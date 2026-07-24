@@ -104,7 +104,14 @@ func debug_advance_to_blue() -> void:
 ## path a player's arrow keys take. It exists so a capture can photograph a *named*
 ## card rather than only whichever the first tab opens on — the roster's tallest
 ## copy is the one worth looking at, and it is not the first. Not on any play path.
+##
+## An unknown id is reported rather than resolved quietly: CommanderDB.by_id falls
+## back to neutral by design, which here would photograph the first card and look
+## exactly like a capture that named nobody — a typo has to be visible in the output
+## or the shot proves the wrong thing.
 func debug_preview(id: StringName) -> void:
+	if not _db.has(id):
+		push_error("No commander '%s': this capture shows the first card, not that one." % id)
 	_focus_commander(id)
 
 

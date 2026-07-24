@@ -60,10 +60,16 @@ func _retitle(header: PanelContainer, title: Label, identity: SideIdentity, team
 func _build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color(0.086, 0.106, 0.118, 0.97)
-	# Anchors *and* offsets throughout: set_anchors_preset alone rewrites the offsets
-	# to preserve the rect a control already has, which for one built in code is 0x0.
-	# Left as a bare preset the veil never covers, and the board shows through.
+	# Near-solid, not the 0.97 written here before: open() used to re-run this build
+	# and stack a second veil over the first, so what the screen actually showed was
+	# the pair (~0.999). With the duplicate build gone, 0.97 alone let the board ghost
+	# through. This keeps the authored "veil over the board" reading without the bleed.
+	bg.color = Color(0.086, 0.106, 0.118, 0.995)
+	# set_anchors_preset alone rewrites the offsets to preserve the rect a control
+	# already has, so it only bites a node that is *already* parented to a sized
+	# parent — the sheet's own call above, added to a full-size battle scene. bg and
+	# the margin below are freshly created and still parentless when their preset
+	# runs: the parent rect is empty, the offsets stay 0, and either form covers.
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 

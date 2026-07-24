@@ -29,6 +29,15 @@ const _MICRO_SIZE := 8
 const _BODY_SIZE := 9
 const _POWER_NAME_SIZE := 11
 const _PORTRAIT_H := 96
+## Where the visible band opens on the bust, as a fraction of the square source.
+## The band stays _PORTRAIT_H tall however wide the card is, so a *wider* card shows
+## a *shorter* slice of the portrait: 98 of the 256 source rows at READING_WIDTH, 80
+## in the info sheet's wider column. Centred, that slice starts below the crown and
+## takes the top off the head. Measured across the roster the highest headwear opens
+## at source row ~30 and every pair of eyes sits at ~108, so a band starting near row
+## 33 holds both at either width. What it gives up instead is the chin — the trade
+## this screen wants, since a face is recognised from the top down.
+const _PORTRAIT_CROP_TOP := 0.13
 
 var _commander: CommanderType
 var _built := false
@@ -80,8 +89,12 @@ func _build() -> void:
 	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_field.add_child(_portrait)
+	# Framed from the field's measured width rather than anchored to its rect: the
+	# card is READING_WIDTH on the select page and wider in the info sheet, and the
+	# crop has to land on the same part of the bust at both.
+	_field.resized.connect(_reframe_portrait)
+	_reframe_portrait()
 
 	_emblem = TextureRect.new()
 	_emblem.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -177,6 +190,16 @@ func _apply() -> void:
 		_power_text_label.text = _commander.power_text
 	else:
 		_power_box.visible = false
+
+
+## Sizes the portrait to a square as wide as the field and slides it up, so the band
+## the field clips to opens at _PORTRAIT_CROP_TOP of the bust rather than at its
+## middle. A square source in a square rect scales without cropping sideways, so the
+## whole framing decision is this one vertical offset.
+func _reframe_portrait() -> void:
+	var width := _field.size.x
+	_portrait.size = Vector2(width, width)
+	_portrait.position = Vector2(0.0, -_PORTRAIT_CROP_TOP * width)
 
 
 ## Whether the power lasts only the owner's turn or through the round — the one
