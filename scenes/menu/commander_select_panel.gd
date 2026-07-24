@@ -100,11 +100,24 @@ func debug_advance_to_blue() -> void:
 	_confirm()
 
 
+## Dev capture only: browses to one commander by id, through the same tab-and-focus
+## path a player's arrow keys take. It exists so a capture can photograph a *named*
+## card rather than only whichever the first tab opens on — the roster's tallest
+## copy is the one worth looking at, and it is not the first. Not on any play path.
+func debug_preview(id: StringName) -> void:
+	_focus_commander(id)
+
+
 # --- build -------------------------------------------------------------------
 
 
 func _build() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Anchors *and* offsets: set_anchors_preset alone rewrites the offsets to
+	# preserve the rect the control already has, which for a page built in code and
+	# added to an already-sized menu is 0x0. That is what left this whole page laid
+	# out at its content's minimum size in the top-left corner, with nothing bounded
+	# by the viewport — the ground COM-31's missing Confirm button grew from.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
 	bg.color = Color(UiTheme.SLATE_900.r, UiTheme.SLATE_900.g, UiTheme.SLATE_900.b, 0.985)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -113,7 +126,7 @@ func _build() -> void:
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, 10)
+		margin.add_theme_constant_override("margin_" + edge, 8)
 	add_child(margin)
 
 	var main := VBoxContainer.new()
@@ -127,9 +140,23 @@ func _build() -> void:
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main.add_child(body)
 
+	# The card is bounded, never free-standing. Its height is content-driven, and a
+	# long doctrine used to stretch the body row past the bottom of the viewport,
+	# carrying the Confirm button off-screen with it (COM-31). A ScrollContainer
+	# stops the card's minimum height propagating up, so the actions row and the
+	# footer legend hold their place whatever a general's copy says. At
+	# READING_WIDTH the whole shipped roster fits, so the bar never appears — the
+	# scroll is the guarantee, not the mechanism.
+	var card_frame := ScrollContainer.new()
+	card_frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	card_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(card_frame)
+
 	_card = CommanderCard.new()
+	_card.custom_minimum_size.x = CommanderCard.READING_WIDTH
+	_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	body.add_child(_card)
+	card_frame.add_child(_card)
 
 	body.add_child(_build_right_column())
 
