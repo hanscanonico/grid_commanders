@@ -61,6 +61,8 @@ gate reads exit status and ignores it.
 the same handlers a player's input reaches and must still produce a frame. It renders, so it needs
 a display — it is a local gate, not a headless-CI one. Narrow it with
 `make smoke MODES="attack capture"`, and keep the captures to look at with `SMOKE_KEEP=1 make smoke`.
+A name no scenario implements fails the run rather than photographing a board nothing ever staged,
+so a typo in `MODES` is a failure and not a quiet pass.
 
 A mode may carry a `+fog` suffix (`make smoke MODES="victory+fog"`) to rerun that scenario with fog
 of war on. Fog is the only setting under which the scene hides units rather than just drawing them,
@@ -79,7 +81,28 @@ make smoke MODES="cutin_skip"                 # walks a skip across every beat; 
 make smoke MODES="capture_cutin"              # a completing capture, late in its banner
 make smoke MODES="capture_cutin_partial"      # an occupying capture, the property not yet flipped
 make smoke MODES="capture_cutin_skip"         # the same skip walk over the capture cut-in
+make smoke MODES="cutin_iron_commander"       # Iron v Verdant: the cut-in must wear the board's factions
+make smoke MODES="capture_cutin_iron_commander"   # the same, on the marching squad and the property
 ```
+
+The two `_iron_commander` variants are the only cut-in modes that run *with* commanders, and that is
+their whole reason to exist: a commander-less side draws in the row its slot number names, so a
+surface reading a team int where an atlas row belongs looks correct in every other capture. They
+stage Iron against Verdant — rows 3 and 4, neither equal to its slot — and fight over a property
+apiece, so the armies, the ground and the flipping building all carry a faction row.
+
+Every cut-in mode is a test as well as a picture: each reads the atlas rows back off the posed art
+and fails the run unless every one is the row `SideIdentity` gives that side. A cut-in painted in
+the wrong faction's colours writes a perfectly good frame, so "a capture exists" could never have
+been the check.
+
+The variant names above are the whole set — plus the two the capture family composes,
+`capture_cutin_partial_skip` and `capture_cutin_partial_iron_commander` — and a mode is checked
+against it before anything is staged: `capture_cutin_partail` fails the run rather than quietly
+posing a completing capture, and `cutin_iron_commandr` fails rather than photographing the
+commander-less frame under the acceptance mode's name. A typo that still poses *a* cut-in is the
+one thing the row checks cannot see, because the frame they check is correct — just not the one
+that was asked for.
 
 `cutin_skip` and `capture_cutin_skip` are the ones that are tests rather than pictures: each plays
 the same cut-in ten times, skipping one frame later each time, and fails unless every run finishes

@@ -79,14 +79,27 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # a shot at a submarine — the one target the roster hides — and an indirect
 # attack, which is the only case that frames a volley with no counter coming
 # back. cutin_skip is a test rather than a picture; see _spam_skip.
+#
+# Every one of those runs commander-less, though, and a commander-less side draws
+# in the row its slot number names — so for a while none of them could see a
+# cut-in surface reading a team int where an atlas row belongs (COM-10: Iron
+# armies came out Aurora blue). The two `_iron_commander` variants close that:
+# they stage Iron against Verdant, rows 3 and 4, neither equal to its slot, and
+# fight over a property apiece so the ground carries a faction row as well.
+#
+# None of the cut-in modes rests on a human eyeballing the frame, either: every
+# one of them reads the rows back off the posed art and fails the run unless each
+# is the row SideIdentity gives that side (see _check_cut_in_rows). A
+# mispainted army renders a perfectly good picture, so "a frame was written" was
+# never going to be the check.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn
 	powermenu+fog victory+fog ambush vanish
 	power_ready power_active power_banner commander_info commander_victory
-	cutin cutin_ko cutin_skip
+	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
-	capture_cutin capture_cutin_partial capture_cutin_skip
+	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
 )
 
 if [[ ! -x "$GODOT" ]]; then

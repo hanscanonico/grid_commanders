@@ -49,7 +49,7 @@ const STAR_STEP := 11.0
 
 var unit: Unit
 var terrain: TerrainType
-## The property's atlas column and the two team rows the flip crosses between.
+## The property's atlas column and the two atlas rows the flip crosses between.
 var prop_col := 0
 var row_before := 0
 var row_after := 0
@@ -85,13 +85,30 @@ func _ready() -> void:
 
 
 ## Poses the stage for one capture. Called once, before the clock starts.
-func bind(p_unit: Unit, p_terrain: TerrainType, p_col: int, p_before: int, p_after: int) -> void:
+##
+## Both rows arrive resolved off SideIdentity, never as team ints: the property
+## starts in its owner's faction row and flips to the capturer's, and the squad
+## marching up to it draws in that same capturer's row *by construction*. Deriving
+## the squad's row separately is what once put red soldiers on an already-slate
+## city — two palettes in one frame, and the whole of COM-10.
+func bind(
+	p_unit: Unit, p_terrain: TerrainType, p_col: int, p_owner_row: int, p_capturer_row: int
+) -> void:
 	unit = p_unit
 	terrain = p_terrain
 	prop_col = p_col
-	row_before = p_before
-	row_after = p_after
-	_squad_art = UnitSprite.texture_for(p_unit.type, p_unit.team)
+	row_before = p_owner_row
+	row_after = p_capturer_row
+	_squad_art = UnitSprite.texture_for(p_unit.type, p_capturer_row)
+
+
+## The atlas row the marching squad is really drawn from, read back off the
+## region `bind` baked. A read for the scenario driver's row check, which asks
+## what is on screen rather than what was remembered — the stage stays draw-only.
+func drawn_squad_row() -> int:
+	if _squad_art == null:
+		return -1
+	return int(_squad_art.region.position.y) / UnitSprite.SPRITE_PX
 
 
 func _draw() -> void:

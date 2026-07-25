@@ -275,13 +275,16 @@ func sync_sprites() -> void:
 		sprite.queue_free()
 
 
-## Dev capture only, so underscored and reached into by the scenario driver like
-## the rest of the scene it drives: a scenario that swaps a side's commander after
-## the board is built re-resolves the identity and repaints to match — units, the
-## property tiles, the HUD name — so a staged commander recolours its army the way
-## it would in a real match (plan R3). Real play never calls this: commanders are
-## fixed before the board is ever drawn, so _build_view's resolve is the only one.
-func _restage_identity() -> void:
+## Re-resolves the match's [SideIdentity] from the sim's current commander picks
+## and repaints everything that wears a side's colour — the property tiles, every
+## unit sprite, the terrain panel and the HUD name.
+##
+## Call this when the commanders changed behind the scene's back, which in
+## practice means a dev scenario staging a commander onto an already-built board:
+## a staged commander then recolours its army the way it would in a real match
+## (plan R3). Real play never needs it — commanders are fixed before the board is
+## ever drawn, so `_build_view`'s resolve is the only one.
+func restage_identity() -> void:
 	identity = SideIdentity.for_game(game)
 	terrain_panel.identity = identity
 	_paint_map()
