@@ -1,7 +1,7 @@
-# Grid Commander (working title)
+# Grid Commanders
 
 A turn-based tactics game in the style of Advance Wars, built with Godot 4.7 and
-typed GDScript. Nine designs of record ship with it under `.lavish/`; `CLAUDE.md` lists them and
+typed GDScript. Fifteen designs of record ship with it under `.lavish/`; `CLAUDE.md` lists them and
 which decisions each one owns.
 
 ## Running

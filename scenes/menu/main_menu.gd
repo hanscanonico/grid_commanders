@@ -202,7 +202,7 @@ func _build_header() -> Control:
 	titles.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	var wordmark := Label.new()
-	wordmark.text = "GRID COMMANDER"
+	wordmark.text = "GRID COMMANDERS"
 	wordmark.add_theme_font_override("font", UiTheme.display(true))
 	wordmark.add_theme_font_size_override("font_size", UiTheme.SIZE_WORDMARK)
 	wordmark.add_theme_color_override("font_color", UiTheme.WHITE)
