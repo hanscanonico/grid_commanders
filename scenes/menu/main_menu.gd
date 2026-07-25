@@ -11,9 +11,9 @@ extends Control
 ## The flow is untouched. "1 Player" and "2 Player" open the CommanderSelectPanel
 ## (readiness plan G2), shown *over* this menu so the map and fog choices survive a
 ## Back; nothing reaches MatchConfig until both commanders are confirmed there.
-## "Continue" bypasses selection — a saved match restores its own commanders. The
-## only behaviour change the revamp makes is that Continue is disabled, not hidden,
-## when there is no save (plan section 2).
+## "Continue" bypasses selection — a saved match restores its own commanders. It
+## is disabled, not hidden, when there is nothing to resume (plan section 2), and
+## it names what it would resume on the micro-line beneath it: "DAY 4 · SCRIMMAGE".
 
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const ICON_PATH := "res://assets/icon.png"
@@ -40,6 +40,8 @@ var _fog_on := false
 var _one_player_button: Button
 var _two_player_button: Button
 var _continue_button: Button
+## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
+var _continue_caption: Label
 var _quit_button: Button
 var _press_start: Label
 
@@ -76,7 +78,7 @@ func _ready() -> void:
 	_select_panel.confirmed.connect(_on_selection_confirmed)
 	_select_panel.cancelled.connect(_on_selection_cancelled)
 
-	_continue_button.disabled = not SaveGame.has_save()
+	_refresh_continue()
 	_one_player_button.pressed.connect(_open_select.bind([2] as Array[int]))
 	_two_player_button.pressed.connect(_open_select.bind([] as Array[int]))
 	_continue_button.pressed.connect(_continue)
@@ -419,8 +421,15 @@ func _build_action_stack(animate: bool) -> Control:
 	col.add_child(_two_player_button)
 
 	_continue_button = _action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
-	_quit_button = _action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_continue_button)
+	# What Continue resumes, on its own line rather than as the button's inline
+	# suffix: "DAY 12 · THE STRAITS" is longer than the 122px action stack can set
+	# at button size, and a micro-label under the control is the panel's own idiom.
+	_continue_caption = _micro_label("")
+	_continue_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_continue_caption)
+
+	_quit_button = _action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_quit_button)
 
 	var spacer := Control.new()
@@ -804,6 +813,36 @@ func _on_selection_confirmed(red_id: StringName, blue_id: StringName) -> void:
 func _on_selection_cancelled() -> void:
 	_menu_root.show()
 	_one_player_button.grab_focus()
+
+
+## Names the saved match under the Continue button, so the menu alone answers
+## "is this the match I meant?" — the whole point of labelling the slot. The day
+## and board are read off the save envelope's own keys (SaveGame.peek); nothing is
+## rebuilt, and the save format is untouched.
+##
+## Continue now follows the summary rather than the file's mere existence. That is
+## strictly narrower: `decode` refuses everything `summarize` refuses, so a save
+## we cannot name is one Continue could only have failed on.
+func _refresh_continue() -> void:
+	var summary := SaveGame.peek()
+	_continue_button.disabled = summary == null
+	if summary == null:
+		_continue_caption.text = "NO SAVED MATCH"
+		# The dim NEUTRAL_DARK of PRESS START: it explains a disabled button, so it
+		# must not read as loudly as a match waiting to be resumed.
+		_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
+		_continue_button.tooltip_text = (
+			"Nothing saved yet.\n" + "Save in battle from the map menu — confirm on an empty tile."
+		)
+		return
+	var label := summary.label()
+	_continue_caption.text = label.to_upper()
+	# The tagline's tone, which is what a micro-label needs to carry a fact rather
+	# than a hint on the dark backdrop — NEUTRAL_DARK is barely legible out here.
+	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	_continue_button.tooltip_text = (
+		"Resume the saved match — %s.\nIts own board, commanders and difficulty apply." % label
+	)
 
 
 func _continue() -> void:

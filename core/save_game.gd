@@ -22,6 +22,23 @@ static func has_save(path: String = SAVE_PATH) -> bool:
 	return FileAccess.file_exists(path)
 
 
+## Which board and day the save holds, without rebuilding the match — what the
+## menu needs to name what Continue resumes. Null when there is no save, or it is
+## not one the codec reads.
+##
+## Silent where `load_game` pushes errors: asking whether a slot is worth naming
+## is a query the menu makes on every boot, and having nothing saved is the
+## ordinary answer, not a failure.
+static func peek(path: String = SAVE_PATH) -> SAVE_CODEC_SCRIPT.Summary:
+	var text := FileAccess.get_file_as_string(path)
+	if text.is_empty():
+		return null
+	var json := JSON.new()
+	if json.parse(text) != OK or not json.data is Dictionary:
+		return null
+	return SAVE_CODEC_SCRIPT.summarize(json.data)
+
+
 ## `difficulty` trails `path` so every existing caller keeps working; a save
 ## written without one records Normal, which is the tier those matches played at.
 static func save(

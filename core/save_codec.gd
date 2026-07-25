@@ -52,6 +52,22 @@ class LoadedMatch:
 	var difficulty: StringName = Difficulty.DEFAULT_ID
 
 
+## Just enough of a save to name it on a menu: which board, and how far in.
+##
+## Deliberately not a `LoadedMatch` with the rest blanked out — a summary is
+## readable without the databases, without loading the map, and without
+## rebuilding a single unit, so the menu can label Continue before it has any of
+## those. Nothing here is new in the format; both fields are already required
+## keys, which is what makes labelling a save a pure read.
+class Summary:
+	var day: int = 0
+	var map_path: String = ""
+
+	## What a player is shown: "Day 4 · Scrimmage".
+	func label() -> String:
+		return SaveCodec.describe(day, map_path)
+
+
 ## The whole match as a plain Dictionary: sim state plus the match setup (AI
 ## sides and difficulty tier). The map itself is stored by path and reloaded from
 ## res:// on the way back in, so saves stay small and follow map edits.
@@ -214,6 +230,28 @@ static func _decode_commanders(
 		# the meter while it still reads down.
 		state.add_charge(team, int(record.get("charge", 0)))
 		co_state.power_active = bool(record.get("active", false)) and co_state.type.has_power()
+
+
+## The board and day of a parsed save, or null when it is not a save this codec
+## reads. Both facts come straight off the envelope's own keys, which is why
+## naming a save needs no format change — and why the summary and the loader can
+## never disagree: `decode` refuses anything `validate` rejects, so a save with
+## no summary is one Continue could not have resumed either.
+static func summarize(data: Dictionary) -> Summary:
+	if validate(data) != "":
+		return null
+	var summary := Summary.new()
+	summary.day = int(data["day"])
+	summary.map_path = String(data["map_path"])
+	return summary
+
+
+## "Day 4 · Scrimmage" — how a match is named wherever one has to be named: the
+## menu's Continue caption and the in-battle Saved banner both say it, so the two
+## can never drift into two phrasings of the same fact. The board's name is
+## MapCatalog's, the same words the map picker shows.
+static func describe(day: int, map_path: String) -> String:
+	return "Day %d · %s" % [day, MapCatalog.display_name(map_path)]
 
 
 ## "" when `data` is a well-formed save this codec can read, else the reason it
