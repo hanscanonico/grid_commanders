@@ -134,8 +134,10 @@ and **Battle animations** (the full-screen combat and capture cut-ins — a save
 default),
 then start a **1 Player** match against the AI or a **2 Player** hot-seat game. Either opens the
 **commander selection page**; **Continue** skips selection and resumes the save with its own map,
-fog setting, difficulty, commanders, and AI sides — it is greyed out (disabled, not hidden) when no
-save exists. **Quit** exits.
+fog setting, difficulty, commanders, and AI sides. A line under it names what it would resume —
+`DAY 13 · ARSENAL` — so the menu alone answers whether the save is the match you meant; when there
+is nothing readable to resume it reads `NO SAVED MATCH` and the button is greyed out (disabled, not
+hidden). **Quit** exits.
 
 On the selection page you pick **side 1**'s commander, confirm, then **side 2**'s, confirm — the
 turn chips preview each side's faction name and colour as you browse, mirror rule included. Four
@@ -215,9 +217,10 @@ jumps to that team's first property.
 - Confirm on an empty tile: the map menu opens with **End Turn**, which hands play to the other
   team (the day counter advances when the rotation wraps back to the first side), and **Save**, which writes
   the whole match — map, day, funds, ownership, every unit, both commanders, and the RNG stream —
-  over the single save slot. Resume it later with **Continue** on the main menu. When your Command
-  Power is charged the menu lists it first, so it is reachable from the keyboard as well as from
-  the HUD button
+  over the single save slot. The banner names what it stored, `Saved Day 4 · Scrimmage`, in the
+  same words the menu's Continue line reads back. Resume it later with **Continue** on the main
+  menu. When your Command Power is charged the menu lists it first, so it is reachable from the
+  keyboard as well as from the HUD button
 - The HUD shows the current day, team, and funds — plus, for a side playing a commander, that
   side's charge meter and a **Power** button (see Commanders below); the corner panel leads with
   the unit on the hovered tile, if any: its sprite, name, army, `HP x/10`, fuel and ammo out of

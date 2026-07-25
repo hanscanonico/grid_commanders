@@ -8,10 +8,9 @@ extends RefCounted
 ## about files and JSON text, so a disk error and a malformed save are separate
 ## failures with separate messages.
 ##
-## The public surface is deliberately unchanged: `save`, `load_game`,
-## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use. The on-disk
-## format is version 2 (commanders); version 1 files still load, as no-commander
-## matches — see SaveCodec.
+## The public surface is small and stays that way: `save`, `load_game`, `peek`,
+## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use. Which on-disk
+## versions exist and which still load is SaveCodec's to say — see its header.
 
 const SAVE_PATH := "user://save.json"
 const SAVE_CODEC_SCRIPT := preload("res://core/save_codec.gd")
