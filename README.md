@@ -27,7 +27,7 @@ Then:
 make run             # boot the game — the menu (map, difficulty, speed, commanders, fog, 1P / 2P / Continue)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
 make verify          # the merge gate: check + lint + format-check + test, in one command
-make smoke           # drive the battle scene's demo scenarios; prove each still renders
+make smoke           # drive the demo scenarios (the battle scene, plus the menu pair); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # parse + type check every .gd file (fast; no scene tree)
 make lint            # gdlint — style and smells (config: gdlintrc)
@@ -57,8 +57,9 @@ script graph), reproducible in twelve lines with no GUT involved. No gameplay ob
 gate reads exit status and ignores it.
 
 `make smoke` covers what unit tests deliberately do not: GUT is limited to the Node-free layers
-(see Architecture below), so the battle scene is verified by driving it. Each demo scenario runs
-the same handlers a player's input reaches and must still produce a frame. It renders, so it needs
+(see Architecture below), so the battle scene — and, for the `menu_` pair below, the main menu — is
+verified by driving it. Each demo scenario runs the same handlers a player's input reaches and must
+still produce a frame. It renders, so it needs
 a display — it is a local gate, not a headless-CI one. Narrow it with
 `make smoke MODES="attack capture"`, and keep the captures to look at with `SMOKE_KEEP=1 make smoke`.
 A name no scenario implements fails the run rather than photographing a board nothing ever staged,
@@ -67,6 +68,22 @@ so a typo in `MODES` is a failure and not a quiet pass.
 A mode may carry a `+fog` suffix (`make smoke MODES="victory+fog"`) to rerun that scenario with fog
 of war on. Fog is the only setting under which the scene hides units rather than just drawing them,
 so two scenarios run both ways by default.
+
+A mode whose name begins `menu_` boots the **main menu** instead of the board — the only scenarios
+that photograph a screen the battle scene never draws:
+
+```sh
+make smoke MODES="menu_with_save"   # Continue live, on a long-named board at DAY 128
+make smoke MODES="menu_no_save"     # the same layout with an empty slot, Continue greyed out
+```
+
+Both pose the save slot themselves, so a capture neither reads nor writes the running machine's
+`user://save.json`, and both are tests as well as pictures: each measures the whole centered menu
+column *and* all four primary actions against the 640×360 logical frame and fails the run if any of
+them leaves it. The column is the load-bearing witness — a too-tall one is centered into an offset
+that runs off both ends at once, so no single child is reliable — and the pair exists to hold the
+rule that a save's presence may never change the layout budget, which is what broke when Continue
+first pushed the title and **Quit** out of frame.
 
 The cut-ins — combat and its capture sibling — have their own family of modes, because they are
 deliberately suppressed while capturing — a mid-animation frame is what would make two identical
@@ -350,10 +367,12 @@ it. `--speed=<tier>` overrides it for one launch without writing anything, and o
 tier captures pin themselves to — which is how you photograph a tier you are tuning. Every number
 lives in one table at the top of `scenes/common/game_speed.gd`.
 
-Battle captures and `make smoke` pin **Instant**: a frame must not depend on which machine took it,
-and scenarios wait on the scene's state machine rather than a frame count, so skipping the theatre
+Battle captures and the board scenarios in `make smoke` pin **Instant**: a frame must not depend on
+which machine took it, and scenarios wait on the scene's state machine rather than a frame count, so
+skipping the theatre
 cannot change what is photographed. It is also four times faster on the scenario that plays a whole
-AI turn, for a byte-identical frame. `make menu-screenshot` pins **Normal** instead — the menu's
+AI turn, for a byte-identical frame. `make menu-screenshot` and the `menu_` scenarios, which boot
+that same screen, pin **Normal** instead — the menu's
 drifting backdrop and blinking **PRESS START** pin still under a capture (the animator's `capturing`
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
