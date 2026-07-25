@@ -307,6 +307,26 @@ static func _disabled_box(fill: Color, border: Color) -> StyleBoxFlat:
 	return _button_box(_desaturate(faded), border, false)
 
 
+# --- input plumbing ----------------------------------------------------------
+
+
+## Marks a subtree as decoration: `root` and every Control under it stop
+## hit-testing, so a card built by laying content over a Button leaves the Button
+## itself as the one thing a click can land on.
+##
+## Control's default is MOUSE_FILTER_STOP and a parent's IGNORE does not exempt
+## its children, so any Panel, PanelContainer or plain Control in the decoration
+## silently eats the press and only keyboard focus still selects the card. This
+## walks the whole subtree rather than naming the pieces, so it holds when one
+## more label lands in a card later. Call it once the decoration is fully built.
+static func make_decoration(root: Control) -> void:
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in root.get_children():
+		var control := child as Control
+		if control != null:
+			make_decoration(control)
+
+
 # --- small colour maths ------------------------------------------------------
 
 

@@ -330,7 +330,6 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 1)
 	content.set_anchors_preset(Control.PRESET_FULL_RECT)
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(content)
 
 	var thumb := MapThumbnail.new()
@@ -345,6 +344,7 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	name_label.add_theme_color_override("font_color", UiTheme.INK)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(name_label)
+	UiTheme.make_decoration(content)
 
 	button.focus_entered.connect(_select_map.bind(index))
 	button.pressed.connect(_select_map.bind(index))
@@ -580,12 +580,10 @@ func _build_toggle(text: String, is_on: bool, on_change: Callable) -> Button:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 5)
 	row.set_anchors_preset(Control.PRESET_FULL_RECT)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(row)
 
 	var check := Panel.new()
 	check.custom_minimum_size = Vector2(12, 12)
-	check.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mark := Label.new()
 	mark.text = "✓"
 	mark.add_theme_font_override("font", UiTheme.stat(true))
@@ -594,7 +592,6 @@ func _build_toggle(text: String, is_on: bool, on_change: Callable) -> Button:
 	mark.set_anchors_preset(Control.PRESET_FULL_RECT)
 	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	check.add_child(mark)
 	row.add_child(check)
 
@@ -612,6 +609,7 @@ func _build_toggle(text: String, is_on: bool, on_change: Callable) -> Button:
 	status.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
 	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(status)
+	UiTheme.make_decoration(row)
 
 	var repaint := func(on: bool) -> void:
 		_paint_check(check, mark, on)

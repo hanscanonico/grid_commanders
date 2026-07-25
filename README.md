@@ -488,6 +488,13 @@ re-declared — faction hues stay `CommanderVisuals`', cream and ink stay
 `CommanderVisuals.PAPER / PAPER_INK / HARD_BORDER` — so there is still exactly one value per colour.
 It is built in code, not a `.tres` Theme, because that is the one form the repo can review in a diff.
 
+A clickable card here — a map cell, a commander mini, a checkbox row — is dress laid *over* a
+`Button`, and `Control`'s default is to hit-test, which a parent's `MOUSE_FILTER_IGNORE` does not
+change for its children. So a panel or a plain `Control` in the dress eats the press and leaves only
+keyboard focus able to select the card. `UiTheme.make_decoration()` is the one fix: call it once the
+dress is built and it walks the whole subtree, so the `Button` stays the single input target even
+when one more piece lands in the card later. Its doc comment carries the reasoning.
+
 The map picker draws live board miniatures (`scenes/menu/map_thumbnail.gd`) by blitting the terrain
 atlas per cell — column from `TerrainType.atlas_col`, row from `SideIdentity.atlas_row`, the same
 authorities the battle board paints with — and the same renderer bakes the slow-panning terrain

@@ -337,7 +337,6 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	var content := VBoxContainer.new()
 	content.set_anchors_preset(Control.PRESET_FULL_RECT)
 	content.add_theme_constant_override("separation", 0)
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(content)
 
 	var stage := Panel.new()
@@ -361,6 +360,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	name_wrap.add_theme_stylebox_override("panel", _flat(theme.color_dark))
 	name_wrap.add_child(_pad(name_label, 2, 1))
 	content.add_child(name_wrap)
+	UiTheme.make_decoration(content)
 
 	var mark := ColorRect.new()
 	mark.color = GOLD
