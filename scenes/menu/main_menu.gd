@@ -336,10 +336,12 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	var thumb := MapThumbnail.new()
 	thumb.setup(map, UiTheme.menu_identity(), THUMB)
 	thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	thumb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(thumb)
 
 	var name_label := Label.new()
 	name_label.text = MapCatalog.display_name(map.source_path)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_label.add_theme_font_override("font", UiTheme.display())
 	name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	name_label.add_theme_color_override("font_color", UiTheme.INK)
