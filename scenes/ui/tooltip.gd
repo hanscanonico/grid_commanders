@@ -14,9 +14,12 @@ extends Control
 ## Attach it to the *micro-label* of a group, never to the group's control: a tip
 ## on a segmented row fires while the player is only reaching for a segment.
 ## `attach` dresses a Label trigger with the dotted underline and help cursor that
-## make it discoverable; the tip opens on hover and on keyboard focus alike, after
-## a delay so sweeping across a row does not strobe, and closes on leave, blur or
-## `ui_cancel`.
+## make it discoverable; the tip opens after a delay, so sweeping across a row does
+## not strobe, and closes on leave, blur or `ui_cancel`.
+##
+## Hover and focus deliberately have different sources — see `follow_focus`, which
+## mirrors the focus half onto the control the label heads, so a keyboard-only
+## player reaches the same explanation without the label joining the tab order.
 ##
 ## Presentation only, like every other node under scenes/: nothing in core/ or ai/
 ## knows a tooltip exists, and the copy is handed in by the caller.
@@ -24,8 +27,13 @@ extends Control
 ## A slab lives on an overlay layer and takes no space in the flow it points into,
 ## so where a tip is *pinned* — a coach mark, a specimen — and must not cover the
 ## control it explains, reserve it a real block in the layout (a row of its own),
-## never a margin tuned to today's string: the height moves with the words. Every
-## tip in the menu opens on hover and closes on leave, so none needs one.
+## never a margin tuned to today's string: the height moves with the words. A tip
+## opened by *focus* is that pinned case: it stays up for as long as its trigger
+## holds focus, so tabbing through the map picker keeps a slab over the cell below
+## the focused one, and a focused tip and a hovered one can be up at once. The menu
+## accepts the overlap rather than reserving a block for it — the slab is
+## MOUSE_FILTER_IGNORE, so it never blocks the control it covers, and the words
+## underneath it are one keystroke from being uncovered again.
 ##
 ## Three of the handoff's props are deliberately absent. `align` exists there to
 ## hand-tune tips on edge-adjacent controls, which the viewport clamp below already
@@ -117,6 +125,22 @@ static func attach(trigger: Control, label: String, detail := "", side := Side.T
 	else:
 		trigger.tree_entered.connect(tip._mount, CONNECT_ONE_SHOT)
 	return tip
+
+
+## Mirrors the tip's *focus* source onto the control its trigger label heads — each
+## segment of a segmented row, the toggle button itself, the Continue button. One
+## tip, one slab, one set of state: this only adds a second way in.
+##
+## Hover and focus have different triggers on purpose. A pointer crossing a segment
+## is on its way to press it, not asking what the group means, which is the whole
+## reason the hover trigger is the micro-label; but focus *arriving* on a control is
+## an unambiguous "I am here now", and the label can never be that arrival — it is
+## not in the tab order, and putting it there would add a stop that does nothing
+## when pressed. A control that cannot take focus (a disabled Continue) simply never
+## opens the tip this way; its caption stays hoverable.
+func follow_focus(control: Control) -> void:
+	control.focus_entered.connect(_request)
+	control.focus_exited.connect(close)
 
 
 ## The words. `label` is one short line in sentence case with no trailing period;
@@ -232,8 +256,14 @@ func _open() -> void:
 	await get_tree().process_frame
 	if not _wanted or not is_inside_tree():
 		return
+	var anchor := _visible_trigger_rect()
+	# Scrolled entirely out of its clip: there is nothing on screen to point at, so
+	# a slab would be the referent-less float this component exists to replace.
+	if anchor.size.x <= 0.0 or anchor.size.y <= 0.0:
+		close()
+		return
 	size = Vector2(WIDTH, _slab.get_combined_minimum_size().y)
-	_place()
+	_place(anchor)
 	modulate = Color(1, 1, 1, 1)
 	set_process_input(true)
 
@@ -258,13 +288,28 @@ func _on_trigger_gone() -> void:
 # --- placement ----------------------------------------------------------------
 
 
-## Anchors the slab to the trigger and the tail to the trigger's centre. The slab
-## slides inward from a viewport edge and the tail stays put, so an edge-adjacent
-## control needs no hand-tuning — and where the requested side has no room at all,
-## `_resolved_side` puts the slab on the opposite one instead.
-func _place() -> void:
-	var view := get_viewport_rect().size
+## The part of the trigger the player can actually see and hover: its global rect
+## intersected with every clipping ancestor's. A map cell scrolled half out of the
+## picker is hit-tested only on the sliver the ScrollContainer shows, so anchoring
+## to the whole cell would drop the slab below the picker with its tail pointing at
+## an edge that is scrolled out of sight.
+func _visible_trigger_rect() -> Rect2:
 	var rect := _trigger.get_global_rect()
+	var node := _trigger.get_parent()
+	while node != null:
+		var clipper := node as Control
+		if clipper != null and clipper.clip_contents:
+			rect = rect.intersection(clipper.get_global_rect())
+		node = node.get_parent()
+	return rect
+
+
+## Anchors the slab to the visible part of the trigger and the tail to its centre.
+## The slab slides inward from a viewport edge and the tail stays put, so an
+## edge-adjacent control needs no hand-tuning — and where the requested side has no
+## room at all, `_resolved_side` puts the slab on the opposite one instead.
+func _place(rect: Rect2) -> void:
+	var view := get_viewport_rect().size
 	var side := _resolved_side(rect, view)
 	var pos := Vector2.ZERO
 	match side:
@@ -276,10 +321,11 @@ func _place() -> void:
 			pos = Vector2(rect.position.x - GAP - size.x, rect.get_center().y - size.y * 0.5)
 		Side.RIGHT:
 			pos = Vector2(rect.end.x + GAP, rect.get_center().y - size.y * 0.5)
-	if side == Side.TOP or side == Side.BOTTOM:
-		pos.x = clampf(pos.x, MARGIN, maxf(MARGIN, view.x - MARGIN - size.x))
-	else:
-		pos.y = clampf(pos.y, MARGIN, maxf(MARGIN, view.y - MARGIN - size.y))
+	# Both axes, not just the one the side does not choose: `_resolved_side` returns
+	# the requested side unchanged when *neither* side has room, and copy that comes
+	# from a map file can grow the slab taller than any code here decided.
+	pos.x = clampf(pos.x, MARGIN, maxf(MARGIN, view.x - MARGIN - size.x))
+	pos.y = clampf(pos.y, MARGIN, maxf(MARGIN, view.y - MARGIN - size.y))
 	position = pos.round()
 	_tail.place(side, rect.get_center() - position, size)
 

@@ -459,6 +459,8 @@ func _build_action_stack(animate: bool) -> Control:
 	_continue_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_continue_caption.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_continue_tip = Tooltip.attach(_continue_caption, "", "", Tooltip.Side.BOTTOM)
+	# A disabled button takes no focus — the case the hoverable caption covers.
+	_continue_tip.follow_focus(_continue_button)
 	col.add_child(_continue_caption)
 
 	_quit_button = _action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
@@ -524,7 +526,7 @@ func _build_segment(
 ) -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	col.add_child(_tip_label(micro, tip, tip_detail))
+	var group_tip := _tip_label(col, micro, tip, tip_detail)
 
 	var frame := PanelContainer.new()
 	var frame_box := UiTheme.flat(UiTheme.PAPER)
@@ -548,6 +550,7 @@ func _build_segment(
 		seg.custom_minimum_size = Vector2(0, 18)
 		seg.add_theme_font_override("font", UiTheme.display())
 		seg.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
+		group_tip.follow_focus(seg)  # focus lands here, never on the micro-label
 		seg_row.add_child(seg)
 		buttons.append(seg)
 
@@ -624,7 +627,8 @@ func _build_toggle(
 	# the same rect; the spacer below keeps ON/OFF hard right where FILL had it.
 	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
+	# The row is one focusable button, so that is where the tip's focus half goes.
+	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM).follow_focus(button)
 	row.add_child(label)
 
 	var spacer := Control.new()
@@ -702,15 +706,16 @@ func _identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 # --- small helpers -----------------------------------------------------------
 
 
-## A micro-label that carries its group's explanation: shrunk to its own string so
-## the dotted underline, the hover target and the words are one rect, and opening
-## downward so the tip lands inside the Match Setup panel rather than over the
-## board behind it (handoff integration note 3).
-func _tip_label(text: String, tip: String, tip_detail: String) -> Label:
+## A micro-label carrying its group's explanation, added to `into` in place: shrunk
+## to its own string so the dotted underline, the hover target and the words are one
+## rect, and opening downward so the tip lands inside the Match Setup panel rather
+## than over the board behind it (handoff integration note 3). The tip comes back so
+## the caller can mirror its focus half onto the group's own focusable control.
+func _tip_label(into: Container, text: String, tip: String, tip_detail: String) -> Tooltip:
 	var label := _micro_label(text)
 	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
-	return label
+	into.add_child(label)
+	return Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
 
 
 func _micro_label(text: String) -> Label:
