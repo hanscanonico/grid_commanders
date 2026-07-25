@@ -574,7 +574,10 @@ func _handle_map_action(action: StringName) -> void:
 		return
 	if action == &"save":
 		if SaveGame.save(game, ai_teams, SaveGame.SAVE_PATH, MatchConfig.difficulty):
-			animator.show_banner("Saved")
+			# Named, because the slot is single: the banner has to say what it just
+			# overwrote the last save with. Same words the menu's Continue caption
+			# will read back, through the one formatter (SaveCodec.describe).
+			animator.show_banner("Saved %s" % SaveCodec.describe(game.day, game.map_path))
 		return
 	if action != &"end_turn":
 		return
