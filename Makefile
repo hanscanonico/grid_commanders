@@ -153,8 +153,8 @@ sprites:
 unit-sprites:
 	$(GODOT) --headless --path . -s res://tools/paste_unit_sprites.gd
 
-# Audits the finished atlas for columns lacking any art (none today; this drew
-# the Missiles placeholder until real art landed on column 13).
+# Audits the finished atlas cell by cell for one no art reached (none today;
+# this drew the Missiles placeholder until real art landed on column 13).
 # Must follow `unit-sprites`, whose output it preserves.
 unit-placeholders:
 	$(GODOT) --headless --path . -s res://tools/generate_unit_placeholders.gd

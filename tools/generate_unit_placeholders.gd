@@ -21,7 +21,7 @@ extends SceneTree
 ## after columns 9-12 and 14-17 got theirs, and a watermark cannot describe a
 ## hole. The list is empty today (missiles was the last placeholder; its column
 ## is real art from tools/paste_unit_sprites.gd now), so the script's whole job
-## is the final invisible-column audit below.
+## is the final invisible-cell audit below.
 
 const ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Columns tools/build_pixvoxel_atlases.sh writes: the length of its UNITS array.

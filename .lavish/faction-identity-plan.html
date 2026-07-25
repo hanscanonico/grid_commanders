@@ -382,6 +382,20 @@
             <li>Proof: <code>make tiles</code>; rows 0–2 of both atlases byte-identical to today;
             <code>make screenshot</code> unchanged; <code>make verify</code> green.</li>
           </ul>
+          <p class="text-xs mt-3 opacity-70"><span class="badge badge-warning badge-sm">how rows 3–4
+          are made superseded 2026-07-25</span> — the two script recipes above (the
+          <code>ROW_PALETTE</code> duotone of the white master, and the palette-swap script that wrote
+          the air/naval PNGs under <span class="gc-file">iso_air_sea/</span>) shipped FI1 and are gone.
+          Both fell short on the board — the duotone buried each sprite in an opaque slab of its own
+          colour (the white master carries a backdrop), and the script ramp read iron as neutral
+          grey — so the iron and verdant rows of every unit and
+          property are now vendored design-system art — per-unit PNGs under
+          <span class="gc-file">assets/sprites/units/</span> (that directory replaced
+          <span class="gc-file">iso_air_sea/</span>) and per-building ones under
+          <span class="gc-file">assets/sprites/iso_buildings/</span>, with no script in the repo that
+          reproduces them. The row order, the byte-identical rows 0–2 and the
+          <code>--check</code> preflight are unchanged; provenance and the ramps live in
+          <span class="gc-file">assets/LICENSES.md</span> § "Design-system faction tints".</p>
         </div>
 
         <div class="card bg-base-100 border p-4">
