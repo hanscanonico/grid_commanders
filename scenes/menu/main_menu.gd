@@ -51,6 +51,8 @@ var _two_player_button: Button
 var _continue_button: Button
 ## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
 var _continue_caption: Label
+## The tip hanging off that line, re-worded with it by `_refresh_continue`.
+var _continue_tip: Tooltip
 var _quit_button: Button
 var _press_start: Label
 
@@ -322,9 +324,14 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	const THUMB := Vector2(132, 60)
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(THUMB.x, THUMB.y + 14)
-	button.tooltip_text = (
-		"%d×%d · %d properties\n%s"
-		% [map.width, map.height, map.property_cells().size(), map.description]
+	# The cell is a single control describing itself, so it is its own trigger —
+	# the micro-label rule guards *group* controls, where hovering to reach a
+	# segment would fire an explanation of the group.
+	Tooltip.attach(
+		button,
+		map.description,
+		"%d×%d · %d properties" % [map.width, map.height, map.property_cells().size()],
+		Tooltip.Side.BOTTOM
 	)
 
 	var content := VBoxContainer.new()
@@ -372,10 +379,8 @@ func _build_choices_row() -> Control:
 		diff_labels,
 		diff_selected,
 		meridian.color,
-		(
-			"How well the computer plays.\nSame rules, economy and dice at every tier — only its\n"
-			+ "judgement changes. Ignored in a 2-Player hot-seat."
-		),
+		"How well the computer plays in a 1-Player match",
+		"Never cheats — only its judgement changes",
 		_on_difficulty_selected
 	)
 	difficulty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -392,10 +397,8 @@ func _build_choices_row() -> Control:
 		speed_labels,
 		speed_selected,
 		meridian.color,
-		(
-			"How fast moves and battles play out on screen.\nNever changes an outcome — pacing "
-			+ "only. Changeable\nany time from the in-battle menu."
-		),
+		"How fast moves and battles play out",
+		"Pacing only — never changes an outcome",
 		_on_speed_selected
 	)
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -406,16 +409,21 @@ func _build_choices_row() -> Control:
 func _build_toggles_row() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	var fog := _build_toggle("Fog of war", _fog_on, _on_fog_toggled)
-	fog.tooltip_text = "Hide the board beyond your units' sight. Off shows the whole map."
+	var fog := _build_toggle(
+		"Fog of war",
+		_fog_on,
+		"Hide the board beyond your units' sight",
+		"Off shows the whole map",
+		_on_fog_toggled
+	)
 	fog.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(fog)
 	var anim := _build_toggle(
-		"Battle animations", Settings.battle_animations, _on_animations_toggled
-	)
-	anim.tooltip_text = (
-		"Play the full-screen battle cut-in when an attack resolves.\n"
-		+ "Off keeps the quick on-map hit. Any key skips a cut-in in progress."
+		"Battle animations",
+		Settings.battle_animations,
+		"Play the full-screen cut-in when an attack resolves",
+		"Any key skips one in progress",
+		_on_animations_toggled
 	)
 	anim.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(anim)
@@ -442,8 +450,15 @@ func _build_action_stack(animate: bool) -> Control:
 	# What Continue resumes, on its own line rather than as the button's inline
 	# suffix: "DAY 12 · THE STRAITS" is longer than the 122px action stack can set
 	# at button size, and a micro-label under the control is the panel's own idiom.
+	#
+	# It is also Continue's tip trigger. The button itself is the one control here
+	# that can be disabled, and a disabled control is exactly where a tip is the
+	# only affordance left — so the explanation hangs off the caption beneath it,
+	# which stays hoverable either way. `_refresh_continue` sets the words.
 	_continue_caption = _micro_label("")
 	_continue_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_continue_caption.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_continue_tip = Tooltip.attach(_continue_caption, "", "", Tooltip.Side.BOTTOM)
 	col.add_child(_continue_caption)
 
 	_quit_button = _action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
@@ -495,18 +510,21 @@ func _action_button(
 ## buttons, the active one carrying the faction fill. Labels come straight from
 ## the authority that owns them (GameSpeed / DifficultyDB), never typed in, so the
 ## control can never disagree with the tiers it drives (plan section 2).
+##
+## The group's explanation hangs off the micro-label, not off the column or the
+## segments: reaching for "Quick" is not asking what Speed means.
 func _build_segment(
 	micro: String,
 	labels: PackedStringArray,
 	selected: int,
 	accent: Color,
-	tooltip: String,
+	tip: String,
+	tip_detail: String,
 	on_select: Callable
 ) -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	col.tooltip_text = tooltip
-	col.add_child(_micro_label(micro))
+	col.add_child(_tip_label(micro, tip, tip_detail))
 
 	var frame := PanelContainer.new()
 	var frame_box := UiTheme.flat(UiTheme.PAPER)
@@ -526,7 +544,6 @@ func _build_segment(
 		seg.text = labels[i]
 		seg.toggle_mode = true
 		seg.clip_text = true
-		seg.tooltip_text = tooltip
 		seg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		seg.custom_minimum_size = Vector2(0, 18)
 		seg.add_theme_font_override("font", UiTheme.display())
@@ -565,8 +582,11 @@ func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> 
 
 ## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
 ## ON/OFF status. The whole row is one focusable button (handoff Toggle), so mouse,
-## keyboard and controller all flip it.
-func _build_toggle(text: String, is_on: bool, on_change: Callable) -> Button:
+## keyboard and controller all flip it — and, like a segmented group, its
+## explanation hangs off the words rather than off the whole row.
+func _build_toggle(
+	text: String, is_on: bool, tip: String, tip_detail: String, on_change: Callable
+) -> Button:
 	var button := Button.new()
 	button.toggle_mode = true
 	button.button_pressed = is_on
@@ -600,9 +620,17 @@ func _build_toggle(text: String, is_on: bool, on_change: Callable) -> Button:
 	label.add_theme_font_override("font", UiTheme.display())
 	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	label.add_theme_color_override("font_color", UiTheme.INK)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Shrunk to its own string, so the underlined words and the hover target are
+	# the same rect; the spacer below keeps ON/OFF hard right where FILL had it.
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
 	row.add_child(label)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(spacer)
 
 	var status := Label.new()
 	status.add_theme_font_override("font", UiTheme.stat())
@@ -672,6 +700,17 @@ func _identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 
 
 # --- small helpers -----------------------------------------------------------
+
+
+## A micro-label that carries its group's explanation: shrunk to its own string so
+## the dotted underline, the hover target and the words are one rect, and opening
+## downward so the tip lands inside the Match Setup panel rather than over the
+## board behind it (handoff integration note 3).
+func _tip_label(text: String, tip: String, tip_detail: String) -> Label:
+	var label := _micro_label(text)
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
+	return label
 
 
 func _micro_label(text: String) -> Label:
@@ -848,18 +887,15 @@ func _refresh_continue() -> void:
 		# The dim NEUTRAL_DARK of PRESS START: it explains a disabled button, so it
 		# must not read as loudly as a match waiting to be resumed.
 		_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
-		_continue_button.tooltip_text = (
-			"Nothing saved yet.\n" + "Save in battle from the map menu — confirm on an empty tile."
-		)
+		_continue_tip.set_copy("Nothing saved yet", "Save in battle from the map menu")
 		return
 	var label := summary.label()
 	_continue_caption.text = label.to_upper()
 	# The tagline's tone, which is what a micro-label needs to carry a fact rather
 	# than a hint on the dark backdrop — NEUTRAL_DARK is barely legible out here.
 	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	_continue_button.tooltip_text = (
-		"Resume the saved match — %s.\nIts own board, commanders and difficulty apply." % label
-	)
+	# The caption already names the day and board, so the tip does not repeat them.
+	_continue_tip.set_copy("Resume the saved match", "Its own board and commanders apply")
 
 
 func _continue() -> void:

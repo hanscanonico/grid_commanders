@@ -68,6 +68,12 @@ const SIZE_TITLE := 8
 const SIZE_BUTTON := 10
 const SIZE_BODY := 8
 const SIZE_SEGMENT := 7
+## A tooltip's label line. The handoff sets it at --text-sm, which the div-2 rule
+## puts at SIZE_SEGMENT's 7 — but a segment holds one word and a tip holds a
+## sentence, and Pixelify's space advance rounds away at 7 with subpixel
+## positioning off ("How fast moves" sets as "Howfast moves"). One step up is the
+## smallest size that keeps the words apart.
+const SIZE_TIP := 8
 const SIZE_MICRO := 6  # Silkscreen micro-labels; 12 physical px, R1's floor
 
 enum ButtonVariant { PRIMARY, SECONDARY, GHOST }
