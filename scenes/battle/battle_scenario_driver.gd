@@ -69,6 +69,28 @@ const FACTION_CAPTURE_FROM := 2
 ## would show up.
 const SKIP_SUFFIX := "_skip"
 const SKIP_FRAMES: Array[int] = [0, 1, 2, 4, 8, 16, 32, 64, 128, 240]
+## Every variant each cut-in family implements, as the suffix left once its
+## prefix is taken off. Not decoration: each suffix below is read off the name
+## with `ends_with`/`begins_with`, and an unrecognised one answers false to all
+## of them rather than erroring — so `cutin_iron_commandr` quietly poses the
+## commander-less frame under the acceptance mode's name, and
+## `capture_cutin_partail` poses a completing capture where an occupying one was
+## asked for. That is the one failure the row checks cannot catch, because the
+## frame they check *is* correct; it is simply not the frame that was asked for.
+##
+## Combat takes at most one suffix, since all three are `ends_with` and only the
+## last would be honoured — `cutin_ko_skip` would drop its `_ko` in silence.
+## Capture reads `_partial` off the front, so it composes with one of the other
+## two and must lead.
+const CUT_IN_SUFFIXES: Array[String] = ["", KO_SUFFIX, SKIP_SUFFIX, FACTION_SUFFIX]
+const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
+	"",
+	PARTIAL_SUFFIX,
+	SKIP_SUFFIX,
+	FACTION_SUFFIX,
+	PARTIAL_SUFFIX + SKIP_SUFFIX,
+	PARTIAL_SUFFIX + FACTION_SUFFIX,
+]
 
 var _battle: Battle
 var _shot_path := ""
@@ -360,6 +382,9 @@ func _run_vanish_demo(mode: String) -> void:
 ##                                   over a property apiece so the ground under
 ##                                   each half carries a faction row too
 ##
+## One suffix off CUT_IN_SUFFIXES, then an optional `:<attacker>:<defender>`;
+## anything else fails the run rather than falling back to the plain variant.
+##
 ## The exchange is resolved directly rather than driven through the targeting
 ## flow, because the flow deliberately suppresses the cut-in while capturing
 ## (BattleAnimator._cut_in_applies) — a mid-tween frame is exactly what makes two
@@ -373,6 +398,11 @@ func _run_vanish_demo(mode: String) -> void:
 ## works on whatever map the capture was launched with.
 func _stage_cut_in(spec: String) -> void:
 	var parts := spec.split(":")
+	if parts.size() != 1 and parts.size() != 3:
+		_fail("cutin demo: a matchup reads ':<attacker>:<defender>' (%s)" % spec)
+		return
+	if not _known_variant(parts[0], CUT_IN_MODE, CUT_IN_SUFFIXES):
+		return
 	var lethal := parts[0].ends_with(KO_SUFFIX)
 	var game := _battle.game
 	var factions := parts[0].ends_with(FACTION_SUFFIX)
@@ -409,12 +439,17 @@ func _stage_cut_in(spec: String) -> void:
 ##   --demo=capture_cutin_skip      walks a skip across the whole clock (a test)
 ##   --demo=capture_cutin_iron_commander  the same city, taken by Iron off Verdant
 ##
+## One suffix off CAPTURE_CUT_IN_SUFFIXES, `_partial` leading where it composes;
+## anything else fails the run rather than falling back to the plain variant.
+##
 ## Like the combat still it is posed rather than driven through the menu, because
 ## the capture flow suppresses the cut-in while capturing for exactly the same
 ## byte-stability reason (BattleAnimator._capture_cut_in_applies). A real
 ## CaptureResult, frozen at one moment of the cut-in's own clock, on the default
 ## board's neutral city at (3,4) — the same property the `capture` demo takes.
 func _stage_capture_cut_in(mode: String) -> void:
+	if not _known_variant(mode, CAPTURE_CUT_IN_MODE, CAPTURE_CUT_IN_SUFFIXES):
+		return
 	var game := _battle.game
 	var cell := Vector2i(3, 4)  # the neutral city
 	var unit := game.unit_at(Vector2i(4, 3))  # the red infantry
@@ -695,6 +730,20 @@ func _check_row(what: String, drawn: int, wanted: int) -> void:
 	if drawn == wanted:
 		return
 	_fail("%s is drawn in atlas row %d, but the board wears row %d" % [what, drawn, wanted])
+
+
+## True when a cut-in mode names a variant the family actually implements — the
+## part left after its prefix is one of `known`. Fails the run otherwise, naming
+## every mode the family does take, since the whole hazard is a name that reads
+## like a variant and quietly stages a different one.
+func _known_variant(name_part: String, prefix: String, known: Array[String]) -> bool:
+	if known.has(name_part.substr(prefix.length())):
+		return true
+	var legal := PackedStringArray()
+	for suffix in known:
+		legal.append(prefix + suffix)
+	_fail("%s demo: unknown variant '%s'; it takes %s" % [prefix, name_part, ", ".join(legal)])
+	return false
 
 
 ## Reports a scenario failure and makes the run's exit code say so. Every

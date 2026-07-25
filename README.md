@@ -94,6 +94,12 @@ and fails the run unless every one is the row `SideIdentity` gives that side. A 
 the wrong faction's colours writes a perfectly good frame, so "a capture exists" could never have
 been the check.
 
+The variant names above are the whole set, and a mode is checked against it before anything is
+staged: `capture_cutin_partail` fails the run rather than quietly posing a completing capture, and
+`cutin_iron_commandr` fails rather than photographing the commander-less frame under the acceptance
+mode's name. A typo that still poses *a* cut-in is the one thing the row checks cannot see, because
+the frame they check is correct — just not the one that was asked for.
+
 `cutin_skip` and `capture_cutin_skip` are the ones that are tests rather than pictures: each plays
 the same cut-in ten times, skipping one frame later each time, and fails unless every run finishes
 exactly once. Both call sites hold the whole interaction flow on that, so a cut-in that ever failed
