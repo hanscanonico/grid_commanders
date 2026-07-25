@@ -129,7 +129,7 @@ func _fog_hides_unseen() -> bool:
 	for unit in _battle.game.units:
 		var sprite := _battle.view.sprite_for(unit)
 		if sprite != null and sprite.visible and not _battle.view.can_see_unit(unit):
-			push_error(
+			_fail(
 				(
 					"fog leak: %s at %s is drawn but team %d cannot see it"
 					% [unit.type.id, unit.cell, _battle.game.current_team]
@@ -382,7 +382,7 @@ func _stage_cut_in(spec: String) -> void:
 		attacker = pair[0]
 		defender = pair[1]
 	if attacker == null or defender == null:
-		push_error("cutin demo: no pair to stage (%s)" % spec)
+		_fail("cutin demo: no pair to stage (%s)" % spec)
 		return
 	if factions:
 		_stage_owned_ground(attacker, defender)
@@ -394,8 +394,7 @@ func _stage_cut_in(spec: String) -> void:
 	_battle.animator.cutscene.pose_at(
 		result, attacker, defender, KO_POSE if lethal else CUT_IN_POSE
 	)
-	if not _cut_in_wears_the_board(attacker, defender):
-		_failed = true
+	_check_cut_in_rows(attacker, defender)
 
 
 ## The capture cut-in, held still for the shutter — the sibling of `_stage_cut_in`.
@@ -415,7 +414,7 @@ func _stage_capture_cut_in(mode: String) -> void:
 	var cell := Vector2i(3, 4)  # the neutral city
 	var unit := game.unit_at(Vector2i(4, 3))  # the red infantry
 	if unit == null:
-		push_error("capture_cutin demo: no infantry at (4,3)")
+		_fail("capture_cutin demo: no infantry at (4,3)")
 		return
 	var factions := mode.ends_with(FACTION_SUFFIX)
 	if factions:
@@ -439,8 +438,7 @@ func _stage_capture_cut_in(mode: String) -> void:
 	_battle.animator.capture_cutscene.pose_at(
 		result, unit, cell, CAPTURE_PARTIAL_POSE if partial else CAPTURE_CUT_IN_POSE
 	)
-	if not _capture_cut_in_wears_the_board(unit, cell):
-		_failed = true
+	_check_capture_cut_in_rows(unit, cell)
 
 
 ## The capture cut-in's half of risk R2, made checkable exactly as `_spam_skip`
@@ -467,19 +465,17 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 		await tree.process_frame  # the exit lands on the frame after the skip
 		cutscene.finished.disconnect(tally)
 		if finishes[0] != 1:
-			push_error(
+			_fail(
 				"capture cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]]
 			)
-			_failed = true
 			return
 		if not camera.zoom.is_equal_approx(resting):
-			push_error(
+			_fail(
 				(
 					"capture cut-in skipped after %d frame(s) left camera zoom at %s, not resting %s"
 					% [delay, camera.zoom, resting]
 				)
 			)
-			_failed = true
 			return
 	camera.zoom = resting
 	print(
@@ -529,17 +525,15 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 		await tree.process_frame  # the exit lands on the frame after the skip
 		cutscene.finished.disconnect(tally)
 		if finishes[0] != 1:
-			push_error("cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]])
-			_failed = true
+			_fail("cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]])
 			return
 		if not camera.zoom.is_equal_approx(resting):
-			push_error(
+			_fail(
 				(
 					"cut-in skipped after %d frame(s) left camera zoom at %s, not resting %s"
 					% [delay, camera.zoom, resting]
 				)
 			)
-			_failed = true
 			return
 	camera.zoom = resting
 	print("cutin_skip: %d skips, each resolved exactly once and camera home" % SKIP_FRAMES.size())
@@ -547,8 +541,11 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 
 ## Puts one unit of each named type onto the first pair of cells the board has
 ## that both can stand on, clearing whatever was there. Returns
-## [attacker, defender], or empty when the ids or the board do not work out — a
-## naval matchup on a land-only map, say, which is a legitimate "not here".
+## [attacker, defender], or empty when the ids or the board do not work out —
+## which fails the run rather than passing quietly. A matchup that was asked for
+## and never staged photographs a plain board, and the caller has nothing to pose
+## and nothing to check; a naval pair belongs on a board with water on it, which
+## is why tools/smoke_scenarios.sh hands those modes `--map=the_straits`.
 ##
 ## The two are stood the attacker's own minimum range apart, not simply side by
 ## side, so an indirect weapon is staged from a cell it could actually have
@@ -559,10 +556,10 @@ func _stand_pair(attacker_id: String, defender_id: String) -> Array[Unit]:
 	var attacker_type := _battle.unit_db.by_id(StringName(attacker_id))
 	var defender_type := _battle.unit_db.by_id(StringName(defender_id))
 	if attacker_type == null or defender_type == null:
-		push_error("cutin demo: unknown unit id in '%s vs %s'" % [attacker_id, defender_id])
+		_fail("cutin demo: unknown unit id in '%s vs %s'" % [attacker_id, defender_id])
 		return none
 	if not _battle.game.damage_chart.can_attack(attacker_type.id, defender_type.id):
-		push_error("cutin demo: %s has no weapon that reaches %s" % [attacker_id, defender_id])
+		_fail("cutin demo: %s has no weapon that reaches %s" % [attacker_id, defender_id])
 		return none
 	var map := _battle.map
 	var reach: int = maxi(attacker_type.min_range, 1)
@@ -581,7 +578,7 @@ func _stand_pair(attacker_id: String, defender_id: String) -> Array[Unit]:
 				]
 				_battle.view.sync_sprites()
 				return pair
-	push_error("cutin demo: no cell pair on this board fits %s vs %s" % [attacker_id, defender_id])
+	_fail("cutin demo: no cell pair on this board fits %s vs %s" % [attacker_id, defender_id])
 	return none
 
 
@@ -652,29 +649,25 @@ func _stage_owned_ground(attacker: Unit, defender: Unit) -> void:
 ## Run for every cut-in mode, not just the commander ones — on a commander-less
 ## board it is a live check that the no-CO fallback still lands where its slot
 ## names, which is the case the bug hid behind.
-func _cut_in_wears_the_board(attacker: Unit, defender: Unit) -> bool:
+func _check_cut_in_rows(attacker: Unit, defender: Unit) -> void:
 	var cutscene := _battle.animator.cutscene
 	var atk := cutscene.attacker_side()
 	var def := cutscene.defender_side()
-	var ok := _row_matches("cut-in attacker", atk.drawn_unit_row(), _army_row(attacker.team))
-	ok = _row_matches("cut-in defender", def.drawn_unit_row(), _army_row(defender.team)) and ok
-	var atk_ground := _ground_row(attacker.cell)
-	var def_ground := _ground_row(defender.cell)
-	ok = _row_matches("cut-in attacker ground", atk.drawn_ground_row(), atk_ground) and ok
-	ok = _row_matches("cut-in defender ground", def.drawn_ground_row(), def_ground) and ok
-	return ok
+	_check_row("cut-in attacker", atk.drawn_unit_row(), _army_row(attacker.team))
+	_check_row("cut-in defender", def.drawn_unit_row(), _army_row(defender.team))
+	_check_row("cut-in attacker ground", atk.drawn_ground_row(), _ground_row(attacker.cell))
+	_check_row("cut-in defender ground", def.drawn_ground_row(), _ground_row(defender.cell))
 
 
 ## The same check over the capture cut-in: the marching squad wears the
 ## capturer's row, and the property flips from the row its owner on the board
 ## wears to that same capturer's.
-func _capture_cut_in_wears_the_board(unit: Unit, cell: Vector2i) -> bool:
+func _check_capture_cut_in_rows(unit: Unit, cell: Vector2i) -> void:
 	var stage := _battle.animator.capture_cutscene.stage()
 	var capturer := _army_row(unit.team)
-	var ok := _row_matches("capture squad", stage.drawn_squad_row(), capturer)
-	ok = _row_matches("capture property before", stage.row_before, _ground_row(cell)) and ok
-	ok = _row_matches("capture property after", stage.row_after, capturer) and ok
-	return ok
+	_check_row("capture squad", stage.drawn_squad_row(), capturer)
+	_check_row("capture property before", stage.row_before, _ground_row(cell))
+	_check_row("capture property after", stage.row_after, capturer)
 
 
 ## The atlas row a side's army is drawn in on the board — SideIdentity's answer,
@@ -693,11 +686,21 @@ func _ground_row(cell: Vector2i) -> int:
 	return _army_row(_battle.game.owner_at(cell))
 
 
-func _row_matches(what: String, drawn: int, wanted: int) -> bool:
+func _check_row(what: String, drawn: int, wanted: int) -> void:
 	if drawn == wanted:
-		return true
-	push_error("%s is drawn in atlas row %d, but the board wears row %d" % [what, drawn, wanted])
-	return false
+		return
+	_fail("%s is drawn in atlas row %d, but the board wears row %d" % [what, drawn, wanted])
+
+
+## Reports a scenario failure and makes the run's exit code say so. Every
+## reporting path in this driver goes through here, because the two halves are
+## not separable: `run` refuses to write a capture once the flag is up, and a
+## capture written anyway quits zero (ScreenshotUtil) — which is the whole signal
+## the smoke sweep reads. A scenario that printed an error and still photographed
+## a board it never staged is a scenario that passes while proving nothing.
+func _fail(message: String) -> void:
+	push_error(message)
+	_failed = true
 
 
 ## Raises a power directly (no fire, no banner) so the capture is the chip's

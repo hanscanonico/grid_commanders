@@ -89,7 +89,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 #
 # None of the cut-in modes rests on a human eyeballing the frame, either: every
 # one of them reads the rows back off the posed art and fails the run unless each
-# is the row SideIdentity gives that side (see _cut_in_wears_the_board). A
+# is the row SideIdentity gives that side (see _check_cut_in_rows). A
 # mispainted army renders a perfectly good picture, so "a frame was written" was
 # never going to be the check.
 DEFAULT_MODES=(
