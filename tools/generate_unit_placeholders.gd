@@ -16,9 +16,12 @@ extends SceneTree
 ## Retiring a placeholder is one edit: drop the unit's id from PLACEHOLDER_IDS
 ## (and its grid from SPRITES) once real art occupies its column, and this script
 ## will preserve that column instead of overwriting it. Ownership is an explicit
-## list rather than a "column N and up" watermark because the real air and naval
-## art landed on columns 9-12 and 14-17, leaving missiles at 13 still a
-## placeholder — a watermark cannot describe a hole.
+## list rather than a "column N and up" watermark because real art has landed
+## non-contiguously before — missiles at column 13 stayed a placeholder long
+## after columns 9-12 and 14-17 got theirs, and a watermark cannot describe a
+## hole. The list is empty today (missiles was the last placeholder; its column
+## is real art from tools/paste_unit_sprites.gd now), so the script's whole job
+## is the final invisible-cell audit below.
 
 const ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Columns tools/build_pixvoxel_atlases.sh writes: the length of its UNITS array.
@@ -26,13 +29,14 @@ const ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 const PIXVOXEL_COLS := 9
 ## The unit ids this script still draws. Everything else in the atlas is real art
 ## and is passed through untouched.
-const PLACEHOLDER_IDS: Array[StringName] = [&"missiles"]
+const PLACEHOLDER_IDS: Array[StringName] = []
 const TILE := 16
 ## Atlas cells are 4x the world grid, matching the PixVoxel columns beside them.
 const SCALE := 4
 ## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant — the atlas row
 ## order the sprites step writes (plan FI1). Matches tools/generate_tiles.gd.
 const ROWS := 5
+const ROW_NAMES: Array[String] = ["neutral", "meridian", "aurora", "iron", "verdant"]
 const TEAM_COLORS: Array[Color] = [
 	Color("8a9099"), Color("d84a3c"), Color("3c64d8"), Color("4a5258"), Color("2c8636")
 ]
@@ -42,27 +46,7 @@ const WAKE := Color("9fd0f2")
 
 ## '#' body (team colour) · '-' its shaded half · '+' glass/warhead · 'o' outline
 ## '~' wake · '.' transparent. One 16x16 grid per unit id.
-const SPRITES := {
-	&"missiles":
-	[
-		"................",
-		"...........oo...",
-		"..........o++o..",
-		".........o++o...",
-		"........o++o....",
-		".......o++o.....",
-		"...oooo#oooo....",
-		"..############..",
-		".##############.",
-		".##############.",
-		".#------------#.",
-		"..############..",
-		"..o##o....o##o..",
-		"...oo......oo...",
-		"................",
-		"................",
-	],
-}
+const SPRITES := {}
 
 
 func _init() -> void:
@@ -127,21 +111,26 @@ func _atlas_columns() -> int:
 	return last + 1
 
 
-## The last set of eyes on the finished atlas: warns about any roster column past
-## the PixVoxel nine that ended up fully transparent — a unit neither the paste
-## step nor PLACEHOLDER_IDS supplies art for, which would otherwise ship as an
-## invisible unit and only be noticed at run time.
+## The last set of eyes on the finished atlas: warns about any roster *cell* that
+## ended up fully transparent — art neither the paste step nor PLACEHOLDER_IDS
+## supplies, which would otherwise ship as an invisible unit and only be noticed
+## at run time. Every column and every row is audited, including the PixVoxel
+## nine: that step derives rows 0-2 only and leaves the faction rows transparent
+## for tools/paste_unit_sprites.gd to fill from its own hand-kept list, so a land
+## unit missing from that list is invisible for Iron Dominion and Verdant League
+## while its classic rows look perfectly healthy. A whole-column test cannot see
+## that, and neither can one that skips the columns the pack covers.
 func _warn_missing_art(painted: Image) -> void:
 	var cell := TILE * SCALE
 	for unit_type in UnitDB.load_default().all():
-		if unit_type.atlas_col < PIXVOXEL_COLS:
-			continue
-		var column := painted.get_region(Rect2i(unit_type.atlas_col * cell, 0, cell, ROWS * cell))
-		if column.is_invisible():
+		for row in ROWS:
+			var at := Rect2i(unit_type.atlas_col * cell, row * cell, cell, cell)
+			if not painted.get_region(at).is_invisible():
+				continue
 			push_warning(
 				(
-					"generate_unit_placeholders: column %d ('%s') has no art — the unit is invisible"
-					% [unit_type.atlas_col, unit_type.id]
+					"generate_unit_placeholders: column %d ('%s') row %d (%s) has no art"
+					% [unit_type.atlas_col, unit_type.id, row, ROW_NAMES[row]]
 				)
 			)
 

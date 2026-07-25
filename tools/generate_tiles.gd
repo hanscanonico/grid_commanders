@@ -3,9 +3,10 @@ extends SceneTree
 ## range overlay, the grid cursor sprite, and the project icon.
 ##
 ## Unit art and the property buildings are deliberately NOT drawn here: the
-## city/base/hq come from the CC0 PixVoxel pack and the airport/port from the
-## hand-authored sprites under assets/sprites/iso_buildings, both composited by
-## tools/build_pixvoxel_atlases.sh onto the bare grounds this script leaves.
+## city/base/hq classic rows come from the CC0 PixVoxel pack, and the airport/port
+## rows plus every building's iron and verdant row from the vendored sprites under
+## assets/sprites/iso_buildings, all composited by tools/build_pixvoxel_atlases.sh
+## onto the bare grounds this script leaves.
 ## Running this alone would blank those buildings, so run the pair:  make tiles
 ##
 ## Tiles are drawn at 16px — the world grid — then scaled 4x on save, because
@@ -22,7 +23,7 @@ const SCALE := 4
 const COLS := 14
 ## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant — the
 ## faction-identity atlas order (plan FI1). Rows 0-2 render byte-for-byte as
-## before; the two faction rows are inert until the FI2 resolver samples them.
+## before; scenes/common/side_identity.gd is what maps a team to one of these.
 ## Keep TERRAIN_ROWS in tools/build_pixvoxel_atlases.sh in step: it checks the
 ## atlas it paints buildings into is exactly this many rows tall.
 const ROWS := 5

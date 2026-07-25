@@ -60,8 +60,10 @@ across three movement domains (land, air, sea), property capture and income, and
   borrows the first hue-distinct classic (Aurora blue, else Meridian red); a commander-less side is
   "First/Second Army" in the classic red and blue, so a no-CO match is board-identical to before
   factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora, 3 iron, 4 verdant`) is a contract
-  between `SideIdentity._ROW_FOR_KEY` and the art pipeline (`build_pixvoxel_atlases.sh` ROW_PALETTE,
-  `generate_tiles.gd`); rows 0–2 are the shipped red/blue art byte-for-byte and must stay so. Its D5
+  between `SideIdentity._ROW_FOR_KEY` and the art pipeline (`build_pixvoxel_atlases.sh` ROW_NAMES,
+  `generate_tiles.gd`); rows 0–2 are the shipped red/blue art byte-for-byte and must stay so, the one
+  exception being a column retiring a generated placeholder for real art through
+  `generate_unit_placeholders.gd`'s documented path, as units column 13 (Missiles) did. Its D5
   is the standing boundary: **"Red"/"Blue" survive only as developer slot vocabulary** — the Balance
   Lab's `--red`/`--blue` grammar and its byte-stable reports, code identifiers, comments — never on a
   screen a player sees; if a player can see it, it speaks faction.
@@ -94,8 +96,9 @@ across three movement domains (land, air, sea), property capture and income, and
   hand-authored 64px airport and port buildings under `assets/sprites/iso_buildings`, composited
   into terrain-atlas columns 9–10 by `build_pixvoxel_atlases.sh` over the bare grounds
   `generate_tiles.gd` now draws for those cells (the PixVoxel pack has no hangar and no quay), with
-  the iron/verdant rows derived by the same `tint_iso_air_sea.sh` recipe as the air/naval sprites —
-  one tint authority for every hand-authored family. It deliberately retimes its handoff reference's
+  the iron/verdant rows vendored design-system faction art like every unit's and property's — one
+  tint authority for every family (`tint_iso_air_sea.sh`, the script tinting it replaced, is gone;
+  see assets/LICENSES.md "Design-system faction tints"). It deliberately retimes its handoff reference's
   4.6s choreography to ≈2.4s house tempo, because its R1 (ceremony fatigue — captures far outnumber
   kills) is the named top risk.
   `.lavish/power-quotes-plan.html` owns the Command Power quotes — milestones PQ1–PQ2, both
