@@ -31,12 +31,14 @@ const _POWER_NAME_SIZE := 11
 const _PORTRAIT_H := 96
 ## Where the visible band opens on the bust, as a fraction of the square source.
 ## The band stays _PORTRAIT_H tall however wide the card is, so a *wider* card shows
-## a *shorter* slice of the portrait: 98 of the 256 source rows at READING_WIDTH, 80
-## in the info sheet's wider column. Centred, that slice starts below the crown and
-## takes the top off the head. Measured across the roster the highest headwear opens
-## at source row ~30 and every pair of eyes sits at ~108, so a band starting near row
-## 33 holds both at either width. What it gives up instead is the chin — the trade
-## this screen wants, since a face is recognised from the top down.
+## a *shorter* slice of the portrait: at READING_WIDTH the field is 244px — the card
+## less the panel's 3px border each side — and 96 * 256 / 244 is ~101 of the 256
+## source rows. Centred, that slice starts below the crown and takes the top off the
+## head. Against the generator's geometry (tools/generate_portraits.gd) the highest
+## headwear opens at source row 30, the hair cap at 40, the eyes span 101-115, and
+## the widest identifying accessory — the headset earcup — reaches 124, so a band
+## opening at row 33 holds all of them. What it gives up instead is the chin at 157:
+## the trade this screen wants, since a face is recognised from the top down.
 const _PORTRAIT_CROP_TOP := 0.13
 
 var _commander: CommanderType

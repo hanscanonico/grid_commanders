@@ -93,6 +93,9 @@ func _build() -> void:
 	var cards := HBoxContainer.new()
 	cards.add_theme_constant_override("separation", 12)
 	cards.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The two columns are as wide as a card and no wider, so the pair is centred here
+	# rather than stretched to the margins.
+	cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	rows.add_child(cards)
 	# Headers built blank; open() titles and tints them per match from the
 	# resolved identity, so this scene never hardcodes a side name or colour.
@@ -120,7 +123,7 @@ func _build() -> void:
 func _titled_card(parent: Node) -> Array:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
-	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	parent.add_child(column)
 
 	var header := PanelContainer.new()
@@ -142,8 +145,14 @@ func _titled_card(parent: Node) -> Array:
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(frame)
 
+	# READING_WIDTH, the width the select page asks for, and not a pixel more: the
+	# portrait band is a fixed height, so a wider card shows a *shorter* slice of the
+	# bust (see CommanderCard._PORTRAIT_CROP_TOP). Stretched to fill this column the
+	# slice lost the lower arc of the glasses, eyepatch and headset that keep the
+	# twelve busts apart. Pinned, both surfaces frame a general identically.
 	var card := CommanderCard.new()
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.custom_minimum_size.x = CommanderCard.READING_WIDTH
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	frame.add_child(card)
 	return [card, header, label]
