@@ -12,6 +12,11 @@
 #
 # Usage:  tools/smoke_scenarios.sh [mode ...]   (see the `smoke` target)
 #
+# A `menu_` mode boots the *main menu* instead of the battle scene; everything
+# else about the run is identical. Those scenarios are the one place the sweep
+# checks a screen the battle scene never draws, and they carry their own gate
+# (see MainMenu._chrome_fits).
+#
 # A mode may carry a `+fog` suffix — `victory+fog` is the victory scenario run
 # with fog of war on. Fog is the one setting under which this scene *hides*
 # units rather than merely drawing them, so a couple of fogged runs are part of
@@ -92,6 +97,14 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # is the row SideIdentity gives that side (see _check_cut_in_rows). A
 # mispainted army renders a perfectly good picture, so "a frame was written" was
 # never going to be the check.
+#
+# The menu pair is the same idea one screen earlier: `menu_with_save` poses a
+# resumable match and `menu_no_save` poses none, and each measures the wordmark
+# and all four primary actions against the 640x360 frame before it writes a
+# thing. COM-5 is why — with a save on disk the old menu clipped its own title
+# and its Quit, and a returning player met a visibly broken screen while a fresh
+# install never did. Both modes pose the save slot themselves, so neither reads
+# nor writes the running machine's user://save.json.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn
@@ -100,6 +113,7 @@ DEFAULT_MODES=(
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
+	menu_with_save menu_no_save
 )
 
 if [[ ! -x "$GODOT" ]]; then
@@ -153,7 +167,14 @@ for mode in "${modes[@]}"; do
 	# `victory+fog` is the victory demo with fog on; anything else is the demo
 	# name as written.
 	demo="${mode%+fog}"
-	godot_args=(--path . "$BATTLE" -- "--screenshot=$shot" "--demo=$demo")
+	# A `menu_` mode boots the project's main scene — the menu — by passing no
+	# scene at all, exactly as `make menu-screenshot` does. Everything else boots
+	# the battle scene.
+	godot_args=(--path .)
+	if [[ "$demo" != menu_* ]]; then
+		godot_args+=("$BATTLE")
+	fi
+	godot_args+=(-- "--screenshot=$shot" "--demo=$demo")
 	if [[ "$demo" != "$mode" ]]; then
 		godot_args+=(--fog)
 	fi

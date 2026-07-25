@@ -39,7 +39,9 @@ verify: check lint format-check test
 # headless CI job. `make smoke MODES="attack capture"` narrows it down;
 # a `+fog` suffix reruns a scenario with fog of war on (`victory+fog`), which is
 # the only setting where sprites are hidden rather than merely drawn;
-# SMOKE_KEEP=1 keeps the captures for eyeballing.
+# SMOKE_KEEP=1 keeps the captures for eyeballing. A `menu_` mode boots the main
+# menu instead of the board — `menu_with_save` and `menu_no_save` are the pair
+# that keeps the primary actions inside the 640x360 frame either way (COM-5).
 MODES ?=
 smoke:
 	tools/smoke_scenarios.sh $(MODES)
