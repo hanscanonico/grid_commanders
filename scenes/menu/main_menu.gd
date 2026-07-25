@@ -84,8 +84,10 @@ func _ready() -> void:
 	_one_player_button.grab_focus()
 
 	# Dev captures of the selection page: `--co-select` opens it on the Red slot,
-	# `--co-select=blue` advances to the Blue slot. An ordinary capture (no such
-	# flag) photographs the menu itself.
+	# `--co-select=blue` advances to the Blue slot, and `--co-select=<commander_id>`
+	# browses to one named general — the roster's copy is not all one length, so a
+	# capture that only ever photographs the first card proves nothing about the
+	# longest. An ordinary capture (no such flag) photographs the menu itself.
 	var select_mode := ""
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--co-select" or arg.begins_with("--co-select="):
@@ -94,6 +96,8 @@ func _ready() -> void:
 		_open_select([2] as Array[int])
 		if select_mode == "blue":
 			_select_panel.debug_advance_to_blue()
+		elif select_mode != "red":
+			_select_panel.debug_preview(StringName(select_mode))
 	if shot_path != "":
 		ScreenshotUtil.capture_and_quit(self, shot_path)
 

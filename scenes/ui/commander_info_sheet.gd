@@ -58,28 +58,44 @@ func _retitle(header: PanelContainer, title: Label, identity: SideIdentity, team
 
 
 func _build() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color(0.086, 0.106, 0.118, 0.97)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Near-solid, not the 0.97 written here before: open() used to re-run this build
+	# and stack a second veil over the first, so what the screen actually showed was
+	# the pair (~0.999). With the duplicate build gone, 0.97 alone let the board ghost
+	# through. This keeps the authored "veil over the board" reading without the bleed.
+	bg.color = Color(0.086, 0.106, 0.118, 0.995)
+	# set_anchors_preset alone rewrites the offsets to preserve the rect a control
+	# already has, so it only bites a node that is *already* parented to a sized
+	# parent — the sheet's own call above, added to a full-size battle scene. bg and
+	# the margin below are freshly created and still parentless when their preset
+	# runs: the parent rect is empty, the offsets stay 0, and either form covers.
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	# A bounded margin, not a CenterContainer: centring a column taller than the
+	# screen pushes both its ends off, which is how the Close button used to leave
+	# the viewport (COM-31, the same overflow the select page had). Here the cards
+	# row absorbs the slack and the title and button keep their edges.
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for edge in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + edge, 8)
+	add_child(margin)
 
 	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 8)
-	center.add_child(rows)
+	rows.add_theme_constant_override("separation", 6)
+	margin.add_child(rows)
 
-	var title := Label.new()
-	title.text = "COMMANDERS"
-	title.add_theme_font_size_override("font_size", 15)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rows.add_child(title)
-
+	# No page title: the two faction headers below already name what this is, and on
+	# a 360px-tall screen the row it would cost is the difference between the cards
+	# fitting and the Close button being crowded.
 	var cards := HBoxContainer.new()
 	cards.add_theme_constant_override("separation", 12)
+	cards.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The two columns are as wide as a card and no wider, so the pair is centred here
+	# rather than stretched to the margins.
+	cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	rows.add_child(cards)
 	# Headers built blank; open() titles and tints them per match from the
 	# resolved identity, so this scene never hardcodes a side name or colour.
@@ -95,8 +111,11 @@ func _build() -> void:
 	_close_button = Button.new()
 	_close_button.text = "Close"
 	_close_button.add_theme_font_size_override("font_size", 11)
+	_close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_close_button.pressed.connect(_emit_close)
 	rows.add_child(_close_button)
+
+	_built = true
 
 
 ## Builds one column — a header band over a CommanderCard — and hands back
@@ -104,6 +123,7 @@ func _build() -> void:
 func _titled_card(parent: Node) -> Array:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
+	column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	parent.add_child(column)
 
 	var header := PanelContainer.new()
@@ -117,8 +137,24 @@ func _titled_card(parent: Node) -> Array:
 	header.add_child(margin)
 	column.add_child(header)
 
+	# Same bounded frame the select page gives its card: the card's height is
+	# content-driven, so it is the one child allowed to run out of room, and the
+	# scroll keeps that from reaching the Close button.
+	var frame := ScrollContainer.new()
+	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(frame)
+
+	# READING_WIDTH, the width the select page asks for, and not a pixel more: the
+	# portrait band is a fixed height, so a wider card shows a *shorter* slice of the
+	# bust (see CommanderCard._PORTRAIT_CROP_TOP). Stretched to fill this column the
+	# slice lost the lower arc of the glasses, eyepatch and headset that keep the
+	# twelve busts apart. Pinned, both surfaces frame a general identically.
 	var card := CommanderCard.new()
-	column.add_child(card)
+	card.custom_minimum_size.x = CommanderCard.READING_WIDTH
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	frame.add_child(card)
 	return [card, header, label]
 
 

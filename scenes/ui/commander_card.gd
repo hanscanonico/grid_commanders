@@ -14,11 +14,32 @@ extends PanelContainer
 ## Built in code rather than a .tscn: the layout is regular and data-driven, and
 ## the repo would rather not hand-maintain scene-graph plumbing for it.
 
-const _NAME_SIZE := 15
+## The hard floor: narrower than this and the doctrine copy shreds into two-word
+## lines. The card claims it unless the caller has already asked for more.
+const MIN_WIDTH := 158
+## The width every line of shipped copy needs to stop wrapping further: measured
+## across the whole roster, the tallest card is 289px at this width or any wider,
+## and no page on a 640x360 screen can spare more than that. Callers with the room
+## ask for it by name rather than guessing a number — narrower is legible but
+## taller, and height is the dimension this screen has none of.
+const READING_WIDTH := 250
+
+const _NAME_SIZE := 13
 const _MICRO_SIZE := 8
-const _BODY_SIZE := 10
-const _POWER_NAME_SIZE := 12
+const _BODY_SIZE := 9
+const _POWER_NAME_SIZE := 11
 const _PORTRAIT_H := 96
+## Where the visible band opens on the bust, as a fraction of the square source.
+## The band stays _PORTRAIT_H tall however wide the card is, so a *wider* card shows
+## a *shorter* slice of the portrait: at READING_WIDTH the field is 244px — the card
+## less the panel's 3px border each side — and 96 * 256 / 244 is ~101 of the 256
+## source rows. Centred, that slice starts below the crown and takes the top off the
+## head. Against the generator's geometry (tools/generate_portraits.gd) the highest
+## headwear opens at source row 30, the hair cap at 40, the eyes span 101-115, and
+## the widest identifying accessory — the headset earcup — reaches 124, so a band
+## opening at row 33 holds all of them. What it gives up instead is the chin at 157:
+## the trade this screen wants, since a face is recognised from the top down.
+const _PORTRAIT_CROP_TOP := 0.13
 
 var _commander: CommanderType
 var _built := false
@@ -51,7 +72,7 @@ func bind(commander: CommanderType) -> void:
 
 
 func _build() -> void:
-	custom_minimum_size = Vector2(158, 0)
+	custom_minimum_size.x = maxf(custom_minimum_size.x, MIN_WIDTH)
 	add_theme_stylebox_override("panel", _hard_box(CommanderVisuals.HARD_BORDER, 3))
 
 	var rows := VBoxContainer.new()
@@ -70,8 +91,13 @@ func _build() -> void:
 	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_field.add_child(_portrait)
+	# Framed from the field's measured width rather than anchored to its rect: both
+	# player-facing surfaces pin the card to READING_WIDTH, but the dev gallery lets
+	# it sit as narrow as MIN_WIDTH, and the crop has to open on the same part of the
+	# bust at any of them.
+	_field.resized.connect(_reframe_portrait)
+	_reframe_portrait()
 
 	_emblem = TextureRect.new()
 	_emblem.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -85,13 +111,13 @@ func _build() -> void:
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", _NAME_SIZE)
 	_name_band = PanelContainer.new()
-	_name_band.add_child(_pad(_name_label, 6, 3))
+	_name_band.add_child(_pad(_name_label, 6, 2))
 	rows.add_child(_name_band)
 
 	# --- rules copy on paper ---
 	var copy := VBoxContainer.new()
-	copy.add_theme_constant_override("separation", 5)
-	var copy_wrap := _paper_panel(copy, 8, 7)
+	copy.add_theme_constant_override("separation", 4)
+	var copy_wrap := _paper_panel(copy, 7, 5)
 	rows.add_child(copy_wrap)
 
 	# The general's signature line — power_quotes[0], the same words the
@@ -130,7 +156,7 @@ func _build() -> void:
 	_power_text_label.add_theme_font_size_override("font_size", _BODY_SIZE)
 	_power_text_label.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)
 	_power_text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	power_rows.add_child(_pad(_power_text_label, 6, 4))
+	power_rows.add_child(_pad(_power_text_label, 6, 3))
 
 	_built = true
 
@@ -167,6 +193,16 @@ func _apply() -> void:
 		_power_text_label.text = _commander.power_text
 	else:
 		_power_box.visible = false
+
+
+## Sizes the portrait to a square as wide as the field and slides it up, so the band
+## the field clips to opens at _PORTRAIT_CROP_TOP of the bust rather than at its
+## middle. A square source in a square rect scales without cropping sideways, so the
+## whole framing decision is this one vertical offset.
+func _reframe_portrait() -> void:
+	var width := _field.size.x
+	_portrait.size = Vector2(width, width)
+	_portrait.position = Vector2(0.0, -_PORTRAIT_CROP_TOP * width)
 
 
 ## Whether the power lasts only the owner's turn or through the round — the one
