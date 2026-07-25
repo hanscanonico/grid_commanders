@@ -239,8 +239,12 @@ func _build_right_column() -> VBoxContainer:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 6)
 	_no_co_button = _action_button("No Commander")
+	# Selects, never locks: "No Commander" is one more thing to browse to, and it is
+	# confirmed like every other pick (COM-7). Locking on the press made it the one
+	# control on the page that took a side in a single step, and left Enter meaning
+	# two different things depending on where focus happened to be.
 	_no_co_button.focus_entered.connect(_preview_neutral)
-	_no_co_button.pressed.connect(_lock_neutral)
+	_no_co_button.pressed.connect(_preview_neutral)
 	actions.add_child(_no_co_button)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -406,13 +410,6 @@ func _confirm() -> void:
 		confirmed.emit(_red_id, _blue_id)
 
 
-## The "No Commander" shortcut: locks neutral for the active side straight away —
-## the same as previewing it and pressing Confirm.
-func _lock_neutral() -> void:
-	_preview_neutral()
-	_confirm()
-
-
 func _back() -> void:
 	if _side == Side.BLUE:
 		_side = Side.RED  # return to editing Red, restoring the locked pick
@@ -423,10 +420,34 @@ func _back() -> void:
 		cancelled.emit()
 
 
-func _shortcut_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
+## The page's two global keys, and the footer has always promised both: Esc backs
+## out from anywhere, Enter confirms the browsed pick from anywhere (COM-7).
+##
+## Enter is read here rather than left to the focused control because browsing
+## already *is* selecting — every tab and portrait previews on focus_entered, so
+## whatever the player is looking at is the pick, and the focused control's own
+## ui_accept would merely re-run what focus already did. Back is the one
+## exception: it is a destination, not a selection, so Enter on it goes back.
+##
+## `_input`, not `_shortcut_input`, and the release is swallowed with the press.
+## Both halves are load-bearing: shortcuts are walked after the GUI, and a Button
+## activates on the *release*, so a press-only handler sitting behind the GUI
+## confirms and then lets the focused button fire too — on Confirm Pick that
+## locked Side 1 and Side 2 with one keystroke.
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
 		_back()
 		accept_event()
+	elif event.is_action("ui_accept") and _focus_owner() != _back_button:
+		if event.is_action_pressed("ui_accept"):
+			_confirm()
+		accept_event()
+
+
+func _focus_owner() -> Control:
+	return get_viewport().gui_get_focus_owner()
 
 
 ## Moves the tab/preview/focus to a specific commander id (used when Back restores
