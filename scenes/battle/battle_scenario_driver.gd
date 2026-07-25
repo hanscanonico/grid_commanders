@@ -322,7 +322,7 @@ func _run_power_menu_demo() -> void:
 	var co := _battle.commander_db.by_id(&"alina_ward")
 	_battle.game.set_commander(1, co)
 	_battle.game.commander_state(1).charge = co.power_cost
-	_battle.view._restage_identity()  # meter reads full, and the CO recolours its board
+	_battle.view.restage_identity()  # meter reads full, and the CO recolours its board
 	_battle.confirm_at(Vector2i(8, 8))  # select the red tank
 	_battle.confirm_at(Vector2i(8, 8))  # stay put -> its action menu
 	await _until_state(Battle.State.MENU)
@@ -368,7 +368,7 @@ func _run_vanish_demo(mode: String) -> void:
 		game.commander_state(2).power_active = true
 	_battle.view.sync_sprites()
 	_battle.view.refresh_fog(game.current_team, false)
-	_battle.view._restage_identity()  # Sable Wren's Verdant recolours Blue after the fog pass
+	_battle.view.restage_identity()  # Sable Wren's Verdant recolours Blue after the fog pass
 	_battle.set_cursor_cell(Vector2i(5, 5))  # the panel names whatever is on the tile
 
 
@@ -642,7 +642,7 @@ func _set_red_commander(id: StringName, charged: bool) -> CommanderType:
 	_battle.game.set_commander(1, co)
 	if charged:
 		_battle.game.commander_state(1).charge = co.power_cost
-	_battle.view._restage_identity()  # reflects the staged CO's name and colour, not just the meter
+	_battle.view.restage_identity()  # reflects the staged CO's name and colour, not just the meter
 	return co
 
 
@@ -655,7 +655,7 @@ func _stage_faction_commanders() -> void:
 	for slot in FACTION_CO_IDS.size():
 		var team: int = GameState.TEAMS[slot]
 		_battle.game.set_commander(team, _battle.commander_db.by_id(FACTION_CO_IDS[slot]))
-	_battle.view._restage_identity()
+	_battle.view.restage_identity()
 
 
 ## Stands the pair on the two adjacent properties in the south-east and gives one
@@ -763,7 +763,7 @@ func _stage_active_power() -> void:
 	var co := _battle.commander_db.by_id(&"alina_ward")
 	_battle.game.set_commander(1, co)
 	_battle.game.commander_state(1).power_active = true
-	_battle.view._restage_identity()
+	_battle.view.restage_identity()
 
 
 ## Charges Red, then fires the power through the real Fire button so the
@@ -781,7 +781,7 @@ func _stage_power_banner() -> void:
 func _stage_commander_info() -> void:
 	_battle.game.set_commander(1, _battle.commander_db.by_id(&"rhea_sol"))
 	_battle.game.set_commander(2, _battle.commander_db.by_id(&"viktor_draeg"))
-	_battle.view._restage_identity()  # the board behind the sheet wears both factions
+	_battle.view.restage_identity()  # the board behind the sheet wears both factions
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"commanders")
@@ -794,7 +794,7 @@ func _stage_commander_info() -> void:
 func _run_victory_demo(with_commander: bool = false) -> void:
 	if with_commander:
 		_battle.game.set_commander(1, _battle.commander_db.by_id(&"viktor_draeg"))
-		_battle.view._restage_identity()  # so the win lockup reads the winner's faction, not First Army
+		_battle.view.restage_identity()  # so the win lockup reads the winner's faction, not First Army
 	for unit in _battle.game.units.duplicate():
 		if unit.team == 2 and unit.cell != Vector2i(9, 8):
 			_battle.game.remove_unit(unit)

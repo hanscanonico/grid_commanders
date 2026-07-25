@@ -16,6 +16,16 @@ disable:
 # sprawl.
 max-returns: 12
 
+# Ratchet, not a target, in the same spirit as max-file-lines below:
+# scenes/battle/battle_view.gd is the widest class and sits at exactly 21 — it is
+# the board's rendering facade, so each method is one thing the scene asks it to
+# draw (a sprite, an overlay, the fog pass, the HUD). It went 20 -> 21 when
+# `_restage_identity` became `restage_identity`: the scenario driver was already
+# calling it across the class boundary, and a public seam is the honest spelling
+# of a caller another class has. Adding to BattleView means moving something out
+# first, which is the point.
+max-public-methods: 21
+
 # Ratchet, not a target: scenes/battle/battle.gd is the longest file and is
 # being split a responsibility at a time. Set at its current length so the file
 # cannot grow without tripping the lint, and lowered each time it shrinks — 1320
