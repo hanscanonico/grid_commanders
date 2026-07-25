@@ -133,7 +133,7 @@ tiles: sprites-check unit-sprites-check ground sprites unit-sprites unit-placeho
 sprites-check:
 	tools/build_pixvoxel_atlases.sh --check "$(PIXVOXEL)"
 
-# Preflight for `unit-sprites`: proves the vendored iso air/sea sources exist,
+# Preflight for `unit-sprites`: proves the vendored per-unit sources exist,
 # are the right size, and map onto the roster, without writing anything.
 unit-sprites-check:
 	$(GODOT) --headless --path . -s res://tools/paste_unit_sprites.gd -- --check
@@ -144,14 +144,17 @@ ground:
 sprites:
 	tools/build_pixvoxel_atlases.sh "$(PIXVOXEL)"
 
-# The PixVoxel pack has no aircraft or ships. `sprites` writes units_atlas.png
-# outright at that pack's nine columns, so the hand-authored air and naval art
-# past them is re-pasted here from assets/sprites/iso_air_sea/ on every rebuild —
-# without this step a `make tiles` silently drops it. Must follow `sprites`.
+# The PixVoxel pack has no aircraft, ships, missiles, or iron/verdant palette.
+# `sprites` writes units_atlas.png outright at that pack's nine columns and
+# three pack-derived rows, so everything else — the air/naval/missiles columns
+# whole, the land columns' iron and verdant rows — is re-pasted here from
+# assets/sprites/units/ on every rebuild; without this step a `make tiles`
+# silently drops it. Must follow `sprites`.
 unit-sprites:
 	$(GODOT) --headless --path . -s res://tools/paste_unit_sprites.gd
 
-# Fills the columns still lacking real art (just Missiles) with placeholders.
+# Audits the finished atlas for columns lacking any art (none today; this drew
+# the Missiles placeholder until real art landed on column 13).
 # Must follow `unit-sprites`, whose output it preserves.
 unit-placeholders:
 	$(GODOT) --headless --path . -s res://tools/generate_unit_placeholders.gd

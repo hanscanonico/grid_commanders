@@ -392,10 +392,11 @@ result, including one capability that measured *negative* and ships switched off
 
 Ground units and the city/base/hq buildings come from the CC0 [PixVoxel Revised Wargame
 Sprites](https://opengameart.org/content/pixvoxel-revised-isometric-wargame-sprites); the ground
-tiles are generated programmer art. The aircraft and the fleet are original hand-authored isometric
-sprites, vendored under `assets/sprites/iso_air_sea`, and the airport and port buildings are the
-same class of art, vendored under `assets/sprites/iso_buildings`; only Missiles is still a
-generated placeholder. The commander portraits and faction emblems are generated
+tiles are generated programmer art. The aircraft, the fleet, and the Missiles launcher are original
+hand-authored isometric sprites, vendored under `assets/sprites/units`, and the airport and port
+buildings are the same class of art, vendored under `assets/sprites/iso_buildings`. The iron and
+verdant rows of every unit and property are design-system faction tints vendored beside the art
+they colour — committed sources, not script output. The commander portraits and faction emblems are generated
 placeholder art too (`make portraits`) — project-original, no third-party pixels — until the final
 portrait pass. All sound is generated placeholder chiptune (`make sfx`). There is no music yet — it
 needs licensed tracks. Third-party asset licenses must be tracked in `assets/LICENSES.md`. No

@@ -16,9 +16,12 @@ extends SceneTree
 ## Retiring a placeholder is one edit: drop the unit's id from PLACEHOLDER_IDS
 ## (and its grid from SPRITES) once real art occupies its column, and this script
 ## will preserve that column instead of overwriting it. Ownership is an explicit
-## list rather than a "column N and up" watermark because the real air and naval
-## art landed on columns 9-12 and 14-17, leaving missiles at 13 still a
-## placeholder — a watermark cannot describe a hole.
+## list rather than a "column N and up" watermark because real art has landed
+## non-contiguously before — missiles at column 13 stayed a placeholder long
+## after columns 9-12 and 14-17 got theirs, and a watermark cannot describe a
+## hole. The list is empty today (missiles was the last placeholder; its column
+## is real art from tools/paste_unit_sprites.gd now), so the script's whole job
+## is the final invisible-column audit below.
 
 const ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Columns tools/build_pixvoxel_atlases.sh writes: the length of its UNITS array.
@@ -26,7 +29,7 @@ const ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 const PIXVOXEL_COLS := 9
 ## The unit ids this script still draws. Everything else in the atlas is real art
 ## and is passed through untouched.
-const PLACEHOLDER_IDS: Array[StringName] = [&"missiles"]
+const PLACEHOLDER_IDS: Array[StringName] = []
 const TILE := 16
 ## Atlas cells are 4x the world grid, matching the PixVoxel columns beside them.
 const SCALE := 4
@@ -42,27 +45,7 @@ const WAKE := Color("9fd0f2")
 
 ## '#' body (team colour) · '-' its shaded half · '+' glass/warhead · 'o' outline
 ## '~' wake · '.' transparent. One 16x16 grid per unit id.
-const SPRITES := {
-	&"missiles":
-	[
-		"................",
-		"...........oo...",
-		"..........o++o..",
-		".........o++o...",
-		"........o++o....",
-		".......o++o.....",
-		"...oooo#oooo....",
-		"..############..",
-		".##############.",
-		".##############.",
-		".#------------#.",
-		"..############..",
-		"..o##o....o##o..",
-		"...oo......oo...",
-		"................",
-		"................",
-	],
-}
+const SPRITES := {}
 
 
 func _init() -> void:

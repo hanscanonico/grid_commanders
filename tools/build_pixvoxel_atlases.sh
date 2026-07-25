@@ -10,9 +10,10 @@
 #
 # Writes assets/tiles/units_atlas.png outright, and repaints the property
 # columns of assets/tiles/terrain_atlas.png (which tools/generate_tiles.gd
-# leaves as bare grounds): city/base/hq from the PixVoxel pack, airport/port
-# from the hand-authored sprites under assets/sprites/iso_buildings (the pack
-# has no hangar and no quay). Run it after the `ground` step; see the `sprites`
+# leaves as bare grounds): city/base/hq rows 0-2 from the PixVoxel pack,
+# airport/port and every building's iron/verdant row from the vendored sprites
+# under assets/sprites/iso_buildings (the pack has no hangar, no quay, and no
+# iron or verdant palette). Run it after the `ground` step; see the `sprites`
 # target in the Makefile. Both steps are idempotent — the building columns are
 # rebuilt from a freshly drawn base rather than composited onto themselves.
 #
@@ -51,25 +52,24 @@ FRAME="Large_face0_0"  # one standing frame, one facing, for every sprite
 NO_TIME=(-strip -define png:exclude-chunk=time)
 
 # Team rows: 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant —
-# the faction-identity plan's atlas order (FI1). Rows 0-2 are byte-for-byte what
-# shipped before factions; the board still samples only 1 and 2 until the FI2
-# resolver reroutes it, so rows 3-4 are inert new art.
+# the faction-identity plan's atlas order (FI1). Only rows 0-2 are derived from
+# the pack here: meridian/aurora are its authored red/blue palettes, and neutral
+# desaturates the white colour1 master so a neutral property never reads as a
+# team.
 #
-# meridian/aurora are the pack's authored red/blue palettes; neutral desaturates
-# the white colour1 master so a neutral property never reads as a team. iron and
-# verdant have no authored palette, so they tint that same white master with a
-# duotone level map — the same class of ImageMagick trick as the desaturate, one
-# hue-and-value ramp per faction. colour0 (dark) is unusable here: its red trim
-# looks red-team. Endpoints are eyeballed against CommanderVisuals' iron #4a5258
-# and verdant #2c8636 on the board (FI2), the paired tint of the air/naval rows
-# in tools/tint_iso_air_sea.sh, and the neutral row beside them.
-ROW_PALETTE=(color1 color2 color6 color1 color1)
-ROW_TWEAK=(
+# Rows 3-4 are NOT derived from the pack at all. The colour1 master carries an
+# opaque backdrop slab, so palette-tweaking it for a team row buries the unit in
+# a plate of its own colour — the "iron and verdant render as neutral grey" bug
+# the design-system handoff replaced. Iron and verdant are hand-vendored art:
+# per-unit sprites under assets/sprites/units (pasted by
+# tools/paste_unit_sprites.gd, which runs next and fills the transparent rows
+# this step leaves), per-building sprites under assets/sprites/iso_buildings
+# (composited below).
+MASTER_PALETTE=(color1 color2 color6)
+MASTER_TWEAK=(
 	"-modulate 100,0,100"
 	""
 	""
-	"-modulate 100,0,100 +level-colors #23282d,#5f6b76"
-	"-modulate 100,0,100 +level-colors #114018,#46b552"
 )
 
 # One crop box shared by every unit and one by every building. A single uniform
@@ -84,22 +84,28 @@ BLDG_CROP="81x91+6+12"
 # then fills any column still lacking real art. Keep PIXVOXEL_COLS in the latter
 # equal to the length of this array.
 UNITS=(Infantry Infantry_T Supply_T Tank Tank_P Artillery_S Artillery Artillery_T Supply)
-# Columns 5, 6, 7 of the terrain atlas: city, base, hq.
+# Columns 5, 6, 7 of the terrain atlas: city, base, hq. Their iron and verdant
+# rows come from cell-sized vendored sprites (design-system handoff art) under
+# assets/sprites/iso_buildings, named by BLDG_IDS, composited like the iso
+# buildings below rather than derived from the pack masters.
 BUILDINGS=(City Factory Castle)
+BLDG_IDS=(city base hq)
 BLDG_COLS=(5 6 7)
 # Columns 9 and 10: airport, port. The pack has no hangar and no quay, so these
 # are hand-authored 64px cells (project-original, PixVoxel style) vendored under
 # assets/sprites/iso_buildings — five committed rows per building, the iron and
-# verdant ones derived from red by tools/tint_iso_air_sea.sh. Unlike the pack
+# verdant ones design-system handoff art like the unit rows. Unlike the pack
 # sprites they are already cell-sized and per-row coloured, so they composite
-# straight onto their ground with no crop, scale, or ROW_TWEAK.
+# straight onto their ground with no crop, scale, or MASTER_TWEAK.
 ISO_BLDG="$ROOT/assets/sprites/iso_buildings"
 ISO_BUILDINGS=(airport port)
 ISO_BLDG_COLS=(9 10)
 ROW_NAMES=(neutral red blue iron verdant)
+# The vendored-art team rows: every row past the pack-derived three.
+FACTION_ROWS=(3 4)
 # COLS in tools/generate_tiles.gd; rows are the team rows above.
 TERRAIN_COLS=14
-TERRAIN_ROWS=${#ROW_PALETTE[@]}
+TERRAIN_ROWS=${#ROW_NAMES[@]}
 
 # Paved lot under a building, matching _ground(o, PAVE) in tools/generate_tiles.gd:
 # PAVE with a 1px (4px at this scale) PAVE.darkened(0.12) edge so the grid reads.
@@ -121,35 +127,45 @@ WATER="#3f8fdc"
 command -v magick >/dev/null || { echo "error: ImageMagick 7 (magick) not found" >&2; exit 1; }
 [ -d "$SRC" ] || { echo "error: no such directory: $SRC" >&2; exit 1; }
 
+# A vendored building cell: must exist and be exactly one atlas cell.
+check_vendored() {
+	local sprite="$1"
+	if [ ! -f "$sprite" ]; then
+		missing+=("$sprite")
+	elif [ "$(magick identify -format '%wx%h' "$sprite")" != "${CELL}x${CELL}" ]; then
+		echo "error: $sprite is not ${CELL}x${CELL}" >&2
+		exit 1
+	fi
+}
+
 missing=()
-for row in "${!ROW_PALETTE[@]}"; do
+for row in "${!MASTER_PALETTE[@]}"; do
 	for name in "${UNITS[@]}" "${BUILDINGS[@]}"; do
-		sprite="$SRC/${ROW_PALETTE[$row]}_${name}_${FRAME}.png"
+		sprite="$SRC/${MASTER_PALETTE[$row]}_${name}_${FRAME}.png"
 		[ -f "$sprite" ] || missing+=("$sprite")
 	done
 done
 for name in "${ISO_BUILDINGS[@]}"; do
 	for rowname in "${ROW_NAMES[@]}"; do
-		sprite="$ISO_BLDG/${name}_${rowname}.png"
-		if [ ! -f "$sprite" ]; then
-			missing+=("$sprite")
-		elif [ "$(magick identify -format '%wx%h' "$sprite")" != "${CELL}x${CELL}" ]; then
-			echo "error: $sprite is not ${CELL}x${CELL}" >&2
-			exit 1
-		fi
+		check_vendored "$ISO_BLDG/${name}_${rowname}.png"
+	done
+done
+for name in "${BLDG_IDS[@]}"; do
+	for row in "${FACTION_ROWS[@]}"; do
+		check_vendored "$ISO_BLDG/${name}_${ROW_NAMES[$row]}.png"
 	done
 done
 if [ "${#missing[@]}" -gt 0 ]; then
 	echo "error: ${#missing[@]} source sprite(s) missing:" >&2
 	printf '       %s\n' "${missing[@]}" >&2
-	echo "       (iron/verdant iso building rows come from tools/tint_iso_air_sea.sh)" >&2
+	echo "       (iron/verdant rows are vendored design-system art — see assets/LICENSES.md)" >&2
 	exit 1
 fi
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
 	echo "preflight ok: ${#UNITS[@]} units + ${#BUILDINGS[@]} buildings" \
-		"x ${#ROW_PALETTE[@]} palettes in $SRC," \
-		"${#ISO_BUILDINGS[@]} iso buildings x ${#ROW_NAMES[@]} rows in $ISO_BLDG"
+		"x ${#MASTER_PALETTE[@]} palettes in $SRC," \
+		"vendored building rows in $ISO_BLDG"
 	exit 0
 fi
 
@@ -182,22 +198,26 @@ render_cell() {
 		"$out"
 }
 
-echo "building units_atlas.png (${#UNITS[@]} cols x ${#ROW_PALETTE[@]} rows @ ${CELL}px)"
+echo "building units_atlas.png (${#UNITS[@]} cols x ${#ROW_NAMES[@]} rows @ ${CELL}px)"
 # The cell lists are accumulated in loop order rather than globbed: a glob sorts
 # lexicographically, so a tenth unit would place u_0_10.png before u_0_2.png and
 # silently hand every column from 2 up the wrong sprite.
+# Only the pack-derived rows 0-2 are drawn; the canvas is then extended to the
+# full row count, leaving the faction rows transparent for the paste step to fill.
 unit_rows=()
-for row in "${!ROW_PALETTE[@]}"; do
+for row in "${!MASTER_PALETTE[@]}"; do
 	unit_cells=()
 	for col in "${!UNITS[@]}"; do
-		render_cell "$SRC/${ROW_PALETTE[$row]}_${UNITS[$col]}_${FRAME}.png" \
-			"$UNIT_CROP" "${ROW_TWEAK[$row]}" "$WORK/u_${row}_${col}.png"
+		render_cell "$SRC/${MASTER_PALETTE[$row]}_${UNITS[$col]}_${FRAME}.png" \
+			"$UNIT_CROP" "${MASTER_TWEAK[$row]}" "$WORK/u_${row}_${col}.png"
 		unit_cells+=("$WORK/u_${row}_${col}.png")
 	done
 	magick "${unit_cells[@]}" +append "$WORK/urow_$row.png"
 	unit_rows+=("$WORK/urow_$row.png")
 done
-magick "${unit_rows[@]}" -append "${NO_TIME[@]}" "$TILES/units_atlas.png"
+magick "${unit_rows[@]}" -append -background none -gravity NorthWest \
+	-extent "$((${#UNITS[@]} * CELL))x$((${#ROW_NAMES[@]} * CELL))" \
+	"${NO_TIME[@]}" "$TILES/units_atlas.png"
 
 echo "painting city/base/hq into terrain_atlas.png"
 # -type TrueColor is load-bearing: the lot is pure grey, so ImageMagick would
@@ -208,11 +228,22 @@ magick -size ${CELL}x${CELL} "xc:$PAVE_EDGE" \
 	-type TrueColor PNG32:"$WORK/pave.png"
 
 cp "$TILES/terrain_atlas.png" "$WORK/terrain.png"
-for row in "${!ROW_PALETTE[@]}"; do
+for row in "${!MASTER_PALETTE[@]}"; do
 	for i in "${!BUILDINGS[@]}"; do
-		render_cell "$SRC/${ROW_PALETTE[$row]}_${BUILDINGS[$i]}_${FRAME}.png" \
-			"$BLDG_CROP" "${ROW_TWEAK[$row]}" "$WORK/b.png"
+		render_cell "$SRC/${MASTER_PALETTE[$row]}_${BUILDINGS[$i]}_${FRAME}.png" \
+			"$BLDG_CROP" "${MASTER_TWEAK[$row]}" "$WORK/b.png"
 		magick "$WORK/pave.png" "$WORK/b.png" -composite "$WORK/tile.png"
+		magick "$WORK/terrain.png" "$WORK/tile.png" \
+			-geometry "+$((BLDG_COLS[i] * CELL))+$((row * CELL))" \
+			-composite "$WORK/terrain.png"
+	done
+done
+# The faction rows composite vendored cell-sized sprites instead — the pack has
+# no iron or verdant palette (see the row comment on MASTER_PALETTE).
+for row in "${FACTION_ROWS[@]}"; do
+	for i in "${!BUILDINGS[@]}"; do
+		magick "$WORK/pave.png" "$ISO_BLDG/${BLDG_IDS[$i]}_${ROW_NAMES[$row]}.png" \
+			-composite "$WORK/tile.png"
 		magick "$WORK/terrain.png" "$WORK/tile.png" \
 			-geometry "+$((BLDG_COLS[i] * CELL))+$((row * CELL))" \
 			-composite "$WORK/terrain.png"
