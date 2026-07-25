@@ -158,7 +158,10 @@ func _fog_hides_unseen() -> bool:
 ## with a general so the victory lockup is fronted by a portrait.
 ##
 ## Modes that stop early return without falling through to the rest of the
-## chain; `run` still takes the capture.
+## chain; `run` still takes the capture. A name that matches nothing here — the
+## cut-in families are dispatched by prefix first, and never reach the match —
+## fails the run instead, since a board no flow ever touched still photographs
+## perfectly well and would otherwise be reported as a scenario that passed.
 func _run_demo(mode: String) -> void:
 	var tree := _battle.get_tree()
 	await tree.process_frame
@@ -239,6 +242,8 @@ func _run_demo(mode: String) -> void:
 				and not (_battle.game.current_team == 1 and _battle.state == Battle.State.IDLE)
 			):
 				await tree.process_frame
+		_:
+			_fail("unknown demo mode: %s" % mode)
 
 
 ## load -> drive -> drop, with three modes stopping partway along the chain.
