@@ -5,12 +5,12 @@ Guidance for AI agents (and humans) working in this repository.
 
 ## Project
 
-An **Advance Wars-style turn-based tactics game** built in **Godot 4.7+** with **GDScript**.
-Grid maps, terrain that shapes movement and defense, a rock-paper-scissors unit roster across
-three movement domains (land, air, sea), property capture and income, and a computer opponent.
+**Grid Commanders** — an **Advance Wars-style turn-based tactics game** built in **Godot 4.7+** with
+**GDScript**. Grid maps, terrain that shapes movement and defense, a rock-paper-scissors unit roster
+across three movement domains (land, air, sea), property capture and income, and a computer opponent.
 
 - **Status:** fifteen designs of record, all worth reading before an architectural decision.
-  `.lavish/advance-wars-clone-plan.html` owns the base game — milestones M0–M7 and which of them
+  `.lavish/grid-commanders-plan.html` owns the base game — milestones M0–M7 and which of them
   are done, mechanics reference, damage formula. `.lavish/commanders-plan.html` owns Commanders
   and Command Powers — milestones C1–C4, the four locked decisions (D1 subclassed `CommanderType`,
   D2 asymmetric charge accrual, D3 what C1 ships, D4 Sable Wren's reworked Vanish) and the risk
