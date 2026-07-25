@@ -66,8 +66,10 @@ const TAIL_BORDER := UiTheme.BORDER
 
 ## The overlay every tip is mounted on. A CanvasLayer above the scene so a slab is
 ## never clipped by the panel, scroll container or map cell it belongs to, and
-## never laid out by them either.
+## never laid out by them either. The layer also carries the one `_FocusSource`
+## every tip reads to tell a Tab from a click.
 const LAYER_NAME := "TooltipLayer"
+const SOURCE_NAME := "TooltipFocusSource"
 
 var _trigger: Control
 var _side := Side.TOP
@@ -138,8 +140,14 @@ static func attach(trigger: Control, label: String, detail := "", side := Side.T
 ## not in the tab order, and putting it there would add a stop that does nothing
 ## when pressed. A control that cannot take focus (a disabled Continue) simply never
 ## opens the tip this way; its caption stays hoverable.
+##
+## Only *keyboard* focus opens it, the rule a browser calls `:focus-visible`.
+## `focus_entered` does not say how focus arrived, and a pointer press grabs focus
+## for any focusable control — so without the gate, clicking a segment would fire
+## the group's explanation over the row just used, which is precisely what the
+## micro-label rule exists to prevent. Blur still closes, whatever moved focus.
 func follow_focus(control: Control) -> void:
-	control.focus_entered.connect(_request)
+	control.focus_entered.connect(_request_focused)
 	control.focus_exited.connect(close)
 
 
@@ -229,6 +237,10 @@ func _mount() -> void:
 		layer.name = LAYER_NAME
 		layer.layer = 1
 		root.add_child(layer)
+	if layer.get_node_or_null(NodePath(SOURCE_NAME)) == null:
+		var source := _FocusSource.new()
+		source.name = SOURCE_NAME
+		layer.add_child(source)
 	layer.add_child(self)
 
 
@@ -240,6 +252,14 @@ func _request() -> void:
 		return
 	_wanted = true
 	_timer.start()
+
+
+## `follow_focus`'s half of the door, open only to the keyboard and the pad. The
+## pointer keeps its own way in — the trigger's `mouse_entered`, ungated.
+func _request_focused() -> void:
+	if not _FocusSource.by_keyboard:
+		return
+	_request()
 
 
 ## Sizes, places and reveals the slab. The width is fixed, so the height is
@@ -355,6 +375,40 @@ func _resolved_side(rect: Rect2, view: Vector2) -> Tooltip.Side:
 func _short(room: float) -> bool:
 	var span := size.y if _side == Side.TOP or _side == Side.BOTTOM else size.x
 	return room < span + GAP + MARGIN
+
+
+# --- how focus arrived --------------------------------------------------------
+
+
+## How the player last spoke to the game. `focus_entered` never says whether focus
+## arrived by Tab or by click, and Godot grabs focus for any focusable control the
+## pointer presses, so this one flag is what lets `follow_focus` answer the question
+## the signal cannot — the same distinction a browser draws with `:focus-visible`.
+##
+## One node beside the tips on the overlay layer, not a hook on each of them: the
+## deciding event is the press *before* a tip would open, so the tracker has to be
+## listening whether or not any tip is currently visible. `_input` runs ahead of the
+## viewport's GUI pass, so the flag is already right by the time focus moves.
+##
+## The state is static because there is exactly one player: every tip asks the same
+## question about the same last event.
+class _FocusSource:
+	extends Node
+
+	static var by_keyboard := false
+
+	func _init() -> void:
+		set_process_input(true)
+
+	func _input(event: InputEvent) -> void:
+		if event is InputEventMouseButton or event is InputEventMouseMotion:
+			by_keyboard = false
+		elif (
+			event is InputEventKey
+			or event is InputEventJoypadButton
+			or event is InputEventJoypadMotion
+		):
+			by_keyboard = true
 
 
 # --- the notch and the dotted underline ---------------------------------------
