@@ -52,6 +52,18 @@ const FACTION_SUFFIX := "_iron_commander"
 ## *both* halves of the frame are a live comparison — a side whose row happened
 ## to match its slot could not tell the two apart.
 const FACTION_CO_IDS: Array[StringName] = [&"viktor_draeg", &"nia_rowan"]
+## The ground `cutin_iron_commander` is fought over: the south-east base and HQ,
+## adjacent, both team-tinted, and re-owned one side each. The frontline cells the
+## other cut-in modes use are plains, where an untinted tile makes the owner row
+## moot — so the third surface COM-10 named, the ground strip under each half, was
+## the one no scenario put a faction row through. Owning the pair apart puts a
+## *different* faction row under each half, so a swapped one is as loud as a
+## wrong one.
+const FACTION_ATTACKER_CELL := Vector2i(16, 11)  # base
+const FACTION_DEFENDER_CELL := Vector2i(17, 11)  # HQ
+## And the side `capture_cutin_iron_commander` takes its property *from*, so the
+## flip crosses between two faction rows rather than out of neutral row 0.
+const FACTION_CAPTURE_FROM := 2
 ## `cutin_skip` walks a skip across the whole cut-in — see _spam_skip. One entry
 ## per beat boundary and a couple past the end, which is where a double-finish
 ## would show up.
@@ -62,6 +74,11 @@ var _battle: Battle
 var _shot_path := ""
 var _select_cell := Vector2i(-1, -1)
 var _demo := ""
+## Raised by any mid-scenario check that fails. `run` reads it before it writes
+## anything: a capture saved after a failed check would take the exit code down
+## with it — ScreenshotUtil quits zero — and that code is the entire signal the
+## smoke sweep reads.
+var _failed := false
 
 
 func _init(battle: Battle) -> void:
@@ -93,7 +110,7 @@ func run() -> void:
 		await _run_demo(_demo)
 	elif _select_cell.x >= 0:
 		_demo_select(_select_cell)
-	if not _fog_hides_unseen():
+	if _failed or not _fog_hides_unseen():
 		_battle.get_tree().quit(1)
 		return
 	if _shot_path != "":
@@ -334,7 +351,9 @@ func _run_vanish_demo(mode: String) -> void:
 ##   --demo=cutin_ko                 the same pair, defender routed
 ##   --demo=cutin:bomber:fighter     that matchup, staged wherever it fits
 ##   --demo=cutin_ko:artillery:mech  and the same with a kill
-##   --demo=cutin_iron_commander     the same tanks, but Iron v Verdant
+##   --demo=cutin_iron_commander     the same tanks, Iron v Verdant, and fought
+##                                   over a property apiece so the ground under
+##                                   each half carries a faction row too
 ##
 ## The exchange is resolved directly rather than driven through the targeting
 ## flow, because the flow deliberately suppresses the cut-in while capturing
@@ -351,7 +370,8 @@ func _stage_cut_in(spec: String) -> void:
 	var parts := spec.split(":")
 	var lethal := parts[0].ends_with(KO_SUFFIX)
 	var game := _battle.game
-	if parts[0].ends_with(FACTION_SUFFIX):
+	var factions := parts[0].ends_with(FACTION_SUFFIX)
+	if factions:
 		_stage_faction_commanders()
 	var attacker := game.unit_at(Vector2i(8, 8))  # red tank
 	var defender := game.unit_at(Vector2i(9, 8))  # blue tank
@@ -364,6 +384,8 @@ func _stage_cut_in(spec: String) -> void:
 	if attacker == null or defender == null:
 		push_error("cutin demo: no pair to stage (%s)" % spec)
 		return
+	if factions:
+		_stage_owned_ground(attacker, defender)
 	defender.hp = 10 if lethal else 74
 	var result := CombatResolver.resolve(game, attacker, defender)
 	_battle.view.sync_sprites()
@@ -372,6 +394,8 @@ func _stage_cut_in(spec: String) -> void:
 	_battle.animator.cutscene.pose_at(
 		result, attacker, defender, KO_POSE if lethal else CUT_IN_POSE
 	)
+	if not _cut_in_wears_the_board(attacker, defender):
+		_failed = true
 
 
 ## The capture cut-in, held still for the shutter — the sibling of `_stage_cut_in`.
@@ -379,7 +403,7 @@ func _stage_cut_in(spec: String) -> void:
 ##   --demo=capture_cutin           a completing capture, late in its banner
 ##   --demo=capture_cutin_partial   an occupying capture over its OCCUPYING tag
 ##   --demo=capture_cutin_skip      walks a skip across the whole clock (a test)
-##   --demo=capture_cutin_iron_commander  the same capture, taken by Iron
+##   --demo=capture_cutin_iron_commander  the same city, taken by Iron off Verdant
 ##
 ## Like the combat still it is posed rather than driven through the menu, because
 ## the capture flow suppresses the cut-in while capturing for exactly the same
@@ -393,11 +417,19 @@ func _stage_capture_cut_in(mode: String) -> void:
 	if unit == null:
 		push_error("capture_cutin demo: no infantry at (4,3)")
 		return
-	if mode.ends_with(FACTION_SUFFIX):
+	var factions := mode.ends_with(FACTION_SUFFIX)
+	if factions:
 		_stage_faction_commanders()
 	var partial := mode.begins_with(CAPTURE_CUT_IN_MODE + PARTIAL_SUFFIX)
 	var result := CaptureCommand.CaptureResult.new()
-	result.owner_before = MapData.NEUTRAL
+	# Taken off the rival side rather than off neutral in the faction variant, so
+	# the row the property *starts* in is a faction row too — row 0 either way is
+	# how the owner path stayed unexercised. The sim's property is re-owned with
+	# it, so the board behind the cut-in agrees about who is being taken from.
+	result.owner_before = FACTION_CAPTURE_FROM if factions else MapData.NEUTRAL
+	if factions:
+		game.set_owner(cell, result.owner_before)
+		_battle.view.repaint_property(cell)
 	result.points_before = 20 if partial else 8
 	result.points_after = 10 if partial else 0
 	result.captured = not partial
@@ -407,6 +439,8 @@ func _stage_capture_cut_in(mode: String) -> void:
 	_battle.animator.capture_cutscene.pose_at(
 		result, unit, cell, CAPTURE_PARTIAL_POSE if partial else CAPTURE_CUT_IN_POSE
 	)
+	if not _capture_cut_in_wears_the_board(unit, cell):
+		_failed = true
 
 
 ## The capture cut-in's half of risk R2, made checkable exactly as `_spam_skip`
@@ -436,7 +470,7 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 			push_error(
 				"capture cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]]
 			)
-			tree.quit(1)
+			_failed = true
 			return
 		if not camera.zoom.is_equal_approx(resting):
 			push_error(
@@ -445,7 +479,7 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 					% [delay, camera.zoom, resting]
 				)
 			)
-			tree.quit(1)
+			_failed = true
 			return
 	camera.zoom = resting
 	print(
@@ -496,7 +530,7 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 		cutscene.finished.disconnect(tally)
 		if finishes[0] != 1:
 			push_error("cut-in skipped after %d frame(s) finished %d times" % [delay, finishes[0]])
-			tree.quit(1)
+			_failed = true
 			return
 		if not camera.zoom.is_equal_approx(resting):
 			push_error(
@@ -505,7 +539,7 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 					% [delay, camera.zoom, resting]
 				)
 			)
-			tree.quit(1)
+			_failed = true
 			return
 	camera.zoom = resting
 	print("cutin_skip: %d skips, each resolved exactly once and camera home" % SKIP_FRAMES.size())
@@ -585,6 +619,85 @@ func _stage_faction_commanders() -> void:
 		var team: int = GameState.TEAMS[slot]
 		_battle.game.set_commander(team, _battle.commander_db.by_id(FACTION_CO_IDS[slot]))
 	_battle.view._restage_identity()
+
+
+## Stands the pair on the two adjacent properties in the south-east and gives one
+## to each side, so the ground strip under each half of the cut-in is a tinted
+## tile with a *faction* owner. Called for the `_iron_commander` combat variant
+## only: the frontline cells the other modes fight over are plains, where the
+## owner row is never read at all.
+func _stage_owned_ground(attacker: Unit, defender: Unit) -> void:
+	var game := _battle.game
+	var cells: Array[Vector2i] = [FACTION_ATTACKER_CELL, FACTION_DEFENDER_CELL]
+	for cell in cells:
+		var sitting := game.unit_at(cell)
+		if sitting != null and sitting != attacker and sitting != defender:
+			game.remove_unit(sitting)
+	attacker.cell = FACTION_ATTACKER_CELL
+	defender.cell = FACTION_DEFENDER_CELL
+	game.set_owner(FACTION_ATTACKER_CELL, attacker.team)
+	game.set_owner(FACTION_DEFENDER_CELL, defender.team)
+	for cell in cells:
+		_battle.view.repaint_property(cell)
+	_battle.view.sync_sprites()
+
+
+## Every atlas row the posed combat cut-in baked into its art is the one
+## SideIdentity gives the side it belongs to — each army's, and each ground
+## strip's owner's.
+##
+## Checked rather than eyeballed, in the spirit of `_fog_hides_unseen`: a half
+## painted in the wrong faction's colours still renders a perfectly good frame, so
+## a scenario that only proves one was written passes straight through COM-10.
+## Run for every cut-in mode, not just the commander ones — on a commander-less
+## board it is a live check that the no-CO fallback still lands where its slot
+## names, which is the case the bug hid behind.
+func _cut_in_wears_the_board(attacker: Unit, defender: Unit) -> bool:
+	var cutscene := _battle.animator.cutscene
+	var atk := cutscene.attacker_side()
+	var def := cutscene.defender_side()
+	var ok := _row_matches("cut-in attacker", atk.drawn_unit_row(), _army_row(attacker.team))
+	ok = _row_matches("cut-in defender", def.drawn_unit_row(), _army_row(defender.team)) and ok
+	var atk_ground := _ground_row(attacker.cell)
+	var def_ground := _ground_row(defender.cell)
+	ok = _row_matches("cut-in attacker ground", atk.drawn_ground_row(), atk_ground) and ok
+	ok = _row_matches("cut-in defender ground", def.drawn_ground_row(), def_ground) and ok
+	return ok
+
+
+## The same check over the capture cut-in: the marching squad wears the
+## capturer's row, and the property flips from the row its owner on the board
+## wears to that same capturer's.
+func _capture_cut_in_wears_the_board(unit: Unit, cell: Vector2i) -> bool:
+	var stage := _battle.animator.capture_cutscene.stage()
+	var capturer := _army_row(unit.team)
+	var ok := _row_matches("capture squad", stage.drawn_squad_row(), capturer)
+	ok = _row_matches("capture property before", stage.row_before, _ground_row(cell)) and ok
+	ok = _row_matches("capture property after", stage.row_after, capturer) and ok
+	return ok
+
+
+## The atlas row a side's army is drawn in on the board — SideIdentity's answer,
+## which is the one every surface owes.
+func _army_row(team: int) -> int:
+	return _battle.view.identity.atlas_row(team)
+
+
+## And the row a cell's ground is drawn in: its owner's faction row on a property,
+## the untinted row 0 on anything else. The same question `BattleView._paint_map`
+## answers for the board, asked of the board here so the cut-in is compared
+## against what the player sees under it rather than against itself.
+func _ground_row(cell: Vector2i) -> int:
+	if not _battle.map.terrain_at(cell).team_tinted:
+		return SideIdentity.NEUTRAL_ROW
+	return _army_row(_battle.game.owner_at(cell))
+
+
+func _row_matches(what: String, drawn: int, wanted: int) -> bool:
+	if drawn == wanted:
+		return true
+	push_error("%s is drawn in atlas row %d, but the board wears row %d" % [what, drawn, wanted])
+	return false
 
 
 ## Raises a power directly (no fire, no banner) so the capture is the chip's

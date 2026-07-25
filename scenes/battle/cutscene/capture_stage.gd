@@ -49,7 +49,7 @@ const STAR_STEP := 11.0
 
 var unit: Unit
 var terrain: TerrainType
-## The property's atlas column and the two team rows the flip crosses between.
+## The property's atlas column and the two atlas rows the flip crosses between.
 var prop_col := 0
 var row_before := 0
 var row_after := 0
@@ -100,6 +100,15 @@ func bind(
 	row_before = p_owner_row
 	row_after = p_capturer_row
 	_squad_art = UnitSprite.texture_for(p_unit.type, p_capturer_row)
+
+
+## The atlas row the marching squad is really drawn from, read back off the
+## region `bind` baked. A read for the scenario driver's row check, which asks
+## what is on screen rather than what was remembered — the stage stays draw-only.
+func drawn_squad_row() -> int:
+	if _squad_art == null:
+		return -1
+	return int(_squad_art.region.position.y) / UnitSprite.SPRITE_PX
 
 
 func _draw() -> void:

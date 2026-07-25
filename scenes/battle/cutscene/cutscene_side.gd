@@ -161,6 +161,22 @@ func bind(
 	_floating = p_unit.type.domain == UnitType.SEA
 
 
+## The atlas row this side's figures are really drawn from, read back off the
+## region `bind` baked, and the row its ground strip is drawn from. Both are
+## reads for the scenario driver's row check, which asks what is on screen rather
+## than what was remembered — the side stays draw-only.
+func drawn_unit_row() -> int:
+	if _art == null:
+		return -1
+	return int(_art.region.position.y) / UnitSprite.SPRITE_PX
+
+
+func drawn_ground_row() -> int:
+	if terrain == null:
+		return -1
+	return _atlas_row()
+
+
 ## Advance Wars' squad rule: one figure per two displayed HP, capped at five.
 ## Zero only ever means dead.
 static func figures_for(displayed_hp: int) -> int:

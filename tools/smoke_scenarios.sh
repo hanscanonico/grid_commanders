@@ -84,9 +84,14 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # in the row its slot number names — so for a while none of them could see a
 # cut-in surface reading a team int where an atlas row belongs (COM-10: Iron
 # armies came out Aurora blue). The two `_iron_commander` variants close that:
-# they stage Iron against Verdant, rows 3 and 4, neither equal to its slot, so a
-# frame that resolves an army's colour any way but through SideIdentity is a
-# frame with the wrong paint on it.
+# they stage Iron against Verdant, rows 3 and 4, neither equal to its slot, and
+# fight over a property apiece so the ground carries a faction row as well.
+#
+# None of the cut-in modes rests on a human eyeballing the frame, either: every
+# one of them reads the rows back off the posed art and fails the run unless each
+# is the row SideIdentity gives that side (see _cut_in_wears_the_board). A
+# mispainted army renders a perfectly good picture, so "a frame was written" was
+# never going to be the check.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn

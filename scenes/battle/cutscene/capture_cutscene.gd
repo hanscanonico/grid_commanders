@@ -155,6 +155,13 @@ func pose_at(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i, a
 	_root.show()
 
 
+## The diorama, so a posed still can be read back. Dev-only, like `pose_at` and
+## for the same caller: the scenario driver checks that the squad and the property
+## it is taking are painted in the faction rows SideIdentity gives them (COM-10).
+func stage() -> CaptureStage:
+	return _stage
+
+
 ## Fast-forwards every remaining beat to its end state. Never aborts: the clock is
 ## set to the end, the final tableau is applied, and the same exit runs — which is
 ## what makes a skip at any beat land on the right board.
@@ -220,14 +227,13 @@ func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> 
 	_beats = _plan(result.captured, hops, clampf(tail_scale, 0.0, 1.0))
 
 
-## A side's faction accent: the capturing commander's colour, or — capturing
-## without one — the classic its slot falls back to. CommanderVisuals is the
-## single authority on what a faction looks like; a commander-less side's colour
-## is SideIdentity's, the same red/blue the board resolves it to.
+## A side's faction accent, asked of the identity that resolved the match rather
+## than of the commander directly — the sibling of CombatCutscene._accent_of, and
+## for the same reason. SideIdentity gives a commanded side its own faction's
+## colour and a commander-less one the classic its slot falls back to, and it is
+## the only one that knows about the mirror borrow: the plate must wear whatever
+## the marching squad beside it is drawn in, borrowed classic included.
 func _accent_of(team: int) -> Color:
-	var commander := view.game.commander_of(team)
-	if commander != null and commander.id != CommanderType.NEUTRAL_ID:
-		return CommanderVisuals.theme_for(commander).color_light
 	return view.identity.theme(team).color_light
 
 

@@ -86,8 +86,13 @@ make smoke MODES="capture_cutin_iron_commander"   # the same, on the marching sq
 The two `_iron_commander` variants are the only cut-in modes that run *with* commanders, and that is
 their whole reason to exist: a commander-less side draws in the row its slot number names, so a
 surface reading a team int where an atlas row belongs looks correct in every other capture. They
-stage Iron against Verdant — rows 3 and 4, neither equal to its slot — so an army painted any way
-but through `SideIdentity` comes out the wrong colour and the frame says so.
+stage Iron against Verdant — rows 3 and 4, neither equal to its slot — and fight over a property
+apiece, so the armies, the ground and the flipping building all carry a faction row.
+
+Every cut-in mode is a test as well as a picture: each reads the atlas rows back off the posed art
+and fails the run unless every one is the row `SideIdentity` gives that side. A cut-in painted in
+the wrong faction's colours writes a perfectly good frame, so "a capture exists" could never have
+been the check.
 
 `cutin_skip` and `capture_cutin_skip` are the ones that are tests rather than pictures: each plays
 the same cut-in ten times, skipping one frame later each time, and fails unless every run finishes

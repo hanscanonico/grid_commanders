@@ -191,6 +191,18 @@ func pose_at(
 	_root.show()
 
 
+## The two halves, so a posed still can be read back. Dev-only, like `pose_at`
+## and for the same caller: the scenario driver checks that each half is painted
+## in the faction row SideIdentity gives its side (COM-10), and a check that
+## re-derived the answer from the director's own fields would prove nothing.
+func attacker_side() -> CutsceneSide:
+	return _atk
+
+
+func defender_side() -> CutsceneSide:
+	return _def
+
+
 ## Fast-forwards every remaining beat to its end state. Never aborts: the clock
 ## is simply set to the end, the final tableau is applied, and the same exit runs
 ## — which is what makes a skip at any beat land on the right board.
@@ -281,15 +293,14 @@ static func _squads(side: CutsceneSide, before: int, after: int, died: bool) -> 
 	side.squad_now = side.squad_was if died else CutsceneSide.figures_for(after)
 
 
-## A side's accent colour: the attacking commander's faction, or — fighting
-## without one — the classic its slot falls back to. CommanderVisuals is the
-## single authority on what a faction looks like (the card, the HUD chip and the
-## power banner all ask it, and so does this); a commander-less side's colour is
-## SideIdentity's, the same red/blue the board and panels already resolve it to.
+## A side's accent colour, asked of the identity that resolved the match rather
+## than of the commander directly. SideIdentity gives a commanded side its own
+## faction's colour and a commander-less one the classic its slot falls back to —
+## the same two answers as before — and it is the only one that knows about the
+## mirror borrow: in an Iron v Iron the later side's army is drawn in a borrowed
+## classic, so asking CommanderVisuals for its general's faction would put slate
+## on both name plates, in the very frame the borrow exists to tell apart.
 func _accent_of(team: int) -> Color:
-	var commander := view.game.commander_of(team)
-	if commander != null and commander.id != CommanderType.NEUTRAL_ID:
-		return CommanderVisuals.theme_for(commander).color_light
 	return view.identity.theme(team).color_light
 
 
