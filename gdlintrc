@@ -55,4 +55,9 @@ max-public-methods: 21
 # keyboard zoom steps — moved out, which is where the small-map camera work (a
 # new min_zoom that lets a small board zoom out until it fits) would otherwise
 # have landed.
+#
+# The ceiling now binds scenes/menu/main_menu.gd, which passed battle.gd as the
+# longest file when the menu grew its 640x360 capture gate: the apparatus lives
+# in MenuCaptureDriver rather than the menu because inlining it went over this
+# limit. Same rule on either file — adding means moving something out first.
 max-file-lines: 905

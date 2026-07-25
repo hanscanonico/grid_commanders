@@ -14,6 +14,10 @@ extends Control
 ## "Continue" bypasses selection — a saved match restores its own commanders. It
 ## is disabled, not hidden, when there is nothing to resume (plan section 2), and
 ## it names what it would resume on the micro-line beneath it: "DAY 4 · SCRIMMAGE".
+## Disabled rather than hidden is also what keeps the two layouts the same height:
+## a save's presence may never change the layout budget (UX-recovery D2), which is
+## what `--demo=menu_with_save` / `--demo=menu_no_save` photograph and what
+## MenuCaptureDriver refuses to let regress.
 
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const ICON_PATH := "res://assets/icon.png"
@@ -37,6 +41,11 @@ var _map_cells: Array[Button] = []
 var _map_marks: Array[Label] = []
 var _selected_map := 0
 var _fog_on := false
+## The whole centered stack — header, setup panel, action column. Kept because it
+## is the one rect that answers "does the menu fit?": the CenterContainer around
+## it hands a too-tall column a negative offset, so an overflow runs off *both*
+## ends at once and no single child is a reliable witness to it.
+var _column: VBoxContainer
 var _one_player_button: Button
 var _two_player_button: Button
 var _continue_button: Button
@@ -57,6 +66,9 @@ var _maps: Array[MapData] = []
 var _difficulties: Array[Difficulty] = []
 var _difficulty_index := 0
 var _speed_tiers: Array[GameSpeed] = []
+## Dev-only, built on every boot because it is what reads the command line; it
+## poses nothing and gates nothing on an ordinary run.
+var _capture_driver: MenuCaptureDriver
 
 
 func _ready() -> void:
@@ -67,6 +79,10 @@ func _ready() -> void:
 		# the pin's only observable effect is the Speed segment's highlight and the
 		# blinking PRESS START, which is pinned solid below.
 		Settings.pin(GameSpeed.DEFAULT_ID)
+	_capture_driver = MenuCaptureDriver.new(self)
+	if _capture_driver.rejected():
+		get_tree().quit(1)
+		return
 
 	_maps = MapCatalog.ordered(TerrainDB.load_default())
 	_difficulties = DifficultyDB.load_default().all()
@@ -101,7 +117,7 @@ func _ready() -> void:
 		elif select_mode != "red":
 			_select_panel.debug_preview(StringName(select_mode))
 	if shot_path != "":
-		ScreenshotUtil.capture_and_quit(self, shot_path)
+		await _capture_driver.capture(shot_path, _chrome() if select_mode == "" else {})
 
 
 # --- layout ------------------------------------------------------------------
@@ -121,6 +137,7 @@ func _build(animate: bool) -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	center.add_child(column)
+	_column = column
 
 	column.add_child(_build_header())
 
@@ -824,7 +841,9 @@ func _on_selection_cancelled() -> void:
 ## strictly narrower: `decode` refuses everything `summarize` refuses, so a save
 ## we cannot name is one Continue could only have failed on.
 func _refresh_continue() -> void:
-	var summary := SaveGame.peek()
+	var summary := (
+		_capture_driver.posed_slot(_maps) if _capture_driver.poses_slot() else SaveGame.peek()
+	)
 	_continue_button.disabled = summary == null
 	if summary == null:
 		_continue_caption.text = "NO SAVED MATCH"
@@ -862,3 +881,18 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 	MatchConfig.commanders = commanders
 	MatchConfig.load_save = load_save
 	get_tree().change_scene_to_file(BATTLE_SCENE)
+
+
+# --- dev captures ------------------------------------------------------------
+
+
+## What a capture measures itself against: the whole centered stack, plus every
+## primary action by name. See MenuCaptureDriver._fits for why it is both.
+func _chrome() -> Dictionary:
+	return {
+		"the menu column": _column,
+		"1 Player": _one_player_button,
+		"2 Player": _two_player_button,
+		"Continue": _continue_button,
+		"Quit": _quit_button,
+	}
