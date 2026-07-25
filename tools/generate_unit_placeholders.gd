@@ -36,6 +36,7 @@ const SCALE := 4
 ## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant — the atlas row
 ## order the sprites step writes (plan FI1). Matches tools/generate_tiles.gd.
 const ROWS := 5
+const ROW_NAMES: Array[String] = ["neutral", "meridian", "aurora", "iron", "verdant"]
 const TEAM_COLORS: Array[Color] = [
 	Color("8a9099"), Color("d84a3c"), Color("3c64d8"), Color("4a5258"), Color("2c8636")
 ]
@@ -110,21 +111,26 @@ func _atlas_columns() -> int:
 	return last + 1
 
 
-## The last set of eyes on the finished atlas: warns about any roster column past
-## the PixVoxel nine that ended up fully transparent — a unit neither the paste
-## step nor PLACEHOLDER_IDS supplies art for, which would otherwise ship as an
-## invisible unit and only be noticed at run time.
+## The last set of eyes on the finished atlas: warns about any roster *cell* that
+## ended up fully transparent — art neither the paste step nor PLACEHOLDER_IDS
+## supplies, which would otherwise ship as an invisible unit and only be noticed
+## at run time. Every column and every row is audited, including the PixVoxel
+## nine: that step derives rows 0-2 only and leaves the faction rows transparent
+## for tools/paste_unit_sprites.gd to fill from its own hand-kept list, so a land
+## unit missing from that list is invisible for Iron Dominion and Verdant League
+## while its classic rows look perfectly healthy. A whole-column test cannot see
+## that, and neither can one that skips the columns the pack covers.
 func _warn_missing_art(painted: Image) -> void:
 	var cell := TILE * SCALE
 	for unit_type in UnitDB.load_default().all():
-		if unit_type.atlas_col < PIXVOXEL_COLS:
-			continue
-		var column := painted.get_region(Rect2i(unit_type.atlas_col * cell, 0, cell, ROWS * cell))
-		if column.is_invisible():
+		for row in ROWS:
+			var at := Rect2i(unit_type.atlas_col * cell, row * cell, cell, cell)
+			if not painted.get_region(at).is_invisible():
+				continue
 			push_warning(
 				(
-					"generate_unit_placeholders: column %d ('%s') has no art — the unit is invisible"
-					% [unit_type.atlas_col, unit_type.id]
+					"generate_unit_placeholders: column %d ('%s') row %d (%s) has no art"
+					% [unit_type.atlas_col, unit_type.id, row, ROW_NAMES[row]]
 				)
 			)
 

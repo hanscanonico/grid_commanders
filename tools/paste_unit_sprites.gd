@@ -140,14 +140,18 @@ func _load_sources() -> Dictionary:
 
 
 ## Loads one unit's sprites for the given team rows into `sources`, reporting
-## and returning false on a roster or file problem.
+## and returning false on a roster or file problem. Rows are merged into whatever
+## the column already holds rather than replacing it, so the two lists above are
+## additive by construction: naming a unit in both — the natural edit when a land
+## unit finally gets real art for all five rows — widens its column instead of
+## silently dropping the rows the first pass loaded.
 func _load_unit(by_id: Dictionary, id: StringName, rows: Array[int], sources: Dictionary) -> bool:
 	var cell := TILE * SCALE
 	if not by_id.has(id):
 		push_error("paste_unit_sprites: no unit '%s' in the roster" % id)
 		return false
 	var unit_type: UnitType = by_id[id]
-	var by_row := {}
+	var by_row: Dictionary = sources.get(unit_type.atlas_col, {})
 	for row in rows:
 		var path := "%s/%s_%s.png" % [SPRITE_DIR, id, TEAM_ROWS[row]]
 		var sprite := Image.load_from_file(ProjectSettings.globalize_path(path))

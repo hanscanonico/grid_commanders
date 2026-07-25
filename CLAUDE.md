@@ -61,7 +61,9 @@ three movement domains (land, air, sea), property capture and income, and a comp
   "First/Second Army" in the classic red and blue, so a no-CO match is board-identical to before
   factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora, 3 iron, 4 verdant`) is a contract
   between `SideIdentity._ROW_FOR_KEY` and the art pipeline (`build_pixvoxel_atlases.sh` ROW_NAMES,
-  `generate_tiles.gd`); rows 0–2 are the shipped red/blue art byte-for-byte and must stay so. Its D5
+  `generate_tiles.gd`); rows 0–2 are the shipped red/blue art byte-for-byte and must stay so, the one
+  exception being a column retiring a generated placeholder for real art through
+  `generate_unit_placeholders.gd`'s documented path, as units column 13 (Missiles) did. Its D5
   is the standing boundary: **"Red"/"Blue" survive only as developer slot vocabulary** — the Balance
   Lab's `--red`/`--blue` grammar and its byte-stable reports, code identifiers, comments — never on a
   screen a player sees; if a player can see it, it speaks faction.
