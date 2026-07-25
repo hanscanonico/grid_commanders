@@ -92,9 +92,10 @@ func _build() -> void:
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_field.add_child(_portrait)
-	# Framed from the field's measured width rather than anchored to its rect: the
-	# card is READING_WIDTH on the select page and wider in the info sheet, and the
-	# crop has to land on the same part of the bust at both.
+	# Framed from the field's measured width rather than anchored to its rect: both
+	# player-facing surfaces pin the card to READING_WIDTH, but the dev gallery lets
+	# it sit as narrow as MIN_WIDTH, and the crop has to open on the same part of the
+	# bust at any of them.
 	_field.resized.connect(_reframe_portrait)
 	_reframe_portrait()
 
