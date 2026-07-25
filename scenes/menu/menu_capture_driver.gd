@@ -87,15 +87,15 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 ## given any. A `--co-select` capture photographs the selection page over a
 ## hidden menu and passes none: the menu's own geometry is not what that picture
 ## claims.
+##
+## The check goes in as the capture's gate rather than being run here, so it
+## measures the settled layout the PNG is written from. A container that sorted
+## its children a frame late would otherwise be measured small — or at zero size,
+## which any frame trivially encloses — and the gate would pass on a layout that
+## is not the one photographed.
 func capture(path: String, chrome: Dictionary) -> void:
-	# Sizes are final only once the containers have sorted their children, which
-	# happens on the frame after the tree is built.
-	await _menu.get_tree().process_frame
-	await _menu.get_tree().process_frame
-	if not chrome.is_empty() and not _fits(chrome):
-		_menu.get_tree().quit(1)
-		return
-	await ScreenshotUtil.capture_and_quit(_menu, path)
+	var gate := Callable() if chrome.is_empty() else _fits.bind(chrome)
+	await ScreenshotUtil.capture_and_quit(_menu, path, gate)
 
 
 ## Every named control lies fully inside the logical frame.

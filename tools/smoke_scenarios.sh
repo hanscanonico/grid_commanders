@@ -14,8 +14,9 @@
 #
 # A `menu_` mode boots the *main menu* instead of the battle scene; everything
 # else about the run is identical. Those scenarios are the one place the sweep
-# checks a screen the battle scene never draws, and they carry their own gate
-# (see MainMenu._chrome_fits).
+# checks a screen the battle scene never draws, and they carry their own gate:
+# the menu hands its centered column and its primary actions to
+# MenuCaptureDriver._fits (see MainMenu._chrome).
 #
 # A mode may carry a `+fog` suffix — `victory+fog` is the victory scenario run
 # with fog of war on. Fog is the one setting under which this scene *hides*
@@ -99,12 +100,16 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # never going to be the check.
 #
 # The menu pair is the same idea one screen earlier: `menu_with_save` poses a
-# resumable match and `menu_no_save` poses none, and each measures the wordmark
-# and all four primary actions against the 640x360 frame before it writes a
-# thing. COM-5 is why — with a save on disk the old menu clipped its own title
-# and its Quit, and a returning player met a visibly broken screen while a fresh
-# install never did. Both modes pose the save slot themselves, so neither reads
-# nor writes the running machine's user://save.json.
+# resumable match and `menu_no_save` poses none, and each measures the whole
+# centered menu column plus all four primary actions against the 640x360 frame
+# before it writes a thing. The column is the load-bearing witness, not the
+# wordmark: a too-tall column is centered into an offset that runs off both ends
+# at once, so the wordmark's own rect sat at exactly y=0 in a visibly sheared
+# build while the header row's icon took the overflow (see
+# MenuCaptureDriver._fits). COM-5 is why — with a save on disk the old menu
+# clipped its own title and its Quit, and a returning player met a visibly
+# broken screen while a fresh install never did. Both modes pose the save slot
+# themselves, so neither reads nor writes the running machine's user://save.json.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn
