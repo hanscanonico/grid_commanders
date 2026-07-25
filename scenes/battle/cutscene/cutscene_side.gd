@@ -83,8 +83,10 @@ static var _tint_cache: Dictionary = {}
 
 var unit: Unit
 var terrain: TerrainType
-## Owner of the cell this side is fought over, for the team-tinted atlas row.
-var owner_team := 0
+## The atlas row the cell's owner draws its property art in — already resolved
+## through SideIdentity by the director, never a team int. Neutral (and unowned)
+## is row 0, which is what an untinted tile wants anyway.
+var owner_row := 0
 ## This side's faction accent, the tint on its name-plate bar. Resolved by the
 ## director off SideIdentity and written here — the side never re-derives a team
 ## colour, in keeping with "draws, and does nothing else" above.
@@ -134,15 +136,26 @@ func _ready() -> void:
 
 ## Poses this half for one exchange. Called once per cut-in, before the clock
 ## starts; everything after that is the pose fields above.
+##
+## Both rows arrive resolved: `p_unit_row` is the faction row this side's army
+## draws in and `p_owner_row` the one the ground's owner does, both the director's
+## SideIdentity answers. A team int here would be a second opinion on who wears
+## what, and for the two sides whose row differs from their slot number it was a
+## wrong one — the whole of COM-10.
 func bind(
-	p_unit: Unit, p_terrain: TerrainType, p_owner_team: int, p_mirror: bool, p_accent: Color
+	p_unit: Unit,
+	p_unit_row: int,
+	p_terrain: TerrainType,
+	p_owner_row: int,
+	p_mirror: bool,
+	p_accent: Color
 ) -> void:
 	unit = p_unit
 	terrain = p_terrain
-	owner_team = p_owner_team
+	owner_row = p_owner_row
 	accent = p_accent
 	mirror = p_mirror
-	_art = UnitSprite.texture_for(p_unit.type, p_unit.team)
+	_art = UnitSprite.texture_for(p_unit.type, p_unit_row)
 	_ridge_tint = _ground_tint(p_terrain.atlas_col, _atlas_row())
 	_flying = p_unit.type.domain == UnitType.AIR
 	_floating = p_unit.type.domain == UnitType.SEA
@@ -529,8 +542,10 @@ func _inward(delta: float) -> float:
 	return -delta if mirror else delta
 
 
+## The terrain atlas row this side's ground is drawn from: the owner's faction row
+## on a property, the untinted row 0 on plain terrain and on anything unowned.
 func _atlas_row() -> int:
-	return owner_team if terrain.team_tinted and owner_team > 0 else 0
+	return owner_row if terrain.team_tinted else SideIdentity.NEUTRAL_ROW
 
 
 static func _terrain_atlas() -> Texture2D:

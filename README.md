@@ -79,7 +79,15 @@ make smoke MODES="cutin_skip"                 # walks a skip across every beat; 
 make smoke MODES="capture_cutin"              # a completing capture, late in its banner
 make smoke MODES="capture_cutin_partial"      # an occupying capture, the property not yet flipped
 make smoke MODES="capture_cutin_skip"         # the same skip walk over the capture cut-in
+make smoke MODES="cutin_iron_commander"       # Iron v Verdant: the cut-in must wear the board's factions
+make smoke MODES="capture_cutin_iron_commander"   # the same, on the marching squad and the property
 ```
+
+The two `_iron_commander` variants are the only cut-in modes that run *with* commanders, and that is
+their whole reason to exist: a commander-less side draws in the row its slot number names, so a
+surface reading a team int where an atlas row belongs looks correct in every other capture. They
+stage Iron against Verdant — rows 3 and 4, neither equal to its slot — so an army painted any way
+but through `SideIdentity` comes out the wrong colour and the frame says so.
 
 `cutin_skip` and `capture_cutin_skip` are the ones that are tests rather than pictures: each plays
 the same cut-in ten times, skipping one frame later each time, and fails unless every run finishes

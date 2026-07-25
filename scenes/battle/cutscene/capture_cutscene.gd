@@ -208,9 +208,12 @@ func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> 
 	_cell = cell
 	var terrain := view.map.terrain_at(cell)
 	_accent = _accent_of(unit.team)
-	var row_before := view.identity.atlas_row(result.owner_before)
-	var row_after := view.identity.atlas_row(unit.team)
-	_stage.bind(unit, terrain, terrain.atlas_col, row_before, row_after)
+	# The two faction rows the flip crosses between, both SideIdentity's answer —
+	# and the second of them is the marching squad's row as well, since the squad
+	# *is* the capturer (see CaptureStage.bind).
+	var owner_row := view.identity.atlas_row(result.owner_before)
+	var capturer_row := view.identity.atlas_row(unit.team)
+	_stage.bind(unit, terrain, terrain.atlas_col, owner_row, capturer_row)
 	var removed := maxi(result.points_before - result.points_after, 0)
 	var hops := clampi(removed, 1, MAX_HOPS)
 	_chips = _split(removed, hops)

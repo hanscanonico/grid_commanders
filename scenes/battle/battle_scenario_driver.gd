@@ -41,6 +41,17 @@ const CAPTURE_CUT_IN_MODE := "capture_cutin"
 const CAPTURE_CUT_IN_POSE := 1.75
 const CAPTURE_PARTIAL_POSE := 1.65
 const PARTIAL_SUFFIX := "_partial"
+## `cutin_iron_commander` and `capture_cutin_iron_commander` stage their cut-in in
+## a *commander* match rather than the commander-less default. That is the whole
+## point of them: a commander-less side deliberately draws in the row its slot
+## number names (SideIdentity plan D4), so every other cut-in capture is blind to
+## a surface that reads a team int where an atlas row belongs.
+const FACTION_SUFFIX := "_iron_commander"
+## The pairing those variants stage, in slot order: Iron on side one, Verdant on
+## side two. Neither faction's atlas row (3 and 4) equals its team int, so
+## *both* halves of the frame are a live comparison — a side whose row happened
+## to match its slot could not tell the two apart.
+const FACTION_CO_IDS: Array[StringName] = [&"viktor_draeg", &"nia_rowan"]
 ## `cutin_skip` walks a skip across the whole cut-in — see _spam_skip. One entry
 ## per beat boundary and a couple past the end, which is where a double-finish
 ## would show up.
@@ -323,6 +334,7 @@ func _run_vanish_demo(mode: String) -> void:
 ##   --demo=cutin_ko                 the same pair, defender routed
 ##   --demo=cutin:bomber:fighter     that matchup, staged wherever it fits
 ##   --demo=cutin_ko:artillery:mech  and the same with a kill
+##   --demo=cutin_iron_commander     the same tanks, but Iron v Verdant
 ##
 ## The exchange is resolved directly rather than driven through the targeting
 ## flow, because the flow deliberately suppresses the cut-in while capturing
@@ -339,6 +351,8 @@ func _stage_cut_in(spec: String) -> void:
 	var parts := spec.split(":")
 	var lethal := parts[0].ends_with(KO_SUFFIX)
 	var game := _battle.game
+	if parts[0].ends_with(FACTION_SUFFIX):
+		_stage_faction_commanders()
 	var attacker := game.unit_at(Vector2i(8, 8))  # red tank
 	var defender := game.unit_at(Vector2i(9, 8))  # blue tank
 	if parts.size() >= 3:
@@ -365,6 +379,7 @@ func _stage_cut_in(spec: String) -> void:
 ##   --demo=capture_cutin           a completing capture, late in its banner
 ##   --demo=capture_cutin_partial   an occupying capture over its OCCUPYING tag
 ##   --demo=capture_cutin_skip      walks a skip across the whole clock (a test)
+##   --demo=capture_cutin_iron_commander  the same capture, taken by Iron
 ##
 ## Like the combat still it is posed rather than driven through the menu, because
 ## the capture flow suppresses the cut-in while capturing for exactly the same
@@ -378,6 +393,8 @@ func _stage_capture_cut_in(mode: String) -> void:
 	if unit == null:
 		push_error("capture_cutin demo: no infantry at (4,3)")
 		return
+	if mode.ends_with(FACTION_SUFFIX):
+		_stage_faction_commanders()
 	var partial := mode.begins_with(CAPTURE_CUT_IN_MODE + PARTIAL_SUFFIX)
 	var result := CaptureCommand.CaptureResult.new()
 	result.owner_before = MapData.NEUTRAL
@@ -556,6 +573,18 @@ func _set_red_commander(id: StringName, charged: bool) -> CommanderType:
 		_battle.game.commander_state(1).charge = co.power_cost
 	_battle.view._restage_identity()  # reflects the staged CO's name and colour, not just the meter
 	return co
+
+
+## Gives both sides a general whose faction row differs from its slot number, then
+## restages identity so the board's units, properties and HUD all wear those
+## factions. What that buys the cut-in variants is a straight comparison inside one
+## frame: whatever colour the board paints a side, the cut-in over it has to paint
+## the same one, and no team-int-as-row shortcut can survive it.
+func _stage_faction_commanders() -> void:
+	for slot in FACTION_CO_IDS.size():
+		var team: int = GameState.TEAMS[slot]
+		_battle.game.set_commander(team, _battle.commander_db.by_id(FACTION_CO_IDS[slot]))
+	_battle.view._restage_identity()
 
 
 ## Raises a power directly (no fire, no banner) so the capture is the chip's

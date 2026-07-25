@@ -246,12 +246,18 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 	_def_style = _styles.for_unit(defender.type)
 	_accent = _accent_of(attacker.team)
 	_atk.bind(
-		attacker, _terrain_at(attacker.cell), view.game.owner_at(attacker.cell), false, _accent
+		attacker,
+		_row_of(attacker.team),
+		_terrain_at(attacker.cell),
+		_owner_row_at(attacker.cell),
+		false,
+		_accent
 	)
 	_def.bind(
 		defender,
+		_row_of(defender.team),
 		_terrain_at(defender.cell),
-		view.game.owner_at(defender.cell),
+		_owner_row_at(defender.cell),
 		true,
 		_accent_of(defender.team)
 	)
@@ -285,6 +291,20 @@ func _accent_of(team: int) -> Color:
 	if commander != null and commander.id != CommanderType.NEUTRAL_ID:
 		return CommanderVisuals.theme_for(commander).color_light
 	return view.identity.theme(team).color_light
+
+
+## The atlas row a side's army is drawn in. Resolved here, beside the accent, and
+## handed to the side — the two answers are the same identity's, so the figure in
+## the cut-in and the sprite on the board can never disagree about whose army it
+## is (Faction Identity plan D1: ask SideIdentity, never re-derive).
+func _row_of(team: int) -> int:
+	return view.identity.atlas_row(team)
+
+
+## And the row the ground under a side is drawn in: the property's owner, resolved
+## the same way. Row 0 for unowned and for plain terrain, which the side applies.
+func _owner_row_at(cell: Vector2i) -> int:
+	return view.identity.atlas_row(view.game.owner_at(cell))
 
 
 ## The cell's terrain. An attacker fires from the cell it has already been moved
