@@ -627,8 +627,6 @@ func _build_toggle(
 	# the same rect; the spacer below keeps ON/OFF hard right where FILL had it.
 	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	# The row is one focusable button, so that is where the tip's focus half goes.
-	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM).follow_focus(button)
 	row.add_child(label)
 
 	var spacer := Control.new()
@@ -642,6 +640,11 @@ func _build_toggle(
 	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(status)
 	UiTheme.make_decoration(row)
+	# After the decoration pass, never before: that pass silences the whole subtree
+	# and a silenced label emits no `mouse_entered` (see UiTheme.make_decoration),
+	# so the words are the one piece of dress reopened to the pointer. The row is
+	# the one focusable control here, so that is where the tip's focus half goes.
+	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM).follow_focus(button)
 
 	var repaint := func(on: bool) -> void:
 		_paint_check(check, mark, on)
