@@ -461,10 +461,14 @@ func refresh_hud() -> void:
 		]
 	)
 	# The chip belongs to whoever's turn it is. It hides itself for a side with no
-	# power, and greys its Fire button for a computer commander — a charged AI
-	# still fills the meter, but the click would be refused.
+	# power, and replaces the Fire button with AI-control copy for a computer
+	# commander — a charged AI still fills the same meter.
+	var team: int = game.current_team
 	commander_chip.update_state(
-		game.commander_state(game.current_team), game.current_team in ai_teams
+		game.commander_state(team),
+		team in ai_teams,
+		identity.theme(team),
+		identity.display_name(team)
 	)
 
 

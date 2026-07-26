@@ -174,10 +174,12 @@ func _fog_hides_unseen() -> bool:
 ## Power from the HUD over an open action menu; ambush and vanish are the same
 ## staged board with Sable Wren's power down and up; victory routs Blue through
 ## a real attack so the victory screen comes up. The commander-identity captures
-## (plan G3): power_ready and power_active stage the HUD chip's ready and active
-## states, power_banner fires a power so its activation card holds, commander_info
-## opens the both-sides reference from the map menu, and commander_victory wins
-## with a general so the victory lockup is fronted by a portrait.
+## (plan G3, COM-18): power_charging/ready/active/ai/mirror cover every HUD chip
+## state, power_ready_contrast is the named legibility gate, power_cursor_fade
+## protects its cursor dodge, power_banner fires a power so its activation card
+## holds, commander_info opens the both-sides reference from the map menu, and
+## commander_victory wins with a general so the victory lockup is fronted by a
+## portrait.
 ##
 ## Modes that stop early return without falling through to the rest of the
 ## chain; `run` still takes the capture. A name that matches nothing here — the
@@ -242,10 +244,18 @@ func _run_demo(mode: String) -> void:
 			await _run_power_menu_demo()
 		"ambush", "vanish":
 			_run_vanish_demo(mode)
-		"power_ready":
-			_set_red_commander(&"mara_voss", true)  # meter full -> READY + live Fire
+		"power_charging":
+			await _stage_charging_power()
+		"power_ready", "power_ready_contrast":
+			await _stage_ready_power()
 		"power_active":
-			_stage_active_power()  # power running -> chip ACTIVE, no banner
+			await _stage_active_power()  # power running -> chip ACTIVE, no banner
+		"power_ai":
+			await _stage_ai_power()
+		"power_mirror":
+			await _stage_mirror_power()
+		"power_cursor_fade":
+			await _stage_cursor_fade()
 		"power_banner":
 			await _stage_power_banner()  # fire it -> the activation card holds
 		"commander_info":
@@ -757,13 +767,65 @@ func _fail(message: String) -> void:
 	_failed = true
 
 
+## The partly filled meter that occupies the chip for most of a match.
+func _stage_charging_power() -> void:
+	var co := _set_red_commander(&"viktor_draeg", false)
+	_battle.game.commander_state(1).charge = int(co.power_cost / 2)
+	_battle.view.refresh_hud()
+	_battle.set_cursor_cell(Vector2i(10, 5))
+	await _battle.get_tree().create_timer(0.2).timeout
+
+
+## The COM-18 contrast frame: live mouse action and the keyboard route on an
+## opaque chip; `power_cursor_fade` separately protects the dodge.
+func _stage_ready_power() -> void:
+	_set_red_commander(&"mara_voss", true)
+	_battle.set_cursor_cell(Vector2i(10, 5))
+	await _battle.get_tree().create_timer(0.2).timeout
+
+
 ## Raises a power directly (no fire, no banner) so the capture is the chip's
 ## ACTIVE state alone. Firing is proved by `power_banner`; this isolates the HUD.
 func _stage_active_power() -> void:
-	var co := _battle.commander_db.by_id(&"alina_ward")
+	# The roster's longest power name makes this the truncation regression frame.
+	var co := _battle.commander_db.by_id(&"viktor_draeg")
 	_battle.game.set_commander(1, co)
 	_battle.game.commander_state(1).power_active = true
 	_battle.view.restage_identity()
+	_battle.set_cursor_cell(Vector2i(10, 5))
+	await _battle.get_tree().create_timer(0.2).timeout
+
+
+## A full computer meter with no player FIRE control.
+func _stage_ai_power() -> void:
+	var co := _battle.commander_db.by_id(&"nia_rowan")
+	_battle.game.set_commander(2, co)
+	_battle.game.commander_state(2).charge = co.power_cost
+	_battle.game.current_team = 2
+	_battle.view.restage_identity()
+	_battle.set_cursor_cell(Vector2i(10, 5))
+	await _battle.get_tree().create_timer(0.2).timeout
+
+
+## Both slots pick Iron; side two's chip must keep the Iron name while borrowing
+## the same Aurora blue its board wears.
+func _stage_mirror_power() -> void:
+	var co := _battle.commander_db.by_id(&"viktor_draeg")
+	_battle.game.set_commander(1, co)
+	_battle.game.set_commander(2, co)
+	_battle.game.commander_state(2).charge = co.power_cost
+	_battle.game.current_team = 2
+	_battle.view.ai_teams.clear()
+	_battle.view.restage_identity()
+	_battle.set_cursor_cell(Vector2i(10, 5))
+	await _battle.get_tree().create_timer(0.2).timeout
+
+
+## The protect-list behavior: the chip fades when the cursor sits under it.
+func _stage_cursor_fade() -> void:
+	_set_red_commander(&"mara_voss", true)
+	_battle.set_cursor_cell(Vector2i.ZERO)
+	await _battle.get_tree().create_timer(0.2).timeout
 
 
 ## Charges Red, then fires the power through the real Fire button so the

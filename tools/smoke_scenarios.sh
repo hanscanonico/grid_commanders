@@ -65,10 +65,11 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # both is what keeps `vanish` honest: a board that hid those units for some
 # unrelated reason would pass on its own, but it would take `ambush` down with
 # it.
-# The commander-identity captures (power_ready/active/banner, commander_info and
-# commander_victory) are the G3 gate: the HUD chip's charging/ready/active
-# states, the activation card, the both-sides info sheet, and the victory lockup,
-# each proved to still render at native 640x360.
+# The commander-identity captures are the G3 and COM-18 gates:
+# power_charging/ready/active/ai/mirror cover every HUD chip state,
+# power_ready_contrast is the named legibility frame, and power_cursor_fade
+# protects the existing cursor dodge. The activation card, both-sides info sheet,
+# and victory lockup are each still proved to render at native 640x360.
 #
 # The `cutin` family is the odd one out: every other mode drives the flow and
 # photographs what it produces, but the battle cut-in is deliberately suppressed
@@ -114,7 +115,8 @@ DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn
 	powermenu+fog victory+fog ambush vanish
-	power_ready power_active power_banner commander_info commander_victory
+	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
+	power_cursor_fade power_banner commander_info commander_victory
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
