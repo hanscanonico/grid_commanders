@@ -223,7 +223,7 @@ jumps to that team's first property.
 - Choosing Fire enters targeting: attackable enemies get a red overlay and a panel previews the
   attack and counter damage; confirm on a target to resolve combat, or cancel back to the menu.
   The preview speaks HP out of 10 like every other HP display — "Deal 5–6 HP / Take 2–3 HP",
-  with the target's "10 → 4–5 HP · 55% · luck included" underneath, where the dimmed percentage is
+  with "Target 10 → 4–5 HP · 55% · luck included" underneath, where the dimmed percentage is
   the luck-free damage kept as secondary detail so a chip attack worth less than a displayed HP
   still shows what it took off. Every bound is the luck range the attack will roll inside — the
   attacker's answers for the opening roll too, since a lucky shot weakens or removes the counter —
