@@ -499,6 +499,14 @@ func refresh_panel(cell: Vector2i) -> void:
 	)
 
 
+## Where the commander chip is drawn, in screen pixels, or an empty rect when the
+## side in hand plays without a power and the chip is hidden. Asked of the chip
+## itself for the same reason the fade above is: that corner's geometry has one
+## owner, and a panel that has to dodge it must never carry a second copy.
+func hud_chip_rect() -> Rect2:
+	return commander_chip.get_global_rect() if commander_chip.visible else Rect2()
+
+
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing
 ## worth previewing under the cursor — hides the panel.
 func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) -> void:

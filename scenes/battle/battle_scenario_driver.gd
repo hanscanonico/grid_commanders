@@ -176,7 +176,9 @@ func _fog_hides_unseen() -> bool:
 ## a real attack so the victory screen comes up. The commander-identity captures
 ## (plan G3, COM-18): power_charging/ready/active/ai/mirror cover every HUD chip
 ## state, power_ready_contrast is the named legibility gate, power_cursor_fade
-## protects its cursor dodge, power_banner fires a power so its activation card
+## protects its cursor dodge, power_mapmenu opens the keyboard route the ready
+## chip advertises and checks the chip is not sitting on top of it,
+## power_banner fires a power so its activation card
 ## holds, commander_info opens the both-sides reference from the map menu, and
 ## commander_victory wins with a general so the victory lockup is fronted by a
 ## portrait.
@@ -256,6 +258,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_mirror_power()
 		"power_cursor_fade":
 			await _stage_ready_power(Vector2i.ZERO)  # the chip fades under the cursor
+		"power_mapmenu":
+			await _stage_power_map_menu()  # the keyboard route to the power, unobscured
 		"power_banner":
 			await _stage_power_banner()  # fire it -> the activation card holds
 		"commander_info":
@@ -833,6 +837,37 @@ func _stage_power_banner() -> void:
 	_set_red_commander(&"cass_orlov", true)
 	_battle.view.commander_chip.fire_button.pressed.emit()
 	await _until_state(Battle.State.IDLE)
+
+
+## The keyboard route the ready chip's hint teaches: Enter on empty ground, then
+## the map menu's first row, which is the Command Power. The chip and this menu
+## share the top-left corner, so the frame alone proves nothing — a menu drawn
+## under the chip photographs just as well as one beside it. Hence the check.
+func _stage_power_map_menu() -> void:
+	_set_red_commander(&"mara_voss", true)
+	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
+	await _until_state(Battle.State.MENU)
+	# The menu sizes its rows and clamps itself a frame after it opens.
+	await _battle.get_tree().process_frame
+	await _battle.get_tree().process_frame
+	_check_map_menu_readable()
+
+
+## The power row the hint sends the player to has to be visible when they get
+## there, and the whole menu has to stay inside the 640x360 frame it is clamped
+## against. Both are read off the live rects rather than recomputed.
+func _check_map_menu_readable() -> void:
+	var rows := BattleMenus.map_actions(_battle.game)
+	if rows.is_empty() or rows[0].id != &"power":
+		_fail("map menu opened without the Command Power as its first row")
+		return
+	var menu := _battle.action_menu.get_global_rect()
+	var chip := _battle.view.commander_chip.get_global_rect()
+	if _battle.view.commander_chip.visible and chip.intersects(menu):
+		_fail("the commander chip %s covers the map menu %s" % [chip, menu])
+	var frame := Rect2(Vector2.ZERO, _battle.get_viewport().get_visible_rect().size)
+	if not frame.encloses(menu):
+		_fail("the map menu %s does not fit the %s frame" % [menu, frame.size])
 
 
 ## Opens the both-sides commander reference through the real map menu, the one

@@ -642,7 +642,11 @@ func _open_build_menu(cell: Vector2i) -> void:
 func _open_map_menu() -> void:
 	_menu_context = &"map"
 	state = State.MENU
-	action_menu.open(BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell))
+	# Its first row is the Command Power, which is exactly what the chip in the
+	# top-left corner sends the player here for — so this one opens clear of it.
+	action_menu.open(
+		BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell), view.hud_chip_rect()
+	)
 
 
 ## Opens the both-sides commander reference over the board. A modal, like the
