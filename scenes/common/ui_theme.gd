@@ -68,6 +68,12 @@ const SIZE_TITLE := 8
 const SIZE_BUTTON := 10
 const SIZE_BODY := 8
 const SIZE_SEGMENT := 7
+## A tooltip's label line. The handoff sets it at --text-sm, which the div-2 rule
+## puts at SIZE_SEGMENT's 7 — but a segment holds one word and a tip holds a
+## sentence, and Pixelify's space advance rounds away at 7 with subpixel
+## positioning off ("How fast moves" sets as "Howfast moves"). One step up is the
+## smallest size that keeps the words apart.
+const SIZE_TIP := 8
 const SIZE_MICRO := 6  # Silkscreen micro-labels; 12 physical px, R1's floor
 
 enum ButtonVariant { PRIMARY, SECONDARY, GHOST }
@@ -319,6 +325,13 @@ static func _disabled_box(fill: Color, border: Color) -> StyleBoxFlat:
 ## silently eats the press and only keyboard focus still selects the card. This
 ## walks the whole subtree rather than naming the pieces, so it holds when one
 ## more label lands in a card later. Call it once the decoration is fully built.
+##
+## Walking everything has one consequence worth knowing: a piece of dress that
+## *does* want the pointer — a `Tooltip` trigger label inside a toggle row — is
+## silenced along with the rest, and a silenced Control emits no `mouse_entered`.
+## Attach the tip after this call, not before; `Tooltip.attach` reopens its trigger
+## to MOUSE_FILTER_PASS, which lets hover through while the press still falls to
+## the Button underneath.
 static func make_decoration(root: Control) -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for child in root.get_children():

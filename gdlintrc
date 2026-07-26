@@ -66,10 +66,21 @@ max-public-methods: 22
 # in MenuCaptureDriver rather than the menu because inlining it went over this
 # limit. Same rule on every file — adding means moving something out first.
 #
-# 905 -> 938 for scenes/battle/battle_scenario_driver.gd, now the longest file:
-# the COM-18 legibility gate staged five more HUD scenarios (charging, ready on
-# a bright board, AI, mirror, cursor fade) plus the map-menu route and the rect
-# check that keeps the chip off it. The driver is a list of staged
-# boards by nature, so it grows a scenario at a time; it is the next file due to
-# come apart, and until it does the ceiling binds it rather than main_menu.gd.
-max-file-lines: 938
+# 905 -> 938 for scenes/battle/battle_scenario_driver.gd, which passed
+# main_menu.gd in turn: the COM-18 legibility gate staged five more HUD
+# scenarios (charging, ready on a bright board, AI, mirror, cursor fade) plus
+# the map-menu route and the rect check that keeps the chip off it. The driver
+# is a list of staged boards by nature, so it grows a scenario at a time; it is
+# the next file due to come apart.
+#
+# 938 -> 940 and the ceiling is main_menu.gd's again, for the same reason it
+# once went back up to 918: rebasing landed two independent additions at once.
+# The scenario driver took the limit to 938 on one side; on the other, every
+# native tooltip_text in the menu became an anchored Tooltip, which is a wider
+# call at each of the seven sites (a label, a detail line and a side, where
+# there had been one string) plus the tip-label helper the segmented groups
+# share. The component itself is already out of the file, in
+# scenes/ui/tooltip.gd — what is left here is the call sites, and they are the
+# menu's own. Neither side is loose, and splitting main_menu.gd is not the
+# tooltip change's job. It sits at exactly 940.
+max-file-lines: 940

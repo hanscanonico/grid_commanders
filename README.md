@@ -177,7 +177,10 @@ then start a **1 Player** match against the AI or a **2 Player** hot-seat game. 
 fog setting, difficulty, commanders, and AI sides. A line under it names what it would resume —
 `DAY 13 · ARSENAL` — so the menu alone answers whether the save is the match you meant; when there
 is nothing readable to resume it reads `NO SAVED MATCH` and the button is greyed out (disabled, not
-hidden). **Quit** exits.
+hidden). **Quit** exits. Each setting's dotted-underlined label — **Speed**, **Difficulty**, **Fog
+of war**, **Battle animations** — explains itself in a tip anchored to it, on hover or on keyboard
+focus, and so do the map cells and the line under **Continue**; leaving, tabbing away or pressing
+Escape dismisses one.
 
 On the selection page you pick **side 1**'s commander, confirm, then **side 2**'s, confirm — the
 turn chips preview each side's faction name and colour as you browse, mirror rule included. Four
@@ -502,12 +505,26 @@ re-declared — faction hues stay `CommanderVisuals`', cream and ink stay
 `CommanderVisuals.PAPER / PAPER_INK / HARD_BORDER` — so there is still exactly one value per colour.
 It is built in code, not a `.tres` Theme, because that is the one form the repo can review in a diff.
 
+A later handoff added the system's **Tooltip**, adopted the same way: the zip ships it as a React
+component and this game has no React tree, so `scenes/ui/tooltip.gd` (`Tooltip`) is that spec
+transcribed — an opaque slate slab with an ink border, a hard shadow and a notched tail pointing at
+its trigger, with every colour, font and metric read from `UiTheme` and its pixel metrics halved for
+the canvas the way the rest of the handoff's numbers are. It replaces Godot's native `tooltip_text`
+throughout the menu, which drew a translucent OS-font tip floating at the cursor with no visible
+referent. `Tooltip.attach` is the whole entry point, and the
+component's doc comment owns the rules worth knowing before reaching for it — a group's tip hangs
+off its micro-label rather than off the segments a pointer is only crossing, hover and keyboard
+focus come from different controls, and a requested side flips when the 640×360 canvas leaves no
+room on it.
+
 A clickable card here — a map cell, a commander mini, a checkbox row — is dress laid *over* a
 `Button`, and `Control`'s default is to hit-test, which a parent's `MOUSE_FILTER_IGNORE` does not
 change for its children. So a panel or a plain `Control` in the dress eats the press and leaves only
 keyboard focus able to select the card. `UiTheme.make_decoration()` is the one fix: call it once the
 dress is built and it walks the whole subtree, so the `Button` stays the single input target even
-when one more piece lands in the card later. Its doc comment carries the reasoning.
+when one more piece lands in the card later. Its doc comment carries the reasoning — including the
+one piece of dress it must not silence, a toggle's tip label, which `Tooltip.attach` re-opens to
+hover afterwards.
 
 The map picker draws live board miniatures (`scenes/menu/map_thumbnail.gd`) by blitting the terrain
 atlas per cell — column from `TerrainType.atlas_col`, row from `SideIdentity.atlas_row`, the same

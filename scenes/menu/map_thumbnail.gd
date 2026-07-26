@@ -29,6 +29,14 @@ var _tile := 4
 var _origin := Vector2.ZERO
 
 
+## A picture, never a target: a Control defaults to swallowing the mouse, and a
+## thumbnail filling its picker cell swallowed the cell's. That cost the cell both
+## its hover styling and, once the menu stopped using the engine's own tooltips —
+## which walk up the tree to find one — its explanation as well.
+func _init() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
 ## Points the thumbnail at a board and fits it, centred, into `box` (canvas px).
 ## The tile size is the largest whole-pixel size that keeps the whole board inside
 ## the box, so different-shaped boards all sit in an identical cell.
