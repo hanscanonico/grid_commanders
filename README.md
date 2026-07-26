@@ -190,11 +190,11 @@ plays the plain rules.
 Mouse, keyboard, and controller all navigate it, and **Back** returns to the menu without discarding
 the map or fog choice. Nothing is committed until both sides are locked.
 
-In battle each side's commander gets a portrait HUD chip — the side's resolved faction colour and
-name over an opaque dark backing, with a charge meter that reads charging, READY, or the running
-power by name — plus a faction-tinted activation card when a power fires, a both-sides reference
-sheet from the map menu (which also says what makes the meter rise), and a portrait on the victory
-screen.
+In battle the side in hand gets a portrait and charge meter in the docked bottom HUD bar — the
+portrait field in the side's resolved faction colour, the power named beside the meter it charges,
+and a readout that reads the live charge, `READY · F`, or `ACTIVE` — plus a faction-tinted
+activation card when a power fires, a both-sides reference sheet from the map menu (which also says
+what makes the meter rise), and a portrait on the victory screen.
 
 ## Controls
 
@@ -210,7 +210,8 @@ jumps to that team's first property.
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
   its movement range; move the cursor within range to preview the path, then confirm a destination
   to move there. Remaining fuel caps that range, so a dry unit is stranded where it stands
-- Cancel (`Esc` / `X` / `Backspace`): deselect, or undo an uncommitted move
+- Cancel (`Esc` / `X` / `Backspace`): deselect, or undo an uncommitted move — and, with nothing
+  selected, open the map menu, which is the control the top bar's `ESC · MENU` hint names
 - Confirm or left-click on a unit you *cannot* command — an enemy, or one of yours that has
   already acted — previews where it could move, in the same blue overlay. Clicking another
   visible unit moves the preview there (a ready unit of your own still just selects), and cancel
@@ -266,21 +267,27 @@ jumps to that team's first property.
   lists what *that* facility makes, cheapest first, each row drawing the unit's artwork in your
   team's colours beside its name and cost; rows you can't afford are greyed out. A bought unit
   spawns exhausted and acts next turn
-- Confirm on an empty tile: the map menu opens with **End Turn**, which hands play to the other
-  team (the day counter advances when the rotation wraps back to the first side), and **Save**, which writes
-  the whole match — map, day, funds, ownership, every unit, both commanders, and the RNG stream —
-  over the single save slot. The banner names what it stored, `Saved Day 4 · Scrimmage`, in the
-  same words the menu's Continue line reads back. Resume it later with **Continue** on the main
+- Confirm on an empty tile, or cancel with nothing selected: the map menu opens with **End Turn**,
+  which hands play to the other team (the day counter advances when the rotation wraps back to the
+  first side), and **Save**, which writes the whole match — map, day, funds, ownership, every unit,
+  both commanders, and the RNG stream — over the single save slot. The banner names what it stored,
+  `Saved Day 4 · Scrimmage`, in the same words the menu's Continue line reads back. Resume it later with **Continue** on the main
   menu. When your Command Power is charged the menu lists it first, so it is reachable from the
   keyboard as well as from the HUD button
-- The HUD shows the current day, team, and funds — plus, for a side playing a commander, that
-  side's charge meter and a **FIRE** button (see Commanders below); the corner panel leads with
-  the unit on the hovered tile, if any: its sprite, name, army, `HP x/10`, fuel and ammo out of
-  their maximums (no ammo row for units that need none), its range when it is an indirect,
-  `Carrying …` when it is a loaded transport, and a `Waited` badge — dimming the card — once it
-  has acted this turn. Below that sits a compact terrain card: the tile's artwork, name, defense
-  stars, the move cost for the occupant's movement class (every class that can enter, when the
-  tile is empty), and the owner, with `capture: N left` while a capture is in progress
+- The HUD is two opaque bars docked above and below the board, never panels floating on it: the
+  board sits in the band they leave over, and only transient things — damage numbers, the capture
+  counter, the attack forecast, the action menu — are ever drawn over terrain. The **top bar**
+  carries the day, the side in hand as a faction colour chip and name, that commander's doctrine,
+  the funds, and the `ESC · MENU` hint. The **bottom bar** carries, left to right: the commander's
+  portrait, name, power name, and — for a side playing a power — the charge meter with its
+  `charge / cost` readout, which reads `READY · F` when it is full and `ACTIVE` while it runs,
+  plus a **FIRE** button (see Commanders below); then the unit on the hovered tile, if any — its
+  sprite, name, HP as ten pips, fuel and ammo out of their maximums (no ammo readout for units
+  that need none), and an order line naming its movement class, its range when it is an indirect,
+  `DIVED`, `LOW FUEL`, `CARRYING …` when it is a loaded transport, and `WAITED` or `READY`, with
+  the sprite greyed once it has acted this turn; then, pinned right, the tile's artwork, name,
+  defense stars, owner, and `CAP N` while a capture is in progress. With nothing under the cursor
+  the unit and tile thirds go blank and the bar keeps its height — the board never shifts
 - Taking the enemy HQ or destroying every enemy unit ends the match on a victory screen naming
   the winner and the day, with **Rematch** (same map, fog, commanders, and sides) and **Main Menu**
 
@@ -296,7 +303,7 @@ doctrine line, power name and description, and every balance number. Read it —
 page's card, which binds the same fields — rather than a list here, so the numbers have one home.
 
 **Colours and names.** A side wears its commander's faction: pick Verdant League and your army is
-green and called *Verdant League* everywhere — the board, the day banner, the terrain panel, the
+green and called *Verdant League* everywhere — the board, the day banner, the HUD bars, the
 victory screen. When both sides pick the same faction, the first keeps the faction colour and the
 second borrows a distinct one (Aurora blue, else Meridian red) while both keep the faction name;
 the side number and commander tell them apart. A side with **No Commander** is *First*/*Second
@@ -314,18 +321,18 @@ as well. The meter is capped at what that general's power costs, so it never hol
 power's worth. And a side whose power is *running* banks nothing, dealt or lost, until it comes
 down — every power is re-earned from empty, not refilled by the fighting it enables.
 
-**Firing.** When the meter fills, the chip's **FIRE** button lights up — for the mouse, and only
-the mouse: it deliberately never takes keyboard focus, so a press is never swallowed by a button
-the battle would have refused anyway. The keyboard route is the map menu (confirm on an empty
-tile), which lists the power as its first entry, and the ready chip prints that route as
-`ENTER ON EMPTY TILE · POWER`; the menu opens clear of the chip, so the row the hint sends you to
-is never underneath it. Firing spends the whole cost and raises the power immediately. Most powers
-last until you end that turn; a few — Hold the Line, Vanish, Signal Jam — exist to bother the
-opponent and so survive their turn, ending as yours begins.
+**Firing.** When the meter fills, a **FIRE** button appears beside it in the HUD bar — for the
+mouse, and only the mouse: it deliberately never takes keyboard focus, so a press is never swallowed
+by a button the battle would have refused anyway. The keyboard has two routes of its own: the `F`
+shortcut the meter's readout advertises, and the map menu (confirm on an empty tile, or cancel with
+nothing selected), which lists the power as its first entry. All three go through the same command.
+Firing spends the whole cost and raises the power immediately. Most powers last until you end that
+turn; a few — Hold the Line, Vanish, Signal Jam — exist to bother the opponent and so survive their
+turn, ending as yours begins.
 
 The AI charges and fires powers too, on its own commander's judgement of the right moment. Its
-meter is shown while it plays, with `AI CONTROLLED · FIRES AUTOMATICALLY` in place of your FIRE
-button — there is nothing to press.
+meter is shown while it plays, reading `READY · AI` where yours offers the shortcut: no Fire button
+appears and the key is refused — it is not yours to press.
 
 **Quotes.** A power's activation card opens with the general speaking — a short in-character
 line above the power's name, beside their portrait. The lines are data like everything else
@@ -535,5 +542,15 @@ Two fonts are vendored under `assets/fonts/`, both SIL OFL 1.1 from Google Fonts
 `assets/LICENSES.md`: **Pixelify Sans** (display and UI chrome) and **Silkscreen** (micro-labels,
 numerals, badges). The design-system handoff named them "chosen substitutes" because the repo shipped
 no UI font; the substitution ends there — they are the game's faces now, rasterised with antialiasing
-off so they sit on the same pixel grid as the art. The battle HUD keeps its current dress; aligning it
-to `UiTheme` is a deliberate future step, not a rider on the menu work.
+off so they sit on the same pixel grid as the art.
+
+The battle HUD followed, under a design handoff of its own (`.lavish/hud/`): the floating commander
+chip and corner terrain panel were replaced by two docked, opaque, full-width bars
+(`scenes/ui/hud_top_bar.gd`, `hud_bottom_bar.gd`, with `hp_pips.gd`), built in code like the menu
+for the same reviewability reason. `UiTheme` stays the single authority — the bar scripts hardcode
+no colour and no size: both fixed bar heights, the HUD colour tokens, and the shared
+`hud_divider` / `hud_spacer` / `hud_label` builders live there. One deliberate departure from that
+handoff: it assumes the app letterboxes the map with empty black bands, so docking costs the board
+nothing. This build has no such bands — the map sits inside a darkened backdrop ring — so the bars
+take 69 canvas pixels that used to show backdrop, and on a map larger than the viewport, board. The
+win is that nothing persistent covers the board any more.

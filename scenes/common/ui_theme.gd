@@ -1,10 +1,10 @@
 class_name UiTheme
 extends RefCounted
-## The menu's presentation authority: the Grid Commander Design System, transcribed
-## into Godot styleboxes and fonts. Where the handoff's cream/ink/hard-shadow look
-## is drawn — the main menu and the commander select page — the recipe comes from
-## here, so a colour or a shadow is defined once and every surface reads the same
-## value (menu-revamp plan D1).
+## The presentation authority for the shell: the Grid Commander Design System,
+## transcribed into Godot styleboxes and fonts. Where the handoff's look is drawn
+## — the main menu, the commander select page, and the two docked battle HUD bars
+## — the recipe comes from here, so a colour, a shadow or a bar height is defined
+## once and every surface reads the same value (menu-revamp plan D1).
 ##
 ## The palette splits three ways. Faction colours are never re-declared: they stay
 ## CommanderVisuals.FactionTheme's, reached through `menu_identity()` so a future
@@ -44,12 +44,18 @@ const PAPER_RAISED := Color(0.95686, 0.93725, 0.89020)  # #f4efe3 hovered/select
 const PAPER_2 := Color(0.81176, 0.81176, 0.81176)  # #cfcfcf secondary grey panel
 const CAPTURE := Color(0.42353, 0.76078, 0.29020)  # #6cc24a capture green (toggle ON)
 const WHITE := Color(0.93333, 0.93333, 0.93333)  # #eeeeee pure light
+const INK_3 := Color(0.54118, 0.56471, 0.60000)  # #8a9099 faint text — HUD labels
+## #e0a92e. The design system has no `--warn`: the amber that fills a charge
+## meter, an ammo bar and a defense star is this one token, and the HUD handoff
+## calls it out as the bug that left the commander meter unstyled.
+const AMMO := Color(0.87843, 0.66275, 0.18039)
+const DANGER := Color(0.84706, 0.29020, 0.23529)  # #d84a3c critical HP
 ## The signature hard drop shadow: ink, 90% opaque, zero blur. rgba(35,39,43,.9).
 const SHADOW_INK := Color(0.13725, 0.15294, 0.16863, 0.9)
 
 # --- aliases: colours that already have a shipped authority (plan D1) ----------
 ## Cream panel surface and the two inks on it stay CommanderVisuals', so the menu
-## and the terrain panel can never disagree about what "paper" is.
+## and the battle screen can never disagree about what "paper" is.
 const PAPER := CommanderVisuals.PAPER
 const INK := CommanderVisuals.PAPER_INK  # body text / muted borders on cream
 const HARD_BORDER := CommanderVisuals.HARD_BORDER  # the darkest outline
@@ -62,6 +68,26 @@ const BORDER := 1  # chrome outline; 2 physical px on the default window
 const PANEL_BORDER := 2  # the panel's heavier outline
 const SHADOW := 1  # hard-shadow size; shows 2*SHADOW canvas px past bottom-right
 const RADIUS := 1  # a whisker of rounding, at most
+
+# --- the docked battle HUD (the handoff, .lavish/hud/SPEC.md) ------------------
+## Both bars are fixed height, and the board's viewport is what is left over. The
+## handoff's 46/92 px halve like every other metric here: the 640x360 canvas
+## doubles into the window, so 23 + 46 canvas px show as 46 + 92 on screen.
+##
+## Fixed is the point, not an implementation detail. A bar that grows when a unit
+## is selected would re-lay-out the board mid-turn and slide the map under the
+## cursor, so HUD_TOP_H + HUD_BOTTOM_H is a constant the camera can be framed
+## against once (SPEC "Fixed heights", "Empty is empty").
+const HUD_TOP_H := 23
+const HUD_BOTTOM_H := 46
+const HUD_BARS_H := HUD_TOP_H + HUD_BOTTOM_H
+## The 3px ink edge the bars present to the board, halved like the rest.
+const HUD_EDGE := 2
+## The vertical rule that splits a bar's groups.
+const HUD_RULE_W := 2
+## One HP cell of the ten-pip strip (handoff 6x14).
+const PIP := Vector2(3, 7)
+const PIP_GAP := 1
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
@@ -179,6 +205,65 @@ static func dark_panel_box(fill := SLATE_800) -> StyleBoxFlat:
 	box.set_border_width_all(PANEL_BORDER)
 	box.set_corner_radius_all(RADIUS)
 	return hard_shadow(box)
+
+
+## One of the two docked HUD bars: an opaque slate slab with a single ink edge on
+## the side that faces the board. Never translucent and never shadowed — it is
+## chrome outside the map, not a card floating on it (SPEC "Opaque only").
+static func hud_bar_box(edge_on_top: bool) -> StyleBoxFlat:
+	var box := flat(SLATE_800)
+	box.border_color = HARD_BORDER
+	if edge_on_top:
+		box.border_width_top = HUD_EDGE
+	else:
+		box.border_width_bottom = HUD_EDGE
+	return box
+
+
+## A vertical rule between two groups inside a docked bar. The height is the
+## rule's own rather than the bar's, so each bar keeps the inset it wants from
+## its own fixed height.
+static func hud_divider(height: int) -> Control:
+	var line := Panel.new()
+	line.custom_minimum_size = Vector2(HUD_RULE_W, height)
+	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_theme_stylebox_override("panel", flat(SLATE_700))
+	return line
+
+
+## Fixed horizontal padding inside a bar's row. Never negative, so a caller may
+## hand it the pad minus the row's separation without guarding the result.
+static func hud_spacer(width: int) -> Control:
+	var pad := Control.new()
+	pad.custom_minimum_size = Vector2(maxi(width, 0), 0)
+	return pad
+
+
+## One label on a docked bar: Silkscreen, vertically centred in a row whose
+## height is fixed. `display_face` swaps in Pixelify for the two readouts the
+## top bar sets as numerals rather than as micro-labels.
+##
+## Here rather than on either bar, for the same reason the colours are: a HUD
+## label defined twice is a HUD label that drifts (menu-revamp plan D1).
+static func hud_label(text: String, font_size: int, color: Color, display_face := false) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", display() if display_face else stat())
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return label
+
+
+## The HP strip's colour rule, straight from the handoff: green above 6, amber
+## through the middle, red at 3 or below. One place, so the pips in the bar and
+## any later readout of the same number cannot disagree.
+static func hp_color(hp: int) -> Color:
+	if hp > 6:
+		return CAPTURE
+	if hp > 3:
+		return AMMO
+	return DANGER
 
 
 ## A panel's title band — the header bar that spans the top of a Panel. Ink by

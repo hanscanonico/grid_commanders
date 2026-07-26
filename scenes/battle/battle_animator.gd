@@ -368,14 +368,20 @@ func show_power_banner(commander: CommanderType, team: int) -> void:
 ##
 ## Skipped under Instant too, which is the one tier where it is theatre rather
 ## than feedback: there is no hit animation left for it to punctuate.
+##
+## Tweened through `BattleView.shake_offset`, never `camera.offset` directly. The
+## view uses that property to dock the board in the band between the two HUD
+## bars, so a shake written straight to the camera would settle at Vector2.ZERO
+## and leave the board half a bar low for the rest of the match. The view
+## composes the two; the shake only ever says how far it is jittering.
 func shake_camera(strength: float = 3.0) -> void:
 	if capturing or Settings.speed.instant:
 		return
 	var tween := node.create_tween()
 	for i in 4:
 		var offset := Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
-		tween.tween_property(camera, "offset", offset, SHAKE_STEP_SECONDS)
-	tween.tween_property(camera, "offset", Vector2.ZERO, SHAKE_STEP_SECONDS)
+		tween.tween_property(view, "shake_offset", offset, SHAKE_STEP_SECONDS)
+	tween.tween_property(view, "shake_offset", Vector2.ZERO, SHAKE_STEP_SECONDS)
 
 
 ## Skipped while capturing, for the same reason as `shake_camera`: a loop has

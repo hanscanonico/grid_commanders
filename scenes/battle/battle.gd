@@ -124,7 +124,7 @@ func _ready() -> void:
 	_outcome = _build_outcome()
 	_outcome.configure(built.watching, built.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
-	view.commander_chip.fire_button.pressed.connect(_fire_command_power)
+	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
 	rematch_button.pressed.connect(_rematch)
 	menu_button.pressed.connect(_go_to_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
@@ -197,13 +197,12 @@ func _build_view() -> BattleView:
 	built.units_root = $Units
 	built.cursor = cursor
 	built.camera = camera
-	built.terrain_panel = %TerrainPanel
+	built.hud_bottom = %HudBottom
 	built.damage_preview = %DamagePreview
 	built.atk_label = %AtkLabel
 	built.counter_label = %CounterLabel
 	built.outcome_label = %OutcomeLabel
-	built.turn_label = %TurnLabel
-	built.commander_chip = %CommanderChip
+	built.hud_top = %HudTop
 	built.db = db
 	built.map = map
 	built.game = game
@@ -286,6 +285,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cancel()
 	elif event.is_action_pressed(&"show_range"):
 		_toggle_range()
+	elif event.is_action_pressed(&"fire_power"):
+		_fire_command_power()  # the shortcut the charged meter advertises
 	else:
 		for dir: Array in DIR_ACTIONS:
 			if event.is_action_pressed(dir[0], true):
@@ -344,7 +345,9 @@ func confirm_at(cell: Vector2i) -> void:
 
 
 func _cancel() -> void:
-	if state == State.UNIT_SELECTED:
+	if state == State.IDLE:
+		_open_map_menu()  # nothing to back out of; the control "ESC · MENU" names
+	elif state == State.UNIT_SELECTED:
 		_clear_selection()
 	elif state == State.PREVIEW:
 		_clear_preview()
@@ -591,13 +594,18 @@ func _handle_map_action(action: StringName) -> void:
 	_on_turn_started()
 
 
-## Fires the current team's Command Power. Reached from the HUD button and from
-## the map menu; both go through PowerCommand, like every other action. Guarded
-## rather than assumed legal, because the HUD button sits outside the selection
-## flow — it is reachable mid-move — and the command is the authority on that.
+## Fires the current team's Command Power. Reached from the HUD button, the F
+## shortcut its charged meter advertises, and the map menu; all three go through
+## PowerCommand, like every other action. Guarded rather than assumed legal,
+## because the HUD button sits outside the selection flow — it is reachable
+## mid-move — and the command is the authority on that. *Who is at the keyboard*
+## is the one thing it cannot answer, so the refusal the bar makes by hiding the
+## button from a computer commander is made here, once, for all three.
 func _fire_command_power() -> void:
 	var command := PowerCommand.new()
-	if state not in [State.IDLE, State.MENU] or command.validate(game) != "":
+	if game.current_team in ai_teams or state not in [State.IDLE, State.MENU]:
+		return
+	if command.validate(game) != "":
 		return
 	command.apply(game)
 	_announce_power(command)
@@ -643,11 +651,10 @@ func _open_build_menu(cell: Vector2i) -> void:
 func _open_map_menu() -> void:
 	_menu_context = &"map"
 	state = State.MENU
-	# Its first row is the Command Power, which is exactly what the chip in the
-	# top-left corner sends the player here for — so this one opens clear of it.
-	action_menu.open(
-		BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell), view.hud_chip_rect()
-	)
+	# Its first row is the Command Power, which is one of the two routes the charged
+	# meter in the bottom bar advertises (F is the other). Nothing floats over the
+	# board any more, so the menu only has to clamp inside the band between the bars.
+	action_menu.open(BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell))
 
 
 ## Opens the both-sides commander reference over the board. A modal, like the

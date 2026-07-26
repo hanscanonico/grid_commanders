@@ -25,11 +25,11 @@ max-returns: 12
 # of a caller another class has. Adding to BattleView means moving something out
 # first, which is the point.
 #
-# 21 -> 22 for `hud_chip_rect`, on the same reasoning as `restage_identity`: the
-# corner the commander chip occupies has one owner, and the map menu that must
-# dodge it asks rather than carrying a second copy of that geometry. The debt is
-# acknowledged, not paid — the facade is due a split before it takes a 23rd.
-max-public-methods: 22
+# It went 21 -> 22 for `hud_chip_rect`, the one owner of the corner the floating
+# commander chip occupied, and back down to 21 when the docked HUD bars retired
+# both: there is no floating chip left for a menu to dodge, so the geometry seam
+# came out with it. Adding to BattleView still means moving something out first.
+max-public-methods: 21
 
 # Ratchet, not a target: scenes/battle/battle.gd is the longest file and is
 # being split a responsibility at a time. Set at its current length so the file
@@ -67,11 +67,11 @@ max-public-methods: 22
 # limit. Same rule on every file — adding means moving something out first.
 #
 # 905 -> 938 for scenes/battle/battle_scenario_driver.gd, which passed
-# main_menu.gd in turn: the COM-18 legibility gate staged five more HUD
-# scenarios (charging, ready on a bright board, AI, mirror, cursor fade) plus
-# the map-menu route and the rect check that keeps the chip off it. The driver
-# is a list of staged boards by nature, so it grows a scenario at a time; it is
-# the next file due to come apart.
+# main_menu.gd in turn: the COM-18 legibility gate staged four more HUD scenarios
+# (charging, ready on a bright board, AI, mirror) plus the map-menu route and the
+# rect check that keeps that menu clear of the opaque chrome. The driver is a list
+# of staged boards by nature, so it grows a scenario at a time; it is the next file
+# due to come apart.
 #
 # 938 -> 940 and the ceiling is main_menu.gd's again, for the same reason it
 # once went back up to 918: rebasing landed two independent additions at once.

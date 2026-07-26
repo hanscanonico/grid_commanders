@@ -1,10 +1,10 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
-[ext_resource type="Script" path="res://scenes/ui/terrain_panel.gd" id="2"]
+[ext_resource type="Script" path="res://scenes/ui/hud_bottom_bar.gd" id="2"]
 [ext_resource type="Texture2D" path="res://assets/ui/cursor.png" id="3"]
 [ext_resource type="Script" path="res://scenes/ui/action_menu.gd" id="4"]
-[ext_resource type="Script" path="res://scenes/ui/commander_hud_chip.gd" id="5"]
+[ext_resource type="Script" path="res://scenes/ui/hud_top_bar.gd" id="5"]
 [ext_resource type="Script" path="res://scenes/ui/commander_power_banner.gd" id="6"]
 [ext_resource type="Script" path="res://scenes/ui/commander_info_sheet.gd" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/battle/cutscene/combat_cutscene.tscn" id="8"]
@@ -47,126 +47,24 @@ position_smoothing_speed = 12.0
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="TerrainPanel" type="PanelContainer" parent="UI"]
+[node name="HudTop" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
-anchors_preset = 2
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+script = ExtResource("5")
+
+[node name="HudBottom" type="PanelContainer" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 12
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = -88.0
-offset_right = 168.0
-offset_bottom = -8.0
+offset_top = -46.0
+grow_horizontal = 2
 grow_vertical = 0
 script = ExtResource("2")
-
-[node name="Margin" type="MarginContainer" parent="UI/TerrainPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
-
-[node name="Rows" type="VBoxContainer" parent="UI/TerrainPanel/Margin"]
-layout_mode = 2
-
-[node name="UnitRows" type="VBoxContainer" parent="UI/TerrainPanel/Margin/Rows"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-
-[node name="UnitHeader" type="HBoxContainer" parent="UI/TerrainPanel/Margin/Rows/UnitRows"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="UnitIcon" type="TextureRect" parent="UI/TerrainPanel/Margin/Rows/UnitRows/UnitHeader"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-size_flags_vertical = 4
-expand_mode = 1
-stretch_mode = 5
-
-[node name="UnitNameLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/UnitRows/UnitHeader"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme_override_font_sizes/font_size = 13
-text = "Tank"
-
-[node name="UnitTeamLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/UnitRows/UnitHeader"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_font_sizes/font_size = 10
-text = "First Army"
-horizontal_alignment = 2
-
-[node name="UnitHpLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/UnitRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "HP 10/10"
-
-[node name="UnitSupplyLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/UnitRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "Fuel 70/70   Ammo 9/9"
-
-[node name="UnitExtraLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/UnitRows"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "Rng 2-3"
-
-[node name="Separator" type="HSeparator" parent="UI/TerrainPanel/Margin/Rows"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-
-[node name="TerrainHeader" type="HBoxContainer" parent="UI/TerrainPanel/Margin/Rows"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="TerrainIcon" type="TextureRect" parent="UI/TerrainPanel/Margin/Rows/TerrainHeader"]
-unique_name_in_owner = true
-texture_filter = 1
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 2
-size_flags_vertical = 4
-expand_mode = 1
-stretch_mode = 5
-
-[node name="NameLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/TerrainHeader"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme_override_font_sizes/font_size = 13
-text = "Plains"
-
-[node name="DefLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows/TerrainHeader"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_font_sizes/font_size = 10
-text = "DEF 1"
-horizontal_alignment = 2
-
-[node name="MoveLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "Foot 1  Boot 1  Tires 2  Treads 1"
-
-[node name="OwnerLabel" type="Label" parent="UI/TerrainPanel/Margin/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "Neutral"
 
 [node name="ActionMenu" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
@@ -213,38 +111,6 @@ modulate = Color(1, 1, 1, 0.7)
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Target 10 → 4–5 HP · 55% · luck included"
-
-[node name="CommanderChip" type="PanelContainer" parent="UI"]
-unique_name_in_owner = true
-visible = false
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 8.0
-offset_bottom = 8.0
-script = ExtResource("5")
-
-[node name="DayPanel" type="PanelContainer" parent="UI"]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -8.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = 8.0
-grow_horizontal = 0
-
-[node name="DayMargin" type="MarginContainer" parent="UI/DayPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 3
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 3
-
-[node name="TurnLabel" type="Label" parent="UI/DayPanel/DayMargin"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "Day 1  -  First Army  -  Funds 0"
 
 [node name="TurnBanner" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
