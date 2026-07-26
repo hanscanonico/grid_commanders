@@ -53,8 +53,10 @@ which compares a full AI turn command for command.
   (`ai/threat_map.gd`): for every visible enemy, its `MovementResolver` reach ×
   its `AttackRange` firing ring, and the damage a `CombatResolver.forecast_at`
   says it would do to the unit standing there. Reuses the single authorities and
-  re-derives no rules; forecast is luck-free, so it draws no RNG and the replay
-  guarantee holds. `forecast_at` takes the defender's cell as an effective value,
+  re-derives no rules; the damage it reads is luck-free, and the forecast only
+  ever *reads* luck's bounds (for the preview's HP spans) rather than rolling
+  them, so it draws no RNG and the replay guarantee holds.
+  `forecast_at` takes the defender's cell as an effective value,
   so scoring a hypothetical move is a pure read — nothing is moved to ask. Cached once per turn, keyed on the day and the enemy set, so a
   new day always rebuilds it and a counter-kill mid-turn does too.
 

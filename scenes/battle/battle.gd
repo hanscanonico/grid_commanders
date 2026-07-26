@@ -201,6 +201,7 @@ func _build_view() -> BattleView:
 	built.damage_preview = %DamagePreview
 	built.atk_label = %AtkLabel
 	built.counter_label = %CounterLabel
+	built.outcome_label = %OutcomeLabel
 	built.turn_label = %TurnLabel
 	built.commander_chip = %CommanderChip
 	built.db = db

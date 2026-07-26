@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commander — Unified UX recovery plan · 2026-07-24</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, li, dd, blockquote, figcaption, td, th, .badge) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2475ad;
+      --gc-water-deep: #123e63;
+      --gc-grass: #83c657;
+      --gc-grass-deep: #4e8c35;
+      --gc-sand: #d9c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-red-deep: #9e332c;
+      --gc-blue: #3276c6;
+      --gc-gold: #d9a62e;
+      --gc-paper: #f2ead7;
+      --gc-night: #0e1b15;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.09) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,.035) 25%, transparent 25%);
+      background-size: 32px 32px, 32px 32px, 64px 64px;
+    }
+
+    .gc-shell {
+      width: min(1240px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 95%, white 5%);
+      box-shadow: 0 0 0 2px var(--gc-water-deep), 0 24px 90px rgba(7,34,55,.38);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.98), rgba(24,75,109,.94)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.08) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.08) 31px 32px);
+    }
+    .gc-hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 38%;
+      height: 210px;
+      clip-path: polygon(0 38%, 100% 0, 100% 100%, 0 100%);
+      background:
+        linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px),
+        var(--gc-grass-deep);
+      background-size: 32px 32px;
+      opacity: .42;
+    }
+    .gc-hero > * { position: relative; z-index: 1; }
+    .gc-kicker {
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font: 800 .75rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .gc-section-number {
+      display: inline-grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 2.2rem;
+      height: 2.2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 900 .82rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+    }
+    .gc-mono, code {
+      font: 750 .8rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .gc-blocker { border-left: 6px solid var(--gc-red); }
+    .gc-high { border-left: 6px solid var(--gc-gold); }
+    .gc-medium { border-left: 6px solid var(--gc-blue); }
+    .gc-low { border-left: 6px solid #8a97a3; }
+    .gc-good { border-left: 6px solid var(--gc-grass-deep); }
+    .gc-phase { position: relative; border-top: 5px solid var(--gc-blue); }
+    .gc-phase[data-tone="red"] { border-top-color: var(--gc-red); }
+    .gc-phase[data-tone="gold"] { border-top-color: var(--gc-gold); }
+    .gc-phase[data-tone="green"] { border-top-color: var(--gc-grass-deep); }
+    .gc-phase-index {
+      position: absolute;
+      top: -1.15rem;
+      right: 1rem;
+      min-width: 3.1rem;
+      padding: .25rem .45rem;
+      border: 2px solid var(--gc-ink);
+      border-radius: .3rem;
+      background: var(--color-base-100);
+      text-align: center;
+      font: 900 .76rem ui-monospace, SFMono-Regular, Menlo, monospace;
+      box-shadow: 3px 3px 0 rgba(23,40,56,.22);
+    }
+    .gc-checks li {
+      display: grid;
+      grid-template-columns: 1.2rem minmax(0, 1fr);
+      gap: .5rem;
+      align-items: start;
+    }
+    .gc-checks li::before { content: "✓"; color: var(--gc-grass-deep); font-weight: 950; }
+    .gc-game-mock {
+      overflow: hidden;
+      color: #f4f5f5;
+      border: 4px solid #111518;
+      border-radius: .4rem;
+      background: #15251b;
+      box-shadow: 5px 5px 0 rgba(17,21,24,.2);
+    }
+    .gc-game-mock__bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .6rem .8rem;
+      border-bottom: 3px solid #111518;
+      background: #29323a;
+      font-weight: 900;
+      letter-spacing: .03em;
+    }
+    .gc-game-mock__body { padding: 1rem; }
+    .gc-filter[aria-pressed="true"] {
+      color: white;
+      border-color: var(--gc-water-deep);
+      background: var(--gc-water-deep);
+    }
+    .gc-issue-row[hidden] { display: none; }
+    .gc-sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 2px solid color-mix(in srgb, var(--gc-ink) 22%, transparent);
+      background: color-mix(in srgb, var(--color-base-100) 92%, transparent);
+      backdrop-filter: blur(12px);
+    }
+    .gc-sticky-nav a { white-space: nowrap; }
+    .gc-verified {
+      display: inline-block;
+      padding: .05rem .4rem;
+      border: 1.5px solid var(--gc-grass-deep);
+      border-radius: .3rem;
+      color: var(--gc-grass-deep);
+      font: 800 .62rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+    .gc-inflight {
+      display: inline-block;
+      padding: .05rem .4rem;
+      border: 1.5px solid var(--gc-blue);
+      border-radius: .3rem;
+      color: var(--gc-blue);
+      font: 800 .62rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+    .gc-src {
+      font: 750 .68rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: color-mix(in srgb, var(--gc-ink) 62%, transparent);
+      white-space: nowrap;
+    }
+    .gc-register td, .gc-register th { vertical-align: top; }
+    .gc-register tbody tr { border-top: 1.5px solid color-mix(in srgb, var(--gc-ink) 14%, transparent); }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================================================ HERO -->
+  <header class="gc-hero px-6 py-10 sm:px-10 sm:py-12">
+    <p class="gc-kicker opacity-80">Grid Commander · unified UX recovery plan · 2026-07-24</p>
+    <h1 class="mt-3 max-w-3xl text-3xl sm:text-4xl font-black leading-tight">
+      Two playtests, one plan.<br>The tactics are readable — the first five minutes are not.
+    </h1>
+    <p class="mt-4 max-w-3xl text-sm sm:text-base opacity-90 leading-relaxed">
+      On the same day, two independent playtests hit the shipped game from different angles: a
+      <strong>keyboard-first first-contact playthrough</strong> (menu → day two, capture, build) and a
+      <strong>blind full-match audit</strong> (fresh <code class="text-white/90">user://</code>, Day&nbsp;1 to defeat,
+      then fog, subs, hot-seat and resume passes with findings traced to file and line). They converge on the
+      same verdict: the core loop communicates well, but the UI hides the next action, moves navigation
+      off-screen as content grows, answers invalid input with silence, and — the audit's discovery — paints the
+      <strong>wrong faction colours in every commander-match cut-in</strong>. This document merges both issue
+      registers into one plan of record and supersedes each on overlapping items.
+    </p>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-4 max-w-3xl">
+      <div class="rounded border-2 border-white/25 bg-black/25 p-3">
+        <p class="text-2xl font-black">41 → 26</p>
+        <p class="text-xs opacity-80 mt-1">raw findings across both documents, deduplicated into unified items</p>
+      </div>
+      <div class="rounded border-2 border-white/25 bg-black/25 p-3">
+        <p class="text-2xl font-black">6</p>
+        <p class="text-xs opacity-80 mt-1">ship blockers — layout, legal copy, a keyboard trap, an identity bug</p>
+      </div>
+      <div class="rounded border-2 border-white/25 bg-black/25 p-3">
+        <p class="text-2xl font-black">3</p>
+        <p class="text-xs opacity-80 mt-1">verified one-line-class fixes ready to land first</p>
+      </div>
+      <div class="rounded border-2 border-white/25 bg-black/25 p-3">
+        <p class="text-2xl font-black">2</p>
+        <p class="text-xs opacity-80 mt-1">findings already fixed on in-flight branches — verify, don't re-plan</p>
+      </div>
+    </div>
+
+    <div class="mt-6 max-w-3xl rounded border-2 border-white/30 bg-black/30 p-4">
+      <p class="gc-kicker text-xs opacity-80">Recommendation</p>
+      <p class="mt-1 font-bold">Land the three verified micro-fixes and the layout blockers first.</p>
+      <p class="mt-1 text-sm opacity-90">
+        Then teach one move, one capture, one build and one end-turn decision through contextual feedback.
+        Every change is presentation-only: no new rule, AI weight, save field, or simulation dependency —
+        both source documents drew the same architecture boundary and this plan locks it.
+      </p>
+    </div>
+  </header>
+
+  <!-- ============================================================ NAV -->
+  <nav class="gc-sticky-nav px-4 py-2 flex gap-4 overflow-x-auto text-sm font-bold">
+    <a class="link link-hover" href="#provenance">01 Evidence</a>
+    <a class="link link-hover" href="#register">02 Issue register</a>
+    <a class="link link-hover" href="#decisions">03 Locked decisions</a>
+    <a class="link link-hover" href="#slices">04 Delivery slices</a>
+    <a class="link link-hover" href="#acceptance">05 Acceptance</a>
+    <a class="link link-hover" href="#protect">06 Protect list</a>
+    <a class="link link-hover" href="#risks">07 Risks</a>
+  </nav>
+
+  <!-- ============================================================ 01 PROVENANCE -->
+  <section id="provenance" class="px-6 sm:px-10 py-10">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">01</span>
+      <h2 class="text-2xl font-black">Two playtests, one verdict</h2>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <p class="gc-kicker text-xs opacity-60">Source A · first-contact playtest</p>
+          <h3 class="font-black">Keyboard-first playthrough <span class="gc-src">(.lavish/ui-first-contact-plan.html)</span></h3>
+          <p class="text-sm leading-relaxed">
+            Canonical 640×360 logical / 1280×720 physical window. Default Scrimmage, Normal difficulty and
+            speed, one player vs AI, real keyboard input handlers: menu, commander selection, a Mech capture,
+            a Tank move, end of day, the AI's turn, an Infantry purchase on day two. The presentation smoke
+            driver then exposed targeting, commander reference, power states, victory, supply, cargo, Dive and
+            fog. <strong>18 findings</strong>: 4 blockers, 8 high, 6 medium — strongest on layout budgets,
+            onboarding structure, and acceptance scaffolding.
+          </p>
+        </div>
+      </div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <p class="gc-kicker text-xs opacity-60">Source B · new-player audit</p>
+          <h3 class="font-black">Blind full-match audit <span class="gc-src">(.lavish/new-player-ux-audit.html)</span></h3>
+          <p class="text-sm leading-relaxed">
+            Fresh <code>user://</code>, exactly as a first launch. One full match on Scrimmage as Alina Ward vs
+            Cass Orlov (Iron) through defeat, then Continue/resume, victory, The Straits under fog, and hot-seat
+            passes — driven by a temporary in-engine input injector, ~120 screenshots retained.
+            <strong>23 findings</strong>: 7 on-screen bugs, 11 friction items, 5 polish — strongest on verified
+            mechanisms (every "verified" item traced to file and line) and on what already works and must not regress.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 card bg-base-100 border-2 border-base-300 gc-good">
+      <div class="card-body p-5">
+        <h3 class="font-black">Already in flight — verify after merge, do not re-plan</h3>
+        <ul class="mt-1 text-sm leading-relaxed space-y-2">
+          <li>
+            <span class="gc-inflight">RANGE-PREVIEW BRANCH</span> — the audit's B2 ("confirm on an enemy unit does
+            nothing; no way to inspect enemy threat") is <strong>already shipped</strong> on
+            <code>worktree-range-preview</code> (RP2/RP3): clicking a unit you cannot command previews its move
+            range, and <strong>R</strong> paints its fire ring off the single <code>AttackRange</code> authority,
+            fog-gated by <code>view.can_see_unit</code>. The unified register carries it as
+            <em>resolved-pending-merge</em>; its acceptance capture stays in the matrix as the regression gate.
+          </li>
+          <li>
+            <span class="gc-inflight">SMALL-MAP-CAMERA BRANCH</span> — the audit observed the zoom floor-cap fix
+            working ("no way to get lost below the board"). Protect it in the do-not-regress list; nothing to plan.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 02 REGISTER -->
+  <section id="register" class="px-6 sm:px-10 py-10 bg-base-100/60 border-y-2 border-base-300">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">02</span>
+      <h2 class="text-2xl font-black">Unified issue register</h2>
+    </div>
+    <p class="mt-2 text-sm max-w-3xl">
+      Every raw finding from both documents appears exactly once below — merged items list all source IDs
+      (<span class="gc-src">FC</span> = first-contact plan, <span class="gc-src">NP</span> = new-player audit).
+      <span class="gc-verified">VERIFIED</span> means reproduced live <em>and</em> traced to the quoted file
+      and line (quoted against <code>worktree-bug-sweep @ edd8d63</code>; lines may drift, mechanisms won't).
+    </p>
+
+    <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter by severity">
+      <button class="btn btn-sm gc-filter" data-filter="all" aria-pressed="true">All · 26</button>
+      <button class="btn btn-sm gc-filter" data-filter="blocker" aria-pressed="false">Blocker · 6</button>
+      <button class="btn btn-sm gc-filter" data-filter="high" aria-pressed="false">High · 8</button>
+      <button class="btn btn-sm gc-filter" data-filter="medium" aria-pressed="false">Medium · 8</button>
+      <button class="btn btn-sm gc-filter" data-filter="low" aria-pressed="false">Polish · 4</button>
+    </div>
+
+    <div class="mt-4 overflow-x-auto">
+      <table class="table table-sm gc-register min-w-[900px]">
+        <thead>
+          <tr class="text-xs uppercase tracking-wider">
+            <th class="w-16">Id</th>
+            <th class="w-24">Severity</th>
+            <th class="w-28">Sources</th>
+            <th>Observed problem</th>
+            <th>Target fix</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+
+          <!-- ================= BLOCKERS ================= -->
+          <tr class="gc-issue-row" data-sev="blocker">
+            <td class="gc-mono font-black">U-01</td>
+            <td><span class="badge badge-error badge-sm text-white">Blocker</span></td>
+            <td class="gc-src">FC B-01<br>NP A3</td>
+            <td>With a save present, Continue appears and the main-menu stack overflows 640×360: the title clips
+              off the top, Quit off the bottom. Every returning player sees a visibly broken primary menu; a
+              fresh install never does.</td>
+            <td>Keep primary actions in a fixed footer; compact or scroll the rows above it (~40px must come
+              back). Acceptance captures with and without a save.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="blocker">
+            <td class="gc-mono font-black">U-02</td>
+            <td><span class="badge badge-error badge-sm text-white">Blocker</span></td>
+            <td class="gc-src">FC B-02<br>NP A4</td>
+            <td>Commander select reflows on every keypress: the preview card grows with doctrine copy, moving the
+              action buttons and controls footer per selection. On the default (longest) card the footer and
+              Confirm are clipped off-screen — the default mouse route cannot start a match.</td>
+            <td>Stable chrome: fixed card height sized to the tallest content with the copy scrolling inside;
+              footer and actions anchored to the panel bottom. Validate every commander on both side slots.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="blocker">
+            <td class="gc-mono font-black">U-03</td>
+            <td><span class="badge badge-error badge-sm text-white">Blocker</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">FC H-07<br>NP A5</td>
+            <td>The footer promises "Enter — Confirm", but after browsing, focus sits on a tab or card and Enter
+              only re-triggers that control; the pick never confirms and there is no feedback. A keyboard-only
+              player is soft-stuck on the first screen. <span class="gc-src">commander_select_panel.gd:381
+              handles ui_cancel only; _confirm() (:349) is button-only.</span> No Commander also locks in one
+              step while commanders take two — two rules for equivalent choices.</td>
+            <td>Add a shortcut-level <code>ui_accept</code> handler mirroring the <code>ui_cancel</code> one:
+              unless focus is on Back/No Commander, Enter = <code>_confirm()</code>. Normalize No Commander to
+              the same two-step select-then-confirm model. Then the footer is true.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="blocker">
+            <td class="gc-mono font-black">U-04</td>
+            <td><span class="badge badge-error badge-sm text-white">Blocker</span></td>
+            <td class="gc-src">FC B-03<br>NP C4</td>
+            <td>The in-battle commander reference has no scroll container: both cards extend past the screen,
+              Close is not reliably reachable, and the sheet draws its "COMMANDERS" title twice with a stray
+              clipped fragment. The surface meant to explain doctrines hides their endings.</td>
+            <td>Two independently scrollable card bodies under fixed faction headers and a fixed Close bar;
+              repair the header stack while in there. Acceptance capture uses the longest doctrine/power pair.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="blocker">
+            <td class="gc-mono font-black">U-05</td>
+            <td><span class="badge badge-error badge-sm text-white">Blocker</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">FC B-04</td>
+            <td>Player-facing copy says "an Advance Wars-style tactics game (working title)"
+              <span class="gc-src">(main_menu.tscn:45)</span> — it reads unfinished and violates the
+              repository's own legal/naming boundary (no comparison trade dress on player surfaces).</td>
+            <td>Ship the clean title and an original genre line ("turn-based tactics"). Comparison vocabulary
+              survives only in developer docs, mirroring the faction plan's "Red/Blue never on screen" rule.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="blocker">
+            <td class="gc-mono font-black">U-06</td>
+            <td><span class="badge badge-error badge-sm text-white">Blocker</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">NP A1</td>
+            <td>Combat and capture cut-ins paint the wrong faction colours in any commander match whose faction
+              row differs from its slot number: Iron units render Aurora blue mid-cut-in while the board shows
+              them near-black. <span class="gc-src">cutscene_side.gd:145 and capture_stage.gd:94 pass the raw
+              team int to UnitSprite.texture_for, whose row parameter is a SideIdentity atlas row
+              (unit_sprite.gd:55); cutscene_side.gd:533 reuses owner_team as a terrain row.</span> Breaks the
+              faction-identity plan's single-authority rule. The smoke suite never caught it because
+              <code>cutin:*</code> scenarios run commander-less, where team&nbsp;n = row&nbsp;n hides the bug.</td>
+            <td>The cut-in director already resolves each side's accent from <code>view.identity</code> —
+              resolve the atlas row in the same place and hand it in, so no cut-in surface re-derives identity
+              from a team int. Add a <code>cutin</code> smoke variant with an Iron commander as the regression
+              gate.</td>
+          </tr>
+
+          <!-- ================= HIGH ================= -->
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-07</td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">NP A2</td>
+            <td>Every in-battle menu drags a ghost panel: the shared ActionMenu's PanelContainer only ever grows,
+              so after the 11-row build menu opens once, every later two-row menu keeps a ~600px translucent slab
+              over the board. Looks like the menu failed to close — visible every single turn.
+              <span class="gc-src">action_menu.gd::open() rebuilds rows but never resets container size.</span></td>
+            <td>Call <code>reset_size()</code> after rebuilding rows in <code>open()</code>, before
+              <code>_clamp_to_view()</code> (which already waits a frame for the new size).</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-08</td>
+            <td><span class="badge badge-warning badge-sm">High</span></td>
+            <td class="gc-src">FC H-01<br>NP B1</td>
+            <td>Nothing teaches the controls or the loop. Day one opens on the HQ with no objective, and no
+              surface ever says Enter/Z confirms, Esc/X cancels, Enter on empty ground opens the map menu (the
+              only route to End Turn and Save), or that +/−/wheel zooms. Everything is discoverable only by
+              prior genre knowledge or trial and error.</td>
+            <td>A first-match mission strip — objective, Select, Move, Capture, End Turn — with each hint
+              retiring after successful use, plus a persistent one-line key legend on the battle HUD (or at
+              minimum a map-menu Help entry). The tutorial owns no rules: it observes the same commands and
+              events the scene already handles.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-09</td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-inflight">PART SHIPPED</span></td>
+            <td class="gc-src">FC H-02<br>NP B2</td>
+            <td>Silent no-op confirms: an acted unit, a freshly built unit, an invalid occupied destination, and
+              input during the AI turn all return nothing — indistinguishable from missed input or a broken
+              control. (The audit's enemy-unit half is already resolved on the range-preview branch: clicking an
+              enemy now previews its reach, and R its fire ring.)</td>
+            <td>Answer every rejected confirm with a short contextual reason near the cursor or unit card:
+              "Already acted," "Ready next day," "Occupied," "CPU turn" — shown briefly, never blocking play.
+              Keep the shipped enemy-preview capture in the acceptance matrix.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-10</td>
+            <td><span class="badge badge-warning badge-sm">High</span></td>
+            <td class="gc-src">FC H-03</td>
+            <td>End Turn commits immediately even when ready units remain — a learner can throw away half a turn
+              without understanding the mistake.</td>
+            <td>Warn with the ready-unit count and name the units ("Tank at (4,1)…"); offer "Review units" /
+              "End anyway." Skip the warning entirely when none remain.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-11</td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">FC H-04<br>NP B11 · A6</td>
+            <td>Transition boundaries mishandle input in both directions. The day banner plays during the
+              ANIMATING state and <em>drops</em> every press — the game elsewhere trains "any key skips", so
+              queued commands simply vanish (whole sequences were lost twice in the audit). Meanwhile menus can
+              open <em>underneath</em> banners and collide, and the outcome panel appears with Rematch already
+              focused, so one buffered press from a mashed cut-in silently reloads the entire match.</td>
+            <td>One convention everywhere (see D3): a press during a banner skips its blocking beat; no
+              interactive menu may open beneath a banner or cut-in; the outcome panel swallows input for
+              ~0.5s and takes no default focus, so the first press only highlights.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-12</td>
+            <td><span class="badge badge-warning badge-sm">High</span></td>
+            <td class="gc-src">FC H-05<br>NP B8</td>
+            <td>There is no way to leave a battle. The map menu offers Commanders / Speed / End Turn / Save /
+              Cancel — no route to the main menu, no concede. Until the match ends the only exits are winning,
+              losing, or killing the application.</td>
+            <td>Add "Save &amp; Main Menu" and a confirmed "Main Menu without saving" to the map menu,
+              preserving the existing single-slot save model.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-13</td>
+            <td><span class="badge badge-warning badge-sm">High</span></td>
+            <td class="gc-src">FC H-06<br>NP B4</td>
+            <td>The damage forecast speaks percentages while every HP display speaks tenths: "Atk 28% / Counter
+              30%" against a unit whose panel says "HP 8/10" reads like hit chance and forces unit conversion
+              mid-fight. The preview never says HP, range, or that luck can move the result.</td>
+            <td>Lead with HP: "Deal 5 HP · take 2–3 HP", defender "10 → 4–5 · luck included." Keep percentages
+              as secondary detail if desired. The forecast pipeline already carries both HP snapshots — this is
+              a formatting change, not a new computation (the cut-in's "replay, never decide" rule applies).</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="high">
+            <td class="gc-mono font-black">U-14</td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">FC H-08<br>NP B9 · B6</td>
+            <td>The command-power surface fails all three jobs at once: the HUD chip's name, meter, READY state
+              and FIRE action are nearly illegible over the board; the FIRE button is mouse-only
+              <span class="gc-src">(commander_hud_chip.gd:93, focus_mode = NONE)</span> with nothing connecting
+              a keyboard player to the map-menu route that exists; the ACTIVE label truncates
+              ("ACTIVE — Coordina…"); and no player surface ever says what the charge numbers count.</td>
+            <td>Opaque faction-dark backing with high-contrast status text and a distinct ready/focused
+              treatment; a key hint on the chip pointing at the map-menu power entry; untruncated state copy;
+              one line on the commander sheet — "charges as your armies take and deal damage."</td>
+          </tr>
+
+          <!-- ================= MEDIUM ================= -->
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-15</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">FC M-01<br>NP B5</td>
+            <td>Match setup hides its decision-critical context in hover tooltips: map size/pitch, AI fairness,
+              speed semantics, fog and animation behavior are mouse-hover-only, so keyboard players never see
+              them. The map picker is twelve bare names — "First Steps" sounds like the tutorial and sits ninth —
+              and the popup already touches the screen edge; the next map added will clip.</td>
+            <td>Echo the tooltip line (size · properties · description) as a static caption under the dropdown;
+              badge or order the beginner map first; one-line option help for each row; disable Difficulty when
+              2&nbsp;Player is chosen.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-16</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">FC M-02<br>NP B3</td>
+            <td>Blind buys: the build menu shows artwork, name, cost and affordability but no role or stats.
+              Movement, range, and matchup strength exist only as data — no surface exposes the damage chart —
+              so first purchases are name-recognition guesswork.</td>
+            <td>A compact detail strip on the focused row: role, movement, range, strongest targets, and
+              "acts next day." A fuller unit sheet on a secondary key can come later.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-17</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span> <span class="gc-verified">VERIFIED</span></td>
+            <td class="gc-src">FC M-03</td>
+            <td>A freshly bought unit is badged "Waited" <span class="gc-src">(terrain_panel.gd:90)</span>. It
+              did not wait; it was built exhausted. The status misstates what happened and misses the chance to
+              teach production timing.</td>
+            <td>"Built · ready next day." Reserve "Waited" for a unit that committed Wait.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-18</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">FC M-04<br>NP B7</td>
+            <td>Advanced actions are guess-and-check: Dive, Supply, Join, Drop, capture interruption and
+              "any key skips" have no explanation at the point of use. The Speed row cycles
+              Normal→Quick→Instant blind, closing the menu per press — nothing marks it as a cycler, and
+              reaching Instant means reopening the menu twice.</td>
+            <td>A two-line focused-action explainer in the action menu; an "Any key: skip" chip during cut-ins;
+              make Speed a real submenu (or at least mark the cycle and keep the menu open).</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-19</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">FC M-05</td>
+            <td>Continue has no metadata and Save overwrites the sole slot anonymously — players cannot judge
+              whether Continue is relevant or whether Save replaced the intended match.</td>
+            <td>Label Continue with day and map; the Saved banner says "Saved Day N · Map."</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-20</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">FC M-06</td>
+            <td>Battle chrome omits ownership and outcome context: no You/CPU markers, no expected income, and
+              the victory panel never says why the match ended.</td>
+            <td>Small You/CPU badges on the day chrome, "+2000 next turn" on the funds readout, and
+              "HQ captured / army routed" on the outcome panel.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-21</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">NP B10</td>
+            <td>The CPU defaults to a mirror of your commander: side 2's picker opens on whatever side 1 just
+              locked, so the path of least resistance is Alina vs Alina in matching factions. The mirror
+              fallback handles it visually, but a first game reads better against contrast.</td>
+            <td>Default the CPU to the first commander of a different faction. Costs nothing; the fallback
+              stays for deliberate mirrors.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="medium">
+            <td class="gc-mono font-black">U-22</td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td class="gc-src">NP A7</td>
+            <td>Board art bleeds through the HUD info panels: tall buildings and units ghost through the text
+              rows ("Fuel 99/99" printed over a castle). Reads as a z-order glitch even though it's alpha.</td>
+            <td>Raise the panel style's background alpha or add a solid underlay behind the text rows —
+              without losing the corner-flip and cursor-dodge behaviors (see protect list).</td>
+          </tr>
+
+          <!-- ================= POLISH ================= -->
+          <tr class="gc-issue-row" data-sev="low">
+            <td class="gc-mono font-black">U-23</td>
+            <td><span class="badge badge-ghost badge-sm">Polish</span></td>
+            <td class="gc-src">NP C1</td>
+            <td>Cut-in fade-in ghosts the board through the letterbox: HP digits and chip fragments float in the
+              sky until the fade completes — reads as a glitch rather than a wipe.</td>
+            <td>Opaque the letterbox bands from frame one; fade the diorama, not the chrome.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="low">
+            <td class="gc-mono font-black">U-24</td>
+            <td><span class="badge badge-ghost badge-sm">Polish</span></td>
+            <td class="gc-src">NP C2</td>
+            <td>Iron Dominion's board sprites read as silhouettes — unit types are hard to tell apart at a
+              glance, worse under fog dimming.</td>
+            <td>More value separation in the iron ramp or a stronger rim light, keeping the faction moody.
+              Touches the tint recipe — respect the atlas-row art contract (rows 0–2 byte-stable).</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="low">
+            <td class="gc-mono font-black">U-25</td>
+            <td><span class="badge badge-ghost badge-sm">Polish</span></td>
+            <td class="gc-src">NP C3</td>
+            <td>The movement-range tint nearly disappears on water (blue over blue) — selecting a sub shows
+              barely any range at all.</td>
+            <td>An outline pass or brighter overlay on sea tiles. Coordinate with the range-preview branch,
+              which owns the overlay surfaces this touches.</td>
+          </tr>
+
+          <tr class="gc-issue-row" data-sev="low">
+            <td class="gc-mono font-black">U-26</td>
+            <td><span class="badge badge-ghost badge-sm">Polish</span></td>
+            <td class="gc-src">NP C5</td>
+            <td>Hot-seat without fog swaps turns with no beat — the camera snaps to the other army with only the
+              small day banner as punctuation (the handoff screen deliberately gates fogged matches only).</td>
+            <td>A half-second "Second Army's turn" beat so two players at one keyboard know when to trade
+              seats. Keep the fog-only full handoff screen as is.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ 03 DECISIONS -->
+  <section id="decisions" class="px-6 sm:px-10 py-10">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">03</span>
+      <h2 class="text-2xl font-black">Locked decisions</h2>
+    </div>
+    <p class="mt-2 text-sm max-w-3xl">
+      Where the two documents agreed, the agreement is locked; where they differed, the difference is resolved
+      here — once.
+    </p>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <div class="card bg-base-100 border-2 border-base-300 gc-blocker">
+        <div class="card-body p-5">
+          <h3 class="font-black">D1 · Presentation-only, no exceptions</h3>
+          <p class="text-sm leading-relaxed">
+            Every change in this plan lives in <code>scenes/</code>, presentation resources, and device-local
+            settings. Nothing under <code>core/</code> or <code>ai/</code> learns about onboarding, banners,
+            contrast, menu layout, or hints. Tutorial-dismissal state lives in <code>user://settings.cfg</code>
+            beside game speed — it is a device preference, never match state, never saved.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-blocker">
+        <div class="card-body p-5">
+          <h3 class="font-black">D2 · Stable chrome, scrollable content</h3>
+          <p class="text-sm leading-relaxed">
+            Titles, side chips, primary actions and control hints occupy reserved space on every screen;
+            variable copy scrolls inside bounded bodies. Content length may never move navigation, and a save's
+            presence may never change the layout budget. Every dynamic-copy surface gets an explicit height
+            budget at 640×360 logical.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-high">
+        <div class="card-body p-5">
+          <h3 class="font-black">D3 · One transition convention: any press skips the beat</h3>
+          <p class="text-sm leading-relaxed">
+            The sources pulled in opposite directions — "hold input until the banner ends" versus "let a press
+            skip it." Resolved in favor of the game's own established convention (cut-ins already skip on any
+            key): a press during a banner's blocking beat <strong>skips the beat</strong>, it is never silently
+            swallowed. The complementary rule: no interactive menu opens beneath a banner or cut-in, and the
+            outcome panel briefly swallows buffered input and takes no default focus.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-high">
+        <div class="card-body p-5">
+          <h3 class="font-black">D4 · Forecasts speak HP first</h3>
+          <p class="text-sm leading-relaxed">
+            Damage communication leads with the unit the rest of the UI uses — HP out of 10 — with percentages
+            demoted to secondary detail. The forecast displays only numbers the pipeline already carries
+            (both HP snapshots exist); no surface recomputes combat. This is the battle cut-in's "replays,
+            never decides" rule extended to text.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-high">
+        <div class="card-body p-5">
+          <h3 class="font-black">D5 · Identity is resolved once, upstream</h3>
+          <p class="text-sm leading-relaxed">
+            The U-06 fix follows the faction-identity plan's letter: the cut-in director resolves the atlas row
+            from <code>view.identity</code> exactly where it already resolves accent colours, and hands rows to
+            staging. No cut-in surface may accept a raw team int where a row is meant. The regression gate is a
+            commander-match smoke variant, because the no-CO fallback provably hides this class of bug.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <h3 class="font-black">D6 · Teach by doing, retire by success</h3>
+          <p class="text-sm leading-relaxed">
+            Progressive, dismissible hints triggered by real scene events — no separate tutorial ruleset, no
+            blocking slideshow, no tutorial map. The mission strip observes the same commands and events the
+            scene already animates; each hint retires permanently after the player performs the action once.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <h3 class="font-black">D7 · The driven playtest harness becomes the acceptance vehicle</h3>
+          <p class="text-sm leading-relaxed">
+            The audit was produced by a temporary in-engine input driver (<code>tools/playtest_driver.gd</code>,
+            currently uncommitted in the small-map-camera worktree — inert unless <code>AWPLAYTEST_DIR</code>
+            is set). Adopt it: the acceptance matrix in section 05 is captured by driving the real UI with real
+            input events, the same way both audits were performed, rather than by hand each release.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <h3 class="font-black">D8 · Read-only previews stay read-only</h3>
+          <p class="text-sm leading-relaxed">
+            Everything that shows the player more (enemy reach, fire rings, forecasts, build stats, threat
+            context) is a pure read of the existing single authorities — <code>AttackRange</code>,
+            <code>MovementResolver</code>, the forecast pipeline, <code>Vision</code> via
+            <code>view.can_see_unit</code>. If an overlay or panel needs the sim to mutate, it is wrong —
+            the range-preview plan's D1/D5 applied to every new surface here.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 04 SLICES -->
+  <section id="slices" class="px-6 sm:px-10 py-10 bg-base-100/60 border-y-2 border-base-300">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">04</span>
+      <h2 class="text-2xl font-black">Four shippable slices</h2>
+    </div>
+    <p class="mt-2 text-sm max-w-3xl">
+      Each slice is independently shippable and playable. The order is the audit's priority order folded into
+      the first-contact plan's delivery shape: verified micro-fixes and blockers first, then the first five
+      minutes, then state clarity, then depth.
+    </p>
+
+    <div class="mt-8 grid gap-6 lg:grid-cols-2">
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-phase" data-tone="red">
+        <span class="gc-phase-index">UX0</span>
+        <div class="card-body p-5">
+          <p class="gc-kicker text-xs opacity-60">Ship blockers · U-01 — U-07</p>
+          <h3 class="font-black text-lg">Make every route fit and every promise true</h3>
+          <p class="text-sm leading-relaxed">
+            Open with the three verified micro-fixes — cut-in atlas rows (U-06), the commander-select
+            <code>ui_accept</code> handler (U-03), the ActionMenu <code>reset_size()</code> (U-07) — then the
+            layout blockers: fixed chrome and bounded scrolling on the main menu, commander selection and
+            commander reference; remove the working-title and comparison-brand copy.
+          </p>
+          <ul class="gc-checks mt-3 text-sm space-y-1">
+            <li>Primary actions stay visible with and without a save.</li>
+            <li>Keyboard alone can browse, confirm, start and back out at 640×360.</li>
+            <li>Cut-in colours match the board for every faction pairing; commander-match smoke variant added.</li>
+            <li>No menu ever shows a ghost panel; all commander copy readable without moving Confirm or Close.</li>
+            <li>No player-visible working-title or comparison-brand copy anywhere.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-phase" data-tone="gold">
+        <span class="gc-phase-index">UX1</span>
+        <div class="card-body p-5">
+          <p class="gc-kicker text-xs opacity-60">First five minutes · U-08 — U-10, U-13</p>
+          <h3 class="font-black text-lg">Teach through successful actions</h3>
+          <p class="text-sm leading-relaxed">
+            The mission strip and key legend, contextual acknowledgements for every rejected confirm, the
+            end-turn ready-unit guard, and the HP-first forecast. The tutorial owns no rules — it observes the
+            same commands and events the scene already handles (D6).
+          </p>
+          <ul class="gc-checks mt-3 text-sm space-y-1">
+            <li>Select → move → action menu → capture → end turn is taught in place, then retires.</li>
+            <li>Every rejected confirm explains why in one line.</li>
+            <li>End Turn names the ready units before committing; silent when none remain.</li>
+            <li>Combat predicts HP dealt and returned, luck acknowledged.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-phase" data-tone="blue">
+        <span class="gc-phase-index">UX2</span>
+        <div class="card-body p-5">
+          <p class="gc-kicker text-xs opacity-60">State clarity &amp; exits · U-11, U-12, U-14, U-22</p>
+          <h3 class="font-black text-lg">Give each mode one visual owner</h3>
+          <p class="text-sm leading-relaxed">
+            The D3 transition convention end to end — banners skip on press, menus never open beneath them, the
+            outcome panel can't be mashed into a rematch — plus the deliberate exit path to the main menu, the
+            commander-HUD legibility and keyboard-power work, and opaque info panels.
+          </p>
+          <ul class="gc-checks mt-3 text-sm space-y-1">
+            <li>No press is ever silently swallowed at a state boundary, and none over-lands.</li>
+            <li>A match can be left — saved or abandoned — without killing the app.</li>
+            <li>READY, ACTIVE, FIRE and the charge meter legible over the brightest and darkest shipped maps.</li>
+            <li>The keyboard path to firing a power is discoverable from the chip itself.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300 gc-phase" data-tone="green">
+        <span class="gc-phase-index">UX3</span>
+        <div class="card-body p-5">
+          <p class="gc-kicker text-xs opacity-60">Depth without a manual · U-15 — U-21, U-23 — U-26</p>
+          <h3 class="font-black text-lg">Explain decisions at the point of choice</h3>
+          <p class="text-sm leading-relaxed">
+            Promote tooltips into persistent captions, build-menu stats, honest unit-status copy, save/income/
+            outcome context, the contrasting CPU default, and the polish set (cut-in fade, iron ramp, sea
+            overlay, hot-seat beat).
+          </p>
+          <ul class="gc-checks mt-3 text-sm space-y-1">
+            <li>Map choice shows size, properties, domains and opening style without a mouse.</li>
+            <li>Build rows explain role, reach and "acts next day" before the purchase.</li>
+            <li>Continue, income, speed, cut-in skip and victory cause are explicit.</li>
+            <li>Polish items land opportunistically as their surfaces are touched.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- mocks -->
+    <div class="mt-10 grid gap-4 lg:grid-cols-2">
+      <figure class="gc-game-mock">
+        <div class="gc-game-mock__bar"><span>COMBAT FORECAST</span><span class="opacity-70">TANK → TANK</span></div>
+        <div class="gc-game-mock__body">
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="rounded border-2 border-white/25 bg-black/30 p-3">
+              <p class="gc-kicker text-[.6rem] opacity-70">You deal</p>
+              <p class="text-2xl font-black">5–6 HP</p>
+            </div>
+            <div class="rounded border-2 border-white/25 bg-black/30 p-3">
+              <p class="gc-kicker text-[.6rem] opacity-70">Counter</p>
+              <p class="text-2xl font-black">2–3 HP</p>
+            </div>
+          </div>
+          <p class="mt-3 text-sm opacity-85">Defender: 10 HP → 4–5 HP · luck included</p>
+          <p class="mt-2 gc-mono text-xs opacity-60">Enter · Fire&nbsp;&nbsp;&nbsp;Esc · Back</p>
+        </div>
+        <figcaption class="px-4 pb-3 pt-1 text-xs opacity-60">U-13 target: HP leads, in the same unit as every HP display around it.</figcaption>
+      </figure>
+
+      <figure class="gc-game-mock">
+        <div class="gc-game-mock__bar"><span>END DAY 1?</span><span class="text-amber-300">2 READY</span></div>
+        <div class="gc-game-mock__body">
+          <p class="font-bold">Two units can still act.</p>
+          <p class="mt-1 text-sm opacity-85">Tank at (4,1) · Recon at (5,1)</p>
+          <div class="mt-3 flex gap-2">
+            <span class="btn btn-sm no-animation pointer-events-none">Review units</span>
+            <span class="btn btn-sm btn-outline no-animation pointer-events-none">End anyway</span>
+          </div>
+        </div>
+        <figcaption class="px-4 pb-3 pt-1 text-xs opacity-60">U-10 target: the guard names the cost of ending now; absent when nothing remains.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================================================ 05 ACCEPTANCE -->
+  <section id="acceptance" class="px-6 sm:px-10 py-10">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">05</span>
+      <h2 class="text-2xl font-black">Acceptance gates</h2>
+    </div>
+    <p class="mt-2 text-sm max-w-3xl">
+      Three gates, in increasing order of honesty: a capture matrix (driven via the D7 harness), named
+      regression scenarios each pinned to the finding it locks down, and a blind five-minute human test.
+    </p>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <div class="card bg-base-100 border-2 border-base-300">
+        <div class="card-body p-5">
+          <h3 class="font-black">Visual &amp; interaction matrix <span class="gc-src">(driven captures)</span></h3>
+          <ul class="gc-checks mt-2 text-sm space-y-1">
+            <li>Main menu with no save and with Continue present.</li>
+            <li>Every commander, both side slots, at the canonical viewport.</li>
+            <li>Commander reference with the longest doctrine/power pair on both sides.</li>
+            <li>Turn banner plus attempted map/build menu — the menu waits or is never obscured.</li>
+            <li>Base, airport and port build lists at minimum and maximum funds.</li>
+            <li>Commander HUD charging, ready, active, AI-controlled and mirror-faction states.</li>
+            <li>Combat and capture cut-ins for every faction pairing, commanders on.</li>
+            <li>Mouse, keyboard and controller routes: start, cancel, save, leave to menu, rematch.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border-2 border-base-300">
+        <div class="card-body p-5">
+          <h3 class="font-black">Blind five-minute test <span class="gc-src">(a human, no hints from us)</span></h3>
+          <ul class="gc-checks mt-2 text-sm space-y-1">
+            <li>Choose a sensible first map without hovering.</li>
+            <li>Start a one-player match keyboard-only and identify who is "you."</li>
+            <li>Move one unit and explain why a cell is reachable.</li>
+            <li>Inspect an enemy's reach before attacking it.</li>
+            <li>Capture a property and state what remains.</li>
+            <li>Build Infantry and predict when it can act.</li>
+            <li>End the turn without accidentally abandoning ready units.</li>
+            <li>Leave to the main menu without closing the app.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 overflow-x-auto">
+      <table class="table table-sm min-w-[720px]">
+        <thead>
+          <tr class="text-xs uppercase tracking-wider">
+            <th>New scenario capture</th><th>Claim it locks down</th><th class="w-20">Finding</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          <tr><td class="gc-mono">menu_with_save</td><td>Continue never clips Quit or any primary action.</td><td class="gc-mono">U-01</td></tr>
+          <tr><td class="gc-mono">co_select_long_copy</td><td>Longest card keeps fixed actions and legend visible.</td><td class="gc-mono">U-02</td></tr>
+          <tr><td class="gc-mono">co_select_kbd_confirm</td><td>Enter confirms the browsed pick from any focus.</td><td class="gc-mono">U-03</td></tr>
+          <tr><td class="gc-mono">commander_info_long_pair</td><td>Both columns scroll; Close remains fixed; one title.</td><td class="gc-mono">U-04</td></tr>
+          <tr><td class="gc-mono">cutin_iron_commander</td><td>Cut-in unit colours match the board's faction rows.</td><td class="gc-mono">U-06</td></tr>
+          <tr><td class="gc-mono">menu_after_build_menu</td><td>A two-row menu after an 11-row menu drags no ghost panel.</td><td class="gc-mono">U-07</td></tr>
+          <tr><td class="gc-mono">turn_banner_build_attempt</td><td>No banner/menu overlap and no lost input.</td><td class="gc-mono">U-11</td></tr>
+          <tr><td class="gc-mono">outcome_mash_guard</td><td>A buffered press cannot restart the match from the outcome panel.</td><td class="gc-mono">U-11</td></tr>
+          <tr><td class="gc-mono">end_turn_ready_units</td><td>The guard names the count and the safe return action.</td><td class="gc-mono">U-10</td></tr>
+          <tr><td class="gc-mono">fresh_build_status</td><td>The unit says "Built · ready next day," not "Waited."</td><td class="gc-mono">U-17</td></tr>
+          <tr><td class="gc-mono">damage_preview_hp</td><td>Forecast communicates dealt and returned HP unambiguously.</td><td class="gc-mono">U-13</td></tr>
+          <tr><td class="gc-mono">power_ready_contrast</td><td>READY and FIRE legible over the brightest and darkest shipped maps.</td><td class="gc-mono">U-14</td></tr>
+          <tr><td class="gc-mono">enemy_range_preview</td><td>Clicking an enemy previews reach; R paints its fire ring (regression gate for the shipped range-preview work).</td><td class="gc-mono">U-09</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ 06 PROTECT -->
+  <section id="protect" class="px-6 sm:px-10 py-10 bg-base-100/60 border-y-2 border-base-300">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">06</span>
+      <h2 class="text-2xl font-black">What already works — protect it</h2>
+    </div>
+    <p class="mt-2 text-sm max-w-3xl">
+      The audit's do-not-regress list, promoted to a gate: a UX slice that breaks any of these fails review
+      even if its own acceptance passes.
+    </p>
+    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+      <div class="card bg-base-100 border-2 border-base-300 gc-good"><div class="card-body p-4 text-sm">
+        The commander HUD chip fades when the cursor walks under it; the info panel flips corners to dodge the
+        cursor. Never "fix" these into static opacity — U-22's opacity work must keep both behaviors.
+      </div></div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-good"><div class="card-body p-4 text-sm">
+        Capture cut-in copy is exemplary — "OCCUPYING — 4/20 LEFT", "CAPTURED!", the mash chips splitting the
+        points — and the board echoes it on hover.
+      </div></div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-good"><div class="card-body p-4 text-sm">
+        The targeting flow shows attack and counter before committing; the target's panel appears while aiming.
+        U-13 reformats the numbers, it does not restructure the flow.
+      </div></div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-good"><div class="card-body p-4 text-sm">
+        The movement overlay and yellow path read clearly on land; damaged units grow HP digits; acted units
+        desaturate; panel states are named.
+      </div></div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-good"><div class="card-body p-4 text-sm">
+        Faction fallbacks hold in play: no-CO matches read "First/Second Army" in classic colours; mirror
+        matches stay distinct; the winner line speaks faction.
+      </div></div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-good"><div class="card-body p-4 text-sm">
+        Speed survives relaunch as a device preference; Save toasts; Continue restores the exact board; zoom is
+        floor-capped on small maps; the AI's turn presents through the same cut-ins as the player's.
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ 07 RISKS -->
+  <section id="risks" class="px-6 sm:px-10 py-10">
+    <div class="flex items-center gap-3">
+      <span class="gc-section-number">07</span>
+      <h2 class="text-2xl font-black">Risks</h2>
+    </div>
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <div class="card bg-base-100 border-2 border-base-300 gc-high">
+        <div class="card-body p-5">
+          <h3 class="font-black">R1 · Tutorial fatigue</h3>
+          <p class="text-sm leading-relaxed">
+            Captures far outnumber first launches; hints that outstay their welcome become the new friction.
+            D6 is the mitigation: event-triggered, dismissible, permanently retired on success — and the blind
+            five-minute test is run by someone who has played before, to catch hints that nag veterans.
+          </p>
+        </div>
+      </div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-high">
+        <div class="card-body p-5">
+          <h3 class="font-black">R2 · Responsive regression</h3>
+          <p class="text-sm leading-relaxed">
+            Larger windows are not evidence the shipped minimum works. Fix and gate at 640×360 logical first;
+            every dynamic-copy surface gets an explicit height budget, and the capture matrix runs at the
+            canonical viewport only.
+          </p>
+        </div>
+      </div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <h3 class="font-black">R3 · Information overload</h3>
+          <p class="text-sm leading-relaxed">
+            Keep primary rows short; role and consequence live in a focused detail area, not expanded on every
+            row at once. The map caption and build strip are one line each.
+          </p>
+        </div>
+      </div>
+      <div class="card bg-base-100 border-2 border-base-300 gc-medium">
+        <div class="card-body p-5">
+          <h3 class="font-black">R4 · Cross-branch collisions</h3>
+          <p class="text-sm leading-relaxed">
+            Three worktrees currently touch the same presentation surfaces: range-preview (overlays, must merge
+            before U-09/U-25), small-map-camera (zoom + the uncommitted playtest driver D7 adopts), and
+            uncommitted promo-recording edits in <code>battle.gd</code>/<code>battle_scenario_driver.gd</code>.
+            Land UX slices on their own branches, merge range-preview first, and adopt the playtest driver via a
+            deliberate commit — never as a ride-along.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 card bg-base-100 border-2 border-base-300 gc-blocker">
+      <div class="card-body p-5">
+        <h3 class="font-black">Locked direction</h3>
+        <p class="text-sm leading-relaxed">
+          Stable chrome + scrollable content, one transition convention, contextual onboarding, HP-first
+          forecasts, reasoned feedback, identity resolved upstream — none of it requires a gameplay, save-format
+          or AI change, and all of it is gated by captures a driven harness can reproduce. This document
+          supersedes <code>ui-first-contact-plan.html</code> and <code>new-player-ux-audit.html</code> on every
+          overlapping item; both remain the evidence record (screenshots, live traces) behind this register.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="px-6 sm:px-10 py-6 text-xs opacity-70 border-t-2 border-base-300">
+    Grid Commander · unified UX recovery plan · merged from the first-contact playtest and the new-player audit,
+    both observed 2026-07-24 at the canonical 1280×720 window · presentation-only by decision D1.
+  </footer>
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('.gc-filter');
+  const rows = document.querySelectorAll('.gc-issue-row');
+  buttons.forEach(btn => btn.addEventListener('click', () => {
+    buttons.forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+    const f = btn.dataset.filter;
+    rows.forEach(r => { r.hidden = (f !== 'all' && r.dataset.sev !== f); });
+  }));
+</script>
+</body>
+</html>
