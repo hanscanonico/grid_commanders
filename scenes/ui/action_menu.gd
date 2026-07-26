@@ -10,6 +10,8 @@ signal action_chosen(action: StringName)
 ## sprites), which would dwarf a 10px label, so every icon is capped to one
 ## world tile wide. Aspect ratio is preserved, so square art lands at 16x16.
 const ICON_PX := 16
+## How far the menu stays off the edge of the frame, and off anything it dodges.
+const MARGIN := 4.0
 
 @onready var rows: VBoxContainer = %MenuRows
 
@@ -17,13 +19,17 @@ var _ids: Array[StringName] = []
 var _labels: Array[String] = []
 var _disabled: Array[bool] = []
 var _index := 0
+## A screen rect this menu must not cover, handed in by whoever opens it. Empty
+## for the menus that have nothing to dodge.
+var _avoid := Rect2()
 
 
 ## actions: [{id: StringName, label: String, disabled?: bool, icon?: Texture2D}, ...]
 ## At least one entry must be enabled (menus always include Cancel).
 ## `icon` draws to the left of the label; rows that omit it in an illustrated
 ## menu get a spacer so every label still starts in the same column.
-func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
+## `avoid` is a HUD rect the rows must stay clear of — see _place.
+func open(actions: Array[Dictionary], screen_pos: Vector2, avoid := Rect2()) -> void:
 	for child in rows.get_children():
 		rows.remove_child(child)
 		child.queue_free()
@@ -49,9 +55,10 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 	_index = -1
 	_step_index(1)
 	_update_labels()
+	_avoid = avoid
 	position = screen_pos
 	show()
-	_clamp_to_view()
+	_place()
 
 
 func close() -> void:
@@ -117,11 +124,28 @@ func _update_labels() -> void:
 		button.text = ("> " if i == _index else "  ") + _labels[i]
 
 
-func _clamp_to_view() -> void:
+## Settles the menu inside the frame and, when it was given one, off the `avoid`
+## rect. Below it by preference — the map menu still reads downward from the
+## cursor — and beside it when the rows are too tall to fit under. A menu with
+## nowhere clear to go keeps the frame over the dodge: rows off screen cannot be
+## read at all, rows behind a panel can at least be stepped through.
+func _place() -> void:
 	# Size is only valid one frame after the buttons were added.
 	await get_tree().process_frame
 	if not visible:
 		return
 	var view := get_viewport().get_visible_rect().size
-	var max_pos := (view - size - Vector2(4, 4)).max(Vector2(4, 4))
-	position = position.clamp(Vector2(4, 4), max_pos)
+	position = _inside(position, view)
+	if not _avoid.intersects(Rect2(position, size)):
+		return
+	var below := _inside(Vector2(position.x, _avoid.end.y + MARGIN), view)
+	var beside := _inside(Vector2(_avoid.end.x + MARGIN, position.y), view)
+	if not _avoid.intersects(Rect2(below, size)):
+		position = below
+	elif not _avoid.intersects(Rect2(beside, size)):
+		position = beside
+
+
+func _inside(pos: Vector2, view: Vector2) -> Vector2:
+	var margin := Vector2(MARGIN, MARGIN)
+	return pos.clamp(margin, (view - size - margin).max(margin))

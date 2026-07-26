@@ -108,6 +108,18 @@ func _build() -> void:
 	_blue_header = blue[1]
 	_blue_title = blue[2]
 
+	# The meter's number is a funds-valued damage total, but the exact accounting
+	# is less important here than the missing player-facing answer to "what makes
+	# this rise?" Keep it on the reference sheet rather than duplicating charge
+	# rules inside every commander card.
+	var charge_help := Label.new()
+	charge_help.text = "Command Power charges as your armies take and deal damage."
+	charge_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	charge_help.add_theme_font_override("font", UiTheme.display())
+	charge_help.add_theme_font_size_override("font_size", 8)
+	charge_help.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	rows.add_child(charge_help)
+
 	_close_button = Button.new()
 	_close_button.text = "Close"
 	_close_button.add_theme_font_size_override("font_size", 11)

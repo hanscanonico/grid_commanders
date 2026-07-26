@@ -465,10 +465,14 @@ func refresh_hud() -> void:
 		]
 	)
 	# The chip belongs to whoever's turn it is. It hides itself for a side with no
-	# power, and greys its Fire button for a computer commander — a charged AI
-	# still fills the meter, but the click would be refused.
+	# power, and replaces the Fire button with AI-control copy for a computer
+	# commander — a charged AI still fills the same meter.
+	var team: int = game.current_team
 	commander_chip.update_state(
-		game.commander_state(game.current_team), game.current_team in ai_teams
+		game.commander_state(team),
+		team in ai_teams,
+		identity.theme(team),
+		identity.display_name(team)
 	)
 
 
@@ -497,6 +501,14 @@ func refresh_panel(cell: Vector2i) -> void:
 	commander_chip.set_covering_cursor(
 		commander_chip.get_global_rect().intersects(_screen_rect_for_cell(cell))
 	)
+
+
+## Where the commander chip is drawn, in screen pixels, or an empty rect when the
+## side in hand plays without a power and the chip is hidden. Asked of the chip
+## itself for the same reason the fade above is: that corner's geometry has one
+## owner, and a panel that has to dodge it must never carry a second copy.
+func hud_chip_rect() -> Rect2:
+	return commander_chip.get_global_rect() if commander_chip.visible else Rect2()
 
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing

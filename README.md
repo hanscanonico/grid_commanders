@@ -187,9 +187,11 @@ plays the plain rules.
 Mouse, keyboard, and controller all navigate it, and **Back** returns to the menu without discarding
 the map or fog choice. Nothing is committed until both sides are locked.
 
-In battle each side's commander gets a portrait HUD chip with a charge meter (charging / ready /
-active), a faction-tinted activation card when a power fires, a both-sides reference sheet from the
-map menu, and a portrait on the victory screen.
+In battle each side's commander gets a portrait HUD chip — the side's resolved faction colour and
+name over an opaque dark backing, with a charge meter that reads charging, READY, or the running
+power by name — plus a faction-tinted activation card when a power fires, a both-sides reference
+sheet from the map menu (which also says what makes the meter rise), and a portrait on the victory
+screen.
 
 ## Controls
 
@@ -269,7 +271,7 @@ jumps to that team's first property.
   menu. When your Command Power is charged the menu lists it first, so it is reachable from the
   keyboard as well as from the HUD button
 - The HUD shows the current day, team, and funds — plus, for a side playing a commander, that
-  side's charge meter and a **Power** button (see Commanders below); the corner panel leads with
+  side's charge meter and a **FIRE** button (see Commanders below); the corner panel leads with
   the unit on the hovered tile, if any: its sprite, name, army, `HP x/10`, fuel and ammo out of
   their maximums (no ammo row for units that need none), its range when it is an indirect,
   `Carrying …` when it is a loaded transport, and a `Waited` badge — dimming the card — once it
@@ -309,13 +311,18 @@ as well. The meter is capped at what that general's power costs, so it never hol
 power's worth. And a side whose power is *running* banks nothing, dealt or lost, until it comes
 down — every power is re-earned from empty, not refilled by the fighting it enables.
 
-**Firing.** When the meter fills, the HUD **Power** button lights up and the map menu (confirm on
-an empty tile) lists the power as its first entry. Firing spends the whole cost and raises the
-power immediately. Most powers last until you end that turn; a few — Hold the Line, Vanish,
-Signal Jam — exist to bother the opponent and so survive their turn, ending as yours begins.
+**Firing.** When the meter fills, the chip's **FIRE** button lights up — for the mouse, and only
+the mouse: it deliberately never takes keyboard focus, so a press is never swallowed by a button
+the battle would have refused anyway. The keyboard route is the map menu (confirm on an empty
+tile), which lists the power as its first entry, and the ready chip prints that route as
+`ENTER ON EMPTY TILE · POWER`; the menu opens clear of the chip, so the row the hint sends you to
+is never underneath it. Firing spends the whole cost and raises the power immediately. Most powers
+last until you end that turn; a few — Hold the Line, Vanish, Signal Jam — exist to bother the
+opponent and so survive their turn, ending as yours begins.
 
 The AI charges and fires powers too, on its own commander's judgement of the right moment. Its
-meter is shown while it plays, but the button stays disabled — it is not yours to press.
+meter is shown while it plays, with `AI CONTROLLED · FIRES AUTOMATICALLY` in place of your FIRE
+button — there is nothing to press.
 
 **Quotes.** A power's activation card opens with the general speaking — a short in-character
 line above the power's name, beside their portrait. The lines are data like everything else
