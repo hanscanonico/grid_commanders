@@ -66,15 +66,17 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # unrelated reason would pass on its own, but it would take `ambush` down with
 # it.
 # The commander-identity captures are the G3 and COM-18 gates:
-# power_charging/ready/active/ai/mirror cover every HUD chip state,
-# power_ready_contrast is the named legibility frame — the same ready chip as
-# power_ready but staged over the bright strait, so the two together are the
-# dark/light background comparison — and power_cursor_fade protects the
-# existing cursor dodge. power_mapmenu is the keyboard half of the same gate:
-# the chip's hint sends the player to the map menu's first row, so that menu
-# has to open clear of the chip, and the scenario measures the two live rects
-# rather than trusting the frame. The activation card, both-sides info sheet,
-# and victory lockup are each still proved to render at native 640x360.
+# power_charging/ready/active/ai/mirror cover every state the bottom bar's
+# commander block takes, and power_ready_contrast is the named legibility frame —
+# the same ready meter as power_ready but staged over the bright strait, so the
+# two together are the dark/light background comparison. (COM-18's
+# power_cursor_fade retired with the floating chip it protected: a docked bar is
+# never on top of a tile, so there is no cursor dodge left to prove.)
+# power_mapmenu is the keyboard half of the same gate: the map menu's first row is
+# the Command Power, so that menu has to open inside the board band, and the
+# scenario measures the live rect against it rather than trusting the frame. The
+# activation card, both-sides info sheet, and victory lockup are each still proved
+# to render at native 640x360.
 #
 # The `cutin` family is the odd one out: every other mode drives the flow and
 # photographs what it produces, but the battle cut-in is deliberately suppressed
@@ -121,7 +123,7 @@ DEFAULT_MODES=(
 	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn
 	powermenu+fog victory+fog ambush vanish
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
-	power_cursor_fade power_mapmenu power_banner commander_info commander_victory
+	power_mapmenu power_banner commander_info commander_victory
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
@@ -193,7 +195,7 @@ for mode in "${modes[@]}"; do
 	# The naval scenarios need a board with water on it; the default has none.
 	# power_ready_contrast borrows the same board for a different reason: it is
 	# power_ready over the bright, sea-heavy strait rather than the dim default,
-	# so the pair is the chip's dark/light legibility comparison.
+	# so the pair is the meter's dark/light legibility comparison.
 	case "$demo" in
 		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
 			godot_args+=(--map=the_straits)

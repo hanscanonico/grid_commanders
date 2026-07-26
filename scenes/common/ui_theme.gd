@@ -44,6 +44,12 @@ const PAPER_RAISED := Color(0.95686, 0.93725, 0.89020)  # #f4efe3 hovered/select
 const PAPER_2 := Color(0.81176, 0.81176, 0.81176)  # #cfcfcf secondary grey panel
 const CAPTURE := Color(0.42353, 0.76078, 0.29020)  # #6cc24a capture green (toggle ON)
 const WHITE := Color(0.93333, 0.93333, 0.93333)  # #eeeeee pure light
+const INK_3 := Color(0.54118, 0.56471, 0.60000)  # #8a9099 faint text — HUD labels
+## #e0a92e. The design system has no `--warn`: the amber that fills a charge
+## meter, an ammo bar and a defense star is this one token, and the HUD handoff
+## calls it out as the bug that left the commander meter unstyled.
+const AMMO := Color(0.87843, 0.66275, 0.18039)
+const DANGER := Color(0.84706, 0.29020, 0.23529)  # #d84a3c critical HP
 ## The signature hard drop shadow: ink, 90% opaque, zero blur. rgba(35,39,43,.9).
 const SHADOW_INK := Color(0.13725, 0.15294, 0.16863, 0.9)
 
@@ -62,6 +68,24 @@ const BORDER := 1  # chrome outline; 2 physical px on the default window
 const PANEL_BORDER := 2  # the panel's heavier outline
 const SHADOW := 1  # hard-shadow size; shows 2*SHADOW canvas px past bottom-right
 const RADIUS := 1  # a whisker of rounding, at most
+
+# --- the docked battle HUD (hud handoff SPEC.md) -------------------------------
+## Both bars are fixed height, and the board's viewport is what is left over. The
+## handoff's 46/92 px halve like every other metric here: the 640x360 canvas
+## doubles into the window, so 23 + 46 canvas px show as 46 + 92 on screen.
+##
+## Fixed is the point, not an implementation detail. A bar that grows when a unit
+## is selected would re-lay-out the board mid-turn and slide the map under the
+## cursor, so HUD_TOP_H + HUD_BOTTOM_H is a constant the camera can be framed
+## against once (SPEC "Fixed heights", "Empty is empty").
+const HUD_TOP_H := 23
+const HUD_BOTTOM_H := 46
+const HUD_BARS_H := HUD_TOP_H + HUD_BOTTOM_H
+## The 3px ink edge the bars present to the board, halved like the rest.
+const HUD_EDGE := 2
+## One HP cell of the ten-pip strip (handoff 6x14).
+const PIP := Vector2(3, 7)
+const PIP_GAP := 1
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
@@ -179,6 +203,30 @@ static func dark_panel_box(fill := SLATE_800) -> StyleBoxFlat:
 	box.set_border_width_all(PANEL_BORDER)
 	box.set_corner_radius_all(RADIUS)
 	return hard_shadow(box)
+
+
+## One of the two docked HUD bars: an opaque slate slab with a single ink edge on
+## the side that faces the board. Never translucent and never shadowed — it is
+## chrome outside the map, not a card floating on it (SPEC "Opaque only").
+static func hud_bar_box(edge_on_top: bool) -> StyleBoxFlat:
+	var box := flat(SLATE_800)
+	box.border_color = HARD_BORDER
+	if edge_on_top:
+		box.border_width_top = HUD_EDGE
+	else:
+		box.border_width_bottom = HUD_EDGE
+	return box
+
+
+## The HP strip's colour rule, straight from the handoff: green above 6, amber
+## through the middle, red at 3 or below. One place, so the pips in the bar and
+## any later readout of the same number cannot disagree.
+static func hp_color(hp: int) -> Color:
+	if hp > 6:
+		return CAPTURE
+	if hp > 3:
+		return AMMO
+	return DANGER
 
 
 ## A panel's title band — the header bar that spans the top of a Panel. Ink by

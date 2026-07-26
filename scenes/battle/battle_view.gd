@@ -1,7 +1,12 @@
 class_name BattleView
 extends RefCounted
 ## Draws battle state: terrain, unit sprites, movement and attack overlays,
-## fog, the HUD, and the terrain and damage panels.
+## fog, the two docked HUD bars, and the damage forecast.
+##
+## The HUD is chrome outside the map, not slabs on top of it: a fixed-height bar
+## above the board and one below, with the board's viewport computed from what
+## they leave over. Only transient, self-dismissing things — the forecast, the
+## action menu, the banners — are still drawn over terrain.
 ##
 ## Reads simulation state to present it and never mutates it — no commands, no
 ## rules, no turn flow. Battle owns the flow and tells the view what to draw.
@@ -36,7 +41,9 @@ var path_line: Line2D
 var units_root: Node2D
 var cursor: Sprite2D
 var camera: Camera2D
-var terrain_panel: TerrainPanel
+## The docked bar below the board: the commander in hand, the unit under the
+## cursor, the tile it stands on. Replaces the floating chip and corner panel.
+var hud_bottom: HudBottomBar
 var damage_preview: PanelContainer
 var atk_label: Label
 var counter_label: Label
@@ -44,10 +51,8 @@ var counter_label: Label
 ## attack percentage as secondary detail, and the note that luck can move where
 ## inside the span it lands.
 var outcome_label: Label
-var turn_label: Label
-## The current side's portrait identity and charge meter. Hides itself for a side
-## with no Command Power, so a commander-less match keeps the pre-commander HUD.
-var commander_chip: CommanderHudChip
+## The docked bar above the board: day, side, doctrine, funds.
+var hud_top: HudTopBar
 
 var db: TerrainDB
 var map: MapData
@@ -75,7 +80,7 @@ var _blacked_out := false
 ## Builds the tile sets from data and paints the opening board. Call once, after
 ## the node fields and `db`/`map`/`game` are set.
 func setup() -> void:
-	terrain_panel.identity = identity  # the panel names and tints sides through the same resolver
+	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
 	terrain_layer.tile_set = _build_tile_set()
 	# The terrain atlas is drawn at 4x the world grid (see TERRAIN_PX), so the
 	# layer is scaled back down to keep one cell = TILE. Overlays and the cursor
@@ -290,13 +295,19 @@ func sync_sprites() -> void:
 ## ever drawn, so `_build_view`'s resolve is the only one.
 func restage_identity() -> void:
 	identity = SideIdentity.for_game(game)
-	terrain_panel.identity = identity
+	hud_bottom.identity = identity
 	_paint_map()
 	for unit: Unit in _sprites:
 		var sprite: UnitSprite = _sprites[unit]
 		sprite.fogged = _is_fogged(unit)
 		sprite.setup(unit, game.current_team, identity.atlas_row(unit.team))
 	refresh_hud()
+	# The tile card names the side that owns the hovered property, so a restage has
+	# to redraw it too. It used to be able to skip this: the old corner panel was
+	# only up while the cursor was moving, and the next move refreshed it. A docked
+	# bar is always up, and a stale one sits there naming the previous side beside
+	# a top bar already naming the new one.
+	refresh_panel(_cursor_cell())
 
 
 # --- overlays ----------------------------------------------------------------
@@ -456,24 +467,24 @@ func _last_seen_owner(cell: Vector2i) -> int:
 
 
 func refresh_hud() -> void:
-	turn_label.text = (
-		"Day %d  -  %s  -  Funds %d"
-		% [
-			game.day,
-			identity.display_name(game.current_team),
-			game.funds[game.current_team],
-		]
-	)
-	# The chip belongs to whoever's turn it is. It hides itself for a side with no
-	# power, and replaces the Fire button with AI-control copy for a computer
-	# commander — a charged AI still fills the same meter.
-	var team: int = game.current_team
-	commander_chip.update_state(
-		game.commander_state(team),
-		team in ai_teams,
+	var team := game.current_team
+	var commander := game.commander_state(team).type
+	# The doctrine — the always-on passive — is the top bar's line, and the power
+	# name belongs beside the meter it charges. The shipped HUD printed the power
+	# name in the doctrine's place, which read as a passive the side did not have.
+	hud_top.show_turn(
+		game.day,
 		identity.theme(team),
-		identity.display_name(team)
+		identity.display_name(team),
+		commander.doctrine_text,
+		game.funds[team]
 	)
+	# The commander block belongs to whoever's turn it is. It drops its meter for a
+	# side with no power, and greys its Fire button for a computer commander — a
+	# charged AI still fills the meter, but the click would be refused. The theme is
+	# the side's resolved one rather than the commander's own, so a mirror match
+	# wears the same borrowed colour here that its army wears on the board.
+	hud_bottom.show_commander(game.commander_state(team), team in ai_teams, identity.theme(team))
 
 
 func refresh_panel(cell: Vector2i) -> void:
@@ -491,24 +502,12 @@ func refresh_panel(cell: Vector2i) -> void:
 	# this cell was fogged keeps its last-seen owner until the viewer sees it, so
 	# the panel never names a side change the board is still hiding.
 	var owner: int = game.owner_at(cell) if _can_see_cell(cell) else _last_seen_owner(cell)
-	terrain_panel.show_tile(
+	# The bar is docked outside the board, so there is no corner to flip to and no
+	# tile to fade off: it never covers the cell it describes. Which cell that is
+	# the board says for itself, with the cursor brackets already on it.
+	hud_bottom.show_tile(
 		map.terrain_at(cell), owner, game.current_team, capture_left, hovered, carrying
 	)
-	terrain_panel.set_side(cursor.position.x < camera.get_screen_center_position().x)
-	# The chip is pinned to the top-left and, unlike the terrain panel, has no
-	# free corner to flip to — the Day panel owns the other one. So it fades
-	# instead: the board reads through it while the cursor is on a tile it covers.
-	commander_chip.set_covering_cursor(
-		commander_chip.get_global_rect().intersects(_screen_rect_for_cell(cell))
-	)
-
-
-## Where the commander chip is drawn, in screen pixels, or an empty rect when the
-## side in hand plays without a power and the chip is hidden. Asked of the chip
-## itself for the same reason the fade above is: that corner's geometry has one
-## owner, and a panel that has to dodge it must never carry a second copy.
-func hud_chip_rect() -> Rect2:
-	return commander_chip.get_global_rect() if commander_chip.visible else Rect2()
 
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing
@@ -561,7 +560,10 @@ func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) ->
 	var pos := screen_pos_for_cell(cell) + Vector2(4.0, 6.0 - panel.y)
 	if pos.x + panel.x > _viewport_size().x - 4.0:
 		pos.x -= panel.x + 12.0
-	damage_preview.position = pos.max(Vector2(4, 4))
+	# The forecast is one of the three things still allowed to float over the map,
+	# but the bars are opaque: clamped into the board band it can never slide
+	# under one and lose the numbers it exists to show.
+	damage_preview.position = pos.max(Vector2(4, UiTheme.HUD_TOP_H + 4))
 
 
 ## "5" for a certain outcome, "5–6" for one luck can move. Both bounds are the
@@ -580,9 +582,32 @@ func move_cursor_to(cell: Vector2i) -> void:
 	camera.position = cursor.position
 
 
+## The cell the cursor is standing on, read back off the sprite the view owns.
+## Battle holds the authoritative `cursor_cell`; this is for the view's own
+## redraws, which must not have to ask for it.
+func _cursor_cell() -> Vector2i:
+	return Vector2i((cursor.position / float(TILE)).floor())
+
+
 func set_zoom(zoom: float) -> void:
 	camera.zoom = Vector2(zoom, zoom)
+	_apply_board_offset()
 	_apply_camera_limits()
+
+
+## Slides the camera so the cell it is centred on lands in the middle of the
+## *board band* — the strip between the two docked HUD bars — rather than the
+## middle of the window, which the bottom bar's larger height would put low.
+##
+## The bars are chrome outside the map, so the board's viewport is the window
+## minus their combined height, computed from constants that never change while a
+## match is running (hud handoff SPEC, "Fixed heights"). Applied on zoom because
+## Camera2D.offset is world units: the same screen inset is a different world
+## distance at each zoom level, and re-deriving it here is what keeps the band
+## centred without the camera ever re-laying-out mid-turn.
+func _apply_board_offset() -> void:
+	var inset := float(UiTheme.HUD_TOP_H - UiTheme.HUD_BOTTOM_H) / 2.0
+	camera.offset = Vector2(0, -inset / camera.zoom.y)
 
 
 ## The furthest out the player may zoom: just far enough that the whole map is
@@ -591,7 +616,7 @@ func set_zoom(zoom: float) -> void:
 ## map starts at its floor. Battle owns the zoom level and clamps against this.
 func min_zoom() -> float:
 	var map_px := Vector2(map.size() * TILE)
-	var view := _viewport_size()
+	var view := _board_viewport_size()
 	return minf(view.x / map_px.x, view.y / map_px.y)
 
 
@@ -599,17 +624,32 @@ func min_zoom() -> float:
 ## more than the whole map they expand just enough to centre it instead,
 ## splitting the exposed backdrop evenly. Floor/ceil keeps the limit span at
 ## least the visible extent, so the camera is never pushed against one edge.
+##
+## The vertical limits carry one extra term. Godot clamps the camera against the
+## *rendered* rect, which is the whole window, while the strip a player can
+## actually see is the board band; pushing the limits out by half the bars' world
+## height makes the engine's clamp land on the band's edges instead, so the board
+## still reaches the chrome rather than stopping short of it and showing a seam
+## of backdrop.
 func _apply_camera_limits() -> void:
 	var map_px := Vector2(map.size() * TILE)
-	var extra := ((_viewport_size() / camera.zoom.x - map_px) / 2.0).max(Vector2.ZERO)
+	var extra := ((_board_viewport_size() / camera.zoom.x - map_px) / 2.0).max(Vector2.ZERO)
+	var hidden := float(UiTheme.HUD_BARS_H) / (2.0 * camera.zoom.y)
 	camera.limit_left = floori(-extra.x)
-	camera.limit_top = floori(-extra.y)
+	camera.limit_top = floori(-extra.y - hidden)
 	camera.limit_right = ceili(map_px.x + extra.x)
-	camera.limit_bottom = ceili(map_px.y + extra.y)
+	camera.limit_bottom = ceili(map_px.y + extra.y + hidden)
 
 
 func _viewport_size() -> Vector2:
 	return cursor.get_viewport().get_visible_rect().size
+
+
+## The strip of window the board actually gets: everything the two docked HUD
+## bars do not cover. Derived from constants, so it answers the same on every
+## call in a match and the camera is never re-framed mid-turn.
+func _board_viewport_size() -> Vector2:
+	return _viewport_size() - Vector2(0, UiTheme.HUD_BARS_H)
 
 
 func screen_pos_for_cell(cell: Vector2i) -> Vector2:
@@ -617,17 +657,19 @@ func screen_pos_for_cell(cell: Vector2i) -> Vector2:
 	return (world - _screen_center()) * camera.zoom + _viewport_size() / 2.0 + Vector2(6, 0)
 
 
-## Where the cell is actually drawn, in screen pixels — what a HUD panel has to
-## be tested against to know whether it is sitting on top of it.
-func _screen_rect_for_cell(cell: Vector2i) -> Rect2:
-	var top_left := Vector2(cell * TILE) - _screen_center()
-	return Rect2(top_left * camera.zoom + _viewport_size() / 2.0, Vector2(TILE, TILE) * camera.zoom)
-
-
 ## The world point the middle of the screen shows. Anchored to the camera's
 ## target (unsmoothed) position so UI placed during a camera glide lands where
 ## the view settles, not where it happens to be.
+##
+## `camera.offset` is part of the answer: it is what pushes the board down into
+## the band between the bars, so a transient overlay measured against the screen
+## centre has to carry the same shift or it would sit a bar's height off the tile
+## it points at.
 func _screen_center() -> Vector2:
+	return _camera_target() + camera.offset
+
+
+func _camera_target() -> Vector2:
 	var view_size := _viewport_size()
 	return Vector2(
 		clampf(

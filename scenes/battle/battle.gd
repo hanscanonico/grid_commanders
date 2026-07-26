@@ -124,7 +124,7 @@ func _ready() -> void:
 	_outcome = _build_outcome()
 	_outcome.configure(built.watching, built.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
-	view.commander_chip.fire_button.pressed.connect(_fire_command_power)
+	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
 	rematch_button.pressed.connect(_rematch)
 	menu_button.pressed.connect(_go_to_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
@@ -197,13 +197,12 @@ func _build_view() -> BattleView:
 	built.units_root = $Units
 	built.cursor = cursor
 	built.camera = camera
-	built.terrain_panel = %TerrainPanel
+	built.hud_bottom = %HudBottom
 	built.damage_preview = %DamagePreview
 	built.atk_label = %AtkLabel
 	built.counter_label = %CounterLabel
 	built.outcome_label = %OutcomeLabel
-	built.turn_label = %TurnLabel
-	built.commander_chip = %CommanderChip
+	built.hud_top = %HudTop
 	built.db = db
 	built.map = map
 	built.game = game
@@ -643,11 +642,10 @@ func _open_build_menu(cell: Vector2i) -> void:
 func _open_map_menu() -> void:
 	_menu_context = &"map"
 	state = State.MENU
-	# Its first row is the Command Power, which is exactly what the chip in the
-	# top-left corner sends the player here for — so this one opens clear of it.
-	action_menu.open(
-		BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell), view.hud_chip_rect()
-	)
+	# Its first row is the Command Power, which is one of the two routes the charged
+	# meter in the bottom bar advertises (F is the other). Nothing floats over the
+	# board any more, so the menu only has to clamp inside the band between the bars.
+	action_menu.open(BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell))
 
 
 ## Opens the both-sides commander reference over the board. A modal, like the

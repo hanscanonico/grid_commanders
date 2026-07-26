@@ -174,14 +174,13 @@ func _fog_hides_unseen() -> bool:
 ## Power from the HUD over an open action menu; ambush and vanish are the same
 ## staged board with Sable Wren's power down and up; victory routs Blue through
 ## a real attack so the victory screen comes up. The commander-identity captures
-## (plan G3, COM-18): power_charging/ready/active/ai/mirror cover every HUD chip
-## state, power_ready_contrast is the named legibility gate, power_cursor_fade
-## protects its cursor dodge, power_mapmenu opens the keyboard route the ready
-## chip advertises and checks the chip is not sitting on top of it,
-## power_banner fires a power so its activation card
-## holds, commander_info opens the both-sides reference from the map menu, and
-## commander_victory wins with a general so the victory lockup is fronted by a
-## portrait.
+## (plan G3, COM-18): power_charging/ready/active/ai/mirror cover every state the
+## bottom bar's commander block takes, power_ready_contrast is the named
+## legibility gate, power_mapmenu opens the keyboard route the ready meter
+## advertises and checks the menu stays inside the board band, power_banner fires
+## a power so its activation card holds, commander_info opens the both-sides
+## reference from the map menu, and commander_victory wins with a general so the
+## victory lockup is fronted by a portrait.
 ##
 ## Modes that stop early return without falling through to the rest of the
 ## chain; `run` still takes the capture. A name that matches nothing here — the
@@ -251,13 +250,11 @@ func _run_demo(mode: String) -> void:
 		"power_ready", "power_ready_contrast":
 			await _stage_ready_power()
 		"power_active":
-			await _stage_active_power()  # power running -> chip ACTIVE, no banner
+			await _stage_active_power()  # power running -> meter ACTIVE, no banner
 		"power_ai":
 			await _stage_ai_power()
 		"power_mirror":
 			await _stage_mirror_power()
-		"power_cursor_fade":
-			await _stage_ready_power(Vector2i.ZERO)  # the chip fades under the cursor
 		"power_mapmenu":
 			await _stage_power_map_menu()  # the keyboard route to the power, unobscured
 		"power_banner":
@@ -340,7 +337,7 @@ func _run_power_menu_demo() -> void:
 	_battle.confirm_at(Vector2i(8, 8))  # select the red tank
 	_battle.confirm_at(Vector2i(8, 8))  # stay put -> its action menu
 	await _until_state(Battle.State.MENU)
-	_battle.view.commander_chip.fire_button.pressed.emit()
+	_battle.view.hud_bottom.fire_button.pressed.emit()
 	await _until_state(Battle.State.IDLE)
 	# Waited out rather than asserted, in the same spirit as _until_state: a menu
 	# that never closes hangs the scenario and the smoke run reports the timeout.
@@ -649,7 +646,7 @@ func _stand(type: UnitType, team: int, cell: Vector2i) -> Unit:
 
 
 ## Sets Red's commander and, optionally, fills its meter, then refreshes the HUD
-## so the chip reads the state under test. Node-free like the rest of the driver:
+## so the bars read the state under test. Node-free like the rest of the driver:
 ## it only writes sim state the presentation then reflects.
 func _set_red_commander(id: StringName, charged: bool) -> CommanderType:
 	var co := _battle.commander_db.by_id(id)
@@ -771,14 +768,15 @@ func _fail(message: String) -> void:
 	_failed = true
 
 
-## Parks the cursor — clear of the chip by default, under it for the fade frame —
-## and lets the HUD settle before the capture.
-func _settle_hud(cell := Vector2i(10, 5)) -> void:
-	_battle.set_cursor_cell(cell)
+## Parks the cursor on open ground and lets the HUD settle before the capture. The
+## docked bars never cover a tile, so where it rests is only about what the bottom
+## bar is describing, not about dodging chrome.
+func _settle_hud() -> void:
+	_battle.set_cursor_cell(Vector2i(10, 5))
 	await _battle.get_tree().create_timer(0.2).timeout
 
 
-## The partly filled meter that occupies the chip for most of a match.
+## The partly filled meter the commander block carries for most of a match.
 func _stage_charging_power() -> void:
 	var co := _set_red_commander(&"viktor_draeg", false)
 	_battle.game.commander_state(1).charge = int(co.power_cost / 2)
@@ -787,15 +785,15 @@ func _stage_charging_power() -> void:
 
 
 ## The COM-18 legibility frames. power_ready and power_ready_contrast stage the
-## same ready chip and differ only in the board it is read against — the smoke
-## harness launches the second on the bright strait — while power_cursor_fade
-## parks the cursor under the chip to prove the dodge.
-func _stage_ready_power(cell := Vector2i(10, 5)) -> void:
+## same ready meter and differ only in the board it is read against — the smoke
+## harness launches the second on the bright strait. The chip's cursor-fade frame
+## retired with the chip: a docked bar is never on top of a tile to fade off one.
+func _stage_ready_power() -> void:
 	_set_red_commander(&"mara_voss", true)
-	await _settle_hud(cell)
+	await _settle_hud()
 
 
-## Raises a power directly (no fire, no banner) so the capture is the chip's
+## Raises a power directly (no fire, no banner) so the capture is the meter's
 ## ACTIVE state alone. Firing is proved by `power_banner`; this isolates the HUD.
 func _stage_active_power() -> void:
 	# The roster's longest power name makes this the truncation regression frame.
@@ -816,8 +814,8 @@ func _stage_ai_power() -> void:
 	await _settle_hud()
 
 
-## Both slots pick Iron; side two's chip must keep the Iron name while borrowing
-## the same Aurora blue its board wears.
+## Both slots pick Iron; side two's commander block must keep the Iron name while
+## borrowing the same Aurora blue its board wears.
 func _stage_mirror_power() -> void:
 	var co := _battle.commander_db.by_id(&"viktor_draeg")
 	_battle.game.set_commander(1, co)
@@ -835,14 +833,14 @@ func _stage_mirror_power() -> void:
 ## capturing (see BattleAnimator.show_power_banner), so the frame is the banner.
 func _stage_power_banner() -> void:
 	_set_red_commander(&"cass_orlov", true)
-	_battle.view.commander_chip.fire_button.pressed.emit()
+	_battle.view.hud_bottom.fire_button.pressed.emit()
 	await _until_state(Battle.State.IDLE)
 
 
-## The keyboard route the ready chip's hint teaches: Enter on empty ground, then
-## the map menu's first row, which is the Command Power. The chip and this menu
-## share the top-left corner, so the frame alone proves nothing — a menu drawn
-## under the chip photographs just as well as one beside it. Hence the check.
+## The keyboard route the ready meter advertises alongside F: Enter on empty
+## ground, then the map menu's first row, which is the Command Power. The frame
+## alone proves nothing — the board renders behind the opaque bars, so a menu drawn
+## under one photographs just as well as one clear of it. Hence the check.
 func _stage_power_map_menu() -> void:
 	_set_red_commander(&"mara_voss", true)
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
@@ -854,7 +852,8 @@ func _stage_power_map_menu() -> void:
 
 
 ## The power row the hint sends the player to has to be visible when they get
-## there, and the whole menu has to stay inside the 640x360 frame it is clamped
+## there, and the whole menu has to stay inside the *board band* — the strip of the
+## 640x360 frame the two docked bars leave over, which is what ActionMenu clamps
 ## against. Both are read off the live rects rather than recomputed.
 func _check_map_menu_readable() -> void:
 	var rows := BattleMenus.map_actions(_battle.game)
@@ -862,12 +861,10 @@ func _check_map_menu_readable() -> void:
 		_fail("map menu opened without the Command Power as its first row")
 		return
 	var menu := _battle.action_menu.get_global_rect()
-	var chip := _battle.view.commander_chip.get_global_rect()
-	if _battle.view.commander_chip.visible and chip.intersects(menu):
-		_fail("the commander chip %s covers the map menu %s" % [chip, menu])
-	var frame := Rect2(Vector2.ZERO, _battle.get_viewport().get_visible_rect().size)
-	if not frame.encloses(menu):
-		_fail("the map menu %s does not fit the %s frame" % [menu, frame.size])
+	var frame := _battle.get_viewport().get_visible_rect().size
+	var band := Rect2(Vector2(0, UiTheme.HUD_TOP_H), Vector2(frame.x, frame.y - UiTheme.HUD_BARS_H))
+	if not band.encloses(menu):
+		_fail("the map menu %s does not fit the board band %s" % [menu, band])
 
 
 ## Opens the both-sides commander reference through the real map menu, the one
