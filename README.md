@@ -223,9 +223,12 @@ jumps to that team's first property.
 - Choosing Fire enters targeting: attackable enemies get a red overlay and a panel previews the
   attack and counter damage; confirm on a target to resolve combat, or cancel back to the menu.
   The preview speaks HP out of 10 like every other HP display — "Deal 5–6 HP / Take 2–3 HP",
-  with the target's "10 → 4–5 HP · luck included" underneath. Both bounds are the luck range the
-  attack will roll inside, so a span of one is the roll and a single number is a certainty; the
-  numbers come off `CombatResolver.Forecast`, which the panel formats and never recomputes
+  with the target's "10 → 4–5 HP · 55% · luck included" underneath, where the dimmed percentage is
+  the luck-free damage kept as secondary detail so a chip attack worth less than a displayed HP
+  still shows what it took off. Every bound is the luck range the attack will roll inside — the
+  attacker's answers for the opening roll too, since a lucky shot weakens or removes the counter —
+  so a span of one is the roll and a single number is a certainty; the numbers come off
+  `CombatResolver.Forecast`, which the panel formats and never recomputes
 - Confirming onto a reachable cell held by one of *your* units offers **Load** (board a transport
   with room) or **Join** (merge into a damaged unit of the same type, adding up HP, fuel, and
   ammo). Cancel snaps the mover back, as with any uncommitted move

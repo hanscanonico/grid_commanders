@@ -72,13 +72,46 @@ func test_bounds_contain_every_roll_the_resolver_can_produce() -> void:
 		var attacker_before := attacker.displayed_hp()
 		CombatResolver.resolve(state, attacker, defender)
 		var defender_left := defender.displayed_hp() if defender.hp > 0 else 0
+		var attacker_left := attacker.displayed_hp() if attacker.hp > 0 else 0
 		assert_between(
 			defender_left,
 			forecast.defender_hp_after_min,
 			forecast.defender_hp_after_max,
 			"defender landed outside the forecast on seed %d" % seed_value
 		)
+		assert_between(
+			attacker_left,
+			forecast.attacker_hp_after_min,
+			forecast.attacker_hp_after_max,
+			"attacker landed outside the forecast on seed %d" % seed_value
+		)
 		assert_eq(forecast.attacker_hp_before, attacker_before)
+
+
+## The same containment where the opening roll decides whether a counter happens
+## at all: a lucky shot kills the defender and the attacker takes nothing, which
+## the counter's own spread alone can never account for.
+func test_attacker_bounds_survive_a_shot_that_may_kill_the_counter() -> void:
+	for seed_value in range(40):
+		var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 T 1 0")
+		state.rng.seed = seed_value
+		var attacker := state.units[0]
+		var defender := state.units[1]
+		defender.hp = 5  # one lucky point of damage from dead
+		var forecast := CombatResolver.forecast(state, attacker, attacker.cell, defender)
+		assert_true(forecast.can_attack)
+		assert_eq(
+			forecast.attacker_hp_after_max,
+			forecast.attacker_hp_before,
+			"a roll that kills the target leaves no counter to take"
+		)
+		CombatResolver.resolve(state, attacker, defender)
+		assert_between(
+			attacker.displayed_hp() if attacker.hp > 0 else 0,
+			forecast.attacker_hp_after_min,
+			forecast.attacker_hp_after_max,
+			"attacker landed outside the forecast on seed %d" % seed_value
+		)
 
 
 ## A counter that cannot happen leaves the attacker's three numbers equal, so the
@@ -103,9 +136,14 @@ func test_counter_bounds_come_from_the_countering_side() -> void:
 	var forecast := CombatResolver.forecast(state, attacker, attacker.cell, state.units[1])
 	assert_gt(forecast.counter_damage, 0)
 	assert_eq(
+		forecast.attacker_hp_after_min,
+		ceili((attacker.hp - forecast.counter_damage - CommanderType.LUCK_MAX) / 10.0),
+		"the unluckiest exchange is the luck-free counter rolling its own ceiling"
+	)
+	assert_gte(
 		forecast.attacker_hp_after_max,
 		ceili((attacker.hp - forecast.counter_damage) / 10.0),
-		"the luck-free counter is the best case for the attacker"
+		"a lucky shot only ever weakens the counter, so the best case is no worse"
 	)
 	assert_lt(forecast.attacker_hp_after_min, forecast.attacker_hp_before)
 

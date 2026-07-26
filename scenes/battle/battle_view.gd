@@ -40,8 +40,9 @@ var terrain_panel: TerrainPanel
 var damage_preview: PanelContainer
 var atk_label: Label
 var counter_label: Label
-## The forecast's third line: the target's HP before and after, and the note
-## that luck can move where inside the span it lands.
+## The forecast's third line: the target's HP before and after, the luck-free
+## attack percentage as secondary detail, and the note that luck can move where
+## inside the span it lands.
 var outcome_label: Label
 var turn_label: Label
 ## The current side's portrait identity and charge meter. Hides itself for a side
@@ -529,12 +530,16 @@ func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) ->
 		else "No counter"
 	)
 	# The target's own before/after, so the player reads the outcome without
-	# subtracting, and the one line that admits the roll exists at all.
+	# subtracting, and the one line that admits the roll exists at all. The
+	# luck-free attack percentage rides along dimmed, demoted to the secondary
+	# detail plan D4 allows it to be: a chip attack worth less than a displayed
+	# HP reads "Deal 0 HP" up top, and this is where it says it landed anyway.
 	outcome_label.text = (
-		"Target %d → %s HP · luck included"
+		"Target %d → %s HP · %d%% · luck included"
 		% [
 			forecast.defender_hp_before,
-			_hp_span(forecast.defender_hp_after_min, forecast.defender_hp_after_max)
+			_hp_span(forecast.defender_hp_after_min, forecast.defender_hp_after_max),
+			forecast.attack_damage
 		]
 	)
 	# Measured rather than guessed: the panel is as wide and as tall as its own
