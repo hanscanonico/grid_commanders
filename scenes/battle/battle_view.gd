@@ -54,6 +54,16 @@ var outcome_label: Label
 ## The docked bar above the board: day, side, doctrine, funds.
 var hud_top: HudTopBar
 
+## The transient jitter the animator lays over the board's docking shift. Set —
+## and tweened — by BattleAnimator.shake_camera rather than written to the
+## camera, so the two can never be the same property's second owner; see
+## `_apply_board_offset`, which composes both and is the only writer.
+var shake_offset := Vector2.ZERO:
+	set(value):
+		shake_offset = value
+		if camera != null:
+			_apply_board_offset()
+
 var db: TerrainDB
 var map: MapData
 var game: GameState
@@ -605,9 +615,16 @@ func set_zoom(zoom: float) -> void:
 ## Camera2D.offset is world units: the same screen inset is a different world
 ## distance at each zoom level, and re-deriving it here is what keeps the band
 ## centred without the camera ever re-laying-out mid-turn.
+##
+## **`camera.offset` has one writer, and this is it.** The docking shift and the
+## combat shake are two different things that both want that property; a shake
+## written straight to the camera settles at Vector2.ZERO and takes the docking
+## shift down with it, leaving the board half a bar low for the rest of the
+## match. So the shake is asked for through `shake_offset` and composed here.
+## Anything else that wants to move the camera belongs in this sum too.
 func _apply_board_offset() -> void:
 	var inset := float(UiTheme.HUD_TOP_H - UiTheme.HUD_BOTTOM_H) / 2.0
-	camera.offset = Vector2(0, -inset / camera.zoom.y)
+	camera.offset = Vector2(0, -inset / camera.zoom.y) + shake_offset
 
 
 ## The furthest out the player may zoom: just far enough that the whole map is

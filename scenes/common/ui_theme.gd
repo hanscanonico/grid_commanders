@@ -69,7 +69,7 @@ const PANEL_BORDER := 2  # the panel's heavier outline
 const SHADOW := 1  # hard-shadow size; shows 2*SHADOW canvas px past bottom-right
 const RADIUS := 1  # a whisker of rounding, at most
 
-# --- the docked battle HUD (hud handoff SPEC.md) -------------------------------
+# --- the docked battle HUD (the handoff, .lavish/hud/SPEC.md) ------------------
 ## Both bars are fixed height, and the board's viewport is what is left over. The
 ## handoff's 46/92 px halve like every other metric here: the 640x360 canvas
 ## doubles into the window, so 23 + 46 canvas px show as 46 + 92 on screen.
@@ -83,6 +83,8 @@ const HUD_BOTTOM_H := 46
 const HUD_BARS_H := HUD_TOP_H + HUD_BOTTOM_H
 ## The 3px ink edge the bars present to the board, halved like the rest.
 const HUD_EDGE := 2
+## The vertical rule that splits a bar's groups.
+const HUD_RULE_W := 2
 ## One HP cell of the ten-pip strip (handoff 6x14).
 const PIP := Vector2(3, 7)
 const PIP_GAP := 1
@@ -216,6 +218,41 @@ static func hud_bar_box(edge_on_top: bool) -> StyleBoxFlat:
 	else:
 		box.border_width_bottom = HUD_EDGE
 	return box
+
+
+## A vertical rule between two groups inside a docked bar. The height is the
+## rule's own rather than the bar's, so each bar keeps the inset it wants from
+## its own fixed height.
+static func hud_divider(height: int) -> Control:
+	var line := Panel.new()
+	line.custom_minimum_size = Vector2(HUD_RULE_W, height)
+	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_theme_stylebox_override("panel", flat(SLATE_700))
+	return line
+
+
+## Fixed horizontal padding inside a bar's row. Never negative, so a caller may
+## hand it the pad minus the row's separation without guarding the result.
+static func hud_spacer(width: int) -> Control:
+	var pad := Control.new()
+	pad.custom_minimum_size = Vector2(maxi(width, 0), 0)
+	return pad
+
+
+## One label on a docked bar: Silkscreen, vertically centred in a row whose
+## height is fixed. `display_face` swaps in Pixelify for the two readouts the
+## top bar sets as numerals rather than as micro-labels.
+##
+## Here rather than on either bar, for the same reason the colours are: a HUD
+## label defined twice is a HUD label that drifts (menu-revamp plan D1).
+static func hud_label(text: String, font_size: int, color: Color, display_face := false) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", display() if display_face else stat())
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return label
 
 
 ## The HP strip's colour rule, straight from the handoff: green above 6, amber

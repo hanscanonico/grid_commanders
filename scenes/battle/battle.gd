@@ -285,6 +285,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cancel()
 	elif event.is_action_pressed(&"show_range"):
 		_toggle_range()
+	elif event.is_action_pressed(&"fire_power"):
+		_fire_command_power()  # the shortcut the charged meter advertises
 	else:
 		for dir: Array in DIR_ACTIONS:
 			if event.is_action_pressed(dir[0], true):
@@ -343,7 +345,9 @@ func confirm_at(cell: Vector2i) -> void:
 
 
 func _cancel() -> void:
-	if state == State.UNIT_SELECTED:
+	if state == State.IDLE:
+		_open_map_menu()  # nothing to back out of; the control "ESC · MENU" names
+	elif state == State.UNIT_SELECTED:
 		_clear_selection()
 	elif state == State.PREVIEW:
 		_clear_preview()
@@ -590,13 +594,18 @@ func _handle_map_action(action: StringName) -> void:
 	_on_turn_started()
 
 
-## Fires the current team's Command Power. Reached from the HUD button and from
-## the map menu; both go through PowerCommand, like every other action. Guarded
-## rather than assumed legal, because the HUD button sits outside the selection
-## flow — it is reachable mid-move — and the command is the authority on that.
+## Fires the current team's Command Power. Reached from the HUD button, the F
+## shortcut its charged meter advertises, and the map menu; all three go through
+## PowerCommand, like every other action. Guarded rather than assumed legal,
+## because the HUD button sits outside the selection flow — it is reachable
+## mid-move — and the command is the authority on that. *Who is at the keyboard*
+## is the one thing it cannot answer, so the refusal the bar makes by hiding the
+## button from a computer commander is made here, once, for all three.
 func _fire_command_power() -> void:
 	var command := PowerCommand.new()
-	if state not in [State.IDLE, State.MENU] or command.validate(game) != "":
+	if game.current_team in ai_teams or state not in [State.IDLE, State.MENU]:
+		return
+	if command.validate(game) != "":
 		return
 	command.apply(game)
 	_announce_power(command)

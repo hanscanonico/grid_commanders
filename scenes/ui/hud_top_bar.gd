@@ -17,6 +17,7 @@ extends PanelContainer
 const _CHIP := 7  # the faction colour square, handoff 14px
 const _PAD := 7
 const _GAP := 7
+const _RULE_H := UiTheme.HUD_TOP_H - 10
 
 var _day_label: Label
 var _chip: Panel
@@ -32,42 +33,47 @@ func _ready() -> void:
 func _build() -> void:
 	custom_minimum_size = Vector2(0, UiTheme.HUD_TOP_H)
 	add_theme_stylebox_override("panel", UiTheme.hud_bar_box(false))
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Chrome swallows the pointer. The board is deliberately allowed to render
+	# *behind* the bars (BattleView._apply_camera_limits), so a bar that let mouse
+	# events fall through to Battle._unhandled_input would walk the game cursor
+	# onto a cell hidden under opaque paint — and a click there would select it.
+	# The bottom bar states the same thing for the same reason.
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", _GAP)
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	add_child(row)
 
-	row.add_child(_spacer(_PAD - _GAP))
-	row.add_child(_label("DAY", UiTheme.SIZE_MICRO, UiTheme.INK_3))
-	_day_label = _label("1", UiTheme.SIZE_BUTTON, UiTheme.WHITE, true)
+	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_label("DAY", UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	_day_label = UiTheme.hud_label("1", UiTheme.SIZE_BUTTON, UiTheme.WHITE, true)
 	row.add_child(_day_label)
-	row.add_child(_divider())
+	row.add_child(UiTheme.hud_divider(_RULE_H))
 
 	_chip = Panel.new()
 	_chip.custom_minimum_size = Vector2(_CHIP, _CHIP)
 	_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_chip)
 
-	_faction_label = _label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
+	_faction_label = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
 	row.add_child(_faction_label)
 	# The doctrine takes whatever width is left and clips rather than pushing the
 	# funds out of place: a fixed-height bar cannot wrap, and the number on the
 	# right has to sit still.
-	_doctrine_label = _label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_doctrine_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	_doctrine_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_doctrine_label.clip_text = true
 	row.add_child(_doctrine_label)
 
-	row.add_child(_label("FUNDS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
-	_funds_label = _label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)
+	row.add_child(UiTheme.hud_label("FUNDS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)
 	row.add_child(_funds_label)
-	row.add_child(_divider())
-	row.add_child(_label("ESC · MENU", UiTheme.SIZE_MICRO, UiTheme.INK_3))
-	row.add_child(_spacer(_PAD - _GAP))
-
-	UiTheme.make_decoration(self)
+	row.add_child(UiTheme.hud_divider(_RULE_H))
+	# Cancel opens the field menu from IDLE (Battle._cancel), which is the control
+	# this names. A hint on permanent chrome has to stay true.
+	row.add_child(UiTheme.hud_label("ESC · MENU", UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
 
 
 ## One update per turn change. `side_theme` and `faction` come from the side's
@@ -107,27 +113,3 @@ func _chip_box(color: Color) -> StyleBoxFlat:
 	box.border_color = UiTheme.HARD_BORDER
 	box.set_border_width_all(1)
 	return box
-
-
-func _divider() -> Control:
-	var line := Panel.new()
-	line.custom_minimum_size = Vector2(2, UiTheme.HUD_TOP_H - 10)
-	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.SLATE_700))
-	return line
-
-
-func _spacer(width: int) -> Control:
-	var pad := Control.new()
-	pad.custom_minimum_size = Vector2(maxi(width, 0), 0)
-	return pad
-
-
-func _label(text: String, font_size: int, color: Color, display := false) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.display() if display else UiTheme.stat())
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return label

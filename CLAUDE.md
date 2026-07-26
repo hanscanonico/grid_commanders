@@ -71,8 +71,20 @@ across three movement domains (land, air, sea), property capture and income, and
   shipped: the occupant is the headline card and terrain drops to a compact card below, with star
   defense and the move row filtered to the occupant's class on occupied tiles. Presentation-only by
   scope — the fog/doctrine gate stays in `battle_view.gd`'s `refresh_panel`, which nulls units the
-  viewer cannot see before the panel ever gets them — the two `show_*` methods merged into one
-  `show_tile()`, and the node deliberately keeps the `TerrainPanel` name.
+  viewer cannot see before the panel ever gets them — and the two `show_*` methods merged into one
+  `show_tile()`. The corner panel itself is gone: `.lavish/hud/SPEC.md` docked the HUD into two
+  opaque full-width bars (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code), so
+  `TerrainPanel` and `CommanderHudChip` are deleted and `show_tile()` is the bottom bar's. What
+  survives the move is the rule above and the metrics' authority: both bar heights, the new colour
+  tokens and the three shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in
+  `UiTheme` — the bar scripts hardcode no colour and no size. Two things follow from docking that a
+  floating panel never had to answer. `camera.offset` now carries the shift that pushes the board
+  into the band between the bars, and `BattleView._apply_board_offset` is its **only writer**: the
+  combat shake asks for its jitter through `BattleView.shake_offset` and the view composes the two,
+  because a shake that settled at `Vector2.ZERO` would take the docking shift with it. And the bars
+  are chrome that swallows the pointer (`MOUSE_FILTER_STOP` on both) — the board is deliberately
+  allowed to render behind them, so an event falling through to `Battle._unhandled_input` would move
+  the game cursor onto a covered cell.
   `.lavish/battle-animations-plan.html` owns the combat cut-in — milestones BA1–BA4, all shipped —
   and its D1: **the cut-in replays a snapshot, it computes nothing.** The only thing `core/` gained
   for it is `CombatResult.attacker_hp_before` / `defender_hp_before`, because the animation runs

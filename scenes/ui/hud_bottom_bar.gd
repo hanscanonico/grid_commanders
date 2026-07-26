@@ -5,10 +5,10 @@ extends PanelContainer
 ## with its cost readout and the charged shortcut — then the unit under the
 ## cursor, then the tile it is standing on.
 ##
-## Replaces the floating commander chip and the corner terrain panel (hud handoff
-## SPEC). Docked and opaque, so nothing here can sit on a tile the player is
-## trying to read; and fixed at UiTheme.HUD_BOTTOM_H whatever it is showing, so
-## the board's viewport is a constant.
+## Replaces the floating commander chip and the corner terrain panel (the HUD
+## handoff, `.lavish/hud/SPEC.md`). Docked and opaque, so nothing here can sit on
+## a tile the player is trying to read; and fixed at UiTheme.HUD_BOTTOM_H whatever
+## it is showing, so the board's viewport is a constant.
 ##
 ## **Empty is empty.** With no unit under the cursor the unit and terrain thirds
 ## go blank and the bar keeps its height — a bar that grew and shrank as the
@@ -32,6 +32,7 @@ const _TILE_ICON := 20  # handoff 40px
 const _METER := Vector2(66, 6)  # handoff 132x12
 const _PAD := 6
 const _GAP := 7
+const _RULE_H := UiTheme.HUD_BOTTOM_H - 18
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
 	TerrainType.BOOT: "Boot",
@@ -81,13 +82,18 @@ func _ready() -> void:
 func _build() -> void:
 	custom_minimum_size = Vector2(0, UiTheme.HUD_BOTTOM_H)
 	add_theme_stylebox_override("panel", UiTheme.hud_bar_box(true))
+	# Chrome swallows the pointer, stated rather than inherited from Control's
+	# default: the board renders behind the bars, so an event that fell through to
+	# Battle._unhandled_input would move the game cursor onto a covered cell. The
+	# Fire button is a child and keeps its own hit-testing.
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", _GAP)
 	add_child(row)
-	row.add_child(_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
 	_build_commander(row)
-	row.add_child(_divider())
+	row.add_child(UiTheme.hud_divider(_RULE_H))
 	_build_unit(row)
 	# Always present, always expanding: it is what keeps the terrain chip pinned to
 	# the right edge whether or not there is a unit to describe, so the chip does
@@ -96,7 +102,7 @@ func _build() -> void:
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(gap)
 	_build_terrain(row)
-	row.add_child(_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
 
 	_built = true
 
@@ -125,9 +131,9 @@ func _build_commander(row: HBoxContainer) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 4)
 	block.add_child(head)
-	_co_name = _label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
+	_co_name = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
 	head.add_child(_co_name)
-	_power_name = _label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_power_name = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	_power_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_power_name.clip_text = true
 	head.add_child(_power_name)
@@ -147,7 +153,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	_meter_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_meter_frame.add_child(_meter_fill)
 
-	_charge_label = _label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_charge_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	meter_row.add_child(_charge_label)
 	fire_button = Button.new()
 	fire_button.text = "FIRE"
@@ -179,9 +185,9 @@ func _build_unit(row: HBoxContainer) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 4)
 	data.add_child(head)
-	_unit_name = _label("", UiTheme.SIZE_BODY, UiTheme.WHITE)
+	_unit_name = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.WHITE)
 	head.add_child(_unit_name)
-	_unit_sub = _label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_unit_sub = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	_unit_sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_unit_sub.clip_text = true
 	head.add_child(_unit_sub)
@@ -191,9 +197,9 @@ func _build_unit(row: HBoxContainer) -> void:
 	data.add_child(stats)
 	_pips = HpPips.new()
 	stats.add_child(_pips)
-	_fuel_label = _label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
+	_fuel_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
 	stats.add_child(_fuel_label)
-	_ammo_label = _label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
+	_ammo_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
 	stats.add_child(_ammo_label)
 
 
@@ -215,9 +221,9 @@ func _build_terrain(row: HBoxContainer) -> void:
 	data.add_theme_constant_override("separation", 2)
 	data.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	block.add_child(data)
-	_terrain_name = _label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
+	_terrain_name = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
 	data.add_child(_terrain_name)
-	_terrain_def = _label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_terrain_def = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	data.add_child(_terrain_def)
 
 
@@ -372,27 +378,3 @@ func _trough_box() -> StyleBoxFlat:
 	box.border_color = UiTheme.HARD_BORDER
 	box.set_border_width_all(1)
 	return box
-
-
-func _divider() -> Control:
-	var line := Panel.new()
-	line.custom_minimum_size = Vector2(2, UiTheme.HUD_BOTTOM_H - 18)
-	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.SLATE_700))
-	return line
-
-
-func _spacer(width: int) -> Control:
-	var pad := Control.new()
-	pad.custom_minimum_size = Vector2(maxi(width, 0), 0)
-	return pad
-
-
-func _label(text: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return label
