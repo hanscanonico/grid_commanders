@@ -30,6 +30,8 @@ const _PORTRAIT := 31  # handoff 62px
 const _UNIT_ICON := 32  # handoff 64px
 const _TILE_ICON := 20  # handoff 40px
 const _METER := Vector2(66, 6)  # handoff 132x12
+## Floor width of the commander block; it grows past this to fit a long power name.
+const _CO_MIN_W := 105
 const _PAD := 6
 const _GAP := 7
 const _RULE_H := UiTheme.HUD_BOTTOM_H - 18
@@ -62,6 +64,7 @@ var _charge_label: Label
 var _co_block: Control
 
 var _unit_block: Control
+var _unit_data: Control
 var _unit_icon: TextureRect
 var _unit_name: Label
 var _unit_sub: Label
@@ -94,13 +97,13 @@ func _build() -> void:
 	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
 	_build_commander(row)
 	row.add_child(UiTheme.hud_divider(_RULE_H))
+	# The unit block is the row's one expanding child, so the free width of the bar
+	# lands on the order line rather than sitting empty to its right. It is also
+	# what keeps the terrain chip pinned to the right edge whether or not there is
+	# a unit to describe — which is why it is blanked rather than hidden when the
+	# cursor steps off a unit: an invisible child is no child at all to a container,
+	# and the chip would slide left.
 	_build_unit(row)
-	# Always present, always expanding: it is what keeps the terrain chip pinned to
-	# the right edge whether or not there is a unit to describe, so the chip does
-	# not slide left the moment the cursor steps off a unit.
-	var gap := Control.new()
-	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(gap)
 	_build_terrain(row)
 	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
 
@@ -123,7 +126,11 @@ func _build_commander(row: HBoxContainer) -> void:
 
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 3)
-	block.custom_minimum_size = Vector2(105, 0)
+	# A floor, not a width: the block sizes to whichever of its two rows is wider,
+	# so every shipped power_name renders whole (they run to "Armoured
+	# Breakthrough"). The floor only bites on a commander-less side, where it keeps
+	# the empty left third from collapsing to the portrait.
+	block.custom_minimum_size = Vector2(_CO_MIN_W, 0)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
 	_co_block = block
@@ -135,7 +142,6 @@ func _build_commander(row: HBoxContainer) -> void:
 	head.add_child(_co_name)
 	_power_name = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	_power_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_power_name.clip_text = true
 	head.add_child(_power_name)
 
 	var meter_row := HBoxContainer.new()
@@ -165,6 +171,7 @@ func _build_commander(row: HBoxContainer) -> void:
 func _build_unit(row: HBoxContainer) -> void:
 	var block := HBoxContainer.new()
 	block.add_theme_constant_override("separation", _GAP)
+	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(block)
 	_unit_block = block
 
@@ -181,6 +188,7 @@ func _build_unit(row: HBoxContainer) -> void:
 	data.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	data.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	block.add_child(data)
+	_unit_data = data
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 4)
@@ -307,7 +315,11 @@ func show_tile(
 
 
 func _show_unit(unit: Unit, carrying: String, active_team: int) -> void:
-	_unit_block.visible = unit != null
+	# The block itself stays in the row — it is the expanding child holding the
+	# terrain chip against the right edge — so an empty tile blanks its contents
+	# rather than hiding the block.
+	_unit_icon.visible = unit != null
+	_unit_data.visible = unit != null
 	if unit == null:
 		return
 	_unit_icon.texture = UnitSprite.texture_for(unit.type, identity.atlas_row(unit.team))
