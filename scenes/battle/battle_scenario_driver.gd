@@ -289,7 +289,7 @@ func _run_transport_demo(mode: String) -> void:
 	_battle.action_menu.choose(&"load")
 	await _until_state(Battle.State.IDLE)
 	if mode == "cargo":
-		_battle.set_cursor_cell(Vector2i(3, 3))  # panel shows the APC's [+Infantry]
+		_battle.set_cursor_cell(Vector2i(3, 3))  # the bar shows the APC as CARRYING
 		return
 	_battle.confirm_at(Vector2i(3, 3))  # select the loaded APC
 	_battle.confirm_at(Vector2i(3, 5))  # drive it south

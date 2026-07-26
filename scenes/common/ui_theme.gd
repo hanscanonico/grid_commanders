@@ -1,10 +1,10 @@
 class_name UiTheme
 extends RefCounted
-## The menu's presentation authority: the Grid Commander Design System, transcribed
-## into Godot styleboxes and fonts. Where the handoff's cream/ink/hard-shadow look
-## is drawn — the main menu and the commander select page — the recipe comes from
-## here, so a colour or a shadow is defined once and every surface reads the same
-## value (menu-revamp plan D1).
+## The presentation authority for the shell: the Grid Commander Design System,
+## transcribed into Godot styleboxes and fonts. Where the handoff's look is drawn
+## — the main menu, the commander select page, and the two docked battle HUD bars
+## — the recipe comes from here, so a colour, a shadow or a bar height is defined
+## once and every surface reads the same value (menu-revamp plan D1).
 ##
 ## The palette splits three ways. Faction colours are never re-declared: they stay
 ## CommanderVisuals.FactionTheme's, reached through `menu_identity()` so a future
@@ -55,7 +55,7 @@ const SHADOW_INK := Color(0.13725, 0.15294, 0.16863, 0.9)
 
 # --- aliases: colours that already have a shipped authority (plan D1) ----------
 ## Cream panel surface and the two inks on it stay CommanderVisuals', so the menu
-## and the terrain panel can never disagree about what "paper" is.
+## and the battle screen can never disagree about what "paper" is.
 const PAPER := CommanderVisuals.PAPER
 const INK := CommanderVisuals.PAPER_INK  # body text / muted borders on cream
 const HARD_BORDER := CommanderVisuals.HARD_BORDER  # the darkest outline

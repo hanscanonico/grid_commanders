@@ -152,8 +152,9 @@ across three movement domains (land, air, sea), property capture and income, and
   draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row`, the board's own authorities, so a
   miniature can never be a second opinion (R2), and the same renderer bakes the panning menu backdrop.
   D6 was the scope line: the menu flow whole, the battle HUD not at all. The battle half has since
-  been reopened a surface at a time — COM-18's legibility pass dresses the commander HUD chip and the
-  info sheet's own chrome in the same `UiTheme` tokens — but the half of D6 that still stands is the
+  been reopened a surface at a time — COM-18's legibility pass dressed the commander HUD chip and the
+  info sheet's own chrome in the same `UiTheme` tokens, and the docked bars that replaced the chip
+  read those tokens too — but the half of D6 that still stands is the
   one that matters: the shared `CommanderCard` keeps its dress until a named follow-up, because it is
   also the in-battle info sheet, so restyling it would move commander selection too. The two fonts
   (Pixelify Sans, Silkscreen) are vendored under `assets/fonts/`, both OFL, recorded in

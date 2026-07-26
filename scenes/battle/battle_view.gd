@@ -296,7 +296,7 @@ func sync_sprites() -> void:
 
 ## Re-resolves the match's [SideIdentity] from the sim's current commander picks
 ## and repaints everything that wears a side's colour — the property tiles, every
-## unit sprite, the terrain panel and the HUD name.
+## unit sprite, and both HUD bars.
 ##
 ## Call this when the commanders changed behind the scene's back, which in
 ## practice means a dev scenario staging a commander onto an already-built board:
@@ -463,7 +463,7 @@ func _can_see_cell(cell: Vector2i) -> bool:
 ## The owner the board tile at `cell` is currently painted for, recovered from its
 ## atlas row. For a cell in view this equals the live owner (the fog pass just
 ## repainted it); for a fogged cell it is the viewer's last-seen owner. The
-## terrain panel reads this instead of live truth on a hidden cell so its owner
+## bar's tile card reads this instead of live truth on a hidden cell so its owner
 ## label names the same side the tile shows — never outing a capture out of sight.
 func _last_seen_owner(cell: Vector2i) -> int:
 	var row: int = terrain_layer.get_cell_atlas_coords(cell).y
