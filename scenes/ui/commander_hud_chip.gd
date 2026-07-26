@@ -157,6 +157,7 @@ func update_state(
 
 	fire_button.visible = co_state.is_ready() and not is_ai
 	fire_button.disabled = not co_state.is_ready() or is_ai
+	_hint_label.add_theme_color_override("font_color", theme.ink)
 	_hint_label.visible = is_ai or (co_state.is_ready() and not co_state.power_active)
 	if is_ai:
 		_hint_label.text = "AI CONTROLLED · FIRES AUTOMATICALLY"
@@ -226,8 +227,7 @@ func _style_fire_button() -> void:
 	fire_button.add_theme_stylebox_override("normal", _button_box(_READY))
 	fire_button.add_theme_stylebox_override("hover", _button_box(_READY.lightened(0.12)))
 	fire_button.add_theme_stylebox_override("pressed", _button_box(_READY.darkened(0.10)))
-	fire_button.add_theme_stylebox_override("focus", UiTheme.focus_box(UiTheme.WHITE))
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
 		fire_button.add_theme_color_override(state, CommanderVisuals.HARD_BORDER)
 
 

@@ -255,7 +255,7 @@ func _run_demo(mode: String) -> void:
 		"power_mirror":
 			await _stage_mirror_power()
 		"power_cursor_fade":
-			await _stage_cursor_fade()
+			await _stage_ready_power(Vector2i.ZERO)  # the chip fades under the cursor
 		"power_banner":
 			await _stage_power_banner()  # fire it -> the activation card holds
 		"commander_info":
@@ -767,21 +767,28 @@ func _fail(message: String) -> void:
 	_failed = true
 
 
+## Parks the cursor — clear of the chip by default, under it for the fade frame —
+## and lets the HUD settle before the capture.
+func _settle_hud(cell := Vector2i(10, 5)) -> void:
+	_battle.set_cursor_cell(cell)
+	await _battle.get_tree().create_timer(0.2).timeout
+
+
 ## The partly filled meter that occupies the chip for most of a match.
 func _stage_charging_power() -> void:
 	var co := _set_red_commander(&"viktor_draeg", false)
 	_battle.game.commander_state(1).charge = int(co.power_cost / 2)
 	_battle.view.refresh_hud()
-	_battle.set_cursor_cell(Vector2i(10, 5))
-	await _battle.get_tree().create_timer(0.2).timeout
+	await _settle_hud()
 
 
-## The COM-18 contrast frame: live mouse action and the keyboard route on an
-## opaque chip; `power_cursor_fade` separately protects the dodge.
-func _stage_ready_power() -> void:
+## The COM-18 legibility frames. power_ready and power_ready_contrast stage the
+## same ready chip and differ only in the board it is read against — the smoke
+## harness launches the second on the bright strait — while power_cursor_fade
+## parks the cursor under the chip to prove the dodge.
+func _stage_ready_power(cell := Vector2i(10, 5)) -> void:
 	_set_red_commander(&"mara_voss", true)
-	_battle.set_cursor_cell(Vector2i(10, 5))
-	await _battle.get_tree().create_timer(0.2).timeout
+	await _settle_hud(cell)
 
 
 ## Raises a power directly (no fire, no banner) so the capture is the chip's
@@ -792,8 +799,7 @@ func _stage_active_power() -> void:
 	_battle.game.set_commander(1, co)
 	_battle.game.commander_state(1).power_active = true
 	_battle.view.restage_identity()
-	_battle.set_cursor_cell(Vector2i(10, 5))
-	await _battle.get_tree().create_timer(0.2).timeout
+	await _settle_hud()
 
 
 ## A full computer meter with no player FIRE control.
@@ -803,8 +809,7 @@ func _stage_ai_power() -> void:
 	_battle.game.commander_state(2).charge = co.power_cost
 	_battle.game.current_team = 2
 	_battle.view.restage_identity()
-	_battle.set_cursor_cell(Vector2i(10, 5))
-	await _battle.get_tree().create_timer(0.2).timeout
+	await _settle_hud()
 
 
 ## Both slots pick Iron; side two's chip must keep the Iron name while borrowing
@@ -815,17 +820,10 @@ func _stage_mirror_power() -> void:
 	_battle.game.set_commander(2, co)
 	_battle.game.commander_state(2).charge = co.power_cost
 	_battle.game.current_team = 2
-	_battle.view.ai_teams.clear()
+	_battle.ai_teams.clear()  # Battle owns the list; hand the emptied one over again
+	_battle.view.ai_teams = _battle.ai_teams
 	_battle.view.restage_identity()
-	_battle.set_cursor_cell(Vector2i(10, 5))
-	await _battle.get_tree().create_timer(0.2).timeout
-
-
-## The protect-list behavior: the chip fades when the cursor sits under it.
-func _stage_cursor_fade() -> void:
-	_set_red_commander(&"mara_voss", true)
-	_battle.set_cursor_cell(Vector2i.ZERO)
-	await _battle.get_tree().create_timer(0.2).timeout
+	await _settle_hud()
 
 
 ## Charges Red, then fires the power through the real Fire button so the

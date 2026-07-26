@@ -67,8 +67,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # it.
 # The commander-identity captures are the G3 and COM-18 gates:
 # power_charging/ready/active/ai/mirror cover every HUD chip state,
-# power_ready_contrast is the named legibility frame, and power_cursor_fade
-# protects the existing cursor dodge. The activation card, both-sides info sheet,
+# power_ready_contrast is the named legibility frame — the same ready chip as
+# power_ready but staged over the bright strait, so the two together are the
+# dark/light background comparison — and power_cursor_fade protects the
+# existing cursor dodge. The activation card, both-sides info sheet,
 # and victory lockup are each still proved to render at native 640x360.
 #
 # The `cutin` family is the odd one out: every other mode drives the flow and
@@ -186,8 +188,11 @@ for mode in "${modes[@]}"; do
 		godot_args+=(--fog)
 	fi
 	# The naval scenarios need a board with water on it; the default has none.
+	# power_ready_contrast borrows the same board for a different reason: it is
+	# power_ready over the bright, sea-heavy strait rather than the dim default,
+	# so the pair is the chip's dark/light legibility comparison.
 	case "$demo" in
-		divemenu | dive | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
+		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
 			godot_args+=(--map=the_straits)
 			;;
 	esac
