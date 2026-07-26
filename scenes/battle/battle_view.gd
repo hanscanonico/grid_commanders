@@ -40,6 +40,9 @@ var terrain_panel: TerrainPanel
 var damage_preview: PanelContainer
 var atk_label: Label
 var counter_label: Label
+## The forecast's third line: the target's HP before and after, and the note
+## that luck can move where inside the span it lands.
+var outcome_label: Label
 var turn_label: Label
 ## The current side's portrait identity and charge meter. Hides itself for a side
 ## with no Command Power, so a commander-less match keeps the pre-commander HUD.
@@ -497,19 +500,57 @@ func refresh_panel(cell: Vector2i) -> void:
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing
 ## worth previewing under the cursor — hides the panel.
+##
+## It speaks HP out of 10, the unit every other HP display in the game speaks
+## (UX recovery plan D4): the percentages it used to print read like a hit
+## chance and made the player convert mid-fight. Every number here was handed
+## over by the forecast — this method formats and never computes, which is the
+## cut-in's "replays, never decides" rule applied to text.
 func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) -> void:
 	damage_preview.visible = forecast != null and forecast.can_attack
 	if not damage_preview.visible:
 		return
-	atk_label.text = "Atk %d%%" % forecast.attack_damage
-	counter_label.text = (
-		"Counter %d%%" % forecast.counter_damage if forecast.counter_damage >= 0 else "No counter"
+	atk_label.text = (
+		"Deal %s HP"
+		% _hp_span(
+			forecast.defender_hp_before - forecast.defender_hp_after_max,
+			forecast.defender_hp_before - forecast.defender_hp_after_min
+		)
 	)
-	var pos := screen_pos_for_cell(cell) + Vector2(4, -34)
-	var view := _viewport_size()
-	if pos.x > view.x - 100.0:
-		pos.x -= 130.0
+	counter_label.text = (
+		(
+			"Take %s HP"
+			% _hp_span(
+				forecast.attacker_hp_before - forecast.attacker_hp_after_max,
+				forecast.attacker_hp_before - forecast.attacker_hp_after_min
+			)
+		)
+		if forecast.counter_damage >= 0
+		else "No counter"
+	)
+	# The target's own before/after, so the player reads the outcome without
+	# subtracting, and the one line that admits the roll exists at all.
+	outcome_label.text = (
+		"Target %d → %s HP · luck included"
+		% [
+			forecast.defender_hp_before,
+			_hp_span(forecast.defender_hp_after_min, forecast.defender_hp_after_max)
+		]
+	)
+	# Measured rather than guessed: the panel is as wide and as tall as its own
+	# lines, and those now vary with the numbers in them. It sits up and to the
+	# right of the tile, and flips to its left rather than run off the screen.
+	var panel := damage_preview.get_combined_minimum_size()
+	var pos := screen_pos_for_cell(cell) + Vector2(4.0, 6.0 - panel.y)
+	if pos.x + panel.x > _viewport_size().x - 4.0:
+		pos.x -= panel.x + 12.0
 	damage_preview.position = pos.max(Vector2(4, 4))
+
+
+## "5" for a certain outcome, "5–6" for one luck can move. Both bounds are the
+## forecast's; this only chooses how to say them.
+func _hp_span(low: int, high: int) -> String:
+	return str(low) if low == high else "%d–%d" % [low, high]
 
 
 # --- cursor and camera geometry ----------------------------------------------

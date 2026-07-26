@@ -39,6 +39,25 @@ class Forecast:
 	## -1 when no counter is possible (defender dead, indirect, unarmed
 	## against the attacker, or the attacker fires from beyond range 1).
 	var counter_damage := -1
+	## The same exchange in displayed HP (1-10) — the unit every other HP display
+	## in the game speaks, and so the unit the damage preview leads with.
+	##
+	## `_after_min` / `_after_max` bound the HP a side is left standing at across
+	## the luck range `resolve` rolls inside, worst and best case for its owner.
+	## The percentages above stay luck-free, so they are a *floor* under a
+	## doctrine with a lucky floor; these bounds are not.
+	##
+	## Filled by the same pass that fills the percentages, for the same reason
+	## CombatResult snapshots the HP the cut-in counts down from: the preview
+	## replays the resolver's arithmetic and never repeats it. With no counter
+	## the attacker's three numbers are all its current HP. Nothing in core/ or
+	## ai/ reads these.
+	var attacker_hp_before := 0
+	var attacker_hp_after_min := 0
+	var attacker_hp_after_max := 0
+	var defender_hp_before := 0
+	var defender_hp_after_min := 0
+	var defender_hp_after_max := 0
 
 
 class CombatResult:
@@ -63,7 +82,9 @@ class CombatResult:
 
 ## Luck-free prediction for the damage preview. `attacker_cell` is the planned
 ## firing position (the move is usually not committed yet). The counter uses
-## the defender's projected post-attack HP, like Advance Wars shows it.
+## the defender's projected post-attack HP, like Advance Wars shows it — the
+## luck-free one, so the counter's own HP spread is its roll and not the
+## opening shot's compounded into it.
 static func forecast(
 	state: GameState, attacker: Unit, attacker_cell: Vector2i, defender: Unit
 ) -> Forecast:
@@ -87,38 +108,50 @@ static func forecast_at(
 	var result := Forecast.new()
 	if not attacker.has_ammo():
 		return result
-	var damage := _damage_pct(
-		state,
-		Engagement.create(
-			attacker,
-			attacker_cell,
-			attacker.displayed_hp(),
-			defender,
-			defender_cell,
-			defender.displayed_hp()
-		)
+	var shot := Engagement.create(
+		attacker,
+		attacker_cell,
+		attacker.displayed_hp(),
+		defender,
+		defender_cell,
+		defender.displayed_hp()
 	)
+	var damage := _damage_pct(state, shot)
 	if damage < 0:
 		return result
 	result.can_attack = true
 	result.attack_damage = damage
+	result.attacker_hp_before = attacker.displayed_hp()
+	result.defender_hp_before = defender.displayed_hp()
+	# The luckiest roll takes the most off, so it is the *low* end of the HP the
+	# defender is left standing at.
+	result.defender_hp_after_min = _hp_after(defender.hp, damage + _luck_max(state, shot))
+	result.defender_hp_after_max = _hp_after(defender.hp, damage + _luck_min(state, shot))
+	result.attacker_hp_after_min = result.attacker_hp_before
+	result.attacker_hp_after_max = result.attacker_hp_before
 	var hp_after := maxi(0, defender.hp - damage)
 	if (
 		hp_after > 0
 		and _defender_can_counter(state, defender, defender_cell, attacker, attacker_cell)
 	):
-		result.counter_damage = _damage_pct(
-			state,
-			Engagement.create(
-				defender,
-				defender_cell,
-				ceili(hp_after / 10.0),
-				attacker,
-				attacker_cell,
-				attacker.displayed_hp(),
-				true
-			)
+		var counter := Engagement.create(
+			defender,
+			defender_cell,
+			ceili(hp_after / 10.0),
+			attacker,
+			attacker_cell,
+			attacker.displayed_hp(),
+			true
 		)
+		var counter_damage := _damage_pct(state, counter)
+		if counter_damage >= 0:
+			result.counter_damage = counter_damage
+			result.attacker_hp_after_min = _hp_after(
+				attacker.hp, counter_damage + _luck_max(state, counter)
+			)
+			result.attacker_hp_after_max = _hp_after(
+				attacker.hp, counter_damage + _luck_min(state, counter)
+			)
 	return result
 
 
@@ -228,9 +261,29 @@ static func _defender_can_counter(
 ## from the match RNG whatever the range, so a doctrine that narrows luck cannot
 ## put a replay out of step with the seed it was recorded on.
 static func _luck(state: GameState, fight: Engagement) -> int:
+	return state.rng.randi_range(_luck_min(state, fight), _luck_max(state, fight))
+
+
+## The bounds `_luck` rolls between, asked without drawing — what the forecast
+## needs where `resolve` needs a number. Same commander, same two hooks, so the
+## preview's spread can never widen past the roll it is describing.
+static func _luck_min(state: GameState, fight: Engagement) -> int:
+	return state.commander_of(fight.attacker.team).luck_min(state, fight)
+
+
+static func _luck_max(state: GameState, fight: Engagement) -> int:
 	var att_co := state.commander_of(fight.attacker.team)
-	var low := att_co.luck_min(state, fight)
-	return state.rng.randi_range(low, maxi(low, att_co.luck_max(state, fight)))
+	# A doctrine that raises its floor above the ceiling gets a fixed roll, not
+	# an inverted range — the clamp `randi_range` has always been given.
+	return maxi(att_co.luck_min(state, fight), att_co.luck_max(state, fight))
+
+
+## Displayed HP (0-10) a unit is left standing at after taking `damage`, from its
+## internal HP. The resolver's own subtraction and the unit's own rounding, so a
+## forecast and the exchange it forecasts cannot disagree about what a hit leaves
+## behind.
+static func _hp_after(hp: int, damage: int) -> int:
+	return ceili(maxi(0, hp - damage) / 10.0)
 
 
 ## The terrain cover the defender actually gets. A unit in the air is over the
