@@ -124,6 +124,12 @@ static func build_actions(
 ## asks its command: the tier the player is watching at has one owner, and a menu
 ## that remembered its own copy would eventually show a speed the game is not
 ## playing at. Choosing it cycles to the next tier — see Battle's map handler.
+##
+## The two exit rows are the only way out of a running match that is not winning,
+## losing or killing the application, so they are spelled out rather than folded
+## into one: which of the two a player wants turns entirely on whether the single
+## save slot may be overwritten, and a row that decided that quietly would be
+## wrong for half of them either way.
 static func map_actions(game: GameState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	var co_state := game.commander_state(game.current_team)
@@ -133,5 +139,27 @@ static func map_actions(game: GameState) -> Array[Dictionary]:
 	actions.append({"id": &"speed", "label": "Speed: %s" % Settings.speed.display_name})
 	actions.append({"id": &"end_turn", "label": "End Turn"})
 	actions.append({"id": &"save", "label": "Save"})
+	actions.append({"id": &"save_and_quit", "label": "Save & Main Menu"})
+	actions.append({"id": &"quit", "label": "Main Menu Without Saving"})
 	actions.append(CANCEL)
+	return actions
+
+
+## Rows for the second press "Main Menu Without Saving" asks for. Leaving is the
+## one map-menu action nothing undoes — the board is gone, and the slot it walks
+## past may hold a match days older than the one on screen — so it is the one that
+## gets asked twice.
+##
+## A menu rather than a dialog of its own, which is what makes the confirmation
+## reachable by every route the row that opened it was: ActionMenu already owns the
+## keyboard, the mouse and the Esc that backs out, and already clamps itself inside
+## the board band. The safe row leads deliberately — ActionMenu arms its first
+## enabled row when it opens, so a confirmation that led with the abandon would put
+## "throw the match away" under the Enter the player is already pressing — and it
+## carries the plain `cancel` id, so the row, Esc and a click past it all mean the
+## same thing.
+static func abandon_confirm_actions() -> Array[Dictionary]:
+	var actions: Array[Dictionary] = []
+	actions.append({"id": &"cancel", "label": "Keep Playing"})
+	actions.append({"id": &"abandon", "label": "Leave Without Saving"})
 	return actions

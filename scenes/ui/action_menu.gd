@@ -60,22 +60,29 @@ func close() -> void:
 	hide()
 
 
+## Every recognised action claims the event *before* it runs, not after: a row may
+## now leave the match, and the scene change frees the viewport out from under this
+## handler, so a trailing set_input_as_handled() would be called on nothing. The
+## menu has consumed the press the moment it recognises the action anyway — what
+## the chosen row then does is not the input layer's business. An unrecognised
+## event still falls through unclaimed.
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if event.is_action_pressed(&"cursor_up", true):
+		get_viewport().set_input_as_handled()
 		_step_index(-1)
 		_update_labels()
 	elif event.is_action_pressed(&"cursor_down", true):
+		get_viewport().set_input_as_handled()
 		_step_index(1)
 		_update_labels()
 	elif event.is_action_pressed(&"confirm"):
+		get_viewport().set_input_as_handled()
 		choose(_ids[_index])
 	elif event.is_action_pressed(&"cancel"):
+		get_viewport().set_input_as_handled()
 		choose(&"cancel")
-	else:
-		return
-	get_viewport().set_input_as_handled()
 
 
 ## Public so scripted drivers (screenshot demos) exercise the same path as
@@ -130,6 +137,12 @@ func _place() -> void:
 	await get_tree().process_frame
 	if not visible:
 		return
+	# A PanelContainer grows to fit its rows and never shrinks back on its own, so
+	# a short menu opened where a tall one just was keeps the tall one's panel
+	# standing behind it — the two-row abandon confirmation under the seven-row map
+	# menu is the flow that shows it. Sizing down is also what makes the clamp below
+	# honest: it then measures the panel the player actually sees.
+	reset_size()
 	var view := get_viewport().get_visible_rect().size
 	var top_left := Vector2(MARGIN, UiTheme.HUD_TOP_H + MARGIN)
 	var max_pos := (view - size - Vector2(MARGIN, UiTheme.HUD_BOTTOM_H + MARGIN)).max(top_left)

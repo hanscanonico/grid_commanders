@@ -16,8 +16,6 @@ extends Node2D
 ## collaborator that wants anything else wants a new entry point here, not a
 ## reach into a private method.
 
-const MAIN_MENU_SCENE := "res://scenes/menu/main_menu.tscn"
-
 enum State {
 	IDLE,
 	UNIT_SELECTED,
@@ -116,6 +114,10 @@ var _capturing := false
 ## and the reported result line. Built after the view and animator it draws
 ## through; see _build_outcome.
 var _outcome: BattleOutcome
+## Owns every way out of a running match short of winning it — the save slot, the
+## two map-menu exits and the confirmation the unsaved one asks for, and the
+## rematch the victory lockup offers. BattleOutcome's sibling; see BattleExit.
+var _exit: BattleExit
 
 
 func _ready() -> void:
@@ -123,6 +125,7 @@ func _ready() -> void:
 	unit_db = UnitDB.load_default()
 	commander_db = CommanderDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
+	_exit = BattleExit.new(self)
 	# Which match this is, BattleSetup decides; from here the scene just runs it.
 	var built := BattleSetup.build(db, unit_db, commander_db)
 	map = built.map
@@ -137,8 +140,8 @@ func _ready() -> void:
 	_outcome.configure(built.watching, built.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
 	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
-	rematch_button.pressed.connect(_rematch)
-	menu_button.pressed.connect(_go_to_main_menu)
+	rematch_button.pressed.connect(_exit.rematch)
+	menu_button.pressed.connect(_exit.to_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view)
@@ -255,15 +258,6 @@ func _build_outcome() -> BattleOutcome:
 	built.victory_sub_label = victory_sub_label
 	built.rematch_button = rematch_button
 	return built
-
-
-func _go_to_main_menu() -> void:
-	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
-
-
-func _rematch() -> void:
-	BattleSetup.remember(game, ai_teams)
-	get_tree().reload_current_scene()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -475,6 +469,8 @@ func _on_menu_action(action: StringName) -> void:
 			_handle_build_action(action)
 		&"map":
 			_handle_map_action(action)
+		&"abandon":
+			_exit.handle_confirm_action(action)
 
 
 func _handle_unit_action(action: StringName) -> void:
@@ -590,11 +586,16 @@ func _handle_map_action(action: StringName) -> void:
 		animator.show_banner("Speed: %s" % Settings.speed.display_name)
 		return
 	if action == &"save":
-		if SaveGame.save(game, ai_teams, SaveGame.SAVE_PATH, MatchConfig.difficulty):
-			# Named, because the slot is single: the banner has to say what it just
-			# overwrote the last save with. Same words the menu's Continue caption
-			# will read back, through the one formatter (SaveCodec.describe).
-			animator.show_banner("Saved %s" % SaveCodec.describe(game.day, game.map_path))
+		_exit.save_match()
+		return
+	if action == &"save_and_quit":
+		_exit.save_and_leave()
+		return
+	if action == &"quit":
+		# The context is Battle's to set — it is what routes the rows that come back
+		# — and the confirmation itself is BattleExit's, like the leaving behind it.
+		_menu_context = &"abandon"
+		_exit.confirm_abandon()
 		return
 	if action != &"end_turn":
 		return

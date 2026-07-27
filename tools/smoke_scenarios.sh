@@ -107,6 +107,16 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # mispainted army renders a perfectly good picture, so "a frame was written" was
 # never going to be the check.
 #
+# leave_confirm is COM-16's: the map menu now carries both routes out of a running
+# match, and the scenario walks from those rows to the confirmation the unsaved one
+# opens. Like power_mapmenu it measures rather than poses — the rows are read off
+# the menu the scenario opened and the rects off the live control — because the
+# board renders behind the opaque bars, so a menu two rows taller than it used to
+# be, or a confirmation that armed its destructive row, would photograph perfectly
+# well. It stops at the confirmation rather than going through: leaving frees the
+# battle scene, which would leave the run with nothing to capture, so the two
+# completed exits are proved by driving the real scenes instead (see the ticket).
+#
 # The menu pair is the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
 # centered menu column plus all four primary actions against the 640x360 frame
@@ -120,7 +130,8 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # themselves, so neither reads nor writes the running machine's user://save.json.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
-	load cargo drop transport supply divemenu dive mapmenu powermenu victory aiturn
+	load cargo drop transport supply divemenu dive mapmenu leave_confirm
+	powermenu victory aiturn
 	powermenu+fog victory+fog ambush vanish
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner commander_info commander_victory
