@@ -387,7 +387,7 @@ func confirm_at(cell: Vector2i) -> void:
 
 func _cancel() -> void:
 	if state == State.IDLE:
-		_open_map_menu()  # nothing to back out of; the control "ESC · MENU" names
+		_open_map_menu()  # nothing to back out of; what the resting legend's ESC names
 	elif state == State.UNIT_SELECTED:
 		_clear_selection()
 	elif state == State.PREVIEW:
