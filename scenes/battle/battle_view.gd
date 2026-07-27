@@ -13,9 +13,8 @@ extends RefCounted
 ## The view never calls back into Battle, so the dependency runs one way and a
 ## renderer can never quietly become a second rules engine.
 ##
-## Fog is enforced here rather than in the sim, which stays permissive:
-## `Vision` decides what a team can see, and the view refuses to draw the rest.
-## Battle picks *whose* eyes to use and passes the team in.
+## Fog is enforced in the presentation layer rather than in the permissive sim.
+## BattlePerspective decides what the viewer may see; this view only draws it.
 ##
 ## Battle assigns the node fields and then calls `setup`; the view is
 ## constructed with no arguments so it never holds a reference to Battle.
@@ -67,6 +66,9 @@ var shake_offset := Vector2.ZERO:
 var db: TerrainDB
 var map: MapData
 var game: GameState
+## The read-only viewer policy this renderer draws. Battle builds it from the
+## same game and shares it with every presentation collaborator.
+var perspective: BattlePerspective
 ## Who each side is and what it wears — resolved once at match setup from the
 ## commander picks (SideIdentity). Every team-to-paint and team-to-name answer
 ## the board draws comes from here; the sim keeps its team ints. Battle builds it
@@ -77,14 +79,6 @@ var identity: SideIdentity
 var ai_teams: Array[int] = []
 
 var _sprites: Dictionary = {}  # Unit -> UnitSprite
-## Cells the viewing team can see; refreshed by `refresh_fog` after commits.
-var _visible_cells: Dictionary = {}
-## Whose eyes the board is drawn from; set by the same pass. Starts on the
-## opening team, which is who is looking before the first fog refresh runs.
-var _viewing_team: int = GameState.TEAMS[0]
-## True while a hot-seat handoff blacks the board out for everyone; set by the
-## same pass, and the one case where even your own units are hidden.
-var _blacked_out := false
 
 
 ## Builds the tile sets from data and paints the opening board. Call once, after
@@ -205,7 +199,7 @@ func _paint_backdrop() -> void:
 ## deferred to `refresh_fog`, which lands it the moment the viewer's vision
 ## reaches the cell.
 func repaint_property(cell: Vector2i) -> void:
-	if not _can_see_cell(cell):
+	if not perspective.can_see_cell(cell):
 		return
 	var terrain := map.terrain_at(cell)
 	if terrain.team_tinted:
@@ -251,11 +245,10 @@ func refresh_sprite(unit: Unit) -> void:
 	sprite.refresh()
 
 
-## Whether the board currently hides `unit` from whoever is looking. Vision owns
-## the rule; the blackout is the view's own, since a hot-seat handoff hides even
-## your own units.
+## Whether the board currently hides `unit` from whoever is looking. The shared
+## perspective owns the answer, including a hot-seat blackout hiding your own.
 func _is_fogged(unit: Unit) -> bool:
-	return _blacked_out or not can_see_unit(unit)
+	return not perspective.can_see_unit(unit)
 
 
 ## Hands the sprite over and stops tracking the unit, for callers that animate
@@ -351,27 +344,16 @@ func update_path_line(path: Array[Vector2i]) -> void:
 # --- fog ---------------------------------------------------------------------
 
 
-## Recomputes visibility and repaints the fog layer plus unit visibility.
-## Called after every committed action and turn change (not per cursor move).
-## With fog off the layer stays clear and nothing is ever hidden; when
-## `blacked_out` (a hot-seat handoff) nobody may look and the board is hidden
-## entirely.
-##
-## Only the *cells* are worked out here. Each sprite is then redrawn through
-## `refresh_sprite`, which is where hiding a unit is decided — for this pass and
-## for every other one.
-func refresh_fog(viewing_team: int, blacked_out: bool) -> void:
+## Repaints the fog layer and unit visibility from the already-refreshed
+## perspective. Called after every committed action and turn change, not per
+## cursor move.
+func refresh_fog() -> void:
 	fog_layer.clear()
-	_viewing_team = viewing_team
-	_blacked_out = blacked_out
-	_visible_cells = {}
 	if game.fog_enabled:
-		if not blacked_out:
-			_visible_cells = Vision.visible_cells(game, viewing_team)
 		for y in map.height:
 			for x in map.width:
 				var cell := Vector2i(x, y)
-				if _visible_cells.has(cell):
+				if perspective.can_see_cell(cell):
 					# In view: show the true owner. A capture the gate in
 					# repaint_property deferred while the cell was fogged reveals
 					# here, so the board never leaks an ownership change the viewer
@@ -381,83 +363,6 @@ func refresh_fog(viewing_team: int, blacked_out: bool) -> void:
 					fog_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i.ZERO)
 	for unit in game.units:
 		refresh_sprite(unit)
-
-
-## Whether the viewing team can see a unit — the question to ask before drawing
-## or targeting one. Deliberately not "can it see that cell": a doctrine can hide
-## a unit standing somewhere the viewer sees perfectly well, so the two came
-## apart. Vision owns the rule, as it owns every other one; this only supplies
-## the cells already computed for the fog pass.
-func can_see_unit(unit: Unit) -> bool:
-	return Vision.can_see_unit(game, _viewing_team, unit, _visible_cells)
-
-
-## The unit on `cell` the viewing team can actually see, or null when the tile
-## reads empty to them — a fogged enemy included. The panel and the menu-opening
-## decisions ask this instead of `game.unit_at` so a hidden occupant can't change
-## what a click offers and turn an apparently-empty cell into a free fog probe.
-## The sim stays the authority on what lands there: a build onto a secretly
-## occupied cell is still refused by BuildCommand.validate.
-func _visible_unit_at(cell: Vector2i) -> Unit:
-	var unit := game.unit_at(cell)
-	if unit != null and not can_see_unit(unit):
-		return null
-	return unit
-
-
-## Adjacent cells where `transport` (previewed at `dest`) could set `passenger`
-## down: the transport must be somewhere it can unload from, the passenger must be
-## able to stand on the cell, and the cell must hold no friendly and no visible
-## enemy. The vacated origin counts as free, and a hidden enemy is left to foil the
-## drop on apply rather than shown here, which would reveal it. A per-passenger
-## query because a Lander's two riders need not share a move class. Underscored
-## for the same reason as `_can_see_cell` below: Battle is the only caller and
-## the view is at its public-method ceiling.
-func _drop_cells(transport: Unit, dest: Vector2i, passenger: Unit) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-	if passenger == null or not transport.type.can_unload_from(map.terrain_at(dest).id):
-		return cells
-	for dir in MovementResolver.DIRECTIONS:
-		var cell := dest + dir
-		var terrain := map.terrain_at(cell)
-		if terrain == null or not terrain.is_passable(passenger.type.move_class):
-			continue
-		var occupant := game.unit_at(cell)
-		if occupant != null and occupant != transport and can_see_unit(occupant):
-			continue
-		cells.append(cell)
-	return cells
-
-
-## The transport's cargo that has at least one legal drop cell from `dest`, in load
-## order. Empty when nothing aboard can step off here — which is how Battle knows
-## whether to offer a Drop, and per passenger so each gets its own menu row.
-## Underscored with its sibling above; Battle is the only caller.
-func _droppable_passengers(transport: Unit, dest: Vector2i) -> Array[Unit]:
-	var droppable: Array[Unit] = []
-	for passenger in game.cargo_of(transport):
-		if not _drop_cells(transport, dest, passenger).is_empty():
-			droppable.append(passenger)
-	return droppable
-
-
-## Whether the viewing team may see activity on `cell` — the single authority in
-## the view for cell-scoped visibility, as `can_see_unit` is for a unit. Ask it
-## before disclosing anything a hidden unit could be doing on the tile, such as a
-## capture in progress or (later) a fresh owner. With fog off every cell is
-## visible; during a hot-seat blackout none is; otherwise it is whatever the last
-## fog pass computed. Kept distinct from `can_see_unit` because a cell can be
-## visible while a doctrine hides the unit standing on it, and vice versa.
-## Underscored because it is the view's own; BattleAiRunner reaches in for it the
-## same way it reaches into Battle's private flow, so as not to add a 21st public
-## method here. It is still the one place the answer is computed — re-derive it
-## nowhere else.
-func _can_see_cell(cell: Vector2i) -> bool:
-	if not game.fog_enabled:
-		return true
-	if _blacked_out:
-		return false
-	return _visible_cells.has(cell)
 
 
 ## The owner the board tile at `cell` is currently painted for, recovered from its
@@ -498,7 +403,7 @@ func refresh_hud() -> void:
 
 
 func refresh_panel(cell: Vector2i) -> void:
-	var hovered := _visible_unit_at(cell)  # hidden enemies stay hidden in the panel too
+	var hovered := perspective.visible_unit_at(cell)  # hidden enemies stay hidden here too
 	var carrying := ""
 	if hovered != null:
 		var cargo := game.cargo_of(hovered)
@@ -507,11 +412,15 @@ func refresh_panel(cell: Vector2i) -> void:
 	# A capture in progress belongs to whoever is standing on the property, so it
 	# stays hidden on a cell the viewer cannot see — otherwise the panel would out
 	# an enemy capturing inside your fog.
-	var capture_left: int = game.capture_progress.get(cell, -1) if _can_see_cell(cell) else -1
+	var capture_left: int = (
+		game.capture_progress.get(cell, -1) if perspective.can_see_cell(cell) else -1
+	)
 	# The owner label follows the tile, not live truth: a property captured while
 	# this cell was fogged keeps its last-seen owner until the viewer sees it, so
 	# the panel never names a side change the board is still hiding.
-	var owner: int = game.owner_at(cell) if _can_see_cell(cell) else _last_seen_owner(cell)
+	var owner: int = (
+		game.owner_at(cell) if perspective.can_see_cell(cell) else _last_seen_owner(cell)
+	)
 	# The bar is docked outside the board, so there is no corner to flip to and no
 	# tile to fade off: it never covers the cell it describes. Which cell that is
 	# the board says for itself, with the cursor brackets already on it.

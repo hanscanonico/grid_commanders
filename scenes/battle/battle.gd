@@ -8,6 +8,13 @@ extends Node2D
 ## `confirm_at`, `set_cursor_cell`, and `leave_handoff` are public because they
 ## are the entry points player input arrives at, and BattleScenarioDriver
 ## stands in for a player through exactly those.
+##
+## `start_turn`, `announce_power`, `enter_victory`, `refresh_fog`, `refresh_hud`
+## and `refresh_panel` are public for the same reason one step further out:
+## BattleAiRunner plays a computer turn through the flow a human's commands run,
+## so it needs those steps by name. They are the whole extra surface — a
+## collaborator that wants anything else wants a new entry point here, not a
+## reach into a private method.
 
 const MAIN_MENU_SCENE := "res://scenes/menu/main_menu.tscn"
 
@@ -76,9 +83,10 @@ var _preview_range: MovementResolver.MoveRange
 ## Whether R's red fire ring is painted; every exit from a range state clears it.
 var _range_shown := false
 var _attack_targets: Array[Vector2i] = []
-var _drop_targets: Array[Vector2i] = []
-## The passenger the chosen Drop row unloads; cleared with the targeting state.
-var _drop_passenger: Unit
+## Viewer-safe cargo choices for the open unit menu, and the one being targeted.
+## Each typed option keeps its passenger and cells together.
+var _drop_options: Array[BattlePerspective.DropOption] = []
+var _drop_option: BattlePerspective.DropOption
 var _pending_special_actions: Array[Dictionary] = []
 var _menu_context: StringName = &"unit"
 var _build_cell := Vector2i.ZERO
@@ -86,6 +94,9 @@ var _build_cell := Vector2i.ZERO
 ## Everything this scene draws. Battle decides what happens; the view decides
 ## how it looks. Nothing here reaches past it into a TileMapLayer or a sprite.
 var view: BattleView
+## Viewer-safe read policy shared by Battle, the renderer and every presentation
+## collaborator. Vision and AttackRange remain the rule authorities it asks.
+var perspective: BattlePerspective
 ## Everything this scene animates. Hands it an outcome that is already decided;
 ## it never picks one.
 var animator: BattleAnimator
@@ -118,6 +129,7 @@ func _ready() -> void:
 	game = built.game
 	ai_teams = built.ai_teams
 	_build_planners(built)
+	perspective = BattlePerspective.new(game)
 	view = _build_view()
 	view.setup()
 	animator = _build_animator()
@@ -143,7 +155,7 @@ func _ready() -> void:
 		# `make smoke` likes to watch their tanks move.
 		Settings.pin(GameSpeed.CAPTURE_ID)
 	animator.start_cursor_pulse()
-	_on_turn_started()  # day 1 gets the same banner/cursor/event as every turn
+	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	camera.position = cursor.position
 	camera.reset_smoothing()
 	if _capturing:
@@ -206,6 +218,7 @@ func _build_view() -> BattleView:
 	built.db = db
 	built.map = map
 	built.game = game
+	built.perspective = perspective
 	built.ai_teams = ai_teams
 	built.identity = SideIdentity.for_game(game)  # the side resolver; Battle reads view.identity
 	return built
@@ -217,6 +230,7 @@ func _build_animator() -> BattleAnimator:
 	var built := BattleAnimator.new()
 	built.node = self
 	built.view = view
+	built.perspective = perspective
 	built.camera = camera
 	built.cursor = cursor
 	built.turn_banner = %TurnBanner
@@ -302,12 +316,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func confirm_at(cell: Vector2i) -> void:
 	match state:
 		State.IDLE:
-			var unit := view._visible_unit_at(cell)
+			var unit := perspective.visible_unit_at(cell)
 			if unit != null and unit.team == game.current_team and not unit.acted:
 				_select(unit)
 			elif _is_own_empty_factory(cell):
 				_open_build_menu(cell)
-			elif unit != null and view.can_see_unit(unit):
+			elif unit != null and perspective.can_see_unit(unit):
 				# A click that did nothing before now previews a unit we cannot
 				# command, gated by the same sight rule targeting uses (so fog and a
 				# dived sub stay unclickable).
@@ -316,7 +330,7 @@ func confirm_at(cell: Vector2i) -> void:
 				_open_map_menu()  # empty, or an unseen occupant — same face, never probe fog
 		State.PREVIEW:
 			var unit := game.unit_at(cell)
-			if unit == null or not view.can_see_unit(unit):
+			if unit == null or not perspective.can_see_unit(unit):
 				_clear_preview()  # empty, or an unseen occupant — dismiss, never probe fog
 			elif unit.team == game.current_team and not unit.acted:
 				_clear_preview()
@@ -340,7 +354,7 @@ func confirm_at(cell: Vector2i) -> void:
 			if cell in _attack_targets:
 				_execute_attack(cell)
 		State.DROP_TARGETING:
-			if cell in _drop_targets:
+			if _drop_option != null and cell in _drop_option.cells:
 				_execute_drop(cell)
 
 
@@ -355,8 +369,8 @@ func _cancel() -> void:
 		_exit_targeting_to_menu()
 	elif state == State.DROP_TARGETING:
 		view.paint_move_overlay([])
-		_drop_targets = []
-		_drop_passenger = null
+		_drop_options = []
+		_drop_option = null
 		_on_move_animation_done()  # back to the unit menu
 
 
@@ -376,13 +390,15 @@ func _clear_selection() -> void:
 	move_range = null
 	planned_path = []
 	_attack_targets = []
+	_drop_options = []
+	_drop_option = null
 	_range_shown = false
 	view.paint_move_overlay([])
 	view.paint_attack_overlay([])
 	view.update_path_line([])
 	view.update_damage_preview(null, cursor_cell)
 	state = State.IDLE
-	_refresh_fog()
+	refresh_fog()
 
 
 ## Previews a unit we cannot command. Its move range shows in blue and R adds the
@@ -442,13 +458,10 @@ func _on_move_animation_done() -> void:
 		special.append(BattleMenus.CANCEL)
 		action_menu.open(special, view.screen_pos_for_cell(dest))
 		return
-	_attack_targets = _attackable_cells(selected, dest, planned_path.size() > 1)
+	_attack_targets = perspective.attackable_cells(selected, dest, planned_path.size() > 1)
+	_drop_options = perspective.drop_options(selected, dest)
 	var actions := BattleMenus.unit_actions(
-		game,
-		selected,
-		planned_path,
-		not _attack_targets.is_empty(),
-		view._droppable_passengers(selected, dest)
+		game, selected, planned_path, not _attack_targets.is_empty(), _drop_options
 	)
 	action_menu.open(actions, view.screen_pos_for_cell(dest))
 
@@ -495,7 +508,7 @@ func _handle_unit_action(action: StringName) -> void:
 			command.apply(game)
 			animator.animate_join(command, selected, game.unit_at(dest))
 			_clear_selection()
-			_refresh_panel()
+			refresh_panel()
 		&"capture":
 			var command := CaptureCommand.new(selected, planned_path)
 			var error := command.validate(game)
@@ -514,10 +527,10 @@ func _handle_unit_action(action: StringName) -> void:
 				view.repaint_property(dest)
 			animator.settle_move(command, selected)
 			_clear_selection()
-			_refresh_panel()
-			_refresh_hud()
+			refresh_panel()
+			refresh_hud()
 			if game.winner != 0:
-				_outcome.enter_victory()
+				enter_victory()
 		&"cancel":
 			_undo_move_preview()
 
@@ -539,7 +552,7 @@ func _commit(action: StringName, command: Command) -> void:
 	EventBus.unit_moved.emit(selected)
 	animator.settle_move(command, selected)
 	_clear_selection()
-	_refresh_panel()
+	refresh_panel()
 
 
 func _handle_build_action(action: StringName) -> void:
@@ -556,9 +569,9 @@ func _handle_build_action(action: StringName) -> void:
 	view.spawn_sprite_for(command.built_unit)
 	EventBus.unit_built.emit(command.built_unit)
 	state = State.IDLE
-	_refresh_fog()  # the new unit lifts fog around its base straight away
-	_refresh_panel()
-	_refresh_hud()
+	refresh_fog()  # the new unit lifts fog around its base straight away
+	refresh_panel()
+	refresh_hud()
 
 
 func _handle_map_action(action: StringName) -> void:
@@ -591,7 +604,7 @@ func _handle_map_action(action: StringName) -> void:
 		push_error("EndTurnCommand rejected: %s" % error)
 		return
 	command.apply(game)
-	_on_turn_started()
+	start_turn()
 
 
 ## Fires the current team's Command Power. Reached from the HUD button, the F
@@ -608,23 +621,29 @@ func _fire_command_power() -> void:
 	if command.validate(game) != "":
 		return
 	command.apply(game)
-	_announce_power(command)
+	announce_power(command)
 	# A power can change movement, vision and HP at once, so the whole board is
 	# redrawn, and the selection — plus any menu the HUD button fired over, whose
 	# rows would otherwise act on it — belongs to rules that no longer apply.
 	action_menu.close()
 	view.sync_sprites()
 	_clear_selection()
-	_refresh_panel()
-	_refresh_hud()
+	refresh_panel()
+	refresh_hud()
 
 
 ## The banner, sting and event a fired power raises. Shared, because the AI
 ## fires powers through the same command and should look the same doing it.
-func _announce_power(fired: PowerCommand) -> void:
+func announce_power(fired: PowerCommand) -> void:
 	Sfx.play(&"fanfare")
 	animator.show_power_banner(fired.commander, fired.team)
 	EventBus.power_activated.emit(fired.team, fired.commander)
+
+
+## Locks input and shows the already-decided winner. Public because the AI turn
+## runner reaches the same terminal flow as a human command.
+func enter_victory() -> void:
+	_outcome.enter_victory()
 
 
 ## A production property of ours standing empty. Which terrains those are is the
@@ -634,7 +653,7 @@ func _is_own_empty_factory(cell: Vector2i) -> bool:
 	return (
 		not map.terrain_at(cell).builds.is_empty()
 		and game.owner_at(cell) == game.current_team
-		and view._visible_unit_at(cell) == null
+		and perspective.visible_unit_at(cell) == null
 	)
 
 
@@ -670,7 +689,7 @@ func _close_commander_info() -> void:
 		state = State.IDLE
 
 
-func _on_turn_started() -> void:
+func start_turn() -> void:
 	view.set_active_team(game.current_team)
 	if _needs_handoff():
 		_enter_handoff()
@@ -686,11 +705,11 @@ func _begin_turn() -> void:
 	# resynced before it is drawn — and a side wiped out by its own fuel gauge
 	# ends the match here, exactly as one shot to pieces does.
 	view.sync_sprites()
-	_refresh_fog()
-	_refresh_hud()
-	_refresh_panel()
+	refresh_fog()
+	refresh_hud()
+	refresh_panel()
 	if game.winner != 0:
-		_outcome.enter_victory()
+		enter_victory()
 		return
 	if _outcome.end_watch_on_day_cap():
 		return
@@ -725,7 +744,7 @@ func _needs_handoff() -> bool:
 func _enter_handoff() -> void:
 	state = State.HANDOFF
 	animator.hide_banner()
-	_refresh_fog()  # blanks the outgoing team's vision before the panel goes up
+	refresh_fog()  # blanks the outgoing team's vision before the panel goes up
 	handoff_label.text = (
 		"%s — press confirm when ready" % view.identity.display_name(game.current_team)
 	)
@@ -754,16 +773,18 @@ func _viewing_team() -> int:
 	return game.current_team
 
 
-## Repaints fog after every committed action and turn change (not per cursor
-## move). During a hot-seat handoff nobody may look, so the board is blacked
-## out entirely — that is a flow decision, so it is made here and the view is
-## told; working out what is visible is Vision's job, and drawing it is the
-## view's.
-func _refresh_fog() -> void:
-	view.refresh_fog(_viewing_team(), state == State.HANDOFF)
+## Refreshes the shared perspective and repaints fog after every committed
+## action and turn change (not per cursor move). During a hot-seat handoff
+## nobody may look, so the board is blacked out entirely — whose eyes and
+## whether they are shut are flow decisions, so they are made here and handed to
+## the perspective; working out what is visible is Vision's job, deciding what
+## this viewer may act on is the perspective's, and drawing it is the view's.
+func refresh_fog() -> void:
+	perspective.refresh(_viewing_team(), state == State.HANDOFF)
+	view.refresh_fog()
 
 
-func _refresh_hud() -> void:
+func refresh_hud() -> void:
 	view.refresh_hud()
 
 
@@ -781,26 +802,6 @@ func _undo_move_preview() -> void:
 # --- attack flow -------------------------------------------------------------
 
 
-## Enemy cells the unit could fire at from `dest`. Indirect units lose their
-## shot if they moved this turn, a dry unit has no shot at all, and carried
-## enemies are not on the board to be shot at.
-func _attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-	if not unit.has_ammo() or (AttackRange.is_indirect(unit) and moved):
-		return cells
-	for other in game.units:
-		if other.team == unit.team or other.carrier != null:
-			continue
-		if not view.can_see_unit(other):
-			continue  # the player cannot target what they cannot see
-		if not AttackRange.covers(game, unit, dest, other.cell):
-			continue
-		if AttackRange.can_engage(game, unit, other):
-			cells.append(other.cell)
-	cells.sort()
-	return cells
-
-
 func _enter_targeting() -> void:
 	state = State.TARGETING
 	view.paint_attack_overlay(_attack_targets)
@@ -816,36 +817,33 @@ func _exit_targeting_to_menu() -> void:
 # --- transport flow ----------------------------------------------------------
 
 
-## The menu row named the passenger by its index into the droppable list; the
-## drop-cell overlay and the command are built for exactly that rider. The cell
-## math lives on the view (_drop_cells), which knows the viewer's fog.
+## The menu row names one typed option; its passenger and viewer-safe drop cells
+## stay paired from menu construction through command creation.
 func _enter_drop_targeting(index: int) -> void:
 	state = State.DROP_TARGETING
-	var dest: Vector2i = planned_path[planned_path.size() - 1]
-	_drop_passenger = view._droppable_passengers(selected, dest)[index]
-	_drop_targets = view._drop_cells(selected, dest, _drop_passenger)
-	view.paint_move_overlay(_drop_targets)
-	set_cursor_cell(_drop_targets[0])
+	_drop_option = _drop_options[index]
+	view.paint_move_overlay(_drop_option.cells)
+	set_cursor_cell(_drop_option.cells[0])
 
 
 func _execute_drop(drop_cell: Vector2i) -> void:
-	var command := DropCommand.new(selected, planned_path, drop_cell, _drop_passenger)
+	var command := DropCommand.new(selected, planned_path, drop_cell, _drop_option.passenger)
 	var error := command.validate(game)
 	if error != "":
 		# The UI only offers legal drops, so this is a bug guard.
 		push_error("DropCommand rejected: %s" % error)
 		_cancel()
 		return
-	var passenger: Unit = _drop_passenger
+	var passenger: Unit = _drop_option.passenger
 	var transport := selected
 	command.apply(game)
 	EventBus.unit_moved.emit(transport)
 	animator.settle_move(command, transport)
 	view.refresh_sprite(passenger)  # reappears, exhausted, at the drop cell (or stays aboard)
-	_drop_targets = []
-	_drop_passenger = null
+	_drop_options = []
+	_drop_option = null
 	_clear_selection()
-	_refresh_panel()
+	refresh_panel()
 
 
 func _execute_attack(target_cell: Vector2i) -> void:
@@ -866,10 +864,10 @@ func _execute_attack(target_cell: Vector2i) -> void:
 	EventBus.unit_moved.emit(attacker)
 	await animator.animate_combat(command.result, attacker, target)
 	_clear_selection()
-	_refresh_panel()
-	_refresh_hud()
+	refresh_panel()
+	refresh_hud()
 	if game.winner != 0:
-		_outcome.enter_victory()
+		enter_victory()
 
 
 ## Whether a damage forecast applies at all is a flow question — only the
@@ -893,7 +891,7 @@ func _mouse_cell() -> Vector2i:
 func set_cursor_cell(cell: Vector2i) -> void:
 	cursor_cell = cell
 	view.move_cursor_to(cell)
-	_refresh_panel()
+	refresh_panel()
 	if state == State.UNIT_SELECTED:
 		if move_range.has(cell) and move_range.can_stop_at(cell):
 			planned_path = move_range.path_to(cell)
@@ -903,5 +901,5 @@ func set_cursor_cell(cell: Vector2i) -> void:
 	EventBus.cursor_moved.emit(cell)
 
 
-func _refresh_panel() -> void:
+func refresh_panel() -> void:
 	view.refresh_panel(cursor_cell)

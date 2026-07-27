@@ -99,8 +99,8 @@ across three movement domains (land, air, sea), property capture and income, and
   filled in `apply` exactly as `AttackCommand.result` is; the mash chips are a presentation split of
   `points_before − points_after`, never a call back into `capture_strength`. `BattleAnimator`
   gained one seam, `animate_capture`, behind the combat gate reused whole (`capturing`, Instant, and
-  viewer visibility via the view and so `Vision` — one unit this time, since the capturer stands on
-  the cell it takes), and the property flip is a `SideIdentity.atlas_row` swap so the cut-in's
+  viewer visibility via `BattlePerspective` and so `Vision` — one unit this time, since the capturer
+  stands on the cell it takes), and the property flip is a `SideIdentity.atlas_row` swap so the cut-in's
   colours are the board's. It reads no `GameSpeed` accessor for its beat lengths — fixed constants
   on `CaptureCutscene` scaled by the animator's shared streak pacing, identical to the combat
   cut-in, deliberately not the plan's D5 tier-scaling, because the shipped combat sibling does not
@@ -140,8 +140,8 @@ across three movement domains (land, air, sea), property capture and income, and
   planner fears are one computation — the movement-overlay lesson (`MoveCommand.validate`) applied
   before the bug, its merge bar a fixed-seed byte-diff of both balance reports. Everything else is
   presentation-only (D5): clicking a unit you cannot command previews its move range and **R** paints
-  its fire ring, both pure reads gated by the same `view.can_see_unit` fog rule targeting uses, so
-  nothing under `core/` or `ai/` learns the overlay exists and `make screenshot` stays byte-stable.
+  its fire ring, both pure reads gated by the same `perspective.can_see_unit` fog rule targeting uses,
+  so nothing under `core/` or `ai/` learns the overlay exists and `make screenshot` stays byte-stable.
   `.lavish/menu-revamp-plan.html` owns the main-menu and commander-select redress — milestones
   MN1–MN3, all shipped — and its D1: **the design-system tokens live in one code authority,
   `scenes/common/ui_theme.gd` (`UiTheme`), never a `.tres` Theme.** `UiTheme` re-exports every colour
@@ -307,6 +307,13 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   fog-limited, its *targeting* stays omniscient-except-doctrine-hidden. A submerged submarine is
   hidden through the same hook and is the one rule there that holds **with fog off** — being under
   the water is not a question of how far anyone can see.
+  In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one adapter
+  from that rule authority to viewer policy: it combines the viewing team and hot-seat blackout,
+  delegates firing geometry to `AttackRange`, and supplies typed transport drop options. `Battle`,
+  `BattleView`, `BattleAnimator`, `BattleAiRunner` and `BattleScenarioDriver` ask it; none re-derives
+  or reaches through a sibling's private visibility helper. The runner drives an AI turn through
+  `Battle`'s own named entry points for the same reason — that surface is the seam, not a private
+  method reached across objects.
 - **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one seam —
   both call sites `await` it, and it either plays the full-screen cut-in or falls through to the
   on-map hit, returning exactly once either way. Inside `scenes/battle/cutscene/`, everything is a
@@ -318,7 +325,7 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   Two consequences worth knowing before touching it. It is suppressed while `capturing`, like the
   shake and the pulse, so `make screenshot` stays byte-stable and a posed cut-in goes through
   `pose_at` instead; and it only plays when the *viewer* can see both combatants, which is asked of
-  the view (and so of `Vision`), never re-derived.
+  `BattlePerspective` (and so of `Vision`), never re-derived.
 
 ## Communication
 

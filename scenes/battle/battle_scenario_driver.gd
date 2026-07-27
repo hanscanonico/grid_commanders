@@ -150,7 +150,7 @@ func _fog_hides_unseen() -> bool:
 		return true
 	for unit in _battle.game.units:
 		var sprite := _battle.view.sprite_for(unit)
-		if sprite != null and sprite.visible and not _battle.view.can_see_unit(unit):
+		if sprite != null and sprite.visible and not _battle.perspective.can_see_unit(unit):
 			_fail(
 				(
 					"fog leak: %s at %s is drawn but team %d cannot see it"
@@ -378,7 +378,7 @@ func _run_vanish_demo(mode: String) -> void:
 	if mode == "vanish":
 		game.commander_state(2).power_active = true
 	_battle.view.sync_sprites()
-	_battle.view.refresh_fog(game.current_team, false)
+	_battle.refresh_fog()
 	_battle.view.restage_identity()  # Sable Wren's Verdant recolours Blue after the fog pass
 	_battle.set_cursor_cell(Vector2i(5, 5))  # the panel names whatever is on the tile
 
