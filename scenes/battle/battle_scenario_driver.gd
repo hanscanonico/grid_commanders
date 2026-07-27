@@ -171,7 +171,9 @@ func _fog_hides_unseen() -> bool:
 ## same chain at the Load menu, the loaded APC's panel, and the drop-target
 ## picker; supply holds the APC next to its infantry so Supply is offered;
 ## mapmenu stops at the map menu (End Turn / Save); powermenu fires a Command
-## Power from the HUD over an open action menu; ambush and vanish are the same
+## Power from the HUD over an open action menu; leave_confirm walks the route out
+## of a running match, from the map menu's two exit rows to the confirmation the
+## unsaved one opens; ambush and vanish are the same
 ## staged board with Sable Wren's power down and up; victory routs Blue through
 ## a real attack so the victory screen comes up. The commander-identity captures
 ## (plan G3, COM-18): power_charging/ready/active/ai/mirror cover every state the
@@ -241,6 +243,8 @@ func _run_demo(mode: String) -> void:
 		"mapmenu":
 			_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> End Turn / Save
 			await _until_state(Battle.State.MENU)
+		"leave_confirm":
+			await _stage_leave_routes()
 		"powermenu":
 			await _run_power_menu_demo()
 		"ambush", "vanish":
@@ -845,26 +849,73 @@ func _stage_power_map_menu() -> void:
 	_set_red_commander(&"mara_voss", true)
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
-	# The menu sizes its rows and clamps itself a frame after it opens.
-	await _battle.get_tree().process_frame
-	await _battle.get_tree().process_frame
+	await _settle_menu()
 	_check_map_menu_readable()
 
 
 ## The power row the hint sends the player to has to be visible when they get
-## there, and the whole menu has to stay inside the *board band* — the strip of the
-## 640x360 frame the two docked bars leave over, which is what ActionMenu clamps
-## against. Both are read off the live rects rather than recomputed.
+## there, and the whole menu has to stay inside the board band.
 func _check_map_menu_readable() -> void:
 	var rows := BattleMenus.map_actions(_battle.game)
 	if rows.is_empty() or rows[0].id != &"power":
 		_fail("map menu opened without the Command Power as its first row")
 		return
+	_check_menu_in_band("map menu")
+
+
+## The route out of a running match (COM-16), walked the way a player walks it: the
+## map menu, which now carries both exits, and then the second press the unsaved
+## one asks for. Reached through the real row rather than by opening the
+## confirmation directly — the finding was that no route existed, so the route is
+## what the scenario walks — and it stops there, since going through would leave
+## the battle scene with nothing left to photograph.
+##
+## Checked rather than eyeballed, like power_mapmenu: the board renders behind the
+## opaque bars, so a menu two rows taller than it used to be, or a confirmation
+## that armed its destructive row, photographs exactly as well as the right one.
+func _stage_leave_routes() -> void:
+	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
+	await _until_state(Battle.State.MENU)
+	await _settle_menu()
+	_check_rows("map menu", BattleMenus.map_actions(_battle.game), [&"save_and_quit", &"quit"])
+	_check_menu_in_band("map menu")
+	_battle.action_menu.choose(&"quit")
+	await _settle_menu()
+	var rows := BattleMenus.abandon_confirm_actions()
+	_check_rows("abandon confirmation", rows, [&"cancel", &"abandon"])
+	if not rows.is_empty() and rows[0].id != &"cancel":
+		# ActionMenu arms its first enabled row: a confirmation that led with the
+		# abandon would sit there with the match under the Enter just pressed.
+		_fail("the abandon confirmation arms '%s', not the row that keeps the match" % rows[0].id)
+	_check_menu_in_band("abandon confirmation")
+
+
+## An open menu only knows its size, and so its clamped position, a frame after its
+## rows were added — see ActionMenu._place, which awaits one itself.
+func _settle_menu() -> void:
+	await _battle.get_tree().process_frame
+	await _battle.get_tree().process_frame
+
+
+## Every id in `wanted` is on the menu, read off the rows the menu was built from.
+## A row that quietly stopped being offered fails the run rather than leaving a
+## player with nowhere to go.
+func _check_rows(what: String, rows: Array[Dictionary], wanted: Array[StringName]) -> void:
+	var ids: Array = rows.map(func(row: Dictionary) -> StringName: return row.id)
+	for id in wanted:
+		if not ids.has(id):
+			_fail("the %s offers %s, with no '%s' row" % [what, ids, id])
+
+
+## The open menu sits inside the *board band* — the strip of the 640x360 frame the
+## two docked bars leave over, which is what ActionMenu clamps against. Read off
+## the live rects rather than recomputed.
+func _check_menu_in_band(what: String) -> void:
 	var menu := _battle.action_menu.get_global_rect()
 	var frame := _battle.get_viewport().get_visible_rect().size
 	var band := Rect2(Vector2(0, UiTheme.HUD_TOP_H), Vector2(frame.x, frame.y - UiTheme.HUD_BARS_H))
 	if not band.encloses(menu):
-		_fail("the map menu %s does not fit the board band %s" % [menu, band])
+		_fail("the %s %s does not fit the board band %s" % [what, menu, band])
 
 
 ## Opens the both-sides commander reference through the real map menu, the one

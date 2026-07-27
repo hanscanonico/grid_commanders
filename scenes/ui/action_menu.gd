@@ -130,6 +130,12 @@ func _place() -> void:
 	await get_tree().process_frame
 	if not visible:
 		return
+	# A PanelContainer grows to fit its rows and never shrinks back on its own, so
+	# a short menu opened where a tall one just was keeps the tall one's panel
+	# standing behind it — the two-row abandon confirmation under the seven-row map
+	# menu is the flow that shows it. Sizing down is also what makes the clamp below
+	# honest: it then measures the panel the player actually sees.
+	reset_size()
 	var view := get_viewport().get_visible_rect().size
 	var top_left := Vector2(MARGIN, UiTheme.HUD_TOP_H + MARGIN)
 	var max_pos := (view - size - Vector2(MARGIN, UiTheme.HUD_BOTTOM_H + MARGIN)).max(top_left)

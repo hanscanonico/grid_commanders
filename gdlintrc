@@ -83,4 +83,14 @@ max-public-methods: 21
 # scenes/ui/tooltip.gd — what is left here is the call sites, and they are the
 # menu's own. Neither side is loose, and splitting main_menu.gd is not the
 # tooltip change's job. It sits at exactly 940.
-max-file-lines: 940
+#
+# 940 -> 986 and the ceiling is the scenario driver's again, for COM-16: the map
+# menu grew the two routes out of a running match, and `leave_confirm` walks them
+# — the rows on the menu, the confirmation the unsaved one opens, and both rects
+# against the board band. Battle itself did not pay for that raise; BattleExit
+# came out of it in the same change, and battle.gd ends shorter than it started
+# (908). The driver is still the file due to come apart, and the shape of the
+# split has not moved: the cut-in family — both `_stage_*_cut_in`, the two skip
+# walks, the pair staging and the atlas-row checks — is a third of the file and
+# answers to one idea. It sits at exactly 986.
+max-file-lines: 986

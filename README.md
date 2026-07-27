@@ -274,6 +274,11 @@ jumps to that team's first property.
   `Saved Day 4 · Scrimmage`, in the same words the menu's Continue line reads back. Resume it later with **Continue** on the main
   menu. When your Command Power is charged the menu lists it first, so it is reachable from the
   keyboard as well as from the HUD button
+- The same menu is how you leave a match without closing the game. **Save & Main Menu** writes the
+  slot exactly as **Save** does and only then goes back — a failed write keeps you on the board and
+  says so — while **Main Menu Without Saving** asks a second time first, on a two-row confirmation
+  whose safe answer is the one already highlighted. Neither adds a slot: the save model stays the
+  single one Continue reads
 - The HUD is two opaque bars docked above and below the board, never panels floating on it: the
   board sits in the band they leave over, and only transient things — damage numbers, the capture
   counter, the attack forecast, the action menu — are ever drawn over terrain. The **top bar**
