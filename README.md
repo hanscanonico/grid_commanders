@@ -205,13 +205,19 @@ you can watch. `make hotseat` drops the AI and lets two players share the keyboa
 Either way, only the team whose day it is can act; a banner announces each turn and the cursor
 jumps to that team's first property.
 
+A first match opens with a **mission strip** over the board: the objective line and five hints —
+select, move, capture, build, end turn — each retiring for good the first time you perform it, on
+your own actions only (the computer taking a city retires nothing). Retirement is a device
+preference in `user://settings.cfg`, so hints never come back across a relaunch; `--reset-hints`
+forgets them all for one machine, which is how a fresh install is staged for testing.
+
 - Arrow keys / mouse hover: move the grid cursor
 - Mouse wheel or `+` / `-`: zoom
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
   its movement range; move the cursor within range to preview the path, then confirm a destination
   to move there. Remaining fuel caps that range, so a dry unit is stranded where it stands
 - Cancel (`Esc` / `X` / `Backspace`): deselect, or undo an uncommitted move — and, with nothing
-  selected, open the map menu, which is the control the top bar's `ESC · MENU` hint names
+  selected, open the map menu, which is the control the top bar's resting key legend names
 - Confirm or left-click on a unit you *cannot* command — an enemy, or one of yours that has
   already acted — previews where it could move, in the same blue overlay. Clicking another
   visible unit moves the preview there (a ready unit of your own still just selects), and cancel
@@ -281,9 +287,11 @@ jumps to that team's first property.
   single one Continue reads
 - The HUD is two opaque bars docked above and below the board, never panels floating on it: the
   board sits in the band they leave over, and only transient things — damage numbers, the capture
-  counter, the attack forecast, the action menu — are ever drawn over terrain. The **top bar**
-  carries the day, the side in hand as a faction colour chip and name, that commander's doctrine,
-  the funds, and the `ESC · MENU` hint. The **bottom bar** carries, left to right: the commander's
+  counter, the attack forecast, the action menu, the first-match mission strip — are ever drawn
+  over terrain. The **top bar** carries the day, the side in hand as a faction colour chip and
+  name, that commander's doctrine, the funds, and a one-line **key legend** that swaps with the
+  interaction — `ENTER · SELECT   ESC · MENU   +/- · ZOOM` at rest, `ENTER · FIRE   ESC · BACK`
+  while targeting, and so on. The **bottom bar** carries, left to right: the commander's
   portrait, name, power name, and — for a side playing a power — the charge meter with its
   `charge / cost` readout, which reads `READY · F` when it is full and `ACTIVE` while it runs,
   plus a **FIRE** button (see Commanders below); then the unit on the hovered tile, if any — its
@@ -450,8 +458,9 @@ result, including one capability that measured *negative* and ships switched off
   mutated by play; runtime ownership, funds, and turn state live in `GameState`. The TileMapLayer is just paint.
 - `scenes/` — presentation: main menu, battle scene, cursor, UI panels.
 - `autoload/` — singletons: the event bus, the match setup the menu hands to the battle scene,
-  the device preferences this machine keeps between launches (`Settings` — the game speed above
-  and whether battles play the full-screen cut-ins), and the sound-effect player.
+  the device preferences this machine keeps between launches (`Settings` — the game speed above,
+  whether battles play the full-screen cut-ins, and which first-match hints this player has
+  retired), and the sound-effect player.
 - `tools/` — the art and sound build scripts: the headless ground-tile, sound, and portrait
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
   Assets below); and the offline balance

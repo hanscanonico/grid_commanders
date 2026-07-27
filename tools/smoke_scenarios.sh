@@ -128,10 +128,22 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # clipped its own title and its Quit, and a returning player met a visibly
 # broken screen while a fresh install never did. Both modes pose the save slot
 # themselves, so neither reads nor writes the running machine's user://save.json.
+#
+# The mission_strip pair is COM-12's. Every other scenario runs with the
+# first-match hints pinned retired, exactly as they run with the game speed
+# pinned — otherwise whether a teaching card sits over the board would depend on
+# how much of the game the person running the sweep had already played. These two
+# pin them *empty* instead, so the strip opens as it does on a fresh install.
+# `mission_strip` poses that first frame; `mission_strip_retired` drives a real
+# selection and a real move and then checks the strip has moved on to CAPTURE,
+# which is the acceptance criterion a still frame cannot show — a hint retires
+# when the player performs it, and a strip stuck on SELECT photographs just as
+# well as one that advanced.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm
 	powermenu victory aiturn
+	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner commander_info commander_victory

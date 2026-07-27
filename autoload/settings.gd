@@ -1,15 +1,19 @@
 extends Node
 ## Device preferences: what this machine likes, as opposed to what this match is.
-## Two of them today — how fast the battle's theatre plays out, and whether a
-## resolved attack cuts to the full-screen battle animation at all.
+## Three of them today — how fast the battle's theatre plays out, whether a
+## resolved attack cuts to the full-screen battle animation at all, and which of
+## the first-match hints this player has already earned their way out of.
 ##
 ## Deliberately not MatchConfig and deliberately not in the save file: resuming a
 ## three-day-old save should play at the speed you like *today* and watch battles
-## the way you like *today*, and a hot-seat pair share one screen anyway. Both are
-## presentation only — nothing here may ever change a rule, a number, or what the
-## sim does, so two players' "same seed, same commands" keep meaning the same
-## result. Nothing here is ever handed to core/ or ai/, so the sim cannot observe
-## a preference it never receives — see GameSpeed.
+## the way you like *today*, and a hot-seat pair share one screen anyway. The
+## hints belong here for the same reason and one more (UX recovery plan D1): a
+## player who has learned to capture has learned it for good, and tying that to a
+## match would teach them again on every new one. All three are presentation only
+## — nothing here may ever change a rule, a number, or what the sim does, so two
+## players' "same seed, same commands" keep meaning the same result. Nothing here
+## is ever handed to core/ or ai/, so the sim cannot observe a preference it never
+## receives — see GameSpeed.
 ##
 ## Persisted to user://settings.cfg with ConfigFile, beside SaveGame's
 ## user://save.json.
@@ -18,6 +22,7 @@ const SETTINGS_PATH := "user://settings.cfg"
 const SECTION := "game"
 const SPEED_KEY := "speed"
 const BATTLE_ANIMATIONS_KEY := "battle_animations"
+const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
 ## the player chose.
@@ -26,6 +31,12 @@ const SPEED_ARG := "--speed="
 ## as un-persisted: how a capture run keeps `make screenshot` byte-stable without
 ## touching the stored preference.
 const NO_ANIM_ARG := "--no-battle-anim"
+## Forgets every retired first-match hint and writes that back, so the next
+## launch meets the mission strip exactly as a fresh install does. The one flag
+## here that *does* touch the file, because that is the whole point of it: the
+## acceptance gate is "hints do not reappear across a relaunch", and checking it
+## needs a way back to the start that a relaunch does not undo.
+const RESET_HINTS_ARG := "--reset-hints"
 
 ## How fast moves and battles play out on screen. Never null. Callers read it at
 ## the moment they animate rather than caching it, so a mid-match change takes
@@ -36,6 +47,11 @@ var speed: GameSpeed = GameSpeed.default_speed()
 ## to the on-map hit flash and shake, which is how combat looked before the
 ## cut-in existed — see BattleAnimator.animate_combat.
 var battle_animations := true
+
+## Which first-match hints this player has already performed their way out of —
+## `TutorialHints` ids, retired for good. MissionStrip reads it to pick what to
+## teach next and stops drawing itself once it holds them all.
+var retired_hints: Array[StringName] = []
 
 ## False once anything has spoken for this launch, so nothing written later
 ## reaches the file.
@@ -68,6 +84,35 @@ func set_battle_animations(enabled: bool) -> void:
 		_save()
 
 
+## Marks a first-match hint as earned and writes it back immediately, like the
+## two setters above: a hint the player has performed must not come back because
+## the game was closed the hard way. Repeats are ignored, so the caller may hand
+## the same id over every time the event it watches fires.
+func retire_hint(id: StringName) -> void:
+	if id in retired_hints:
+		return
+	retired_hints.append(id)
+	if _persistent:
+		_save()
+
+
+## Pins the whole strip for this launch, the way `pin` pins the speed tier and
+## for the same reason: a capture must not depend on which machine took it, and
+## whether *this* machine's player has already learned to capture is exactly the
+## sort of thing a screenshot would otherwise photograph. `all_retired` hides the
+## strip outright; false is the fresh-install state a scenario stages it in.
+func pin_hints(all_retired: bool) -> void:
+	_persistent = false
+	# Built as a typed local rather than a ternary: the empty branch of
+	# `ids() if x else []` is an untyped Array, which the engine refuses to assign
+	# here at *runtime* — a script error the scene walks straight past, leaving the
+	# capture reading whatever this machine's player had already learned.
+	var pinned: Array[StringName] = []
+	if all_retired:
+		pinned = TutorialHints.ids()
+	retired_hints = pinned
+
+
 ## Pins a tier for this launch and latches the file shut behind it. Captures and
 ## scripted scenario runs pin, so a frame never depends on which machine took it
 ## — and it is pinned *here* rather than inside the animator because the setting
@@ -92,6 +137,15 @@ func _load() -> void:
 	var stored_anim: Variant = config.get_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
 	if stored_anim is bool:
 		battle_animations = stored_anim
+	# Stored as strings and read back as StringNames: ConfigFile has no
+	# StringName, and a hint id written by one version must still match the
+	# TutorialHints id in the next. An id nothing answers to any more is kept
+	# rather than dropped — it costs a string and it is the only thing standing
+	# between a renamed step and a veteran being taught to capture again.
+	var stored_hints: Variant = config.get_value(SECTION, HINTS_KEY, PackedStringArray())
+	if stored_hints is PackedStringArray:
+		for id: String in stored_hints as PackedStringArray:
+			retired_hints.append(StringName(id))
 
 
 func _save() -> void:
@@ -99,6 +153,10 @@ func _save() -> void:
 	config.load(SETTINGS_PATH)  # keep any key a later version of the game wrote
 	config.set_value(SECTION, SPEED_KEY, String(speed.id))
 	config.set_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
+	var hints := PackedStringArray()
+	for id in retired_hints:
+		hints.append(String(id))
+	config.set_value(SECTION, HINTS_KEY, hints)
 	if config.save(SETTINGS_PATH) != OK:
 		push_error("Settings: cannot write %s" % SETTINGS_PATH)
 
@@ -126,6 +184,18 @@ func _apply_cmdline() -> void:
 			# Latched after that pin, so the flag's own lands and every later
 			# one — a capture's — is declined.
 			_flag_wins = true
+		elif arg == RESET_HINTS_ARG:
+			# Unlike every other flag here this one writes: see RESET_HINTS_ARG.
+			# It writes the hints key alone, never through _save(): a --speed= or
+			# --no-battle-anim earlier on the same command line has already moved
+			# the in-memory value, and a full save would persist that launch-only
+			# override — the exact thing those flags promise never to do.
+			retired_hints = []
+			var config := ConfigFile.new()
+			config.load(SETTINGS_PATH)  # keep every other key as the file has it
+			config.set_value(SECTION, HINTS_KEY, PackedStringArray())
+			if config.save(SETTINGS_PATH) != OK:
+				push_error("Settings: cannot write %s" % SETTINGS_PATH)
 		elif arg == NO_ANIM_ARG:
 			# Same family as --speed=: a per-launch override that never reaches
 			# the file. Latches it shut exactly as a pin does, so a scripted or

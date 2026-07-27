@@ -160,6 +160,25 @@ across three movement domains (land, air, sea), property capture and income, and
   (Pixelify Sans, Silkscreen) are vendored under `assets/fonts/`, both OFL, recorded in
   `assets/LICENSES.md`. The design-system source is external (the handoff zip), not in the repo; its
   numbers are quoted in the plan so the tree never depends on it.
+  `.lavish/ux-recovery-plan.html` owns the merged first-contact and new-player registers — items
+  U-01–U-26 across four slices, of which UX1's onboarding half is COM-12, shipped — and its D1:
+  **every change in it is presentation-only, and tutorial state is a device preference.** The
+  first-match strip (`scenes/ui/mission_strip.gd`) and its script and copy
+  (`scenes/ui/tutorial_hints.gd`) live entirely in `scenes/`, retire into
+  `user://settings.cfg` beside the game speed — never `MatchConfig`, never a save — and honour its
+  D6: **the tutorial owns no rule and observes rather than instruments.** Each step retires off the
+  `EventBus` signals the scene already animates (`unit_selected` was added for the one step no
+  committed command marked), filtered to the human sides so the computer cannot retire a hint by
+  playing its own turn; nothing under `core/` or `ai/` gained a hook, a field or a branch for it.
+  Two consequences worth knowing. A capture pins the hint set exactly as it pins the speed tier —
+  `Settings.pin_hints`, called from `Battle._ready` — so no frame depends on how much of the game
+  the person running `make smoke` had already played; only `--demo=mission_strip[_retired]` pins it
+  *empty*, and `--reset-hints` is the one flag in `Settings` that deliberately writes. And the key
+  legend on the top bar is the strip's permanent counterpart: `scenes/ui/control_hints.gd`
+  (`ControlHints`) owns one line per interaction context, `Battle.STATE_CONTEXT` maps the state to
+  the key, and **`Battle.state`'s setter is what prints it** — a legend refreshed from each of the
+  dozen sites that assign that state would be one missed call away from naming a key that does
+  nothing.
 - **Engine:** Godot 4.7+ (`TileMapLayer`, custom `Resource` types).
 - **Language:** GDScript, **typed everywhere** (`class_name`, typed vars, typed signatures).
 
@@ -202,7 +221,7 @@ res://
 │  │  └─ cutscene/  # the combat & capture cut-ins and the BattleStyle they read
 │  ├─ menu/     # main_menu.tscn — map and commander select, match options
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
-│  └─ ui/       # menus, panels, damage preview
+│  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip
 ├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx
 ├─ ai/          # ai_controller.gd — plans Commands; ai_profile.gd — its weights
 │              (NO Node references)
