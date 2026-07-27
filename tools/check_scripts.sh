@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Parse- and type-checks GDScript files.
+# Audits GDScript files: parse/type checks, plus repository architecture seams.
 #
 # `godot --check-only -s <file>` runs the full GDScript analyser — it catches
 # type mismatches and unknown identifiers, not just syntax — but always exits 0,
@@ -84,8 +84,34 @@ done < <(
 	fi
 )
 
+# The live battle has one mutation seam. Keep this in the full-project audit,
+# not a subset check: a new apply or validate anywhere under scenes/battle is
+# exactly the cross-file drift this invariant exists to catch.
+if (($# == 0)); then
+	live_applies="$(grep -rn --include='*.gd' -E '\.apply\([^)]*game[^)]*\)' scenes/battle || true)"
+	apply_count="$(printf '%s\n' "$live_applies" | sed '/^$/d' | wc -l | tr -d ' ')"
+	if [[ "$apply_count" != 1 || "$live_applies" != scenes/battle/battle_command_pipeline.gd:* ]]; then
+		echo "check: expected one live apply in BattleCommandPipeline, found $apply_count" >&2
+		printf '%s\n' "$live_applies" >&2
+		failed=$((failed + 1))
+	fi
+
+	# Menu construction may query a fresh command to decide whether to offer a
+	# row — a `<Command>.new(...).validate(game)` chain, excluded below. This
+	# guards committed-command validation specifically, whatever the receiver
+	# variable is named.
+	live_validates="$(grep -rn --include='*.gd' -E '\.validate\([^)]*game[^)]*\)' scenes/battle |
+		grep -vE '\.new\(.*\)\.validate\(' || true)"
+	validate_count="$(printf '%s\n' "$live_validates" | sed '/^$/d' | wc -l | tr -d ' ')"
+	if [[ "$validate_count" != 1 || "$live_validates" != scenes/battle/battle_command_pipeline.gd:* ]]; then
+		echo "check: expected one live validate in BattleCommandPipeline, found $validate_count" >&2
+		printf '%s\n' "$live_validates" >&2
+		failed=$((failed + 1))
+	fi
+fi
+
 if ((failed > 0)); then
-	echo "check: $failed of $checked file(s) failed to parse" >&2
+	echo "check: $failed failure(s) across $checked file(s)" >&2
 	exit 1
 fi
 

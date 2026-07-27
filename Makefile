@@ -100,8 +100,8 @@ SOURCES := $(shell find . -name '*.gd' \
 	-not -path './.godot/*' -not -path './addons/*' -not -path './bin/*' \
 	-not -path './.claude/*')
 
-# Parse + type check without booting the scene tree — the quick "does this
-# compile?" pass. Rules live in tools/check_scripts.sh.
+# Parse/type check plus lightweight architecture invariants without booting the
+# scene tree. Rules live in tools/check_scripts.sh.
 check:
 	tools/check_scripts.sh
 

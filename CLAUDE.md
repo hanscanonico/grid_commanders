@@ -310,13 +310,23 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one adapter
   from that rule authority to viewer policy: it combines the viewing team and hot-seat blackout,
   delegates firing geometry to `AttackRange`, and supplies typed transport drop options. `Battle`,
-  `BattleView`, `BattleAnimator`, `BattleAiRunner` and `BattleScenarioDriver` ask it; none re-derives
+  `BattleView`, `BattleAnimator`, `BattleCommandPipeline` and `BattleScenarioDriver` ask it; none re-derives
   or reaches through a sibling's private visibility helper. The runner drives an AI turn through
   `Battle`'s own named entry points for the same reason — that surface is the seam, not a private
   method reached across objects.
+- **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
+  (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and
+  result presentation; both `Battle` and `BattleAiRunner` enter through `Battle.execute_command`.
+  It captures combat, join and drop references before apply, replays `AttackCommand.result` and
+  `CaptureCommand.result`, gates AI movement through `BattlePerspective`, and reconciles sprites,
+  properties, fog, the panel and the HUD. Its typed `BattleCommandReceipt` returns validation,
+  turn, winner, watch and ambush facts. The callers still own selection/input transitions, AI
+  planning and pacing, save policy, and the decision to start a turn or show victory; do not move
+  those into the pipeline. The headless `BalanceMatchEngine` remains separate.
 - **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one seam —
-  both call sites `await` it, and it either plays the full-screen cut-in or falls through to the
-  on-map hit, returning exactly once either way. Inside `scenes/battle/cutscene/`, everything is a
+  its one live call site, `BattleCommandPipeline`, `await`s it, and it either plays the full-screen
+  cut-in or falls through to the on-map hit, returning exactly once either way. Inside
+  `scenes/battle/cutscene/`, everything is a
   pure function of one clock: skipping sets that clock to the end rather than cancelling tweens,
   which is what makes "any press, at any beat, lands on the right board" true by construction
   instead of by testing. Every number the cut-in shows was handed to it — the result's two HP
