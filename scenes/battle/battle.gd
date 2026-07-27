@@ -890,7 +890,6 @@ func set_cursor_cell(cell: Vector2i) -> void:
 		view.update_path_line(planned_path)
 	elif state == State.TARGETING:
 		_update_damage_preview()
-	EventBus.cursor_moved.emit(cell)
 
 
 func refresh_panel() -> void:

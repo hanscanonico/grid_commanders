@@ -128,7 +128,6 @@ func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:
 func _present_power(command: PowerCommand) -> void:
 	Sfx.play(&"fanfare")
 	_battle.animator.show_power_banner(command.commander, command.team)
-	EventBus.power_activated.emit(command.team, command.commander)
 
 
 func _present_build(command: BuildCommand) -> void:
