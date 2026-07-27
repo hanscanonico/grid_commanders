@@ -320,6 +320,12 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   `pose_at` instead; and it only plays when the *viewer* can see both combatants, which is asked of
   the view (and so of `Vision`), never re-derived.
 
+## Communication
+
+- **Be concise.** Keep responses, summaries, and explanations short — lead with the answer, cut
+  background the reader didn't ask for, and skip restating what the diff or the conversation
+  already shows. Same goes for commit messages, PR bodies, and code comments.
+
 ## Commits
 
 - Small, focused commits scoped to one milestone task.
