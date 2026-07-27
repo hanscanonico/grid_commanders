@@ -9,182 +9,111 @@ Guidance for AI agents (and humans) working in this repository.
 **GDScript**. Grid maps, terrain that shapes movement and defense, a rock-paper-scissors unit roster
 across three movement domains (land, air, sea), property capture and income, and a computer opponent.
 
-- **Status:** fifteen designs of record, all worth reading before an architectural decision.
-  `.lavish/grid-commanders-plan.html` owns the base game — milestones M0–M7 and which of them
-  are done, mechanics reference, damage formula. `.lavish/commanders-plan.html` owns Commanders
-  and Command Powers — milestones C1–C4, the four locked decisions (D1 subclassed `CommanderType`,
-  D2 asymmetric charge accrual, D3 what C1 ships, D4 Sable Wren's reworked Vanish) and the risk
-  register R1–R6 that work was built against. `.lavish/difficulty-modes-plan.html` owns the
-  difficulty tiers — milestones DF1–DF4 and the locked D2/D3: **the AI never cheats at any tier**,
-  so difficulty may only change which `AIProfile` the planner weighs moves with, never income,
-  vision, damage or luck. Its DF4 acceptance gate is currently **unmet** — read
-  `docs/difficulty_check.md` before touching an AI weight or a tier `.tres`.
-  `.lavish/naval-air-units-plan.html` owns the air and naval domains — milestones N1–N4, decisions
-  D1–D6, and risks R1–R6, of which R1 is the standing one: the AI cannot plan a ferry, so it never
-  builds transports and a naval map has to let fleets reach each other without one.
-  `.lavish/map-retrofit-plan.html` owns which shipped boards carry a port or an airfield and which
-  stay land-only on purpose, and it supersedes that plan's "the existing maps stay byte-identical"
-  clause with the rule that replaced it: a map edit **converts** cells, never carves — land stays
-  passable to every land class, no cell becomes sea and no coastline is redrawn — because a save
-  stores its board by `map_path` and reloads the edited file from `res://`.
-  `.lavish/production-maps-plan.html` owns the three production boards — `forge`, `arsenal`,
-  `steelworks` — and its D1: **zero starting units is an omitted `[units]` section**, not a flag and
-  not a parser change, which is why the trio shipped with no engine change at all. Its D3 keeps them
-  land-only, deferring to the naval plan's standing R1.
-  `.lavish/balance-simulator-plan.html` owns the offline balance instruments — milestones BS1–BS4,
-  all shipped — and its D2: **the telemetry observes, it never instruments the sim.** Nothing under
-  `core/` or `ai/` gained a signal, hook or field for it, so what the Lab measures is bit-for-bit
-  what ships. Its D1 is the standing constraint on the toolchain: `tools/balance/match_engine.gd` is
-  the one match loop, `make commander-balance` and `make difficulty-check` are byte-stable presets
-  over it, and the merge bar for touching it is a fixed-seed byte-diff of both their reports — two
-  committed documents rest on those numbers. `docs/balance_sim.md` is how to run and read it.
-  `.lavish/game-speed-plan.html` owns the game-speed setting — milestones GS1–GS3 and the four
-  locked decisions (D1 a device preference in `user://settings.cfg`, never `MatchConfig` and never
-  a save, so a resumed match plays at the speed you like today; D2 the numbers as constants on the
-  `GameSpeed` presentation class rather than a `.tres` under `data/`, deliberately breaking the
-  difficulty tiers' symmetry; D3 Normal is the default at twice the movement duration, with Quick
-  reproducing the old feel bit for bit; D4 Instant is an explicit branch, in the tradition of the
-  animator's `capturing` flag, not an animation scale of zero). D2 exists to protect the standing
-  invariant: **nothing under `core/` or `ai/` may import `GameSpeed` or read `Settings`**, which is
-  what keeps pacing unable to move an outcome, a save or a replay. Its GS3 subjective retune is
-  **not done** — the tier numbers are still the plan's starting values, characterized but not yet
-  adjusted against a full match played at each tier by a human.
-  `.lavish/faction-identity-plan.html` owns armies wearing their commander's faction — milestones
-  FI1–FI3, all shipped — and its D1: **identity is presentation-only.** Nothing under `core/` or
-  `ai/` learns a colour or a name; the sim keeps its team ints, and `scenes/common/side_identity.gd`
-  (`SideIdentity`) resolves `team → {theme, display name, atlas row}` **once per match** from the
-  commander picks, re-derived on load, never stored. It is the single authority every surface that
-  once said "Red"/"Blue" now reads — the board, the day banner, the terrain panel, the winner line,
-  the select chips, the info sheet — so ask it, never re-derive a side's colour or name. Its D3/D4
-  fallbacks are load-bearing and total: a mirror match keeps the faction name and the later slot
-  borrows the first hue-distinct classic (Aurora blue, else Meridian red); a commander-less side is
-  "First/Second Army" in the classic red and blue, so a no-CO match is board-identical to before
-  factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora, 3 iron, 4 verdant`) is a contract
-  between `SideIdentity._ROW_FOR_KEY` and the art pipeline (`build_pixvoxel_atlases.sh` ROW_NAMES,
-  `generate_tiles.gd`); rows 0–2 are the shipped red/blue art byte-for-byte and must stay so, the one
-  exception being a column retiring a generated placeholder for real art through
-  `generate_unit_placeholders.gd`'s documented path, as units column 13 (Missiles) did. Its D5
-  is the standing boundary: **"Red"/"Blue" survive only as developer slot vocabulary** — the Balance
-  Lab's `--red`/`--blue` grammar and its byte-stable reports, code identifiers, comments — never on a
-  screen a player sees; if a player can see it, it speaks faction.
-  `.lavish/tile-info-panel-plan.html` owns the hovered-tile corner panel — the unit-first redesign,
-  shipped: the occupant is the headline card and terrain drops to a compact card below, with star
-  defense and the move row filtered to the occupant's class on occupied tiles. Presentation-only by
-  scope — the fog/doctrine gate stays in `battle_view.gd`'s `refresh_panel`, which nulls units the
-  viewer cannot see before the panel ever gets them — and the two `show_*` methods merged into one
-  `show_tile()`. The corner panel itself is gone: `.lavish/hud/SPEC.md` docked the HUD into two
-  opaque full-width bars (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code), so
-  `TerrainPanel` and `CommanderHudChip` are deleted and `show_tile()` is the bottom bar's. What
-  survives the move is the rule above and the metrics' authority: both bar heights, the new colour
-  tokens and the three shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in
-  `UiTheme` — the bar scripts hardcode no colour and no size. Two things follow from docking that a
-  floating panel never had to answer. `camera.offset` now carries the shift that pushes the board
-  into the band between the bars, and `BattleView._apply_board_offset` is its **only writer**: the
-  combat shake asks for its jitter through `BattleView.shake_offset` and the view composes the two,
-  because a shake that settled at `Vector2.ZERO` would take the docking shift with it. And the bars
-  are chrome that swallows the pointer (`MOUSE_FILTER_STOP` on both) — the board is deliberately
-  allowed to render behind them, so an event falling through to `Battle._unhandled_input` would move
-  the game cursor onto a covered cell.
-  `.lavish/battle-animations-plan.html` owns the combat cut-in — milestones BA1–BA4, all shipped —
-  and its D1: **the cut-in replays a snapshot, it computes nothing.** The only thing `core/` gained
-  for it is `CombatResult.attacker_hp_before` / `defender_hp_before`, because the animation runs
-  *after* the command applied and both units already hold post-combat HP. Its D5 is the standing
-  rule on the other side of the line: how a weapon looks is a `BattleStyle` under
-  `data/battle_anim/`, `UnitType.battle_style` is a presentation key exactly like `atlas_col`, and
-  no gameplay number may ever appear in a style.
-  `.lavish/capture-animation-plan.html` owns the capture cut-in — milestones CP1–CP3, all shipped —
-  and it is the combat cut-in's sibling in every structural sense, sharing its D1: **the cut-in
-  replays a snapshot, it computes nothing.** The only thing `core/` gained is a
-  `CaptureCommand.result` snapshot (`points_before`, `points_after`, `owner_before`, `captured`),
-  filled in `apply` exactly as `AttackCommand.result` is; the mash chips are a presentation split of
-  `points_before − points_after`, never a call back into `capture_strength`. `BattleAnimator`
-  gained one seam, `animate_capture`, behind the combat gate reused whole (`capturing`, Instant, and
-  viewer visibility via `BattlePerspective` and so `Vision` — one unit this time, since the capturer
-  stands on the cell it takes), and the property flip is a `SideIdentity.atlas_row` swap so the cut-in's
-  colours are the board's. It reads no `GameSpeed` accessor for its beat lengths — fixed constants
-  on `CaptureCutscene` scaled by the animator's shared streak pacing, identical to the combat
-  cut-in, deliberately not the plan's D5 tier-scaling, because the shipped combat sibling does not
-  tier-scale and structural parity is the stronger rule. Its art prerequisite landed alongside: the
-  hand-authored 64px airport and port buildings under `assets/sprites/iso_buildings`, composited
-  into terrain-atlas columns 9–10 by `build_pixvoxel_atlases.sh` over the bare grounds
-  `generate_tiles.gd` now draws for those cells (the PixVoxel pack has no hangar and no quay), with
-  the iron/verdant rows vendored design-system faction art like every unit's and property's — one
-  tint authority for every family (`tint_iso_air_sea.sh`, the script tinting it replaced, is gone;
-  see assets/LICENSES.md "Design-system faction tints"). It deliberately retimes its handoff reference's
-  4.6s choreography to ≈2.4s house tempo, because its R1 (ceremony fatigue — captures far outnumber
-  kills) is the named top risk.
-  `.lavish/power-quotes-plan.html` owns the Command Power quotes — milestones PQ1–PQ2, both
-  shipped — and its D1: **a quote is presentation data in the `battle_style` tradition.**
-  `power_quotes` is an exported string array on `CommanderType`, the words live on each general's
-  `.tres` under `data/commanders/`, and nothing in `core/` or `ai/` ever reads one — the sim, the
-  save format and the seeded RNG are untouched. Its D2 keeps the theatre deterministic: three
-  lines per general, rotated in order by a per-team activation counter on the banner, never by
-  RNG, so a replayed match speaks the same words and the scenario gallery's `power_banner` frame
-  (always activation #1) always speaks the first; the counter is scene-lifetime presentation
-  state, and a loaded save restarting the rotation is accepted as cosmetic. Its D3 renders the
-  line inside the existing `CommanderPowerBanner` as the card's headline beside the portrait — a
-  quote never appears without the bust — with the power name stepping down in size only when a
-  quote exists, so a quote-less commander (and the neutral one) renders today's card
-  pixel-identical: that conditional sizing is the regression guarantee, not an inconsistency.
-  Its D4 bumped `POWER_BANNER_SECONDS` 1.1 → 1.5 because the card now opens with a sentence,
-  leaving Instant's clamp and the day banner deliberately untouched. PQ2 puts `power_quotes[0]`
-  on the shared `CommanderCard` as the general's signature line, and
-  `tests/unit/test_commander_quotes.gd` enforces that every powered general ships quotes and
-  that each line fits the 60-character cap — an editorial ruler, not a rendering fact. Its D5
-  keeps it text only; voice audio and a settings toggle are explicitly out of scope.
-  `.lavish/range-preview-plan.html` owns the range preview — milestones RP1–RP3, all shipped — and
-  its D1: **the fire ring is the single authority's geometry, never a second opinion.**
-  `AttackRange.threat_cells`/`firing_cells`/`ring_cells` in `core/rules/` own "every cell a unit
-  could bring under fire this turn"; `ai/threat_map.gd` was rebuilt onto them, keeping only its own
-  dry/unarmed filter and per-enemy attribution, so the red overlay the player sees and the cells the
-  planner fears are one computation — the movement-overlay lesson (`MoveCommand.validate`) applied
-  before the bug, its merge bar a fixed-seed byte-diff of both balance reports. Everything else is
-  presentation-only (D5): clicking a unit you cannot command previews its move range and **R** paints
-  its fire ring, both pure reads gated by the same `perspective.can_see_unit` fog rule targeting uses,
-  so nothing under `core/` or `ai/` learns the overlay exists and `make screenshot` stays byte-stable.
-  `.lavish/menu-revamp-plan.html` owns the main-menu and commander-select redress — milestones
-  MN1–MN3, all shipped — and its D1: **the design-system tokens live in one code authority,
-  `scenes/common/ui_theme.gd` (`UiTheme`), never a `.tres` Theme.** `UiTheme` re-exports every colour
-  that already has an authority (faction hues stay `CommanderVisuals`/`SideIdentity`'s, cream and ink
-  stay `CommanderVisuals.PAPER`/`PAPER_INK`/`HARD_BORDER`) and declares only the shell tokens the game
-  lacked, so there is still exactly one value per colour. The whole revamp is presentation-only —
-  nothing under `core/` or `ai/` changes — and its D5 map thumbnails (`scenes/menu/map_thumbnail.gd`)
-  draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row`, the board's own authorities, so a
-  miniature can never be a second opinion (R2), and the same renderer bakes the panning menu backdrop.
-  D6 was the scope line: the menu flow whole, the battle HUD not at all. The battle half has since
-  been reopened a surface at a time — COM-18's legibility pass dressed the commander HUD chip and the
-  info sheet's own chrome in the same `UiTheme` tokens, and the docked bars that replaced the chip
-  read those tokens too — but the half of D6 that still stands is the
-  one that matters: the shared `CommanderCard` keeps its dress until a named follow-up, because it is
-  also the in-battle info sheet, so restyling it would move commander selection too. The two fonts
-  (Pixelify Sans, Silkscreen) are vendored under `assets/fonts/`, both OFL, recorded in
-  `assets/LICENSES.md`. The design-system source is external (the handoff zip), not in the repo; its
-  numbers are quoted in the plan so the tree never depends on it.
-  `.lavish/ux-recovery-plan.html` owns the merged first-contact and new-player registers — items
-  U-01–U-26 across four slices, of which UX1's onboarding half is COM-12, shipped — and its D1:
-  **every change in it is presentation-only, and tutorial state is a device preference.** The
-  first-match strip (`scenes/ui/mission_strip.gd`) and its script and copy
-  (`scenes/ui/tutorial_hints.gd`) live entirely in `scenes/`, retire into
-  `user://settings.cfg` beside the game speed — never `MatchConfig`, never a save — and honour its
-  D6: **the tutorial owns no rule and observes rather than instruments.** Each step retires off the
-  `EventBus` signals the scene already animates (`unit_selected` was added for the one step no
-  committed command marked), filtered to the human sides so the computer cannot retire a hint by
-  playing its own turn; nothing under `core/` or `ai/` gained a hook, a field or a branch for it.
-  Two consequences worth knowing. A capture pins the hint set exactly as it pins the speed tier —
-  `Settings.pin_hints`, called from `Battle._ready` — so no frame depends on how much of the game
-  the person running `make smoke` had already played; only `--demo=mission_strip[_retired]` pins it
-  *empty*, and `--reset-hints` is the one flag in `Settings` that deliberately writes. And the key
-  legend on the top bar is the strip's permanent counterpart: `scenes/ui/control_hints.gd`
-  (`ControlHints`) owns one line per interaction context, `Battle.STATE_CONTEXT` maps the state to
-  the key, and **`Battle.state`'s setter is what prints it** — a legend refreshed from each of the
-  dozen sites that assign that state would be one missed call away from naming a key that does
-  nothing.
 - **Engine:** Godot 4.7+ (`TileMapLayer`, custom `Resource` types).
 - **Language:** GDScript, **typed everywhere** (`class_name`, typed vars, typed signatures).
 
 > Legal: this is a *reimplementation of mechanics*, not a copy. No Nintendo sprites, music,
 > unit-name trade dress, or the "Advance Wars" name. Use original or freely-licensed assets and
 > a different title. Track every third-party license in `assets/LICENSES.md`.
+
+## Designs of record
+
+The plans under `.lavish/` are the designs of record — **read the owning plan before an
+architectural decision in its area.** The index below names each plan's scope and the invariants
+that must survive any change; the full rationale, milestones and risk registers live in the plans.
+
+- `grid-commanders-plan.html` — the base game: milestones M0–M7 (all done), mechanics reference,
+  damage formula.
+- `commanders-plan.html` — Commanders and Command Powers: milestones C1–C4, locked decisions D1–D4
+  (subclassed `CommanderType`, asymmetric charge accrual, C1 scope, Sable Wren's reworked Vanish),
+  risk register R1–R6.
+- `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
+  tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
+  income, vision, damage or luck. Its DF4 acceptance gate is currently **unmet** — read
+  `docs/difficulty_check.md` before touching an AI weight or a tier `.tres`.
+- `naval-air-units-plan.html` — air and naval domains N1–N4. Standing risk R1: the AI cannot plan
+  a ferry, so it never builds transports — a naval map has to let fleets reach each other without
+  one.
+- `map-retrofit-plan.html` — which shipped boards carry a port or airfield and which stay
+  land-only on purpose. Its byte-identical clause is superseded by the rule that replaced it: a
+  map edit **converts** cells, never carves — land stays passable to every land class, no cell
+  becomes sea, no coastline is redrawn — because a save stores its board by `map_path` and reloads
+  the edited file from `res://`.
+- `production-maps-plan.html` — the `forge`/`arsenal`/`steelworks` boards. D1: zero starting units
+  is an omitted `[units]` section, not a flag and not a parser change. D3 keeps them land-only
+  (naval R1).
+- `balance-simulator-plan.html` — offline balance instruments BS1–BS4, all shipped. D2: **the
+  telemetry observes, it never instruments the sim** — nothing under `core/` or `ai/` gained a
+  hook for it. D1: `tools/balance/match_engine.gd` is the one match loop; `make commander-balance`
+  and `make difficulty-check` are byte-stable presets over it, and the merge bar for touching it
+  is a fixed-seed byte-diff of both reports. `docs/balance_sim.md` is how to run and read it.
+- `game-speed-plan.html` — the game-speed setting GS1–GS3. D1: a device preference in
+  `user://settings.cfg`, never `MatchConfig` and never a save. Standing invariant: **nothing under
+  `core/` or `ai/` may import `GameSpeed` or read `Settings`** — pacing can never move an outcome,
+  a save or a replay. Instant is an explicit branch, not an animation scale of zero. The GS3
+  subjective retune is **not done** — tier numbers are still the plan's starting values.
+- `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:
+  **identity is presentation-only** — the sim keeps its team ints; `scenes/common/side_identity.gd`
+  (`SideIdentity`) resolves `team → {theme, display name, atlas row}` once per match from the
+  commander picks and is the single authority every surface reads — ask it, never re-derive a
+  side's colour or name. Its fallbacks are load-bearing and total: a no-CO match is
+  board-identical to before factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora,
+  3 iron, 4 verdant`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art pipeline
+  (`build_pixvoxel_atlases.sh`, `generate_tiles.gd`); rows 0–2 stay byte-for-byte the shipped
+  red/blue art. D5: **"Red"/"Blue" survive only as developer slot vocabulary** (the Balance Lab's
+  `--red`/`--blue` grammar, identifiers, comments) — never on a screen a player sees.
+- `tile-info-panel-plan.html` + `.lavish/hud/SPEC.md` — the tile info panel and the docked HUD
+  (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code; `show_tile()` is the bottom
+  bar's). Presentation-only; the fog/doctrine gate stays in `battle_view.gd`'s `refresh_panel`,
+  which nulls units the viewer cannot see before the panel gets them. Bar heights, colour tokens
+  and the shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in `UiTheme` — the bar
+  scripts hardcode no colour and no size. `BattleView._apply_board_offset` is the **only writer**
+  of `camera.offset` (the combat shake composes through `BattleView.shake_offset`), and both bars
+  swallow the pointer (`MOUSE_FILTER_STOP`) so events can't fall through to cells rendered behind
+  them.
+- `battle-animations-plan.html` — the combat cut-in BA1–BA4, all shipped. D1: **the cut-in replays
+  a snapshot, it computes nothing** — `core/` gained only `CombatResult.attacker_hp_before` /
+  `defender_hp_before`. D5: how a weapon looks is a `BattleStyle` under `data/battle_anim/`,
+  `UnitType.battle_style` is a presentation key like `atlas_col`, and no gameplay number may ever
+  appear in a style.
+- `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
+  sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
+  `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
+  are a presentation split of `points_before − points_after`, never a call back into
+  `capture_strength`; the property flip is a `SideIdentity.atlas_row` swap. Deliberately does not
+  tier-scale (structural parity with the combat sibling). Faction tinting for its buildings and
+  all art families has one authority — see `assets/LICENSES.md` "Design-system faction tints".
+- `power-quotes-plan.html` — Command Power quotes PQ1–PQ2, shipped. D1: a quote is presentation
+  data — `power_quotes` is exported on `CommanderType`, the words live on each general's `.tres`,
+  nothing in `core/` or `ai/` reads one. D2: rotation is by a per-team activation counter, never
+  RNG, so a replayed match speaks the same words. A quote-less commander renders the banner
+  pixel-identical to before. `tests/unit/test_commander_quotes.gd` enforces coverage and the
+  60-character cap. Text only — no voice audio, no settings toggle.
+- `range-preview-plan.html` — the range preview RP1–RP3, shipped. D1: **the fire ring is the
+  single authority's geometry, never a second opinion** — `AttackRange.threat_cells` /
+  `firing_cells` / `ring_cells` in `core/rules/` own "every cell a unit could bring under fire
+  this turn", and `ai/threat_map.gd` is rebuilt on them (keeping only its dry/unarmed filter and
+  per-enemy attribution), so the red overlay and the planner's fear are one computation.
+  Everything else is presentation-only, gated by the same `perspective.can_see_unit` fog rule
+  targeting uses; `make screenshot` stays byte-stable.
+- `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
+  **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
+  never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
+  cream/ink) so there is exactly one value per colour. Map thumbnails
+  (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
+  a miniature can never be a second opinion. The shared `CommanderCard` keeps its dress until a
+  named follow-up (it is also the in-battle info sheet, so restyling it moves commander selection
+  too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
+- `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
+  slice (COM-12) is shipped. D1: everything in it is presentation-only, and tutorial state is a
+  device preference (`user://settings.cfg`, never `MatchConfig`, never a save). D6: the tutorial
+  owns no rule and observes rather than instruments — steps retire off existing `EventBus`
+  signals, filtered to human sides so the computer cannot retire a hint; nothing in `core/` or
+  `ai/` gained a hook. A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so
+  `make smoke` frames don't depend on play history; `--reset-hints` is the one `Settings` flag
+  that deliberately writes. The key legend (`scenes/ui/control_hints.gd`) is printed by
+  **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites
+  that assign the state.
 
 ## Architecture — the rules that matter most
 
@@ -254,12 +183,9 @@ Follow the official Godot GDScript style guide. Key points:
 
 - Tests use **GUT** (Godot Unit Test) and live in `tests/`, mirroring `core/` and `ai/`.
 - **Test the pure-simulation layers exclusively** — `core/`, plus `ai/` and the offline balance
-  harness in `tools/balance/`, all of which are Node-free for exactly this reason. That's where the
-  rules live and where bugs hurt. Movement range, path math, the combat resolver, capture points,
-  turn/economy logic, AI planning, and the balance engine's determinism and telemetry attribution
-  all get unit tests. Presentation is verified by playing the scene, not by unit tests — which is
-  why watch mode announces its winner and day: it makes a presentation-layer claim (the watched
-  match *is* the harness's match) checkable by diffing two lines instead of watching a window.
+  harness in `tools/balance/`, all of which are Node-free for exactly this reason. That's where
+  the rules live and where bugs hurt. Presentation is verified by playing the scene, not by unit
+  tests.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 
@@ -293,68 +219,56 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   if editing by hand, keep changes minimal and reviewable.
 - **Doctrine hooks take an `Engagement`, not two `Unit`s.** `core/rules/engagement.gd` carries the
   effective values a shot is resolved with: the cell it is *actually* fired from and the HP the
-  formula should use. A forecast fires from a cell the attacker has not moved to yet, and a
-  forecast's counter uses projected post-attack HP — handing hooks the effective values is what
-  keeps the damage preview and the resolved attack on identical numbers. The *defender's* cell is
-  an effective value for the same reason: `CombatResolver.forecast_at` takes the cell to score the
-  shot against, so the AI can ask "how hard am I hit if I stop here?" without standing a live unit
-  somewhere to ask it. Forecasting is a pure read — if a query has to mutate the board, it is wrong.
-- Two more single authorities, same rule as vision below — ask them, never re-derive:
-  `core/rules/attack_range.gd` owns **who** a unit may shoot and **how far** — `can_engage` and
-  `covers` — and `core/movement_resolver.gd` owns the movement budget and per-step terrain cost,
-  **including inside `MoveCommand.validate`**. That last one is load-bearing: a fourth independent
-  opinion on movement was a real bug here, and it made the range overlay offer cells the command
-  then refused. `can_engage` exists for the same reason: the command, the planner and the targeting
-  overlay each used to ask the damage chart directly, which was the whole answer only until a
-  submarine could be under the water. Countering is the one deliberate exception on distance,
-  documented on `CombatResolver._defender_can_counter`; it asks `can_engage` for the rest.
+  formula should use — which is what keeps the damage preview and the resolved attack on
+  identical numbers. `CombatResolver.forecast_at` takes the defender's cell for the same reason,
+  so the AI can ask "how hard am I hit if I stop here?" without standing a live unit somewhere to
+  ask it. Forecasting is a pure read — if a query has to mutate the board, it is wrong.
+- **Single authorities — ask them, never re-derive.** `core/rules/attack_range.gd` owns **who** a
+  unit may shoot and **how far** (`can_engage`, `covers`); `core/movement_resolver.gd` owns the
+  movement budget and per-step terrain cost, **including inside `MoveCommand.validate`**. Both
+  exist because independent second opinions were real bugs here: a fourth opinion on movement made
+  the range overlay offer cells the command then refused, and asking the damage chart directly was
+  the whole answer only until a submarine could be under the water. Countering is the one
+  deliberate exception on distance, documented on `CombatResolver._defender_can_counter`.
 - **Movement domains are data, not code.** A move class is a key in each terrain's `move_costs`
-  (`air` on every terrain, `ship`/`lander` on the water), which is the entire reason aircraft and
-  hulls needed no change to `MovementResolver`. Which property builds and refits what is likewise
-  `TerrainType.builds` / `services`, read by `BuildCommand`, the build menu and the AI's production
-  alike — never a terrain id checked in three places, which is what those two lists replaced.
-- Keep the vision/fog boundary clean: `core/rules/vision.gd` is the single authority for "what can
-  this player see?" — ask it, never re-derive visibility. Fog is enforced in the presentation layer
-  (the sim stays permissive, the UI refuses to target or inspect what the viewer cannot see), and
-  the AI deliberately sees everything **except** units a doctrine hides — it asks
-  `Vision.is_hidden_from` for that one case, so an invisibility power is not inert against it.
-  Terrain, range and property sight stay invisible to the AI's omniscience; don't widen the
-  exception without a matching decision in the plan. The one widening made with such a decision is
-  **movement-obstacle detection**: a committed path is planned and walked with the mover's *own*
-  visibility, so a unit hidden from the AI (a fogged enemy, or a dived sub it is not next to) can
-  spring an ambush on its move exactly as one can on a human's — only the AI's *pathing* is
+  (`air` on every terrain, `ship`/`lander` on the water) — aircraft and hulls needed no
+  `MovementResolver` change. What a property builds and refits is `TerrainType.builds` /
+  `services`, read by `BuildCommand`, the build menu and the AI's production alike — never a
+  terrain id checked in three places.
+- **Vision/fog:** `core/rules/vision.gd` is the single authority for "what can this player see?" —
+  ask it, never re-derive visibility. Fog is enforced in the presentation layer (the sim stays
+  permissive, the UI refuses to target or inspect what the viewer cannot see). The AI deliberately
+  sees everything **except** units a doctrine hides — it asks `Vision.is_hidden_from` for that one
+  case; don't widen the exception without a matching plan decision. The one made widening:
+  a committed path is planned and walked with the mover's *own* visibility, so a unit hidden from
+  the AI can spring an ambush on its move exactly as one can on a human's — the AI's *pathing* is
   fog-limited, its *targeting* stays omniscient-except-doctrine-hidden. A submerged submarine is
-  hidden through the same hook and is the one rule there that holds **with fog off** — being under
-  the water is not a question of how far anyone can see.
-  In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one adapter
-  from that rule authority to viewer policy: it combines the viewing team and hot-seat blackout,
-  delegates firing geometry to `AttackRange`, and supplies typed transport drop options. `Battle`,
-  `BattleView`, `BattleAnimator`, `BattleCommandPipeline` and `BattleScenarioDriver` ask it; none re-derives
-  or reaches through a sibling's private visibility helper. The runner drives an AI turn through
-  `Battle`'s own named entry points for the same reason — that surface is the seam, not a private
-  method reached across objects.
+  hidden through the same hook even with fog off.
+  In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one
+  adapter from that rule authority to viewer policy: viewing team plus hot-seat blackout, firing
+  geometry delegated to `AttackRange`, typed transport drop options. `Battle`, `BattleView`,
+  `BattleAnimator`, `BattleCommandPipeline` and `BattleScenarioDriver` ask it; none re-derives
+  visibility or reaches through a sibling's private helper, and the runner drives AI turns through
+  `Battle`'s own named entry points.
 - **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
   (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and
   result presentation; both `Battle` and `BattleAiRunner` enter through `Battle.execute_command`.
-  It captures combat, join and drop references before apply, replays `AttackCommand.result` and
+  It captures combat/join/drop references before apply, replays `AttackCommand.result` and
   `CaptureCommand.result`, gates AI movement through `BattlePerspective`, and reconciles sprites,
   properties, fog, the panel and the HUD. Its typed `BattleCommandReceipt` returns validation,
   turn, winner, watch and ambush facts. The callers still own selection/input transitions, AI
-  planning and pacing, save policy, and the decision to start a turn or show victory; do not move
-  those into the pipeline. The headless `BalanceMatchEngine` remains separate.
-- **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one seam —
-  its one live call site, `BattleCommandPipeline`, `await`s it, and it either plays the full-screen
-  cut-in or falls through to the on-map hit, returning exactly once either way. Inside
-  `scenes/battle/cutscene/`, everything is a
-  pure function of one clock: skipping sets that clock to the end rather than cancelling tweens,
-  which is what makes "any press, at any beat, lands on the right board" true by construction
-  instead of by testing. Every number the cut-in shows was handed to it — the result's two HP
-  snapshots and the units themselves — and none is recomputed from the damage chart or the RNG.
-  Keep it that way: a second opinion on combat is the movement bug this repo already paid for once.
-  Two consequences worth knowing before touching it. It is suppressed while `capturing`, like the
-  shake and the pulse, so `make screenshot` stays byte-stable and a posed cut-in goes through
-  `pose_at` instead; and it only plays when the *viewer* can see both combatants, which is asked of
-  `BattlePerspective` (and so of `Vision`), never re-derived.
+  planning and pacing, save policy, and victory presentation — do not move those into the
+  pipeline. The headless `BalanceMatchEngine` stays separate.
+- **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one
+  seam — its one live call site, `BattleCommandPipeline`, `await`s it, and it returns exactly
+  once, full-screen cut-in or on-map hit. Inside `scenes/battle/cutscene/` everything is a pure
+  function of one clock: skipping sets the clock to the end rather than cancelling tweens, which
+  makes "any press, at any beat, lands on the right board" true by construction. Every number the
+  cut-in shows was handed to it (the result's two HP snapshots, the units themselves); none is
+  recomputed from the damage chart or the RNG. It is suppressed while `capturing` — so
+  `make screenshot` stays byte-stable, posed cut-ins go through `pose_at` — and it only plays when
+  the *viewer* can see both combatants, asked of `BattlePerspective` (and so of `Vision`), never
+  re-derived.
 
 ## Communication
 
