@@ -186,8 +186,16 @@ func _apply_cmdline() -> void:
 			_flag_wins = true
 		elif arg == RESET_HINTS_ARG:
 			# Unlike every other flag here this one writes: see RESET_HINTS_ARG.
+			# It writes the hints key alone, never through _save(): a --speed= or
+			# --no-battle-anim earlier on the same command line has already moved
+			# the in-memory value, and a full save would persist that launch-only
+			# override — the exact thing those flags promise never to do.
 			retired_hints = []
-			_save()
+			var config := ConfigFile.new()
+			config.load(SETTINGS_PATH)  # keep every other key as the file has it
+			config.set_value(SECTION, HINTS_KEY, PackedStringArray())
+			if config.save(SETTINGS_PATH) != OK:
+				push_error("Settings: cannot write %s" % SETTINGS_PATH)
 		elif arg == NO_ANIM_ARG:
 			# Same family as --speed=: a per-launch override that never reaches
 			# the file. Latches it shut exactly as a pin does, so a scripted or

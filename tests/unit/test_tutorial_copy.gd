@@ -10,7 +10,8 @@ extends GutTest
 ## 640x360 canvas.
 ##
 ## Presentation stays out of here, exactly as CLAUDE.md says: MissionStrip is a
-## Node and is verified by driving the scene (`make smoke tutorial_strip`).
+## Node and is verified by driving the scene (the `mission_strip` and
+## `mission_strip_retired` smoke scenarios).
 
 
 func _all() -> Array[StringName]:
