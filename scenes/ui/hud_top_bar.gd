@@ -24,6 +24,7 @@ var _chip: Panel
 var _faction_label: Label
 var _doctrine_label: Label
 var _funds_label: Label
+var _keys_label: Label
 
 
 func _ready() -> void:
@@ -70,9 +71,16 @@ func _build() -> void:
 	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)
 	row.add_child(_funds_label)
 	row.add_child(UiTheme.hud_divider(_RULE_H))
-	# Cancel opens the field menu from IDLE (Battle._cancel), which is the control
-	# this names. A hint on permanent chrome has to stay true.
-	row.add_child(UiTheme.hud_label("ESC · MENU", UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	# The key legend, and the whole of it: whichever keys do something in the
+	# interaction the player is currently in. It replaced a lone "ESC · MENU" that
+	# was true but was also the only control the game ever named out loud (COM-12).
+	# A hint on permanent chrome has to stay true, so the line is swapped per
+	# context rather than listing every binding at once — see ControlHints, which
+	# owns the copy, and Battle, which maps its State to a context key.
+	_keys_label = UiTheme.hud_label(
+		ControlHints.legend_for(ControlHints.IDLE), UiTheme.SIZE_MICRO, UiTheme.INK_3
+	)
+	row.add_child(_keys_label)
 	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
 
 
@@ -93,6 +101,14 @@ func show_turn(
 	_faction_label.text = faction.to_upper()
 	_doctrine_label.text = doctrine
 	_funds_label.text = _thousands(funds)
+
+
+## Swaps the key legend for the interaction the player is now in. Called on every
+## state change rather than once a turn, because that is exactly when the keys
+## change; the copy itself is ControlHints', so this only prints it.
+func show_keys(legend: String) -> void:
+	if _keys_label != null:
+		_keys_label.text = legend
 
 
 ## 13000 -> "13,000". The funds readout is the one number on this bar a player

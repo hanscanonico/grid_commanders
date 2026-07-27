@@ -92,6 +92,14 @@ const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	PARTIAL_SUFFIX + FACTION_SUFFIX,
 ]
 
+## The first-match teaching strip (COM-12). `mission_strip` poses it on a fresh
+## install's very first frame — the objective, the SELECT step, and the four
+## still to come — and `mission_strip_retired` walks a real selection and a real
+## move through the flow so the strip is caught two steps in, which is the half a
+## still frame cannot prove: that a step retires when the player performs it.
+const MISSION_STRIP_MODE := "mission_strip"
+const MISSION_STRIP_RETIRED := MISSION_STRIP_MODE + "_retired"
+
 var _battle: Battle
 var _shot_path := ""
 var _select_cell := Vector2i(-1, -1)
@@ -119,6 +127,14 @@ func _init(battle: Battle) -> void:
 ## building a driver otherwise, so an ordinary match never pays for one.
 func requested() -> bool:
 	return _shot_path != "" or _select_cell.x >= 0 or _demo != ""
+
+
+## Whether this run is one of the two that exist to photograph the first-match
+## teaching strip. Every other capture pins the hints away, exactly as it pins
+## the game speed: the strip's presence would otherwise depend on how much of the
+## game the person running `make smoke` had already played (COM-12).
+func wants_mission_strip() -> bool:
+	return _demo.begins_with(MISSION_STRIP_MODE)
 
 
 func run() -> void:
@@ -263,6 +279,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_power_map_menu()  # the keyboard route to the power, unobscured
 		"power_banner":
 			await _stage_power_banner()  # fire it -> the activation card holds
+		MISSION_STRIP_MODE, MISSION_STRIP_RETIRED:
+			await _stage_mission_strip(mode)
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
 		"commander_victory":
@@ -860,7 +878,7 @@ func _check_map_menu_readable() -> void:
 	if rows.is_empty() or rows[0].id != &"power":
 		_fail("map menu opened without the Command Power as its first row")
 		return
-	_check_menu_in_band("map menu")
+	_check_in_band("map menu", _battle.action_menu)
 
 
 ## The route out of a running match (COM-16), walked the way a player walks it: the
@@ -878,7 +896,7 @@ func _stage_leave_routes() -> void:
 	await _until_state(Battle.State.MENU)
 	await _settle_menu()
 	_check_rows("map menu", BattleMenus.map_actions(_battle.game), [&"save_and_quit", &"quit"])
-	_check_menu_in_band("map menu")
+	_check_in_band("map menu", _battle.action_menu)
 	var map_menu_h := _battle.action_menu.get_global_rect().size.y
 	_battle.action_menu.choose(&"quit")
 	await _settle_menu()
@@ -888,7 +906,7 @@ func _stage_leave_routes() -> void:
 		# ActionMenu arms its first enabled row: a confirmation that led with the
 		# abandon would sit there with the match under the Enter just pressed.
 		_fail("the abandon confirmation arms '%s', not the row that keeps the match" % rows[0].id)
-	_check_menu_in_band("abandon confirmation")
+	_check_in_band("abandon confirmation", _battle.action_menu)
 	# Guards ActionMenu.reset_size(): without it the two-row confirmation stands
 	# inside the seven-row map menu's leftover panel, and the enclosure test above
 	# still passes. Two rows against seven, so the comparison needs no threshold.
@@ -919,15 +937,68 @@ func _check_rows(what: String, rows: Array[Dictionary], wanted: Array[StringName
 			_fail("the %s offers %s, with no '%s' row" % [what, ids, id])
 
 
-## The open menu sits inside the *board band* — the strip of the 640x360 frame the
-## two docked bars leave over, which is what ActionMenu clamps against. Read off
-## the live rects rather than recomputed.
-func _check_menu_in_band(what: String) -> void:
-	var menu := _battle.action_menu.get_global_rect()
+## A live control sits inside the *board band* — the strip of the 640x360 frame the
+## two docked bars leave over, which is what ActionMenu clamps against and what
+## MissionStrip centres itself in. Read off the live rects rather than recomputed.
+func _check_in_band(what: String, control: Control) -> void:
+	var rect := control.get_global_rect()
 	var frame := _battle.get_viewport().get_visible_rect().size
 	var band := Rect2(Vector2(0, UiTheme.HUD_TOP_H), Vector2(frame.x, frame.y - UiTheme.HUD_BARS_H))
-	if not band.encloses(menu):
-		_fail("the %s %s does not fit the board band %s" % [what, menu, band])
+	if not band.encloses(rect):
+		_fail("the %s %s does not fit the board band %s" % [what, rect, band])
+
+
+## The first-match teaching strip (COM-12), on a hint set Battle pinned empty for
+## this run so it opens exactly as a fresh install's first frame does.
+##
+## `mission_strip` poses that opening. `mission_strip_retired` walks a whole first
+## turn — select, move, build, end turn — through the same handlers a player's
+## input reaches, and then checks that the four steps performed are retired and
+## the strip has moved on to CAPTURE. That is the acceptance criterion a still
+## frame cannot show, since a strip stuck on SELECT photographs just as well as
+## one that advanced; and Capture is the step deliberately *not* performed, so it
+## is the witness that a step nobody did stays up. Ending the turn also proves the
+## rule with the most to get wrong — the turn has to pass off a *human* side, or
+## the computer would retire the player's hint by playing its own turn.
+func _stage_mission_strip(mode: String) -> void:
+	var strip: MissionStrip = _battle.view.mission_strip
+	var expected: StringName = &"select"
+	if mode == MISSION_STRIP_RETIRED:
+		expected = &"capture"
+		await _walk_first_turn()
+	await _settle_menu()  # the strip measures and centres itself a frame late
+	if not strip.visible:
+		_fail("the mission strip is down with %s still to teach" % expected)
+		return
+	if strip.current_step_id() != expected:
+		_fail("the mission strip teaches '%s', not '%s'" % [strip.current_step_id(), expected])
+	_check_in_band("mission strip", strip)
+
+
+## Every step of the loop except the capture, in the order the strip teaches them.
+## Wait rather than Capture on the city, so the third step stays un-performed.
+func _walk_first_turn() -> void:
+	_battle.confirm_at(Vector2i(4, 3))  # select the red infantry -> retires "select"
+	_battle.confirm_at(Vector2i(3, 4))  # move it onto the neutral city
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"wait")  # commit the move -> retires "move"
+	await _until_state(Battle.State.IDLE)
+	_battle.confirm_at(Vector2i(3, 2))  # the red base -> the build menu
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"infantry")  # -> retires "build"
+	await _until_state(Battle.State.IDLE)
+	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> the map menu
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"end_turn")  # -> retires "end_turn"
+	# Wait the computer's whole turn out, back to day two: the frame is then a real
+	# board rather than a half-planned one, and the AI's own moves are a live check
+	# that nothing it does retires a step on the player's behalf.
+	var tree := _battle.get_tree()
+	while (
+		_battle.game.winner == 0
+		and not (_battle.game.current_team == 1 and _battle.state == Battle.State.IDLE)
+	):
+		await tree.process_frame
 
 
 ## Opens the both-sides commander reference through the real map menu, the one

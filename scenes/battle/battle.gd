@@ -30,6 +30,23 @@ enum State {
 	INFO,
 }
 
+## Which key legend the top bar prints in each state. The mapping is Battle's
+## because the enum is; the words are ControlHints'. A state added without a row
+## here falls back to the resting legend rather than blanking the bar.
+const STATE_CONTEXT: Dictionary = {
+	State.IDLE: ControlHints.IDLE,
+	State.UNIT_SELECTED: ControlHints.UNIT_SELECTED,
+	State.PREVIEW: ControlHints.PREVIEW,
+	State.ANIMATING: ControlHints.ANIMATING,
+	State.MENU: ControlHints.MENU,
+	State.TARGETING: ControlHints.TARGETING,
+	State.DROP_TARGETING: ControlHints.DROP_TARGETING,
+	State.VICTORY: ControlHints.VICTORY,
+	State.AI_TURN: ControlHints.AI_TURN,
+	State.HANDOFF: ControlHints.HANDOFF,
+	State.INFO: ControlHints.INFO,
+}
+
 const DIR_ACTIONS: Array = [
 	[&"cursor_up", Vector2i.UP],
 	[&"cursor_down", Vector2i.DOWN],
@@ -69,7 +86,17 @@ var planners: Dictionary = {}
 var ai_teams: Array[int] = [2]
 var cursor_cell := Vector2i.ZERO
 
-var state := State.IDLE
+## The interaction the player is in. The setter is the whole reason it has one:
+## the top bar prints the keys that work *here*, and a legend refreshed from each
+## of the dozen places that assign this would be one missed call site away from
+## promising a key that does nothing. Everything else about the flow is unchanged
+## — the setter only tells the bar.
+var state := State.IDLE:
+	set(value):
+		state = value
+		if view != null:  # nothing to tell during _ready, before the view exists
+			view.refresh_keys(STATE_CONTEXT.get(state, ControlHints.IDLE))
+
 var selected: Unit
 var move_range: MovementResolver.MoveRange
 var planned_path: Array[Vector2i] = []
@@ -157,6 +184,11 @@ func _ready() -> void:
 		# must not depend on which machine took it, or on how fast whoever ran
 		# `make smoke` likes to watch their tanks move.
 		Settings.pin(GameSpeed.CAPTURE_ID)
+		# The teaching strip is pinned for the same reason and one more: whether
+		# *this* machine's player has already learned to capture would otherwise
+		# decide whether a card sits over the board in every other scenario's
+		# frame. Every capture but the strip's own hides it (COM-12).
+		Settings.pin_hints(not driver.wants_mission_strip())
 	animator.start_cursor_pulse()
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	camera.position = cursor.position
@@ -218,6 +250,7 @@ func _build_view() -> BattleView:
 	built.counter_label = %CounterLabel
 	built.outcome_label = %OutcomeLabel
 	built.hud_top = %HudTop
+	built.mission_strip = %MissionStrip
 	built.db = db
 	built.map = map
 	built.game = game
@@ -370,6 +403,10 @@ func _cancel() -> void:
 
 func _select(unit: Unit) -> void:
 	Sfx.play(&"select")
+	# Picking a unit up is the one step of the loop no committed command marks, so
+	# it gets the event the rest already had. MissionStrip is the only listener
+	# today; the flow below is untouched by it either way.
+	EventBus.unit_selected.emit(unit)
 	selected = unit
 	move_range = MovementResolver.reachable(game, unit)
 	planned_path = [unit.cell]

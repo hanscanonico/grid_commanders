@@ -50,8 +50,12 @@ var counter_label: Label
 ## attack percentage as secondary detail, and the note that luck can move where
 ## inside the span it lands.
 var outcome_label: Label
-## The docked bar above the board: day, side, doctrine, funds.
+## The docked bar above the board: day, side, doctrine, funds, key legend.
 var hud_top: HudTopBar
+## The first-match teaching strip. Transient by design — it retires itself for
+## good once the loop has been performed once — so unlike the two bars it floats
+## over the board and the camera is never framed around it.
+var mission_strip: MissionStrip
 
 ## The transient jitter the animator lays over the board's docking shift. Set —
 ## and tweened — by BattleAnimator.shake_camera rather than written to the
@@ -85,6 +89,11 @@ var _sprites: Dictionary = {}  # Unit -> UnitSprite
 ## the node fields and `db`/`map`/`game` are set.
 func setup() -> void:
 	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
+	# Whose actions the teaching strip may learn from — the computer plays through
+	# the same events and must not retire a hint on the player's behalf. Nothing is
+	# drawn yet: `refresh_hud` decides whether the strip shows at all, and it runs
+	# after a capture run has had its chance to pin the hints away.
+	mission_strip.setup(_human_teams())
 	terrain_layer.tile_set = _build_tile_set()
 	# The terrain atlas is drawn at 4x the world grid (see TERRAIN_PX), so the
 	# layer is scaled back down to keep one cell = TILE. Overlays and the cursor
@@ -400,6 +409,28 @@ func refresh_hud() -> void:
 	# the side's resolved one rather than the commander's own, so a mirror match
 	# wears the same borrowed colour here that its army wears on the board.
 	hud_bottom.show_commander(game.commander_state(team), team in ai_teams, identity.theme(team))
+	# The strip reads its own progress out of the device preference, so this only
+	# has to say "something changed" — and a turn boundary is when a step most
+	# often did (COM-12).
+	mission_strip.refresh()
+
+
+## Prints the keys that do something in the interaction the player is now in.
+## Battle calls it from its `state` setter, so the legend cannot fall out of step
+## with the flow the way a per-call-site refresh eventually would.
+func refresh_keys(context: StringName) -> void:
+	hud_top.show_keys(ControlHints.legend_for(context))
+
+
+## The sides a person is playing. One in a match against the computer, both in
+## hot-seat, and none at all in a watched AI-versus-AI replay — where the strip
+## then has nobody to teach and stays down.
+func _human_teams() -> Array[int]:
+	var out: Array[int] = []
+	for team in GameState.TEAMS:
+		if team not in ai_teams:
+			out.append(team)
+	return out
 
 
 func refresh_panel(cell: Vector2i) -> void:
