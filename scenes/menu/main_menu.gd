@@ -1,6 +1,6 @@
 extends Control
 ## Main menu: pick a map and match options, choose commanders on the dedicated
-## selection page, then hand off to the battle scene through MatchConfig.
+## selection page, then hand off to the battle scene by staging one MatchRequest.
 ##
 ## The screen wears the Grid Commander Design System (menu-revamp plan): a header
 ## with the wordmark, a cream Match Setup panel beside an action stack, all drawn
@@ -10,7 +10,7 @@ extends Control
 ##
 ## The flow is untouched. "1 Player" and "2 Player" open the CommanderSelectPanel
 ## (readiness plan G2), shown *over* this menu so the map and fog choices survive a
-## Back; nothing reaches MatchConfig until both commanders are confirmed there.
+## Back; no request is staged until both commanders are confirmed there.
 ## "Continue" bypasses selection — a saved match restores its own commanders. It
 ## is disabled, not hidden, when there is nothing to resume (plan section 2), and
 ## it names what it would resume on the micro-line beneath it: "DAY 4 · SCRIMMAGE".
@@ -108,10 +108,7 @@ func _ready() -> void:
 	# browses to one named general — the roster's copy is not all one length, so a
 	# capture that only ever photographs the first card proves nothing about the
 	# longest. An ordinary capture (no such flag) photographs the menu itself.
-	var select_mode := ""
-	for arg in OS.get_cmdline_user_args():
-		if arg == "--co-select" or arg.begins_with("--co-select="):
-			select_mode = arg.get_slice("=", 1) if arg.contains("=") else "red"
+	var select_mode := CmdArgs.value(CmdArgs.user(), "--co-select", "red")
 	if select_mode != "":
 		_open_select([2] as Array[int])
 		if select_mode == "blue":
@@ -915,13 +912,15 @@ func _continue() -> void:
 ## difficulty apply, so the choices above are ignored).
 func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> void:
 	var map := _map_at(_selected_map)
-	if map != null:
-		MatchConfig.map_path = map.source_path
-	MatchConfig.ai_teams = ai_teams
-	MatchConfig.fog_enabled = _fog_on
-	MatchConfig.difficulty = _selected_difficulty()
-	MatchConfig.commanders = commanders
-	MatchConfig.load_save = load_save
+	var request := MatchRequest.from_menu(
+		map.source_path if map != null else MatchRequest.DEFAULT_MAP_PATH,
+		ai_teams,
+		_fog_on,
+		_selected_difficulty(),
+		commanders,
+		load_save
+	)
+	MatchConfig.stage(request)
 	get_tree().change_scene_to_file(BATTLE_SCENE)
 
 

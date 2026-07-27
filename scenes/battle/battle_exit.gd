@@ -30,7 +30,7 @@ func _init(battle: Battle) -> void:
 ## reports at all: `save_and_leave` may only go once the match is on disk.
 func save_match() -> bool:
 	var game := _battle.game
-	if not SaveGame.save(game, _battle.ai_teams, SaveGame.SAVE_PATH, MatchConfig.difficulty):
+	if not SaveGame.save(game, _battle.ai_teams, SaveGame.SAVE_PATH, _battle.difficulty.id):
 		# SaveGame has already pushed the disk error; this is the player's half of
 		# it, and it says where they still are as well as what failed.
 		_battle.animator.show_banner("Save failed — still in the match")
@@ -80,7 +80,11 @@ func to_main_menu() -> void:
 
 ## Replays the match actually running — including one resumed from a save, whose
 ## map, sides and commanders the menu never saw — rather than whatever the menu
-## last wrote. See BattleSetup.remember.
+## last chose. Derived from the live GameState rather than from what was staged
+## for this scene, which is why a resumed match rematches its own board; see
+## MatchRequest.from_match.
 func rematch() -> void:
-	BattleSetup.remember(_battle.game, _battle.ai_teams)
+	MatchConfig.stage(
+		MatchRequest.from_match(_battle.game, _battle.ai_teams, _battle.difficulty.id)
+	)
 	_battle.get_tree().reload_current_scene()

@@ -83,6 +83,11 @@ var game: GameState
 var planners: Dictionary = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
+## The tier this match is being played at, as BattleSetup resolved it — from the
+## menu, a `--difficulty=` flag, or the resumed save itself. Held here because
+## the scene is what a save asks for it: it is the id SaveGame records, and the
+## one a resumed match plays back at.
+var difficulty: Difficulty
 var cursor_cell := Vector2i.ZERO
 
 ## The interaction the player is in. The setter is the whole reason it has one:
@@ -155,11 +160,26 @@ func _ready() -> void:
 	commander_db = CommanderDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
 	_exit = BattleExit.new(self)
-	# Which match this is, BattleSetup decides; from here the scene just runs it.
-	var built := BattleSetup.build(db, unit_db, commander_db)
+	# Which match this is, the request says and BattleSetup builds; from here the
+	# scene just runs it. The menu (or a rematch) stages a request; a run that
+	# booted this scene directly — a smoke scenario, a capture, a watched Balance
+	# Lab row — has none and plays the defaults. Either way the flags are layered
+	# on top, which is what keeps a headless capture and a menu launch arriving at
+	# the same board by the same route.
+	var request := MatchConfig.take()
+	if request == null:
+		request = MatchRequest.new()
+	request.apply_cmdline(CmdArgs.user())
+	var built := BattleSetup.build(request, db, unit_db, commander_db)
+	if built == null:
+		# BattleSetup has already pushed what failed. There is no board to draw and
+		# nothing to play, so the scene stops here rather than dereferencing a null
+		# map on its first touch.
+		return
 	map = built.map
 	game = built.game
 	ai_teams = built.ai_teams
+	difficulty = built.difficulty
 	_build_planners(built)
 	perspective = BattlePerspective.new(game)
 	view = _build_view()
@@ -167,7 +187,7 @@ func _ready() -> void:
 	animator = _build_animator()
 	_command_pipeline = BattleCommandPipeline.new(self)
 	_outcome = _build_outcome()
-	_outcome.configure(built.watching, built.days_cap)
+	_outcome.configure(request.watching, request.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
 	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
 	rematch_button.pressed.connect(_exit.rematch)

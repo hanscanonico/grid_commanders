@@ -26,7 +26,7 @@ extends RefCounted
 
 ## Spelled exactly like the battle scene's, and routed by `make smoke`: a mode
 ## whose name begins `menu_` boots this screen instead of the board.
-const DEMO_ARG := "--demo="
+const DEMO_ARG := "--demo"
 const DEMO_WITH_SAVE := "menu_with_save"
 const DEMO_NO_SAVE := "menu_no_save"
 const DEMO_MODES: Array[String] = [DEMO_WITH_SAVE, DEMO_NO_SAVE]
@@ -43,9 +43,7 @@ var _demo := ""
 
 func _init(menu: Control) -> void:
 	_menu = menu
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with(DEMO_ARG):
-			_demo = arg.get_slice("=", 1)
+	_demo = CmdArgs.value(CmdArgs.user(), DEMO_ARG)
 
 
 ## True when the command line named a mode this driver does not implement, and
