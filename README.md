@@ -399,9 +399,9 @@ nothing else: **no outcome, save, replay or seeded roll can change with it**, be
   repaints. For grinding out the late game.
 
 It is a **device preference**, not match state: it lives in `user://settings.cfg` (beside the save's
-`user://save.json`), never enters `MatchConfig` or a save file, and both sides of a hot-seat share
-it. `--speed=<tier>` overrides it for one launch without writing anything, and outranks even the
-tier captures pin themselves to — which is how you photograph a tier you are tuning. Every number
+`user://save.json`), never enters the match request or a save file, and both sides of a hot-seat
+share it. `--speed=<tier>` overrides it for one launch without writing anything, and outranks even
+the tier captures pin themselves to — which is how you photograph a tier you are tuning. Every number
 lives in one table at the top of `scenes/common/game_speed.gd`.
 
 Battle captures and the board scenarios in `make smoke` pin **Instant**: a frame must not depend on
@@ -457,18 +457,19 @@ result, including one capability that measured *negative* and ships switched off
   an optional starting-units section. `MapData` (core) is authoritative for terrain and is never
   mutated by play; runtime ownership, funds, and turn state live in `GameState`. The TileMapLayer is just paint.
 - `scenes/` — presentation: main menu, battle scene, cursor, UI panels.
-- `autoload/` — singletons: the event bus, the match setup the menu hands to the battle scene,
-  the device preferences this machine keeps between launches (`Settings` — the game speed above,
-  whether battles play the full-screen cut-ins, and which first-match hints this player has
-  retired), and the sound-effect player.
+- `autoload/` — singletons: the event bus, the one match request the menu (or a rematch) stages
+  for the battle scene, the device preferences this machine keeps between launches (`Settings` —
+  the game speed above, whether battles play the full-screen cut-ins, and which first-match hints
+  this player has retired), and the sound-effect player.
 - `tools/` — the art and sound build scripts: the headless ground-tile, sound, and portrait
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
   Assets below); and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`) and the
   Balance Lab (`docs/balance_sim.md`) alike.
-- `tests/` — GUT tests, targeting the pure-simulation layers (`core/` and `ai/`) plus the Node-free
-  offline balance harness under `tools/balance/`, which is written that way for exactly this reason.
+- `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
+  offline balance harness under `tools/balance/`, and the launch layer that states which match to
+  play (`MatchRequest`, `CmdArgs`) — each written that way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT).
 
 ## Assets

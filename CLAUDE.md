@@ -48,10 +48,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   and `make difficulty-check` are byte-stable presets over it, and the merge bar for touching it
   is a fixed-seed byte-diff of both reports. `docs/balance_sim.md` is how to run and read it.
 - `game-speed-plan.html` — the game-speed setting GS1–GS3. D1: a device preference in
-  `user://settings.cfg`, never `MatchConfig` and never a save. Standing invariant: **nothing under
-  `core/` or `ai/` may import `GameSpeed` or read `Settings`** — pacing can never move an outcome,
-  a save or a replay. Instant is an explicit branch, not an animation scale of zero. The GS3
-  subjective retune is **not done** — tier numbers are still the plan's starting values.
+  `user://settings.cfg`, never the `MatchRequest` a launch is staged as and never a save. Standing
+  invariant: **nothing under `core/` or `ai/` may import `GameSpeed` or read `Settings`** — pacing
+  can never move an outcome, a save or a replay. Instant is an explicit branch, not an animation
+  scale of zero. The GS3 subjective retune is **not done** — tier numbers are still the plan's
+  starting values.
 - `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:
   **identity is presentation-only** — the sim keeps its team ints; `scenes/common/side_identity.gd`
   (`SideIdentity`) resolves `team → {theme, display name, atlas row}` once per match from the
@@ -106,7 +107,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12) is shipped. D1: everything in it is presentation-only, and tutorial state is a
-  device preference (`user://settings.cfg`, never `MatchConfig`, never a save). D6: the tutorial
+  device preference (`user://settings.cfg`, never the match request, never a save). D6: the tutorial
   owns no rule and observes rather than instruments — steps retire off existing `EventBus`
   signals, filtered to human sides so the computer cannot retire a hint; nothing in `core/` or
   `ai/` gained a hook. A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so
@@ -182,10 +183,14 @@ Follow the official Godot GDScript style guide. Key points:
 ## Testing
 
 - Tests use **GUT** (Godot Unit Test) and live in `tests/`, mirroring `core/` and `ai/`.
-- **Test the pure-simulation layers exclusively** — `core/`, plus `ai/` and the offline balance
-  harness in `tools/balance/`, all of which are Node-free for exactly this reason. That's where
-  the rules live and where bugs hurt. Presentation is verified by playing the scene, not by unit
-  tests.
+- **Test the Node-free layers only** — `core/`, plus `ai/` and the offline balance harness in
+  `tools/balance/`, all of which are Node-free for exactly this reason. That's where the rules
+  live and where bugs hurt. Presentation is verified by playing the scene, not by unit tests.
+  The narrow exception is the launch layer that was deliberately made Node-free and
+  argument-taking so it could be tested at all: `MatchRequest` and `CmdArgs` under
+  `scenes/common/` (the flag grammar every `make smoke` scenario and Balance Lab row is launched
+  with), and `MatchConfig`'s staging, which is reachable without a scene and is where `take()`
+  clearing is held.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 
@@ -259,6 +264,26 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   turn, winner, watch and ambush facts. The callers still own selection/input transitions, AI
   planning and pacing, save policy, and victory presentation — do not move those into the
   pipeline. The headless `BalanceMatchEngine` stays separate.
+- **Which match to play is a typed request, not an autoload's fields.**
+  `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, sides, fog,
+  tier, commanders, resume, seed, watch, day cap, raw side specs — and is built by one of three
+  adapters: `from_menu`, `from_match` (a rematch, derived from the *live* `GameState`, so a match
+  resumed from a save replays its own board and commanders) and `apply_cmdline`, layered over
+  either on **every** battle boot, which is how a headless capture and a menu launch reach the same
+  board by the same route. `BattleSetup.build(request, …)` reads no autoload, scans no command line
+  and writes nothing back; it returns `null` with a pushed error when the board or the state cannot
+  be built (`assert` is stripped from a release build), and `Battle` disables itself rather than
+  dereferencing a null map. `MatchConfig` carries exactly one staged request, and `take()` clearing
+  is load-bearing rather than tidy: it is what makes a resume that found no save on disk unable to
+  latch into the next boot.
+- **The command line is parsed in one place.** `scenes/common/cmd_args.gd` (`CmdArgs`) — `user()`
+  is the only `OS.get_cmdline_user_args()` call outside `tools/`, and the six inline scans it
+  replaced are why one flag was last-wins and another first-wins with nobody deciding either.
+  `value()` is last-wins, `flag()` matches a bare switch, and `has()` exists because an *empty*
+  flag is not an *absent* one — `--co=` clears the commanders the menu picked and `--seed=` pins
+  seed 0 — so gate an override on `has`, never on a non-empty value. `autoload/settings.gd`
+  deliberately keeps its own ordered walk (its `pin()` latches, so there the *first* `--speed=`
+  lands and `--reset-hints` must see the flags before it); a comment there says so.
 - **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one
   seam — its one live call site, `BattleCommandPipeline`, `await`s it, and it returns exactly
   once, full-screen cut-in or on-map hit. Inside `scenes/battle/cutscene/` everything is a pure
