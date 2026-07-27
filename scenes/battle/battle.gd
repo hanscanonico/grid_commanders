@@ -8,6 +8,13 @@ extends Node2D
 ## `confirm_at`, `set_cursor_cell`, and `leave_handoff` are public because they
 ## are the entry points player input arrives at, and BattleScenarioDriver
 ## stands in for a player through exactly those.
+##
+## `start_turn`, `announce_power`, `enter_victory`, `refresh_fog`, `refresh_hud`
+## and `refresh_panel` are public for the same reason one step further out:
+## BattleAiRunner plays a computer turn through the flow a human's commands run,
+## so it needs those steps by name. They are the whole extra surface — a
+## collaborator that wants anything else wants a new entry point here, not a
+## reach into a private method.
 
 const MAIN_MENU_SCENE := "res://scenes/menu/main_menu.tscn"
 
@@ -766,11 +773,12 @@ func _viewing_team() -> int:
 	return game.current_team
 
 
-## Repaints fog after every committed action and turn change (not per cursor
-## move). During a hot-seat handoff nobody may look, so the board is blacked
-## out entirely — that is a flow decision, so it is made here and the view is
-## told; working out what is visible is Vision's job, and drawing it is the
-## view's.
+## Refreshes the shared perspective and repaints fog after every committed
+## action and turn change (not per cursor move). During a hot-seat handoff
+## nobody may look, so the board is blacked out entirely — whose eyes and
+## whether they are shut are flow decisions, so they are made here and handed to
+## the perspective; working out what is visible is Vision's job, deciding what
+## this viewer may act on is the perspective's, and drawing it is the view's.
 func refresh_fog() -> void:
 	perspective.refresh(_viewing_team(), state == State.HANDOFF)
 	view.refresh_fog()

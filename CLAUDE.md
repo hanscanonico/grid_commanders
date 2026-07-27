@@ -310,8 +310,10 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one adapter
   from that rule authority to viewer policy: it combines the viewing team and hot-seat blackout,
   delegates firing geometry to `AttackRange`, and supplies typed transport drop options. `Battle`,
-  `BattleView`, `BattleAnimator`, and `BattleAiRunner` ask it; none re-derives or reaches through a
-  sibling's private visibility helper.
+  `BattleView`, `BattleAnimator`, `BattleAiRunner` and `BattleScenarioDriver` ask it; none re-derives
+  or reaches through a sibling's private visibility helper. The runner drives an AI turn through
+  `Battle`'s own named entry points for the same reason — that surface is the seam, not a private
+  method reached across objects.
 - **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one seam —
   both call sites `await` it, and it either plays the full-screen cut-in or falls through to the
   on-map hit, returning exactly once either way. Inside `scenes/battle/cutscene/`, everything is a
