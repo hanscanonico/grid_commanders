@@ -93,4 +93,10 @@ max-public-methods: 21
 # split has not moved: the cut-in family — both `_stage_*_cut_in`, the two skip
 # walks, the pair staging and the atlas-row checks — is a third of the file and
 # answers to one idea. It sits at exactly 986.
-max-file-lines: 986
+#
+# 986 -> 998, the scenario driver's again and the same scenario's: review asked
+# `leave_confirm` to guard the reset_size() half of COM-16 too, since a stale
+# panel behind the confirmation passes the band check unchanged. The guard is the
+# map menu's height measured before the row is chosen and compared against the
+# confirmation's. It sits at exactly 998.
+max-file-lines: 998

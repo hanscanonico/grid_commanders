@@ -879,6 +879,7 @@ func _stage_leave_routes() -> void:
 	await _settle_menu()
 	_check_rows("map menu", BattleMenus.map_actions(_battle.game), [&"save_and_quit", &"quit"])
 	_check_menu_in_band("map menu")
+	var map_menu_h := _battle.action_menu.get_global_rect().size.y
 	_battle.action_menu.choose(&"quit")
 	await _settle_menu()
 	var rows := BattleMenus.abandon_confirm_actions()
@@ -888,6 +889,17 @@ func _stage_leave_routes() -> void:
 		# abandon would sit there with the match under the Enter just pressed.
 		_fail("the abandon confirmation arms '%s', not the row that keeps the match" % rows[0].id)
 	_check_menu_in_band("abandon confirmation")
+	# Guards ActionMenu.reset_size(): without it the two-row confirmation stands
+	# inside the seven-row map menu's leftover panel, and the enclosure test above
+	# still passes. Two rows against seven, so the comparison needs no threshold.
+	var confirm_h := _battle.action_menu.get_global_rect().size.y
+	if confirm_h >= map_menu_h:
+		_fail(
+			(
+				"the abandon confirmation stands %.0fpx tall, no shorter than the map menu's %.0fpx"
+				% [confirm_h, map_menu_h]
+			)
+		)
 
 
 ## An open menu only knows its size, and so its clamped position, a frame after its
