@@ -88,7 +88,7 @@ done < <(
 # not a subset check: a new apply or validate anywhere under scenes/battle is
 # exactly the cross-file drift this invariant exists to catch.
 if (($# == 0)); then
-	live_applies="$(rg -n '\.apply\(game\)' scenes/battle --glob '*.gd' || true)"
+	live_applies="$(grep -rn --include='*.gd' -E '\.apply\([^)]*game[^)]*\)' scenes/battle || true)"
 	apply_count="$(printf '%s\n' "$live_applies" | sed '/^$/d' | wc -l | tr -d ' ')"
 	if [[ "$apply_count" != 1 || "$live_applies" != scenes/battle/battle_command_pipeline.gd:* ]]; then
 		echo "check: expected one live apply in BattleCommandPipeline, found $apply_count" >&2
@@ -97,8 +97,11 @@ if (($# == 0)); then
 	fi
 
 	# Menu construction may query a fresh command to decide whether to offer a
-	# row. This guards committed-command validation specifically.
-	live_validates="$(rg -n 'command\.validate\(game\)' scenes/battle --glob '*.gd' || true)"
+	# row — a `<Command>.new(...).validate(game)` chain, excluded below. This
+	# guards committed-command validation specifically, whatever the receiver
+	# variable is named.
+	live_validates="$(grep -rn --include='*.gd' -E '\.validate\([^)]*game[^)]*\)' scenes/battle |
+		grep -vE '\.new\(.*\)\.validate\(' || true)"
 	validate_count="$(printf '%s\n' "$live_validates" | sed '/^$/d' | wc -l | tr -d ' ')"
 	if [[ "$validate_count" != 1 || "$live_validates" != scenes/battle/battle_command_pipeline.gd:* ]]; then
 		echo "check: expected one live validate in BattleCommandPipeline, found $validate_count" >&2

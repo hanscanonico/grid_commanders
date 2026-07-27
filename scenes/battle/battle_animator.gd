@@ -338,7 +338,8 @@ func hide_banner() -> void:
 
 ## The Command Power activation card: portrait, the general's spoken line, power
 ## name, and exact effect text, faction-tinted. Shown when a power fires (player
-## or AI, both through Battle.announce_power) and auto-hidden after a beat.
+## or AI, both through BattleCommandPipeline._present_power) and auto-hidden
+## after a beat.
 ## `team` keys the card's quote rotation, so the two sides speak independently.
 ## While capturing it holds, so a screenshot of the same activation is the same
 ## frame — the whole reason the two open-ended animations above are suppressed
