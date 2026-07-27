@@ -112,4 +112,15 @@ max-public-methods: 21
 # is the only reason it is not more. The split named above is still the one that
 # is due and its shape has still not moved: the cut-in family is a third of this
 # file and answers to one idea. It sits at exactly 1069.
-max-file-lines: 1069
+#
+# 1069 -> 1113, the scenario driver's a fifth time, for COM-11: the ghost panel
+# the 998 raise guarded on the map menu is the same defect on the build menu,
+# and no scenario walked that order. `after_build_menu` opens the eleven-row
+# shop, cancels, opens a two-row unit menu and measures it against the one before
+# it on both axes — the sequence is the whole check, since either menu on its own
+# already photographs correctly. The split these notes have now named several
+# times is still the right one and still not this change's job: the cut-in
+# family is a third of the file and twelve smoke scenarios rest on it, so moving
+# it inside a ghost-panel fix would leave neither half reviewable. It is filed
+# as COM-94. The driver sits at exactly 1113.
+max-file-lines: 1113
