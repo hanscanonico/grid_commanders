@@ -117,6 +117,16 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # battle scene, which would leave the run with nothing to capture, so the two
 # completed exits are proved by driving the real scenes instead (see the ticket).
 #
+# after_build_menu is COM-11's, and it is a *sequence* rather than a screen: the
+# three battle menus share one ActionMenu, a PanelContainer grows to fit its rows
+# and never shrinks back on its own, and the eleven-row build menu used to leave its
+# panel standing behind every short menu opened after it. So the scenario opens the
+# build menu, cancels, and opens a two-row unit menu, then measures that one against
+# the one before it on both axes. `buildmenu` and `supply` each photograph one of
+# those two menus perfectly well on its own, which is exactly why neither ever saw
+# the bug. Note the name: a `menu_` prefix is reserved above for the main-menu
+# scenarios, and this one is a battle-scene flow.
+#
 # The menu pair is the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
 # centered menu column plus all four primary actions against the 640x360 frame
@@ -141,7 +151,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # well as one that advanced.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
-	load cargo drop transport supply divemenu dive mapmenu leave_confirm
+	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
 	powermenu victory aiturn
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish

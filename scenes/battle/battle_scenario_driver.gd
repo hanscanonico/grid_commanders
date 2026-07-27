@@ -189,7 +189,9 @@ func _fog_hides_unseen() -> bool:
 ## mapmenu stops at the map menu (End Turn / Save); powermenu fires a Command
 ## Power from the HUD over an open action menu; leave_confirm walks the route out
 ## of a running match, from the map menu's two exit rows to the confirmation the
-## unsaved one opens; ambush and vanish are the same
+## unsaved one opens; after_build_menu opens the tallest menu in the game and then
+## the shortest, which is the order the shared panel's size has to survive;
+## ambush and vanish are the same
 ## staged board with Sable Wren's power down and up; victory routs Blue through
 ## a real attack so the victory screen comes up. The commander-identity captures
 ## (plan G3, COM-18): power_charging/ready/active/ai/mirror cover every state the
@@ -261,6 +263,8 @@ func _run_demo(mode: String) -> void:
 			await _until_state(Battle.State.MENU)
 		"leave_confirm":
 			await _stage_leave_routes()
+		"after_build_menu":
+			await _stage_menu_after_build_menu()
 		"powermenu":
 			await _run_power_menu_demo()
 		"ambush", "vanish":
@@ -916,6 +920,46 @@ func _stage_leave_routes() -> void:
 			(
 				"the abandon confirmation stands %.0fpx tall, no shorter than the map menu's %.0fpx"
 				% [confirm_h, map_menu_h]
+			)
+		)
+
+
+## The ghost panel (COM-11): the unit, build and map menus are one shared
+## ActionMenu, and a PanelContainer grows to fit its rows but never shrinks back on
+## its own, so the eleven-row build menu used to leave its slab standing behind
+## every short menu opened afterwards — over the board, every turn.
+##
+## Walked in that order — build menu, Cancel, then a unit's own Wait/Cancel —
+## because the stale size belongs to the *sequence*: either menu opened on its own
+## photographs perfectly well, which is why `buildmenu` never caught it. Measured
+## rather than eyeballed for the same reason leave_confirm is; the leftover panel is
+## translucent chrome over a board that renders either way.
+func _stage_menu_after_build_menu() -> void:
+	_battle.set_cursor_cell(Vector2i(3, 2))  # red base
+	_battle.confirm_at(Vector2i(3, 2))  # the tallest and widest menu in the game
+	await _until_state(Battle.State.MENU)
+	await _settle_menu()
+	var build_menu := _battle.action_menu.get_global_rect().size
+	_battle.action_menu.choose(&"cancel")
+	await _until_state(Battle.State.IDLE)
+	_battle.confirm_at(Vector2i(4, 3))  # select the red infantry
+	_battle.confirm_at(Vector2i(4, 3))  # stay put -> Wait / Cancel, the shortest menu
+	await _until_state(Battle.State.MENU)
+	await _settle_menu()
+	_check_menu_in_band("unit menu")
+	var shown := _battle.action_menu.rows.get_child_count()
+	if shown != 2:
+		_fail("the infantry's menu drew %d rows, not the two the comparison rests on" % shown)
+		return
+	# Both axes: the build menu is the widest menu as well as the tallest — every row
+	# carries an icon and a price — so a panel that only shrank in height would still
+	# hang off to the side of the two words under it.
+	var unit_menu := _battle.action_menu.get_global_rect().size
+	if unit_menu.x >= build_menu.x or unit_menu.y >= build_menu.y:
+		_fail(
+			(
+				"the two-row unit menu measures %s, no smaller than the build menu's %s"
+				% [unit_menu, build_menu]
 			)
 		)
 
