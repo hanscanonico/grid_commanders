@@ -9,12 +9,11 @@ extends Node2D
 ## are the entry points player input arrives at, and BattleScenarioDriver
 ## stands in for a player through exactly those.
 ##
-## `start_turn`, `announce_power`, `enter_victory`, `refresh_fog`, `refresh_hud`
-## and `refresh_panel` are public for the same reason one step further out:
-## BattleAiRunner plays a computer turn through the flow a human's commands run,
-## so it needs those steps by name. They are the whole extra surface — a
-## collaborator that wants anything else wants a new entry point here, not a
-## reach into a private method.
+## `execute_command` and `conclude_command` are the AI runner's committed-action
+## seam. The first delegates to BattleCommandPipeline; the second consumes its
+## turn/winner facts only after the caller has finished its own interaction-state
+## cleanup. `start_turn`, `enter_victory`, `refresh_fog`, `refresh_hud`, and
+## `refresh_panel` are the remaining public presentation entry points.
 
 enum State {
 	IDLE,
@@ -98,6 +97,9 @@ var perspective: BattlePerspective
 ## Everything this scene animates. Hands it an outcome that is already decided;
 ## it never picks one.
 var animator: BattleAnimator
+## The one live owner of command validation, application, and presentation.
+## Human flow and the AI runner both enter through execute_command below.
+var _command_pipeline: BattleCommandPipeline
 ## Plays computer turns — the AI's side of the interaction flow. Held for the
 ## whole scene; `run()` is fired when a computer team's turn opens.
 var _ai_runner: BattleAiRunner
@@ -136,6 +138,7 @@ func _ready() -> void:
 	view = _build_view()
 	view.setup()
 	animator = _build_animator()
+	_command_pipeline = BattleCommandPipeline.new(self)
 	_outcome = _build_outcome()
 	_outcome.configure(built.watching, built.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
@@ -190,6 +193,24 @@ func planner_for(team: int) -> AIController:
 	if not planners.has(team):
 		planners[team] = AIController.new(unit_db)
 	return planners[team]
+
+
+## The only live-scene route into validation/application/presentation. The
+## computer asks for path animation; a human has already previewed the route.
+func execute_command(command: Command, animate_path: bool = false) -> BattleCommandReceipt:
+	return await _command_pipeline.execute(command, animate_path)
+
+
+## Consumes the pipeline's flow facts after the caller has completed any
+## human-only selection cleanup. The pipeline deliberately does not choose an
+## interaction state or start the next AI planner.
+func conclude_command(receipt: BattleCommandReceipt) -> void:
+	if not receipt.applied:
+		return
+	if receipt.turn_changed:
+		start_turn()
+	elif receipt.winner != 0:
+		enter_victory()
 
 
 ## The banner belongs to the animator, but dismissing it is something a caller
@@ -379,7 +400,7 @@ func _select(unit: Unit) -> void:
 	state = State.UNIT_SELECTED
 
 
-func _clear_selection() -> void:
+func _clear_selection(refresh_board: bool = true) -> void:
 	selected = null
 	move_range = null
 	planned_path = []
@@ -392,7 +413,8 @@ func _clear_selection() -> void:
 	view.update_path_line([])
 	view.update_damage_preview(null, cursor_cell)
 	state = State.IDLE
-	refresh_fog()
+	if refresh_board:
+		refresh_fog()
 
 
 ## Previews a unit we cannot command. Its move range shows in blue and R adds the
@@ -488,67 +510,30 @@ func _handle_unit_action(action: StringName) -> void:
 			_commit(action, SupplyCommand.new(selected, planned_path))
 		&"dive", &"surface":
 			# Going under changes what the *other* side can see, so the fog pass
-			# _commit ends with is load-bearing here rather than incidental:
+			# the command pipeline ends with is load-bearing here rather than incidental:
 			# without it the boat would keep the look it had.
 			_commit(action, DiveCommand.new(selected, planned_path, action == &"dive"))
 		&"wait":
 			_commit(action, MoveCommand.new(selected, planned_path))
 		&"join":
-			var command := JoinCommand.new(selected, planned_path)
-			var error := command.validate(game)
-			if error != "":
-				push_error("JoinCommand rejected: %s" % error)
-				_undo_move_preview()
-				return
-			var dest: Vector2i = planned_path[planned_path.size() - 1]
-			command.apply(game)
-			animator.animate_join(command, selected, game.unit_at(dest))
-			_clear_selection()
-			refresh_panel()
+			_commit(action, JoinCommand.new(selected, planned_path))
 		&"capture":
-			var command := CaptureCommand.new(selected, planned_path)
-			var error := command.validate(game)
-			if error != "":
-				# The UI only offers legal captures, so this is a bug guard.
-				push_error("CaptureCommand rejected: %s" % error)
-				_undo_move_preview()
-				return
-			var dest: Vector2i = planned_path[planned_path.size() - 1]
-			command.apply(game)
-			EventBus.unit_moved.emit(selected)
-			set_cursor_cell(dest)  # the cut-in punches the camera onto the taken cell
-			await animator.animate_capture(command.result, selected, dest)
-			if game.owner_at(dest) == selected.team:
-				EventBus.property_captured.emit(dest, selected.team)
-				view.repaint_property(dest)
-			animator.settle_move(command, selected)
-			_clear_selection()
-			refresh_panel()
-			refresh_hud()
-			if game.winner != 0:
-				enter_victory()
+			_commit(action, CaptureCommand.new(selected, planned_path))
 		&"cancel":
 			_undo_move_preview()
 
 
-## The shape every plain unit action shares: refuse to run a command the rules
-## turn down, then apply it and put the board back in step. The menu only offers
-## legal actions, so a rejection here is a bug rather than a player mistake — it
-## is reported and the uncommitted move is rolled back rather than half-applied.
-##
-## Capture and Join are not routed through this: each has work of its own between
-## the apply and the refresh, which is the only reason they read differently.
+## Every committed unit-menu action shares this interaction wrapper. Validation,
+## application, snapshots, and presentation belong to the pipeline; this method
+## only decides how the human menu recovers or closes around its receipt.
 func _commit(action: StringName, command: Command) -> void:
-	var error := command.validate(game)
-	if error != "":
-		push_error("%s rejected: %s" % [action, error])
+	var receipt := await execute_command(command)
+	if receipt.rejected():
+		push_error("%s rejected: %s" % [action, receipt.validation_error])
 		_undo_move_preview()
 		return
-	command.apply(game)
-	EventBus.unit_moved.emit(selected)
-	animator.settle_move(command, selected)
-	_clear_selection()
-	refresh_panel()
+	_clear_selection(false)
+	conclude_command(receipt)
 
 
 func _handle_build_action(action: StringName) -> void:
@@ -556,18 +541,13 @@ func _handle_build_action(action: StringName) -> void:
 		state = State.IDLE
 		return
 	var command := BuildCommand.new(game.current_team, unit_db.by_id(action), _build_cell)
-	var error := command.validate(game)
-	if error != "":
-		push_error("BuildCommand rejected: %s" % error)
+	var receipt := await execute_command(command)
+	if receipt.rejected():
+		push_error("BuildCommand rejected: %s" % receipt.validation_error)
 		state = State.IDLE
 		return
-	command.apply(game)
-	view.spawn_sprite_for(command.built_unit)
-	EventBus.unit_built.emit(command.built_unit)
 	state = State.IDLE
-	refresh_fog()  # the new unit lifts fog around its base straight away
-	refresh_panel()
-	refresh_hud()
+	conclude_command(receipt)
 
 
 func _handle_map_action(action: StringName) -> void:
@@ -600,12 +580,11 @@ func _handle_map_action(action: StringName) -> void:
 	if action != &"end_turn":
 		return
 	var command := EndTurnCommand.new()
-	var error := command.validate(game)
-	if error != "":
-		push_error("EndTurnCommand rejected: %s" % error)
+	var receipt := await execute_command(command)
+	if receipt.rejected():
+		push_error("EndTurnCommand rejected: %s" % receipt.validation_error)
 		return
-	command.apply(game)
-	start_turn()
+	conclude_command(receipt)
 
 
 ## Fires the current team's Command Power. Reached from the HUD button, the F
@@ -619,26 +598,15 @@ func _fire_command_power() -> void:
 	var command := PowerCommand.new()
 	if game.current_team in ai_teams or state not in [State.IDLE, State.MENU]:
 		return
-	if command.validate(game) != "":
+	var receipt := await execute_command(command)
+	if receipt.rejected():
 		return
-	command.apply(game)
-	announce_power(command)
 	# A power can change movement, vision and HP at once, so the whole board is
 	# redrawn, and the selection — plus any menu the HUD button fired over, whose
 	# rows would otherwise act on it — belongs to rules that no longer apply.
 	action_menu.close()
-	view.sync_sprites()
-	_clear_selection()
-	refresh_panel()
-	refresh_hud()
-
-
-## The banner, sting and event a fired power raises. Shared, because the AI
-## fires powers through the same command and should look the same doing it.
-func announce_power(fired: PowerCommand) -> void:
-	Sfx.play(&"fanfare")
-	animator.show_power_banner(fired.commander, fired.team)
-	EventBus.power_activated.emit(fired.team, fired.commander)
+	_clear_selection(false)
+	conclude_command(receipt)
 
 
 ## Locks input and shows the already-decided winner. Public because the AI turn
@@ -829,46 +797,32 @@ func _enter_drop_targeting(index: int) -> void:
 
 func _execute_drop(drop_cell: Vector2i) -> void:
 	var command := DropCommand.new(selected, planned_path, drop_cell, _drop_option.passenger)
-	var error := command.validate(game)
-	if error != "":
+	var receipt := await execute_command(command)
+	if receipt.rejected():
 		# The UI only offers legal drops, so this is a bug guard.
-		push_error("DropCommand rejected: %s" % error)
+		push_error("DropCommand rejected: %s" % receipt.validation_error)
 		_cancel()
 		return
-	var passenger: Unit = _drop_option.passenger
-	var transport := selected
-	command.apply(game)
-	EventBus.unit_moved.emit(transport)
-	animator.settle_move(command, transport)
-	view.refresh_sprite(passenger)  # reappears, exhausted, at the drop cell (or stays aboard)
 	_drop_options = []
 	_drop_option = null
-	_clear_selection()
-	refresh_panel()
+	_clear_selection(false)
+	conclude_command(receipt)
 
 
 func _execute_attack(target_cell: Vector2i) -> void:
-	var target := game.unit_at(target_cell)
 	var command := AttackCommand.new(selected, planned_path, target_cell)
-	var error := command.validate(game)
-	if error != "":
-		# The UI only offers legal attacks, so this is a bug guard.
-		push_error("AttackCommand rejected: %s" % error)
-		_exit_targeting_to_menu()
-		return
-	var attacker := selected
 	view.paint_attack_overlay([])
 	view.update_damage_preview(null, cursor_cell)
 	view.update_path_line([])
 	state = State.ANIMATING
-	command.apply(game)
-	EventBus.unit_moved.emit(attacker)
-	await animator.animate_combat(command.result, attacker, target)
-	_clear_selection()
-	refresh_panel()
-	refresh_hud()
-	if game.winner != 0:
-		enter_victory()
+	var receipt := await execute_command(command)
+	if receipt.rejected():
+		# The UI only offers legal attacks, so this is a bug guard.
+		push_error("AttackCommand rejected: %s" % receipt.validation_error)
+		_exit_targeting_to_menu()
+		return
+	_clear_selection(false)
+	conclude_command(receipt)
 
 
 ## Whether a damage forecast applies at all is a flow question — only the

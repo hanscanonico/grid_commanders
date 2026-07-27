@@ -314,6 +314,15 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   or reaches through a sibling's private visibility helper. The runner drives an AI turn through
   `Battle`'s own named entry points for the same reason — that surface is the seam, not a private
   method reached across objects.
+- **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
+  (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and
+  result presentation; both `Battle` and `BattleAiRunner` enter through `Battle.execute_command`.
+  It captures combat, join and drop references before apply, replays `AttackCommand.result` and
+  `CaptureCommand.result`, gates AI movement through `BattlePerspective`, and reconciles sprites,
+  properties, fog, the panel and the HUD. Its typed `BattleCommandReceipt` returns validation,
+  turn, winner, watch and ambush facts. The callers still own selection/input transitions, AI
+  planning and pacing, save policy, and the decision to start a turn or show victory; do not move
+  those into the pipeline. The headless `BalanceMatchEngine` remains separate.
 - **The battle cut-in replays; it never decides.** `BattleAnimator.animate_combat` is the one seam —
   both call sites `await` it, and it either plays the full-screen cut-in or falls through to the
   on-map hit, returning exactly once either way. Inside `scenes/battle/cutscene/`, everything is a

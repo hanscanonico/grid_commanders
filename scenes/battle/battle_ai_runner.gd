@@ -42,27 +42,14 @@ func run() -> void:
 		# to the other side mid-loop, and in watch mode that side has a planner of
 		# its own.
 		var command := _battle.planner_for(game.current_team).plan_next_command(game)
-		var error := command.validate(game)
-		if error != "":
-			push_error("AI command rejected (%s); ending the AI turn" % error)
-			command = EndTurnCommand.new()
-			if command.validate(game) != "":
-				_leave()
-				return
-		var ended := command is EndTurnCommand
-		await _execute(command)
-		if game.winner != 0:
-			_leave()
+		var receipt := await _execute(command)
+		if receipt == null:
 			return
-		if ended:
+		if receipt.winner != 0 or receipt.turn_changed:
 			return
 		await _think()
 	push_error("AI hit the per-turn command cap; forcing end of turn")
-	var end_turn := EndTurnCommand.new()
-	if end_turn.validate(game) == "":
-		await _execute(end_turn)
-	else:
-		_leave()
+	await _execute(EndTurnCommand.new())
 
 
 ## The think-beat between two commands, so the turn reads as decisions rather
@@ -90,131 +77,17 @@ func _leave() -> void:
 		_battle.state = Battle.State.IDLE
 
 
-## Applies one AI command with the same animations the player flow uses.
-## Attack/Capture are checked before Move because each is its own Command
-## subclass. The cursor and camera follow so the player can watch — but only for an
-## action the viewer can actually see (`_can_watch`). A computer move made entirely
-## inside the viewer's fog is applied without moving the cursor, panning the camera
-## or sounding its footsteps, so a fogged turn no longer broadcasts every hidden
-## step; the mover's sprite stays hidden and lands on its committed cell without a
-## tween.
-##
-## The move-family branches (Attack, Capture, Dive, Move) apply the command first,
-## then tween only the path actually walked — an ambush by a hidden enemy cut it
-## short of the plan — and land the sprite through `BattleAnimator.settle_move`, the
-## same seam the player flow uses, so a watched ambush springs the same "Ambush!"
-## banner and a fogged one places the sprite in silence. An attack that reached its
-## firing cell hands off to `animate_combat` for the shot instead.
-func _execute(command: Command) -> void:
-	var game := _battle.game
-	var view := _battle.view
-	var animator := _battle.animator
-	if command is AttackCommand:
-		var attack := command as AttackCommand
-		var target := game.unit_at(attack.target_cell)
-		command.apply(game)
-		EventBus.unit_moved.emit(attack.unit)
-		var watched: bool = await _walk_move(attack.unit, _walked_path(attack.unit, attack.path))
-		if attack.ambushed:
-			_settle_move(command, attack.unit, watched)
-		else:
-			if watched or _battle.perspective.can_see_cell(attack.target_cell):
-				_battle.set_cursor_cell(attack.target_cell)
-			await animator.animate_combat(attack.result, attack.unit, target)
-	elif command is CaptureCommand:
-		var capture := command as CaptureCommand
-		command.apply(game)
-		EventBus.unit_moved.emit(capture.unit)
-		var watched: bool = await _walk_move(capture.unit, _walked_path(capture.unit, capture.path))
-		var dest: Vector2i = capture.path[capture.path.size() - 1]
-		await animator.animate_capture(capture.result, capture.unit, dest)
-		if game.owner_at(dest) == capture.unit.team:
-			EventBus.property_captured.emit(dest, capture.unit.team)
-			view.repaint_property(dest)
-		_settle_move(command, capture.unit, watched)
-	elif command is DiveCommand:
-		var dive := command as DiveCommand
-		command.apply(game)
-		EventBus.unit_moved.emit(dive.unit)
-		var watched: bool = await _walk_move(dive.unit, _walked_path(dive.unit, dive.path))
-		_settle_move(command, dive.unit, watched)
-	elif command is MoveCommand:
-		var move := command as MoveCommand
-		command.apply(game)
-		EventBus.unit_moved.emit(move.unit)
-		var watched: bool = await _walk_move(move.unit, _walked_path(move.unit, move.path))
-		_settle_move(command, move.unit, watched)
-	elif command is PowerCommand:
-		command.apply(game)
-		_battle.announce_power(command as PowerCommand)
-		view.sync_sprites()  # the one-shot half may have healed or refuelled
-	elif command is BuildCommand:
-		var build := command as BuildCommand
-		var build_cells: Array[Vector2i] = [build.cell]
-		if _can_watch(null, build_cells):
-			_battle.set_cursor_cell(build.cell)
-		command.apply(game)
-		view.spawn_sprite_for(build.built_unit)
-		EventBus.unit_built.emit(build.built_unit)
-	elif command is EndTurnCommand:
-		command.apply(game)
-		_battle.start_turn()
-	_battle.refresh_fog()
-	_battle.refresh_panel()
-	_battle.refresh_hud()
-
-
-## Whether the viewing player can watch this command play out — the gate on the
-## cursor, the camera and the move cue during a computer turn. A move made
-## entirely inside the viewer's fog must not pan the camera to its destination or
-## sound its footsteps: that would broadcast a hidden enemy's every step. An action
-## whose unit the viewer can see, or that starts, passes, or ends on a cell the
-## viewer can see, is shown exactly as before. `unit` is null for a build, whose
-## visibility is the factory cell's alone. Both questions go through the shared
-## BattlePerspective. With fog off every cell and unit is visible, so this is
-## always true and a watched (fog-off) match is unchanged.
-func _can_watch(unit: Unit, cells: Array[Vector2i]) -> bool:
-	var perspective := _battle.perspective
-	if unit != null and perspective.can_see_unit(unit):
-		return true
-	for cell in cells:
-		if perspective.can_see_cell(cell):
-			return true
-	return false
-
-
-## The path the mover actually walked, sliced from its plan at the cell the sim
-## left it on: the whole plan for a clean move, and cut short at the last free cell
-## when a hidden enemy sprang an ambush (`GameState.advance_unit`). Animating this
-## rather than the plan keeps the sprite off the cells the unit never reached.
-func _walked_path(unit: Unit, planned: Array[Vector2i]) -> Array[Vector2i]:
-	var walked: Array[Vector2i] = []
-	for cell in planned:
-		walked.append(cell)
-		if cell == unit.cell:
-			break
-	return walked
-
-
-## Tweens an already-applied move along the path it actually walked and follows it
-## with the cursor, but only when the viewer can watch (`_can_watch`): a move made
-## entirely inside the viewer's fog places its sprite without a tween or a camera
-## move. Returns whether it was watched, so the caller springs the ambush cue only
-## for a move the viewer could see.
-func _walk_move(unit: Unit, walked: Array[Vector2i]) -> bool:
-	if not _can_watch(unit, walked):
-		return false
-	_battle.set_cursor_cell(walked[walked.size() - 1])
-	await _battle.animator.animate_path(_battle.view.sprite_for(unit), walked)
-	return true
-
-
-## Lands a move-family unit's sprite the way the player flow does. A watched move
-## goes through `BattleAnimator.settle_move`, which springs the "Ambush!" banner
-## when the move was cut short; an unwatched (fogged) move refreshes the sprite in
-## place with no banner, so a hidden ambush leaks no cue.
-func _settle_move(command: Command, unit: Unit, watched: bool) -> void:
-	if watched:
-		_battle.animator.settle_move(command, unit)
-	else:
-		_battle.view.refresh_sprite(unit)
+## Routes a planned command through the shared live executor. A rejected plan is
+## replaced with EndTurn through that same seam; validation is never re-derived
+## here. The receipt is then handed back to Battle for turn/victory flow, while
+## this runner keeps ownership of planning and pacing.
+func _execute(command: Command) -> BattleCommandReceipt:
+	var receipt := await _battle.execute_command(command, true)
+	if receipt.rejected():
+		push_error("AI command rejected (%s); ending the AI turn" % receipt.validation_error)
+		receipt = await _battle.execute_command(EndTurnCommand.new(), true)
+		if receipt.rejected():
+			_leave()
+			return null
+	_battle.conclude_command(receipt)
+	return receipt

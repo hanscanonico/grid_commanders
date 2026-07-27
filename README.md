@@ -29,7 +29,7 @@ make hotseat         # skip the menu: straight into a two-player hot-seat match 
 make verify          # the merge gate: check + lint + format-check + test, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu pair); prove each still renders
 make test            # run the GUT unit test suite (headless)
-make check           # parse + type check every .gd file (fast; no scene tree)
+make check           # audit every .gd file: parse/types + architecture seams
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
 make tiles           # rebuild the art: ground tiles, PixVoxel + vendored unit sprites, audit, import
