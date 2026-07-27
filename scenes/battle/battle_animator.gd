@@ -46,6 +46,7 @@ const PUNCH_SECONDS := 0.11
 ## Assigned by Battle before first use, like BattleView's nodes.
 var node: Node
 var view: BattleView
+var perspective: BattlePerspective
 var camera: Camera2D
 var cursor: Sprite2D
 var turn_banner: PanelContainer
@@ -165,8 +166,8 @@ func fade_out(sprite: UnitSprite) -> void:
 ## The visibility half is the point of the gate: under fog an exchange the
 ## viewer cannot see would otherwise parade two hidden units across the screen,
 ## so it stays on the map path, which already draws fogged units correctly. The
-## question goes to the view, which asks `Vision` — no second opinion on who can
-## see what lives here (plan R6).
+## question goes to BattlePerspective, which asks `Vision` — no second opinion
+## on who can see what lives here (plan R6).
 ##
 ## Instant is out too: that tier exists to skip the theatre, so a full-screen
 ## cut-in playing on its own clock would defeat it — the exchange stays on the
@@ -176,7 +177,7 @@ func _cut_in_applies(attacker: Unit, defender: Unit) -> bool:
 		return false
 	if Settings.speed.instant:
 		return false
-	return view.can_see_unit(attacker) and view.can_see_unit(defender)
+	return perspective.can_see_unit(attacker) and perspective.can_see_unit(defender)
 
 
 ## Sets how much ceremony whichever cut-in is about to play gets, from how long
@@ -259,20 +260,20 @@ func animate_capture(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vec
 		camera.zoom = resting  # safety net: the cut-in already eased it home on the wipe
 		_last_cut_in_ms = Time.get_ticks_msec()
 		return
-	if view.can_see_unit(unit):
+	if perspective.can_see_unit(unit):
 		Sfx.play(&"capture")
 
 
 ## Whether this capture gets the cut-in. The same four questions as the combat
 ## gate, with one unit instead of two: the capturer stands on the very cell it
 ## takes, so a single visibility check answers for the whole scene (plan R6). No
-## second opinion on who can see what lives here — the view asks `Vision`.
+## second opinion on who can see what lives here — the perspective asks `Vision`.
 func _capture_cut_in_applies(unit: Unit) -> bool:
 	if capture_cutscene == null or capturing or not Settings.battle_animations:
 		return false
 	if Settings.speed.instant:
 		return false
-	return view.can_see_unit(unit)
+	return perspective.can_see_unit(unit)
 
 
 # --- ambush ------------------------------------------------------------------
@@ -337,7 +338,7 @@ func hide_banner() -> void:
 
 ## The Command Power activation card: portrait, the general's spoken line, power
 ## name, and exact effect text, faction-tinted. Shown when a power fires (player
-## or AI, both through Battle's _announce_power) and auto-hidden after a beat.
+## or AI, both through Battle.announce_power) and auto-hidden after a beat.
 ## `team` keys the card's quote rotation, so the two sides speak independently.
 ## While capturing it holds, so a screenshot of the same activation is the same
 ## frame — the whole reason the two open-ended animations above are suppressed

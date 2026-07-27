@@ -25,14 +25,18 @@ const CANCEL := {"id": &"cancel", "label": "Cancel"}
 
 
 ## Rows for a unit whose move preview has finished on `dest` (the last cell of
-## `path`). `can_fire` and `drop_passengers` are passed in because working them
+## `path`). `can_fire` and `drop_options` are passed in because working them
 ## out needs the viewing team's fog, which is Battle's to know and not ours.
 ##
 ## Each droppable passenger gets its own row — a Lander can hold two and only one
 ## of them might fit the ground beside it — so a row names the unit it unloads and
-## its id carries the passenger's index into `drop_passengers`.
+## its id carries the option's index.
 static func unit_actions(
-	game: GameState, unit: Unit, path: Array[Vector2i], can_fire: bool, drop_passengers: Array[Unit]
+	game: GameState,
+	unit: Unit,
+	path: Array[Vector2i],
+	can_fire: bool,
+	drop_options: Array[BattlePerspective.DropOption]
 ) -> Array[Dictionary]:
 	var dest: Vector2i = path[path.size() - 1]
 	var actions: Array[Dictionary] = []
@@ -41,11 +45,11 @@ static func unit_actions(
 	var terrain := game.map.terrain_at(dest)
 	if unit.type.can_capture and terrain.is_property and game.owner_at(dest) != unit.team:
 		actions.append({"id": &"capture", "label": "Capture"})
-	for i in drop_passengers.size():
+	for i in drop_options.size():
 		# One passenger drops under a plain "Drop"; a Lander's two are named apart.
 		var label := "Drop"
-		if drop_passengers.size() > 1:
-			label += " %s" % drop_passengers[i].type.display_name
+		if drop_options.size() > 1:
+			label += " %s" % drop_options[i].passenger.type.display_name
 		actions.append({"id": StringName("drop_%d" % i), "label": label})
 	if (
 		unit.type.can_resupply

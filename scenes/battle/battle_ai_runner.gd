@@ -85,7 +85,7 @@ func _think() -> void:
 ## scene stuck in AI_TURN with all input blocked and no banner.
 func _leave() -> void:
 	if _battle.game.winner != 0:
-		_battle._outcome.enter_victory()
+		_battle.enter_victory()
 	else:
 		_battle.state = Battle.State.IDLE
 
@@ -118,7 +118,7 @@ func _execute(command: Command) -> void:
 		if attack.ambushed:
 			_settle_move(command, attack.unit, watched)
 		else:
-			if watched or view._can_see_cell(attack.target_cell):
+			if watched or _battle.perspective.can_see_cell(attack.target_cell):
 				_battle.set_cursor_cell(attack.target_cell)
 			await animator.animate_combat(attack.result, attack.unit, target)
 	elif command is CaptureCommand:
@@ -146,7 +146,7 @@ func _execute(command: Command) -> void:
 		_settle_move(command, move.unit, watched)
 	elif command is PowerCommand:
 		command.apply(game)
-		_battle._announce_power(command as PowerCommand)
+		_battle.announce_power(command as PowerCommand)
 		view.sync_sprites()  # the one-shot half may have healed or refuelled
 	elif command is BuildCommand:
 		var build := command as BuildCommand
@@ -158,10 +158,10 @@ func _execute(command: Command) -> void:
 		EventBus.unit_built.emit(build.built_unit)
 	elif command is EndTurnCommand:
 		command.apply(game)
-		_battle._on_turn_started()
-	_battle._refresh_fog()
-	_battle._refresh_panel()
-	_battle._refresh_hud()
+		_battle.start_turn()
+	_battle.refresh_fog()
+	_battle.refresh_panel()
+	_battle.refresh_hud()
 
 
 ## Whether the viewing player can watch this command play out — the gate on the
@@ -170,16 +170,15 @@ func _execute(command: Command) -> void:
 ## sound its footsteps: that would broadcast a hidden enemy's every step. An action
 ## whose unit the viewer can see, or that starts, passes, or ends on a cell the
 ## viewer can see, is shown exactly as before. `unit` is null for a build, whose
-## visibility is the factory cell's alone. Cell visibility is BattleView's own
-## `_can_see_cell`, reached into the same way this runner reaches into Battle's
-## private flow. With fog off every cell and unit is visible, so this is always
-## true and a watched (fog-off) match is unchanged.
+## visibility is the factory cell's alone. Both questions go through the shared
+## BattlePerspective. With fog off every cell and unit is visible, so this is
+## always true and a watched (fog-off) match is unchanged.
 func _can_watch(unit: Unit, cells: Array[Vector2i]) -> bool:
-	var view := _battle.view
-	if unit != null and view.can_see_unit(unit):
+	var perspective := _battle.perspective
+	if unit != null and perspective.can_see_unit(unit):
 		return true
 	for cell in cells:
-		if view._can_see_cell(cell):
+		if perspective.can_see_cell(cell):
 			return true
 	return false
 
