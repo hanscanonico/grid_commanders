@@ -1,18 +1,33 @@
 extends Node
-## Carries the match setup from the main menu into the battle scene.
-## Command-line flags (--map, --hotseat, --fog, --co, --difficulty) still
-## override these, so demos and tools keep working without the menu.
+## Carries one MatchRequest from whoever chose the match into the battle scene,
+## and nothing else.
+##
+## It used to be the match setup itself — six mutable fields with three writers
+## and no reset, which `BattleSetup.build` read, merged with the command line and
+## a save, and then wrote back to (architecture finding A3). That is what made a
+## latched `load_save` possible: a resume that found no save file on disk left
+## the flag set for the rest of the process, and the next battle boot silently
+## tried to resume again.
+##
+## Now it holds one typed request and hands it over exactly once. `take()`
+## clearing is the whole design: a request cannot outlive the scene transition it
+## was staged for, so there is no stale field left for the next boot to read.
 
-var map_path := "res://maps/first_steps.txt"
-## Teams played by the computer.
-var ai_teams: Array[int] = [2]
-var fog_enabled := false
-## Which difficulty tier the computer plays at — an id in data/difficulty/.
-## Steers the AI's profile and nothing else, so it is inert in a hot-seat match.
-var difficulty: StringName = Difficulty.DEFAULT_ID
-## team -> commander id. A team with no entry plays without a commander, which
-## is the default and reproduces the pre-commander game exactly.
-var commanders: Dictionary = {}
-## When true, the battle scene resumes SaveGame.SAVE_PATH instead of
-## starting fresh (and clears the flag).
-var load_save := false
+var _request: MatchRequest = null
+
+
+## Stages the match the next battle scene will play. Called by the main menu on
+## start and by BattleExit on rematch — the two moments something decides which
+## match comes next.
+func stage(request: MatchRequest) -> void:
+	_request = request
+
+
+## The staged request, consumed. Null when nothing staged one, which is the
+## normal case for a run that boots `battle.tscn` directly: a `make smoke`
+## scenario, a capture, or a watched Balance Lab row. Those play the defaults
+## plus whatever their own flags say.
+func take() -> MatchRequest:
+	var request := _request
+	_request = null
+	return request

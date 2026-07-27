@@ -17,8 +17,8 @@ extends RefCounted
 ## --select previews a unit's movement; see `_run_demo` for the demo modes.
 ## The capture flag itself belongs to ScreenshotUtil — every scene that
 ## photographs itself reads it from the one place it is spelled.
-const SELECT_ARG := "--select="
-const DEMO_ARG := "--demo="
+const SELECT_ARG := "--select"
+const DEMO_ARG := "--demo"
 
 ## Demos fix the seed so a capture of the same scenario is the same frame.
 const DEMO_SEED := 2026
@@ -114,13 +114,11 @@ var _failed := false
 func _init(battle: Battle) -> void:
 	_battle = battle
 	_shot_path = ScreenshotUtil.requested()
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with(SELECT_ARG):
-			var parts := arg.get_slice("=", 1).split(",")
-			if parts.size() == 2:
-				_select_cell = Vector2i(int(parts[0]), int(parts[1]))
-		elif arg.begins_with(DEMO_ARG):
-			_demo = arg.get_slice("=", 1)
+	var args := CmdArgs.user()
+	var parts := CmdArgs.value(args, SELECT_ARG).split(",")
+	if parts.size() == 2:
+		_select_cell = Vector2i(int(parts[0]), int(parts[1]))
+	_demo = CmdArgs.value(args, DEMO_ARG)
 
 
 ## True when the command line asked for any scripted flow at all. Battle skips

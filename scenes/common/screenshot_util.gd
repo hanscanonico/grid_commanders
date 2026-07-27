@@ -3,7 +3,7 @@ extends RefCounted
 ## Shared --screenshot support for scenes: wait for the first frames to
 ## render, save the viewport, and quit. Used for automated visual checks.
 
-const SCREENSHOT_ARG := "--screenshot="
+const SCREENSHOT_ARG := "--screenshot"
 ## How long the tree is given to settle before the viewport is read. A capture's
 ## own checks run on this same frame (see `gate`), so what is measured and what
 ## is photographed are one layout rather than two.
@@ -15,10 +15,7 @@ const SETTLE_FRAMES := 8
 ## is also how it knows to pin whatever a capture must not vary on, such as the
 ## device's speed preference.
 static func requested() -> String:
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with(SCREENSHOT_ARG):
-			return arg.get_slice("=", 1)
-	return ""
+	return CmdArgs.value(CmdArgs.user(), SCREENSHOT_ARG)
 
 
 ## Saves the viewport and quits zero. `gate` is an optional `func() -> bool` a

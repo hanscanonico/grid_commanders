@@ -162,7 +162,10 @@ func _save() -> void:
 
 
 func _apply_cmdline() -> void:
-	for arg in OS.get_cmdline_user_args():
+	# Walked in order rather than read through CmdArgs' last-wins lookups: the
+	# pin below latches, so here the *first* valid --speed= is the one that
+	# lands, and --reset-hints has to see the writes the flags before it made.
+	for arg in CmdArgs.user():
 		if arg.begins_with(SPEED_ARG):
 			var wanted := StringName(arg.get_slice("=", 1).strip_edges())
 			# Checked here rather than inside pin(), which is only ever handed an
