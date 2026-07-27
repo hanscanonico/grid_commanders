@@ -172,9 +172,16 @@ func _ready() -> void:
 	request.apply_cmdline(CmdArgs.user())
 	var built := BattleSetup.build(request, db, unit_db, commander_db)
 	if built == null:
-		# BattleSetup has already pushed what failed. There is no board to draw and
-		# nothing to play, so the scene stops here rather than dereferencing a null
-		# map on its first touch.
+		# BattleSetup has already pushed what failed. There is no match to play, so
+		# this scene does nothing at all: disabling it stops every process and input
+		# callback, here and in its children, which is what makes "nothing can reach
+		# a null map" true by construction rather than a null check per handler.
+		process_mode = Node.PROCESS_MODE_DISABLED
+		if ScreenshotUtil.requested() != "":
+			# Nothing will ever drive the capture, and a headless run with no input
+			# to be inert against would otherwise sit here until `make smoke` timed
+			# it out. Non-zero, like a capture that fails its own gate.
+			get_tree().quit(1)
 		return
 	map = built.map
 	game = built.game
