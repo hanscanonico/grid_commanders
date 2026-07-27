@@ -946,7 +946,7 @@ func _stage_menu_after_build_menu() -> void:
 	_battle.confirm_at(Vector2i(4, 3))  # stay put -> Wait / Cancel, the shortest menu
 	await _until_state(Battle.State.MENU)
 	await _settle_menu()
-	_check_menu_in_band("unit menu")
+	_check_in_band("unit menu", _battle.action_menu)
 	var shown := _battle.action_menu.rows.get_child_count()
 	if shown != 2:
 		_fail("the infantry's menu drew %d rows, not the two the comparison rests on" % shown)
