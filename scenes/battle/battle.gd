@@ -546,8 +546,8 @@ func _clear_selection(refresh_board: bool = true) -> void:
 func _enter_preview(unit: Unit) -> void:
 	Sfx.play(&"select")
 	_previewed = unit
-	# Asked of the perspective, never of the resolver directly: this is somebody
-	# else's reach, and both whose sight fills it and how much of it the viewer may
+	# Asked of the perspective, never of the resolver directly: this reach may belong
+	# to either side, and both whose sight fills it and how much of it the viewer may
 	# be shown are viewer policy.
 	_range_shown = false
 	view.paint_move_overlay(perspective.move_overlay_cells(unit))
@@ -568,8 +568,9 @@ func _clear_preview() -> void:
 ## momentary lens; it issues nothing. Public for the same reason `confirm_at` and
 ## `set_cursor_cell` are: the scenario driver walks the flows a player's input
 ## reaches, and this is one of them. Painted through the perspective rather than off
-## AttackRange directly, because the ring belongs to the selected unit in one state
-## and to a previewed enemy in the other, and only one of those may be drawn whole.
+## AttackRange directly, because the ring is whole for a unit of the viewer's own side
+## and their best reading of another side's — a split by whose unit it is, not by which
+## state we are in, and the perspective's to make rather than this call site's.
 func toggle_range() -> void:
 	# The unit whose range is up: the selected one, or a previewed one.
 	var unit: Unit = selected if state == State.UNIT_SELECTED else _previewed

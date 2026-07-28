@@ -83,24 +83,27 @@ func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i
 ## The cells to paint for `unit`'s reach — where it could move, and where it could
 ## bring fire — as the viewer is allowed to see them.
 ##
-## One rule with two answers, which is why it lives here rather than at either call
-## site. A unit the viewer **commands** is shown its whole reach: that overlay has to
+## One rule with two answers, and the axis is **whose side the unit is on**, not which
+## flow is asking — a unit of the viewer's own that has already acted is previewed
+## like an enemy, and is still shown whole. That is why the rule lives here rather
+## than at either call site.
+##
+## A unit on the viewer's **own side** is shown its whole reach: that overlay has to
 ## agree cell for cell with what the commands will accept, and one that stopped at the
 ## fog would hide moves `MoveCommand` allows — the movement-overlay lesson this repo
 ## already paid for once, in the other direction.
 ##
-## Any other unit is being *previewed*, and two separate things would be told about
-## it. What it is drawn *over* is ground the viewer may never have scouted, which
-## `_viewer_safe` masks away. What its outline *is* would be worse: a fill keyed to
-## the mover's own sight is walled by the viewer's units that mover can see and
-## planned through the ones it cannot, so the shape alone would report which of the
-## viewer's pieces the enemy has spotted. A mask cannot close that — the cells
-## carrying the signal are ones the viewer always sees — so both fills below are
-## asked for the *viewer's* knowledge instead, and then depend on nothing the viewer
-## does not already know (COM-57).
+## Another side's unit would tell two separate things. What it is drawn *over* is
+## ground the viewer may never have scouted, which `_viewer_safe` masks away. What its
+## outline *is* would be worse: a fill keyed to the mover's own sight is walled by the
+## viewer's units that mover can see and planned through the ones it cannot, so the
+## shape alone would report which of the viewer's pieces the enemy has spotted. A mask
+## cannot close that — the cells carrying the signal are ones the viewer always sees —
+## so both fills below are asked for the *viewer's* knowledge instead, and then depend
+## on nothing the viewer does not already know (COM-57).
 ##
-## Passed on every call, the commanded unit's included, where it names that unit's
-## own team and the fill is the one the commands plan with, cell for cell.
+## Passed on every call, an own-side unit's included, where it names that unit's own
+## team and the fill is the one the commands plan with, cell for cell.
 func move_overlay_cells(unit: Unit) -> Array[Vector2i]:
 	var reach := MovementResolver.reachable(_game, unit, 0, _viewing_team)
 	return _viewer_safe(reach.cells(), unit)
@@ -110,7 +113,7 @@ func threat_overlay_cells(unit: Unit) -> Array[Vector2i]:
 	return _viewer_safe(AttackRange.threat_cells(_game, unit, _viewing_team), unit)
 
 
-## Whole for a unit the viewer commands, scouted ground only for anyone else.
+## Whole for a unit on the viewer's own side, scouted ground only for another side's.
 func _viewer_safe(cells: Array[Vector2i], unit: Unit) -> Array[Vector2i]:
 	if unit.team == _viewing_team:
 		return cells

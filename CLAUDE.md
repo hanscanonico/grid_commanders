@@ -98,7 +98,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   computation answers for two sets of eyes: `MovementResolver.reachable` takes a `sight_team`
   (default `MOVER_SIGHT`, threaded down through `firing_cells` / `threat_cells`) naming whose
   knowledge of **occupancy** fills it — the planner and every committed move keyed to the mover's
-  own sight, a preview of a unit the viewer does not command keyed to the **viewer's**, because a
+  own sight, a preview of **another side's** unit keyed to the **viewer's**, because a
   fill keyed to the mover is walled by the units that mover can see and planned through the ones it
   cannot, so a previewed silhouette alone would report which of the viewer's own pieces that unit
   has spotted (COM-57). Terrain, budget and doctrine stay the mover's throughout. So this slice
