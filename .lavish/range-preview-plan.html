@@ -288,7 +288,13 @@
         red overlay that disagreed with the AI's threat model by one cell would be the same bug
         wearing a new color. Rejected: computing the ring in <span class="gc-file">battle.gd</span>
         beside <code>_attackable_cells</code> — that would make the presentation layer the second
-        opinion.</p>
+        opinion. <span class="badge badge-warning badge-sm">superseded 2026-07-28</span> — the
+        signature only: <code>threat_cells(state, unit, sight_team)</code> and
+        <code>firing_cells(state, unit, sight_team)</code>, the argument handed straight down to
+        <code>MovementResolver.reachable</code> and defaulting to the mover's own sight. The
+        decision itself is untouched — still one authority, still the geometry the planner asks —
+        and the parameter is what lets that one computation answer for two sets of eyes rather than
+        becoming two computations. See D5 for why it had to (COM-57).</p>
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
@@ -343,7 +349,19 @@
         the flood fill to walk would be one more independent opinion on movement, and that is the
         one bug this repo has promised itself never to buy twice. The cost is a leak so small it
         needs a magnifying glass — see R3 — and the sim stays untouched either way:
-        <em>forecasting is a pure read</em>, and so is this.</p>
+        <em>forecasting is a pure read</em>, and so is this.
+        <span class="badge badge-warning badge-sm">superseded 2026-07-28</span> — the leak needed no
+        magnifying glass. <code>MovementResolver.reachable</code> fills with the <em>mover's</em>
+        sight, walling it at units that mover can see and planning it through the ones it cannot, so
+        a previewed enemy's outline reported which of the viewer's own pieces it had spotted — and
+        drawn whole it also covered ground the viewer had never scouted (COM-57). Closed without the
+        censored board this decision rejects and without a second opinion: <code>reachable</code>
+        gained a <code>sight_team</code> argument (default the mover's own, so every committed move
+        and every AI plan is unchanged) that <code>firing_cells</code> / <code>threat_cells</code>
+        thread down, and <span class="gc-file">scenes/battle/battle_perspective.gd</span> asks that
+        one authority for the <em>viewer's</em> knowledge of occupancy, then masks the answer to the
+        cells <code>can_see_cell</code> allows. Terrain, budget and doctrine stay the mover's, the
+        entry gate above is untouched, and the read is still pure.</p>
       </div>
     </section>
 
