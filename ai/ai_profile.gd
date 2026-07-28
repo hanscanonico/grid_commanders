@@ -8,6 +8,11 @@ extends Resource
 ## yields the same command. Tests that care about a specific weight build a
 ## profile explicitly rather than leaning on the default file.
 ##
+## Adding an `@export` here also means writing it into every profile under
+## `data/ai/`: a tier that omits a field inherits the default below, so editing a
+## default silently retunes exactly the tiers that left it out and no others.
+## `tests/unit/test_ai_profile.gd` holds every shipped tier to that.
+##
 ## Node-free like the rest of ai/ and core/, so it is usable from tests.
 
 const DEFAULT_PATH := "res://data/ai/default.tres"
