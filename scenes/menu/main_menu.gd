@@ -74,14 +74,16 @@ var _capture_driver: MenuCaptureDriver
 
 
 func _ready() -> void:
-	var shot_path := ScreenshotUtil.requested()
+	_capture_driver = MenuCaptureDriver.new(self)
+	# Asked of the driver, not ScreenshotUtil: a batched menu scenario
+	# (COM-118) carries no --screenshot= of its own.
+	var shot_path := _capture_driver.shot_path()
 	if shot_path != "":
 		# The battle scene's rule, and for the same reason: a capture must not
 		# show — or depend on — the preference of the machine that took it. Here
 		# the pin's only observable effect is the Speed segment's highlight and the
 		# blinking PRESS START, which is pinned solid below.
 		Settings.pin(GameSpeed.DEFAULT_ID)
-	_capture_driver = MenuCaptureDriver.new(self)
 	if _capture_driver.rejected():
 		get_tree().quit(1)
 		return

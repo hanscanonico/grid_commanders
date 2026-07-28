@@ -123,17 +123,24 @@ that must survive any change; the full rationale, milestones and risk registers 
   **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites
   that assign the state.
 - `focus-steal-plan.html` — developer ergonomics: the smoke sweep and the desktop's window
-  focus, FS0–FS3; FS0–FS2 shipped, FS3 pending. The instrument is `tools/focus_timeline.sh`
+  focus, FS0–FS3, all shipped. The instrument is `tools/focus_timeline.sh`
   (FS0) and every claim about focus is a measurement with it, never an anecdote. FS1: the
   watcher in `tools/godot_gui.sh` lives as long as the engine it launched — its only exit
   conditions are the child dying and a human clicking into the game — and restores on every
-  activation, never onto the game itself or transient system UI. FS2: the sweep boots **once per
-  boot configuration** — scene · fog · map, `group_key` in `tools/smoke_scenarios.sh` — and
-  `scenes/battle/battle_capture_batch.gd` (`BattleCaptureBatch`) runs the group in that one
-  process, its queue held in statics because a `reload_current_scene` between scenarios is what
-  gives each a fresh `Battle` in the same window. Per-scenario diagnosis is preserved by re-running
-  a failed group one process each (R2), the per-scenario deadline lives in the driver where the
-  stuck scenario's name is known (R3), and `SMOKE_ISOLATE=1` still runs the verbatim
+  activation, never onto the game itself or transient system UI. FS2/FS3: the sweep boots **once
+  for the whole run** — `run_batched_sweep` in `tools/smoke_scenarios.sh` passes every scenario as
+  one `--demos=` queue and **scene, fog and map are per-entry boot facts** (`+fog` stays in the
+  mode name, `@<map>` is appended; neither the label nor the capture filename changes) — and
+  `scenes/battle/battle_capture_batch.gd` (`BattleCaptureBatch`) runs the queue in that one
+  process, held in statics because a `reload_current_scene` between scenarios is what gives each a
+  fresh `Battle` in the same window, and `change_scene_to_file` is what lets the `menu_` pair join
+  the same boot. `BattleCaptureBatch.scenario_args()` is the one seam: it hands `Battle` the
+  process command line with the current entry's `--map`/`--fog` swapped in, so
+  `MatchRequest.apply_cmdline` and the documented CLI grammar are unchanged — only where the values
+  are read from moved. It parses the queue lazily and idempotently, because the first scenario's
+  boot facts are asked for before any driver has adopted it. Per-scenario diagnosis is preserved by
+  re-running a failed sweep one process each (R2), the per-scenario deadline lives in the driver
+  where the stuck scenario's name is known (R3), and `SMOKE_ISOLATE=1` still runs the verbatim
   one-process-per-scenario path (R1). `ScreenshotUtil.save_frame` is the one shutter both the batch
   and the classic quit path share, and it forces a draw before reading the viewport: macOS stops
   presenting an occluded window, and the viewport texture then hands back a stale or blank frame.
@@ -144,7 +151,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   captures staying byte-identical is the merge bar for any change here — it is what keeps the two
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
-  net, batching (FS2) is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
+  net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
 
 ## Architecture — the rules that matter most
 

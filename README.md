@@ -65,23 +65,23 @@ a display — it is a local gate, not a headless-CI one. Narrow it with
 A name no scenario implements fails the run rather than photographing a board nothing ever staged,
 so a typo in `MODES` is a failure and not a quiet pass.
 
-Scenarios that share a boot configuration — scene, fog, map — share one engine process: the sweep
-hands the driver the whole group, which runs the scenarios back to back and reloads the battle scene
-between them, so a default sweep opens five windows rather than one per scenario. The output lines
-are unchanged, and a group that fails in any way is automatically re-run one process per scenario,
-so a failure always names a scenario (the batch's own log is kept and reported when that happens).
+The whole sweep runs in one engine process and one window: it hands the driver every scenario as a
+single queue, each entry carrying its own boot facts — scene, fog, map — and the driver reloads the
+battle scene between scenarios and scene-changes for the `menu_` pair. The output lines are
+unchanged, and a sweep that fails in any way is automatically re-run one process per scenario, so a
+failure always names a scenario (the batch's own log is kept and reported when that happens).
 `SMOKE_ISOLATE=1 make smoke` skips batching altogether and runs the one-process-per-scenario path,
 which is the way to bisect a scenario suspected of leaning on a batched neighbour's leftover state.
 
-Each boot opens a window and the engine activates it, so a sweep still takes the front app away from
-you a few times. `tools/focus_timeline.sh make smoke` measures that instead of guessing: it wraps any
-command, samples the frontmost app for its whole lifetime, and prints the timeline with runs of the
-same app collapsed, plus the steal count, the total and longest stolen interval, and every restore
-that landed on some other app. It is macOS-only and says so (elsewhere it runs the command
-untouched), exits with the wrapped command's own status unless the wrapper itself is signalled
-(then it prints the partial timeline and exits 128+signal), and is deliberately in no `make verify`
-gate — like the sweep it measures, it needs a display and a human's desktop. The script's header
-comment owns the details, including `FOCUS_THIEF`.
+The one window is still activated as it opens and again on each scene change, so a sweep briefly
+takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of
+guessing: it wraps any command, samples the frontmost app for its whole lifetime, and prints the
+timeline with runs of the same app collapsed, plus the steal count, the total and longest stolen
+interval, and every restore that landed on some other app. It is macOS-only and says so (elsewhere
+it runs the command untouched), exits with the wrapped command's own status unless the wrapper is
+signalled (then it prints the partial timeline and exits 128+signal), and is deliberately in no
+`make verify` gate — like the sweep it measures, it needs a display and a human's desktop. The
+script's header comment owns the details, including `FOCUS_THIEF`.
 
 A mode may carry a `+fog` suffix (`make smoke MODES="victory+fog"`) to rerun that scenario with fog
 of war on. Fog is the only setting under which the scene hides units rather than just drawing them,
