@@ -462,7 +462,11 @@ records the tier it was played at.
 
 - **Easy** — timid by design. It over-weights danger, retreats early, refuses good trades, passes
   up marginal plays, under-staffs property races, finishes poorly, and never fields an md tank.
-  The AI-vs-AI ladder measures Normal taking 71.7% from it overall.
+  The AI-vs-AI ladder measures Normal taking 71.7% from it overall, clearing the 70% gate — but
+  the two boards disagree sharply about it: 93.3% on `scrimmage`, where Normal won every game
+  that ended on the board, against an even 50.0% on `ironworks`, where every match instead ran
+  out the day cap and was scored on the tiebreak. `docs/difficulty_check.md` carries the standing
+  numbers and how to read that split.
 - **Normal** — the shipped AI, bit for bit. A test pins its profile to the planner's own defaults,
   so a same-seed replay of an old match still plays out identically.
 - **Difficult** — the same economy and the same dice, with more on its mind. It builds a **threat
