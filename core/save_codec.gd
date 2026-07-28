@@ -205,6 +205,12 @@ static func decode(
 		var index := carrier_indices[i]
 		if index != NO_CARRIER:
 			state.units[i].carrier = state.units[index]
+	# And only now that they are: whether a transport is over capacity is a question
+	# about the whole board, not about one link. See `_carriage_error`.
+	var riding_error := _carriage_error(state)
+	if riding_error != "":
+		push_error("SaveCodec: %s" % riding_error)
+		return null
 
 	var result := LoadedMatch.new()
 	result.state = state
@@ -379,6 +385,29 @@ static func _cells_on_board(entries: Variant, map: MapData, what: String) -> Str
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		if not map.in_bounds(cell):
 			return "%s at %s is off a %dx%d board" % [what, cell, map.width, map.height]
+	return ""
+
+
+## "" when every unit riding in another is one that could have boarded it, else the
+## reason it could not. Asked of the wired-up board rather than of the raw indices,
+## because capacity and nesting are questions about the whole arrangement.
+##
+## The rules themselves are `LoadCommand`'s, asked rather than copied. Boarding is
+## simply not the only way a rider ends up inside a transport, and while the codec
+## kept its own opinion — indices in range, nobody carrying themselves, no cycles —
+## a save could seat a battleship inside an infantry and every rule the command
+## enforces at runtime was bypassed by editing a file (COM-53).
+static func _carriage_error(state: GameState) -> String:
+	for i in state.units.size():
+		var rider := state.units[i]
+		if rider.carrier == null:
+			continue
+		var reason := LoadCommand.carriage_error(state, rider.carrier, rider)
+		if reason != "":
+			return (
+				"unit %d (%s) cannot ride in %s: %s"
+				% [i, rider.type.id, rider.carrier.type.id, reason]
+			)
 	return ""
 
 

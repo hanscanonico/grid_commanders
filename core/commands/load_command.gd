@@ -19,20 +19,46 @@ func validate(state: GameState) -> String:
 	var steps := MoveCommand.validate_path_steps(state, unit, path)
 	if steps != "":
 		return steps
-	var dest: Vector2i = path[path.size() - 1]
-	var transport := state.unit_at(dest)
-	if transport == null or transport == unit or transport.team != unit.team:
+	var transport := state.unit_at(path[path.size() - 1])
+	if transport == null:
 		return "no friendly transport at the destination"
+	return carriage_error(state, transport, unit)
+
+
+## Whether `rider` may be *inside* `transport` at all: everything about the pairing
+## that holds however the two came to be together, and nothing about getting there.
+## "" when the carriage is legal, else the reason it is not.
+##
+## The single authority on that question, in the tradition of `AttackRange.can_engage`
+## and for the same reason it was split out. Boarding is not the only way a rider ends
+## up in a transport — a save file arrives at the arrangement without walking a path —
+## so `SaveCodec` asks this per carrier link rather than keeping its own opinion.
+## While it did keep one, a hand-edited save could load a battleship into an infantry
+## (COM-53).
+##
+## Capacity counts everything aboard *except the rider*, which is what lets the same
+## rule answer for both callers: the command asks before the rider has boarded and
+## the codec asks after the link is already wired, and neither has to know that the
+## other exists.
+static func carriage_error(state: GameState, transport: Unit, rider: Unit) -> String:
+	if transport == rider:
+		return "a unit cannot carry itself"
+	if transport.team != rider.team:
+		return "no friendly transport for this unit"
 	if transport.type.transport_capacity <= 0:
-		return "destination unit is not a transport"
-	if not transport.type.can_carry(unit.type.move_class):
+		return "unit is not a transport"
+	if not transport.type.can_carry(rider.type.move_class):
 		return "unit cannot be transported"
-	if state.cargo_of(transport).size() >= transport.type.transport_capacity:
+	var aboard := 0
+	for passenger in state.cargo_of(transport):
+		if passenger != rider:
+			aboard += 1
+	if aboard >= transport.type.transport_capacity:
 		return "transport is full"
 	# The sim nests transports one level deep only: a loaded carrier's cargo would
-	# freeze at this boarding cell and its capture-progress erase the wrong cell on
+	# freeze at its boarding cell and its capture-progress erase the wrong cell on
 	# a sinking. Refuse the second level outright.
-	if not state.cargo_of(unit).is_empty():
+	if not state.cargo_of(rider).is_empty():
 		return "unit is carrying cargo"
 	return ""
 
