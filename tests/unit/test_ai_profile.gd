@@ -3,11 +3,7 @@ extends GutTest
 ## planner used when they were constants, and the planner must actually read
 ## the profile it was handed rather than a hardcoded copy.
 
-const TIER_PATHS: Array[String] = [
-	"res://data/ai/easy.tres",
-	"res://data/ai/default.tres",
-	"res://data/ai/hard.tres",
-]
+const TIER_DIR := "res://data/ai"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -18,6 +14,30 @@ func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+
+
+## Every profile the game ships, discovered rather than listed, so a tier added
+## later is held to the same rule without anyone remembering to name it here.
+func _tier_paths() -> Array[String]:
+	var paths: Array[String] = []
+	for file_name in DirAccess.get_files_at(TIER_DIR):
+		if file_name.get_extension() == "tres":
+			paths.append("%s/%s" % [TIER_DIR, file_name])
+	paths.sort()
+	return paths
+
+
+## The fields a .tres can actually store: an @export carries STORAGE, a plain
+## script var does not, and demanding one of those in data would be unfixable.
+func _stored_fields() -> Array[String]:
+	var fields: Array[String] = []
+	for property in AIProfile.new().get_property_list():
+		var usage := int(property.usage)
+		if not (usage & PROPERTY_USAGE_SCRIPT_VARIABLE) or not (usage & PROPERTY_USAGE_STORAGE):
+			continue
+		var field: String = property.name
+		fields.append(field)
+	return fields
 
 
 func _state(map_text: String) -> GameState:
@@ -57,19 +77,17 @@ func test_default_profile_matches_the_built_in_defaults() -> void:
 ## Every tier owns every balance value explicitly. Otherwise changing an
 ## AIProfile code default silently retunes only the tiers that omitted it.
 func test_every_tier_explicitly_writes_every_profile_field() -> void:
-	var profile := AIProfile.new()
-	var checked := 0
-	for property in profile.get_property_list():
-		if not (int(property.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE):
-			continue
-		var field: String = property.name
-		for path in TIER_PATHS:
-			var source: String = FileAccess.get_file_as_string(path)
+	var fields := _stored_fields()
+	assert_gt(fields.size(), 10, "the profile should export its weights")
+
+	var paths := _tier_paths()
+	assert_false(paths.is_empty(), "no profile found under %s to check" % TIER_DIR)
+	for path in paths:
+		var source: String = FileAccess.get_file_as_string(path)
+		for field in fields:
 			assert_true(
 				source.contains("\n%s =" % field), "%s must explicitly write %s" % [path, field]
 			)
-		checked += 1
-	assert_gt(checked, 10, "the profile should expose its weights as script variables")
 
 
 ## A controller built without a profile must behave exactly like one built with
