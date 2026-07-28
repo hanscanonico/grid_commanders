@@ -33,7 +33,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   `docs/difficulty_check.md` before touching an AI weight or a tier `.tres`.
 - `naval-air-units-plan.html` — air and naval domains N1–N4. Standing risk R1: the AI cannot plan
   a ferry, so it never builds transports — a naval map has to let fleets reach each other without
-  one.
+  one. Its one-weapon simplification is superseded: Tank, Md Tank and Mech carry an infinite-ammo
+  secondary the damage chart selects; every other unit stays single-weapon.
 - `map-retrofit-plan.html` — which shipped boards carry a port or airfield and which stay
   land-only on purpose. Its byte-identical clause is superseded by the rule that replaced it: a
   map edit **converts** cells, never carves — land stays passable to every land class, no cell
@@ -74,9 +75,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   them.
 - `battle-animations-plan.html` — the combat cut-in BA1–BA4, all shipped. D1: **the cut-in replays
   a snapshot, it computes nothing** — `core/` gained only `CombatResult.attacker_hp_before` /
-  `defender_hp_before`. D5: how a weapon looks is a `BattleStyle` under `data/battle_anim/`,
-  `UnitType.battle_style` is a presentation key like `atlas_col`, and no gameplay number may ever
-  appear in a style.
+  `defender_hp_before` and, with secondary weapons, the two weapon slots the rules selected
+  (`attacker_weapon_slot` / `counter_weapon_slot`), which the cut-in maps to a style through
+  `BattleStyleDb.for_weapon` and never re-decides. D5: how a weapon looks is a `BattleStyle`
+  under `data/battle_anim/`, `UnitType.battle_style` / `secondary_battle_style` are presentation keys
+  like `atlas_col`, and no gameplay number may ever appear in a style.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
@@ -171,9 +174,12 @@ that must survive any change; the full rationale, milestones and risk registers 
      under `scenes/`.** If you reach for a Node inside `core/`, you're in the wrong layer.
 2. **Data-driven via Resources.** Unit stats, terrain properties, and the damage chart are
    `.tres` `Resource` files under `data/`, not constants in code. Balancing = editing data;
-   adding a unit = adding a file. The damage chart is one resource holding the attacker × defender
-   base-damage matrix. Commanders split the two: the doctrine is a `CommanderType` subclass in
-   `core/commanders/`, every number it reads is `@export` on its `.tres` in `data/commanders/`.
+   adding a unit = adding a file. The damage chart is one resource holding two attacker × defender
+   base-damage matrices — the stocked primary and the infinite-ammo secondary — and it owns which
+   of them a shot uses (`select_shot`); a matchup that appears only in the secondary matrix is one
+   the secondary is always preferred for. Commanders split the two: the doctrine is a
+   `CommanderType` subclass in `core/commanders/`, every number it reads is `@export` on its
+   `.tres` in `data/commanders/`.
 3. **Command pattern for all actions.** Every player or AI action is a command object under
    `core/commands/` (`Move`, `Attack`, `Capture`, `Build`, `EndTurn`, …) that is *validated* then
    *applied* to the sim, which emits typed events the scene layer animates. This gives us undo of
@@ -290,7 +296,12 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   so the AI can ask "how hard am I hit if I stop here?" without standing a live unit somewhere to
   ask it. Forecasting is a pure read — if a query has to mutate the board, it is wrong.
 - **Single authorities — ask them, never re-derive.** `core/rules/attack_range.gd` owns **who** a
-  unit may shoot and **how far** (`can_engage`, `covers`); `core/movement_resolver.gd` owns the
+  unit may shoot, **how far**, and **with which weapon** (`can_engage`, `covers`, and `ready_shot`
+  — the one selector, over `DamageChart.select_shot`, that every caller from `AttackCommand` to the
+  overlays, the forecast, the counter, the AI and the threat map goes through; `can_fire` is its yes
+  or no). Nobody asks a unit whether it has ammo: `Unit.ammo` is the primary pool alone, and only
+  the selector knows a dry primary can still fall back to an infinite secondary.
+  `core/movement_resolver.gd` owns the
   movement budget and per-step terrain cost, **including inside `MoveCommand.validate`**. Both
   exist because independent second opinions were real bugs here: a fourth opinion on movement made
   the range overlay offer cells the command then refused, and asking the damage chart directly was
