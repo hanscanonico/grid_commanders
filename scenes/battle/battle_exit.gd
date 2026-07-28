@@ -33,12 +33,12 @@ func save_match() -> bool:
 	if not SaveGame.save(game, _battle.ai_teams, SaveGame.SAVE_PATH, _battle.difficulty.id):
 		# SaveGame has already pushed the disk error; this is the player's half of
 		# it, and it says where they still are as well as what failed.
-		_battle.animator.show_banner("Save failed — still in the match")
+		_battle.present_banner("Save failed — still in the match")
 		return false
 	# Named, because the slot is single: the banner has to say what it just
 	# overwrote the last save with. Same words the menu's Continue caption will read
 	# back, through the one formatter (SaveCodec.describe).
-	_battle.animator.show_banner("Saved %s" % SaveCodec.describe(game.day, game.map_path))
+	_battle.present_banner("Saved %s" % SaveCodec.describe(game.day, game.map_path))
 	return true
 
 

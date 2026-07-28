@@ -44,9 +44,8 @@ const BASE_COMMAND_DELAY_SECONDS := 0.2
 const BANNER_SECONDS := 1.2
 const POWER_BANNER_SECONDS := 1.5
 const INSTANT_BANNER_SECONDS := 0.5
-## The AI opens its turn just after the day banner has cleared, so its opening
-## beat tracks whatever the banner holds for at this tier rather than fixing a
-## number of its own.
+## The AI opens its turn just after the awaited day banner clears. This is only
+## the breathing room after it, never a second copy of the banner's own hold.
 const START_DELAY_PADDING := 0.1
 
 ## Every tier, gentlest first — the order the menu lists and the in-battle row
@@ -177,7 +176,6 @@ func power_banner_seconds() -> float:
 	return INSTANT_BANNER_SECONDS if instant else POWER_BANNER_SECONDS
 
 
-## How long the AI waits before its first command: just past the day banner,
-## however long this tier holds it.
+## How long the AI waits after the day banner clears before its first command.
 func start_delay_seconds() -> float:
-	return banner_seconds() + START_DELAY_PADDING
+	return START_DELAY_PADDING

@@ -162,9 +162,10 @@ func run() -> void:
 	if not requested():
 		return
 	# Demos and captures drive the board, so neither the handoff panel nor the
-	# day-1 banner may sit on top of the frame.
+	# day-1 banner may sit on top, except the flow whose subject is that banner.
 	_battle.leave_handoff()
-	_battle.hide_banner()
+	if _demo != "turn_banner_build_attempt":
+		_battle.hide_banner()
 	if _demo != "":
 		await _run_demo(_demo)
 	elif _select_cell.x >= 0:
@@ -289,6 +290,10 @@ func _run_demo(mode: String) -> void:
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
+		"turn_banner_build_attempt", "outcome_mash_guard":
+			var transition_error := await BattleTransitionScenario.new(_battle).run(mode)
+			if transition_error != "":
+				_fail(transition_error)
 		"powermenu":
 			await _run_power_menu_demo()
 		CAPTURE_POWER_MODE:

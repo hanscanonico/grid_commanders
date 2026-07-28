@@ -19,6 +19,9 @@ extends RefCounted
 ## literal seconds below: a tween timed by a number written here would ignore the
 ## player's setting forever.
 
+signal banner_finished
+signal power_banner_finished
+
 ## The two durations that deliberately do *not* follow the setting: the shake is
 ## impact feedback and the pulse is idle UI, and neither is gameplay theatre.
 ## Named rather than written inline so the exception is visibly meant, and so
@@ -114,7 +117,7 @@ func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 ## nothing to see.
 func animate_combat(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
 	if result == null:
-		show_ambush(attacker)
+		await show_ambush(attacker)
 		return
 	var defender_sprite := view.sprite_for(defender)
 	var attacker_sprite := view.sprite_for(attacker)
@@ -285,7 +288,7 @@ func _capture_cut_in_applies(unit: Unit) -> bool:
 ## where the shot simply never fires.
 func show_ambush(unit: Unit) -> void:
 	view.refresh_sprite(unit)
-	show_banner("Ambush!")
+	await show_banner("Ambush!")
 
 
 ## Brings a moved unit's sprite back in step with the sim after an ordinary
@@ -294,7 +297,7 @@ func show_ambush(unit: Unit) -> void:
 ## trap reads the same however the move was going to end.
 func settle_move(command: Command, unit: Unit) -> void:
 	if command.ambushed:
-		show_ambush(unit)
+		await show_ambush(unit)
 	else:
 		view.refresh_sprite(unit)
 
@@ -304,7 +307,7 @@ func settle_move(command: Command, unit: Unit) -> void:
 ## which case nobody merged and the mover is simply back on its own cell.
 func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 	if command.ambushed:
-		show_ambush(mover)
+		await show_ambush(mover)
 		return
 	fade_out(view.release_sprite(mover))  # merged-away twin; fire and forget
 	view.refresh_sprite(survivor)
@@ -322,18 +325,28 @@ func _set_banner(text: String) -> void:
 	turn_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 
 
+## Shows one blocking beat and returns once time or a press retires it.
 func show_banner(text: String) -> void:
 	_set_banner(text)
 	_banner_tween = node.create_tween()
 	_banner_tween.tween_interval(Settings.speed.banner_seconds())
-	_banner_tween.tween_callback(turn_banner.hide)
+	_banner_tween.tween_callback(_finish_banner)
+	await banner_finished
 
 
 ## Dismisses the banner now, cancelling any pending auto-hide.
 func hide_banner() -> void:
 	if _banner_tween != null and _banner_tween.is_valid():
 		_banner_tween.kill()
+	_finish_banner()
+
+
+func _finish_banner() -> void:
+	_banner_tween = null
+	if not turn_banner.visible:
+		return
 	turn_banner.hide()
+	banner_finished.emit()
 
 
 ## The Command Power activation card: portrait, the general's spoken line, power
@@ -354,7 +367,37 @@ func show_power_banner(commander: CommanderType, team: int) -> void:
 		return
 	_power_banner_tween = node.create_tween()
 	_power_banner_tween.tween_interval(Settings.speed.power_banner_seconds())
-	_power_banner_tween.tween_callback(power_banner.hide)
+	_power_banner_tween.tween_callback(_finish_power_banner)
+	await power_banner_finished
+
+
+func hide_power_banner() -> void:
+	if _power_banner_tween != null and _power_banner_tween.is_valid():
+		_power_banner_tween.kill()
+	_finish_power_banner()
+
+
+func _finish_power_banner() -> void:
+	_power_banner_tween = null
+	if not power_banner.visible:
+		return
+	power_banner.hide()
+	power_banner_finished.emit()
+
+
+## Any keyboard, mouse or controller press retires the visible blocking card.
+## Returns whether it claimed the event so Battle can stop it over-landing on
+## the board or a newly revealed action.
+func consume_banner_skip(event: InputEvent) -> bool:
+	if not TransitionInput.is_press(event):
+		return false
+	if turn_banner.visible:
+		hide_banner()
+		return true
+	if power_banner.visible and not capturing:
+		hide_power_banner()
+		return true
+	return false
 
 
 # --- camera and cursor -------------------------------------------------------
