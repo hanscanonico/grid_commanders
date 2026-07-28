@@ -43,6 +43,13 @@ const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
 ## A unit standing on the board rather than riding in something.
 const NO_CARRIER := -1
 
+## What a live unit's internal HP may be. Zero is not a wounded unit, it is a dead
+## one: every route that takes a unit to zero removes it in the same breath, so a
+## save that records one is describing a board the rules cannot produce. The ceiling
+## is Unit's own full health — see its header on the 0-100 scale the UI divides by ten.
+const MIN_HP := 1
+const MAX_HP := 100
+
 
 class LoadedMatch:
 	var state: GameState
@@ -148,6 +155,12 @@ static func decode(
 	var map := MapData.load_from_file(String(data["map_path"]), terrain_db)
 	if map == null:
 		return null  # MapData already reported why
+	# Only askable now: what counts as a legal cell is the board's to say, and the
+	# board is what was just loaded. See `board_error`.
+	error = board_error(data, map)
+	if error != "":
+		push_error("SaveCodec: %s" % error)
+		return null
 
 	var state := GameState.new()
 	state.map = map
@@ -281,6 +294,53 @@ static func validate(data: Dictionary) -> String:
 	for team in GameState.TEAMS:
 		if not (funds as Dictionary).has(str(team)):
 			return "save has no funds for team %d" % team
+	return ""
+
+
+## "" when every value in `data` describes something that can exist on `map`, else
+## the reason it cannot. `validate`'s sibling, split from it for one reason: these
+## questions need the board, and `validate` deliberately answers without one so a
+## save can be named on a menu that has loaded no map.
+##
+## The rules layer trusts what it is handed — `MovementResolver`, `AttackRange` and
+## `CombatResolver` all read terrain at a unit's cell without asking whether the unit
+## is standing anywhere real — because every other route onto the board goes through
+## a command that already checked. A save does not, so a hand-edited or truncated one
+## used to load clean and take the game down much later and far away:
+## `CombatResolver` null-derefs `terrain_at(...).defense_stars` for a unit off the
+## map, an `hp` of zero puts a corpse on the board that no attack can finish, and a
+## `team` outside `GameState.TEAMS` produces a unit no turn ever readies. Refusing
+## here is what keeps the delayed crash from ever being the player's first symptom.
+##
+## Every cell the save carries is asked the same question, not only the units' — a
+## board is a board, and a rule applied to one list and not the others is the sort of
+## half-rule that reads as deliberate until it isn't.
+static func board_error(data: Dictionary, map: MapData) -> String:
+	for entry: Dictionary in data["units"] as Array:
+		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
+		if not map.in_bounds(cell):
+			return (
+				"unit '%s' stands at %s, off a %dx%d board"
+				% [entry["type"], cell, map.width, map.height]
+			)
+		var hp := int(entry["hp"])
+		if hp < MIN_HP or hp > MAX_HP:
+			return "unit '%s' has %d HP, outside %d-%d" % [entry["type"], hp, MIN_HP, MAX_HP]
+		var team := int(entry["team"])
+		if not GameState.TEAMS.has(team):
+			return "unit '%s' belongs to team %d, which does not play" % [entry["type"], team]
+	var cells_error := _cells_on_board(data["owners"], map, "owned property")
+	if cells_error != "":
+		return cells_error
+	return _cells_on_board(data.get("capture_progress", []), map, "capture in progress")
+
+
+## "" when every entry in `entries` names a cell `map` actually has.
+static func _cells_on_board(entries: Variant, map: MapData, what: String) -> String:
+	for entry: Dictionary in entries as Array:
+		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
+		if not map.in_bounds(cell):
+			return "%s at %s is off a %dx%d board" % [what, cell, map.width, map.height]
 	return ""
 
 
