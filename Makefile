@@ -42,8 +42,8 @@ verify: check lint format-check test
 # SMOKE_KEEP=1 keeps the captures for eyeballing, and SMOKE_ISOLATE=1 turns off
 # the one-boot batching (one process per scenario; see README).
 # A `menu_` mode boots the main
-# menu instead of the board — `menu_with_save` and `menu_no_save` are the pair
-# that keeps the primary actions inside the 640x360 frame either way (COM-5).
+# menu instead of the board and gates it against the 640x360 frame (COM-5); the
+# set and what each one proves is in the README.
 MODES ?=
 smoke:
 	tools/smoke_scenarios.sh $(MODES)

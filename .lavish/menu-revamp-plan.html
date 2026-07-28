@@ -290,7 +290,7 @@
         <div class="card bg-base-100 border p-4">
           <h3 class="font-black">12 maps, not 2 → a scrollable two-up grid</h3>
           <p class="text-sm mt-1">The mockup shows two thumbnails side by side; the roster
-          (<span class="gc-file">core/map_catalog.gd</span>, smallest board first) ships twelve. The
+          (<span class="gc-file">core/map_catalog.gd</span>, in <code>ordered()</code>'s order) ships twelve. The
           picker becomes a <code>ScrollContainer</code> holding the mockup's two-up thumbnail cells —
           selected map gets the raised surface, 3px red border and "✓" exactly per spec, and the panel
           header-right shows <em>name · size</em>. Each cell keeps the current dropdown's tooltip
@@ -471,7 +471,7 @@
           <p class="text-sm mt-1 mb-2">The dropdown dies; the roster becomes visible terrain.</p>
           <ul class="gc-checks text-sm">
             <li><span class="gc-file">scenes/menu/map_thumbnail.gd</span> — D5's renderer: one canvas item per map, atlas columns × identity rows, sized to its cell (4–5px canvas tiles for a 20×15 board).</li>
-            <li>The scrollable two-up grid replaces <code>MapOption</code>: selected cell gets raised surface + meridian border + ✓, panel header-right reads <em>name · size</em>, every cell carries the old tooltip's facts. Scroll position follows keyboard focus; twelve maps, smallest first, exactly <code>MapCatalog.ordered()</code>.</li>
+            <li>The scrollable two-up grid replaces <code>MapOption</code>: selected cell gets raised surface + meridian border + ✓, panel header-right reads <em>name · size</em>, every cell carries the old tooltip's facts. Scroll position follows keyboard focus; twelve maps in exactly <code>MapCatalog.ordered()</code>'s order, which owns the sort.</li>
             <li>The panning backdrop: one shipped board baked to an <code>ImageTexture</code>, tiled 3×3, drifting −64px canvas diagonally over 40s at 14% opacity behind a radial slate highlight. <strong>Pinned still whenever <code>ScreenshotUtil.requested()</code></strong> — the capture must not depend on when it was taken (the animator's <code>capturing</code> precedent), and the PRESS START blink pins with it.</li>
             <li>Proof: <code>make run</code> — flip through all twelve thumbnails against the boards they launch; a <code>--co-select</code> capture is byte-stable across two runs.</li>
           </ul>

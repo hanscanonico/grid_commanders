@@ -198,7 +198,7 @@ func _paint_backdrop(animate: bool) -> void:
 
 	if _maps.is_empty():
 		return
-	# The fullest board in the roster (largest, so last after smallest-first), baked
+	# The fullest board in the roster (largest, so last in MapCatalog.ordered()), baked
 	# once by the thumbnail renderer and tiled — the field is the thumbnails' own
 	# output, so it can never disagree with them (plan R2).
 	var board := _maps[_maps.size() - 1]
@@ -889,12 +889,12 @@ func _cell_hover_box() -> StyleBoxFlat:
 
 
 func _map_cell_name(map: MapData, selected: bool) -> String:
-	var name := MapCatalog.display_name(map.source_path)
+	var cell_name := MapCatalog.display_name(map.source_path)
 	if map.source_path == MapCatalog.BEGINNER_MAP_PATH:
-		name += " · Start Here"
+		cell_name += " · Start Here"
 	if selected:
-		name += " ✓"
-	return name
+		cell_name += " ✓"
+	return cell_name
 
 
 ## Header and persistent caption, read off the board itself so no hand-kept table
