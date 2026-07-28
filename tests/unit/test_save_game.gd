@@ -86,23 +86,26 @@ func test_roundtrip_preserves_rng_sequence() -> void:
 	)
 
 
-## COM-51. Every unwritable target this platform can stage — a read-only file, a
-## read-only directory, a directory standing where the file should be, a directory
-## that is not there at all — is refused by `FileAccess.open`, so this is the branch
-## a test can reach and it is now guarded rather than merely believed. The other
-## half of the fix is the one no in-process test can induce: a write that fails
-## *after* a successful open, which is what a full disk does, and what the explicit
-## close and error check exist for.
+## COM-51. Every unwritable target reachable without mounting a volume — a read-only
+## file, a read-only directory, a directory standing where the file should be, a
+## directory that is not there at all — is refused by `FileAccess.open`, so this is
+## the branch these tests reach and it is now guarded rather than merely believed.
+##
+## The failure the ticket was actually filed about needs a volume with no space left,
+## which is a thing to stage rather than a thing to assert: on one, every signal the
+## handle offers reads clean while nothing lands, so `save` answers for itself by
+## re-reading the temp. That is why none of the tests below stand on `store_string`'s
+## bool or on `get_error()` — neither one sees a full disk.
 func test_save_to_an_unwritable_path_reports_failure() -> void:
 	var state := _first_steps_state()
 	assert_false(SaveGame.save(state, [] as Array[int], "user://no_such_dir/save.json"))
 	assert_push_error("cannot write")
 
 
-## COM-51. The half of the fix a test *can* stage: a save that cannot be written is
-## a save the player still has. Standing a directory where the temp belongs is the
-## one unwritable target reachable in-process, and it fails at the same place a full
-## disk does — before anything has touched the slot.
+## COM-51. What the atomic swap buys, stated as a promise: a save that cannot be
+## written is a save the player still has. Standing a directory where the temp belongs
+## refuses the write at the open, one step earlier than a full volume does — but both
+## fail before anything has touched the slot, which is the guarantee under test.
 func test_a_failed_write_leaves_the_previous_save_intact() -> void:
 	var state := _first_steps_state()
 	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
