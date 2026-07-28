@@ -361,7 +361,7 @@ func _build_outcome() -> BattleOutcome:
 
 
 ## The one press the two states that swallow play still listen for: the confirm
-## key, or a left click. Shared so the handoff's "I'm ready" and the computer
+## action, or a left click. Shared so the handoff's "I'm ready" and the computer
 ## turn's refusal can never answer different presses.
 func _is_confirm_press(event: InputEvent) -> bool:
 	if event.is_action_pressed(&"confirm"):

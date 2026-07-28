@@ -2,7 +2,7 @@ class_name ActionMenu
 extends PanelContainer
 ## Minimal AW-style action menu (M2: Wait / Cancel; Fire etc. arrive in M3).
 ## The battle scene opens it with a list of actions; it emits the chosen id.
-## Keyboard: cursor up/down + confirm/cancel. Mouse: click a row.
+## Keyboard or pad: cursor up/down + confirm/cancel. Mouse: click a row.
 
 signal action_chosen(action: StringName)
 

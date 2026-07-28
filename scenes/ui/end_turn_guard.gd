@@ -10,10 +10,11 @@ signal end_requested
 const PANEL_W := 300.0
 const LIST_H := 78.0
 const PAD := 8
-## Scrolling the ready-unit list is the guard's own, and the board's direction
-## actions carry keyboard events only, so it answers Godot's built-in pair — the
-## one a pad's d-pad and left stick arrive as — alongside them. Picking an action
-## is not here: left and right belong to Control focus, wired in _build.
+## Scrolling the ready-unit list is the guard's own. A direction reaches here as
+## the board's action or as Godot's built-in one — both carry the same arrow key,
+## d-pad button and stick axis — so the guard answers both, and DirectionalInput
+## collapses the pair one gesture fires into a single line. Picking an action is
+## not here: left and right belong to Control focus, wired in _build.
 const SCROLL_ACTIONS: Dictionary = {
 	&"cursor_up": -1,
 	&"ui_up": -1,
@@ -30,8 +31,7 @@ var _list: ScrollContainer
 var _review_button: Button
 var _end_button: Button
 var _buttons: Array[Button] = []
-## One scroll line or one button step per directional gesture; see
-## DirectionalInput.
+## One scroll line per directional gesture; see DirectionalInput.
 var _dirs := DirectionalInput.new()
 
 
