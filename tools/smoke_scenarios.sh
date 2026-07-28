@@ -43,8 +43,10 @@ BATTLE="${BATTLE:-scenes/battle/battle.tscn}"
 export GODOT
 GODOT_GUI="$(cd "$(dirname "$0")" && pwd)/godot_gui.sh"
 # Generous: `aiturn` plans and applies a whole AI turn. Captures pin the Instant
-# game speed, so no tween is being waited on; this only has to catch a genuinely
-# stuck scene, not time anything.
+# game speed, so almost no tween is being waited on; this only has to catch a
+# genuinely stuck scene, not time anything. The one exception is `capture_power`,
+# which un-pins Instant on purpose so a cut-in really plays and then puts it back
+# — still seconds, not a timeout's worth, and the scenario bounds its own wait.
 SMOKE_TIMEOUT="${SMOKE_TIMEOUT:-90}"
 # A frame that renders the map is tens of KB; anything this small is a blank or
 # truncated capture, which means the scene never really came up.
@@ -53,7 +55,9 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # One per branch of the interaction flow: targeting preview and resolved
 # combat, capture, the build menu and a completed build, the map menu and the
 # turn it ends, the load/drive/drop transport chain, supply, a Command Power
-# fired from the HUD over an open menu, victory, and a full AI turn.
+# fired from the HUD over an open menu, the same button fired one beat later
+# while the capture cut-in is still playing (capture_power, COM-50), victory, and
+# a full AI turn.
 #
 # Two of them run again under fog, where the sprite-hiding path exists at all:
 # powermenu+fog fires a power, which redraws every sprite on the board at once,
@@ -152,7 +156,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
-	powermenu victory aiturn
+	powermenu capture_power victory aiturn
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror

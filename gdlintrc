@@ -123,4 +123,17 @@ max-public-methods: 21
 # family is a third of the file and twelve smoke scenarios rest on it, so moving
 # it inside a ghost-panel fix would leave neither half reviewable. It is filed
 # as COM-94. The driver sits at exactly 1113.
-max-file-lines: 1113
+#
+# 1113 -> 1193, the scenario driver's a sixth time, for COM-50: the capture flow
+# held its cut-in from inside State.MENU, which the HUD's Fire button reaches a
+# command from, so a power fired mid-beat ran a second command through the
+# pipeline while the first was still replaying. `capture_power` is the only
+# scenario that lets a cut-in actually play — `capturing`, the pinned Instant tier
+# and the battle-animations preference each gate one out, and the window is inside
+# the beats they suppress — so it stages the race, presses the button, and puts all
+# three back before the frame. Eighty lines for that staging, the bounded wait that
+# names a gate it failed to clear rather than running out the sweep's timeout, and
+# the three checks it makes of the sim afterwards.
+# COM-94's split is still the right one and still not a crash fix's job. The
+# driver sits at exactly 1193.
+max-file-lines: 1193

@@ -92,6 +92,25 @@ const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	PARTIAL_SUFFIX + FACTION_SUFFIX,
 ]
 
+## `capture_power` walks COM-50's race — a Command Power fired from the HUD while
+## the capture cut-in is playing. The city the default board's `capture` demo takes
+## and the infantry that takes it, named here because the race checks the sim
+## afterwards as well as driving it.
+const CAPTURE_POWER_MODE := "capture_power"
+const CAPTURE_CELL := Vector2i(3, 4)
+const CAPTURER_CELL := Vector2i(4, 3)
+## The tier that race is run at: the shortest one that still plays a cut-in, since
+## the window it is looking for only exists while one does. Captures pin Instant,
+## which has no beats to race (GameSpeed.CAPTURE_ID), and the scenario puts that
+## back before it returns.
+const RACE_SPEED_ID := &"quick"
+## How long the race waits for the cut-in it staged before calling the staging
+## wrong. Every other wait here is unbounded because what it waits on is this
+## scene's own flow; this one waits on a gate whose inputs live outside the
+## scenario, so a miss has to be said out loud rather than run out the sweep's
+## timeout with no reason attached.
+const CUT_IN_START_FRAMES := 600
+
 ## The first-match teaching strip (COM-12). `mission_strip` poses it on a fresh
 ## install's very first frame — the objective, the SELECT step, and the four
 ## still to come — and `mission_strip_retired` walks a real selection and a real
@@ -185,7 +204,9 @@ func _fog_hides_unseen() -> bool:
 ## same chain at the Load menu, the loaded APC's panel, and the drop-target
 ## picker; supply holds the APC next to its infantry so Supply is offered;
 ## mapmenu stops at the map menu (End Turn / Save); powermenu fires a Command
-## Power from the HUD over an open action menu; leave_confirm walks the route out
+## Power from the HUD over an open action menu and capture_power fires the same
+## button one beat later, while the capture cut-in is playing (COM-50);
+## leave_confirm walks the route out
 ## of a running match, from the map menu's two exit rows to the confirmation the
 ## unsaved one opens; after_build_menu opens the tallest menu in the game and then
 ## the shortest, which is the order the shared panel's size has to survive;
@@ -265,6 +286,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_menu_after_build_menu()
 		"powermenu":
 			await _run_power_menu_demo()
+		CAPTURE_POWER_MODE:
+			await _stage_capture_power_race()
 		"ambush", "vanish":
 			_run_vanish_demo(mode)
 		"power_charging":
@@ -368,6 +391,65 @@ func _run_power_menu_demo() -> void:
 	while _battle.action_menu.visible:
 		await _battle.get_tree().process_frame
 	_battle.action_menu.choose(&"wait")  # the click a player can no longer make
+
+
+## The same button, pressed one beat later: while the capture cut-in is playing
+## (COM-50). The capture flow holds its cut-in on an await, and the HUD's Fire
+## button is the one control that reaches a command from a held flow — the board is
+## mouse-transparent under the cut-in and the keyboard is already refused. So a
+## power fired mid-beat used to enter the command pipeline re-entrantly, while the
+## capture was still replaying its own snapshot, and clear the selection the
+## capture flow came back to.
+##
+## The only scenario that lets a cut-in really play: `capturing`, the pinned
+## Instant tier and the battle-animations preference each gate it out
+## (BattleAnimator._capture_cut_in_applies), and the window this walks exists only
+## inside the beats they suppress. All three are staged and put back before it
+## returns, so the frame `run` takes afterwards is `capture`'s frame — and the
+## third is staged for the same reason the first two are pinned at all: whether
+## this machine's player left the cut-ins switched on must not decide whether the
+## scenario runs.
+func _stage_capture_power_race() -> void:
+	var tree := _battle.get_tree()
+	var cutscene := _battle.animator.capture_cutscene
+	var animations_were := Settings.battle_animations
+	_set_red_commander(&"alina_ward", true)
+	_battle.animator.capturing = false
+	# Both pinned, so neither writes a preference file (Settings.pin, from
+	# Battle._ready, latches it shut for every scenario run).
+	Settings.set_speed(RACE_SPEED_ID)
+	Settings.set_battle_animations(true)
+	_battle.confirm_at(CAPTURER_CELL)  # select the red infantry
+	_battle.confirm_at(CAPTURE_CELL)  # move onto the neutral city
+	await _until_state(Battle.State.MENU)
+	# Deliberately not awaited: choosing the row starts the capture, and the flow is
+	# still inside its cut-in when the button below is pressed.
+	_battle.action_menu.choose(&"capture")
+	var waited := 0
+	while not cutscene.is_processing():
+		if waited >= CUT_IN_START_FRAMES:
+			# Said out loud and abandoned rather than raced anyway: with no cut-in
+			# there is no window, so every check below would report the staging's
+			# failure as the fix's.
+			_fail("the capture cut-in never started — the race had nothing to race")
+			_battle.animator.capturing = true
+			Settings.set_speed(GameSpeed.CAPTURE_ID)
+			Settings.set_battle_animations(animations_were)
+			return
+		waited += 1
+		await tree.process_frame
+	if _battle.state == Battle.State.MENU:
+		_fail("capture holds its cut-in in State.MENU — the HUD Fire button reaches a command")
+	_battle.view.hud_bottom.fire_button.pressed.emit()
+	await _until_state(Battle.State.IDLE)
+	if _battle.game.commander_state(1).power_active:
+		_fail("a Command Power fired during the capture cut-in")
+	if not _battle.game.capture_progress.has(CAPTURE_CELL):
+		_fail("the capture the power was fired over never registered")
+	_battle.animator.capturing = true
+	Settings.set_speed(GameSpeed.CAPTURE_ID)
+	Settings.set_battle_animations(animations_were)
+	_battle.set_cursor_cell(CAPTURE_CELL)  # the `capture` frame, once the race is over
 
 
 ## Sable Wren's Vanish (decision D4), seen from Red's side of the screen.
