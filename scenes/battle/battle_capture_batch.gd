@@ -39,7 +39,7 @@ static var _timeout := 0.0
 static var _active := false
 
 
-## The group this process was launched with, or "" outside a batch — asked the
+## The queue this process was launched with, or "" outside a batch — asked the
 ## way ScreenshotUtil.requested() is asked, and for the same reason. A batch
 ## carries no `--screenshot=` of its own, so anything guarding on "is this run
 ## here to be photographed?" has to ask both.
@@ -69,11 +69,11 @@ static func _adopted() -> bool:
 	return true
 
 
-## Adopts the current batch scenario, when the command line carries a group;
-## answers whether it did. Called from the driver's _init so Battle's own
+## Adopts the current batch scenario, when the command line carries a queue;
+## answers whether it did. Called from either driver's _init so the scene's own
 ## capture pinning (game speed, the hint set) reads the current scenario's
 ## demo — and the per-scenario deadline (risk R3) is armed here for the same
-## reason: a group process is alive as long as *any* scenario progresses, so
+## reason: a batch process is alive as long as *any* scenario progresses, so
 ## the budget has to live where the stuck scenario's name is known.
 static func adopt(battle: Node) -> bool:
 	if not _adopted():

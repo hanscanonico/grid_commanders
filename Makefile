@@ -40,7 +40,7 @@ verify: check lint format-check test
 # a `+fog` suffix reruns a scenario with fog of war on (`victory+fog`), which is
 # the only setting where sprites are hidden rather than merely drawn;
 # SMOKE_KEEP=1 keeps the captures for eyeballing, and SMOKE_ISOLATE=1 turns off
-# the per-configuration batching (one process per scenario; see README).
+# the one-boot batching (one process per scenario; see README).
 # A `menu_` mode boots the main
 # menu instead of the board — `menu_with_save` and `menu_no_save` are the pair
 # that keeps the primary actions inside the 640x360 frame either way (COM-5).

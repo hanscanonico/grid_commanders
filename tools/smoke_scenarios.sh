@@ -210,8 +210,8 @@ if ((${#modes[@]} == 0)); then
 fi
 
 out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
-# One entry per group that failed as a batch and had to be re-run one process
-# per scenario; each names the group and the log the batch left behind.
+# Non-empty when the one-boot sweep failed as a batch and had to be re-run one
+# process per scenario; the entry names the log the batch left behind.
 batch_fallbacks=()
 cleanup() {
 	# A fallback's log and captures are the only record of batch rot — the
@@ -265,9 +265,9 @@ map_for_demo() {
 }
 
 # One scenario, one process — the shape the sweep always had, kept verbatim as
-# the SMOKE_ISOLATE=1 path, the menu scenarios' path, and the re-run a failing
-# group gets (see run_group). Prints the scenario's status line and bumps
-# `failed` when it goes wrong.
+# the SMOKE_ISOLATE=1 path and the re-run a failing sweep gets (see
+# run_batched_sweep). Prints the scenario's status line and bumps `failed` when
+# it goes wrong.
 run_one_scenario() {
 	local mode="$1"
 	# A cut-in mode carries its matchup in the name; colons are legal in a POSIX
