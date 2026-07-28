@@ -460,7 +460,8 @@ records the tier it was played at.
 Each tier is a `.tres` under `data/difficulty/` pointing at a profile in `data/ai/`, so retuning
 one is a data edit. `make difficulty-check` plays the tiers against each other headless and
 reports whether the ladder actually orders — see `docs/difficulty_check.md` for the standing
-result, including one capability that measured *negative* and ships switched off.
+result, and for the superseded probes the weights were first set from, including one capability
+that measured *negative* and ships switched off.
 
 ## Architecture
 
