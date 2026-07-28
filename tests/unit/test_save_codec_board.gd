@@ -211,6 +211,7 @@ func test_a_loaded_carrier_riding_in_another_is_rejected() -> void:
 				"fuel": 99,
 				"ammo": 0,
 				"acted": false,
+				"dived": false,  # a version 3 unit entry carries it, boat or not
 				"carrier": SaveCodec.NO_CARRIER,
 			}
 		)

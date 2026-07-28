@@ -70,11 +70,17 @@ func test_encoded_save_declares_the_current_version() -> void:
 ## matches were played against the shipped AI, which is exactly Normal — so they
 ## resume rather than being rejected or resuming at some other tier. An encode
 ## that is not told a tier records Normal for the same reason.
+##
+## Staged as a version 2 save because that is what such a save is: the key arrived
+## between versions 2 and 3 without a bump of its own, so version 2 is the newest
+## one entitled to be without it. A version 3 save missing it is truncated, and is
+## refused — see test_save_codec_versions.gd (COM-54).
 func test_a_save_without_a_difficulty_resumes_as_normal() -> void:
 	assert_eq(String(_encoded()["difficulty"]), "normal", "an unspecified tier encodes as normal")
 	var data := _encoded()
+	data["version"] = 2
 	data.erase("difficulty")
-	assert_eq(SaveCodec.validate(data), "", "difficulty is optional, never required")
+	assert_eq(SaveCodec.validate(data), "", "a save from before the key is entitled to go without")
 	var loaded := _decode(data)
 	assert_not_null(loaded)
 	assert_eq(loaded.difficulty, &"normal")

@@ -16,6 +16,11 @@ extends RefCounted
 ## with every boat on the surface, which is exactly the match each recorded. New
 ## saves are always written at the current version.
 ##
+## Which is why the version number is load-bearing rather than decorative: it is what
+## separates a save that is *old* from one that is *damaged*. Every additive field is
+## optional only to the versions that predate it, and a save claiming a version that
+## wrote a field has to carry it — see OPTIONAL_KEY_VERSIONS.
+##
 ## When a format arrives that *cannot* be read this way, it gets its own
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
@@ -24,9 +29,7 @@ const VERSION := 3
 ## Every version this codec can still read, oldest first.
 const READABLE_VERSIONS: Array[int] = [1, 2, 3]
 
-## Keys every save envelope must carry; optional ones (fog, winner,
-## capture_progress, carrier, dived, ai_teams, commanders, difficulty) fall back
-## to defaults.
+## Keys every save envelope must carry, whatever version wrote it.
 const REQUIRED_KEYS: Array = [
 	"map_path",
 	"day",
@@ -39,6 +42,32 @@ const REQUIRED_KEYS: Array = [
 const REQUIRED_UNIT_KEYS: Array = ["type", "team", "x", "y", "hp", "fuel", "ammo", "acted"]
 const REQUIRED_OWNER_KEYS: Array = ["x", "y", "team"]
 const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
+
+## The remaining keys, and the first version that always wrote each. Every one of
+## them has a fallback in `decode`, and the fallback is for *age*, not for damage:
+## a save old enough not to know about a field is entitled to the default, and a
+## save that claims to be new enough is telling the truth about what it contains or
+## it is truncated. Without this the two were indistinguishable, so a key lost to a
+## short write loaded a match that played differently — fog off, captures reset,
+## both sides commander-less — and said nothing (COM-54).
+##
+## `difficulty` is the awkward one, and it is deliberately listed at 3 rather than 2:
+## it was added between those two versions without a bump of its own, so a version 2
+## save may or may not carry it and only a version 3 save is guaranteed to.
+const OPTIONAL_KEY_VERSIONS := {
+	"fog": 1,
+	"winner": 1,
+	"capture_progress": 1,
+	"ai_teams": 1,
+	"commanders": 2,
+	"difficulty": 3,
+}
+## The same, per unit entry: `carrier` shipped with the format, `dived` is version 3's
+## whole reason for existing.
+const OPTIONAL_UNIT_KEY_VERSIONS := {
+	"carrier": 1,
+	"dived": 3,
+}
 
 ## A unit standing on the board rather than riding in something.
 const NO_CARRIER := -1
@@ -286,11 +315,17 @@ static func describe(day: int, map_path: String) -> String:
 ## describe a board that could exist: that is its sibling `board_error`'s, which
 ## needs the map this one deliberately answers without.
 static func validate(data: Dictionary) -> String:
-	if not READABLE_VERSIONS.has(int(data.get("version", -1))):
+	var version := int(data.get("version", -1))
+	if not READABLE_VERSIONS.has(version):
 		return "unsupported save version"
 	var missing := _missing_key(data, REQUIRED_KEYS)
 	if missing != "":
 		return "save is missing '%s'" % missing
+	# What a save of *this* version promised to write, it has to have written. See
+	# OPTIONAL_KEY_VERSIONS: below its version a key is old, at or above it is lost.
+	missing = _missing_key(data, _keys_written_by(version, OPTIONAL_KEY_VERSIONS))
+	if missing != "":
+		return "a version %d save is missing '%s'" % [version, missing]
 	var error := _entries_error(data["owners"], REQUIRED_OWNER_KEYS, "owner")
 	if error != "":
 		return error
@@ -299,7 +334,8 @@ static func validate(data: Dictionary) -> String:
 	)
 	if error != "":
 		return error
-	error = _entries_error(data["units"], REQUIRED_UNIT_KEYS, "unit")
+	var unit_keys := REQUIRED_UNIT_KEYS + _keys_written_by(version, OPTIONAL_UNIT_KEY_VERSIONS)
+	error = _entries_error(data["units"], unit_keys, "unit")
 	if error != "":
 		return error
 	var funds: Variant = data["funds"]
@@ -437,6 +473,16 @@ static func _validate_carriers(indices: Array[int]) -> String:
 			if hops > count:
 				return "unit %d is in a loop of units carrying each other" % i
 	return ""
+
+
+## Every key in `introduced_in` that a save of this `version` was already writing —
+## which is exactly the set it is not allowed to be missing.
+static func _keys_written_by(version: int, introduced_in: Dictionary) -> Array:
+	var keys: Array = []
+	for key: String in introduced_in:
+		if version >= int(introduced_in[key]):
+			keys.append(key)
+	return keys
 
 
 ## The first key `data` lacks, or "" when it carries them all.
