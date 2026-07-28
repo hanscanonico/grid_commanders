@@ -29,11 +29,10 @@ const MAX_COMMANDS_PER_TURN := 300
 const DEFAULT_DAYS := 20
 
 
-## Everything one match needs. Built by the caller so the *planners* stay the
-## caller's choice: the commander matrix deliberately hands both seats the same
-## AIController instance (as it always has), while the difficulty ladder and the
-## Lab give each side its own. That distinction is load-bearing for D1's
-## byte-diff, which is why the engine takes planners rather than building them.
+## Everything one match needs. Built by the caller so each side's profile stays
+## the caller's choice. The engine requires a distinct AIController per team,
+## matching live play: controller caches and future planner state belong to one
+## side and never cross the turn boundary.
 class Setup:
 	var map: MapData
 	var unit_db: UnitDB
@@ -79,6 +78,9 @@ class Outcome:
 ## decision, which is what keeps the measured game the shipped one (plan D2).
 static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome:
 	var outcome := Outcome.new()
+	if not _has_independent_planners(setup):
+		outcome.termination = "invalid_planners"
+		return outcome
 	# Commanders are handed to create so the opening side's day-1 begin_turn runs
 	# against its real doctrine, not neutral — the same asymmetry the battle scene
 	# had to fix.
@@ -145,6 +147,13 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 		outcome.winner = tiebreak(state)
 	outcome.termination = termination(state, outcome.cap_stall)
 	return outcome
+
+
+static func _has_independent_planners(setup: Setup) -> bool:
+	for team: int in GameState.TEAMS:
+		if not (setup.planners.get(team) is AIController):
+			return false
+	return setup.planners[1] != setup.planners[2]
 
 
 ## rout (loser has no units), hq (loser was routed off its HQ but still has

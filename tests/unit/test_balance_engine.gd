@@ -132,6 +132,17 @@ func test_a_different_seed_is_a_different_match() -> void:
 # --- the harness's own guarantees ----------------------------------------------
 
 
+func test_a_match_refuses_one_controller_shared_between_teams() -> void:
+	var setup := _setup(42)
+	setup.planners[2] = setup.planners[1]
+	var outcome := BalanceMatchEngine.play(setup)
+	assert_eq(
+		outcome.termination,
+		"invalid_planners",
+		"each side owns its controller state, just as it does in the live scene"
+	)
+
+
 func test_the_planner_never_proposes_an_illegal_command() -> void:
 	for seed_val in [7, 21, 404]:
 		var outcome := BalanceMatchEngine.play(_setup(seed_val))
