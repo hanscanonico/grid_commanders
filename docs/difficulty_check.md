@@ -6,7 +6,7 @@ difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
 **Standing verdict: the gate does not pass.** Normal takes 43.3% from Easy and
-Difficult takes 65.0% from Normal; neither adjacent pairing clears the required
+Difficult takes 66.7% from Normal; neither adjacent pairing clears the required
 70%. Difficult now has a measurable advantage, but Easy's intended weakness is
 not established. Details and the reasoning below — read §4 before changing a
 weight, and §5 before deciding what to do about it.
