@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Focus Theft: the smoke sweep and your front window</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-amber: #d58a24;
+      --gc-blue: #3276c6;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,.03) 25%, transparent 25%);
+      background-size: 32px 32px, 32px 32px, 64px 64px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    pre code { font-size: .8rem; line-height: 1.55; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid var(--gc-amber); }
+    .gc-risk-good { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-checks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-checks li::before { content: "✓"; color: var(--gc-grass-dark); font-weight: 900; }
+    .gc-crosses li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-crosses li::before { content: "✕"; color: var(--gc-red); font-weight: 900; }
+
+    /* --- focus timeline strip ------------------------------------------- */
+    .tl { display: grid; gap: .35rem; }
+    .tl-row { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: .6rem; align-items: center; }
+    .tl-label { font: 700 .74rem/1.2 ui-monospace, monospace; text-align: right; opacity: .85; }
+    .tl-track {
+      position: relative;
+      height: 1.5rem;
+      border-radius: 3px;
+      background: repeating-linear-gradient(90deg, rgba(23,40,56,.10) 0 1px, transparent 1px 40px);
+      border: 1px solid rgba(23,40,56,.2);
+      overflow: hidden;
+    }
+    .tl-track > i {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      display: block;
+    }
+    .tl-you { background: color-mix(in srgb, var(--gc-grass) 70%, white 30%); }
+    .tl-steal { background: var(--gc-red); box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+    .tl-scale { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: .6rem; font: 600 .7rem ui-monospace, monospace; opacity: .7; }
+    .tl-scale div:last-child { display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body class="py-6">
+<div class="gc-shell rounded-box overflow-hidden">
+
+  <!-- ============================== HERO ============================== -->
+  <header class="gc-hero px-6 py-8 md:px-10">
+    <p class="gc-kicker opacity-80">Grid Commanders · Developer ergonomics · Design of record</p>
+    <h1 class="text-3xl md:text-4xl font-black mt-2">Focus theft — the smoke sweep and your front window</h1>
+    <p class="mt-3 max-w-3xl opacity-90">
+      <span class="gc-file">make smoke</span> opens <strong>49 real Godot windows, one per scenario</strong>,
+      and this engine build activates every one of them unconditionally.
+      <span class="gc-file">tools/godot_gui.sh</span> already hands the focus back — measured at
+      <strong>240 ms per window</strong> — but forty-nine restored blips in two minutes is still a
+      keyboard you cannot type into, and the sweep now runs unattended from every
+      <span class="gc-file">no-mistakes</span> review worktree. This plan keeps the wrapper as the
+      safety net and attacks the real number: <strong>how many windows the sweep opens at all</strong>.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-warning badge-lg font-bold">PROPOSED — nothing built yet</span>
+      <span class="badge badge-outline badge-lg text-white">49 launches → target ≤ 6</span>
+      <span class="badge badge-outline badge-lg text-white">tools/ only, plus one presentation seam</span>
+      <span class="badge badge-outline badge-lg text-white">merge bar: 49 byte-identical captures</span>
+    </div>
+  </header>
+
+  <main class="px-6 md:px-10 py-8 space-y-12">
+
+    <!-- ====================== 1 · WHAT ACTUALLY HAPPENS ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">1</span> What actually happens</h2>
+      <p class="max-w-3xl">
+        The complaint — <em>“something keeps stealing my window”</em> — was traced on
+        <strong>2026-07-27</strong> to windowed Godot launches from agent sessions. Nobody is doing
+        anything wrong: the presentation smoke sweep is a windowed gate by design
+        (<span class="gc-file">tools/smoke_scenarios.sh</span>, header: <em>“Needs a display: these
+        runs render”</em>), and both <span class="gc-file">make smoke</span> and the
+        <span class="gc-file">no-mistakes</span> reviewer run it as a matter of course. The bursts
+        observed that afternoon:
+      </p>
+      <div class="overflow-x-auto">
+        <table class="table table-sm table-zebra w-full">
+          <thead>
+            <tr><th>Local time</th><th>Origin</th><th>Command</th><th>Windows</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="whitespace-nowrap">18:16–18:19</td>
+              <td><span class="gc-file">~/.no-mistakes/worktrees/…/01KYJ5GK…</span> (COM-11 review)</td>
+              <td><span class="gc-file">tools/smoke_scenarios.sh after_build_menu</span>, ×4 invocations</td>
+              <td class="text-center font-bold">~6</td>
+            </tr>
+            <tr class="bg-error/10">
+              <td class="whitespace-nowrap">20:23</td>
+              <td><span class="gc-file">.claude/worktrees/com-33-a0-eventbus-removal</span></td>
+              <td><span class="gc-file">make smoke</span></td>
+              <td class="text-center font-bold">49</td>
+            </tr>
+            <tr>
+              <td class="whitespace-nowrap">20:27–20:29</td>
+              <td><span class="gc-file">~/.no-mistakes/worktrees/…/01KYJD73…</span> (COM-33 review)</td>
+              <td><span class="gc-file">tools/smoke_scenarios.sh power_banner power_active …</span>, ×3</td>
+              <td class="text-center font-bold">~12</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="max-w-3xl">
+        Three sessions, ~67 windows in one afternoon, none of them wanted on screen. The review
+        worktrees carry no <span class="gc-file">bin/</span> symlink, so they fall back to
+        <span class="gc-file">/opt/homebrew/bin/godot</span> — which resolves to the same
+        <span class="gc-file">/Applications/Godot.app</span> bundle, so this is not a
+        second-engine problem.
+      </p>
+    </section>
+
+    <!-- ====================== 2 · THE MEASUREMENT ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">2</span> The measurement — a 240 ms blip, forty-nine times</h2>
+      <p class="max-w-3xl">
+        Sampling the frontmost app every 100 ms (<span class="gc-file">lsappinfo front</span>) across
+        one <span class="gc-file">capture</span> scenario on a warm worktree:
+      </p>
+
+      <div class="card bg-base-100 border border-base-300">
+        <div class="card-body gap-4">
+          <div class="tl">
+            <div class="tl-row">
+              <span class="tl-label">stock wrapper</span>
+              <span class="tl-track">
+                <i class="tl-you"   style="left:0%;  width:20%"></i>
+                <i class="tl-steal" style="left:20%; width:11.5%"></i>
+                <i class="tl-you"   style="left:31.5%; width:68.5%"></i>
+              </span>
+            </div>
+            <div class="tl-scale">
+              <div></div>
+              <div><span>0.0 s</span><span>1.0 s</span><span>2.1 s (scenario ends)</span></div>
+            </div>
+          </div>
+          <ul class="text-sm space-y-1">
+            <li><strong>+0.42 s</strong> — Godot becomes frontmost (<span class="gc-file">org.godotengine.godot</span>)</li>
+            <li><strong>+0.66 s</strong> — <span class="gc-file">godot_gui.sh</span>’s watcher fires <span class="gc-file">.godot/activate_pid</span>, your app is front again</li>
+            <li><strong>+2.08 s</strong> — the scenario writes its 44 450 B capture and quits</li>
+          </ul>
+          <p class="text-sm opacity-80">
+            The wrapper works. The problem is arithmetic: <strong>49 × 0.24 s</strong> of stolen
+            focus, spread as forty-nine separate interruptions across roughly two minutes, is not a
+            background task — it is a machine you have to stop using.
+          </p>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <div>
+          <h3 class="font-bold">Two holes in the wrapper the measurement did <em>not</em> hit</h3>
+          <p class="text-sm mt-1">
+            <span class="gc-file">tools/godot_gui.sh:56-75</span> watches for the steal with
+            <code>for _ in $(seq 1 100)</code> and <code>sleep 0.1</code> — a <strong>10-second
+            budget</strong> — and it <code>exit 0</code>s after the <em>first</em> restore. A launch
+            whose window appears later than 10 s (cold worktree, fresh <span class="gc-file">.godot</span>
+            import, the 90-second <span class="gc-file">aiturn</span> scenario) gets
+            <strong>no restore at all</strong>, and an engine that activates a second time keeps the
+            focus for the rest of the run. Both cases are unobserved so far and both are one slow
+            morning away.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 3 · DEAD ENDS ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">3</span> Dead ends — tested, refuted, do not re-litigate</h2>
+      <p class="max-w-3xl">
+        The wrapper’s own header already records four failed attempts to stop the steal at the source
+        (no CLI flag, <span class="gc-file">open -g</span>, bundle-id trickery, the
+        <span class="gc-file">no_focus</span> window flag). Two more were tested while writing this
+        plan, because “just tell macOS the app is not a foreground app” is the obvious next idea and
+        somebody will have it again:
+      </p>
+      <div class="overflow-x-auto">
+        <table class="table table-sm w-full">
+          <thead>
+            <tr><th>Attempt</th><th>Method</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr class="gc-risk-high">
+              <td class="font-bold">LSUIElement</td>
+              <td>Ad-hoc-signed clone of <span class="gc-file">Godot.app</span> with <code>LSUIElement=true</code>, run over 3 scenarios</td>
+              <td><strong>Still stole focus 3/3.</strong> Captures byte-size-identical (44 450 / 61 200 / 83 958 B)</td>
+            </tr>
+            <tr class="gc-risk-high">
+              <td class="font-bold">LSBackgroundOnly</td>
+              <td>Same clone with <code>LSBackgroundOnly=true</code>, 3 scenarios</td>
+              <td><strong>Still stole focus 3/3.</strong> Same three capture sizes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="max-w-3xl text-sm opacity-80">
+        Both plist routes cost more than they look, too: editing <span class="gc-file">Info.plist</span>
+        inside the signed bundle invalidates the signature and the process is <code>SIGKILL</code>ed
+        (exit 137) until you strip <span class="gc-file">com.apple.quarantine</span> and re-sign
+        <code>--deep --sign -</code>. A vendored, re-signed engine copy that still fails the actual
+        goal is the worst of both. <strong>The engine activates itself explicitly; macOS metadata does
+        not out-vote that.</strong>
+      </p>
+    </section>
+
+    <!-- ====================== 4 · DECISIONS ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">4</span> Decisions</h2>
+      <div class="grid gap-3 md:grid-cols-2">
+        <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
+          <h3 class="font-black">D1 · The sweep’s output is the invariant</h3>
+          <p class="text-sm">Every one of the 49 captures stays <strong>byte-identical</strong> to today’s, and that byte-diff is the merge bar — the same instrument the balance reports use. Repeated runs already produce identical capture sizes, so the gate is real and cheap.</p>
+        </div></div>
+        <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
+          <h3 class="font-black">D2 · No engine-bundle metadata tricks</h3>
+          <p class="text-sm">LSUIElement and LSBackgroundOnly are refuted above, and a vendored re-signed <span class="gc-file">Godot.app</span> would be a supply-chain and licensing liability for zero benefit. The engine binary the repo ships stays untouched.</p>
+        </div></div>
+        <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
+          <h3 class="font-black">D3 · A human who launches the game still gets it focused</h3>
+          <p class="text-sm">The existing tty rule stays exactly as written: an interactive launch <code>exec</code>s Godot directly, only tty-less agent and script launches get the restore behaviour. This plan makes the agent path better, never the human path worse.</p>
+        </div></div>
+        <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
+          <h3 class="font-black">D4 · <span class="gc-file">tools/</span> first; one presentation seam at most</h3>
+          <p class="text-sm">FS1 is <span class="gc-file">tools/</span> only. FS2 may touch <span class="gc-file">scenes/battle/battle_setup.gd</span> — where <code>--fog</code> / <code>--map</code> are read off <code>OS.get_cmdline_user_args()</code> — and nothing else. <strong>Nothing under <span class="gc-file">core/</span> or <span class="gc-file">ai/</span> learns that a smoke sweep exists.</strong></p>
+        </div></div>
+        <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
+          <h3 class="font-black">D5 · No new dependency</h3>
+          <p class="text-sm">The Swift <span class="gc-file">activate_pid</span> helper compiled into the gitignored <span class="gc-file">.godot/</span> cache stays the mechanism, and the <code>open -b &lt;bundleid&gt;</code> fallback stays correct for a machine with no Swift toolchain.</p>
+        </div></div>
+        <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
+          <h3 class="font-black">D6 · Fewer windows beats faster restores</h3>
+          <p class="text-sm">The wrapper can only ever shrink a steal it has already suffered. The number that actually decides whether the machine is usable is <strong>how many times the sweep boots the engine</strong>, and that is FS2’s target — 49 → ≤ 6 — with FS1 as the net underneath it.</p>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ====================== 5 · MILESTONES ====================== -->
+    <section class="space-y-5">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">5</span> Milestones</h2>
+
+      <!-- FS0 -->
+      <div class="card bg-base-100 border-2 border-base-300">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="badge badge-neutral badge-lg font-black">FS0</span>
+            <h3 class="text-xl font-black">The instrument — <span class="gc-file">tools/focus_timeline.sh</span></h3>
+            <span class="badge badge-outline">~40 lines, no engine involvement</span>
+          </div>
+          <p>
+            Wraps any command and prints the frontmost-app timeline around it, collapsing runs of the
+            same app the way the tables in §2 do. Everything below is stated as a measurement, so the
+            measuring tool ships first — a focus regression is otherwise invisible to
+            <span class="gc-file">make verify</span> forever.
+          </p>
+<pre class="bg-base-200 rounded p-3 overflow-x-auto"><code>$ tools/focus_timeline.sh make smoke
+  0.00  com.google.Chrome
+  0.42  org.godotengine.godot     ← steal   (+0.24s)
+  0.66  com.google.Chrome
+  ...
+  steals: 49   total stolen: 11.8s   longest: 0.31s   restored to wrong app: 1</code></pre>
+          <ul class="gc-checks text-sm space-y-1">
+            <li>Reports steal count, total and longest stolen interval, and every restore that landed on an app other than the pre-launch one.</li>
+            <li>macOS-only and honest about it: on any other platform it runs the command and says so.</li>
+            <li>Not wired into <span class="gc-file">make verify</span> — it needs a display and a human’s desktop, exactly like the sweep it measures.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FS1 -->
+      <div class="card bg-base-100 border-2 border-base-300">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="badge badge-primary badge-lg font-black">FS1</span>
+            <h3 class="text-xl font-black">The watcher stops giving up</h3>
+            <span class="badge badge-outline">tools/godot_gui.sh</span>
+          </div>
+          <p>Three defects, one file, no behaviour change for an interactive launch:</p>
+          <div class="overflow-x-auto">
+            <table class="table table-sm w-full">
+              <thead><tr><th>Today</th><th>FS1</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Watches for ≤ 10 s (<code>seq 1 100</code> × <code>sleep 0.1</code>), then abandons the run</td>
+                  <td>Watches for the child’s <strong>whole lifetime</strong> — the loop’s exit condition is <code>kill -0 "$game_pid"</code>, nothing else</td>
+                </tr>
+                <tr>
+                  <td><code>exit 0</code> after the first restore; a second activation keeps the focus</td>
+                  <td>Restores <strong>every</strong> time the game becomes frontmost, with a short backoff so a fight with a genuinely re-activating engine cannot spin</td>
+                </tr>
+                <tr>
+                  <td>Restore target is “whoever was front on the last poll”, which caught <span class="gc-file">com.apple.systemuiserver</span> once during testing</td>
+                  <td>Prefers the app that was front <strong>before the launch</strong>; transient system UI (SystemUIServer, Dock, Spotlight, and the game itself) is never adopted as a target</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm"><strong>Acceptance.</strong> <span class="gc-file">tools/focus_timeline.sh make smoke</span> reports zero stolen intervals longer than 0.5 s, zero restores to an app that was not front before the launch, and the same 49 <span class="gc-file">ok</span> lines. A run started from an interactive terminal still comes up focused.</p>
+        </div>
+      </div>
+
+      <!-- FS2 -->
+      <div class="card bg-base-100 border-2 border-base-300">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="badge badge-secondary badge-lg font-black">FS2</span>
+            <h3 class="text-xl font-black">One boot per configuration group — 49 windows become ≤ 6</h3>
+            <span class="badge badge-outline">the actual fix</span>
+          </div>
+          <p>
+            The 49 scenarios are not 49 different programs. They differ in exactly three boot facts —
+            <strong>which scene</strong> (battle vs. main menu), <strong>fog on or off</strong>, and
+            <strong>which map</strong> — and then in a <code>--demo=</code> string the driver
+            dispatches internally. Group by those three and the sweep is a handful of processes:
+          </p>
+          <div class="overflow-x-auto">
+            <table class="table table-sm table-zebra w-full">
+              <thead><tr><th>Group</th><th>Boot</th><th>Scenarios</th></tr></thead>
+              <tbody>
+                <tr><td class="font-bold">battle · default map</td><td><span class="gc-file">battle.tscn</span></td><td class="text-center">40</td></tr>
+                <tr><td class="font-bold">battle · fog</td><td>+ <code>--fog</code> (<span class="gc-file">powermenu+fog</span>, <span class="gc-file">victory+fog</span>)</td><td class="text-center">2</td></tr>
+                <tr><td class="font-bold">battle · the_straits</td><td>+ <code>--map=the_straits</code> (the naval and <span class="gc-file">power_ready_contrast</span> modes)</td><td class="text-center">5</td></tr>
+                <tr><td class="font-bold">menu</td><td>no scene argument</td><td class="text-center">2</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            So the driver grows a batch entry — <code>--demos=a,b,c</code> beside today’s
+            <code>--demo=</code> — that runs each scenario, writes its capture, reloads the battle
+            scene, and only quits after the last one. <span class="gc-file">tools/smoke_scenarios.sh</span>
+            keeps its per-scenario output lines and its exit code; what changes is that it launches
+            per <em>group</em> instead of per <em>scenario</em>.
+          </p>
+          <ul class="gc-checks text-sm space-y-1">
+            <li><strong>All 49 captures byte-identical</strong> to a pre-change run (D1). This is the merge bar, not a smoke check.</li>
+            <li>Per-scenario status preserved: a failure still names the scenario, and a scenario that fails in a batch is automatically re-run alone before the sweep reports it.</li>
+            <li><span class="gc-file">SMOKE_ISOLATE=1</span> restores today’s one-process-per-scenario behaviour verbatim, so the isolation the sweep has always had remains available in one word.</li>
+            <li>The per-scenario watchdog survives the move: <span class="gc-file">run_with_timeout</span> today only sees a whole group, so the batch driver carries its own per-scenario deadline and fails the group with the offending name.</li>
+          </ul>
+          <p class="text-sm"><strong>Acceptance.</strong> <span class="gc-file">make smoke</span> opens ≤ 6 windows, the byte-diff over all 49 captures is empty, wall clock is no worse than today, and <span class="gc-file">SMOKE_ISOLATE=1 make smoke</span> is bit-for-bit the old path.</p>
+        </div>
+      </div>
+
+      <!-- FS3 -->
+      <div class="card bg-base-100 border-2 border-base-300 opacity-95">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="badge badge-accent badge-lg font-black">FS3</span>
+            <h3 class="text-xl font-black">One boot, full stop — stretch, and only if it is free</h3>
+            <span class="badge badge-outline">stop at FS2 if a single byte moves</span>
+          </div>
+          <p>
+            The three battle groups only exist because <code>--fog</code> and <code>--map</code> are
+            read once at setup off <code>OS.get_cmdline_user_args()</code>
+            (<span class="gc-file">scenes/battle/battle_setup.gd:46,88</span>). Give
+            <span class="gc-file">BattleSetup</span> an injectable options value and the batch runner
+            can reconfigure between scenarios, collapsing the sweep to <strong>one window for the
+            whole run</strong> — one 0.24 s blip in two minutes, which is the end state.
+          </p>
+          <p class="text-sm">
+            This is explicitly the risky half: it makes every scenario share one process with the
+            autoloads (<span class="gc-file">MatchConfig</span>, <span class="gc-file">Settings</span>,
+            <span class="gc-file">Sfx</span>) it used to get fresh. The gate is unchanged and
+            unforgiving — <strong>49 byte-identical captures or the milestone does not ship</strong>.
+            FS2 alone already takes the interruption count from 49 to ~4; FS3 is a nicety, not the deliverable.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 6 · RISKS ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">6</span> Risks</h2>
+      <div class="space-y-3">
+        <div class="card bg-base-100 gc-risk-high"><div class="card-body py-4 gap-1">
+          <h3 class="font-black">R1 · A batched scenario passes because of its predecessor <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">Shared autoload state is exactly what one-process-per-scenario used to rule out. <strong>Mitigation:</strong> the byte-diff gate (a leaked pin or a stale <span class="gc-file">Settings</span> value moves pixels), the scene reload between scenarios, and <span class="gc-file">SMOKE_ISOLATE=1</span> kept as a first-class escape hatch for bisecting a suspicious pass.</p>
+        </div></div>
+        <div class="card bg-base-100 gc-risk-medium"><div class="card-body py-4 gap-1">
+          <h3 class="font-black">R2 · One crash takes a whole group down <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">Today a crashing scenario costs one scenario; batched, it costs 37. <strong>Mitigation:</strong> a group that fails is re-run scenario-by-scenario before the sweep reports, so the diagnosis a developer reads is always per-scenario — slower only on the runs that were failing anyway.</p>
+        </div></div>
+        <div class="card bg-base-100 gc-risk-medium"><div class="card-body py-4 gap-1">
+          <h3 class="font-black">R3 · The watchdog loses its resolution <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm"><span class="gc-file">run_with_timeout</span> polls a process, and a batch process is alive as long as <em>any</em> scenario is progressing — a scenario stuck in <code>_run_demo</code>’s <code>while state != …</code> loop would hide behind its neighbours. <strong>Mitigation:</strong> the per-scenario deadline moves inside the driver and names the scenario when it trips; the outer timeout becomes a group-level backstop.</p>
+        </div></div>
+        <div class="card bg-base-100 gc-risk-medium"><div class="card-body py-4 gap-1">
+          <h3 class="font-black">R4 · The restore hands focus to the wrong app <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">Observed once during testing: focus came back to <span class="gc-file">com.apple.systemuiserver</span> rather than the browser it was taken from. Rare and self-correcting today, and a lifetime watcher (FS1) makes it <em>more</em> reachable by restoring more often. <strong>Mitigation:</strong> the pre-launch snapshot and the system-UI denylist are part of FS1, not a follow-up.</p>
+        </div></div>
+        <div class="card bg-base-100 gc-risk-good"><div class="card-body py-4 gap-1">
+          <h3 class="font-black">R5 · Cold review worktrees widen the window <span class="badge badge-success badge-sm align-middle">low</span></h3>
+          <p class="text-sm">Every <span class="gc-file">no-mistakes</span> worktree starts with an empty <span class="gc-file">.godot/</span>: it recompiles <span class="gc-file">activate_pid</span> and imports assets before the first window appears, which is precisely the case today’s 10-second watcher budget can miss. FS1 removes the budget; nothing else is needed.</p>
+        </div></div>
+        <div class="card bg-base-100 gc-risk-good"><div class="card-body py-4 gap-1">
+          <h3 class="font-black">R6 · Scope creep into the sweep’s coverage <span class="badge badge-success badge-sm align-middle">low</span></h3>
+          <p class="text-sm">This is a developer-ergonomics change. It adds no scenario, removes no scenario, and changes no frame. If a milestone starts arguing about what the sweep should photograph, it has left this plan.</p>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ====================== 7 · MERGE BAR ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">7</span> The merge bar</h2>
+      <p class="max-w-3xl">
+        Same shape as the balance harness’s: generate both sides locally, diff the artefacts, and the
+        change ships only if the diff is empty.
+      </p>
+<pre class="bg-base-200 rounded p-3 overflow-x-auto"><code># before — on the unchanged tree
+SMOKE_KEEP=1 tools/smoke_scenarios.sh 2>&1 | tail -3      # prints the capture dir
+cp -R &lt;that dir&gt; /tmp/smoke-before
+
+# after — with the change applied
+SMOKE_KEEP=1 tools/smoke_scenarios.sh 2>&1 | tail -3
+diff -r /tmp/smoke-before &lt;the new dir&gt;                   # must be empty: 49 files, byte-identical
+
+# and the thing this plan is actually about
+tools/focus_timeline.sh make smoke                        # steals: ≤6, longest ≤0.5s, wrong-app restores: 0</code></pre>
+      <ul class="gc-checks text-sm space-y-1 max-w-3xl">
+        <li><span class="gc-file">make verify</span> stays green — it never touched the sweep and still does not.</li>
+        <li><span class="gc-file">make screenshot</span> stays byte-stable; it is one launch through the same wrapper and FS1 must not perturb it.</li>
+        <li>The interactive path is checked by a human running <span class="gc-file">make run</span> once and finding the window in front of them.</li>
+      </ul>
+    </section>
+
+    <!-- ====================== 8 · OUT OF SCOPE ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">8</span> Out of scope</h2>
+      <ul class="gc-crosses text-sm space-y-1 max-w-3xl">
+        <li><strong>Making the sweep headless.</strong> Godot’s macOS headless display server draws nothing, and the sweep’s entire premise is that a frame gets rendered — <span class="gc-file">SMOKE_MIN_BYTES</span> exists to catch exactly the blank capture this would produce.</li>
+        <li><strong>Injecting into the engine</strong> (<code>DYLD_INSERT_LIBRARIES</code>, swizzling <code>-[NSApplication activate…]</code>). It would work and it would be the worst thing in the repository: it needs library validation disabled on a re-signed engine copy, and it fails silently and mysteriously on the next engine bump.</li>
+        <li><strong>Vendoring a patched engine.</strong> Same objection, larger. The plan’s whole point is that the repo keeps running the stock build.</li>
+        <li><strong>Teaching the agents not to run smoke.</strong> They are supposed to run it — that is the gate working. Making the gate quiet is the fix; making it rarer is a regression.</li>
+        <li><strong>A settings toggle to skip the sweep.</strong> Nobody would set it back.</li>
+      </ul>
+    </section>
+
+    <!-- ====================== 9 · FIELD NOTES ====================== -->
+    <section class="space-y-4">
+      <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">9</span> Field notes from the investigation</h2>
+      <p class="max-w-3xl text-sm">Found while tracing the above; unrelated to the plan, listed so they are not re-discovered. <strong>Nothing was killed or changed.</strong></p>
+      <div class="overflow-x-auto">
+        <table class="table table-sm w-full">
+          <thead><tr><th>PID</th><th>Since</th><th>What</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="font-mono font-bold">16413</td>
+              <td>Sat 2026-07-25 22:34</td>
+              <td>An orphaned windowed Godot editor from <span class="gc-file">bin/Godot.app</span> (ppid 1). Idle, not the focus thief, but it has been sitting there for two days.</td>
+            </tr>
+            <tr>
+              <td class="font-mono font-bold">12401</td>
+              <td>Mon 2026-07-27 12:48</td>
+              <td>A headless <span class="gc-file">tools/probe_exit.gd</span> run stuck for 7 h 40 m, with its <span class="gc-file">zsh</span> parent (12400) spinning in a <code>kill -0</code> loop that has no <code>sleep</code> in it.</td>
+            </tr>
+            <tr>
+              <td class="font-mono">58859 · 59027 · 94726</td>
+              <td>ongoing</td>
+              <td>Three <code>--headless --editor</code> LSP servers, one per active worktree. Expected, harmless, invisible to focus.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="px-6 md:px-10 py-6 border-t border-base-300 text-sm opacity-75">
+    <p><strong>Grid Commanders — Focus theft plan.</strong> Written 2026-07-27 from a live trace of three agent sessions. Status: proposed, nothing built. Measurements in §2 and §3 are reproducible with <span class="gc-file">lsappinfo front</span> sampling; the LSUIElement / LSBackgroundOnly clones were ad-hoc-signed throwaways under the session scratchpad and left nothing behind in the tree.</p>
+  </footer>
+</div>
+</body>
+</html>

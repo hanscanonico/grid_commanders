@@ -115,6 +115,15 @@ that must survive any change; the full rationale, milestones and risk registers 
   that deliberately writes. The key legend (`scenes/ui/control_hints.gd`) is printed by
   **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites
   that assign the state.
+- `focus-steal-plan.html` — developer ergonomics: the smoke sweep and the desktop's window
+  focus, FS0–FS3. The instrument is `tools/focus_timeline.sh` (FS0) and every claim about focus
+  is a measurement with it, never an anecdote. D2: **engine-bundle metadata tricks are refuted**
+  — `LSUIElement` and `LSBackgroundOnly` clones each still stole focus 3/3; do not re-litigate
+  without new evidence. D3: an interactive (tty) launch still `exec`s Godot directly and comes up
+  focused; only tty-less launches get the restore watcher. D1: the sweep's 49 captures staying
+  byte-identical is the merge bar for any change here. D6: fewer windows beats faster restores —
+  the wrapper is the safety net, batching (FS2) is the fix. Nothing under `core/` or `ai/` learns
+  the sweep exists.
 
 ## Architecture — the rules that matter most
 

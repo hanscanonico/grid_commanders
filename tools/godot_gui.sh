@@ -5,9 +5,11 @@
 # This engine build (4.7.1) activates its window unconditionally on startup:
 # no CLI flag, `open -g`, bundle-id trickery, or the no_focus window flag
 # stops the app from becoming frontmost — all four were tried. So the steal
-# is undone instead: watch for the moment the launched instance becomes the
-# frontmost app, then re-activate whatever the user was on. The focus loss
-# shrinks from the whole run to a sub-second blip.
+# is undone instead: watch the launched instance for its whole lifetime and
+# re-activate the user's app every time the game becomes frontmost. The
+# focus loss shrinks from the whole run to a sub-second blip per activation,
+# however late the window appears (a cold worktree imports for well over ten
+# seconds before its first frame) and however often the engine re-activates.
 #
 # A launch from an interactive terminal execs Godot directly — a human who
 # starts the game wants it focused. Agent and script launches (no tty) get
@@ -52,24 +54,63 @@ front_bundle() {
 # $$ survives the exec below, so inside the watcher it names the game process.
 game_pid=$$
 (
+	# Only a real user app may be adopted as a restore target: never the game
+	# itself (any Godot instance), and never transient system UI — a restore
+	# was observed landing on com.apple.systemuiserver instead of the app the
+	# focus was taken from.
+	restorable() {
+		[[ -n "$1" && "$1" != "$game_pid" ]] || return 1
+		case "$2" in
+			"" | org.godotengine.* | com.apple.systemuiserver | com.apple.dock | com.apple.Spotlight | com.apple.loginwindow)
+				return 1
+				;;
+		esac
+	}
+	# Snapshot the app that was front before the launch as the first target;
+	# the tracking below follows the user if they genuinely switch apps.
 	prev_pid="$(front_pid)"
 	prev_bundle="$(front_bundle)"
-	for _ in $(seq 1 100); do
-		kill -0 "$game_pid" 2>/dev/null || exit 0
+	if ! restorable "$prev_pid" "$prev_bundle"; then
+		# A launch can land on the beat between two scenarios, when window
+		# teardown briefly puts system UI in front. Seed from the window
+		# order instead of the bare frontmost process — a watcher seeded
+		# empty would have no restore target for its whole run.
+		prev_pid=""
+		prev_bundle=""
+		for asn in $(lsappinfo visibleProcessList 2>/dev/null); do
+			asn="${asn%%-\"*}:"
+			cand_pid="$(lsappinfo info -only pid "$asn" 2>/dev/null |
+				sed -E 's/[^0-9]*([0-9]+).*/\1/')"
+			cand_bundle="$(lsappinfo info -only bundleid "$asn" 2>/dev/null |
+				sed -E 's/.*"CFBundleIdentifier"="([^"]*)".*/\1/')"
+			if restorable "$cand_pid" "$cand_bundle"; then
+				prev_pid="$cand_pid"
+				prev_bundle="$cand_bundle"
+				break
+			fi
+		done
+	fi
+	# Watch for the game's whole lifetime — the exit condition is the child
+	# dying, nothing else — and restore on every activation. The longer sleep
+	# after a restore keeps a genuinely re-activating engine from turning
+	# this loop into a spin.
+	while kill -0 "$game_pid" 2>/dev/null; do
 		now="$(front_pid)"
 		if [[ "$now" == "$game_pid" ]]; then
-			if [[ -x "$activate_bin" ]]; then
+			if [[ -x "$activate_bin" && -n "$prev_pid" ]]; then
 				"$activate_bin" "$prev_pid" 2>/dev/null
-			elif [[ -n "$prev_bundle" && "$prev_bundle" != "org.godotengine.godot" ]]; then
+			elif [[ -n "$prev_bundle" ]]; then
 				open -b "$prev_bundle"
 			fi
-			exit 0
+			sleep 0.3
+			continue
 		fi
 		# Keep tracking where the user actually is: they may switch apps
 		# between our launch and the steal.
-		if [[ -n "$now" ]]; then
+		now_bundle="$(front_bundle)"
+		if restorable "$now" "$now_bundle"; then
 			prev_pid="$now"
-			prev_bundle="$(front_bundle)"
+			prev_bundle="$now_bundle"
 		fi
 		sleep 0.1
 	done
