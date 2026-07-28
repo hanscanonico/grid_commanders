@@ -438,7 +438,7 @@
 
           <tr class="gc-issue-row" data-sev="high">
             <td class="gc-mono font-black">U-09</td>
-            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-inflight">PART SHIPPED</span></td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-inflight">SHIPPED</span></td>
             <td class="gc-src">FC H-02<br>NP B2</td>
             <td>Silent no-op confirms: an acted unit, a freshly built unit, an invalid occupied destination, and
               input during the AI turn all return nothing — indistinguishable from missed input or a broken
@@ -446,7 +446,10 @@
               enemy now previews its reach, and R its fire ring.)</td>
             <td>Answer every rejected confirm with a short contextual reason near the cursor or unit card:
               "Already acted," "Ready next day," "Occupied," "CPU turn" — shown briefly, never blocking play.
-              Keep the shipped enemy-preview capture in the acceptance matrix.</td>
+              Keep the shipped enemy-preview capture in the acceptance matrix.
+              <br><em>Shipped (COM-13):</em> a transient chip beside the cursor
+              (<code>scenes/ui/action_feedback.gd</code>), presentation-only — fresh builds are tracked for the
+              active view turn alone, nothing in <code>core/</code> or <code>ai/</code> changed.</td>
           </tr>
 
           <tr class="gc-issue-row" data-sev="high">
@@ -946,6 +949,7 @@
           <tr><td class="gc-mono">fresh_build_status</td><td>The unit says "Built · ready next day," not "Waited."</td><td class="gc-mono">U-17</td></tr>
           <tr><td class="gc-mono">damage_preview_hp</td><td>Forecast communicates dealt and returned HP unambiguously.</td><td class="gc-mono">U-13</td></tr>
           <tr><td class="gc-mono">power_ready_contrast</td><td>READY and FIRE legible over the brightest and darkest shipped maps.</td><td class="gc-mono">U-14</td></tr>
+          <tr><td class="gc-mono">rejected_confirm</td><td>All four refusals answer: acted unit, unit built this turn, occupied destination, CPU turn.</td><td class="gc-mono">U-09</td></tr>
           <tr><td class="gc-mono">enemy_range_preview</td><td>Clicking an enemy previews reach; R paints its fire ring (regression gate for the shipped range-preview work).</td><td class="gc-mono">U-09</td></tr>
         </tbody>
       </table>

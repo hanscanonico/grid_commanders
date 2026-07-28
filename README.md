@@ -208,9 +208,10 @@ what makes the meter rise), and a portrait on the victory screen.
 
 ## Controls
 
-You play the first side; the computer plays the second. Its turn plays itself — input is blocked
-while the AI moves, attacks, captures, and builds, and the cursor follows each of its actions so
-you can watch. `make hotseat` drops the AI and lets two players share the keyboard instead.
+You play the first side; the computer plays the second. Its turn plays itself — play is blocked
+while the AI moves, attacks, captures, and builds (a confirm during it answers *CPU turn.* rather
+than going quiet), and the cursor follows each of its actions so you can watch. `make hotseat`
+drops the AI and lets two players share the keyboard instead.
 
 Either way, only the team whose day it is can act; a banner announces each turn and the cursor
 jumps to that team's first property.
@@ -233,6 +234,10 @@ forgets them all for one machine, which is how a fresh install is staged for tes
   visible unit moves the preview there (a ready unit of your own still just selects), and cancel
   or a click on an empty tile dismisses it. It is a look, not an order, and fog applies: a unit
   you cannot see cannot be inspected
+- A confirm the board refuses says why, in a chip beside the cursor that fades on its own and never
+  blocks play: *Already acted.* on one of yours that has spent its day, *Ready next day.* on one you
+  built this turn, *Occupied.* on a destination in range held by a friendly unit the mover can
+  neither load into nor join, and *CPU turn.* while the computer is playing
 - `R`, while any unit's movement range is on screen — selected or previewed — toggles a red
   overlay of every cell that unit could bring under fire this turn: a direct unit firing from
   anywhere it could stop, an indirect only from where it stands, since it cannot move and shoot.

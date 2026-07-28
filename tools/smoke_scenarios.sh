@@ -131,6 +131,17 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # the bug. Note the name: a `menu_` prefix is reserved above for the main-menu
 # scenarios, and this one is a battle-scene flow.
 #
+# rejected_confirm and enemy_range_preview are COM-13's pair, and both are checks
+# rather than pictures. The first walks every refusal a confirm can meet — an
+# acted unit, one built this turn, a reachable destination a friendly holds that
+# is neither a Load nor a Join, and a press during the computer's turn — and reads
+# the chip's words back after each one, because all four used to be silent no-ops
+# and silence photographs exactly like a reason. The second is the regression gate
+# the same finding owes the already-shipped range preview: clicking an enemy must
+# still paint its reach and R its fire ring. Both flows live in
+# BattleFeedbackScenario rather than in the driver, which is why the driver's line
+# ceiling moved by the dispatch arm and not by the scenarios.
+#
 # The menu pair is the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
 # centered menu column plus all four primary actions against the 640x360 frame
