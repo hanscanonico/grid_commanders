@@ -14,13 +14,14 @@
 ; flinch on the advance path, and Easy gets the larger of the two shipped values
 ; because hanging back is its whole character. The remaining weights say the rest —
 ; poor finishing, fears every counter, runs home early, shrugs at marginal plays,
-; over-buys infantry, and never fields an md tank. The tail appends Normal's
+; stops at two capture units even on a large property race, and never fields an
+; md tank. The tail appends Normal's
 ; non-transport air and sea combat units in their existing order, so an owned
 ; airport or port stays useful. It adds no land unit — the land prefix above is
 ; Easy's alone — and no transport, which the planner cannot use.
 [resource]
 script = ExtResource("1")
-kill_bonus = 1.2
+kill_bonus = 1.0
 counter_weight = 1.0
 capture_score = 900.0
 hq_capture_multiplier = 3.0
@@ -30,7 +31,7 @@ retreat_hp = 60
 min_useful_score = 80.0
 advance_score = 1.0
 build_priority = Array[StringName]([&"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter"])
-capture_unit_target = 4
+capture_unit_target = 2
 air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
 air_answer_target = 2
 duplicate_priority_cost = 3

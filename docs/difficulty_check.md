@@ -5,11 +5,10 @@ what the measurement currently says. This is the committed record of the
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
-**Standing verdict: the gate does not pass.** Normal takes 43.3% from Easy and
-Difficult takes 66.7% from Normal; neither adjacent pairing clears the required
-70%. Difficult now has a measurable advantage, but Easy's intended weakness is
-not established. Details and the reasoning below — read §4 before changing a
-weight, and §5 before deciding what to do about it.
+**Standing verdict: the gate passes.** Normal takes 71.7% from Easy and
+Difficult takes 71.7% from Normal; both adjacent pairings clear the required
+70%, with zero rejected commands and zero cap stalls. Details and the tuning
+record follow — read §4 before changing a weight.
 
 ## 1. What difficulty is allowed to change
 
@@ -28,7 +27,7 @@ wins more games — which is what the gate measures.
 
 | Tier | id | Profile | Character |
 |---|---|---|---|
-| Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, refuses trades, over-buys infantry, no md tank |
+| Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, finishes poorly, under-fields capturers, no md tank |
 | Normal | `normal` | `data/ai/default.tres` | The shipped AI, bit for bit |
 | Difficult | `hard` | `data/ai/hard.tres` | Threat-aware and counter-building, sharper trade weights |
 
@@ -116,8 +115,8 @@ planner and the rules disagree.
 
 | Pairing | Overall | scrimmage | ironworks | Gate |
 |---|---|---|---|---|
-| Normal over Easy | **43.3%** (26/60) | 63.3% | 23.3% | fail |
-| Difficult over Normal | **66.7%** (40/60) | 70.0% | 63.3% | fail |
+| Normal over Easy | **71.7%** (43/60) | 93.3% | 50.0% | pass |
+| Difficult over Normal | **71.7%** (43/60) | 70.0% | 73.3% | pass |
 
 Zero rejected commands and zero cap stalls across all 120 — the planner and the
 rules never disagreed, which is the correctness half of this run and it is clean.
@@ -132,22 +131,44 @@ facility, and proves each tier issues a valid build for the remaining domain.
 
 ### Findings
 
-**(a) Production coverage was a real defect, but fixing it is not sufficient to
-prove the ladder.** Easy and Difficult no longer leave an affordable owned
-airport or port idle merely because no compatible unit appears in their static
-priority list. The full gate nevertheless puts Easy ahead of Normal overall,
-and especially on `ironworks`: Normal wins only 7 of 30 there. The intended
-"timid and weaker" Easy profile therefore needs a separate tuning pass.
+**(a) Easy now measures weaker without a handicap.** Its capture-unit target
+drops from four to two, so it under-staffs the large property race, and its kill
+bonus drops from 1.2 to 1.0, worsening its finishing judgement. Normal takes
+71.7% overall. The maps remain uneven — 93.3% on `scrimmage`, 50.0% on
+`ironworks` — but the combined pairing is the locked gate and clears it.
 
-**(b) Difficult is stronger, but not enough.** It exactly clears 70% on
-`scrimmage`, takes 63.3% on `ironworks`, and reaches 66.7% overall. That is a
-clear improvement over the superseded 50% record, but the gate is defined on the
-combined pairing and remains red by 3.3 points.
+**(b) Difficult closes the finishing gap without a new capability.** Its kill
+bonus rises from 1.8 to 2.0 and its counter-damage weight falls from 0.5 to 0.4.
+It values a kill more and discounts a good attack less for its return fire.
+Difficult takes 71.7% overall and independently reaches the threshold on both
+maps.
 
-The two maps still disagree sharply about Easy: Normal takes 63.3% on
-`scrimmage` but only 23.3% on `ironworks`. The report does not license an
-explanation by estimate; the next pass must change one profile hypothesis at a
-time and rerun the same fixed-seed gate.
+**(c) The honest air/sea production baseline remains intact.** Easy and
+Difficult retain their land-priority prefixes, list every non-transport air and
+sea combat unit, and never leave an affordable owned airport or port idle merely
+because their priority list lacks a compatible unit. No transport was added;
+the planner still cannot plan a ferry.
+
+### COM-120 tuning path
+
+Each row changed one judgement hypothesis from the retained candidate, then ran
+the same 15-seed, 120-match gate. Rejected values were restored before the next
+axis moved.
+
+| Probe | Profile change | Target pairing | Result | Decision |
+|---|---|---|---|---|
+| H1 | Easy `threat_aversion` 0.3 → 0.5 | Normal over Easy | 40.0% | reject — timidity strengthened Easy on `ironworks` |
+| H2 | Easy `capture_score` 900 → 300 | Normal over Easy | 48.3% | reject — did not alter the large-board race |
+| H3 | Easy `capture_unit_target` 4 → 2 | Normal over Easy | 68.3% | retain as the better axis |
+| H4 | Easy `capture_unit_target` 2 → 1 | Normal over Easy | 75.0% | reject — passed by removing more capture play than needed |
+| H5 | Easy `kill_bonus` 1.2 → 1.0, with H3 retained | Normal over Easy | **71.7%** | select |
+| H6 | Difficult `build_reactivity` 0.6 → 1.0 | Difficult over Normal | 41.7% | reject |
+| H7 | Difficult `advance_threat_tiles` 2.0 → 1.6 | Difficult over Normal | 60.0% | reject |
+| H8 | Difficult `advance_threat_tiles` 2.0 → 3.0 | Difficult over Normal | 60.0% | reject |
+| H9 | Difficult `kill_bonus` 1.8 → 2.0 | Difficult over Normal | 68.3% | retain as the better axis |
+| H10 | Difficult `kill_bonus` 2.0 → 2.2 | Difficult over Normal | 68.3% | reject — no outcome changed |
+| H11 | Difficult `kill_bonus` 2.0 → 2.4 | Difficult over Normal | 68.3% | reject — shifted wins between maps only |
+| H12 | Difficult `counter_weight` 0.5 → 0.4, with H9 retained | Difficult over Normal | **71.7%** | select |
 
 ### Turn time (risk R3)
 
@@ -155,30 +176,27 @@ Mean AI planning per turn in the standing run:
 
 | Tier | ms/turn | over |
 |---|---|---|
-| Easy | 104.3 | 1118 turns |
-| Difficult | 65.8 | 1138 turns |
-| Normal | 42.1 | 2258 turns |
+| Easy | 71.6 | 1072 turns |
+| Difficult | 53.7 | 1146 turns |
+| Normal | 33.7 | 2210 turns |
 
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
 
 ## 5. Where this leaves the feature
 
-Everything the plan asked to be *built* is built, tested and shipping: the tier
-plumbing, the menu picker, the save key, all three capabilities, and this gate.
-What is not established is the ordering the gate exists to prove.
+Everything the plan asked to be built and measured is now shipping: the tier
+plumbing, menu picker, save key, all three capabilities, production coverage,
+and a passing DF4 ladder. No threshold, income, vision, damage, luck, map,
+harness, or simulation code changed to obtain the pass.
 
-The production defect and its coverage test stay isolated in their own change.
-The next step is a separate tuning ticket and pull request: tune Easy against
-Normal first, then close Difficult's 3.3-point overall gap, changing one
-profile hypothesis at a time and rerunning the 15-seed gate. No threshold,
-income, vision, damage, luck, map, or harness change is an acceptable substitute
-for a passing profile ladder. A human playtest at Easy and Difficult remains the
-other required read on whether the measured profiles are also fun.
+A human playtest at Easy and Difficult is still required to judge whether the
+measured profiles also feel distinct and fun. This report proves the automated
+ordering, not that subjective claim.
 
-`make difficulty-check` exits non-zero while the gate is unmet. That is
-deliberate: it is an opt-in release task, kept out of `make verify`, and a red
-result is the honest status of the claim.
+`make difficulty-check` remains an opt-in release task outside `make verify`.
+It exits non-zero whenever a future profile or planner change breaks the
+standing gate.
 
 ## 6. Superseded measurements
 

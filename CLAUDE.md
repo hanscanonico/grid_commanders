@@ -29,7 +29,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   risk register R1–R6.
 - `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
   tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
-  income, vision, damage or luck. Its DF4 acceptance gate is currently **unmet** — read
+  income, vision, damage or luck. Its DF4 acceptance gate is currently **met** — read
   `docs/difficulty_check.md` before touching an AI weight or a tier `.tres`.
 - `naval-air-units-plan.html` — air and naval domains N1–N4. Standing risk R1: the AI cannot plan
   a ferry, so it never builds transports — a naval map has to let fleets reach each other without

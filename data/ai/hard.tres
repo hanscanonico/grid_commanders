@@ -17,7 +17,11 @@
 ; zone" inert where nobody was attacking. 2.0 buys two tiles of retreat from a
 ; shot that would kill outright, and proportionally less from one that would not;
 ; below ~1.6 a healthy unit cannot buy even one against a plain artillery shot,
-; so that is the floor. A starting value: it has not been through the ladder yet.
+; so that is the floor.
+;
+; The ladder closes its finishing gap with kill_bonus 2.0 and counter_weight 0.4:
+; value a kill more, and discount a sound attack less for its return fire. These
+; remain judgement weights; they change no combat number.
 ;
 ; focus_fire_bonus ships at 0. The capability is implemented and tested, but it
 ; measured negative in every shape tried — the planner already re-plans after
@@ -32,8 +36,8 @@
 ; to the prefix and no transport the AI cannot use.
 [resource]
 script = ExtResource("1")
-kill_bonus = 1.8
-counter_weight = 0.5
+kill_bonus = 2.0
+counter_weight = 0.4
 capture_score = 900.0
 hq_capture_multiplier = 3.0
 capture_progress_bonus = 45.0
