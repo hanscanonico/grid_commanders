@@ -15,10 +15,10 @@
 ; because hanging back is its whole character. The remaining weights say the rest —
 ; poor finishing, fears every counter, runs home early, shrugs at marginal plays,
 ; stops at two capture units even on a large property race, and never fields an
-; md tank. The tail appends Normal's
-; non-transport air and sea combat units in their existing order, so an owned
-; airport or port stays useful. It adds no land unit — the land prefix above is
-; Easy's alone — and no transport, which the planner cannot use.
+; md tank. The tail appends Normal's non-transport air and sea combat units in
+; their existing order, so an owned airport or port stays useful. It adds no land
+; unit — the land prefix above is Easy's alone — and no transport, which the
+; planner cannot use.
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.0
