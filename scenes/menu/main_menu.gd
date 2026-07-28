@@ -28,6 +28,10 @@ const _BLINK_SECONDS := 0.7
 ## bigger than the canvas the field is drawn so panning never exposes an edge.
 const BACKDROP_TILE := 4
 const BACKDROP_SPAN := Vector2(680, 400)
+## Lines reserved for the selected board's caption. The words change with the
+## selection; the height may not (UX-recovery D2), so the panel is as tall on the
+## longest description as on the shortest.
+const MAP_CAPTION_LINES := 2
 
 ## Everything the select page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
@@ -50,6 +54,11 @@ var _column: VBoxContainer
 var _one_player_button: Button
 var _two_player_button: Button
 var _difficulty_buttons: Array[Button] = []
+## Which mode the setup is dressed for. Real menu state rather than an argument of
+## the press: hot-seat has no computer to tune, so Difficulty dims the moment
+## 2 Player is the choice in hand, comes back with 1 Player, and survives a Back
+## out of commander selection with the button that set it still focused.
+var _two_player_mode := false
 var _setup_help_labels: Array[Label] = []
 var _continue_button: Button
 ## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
@@ -104,10 +113,16 @@ func _ready() -> void:
 	_refresh_continue()
 	_one_player_button.pressed.connect(_open_select.bind([2] as Array[int]))
 	_two_player_button.pressed.connect(_open_select.bind([] as Array[int]))
+	# Reaching a mode is what dresses the panel for it, by focus for a keyboard or
+	# pad and by hover for a mouse, so the rule that hot-seat has no AI difficulty
+	# is readable before it is committed to rather than only after.
+	_one_player_button.focus_entered.connect(_set_two_player_mode.bind(false))
+	_one_player_button.mouse_entered.connect(_set_two_player_mode.bind(false))
+	_two_player_button.focus_entered.connect(_set_two_player_mode.bind(true))
+	_two_player_button.mouse_entered.connect(_set_two_player_mode.bind(true))
 	_continue_button.pressed.connect(_continue)
 	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses_setup_context():
-		_set_two_player_mode(true)
 		_two_player_button.grab_focus()
 	else:
 		_one_player_button.grab_focus()
@@ -155,6 +170,7 @@ func _build(animate: bool) -> void:
 	column.add_child(body)
 	body.add_child(_build_setup_panel())
 	body.add_child(_build_action_stack(animate))
+	_reserve_map_caption()
 
 
 ## The backdrop the menu sits on: a radial-lit slate floor (a brighter pool at
@@ -294,12 +310,11 @@ func _build_setup_panel() -> Control:
 
 
 ## The map picker: a scrollable two-up grid of live board thumbnails, the whole
-## roster's teaching board first (MapCatalog.ordered) — the dropdown is gone
-## (MN2). The
-## selected cell gets the raised cream surface, the meridian border and a ✓; scroll
-## follows keyboard focus so every board is reachable without a mouse. A static
-## caption beneath the viewport carries the decision-critical facts; each cell
-## keeps the richer tooltip as optional detail.
+## roster with its teaching board first (MapCatalog.ordered) — the dropdown is
+## gone (MN2). The selected cell gets the raised cream surface, the meridian
+## border and a ✓; scroll follows keyboard focus so every board is reachable
+## without a mouse. A static caption beneath the viewport carries the
+## decision-critical facts; each cell keeps the richer tooltip as optional detail.
 func _build_map_picker() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
@@ -322,9 +337,9 @@ func _build_map_picker() -> Control:
 	for i in _maps.size():
 		grid.add_child(_make_map_cell(i, _maps[i]))
 	_map_caption = _setup_help("")
-	_map_caption.custom_minimum_size = Vector2(0, 14)
 	_map_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_map_caption.max_lines_visible = 2
+	_map_caption.max_lines_visible = MAP_CAPTION_LINES
+	_map_caption.add_theme_constant_override("line_spacing", 1)
 	col.add_child(_map_caption)
 	_select_map(0)
 	return col
@@ -406,7 +421,6 @@ func _build_choices_row() -> Control:
 		speed_labels.append(_speed_tiers[i].display_name)
 		if _speed_tiers[i].id == Settings.speed.id:
 			speed_selected = i
-	var speed_buttons: Array[Button] = []
 	var speed := _build_segment(
 		"Speed",
 		speed_labels,
@@ -414,8 +428,7 @@ func _build_choices_row() -> Control:
 		meridian.color,
 		"How fast moves and battles play out",
 		"Pacing only · outcomes never change",
-		_on_speed_selected,
-		speed_buttons
+		_on_speed_selected
 	)
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(speed)
@@ -436,7 +449,7 @@ func _build_toggles_row() -> Control:
 	)
 	fog_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fog_col.add_child(fog)
-	fog_col.add_child(_setup_help("Hides tiles beyond your units' sight"))
+	fog_col.add_child(_option_help("Hides tiles beyond your units' sight"))
 	row.add_child(fog_col)
 	var anim_col := VBoxContainer.new()
 	anim_col.add_theme_constant_override("separation", 2)
@@ -449,7 +462,7 @@ func _build_toggles_row() -> Control:
 	)
 	anim_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	anim_col.add_child(anim)
-	anim_col.add_child(_setup_help("Full-screen cut-ins · any key skips"))
+	anim_col.add_child(_option_help("Full-screen cut-ins · any key skips"))
 	row.add_child(anim_col)
 	return row
 
@@ -547,7 +560,7 @@ func _build_segment(
 	tip: String,
 	tip_detail: String,
 	on_select: Callable,
-	button_sink: Array[Button]
+	button_sink: Array[Button] = []
 ) -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
@@ -590,7 +603,7 @@ func _build_segment(
 				restyle.call(i)
 				on_select.call(i)
 		)
-	col.add_child(_setup_help(tip_detail))
+	col.add_child(_option_help(tip_detail))
 	return col
 
 
@@ -603,7 +616,9 @@ func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> 
 	seg.add_theme_stylebox_override("hover", normal)
 	seg.add_theme_stylebox_override("pressed", normal)
 	seg.add_theme_stylebox_override("focus", UiTheme.focus_box())
-	var disabled := UiTheme.segment_box(false, accent)
+	# Dimmed rather than blanked: a disabled group still has a tier in hand, and a
+	# player must be able to read which one before the mode that greyed it out.
+	var disabled := UiTheme.segment_box(active, accent.lerp(UiTheme.PAPER, 0.55))
 	if divided:
 		disabled.border_color = UiTheme.HARD_BORDER
 		disabled.border_width_left = UiTheme.BORDER
@@ -613,7 +628,9 @@ func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> 
 	seg.add_theme_color_override("font_hover_color", fg)
 	seg.add_theme_color_override("font_pressed_color", fg)
 	seg.add_theme_color_override("font_focus_color", fg)
-	seg.add_theme_color_override("font_disabled_color", UiTheme.NEUTRAL_DARK)
+	seg.add_theme_color_override(
+		"font_disabled_color", UiTheme.WHITE if active else UiTheme.NEUTRAL_DARK
+	)
 
 
 ## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
@@ -770,8 +787,28 @@ func _setup_help(text: String) -> Label:
 	var label := _micro_label(text)
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return label
+
+
+## One option's help line, registered so the capture gate measures every one of
+## them and refuses an empty one. The map caption is not one of these: its words
+## follow the selection, so it answers to its own reserved budget instead.
+func _option_help(text: String) -> Label:
+	var label := _setup_help(text)
 	_setup_help_labels.append(label)
 	return label
+
+
+## Pins the caption's height to its reserved lines, asked of the label itself
+## rather than typed in as a pixel count, so a font or spacing change carries the
+## reservation with it. Called once the whole menu is in the tree: a Control
+## resolves its fonts through the tree, so measured before that the label answers
+## with the default theme's line height instead of its own.
+func _reserve_map_caption() -> void:
+	var words := _map_caption.text
+	_map_caption.text = "X\n".repeat(MAP_CAPTION_LINES - 1) + "X"
+	_map_caption.custom_minimum_size = Vector2(0, _map_caption.get_combined_minimum_size().y)
+	_map_caption.text = words
 
 
 ## A thin ink divider between the panel's rows (handoff --border-soft).
@@ -913,7 +950,12 @@ func _selected_difficulty() -> StringName:
 	return _difficulties[_difficulty_index].id
 
 
+## The one writer of the mode and of what it dresses. Hot-seat has no computer to
+## tune, so its Difficulty is inert; every route back to one player — the button,
+## a Back out of selection, the next boot — runs through here, so the tiers can
+## never be left stranded behind a mode nobody is in any more.
 func _set_two_player_mode(two_player: bool) -> void:
+	_two_player_mode = two_player
 	for button in _difficulty_buttons:
 		button.disabled = two_player
 
@@ -934,9 +976,13 @@ func _on_selection_confirmed(red_id: StringName, blue_id: StringName) -> void:
 	_start(_pending_ai_teams, false, {1: red_id, 2: blue_id})
 
 
+## Back from selection returns to the setup exactly as it was left: the mode that
+## opened the page is still the one in hand, and the button that chose it takes
+## focus back — which re-applies that mode rather than assuming one.
 func _on_selection_cancelled() -> void:
 	_menu_root.show()
-	_one_player_button.grab_focus()
+	var chosen := _two_player_button if _two_player_mode else _one_player_button
+	chosen.grab_focus()
 
 
 ## Names the saved match under the Continue button, so the menu alone answers
@@ -1004,27 +1050,71 @@ func _chrome() -> Dictionary:
 		"Quit": _quit_button,
 	}
 	for i in _setup_help_labels.size():
-		chrome["setup help %d" % (i + 1)] = _setup_help_labels[i]
+		chrome["option help %d" % (i + 1)] = _setup_help_labels[i]
 	return chrome
 
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
-## beginner board leads or that a hot-seat setup has no operable AI difficulty.
+## beginner board leads, that a hot-seat setup has no operable AI difficulty, or
+## that the caption's budget holds for a board this frame does not show.
 func _setup_context_ready() -> bool:
-	var ready := true
+	var passed := true
 	var map := _map_at(_selected_map)
 	if map == null or map.source_path != MapCatalog.BEGINNER_MAP_PATH:
 		push_error("main menu setup context: beginner board is not the default")
-		ready = false
+		passed = false
 	elif not _map_caption.text.contains(map.description.to_upper()):
 		push_error("main menu setup context: selected map description is not visible")
-		ready = false
-	for button in _difficulty_buttons:
-		if not button.disabled:
-			push_error("main menu setup context: two-player difficulty remains operable")
-			ready = false
+		passed = false
 	for label in _setup_help_labels:
 		if label.text.strip_edges() == "":
 			push_error("main menu setup context: an option-help line is empty")
-			ready = false
-	return ready
+			passed = false
+	# Deliberately not short-circuiting, like the driver's own frame check: one
+	# failed run should name every promise that broke, not just the first.
+	passed = _difficulty_follows_mode() and passed
+	passed = _caption_budget_holds() and passed
+	return passed
+
+
+## The mode is state, so the gate walks it rather than photographing one side of
+## it: hot-seat dims Difficulty, one player brings it back operable. The posed
+## hot-seat mode is restored before the frame is written.
+func _difficulty_follows_mode() -> bool:
+	var passed := true
+	if not _two_player_mode:
+		push_error("main menu setup context: hot-seat mode is not the posed state")
+		passed = false
+	_set_two_player_mode(false)
+	for button in _difficulty_buttons:
+		if button.disabled:
+			push_error("main menu setup context: one-player difficulty stays disabled")
+			passed = false
+	_set_two_player_mode(true)
+	for button in _difficulty_buttons:
+		if not button.disabled:
+			push_error("main menu setup context: two-player difficulty remains operable")
+			passed = false
+	return passed
+
+
+## No board may cost the panel a line the reserved caption does not have — the
+## COM-5 class again, where the layout budget quietly depended on the selection.
+## Measured on the live label at its settled width, so it is the real wrap.
+func _caption_budget_holds() -> bool:
+	var passed := true
+	var chosen := _selected_map
+	for i in _maps.size():
+		_selected_map = i
+		_refresh_map_facts()
+		if _map_caption.get_line_count() > MAP_CAPTION_LINES:
+			push_error(
+				(
+					"main menu setup context: %s wraps its caption to %d lines"
+					% [MapCatalog.display_name(_maps[i].source_path), _map_caption.get_line_count()]
+				)
+			)
+			passed = false
+	_selected_map = chosen
+	_refresh_map_facts()
+	return passed
