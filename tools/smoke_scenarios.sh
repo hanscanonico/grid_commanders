@@ -142,6 +142,14 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # BattleFeedbackScenario rather than in the driver, which is why the driver's line
 # ceiling moved by the dispatch arm and not by the scenarios.
 #
+# end_turn_ready_units is COM-14's two-sided gate. It first opens the guard with
+# live units ready and reads the count, every name/coordinate, and both choices
+# back from the modal; Review units must return to the same turn. It then marks
+# that side spent and proves End Turn commits with no guard at all before opening
+# the next side's guard for the capture. The old endturn and aiturn modes choose
+# End anyway through the same helper, so the new confirmation cannot strand
+# either of those established flows.
+#
 # The menu pair is the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
 # centered menu column plus all four primary actions against the 640x360 frame
@@ -167,7 +175,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
-	rejected_confirm enemy_range_preview
+	rejected_confirm enemy_range_preview end_turn_ready_units
 	powermenu capture_power victory aiturn
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish

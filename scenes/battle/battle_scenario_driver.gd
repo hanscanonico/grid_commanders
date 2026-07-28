@@ -265,10 +265,7 @@ func _run_demo(mode: String) -> void:
 			_battle.action_menu.choose(&"infantry")
 			await _until_state(Battle.State.IDLE)
 		"endturn":
-			_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
-			await _until_state(Battle.State.MENU)
-			_battle.action_menu.choose(&"end_turn")
-			await tree.process_frame
+			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
 		"load", "cargo", "drop", "transport":
 			await _run_transport_demo(mode)
 		"divemenu", "dive":
@@ -284,7 +281,7 @@ func _run_demo(mode: String) -> void:
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
-		"rejected_confirm", "enemy_range_preview":
+		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units":
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
@@ -318,9 +315,7 @@ func _run_demo(mode: String) -> void:
 			await _run_victory_demo()
 		"aiturn":
 			# hand the turn to the Blue AI and wait until it plays back to Red
-			_battle.confirm_at(Vector2i(10, 5))
-			await _until_state(Battle.State.MENU)
-			_battle.action_menu.choose(&"end_turn")
+			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
 			while (
 				_battle.game.winner == 0
 				and not (_battle.game.current_team == 1 and _battle.state == Battle.State.IDLE)

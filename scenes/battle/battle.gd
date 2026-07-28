@@ -70,6 +70,7 @@ const DIR_ACTIONS: Array = [
 @onready var handoff_button: Button = %HandoffButton
 @onready var commander_info_sheet: CommanderInfoSheet = %CommanderInfoSheet
 @onready var action_feedback: ActionFeedback = %ActionFeedback
+@onready var end_turn_guard: EndTurnGuard = %EndTurnGuard
 
 var db: TerrainDB
 var unit_db: UnitDB
@@ -197,6 +198,8 @@ func _ready() -> void:
 	_outcome = _build_outcome()
 	_outcome.configure(request.watching, request.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
+	end_turn_guard.review_requested.connect(_review_ready_units)
+	end_turn_guard.end_requested.connect(_end_turn_anyway)
 	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
 	rematch_button.pressed.connect(_exit.rematch)
 	menu_button.pressed.connect(_exit.to_main_menu)
@@ -685,6 +688,43 @@ func _handle_map_action(action: StringName) -> void:
 		return
 	if action != &"end_turn":
 		return
+	_request_end_turn()
+
+
+func _request_end_turn() -> void:
+	var ready := _ready_units()
+	if not ready.is_empty():
+		state = State.MENU
+		end_turn_guard.open(game.day, ready, view.identity.theme(game.current_team))
+		return
+	_commit_end_turn()
+
+
+func _review_ready_units() -> void:
+	state = State.IDLE
+	var ready := _ready_units()
+	if not ready.is_empty():
+		set_cursor_cell(ready[0].cell)
+
+
+func _end_turn_anyway() -> void:
+	state = State.IDLE
+	_commit_end_turn()
+
+
+func _ready_units() -> Array[Unit]:
+	var ready: Array[Unit] = []
+	for unit in game.units:
+		if unit.team == game.current_team and not unit.acted and unit.carrier == null:
+			ready.append(unit)
+	ready.sort_custom(
+		func(a: Unit, b: Unit) -> bool:
+			return a.cell.y < b.cell.y or (a.cell.y == b.cell.y and a.cell.x < b.cell.x)
+	)
+	return ready
+
+
+func _commit_end_turn() -> void:
 	var command := EndTurnCommand.new()
 	var receipt := await execute_command(command)
 	if receipt.rejected():
