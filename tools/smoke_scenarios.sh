@@ -144,11 +144,17 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 #
 # end_turn_ready_units is COM-14's two-sided gate. It first opens the guard with
 # live units ready and reads the count, every name/coordinate, and both choices
-# back from the modal; Review units must return to the same turn. It then marks
-# that side spent and proves End Turn commits with no guard at all before opening
-# the next side's guard for the capture. The old endturn and aiturn modes choose
-# End anyway through the same helper, so the new confirmation cannot strand
-# either of those established flows.
+# back from the modal, then answers it three ways, because "operable" is a claim
+# per input: the keyboard steps the two actions under left/right and backs out
+# with Escape, a real click at the Review button's own rect backs out again — a
+# click rather than its `pressed` signal, since the guard veils the board with a
+# pointer-swallowing rect the actions have to sit on top of — and Enter on the
+# stepped-to End anyway commits the next side's turn through the live pipeline.
+# Every one of those must land on the same turn it was answered from, or the next
+# one. Between them it marks a side spent and proves End Turn commits with no
+# guard at all, and it ends on the day-two guard the capture photographs. The old
+# endturn and aiturn modes choose End anyway through the same helper, so the new
+# confirmation cannot strand either of those established flows.
 #
 # The menu pair is the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
