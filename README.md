@@ -506,9 +506,10 @@ that measured *negative* and ships switched off.
 
 - `core/` — pure simulation code. **Nothing here may reference a Node or a scene.**
   All rules are unit-testable and the AI simulates through the same code.
-- `ai/` — the computer opponent (`AIController`). Also pure simulation: it plans one `Command`
-  at a time, the exact same command objects player input produces, and the battle scene applies
-  and animates them.
+- `ai/` — the computer opponent. `AIController` is the public façade; one
+  `AIPlanningContext` supplies scan-stable facts to the coarse unit-action and production
+  planners. It remains pure simulation and returns the exact same `Command` objects player input
+  produces for the battle scene to apply and animate.
 - `data/` — game data as `Resource` files (terrain, units, the damage chart, the commander
   roster in `data/commanders/`, the AI profiles in `data/ai/` — every weight the opponent scores
   with, so tuning its behaviour is a data edit rather than a code change — and the difficulty

@@ -190,8 +190,8 @@ res://
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip
 ├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx
-├─ ai/          # ai_controller.gd — plans Commands; ai_profile.gd — its weights
-│              (NO Node references)
+├─ ai/          # AIController façade + planning context + unit/production planners
+│              # ai_profile.gd owns every weight; NO Node references
 ├─ maps/        # map scenes / map resources
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), art & sfx pipeline
@@ -268,6 +268,12 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   scene, and prefer editing resource *data* over scene graph plumbing.
 - **`project.godot`, autoloads, and the input map** are edited through the editor when practical;
   if editing by hand, keep changes minimal and reviewable.
+- **`AIController` is a façade, not a planning bucket.** It asks for Command Power first, then
+  delegates to exactly two coarse collaborators: `AIUnitActionPlanner` and
+  `AIProductionPlanner`. `AIPlanningContext` is the one owner of scan-ordered per-decision facts
+  (friendlies, visible enemies, properties, unit types, goals and the production roster) and the
+  threat map cache shared across decisions in a turn. Preserve strict comparator order and profile
+  reads when moving AI code; never tune a `.tres` in an extraction.
 - **Doctrine hooks take an `Engagement`, not two `Unit`s.** `core/rules/engagement.gd` carries the
   effective values a shot is resolved with: the cell it is *actually* fired from and the HP the
   formula should use — which is what keeps the damage preview and the resolved attack on
