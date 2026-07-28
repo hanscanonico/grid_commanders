@@ -65,6 +65,16 @@ a display — it is a local gate, not a headless-CI one. Narrow it with
 A name no scenario implements fails the run rather than photographing a board nothing ever staged,
 so a typo in `MODES` is a failure and not a quiet pass.
 
+Every scenario opens a window and the engine activates it, so a sweep takes the front app away from
+you repeatedly. `tools/focus_timeline.sh make smoke` measures that instead of guessing: it wraps any
+command, samples the frontmost app for its whole lifetime, and prints the timeline with runs of the
+same app collapsed, plus the steal count, the total and longest stolen interval, and every restore
+that landed on some other app. It is macOS-only and says so (elsewhere it runs the command
+untouched), exits with the wrapped command's own status unless the wrapper itself is signalled
+(then it prints the partial timeline and exits 128+signal), and is deliberately in no `make verify`
+gate — like the sweep it measures, it needs a display and a human's desktop. The script's header
+comment owns the details, including `FOCUS_THIEF`.
+
 A mode may carry a `+fog` suffix (`make smoke MODES="victory+fog"`) to rerun that scenario with fog
 of war on. Fog is the only setting under which the scene hides units rather than just drawing them,
 so two scenarios run both ways by default.
@@ -466,7 +476,8 @@ result, including one capability that measured *negative* and ships switched off
   Assets below); and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`) and the
-  Balance Lab (`docs/balance_sim.md`) alike.
+  Balance Lab (`docs/balance_sim.md`) alike; plus `tools/focus_timeline.sh`, the focus-theft
+  instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, and the launch layer that states which match to
   play (`MatchRequest`, `CmdArgs`) — each written that way for exactly this reason.
