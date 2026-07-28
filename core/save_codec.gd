@@ -247,9 +247,15 @@ static func _decode_commanders(
 
 ## The board and day of a parsed save, or null when it is not a save this codec
 ## reads. Both facts come straight off the envelope's own keys, which is why
-## naming a save needs no format change — and why the summary and the loader can
-## never disagree: `decode` refuses anything `validate` rejects, so a save with
-## no summary is one Continue could not have resumed either.
+## naming a save needs no format change — and why nothing summarized here is a
+## fact `decode` would read differently: it asks the same `validate`, so a save
+## with no summary is one Continue could not have resumed either.
+##
+## The implication runs one way only. Naming a save deliberately loads no map, so
+## a summary is not a promise `decode` will accept: it goes on to ask
+## `board_error` of the loaded board, and a save that describes an impossible one
+## is named on the menu and then refused — the same fallback a save whose map has
+## since gone missing has always taken.
 static func summarize(data: Dictionary) -> Summary:
 	if validate(data) != "":
 		return null
@@ -270,7 +276,9 @@ static func describe(day: int, map_path: String) -> String:
 ## "" when `data` is a well-formed save this codec can read, else the reason it
 ## is not.
 ## Structure only — it does not check that the map exists or that unit ids are
-## known, because that needs the databases decode is given.
+## known, because that needs the databases decode is given. Nor whether the values
+## describe a board that could exist: that is its sibling `board_error`'s, which
+## needs the map this one deliberately answers without.
 static func validate(data: Dictionary) -> String:
 	if not READABLE_VERSIONS.has(int(data.get("version", -1))):
 		return "unsupported save version"
