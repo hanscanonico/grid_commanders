@@ -7,13 +7,14 @@ extends GutTest
 ## all. These cases therefore all load a real map, which is the line between the
 ## files.
 ##
-## Every case here used to decode *clean* (COM-52) and hand the rules a board they
-## cannot reason about, so the symptom arrived much later and somewhere else: a unit
-## off the map null-derefs CombatResolver's terrain read the first time anything
-## shoots at it, a unit at zero HP is a corpse no attack can finish, and a unit on a
-## team that does not play is one no turn ever readies. That each rejection *names*
-## its reason is the point — the loader is the last place that still knows the save
-## is the cause.
+## Every case here used to decode *clean* and hand the rules a board they cannot
+## reason about, so the symptom arrived much later and somewhere else: a unit off the
+## map null-derefs CombatResolver's terrain read the first time anything shoots at it
+## (COM-52), a unit at zero HP is a corpse no attack can finish, a unit on a team that
+## does not play is one no turn ever readies, and a unit riding in something that
+## could never have carried it is an arrangement no command would have allowed
+## (COM-53). That each rejection *names* its reason is the point — the loader is the
+## last place that still knows the save is the cause.
 
 const MAP_PATH := "res://maps/first_steps.txt"
 
@@ -145,3 +146,86 @@ func test_the_bounds_include_their_own_edges() -> void:
 	assert_eq(SaveCodec.board_error(data, map), "", "the last cell of the board is on it")
 	unit["hp"] = SaveCodec.MIN_HP
 	assert_eq(SaveCodec.board_error(data, map), "", "one HP is a unit clinging on, not a corpse")
+
+
+# --- arrangements no command would have allowed (COM-53) ----------------------
+#
+# The codec checked the *shape* of its carrier links — indices in range, nobody
+# carrying themselves, no cycles — and nothing about whether the carriage was
+# legal. LoadCommand enforces four rules at runtime that a save simply walked
+# past, so a hand-edited one could seat a battleship inside an infantry. The rules
+# are asked of LoadCommand rather than restated here; these cases prove the codec
+# asks.
+#
+# first_steps' unit order: 0 infantry, 1 mech, 2 tank, 3 recon, 4 artillery,
+# 5 APC (capacity 1, foot and boot), 6.. Blue's.
+
+
+func _units(data: Dictionary) -> Array:
+	return data["units"] as Array
+
+
+func test_a_carrier_that_is_not_a_transport_is_rejected() -> void:
+	var data := _encoded()
+	_units(data)[0]["carrier"] = 2  # infantry riding in a tank
+	assert_null(_decode(data))
+	assert_push_error("unit is not a transport")
+
+
+func test_a_transport_that_cannot_carry_the_class_is_rejected() -> void:
+	var data := _encoded()
+	_units(data)[2]["carrier"] = 5  # a tank in an APC, which takes foot and boot
+	assert_null(_decode(data))
+	assert_push_error("unit cannot be transported")
+
+
+func test_an_over_capacity_transport_is_rejected() -> void:
+	var data := _encoded()
+	_units(data)[0]["carrier"] = 5
+	_units(data)[1]["carrier"] = 5  # two riders in a one-seat APC
+	assert_null(_decode(data))
+	assert_push_error("transport is full")
+
+
+func test_a_transport_on_the_other_side_is_rejected() -> void:
+	var data := _encoded()
+	_units(data)[0]["carrier"] = 6  # Red's infantry riding in one of Blue's units
+	assert_null(_decode(data))
+	assert_push_error("no friendly transport")
+
+
+## The one level of nesting the sim refuses: a loaded carrier that itself boards
+## would freeze its own cargo at the boarding cell. Staged with a Lander, since it
+## is the only hull that carries what the APC drives on.
+func test_a_loaded_carrier_riding_in_another_is_rejected() -> void:
+	var data := _encoded()
+	(
+		_units(data)
+		. append(
+			{
+				"type": "lander",
+				"team": 1,
+				"x": 1,
+				"y": 1,
+				"hp": 100,
+				"fuel": 99,
+				"ammo": 0,
+				"acted": false,
+				"carrier": SaveCodec.NO_CARRIER,
+			}
+		)
+	)
+	_units(data)[0]["carrier"] = 5  # infantry in the APC, legal on its own
+	_units(data)[5]["carrier"] = _units(data).size() - 1  # and the loaded APC in the Lander
+	assert_null(_decode(data))
+	assert_push_error("unit is carrying cargo")
+
+
+## The counterpart: the arrangement the game itself produces must still load, so
+## none of the refusals above has been drawn one seat too tight.
+func test_a_legally_carried_unit_still_loads() -> void:
+	var data := _encoded()
+	_units(data)[0]["carrier"] = 5  # infantry in the APC, which is exactly what Load does
+	var loaded := _decode(data)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.cargo_of(loaded.state.units[5]).size(), 1)

@@ -195,7 +195,7 @@ func test_t_copter_will_not_lift_a_tank() -> void:
 func test_a_gunship_carries_nothing() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 h 0 0\n1 i 1 0")
 	var command := LoadCommand.new(state.units[1], _path([Vector2i(1, 0), Vector2i(0, 0)]))
-	assert_eq(command.validate(state), "destination unit is not a transport")
+	assert_eq(command.validate(state), "unit is not a transport")
 
 
 # --- the lander --------------------------------------------------------------
