@@ -113,13 +113,13 @@ func _ready() -> void:
 	_refresh_continue()
 	_one_player_button.pressed.connect(_open_select.bind([2] as Array[int]))
 	_two_player_button.pressed.connect(_open_select.bind([] as Array[int]))
-	# Reaching a mode is what dresses the panel for it, by focus for a keyboard or
-	# pad and by hover for a mouse, so the rule that hot-seat has no AI difficulty
-	# is readable before it is committed to rather than only after.
+	# Focus is what dresses the panel for a mode, so the rule that hot-seat has no
+	# AI difficulty is readable before it is committed to rather than only after.
+	# Focus and the press are the only two writers: a keyboard, a pad and a click
+	# all produce one, while a pointer merely passing over a button produces
+	# neither, so what the panel shows can never disagree with the choice in hand.
 	_one_player_button.focus_entered.connect(_set_two_player_mode.bind(false))
-	_one_player_button.mouse_entered.connect(_set_two_player_mode.bind(false))
 	_two_player_button.focus_entered.connect(_set_two_player_mode.bind(true))
-	_two_player_button.mouse_entered.connect(_set_two_player_mode.bind(true))
 	_continue_button.pressed.connect(_continue)
 	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses_setup_context():
@@ -618,6 +618,8 @@ func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> 
 	seg.add_theme_stylebox_override("focus", UiTheme.focus_box())
 	# Dimmed rather than blanked: a disabled group still has a tier in hand, and a
 	# player must be able to read which one before the mode that greyed it out.
+	# The fill loses its saturation, so the words take the ink the pale segments
+	# already wear rather than the white that only reads against a full accent.
 	var disabled := UiTheme.segment_box(active, accent.lerp(UiTheme.PAPER, 0.55))
 	if divided:
 		disabled.border_color = UiTheme.HARD_BORDER
@@ -629,7 +631,7 @@ func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> 
 	seg.add_theme_color_override("font_pressed_color", fg)
 	seg.add_theme_color_override("font_focus_color", fg)
 	seg.add_theme_color_override(
-		"font_disabled_color", UiTheme.WHITE if active else UiTheme.NEUTRAL_DARK
+		"font_disabled_color", UiTheme.INK if active else UiTheme.NEUTRAL_DARK
 	)
 
 
