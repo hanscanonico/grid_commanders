@@ -181,7 +181,7 @@ func _ready() -> void:
 		# callback, here and in its children, which is what makes "nothing can reach
 		# a null map" true by construction rather than a null check per handler.
 		process_mode = Node.PROCESS_MODE_DISABLED
-		if ScreenshotUtil.requested() != "":
+		if ScreenshotUtil.requested() != "" or BattleCaptureBatch.requested() != "":
 			# Nothing will ever drive the capture, and a headless run with no input
 			# to be inert against would otherwise sit here until `make smoke` timed
 			# it out. Non-zero, like a capture that fails its own gate.
