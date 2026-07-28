@@ -292,9 +292,12 @@ forgets them all for one machine, which is how a fresh install is staged for tes
   which hands play to the other team (the day counter advances when the rotation wraps back to the
   first side), and **Save**, which writes the whole match — map, day, funds, ownership, every unit,
   both commanders, and the RNG stream — over the single save slot. The banner names what it stored,
-  `Saved Day 4 · Scrimmage`, in the same words the menu's Continue line reads back. Resume it later with **Continue** on the main
-  menu. When your Command Power is charged the menu lists it first, so it is reachable from the
-  keyboard as well as from the HUD button
+  `Saved Day 4 · Scrimmage`, in the same words the menu's Continue line reads back, and says instead
+  that the save failed when the disk refused it — a write that cannot land leaves the save you
+  already had exactly as it was, so a full disk costs you the save you just asked for and never the
+  one you could still resume. Resume it later with **Continue** on the main menu. When your Command
+  Power is charged the menu lists it first, so it is reachable from the keyboard as well as from the
+  HUD button
 - The same menu is how you leave a match without closing the game. **Save & Main Menu** writes the
   slot exactly as **Save** does and only then goes back — a failed write keeps you on the board and
   says so — while **Main Menu Without Saving** asks a second time first, on a two-row confirmation
