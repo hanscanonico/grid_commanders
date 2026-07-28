@@ -13,7 +13,9 @@
 ; flinch on the advance path, and Easy gets the larger of the two shipped values
 ; because hanging back is its whole character. The remaining weights say the rest —
 ; poor finishing, fears every counter, runs home early, shrugs at marginal plays,
-; over-buys infantry, and never fields an md tank.
+; over-buys infantry, and never fields an md tank. The tail keeps Normal's
+; remaining combat roster in its existing order, so every facility stays useful
+; without changing Easy's land-priority prefix or buying transports it cannot use.
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.2
@@ -25,7 +27,7 @@ step_cost_penalty = 4.0
 retreat_hp = 60
 min_useful_score = 80.0
 advance_score = 1.0
-build_priority = Array[StringName]([&"tank", &"artillery", &"mech"])
+build_priority = Array[StringName]([&"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter", &"missiles"])
 capture_unit_target = 4
 air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
 air_answer_target = 2

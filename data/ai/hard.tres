@@ -24,6 +24,10 @@
 ; free, and biasing the *first* shot toward a gang-up pulls it off its own best
 ; trade. Left switched off rather than deleted: zeroing a misbehaving smart is
 ; the plan's own remedy, and the ladder can re-test it in one edit.
+;
+; The build list preserves Difficult's land-priority prefix, then carries
+; Normal's remaining combat roster in its existing order. Airports and ports
+; therefore stay live before contact without admitting transports the AI cannot use.
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.8
@@ -35,7 +39,7 @@ step_cost_penalty = 4.0
 retreat_hp = 45
 min_useful_score = 40.0
 advance_score = 1.0
-build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech"])
+build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter", &"missiles"])
 capture_unit_target = 3
 air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
 air_answer_target = 2

@@ -5,17 +5,11 @@ what the measurement currently says. This is the committed record of the
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
-**Standing verdict: the gate does not pass.** Easy is clearly weaker than Normal
-where the instrument can see it; **Difficult is not measurably stronger than
-Normal at all**. Details and the reasoning below — read §4 before changing a
+**Standing verdict: the gate does not pass.** Normal takes 43.3% from Easy and
+Difficult takes 65.0% from Normal; neither adjacent pairing clears the required
+70%. Difficult now has a measurable advantage, but Easy's intended weakness is
+not established. Details and the reasoning below — read §4 before changing a
 weight, and §5 before deciding what to do about it.
-
-**The recorded numbers are also out of date.** They were measured before this
-branch's later planner fixes — §4 says which — and before the charge-meter fix
-that stopped a team from banking charge while its own power is active, which
-slows power cadence for every commander at every tier. Both tiers plan
-differently now, so `make difficulty-check` must be re-run and its output
-committed over §4 before the standings are quoted again.
 
 ## 1. What difficulty is allowed to change
 
@@ -66,7 +60,8 @@ which compares a full AI turn command for command.
   - **`threat_aversion` — attacks, in value.** An attack's score is
     `cost × damage fraction`, so the firing cell's discount is
     `threat × unit cost × threat_aversion` in that same currency. Must stay
-    small; see below.
+    small because the summed threat saturates at a lethal attack and the
+    cost-scaled penalty can otherwise make the planner refuse useful trades.
   - **`advance_threat_tiles` — advances, in tiles.** A destination a unit is
     merely walking to scores as `-distance`, stepping by whole integers, so the
     penalty is `advance_threat_tiles × lethality` *tiles* of forward progress,
@@ -77,14 +72,16 @@ which compares a full AI turn command for command.
     Difficult's ladder-safe `0.1` the advance penalty maxes out at a hundredth of
     a tile and could only break ties, so the tier's headline "refuses a kill
     zone" never once cost it a step. Cost-scaling the advance term instead is not
-    the fix — that is the R2 coward the 0.5 row below measures at 88% losses.
+    the fix — that is the R2 coward that prior single-capability probes produced.
     The floor for a live value is ~1.6: below that a healthy unit cannot buy even
     one tile against a full-strength artillery shot (63 of its 100 points), i.e.
     it is inert where nothing is hurt yet.
-    `data/ai/hard.tres` ships `2.0` and `easy.tres` `3.0` as **starting values —
-    neither has been through the ladder.**
+    `data/ai/hard.tres` ships `2.0` and `easy.tres` `3.0`; §4 measures those
+    values in the current ladder.
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
-  could still add damage to. **Ships at `0.0` — see §4.**
+  could still add damage to. Ships at `0.0`: earlier isolated probes found the
+  bias harmful, while replanning after every command already exposes a wounded
+  target's finishing shot to the next attacker.
 - **S3 `build_reactivity` — counter-building.** Re-ranks each affordable combat
   unit by its damage-chart effectiveness against the enemy's actual cost-weighted
   roster, blended over the static `build_priority` list. With no enemy in sight
@@ -114,161 +111,70 @@ planner and the rules disagree.
 
 ## 4. What the measurement says
 
-> **Every number in this section predates the `advance_threat_tiles` split
-> described in §2, its rescaling against the HP a unit has left, and the
-> threat-map lookup being hoisted out of the per-cell attack and advance
-> loops — and, since, the bug-fix pass of 2026-07-24, which gates the threat
-> map's and the focus-fire follow-up's who-may-shoot through
-> `AttackRange.can_engage`, retreats a damaged unit only to a property that
-> repairs its domain, and plans every committed path with the mover's own
-> vision.** It was measured against a build where Difficult's advance path could
-> not give up a single tile for safety, and where Easy and Difficult rebuilt the
-> visible-enemy list and its cache key once per candidate cell. Both tiers now
-> plan differently, so **the ladder has to be re-run before any of the standings
-> below mean anything again.** They are kept as the record of what was measured,
-> not as a current claim. Nothing here has been re-scored by estimate —
-> `make difficulty-check` is the only thing allowed to write these numbers.
-
-> **The board itself has also moved since: `ironworks` gained a mirrored pair of
-> airfields** (one per side, owned from day 1) in the map retrofit of
-> 2026-07-21 — see `.lavish/map-retrofit-plan.html`. That is +2 properties and
-> the income they carry, plus a 20k air domain on a board whose measurements
-> below were taken when nothing on it could fly and no tier profile had ever been
-> weighed against an aircraft. So the `ironworks` column and finding (a)
-> describe a **superseded board**, on top of describing a superseded planner.
-> Both halves of the gate need re-baselining on the current maps before the DF4
-> verdict is judged again; the retrofit is data-only and touched no `AIProfile`
-> weight and no tier `.tres` — as D2/D3 require, difficulty still changes nothing
-> but which profile the planner weighs moves with.
-
-**Standing result — 120 matches, 15 seeds, default 20-day cap:**
+**Standing result — measured 2026-07-28, 120 matches, 15 seeds, default
+20-day cap:**
 
 | Pairing | Overall | scrimmage | ironworks | Gate |
 |---|---|---|---|---|
-| Normal over Easy | **68.3%** (41/60) | 90.0% | 46.7% | fail (just) |
-| Difficult over Normal | **50.0%** (30/60) | 53.3% | 46.7% | fail |
+| Normal over Easy | **43.3%** (26/60) | 63.3% | 23.3% | fail |
+| Difficult over Normal | **65.0%** (39/60) | 70.0% | 60.0% | fail |
 
 Zero rejected commands and zero cap stalls across all 120 — the planner and the
 rules never disagreed, which is the correctness half of this run and it is clean.
 
-### Two findings that matter more than the numbers
+This run follows the planner correctness fixes listed in the former DF4 record,
+the current `ironworks` map with its mirrored airfields, and the per-seat
+controller correction in the balance harness. It also follows the production
+coverage fix measured here: Easy and Difficult retain their land-priority
+prefixes, then list every non-transport air and sea combat unit. A capability
+test places an owned airport and port on the same board, blocks the irrelevant
+facility, and proves each tier issues a valid build for the remaining domain.
 
-**(a) `ironworks` cannot tell the tiers apart — including Easy.** Normal beats
-Easy 90% on `scrimmage` and 46.7% on `ironworks`. Easy is *known* to be the
-weaker planner, so a board that scores it even with Normal is not measuring
-planning strength there. On a 24×16 city-rich map inside a 20-day cap, both
-sides sprawl and capture at similar rates and the day-cap tiebreak (properties,
-then units, then funds) turns over on noise. Re-running at `--days=40` did not
-help (Normal-over-Easy fell to 37.5% on that board), so the cap is not the cause.
-**Half the gate is currently blind**, which means the Difficult verdict rests
-mostly on the `scrimmage` column.
+### Findings
 
-**(b) Difficult is not stronger.** Even on the discriminating board it is 53.3%.
-Isolated single-capability probes on `scrimmage` (60 matches each, against the
-shipped Normal profile; 50% is parity) were more encouraging than the shipped
-combination turned out to be:
+**(a) Production coverage was a real defect, but fixing it is not sufficient to
+prove the ladder.** Easy and Difficult no longer leave an affordable owned
+airport or port idle merely because no compatible unit appears in their static
+priority list. The full gate nevertheless puts Easy ahead of Normal overall,
+and especially on `ironworks`: Normal wins only 7 of 30 there. The intended
+"timid and weaker" Easy profile therefore needs a separate tuning pass.
 
-| Variant | Win % | Read |
-|---|---|---|
-| control (Normal vs Normal) | 50.0 | sanity check — the harness is unbiased |
-| `threat_aversion` 0.02 / 0.05 / 0.10 | 56.7 / 53.3 / **58.3** | mild but real gain |
-| `threat_aversion` 0.20 | 35.0 | already harmful |
-| `threat_aversion` 0.50 | 11.7 | catastrophic — see below |
-| `build_reactivity` 0.3 / 0.6 / 1.0 | 50.0 / 53.3 / **55.0** | mild gain |
-| `kill_bonus` 1.8 + `counter_weight` 0.5 | 50.0 | neutral |
-| `threat` 0.1 + `build` 1.0 | **61.7** | best combination found |
-| `focus_fire_bonus` 0.2 / 0.5 / 1.0 | 43.3 / 41.7 / 43.3 | **negative** |
+**(b) Difficult is stronger, but not enough.** It exactly clears 70% on
+`scrimmage`, takes 60% on `ironworks`, and reaches 65% overall. That is a clear
+improvement over the superseded 50% record, but the gate is defined on the
+combined pairing and remains red.
 
-### Why `threat_aversion` must stay small
-
-The penalty is scaled by the exposed unit's cost, and the threat total sums every
-enemy that could reach the cell, so on a contested front it saturates at "this
-unit dies". Above ~0.15 the discount exceeds the value of almost any attack, the
-planner stops attacking, and it loses on time — 0.5 lost 88% of its games. This
-is risk R2 (the coward) arriving exactly where the plan predicted.
-
-That ceiling is exactly why the advance path needed `advance_threat_tiles` as a
-second field rather than a second reading of this one. A weight low enough to
-keep the AI attacking is, on a scale that steps by whole tiles, no weight at all.
-Splitting them lets caution be real where a unit is only walking and stay cheap
-where it is shooting; **the split is unmeasured** and both new values are
-starting points.
-
-The attack dial is also what makes **Easy** weak, turned the other way: Easy
-ships `threat_aversion = 0.3` (and now the larger `advance_threat_tiles` of the
-two tiers), so its timidity is mechanical rather than cosmetic. That is the
-single biggest reason Normal beat it 90% on `scrimmage` in the run above.
-
-### Why focus fire ships switched off
-
-It measured negative in **both** shapes tried:
-
-1. As an independent bonus scaled by follow-up damage (43.3% / 41.7% / 43.3%).
-   This term can dwarf the shot's own value, so the AI chased whatever the team
-   could gang up on and walked into bad trades to get there.
-2. Reshaped as a *proportion of the shot's own value*, capped at doubling it
-   (43.3% / 46.7% / 46.7% / 45.0%) — better, still below parity, and it dragged
-   the best combination from 61.7% down to 46.7%.
-
-The likely cause is double-counting: the planner already re-plans after every
-applied command, so a wounded target's kill is visible to the next attacker for
-free. Biasing the *first* shot toward a gang-up only pulls it off its own best
-trade. The capability is kept, gated and unit-tested, and set to `0.0` —
-"zero a misbehaving smart" is the plan's own remedy, and the ladder can re-test
-it in one edit.
+The two maps still disagree sharply about Easy: Normal takes 63.3% on
+`scrimmage` but only 23.3% on `ironworks`. The report does not license an
+explanation by estimate; the next pass must change one profile hypothesis at a
+time and rerun the same fixed-seed gate.
 
 ### Turn time (risk R3)
 
-Mean AI planning per turn, measured during the standing run:
+Mean AI planning per turn in the standing run:
 
 | Tier | ms/turn | over |
 |---|---|---|
-| Normal | 72.9 | 2310 turns |
-| Difficult | 102.1 | 1160 turns |
-| Easy | 144.3 | 1154 turns |
+| Easy | 90.8 | 1118 turns |
+| Difficult | 71.7 | 1140 turns |
+| Normal | 42.4 | 2259 turns |
 
-Well inside the budget: `BattleAiRunner` waits a think-beat between commands —
-0.2 s at the default game speed, one frame at Instant — so none of this is
-perceptible in play. Easy was the slowest tier, not Difficult —
-its high `min_useful_score` sends more units down the advance path, which
-evaluates threat for every reachable cell, while Difficult's lower one usually
-finds an attack first.
-
-Most of that gap was avoidable and has since been closed: the advance loop and
-the attack sweep both asked for the threat map once per *candidate cell*, and
-each ask rebuilt the visible-enemy array and a formatted cache-key string only to
-conclude the cached map was still valid. The lookup now happens once per sweep,
-not once per cell. The table above was measured before that, so the two tier
-costs should be re-read on the next run.
+These are measurements, not deterministic outputs; the pairing results,
+rejected-command count and cap-stall count are the reproducible gate evidence.
 
 ## 5. Where this leaves the feature
 
 Everything the plan asked to be *built* is built, tested and shipping: the tier
 plumbing, the menu picker, the save key, all three capabilities, and this gate.
-What is not established is the claim the gate exists to prove.
+What is not established is the ordering the gate exists to prove.
 
-Being straight about it: **shipping a "Difficult" that AI-vs-AI cannot separate
-from Normal is a product decision, not a technical one.** It is mechanically
-different — it refuses kill zones and counter-builds — and the plan itself notes
-the soak proves ordering, not feel, so a human playtest is the missing evidence
-either way. But nothing here yet justifies telling a player it is harder.
-
-The candidates, in the order worth trying:
-
-0. **Re-run the ladder.** The standings in §4 predate the `advance_threat_tiles`
-   split, and Difficult's threat awareness was inert on the advance path when
-   they were taken. Whatever is decided next, it should be decided on numbers
-   that describe the planner as it is now.
-1. **Fix the instrument first.** A gate whose large board cannot distinguish Easy
-   from Normal cannot be trusted about Difficult. Either give `ironworks` a
-   decisive win condition instead of a day-cap tiebreak, or replace it with a
-   larger board that resolves. Doing this before more tuning avoids optimising
-   against noise.
-2. **The named reserve (plan §6/R1):** HQ defense and artillery screening. These
-   were deliberately benched as follow-ups, not scope creep — they are the next
-   thing to build if the ordering still will not appear.
-3. **Human playtest at Easy and Difficult**, which the plan calls for regardless
-   and which is the only read on whether Easy is timid-but-fun or just passive.
+The production defect and its coverage test stay isolated in their own change.
+The next step is a separate tuning ticket and pull request: tune Easy against
+Normal first, then close Difficult's five-point overall gap, changing one
+profile hypothesis at a time and rerunning the 15-seed gate. No threshold,
+income, vision, damage, luck, map, or harness change is an acceptable substitute
+for a passing profile ladder. A human playtest at Easy and Difficult remains the
+other required read on whether the measured profiles are also fun.
 
 `make difficulty-check` exits non-zero while the gate is unmet. That is
 deliberate: it is an opt-in release task, kept out of `make verify`, and a red
