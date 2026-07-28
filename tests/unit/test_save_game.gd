@@ -1,6 +1,7 @@
 extends GutTest
 
 const TEST_PATH := "user://test_save.json"
+const TEMP_PATH := TEST_PATH + ".tmp"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -16,6 +17,11 @@ func before_each() -> void:
 func after_each() -> void:
 	if FileAccess.file_exists(TEST_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PATH))
+	# Covers both shapes the temp can take here: the file a save stages, and the
+	# directory the failed-write test parks in its way.
+	var temp := ProjectSettings.globalize_path(TEMP_PATH)
+	if FileAccess.file_exists(TEMP_PATH) or DirAccess.dir_exists_absolute(temp):
+		DirAccess.remove_absolute(temp)
 
 
 func _first_steps_state() -> GameState:
@@ -88,6 +94,30 @@ func test_save_to_an_unwritable_path_reports_failure() -> void:
 	var state := _first_steps_state()
 	assert_false(SaveGame.save(state, [] as Array[int], "user://no_such_dir/save.json"))
 	assert_push_error("cannot write")
+
+
+## COM-51. The half of the fix a test *can* stage: a save that cannot be written is
+## a save the player still has. Standing a directory where the temp belongs is the
+## one unwritable target reachable in-process, and it fails at the same place a full
+## disk does — before anything has touched the slot.
+func test_a_failed_write_leaves_the_previous_save_intact() -> void:
+	var state := _first_steps_state()
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	var good := FileAccess.get_file_as_string(TEST_PATH)
+	DirAccess.make_dir_absolute(ProjectSettings.globalize_path(TEMP_PATH))
+	state.day = 9
+	assert_false(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	assert_push_error("cannot write")
+	assert_eq(FileAccess.get_file_as_string(TEST_PATH), good, "the old save is byte-identical")
+	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.day, 1, "and it still loads, as the match it recorded")
+
+
+func test_a_successful_save_leaves_no_temp_behind() -> void:
+	var state := _first_steps_state()
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	assert_false(FileAccess.file_exists(TEMP_PATH), "the temp is renamed over the slot, not left")
 
 
 func test_missing_file_returns_null() -> void:
