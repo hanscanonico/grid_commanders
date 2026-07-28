@@ -1110,9 +1110,9 @@ func _walk_first_turn() -> void:
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"infantry")  # -> retires "build"
 	await _until_state(Battle.State.IDLE)
-	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> the map menu
-	await _until_state(Battle.State.MENU)
-	_battle.action_menu.choose(&"end_turn")  # -> retires "end_turn"
+	# -> retires "end_turn"; the side still has unacted units, so this answers the
+	# COM-14 guard the map menu now opens.
+	await BattleFeedbackScenario.new(_battle).end_turn_anyway()
 	# Wait the computer's whole turn out, back to day two: the frame is then a real
 	# board rather than a half-planned one, and the AI's own moves are a live check
 	# that nothing it does retires a step on the player's behalf.

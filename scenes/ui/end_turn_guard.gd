@@ -16,10 +16,10 @@ var _title_label: Label
 var _count_label: Label
 var _body_label: Label
 var _unit_label: Label
+var _list: ScrollContainer
 var _review_button: Button
 var _end_button: Button
 var _buttons: Array[Button] = []
-var _index := 0
 
 
 func _ready() -> void:
@@ -45,9 +45,9 @@ func open(day: int, ready_units: Array[Unit], side_theme: CommanderVisuals.Facti
 		lines.append("%s at (%d,%d)" % [unit.type.display_name, unit.cell.x, unit.cell.y])
 	_unit_label.text = "\n".join(lines)
 	UiTheme.apply_button(_review_button, UiTheme.ButtonVariant.PRIMARY, side_theme)
-	_index = 0
+	_list.scroll_vertical = 0
 	show()
-	_focus_current.call_deferred()
+	_review_button.grab_focus.call_deferred()
 
 
 func close() -> void:
@@ -59,13 +59,18 @@ func close() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed(&"cursor_up", true) or event.is_action_pressed(&"cursor_left", true):
+	if event.is_action_pressed(&"cursor_up", true):
+		get_viewport().set_input_as_handled()
+		if not _scroll_list(-1):
+			_step(-1)
+	elif event.is_action_pressed(&"cursor_down", true):
+		get_viewport().set_input_as_handled()
+		if not _scroll_list(1):
+			_step(1)
+	elif event.is_action_pressed(&"cursor_left", true):
 		get_viewport().set_input_as_handled()
 		_step(-1)
-	elif (
-		event.is_action_pressed(&"cursor_down", true)
-		or event.is_action_pressed(&"cursor_right", true)
-	):
+	elif event.is_action_pressed(&"cursor_right", true):
 		get_viewport().set_input_as_handled()
 		_step(1)
 	elif event.is_action_pressed(&"confirm"):
@@ -86,14 +91,27 @@ func _choose(end_anyway: bool) -> void:
 		review_requested.emit()
 
 
+## Native UI focus navigation moves between the two buttons on its own and marks
+## those presses handled, so the focused button — never a parallel index — is
+## where a step starts.
 func _step(delta: int) -> void:
-	_index = wrapi(_index + delta, 0, _buttons.size())
-	_focus_current()
+	var from := 0
+	for index in _buttons.size():
+		if _buttons[index].has_focus():
+			from = index
+			break
+	_buttons[wrapi(from + delta, 0, _buttons.size())].grab_focus()
 
 
-func _focus_current() -> void:
-	if visible:
-		_buttons[_index].grab_focus()
+## Scrolls the ready-unit list a line at a time so a keyboard or controller can
+## read past the modal's bounded band. Returns false when the list fits, leaving
+## up/down to move between the two actions.
+func _scroll_list(delta: int) -> bool:
+	var bar := _list.get_v_scroll_bar()
+	if bar.max_value <= bar.page:
+		return false
+	_list.scroll_vertical += delta * maxi(_unit_label.get_line_height(), 1)
+	return true
 
 
 func _build() -> void:
@@ -147,13 +165,15 @@ func _build() -> void:
 	_body_label = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.INK, true)
 	body.add_child(_body_label)
 
-	var list := ScrollContainer.new()
-	list.custom_minimum_size.y = LIST_H
-	list.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body.add_child(list)
+	_list = ScrollContainer.new()
+	_list.custom_minimum_size.y = LIST_H
+	_list.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_list.focus_mode = Control.FOCUS_NONE
+	_list.get_v_scroll_bar().focus_mode = Control.FOCUS_NONE
+	body.add_child(_list)
 	_unit_label = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.INK)
 	_unit_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list.add_child(_unit_label)
+	_list.add_child(_unit_label)
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 6)

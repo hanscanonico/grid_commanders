@@ -173,8 +173,8 @@ func _ready_units(team: int) -> Array[Unit]:
 	return ready
 
 
-func _guard() -> Control:
-	return _battle.get_node_or_null("UI/EndTurnGuard") as Control
+func _guard() -> EndTurnGuard:
+	return _battle.end_turn_guard
 
 
 func _control_text(root: Control) -> String:
