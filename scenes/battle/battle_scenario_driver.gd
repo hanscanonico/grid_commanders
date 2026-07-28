@@ -124,6 +124,12 @@ const CUT_IN_START_FRAMES := 600
 const MISSION_STRIP_MODE := "mission_strip"
 const MISSION_STRIP_RETIRED := MISSION_STRIP_MODE + "_retired"
 
+## COM-57's fogged overlay check. Blue's infantry comes up beside Red's tank at
+## (8,8): close enough to be seen and so previewable, with a reach that runs off
+## into ground Red has no eyes on.
+const PREVIEW_FOG_FROM := Vector2i(15, 10)
+const PREVIEW_FOG_TO := Vector2i(9, 8)
+
 var _battle: Battle
 var _shot_path := ""
 var _select_cell := Vector2i(-1, -1)
@@ -305,6 +311,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_capture_power_race()
 		"ambush", "vanish":
 			_run_vanish_demo(mode)
+		"preview_fog":
+			await _stage_preview_fog()
 		"power_charging":
 			await _stage_charging_power()
 		"power_ready", "power_ready_contrast":
@@ -500,6 +508,70 @@ func _run_vanish_demo(mode: String) -> void:
 	_battle.refresh_fog()
 	_battle.view.restage_identity()  # Sable Wren's Verdant recolours Blue after the fog pass
 	_battle.set_cursor_cell(Vector2i(5, 5))  # the panel names whatever is on the tile
+
+
+## COM-57, and the sibling of `ambush`/`vanish` in every structural sense: a fogged
+## board where the thing under test is what the overlay is allowed to *say*.
+##
+## Clicking an enemy you cannot command previews its reach, and R adds its fire ring.
+## Both used to be filled straight off `MovementResolver`/`AttackRange`, which answer
+## for the whole board — so the preview was drawn over ground the viewer had never
+## scouted, and worse, `reachable` fills with the *mover's* sight, walling that unit
+## off at enemies it can see and planning it through the ones it cannot. The outline
+## alone therefore reported where the viewer's own hidden pieces stood.
+##
+## Checked rather than photographed, like `leave_confirm` and `power_mapmenu`: an
+## overlay painted three cells too wide renders a perfectly good picture. The board is
+## read back off the live TileMapLayers, so what is asserted is what is on screen.
+func _stage_preview_fog() -> void:
+	var game := _battle.game
+	game.fog_enabled = true
+	# Blue's infantry comes up beside Red's tank, which is the whole staging: close
+	# enough to be seen and so previewable, with a reach that runs off into ground
+	# Red has no eyes on.
+	var enemy := game.unit_at(PREVIEW_FOG_FROM)
+	if enemy == null:
+		_fail("preview_fog: no blue infantry at %s" % PREVIEW_FOG_FROM)
+		return
+	enemy.cell = PREVIEW_FOG_TO
+	_battle.view.sync_sprites()
+	_battle.refresh_fog()
+	if not _battle.perspective.can_see_unit(enemy):
+		_fail("preview_fog: the enemy staged to be previewed is not visible to Red")
+		return
+	var whole := MovementResolver.reachable(game, enemy).cells().size()
+	_battle.confirm_at(enemy.cell)  # a unit Red cannot command -> preview, not select
+	await _until_state(Battle.State.PREVIEW)
+	var shown := _check_overlay_scouted("move preview", _battle.view.move_overlay)
+	# Vacuous otherwise: an overlay masked down to nothing, or one that never had a
+	# cell to lose, would pass the check above without proving anything.
+	if shown >= whole:
+		_fail(
+			(
+				"preview_fog: the preview shows all %d of its cells, so the fog mask did nothing"
+				% whole
+			)
+		)
+		return
+	_battle.toggle_range()
+	_check_overlay_scouted("fire ring", _battle.view.attack_overlay)
+	_battle.set_cursor_cell(enemy.cell)
+
+
+## Every cell painted on `layer` is ground the viewer has scouted. Returns how many
+## there were, so a caller can also refuse an overlay that proves nothing by being
+## empty. Reads the live layer rather than the array that was handed to it: what is
+## on the board is the claim being made.
+func _check_overlay_scouted(what: String, layer: TileMapLayer) -> int:
+	var cells := layer.get_used_cells()
+	if cells.is_empty():
+		_fail("preview_fog: the %s painted nothing, so there is nothing to check" % what)
+		return 0
+	for cell in cells:
+		if not _battle.perspective.can_see_cell(cell):
+			_fail("preview_fog: the %s paints %s, which the viewer has not scouted" % [what, cell])
+			return cells.size()
+	return cells.size()
 
 
 ## The battle cut-in, held still for the shutter. Any matchup, on any board:

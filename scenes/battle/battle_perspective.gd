@@ -80,6 +80,40 @@ func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i
 	return cells
 
 
+## The cells to paint for `unit`'s reach — where it could move, and where it could
+## bring fire — as the viewer is allowed to see them.
+##
+## One rule with two answers, which is why it lives here rather than at either call
+## site. A unit the viewer **commands** is shown its whole reach: that overlay has to
+## agree cell for cell with what the commands will accept, and one that stopped at the
+## fog would hide moves `MoveCommand` allows — the movement-overlay lesson this repo
+## already paid for once, in the other direction.
+##
+## Any other unit is being *previewed*, and its reach was filled with **its** sight,
+## not the viewer's: `MovementResolver.reachable` walls a mover off at enemies that
+## mover can see and plans it through the ones it cannot, so an enemy's range is
+## shaped by units the viewer may know nothing about, and its outline alone would
+## report where they stand. Drawn whole it also covers ground the viewer never
+## scouted. So a preview is masked to what the viewer has actually seen (COM-57).
+func move_overlay_cells(unit: Unit) -> Array[Vector2i]:
+	return _viewer_safe(MovementResolver.reachable(_game, unit).cells(), unit)
+
+
+func threat_overlay_cells(unit: Unit) -> Array[Vector2i]:
+	return _viewer_safe(AttackRange.threat_cells(_game, unit), unit)
+
+
+## Whole for a unit the viewer commands, scouted ground only for anyone else.
+func _viewer_safe(cells: Array[Vector2i], unit: Unit) -> Array[Vector2i]:
+	if unit.team == _viewing_team:
+		return cells
+	var scouted: Array[Vector2i] = []
+	for cell in cells:
+		if can_see_cell(cell):
+			scouted.append(cell)
+	return scouted
+
+
 ## Every passenger with at least one viewer-safe unload cell from `dest`, in
 ## cargo order. A hidden enemy is left for DropCommand to discover on apply
 ## rather than disclosed here.
