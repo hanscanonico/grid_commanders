@@ -125,6 +125,10 @@ const FUNDS_SHAPE := Shape.NUMBER
 ## A unit standing on the board rather than riding in something.
 const NO_CARRIER := -1
 
+## What a save claims to be when it claims nothing this codec can read. No release ever
+## wrote it, so no rule may be derived from it — see `_claimed_version`.
+const NO_VERSION := 0
+
 ## What a live unit's internal HP may be. Zero is not a wounded unit, it is a dead
 ## one: every route that takes a unit to zero removes it in the same breath, so a
 ## save that records one is describing a board the rules cannot produce. The ceiling
@@ -371,8 +375,10 @@ static func describe(day: int, map_path: String) -> String:
 ## describe a board that could exist: that is its sibling `board_error`'s, which
 ## needs the map this one deliberately answers without.
 static func validate(data: Dictionary) -> String:
-	var version := int(data.get("version", -1))
-	if not READABLE_VERSIONS.has(version):
+	# Answered first, and refused rather than floored: every rule below is derived from
+	# this number, so nothing may be asked of a save until it is one this codec reads.
+	var version := _claimed_version(data)
+	if version == NO_VERSION:
 		return "unsupported save version"
 	# What a save of *this* version promised to write, it has to have written, holding
 	# what it promised to hold. See KEY_RULES: below its version a field is old, at or
@@ -434,11 +440,17 @@ static func validate(data: Dictionary) -> String:
 ## Safe to call on a dictionary `validate` has not seen. It leans on `validate`'s own
 ## entry check for that rather than restating the structure, so a save missing a list
 ## comes back as a reason — which is what the signature promises — instead of a
-## runtime error off a key that was never there.
+## runtime error off a key that was never there. Which version's fields to ask for is
+## floored rather than trusted for exactly that reason; see the note where it is read.
 static func board_error(data: Dictionary, map: MapData) -> String:
-	# The oldest readable version when the save does not say, which asks of every entry
-	# exactly the fields this function goes on to read and nothing a later format added.
-	var version := int(data.get("version", READABLE_VERSIONS[0]))
+	# The asymmetry that makes this necessary: `validate` refuses a version it cannot read
+	# before deriving one rule from it, and this function is documented to answer for a
+	# dictionary `validate` has never seen — so it cannot refuse, and floors instead. The
+	# oldest readable version asks of every entry exactly the fields the reads below need
+	# and nothing a later format added; trusting an unreadable one would ask for nothing
+	# at all and leave those reads falling off records nobody had checked.
+	var claimed := _claimed_version(data)
+	var version := claimed if claimed != NO_VERSION else READABLE_VERSIONS[0]
 	var error := _entries_error(data.get("units"), UNIT_KEY_RULES, version, "unit")
 	if error != "":
 		return error
@@ -556,6 +568,23 @@ static func _ai_teams_error(data: Dictionary) -> String:
 		if not _is_shape(team, Shape.NUMBER):
 			return "'ai_teams' is malformed"
 	return ""
+
+
+## The version `data` claims, or `NO_VERSION` when it claims none this codec can read —
+## whether it says nothing, says a number no release ever wrote, or says something that
+## is not a number at all. The last is why this is a shape question and not an `int()`:
+## that constructor will not take a Dictionary or an Array, so reading the version the
+## obvious way is a crash on the one field every other rule here hangs off.
+##
+## Not a reason string, because its two callers want different things from the answer:
+## `validate` refuses, `board_error` floors. What each does with it is stated where it
+## asks.
+static func _claimed_version(data: Dictionary) -> int:
+	var claimed: Variant = data.get("version")
+	if not _is_shape(claimed, Shape.NUMBER):
+		return NO_VERSION
+	var version := int(claimed)
+	return version if READABLE_VERSIONS.has(version) else NO_VERSION
 
 
 ## "" when the save's RNG state is a whole number spelled out in full, else why it is

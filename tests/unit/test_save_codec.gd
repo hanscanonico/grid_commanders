@@ -110,6 +110,17 @@ func test_a_version_this_codec_cannot_read_is_rejected() -> void:
 	var data := _encoded()
 	data["version"] = 99
 	assert_string_contains(SaveCodec.validate(data), "version")
+	# A version that is not a number at all is the same answer, and it has to be asked
+	# as a shape: `int()` will not take a Dictionary, so reading the version the obvious
+	# way is a crash on the one field every other rule is derived from. A file dropped in
+	# the save slot by hand reaches here through the menu's Continue caption.
+	for claimed: Variant in ["three", {}, [], true, null]:
+		data = _encoded()
+		data["version"] = claimed
+		assert_string_contains(SaveCodec.validate(data), "version")
+	data = _encoded()
+	data.erase("version")
+	assert_string_contains(SaveCodec.validate(data), "version")
 
 
 # --- commanders and version 1 -------------------------------------------------

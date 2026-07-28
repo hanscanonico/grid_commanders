@@ -110,6 +110,16 @@ func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
 	data = _encoded()
 	(data["owners"] as Array)[0].erase("x")
 	assert_ne(SaveCodec.board_error(data, map), "", "so is an entry with no cell to check")
+	# And so is a version no release wrote. It decides which fields every entry is asked
+	# for, and this is the one function that never gets to refuse it: trusted, a version
+	# below the oldest readable one asks for nothing, leaving the cell and HP reads below
+	# to fall off records nobody had checked. `"three"` is the one to keep — `int()` reads
+	# it as 0, which looks like a version rather than like nonsense.
+	for version: Variant in [0, -1, "three", {}]:
+		data = _encoded()
+		data["version"] = version
+		data["units"] = [{}]
+		assert_ne(SaveCodec.board_error(data, map), "", "an unreadable version is floored")
 
 
 func test_an_owned_property_off_the_board_is_rejected() -> void:
