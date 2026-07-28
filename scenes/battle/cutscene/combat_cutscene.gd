@@ -212,8 +212,8 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 	_result = result
 	_atk_hp_after = attacker.displayed_hp()
 	_def_hp_after = defender.displayed_hp()
-	_atk_style = _styles.for_unit(attacker.type)
-	_def_style = _styles.for_unit(defender.type)
+	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
+	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
 	_play.accent = _accent_of(attacker.team)
 	_atk.bind(
 		attacker,

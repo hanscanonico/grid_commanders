@@ -41,11 +41,6 @@ func displayed_hp() -> int:
 	return ceili(hp / 10.0)
 
 
-## True when the unit can still fire (max_ammo 0 = the weapon needs none).
-func has_ammo() -> bool:
-	return type.max_ammo == 0 or ammo > 0
-
-
 ## True when the unit has under `margin_turns` worth of fuel left: it can no
 ## longer both fly a full move and pay that many days of upkeep. Always false for
 ## anything an empty tank merely strands — a tank out of fuel is parked, not

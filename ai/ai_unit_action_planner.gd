@@ -66,7 +66,7 @@ func _consider_attacks(
 		for enemy in context.visible_enemies:
 			if not AttackRange.covers(state, unit, dest, enemy.cell):
 				continue
-			if not AttackRange.can_engage(state, unit, enemy):
+			if not AttackRange.can_fire(state, unit, enemy):
 				continue
 			if dest_penalty < 0.0:
 				if threat == null and profile.threat_aversion > 0.0:
@@ -140,10 +140,10 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 	for friendly in context.friendly_units:
 		if friendly == attacker or friendly.acted or friendly.carrier != null:
 			continue
-		if friendly.type.max_range <= 0 or not friendly.has_ammo():
+		if friendly.type.max_range <= 0:
 			continue
-		if not AttackRange.can_engage(state, friendly, enemy):
-			continue
+		if not AttackRange.can_fire(state, friendly, enemy):
+			continue  # no chart entry, no loaded weapon, or the target is dived
 		var reach := AttackRange.maximum(state, friendly)
 		if not AttackRange.is_indirect(friendly):
 			reach += MovementResolver.move_budget(state, friendly)

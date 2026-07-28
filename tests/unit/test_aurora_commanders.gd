@@ -36,38 +36,38 @@ func _fire_power(state: GameState) -> void:
 # --- Lyra Quill: the luck hooks ----------------------------------------------
 
 
-## Her floor is 4, so a Tank that would roll 23-32 against Infantry rolls 27-32.
+## Her floor is 4, so a Tank MG that would roll 68-77 against Infantry rolls 72-77.
 ## Checked over many seeds rather than one, since the point is the range.
 func test_her_luck_never_rolls_low() -> void:
 	for seed_value in 40:
 		var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0", &"lyra_quill")
 		state.rng.seed = seed_value
 		var result := CombatResolver.resolve(state, state.units[0], state.units[1])
-		assert_between(result.attack_damage, 23 + 4, 23 + 9, "seed %d" % seed_value)
+		assert_between(result.attack_damage, 68 + 4, 68 + 9, "seed %d" % seed_value)
 
 
 func test_her_units_are_slightly_softer() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0", &"lyra_quill")
-	# Tank into her Infantry: 25 * (200 - 95)/100 * 0.9 = 23.625 -> 24, against 23.
+	# Tank MG into her Infantry: 75 * (200 - 95)/100 * 0.9 = 70.875 -> 71.
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[1], Vector2i(1, 0), state.units[0])
 			. attack_damage
 		),
-		24
+		71
 	)
 
 
 ## Perfect Solution: maximum luck every time, plus +10% attack.
-## 25 * 1.1 * 0.9 = 24.75 -> 25, and always +9.
+## 75 * 1.1 * 0.9 = 74.25 -> 74, and always +9.
 func test_her_power_removes_the_roll() -> void:
 	for seed_value in 10:
 		var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0", &"lyra_quill")
 		state.rng.seed = seed_value
 		_fire_power(state)
 		var result := CombatResolver.resolve(state, state.units[0], state.units[1])
-		assert_eq(result.attack_damage, 25 + 9, "seed %d" % seed_value)
+		assert_eq(result.attack_damage, 74 + 9, "seed %d" % seed_value)
 
 
 ## Determinism still holds: a narrowed range must draw exactly one number from
@@ -144,9 +144,9 @@ func test_his_light_units_are_faster_and_his_heavy_ones_softer() -> void:
 	var tank := state.units[1]
 	assert_eq(MovementResolver.move_budget(state, recon), recon.type.move_points + 1)
 	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points, "treads unchanged")
-	# Tank vs Infantry: 25 * 0.9 * 0.9 = 20.25 -> 20, against 23.
+	# Tank MG vs Infantry: 75 * 0.9 * 0.9 = 60.75 -> 61, against 68.
 	assert_eq(
-		CombatResolver.forecast(state, tank, Vector2i(0, 1), state.units[2]).attack_damage, 20
+		CombatResolver.forecast(state, tank, Vector2i(0, 1), state.units[2]).attack_damage, 61
 	)
 
 
@@ -160,9 +160,9 @@ func test_his_power_trades_damage_for_movement() -> void:
 	_fire_power(state)
 	assert_eq(MovementResolver.move_budget(state, recon), recon.type.move_points + 3, "1 + 2")
 	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points + 2)
-	# Tank now at -30 total: 25 * 0.7 * 0.9 = 15.75 -> 16.
+	# Tank now at -30 total: 75 * 0.7 * 0.9 = 47.25 -> 47.
 	assert_eq(
-		CombatResolver.forecast(state, tank, Vector2i(0, 1), state.units[2]).attack_damage, 16
+		CombatResolver.forecast(state, tank, Vector2i(0, 1), state.units[2]).attack_damage, 47
 	)
 
 
@@ -172,27 +172,27 @@ func test_his_power_trades_damage_for_movement() -> void:
 func test_she_hits_nearly_dead_units_harder() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", &"cass_orlov")
 	var target := state.units[1]
-	# Healthy: no bonus. 25 * 0.9 = 22.5 -> 23.
+	# Healthy: no bonus. 75 * 0.9 = 67.5 -> 68.
 	assert_eq(
-		CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), target).attack_damage, 23
+		CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), target).attack_damage, 68
 	)
 	target.hp = 50  # 5 displayed: inside her threshold
-	# 25 * 1.15 * (1 - 0.1 * 1 * 0.5) = 27.3125 -> 27
+	# 75 * 1.15 * (1 - 0.1 * 1 * 0.5) = 81.9375 -> 82.
 	assert_eq(
-		CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), target).attack_damage, 27
+		CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), target).attack_damage, 82
 	)
 
 
 func test_her_own_units_are_softer() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0", &"cass_orlov")
-	# Tank into her Infantry: 25 * (200 - 90)/100 * 0.9 = 24.75 -> 25, against 23.
+	# Tank MG into her Infantry: 75 * (200 - 90)/100 * 0.9 = 74.25 -> 74.
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[1], Vector2i(1, 0), state.units[0])
 			. attack_damage
 		),
-		25
+		74
 	)
 
 

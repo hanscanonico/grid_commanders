@@ -49,6 +49,11 @@ const CLASS_LABELS: Dictionary = {
 ## hands it over, so the bar tints a unit through the same resolver the board does.
 var identity: SideIdentity
 
+## The rules' own weapon tables, handed over by BattleView. The bar asks them
+## whether a unit owns an infinite-ammo secondary rather than reading the
+## presentation key that only says how one looks.
+var chart: DamageChart
+
 ## Wired by Battle to _fire_command_power, and kept on the bar so the fire control
 ## sits with the readiness it reflects — the same contract the floating chip had.
 var fire_button: Button
@@ -332,7 +337,10 @@ func _show_unit(unit: Unit, carrying: String, active_team: int) -> void:
 	_pips.set_hp(unit.displayed_hp())
 	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
 	_ammo_label.visible = unit.type.max_ammo > 0
-	_ammo_label.text = "AMMO %d/%d" % [unit.ammo, unit.type.max_ammo]
+	if chart != null and chart.has_secondary(unit.type.id):
+		_ammo_label.text = "MAIN %d/%d · MG ∞" % [unit.ammo, unit.type.max_ammo]
+	else:
+		_ammo_label.text = "AMMO %d/%d" % [unit.ammo, unit.type.max_ammo]
 
 
 ## Movement class first, then whatever the unit is currently doing — the order

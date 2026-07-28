@@ -151,9 +151,12 @@
     <span class="nav-code">tools/build_pixvoxel_atlases.sh</span>'s <span class="nav-code">UNITS</span> order.
   </p>
   <div class="alert text-sm">
-    <span><b>One-weapon simplification (kept):</b> this game has a single chart row per unit, not
-    Advance Wars' primary/secondary weapons. A tank strafing a copter therefore spends a cannon
-    shell. Accepted — it costs one shell of realism and saves a whole weapons subsystem.</span>
+    <span><b>One-weapon simplification (superseded by COM-113):</b> this plan assumed a single
+    chart row per unit, so a tank strafing a copter spent a cannon shell. Tank, Md Tank and Mech
+    now carry an infinite-ammo secondary: <span class="nav-code">DamageChart</span> holds a second
+    matrix and <span class="nav-code">select_shot</span> alone picks the weapon — there is still no
+    weapon picker and no general weapons subsystem. Every other unit here is unchanged and remains
+    single-weapon.</span>
   </div>
 </section>
 

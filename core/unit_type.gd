@@ -69,6 +69,9 @@ const SEA := &"sea"
 ## Defaults to unarmed, so a unit that forgets to declare one stages quietly
 ## rather than firing something it does not own.
 @export var battle_style: StringName = &"unarmed"
+## The infinite-ammo secondary's presentation signature. Like battle_style,
+## this is an opaque replay key and carries no combat value.
+@export var secondary_battle_style: StringName = &"unarmed"
 
 
 ## True when running dry destroys this unit rather than merely stranding it.

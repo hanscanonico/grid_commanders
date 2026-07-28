@@ -284,10 +284,10 @@ mouse, keyboard, or controller throughout.
   anywhere it could stop, an indirect only from where it stands, since it cannot move and shoot.
   The same split as the blue: on one of your own units that is every such cell, whatever the fog;
   on another side's it is the same reading as the blue beneath it, drawn from what you have
-  scouted. It shows what the weapon *reaches* — a unit out of ammo still shows its ring, one
+  scouted. It shows what the weapon *reaches* — a unit with no shot left still shows its ring, one
   resupply from meaning it — and it paints over the blue until pressed again
-- After a move, the action menu opens: **Fire** (offered only when an enemy is in weapon range
-  from the destination and the unit still has ammo), **Capture** (offered when a capture-capable
+- After a move, the action menu opens: **Fire** (offered only when an enemy the unit has a ready
+  weapon for is in range from the destination), **Capture** (offered when a capture-capable
   unit ends on a property you don't own), **Drop** and **Supply** (see transports below),
   **Wait** (commit the move), or **Cancel** (revert it)
 - Choosing Fire enters targeting: attackable enemies get a red overlay and a panel previews the
@@ -311,8 +311,13 @@ mouse, keyboard, or controller throughout.
   over the side mid-channel. **Supply** refills every friendly unit within the APC's supply reach —
   normally the adjacent tiles, further under a commander who says so
 - Moving spends fuel equal to the terrain cost of each step, discounted by any doctrine that makes
-  that step cheaper, so you are never billed more than the range overlay showed; attacking spends
-  one ammo, and so does each counter-attack, so a dry unit can neither fire nor counter. At the
+  that step cheaper, so you are never billed more than the range overlay showed; firing the main
+  gun spends one ammo, and so does a counter-attack fired with it, so a dry unit with nothing else
+  to shoot can neither fire nor counter. A Tank, a Md Tank and a Mech carry a machine gun with
+  unlimited ammunition alongside that main gun, and the rules pick between the two for you: the
+  machine gun is always what they answer infantry, Mechs and copters with, and it takes over
+  against everything else they can hit — every land and air target; ships stay the main gun's
+  alone — once the main gun runs dry, so those three are never silenced. At the
   start of your turn every unit standing on a property that services it, or in reach of one of your
   APCs, is refilled — and a transport tops up every unit riding aboard it. Which property services
   what is the point: a city refits vehicles, an airport
@@ -365,8 +370,9 @@ mouse, keyboard, or controller throughout.
   portrait, name, power name, and — for a side playing a power — the charge meter with its
   `charge / cost` readout, which reads `READY · F` when it is full and `ACTIVE` while it runs,
   plus a **FIRE** button (see Commanders below); then the unit on the hovered tile, if any — its
-  sprite, name, HP as ten pips, fuel and ammo out of their maximums (no ammo readout for units
-  that need none), and an order line naming its movement class, its range when it is an indirect,
+  sprite, name, HP as ten pips, fuel and ammo out of their maximums — `MAIN 6/9 · MG ∞` for one
+  that also carries a machine gun, and no ammo readout at all for one that needs none — and an
+  order line naming its movement class, its range when it is an indirect,
   `DIVED`, `LOW FUEL`, `CARRYING …` when it is a loaded transport, and `WAITED` or `READY`, with
   the sprite greyed once it has acted this turn; then, pinned right, the tile's artwork, name,
   defense stars, owner, and `CAP N` while a capture is in progress. With nothing under the cursor

@@ -73,15 +73,19 @@ class CombatResult:
 	## Displayed HP (1-10) each side went into the exchange with, snapshotted by
 	## `resolve` before a point of it is spent.
 	##
-	## The only thing in this file that exists for the presentation layer. By the
-	## time the battle cut-in is handed a result the command has already applied,
-	## so both units hold their *post*-combat HP and the animation has nothing to
-	## count down from. Recorded here rather than re-derived there, because the
-	## cut-in must replay the exchange and never recompute it — a second opinion
-	## on combat is exactly the bug class this repo already paid for once with
-	## movement. Nothing in core/ or ai/ reads these.
+	## These snapshots exist for the presentation layer. By the time the battle
+	## cut-in is handed a result the command has already applied, so both units
+	## hold their *post*-combat HP and the animation has nothing to count down
+	## from. Recorded here rather than re-derived there, because the cut-in must
+	## replay the exchange and never recompute it — a second opinion on combat is
+	## exactly the bug class this repo already paid for once with movement.
+	## Nothing in core/ or ai/ reads these.
 	var attacker_hp_before := 0
 	var defender_hp_before := 0
+	## Weapon slots selected by the rules, snapshotted for that cut-in to replay.
+	## An empty counter slot means the defender never fired.
+	var attacker_weapon_slot: StringName
+	var counter_weapon_slot: StringName
 
 
 ## Luck-free prediction for the damage preview. `attacker_cell` is the planned
@@ -110,7 +114,8 @@ static func forecast_at(
 	defender_cell: Vector2i
 ) -> Forecast:
 	var result := Forecast.new()
-	if not attacker.has_ammo():
+	var selected := _select_shot(state, attacker, defender)
+	if selected == null:
 		return result
 	var shot := Engagement.create(
 		attacker,
@@ -120,9 +125,7 @@ static func forecast_at(
 		defender_cell,
 		defender.displayed_hp()
 	)
-	var damage := _damage_pct(state, shot)
-	if damage < 0:
-		return result
+	var damage := _damage_pct(state, shot, selected.base_damage)
 	var shot_luck := _luck_bounds(state, shot)
 	result.can_attack = true
 	result.attack_damage = damage
@@ -135,10 +138,12 @@ static func forecast_at(
 	result.attacker_hp_after_min = result.attacker_hp_before
 	result.attacker_hp_after_max = result.attacker_hp_before
 	var hp_after := maxi(0, defender.hp - damage)
-	if (
-		hp_after > 0
-		and _defender_can_counter(state, defender, defender_cell, attacker, attacker_cell)
-	):
+	if hp_after > 0:
+		var selected_counter := _counter_shot(
+			state, defender, defender_cell, attacker, attacker_cell
+		)
+		if selected_counter == null:
+			return result
 		var counter := Engagement.create(
 			defender,
 			defender_cell,
@@ -148,18 +153,21 @@ static func forecast_at(
 			attacker.displayed_hp(),
 			true
 		)
-		var counter_damage := _damage_pct(state, counter)
-		if counter_damage >= 0:
-			result.counter_damage = counter_damage
-			# Worst case: the unluckiest shot leaves the defender the strongest
-			# band it can answer from, which is the luck-free one the percentage
-			# above is already projected off.
-			result.attacker_hp_after_min = _hp_after(
-				attacker.hp, counter_damage + _luck_bounds(state, counter).y
-			)
-			result.attacker_hp_after_max = _counter_best_case(
-				state, counter, counter_damage, defender.hp - damage - shot_luck.y
-			)
+		var counter_damage := _damage_pct(state, counter, selected_counter.base_damage)
+		result.counter_damage = counter_damage
+		# Worst case: the unluckiest shot leaves the defender the strongest
+		# band it can answer from, which is the luck-free one the percentage
+		# above is already projected off.
+		result.attacker_hp_after_min = _hp_after(
+			attacker.hp, counter_damage + _luck_bounds(state, counter).y
+		)
+		result.attacker_hp_after_max = _counter_best_case(
+			state,
+			counter,
+			selected_counter.base_damage,
+			counter_damage,
+			defender.hp - damage - shot_luck.y
+		)
 	return result
 
 
@@ -171,7 +179,11 @@ static func forecast_at(
 ## luck-free one did, which is the common case; `forecast` is the AI's inner
 ## loop and pays for this on every candidate move.
 static func _counter_best_case(
-	state: GameState, counter: Engagement, counter_damage: int, defender_left: int
+	state: GameState,
+	counter: Engagement,
+	counter_base_damage: int,
+	counter_damage: int,
+	defender_left: int
 ) -> int:
 	var attacker := counter.defender
 	if defender_left <= 0:
@@ -188,9 +200,7 @@ static func _counter_best_case(
 		counter.defender_hp,
 		true
 	)
-	var weakened := _damage_pct(state, luckiest)
-	if weakened < 0:
-		return attacker.displayed_hp()
+	var weakened := _damage_pct(state, luckiest, counter_base_damage)
 	return _hp_after(attacker.hp, weakened + _luck_bounds(state, luckiest).x)
 
 
@@ -199,6 +209,10 @@ static func _counter_best_case(
 ## bank Command Power charge for the HP that changed hands.
 static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatResult:
 	var result := CombatResult.new()
+	var selected := _select_shot(state, attacker, defender)
+	if selected == null:
+		push_error("CombatResolver: %s cannot attack %s" % [attacker.type.id, defender.type.id])
+		return result
 	var fight := Engagement.create(
 		attacker,
 		attacker.cell,
@@ -212,11 +226,9 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	# from the exchange it describes.
 	result.attacker_hp_before = fight.attacker_hp
 	result.defender_hp_before = fight.defender_hp
-	var base := _damage_pct(state, fight)
-	if base < 0:
-		push_error("CombatResolver: %s cannot attack %s" % [attacker.type.id, defender.type.id])
-		return result
-	if attacker.type.max_ammo > 0:
+	result.attacker_weapon_slot = selected.slot
+	var base := _damage_pct(state, fight, selected.base_damage)
+	if selected.consumes_primary_ammo:
 		attacker.ammo = maxi(0, attacker.ammo - 1)
 	result.attack_damage = base + _luck(state, fight)
 	# Banked before the unit is removed: a kill charges for the HP it actually
@@ -228,7 +240,8 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 		_bank_cargo_losses(state, defender, attacker.team)
 		state.remove_unit(defender)
 		return result
-	if not _defender_can_counter(state, defender, defender.cell, attacker, attacker.cell):
+	var selected_counter := _counter_shot(state, defender, defender.cell, attacker, attacker.cell)
+	if selected_counter == null:
 		return result
 	var counter := Engagement.create(
 		defender,
@@ -239,10 +252,9 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 		attacker.displayed_hp(),
 		true
 	)
-	var counter_base := _damage_pct(state, counter)
-	if counter_base < 0:
-		return result
-	if defender.type.max_ammo > 0:
+	var counter_base := _damage_pct(state, counter, selected_counter.base_damage)
+	result.counter_weapon_slot = selected_counter.slot
+	if selected_counter.consumes_primary_ammo:
 		defender.ammo = maxi(0, defender.ammo - 1)
 	result.countered = true
 	result.counter_damage = counter_base + _luck(state, counter)
@@ -269,31 +281,33 @@ static func _bank_cargo_losses(state: GameState, transport: Unit, dealer_team: i
 		_bank_cargo_losses(state, passenger, dealer_team)
 
 
-static func _defender_can_counter(
+## The weapon the defender shoots back with, or null when it does not counter at
+## all. One selection, handed to the caller that prices the counter — asking
+## whether a counter happens and asking what it is fired with are the same
+## question, and the forecast is the AI's inner loop.
+static func _counter_shot(
 	state: GameState,
 	defender: Unit,
 	defender_cell: Vector2i,
 	attacker: Unit,
 	attacker_cell: Vector2i
-) -> bool:
+) -> DamageChart.Shot:
 	# Deliberately the unit type's own range rather than AttackRange: countering
 	# is adjacency, and a doctrine that extends how far a unit can *initiate*
 	# must not turn an indirect into something that shoots back. Only the
 	# distance is decided here, though — whether the shot is possible at all is
 	# AttackRange's, below.
 	if defender.type.max_range != 1:
-		return false  # unarmed and indirect units never counter
-	if not defender.has_ammo():
-		return false
+		return null  # unarmed and indirect units never counter
 	if defender.dived:
-		return false  # a submarine that is hiding does not give itself away
+		return null  # a submarine that is hiding does not give itself away
 	var dist := absi(attacker_cell.x - defender_cell.x) + absi(attacker_cell.y - defender_cell.y)
 	if dist != 1:
-		return false  # an indirect attacker fires from beyond counter reach
+		return null  # an indirect attacker fires from beyond counter reach
 	# The same authority the opening shot went through, which is what gives the
 	# dive its edge: a submerged attacker is countered only by a hunter that can
 	# reach under the surface, and shrugged at by everything else.
-	return AttackRange.can_engage(state, defender, attacker)
+	return AttackRange.ready_shot(state, defender, attacker)
 
 
 ## One luck roll, from the attacking commander's range. Always exactly one draw
@@ -337,10 +351,7 @@ static func _cover_stars(state: GameState, fight: Engagement) -> int:
 	return state.map.terrain_at(fight.defender_cell).defense_stars
 
 
-static func _damage_pct(state: GameState, fight: Engagement) -> int:
-	var base := state.damage_chart.base_damage(fight.attacker.type.id, fight.defender.type.id)
-	if base < 0:
-		return -1
+static func _damage_pct(state: GameState, fight: Engagement, base_damage: int) -> int:
 	var att_co := state.commander_of(fight.attacker.team)
 	var def_co := state.commander_of(fight.defender.team)
 	var stars := clampi(
@@ -355,10 +366,18 @@ static func _damage_pct(state: GameState, fight: Engagement) -> int:
 	var att := 100 + att_co.attack_bonus(state, fight)
 	var def := 100 + def_co.defense_bonus(state, fight)
 	var raw := (
-		base
+		base_damage
 		* (att / 100.0)
 		* (fight.attacker_hp / 10.0)
 		* (1.0 - 0.1 * stars * fight.defender_hp / 10.0)
 		* ((200 - def) / 100.0)
 	)
 	return maxi(0, roundi(raw))
+
+
+static func _select_shot(state: GameState, attacker: Unit, defender: Unit) -> DamageChart.Shot:
+	if state.damage_chart == null:
+		return null
+	return state.damage_chart.select_shot(
+		attacker.type.id, defender.type.id, attacker.ammo, attacker.type.max_ammo
+	)

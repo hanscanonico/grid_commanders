@@ -1,0 +1,42 @@
+extends GutTest
+## Cross-consumer checks for the live selector. Exact data and resolver replay
+## have their own focused files; these pin the two callers most likely to retain
+## the old global dry-ammo shortcut.
+
+var terrain_db: TerrainDB
+var unit_db: UnitDB
+var chart: DamageChart
+
+
+func before_each() -> void:
+	terrain_db = TerrainDB.load_default()
+	unit_db = UnitDB.load_default()
+	chart = load("res://data/damage_chart.tres")
+
+
+func _state(map_text: String) -> GameState:
+	var map := MapData.parse(map_text, terrain_db)
+	var state := GameState.create(map, unit_db, chart)
+	assert_not_null(state)
+	return state
+
+
+func test_ai_uses_a_dry_tanks_secondary() -> void:
+	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0")
+	state.units[0].ammo = 0
+	var command := AIController.new(unit_db, AIProfile.load_default()).plan_next_command(state)
+	assert_true(command is AttackCommand, "the dry Tank should still take its legal MG shot")
+	assert_eq((command as AttackCommand).target_cell, Vector2i(1, 0))
+
+
+func test_threat_map_prices_a_dry_tank_per_target() -> void:
+	var state := _state("[terrain]\n=====\n[units]\n2 t 4 0")
+	var enemy := state.units[0]
+	enemy.ammo = 0
+	var map := ThreatMap.build(state, [enemy])
+	var infantry := Unit.create(unit_db.by_id(&"infantry"), 1, Vector2i(0, 0))
+	var tank := Unit.create(unit_db.by_id(&"tank"), 1, Vector2i(0, 0))
+	var fighter := Unit.create(unit_db.by_id(&"fighter"), 1, Vector2i(0, 0))
+	assert_eq(map.incoming_damage(state, infantry, Vector2i(0, 0)), 75)
+	assert_eq(map.incoming_damage(state, tank, Vector2i(0, 0)), 6)
+	assert_eq(map.incoming_damage(state, fighter, Vector2i(0, 0)), 0)

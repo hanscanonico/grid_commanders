@@ -22,8 +22,6 @@ func validate(state: GameState) -> String:
 		return move_error
 	if unit.type.max_range <= 0:
 		return "unit is unarmed"
-	if not unit.has_ammo():
-		return "out of ammo"
 	if AttackRange.is_indirect(unit) and path.size() > 1:
 		return "indirect units cannot move and fire"
 	var target := state.unit_at(target_cell)
@@ -33,7 +31,11 @@ func validate(state: GameState) -> String:
 		return "cannot attack a friendly unit"
 	if not AttackRange.covers(state, unit, path[path.size() - 1], target_cell):
 		return "target out of range"
-	if not AttackRange.can_engage(state, unit, target):
+	if AttackRange.ready_shot(state, unit, target) == null:
+		# Which of the two it is only matters for the message, so the distinction
+		# is drawn on the way out rather than costing a second lookup per shot.
+		if AttackRange.can_engage(state, unit, target):
+			return "out of ammo"
 		return "cannot damage the target"
 	return ""
 

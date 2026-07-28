@@ -1,10 +1,10 @@
 extends GutTest
 ## Lint over data/damage_chart.tres, because every way that file goes wrong is
-## silent. A missing entry *is* the rule "this attacker cannot damage that
-## defender" (DamageChart.base_damage returns -1, can_attack reads it as no), so
-## a typo'd id, a forgotten row or a whole missing column produces a matchup that
-## simply never happens — no error, no crash, nothing in the log. The only place
-## that can be caught is here.
+## silent. A missing entry across both weapon tables *is* the rule "this attacker
+## cannot damage that defender" (DamageChart.base_damage returns -1), so a typo'd
+## id, a forgotten row or a whole missing column produces a matchup that simply
+## never happens — no error, no crash, nothing in the log. The only place that
+## can be caught is here.
 ##
 ## What each test asserts is deliberately structural rather than numerical:
 ## balance lives in the numbers and moves with playtesting, but "an anti-air gun
@@ -43,6 +43,54 @@ const HIGH_FLYING: Array[StringName] = [&"fighter", &"bomber"]
 ## navy with no answer to bombers is a navy that cannot leave port.
 const AIR_ANSWERS: Array[StringName] = [&"anti_air", &"fighter", &"missiles", &"cruiser"]
 
+const EXPECTED_SECONDARIES := {
+	&"tank":
+	{
+		&"infantry": 75,
+		&"mech": 70,
+		&"b_copter": 10,
+		&"t_copter": 40,
+		&"recon": 40,
+		&"tank": 6,
+		&"md_tank": 1,
+		&"anti_air": 5,
+		&"artillery": 45,
+		&"rockets": 55,
+		&"apc": 45,
+		&"missiles": 30,
+	},
+	&"md_tank":
+	{
+		&"infantry": 105,
+		&"mech": 95,
+		&"b_copter": 12,
+		&"t_copter": 45,
+		&"recon": 45,
+		&"tank": 8,
+		&"md_tank": 1,
+		&"anti_air": 7,
+		&"artillery": 45,
+		&"rockets": 55,
+		&"apc": 45,
+		&"missiles": 35,
+	},
+	&"mech":
+	{
+		&"infantry": 65,
+		&"mech": 55,
+		&"b_copter": 9,
+		&"t_copter": 35,
+		&"recon": 18,
+		&"tank": 6,
+		&"md_tank": 1,
+		&"anti_air": 6,
+		&"artillery": 32,
+		&"rockets": 35,
+		&"apc": 20,
+		&"missiles": 35,
+	},
+}
+
 
 func before_each() -> void:
 	unit_db = UnitDB.load_default()
@@ -52,14 +100,15 @@ func before_each() -> void:
 ## Both levels of the chart are keyed by unit id, and a misspelling on either
 ## looks exactly like a matchup that was never meant to exist.
 func test_every_id_in_the_chart_is_a_real_unit() -> void:
-	for attacker: StringName in chart.chart:
-		assert_not_null(unit_db.by_id(attacker), "chart row '%s' is not a unit id" % attacker)
-		var row: Dictionary = chart.chart[attacker]
-		for defender: StringName in row:
-			assert_not_null(
-				unit_db.by_id(defender),
-				"chart entry %s -> '%s' is not a unit id" % [attacker, defender]
-			)
+	for table: Dictionary in [chart.chart, chart.secondary_chart]:
+		for attacker: StringName in table:
+			assert_not_null(unit_db.by_id(attacker), "chart row '%s' is not a unit id" % attacker)
+			var row: Dictionary = table[attacker]
+			for defender: StringName in row:
+				assert_not_null(
+					unit_db.by_id(defender),
+					"chart entry %s -> '%s' is not a unit id" % [attacker, defender]
+				)
 
 
 ## An armed unit with no row cannot attack anything at all, which is a unit that
@@ -81,7 +130,7 @@ func test_no_unarmed_unit_has_a_row() -> void:
 		if unit_type.max_range > 0:
 			continue
 		assert_false(
-			chart.chart.has(unit_type.id),
+			chart.chart.has(unit_type.id) or chart.secondary_chart.has(unit_type.id),
 			"%s is unarmed, so a chart row for it can never be used" % unit_type.id
 		)
 
@@ -148,8 +197,32 @@ func test_every_air_answer_reaches_every_fixed_wing_aircraft() -> void:
 ## as "cannot attack" and a wild one is a data-entry slip rather than a balance
 ## choice.
 func test_damage_values_are_sane_percentages() -> void:
-	for attacker: StringName in chart.chart:
-		var row: Dictionary = chart.chart[attacker]
-		for defender: StringName in row:
-			var damage: int = row[defender]
-			assert_between(damage, 1, 200, "%s -> %s is %d%%" % [attacker, defender, damage])
+	for table: Dictionary in [chart.chart, chart.secondary_chart]:
+		for attacker: StringName in table:
+			var row: Dictionary = table[attacker]
+			for defender: StringName in row:
+				var damage: int = row[defender]
+				assert_between(damage, 1, 200, "%s -> %s is %d%%" % [attacker, defender, damage])
+
+
+func test_secondary_chart_matches_the_locked_machine_gun_table() -> void:
+	assert_eq(chart.secondary_chart, EXPECTED_SECONDARIES)
+
+
+func test_selector_owns_preference_fallback_and_ammo_spend() -> void:
+	var preferred := chart.select_shot(&"tank", &"mech", 9, 9)
+	assert_eq(preferred.slot, DamageChart.SECONDARY)
+	assert_eq(preferred.base_damage, 70)
+	assert_false(preferred.consumes_primary_ammo)
+
+	var stocked := chart.select_shot(&"tank", &"tank", 9, 9)
+	assert_eq(stocked.slot, DamageChart.PRIMARY)
+	assert_eq(stocked.base_damage, 55)
+	assert_true(stocked.consumes_primary_ammo)
+
+	var fallback := chart.select_shot(&"tank", &"tank", 0, 9)
+	assert_eq(fallback.slot, DamageChart.SECONDARY)
+	assert_eq(fallback.base_damage, 6)
+	assert_false(fallback.consumes_primary_ammo)
+
+	assert_null(chart.select_shot(&"tank", &"battleship", 0, 9))

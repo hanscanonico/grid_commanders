@@ -31,10 +31,10 @@ func _damage(state: GameState, attacker: Unit, defender: Unit) -> int:
 # --- the doctrine ------------------------------------------------------------
 
 
-## Tank vs Infantry on plains: 25 * 1.15 * 0.9 = 25.875 -> 26, against 23 flat.
+## Tank MG vs Infantry: 75 * 1.15 * 0.9 = 77.625 -> 78, against 68 flat.
 func test_tanks_hit_harder() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
-	assert_eq(_damage(state, state.units[0], state.units[1]), 26)
+	assert_eq(_damage(state, state.units[0], state.units[1]), 78)
 
 
 ## Infantry vs Tank on plains: 5 * 0.9 * 0.9 = 4.05 -> 4, against 4.5 -> 5.
@@ -73,13 +73,13 @@ func _fire_power(state: GameState) -> void:
 
 
 ## A city is 3 stars; Breakthrough makes the Tank fight it as 2.
-##   plain:        25 * 1.15 * (1 - 0.3) = 20.125 -> 20
-##   breakthrough: 25 * 1.15 * (1 - 0.2) = 23
+##   passive:      75 * 1.15 * (1 - 0.3) = 60.375 -> 60
+##   breakthrough: 75 * 1.15 * (1 - 0.2) = 69
 func test_the_power_pierces_one_terrain_star() -> void:
 	var state := _state("[terrain]\n.C\n[units]\n1 t 0 0\n2 i 1 0")
-	assert_eq(_damage(state, state.units[0], state.units[1]), 20)
+	assert_eq(_damage(state, state.units[0], state.units[1]), 60)
 	_fire_power(state)
-	assert_eq(_damage(state, state.units[0], state.units[1]), 23)
+	assert_eq(_damage(state, state.units[0], state.units[1]), 69)
 
 
 func test_stars_clamp_at_zero() -> void:
@@ -109,6 +109,6 @@ func test_foot_units_do_not_pierce_under_the_power() -> void:
 func test_the_power_expires_with_the_turn() -> void:
 	var state := _state("[terrain]\n.C\n[units]\n1 t 0 0\n2 i 1 0")
 	_fire_power(state)
-	assert_eq(_damage(state, state.units[0], state.units[1]), 23)
+	assert_eq(_damage(state, state.units[0], state.units[1]), 69)
 	EndTurnCommand.new().apply(state)
-	assert_eq(_damage(state, state.units[0], state.units[1]), 20, "back to the passive alone")
+	assert_eq(_damage(state, state.units[0], state.units[1]), 60, "back to the passive alone")

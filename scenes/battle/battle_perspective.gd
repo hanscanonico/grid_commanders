@@ -65,7 +65,7 @@ func visible_unit_at(cell: Vector2i) -> Unit:
 ## the action; `AttackRange` remains the authority on reach and targetability.
 func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	if not unit.has_ammo() or (AttackRange.is_indirect(unit) and moved):
+	if AttackRange.is_indirect(unit) and moved:
 		return cells
 	for other in _game.units:
 		if other.team == unit.team or other.carrier != null:
@@ -74,7 +74,7 @@ func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i
 			continue
 		if not AttackRange.covers(_game, unit, dest, other.cell):
 			continue
-		if AttackRange.can_engage(_game, unit, other):
+		if AttackRange.can_fire(_game, unit, other):
 			cells.append(other.cell)
 	cells.sort()
 	return cells
