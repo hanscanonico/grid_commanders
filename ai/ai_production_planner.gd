@@ -228,6 +228,6 @@ static func _can_hit_any(state: GameState, unit: Unit, targets: Array[Unit]) -> 
 	if unit.type.max_range <= 0:
 		return false
 	for target in targets:
-		if AttackRange.can_engage(state, unit, target):
+		if AttackRange.can_fire(state, unit, target):
 			return true
 	return false

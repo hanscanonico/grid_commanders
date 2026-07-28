@@ -53,9 +53,19 @@ func register(style: BattleStyle) -> void:
 	_by_id[style.id] = style
 
 
-## The style a unit fires with. Never null — see the note at the top.
+## The style a unit's primary weapon fires with. Never null — see above.
 func for_unit(type: UnitType) -> BattleStyle:
 	return by_id(type.battle_style)
+
+
+## The style named by an already-resolved weapon slot. The slot is a replay
+## fact; this maps it to presentation data and never asks the combat rules.
+func for_weapon(type: UnitType, slot: StringName) -> BattleStyle:
+	if slot == DamageChart.PRIMARY:
+		return by_id(type.battle_style)
+	if slot == DamageChart.SECONDARY:
+		return by_id(type.secondary_battle_style)
+	return unarmed()
 
 
 func by_id(id: StringName) -> BattleStyle:

@@ -32,7 +32,7 @@ func _fire_power(state: GameState) -> void:
 # --- the doctrine ------------------------------------------------------------
 
 
-## Her Tank opening on an Infantry: 25 * 0.9 * 0.9 = 20.25 -> 20, against 23.
+## Her Tank MG opening on Infantry: 75 * 0.9 * 0.9 = 60.75 -> 61, against 68.
 func test_initiating_hits_softer() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	assert_eq(
@@ -41,7 +41,7 @@ func test_initiating_hits_softer() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		20
+		61
 	)
 
 
@@ -78,15 +78,15 @@ func test_the_power_covers_the_opponents_turn() -> void:
 	_fire_power(state)
 	EndTurnCommand.new().apply(state)
 	assert_true(state.power_active(1), "still up on blue's turn")
-	# Blue's Tank into her defended Infantry: 25 * (200 - 130)/100 * 0.9
-	# = 25 * 0.7 * 0.9 = 15.75 -> 16, against 23 undefended.
+	# Blue's Tank MG into her defended Infantry: 75 * (200 - 130)/100 * 0.9
+	# = 75 * 0.7 * 0.9 = 47.25 -> 47, against 68 undefended.
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[1], Vector2i(1, 0), state.units[0])
 			. attack_damage
 		),
-		16
+		47
 	)
 	EndTurnCommand.new().apply(state)
 	assert_false(state.power_active(1), "and down as her next turn opens")
@@ -96,7 +96,7 @@ func test_the_power_covers_the_opponents_turn() -> void:
 			. forecast(state, state.units[1], Vector2i(1, 0), state.units[0])
 			. attack_damage
 		),
-		23
+		68
 	)
 
 

@@ -332,7 +332,10 @@ func _show_unit(unit: Unit, carrying: String, active_team: int) -> void:
 	_pips.set_hp(unit.displayed_hp())
 	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
 	_ammo_label.visible = unit.type.max_ammo > 0
-	_ammo_label.text = "AMMO %d/%d" % [unit.ammo, unit.type.max_ammo]
+	if unit.type.secondary_battle_style != &"unarmed":
+		_ammo_label.text = "MAIN %d/%d · MG ∞" % [unit.ammo, unit.type.max_ammo]
+	else:
+		_ammo_label.text = "AMMO %d/%d" % [unit.ammo, unit.type.max_ammo]
 
 
 ## Movement class first, then whatever the unit is currently doing — the order

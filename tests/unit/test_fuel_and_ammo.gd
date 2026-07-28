@@ -65,8 +65,8 @@ func test_attack_and_counter_consume_ammo() -> void:
 	assert_eq(state.units[1].ammo, 7, "the counter-attack spent one too")
 
 
-func test_out_of_ammo_blocks_attack() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+func test_out_of_primary_ammo_blocks_an_unsupported_secondary_target() -> void:
+	var state := _state("[terrain]\n.S\n[units]\n1 t 0 0\n2 B 1 0")
 	state.units[0].ammo = 0
 	var command := AttackCommand.new(state.units[0], _path([Vector2i(0, 0)]), Vector2i(1, 0))
 	assert_eq(command.validate(state), "out of ammo")
@@ -74,8 +74,18 @@ func test_out_of_ammo_blocks_attack() -> void:
 	assert_false(forecast.can_attack)
 
 
-func test_out_of_ammo_defender_cannot_counter() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+func test_dry_tank_uses_its_machine_gun_fallback() -> void:
+	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 t 1 0")
+	state.units[0].ammo = 0
+	var command := AttackCommand.new(state.units[0], _path([Vector2i(0, 0)]), Vector2i(1, 0))
+	assert_eq(command.validate(state), "")
+	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
+	assert_true(forecast.can_attack)
+	assert_eq(forecast.attack_damage, 6)
+
+
+func test_out_of_ammo_defender_without_a_secondary_cannot_counter() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 h 1 0")
 	state.rng.seed = 4
 	state.units[1].ammo = 0
 	var result := CombatResolver.resolve(state, state.units[0], state.units[1])

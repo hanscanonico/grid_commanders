@@ -9,8 +9,8 @@ extends RefCounted
 ##
 ## Node-free like the rest of ai/. Reuses the single authorities and re-derives
 ## no rules: MovementResolver for each enemy's reach, AttackRange for its firing
-## ring and for whether an enemy may engage the defender at all (can_engage, so a
-## dived sub is charged nothing by a hunter that cannot reach under the water),
+## ring and for whether an enemy can fire at the defender (can_fire, so a dived
+## sub is charged nothing by a hunter that cannot reach under the water),
 ## CombatResolver.forecast_at for the damage. Forecast is luck-free and draws no
 ## RNG, so a Difficult match stays as deterministic and replayable as any other
 ## tier.
@@ -42,8 +42,8 @@ var _by_cell: Dictionary = {}
 static func build(state: GameState, enemies: Array[Unit]) -> ThreatMap:
 	var map := ThreatMap.new()
 	for enemy in enemies:
-		if enemy.type.max_range <= 0 or not enemy.has_ammo():
-			continue  # unarmed or dry: no threat to map
+		if enemy.type.max_range <= 0 or not AttackRange.has_ready_weapon(state, enemy):
+			continue  # no ready weapon: no threat to map
 		var low := AttackRange.minimum(state, enemy)
 		var high := AttackRange.maximum(state, enemy)
 		for from in AttackRange.firing_cells(state, enemy):
@@ -80,7 +80,7 @@ func incoming_damage(state: GameState, defender: Unit, cell: Vector2i) -> int:
 		return 0
 	var total := 0
 	for enemy: Unit in enemies:
-		if not AttackRange.can_engage(state, enemy, defender):
+		if not AttackRange.can_fire(state, enemy, defender):
 			continue  # no chart entry, or the defender is dived beyond this hunter
 		var forecast := CombatResolver.forecast_at(state, enemy, enemy.cell, defender, cell)
 		if forecast.can_attack:

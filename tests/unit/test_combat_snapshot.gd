@@ -1,6 +1,6 @@
 extends GutTest
-## The two fields on CombatResult that exist for the battle cut-in and for
-## nothing else (battle-animations plan D1).
+## The snapshots on CombatResult that exist for the battle cut-in and for
+## nothing else (battle-animations plan D1 and secondary-weapons plan D3).
 ##
 ## Split out of test_combat_resolver.gd because it is a different question. That
 ## file pins the *formula*; this one pins the record of what the formula was
@@ -74,3 +74,18 @@ func test_resolve_snapshots_an_unanswered_volley() -> void:
 	assert_eq(result.attacker_hp_before, 5)
 	assert_eq(result.defender_hp_before, 10)
 	assert_eq(attacker.displayed_hp(), 5, "nothing shot back, so the attacker is untouched")
+
+
+## The weapon pair is replay data just like HP. Tank chooses its MG against a
+## Mech, while the surviving stocked Mech independently chooses its bazooka.
+func test_resolve_snapshots_each_sides_independent_weapon_slot() -> void:
+	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 m 1 0")
+	state.rng.seed = 11
+	var tank := state.units[0]
+	var mech := state.units[1]
+	var result := CombatResolver.resolve(state, tank, mech)
+	assert_true(result.countered)
+	assert_eq(result.attacker_weapon_slot, DamageChart.SECONDARY)
+	assert_eq(result.counter_weapon_slot, DamageChart.PRIMARY)
+	assert_eq(tank.ammo, tank.type.max_ammo, "the MG spent no cannon round")
+	assert_eq(mech.ammo, mech.type.max_ammo - 1, "the bazooka spent one primary round")

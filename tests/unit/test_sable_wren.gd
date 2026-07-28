@@ -35,7 +35,7 @@ func _fire_power(state: GameState) -> void:
 
 
 ## Woods are 2 stars; hers count as 3. Tank vs Infantry in woods:
-## 25 * (1 - 0.3) = 17.5 -> 18, against 25 * 0.8 = 20.
+## 75 * (1 - 0.3) = 52.5 -> 53, against 75 * 0.8 = 60.
 func test_her_units_get_an_extra_star_in_woods() -> void:
 	var state := _state("[terrain]\n.F\n[units]\n2 t 0 0\n1 i 1 0")
 	assert_eq(
@@ -44,12 +44,12 @@ func test_her_units_get_an_extra_star_in_woods() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		18
+		53
 	)
 
 
 ## Roads have no cover to begin with, so the penalty is pure downside:
-## 25 * (200 - 90)/100 = 27.5 -> 28, against 25 flat.
+## 75 * (200 - 90)/100 = 82.5 -> 83, against 75 flat.
 func test_her_units_are_softer_on_roads() -> void:
 	var state := _state("[terrain]\n==\n[units]\n2 t 0 0\n1 i 1 0")
 	assert_eq(
@@ -58,7 +58,7 @@ func test_her_units_are_softer_on_roads() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		28
+		83
 	)
 
 

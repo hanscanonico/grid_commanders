@@ -34,6 +34,18 @@ func test_every_unit_names_a_style_that_exists() -> void:
 		)
 
 
+func test_secondary_units_name_the_small_arms_style() -> void:
+	for id: StringName in [&"tank", &"md_tank", &"mech"]:
+		var type := units.by_id(id)
+		assert_eq(type.secondary_battle_style, &"small_arms")
+		assert_true(styles.has(type.secondary_battle_style))
+		assert_eq(
+			styles.for_weapon(type, DamageChart.SECONDARY),
+			styles.by_id(&"small_arms"),
+			"%s should replay its snapshotted secondary as small arms" % id,
+		)
+
+
 ## The roster's three transports are the only units the damage chart gives no
 ## attack at all. They are staged as defenders and never fire, so their style
 ## must be the one that puts nothing on screen — a transport with a cannon

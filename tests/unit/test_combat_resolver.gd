@@ -19,7 +19,7 @@ func _state(map_text: String) -> GameState:
 
 
 func test_chart_loads() -> void:
-	assert_eq(chart.base_damage(&"tank", &"infantry"), 25)
+	assert_eq(chart.base_damage(&"tank", &"infantry"), 75)
 	assert_eq(chart.base_damage(&"infantry", &"tank"), 5)
 	assert_eq(chart.base_damage(&"apc", &"tank"), -1, "APC is unarmed")
 	assert_true(chart.can_attack(&"rockets", &"md_tank"))
@@ -27,29 +27,29 @@ func test_chart_loads() -> void:
 
 
 func test_forecast_full_hp_on_plains() -> void:
-	# tank vs infantry on plains (1 star): 25 * 1.0 * 0.9 = 22.5 -> 23
+	# Tank MG vs Infantry on plains (1 star): 75 * 1.0 * 0.9 = 67.5 -> 68
 	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
 	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 	assert_true(forecast.can_attack)
-	assert_eq(forecast.attack_damage, 23)
-	# counter: infantry at 8 HP (77 internal) vs tank on plains:
-	# 5 * 0.8 * 0.9 = 3.6 -> 4
-	assert_eq(forecast.counter_damage, 4)
+	assert_eq(forecast.attack_damage, 68)
+	# Counter: Infantry at 4 displayed HP vs Tank on plains:
+	# 5 * 0.4 * 0.9 = 1.8 -> 2.
+	assert_eq(forecast.counter_damage, 2)
 
 
 func test_forecast_ignores_luck_and_respects_terrain() -> void:
-	# road has 0 defense stars: tank vs infantry = flat 25
+	# Road has 0 defense stars: Tank MG vs Infantry = flat 75.
 	var road_state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0")
 	var road_forecast := CombatResolver.forecast(
 		road_state, road_state.units[0], Vector2i(0, 0), road_state.units[1]
 	)
-	assert_eq(road_forecast.attack_damage, 25)
-	# mountain (4 stars) shields the defender: 25 * 1.0 * 0.6 = 15
+	assert_eq(road_forecast.attack_damage, 75)
+	# Mountain (4 stars) shields the defender: 75 * 1.0 * 0.6 = 45.
 	var mountain_state := _state("[terrain]\n.M\n[units]\n1 t 0 0\n2 i 1 0")
 	var mountain_forecast := CombatResolver.forecast(
 		mountain_state, mountain_state.units[0], Vector2i(0, 0), mountain_state.units[1]
 	)
-	assert_eq(mountain_forecast.attack_damage, 15)
+	assert_eq(mountain_forecast.attack_damage, 45)
 
 
 func test_forecast_damaged_attacker_scales() -> void:
@@ -99,8 +99,8 @@ func test_forecast_at_reads_the_cover_of_the_cell_it_is_given() -> void:
 	var on_mountain := CombatResolver.forecast_at(
 		state, tank, Vector2i(3, 0), infantry, Vector2i(2, 0)
 	)
-	assert_eq(on_road.attack_damage, 25, "where it actually stands: road, 25 * 1.0")
-	assert_eq(on_mountain.attack_damage, 15, "where it is asked about: mountain, 25 * 0.6")
+	assert_eq(on_road.attack_damage, 75, "where it actually stands: road, 75 * 1.0")
+	assert_eq(on_mountain.attack_damage, 45, "where it is asked about: mountain, 75 * 0.6")
 
 
 ## The counter is a question about distance, so it has to be measured from the
@@ -113,8 +113,8 @@ func test_forecast_at_measures_the_counter_from_the_effective_cell() -> void:
 	var far := CombatResolver.forecast_at(state, tank, Vector2i(0, 0), infantry, Vector2i(3, 0))
 	var beside := CombatResolver.forecast_at(state, tank, Vector2i(0, 0), infantry, Vector2i(1, 0))
 	assert_eq(far.counter_damage, -1, "three tiles from the tank nothing shoots back")
-	# Beside the tank the counter lands: 5 * 0.8 * 0.9 = 3.6 -> 4.
-	assert_eq(beside.counter_damage, 4, "asked about the cell beside the tank, it is answered")
+	# Beside the Tank the counter lands: 5 * 0.4 * 0.9 = 1.8 -> 2.
+	assert_eq(beside.counter_damage, 2, "asked about the cell beside the tank, it is answered")
 
 
 ## The whole reason the parameter exists: asking about a cell is a pure read.
@@ -132,7 +132,7 @@ func test_resolve_luck_bounds_and_hp() -> void:
 	state.rng.seed = 1234
 	var defender := state.units[1]
 	var result := CombatResolver.resolve(state, state.units[0], defender)
-	assert_between(result.attack_damage, 23, 23 + CombatResolver.LUCK_MAX)
+	assert_between(result.attack_damage, 68, 68 + CombatResolver.LUCK_MAX)
 	assert_eq(defender.hp, 100 - result.attack_damage)
 	assert_true(result.countered)
 	assert_between(result.counter_damage, 4, 4 + CombatResolver.LUCK_MAX)

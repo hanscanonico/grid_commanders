@@ -78,12 +78,12 @@ func test_neutral_hooks_return_the_pre_commander_rules() -> void:
 func test_golden_damage_matrix_for_the_neutral_commander() -> void:
 	# map, attacker, defender, expected damage
 	var cases: Array = [
-		# tank -> infantry, base 25
-		["[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0", 25],  # 0 stars: 25 * 1.0
-		["[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", 23],  # plains 1*: 25 * 0.9 = 22.5
-		["[terrain]\n.F\n[units]\n1 t 0 0\n2 i 1 0", 20],  # woods 2*: 25 * 0.8
-		["[terrain]\n.C\n[units]\n1 t 0 0\n2 i 1 0", 18],  # city 3*: 25 * 0.7 = 17.5
-		["[terrain]\n.M\n[units]\n1 t 0 0\n2 i 1 0", 15],  # mountain 4*: 25 * 0.6
+		# Tank MG -> Infantry, base 75.
+		["[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0", 75],  # 0 stars: 75 * 1.0
+		["[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", 68],  # plains 1*: 75 * 0.9
+		["[terrain]\n.F\n[units]\n1 t 0 0\n2 i 1 0", 60],  # woods 2*: 75 * 0.8
+		["[terrain]\n.C\n[units]\n1 t 0 0\n2 i 1 0", 53],  # city 3*: 75 * 0.7
+		["[terrain]\n.M\n[units]\n1 t 0 0\n2 i 1 0", 45],  # mountain 4*: 75 * 0.6
 		# infantry -> tank, base 5
 		["[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0", 5],  # plains 1*: 5 * 0.9 = 4.5
 	]
@@ -101,40 +101,40 @@ func test_golden_damage_matrix_for_the_neutral_commander() -> void:
 func test_golden_damage_matrix_for_damaged_units() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	state.units[0].hp = 50  # 5 displayed
-	# 25 * 0.5 * (1 - 0.1 * 1 * 1.0) = 11.25 -> 11
+	# 75 * 0.5 * (1 - 0.1 * 1 * 1.0) = 33.75 -> 34.
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		11
+		34
 	)
 	state.units[0].hp = 100
 	state.units[1].hp = 50  # 5 displayed: terrain shields it half as well
-	# 25 * 1.0 * (1 - 0.1 * 1 * 0.5) = 23.75 -> 24
+	# 75 * 1.0 * (1 - 0.1 * 1 * 0.5) = 71.25 -> 71.
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		24
+		71
 	)
 
 
-## The plan's C1 acceptance criterion: a match nobody picked a commander for
-## must play exactly as it did before commanders existed. Same seed and the same
-## commands have to land on the same board, down to HP and funds.
-func test_a_no_commander_match_is_unchanged() -> void:
+## A match nobody picked a commander for remains deterministic through the
+## neutral hooks. Same seed and commands land on the same board, down to HP and
+## funds; the golden HP includes the deliberate Tank MG lethality change.
+func test_a_no_commander_match_is_deterministic() -> void:
 	var first := _play_scripted_match()
 	var second := _play_scripted_match()
 	for key: String in first:
 		assert_eq(first[key], second[key], "same seed + same commands must agree on %s" % key)
-	# Recorded from the pre-commander rules. A doctrine leaking into a neutral
-	# match — a hook called on the wrong side, a stray multiplier — moves these.
-	assert_eq(first["red_hp"], 89, "red tank HP after the exchange")
-	assert_eq(first["blue_hp"], 81, "blue infantry HP after the exchange")
+	# A doctrine leaking into a neutral match — a hook called on the wrong side,
+	# a stray multiplier — moves these.
+	assert_eq(first["red_hp"], 91, "red tank HP after the exchange")
+	assert_eq(first["blue_hp"], 46, "blue infantry HP after the exchange")
 	assert_eq(first["day"], 2)
 	assert_eq(first["red_funds"], 2000, "two properties, two turns of income")
 

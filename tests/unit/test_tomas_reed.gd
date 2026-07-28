@@ -47,7 +47,7 @@ func test_foot_units_hit_harder() -> void:
 	)
 
 
-## Tank vs Infantry on plains: 25 * 0.9 * 0.9 = 20.25 -> 20, against 23 flat.
+## Tank MG vs Infantry on plains: 75 * 0.9 * 0.9 = 60.75 -> 61, against 68 flat.
 func test_vehicles_hit_softer() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	assert_eq(
@@ -56,7 +56,7 @@ func test_vehicles_hit_softer() -> void:
 			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 			. attack_damage
 		),
-		20
+		61
 	)
 
 

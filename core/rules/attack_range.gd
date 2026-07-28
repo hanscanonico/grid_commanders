@@ -56,6 +56,28 @@ static func can_engage(state: GameState, attacker: Unit, target: Unit) -> bool:
 	return not target.dived or attacker.type.can_hit_submerged
 
 
+## Whether one of `attacker`'s target-compatible weapons is ready now. Weapon
+## choice and ammo ownership stay in DamageChart; this adds only the submerged
+## target rule that already makes can_engage the who-may-shoot authority.
+static func can_fire(state: GameState, attacker: Unit, target: Unit) -> bool:
+	if not can_engage(state, attacker, target):
+		return false
+	return (
+		state.damage_chart.select_shot(
+			attacker.type.id, target.type.id, attacker.ammo, attacker.type.max_ammo
+		)
+		!= null
+	)
+
+
+## Target-agnostic readiness for callers that are about to build firing
+## geometry. Target cells still have to pass can_fire before damage is priced.
+static func has_ready_weapon(state: GameState, unit: Unit) -> bool:
+	if state.damage_chart == null:
+		return false
+	return state.damage_chart.has_ready_weapon(unit.type.id, unit.ammo, unit.type.max_ammo)
+
+
 ## True for a unit that shoots over distance: it cannot move and fire, never
 ## counters, and is never countered. A property of the weapon, so it is read
 ## from the type and no doctrine turns a direct unit into an indirect one.

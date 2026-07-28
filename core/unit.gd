@@ -41,7 +41,8 @@ func displayed_hp() -> int:
 	return ceili(hp / 10.0)
 
 
-## True when the unit can still fire (max_ammo 0 = the weapon needs none).
+## True when the primary ammunition supply is available (max_ammo 0 = free).
+## A dry primary may still fall back to a secondary; ask AttackRange.can_fire.
 func has_ammo() -> bool:
 	return type.max_ammo == 0 or ammo > 0
 
