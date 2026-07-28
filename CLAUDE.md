@@ -120,7 +120,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   is a measurement with it, never an anecdote. D2: **engine-bundle metadata tricks are refuted**
   — `LSUIElement` and `LSBackgroundOnly` clones each still stole focus 3/3; do not re-litigate
   without new evidence. D3: an interactive (tty) launch still `exec`s Godot directly and comes up
-  focused; only tty-less launches get the restore watcher. D1: the sweep's 49 captures staying
+  focused; only tty-less launches get the restore watcher. D1: the sweep's captures staying
   byte-identical is the merge bar for any change here. D6: fewer windows beats faster restores —
   the wrapper is the safety net, batching (FS2) is the fix. Nothing under `core/` or `ai/` learns
   the sweep exists.
