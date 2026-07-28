@@ -21,7 +21,7 @@ static func requested() -> String:
 ## Waits out the settle, asks the gate, writes the frame. Returns the gate's
 ## verdict — a false saves nothing. Callers own what happens next: a quit for
 ## a single capture (capture_and_quit), a scene reload for a smoke batch
-## (BattleScenarioDriver, COM-117) — so the shutter discipline byte-stable
+## (BattleCaptureBatch, COM-117) — so the shutter discipline byte-stable
 ## captures depend on has exactly one spelling.
 static func save_frame(node: Node, path: String, gate: Callable = Callable()) -> bool:
 	for i in SETTLE_FRAMES:

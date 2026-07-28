@@ -176,8 +176,9 @@ printf '%s %s\n' "$(now)" "$(front_bundle)" >"$samples"
 ) >>"$samples" &
 sampler_pid=$!
 
-# A wrapped run is minutes long (`tools/focus_timeline.sh make smoke`), and an
-# interrupted run is still a measurement: INT/TERM fall through to the report
+# A wrapped run is long (`tools/focus_timeline.sh make smoke`: half a minute
+# batched, minutes with SMOKE_ISOLATE=1), and an interrupted run is still a
+# measurement: INT/TERM fall through to the report
 # on the samples gathered so far rather than discarding them, and the script
 # then exits 128+signal instead of the command's status.
 signalled=0

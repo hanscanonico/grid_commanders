@@ -113,9 +113,9 @@
       safety net and attacks the real number: <strong>how many windows the sweep opens at all</strong>.
     </p>
     <div class="mt-5 flex flex-wrap gap-2">
-      <span class="badge badge-warning badge-lg font-bold">FS0–FS1 SHIPPED — FS2–FS3 pending</span>
-      <span class="badge badge-outline badge-lg text-white">49 launches → target ≤ 6</span>
-      <span class="badge badge-outline badge-lg text-white">tools/ only, plus one presentation seam</span>
+      <span class="badge badge-warning badge-lg font-bold">FS0–FS2 SHIPPED — FS3 pending</span>
+      <span class="badge badge-outline badge-lg text-white">49 launches → 5 windows, measured</span>
+      <span class="badge badge-outline badge-lg text-white">tools/ plus capture-only presentation seams</span>
       <span class="badge badge-outline badge-lg text-white">merge bar: 49 byte-identical captures</span>
     </div>
   </header>
@@ -128,8 +128,8 @@
         <p class="text-sm mt-1">
           The sweep’s scenario count is owned by <code>DEFAULT_MODES</code> in
           <span class="gc-file">tools/smoke_scenarios.sh</span>, never by this plan: it was 49 when
-          this was written on 2026-07-27 and is 50 since COM-50 added
-          <span class="gc-file">capture_power</span>. The measurements in §1–§2 are that day’s runs
+          this was written on 2026-07-27 and has grown since — FS2 shipped and was byte-diffed over
+          the 52 the roster listed that week. The measurements in §1–§2 are that day’s runs
           and stay as recorded; every acceptance gate and byte-diff count below — FS2’s group table
           included — is <em>all</em> the default scenarios, whatever that number is on the day the
           milestone ships.
@@ -297,6 +297,7 @@
         <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
           <h3 class="font-black">D4 · <span class="gc-file">tools/</span> first; one presentation seam at most</h3>
           <p class="text-sm">FS1 is <span class="gc-file">tools/</span> only. FS2 may touch <span class="gc-file">scenes/battle/battle_setup.gd</span> — where <code>--fog</code> / <code>--map</code> are read off <code>OS.get_cmdline_user_args()</code> — and nothing else. <strong>Nothing under <span class="gc-file">core/</span> or <span class="gc-file">ai/</span> learns that a smoke sweep exists.</strong></p>
+          <p class="text-sm"><strong>As built (COM-117):</strong> FS2 needed no <span class="gc-file">battle_setup.gd</span> change at all — the group carries its <code>--fog</code> / <code>--map</code> on one boot — and landed instead in a new capture-only file, <span class="gc-file">battle_capture_batch.gd</span>, with one line each in the driver and <span class="gc-file">battle.gd</span>. The declared exception is <span class="gc-file">screenshot_util.gd</span>: the shutter was split rather than copied, so the two capture endings share one settle/save sequence. The <span class="gc-file">core/</span> · <span class="gc-file">ai/</span> half of this decision is untouched. The menu pair keeps its own driver, unbatched, for the same one-seam reason.</p>
         </div></div>
         <div class="card bg-base-100 border-2 border-base-300"><div class="card-body gap-2">
           <h3 class="font-black">D5 · No new dependency</h3>
@@ -380,6 +381,7 @@
             <span class="badge badge-secondary badge-lg font-black">FS2</span>
             <h3 class="text-xl font-black">One boot per configuration group — 49 windows become ≤ 6</h3>
             <span class="badge badge-outline">the actual fix</span>
+            <span class="badge badge-success badge-lg font-black">SHIPPED · COM-117</span>
           </div>
           <p>
             The 49 scenarios are not 49 different programs. They differ in exactly three boot facts —
@@ -412,6 +414,30 @@
             <li>The per-scenario watchdog survives the move: <span class="gc-file">run_with_timeout</span> today only sees a whole group, so the batch driver carries its own per-scenario deadline and fails the group with the offending name.</li>
           </ul>
           <p class="text-sm"><strong>Acceptance.</strong> <span class="gc-file">make smoke</span> opens ≤ 6 windows, the byte-diff over all 49 captures is empty, wall clock is no worse than today, and <span class="gc-file">SMOKE_ISOLATE=1 make smoke</span> is bit-for-bit the old path.</p>
+
+          <div class="alert alert-success items-start">
+            <div>
+              <h4 class="font-black">As built (COM-117)</h4>
+              <p class="text-sm mt-1">
+                The grouping is <code>group_key</code> in <span class="gc-file">tools/smoke_scenarios.sh</span>
+                and the in-process runner is a new file,
+                <span class="gc-file">scenes/battle/battle_capture_batch.gd</span>
+                (<code>BattleCaptureBatch</code>): the shell passes
+                <code>--demos=a,b,c</code> with a shared <code>--shots-dir=</code> and
+                <code>--scenario-timeout=</code>, and the class’s <em>statics</em> carry the queue —
+                each scenario saves its frame through the one shared shutter and
+                <code>reload_current_scene</code> hands the next one a fresh
+                <span class="gc-file">Battle</span> in the same window; the last quits.
+              </p>
+              <ul class="gc-checks text-sm space-y-1 mt-2">
+                <li><strong>5 boots, not 4</strong> — a declared divergence from the table above. Groups came out battle·default 43, battle·the_straits 5, battle·fog 2, and the <em>menu pair stays unbatched</em> at one process each: <code>MenuCaptureDriver</code> is deliberately not taught to batch, per D4’s one-seam rule.</li>
+                <li><strong>One step beyond D4’s letter, declared:</strong> <code>ScreenshotUtil</code> was split into <code>save_frame</code> + <code>capture_and_quit</code> so the batch’s reload path and the classic quit path share one shutter. A second copy of the settle/save sequence the byte-stability gate rests on would have been the worse outcome.</li>
+                <li><strong>D1 caught two real defects.</strong> (1) macOS stops presenting a fully occluded window and the viewport texture then hands back the last frame that reached the screen — one wrapped run photographed a single stale frame under every scenario after the seventh, and a window occluded from birth photographs a blank (the historical 3666-byte captures <code>SMOKE_MIN_BYTES</code> exists to catch). <code>save_frame</code> now calls <code>RenderingServer.force_draw()</code> before reading the viewport, which is this repo’s established playtest-harness practice. (2) The process-wide font glyph atlas shifted exactly two text-heavy frames — <span class="gc-file">commander_info</span> and <span class="gc-file">cutin:bomber:tank</span> — by one antialiased column once thirty scenarios had rasterised text ahead of them, so <code>run_group</code> runs those two first, where the atlas still matches a fresh boot’s. The list is empirical and commented; the byte-diff bar is what keeps it honest as the roster moves. Clearing font caches between scenarios was tried and rejected: <code>FontFile.clear_cache()</code> blanks live labels.</li>
+                <li><strong>Measured</strong> on a quiet desk against a pre-change <code>SMOKE_KEEP</code> baseline: byte-diff <em>empty</em> over all 52 default captures, twice; <code>SMOKE_ISOLATE=1</code> full sweep byte-diff empty; wall clock 32–33 s vs 125 s; <span class="gc-file">make screenshot</span> byte-stable; <span class="gc-file">make verify</span> green.</li>
+                <li><strong>FS0 timeline:</strong> 5 windows, 8 sub-second activation events, 1.9 s total stolen, longest 0.76 s, zero wrong-app restores — against 78 events and 12.6 s per-scenario. The events exceed the windows because the engine re-activates on some scene reloads and FS1’s lifetime watcher restores each; the “≤ 6 steals” acceptance above assumed one steal per window, and the <em>window</em> count is 5.</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -436,7 +462,7 @@
             autoloads (<span class="gc-file">MatchConfig</span>, <span class="gc-file">Settings</span>,
             <span class="gc-file">Sfx</span>) it used to get fresh. The gate is unchanged and
             unforgiving — <strong>49 byte-identical captures or the milestone does not ship</strong>.
-            FS2 alone already takes the interruption count from 49 to ~4; FS3 is a nicety, not the deliverable.
+            FS2 alone took the window count from one per scenario to 5 (measured); FS3 is a nicety, not the deliverable.
           </p>
         </div>
       </div>
