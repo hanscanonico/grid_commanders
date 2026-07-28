@@ -3,6 +3,12 @@ extends GutTest
 ## planner used when they were constants, and the planner must actually read
 ## the profile it was handed rather than a hardcoded copy.
 
+const TIER_PATHS: Array[String] = [
+	"res://data/ai/easy.tres",
+	"res://data/ai/default.tres",
+	"res://data/ai/hard.tres",
+]
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -44,6 +50,24 @@ func test_default_profile_matches_the_built_in_defaults() -> void:
 			continue
 		var field: String = property.name
 		assert_eq(shipped.get(field), defaults.get(field), "data/ai/default.tres: %s" % field)
+		checked += 1
+	assert_gt(checked, 10, "the profile should expose its weights as script variables")
+
+
+## Every tier owns every balance value explicitly. Otherwise changing an
+## AIProfile code default silently retunes only the tiers that omitted it.
+func test_every_tier_explicitly_writes_every_profile_field() -> void:
+	var profile := AIProfile.new()
+	var checked := 0
+	for property in profile.get_property_list():
+		if not (int(property.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var field: String = property.name
+		for path in TIER_PATHS:
+			var source: String = FileAccess.get_file_as_string(path)
+			assert_true(
+				source.contains("\n%s =" % field), "%s must explicitly write %s" % [path, field]
+			)
 		checked += 1
 	assert_gt(checked, 10, "the profile should expose its weights as script variables")
 
