@@ -343,14 +343,10 @@ func _pairings() -> Array:
 
 ## Plays one match and tallies the per-match metrics the plan's report calls for.
 ##
-## The loop itself is BalanceMatchEngine's. What stays here is the one thing this
-## mode does differently and must keep doing: **both seats share a single
-## AIController instance**, as they have since this runner was written. The
-## difficulty ladder below gives each side its own, because there the planners
-## differ; here they do not, and changing it would move every committed number in
-## docs/commander_balance.md for no reason.
+## The loop itself is BalanceMatchEngine's. Both seats use the default profile,
+## but each owns its AIController instance, matching the live scene and keeping
+## mutable planner state inside one team.
 func _play(scenario: String, red: StringName, blue: StringName, seed_val: int) -> Dictionary:
-	var ai := AIController.new(unit_db)
 	var setup := BalanceMatchEngine.Setup.new()
 	setup.map = _board(scenario)
 	setup.unit_db = unit_db
@@ -359,7 +355,7 @@ func _play(scenario: String, red: StringName, blue: StringName, seed_val: int) -
 	setup.days_cap = _days_cap
 	setup.command_cap = COMMAND_CAP
 	setup.commanders = {1: commander_db.by_id(red), 2: commander_db.by_id(blue)}
-	setup.planners = {1: ai, 2: ai}
+	setup.planners = {1: AIController.new(unit_db), 2: AIController.new(unit_db)}
 	var outcome := BalanceMatchEngine.play(setup)
 	_turn_cap_hits += outcome.turn_cap_hits
 	var state := outcome.state
