@@ -19,8 +19,7 @@ extends RefCounted
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
 ## optional only to the versions that predate it, and a save claiming a version that
-## wrote a field has to carry it, in the shape that version wrote it — see
-## OPTIONAL_KEY_RULES.
+## wrote a field has to carry it, in the shape that version wrote it — see KEY_RULES.
 ##
 ## When a format arrives that *cannot* be read this way, it gets its own
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
@@ -30,42 +29,33 @@ const VERSION := 3
 ## Every version this codec can still read, oldest first.
 const READABLE_VERSIONS: Array[int] = [1, 2, 3]
 
-## Keys every save envelope must carry, whatever version wrote it.
-const REQUIRED_KEYS: Array = [
-	"map_path",
-	"day",
-	"current_team",
-	"funds",
-	"rng_state",
-	"owners",
-	"units",
-]
-const REQUIRED_UNIT_KEYS: Array = ["type", "team", "x", "y", "hp", "fuel", "ammo", "acted"]
-const REQUIRED_OWNER_KEYS: Array = ["x", "y", "team"]
-const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
-
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
 ## as a float, which is why `decode` coerces with `int()` at every read.
 enum Shape { BOOL, NUMBER, STRING, ARRAY, DICTIONARY }
 
-## The remaining keys: for each, the first version that always wrote it and the shape
-## that version wrote. The two live in one entry on purpose — they answer the same
-## question, what a save of a given version promised — because a declaration drifting
-## away from the fallback it describes is the whole of COM-54.
+## Every field of a save envelope: the first version that always wrote it, and the shape
+## that version wrote. One entry per field, and nothing beside it — the presence rules and
+## the shape rules are read off this same table, because two lists that have to agree by
+## hand is the drift this whole ticket is about (COM-54).
 ##
-## Every one of them has a fallback in `decode`, and the fallback is for *age*, not for
-## damage: a save old enough not to know about a field is entitled to the default, and
-## a save that claims to be new enough is telling the truth about what it contains or
-## it is truncated. Without this the two were indistinguishable, so a field lost to a
-## short write — or a typo leaving one holding the wrong kind of value, which `decode`
-## coerces into a plausible default rather than a refusal — loaded a match that played
-## differently: fog off, captures reset, both sides commander-less, a computer opponent
-## resuming as a second human. And said nothing (COM-54).
+## `since: 1` is what "required" used to be a separate list for: a field written by every
+## version this codec still reads. The distinction that remains is real but narrow — such
+## a field is simply missing, while a later arrival is missing *for the version the save
+## claims* — and `_missing_message` derives even that from the table rather than from a
+## second list.
 ##
-## Shape only. Which sides `ai_teams` may name and which side may have won are
-## questions about the board rather than the format, and `board_error` already owns
-## those, so nothing declared here holds a second opinion on them.
+## Both halves of a rule answer the same question: what a save of a given version
+## promised. A field it promised and did not deliver was lost to a short write; one it
+## delivered in the wrong kind of value was lost to a typo, and `decode` coerces that
+## into a plausible default rather than a refusal — `int()` on a word is zero, and a
+## String is truthy while `bool()` will not take one at all. Either way the match loaded
+## clean and played differently — fog off, captures reset, both sides commander-less, a
+## computer opponent resuming as a second human — and said nothing.
+##
+## Shape only. Which sides `ai_teams` may name, which side may have won, and where on the
+## board a cell is are questions about the board rather than the format, and `board_error`
+## already owns those, so nothing declared here holds a second opinion on them.
 ##
 ## `difficulty` is the awkward one, and it is deliberately listed at 3 rather than 2:
 ## it was added between those two versions without a bump of its own, so a version 2
@@ -75,7 +65,14 @@ enum Shape { BOOL, NUMBER, STRING, ARRAY, DICTIONARY }
 ## their `decode` defaults cannot currently be taken. They stay all the same, for the
 ## reason `board_error` is total: a decoder that answers for any dictionary is one a
 ## later caller cannot reach through a hole in.
-const OPTIONAL_KEY_RULES := {
+const KEY_RULES := {
+	"map_path": {"since": 1, "shape": Shape.STRING},
+	"day": {"since": 1, "shape": Shape.NUMBER},
+	"current_team": {"since": 1, "shape": Shape.NUMBER},
+	"funds": {"since": 1, "shape": Shape.DICTIONARY},
+	"rng_state": {"since": 1, "shape": Shape.STRING},
+	"owners": {"since": 1, "shape": Shape.ARRAY},
+	"units": {"since": 1, "shape": Shape.ARRAY},
 	"fog": {"since": 1, "shape": Shape.BOOL},
 	"winner": {"since": 1, "shape": Shape.NUMBER},
 	"capture_progress": {"since": 1, "shape": Shape.ARRAY},
@@ -83,24 +80,47 @@ const OPTIONAL_KEY_RULES := {
 	"commanders": {"since": 2, "shape": Shape.DICTIONARY},
 	"difficulty": {"since": 3, "shape": Shape.STRING},
 }
-## The same, per unit entry: `carrier` shipped with the format, `dived` is version 3's
-## whole reason for existing. What a `carrier` number may *be* — a link in range, nobody
-## carrying themselves, no rings — is `_validate_carriers`', which can only ask once the
-## unit count is known; this says no more than that it is a number.
-const OPTIONAL_UNIT_KEY_RULES := {
+## The same, per unit entry: everything but the dive flag shipped with the format, and
+## `dived` is version 3's whole reason for existing. What a `carrier` number may *be* —
+## a link in range, nobody carrying themselves, no rings — is `_validate_carriers`',
+## which can only ask once the unit count is known; this says no more than that it is a
+## number. `acted` earns its place here as much as any of them: it is a flag the sim
+## plays the resumed turn under, so a quoted one is a unit that cannot move.
+const UNIT_KEY_RULES := {
+	"type": {"since": 1, "shape": Shape.STRING},
+	"team": {"since": 1, "shape": Shape.NUMBER},
+	"x": {"since": 1, "shape": Shape.NUMBER},
+	"y": {"since": 1, "shape": Shape.NUMBER},
+	"hp": {"since": 1, "shape": Shape.NUMBER},
+	"fuel": {"since": 1, "shape": Shape.NUMBER},
+	"ammo": {"since": 1, "shape": Shape.NUMBER},
+	"acted": {"since": 1, "shape": Shape.BOOL},
 	"carrier": {"since": 1, "shape": Shape.NUMBER},
 	"dived": {"since": 3, "shape": Shape.BOOL},
 }
-## And the same again, per side inside the commander block: all three arrived with the
-## block itself at version 2, which is why they share its version and why a version 1
-## save is asked for none of them. Declared here rather than as a bare key list because
-## every field this codec knows about should say what it is in the one place it says
-## when it arrived — the drift between those two is the whole of COM-54.
+## And per entry in the two cell lists, which are the same shape of thing: a cell and
+## one number about it.
+const OWNER_KEY_RULES := {
+	"x": {"since": 1, "shape": Shape.NUMBER},
+	"y": {"since": 1, "shape": Shape.NUMBER},
+	"team": {"since": 1, "shape": Shape.NUMBER},
+}
+const PROGRESS_KEY_RULES := {
+	"x": {"since": 1, "shape": Shape.NUMBER},
+	"y": {"since": 1, "shape": Shape.NUMBER},
+	"points": {"since": 1, "shape": Shape.NUMBER},
+}
+## And per side inside the commander block: all three arrived with the block itself at
+## version 2, which is why they share its version and why a version 1 save is asked for
+## none of them.
 const COMMANDER_KEY_RULES := {
 	"id": {"since": 2, "shape": Shape.STRING},
 	"charge": {"since": 2, "shape": Shape.NUMBER},
 	"active": {"since": 2, "shape": Shape.BOOL},
 }
+## The purse is a Dictionary keyed by side rather than a record of named fields, so its
+## one rule lives here: every side's money is a number, checked in `_funds_error`.
+const FUNDS_SHAPE := Shape.NUMBER
 
 ## A unit standing on the board rather than riding in something.
 const NO_CARRIER := -1
@@ -354,42 +374,37 @@ static func validate(data: Dictionary) -> String:
 	var version := int(data.get("version", -1))
 	if not READABLE_VERSIONS.has(version):
 		return "unsupported save version"
-	var missing := _missing_key(data, REQUIRED_KEYS)
+	# What a save of *this* version promised to write, it has to have written, holding
+	# what it promised to hold. See KEY_RULES: below its version a field is old, at or
+	# above it a missing one is lost and a wrong-typed one is a typo.
+	var written := _keys_written_by(version, KEY_RULES)
+	var missing := _missing_key(data, written)
 	if missing != "":
-		return "save is missing '%s'" % missing
-	# What a save of *this* version promised to write, it has to have written. See
-	# OPTIONAL_KEY_RULES: below its version a key is old, at or above it is lost.
-	var written := _keys_written_by(version, OPTIONAL_KEY_RULES)
-	missing = _missing_key(data, written)
-	if missing != "":
-		return "a version %d save is missing '%s'" % [version, missing]
-	# And having written it is not the same as still holding it: a key carrying the
-	# wrong kind of value is the same field lost, wearing a typo.
+		return _missing_message(missing, KEY_RULES, version)
 	for key: String in written:
-		if not _is_shape(data[key], int(OPTIONAL_KEY_RULES[key]["shape"])):
+		if not _is_shape(data[key], int(KEY_RULES[key]["shape"])):
 			return "'%s' is malformed" % key
-	# Both checks above stop at the envelope, and neither a hollow commander block nor
-	# a list holding something that is not a number is missing or the wrong kind of
-	# value at that level.
-	var error := _commander_block_error(data, version)
+	# The envelope pass stops at each key's own value, and a Dictionary that is hollow,
+	# a list of things that are not numbers and a number spelled as a word are all
+	# perfectly good values at that level.
+	var error := _rng_state_error(data)
+	if error != "":
+		return error
+	error = _commander_block_error(data, version)
 	if error != "":
 		return error
 	error = _ai_teams_error(data)
 	if error != "":
 		return error
-	error = _entries_error(data["owners"], REQUIRED_OWNER_KEYS, "owner")
+	error = _entries_error(data["owners"], OWNER_KEY_RULES, version, "owner")
 	if error != "":
 		return error
 	error = _entries_error(
-		data.get("capture_progress", []), REQUIRED_PROGRESS_KEYS, "capture progress"
+		data.get("capture_progress", []), PROGRESS_KEY_RULES, version, "capture progress"
 	)
 	if error != "":
 		return error
-	var unit_keys := REQUIRED_UNIT_KEYS + _keys_written_by(version, OPTIONAL_UNIT_KEY_RULES)
-	error = _entries_error(data["units"], unit_keys, "unit")
-	if error != "":
-		return error
-	error = _unit_shapes_error(data["units"] as Array, version)
+	error = _entries_error(data["units"], UNIT_KEY_RULES, version, "unit")
 	if error != "":
 		return error
 	return _funds_error(data)
@@ -421,14 +436,17 @@ static func validate(data: Dictionary) -> String:
 ## comes back as a reason — which is what the signature promises — instead of a
 ## runtime error off a key that was never there.
 static func board_error(data: Dictionary, map: MapData) -> String:
-	var error := _entries_error(data.get("units"), REQUIRED_UNIT_KEYS, "unit")
+	# The oldest readable version when the save does not say, which asks of every entry
+	# exactly the fields this function goes on to read and nothing a later format added.
+	var version := int(data.get("version", READABLE_VERSIONS[0]))
+	var error := _entries_error(data.get("units"), UNIT_KEY_RULES, version, "unit")
 	if error != "":
 		return error
-	error = _entries_error(data.get("owners"), REQUIRED_OWNER_KEYS, "owner")
+	error = _entries_error(data.get("owners"), OWNER_KEY_RULES, version, "owner")
 	if error != "":
 		return error
 	error = _entries_error(
-		data.get("capture_progress", []), REQUIRED_PROGRESS_KEYS, "capture progress"
+		data.get("capture_progress", []), PROGRESS_KEY_RULES, version, "capture progress"
 	)
 	if error != "":
 		return error
@@ -497,7 +515,7 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 ## both sides neutral with an empty meter, which is the match it recorded. That the
 ## block is a Dictionary at all is the shape pass's answer, not restated here.
 static func _commander_block_error(data: Dictionary, version: int) -> String:
-	if version < int(OPTIONAL_KEY_RULES["commanders"]["since"]):
+	if version < int(KEY_RULES["commanders"]["since"]):
 		return ""
 	var saved: Dictionary = data["commanders"]
 	var keys := _keys_written_by(version, COMMANDER_KEY_RULES)
@@ -540,31 +558,31 @@ static func _ai_teams_error(data: Dictionary) -> String:
 	return ""
 
 
-## "" when every unit entry holds the flags its version wrote in the shape it wrote
-## them. Asked after `_entries_error` has established that the entries are dictionaries
-## carrying the keys at all, which is what lets this read them straight.
-static func _unit_shapes_error(entries: Array, version: int) -> String:
-	for key: String in _keys_written_by(version, OPTIONAL_UNIT_KEY_RULES):
-		var shape := int(OPTIONAL_UNIT_KEY_RULES[key]["shape"])
-		for entry: Dictionary in entries:
-			if not _is_shape(entry[key], shape):
-				return "unit entry's '%s' is malformed" % key
+## "" when the save's RNG state is a whole number spelled out in full, else why it is
+## not. The one field a shape cannot finish: a 64-bit state does not survive JSON's
+## single number type, so it is stored as text and `Shape.STRING` is satisfied by any
+## text at all — while `int()` turns whatever is left of a damaged one into 0, a seed
+## nobody rolled, and every shot for the rest of the match lands differently than the
+## match this save recorded.
+static func _rng_state_error(data: Dictionary) -> String:
+	if not String(data["rng_state"]).is_valid_int():
+		return "'rng_state' is malformed"
 	return ""
 
 
-## "" when the save carries a purse for every side that plays.
+## "" when the save carries a purse for every side that plays, and every purse is money.
 static func _funds_error(data: Dictionary) -> String:
-	var funds: Variant = data["funds"]
-	if not (funds is Dictionary):
-		return "'funds' is malformed"
+	var funds: Dictionary = data["funds"]
 	for team in GameState.TEAMS:
-		if not (funds as Dictionary).has(str(team)):
+		if not funds.has(str(team)):
 			return "save has no funds for team %d" % team
+		if not _is_shape(funds[str(team)], FUNDS_SHAPE):
+			return "the save's funds for team %d are malformed" % team
 	return ""
 
 
-## Whether `value` is the kind of thing `shape` describes — the one reader of the
-## shapes declared in the two rule tables, so every field is asked the same way.
+## Whether `value` is the kind of thing `shape` describes — the one reader of every
+## shape the rule tables declare, so no field is asked in its own way.
 static func _is_shape(value: Variant, shape: int) -> bool:
 	var kind := typeof(value)
 	match shape:
@@ -660,14 +678,30 @@ static func _missing_key(data: Dictionary, keys: Array) -> String:
 	return ""
 
 
-## "" when `value` is an array of dictionaries that all carry `keys`.
-static func _entries_error(value: Variant, keys: Array, what: String) -> String:
+## How a save of `version` is told it lacks `key`: a field every readable version wrote
+## is simply missing, while a later arrival is missing *for the version the save claims*,
+## which is the distinction the whole gate turns on. Derived from the rule rather than
+## from a second list of which fields are which.
+static func _missing_message(key: String, rules: Dictionary, version: int) -> String:
+	if int(rules[key]["since"]) <= READABLE_VERSIONS[0]:
+		return "save is missing '%s'" % key
+	return "a version %d save is missing '%s'" % [version, key]
+
+
+## "" when `value` is an array of dictionaries that each carry the fields a save of
+## `version` wrote, in the shapes it wrote them.
+static func _entries_error(value: Variant, rules: Dictionary, version: int, what: String) -> String:
 	if not (value is Array):
 		return "'%s' list is malformed" % what
+	var keys := _keys_written_by(version, rules)
 	for entry: Variant in value as Array:
 		if not (entry is Dictionary):
 			return "%s entry is malformed" % what
-		var missing := _missing_key(entry as Dictionary, keys)
+		var record := entry as Dictionary
+		var missing := _missing_key(record, keys)
 		if missing != "":
 			return "%s entry is missing '%s'" % [what, missing]
+		for key: String in keys:
+			if not _is_shape(record[key], int(rules[key]["shape"])):
+				return "%s entry's '%s' is malformed" % [what, key]
 	return ""

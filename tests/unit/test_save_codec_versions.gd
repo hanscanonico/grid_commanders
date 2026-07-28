@@ -115,11 +115,66 @@ func test_a_current_save_holding_the_wrong_kind_of_value_is_refused() -> void:
 		"ai_teams": 2,
 		"commanders": [],
 		"difficulty": 3,
+		"map_path": 7,
+		"day": "four",
+		"current_team": "red",
+		"funds": [],
+		"rng_state": true,
+		"owners": {},
+		"units": "none",
 	}
 	for key: String in wrong:
 		var data := _encoded()
 		data[key] = wrong[key]
 		assert_string_contains(SaveCodec.validate(data), key)
+
+
+## The two the key tables could not reach, because neither is a record of named fields.
+##
+## `rng_state` is text on purpose — a 64-bit state does not survive JSON's one number
+## type — so its shape is satisfied by any text at all, and `int()` reads whatever is
+## left of a damaged one as 0: a seed nobody rolled, and every shot for the rest of the
+## match landing differently than the match the save recorded. The purse is keyed by
+## side rather than by field name, and a side whose money is a word resumes broke.
+func test_the_fields_a_key_table_could_not_reach_are_asked_too() -> void:
+	var data := _encoded()
+	data["rng_state"] = "somewhere in the middle"
+	assert_string_contains(SaveCodec.validate(data), "rng_state")
+	data = _encoded()
+	data["funds"]["2"] = "plenty"
+	assert_string_contains(SaveCodec.validate(data), "funds for team 2")
+
+
+## Every field of every entry list, on one table and one walk — the unit fields that were
+## exempt by construction while the list was presence-only, the two the version gate
+## already reached, and the cell lists nothing asked at all.
+##
+## `int("full")` is a unit resuming dry; `int("here")` is 0, and (0, 0) is a cell every
+## board has, so a property quietly moved to the corner rather than being refused. And
+## `acted` is the `bool()` hazard again, one line from the commander flag: a String is
+## truthy while `bool()` refuses one outright, so a quoted flag is either a unit that
+## cannot move on the turn it resumes into or a rebuild that stops half way.
+func test_every_entry_field_is_shaped_the_way_its_table_says() -> void:
+	var units := {
+		"type": 5,
+		"team": "red",
+		"x": "0",
+		"hp": "hurt",
+		"fuel": "full",
+		"acted": "false",
+		"carrier": "none",
+		"dived": "surfaced",
+	}
+	for key: String in units:
+		var data := _encoded()
+		(data["units"] as Array)[0][key] = units[key]
+		assert_string_contains(SaveCodec.validate(data), "unit entry's '%s'" % key)
+	var data_owners := _encoded()
+	(data_owners["owners"] as Array)[0]["team"] = "red"
+	assert_string_contains(SaveCodec.validate(data_owners), "owner entry's 'team'")
+	var data_progress := _encoded()
+	data_progress["capture_progress"] = [{"x": 0, "y": 0, "points": "nearly"}]
+	assert_string_contains(SaveCodec.validate(data_progress), "capture progress entry's 'points'")
 
 
 ## The block's own fields, by the reasoning that reached them one level down: a charge
@@ -159,15 +214,6 @@ func test_a_computer_side_that_does_not_play_is_refused() -> void:
 	assert_eq(SaveCodec.validate(data), "", "a list of numbers is all this one asks")
 	assert_null(SaveCodec.decode(data, terrain_db, unit_db, chart))
 	assert_push_error("team 9")
-
-
-func test_a_unit_entrys_flags_must_be_the_shape_its_version_wrote() -> void:
-	var data := _encoded()
-	(data["units"] as Array)[0]["dived"] = "surfaced"
-	assert_string_contains(SaveCodec.validate(data), "dived")
-	data = _encoded()
-	(data["units"] as Array)[0]["carrier"] = "none"
-	assert_string_contains(SaveCodec.validate(data), "carrier")
 
 
 # --- an older save is entitled to the defaults --------------------------------
@@ -237,9 +283,9 @@ func test_a_version_2_save_may_lack_the_dive_flag_but_not_commanders() -> void:
 ## complete, so the table above cannot be demanding a key nothing produces.
 func test_a_freshly_encoded_save_carries_everything_its_version_promises() -> void:
 	assert_eq(SaveCodec.validate(_encoded()), "")
-	for key: String in SaveCodec.OPTIONAL_KEY_RULES:
+	for key: String in SaveCodec.KEY_RULES:
 		assert_has(_encoded(), key, "encode must write every key its version claims")
-	for key: String in SaveCodec.OPTIONAL_UNIT_KEY_RULES:
+	for key: String in SaveCodec.UNIT_KEY_RULES:
 		assert_has((_encoded()["units"] as Array)[0] as Dictionary, key)
 	for key: String in SaveCodec.COMMANDER_KEY_RULES:
 		for team in GameState.TEAMS:
