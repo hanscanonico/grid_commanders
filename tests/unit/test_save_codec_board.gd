@@ -110,6 +110,28 @@ func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
 	data = _encoded()
 	(data["owners"] as Array)[0].erase("x")
 	assert_ne(SaveCodec.board_error(data, map), "", "so is an entry with no cell to check")
+	# And so is a version no release wrote. It decides which fields every entry is asked
+	# for, and this is the one function that never gets to refuse it: trusted, a version
+	# below the oldest readable one asks for nothing, leaving the cell and HP reads below
+	# to fall off records nobody had checked. `"three"` is the one to keep — `int()` reads
+	# it as 0, which looks like a version rather than like nonsense.
+	for version: Variant in [0, -1, "three", {}]:
+		data = _encoded()
+		data["version"] = version
+		data["units"] = [{}]
+		assert_ne(SaveCodec.board_error(data, map), "", "an unreadable version is floored")
+	# The turn and the winner are read the same way and were the last two that were not:
+	# `int()` will not take a Dictionary or an Array, and with the entry lists empty there
+	# is nothing before them to intercept a save that never went through `validate`.
+	for named: Variant in [{}, [], "red"]:
+		data = _encoded()
+		data["units"] = []
+		data["current_team"] = named
+		assert_ne(SaveCodec.board_error(data, map), "", "a turn that is not a side is a reason")
+		data = _encoded()
+		data["units"] = []
+		data["winner"] = named
+		assert_ne(SaveCodec.board_error(data, map), "", "and so is a winner that is not one")
 
 
 func test_an_owned_property_off_the_board_is_rejected() -> void:
@@ -211,6 +233,7 @@ func test_a_loaded_carrier_riding_in_another_is_rejected() -> void:
 				"fuel": 99,
 				"ammo": 0,
 				"acted": false,
+				"dived": false,  # a version 3 unit entry carries it, boat or not
 				"carrier": SaveCodec.NO_CARRIER,
 			}
 		)

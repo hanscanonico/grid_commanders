@@ -147,7 +147,14 @@
           <p class="text-sm mt-1"><span class="gc-file">core/save_codec.gd</span> already treats
           <code>ai_teams</code> / <code>commanders</code> / <code>fog</code> as optional keys with
           defaults — a <code>difficulty</code> id joins that list, and day-old saves keep loading as
-          Normal. The offline balance runner (<span class="gc-file">tools/run_commander_balance.gd</span>)
+          Normal. <span class="badge badge-warning badge-sm">superseded 2026-07-28</span> — those keys
+          are no longer optional to every save: the version a save claims says which fields it
+          promised to write, and one claiming a version that wrote a key is refused without it, so a
+          truncated save can no longer resume as a different match (COM-54). <code>difficulty</code>
+          is the odd one — it arrived between versions 2 and 3 without a bump of its own, so it is
+          guaranteed only from version 3 while a version 2 save may legitimately lack it.
+          <span class="gc-file">core/save_codec.gd</span>'s <code>KEY_RULES</code> is the table that
+          says so. The offline balance runner (<span class="gc-file">tools/run_commander_balance.gd</span>)
           plays real AI-vs-AI matches headless — exactly the harness that can <em>prove</em> the three
           tiers order Easy &lt; Normal &lt; Difficult, which matters double now that skill is the only
           lever.</p>
@@ -387,7 +394,9 @@
             <code>--difficulty=</code> CLI flag beside <code>--map</code>/<code>--fog</code>/<code>--co</code>.</li>
             <li><span class="gc-file">save_codec.gd</span>: one optional <code>difficulty</code> key,
             defaulting to normal — every existing save still loads. The sim state itself is
-            untouched by this whole plan.</li>
+            untouched by this whole plan. <span class="badge badge-warning badge-sm">superseded
+            2026-07-28</span> — optional only below version 3; see the note in §"Saves and soaks are
+            ready for it" above.</li>
             <li><strong>GUT tests:</strong> the three tiers load; Normal's profile equals
             <code>AIProfile.new()</code> defaults; legacy-save fallback; round-trip; a crafted state
             where the Easy profile provably picks a different command than Normal (guards against

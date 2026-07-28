@@ -70,11 +70,17 @@ func test_encoded_save_declares_the_current_version() -> void:
 ## matches were played against the shipped AI, which is exactly Normal — so they
 ## resume rather than being rejected or resuming at some other tier. An encode
 ## that is not told a tier records Normal for the same reason.
+##
+## Staged as a version 2 save because that is what such a save is: the key arrived
+## between versions 2 and 3 without a bump of its own, so version 2 is the newest
+## one entitled to be without it. A version 3 save missing it is truncated, and is
+## refused — see test_save_codec_versions.gd (COM-54).
 func test_a_save_without_a_difficulty_resumes_as_normal() -> void:
 	assert_eq(String(_encoded()["difficulty"]), "normal", "an unspecified tier encodes as normal")
 	var data := _encoded()
+	data["version"] = 2
 	data.erase("difficulty")
-	assert_eq(SaveCodec.validate(data), "", "difficulty is optional, never required")
+	assert_eq(SaveCodec.validate(data), "", "a save from before the key is entitled to go without")
 	var loaded := _decode(data)
 	assert_not_null(loaded)
 	assert_eq(loaded.difficulty, &"normal")
@@ -103,6 +109,17 @@ func test_validate_accepts_an_encoded_save() -> void:
 func test_a_version_this_codec_cannot_read_is_rejected() -> void:
 	var data := _encoded()
 	data["version"] = 99
+	assert_string_contains(SaveCodec.validate(data), "version")
+	# A version that is not a number at all is the same answer, and it has to be asked
+	# as a shape: `int()` will not take a Dictionary, so reading the version the obvious
+	# way is a crash on the one field every other rule is derived from. A file dropped in
+	# the save slot by hand reaches here through the menu's Continue caption.
+	for claimed: Variant in ["three", {}, [], true, null]:
+		data = _encoded()
+		data["version"] = claimed
+		assert_string_contains(SaveCodec.validate(data), "version")
+	data = _encoded()
+	data.erase("version")
 	assert_string_contains(SaveCodec.validate(data), "version")
 
 
@@ -144,7 +161,7 @@ func test_a_version_1_save_loads_as_a_no_commander_match() -> void:
 
 func test_a_commander_who_no_longer_exists_falls_back_to_neutral() -> void:
 	var data := _encoded()
-	data["commanders"] = {"1": {"id": "a_general_who_was_cut", "charge": 9000, "active": true}}
+	data["commanders"]["1"] = {"id": "a_general_who_was_cut", "charge": 9000, "active": true}
 	var loaded := _decode(data)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.commander_of(1).id, CommanderType.NEUTRAL_ID)
@@ -155,7 +172,7 @@ func test_a_commander_who_no_longer_exists_falls_back_to_neutral() -> void:
 func test_a_hand_edited_meter_is_still_capped() -> void:
 	var commander_db := CommanderDB.load_default()
 	var data := _encoded()
-	data["commanders"] = {"1": {"id": "alina_ward", "charge": 999999, "active": false}}
+	data["commanders"]["1"] = {"id": "alina_ward", "charge": 999999, "active": false}
 	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart, commander_db)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.commander_state(1).charge, loaded.state.commander_of(1).power_cost)
