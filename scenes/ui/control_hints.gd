@@ -35,6 +35,7 @@ const AI_TURN := &"ai_turn"
 const HANDOFF := &"handoff"
 const VICTORY := &"victory"
 const INFO := &"info"
+const END_TURN_GUARD := &"end_turn_guard"
 
 ## Context -> the keys that do something in it. IDLE carries the zoom keys
 ## because that is the only context with room for them and the only one a player
@@ -51,6 +52,9 @@ const LEGENDS: Dictionary = {
 	HANDOFF: "ENTER · READY",
 	VICTORY: "UP/DOWN · PICK   ENTER · OK",
 	INFO: "ESC · CLOSE",
+	# The one context whose two arrow axes do different things: the ready-unit
+	# list scrolls under up/down while the two actions sit side by side.
+	END_TURN_GUARD: "L/R · PICK   UP/DN · SCROLL   ENTER · OK",
 }
 
 

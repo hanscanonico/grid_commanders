@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/ui/hud_bottom_bar.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/battle/cutscene/capture_cutscene.tscn" id="9"]
 [ext_resource type="Script" path="res://scenes/ui/mission_strip.gd" id="10"]
 [ext_resource type="Script" path="res://scenes/ui/action_feedback.gd" id="11"]
+[ext_resource type="Script" path="res://scenes/ui/end_turn_guard.gd" id="12"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
@@ -92,6 +93,17 @@ script = ExtResource("4")
 [node name="MenuRows" type="VBoxContainer" parent="UI/ActionMenu"]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="EndTurnGuard" type="Control" parent="UI"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("12")
 
 [node name="DamagePreview" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true

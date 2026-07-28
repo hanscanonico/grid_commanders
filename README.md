@@ -298,6 +298,14 @@ forgets them all for one machine, which is how a fresh install is staged for tes
   one you could still resume. Resume it later with **Continue** on the main menu. When your Command
   Power is charged the menu lists it first, so it is reachable from the keyboard as well as from the
   HUD button
+- **End Turn** asks first when any of your units still standing on the board can act — a passenger
+  riding a transport is not one of them: a panel names how many are ready and lists each with its
+  tile — *Tank at (4,1)*, in the board's own zero-based cells — and offers **Review units**, the
+  already-highlighted answer, which closes it on the same turn with the cursor on the first of
+  them, or **End anyway**, which hands play over as before. Left/right pick, up/down
+  scroll a list too long to fit, Enter takes the highlighted action and Esc reviews; clicking a
+  button works the same. A turn with nothing left to act skips the panel entirely, and the
+  computer's turns never see it
 - The same menu is how you leave a match without closing the game. **Save & Main Menu** writes the
   slot exactly as **Save** does and only then goes back — a failed write keeps you on the board and
   says so — while **Main Menu Without Saving** asks a second time first, on a two-row confirmation

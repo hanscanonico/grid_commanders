@@ -454,12 +454,17 @@
 
           <tr class="gc-issue-row" data-sev="high">
             <td class="gc-mono font-black">U-10</td>
-            <td><span class="badge badge-warning badge-sm">High</span></td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-inflight">SHIPPED</span></td>
             <td class="gc-src">FC H-03</td>
             <td>End Turn commits immediately even when ready units remain — a learner can throw away half a turn
               without understanding the mistake.</td>
             <td>Warn with the ready-unit count and name the units ("Tank at (4,1)…"); offer "Review units" /
-              "End anyway." Skip the warning entirely when none remain.</td>
+              "End anyway." Skip the warning entirely when none remain.
+              <br><em>Shipped (COM-14):</em> a modal over the board
+              (<code>scenes/ui/end_turn_guard.gd</code>), opened from the map menu's End Turn with Review armed
+              and answerable by keyboard, pad or mouse; <code>Battle</code> keeps the ready-unit count and the
+              <code>EndTurnCommand</code>, the AI's end-turn path is untouched, and nothing in <code>core/</code>
+              or <code>ai/</code> changed.</td>
           </tr>
 
           <tr class="gc-issue-row" data-sev="high">

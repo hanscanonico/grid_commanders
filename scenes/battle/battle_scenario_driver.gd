@@ -265,10 +265,7 @@ func _run_demo(mode: String) -> void:
 			_battle.action_menu.choose(&"infantry")
 			await _until_state(Battle.State.IDLE)
 		"endturn":
-			_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
-			await _until_state(Battle.State.MENU)
-			_battle.action_menu.choose(&"end_turn")
-			await tree.process_frame
+			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
 		"load", "cargo", "drop", "transport":
 			await _run_transport_demo(mode)
 		"divemenu", "dive":
@@ -284,7 +281,7 @@ func _run_demo(mode: String) -> void:
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
-		"rejected_confirm", "enemy_range_preview":
+		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units":
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
@@ -318,9 +315,7 @@ func _run_demo(mode: String) -> void:
 			await _run_victory_demo()
 		"aiturn":
 			# hand the turn to the Blue AI and wait until it plays back to Red
-			_battle.confirm_at(Vector2i(10, 5))
-			await _until_state(Battle.State.MENU)
-			_battle.action_menu.choose(&"end_turn")
+			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
 			while (
 				_battle.game.winner == 0
 				and not (_battle.game.current_team == 1 and _battle.state == Battle.State.IDLE)
@@ -1115,9 +1110,9 @@ func _walk_first_turn() -> void:
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"infantry")  # -> retires "build"
 	await _until_state(Battle.State.IDLE)
-	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> the map menu
-	await _until_state(Battle.State.MENU)
-	_battle.action_menu.choose(&"end_turn")  # -> retires "end_turn"
+	# -> retires "end_turn"; the side still has unacted units, so this answers the
+	# COM-14 guard the map menu now opens.
+	await BattleFeedbackScenario.new(_battle).end_turn_anyway()
 	# Wait the computer's whole turn out, back to day two: the frame is then a real
 	# board rather than a half-planned one, and the AI's own moves are a live check
 	# that nothing it does retires a step on the player's behalf.
