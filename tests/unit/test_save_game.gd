@@ -15,13 +15,16 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	if FileAccess.file_exists(TEST_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PATH))
-	# Covers both shapes the temp can take here: the file a save stages, and the
-	# directory the failed-write test parks in its way.
-	var temp := ProjectSettings.globalize_path(TEMP_PATH)
-	if FileAccess.file_exists(TEMP_PATH) or DirAccess.dir_exists_absolute(temp):
-		DirAccess.remove_absolute(temp)
+	# Both paths are cleared in both shapes — a file where a save landed, and the
+	# directory a failure test parks in the way of the temp or of the slot itself.
+	_remove(TEST_PATH)
+	_remove(TEMP_PATH)
+
+
+func _remove(path: String) -> void:
+	var absolute := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(absolute):
+		DirAccess.remove_absolute(absolute)
 
 
 func _first_steps_state() -> GameState:
@@ -112,6 +115,18 @@ func test_a_failed_write_leaves_the_previous_save_intact() -> void:
 	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.day, 1, "and it still loads, as the match it recorded")
+
+
+## COM-51. A temp that outlives its failure is the *next* save's disaster: it would be
+## renamed over a slot it never described. This is the one failure path a test can push
+## far enough to stage a temp at all — the write lands, the swap is what is refused —
+## and nothing is left behind there either.
+func test_a_failed_swap_leaves_no_temp_behind() -> void:
+	var state := _first_steps_state()
+	DirAccess.make_dir_absolute(ProjectSettings.globalize_path(TEST_PATH))
+	assert_false(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	assert_push_error("cannot replace")
+	assert_false(FileAccess.file_exists(TEMP_PATH), "the staged temp is discarded, not left")
 
 
 func test_a_successful_save_leaves_no_temp_behind() -> void:

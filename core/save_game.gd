@@ -15,6 +15,11 @@ extends RefCounted
 ## The slot is replaced *atomically*, and that is part of what this file promises:
 ## a save that fails leaves the previous one exactly as it was, so a full disk costs
 ## the player the save they just asked for and never the one they already had.
+##
+## That costs a second copy's worth of free space, and the trade is deliberate: a
+## volume too full to hold the temp fails the save outright, where writing in place
+## would have squeezed it in by first truncating — and so destroying — the only good
+## copy. Losing the save the player just asked for is the cheaper of the two.
 
 const SAVE_PATH := "user://save.json"
 const SAVE_CODEC_SCRIPT := preload("res://core/save_codec.gd")
@@ -65,15 +70,17 @@ static func save(
 			"SaveGame: cannot write %s (error %d)" % [temp_path, FileAccess.get_open_error()]
 		)
 		return false
-	var stored := file.store_string(
-		JSON.stringify(SAVE_CODEC_SCRIPT.encode(state, ai_teams, difficulty), "\t")
-	)
-	# Three signals, because no one of them is sufficient. The store's own `false` is
-	# what a short write raises on Unix — that path returns it rather than recording a
-	# `last_error`, so a save that only asked `get_error()` still answered `true` over a
-	# truncated file. The error is then asked twice, and the handle is closed here
-	# rather than left to the local going out of scope, because a store whose buffer
-	# spilled cleanly can still fail on the tail the flush pushes out.
+	var payload := JSON.stringify(SAVE_CODEC_SCRIPT.encode(state, ai_teams, difficulty), "\t")
+	# Bytes, not characters: `store_string` writes UTF-8, so a single accented character
+	# in a map name would make a truncated file look the right length to a `length()`.
+	var expected_bytes := payload.to_utf8_buffer().size()
+	var stored := file.store_string(payload)
+	# The cheap early-outs. The store's own `false` is what a short write raises on Unix
+	# — that path returns it rather than recording a `last_error`, so a save that only
+	# asked `get_error()` still answered `true` over a truncated file. The error is then
+	# asked twice, and the handle is closed here rather than left to the local going out
+	# of scope, because a store whose buffer spilled cleanly can still fail on the tail
+	# the flush pushes out.
 	var write_error := file.get_error()
 	file.close()
 	if write_error == OK:
@@ -84,6 +91,21 @@ static func save(
 		if write_error == OK:
 			write_error = ERR_FILE_CANT_WRITE
 		push_error("SaveGame: failed writing %s (error %d)" % [temp_path, write_error])
+		_discard(temp_path)
+		return false
+	# And the authority: what the disk hands back, not what the handle claims. On a full
+	# volume every signal above reads clean — `store_string` returns true and both
+	# `get_error()` calls read OK — while zero bytes land, because the ENOSPC surfaces
+	# inside the buffered flush and no FileAccess call carries it out. Re-opening the
+	# temp is the one question that cannot be answered by a handle that never noticed.
+	var landed_bytes := FileAccess.get_file_as_bytes(temp_path).size()
+	if landed_bytes != expected_bytes:
+		push_error(
+			(
+				"SaveGame: %s holds %d of %d bytes — the disk is full or the write was cut short"
+				% [temp_path, landed_bytes, expected_bytes]
+			)
+		)
 		_discard(temp_path)
 		return false
 	# POSIX rename replaces the destination in one step, which is what makes the swap
