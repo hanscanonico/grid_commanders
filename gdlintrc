@@ -136,4 +136,12 @@ max-public-methods: 21
 # the three checks it makes of the sim afterwards.
 # COM-94's split is still the right one and still not a crash fix's job. The
 # driver sits at exactly 1193.
-max-file-lines: 1193
+#
+# 1193 -> 1197, the scenario driver's a seventh time, for COM-13's two flows —
+# `rejected_confirm` walks all four refusal reasons, `enemy_range_preview` is the
+# range-preview regression gate the same finding owes. This is the raise that did
+# move something out first: both flows live in
+# scenes/battle/battle_feedback_scenario.gd, and what stayed here is the
+# four-line dispatch arm that reaches them. COM-94's cut-in split is still the one
+# that is due. The driver sits at exactly 1197.
+max-file-lines: 1197

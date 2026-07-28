@@ -106,8 +106,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   named follow-up (it is also the in-battle info sheet, so restyling it moves commander selection
   too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
-  slice (COM-12) is shipped. D1: everything in it is presentation-only, and tutorial state is a
-  device preference (`user://settings.cfg`, never the match request, never a save). D6: the tutorial
+  slice (COM-12) and the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`) are
+  shipped. D1: everything in it is presentation-only, and tutorial state is a device preference
+  (`user://settings.cfg`, never the match request, never a save). D6: the tutorial
   owns no rule and observes rather than instruments — steps retire off existing `EventBus`
   signals, filtered to human sides so the computer cannot retire a hint; nothing in `core/` or
   `ai/` gained a hook. A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so

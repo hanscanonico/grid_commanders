@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/ui/hud_bottom_bar.gd" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/battle/cutscene/combat_cutscene.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/battle/cutscene/capture_cutscene.tscn" id="9"]
 [ext_resource type="Script" path="res://scenes/ui/mission_strip.gd" id="10"]
+[ext_resource type="Script" path="res://scenes/ui/action_feedback.gd" id="11"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
@@ -73,6 +74,13 @@ visible = false
 offset_right = 300.0
 offset_bottom = 40.0
 script = ExtResource("10")
+
+[node name="ActionFeedback" type="PanelContainer" parent="UI"]
+unique_name_in_owner = true
+visible = false
+offset_right = 80.0
+offset_bottom = 20.0
+script = ExtResource("11")
 
 [node name="ActionMenu" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
