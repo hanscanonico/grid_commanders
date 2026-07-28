@@ -116,14 +116,17 @@ that must survive any change; the full rationale, milestones and risk registers 
   **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites
   that assign the state.
 - `focus-steal-plan.html` — developer ergonomics: the smoke sweep and the desktop's window
-  focus, FS0–FS3. The instrument is `tools/focus_timeline.sh` (FS0) and every claim about focus
-  is a measurement with it, never an anecdote. D2: **engine-bundle metadata tricks are refuted**
-  — `LSUIElement` and `LSBackgroundOnly` clones each still stole focus 3/3; do not re-litigate
-  without new evidence. D3: an interactive (tty) launch still `exec`s Godot directly and comes up
-  focused; only tty-less launches get the restore watcher. D1: the sweep's captures staying
-  byte-identical is the merge bar for any change here. D6: fewer windows beats faster restores —
-  the wrapper is the safety net, batching (FS2) is the fix. Nothing under `core/` or `ai/` learns
-  the sweep exists.
+  focus, FS0–FS3; FS0–FS1 shipped, FS2–FS3 pending. The instrument is `tools/focus_timeline.sh`
+  (FS0) and every claim about focus is a measurement with it, never an anecdote. FS1: the
+  watcher in `tools/godot_gui.sh` lives as long as the engine it launched — its only exit
+  conditions are the child dying and a human clicking into the game — and restores on every
+  activation, never onto the game itself or transient system UI. D2: **engine-bundle metadata
+  tricks are refuted** — `LSUIElement` and `LSBackgroundOnly` clones each still stole focus 3/3;
+  do not re-litigate without new evidence. D3: an interactive (tty) launch still `exec`s Godot
+  directly and comes up focused; only tty-less launches get the restore watcher. D1: the sweep's
+  captures staying byte-identical is the merge bar for any change here. D6: fewer windows beats
+  faster restores — the wrapper is the safety net, batching (FS2) is the fix. Nothing under
+  `core/` or `ai/` learns the sweep exists.
 
 ## Architecture — the rules that matter most
 

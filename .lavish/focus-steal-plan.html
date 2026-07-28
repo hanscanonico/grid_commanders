@@ -122,6 +122,21 @@
 
   <main class="px-6 md:px-10 py-8 space-y-12">
 
+    <div class="alert alert-info">
+      <div>
+        <h3 class="font-bold">Read every “49” below as “one per default scenario”</h3>
+        <p class="text-sm mt-1">
+          The sweep’s scenario count is owned by <code>DEFAULT_MODES</code> in
+          <span class="gc-file">tools/smoke_scenarios.sh</span>, never by this plan: it was 49 when
+          this was written on 2026-07-27 and is 50 since COM-50 added
+          <span class="gc-file">capture_power</span>. The measurements in §1–§2 are that day’s runs
+          and stay as recorded; every acceptance gate and byte-diff count below — FS2’s group table
+          included — is <em>all</em> the default scenarios, whatever that number is on the day the
+          milestone ships.
+        </p>
+      </div>
+    </div>
+
     <!-- ====================== 1 · WHAT ACTUALLY HAPPENS ====================== -->
     <section class="space-y-4">
       <h2 class="text-2xl font-black flex items-center gap-3"><span class="gc-section-number">1</span> What actually happens</h2>
