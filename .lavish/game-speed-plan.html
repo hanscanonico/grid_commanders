@@ -219,9 +219,12 @@
           </table>
         </div>
         <p class="text-xs mt-3 opacity-70">The AI's turn-open delay
-        (<span class="gc-file">battle_ai_runner.gd:15</span>) is today a <code>const</code> derived
-        from the banner hold; it becomes a value computed at call time from the active tier, so it
-        keeps tracking the banner automatically.</p>
+        (<span class="gc-file">battle_ai_runner.gd</span>) was a <code>const</code> derived from the
+        banner hold, then a value computed at call time from the active tier so it kept tracking the
+        banner. Since COM-15 made the day banner an awaited blocking beat that
+        <span class="gc-file">battle.gd</span> holds before handing the turn over,
+        <code>start_delay_seconds()</code> is only the breathing room that follows the banner
+        (<code>START_DELAY_PADDING</code>) — never a second copy of its hold.</p>
       </div>
     </section>
 
