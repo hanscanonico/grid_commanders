@@ -30,8 +30,9 @@
 # macOS-only, honestly: on any other platform (or without `lsappinfo`) it runs
 # the command untouched and says the timeline is unavailable. Deliberately in
 # no `make verify` gate — it needs a display and a human's desktop, exactly
-# like the smoke sweep it measures. Exit status is always the wrapped
-# command's own.
+# like the smoke sweep it measures. Exit status is the wrapped command's own,
+# with one exception: a wrapper that is itself signalled prints the partial
+# timeline and exits 128+signal.
 
 set -u
 
@@ -116,9 +117,12 @@ report() {
 			# run that is not the tail of a steal) becomes the new app restores are
 			# expected to land on. It is seeded from the first run that could be
 			# one at all — a first sample of "-" or of system UI is not an app the
-			# developer was in.
+			# developer was in. The scan stops at the first steal: past it, the
+			# only candidates left are restore targets, and a restore may never
+			# be the baseline it is judged against.
 			expected = ""
 			for (r = 0; r < rn; r++) {
+				if (rapp[r] ~ thief) break
 				if (baseline_ok(rapp[r])) {
 					expected = rapp[r]
 					break
