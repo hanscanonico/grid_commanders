@@ -451,7 +451,7 @@ flowchart TD
             <li><span class="cop-code">movement_resolver.gd</span> — move budget + per-step terrain cost hooks</li>
             <li><span class="cop-code">turn_rules.gd</span> — supply radius, repair cost, power expiry</li>
             <li><span class="cop-code">capture_command.gd</span>, <span class="cop-code">supply_command.gd</span>, <span class="cop-code">attack_command.gd</span>, <span class="cop-code">vision.gd</span> — one hook call each</li>
-            <li><span class="cop-code">save_game.gd</span> — VERSION 2 (commander id, charge, active power per team; missing keys → neutral commander, so v1 saves still load)</li>
+            <li><span class="cop-code">save_game.gd</span> — VERSION 2 (commander id, charge, active power per team; missing keys → neutral commander, so v1 saves still load) <span class="badge badge-warning badge-sm">superseded 2026-07-28</span> — the fallback is now gated on the save's version: a v1 save still loads both sides neutral, but a save claiming v2 or later must carry the whole block, since a missing one there is damage rather than age (COM-54). <span class="cop-code">core/save_codec.gd</span>'s <code>KEY_RULES</code> / <code>COMMANDER_KEY_RULES</code> own it.</li>
             <li><span class="cop-code">ai_controller.gd</span>, <span class="cop-code">match_config.gd</span>, <span class="cop-code">main_menu</span>, <span class="cop-code">battle</span> HUD, <span class="cop-code">event_bus.gd</span></li>
           </ul>
         </div>
