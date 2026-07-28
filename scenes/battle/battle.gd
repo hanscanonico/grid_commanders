@@ -342,27 +342,28 @@ func _build_outcome() -> BattleOutcome:
 	return built
 
 
+## The one press the two states that swallow play still listen for: the confirm
+## key, or a left click. Shared so the handoff's "I'm ready" and the computer
+## turn's refusal can never answer different presses.
+func _is_confirm_press(event: InputEvent) -> bool:
+	if event.is_action_pressed(&"confirm"):
+		return true
+	var button := event as InputEventMouseButton
+	return button != null and button.button_index == MOUSE_BUTTON_LEFT and button.pressed
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.HANDOFF:
 		# Only "I'm ready" gets through while the device is being passed over.
-		var clicked := (
-			event is InputEventMouseButton
-			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
-			and (event as InputEventMouseButton).pressed
-		)
-		if event.is_action_pressed(&"confirm") or clicked:
+		if _is_confirm_press(event):
 			leave_handoff()
 		return
 	if state == State.AI_TURN:
-		var clicked := (
-			event is InputEventMouseButton
-			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
-			and (event as InputEventMouseButton).pressed
-		)
-		if event.is_action_pressed(&"confirm") or clicked:
+		# The computer's turn refuses play, but it says so rather than going quiet.
+		if _is_confirm_press(event):
 			confirm_at(cursor_cell)
 		return
-	if state in [State.ANIMATING, State.MENU, State.VICTORY, State.AI_TURN, State.INFO]:
+	if state in [State.ANIMATING, State.MENU, State.VICTORY, State.INFO]:
 		return  # the menu and info sheet handle their own input; the rest block it
 	if _zoom.handle_input(event):
 		return
@@ -404,15 +405,7 @@ func confirm_at(cell: Vector2i) -> void:
 			var unit := perspective.visible_unit_at(cell)
 			if unit != null and unit.team == game.current_team:
 				if unit.acted:
-					_reject(
-						(
-							"Ready next day."
-							if action_feedback.was_built_this_turn(unit)
-							else "Already acted."
-						),
-						cell
-					)
-					_enter_preview(unit)
+					_reject_acted(unit, cell)
 				else:
 					_select(unit)
 			elif _is_own_empty_factory(cell):
@@ -432,15 +425,7 @@ func confirm_at(cell: Vector2i) -> void:
 				_clear_preview()
 				_select(unit)  # intel never blocks play — a ready unit still selects
 			elif unit.team == game.current_team:
-				_reject(
-					(
-						"Ready next day."
-						if action_feedback.was_built_this_turn(unit)
-						else "Already acted."
-					),
-					cell
-				)
-				_enter_preview(unit)
+				_reject_acted(unit, cell)
 			else:
 				_enter_preview(unit)  # a visible other unit: switch the preview to it
 		State.UNIT_SELECTED:
@@ -470,6 +455,17 @@ func confirm_at(cell: Vector2i) -> void:
 
 func _reject(reason: String, cell: Vector2i) -> void:
 	action_feedback.show_reason(reason, view.screen_pos_for_cell(cell))
+
+
+## One of ours that cannot be commanded: it says why, then falls back to the
+## preview so the refusal still shows what the unit can do. Both arms that can
+## reach an acted friendly unit come through here, so the two reasons are picked
+## in one place and a third can only be added once.
+func _reject_acted(unit: Unit, cell: Vector2i) -> void:
+	_reject(
+		"Ready next day." if action_feedback.was_built_this_turn(unit) else "Already acted.", cell
+	)
+	_enter_preview(unit)
 
 
 func _cancel() -> void:

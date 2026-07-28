@@ -1,8 +1,9 @@
 class_name BattleFeedbackScenario
 extends RefCounted
 ## Driven COM-13 acceptance flows, split out so BattleScenarioDriver stays under
-## its linted size cap. The individual flows return an error string rather than
-## owning the harness's failure state.
+## its linted size cap. Every flow — `run` included — returns an error string
+## rather than reporting one: the driver's `_fail` owns the push_error and the
+## exit-code flag together, and the two are not separable.
 
 var _battle: Battle
 
@@ -11,22 +12,14 @@ func _init(battle: Battle) -> void:
 	_battle = battle
 
 
-func run(mode: String) -> bool:
-	var error := (
-		await _run_rejected_confirms()
-		if mode == "rejected_confirm"
-		else await _run_enemy_range_preview()
-	)
-	if error == "":
-		return true
-	push_error(error)
-	return false
+func run(mode: String) -> String:
+	if mode == "rejected_confirm":
+		return await _run_rejected_confirms()
+	return await _run_enemy_range_preview()
 
 
 func _run_rejected_confirms() -> String:
-	var feedback := _battle.get_node_or_null("UI/ActionFeedback") as ActionFeedback
-	if feedback == null:
-		return "rejected confirms have no ActionFeedback surface"
+	var feedback := _battle.action_feedback
 
 	var infantry := _battle.game.unit_at(Vector2i(4, 3))
 	infantry.acted = true
@@ -53,6 +46,13 @@ func _run_rejected_confirms() -> String:
 	if error != "":
 		return error
 
+	# Back out the selection the way a player would before handing the turn over:
+	# a human selection left live under the CPU-turn chip is a board the game
+	# cannot reach, and this mode's frame is photographed exactly there.
+	await _press(&"cancel")
+	if _battle.state != Battle.State.IDLE:
+		return "cancel did not clear the selection before the CPU turn"
+
 	_battle.state = Battle.State.AI_TURN
 	_battle.confirm_at(_battle.cursor_cell)
 	return _expect_reason(feedback, "CPU turn.")
@@ -65,14 +65,20 @@ func _run_enemy_range_preview() -> String:
 		return "enemy confirm did not enter PREVIEW"
 	if _battle.view.move_overlay.get_used_cells().is_empty():
 		return "enemy preview painted no movement reach"
-	var event := InputEventAction.new()
-	event.action = &"show_range"
-	event.pressed = true
-	Input.parse_input_event(event)
-	await _battle.get_tree().process_frame
+	await _press(&"show_range")
 	if _battle.view.attack_overlay.get_used_cells().is_empty():
 		return "R painted no enemy fire ring"
 	return ""
+
+
+## Sends a key the player's own input path, so the flow under test is the one a
+## keyboard reaches — not a handler called directly.
+func _press(action: StringName) -> void:
+	var event := InputEventAction.new()
+	event.action = action
+	event.pressed = true
+	Input.parse_input_event(event)
+	await _battle.get_tree().process_frame
 
 
 func _expect_reason(feedback: ActionFeedback, expected: String) -> String:

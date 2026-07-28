@@ -19,7 +19,6 @@ var _built_this_turn: Dictionary = {}  # Unit -> true
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_theme_stylebox_override("panel", _panel_box())
 
 	var margin := MarginContainer.new()
@@ -31,6 +30,12 @@ func _ready() -> void:
 
 	_label = UiTheme.hud_label("", UiTheme.SIZE_TIP, UiTheme.WHITE)
 	margin.add_child(_label)
+
+	# The chip floats over the board, so nothing in it may eat a click meant for
+	# the tile underneath: a Container child left on its own filter swallows the
+	# press before _unhandled_input ever sees it. `make_decoration` walks the whole
+	# subtree, which is what keeps that true when a piece is added later.
+	UiTheme.make_decoration(self)
 	hide()
 
 
