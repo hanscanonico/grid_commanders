@@ -444,9 +444,11 @@ board-wide sight described under Fog of war) are identical at Easy and at Diffic
 opponent is only ever a better-judging one. It is inert in a 2-Player hot-seat, and a save
 records the tier it was played at.
 
-- **Easy** — timid. It over-weights danger, retreats early, refuses good trades, passes up
-  marginal plays, and never fields an md tank. It loses on judgement, so beating it teaches the
-  real game.
+- **Easy** — timid by design. It over-weights danger, retreats early, refuses good trades, passes
+  up marginal plays, and never fields an md tank. Whether that actually makes it *weaker* is
+  unconfirmed: the AI-vs-AI ladder currently has Normal taking only 43.3% from Easy overall (23.3%
+  on `ironworks`), so on the measurement the ordering is not yet established — `docs/difficulty_check.md`
+  carries the standing numbers.
 - **Normal** — the shipped AI, bit for bit. A test pins its profile to the planner's own defaults,
   so a same-seed replay of an old match still plays out identically.
 - **Difficult** — the same economy and the same dice, with more on its mind. It builds a **threat
@@ -454,14 +456,15 @@ records the tier it was played at.
   you see in the damage preview) and weighs it two ways: a shot is discounted by what the firing
   cell invites in return, scaled against the unit's own cost, and a unit that is only advancing
   will give up tiles of progress rather than end its move in a kill zone. It also **counter-builds**
-  against your actual roster instead of a fixed shopping list. Whether all that actually *beats*
-  Normal is unconfirmed — the AI-vs-AI ladder has not separated the two; `docs/difficulty_check.md`
-  carries the standing numbers.
+  against your actual roster instead of a fixed shopping list. The AI-vs-AI ladder now measures it
+  ahead of Normal — 66.7% overall — but that is still under the 70% the gate requires, so the
+  claim is not yet proven; `docs/difficulty_check.md` carries the standing numbers.
 
 Each tier is a `.tres` under `data/difficulty/` pointing at a profile in `data/ai/`, so retuning
 one is a data edit. `make difficulty-check` plays the tiers against each other headless and
 reports whether the ladder actually orders — see `docs/difficulty_check.md` for the standing
-result, including one capability that measured *negative* and ships switched off.
+result, and for the superseded probes the weights were first set from, including one capability
+that measured *negative* and ships switched off.
 
 ## Architecture
 

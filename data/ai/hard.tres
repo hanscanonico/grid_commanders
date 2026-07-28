@@ -3,11 +3,12 @@
 [ext_resource type="Script" path="res://ai/ai_profile.gd" id="1"]
 
 ; Difficult. Weights set by the DF4 AI-vs-AI ladder, not by taste — see
-; docs/difficulty_check.md for the measurements behind each one.
+; docs/difficulty_check.md for the measurements behind each one (§4 for the
+; standing ladder, §6 for the superseded probes the dials were first set from).
 ;
 ; threat_aversion is deliberately small: the penalty is scaled by the exposed
 ; unit's cost, so on a contested front the incoming total saturates and anything
-; above ~0.15 stops the AI attacking at all (0.5 lost 88% of its games).
+; above ~0.15 stops the AI attacking at all (0.5 lost 88% of its games, §6).
 ;
 ; advance_threat_tiles is the same caution on the advance path, and it is a
 ; separate dial because that path scores in tiles rather than in value —
@@ -24,6 +25,11 @@
 ; free, and biasing the *first* shot toward a gang-up pulls it off its own best
 ; trade. Left switched off rather than deleted: zeroing a misbehaving smart is
 ; the plan's own remedy, and the ladder can re-test it in one edit.
+;
+; The build list preserves Difficult's land-priority prefix, then appends
+; Normal's non-transport air and sea combat units in their existing order.
+; Airports and ports therefore stay live before contact, with no land unit added
+; to the prefix and no transport the AI cannot use.
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.8
@@ -35,7 +41,7 @@ step_cost_penalty = 4.0
 retreat_hp = 45
 min_useful_score = 40.0
 advance_score = 1.0
-build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech"])
+build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter"])
 capture_unit_target = 3
 air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
 air_answer_target = 2

@@ -9,6 +9,32 @@ extends GutTest
 ## a base that eats the treasury before the port is asked, a 28 000 hull nothing
 ## can ever afford, a lander bought and never used — so each has a test.
 
+const PORT_BLOCKED_BOARD := """
+[terrain]
+AP...
+SS...
+[owners]
+1 0 0
+1 1 0
+[units]
+1 i 1 0
+1 i 2 0
+1 m 3 0
+"""
+
+const AIRPORT_BLOCKED_BOARD := """
+[terrain]
+AP...
+SS...
+[owners]
+1 0 0
+1 1 0
+[units]
+1 i 0 0
+1 i 2 0
+1 m 3 0
+"""
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -27,6 +53,37 @@ func _state(map_text: String) -> GameState:
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
 	return state
+
+
+func _assert_every_tier_builds(map_text: String, expected_domain: StringName) -> void:
+	var difficulty_db := DifficultyDB.load_default()
+	for tier in difficulty_db.all():
+		var state := _state(map_text)
+		for unit in state.units:
+			unit.acted = true
+		state.funds[1] = 99999
+		var planner := AIController.new(unit_db, tier.profile())
+		var command := planner.plan_next_command(state)
+		assert_true(
+			command is BuildCommand,
+			(
+				"%s should use its available %s facility, got %s"
+				% [tier.display_name, expected_domain, command]
+			)
+		)
+		if not (command is BuildCommand):
+			continue
+		var build := command as BuildCommand
+		assert_eq(build.unit_type.domain, expected_domain, tier.display_name)
+		assert_eq(build.validate(state), "", tier.display_name)
+
+
+func test_every_tier_builds_aircraft_at_an_airport() -> void:
+	_assert_every_tier_builds(PORT_BLOCKED_BOARD, UnitType.AIR)
+
+
+func test_every_tier_builds_hulls_at_a_port() -> void:
+	_assert_every_tier_builds(AIRPORT_BLOCKED_BOARD, UnitType.SEA)
 
 
 func test_builds_aircraft_at_an_airport() -> void:

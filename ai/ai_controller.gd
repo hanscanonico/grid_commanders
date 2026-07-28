@@ -253,7 +253,7 @@ func _threat_penalty(state: GameState, unit: Unit, cell: Vector2i, threat: Threa
 ## shot on the board, so the AI walks into bad trades to reach the gang-up. As a
 ## proportion it can at most double a shot the team can finish, which re-ranks
 ## comparable attacks and never promotes a bad one. The AI-vs-AI gate measured
-## both shapes; the additive one lost games (see docs/difficulty_check.md).
+## both shapes; the additive one lost games (docs/difficulty_check.md §6).
 func _focus_bonus(
 	state: GameState, unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast
 ) -> float:
