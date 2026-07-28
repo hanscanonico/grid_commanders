@@ -10,6 +10,21 @@ signal end_requested
 const PANEL_W := 300.0
 const LIST_H := 78.0
 const PAD := 8
+## The board's own direction actions carry keyboard events only; a pad's d-pad
+## and left stick reach the tree as Godot's built-in `ui_*` pair, so the guard
+## answers both. Vertical scrolls the ready-unit list, horizontal picks a button.
+const SCROLL_ACTIONS: Dictionary = {
+	&"cursor_up": -1,
+	&"ui_up": -1,
+	&"cursor_down": 1,
+	&"ui_down": 1,
+}
+const PICK_ACTIONS: Dictionary = {
+	&"cursor_left": -1,
+	&"ui_left": -1,
+	&"cursor_right": 1,
+	&"ui_right": 1,
+}
 
 var _built := false
 var _title_label: Label
@@ -20,6 +35,9 @@ var _list: ScrollContainer
 var _review_button: Button
 var _end_button: Button
 var _buttons: Array[Button] = []
+## One scroll line or one button step per directional gesture; see
+## DirectionalInput.
+var _dirs := DirectionalInput.new()
 
 
 func _ready() -> void:
@@ -59,18 +77,14 @@ func close() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if _pressed(event, &"cursor_up", &"ui_up"):
+	var scrolled := _dirs.step(event, SCROLL_ACTIONS.keys())
+	var picked := _dirs.step(event, PICK_ACTIONS.keys())
+	if not scrolled.is_empty():
 		get_viewport().set_input_as_handled()
-		_scroll_list(-1)
-	elif _pressed(event, &"cursor_down", &"ui_down"):
+		_scroll_list(SCROLL_ACTIONS[scrolled])
+	elif not picked.is_empty():
 		get_viewport().set_input_as_handled()
-		_scroll_list(1)
-	elif _pressed(event, &"cursor_left", &"ui_left"):
-		get_viewport().set_input_as_handled()
-		_step(-1)
-	elif _pressed(event, &"cursor_right", &"ui_right"):
-		get_viewport().set_input_as_handled()
-		_step(1)
+		_step(PICK_ACTIONS[picked])
 	elif event.is_action_pressed(&"confirm"):
 		get_viewport().set_input_as_handled()
 		# Native UI focus may have handled an arrow before this custom action
@@ -87,12 +101,6 @@ func _choose(end_anyway: bool) -> void:
 		end_requested.emit()
 	else:
 		review_requested.emit()
-
-
-## The board's own direction actions carry keyboard events only; a pad's d-pad
-## reaches the tree as Godot's built-in `ui_*` pair, so the guard answers both.
-func _pressed(event: InputEvent, action: StringName, ui_action: StringName) -> bool:
-	return event.is_action_pressed(action, true) or event.is_action_pressed(ui_action, true)
 
 
 ## Native UI focus navigation moves between the two buttons on its own and marks

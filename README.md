@@ -234,9 +234,12 @@ preference in `user://settings.cfg`, so hints never come back across a relaunch;
 forgets them all for one machine, which is how a fresh install is staged for testing.
 
 On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
-(A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the
-shoulders zoom, the left face button (X / Square) shows a unit's range, and the top face button
-(Y / Triangle) fires a ready Command Power. The same face buttons confirm and back out of menus.
+(A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
+shoulder (RB / R1) zooms in and the left (LB / L1) zooms out, the left face button (X / Square)
+shows a unit's range, and the top face button (Y / Triangle) fires a ready Command Power. The same
+face buttons confirm and back out of menus. One push of the stick is one step: the cursor and a
+menu highlight move a single cell or row per gesture, and the stick has to return to centre before
+it asks again.
 The docked on-screen legend keeps the compact keyboard labels; the actions themselves accept
 mouse, keyboard, or controller throughout.
 

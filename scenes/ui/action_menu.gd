@@ -12,6 +12,11 @@ signal action_chosen(action: StringName)
 const ICON_PX := 16
 ## How far the menu stays off the edges of the board band.
 const MARGIN := 4.0
+## Which way each direction action walks the highlight.
+const ROW_ACTIONS: Dictionary = {
+	&"cursor_up": -1,
+	&"cursor_down": 1,
+}
 
 @onready var rows: VBoxContainer = %MenuRows
 
@@ -19,6 +24,8 @@ var _ids: Array[StringName] = []
 var _labels: Array[String] = []
 var _disabled: Array[bool] = []
 var _index := 0
+## One highlight step per directional gesture; see DirectionalInput.
+var _dirs := DirectionalInput.new()
 
 
 ## actions: [{id: StringName, label: String, disabled?: bool, icon?: Texture2D}, ...]
@@ -69,13 +76,10 @@ func close() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed(&"cursor_up", true):
+	var dir := _dirs.step(event, ROW_ACTIONS.keys())
+	if not dir.is_empty():
 		get_viewport().set_input_as_handled()
-		_step_index(-1)
-		_update_labels()
-	elif event.is_action_pressed(&"cursor_down", true):
-		get_viewport().set_input_as_handled()
-		_step_index(1)
+		_step_index(ROW_ACTIONS[dir])
 		_update_labels()
 	elif event.is_action_pressed(&"confirm"):
 		get_viewport().set_input_as_handled()

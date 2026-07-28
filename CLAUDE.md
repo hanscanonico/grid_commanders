@@ -222,7 +222,9 @@ Follow the official Godot GDScript style guide. Key points:
   with), and `MatchConfig`'s staging, which is reachable without a scene and is where `take()`
   clearing is held. `TransitionInput` joins them on the same terms: a pure static answer over an
   `InputEvent`, so the boundary convention every banner and the victory lockup obey is checked
-  without a scene.
+  without a scene. `DirectionalInput` joins it on the same terms: a pure answer over an
+  `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and
+  every menu obey is checked without a pad.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 
