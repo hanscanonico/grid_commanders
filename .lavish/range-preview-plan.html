@@ -455,7 +455,18 @@
           sharp-eyed player could read the missing fringe cell as "something is there." Bounded:
           absence-only, one ring cell at a time, and only where the viewer already suspects.
           The redacted-state alternative buys back this sliver at the price of a second movement
-          model — D5 declines the trade on purpose.</p>
+          model — D5 declines the trade on purpose.
+          <span class="badge badge-warning badge-sm">superseded 2026-07-28</span> — this is the risk
+          that was realized (COM-57), and the assessment above was wrong on both counts. It was not
+          absence-only or one cell at a time: <code>MovementResolver.reachable</code> fills with the
+          <em>mover's</em> sight, so the entire silhouette of a previewed enemy's reach reported
+          which of the viewer's own pieces that enemy had spotted — and drawn whole it also covered
+          ground the viewer had never scouted. Nor did closing it cost a second movement model: it
+          cost one argument, <code>sight_team</code>, on the single authority, defaulting to the
+          mover's own sight so every committed move and every AI plan is unchanged, with the
+          viewer's team passed for a preview. That predicted second model is what made declining
+          the trade look reasonable, and it is the part worth remembering. The note on D5 records
+          how it was closed.</p>
         </div>
         <div class="card bg-base-100 border gc-risk-good p-4">
           <h3 class="font-bold">R5 · A new state in a ten-state machine</h3>
