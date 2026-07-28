@@ -270,9 +270,24 @@ func test_a_version_1_save_may_lack_commanders_and_the_dive_flag() -> void:
 ## `difficulty` is the one key that arrived between versions without a bump of its
 ## own, so version 2 is the newest one entitled to be without it — and version 3 is
 ## the first that must have it.
+##
+## Which cuts both ways, and is why this is the one field shaped outside its own version.
+## Optional is not the same as ignored: a version 2 save written after the key arrived
+## holds a real tier, so it resumes at that tier rather than at Normal — and a version 2
+## save holding something that is not a tier id at all is damage wherever it sits, not an
+## older save exercising a right.
 func test_difficulty_is_optional_through_version_2_and_required_at_3() -> void:
 	assert_eq(SaveCodec.validate(_without("difficulty", 2)), "", "version 2 may predate the key")
 	assert_string_contains(SaveCodec.validate(_without("difficulty", 3)), "difficulty")
+	var data := _encoded()
+	data["version"] = 2
+	data["difficulty"] = "hard"
+	assert_eq(SaveCodec.validate(data), "", "a version 2 save may carry one all the same")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	assert_eq(loaded.difficulty, &"hard", "and the match resumes at the tier it was played at")
+	data["difficulty"] = {}
+	assert_string_contains(SaveCodec.validate(data), "difficulty")
 
 
 func test_a_version_2_save_may_lack_the_dive_flag_but_not_commanders() -> void:

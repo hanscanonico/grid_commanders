@@ -59,7 +59,10 @@ enum Shape { BOOL, NUMBER, STRING, ARRAY, DICTIONARY }
 ##
 ## `difficulty` is the awkward one, and it is deliberately listed at 3 rather than 2:
 ## it was added between those two versions without a bump of its own, so a version 2
-## save may or may not carry it and only a version 3 save is guaranteed to.
+## save may or may not carry it and only a version 3 save is guaranteed to. Its `since`
+## therefore means *guaranteed from*, where every other entry's means *introduced at* —
+## which is why it is the one field `decode` reads below its own version, and the one
+## whose shape is asked wherever the key appears. See `_difficulty_error`.
 ##
 ## The entries listed at 1 are demanded of every version this codec still reads, so
 ## their `decode` defaults cannot currently be taken. They stay all the same, for the
@@ -254,7 +257,9 @@ static func decode(
 	# Readable, because `validate` refused anything else above. Every read below that is
 	# not unconditional asks it first: a key a save's version never wrote is not that
 	# field, and `validate` deliberately shapes no such key, so coercing one would be the
-	# age rule turned into a crash.
+	# age rule turned into a crash. `difficulty` is the exception in both directions —
+	# read at any version because an older save may carry a real tier, and shaped at any
+	# version for exactly that reason. See `_difficulty_error`.
 	var version := _claimed_version(data)
 	var state := GameState.new()
 	state.map = map
@@ -401,10 +406,15 @@ static func validate(data: Dictionary) -> String:
 	for key: String in written:
 		if not _is_shape(data[key], int(KEY_RULES[key]["shape"])):
 			return "'%s' is malformed" % key
-	# The envelope pass stops at each key's own value, and a Dictionary that is hollow,
-	# a list of things that are not numbers and a number spelled as a word are all
-	# perfectly good values at that level.
-	var error := _rng_state_error(data)
+	# The envelope pass stops at the keys this version promised, and `difficulty` is the
+	# one a version below its own may still be carrying for real. See `_difficulty_error`.
+	var error := _difficulty_error(data)
+	if error != "":
+		return error
+	# The pass stops at each key's own value too, and a Dictionary that is hollow, a list
+	# of things that are not numbers and a number spelled as a word are all perfectly good
+	# values at that level.
+	error = _rng_state_error(data)
 	if error != "":
 		return error
 	error = _commander_block_error(data, version)
@@ -616,6 +626,28 @@ static func _claimed_version(data: Dictionary) -> int:
 		return NO_VERSION
 	var version := int(claimed)
 	return version if READABLE_VERSIONS.has(version) else NO_VERSION
+
+
+## "" when the save's difficulty is text at all, else why it is not. Asked wherever the
+## key turns up rather than only from the version that demands it, which makes it the one
+## field shaped outside its own `since`.
+##
+## That is the awkward entry earning its keep. `since: 3` says only that a version 3 save
+## is *guaranteed* to carry a tier — the key arrived between 2 and 3 without a bump of its
+## own, so a version 2 save may well hold a real one, and `decode` honours it rather than
+## resuming that match at a tier it never played. A field `decode` reads at every version
+## has to be shaped at every version, or the read is back to being a coercion over
+## something nothing checked.
+##
+## Only the shape. A tier id nobody recognises is Normal by `DifficultyDB`'s deliberate
+## fallback — retiring a tier must not strand the saves that played at it — but a tier
+## that is not text is not an id at all.
+static func _difficulty_error(data: Dictionary) -> String:
+	if not data.has("difficulty"):
+		return ""
+	if not _is_shape(data["difficulty"], int(KEY_RULES["difficulty"]["shape"])):
+		return "'difficulty' is malformed"
+	return ""
 
 
 ## "" when the save's RNG state is a whole number spelled out in full, else why it is
