@@ -288,9 +288,13 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   seam — its one live call site, `BattleCommandPipeline`, `await`s it, and it returns exactly
   once, full-screen cut-in or on-map hit. Inside `scenes/battle/cutscene/` everything is a pure
   function of one clock: skipping sets the clock to the end rather than cancelling tweens, which
-  makes "any press, at any beat, lands on the right board" true by construction. Every number the
-  cut-in shows was handed to it (the result's two HP snapshots, the units themselves); none is
-  recomputed from the damage chart or the RNG. It is suppressed while `capturing` — so
+  makes "any press, at any beat, lands on the right board" true by construction. That clock is
+  literally one object — `cutscene_playback.gd` (`CutscenePlayback`), the shell both directors
+  compose: it owns the clock, the letterbox, the camera's return to rest, the cue ledger and what
+  counts as a skip press, so no cut-in gets a second opinion on any of them. A director owns only
+  its beat sheet and what it paints in the band. Every number the cut-in shows was handed to it
+  (the result's two HP snapshots, the units themselves); none is recomputed from the damage chart
+  or the RNG. It is suppressed while `capturing` — so
   `make screenshot` stays byte-stable, posed cut-ins go through `pose_at` — and it only plays when
   the *viewer* can see both combatants, asked of `BattlePerspective` (and so of `Vision`), never
   re-derived.

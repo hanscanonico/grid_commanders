@@ -13,11 +13,15 @@ extends CanvasLayer
 ## points_after`), never a call back into `capture_strength`, so a press
 ## mid-mash lands on the same number the terrain panel reports.
 ##
-## One clock, one exit. `_t` advances in `_process` and every visual is a pure
-## function of it, so skipping is `_t = _total` rather than a race between
-## cancelled tweens — the awaitable `play()` resolves exactly once, whatever the
-## player presses (plan R2). Owned by Battle, which assigns `view` and hands it
-## to the animator — the same assignment-not-constructor shape the rest use.
+## One clock, one exit — both `CutscenePlayback`'s, held rather than repeated.
+## Every visual below is a pure function of `_play.t`, so skipping is the clock
+## jumping to its end rather than a race between cancelled tweens, and the
+## awaitable `play()` resolves exactly once whatever the player presses (plan R2).
+## This file owns the beat sheet and what goes in the band; the shell around it —
+## letterbox, dim, camera punch, cue ledger — is shared with CombatCutscene.
+##
+## Owned by Battle, which assigns `view` and hands it to the animator — the same
+## assignment-not-constructor shape the rest use.
 
 ## Emitted once per cut-in, when the wipe has cleared and control belongs to the
 ## caller again. Every branch funnels through `_finish`, the only place it emits.
@@ -44,11 +48,9 @@ const MIN_WIPE_SCALE := 0.4
 ## turn still reads as three hops, not twelve.
 const MAX_HOPS := 3
 
-const BAR_RATIO := 0.13
-const DIM_ALPHA := 0.62
-const PUSH_SCALE := 0.03
-const SHAKE_PX := 5.0
-const ACCENT_PX := 2.0
+## The band shake's two frequencies. Deliberately not the combat cut-in's 91/77 —
+## see CutscenePlayback.frame_band for why the drift is carried rather than fixed.
+const SHAKE_FREQ := Vector2(90.0, 76.0)
 
 
 ## The beat windows this capture has, laid out on the clock. A completing capture
@@ -74,41 +76,23 @@ var view: BattleView
 var speed := 1.0
 var tail_scale := 1.0
 
-var _root: Control
-var _dim: ColorRect
-var _band: Control
-var _top_bar: ColorRect
-var _bottom_bar: ColorRect
-var _top_edge: ColorRect
-var _bottom_edge: ColorRect
+## The clock, the letterbox and the single exit, shared with CombatCutscene.
+var _play := CutscenePlayback.new()
 var _stage: CaptureStage
 var _hud: CaptureHud
-var _view := Vector2(640.0, 360.0)
-var _bar_h := 46.0
 
-var _camera: Camera2D
-var _resting_zoom := Vector2.ONE
-var _punched_zoom := Vector2.ONE
-
-var _playing := false
-var _skipping := false
-var _t := 0.0
 var _beats := Beats.new()
 var _result: CaptureCommand.CaptureResult
 var _unit: Unit
 var _cell := Vector2i.ZERO
-var _accent := Color.WHITE
 ## The point chips each mash knocks off, largest first, summing to the meter's
 ## drop. Computed once in `_pose`.
 var _chips := PackedInt32Array()
-## Cue name -> true once its sound has played, so a beat crossed twice by a frame
-## boundary is heard once and a skip is silent rather than a pile-up.
-var _cues: Dictionary = {}
 
 
 func _ready() -> void:
 	_build()
-	_root.hide()
+	_play.root.hide()
 	set_process(false)
 
 
@@ -127,16 +111,10 @@ func play(
 	resting_zoom := Vector2.ONE
 ) -> void:
 	_pose(result, unit, cell)
-	_camera = camera
-	_resting_zoom = resting_zoom
-	_punched_zoom = camera.zoom if camera != null else resting_zoom
-	_t = 0.0
-	_playing = true
-	_skipping = false
-	_cues.clear()
-	_layout()
+	_play.begin(_beats.total, camera, resting_zoom)
+	_play.layout()
 	_apply()
-	_root.show()
+	_play.root.show()
 	set_process(true)
 	set_process_unhandled_input(true)
 	await finished
@@ -148,11 +126,10 @@ func play(
 ## Dev-only; play never poses.
 func pose_at(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i, at: float) -> void:
 	_pose(result, unit, cell)
-	_camera = null
-	_t = clampf(at, 0.0, _beats.total)
-	_layout()
+	_play.pose(_beats.total, at)
+	_play.layout()
 	_apply()
-	_root.show()
+	_play.root.show()
 
 
 ## The diorama, so a posed still can be read back. Dev-only, like `pose_at` and
@@ -166,42 +143,30 @@ func stage() -> CaptureStage:
 ## set to the end, the final tableau is applied, and the same exit runs — which is
 ## what makes a skip at any beat land on the right board.
 func skip() -> void:
-	if not _playing:
-		return
-	_skipping = true
-	_t = _beats.total
+	_play.skip()
 
 
 func _process(delta: float) -> void:
-	if not _playing:
+	if not _play.playing:
 		return
-	_t = minf(_t + delta * speed, _beats.total)
+	var done := _play.advance(delta * speed)
 	_apply()
-	if _t >= _beats.total:
+	if done:
 		_finish()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _playing:
-		return
-	var pressed := (
-		event.is_action_pressed(&"confirm")
-		or event.is_action_pressed(&"cancel")
-		or (event is InputEventMouseButton and (event as InputEventMouseButton).pressed)
-	)
-	if pressed:
-		skip()
+	if _play.consume_skip(event):
 		get_viewport().set_input_as_handled()
 
 
 ## The single exit. Every branch reaches it, and it emits once.
 func _finish() -> void:
-	if not _playing:
+	if not _play.playing:
 		return
-	_playing = false
+	_play.end()
 	set_process(false)
 	set_process_unhandled_input(false)
-	_root.hide()
 	finished.emit()
 
 
@@ -214,7 +179,7 @@ func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> 
 	_unit = unit
 	_cell = cell
 	var terrain := view.map.terrain_at(cell)
-	_accent = _accent_of(unit.team)
+	_play.accent = _accent_of(unit.team)
 	# The two faction rows the flip crosses between, both SideIdentity's answer —
 	# and the second of them is the marching squad's row as well, since the squad
 	# *is* the capturer (see CaptureStage.bind).
@@ -276,44 +241,44 @@ static func _plan(captured: bool, hops: int, tail: float) -> Beats:
 # --- the frame ---------------------------------------------------------------
 
 
-## Everything the cut-in shows, as a pure function of `_t`. Called once per frame
-## while playing and once by `skip`, so it may never do anything that only makes
-## sense the first time — sounds go through `_cue`.
+## Everything the cut-in shows, as a pure function of the clock. Called once per
+## frame while playing and once by `skip`, so it may never do anything that only
+## makes sense the first time — sounds go through `_play.cue`.
 func _apply() -> void:
-	var present := clampf(_window(Vector2(0.0, WIPE_IN)) - _window(_beats.wipe_out), 0.0, 1.0)
-	var plates := _window(_beats.plates) * present
-	_dim.color.a = DIM_ALPHA * present
-	_restore_zoom()
-	_frame_bars(present)
+	var present := clampf(
+		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
+	)
+	var plates := _play.window(_beats.plates) * present
+	_play.frame(present, _beats.wipe_out)
 	_frame_band(present)
 
 	# The meter reading and the chips: a split of the committed delta, applied as
 	# each mash lands.
 	var shown := _result.points_before
-	var flip_p := _window(_beats.flip) if _result.captured else 0.0
+	var flip_p := _play.window(_beats.flip) if _result.captured else 0.0
 	var flash := sin(flip_p * PI) if (flip_p > 0.0 and flip_p < 1.0) else 0.0
 	var squash := 0.0
 	var hop_advance := 0.0
 	var chip_p := PackedFloat32Array()
 	for i in _beats.hops.size():
-		var hp := _window(_beats.hops[i])
+		var hp := _play.window(_beats.hops[i])
 		if hp > 0.0:
 			hop_advance = (i + minf(hp * 2.0, 1.0)) / float(_beats.hops.size())
 		var land: float = _beats.lands[i]
-		if _t >= land:
+		if _play.t >= land:
 			shown -= _chips[i]
-		squash = maxf(squash, sin(clampf((_t - land) / 0.22, 0.0, 1.0) * PI) * 0.12)
-		chip_p.append(_window(Vector2(land, land + 0.6)))
+		squash = maxf(squash, sin(clampf((_play.t - land) / 0.22, 0.0, 1.0) * PI) * 0.12)
+		chip_p.append(_play.window(Vector2(land, land + 0.6)))
 
 	_stage.plate_p = plates
-	_stage.march_p = _window(_beats.march)
+	_stage.march_p = _play.window(_beats.march)
 	_stage.hop_advance = hop_advance
 	_stage.squad_y = -sin(_active_hop() * PI) * HOP_HEIGHT
 	_stage.squash = squash
 	_stage.brightness = flash * 2.0
 	_stage.flipped = _result.captured and flip_p >= 0.5
 	_stage.dust = _dust_windows()
-	_stage.clock = _t
+	_stage.clock = _play.t
 	_stage.modulate.a = present
 	_stage.queue_redraw()
 
@@ -324,10 +289,12 @@ func _apply() -> void:
 	_hud.chip_at = _prop_head()
 	_hud.flash = flash * 0.55
 	_hud.specks_p = (
-		_window(Vector2(_beats.flip.y - 0.05, _beats.flip.y + 0.8)) if _result.captured else 0.0
+		_play.window(Vector2(_beats.flip.y - 0.05, _beats.flip.y + 0.8))
+		if _result.captured
+		else 0.0
 	)
 	_hud.specks_at = _prop_head() + Vector2(0.0, 20.0)
-	_hud.specks_accent = _accent
+	_hud.specks_accent = _play.accent
 	_frame_banner()
 	_hud.modulate.a = present
 	_hud.queue_redraw()
@@ -338,7 +305,7 @@ func _apply() -> void:
 ## Where along its arc the one hop in flight sits, 0 while none is.
 func _active_hop() -> float:
 	for span in _beats.hops:
-		var hp := _window(span)
+		var hp := _play.window(span)
 		if hp > 0.0 and hp < 1.0:
 			return hp
 	return 0.0
@@ -348,18 +315,18 @@ func _active_hop() -> float:
 func _dust_windows() -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	for land in _beats.lands:
-		out.append(_window(Vector2(land, land + 0.5)))
+		out.append(_play.window(Vector2(land, land + 0.5)))
 	return out
 
 
 ## The property's head in the band's coordinates — where the chips rise from and
 ## the specks fan out. Fixed for the whole cut-in so nothing anchored here drifts.
 func _prop_head() -> Vector2:
-	return Vector2(_band.size.x * CaptureStage.PROP_CENTER, _band.size.y * 0.34)
+	return Vector2(_play.band.size.x * CaptureStage.PROP_CENTER, _play.band.size.y * 0.34)
 
 
 func _frame_banner() -> void:
-	_hud.banner_p = _window(Vector2(_beats.banner.x, _beats.banner.x + 0.3))
+	_hud.banner_p = _play.window(Vector2(_beats.banner.x, _beats.banner.x + 0.3))
 	_hud.banner_complete = _result.captured
 	if _result.captured:
 		_hud.banner_text = "CAPTURED!"
@@ -367,135 +334,49 @@ func _frame_banner() -> void:
 	else:
 		_hud.banner_text = "OCCUPYING"
 		_hud.banner_sub = "%d/20 LEFT" % maxi(_result.points_after, 0)
-	if _t < _beats.banner.x or _t >= _beats.banner.y:
+	if _play.t < _beats.banner.x or _play.t >= _beats.banner.y:
 		_hud.banner_p = 0.0
 
 
-## Eases the board camera from its entry punch back to rest over the closing wipe,
-## in lockstep with `present` falling to zero — so the map is at its resting zoom
-## on the frame the wipe uncovers it, and a skip (which pins the reveal at 1)
-## lands the zoom exactly at rest. No-op when no camera was handed over.
-func _restore_zoom() -> void:
-	if _camera == null:
-		return
-	var reveal := _window(_beats.wipe_out)
-	_camera.zoom = _resting_zoom if reveal >= 1.0 else _punched_zoom.lerp(_resting_zoom, reveal)
-
-
-func _frame_bars(present: float) -> void:
-	var bar := _bar_h * present
-	_top_bar.size = Vector2(_view.x, bar)
-	_bottom_bar.position = Vector2(0.0, _view.y - bar)
-	_bottom_bar.size = Vector2(_view.x, bar)
-	var glow := lerpf(1.0, 0.55, present)
-	var edge := Color(_accent, present * glow)
-	_top_edge.color = edge
-	_top_edge.position = Vector2(0.0, bar)
-	_top_edge.size = Vector2(_view.x, ACCENT_PX)
-	_bottom_edge.color = edge
-	_bottom_edge.position = Vector2(0.0, _view.y - bar - ACCENT_PX)
-	_bottom_edge.size = Vector2(_view.x, ACCENT_PX)
-
-
-## The single panel fades in and pushes in slightly, with a decaying shake on
-## every landing and the flip flash.
+## The single panel pushes in slightly, with a decaying shake on every landing and
+## the flip flash. The push and the shake are the shell's; which beats jolt it is
+## this cut-in's alone.
 func _frame_band(present: float) -> void:
-	var push := 1.0 + PUSH_SCALE * _window(Vector2(WIPE_IN, WIPE_IN + 0.3)) * present
-	_band.scale = Vector2(push, push)
 	var jolt := 0.0
 	for land in _beats.lands:
-		jolt += _decay(_window(Vector2(land, land + 0.3)))
+		jolt += CutscenePlayback.decay(_play.window(Vector2(land, land + 0.3)))
 	if _result.captured:
-		var flip_p := _window(_beats.flip)
+		var flip_p := _play.window(_beats.flip)
 		jolt += (sin(flip_p * PI) if (flip_p > 0.0 and flip_p < 1.0) else 0.0) * 0.6
-	_band.position = Vector2(
-		sin(_t * 90.0) * jolt * SHAKE_PX, _bar_h + cos(_t * 76.0) * jolt * SHAKE_PX
-	)
+	_play.frame_band(present, jolt, SHAKE_FREQ, _play.window(Vector2(WIPE_IN, WIPE_IN + 0.3)))
 
 
 func _sound() -> void:
-	if not _playing:
+	if not _play.playing:
 		return
 	for i in _beats.lands.size():
-		_cue(StringName("mash_%d" % i), _beats.lands[i], &"capture")
+		_play.cue(StringName("mash_%d" % i), _beats.lands[i], &"capture")
 	if _result.captured:
-		_cue(&"flip", _beats.banner.x, &"fanfare")
-
-
-func _cue(key: StringName, at: float, sfx: StringName) -> void:
-	if at <= 0.0 or _cues.has(key) or _t < at:
-		return
-	_cues[key] = true
-	if not _skipping:
-		Sfx.play(sfx)
-
-
-# --- curves ------------------------------------------------------------------
-
-
-## Where `_t` sits inside a beat window, 0 -> 1. A zero-length window — a beat
-## this capture does not have — is always 0, switching its branch of the frame off.
-func _window(span: Vector2) -> float:
-	if span.y <= span.x:
-		return 0.0
-	return clampf((_t - span.x) / (span.y - span.x), 0.0, 1.0)
-
-
-## A jolt strongest as its window opens and gone a third of the way in.
-static func _decay(progress: float) -> float:
-	if progress <= 0.0 or progress >= 1.0:
-		return 0.0
-	return maxf(0.0, 1.0 - progress / 0.35)
+		_play.cue(&"flip", _beats.banner.x, &"fanfare")
 
 
 # --- nodes -------------------------------------------------------------------
 
 
+## The shell, then this cut-in's own two draw layers inside its band, then the
+## letterbox over both — the ordering the bars depend on to sit on top.
 func _build() -> void:
-	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_root)
-	_dim = ColorRect.new()
-	_dim.color = Color(0.078, 0.086, 0.118, 0.0)
-	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_dim)
-	_band = Control.new()
-	_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_band)
+	_play.build(self, _place_layers)
 	_stage = CaptureStage.new()
 	_hud = CaptureHud.new()
-	_band.add_child(_stage)
-	_band.add_child(_hud)
-	_top_bar = _new_bar()
-	_bottom_bar = _new_bar()
-	_top_edge = _new_bar()
-	_bottom_edge = _new_bar()
-	_root.resized.connect(_layout)
+	_play.band.add_child(_stage)
+	_play.band.add_child(_hud)
+	_play.build_bars()
 
 
-func _new_bar() -> ColorRect:
-	var bar := ColorRect.new()
-	bar.color = Color(0.055, 0.063, 0.078)
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(bar)
-	return bar
-
-
-## Sizes the band and its two draw layers off the viewport, so the cut-in still
-## frames correctly if the base resolution ever changes.
-func _layout() -> void:
-	_view = _root.get_viewport_rect().size
-	_bar_h = roundf(_view.y * BAR_RATIO)
-	var band := Vector2(_view.x, _view.y - _bar_h * 2.0)
-	_dim.position = Vector2.ZERO
-	_dim.size = _view
-	_band.position = Vector2(0.0, _bar_h)
-	_band.size = band
-	_band.pivot_offset = band * 0.5
+## Re-places the two draw layers whenever the shell re-measures the viewport.
+func _place_layers(band: Vector2) -> void:
 	_stage.position = Vector2.ZERO
 	_stage.size = band
 	_hud.position = Vector2.ZERO
 	_hud.size = band
-	_top_bar.position = Vector2.ZERO
-	_bottom_bar.position = Vector2(0.0, _view.y - _bar_h)

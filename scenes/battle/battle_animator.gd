@@ -211,7 +211,7 @@ func _pace_cut_in() -> void:
 ## the frame is taken away from it. Awaited, then left punched in: the cut-in
 ## covers the map for its whole run and, handed the camera and this resting zoom,
 ## eases it home over the closing wipe so the board is already at rest the moment
-## it is uncovered — see CombatCutscene._restore_zoom.
+## it is uncovered — see CutscenePlayback._restore_zoom.
 func _punch_camera() -> void:
 	var tween := node.create_tween()
 	(

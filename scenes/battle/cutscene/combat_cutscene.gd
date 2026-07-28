@@ -11,11 +11,14 @@ extends CanvasLayer
 ## command has applied and both units hold post-combat HP. Nothing here touches
 ## the damage chart, the RNG, or a rule.
 ##
-## One clock, one exit. `_t` advances in `_process` and every visual is a pure
-## function of it, so skipping is `_t = _total` rather than a race between
-## cancelled tweens — the awaitable `play()` resolves exactly once, whatever the
-## player presses (plan R2). The randomness in the shake is a function of `_t`
-## too, so a posed frame is the same frame every run (R4).
+## One clock, one exit — both `CutscenePlayback`'s, held rather than repeated.
+## Every visual below is a pure function of `_play.t`, so skipping is the clock
+## jumping to its end rather than a race between cancelled tweens, and the
+## awaitable `play()` resolves exactly once whatever the player presses (plan R2).
+## The randomness in the shake is a function of the clock too, so a posed frame is
+## the same frame every run (R4). This file owns the beat sheet and what goes in
+## the band; the shell around it — letterbox, dim, camera punch, cue ledger — is
+## shared with CaptureCutscene.
 ##
 ## Owned by Battle, which assigns `view` and hands it to the animator — the same
 ## assignment-not-constructor shape BattleView and BattleAnimator use, so the
@@ -42,16 +45,11 @@ const WIPE_OUT := 0.20
 ## as a fast exit.
 const MIN_WIPE_SCALE := 0.4
 
-## Letterbox bar height, as a share of the viewport.
-const BAR_RATIO := 0.13
-const DIM_ALPHA := 0.62
 ## How far each half slides in from its own edge.
 const SLIDE_PX := 60.0
-## Push-in over the exchange, and the shake an impact adds.
-const PUSH_SCALE := 0.03
-const SHAKE_PX := 5.0
-## Thickness of the faction line the wipe carries along the letterbox edges.
-const ACCENT_PX := 2.0
+## The band shake's two frequencies. Deliberately not the capture cut-in's 90/76 —
+## see CutscenePlayback.frame_band for why the drift is carried rather than fixed.
+const SHAKE_FREQ := Vector2(91.0, 77.0)
 ## How much higher an indirect weapon lobs its round than the same style fired
 ## flat. Artillery, Rockets and Missiles all share a style with something that
 ## shoots straight, and the arc is what tells them apart at a glance — so it is
@@ -91,34 +89,17 @@ var view: BattleView
 var speed := 1.0
 var tail_scale := 1.0
 
-var _root: Control
-var _dim: ColorRect
-var _band: Control
-var _top_bar: ColorRect
-var _bottom_bar: ColorRect
-var _top_edge: ColorRect
-var _bottom_edge: ColorRect
+## The clock, the letterbox and the single exit, shared with CaptureCutscene. It
+## also owns the board camera: the cut-in eases it from the entry flinch's zoom
+## back to rest over the closing wipe, so the board is already at rest on the
+## frame it is uncovered — no snap when `play` returns, and a skip lands the zoom
+## home exactly as it lands every other value, because it too is a pure function
+## of the clock.
+var _play := CutscenePlayback.new()
 var _atk: CutsceneSide
 var _def: CutsceneSide
 var _fx: CutsceneFx
-## Viewport size and letterbox height, refreshed by `_layout` so the per-frame
-## work never re-measures anything.
-var _view := Vector2(640.0, 360.0)
-var _bar_h := 46.0
 
-## The board camera and the two zoom levels the entry flinch left it between.
-## The cut-in eases it from `_punched_zoom` back to `_resting_zoom` over the
-## closing wipe, so the board is already at rest on the frame it is uncovered —
-## no snap when `play` returns, and a skip lands the zoom home exactly as it
-## lands every other value, because it too is a pure function of `_t`. Bound per
-## play by the animator; null for a posed still, which never punched the camera.
-var _camera: Camera2D
-var _resting_zoom := Vector2.ONE
-var _punched_zoom := Vector2.ONE
-
-var _playing := false
-var _skipping := false
-var _t := 0.0
 var _beats := Beats.new()
 var _result: CombatResolver.CombatResult
 var _atk_hp_after := 0
@@ -128,17 +109,12 @@ var _def_hp_after := 0
 var _styles := BattleStyleDB.new()
 var _atk_style: BattleStyle
 var _def_style: BattleStyle
-## The attacking side's faction colour, which the wipe carries in.
-var _accent := Color.WHITE
-## Cue name -> true once its sound has played, so a beat crossed twice by a
-## frame boundary is still heard once and a skip is silent rather than a pile-up.
-var _cues: Dictionary = {}
 
 
 func _ready() -> void:
 	_build()
 	_styles = BattleStyleDB.load_default()
-	_root.hide()
+	_play.root.hide()
 	set_process(false)
 
 
@@ -149,7 +125,7 @@ func _ready() -> void:
 ## Awaitable: both call sites hold the interaction flow on it.
 ##
 ## The animator hands over the punched-in camera and the zoom to return it to;
-## the cut-in eases it home over the closing wipe (see `_restore_zoom`). Left
+## the cut-in eases it home over the closing wipe (see CutscenePlayback). Left
 ## null — as the scenario driver leaves it — the camera is untouched.
 func play(
 	result: CombatResolver.CombatResult,
@@ -159,16 +135,10 @@ func play(
 	resting_zoom := Vector2.ONE
 ) -> void:
 	_pose(result, attacker, defender)
-	_camera = camera
-	_resting_zoom = resting_zoom
-	_punched_zoom = camera.zoom if camera != null else resting_zoom
-	_t = 0.0
-	_playing = true
-	_skipping = false
-	_cues.clear()
-	_layout()
+	_play.begin(_beats.total, camera, resting_zoom)
+	_play.layout()
 	_apply()
-	_root.show()
+	_play.root.show()
 	set_process(true)
 	set_process_unhandled_input(true)
 	await finished
@@ -184,11 +154,11 @@ func pose_at(
 	result: CombatResolver.CombatResult, attacker: Unit, defender: Unit, at: float
 ) -> void:
 	_pose(result, attacker, defender)
-	_camera = null  # a still never punched the camera; keep `_apply` off it
-	_t = clampf(at, 0.0, _beats.total)
-	_layout()
+	# A still never punched the camera; `pose` keeps `_apply` off it.
+	_play.pose(_beats.total, at)
+	_play.layout()
 	_apply()
-	_root.show()
+	_play.root.show()
 
 
 ## The two halves, so a posed still can be read back. Dev-only, like `pose_at`
@@ -207,42 +177,30 @@ func defender_side() -> CutsceneSide:
 ## is simply set to the end, the final tableau is applied, and the same exit runs
 ## — which is what makes a skip at any beat land on the right board.
 func skip() -> void:
-	if not _playing:
-		return
-	_skipping = true
-	_t = _beats.total
+	_play.skip()
 
 
 func _process(delta: float) -> void:
-	if not _playing:
+	if not _play.playing:
 		return
-	_t = minf(_t + delta * speed, _beats.total)
+	var done := _play.advance(delta * speed)
 	_apply()
-	if _t >= _beats.total:
+	if done:
 		_finish()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _playing:
-		return
-	var pressed := (
-		event.is_action_pressed(&"confirm")
-		or event.is_action_pressed(&"cancel")
-		or (event is InputEventMouseButton and (event as InputEventMouseButton).pressed)
-	)
-	if pressed:
-		skip()
+	if _play.consume_skip(event):
 		get_viewport().set_input_as_handled()
 
 
 ## The single exit. Every branch reaches it, and it emits once.
 func _finish() -> void:
-	if not _playing:
+	if not _play.playing:
 		return
-	_playing = false
+	_play.end()
 	set_process(false)
 	set_process_unhandled_input(false)
-	_root.hide()
 	finished.emit()
 
 
@@ -256,14 +214,14 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 	_def_hp_after = defender.displayed_hp()
 	_atk_style = _styles.for_unit(attacker.type)
 	_def_style = _styles.for_unit(defender.type)
-	_accent = _accent_of(attacker.team)
+	_play.accent = _accent_of(attacker.team)
 	_atk.bind(
 		attacker,
 		_row_of(attacker.team),
 		_terrain_at(attacker.cell),
 		_owner_row_at(attacker.cell),
 		false,
-		_accent
+		_play.accent
 	)
 	_def.bind(
 		defender,
@@ -360,39 +318,39 @@ static func _plan(
 # --- the frame ---------------------------------------------------------------
 
 
-## Everything the cut-in shows, as a pure function of `_t`. Called once per
+## Everything the cut-in shows, as a pure function of `_play.t`. Called once per
 ## frame while playing and once more by `skip`, which is why it may never do
-## anything that only makes sense the first time — sounds go through `_cue`.
+## anything that only makes sense the first time — sounds go through `_play.cue`.
 func _apply() -> void:
-	var present := clampf(_window(Vector2(0.0, WIPE_IN)) - _window(_beats.wipe_out), 0.0, 1.0)
-	var plates := _window(Vector2(WIPE_IN * 0.5, WIPE_IN * 0.5 + PLATES)) * present
-	_dim.color.a = DIM_ALPHA * present
-	_restore_zoom()
-	_frame_bars(present)
+	var present := clampf(
+		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
+	)
+	var plates := _play.window(Vector2(WIPE_IN * 0.5, WIPE_IN * 0.5 + PLATES)) * present
+	_play.frame(present, _beats.wipe_out)
 	_frame_band(present)
 
-	var atk_ready := _window(_beats.atk_ready)
-	var ctr_ready := _window(_beats.ctr_ready)
-	var def_hit := _window(_beats.def_impact)
-	var atk_hit := _window(_beats.atk_impact)
-	var def_gone := _window(_beats.def_death)
-	var atk_gone := _window(_beats.atk_death)
+	var atk_ready := _play.window(_beats.atk_ready)
+	var ctr_ready := _play.window(_beats.ctr_ready)
+	var def_hit := _play.window(_beats.def_impact)
+	var atk_hit := _play.window(_beats.atk_impact)
+	var def_gone := _play.window(_beats.def_death)
+	var atk_gone := _play.window(_beats.atk_death)
 
-	_atk.clock = _t
+	_atk.clock = _play.t
 	_atk.plate_p = plates
 	_atk.lunge = _lunge(atk_ready)
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
 	_atk.hp_shown = _tick(_result.attacker_hp_before, _atk_hp_after, atk_hit)
-	_atk.fall_p = _window(_topple(_beats.atk_impact))
+	_atk.fall_p = _play.window(_topple(_beats.atk_impact))
 	_atk.squad_alpha = 1.0 - atk_gone
 	_atk.queue_redraw()
 
-	_def.clock = _t
+	_def.clock = _play.t
 	_def.plate_p = plates
 	_def.lunge = _lunge(ctr_ready)
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
 	_def.hp_shown = _tick(_result.defender_hp_before, _def_hp_after, def_hit)
-	_def.fall_p = _window(_topple(_beats.def_impact))
+	_def.fall_p = _play.window(_topple(_beats.def_impact))
 	_def.squad_alpha = 1.0 - def_gone
 	_def.queue_redraw()
 
@@ -400,63 +358,30 @@ func _apply() -> void:
 	_sound()
 
 
-## Eases the board camera from its entry punch back to rest over the closing
-## wipe, in lockstep with `present` falling to zero — so the map is already at
-## its resting zoom on the frame the wipe uncovers it, and a skip (which pins the
-## reveal at 1) lands the zoom exactly at rest with everything else. No-op when no
-## camera was handed over, which is how a posed still leaves the board untouched.
-func _restore_zoom() -> void:
-	if _camera == null:
-		return
-	var reveal := _window(_beats.wipe_out)
-	_camera.zoom = _resting_zoom if reveal >= 1.0 else _punched_zoom.lerp(_resting_zoom, reveal)
-
-
-## The letterbox, and the faction line on its inner edge. The accent is brightest
-## while the halves are still sliding and settles to a quiet rule once they are
-## home — the wipe is the attacking side arriving, so it arrives in their colour.
-func _frame_bars(present: float) -> void:
-	var bar := _bar_h * present
-	_top_bar.size = Vector2(_view.x, bar)
-	_bottom_bar.position = Vector2(0.0, _view.y - bar)
-	_bottom_bar.size = Vector2(_view.x, bar)
-	var glow := lerpf(1.0, 0.55, present)
-	var edge := Color(_accent, present * glow)
-	_top_edge.color = edge
-	_top_edge.position = Vector2(0.0, bar)
-	_top_edge.size = Vector2(_view.x, ACCENT_PX)
-	_bottom_edge.color = edge
-	_bottom_edge.position = Vector2(0.0, _view.y - bar - ACCENT_PX)
-	_bottom_edge.size = Vector2(_view.x, ACCENT_PX)
-
-
 ## The two halves slide in from their own edges, and the whole band pushes in
-## slightly over the exchange with a decaying shake on every impact.
+## slightly over the exchange with a decaying shake on every impact. The push and
+## the shake are the shell's; which beats jolt it is this cut-in's alone.
 func _frame_band(present: float) -> void:
-	var half := _band.size.x * 0.5
+	var half := _play.band.size.x * 0.5
 	_atk.position = Vector2(-SLIDE_PX * (1.0 - present), 0.0)
 	_def.position = Vector2(half + SLIDE_PX * (1.0 - present), 0.0)
 	_atk.modulate.a = present
 	_def.modulate.a = present
-	var push := 1.0 + PUSH_SCALE * _window(Vector2(WIPE_IN, WIPE_IN + 0.3)) * present
-	_band.scale = Vector2(push, push)
 	var jolt := (
-		_decay(_window(_beats.def_impact))
-		+ _decay(_window(_beats.atk_impact))
-		+ _decay(_window(_beats.def_death))
-		+ _decay(_window(_beats.atk_death))
+		CutscenePlayback.decay(_play.window(_beats.def_impact))
+		+ CutscenePlayback.decay(_play.window(_beats.atk_impact))
+		+ CutscenePlayback.decay(_play.window(_beats.def_death))
+		+ CutscenePlayback.decay(_play.window(_beats.atk_death))
 	)
-	_band.position = Vector2(
-		sin(_t * 91.0) * jolt * SHAKE_PX, _bar_h + cos(_t * 77.0) * jolt * SHAKE_PX
-	)
+	_play.frame_band(present, jolt, SHAKE_FREQ, _play.window(Vector2(WIPE_IN, WIPE_IN + 0.3)))
 
 
 ## Which side is firing, what it is firing, and where the blast goes off. Only
 ## one volley is ever in the air: the counter cannot start until the first has
 ## landed, which is the beat sheet's shape, not a rule enforced here.
 func _frame_fx(present: float) -> void:
-	var outgoing := _window(_beats.atk_travel)
-	var returning := _window(_beats.def_travel)
+	var outgoing := _play.window(_beats.atk_travel)
+	var returning := _play.window(_beats.def_travel)
 	_fx.volley_p = 0.0
 	_fx.volley_style = null
 	if outgoing > 0.0 and outgoing < 1.0:
@@ -469,21 +394,21 @@ func _frame_fx(present: float) -> void:
 		_flash_barrels(_atk, _atk_style)
 	elif _flashing(_beats.def_fire) and _def_style.fires():
 		_flash_barrels(_def, _def_style)
-	var def_gone := _window(_beats.def_death)
-	_fx.blast_p = def_gone if def_gone > 0.0 else _window(_beats.atk_death)
+	var def_gone := _play.window(_beats.def_death)
+	_fx.blast_p = def_gone if def_gone > 0.0 else _play.window(_beats.atk_death)
 	_fx.blast_at = (
 		_def.position + _def.center_point()
 		if def_gone > 0.0
 		else (_atk.position + _atk.center_point())
 	)
-	_fx.vs_alpha = present * (1.0 - clampf(_t / maxf(_beats.atk_fire, 0.01), 0.0, 1.0))
+	_fx.vs_alpha = present * (1.0 - clampf(_play.t / maxf(_beats.atk_fire, 0.01), 0.0, 1.0))
 	_fx.def_amount = _result.defender_hp_before - _def_hp_after
 	_fx.def_tag = CutsceneFx.KO_TAG if _result.defender_died else ""
-	_fx.def_p = _window(_callout(_beats.def_impact, _beats.def_death))
+	_fx.def_p = _play.window(_callout(_beats.def_impact, _beats.def_death))
 	_fx.def_at = _head_of(_def)
 	_fx.atk_amount = _result.attacker_hp_before - _atk_hp_after
 	_fx.atk_tag = CutsceneFx.KO_TAG if _result.attacker_died else ""
-	_fx.atk_p = _window(_callout(_beats.atk_impact, _beats.atk_death))
+	_fx.atk_p = _play.window(_callout(_beats.atk_impact, _beats.atk_death))
 	_fx.atk_at = _head_of(_atk)
 	_fx.modulate.a = present
 	_fx.queue_redraw()
@@ -520,34 +445,17 @@ func _flash_barrels(side: CutsceneSide, style: BattleStyle) -> void:
 ## fast-forward — skipping past four beats should not play four sounds at once —
 ## and silent for a posed still, which has no beats to cross.
 func _sound() -> void:
-	if not _playing:
+	if not _play.playing:
 		return
 	if _atk_style.fires():
-		_cue(&"atk_fire", _beats.atk_fire, _atk_style.sfx)
+		_play.cue(&"atk_fire", _beats.atk_fire, _atk_style.sfx)
 	if _def_style.fires():
-		_cue(&"def_fire", _beats.def_fire, _def_style.sfx)
-	_cue(&"def_death", _beats.def_death.x, &"explosion")
-	_cue(&"atk_death", _beats.atk_death.x, &"explosion")
-
-
-func _cue(key: StringName, at: float, sfx: StringName) -> void:
-	if at <= 0.0 or _cues.has(key) or _t < at:
-		return
-	_cues[key] = true
-	if not _skipping:
-		Sfx.play(sfx)
+		_play.cue(&"def_fire", _beats.def_fire, _def_style.sfx)
+	_play.cue(&"def_death", _beats.def_death.x, &"explosion")
+	_play.cue(&"atk_death", _beats.atk_death.x, &"explosion")
 
 
 # --- curves ------------------------------------------------------------------
-
-
-## Where `_t` sits inside a beat window, 0 -> 1. A zero-length window — a beat
-## this exchange does not have — is always 0, which is what switches its whole
-## branch of the frame off.
-func _window(span: Vector2) -> float:
-	if span.y <= span.x:
-		return 0.0
-	return clampf((_t - span.x) / (span.y - span.x), 0.0, 1.0)
 
 
 ## The window surplus figures topple over: it opens just after the round lands
@@ -583,16 +491,9 @@ static func _tick(before: int, after: int, progress: float) -> int:
 	return roundi(lerpf(before, after, clampf((progress - 0.35) / 0.65, 0.0, 1.0)))
 
 
-## A jolt that is strongest as its window opens and gone a third of the way in.
-static func _decay(progress: float) -> float:
-	if progress <= 0.0 or progress >= 1.0:
-		return 0.0
-	return maxf(0.0, 1.0 - progress / 0.35)
-
-
 ## True for the few frames a barrel is alight after `at`.
 func _flashing(at: float) -> bool:
-	return at > 0.0 and _t >= at and _t < at + 0.09
+	return at > 0.0 and _play.t >= at and _play.t < at + 0.09
 
 
 ## Just above a side's squad, in the overlay's coordinates — where that side's
@@ -605,53 +506,23 @@ static func _head_of(side: CutsceneSide) -> Vector2:
 # --- nodes -------------------------------------------------------------------
 
 
+## The shell, then this cut-in's own three draw layers inside its band, then the
+## letterbox over all of them — the ordering the bars depend on to sit on top.
 func _build() -> void:
-	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_root)
-	_dim = ColorRect.new()
-	_dim.color = Color(0.078, 0.086, 0.118, 0.0)
-	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_dim)
-	_band = Control.new()
-	_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_band)
+	_play.build(self, _place_layers)
 	_atk = CutsceneSide.new()
 	_def = CutsceneSide.new()
 	_fx = CutsceneFx.new()
-	_band.add_child(_atk)
-	_band.add_child(_def)
-	_band.add_child(_fx)
-	_top_bar = _new_bar()
-	_bottom_bar = _new_bar()
-	_top_edge = _new_bar()
-	_bottom_edge = _new_bar()
-	_root.resized.connect(_layout)
+	_play.band.add_child(_atk)
+	_play.band.add_child(_def)
+	_play.band.add_child(_fx)
+	_play.build_bars()
 
 
-func _new_bar() -> ColorRect:
-	var bar := ColorRect.new()
-	bar.color = Color(0.055, 0.063, 0.078)
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(bar)
-	return bar
-
-
-## Sizes the band and its halves off the viewport rather than off constants, so
-## the cut-in still frames correctly if the base resolution ever changes.
-func _layout() -> void:
-	_view = _root.get_viewport_rect().size
-	_bar_h = roundf(_view.y * BAR_RATIO)
-	var band := Vector2(_view.x, _view.y - _bar_h * 2.0)
-	_dim.position = Vector2.ZERO
-	_dim.size = _view
-	_band.position = Vector2(0.0, _bar_h)
-	_band.size = band
-	_band.pivot_offset = band * 0.5
+## Re-places the two halves and the overlay whenever the shell re-measures the
+## viewport, so the cut-in still frames correctly if the base resolution changes.
+func _place_layers(band: Vector2) -> void:
 	_atk.size = Vector2(band.x * 0.5, band.y)
 	_def.size = _atk.size
 	_fx.position = Vector2.ZERO
 	_fx.size = band
-	_top_bar.position = Vector2.ZERO
-	_bottom_bar.position = Vector2(0.0, _view.y - _bar_h)
