@@ -74,6 +74,43 @@ func test_a_unit_on_a_team_that_does_not_play_is_rejected() -> void:
 	assert_push_error("team 9, which does not play")
 
 
+func test_a_turn_belonging_to_a_team_that_does_not_play_is_rejected() -> void:
+	var data := _encoded()
+	data["current_team"] = 9
+	assert_null(_decode(data), "the turn indexes funds, which only the playing teams have")
+	assert_push_error("turn belongs to team 9")
+
+
+func test_a_victory_by_a_team_that_does_not_play_is_rejected() -> void:
+	var data := _encoded()
+	data["winner"] = 9
+	assert_null(_decode(data), "a winner nobody was locks the board against every command")
+	assert_push_error("won by team 9")
+
+
+## Zero is the running match, not a nonsense winner — every save the game writes
+## mid-match carries it, so refusing it would refuse them all.
+func test_no_winner_yet_is_not_a_bad_winner() -> void:
+	var map := MapData.load_from_file(MAP_PATH, terrain_db)
+	var data := _encoded()
+	data["winner"] = 0
+	assert_eq(SaveCodec.board_error(data, map), "")
+
+
+## `board_error` is public and `validate` is a separate call, so a caller that has
+## not run one first must get the reason string the signature promises rather than a
+## runtime error off a key that was never there.
+func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
+	var map := MapData.load_from_file(MAP_PATH, terrain_db)
+	assert_ne(SaveCodec.board_error({}, map), "", "a save with no lists at all is a reason")
+	var data := _encoded()
+	data["units"] = ["not a unit"]
+	assert_ne(SaveCodec.board_error(data, map), "", "so is an entry that is not a dictionary")
+	data = _encoded()
+	(data["owners"] as Array)[0].erase("x")
+	assert_ne(SaveCodec.board_error(data, map), "", "so is an entry with no cell to check")
+
+
 func test_an_owned_property_off_the_board_is_rejected() -> void:
 	var data := _encoded()
 	(data["owners"] as Array)[0]["x"] = 999

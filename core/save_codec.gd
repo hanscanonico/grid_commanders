@@ -314,8 +314,38 @@ static func validate(data: Dictionary) -> String:
 ##
 ## Every cell the save carries is asked the same question, not only the units' — a
 ## board is a board, and a rule applied to one list and not the others is the sort of
-## half-rule that reads as deliberate until it isn't.
+## half-rule that reads as deliberate until it isn't. Every *team* it carries is asked
+## too, for the same reason: refusing a unit on team 9 while accepting a whole turn or
+## a victory belonging to team 9 would be the rule half-applied.
+##
+## Safe to call on a dictionary `validate` has not seen. It leans on `validate`'s own
+## entry check for that rather than restating the structure, so a save missing a list
+## comes back as a reason — which is what the signature promises — instead of a
+## runtime error off a key that was never there.
 static func board_error(data: Dictionary, map: MapData) -> String:
+	var error := _entries_error(data.get("units"), REQUIRED_UNIT_KEYS, "unit")
+	if error != "":
+		return error
+	error = _entries_error(data.get("owners"), REQUIRED_OWNER_KEYS, "owner")
+	if error != "":
+		return error
+	error = _entries_error(
+		data.get("capture_progress", []), REQUIRED_PROGRESS_KEYS, "capture progress"
+	)
+	if error != "":
+		return error
+	# The turn indexes `funds`, which decode fills for GameState.TEAMS and nothing
+	# else, so a turn belonging to a side that does not play is an invalid-key read
+	# the first time the HUD draws it.
+	var turn := int(data.get("current_team", 0))
+	if not GameState.TEAMS.has(turn):
+		return "the save's turn belongs to team %d, which does not play" % turn
+	# Zero is the running match; anything else is the side that won, and every
+	# command refuses while one stands. A winner no side ever was resumes into a
+	# board locked against every move, announcing a victory nobody could have won.
+	var winner := int(data.get("winner", 0))
+	if winner != 0 and not GameState.TEAMS.has(winner):
+		return "the save was won by team %d, which does not play" % winner
 	for entry: Dictionary in data["units"] as Array:
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		if not map.in_bounds(cell):
