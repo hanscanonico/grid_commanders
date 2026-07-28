@@ -210,8 +210,13 @@ if ((${#modes[@]} == 0)); then
 fi
 
 out_dir="$(mktemp -d "${TMPDIR:-/tmp}/battle-smoke.XXXXXX")"
+# One entry per group that failed as a batch and had to be re-run one process
+# per scenario; each names the group and the log the batch left behind.
+batch_fallbacks=()
 cleanup() {
-	if [[ -n "${SMOKE_KEEP:-}" ]]; then
+	# A fallback's log and captures are the only record of batch rot — the
+	# scenarios pass on their own, so nothing else is left to look at.
+	if [[ -n "${SMOKE_KEEP:-}" ]] || ((${#batch_fallbacks[@]} > 0)); then
 		echo "smoke: captures kept in $out_dir"
 	else
 		rm -rf "$out_dir"
@@ -242,6 +247,23 @@ run_with_timeout() {
 
 failed=0
 
+# The board a demo needs, or nothing for the default one. The naval scenarios
+# need water on the map; the default board has none. power_ready_contrast
+# borrows the same board for a different reason: it is power_ready over the
+# bright, sea-heavy strait rather than the dim default, so the pair is the
+# meter's dark/light legibility comparison.
+#
+# One spelling, two callers — the `--map=` a single scenario boots with and the
+# map third of a batch's group key — so a new water scenario cannot reach one
+# and not the other.
+map_for_demo() {
+	case "$1" in
+		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
+			echo the_straits
+			;;
+	esac
+}
+
 # One scenario, one process — the shape the sweep always had, kept verbatim as
 # the SMOKE_ISOLATE=1 path, the menu scenarios' path, and the re-run a failing
 # group gets (see run_group). Prints the scenario's status line and bumps
@@ -266,15 +288,9 @@ run_one_scenario() {
 	if [[ "$demo" != "$mode" ]]; then
 		godot_args+=(--fog)
 	fi
-	# The naval scenarios need a board with water on it; the default has none.
-	# power_ready_contrast borrows the same board for a different reason: it is
-	# power_ready over the bright, sea-heavy strait rather than the dim default,
-	# so the pair is the meter's dark/light legibility comparison.
-	case "$demo" in
-		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
-			godot_args+=(--map=the_straits)
-			;;
-	esac
+	local map
+	map="$(map_for_demo "$demo")"
+	[[ -n "$map" ]] && godot_args+=(--map="$map")
 	run_with_timeout "$SMOKE_TIMEOUT" "$GODOT_GUI" "${godot_args[@]}"
 	local status=$?
 
@@ -322,14 +338,8 @@ group_key() {
 		echo "menu"
 		return
 	fi
-	# The same map rule run_one_scenario applies, spelled once more because a
-	# bash 3.2 function cannot return an array; keep the two case lists equal.
-	local map=""
-	case "$demo" in
-		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
-			map=the_straits
-			;;
-	esac
+	local map
+	map="$(map_for_demo "$demo")"
 	echo "battle:${fog}:${map}"
 }
 
@@ -396,9 +406,27 @@ run_group() {
 		done
 		return
 	fi
-	echo "smoke: batch of ${#members[@]} ($key) failed; re-running its scenarios one by one" >&2
+	# The re-runs below reuse last.log, so the batch's own diagnosis has to be
+	# moved aside first: when every scenario then passes on its own, this log is
+	# the only thing left that says the batch broke.
+	local batch_log="$out_dir/batch-${key//[^A-Za-z0-9]/_}.log"
+	cp "$out_dir/last.log" "$batch_log" 2>/dev/null
+	batch_fallbacks+=("$key ($batch_log)")
+	echo "smoke: batch of ${#members[@]} ($key) failed; log kept at $batch_log" >&2
+	echo "smoke: re-running its scenarios one by one" >&2
 	for m in "${members[@]}"; do
 		run_one_scenario "$m"
+	done
+}
+
+# Batch rot does not fail the sweep — every scenario passing on its own is a
+# pass — but it must never be silent, so it is named again after the summary.
+report_batch_fallbacks() {
+	((${#batch_fallbacks[@]} == 0)) && return
+	echo "smoke: ${#batch_fallbacks[@]} batch(es) failed and fell back to one process per scenario:" >&2
+	local entry
+	for entry in "${batch_fallbacks[@]}"; do
+		echo "smoke:   $entry" >&2
 	done
 }
 
@@ -432,7 +460,9 @@ fi
 
 if ((failed > 0)); then
 	echo "smoke: $failed of ${#modes[@]} scenario(s) failed" >&2
+	report_batch_fallbacks
 	exit 1
 fi
 
 echo "smoke: ${#modes[@]} scenarios OK"
+report_batch_fallbacks

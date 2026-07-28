@@ -28,6 +28,14 @@ static var _timeout := 0.0
 static var _active := false
 
 
+## The group this process was launched with, or "" outside a batch — asked the
+## way ScreenshotUtil.requested() is asked, and for the same reason. A batch
+## carries no `--screenshot=` of its own, so anything guarding on "is this run
+## here to be photographed?" has to ask both.
+static func requested() -> String:
+	return CmdArgs.value(CmdArgs.user(), DEMOS_ARG)
+
+
 ## Adopts the current batch scenario, when the command line carries a group;
 ## answers whether it did. The first boot parses the flags; every reload after
 ## it takes the next mode off the static queue. Called from the driver's
@@ -74,7 +82,9 @@ static func finish_capture(battle: Node, path: String) -> void:
 		battle.get_tree().quit(1)
 		return
 	_index += 1
-	battle.get_tree().reload_current_scene()
+	if battle.get_tree().reload_current_scene() != OK:
+		push_error("smoke batch: could not reload the scene for '%s'" % _modes[_index])
+		battle.get_tree().quit(1)
 
 
 ## R3's deadline, fired by the tree: a batch scenario still on stage past its
