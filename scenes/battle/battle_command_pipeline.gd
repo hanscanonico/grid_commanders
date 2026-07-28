@@ -115,7 +115,7 @@ func _present_capture(command: CaptureCommand, watched: bool, animate_path: bool
 	if command.result != null and command.result.captured:
 		EventBus.property_captured.emit(dest, command.unit.team)
 		_battle.view.repaint_property(dest)
-	_settle_move(command, command.unit, watched)
+	await _settle_move(command, command.unit, watched)
 
 
 func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:

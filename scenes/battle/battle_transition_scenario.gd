@@ -5,8 +5,6 @@ extends RefCounted
 ## and return a diagnostic rather than owning the smoke run's exit code.
 
 const BUILD_CELL := Vector2i(3, 2)
-const LAST_ENEMY_CELL := Vector2i(9, 8)
-const ATTACKER_CELL := Vector2i(8, 8)
 const OUTCOME_GUARD_SECONDS := 0.55
 
 var _battle: Battle
@@ -54,7 +52,7 @@ func _run_turn_banner_build_attempt() -> String:
 ## to land on an already-focused Rematch. It must neither focus nor activate
 ## anything during the guard; after the guard, one fresh press only highlights.
 func _run_outcome_mash_guard() -> String:
-	await _stage_victory()
+	await BattleScenarioDriver.stage_rout(_battle)
 	var focused := _battle.get_viewport().gui_get_focus_owner()
 	if focused != null and _battle.victory_screen.is_ancestor_of(focused):
 		return "outcome appeared with '%s' already focused" % focused.name
@@ -85,23 +83,6 @@ func _run_outcome_mash_guard() -> String:
 	if focused == null or not _battle.victory_screen.is_ancestor_of(focused):
 		return "the first accepted outcome press did not highlight an action"
 	return ""
-
-
-func _stage_victory() -> void:
-	for unit in _battle.game.units.duplicate():
-		if unit.team == 2 and unit.cell != LAST_ENEMY_CELL:
-			_battle.game.remove_unit(unit)
-	_battle.view.sync_sprites()
-	var last_enemy := _battle.game.unit_at(LAST_ENEMY_CELL)
-	last_enemy.hp = 1
-	_battle.view.refresh_sprite(last_enemy)
-	_battle.confirm_at(ATTACKER_CELL)
-	_battle.confirm_at(ATTACKER_CELL)
-	await _until_state(Battle.State.MENU)
-	_battle.action_menu.choose(&"fire")
-	await _until_state(Battle.State.TARGETING)
-	_battle.confirm_at(_battle.cursor_cell)
-	await _until_state(Battle.State.VICTORY)
 
 
 func _press_key(keycode: Key) -> void:

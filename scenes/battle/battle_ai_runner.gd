@@ -30,8 +30,8 @@ func _init(battle: Battle) -> void:
 ## mirrors: it awaits its own animations and never blocks Battle's frame.
 func run() -> void:
 	var game := _battle.game
-	# Opens just after the day banner has cleared — however long the active tier
-	# holds that banner, which is why the wait is computed here and not fixed.
+	# Battle awaits the day banner itself before handing the turn over, so this is
+	# only the pacing padding that follows it, not a wait for the banner.
 	var start_delay := Settings.speed.start_delay_seconds()
 	await _battle.get_tree().create_timer(start_delay).timeout
 	for i in MAX_COMMANDS_PER_TURN:
