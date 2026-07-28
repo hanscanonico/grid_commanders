@@ -153,4 +153,17 @@ max-public-methods: 21
 # buys a deletion: the transition scenario lost nineteen lines to the driver's
 # seventeen. COM-94's cut-in split is still the one that is due. The driver sits
 # at exactly 1214.
-max-file-lines: 1214
+#
+# 1214 -> 1299 for COM-57. Clicking an enemy previewed its reach straight off
+# MovementResolver and AttackRange, which answer for the whole board with the
+# *mover's* knowledge, so the overlay was drawn over ground the viewer had never
+# scouted — and the outline reported which of the viewer's own pieces that enemy
+# had spotted. Both fills now take the viewer's knowledge and are masked to the
+# viewer's scouted ground. `preview_fog` is the check, and it is a check rather
+# than a picture: an overlay three cells too wide photographs perfectly well, so it
+# reads the painted cells back off the live TileMapLayers and refuses an unscouted
+# cell, an overlay that withheld nothing, and a staging cell the board already
+# occupies. Eighty-five lines for the staged board, the two overlays and the shared
+# layer check. COM-94's cut-in split is still the one that is due and still not a
+# fog leak's job. The driver sits at exactly 1299.
+max-file-lines: 1299

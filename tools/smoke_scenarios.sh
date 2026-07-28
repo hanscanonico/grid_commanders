@@ -197,7 +197,7 @@ DEFAULT_MODES=(
 	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn
 	mission_strip mission_strip_retired
-	powermenu+fog victory+fog ambush vanish
+	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner commander_info commander_victory
 	cutin cutin_ko cutin_skip cutin_iron_commander

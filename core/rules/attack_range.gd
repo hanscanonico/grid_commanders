@@ -72,11 +72,17 @@ static func is_indirect(unit: Unit) -> bool:
 ## cell the AI fears are then the same math, not two that agree until someone
 ## edits one. The movement-overlay lesson (MoveCommand.validate) applied before
 ## the second opinion, not after.
-static func firing_cells(state: GameState, unit: Unit) -> Array[Vector2i]:
+##
+## `sight_team` is handed straight to the fill underneath — see
+## MovementResolver.reachable — so a caller drawing somebody else's ring works its
+## firing positions out with the knowledge it actually has.
+static func firing_cells(
+	state: GameState, unit: Unit, sight_team: int = MovementResolver.MOVER_SIGHT
+) -> Array[Vector2i]:
 	if is_indirect(unit):
 		return [unit.cell]
 	var cells: Array[Vector2i] = []
-	var reach := MovementResolver.reachable(state, unit)
+	var reach := MovementResolver.reachable(state, unit, 0, sight_team)
 	for cell in reach.cells():
 		if reach.can_stop_at(cell):
 			cells.append(cell)
@@ -108,13 +114,15 @@ static func ring_cells(state: GameState, from: Vector2i, low: int, high: int) ->
 ##
 ## A pure read: no RNG, no mutation. The single authority the range overlay asks
 ## and the AI's ThreatMap is built from.
-static func threat_cells(state: GameState, unit: Unit) -> Array[Vector2i]:
+static func threat_cells(
+	state: GameState, unit: Unit, sight_team: int = MovementResolver.MOVER_SIGHT
+) -> Array[Vector2i]:
 	if unit.type.max_range <= 0:
 		return []
 	var low := minimum(state, unit)
 	var high := maximum(state, unit)
 	var seen := {}
-	for from in firing_cells(state, unit):
+	for from in firing_cells(state, unit, sight_team):
 		for cell in ring_cells(state, from, low, high):
 			seen[cell] = true
 	var result: Array[Vector2i] = []

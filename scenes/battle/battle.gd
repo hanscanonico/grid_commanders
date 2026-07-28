@@ -112,7 +112,6 @@ var planned_path: Array[Vector2i] = []
 ## Its move range shows in blue; `selected` stays null, so the menu flow keeps its
 ## meaning of "a unit I am commanding" and no command can act on a previewed one.
 var _previewed: Unit
-var _preview_range: MovementResolver.MoveRange
 ## Whether R's red fire ring is painted; every exit from a range state clears it.
 var _range_shown := false
 var _attack_targets: Array[Vector2i] = []
@@ -413,7 +412,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"cancel"):
 		_cancel()
 	elif event.is_action_pressed(&"show_range"):
-		_toggle_range()
+		toggle_range()
 	elif event.is_action_pressed(&"fire_power"):
 		_fire_command_power()  # the shortcut the charged meter advertises
 	elif not dir.is_empty():
@@ -547,9 +546,11 @@ func _clear_selection(refresh_board: bool = true) -> void:
 func _enter_preview(unit: Unit) -> void:
 	Sfx.play(&"select")
 	_previewed = unit
-	_preview_range = MovementResolver.reachable(game, unit)
+	# Asked of the perspective, never of the resolver directly: this reach may belong
+	# to either side, and both whose sight fills it and how much of it the viewer may
+	# be shown are viewer policy.
 	_range_shown = false
-	view.paint_move_overlay(_preview_range.cells())
+	view.paint_move_overlay(perspective.move_overlay_cells(unit))
 	view.paint_attack_overlay([])
 	view.update_path_line([])  # a preview plans no route
 	state = State.PREVIEW
@@ -557,7 +558,6 @@ func _enter_preview(unit: Unit) -> void:
 
 func _clear_preview() -> void:
 	_previewed = null
-	_preview_range = null
 	_range_shown = false
 	view.paint_move_overlay([])
 	view.paint_attack_overlay([])
@@ -565,15 +565,20 @@ func _clear_preview() -> void:
 
 
 ## R toggles the red fire ring for whatever unit's move range is on screen. A
-## momentary lens painted from the AttackRange authority; it issues nothing.
-func _toggle_range() -> void:
+## momentary lens; it issues nothing. Public for the same reason `confirm_at` and
+## `set_cursor_cell` are: the scenario driver walks the flows a player's input
+## reaches, and this is one of them. Painted through the perspective rather than off
+## AttackRange directly, because the ring is whole for a unit of the viewer's own side
+## and their best reading of another side's — a split by whose unit it is, not by which
+## state we are in, and the perspective's to make rather than this call site's.
+func toggle_range() -> void:
 	# The unit whose range is up: the selected one, or a previewed one.
 	var unit: Unit = selected if state == State.UNIT_SELECTED else _previewed
 	if unit == null:  # not in a range state
 		return
 	_range_shown = not _range_shown
 	if _range_shown:
-		view.paint_attack_overlay(AttackRange.threat_cells(game, unit))
+		view.paint_attack_overlay(perspective.threat_overlay_cells(unit))
 	else:
 		view.paint_attack_overlay([])
 

@@ -254,16 +254,24 @@ mouse, keyboard, or controller throughout.
   already acted — previews where it could move, in the same blue overlay. Clicking another
   visible unit moves the preview there (a ready unit of your own still just selects), and cancel
   or a click on an empty tile dismisses it. It is a look, not an order, and fog applies: a unit
-  you cannot see cannot be inspected
+  you cannot see cannot be inspected. Whose unit it is decides what the blue can promise. Your own
+  — the one you are about to move, and equally one of yours that has already spent its day — shows
+  its whole reach. A unit belonging to another side shows your best reading of its reach rather
+  than the truth of it: it is drawn from what *you* have scouted, so it stops at the edge of ground
+  you have never seen and treats a unit you have not found as though it were not there. Expect an
+  enemy to sometimes go further than the blue showed — that is the fog doing its job, not the
+  overlay lying to you
 - A confirm the board refuses says why, in a chip beside the cursor that fades on its own and never
   blocks play: *Already acted.* on one of yours that has spent its day, *Ready next day.* on one you
   built this turn, *Occupied.* on a destination in range held by a friendly unit the mover can
   neither load into nor join, and *CPU turn.* while the computer is playing
 - `R`, while any unit's movement range is on screen — selected or previewed — toggles a red
-  overlay of every cell that unit could bring under fire this turn: a direct unit firing from
+  overlay of the cells that unit could bring under fire this turn: a direct unit firing from
   anywhere it could stop, an indirect only from where it stands, since it cannot move and shoot.
-  It shows what the weapon *reaches* — a unit out of ammo still shows its ring, one resupply from
-  meaning it — and it paints over the blue until pressed again
+  The same split as the blue: on one of your own units that is every such cell, whatever the fog;
+  on another side's it is the same reading as the blue beneath it, drawn from what you have
+  scouted. It shows what the weapon *reaches* — a unit out of ammo still shows its ring, one
+  resupply from meaning it — and it paints over the blue until pressed again
 - After a move, the action menu opens: **Fire** (offered only when an enemy is in weapon range
   from the destination and the unit still has ammo), **Capture** (offered when a capture-capable
   unit ends on a property you don't own), **Drop** and **Supply** (see transports below),

@@ -71,6 +71,45 @@ func test_reachable_excludes_a_visible_enemy_cell() -> void:
 	assert_false(reach.has(Vector2i(3, 0)), "and cannot be passed through")
 
 
+# --- or with a named onlooker's knowledge ------------------------------------
+
+
+## `sight_team` names whose knowledge the fill plans occupancy with. The overlay
+## that previews an enemy asks for the *viewer's*, so a unit the viewer can see is
+## a wall even where the mover has no idea it is there (COM-57).
+func test_a_named_sight_team_walls_at_what_that_team_sees() -> void:
+	var state := _state("[terrain]\n......\n[units]\n1 i 3 0\n2 i 0 0")
+	var mover := state.units[1]
+	assert_true(
+		MovementResolver.reachable(state, mover).has(Vector2i(3, 0)),
+		"the mover cannot see the picket three tiles off, so its own fill plans through it"
+	)
+	assert_false(
+		MovementResolver.reachable(state, mover, 0, 1).has(Vector2i(3, 0)),
+		"team 1 can see its own picket, so a fill keyed to team 1 stops at it"
+	)
+
+
+## And the reason it has to: keyed to the mover, the shape of the fill changes with
+## what the mover has spotted, so a previewed outline would report which of the
+## onlooker's pieces it has found. Keyed to the onlooker, it cannot.
+func test_a_named_sight_team_hides_what_the_mover_has_spotted() -> void:
+	var unspotted := _state("[terrain]\n......\n......\n[units]\n1 i 3 0\n2 i 0 0")
+	# The same board plus a team 2 spotter next to the picket, close enough to see
+	# it. Off the mover's reach, so nothing but that sighting differs.
+	var spotted := _state("[terrain]\n......\n......\n[units]\n1 i 3 0\n2 i 0 0\n2 i 3 1")
+	assert_ne(
+		MovementResolver.reachable(unspotted, unspotted.units[1]).cells().size(),
+		MovementResolver.reachable(spotted, spotted.units[1]).cells().size(),
+		"the mover's own fill changes shape the moment it spots the picket"
+	)
+	assert_eq(
+		MovementResolver.reachable(unspotted, unspotted.units[1], 0, 1).cells().size(),
+		MovementResolver.reachable(spotted, spotted.units[1], 0, 1).cells().size(),
+		"a fill keyed to team 1 does not, so a preview of it reports nothing"
+	)
+
+
 # --- the trap springs on commit ----------------------------------------------
 
 

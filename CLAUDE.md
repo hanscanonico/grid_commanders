@@ -94,9 +94,18 @@ that must survive any change; the full rationale, milestones and risk registers 
   single authority's geometry, never a second opinion** — `AttackRange.threat_cells` /
   `firing_cells` / `ring_cells` in `core/rules/` own "every cell a unit could bring under fire
   this turn", and `ai/threat_map.gd` is rebuilt on them (keeping only its dry/unarmed filter and
-  per-enemy attribution), so the red overlay and the planner's fear are one computation.
-  Everything else is presentation-only, gated by the same `perspective.can_see_unit` fog rule
-  targeting uses; `make screenshot` stays byte-stable.
+  per-enemy attribution), so the red overlay and the planner's fear are one computation. That one
+  computation answers for two sets of eyes: `MovementResolver.reachable` takes a `sight_team`
+  (default `MOVER_SIGHT`, threaded down through `firing_cells` / `threat_cells`) naming whose
+  knowledge of **occupancy** fills it — the planner and every committed move keyed to the mover's
+  own sight, a preview of **another side's** unit keyed to the **viewer's**, because a
+  fill keyed to the mover is walled by the units that mover can see and planned through the ones it
+  cannot, so a previewed silhouette alone would report which of the viewer's own pieces that unit
+  has spotted (COM-57). Terrain, budget and doctrine stay the mover's throughout. So this slice
+  does reach into `core/` and that parameter is the whole of it — a second, fog-redacted board for
+  the fill to walk is still the rejected answer. Everything else is presentation, gated by the same
+  `perspective.can_see_unit` fog rule targeting uses and then masked to scouted ground by
+  `BattlePerspective._viewer_safe`; `make screenshot` stays byte-stable.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
@@ -308,10 +317,11 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   hidden through the same hook even with fog off.
   In the live scene, `scenes/battle/battle_perspective.gd` (`BattlePerspective`) is the one
   adapter from that rule authority to viewer policy: viewing team plus hot-seat blackout, firing
-  geometry delegated to `AttackRange`, typed transport drop options. `Battle`, `BattleView`,
-  `BattleAnimator`, `BattleCommandPipeline` and `BattleScenarioDriver` ask it; none re-derives
-  visibility or reaches through a sibling's private helper, and the runner drives AI turns through
-  `Battle`'s own named entry points.
+  geometry delegated to `AttackRange`, typed transport drop options, and how much of a unit's reach
+  and fire ring an overlay may show (that rule is the range-preview plan's, above). `Battle`,
+  `BattleView`, `BattleAnimator`, `BattleCommandPipeline` and `BattleScenarioDriver` ask it; none
+  re-derives visibility or reaches through a sibling's private helper, and the runner drives AI
+  turns through `Battle`'s own named entry points.
 - **A live command applies once.** `scenes/battle/battle_command_pipeline.gd`
   (`BattleCommandPipeline`) is the only live-scene owner of command validation, application and
   result presentation; both `Battle` and `BattleAiRunner` enter through `Battle.execute_command`.

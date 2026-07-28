@@ -101,3 +101,21 @@ func test_board_edge_clips_the_ring() -> void:
 func test_firing_cells_pins_indirect_to_its_cell() -> void:
 	var state := _state("[terrain]\n.......\n[units]\n1 g 3 0")
 	assert_eq(AttackRange.firing_cells(state, state.units[0]), [Vector2i(3, 0)] as Array[Vector2i])
+
+
+## A direct unit's ring is its movement fill grown by the weapon, so it inherits
+## whatever knowledge the fill was planned with — and the same leak. `sight_team`
+## goes straight down to MovementResolver.reachable so the previewed ring and the
+## previewed reach are keyed to one team, never two.
+func test_threat_cells_pass_the_sight_team_down_to_the_fill() -> void:
+	var state := _state("[terrain]\n.......\n[units]\n1 i 3 0\n2 i 0 0")
+	state.fog_enabled = true
+	var mover := state.units[1]
+	assert_true(
+		_has(AttackRange.threat_cells(state, mover), Vector2i(4, 0)),
+		"the mover cannot see the picket three tiles off, so its own ring reaches past it"
+	)
+	assert_false(
+		_has(AttackRange.threat_cells(state, mover, 1), Vector2i(4, 0)),
+		"a ring keyed to team 1 stops at the picket team 1 can see"
+	)
