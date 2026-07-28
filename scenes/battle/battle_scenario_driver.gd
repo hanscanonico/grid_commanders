@@ -124,11 +124,12 @@ const CUT_IN_START_FRAMES := 600
 const MISSION_STRIP_MODE := "mission_strip"
 const MISSION_STRIP_RETIRED := MISSION_STRIP_MODE + "_retired"
 
-## COM-57's fogged overlay check. Blue's infantry comes up beside Red's tank at
-## (8,8): close enough to be seen and so previewable, with a reach that runs off
-## into ground Red has no eyes on.
+## COM-57's fogged overlay check. Blue's infantry comes up two tiles from Red's
+## tank at (8,8): inside its sight and so previewable, on free plains — (9,8) is
+## the frontline Blue tank's — with a reach that runs off into ground Red has no
+## eyes on.
 const PREVIEW_FOG_FROM := Vector2i(15, 10)
-const PREVIEW_FOG_TO := Vector2i(9, 8)
+const PREVIEW_FOG_TO := Vector2i(10, 8)
 
 var _battle: Battle
 var _shot_path := ""
@@ -515,10 +516,11 @@ func _run_vanish_demo(mode: String) -> void:
 ##
 ## Clicking an enemy you cannot command previews its reach, and R adds its fire ring.
 ## Both used to be filled straight off `MovementResolver`/`AttackRange`, which answer
-## for the whole board — so the preview was drawn over ground the viewer had never
-## scouted, and worse, `reachable` fills with the *mover's* sight, walling that unit
-## off at enemies it can see and planning it through the ones it cannot. The outline
-## alone therefore reported where the viewer's own hidden pieces stood.
+## for the whole board with the *mover's* knowledge — so the preview was drawn over
+## ground the viewer had never scouted, and worse, `reachable` walls that unit off at
+## enemies it can see and plans it through the ones it cannot, so the outline alone
+## reported which of the viewer's own pieces it had spotted. Both are now filled with
+## the viewer's knowledge and then masked to the viewer's scouted ground.
 ##
 ## Checked rather than photographed, like `leave_confirm` and `power_mapmenu`: an
 ## overlay painted three cells too wide renders a perfectly good picture. The board is
@@ -526,12 +528,22 @@ func _run_vanish_demo(mode: String) -> void:
 func _stage_preview_fog() -> void:
 	var game := _battle.game
 	game.fog_enabled = true
-	# Blue's infantry comes up beside Red's tank, which is the whole staging: close
-	# enough to be seen and so previewable, with a reach that runs off into ground
-	# Red has no eyes on.
+	# Blue's infantry comes up two tiles from Red's tank, which is the whole staging:
+	# close enough to be seen and so previewable, with a reach that runs off into
+	# ground Red has no eyes on. The destination is checked rather than assumed: a
+	# board edit that put something there would otherwise stack two units on one
+	# cell, and `unit_at` would hand the preview whichever the map listed first.
 	var enemy := game.unit_at(PREVIEW_FOG_FROM)
 	if enemy == null:
 		_fail("preview_fog: no blue infantry at %s" % PREVIEW_FOG_FROM)
+		return
+	if game.unit_at(PREVIEW_FOG_TO) != null:
+		_fail(
+			(
+				"preview_fog: %s is already occupied, so the staging would stack two units"
+				% PREVIEW_FOG_TO
+			)
+		)
 		return
 	enemy.cell = PREVIEW_FOG_TO
 	_battle.view.sync_sprites()
@@ -543,12 +555,13 @@ func _stage_preview_fog() -> void:
 	_battle.confirm_at(enemy.cell)  # a unit Red cannot command -> preview, not select
 	await _until_state(Battle.State.PREVIEW)
 	var shown := _check_overlay_scouted("move preview", _battle.view.move_overlay)
-	# Vacuous otherwise: an overlay masked down to nothing, or one that never had a
-	# cell to lose, would pass the check above without proving anything.
+	# Vacuous otherwise: an overlay narrowed down to nothing, or one that never had a
+	# cell to lose, would pass the check above without proving anything. `whole` is
+	# what the raw authority would have painted, so this is the withholding itself.
 	if shown >= whole:
 		_fail(
 			(
-				"preview_fog: the preview shows all %d of its cells, so the fog mask did nothing"
+				"preview_fog: the preview shows all %d cells the raw fill reaches, so nothing was withheld"
 				% whole
 			)
 		)

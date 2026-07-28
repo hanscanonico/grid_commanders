@@ -89,18 +89,25 @@ func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i
 ## fog would hide moves `MoveCommand` allows — the movement-overlay lesson this repo
 ## already paid for once, in the other direction.
 ##
-## Any other unit is being *previewed*, and its reach was filled with **its** sight,
-## not the viewer's: `MovementResolver.reachable` walls a mover off at enemies that
-## mover can see and plans it through the ones it cannot, so an enemy's range is
-## shaped by units the viewer may know nothing about, and its outline alone would
-## report where they stand. Drawn whole it also covers ground the viewer never
-## scouted. So a preview is masked to what the viewer has actually seen (COM-57).
+## Any other unit is being *previewed*, and two separate things would be told about
+## it. What it is drawn *over* is ground the viewer may never have scouted, which
+## `_viewer_safe` masks away. What its outline *is* would be worse: a fill keyed to
+## the mover's own sight is walled by the viewer's units that mover can see and
+## planned through the ones it cannot, so the shape alone would report which of the
+## viewer's pieces the enemy has spotted. A mask cannot close that — the cells
+## carrying the signal are ones the viewer always sees — so both fills below are
+## asked for the *viewer's* knowledge instead, and then depend on nothing the viewer
+## does not already know (COM-57).
+##
+## Passed on every call, the commanded unit's included, where it names that unit's
+## own team and the fill is the one the commands plan with, cell for cell.
 func move_overlay_cells(unit: Unit) -> Array[Vector2i]:
-	return _viewer_safe(MovementResolver.reachable(_game, unit).cells(), unit)
+	var reach := MovementResolver.reachable(_game, unit, 0, _viewing_team)
+	return _viewer_safe(reach.cells(), unit)
 
 
 func threat_overlay_cells(unit: Unit) -> Array[Vector2i]:
-	return _viewer_safe(AttackRange.threat_cells(_game, unit), unit)
+	return _viewer_safe(AttackRange.threat_cells(_game, unit, _viewing_team), unit)
 
 
 ## Whole for a unit the viewer commands, scouted ground only for anyone else.

@@ -112,9 +112,6 @@ var planned_path: Array[Vector2i] = []
 ## Its move range shows in blue; `selected` stays null, so the menu flow keeps its
 ## meaning of "a unit I am commanding" and no command can act on a previewed one.
 var _previewed: Unit
-## The previewed unit's reach, already masked to what the viewer may see — cells
-## rather than a MoveRange, because a preview plans no route through them.
-var _preview_range: Array[Vector2i] = []
 ## Whether R's red fire ring is painted; every exit from a range state clears it.
 var _range_shown := false
 var _attack_targets: Array[Vector2i] = []
@@ -550,10 +547,10 @@ func _enter_preview(unit: Unit) -> void:
 	Sfx.play(&"select")
 	_previewed = unit
 	# Asked of the perspective, never of the resolver directly: this is somebody
-	# else's reach, and how much of it the viewer may be shown is viewer policy.
-	_preview_range = perspective.move_overlay_cells(unit)
+	# else's reach, and both whose sight fills it and how much of it the viewer may
+	# be shown are viewer policy.
 	_range_shown = false
-	view.paint_move_overlay(_preview_range)
+	view.paint_move_overlay(perspective.move_overlay_cells(unit))
 	view.paint_attack_overlay([])
 	view.update_path_line([])  # a preview plans no route
 	state = State.PREVIEW
@@ -561,7 +558,6 @@ func _enter_preview(unit: Unit) -> void:
 
 func _clear_preview() -> void:
 	_previewed = null
-	_preview_range = []
 	_range_shown = false
 	view.paint_move_overlay([])
 	view.paint_attack_overlay([])
