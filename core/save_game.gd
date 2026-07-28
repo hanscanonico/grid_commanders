@@ -12,12 +12,14 @@ extends RefCounted
 ## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use. Which on-disk
 ## versions exist and which still load is SaveCodec's to say — see its header.
 ##
-## At every instant of a save, on every platform, one whole save is on disk — the
-## previous one or the new one — and that is part of what this file promises: a save
-## that fails leaves the previous one exactly as it was, so a full disk costs the
-## player the save they just asked for and never the one they already had. The
-## replacement keeps that true itself rather than borrowing it from `rename`, which
-## is indivisible on Unix but a delete-then-move on Windows.
+## At every instant of a save, on every platform, one whole save is on disk *and this
+## file can find it* — the previous one or the new one. That is part of what this file
+## promises: a save that fails leaves the previous one exactly as it was, so a full disk
+## costs the player the save they just asked for and never the one they already had. The
+## replacement keeps that true itself rather than borrowing it from `rename`, which is
+## indivisible on Unix but a delete-then-move on Windows. Its price is a moment where
+## the previous save sits at the sibling backup rather than at the slot, which is why
+## every reader here goes through `_slot_path` instead of opening `path`.
 ##
 ## That costs a second copy's worth of free space, and the trade is deliberate: a
 ## volume too full to hold the temp fails the save outright, where writing in place
@@ -27,10 +29,32 @@ extends RefCounted
 const SAVE_PATH := "user://save.json"
 const SAVE_CODEC_SCRIPT := preload("res://core/save_codec.gd")
 const VERSION := SAVE_CODEC_SCRIPT.VERSION
+const TEMP_SUFFIX := ".tmp"
+const BACKUP_SUFFIX := ".bak"
 
 
 static func has_save(path: String = SAVE_PATH) -> bool:
-	return FileAccess.file_exists(path)
+	return not _slot_path(path).is_empty()
+
+
+## Which file holds this slot's save right now: the slot, or — when a save was
+## interrupted between the swap's two renames and the slot is therefore not there — the
+## backup it was set aside to. Empty when neither exists.
+##
+## Every reader asks this rather than opening `path` itself, because a backup nothing
+## looks at is not durability: without it a machine that lost power mid-swap would boot
+## to "no saved match" while the whole previous match sat beside the slot, which is the
+## harm this file exists to prevent. Answering anything but the slot means a genuine
+## interruption — the next successful save takes the slot back and clears the backup.
+##
+## Reading is a pure query here as everywhere: recovery is the *writer's* to finish.
+static func _slot_path(path: String) -> String:
+	if FileAccess.file_exists(path):
+		return path
+	var backup_path := path + BACKUP_SUFFIX
+	if FileAccess.file_exists(backup_path):
+		return backup_path
+	return ""
 
 
 ## Which board and day the save holds, without rebuilding the match — what the
@@ -41,7 +65,10 @@ static func has_save(path: String = SAVE_PATH) -> bool:
 ## is a query the menu makes on every boot, and having nothing saved is the
 ## ordinary answer, not a failure.
 static func peek(path: String = SAVE_PATH) -> SAVE_CODEC_SCRIPT.Summary:
-	var text := FileAccess.get_file_as_string(path)
+	var slot := _slot_path(path)
+	if slot.is_empty():
+		return null
+	var text := FileAccess.get_file_as_string(slot)
 	if text.is_empty():
 		return null
 	var json := JSON.new()
@@ -66,8 +93,8 @@ static func save(
 ) -> bool:
 	# Both derived from the caller's path, not from SAVE_PATH, so a test writing its own
 	# slot stages its own temp and backup beside it rather than beside the player's.
-	var temp_path := path + ".tmp"
-	var backup_path := path + ".bak"
+	var temp_path := path + TEMP_SUFFIX
+	var backup_path := path + BACKUP_SUFFIX
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if file == null:
 		push_error(
@@ -105,9 +132,13 @@ static func save(
 ## indivisible on Unix: Godot's Windows `rename` deletes the destination before it
 ## moves, so a slot replaced in a single call has an instant there where it holds
 ## neither save — the ticket's own harm, reappearing on the platform nobody tested on.
-## Moving the previous save to a sibling first makes the guarantee the code's rather
-## than the filesystem's: whichever rename fails, one whole save is still on disk and
-## neither stray is left behind.
+##
+## What each failure leaves, stated as what the code does rather than as one promise:
+## a refused set-aside never touches the slot; a refused swap puts the previous save
+## back and reports only the replacement as failed; and a restore that is *itself*
+## refused leaves that save at the backup, where `_slot_path` finds it — so it says so,
+## rather than letting a caller tell the player a save it can no longer open is intact.
+## Only that last path leaves a file standing, and it is the previous save, whole.
 static func _swap_into_place(temp_path: String, backup_path: String, path: String) -> bool:
 	var previous := FileAccess.file_exists(path)
 	if previous:
@@ -121,10 +152,18 @@ static func _swap_into_place(temp_path: String, backup_path: String, path: Strin
 		push_error("SaveGame: cannot replace %s (error %d)" % [path, swap_error])
 		_discard(temp_path)
 		if previous:
-			DirAccess.rename_absolute(_absolute(backup_path), _absolute(path))
+			var restore := DirAccess.rename_absolute(_absolute(backup_path), _absolute(path))
+			if restore != OK:
+				push_error(
+					(
+						"SaveGame: %s is empty — the previous save is at %s (error %d)"
+						% [path, backup_path, restore]
+					)
+				)
 		return false
-	# Unconditional: a backup that outlived a crashed save is stale the moment this one
-	# lands, and the slot it described is the file just replaced.
+	# Unconditional: a backup left standing by an interrupted save is stale the moment
+	# this one lands, and clearing it here is what keeps `_slot_path` reaching for one
+	# only after a genuine interruption rather than for the rest of the match.
 	_discard(backup_path)
 	return true
 
@@ -149,12 +188,16 @@ static func load_game(
 	path: String = SAVE_PATH,
 	commander_db: CommanderDB = null
 ) -> SAVE_CODEC_SCRIPT.LoadedMatch:
-	var text := FileAccess.get_file_as_string(path)
-	if text.is_empty():
+	var slot := _slot_path(path)
+	if slot.is_empty():
 		push_error("SaveGame: cannot read %s" % path)
+		return null
+	var text := FileAccess.get_file_as_string(slot)
+	if text.is_empty():
+		push_error("SaveGame: cannot read %s" % slot)
 		return null
 	var json := JSON.new()
 	if json.parse(text) != OK or not json.data is Dictionary:
-		push_error("SaveGame: %s is not a valid save" % path)
+		push_error("SaveGame: %s is not a valid save" % slot)
 		return null
 	return SAVE_CODEC_SCRIPT.decode(json.data, terrain_db, unit_db, damage_chart, commander_db)

@@ -1,8 +1,8 @@
 extends GutTest
 
 const TEST_PATH := "user://test_save.json"
-const TEMP_PATH := TEST_PATH + ".tmp"
-const BACKUP_PATH := TEST_PATH + ".bak"
+const TEMP_PATH := TEST_PATH + SaveGame.TEMP_SUFFIX
+const BACKUP_PATH := TEST_PATH + SaveGame.BACKUP_SUFFIX
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -27,6 +27,14 @@ func _remove(path: String) -> void:
 	var absolute := ProjectSettings.globalize_path(path)
 	if FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(absolute):
 		DirAccess.remove_absolute(absolute)
+
+
+## Exactly the state a machine that lost power between the swap's two renames leaves
+## behind: the slot gone, the whole previous save standing at the backup.
+func _interrupt_a_swap() -> void:
+	DirAccess.rename_absolute(
+		ProjectSettings.globalize_path(TEST_PATH), ProjectSettings.globalize_path(BACKUP_PATH)
+	)
 
 
 func _first_steps_state() -> GameState:
@@ -131,7 +139,11 @@ func test_a_failed_write_leaves_the_previous_save_intact() -> void:
 ## renamed over a slot it never described. A directory standing where the slot belongs
 ## is one of the two ways a test can push a save far enough to stage a temp at all —
 ## the write lands, the second rename is what is refused. Nothing is set aside on this
-## path: `file_exists` is false of a directory, so there is no previous save to move.
+## path: `file_exists` is false of a directory, so there is no previous save to move —
+## which is also why the restore beside it is the one branch left uncovered. Reaching it
+## needs the swap refused *with* a previous save aside, and after the set-aside the only
+## thing that can refuse the rename is a parent directory that turned unwritable between
+## the two, which is not a thing a single in-process call can be interrupted to stage.
 func test_a_failed_swap_leaves_no_temp_behind() -> void:
 	var state := _first_steps_state()
 	DirAccess.make_dir_absolute(ProjectSettings.globalize_path(TEST_PATH))
@@ -164,6 +176,44 @@ func test_a_successful_save_leaves_no_temp_behind() -> void:
 	var state := _first_steps_state()
 	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
 	assert_false(FileAccess.file_exists(TEMP_PATH), "the temp is renamed over the slot, not left")
+	assert_false(FileAccess.file_exists(BACKUP_PATH), "and a first save sets nothing aside")
+
+
+## COM-51. The swap's cost, and why the readers had to learn about the backup: between
+## its two renames the slot does not exist, and a machine that dies there leaves the
+## whole previous match at the sibling. A copy nothing looks at is not durability, so
+## every reader resolves it — Continue is offered, named, and resumes that match instead
+## of reporting none, which is the ticket's own harm arriving by a different route.
+func test_an_interrupted_swap_is_still_the_save_every_reader_finds() -> void:
+	var state := _first_steps_state()
+	state.day = 6
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	_interrupt_a_swap()
+	assert_false(FileAccess.file_exists(TEST_PATH), "the slot is where the crash left it: gone")
+	assert_true(SaveGame.has_save(TEST_PATH), "Continue is offered rather than greyed out")
+	var summary := SaveGame.peek(TEST_PATH)
+	assert_not_null(summary)
+	assert_eq(summary.day, 6, "and the menu names the match it will resume")
+	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.day, 6, "which is the one it resumes")
+
+
+## COM-51. Recovery is a read, and finishing it is the writer's: the backup stands until
+## the game next saves, which takes the slot back and clears it. Left undone, a single
+## interrupted save would keep a stale copy beside the slot for the rest of the match.
+func test_the_next_save_reclaims_the_slot_from_a_recovered_backup() -> void:
+	var state := _first_steps_state()
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	_interrupt_a_swap()
+	state.day = 11
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	assert_true(FileAccess.file_exists(TEST_PATH), "the slot is a save again")
+	assert_false(FileAccess.file_exists(BACKUP_PATH), "the recovered copy is cleared, not kept")
+	assert_false(FileAccess.file_exists(TEMP_PATH))
+	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.day, 11, "and it holds the newer match")
 
 
 ## COM-51. Every save but a match's first one replaces a slot that is already there,
