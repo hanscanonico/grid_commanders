@@ -320,7 +320,7 @@ static func _plan(
 
 ## Everything the cut-in shows, as a pure function of `_play.t`. Called once per
 ## frame while playing and once more by `skip`, which is why it may never do
-## anything that only makes sense the first time — sounds go through `_cue`.
+## anything that only makes sense the first time — sounds go through `_play.cue`.
 func _apply() -> void:
 	var present := clampf(
 		_play.window(Vector2(0.0, WIPE_IN)) - _play.window(_beats.wipe_out), 0.0, 1.0
