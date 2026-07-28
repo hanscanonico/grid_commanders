@@ -104,6 +104,12 @@ const CAPTURER_CELL := Vector2i(4, 3)
 ## which has no beats to race (GameSpeed.CAPTURE_ID), and the scenario puts that
 ## back before it returns.
 const RACE_SPEED_ID := &"quick"
+## How long the race waits for the cut-in it staged before calling the staging
+## wrong. Every other wait here is unbounded because what it waits on is this
+## scene's own flow; this one waits on a gate whose inputs live outside the
+## scenario, so a miss has to be said out loud rather than run out the sweep's
+## timeout with no reason attached.
+const CUT_IN_START_FRAMES := 600
 
 ## The first-match teaching strip (COM-12). `mission_strip` poses it on a fresh
 ## install's very first frame — the objective, the SELECT step, and the four
@@ -395,23 +401,42 @@ func _run_power_menu_demo() -> void:
 ## capture was still replaying its own snapshot, and clear the selection the
 ## capture flow came back to.
 ##
-## The only scenario that lets a cut-in really play: `capturing` and the pinned
-## Instant tier each gate it out (BattleAnimator._capture_cut_in_applies), and the
-## window this walks exists only inside the beats they suppress. Both are put back
-## before it returns, so the frame `run` takes afterwards is `capture`'s frame.
+## The only scenario that lets a cut-in really play: `capturing`, the pinned
+## Instant tier and the battle-animations preference each gate it out
+## (BattleAnimator._capture_cut_in_applies), and the window this walks exists only
+## inside the beats they suppress. All three are staged and put back before it
+## returns, so the frame `run` takes afterwards is `capture`'s frame — and the
+## third is staged for the same reason the first two are pinned at all: whether
+## this machine's player left the cut-ins switched on must not decide whether the
+## scenario runs.
 func _stage_capture_power_race() -> void:
 	var tree := _battle.get_tree()
 	var cutscene := _battle.animator.capture_cutscene
+	var animations_were := Settings.battle_animations
 	_set_red_commander(&"alina_ward", true)
 	_battle.animator.capturing = false
-	Settings.set_speed(RACE_SPEED_ID)  # pinned, so this writes no preference file
+	# Both pinned, so neither writes a preference file (Settings.pin, from
+	# Battle._ready, latches it shut for every scenario run).
+	Settings.set_speed(RACE_SPEED_ID)
+	Settings.set_battle_animations(true)
 	_battle.confirm_at(CAPTURER_CELL)  # select the red infantry
 	_battle.confirm_at(CAPTURE_CELL)  # move onto the neutral city
 	await _until_state(Battle.State.MENU)
 	# Deliberately not awaited: choosing the row starts the capture, and the flow is
 	# still inside its cut-in when the button below is pressed.
 	_battle.action_menu.choose(&"capture")
-	while not cutscene.is_processing():  # a cut-in that never starts hangs the run
+	var waited := 0
+	while not cutscene.is_processing():
+		if waited >= CUT_IN_START_FRAMES:
+			# Said out loud and abandoned rather than raced anyway: with no cut-in
+			# there is no window, so every check below would report the staging's
+			# failure as the fix's.
+			_fail("the capture cut-in never started — the race had nothing to race")
+			_battle.animator.capturing = true
+			Settings.set_speed(GameSpeed.CAPTURE_ID)
+			Settings.set_battle_animations(animations_were)
+			return
+		waited += 1
 		await tree.process_frame
 	if _battle.state == Battle.State.MENU:
 		_fail("capture holds its cut-in in State.MENU — the HUD Fire button reaches a command")
@@ -423,6 +448,7 @@ func _stage_capture_power_race() -> void:
 		_fail("the capture the power was fired over never registered")
 	_battle.animator.capturing = true
 	Settings.set_speed(GameSpeed.CAPTURE_ID)
+	Settings.set_battle_animations(animations_were)
 	_battle.set_cursor_cell(CAPTURE_CELL)  # the `capture` frame, once the race is over
 
 
