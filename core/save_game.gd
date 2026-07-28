@@ -1,7 +1,7 @@
 class_name SaveGame
 extends RefCounted
 ## Storage for a running match: reads and writes the single save slot under
-## user://, and nothing else.
+## user:// — and the two siblings a replacement stages beside it — and nothing else.
 ##
 ## Everything about *what* a save contains — the field layout, the validation
 ## rules, rebuilding a GameState — belongs to SaveCodec. This file only knows
@@ -9,7 +9,9 @@ extends RefCounted
 ## failures with separate messages.
 ##
 ## The public surface is small and stays that way: `save`, `load_game`, `peek`,
-## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use. Which on-disk
+## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use — plus `TEMP_SUFFIX`
+## and `BACKUP_SUFFIX`, which are public only so a test can name the siblings a save
+## stages beside a slot rather than spelling them a second time. Which on-disk
 ## versions exist and which still load is SaveCodec's to say — see its header.
 ##
 ## At every instant of a save, on every platform, one whole save is on disk *and this
