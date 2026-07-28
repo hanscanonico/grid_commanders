@@ -167,10 +167,10 @@ func test_easy_reaches_a_different_command_than_normal() -> void:
 	assert_eq(easy_pick.validate(easy_state), "")
 
 
-## Easy over-buys infantry: it wants a fourth capture unit where Normal is
-## already satisfied with three.
-func test_easy_keeps_buying_capture_units_longer() -> void:
-	var map_text := "[terrain]\nB...\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0"
+## Easy under-staffs a property race: it is satisfied with two capture units
+## while Normal still buys its third.
+func test_easy_stops_buying_capture_units_before_normal() -> void:
+	var map_text := "[terrain]\nB...\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0"
 
 	var easy_state := _state(map_text)
 	easy_state.funds[1] = 20000
@@ -180,4 +180,14 @@ func test_easy_keeps_buying_capture_units_longer() -> void:
 		easy_state
 	)
 	assert_true(easy_pick is BuildCommand)
-	assert_eq((easy_pick as BuildCommand).unit_type.id, &"infantry")
+	assert_eq((easy_pick as BuildCommand).unit_type.id, &"tank")
+
+	var normal_state := _state(map_text)
+	normal_state.funds[1] = 20000
+	for unit in normal_state.units:
+		unit.acted = true
+	var normal_pick := AIController.new(unit_db, db.by_id(&"normal").profile()).plan_next_command(
+		normal_state
+	)
+	assert_true(normal_pick is BuildCommand)
+	assert_eq((normal_pick as BuildCommand).unit_type.id, &"infantry")

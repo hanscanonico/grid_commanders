@@ -5,11 +5,13 @@ what the measurement currently says. This is the committed record of the
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
-**Standing verdict: the gate does not pass.** Normal takes 43.3% from Easy and
-Difficult takes 66.7% from Normal; neither adjacent pairing clears the required
-70%. Difficult now has a measurable advantage, but Easy's intended weakness is
-not established. Details and the reasoning below — read §4 before changing a
-weight, and §5 before deciding what to do about it.
+**Standing verdict: the gate passes.** Normal takes 71.7% from Easy and
+Difficult takes 71.7% from Normal; both adjacent pairings clear the required
+70%, with zero rejected commands and zero cap stalls. One caveat travels with
+it: Difficult's ordering holds on both boards and survives a longer day cap,
+while Easy's is a board result on `scrimmage` and a day-cap tiebreak on
+`ironworks`. Details and the tuning record follow — read §4 before changing a
+weight.
 
 ## 1. What difficulty is allowed to change
 
@@ -28,7 +30,7 @@ wins more games — which is what the gate measures.
 
 | Tier | id | Profile | Character |
 |---|---|---|---|
-| Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, refuses trades, over-buys infantry, no md tank |
+| Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, finishes poorly, under-fields capturers, no md tank |
 | Normal | `normal` | `data/ai/default.tres` | The shipped AI, bit for bit |
 | Difficult | `hard` | `data/ai/hard.tres` | Threat-aware and counter-building, sharper trade weights |
 
@@ -116,8 +118,8 @@ planner and the rules disagree.
 
 | Pairing | Overall | scrimmage | ironworks | Gate |
 |---|---|---|---|---|
-| Normal over Easy | **43.3%** (26/60) | 63.3% | 23.3% | fail |
-| Difficult over Normal | **66.7%** (40/60) | 70.0% | 63.3% | fail |
+| Normal over Easy | **71.7%** (43/60) | 93.3% | 50.0% | pass |
+| Difficult over Normal | **71.7%** (43/60) | 70.0% | 73.3% | pass |
 
 Zero rejected commands and zero cap stalls across all 120 — the planner and the
 rules never disagreed, which is the correctness half of this run and it is clean.
@@ -130,24 +132,105 @@ prefixes, then list every non-transport air and sea combat unit. A capability
 test places an owned airport and port on the same board, blocks the irrelevant
 facility, and proves each tier issues a valid build for the remaining domain.
 
+**How much of that was decided on the board.** The repo's standing reading rule
+(`tools/balance/run_summary.gd`'s `MIN_RESOLVED_PCT`, `docs/balance_sim.md`)
+says a win rate whose games mostly ended on the day cap rather than on the board
+is low-confidence, because the tiebreak (properties, then units, then funds) can
+turn over on noise. Counting `rout`/`hq` terminations out of `matches.csv`:
+
+| Pairing | Map | Resolved on the board | Higher tier, resolved games | Higher tier, day-cap games |
+|---|---|---|---|---|
+| Normal over Easy | `scrimmage` | 20/30 (66.7%) | **20/20** | 8/10 |
+| Normal over Easy | `ironworks` | **0/30 (0%)** | — | 15/30 |
+| Difficult over Normal | `scrimmage` | 11/30 (36.7%) | 10/11 | 11/19 |
+| Difficult over Normal | `ironworks` | **0/30 (0%)** | — | 22/30 |
+
+**Not one `ironworks` match resolved on the board** — all 60 ran to day 21 and
+were scored by the tiebreak. So `ironworks` contributes no board evidence at
+this cap in either pairing, and every per-map `ironworks` number above is a
+tiebreak reading, not a rout.
+
+**The `--days=40` probe.** Loosening the cap (15 seeds, same maps and seats)
+separates the two pairings:
+
+| Pairing | Overall | `scrimmage` | `ironworks` | Resolved, `scrimmage` | Resolved, `ironworks` |
+|---|---|---|---|---|---|
+| Normal over Easy | 65.0% (39/60) | 100.0% | 30.0% | 30/30 | 8/30 |
+| Difficult over Normal | 71.7% (43/60) | 70.0% | 73.3% | 24/30 | 12/30 |
+
+Difficult's pairing is **unchanged, map for map**, while its board-resolved
+share rises from 18.3% (11/60) to 60.0% (36/60) — and it still takes 17 of the
+24 resolved `scrimmage` games and 8 of the 12 resolved `ironworks` ones. Its
+ordering does not depend on the clock.
+
+Normal-over-Easy does. Given more time `scrimmage` goes to 30/30, all resolved —
+Easy is emphatically the weaker planner on the small decisive board — but
+`ironworks` inverts to 30.0%, with Normal taking only 2 of the 8 games that
+resolved there. The honest reading is that **Easy's measured weakness is proven
+on `scrimmage` and unproven on `ironworks`**: on a large city-rich board the
+cheaper, capture-light Easy profile is not behind on the tiebreak's currency,
+and given forty days it is ahead on the board. The gate is defined on the
+combined pairing at the default cap and is met there; this is the caveat that
+comes with it, not a re-scoring of it. See §6's superseded finding (a) — the
+same board showed the same shape before this tune, so it is a property of
+`ironworks` inside a day cap rather than something these four weights introduced.
+
+The probe is a read on the standing result, not a second gate: the gate is the
+default cap, and `--days=40` is not a tier `.tres` change, so nothing above was
+retuned against it.
+
 ### Findings
 
-**(a) Production coverage was a real defect, but fixing it is not sufficient to
-prove the ladder.** Easy and Difficult no longer leave an affordable owned
-airport or port idle merely because no compatible unit appears in their static
-priority list. The full gate nevertheless puts Easy ahead of Normal overall,
-and especially on `ironworks`: Normal wins only 7 of 30 there. The intended
-"timid and weaker" Easy profile therefore needs a separate tuning pass.
+**(a) Easy now measures weaker without a handicap.** Its capture-unit target
+drops from four to two, so it under-staffs the large property race, and its kill
+bonus drops from 1.2 to 1.0, worsening its finishing judgement. Normal takes
+71.7% overall. The maps remain uneven — 93.3% on `scrimmage`, 50.0% on
+`ironworks` — and the combined pairing is the locked gate, which clears. But the
+resolution split above says the two halves are not the same kind of evidence:
+`scrimmage` is a board result (Normal won every one of the 20 games that
+resolved, 30/30 at `--days=40`), while `ironworks` is 30 day-cap tiebreaks and
+inverts to 30.0% when the clock is loosened. Read this finding as *Easy is
+weaker on the decisive board*; on `ironworks` the ordering is not established.
 
-**(b) Difficult is stronger, but not enough.** It exactly clears 70% on
-`scrimmage`, takes 63.3% on `ironworks`, and reaches 66.7% overall. That is a
-clear improvement over the superseded 50% record, but the gate is defined on the
-combined pairing and remains red by 3.3 points.
+**(b) Difficult closes the finishing gap without a new capability.** Its kill
+bonus rises from 1.8 to 2.0 and its counter-damage weight falls from 0.5 to 0.4.
+It values a kill more and discounts a good attack less for its return fire.
+Difficult takes 71.7% overall and independently reaches the threshold on both
+maps. It is also the pairing the resolution split treats kindly: it holds 71.7%
+map for map at `--days=40`, where 80% of its `scrimmage` games and 40% of its
+`ironworks` games end on the board and it wins the majority of both. This
+ordering is not a tiebreak artefact.
 
-The two maps still disagree sharply about Easy: Normal takes 63.3% on
-`scrimmage` but only 23.3% on `ironworks`. The report does not license an
-explanation by estimate; the next pass must change one profile hypothesis at a
-time and rerun the same fixed-seed gate.
+**(c) The honest air/sea production baseline remains intact.** Easy and
+Difficult retain their land-priority prefixes, list every non-transport air and
+sea combat unit, and never leave an affordable owned airport or port idle merely
+because their priority list lacks a compatible unit. No transport was added;
+the planner still cannot plan a ferry.
+
+### COM-120 tuning path
+
+Each row changed one judgement hypothesis from the retained candidate, then ran
+the same 15-seed, 120-match gate. Rejected values were restored before the next
+axis moved. H0 is the control every row below is an improvement or a regression
+*against* — the profiles as they shipped before this pass, measured on the same
+planner, maps and harness as everything under it; its per-map split is in §6.
+
+| Probe | Profile change | Target pairing | Result | Decision |
+|---|---|---|---|---|
+| H0 | control — profiles as shipped pre-tune | Normal over Easy | 43.3% | fails the gate; the starting point for H1–H5 |
+| H0 | control — profiles as shipped pre-tune | Difficult over Normal | 66.7% | fails the gate; the starting point for H6–H12 |
+| H1 | Easy `threat_aversion` 0.3 → 0.5 | Normal over Easy | 40.0% | reject — timidity strengthened Easy on `ironworks` |
+| H2 | Easy `capture_score` 900 → 300 | Normal over Easy | 48.3% | reject — did not alter the large-board race |
+| H3 | Easy `capture_unit_target` 4 → 2 | Normal over Easy | 68.3% | retain as the better axis |
+| H4 | Easy `capture_unit_target` 2 → 1 | Normal over Easy | 75.0% | reject — passed by removing more capture play than needed |
+| H5 | Easy `kill_bonus` 1.2 → 1.0, with H3 retained | Normal over Easy | **71.7%** | select |
+| H6 | Difficult `build_reactivity` 0.6 → 1.0 | Difficult over Normal | 41.7% | reject |
+| H7 | Difficult `advance_threat_tiles` 2.0 → 1.6 | Difficult over Normal | 60.0% | reject |
+| H8 | Difficult `advance_threat_tiles` 2.0 → 3.0 | Difficult over Normal | 60.0% | reject |
+| H9 | Difficult `kill_bonus` 1.8 → 2.0 | Difficult over Normal | 68.3% | retain as the better axis |
+| H10 | Difficult `kill_bonus` 2.0 → 2.2 | Difficult over Normal | 68.3% | reject — no outcome changed |
+| H11 | Difficult `kill_bonus` 2.0 → 2.4 | Difficult over Normal | 68.3% | reject — shifted wins between maps only |
+| H12 | Difficult `counter_weight` 0.5 → 0.4, with H9 retained | Difficult over Normal | **71.7%** | select |
 
 ### Turn time (risk R3)
 
@@ -155,39 +238,67 @@ Mean AI planning per turn in the standing run:
 
 | Tier | ms/turn | over |
 |---|---|---|
-| Easy | 104.3 | 1118 turns |
-| Difficult | 65.8 | 1138 turns |
-| Normal | 42.1 | 2258 turns |
+| Easy | 71.6 | 1072 turns |
+| Difficult | 53.7 | 1146 turns |
+| Normal | 33.7 | 2210 turns |
 
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
 
 ## 5. Where this leaves the feature
 
-Everything the plan asked to be *built* is built, tested and shipping: the tier
-plumbing, the menu picker, the save key, all three capabilities, and this gate.
-What is not established is the ordering the gate exists to prove.
+Everything the plan asked to be built and measured is now shipping: the tier
+plumbing, menu picker, save key, all three capabilities, production coverage,
+and a passing DF4 ladder. No threshold, income, vision, damage, luck, map,
+harness, or simulation code changed to obtain the pass.
 
-The production defect and its coverage test stay isolated in their own change.
-The next step is a separate tuning ticket and pull request: tune Easy against
-Normal first, then close Difficult's 3.3-point overall gap, changing one
-profile hypothesis at a time and rerunning the 15-seed gate. No threshold,
-income, vision, damage, luck, map, or harness change is an acceptable substitute
-for a passing profile ladder. A human playtest at Easy and Difficult remains the
-other required read on whether the measured profiles are also fun.
+Two reads stay open, and neither is a reason to hold the tune.
 
-`make difficulty-check` exits non-zero while the gate is unmet. That is
-deliberate: it is an opt-in release task, kept out of `make verify`, and a red
-result is the honest status of the claim.
+A human playtest at Easy and Difficult is still required to judge whether the
+measured profiles also feel distinct and fun. This report proves the automated
+ordering, not that subjective claim.
+
+And Easy's ordering on `ironworks` is unproven, for the reason §4's resolution
+split gives: inside a 20-day cap that board resolves nothing, and given forty it
+scores Easy ahead. That is a property of a large city-rich board under a clock —
+§6's superseded finding (a) found the same shape on the previous profiles — so
+the lever is the board or the cap, not the four weights, and moving either is a
+map or gate change this pass is not allowed to make. The next honest step is a
+board that can resolve, not a weight that flatters the tiebreak.
+
+`make difficulty-check` remains an opt-in release task outside `make verify`.
+Run at the standing invocation — `make difficulty-check DIFF="--seeds=15"` — it
+exits non-zero whenever a future profile or planner change breaks the gate. The
+bare target is the 4-seed default (16 matches a pairing, a strict subset of the
+standing 60): a fast smoke of the same code path, not the gate. With the
+standing pairings only 1.7 points clear of the threshold, that subset can read
+red without a regression or green through one, so a colour from it is never the
+number to quote.
 
 ## 6. Superseded measurements
 
 **None of this section is a current claim.** §4 is the standing record. These
 numbers are kept only because code comments and other documents were written
-against them and cite the shapes they found; a fixed anchor is better than a
-dangling reference. Every one of them predates the planner, the maps and the
-harness §4 was measured on, and nothing here has been re-scored by estimate —
+against them and cite the shapes they found, or — for the COM-120 control
+directly below — because §4's tuning table cannot be read as an improvement
+without the number it improved on. Nothing here has been re-scored by estimate:
 `make difficulty-check` is the only thing allowed to write a standing number.
+Everything from "What changed under them" onward predates the planner, the maps
+and the harness §4 was measured on; the control does not, and differs from §4 in
+nothing but the four tuned weights.
+
+**Superseded standing result — the COM-120 pre-tune control (H0).** Same 15
+seeds, 120 matches and 20-day cap as §4, with `easy.tres` at `kill_bonus` 1.2 /
+`capture_unit_target` 4 and `hard.tres` at `kill_bonus` 1.8 / `counter_weight`
+0.5:
+
+| Pairing | Overall | scrimmage | ironworks | Gate |
+|---|---|---|---|---|
+| Normal over Easy | 43.3% (26/60) | 63.3% | 23.3% | fail |
+| Difficult over Normal | 66.7% (40/60) | 70.0% | 63.3% | fail |
+
+`ironworks` is where the tuning moved: Easy went from beating Normal 23 games in
+30 to an even split, while `scrimmage` widened 63.3% → 93.3%.
 
 **What changed under them.** The `advance_threat_tiles` split described in §2
 and its rescaling against the HP a unit has left; the threat-map lookup being
