@@ -71,7 +71,46 @@ func test_a_current_save_without_a_carrier_field_is_refused() -> void:
 	assert_string_contains(SaveCodec.validate(data), "carrier")
 
 
+# --- and a block it carries has to be a block ---------------------------------
+
+
+## Present is not the same as populated: the envelope check only asks whether the
+## commander block is there, and an empty one is. Left unasked, it decoded to the
+## reported symptom itself — both sides commander-less, loaded clean.
+func test_a_current_save_with_an_empty_commander_block_is_refused() -> void:
+	var data := _encoded()
+	data["commanders"] = {}
+	assert_string_contains(SaveCodec.validate(data), "commander for team 1")
+
+
+func test_a_current_save_missing_one_sides_commander_is_refused() -> void:
+	var data := _encoded()
+	(data["commanders"] as Dictionary).erase("2")
+	assert_string_contains(SaveCodec.validate(data), "commander for team 2")
+
+
+## The same reasoning one level down: `encode` has written all three fields for as
+## long as the block has existed, so a lost charge is a meter lost, not an old save.
+func test_a_current_save_whose_commander_lost_its_charge_is_refused() -> void:
+	var data := _encoded()
+	(data["commanders"]["1"] as Dictionary).erase("charge")
+	assert_string_contains(SaveCodec.validate(data), "'charge'")
+
+
 # --- an older save is entitled to the defaults --------------------------------
+
+
+## The other direction of the block rule: version 1 wrote no commanders at all, so
+## it is never asked for one and still resumes as the no-commander match it was.
+func test_a_version_1_save_with_no_commander_block_still_loads_neutral() -> void:
+	var data := _without("commanders", 1)
+	data.erase("difficulty")
+	assert_eq(SaveCodec.validate(data), "", "version 1 knew no commander block")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	for team in GameState.TEAMS:
+		assert_eq(loaded.state.commander_of(team).id, CommanderType.NEUTRAL_ID)
+		assert_eq(loaded.state.commander_state(team).charge, 0, "and an empty meter")
 
 
 ## The whole point of the version gate: the same missing key that condemns a
@@ -117,3 +156,6 @@ func test_a_freshly_encoded_save_carries_everything_its_version_promises() -> vo
 		assert_has(_encoded(), key, "encode must write every key its version claims")
 	for key: String in SaveCodec.OPTIONAL_UNIT_KEY_VERSIONS:
 		assert_has((_encoded()["units"] as Array)[0] as Dictionary, key)
+	for key: String in SaveCodec.REQUIRED_COMMANDER_KEYS:
+		for team in GameState.TEAMS:
+			assert_has(_encoded()["commanders"][str(team)] as Dictionary, key)

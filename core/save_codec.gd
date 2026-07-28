@@ -42,6 +42,9 @@ const REQUIRED_KEYS: Array = [
 const REQUIRED_UNIT_KEYS: Array = ["type", "team", "x", "y", "hp", "fuel", "ammo", "acted"]
 const REQUIRED_OWNER_KEYS: Array = ["x", "y", "team"]
 const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
+## What `encode` writes for each side's general — demanded of every save old enough
+## to have a commander block at all. See `_commander_block_error`.
+const REQUIRED_COMMANDER_KEYS: Array = ["id", "charge", "active"]
 
 ## The remaining keys, and the first version that always wrote each. Every one of
 ## them has a fallback in `decode`, and the fallback is for *age*, not for damage:
@@ -54,6 +57,11 @@ const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
 ## `difficulty` is the awkward one, and it is deliberately listed at 3 rather than 2:
 ## it was added between those two versions without a bump of its own, so a version 2
 ## save may or may not carry it and only a version 3 save is guaranteed to.
+##
+## The entries listed at 1 are demanded of every version this codec still reads, so
+## their `decode` defaults cannot currently be taken. They stay all the same, for the
+## reason `board_error` is total: a decoder that answers for any dictionary is one a
+## later caller cannot reach through a hole in.
 const OPTIONAL_KEY_VERSIONS := {
 	"fog": 1,
 	"winner": 1,
@@ -179,6 +187,9 @@ static func decode(
 ) -> LoadedMatch:
 	var error := validate(data)
 	if error != "":
+		# Reaches a log, not a player: the menu gates Continue on `summarize`, which
+		# asks this same `validate` through the deliberately silent `SaveGame.peek`,
+		# so a save refused here reads as no save at all on the way in.
 		push_error("SaveCodec: %s" % error)
 		return null
 	var map := MapData.load_from_file(String(data["map_path"]), terrain_db)
@@ -256,7 +267,9 @@ static func decode(
 ## Restores each side's general, meter and running power. Every step falls back
 ## to the neutral commander with an empty meter, which is what makes a version-1
 ## save — where the whole block is missing — load as the no-commander match it
-## actually was.
+## actually was. From version 2 on those fallbacks are unreachable: `validate` has
+## already refused a block missing a side or a field, so a hollow one never gets
+## this far.
 static func _decode_commanders(
 	state: GameState, data: Dictionary, commander_db: CommanderDB
 ) -> void:
@@ -326,7 +339,12 @@ static func validate(data: Dictionary) -> String:
 	missing = _missing_key(data, _keys_written_by(version, OPTIONAL_KEY_VERSIONS))
 	if missing != "":
 		return "a version %d save is missing '%s'" % [version, missing]
-	var error := _entries_error(data["owners"], REQUIRED_OWNER_KEYS, "owner")
+	# The check above asks only whether the commander block is *there*, which a
+	# hollow one also is. See `_commander_block_error`.
+	var error := _commander_block_error(data, version)
+	if error != "":
+		return error
+	error = _entries_error(data["owners"], REQUIRED_OWNER_KEYS, "owner")
 	if error != "":
 		return error
 	error = _entries_error(
@@ -413,6 +431,38 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	if cells_error != "":
 		return cells_error
 	return _cells_on_board(data.get("capture_progress", []), map, "capture in progress")
+
+
+## "" when a save of `version` carries the commander block that version wrote, else
+## the reason it does not. The envelope's own check cannot see this: a block that is
+## present but empty, or one whose second side was lost to a hand-edit, satisfies
+## `has("commanders")` while `_decode_commanders` falls back per team — so the match
+## resumes with both sides commander-less and their meters at zero, which is the very
+## harm the version gate was added to end (COM-54).
+##
+## The per-entry fields go with it rather than staying optional. All three have been
+## written for as long as the block has existed, so an entry without a charge is a
+## meter lost, not one that predates the key — the same reasoning, one level down.
+##
+## A version 1 save is not asked, because it knew of no such block: it keeps loading
+## both sides neutral with an empty meter, which is the match it recorded.
+static func _commander_block_error(data: Dictionary, version: int) -> String:
+	if version < int(OPTIONAL_KEY_VERSIONS["commanders"]):
+		return ""
+	var saved: Variant = data.get("commanders")
+	if not (saved is Dictionary):
+		return "'commanders' is malformed"
+	for team in GameState.TEAMS:
+		var entry: Variant = (saved as Dictionary).get(str(team))
+		if not (entry is Dictionary):
+			return "a version %d save is missing the commander for team %d" % [version, team]
+		var missing := _missing_key(entry as Dictionary, REQUIRED_COMMANDER_KEYS)
+		if missing != "":
+			return (
+				"a version %d save is missing '%s' for team %d's commander"
+				% [version, missing, team]
+			)
+	return ""
 
 
 ## "" when every entry in `entries` names a cell `map` actually has.

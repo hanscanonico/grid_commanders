@@ -150,7 +150,7 @@ func test_a_version_1_save_loads_as_a_no_commander_match() -> void:
 
 func test_a_commander_who_no_longer_exists_falls_back_to_neutral() -> void:
 	var data := _encoded()
-	data["commanders"] = {"1": {"id": "a_general_who_was_cut", "charge": 9000, "active": true}}
+	data["commanders"]["1"] = {"id": "a_general_who_was_cut", "charge": 9000, "active": true}
 	var loaded := _decode(data)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.commander_of(1).id, CommanderType.NEUTRAL_ID)
@@ -161,7 +161,7 @@ func test_a_commander_who_no_longer_exists_falls_back_to_neutral() -> void:
 func test_a_hand_edited_meter_is_still_capped() -> void:
 	var commander_db := CommanderDB.load_default()
 	var data := _encoded()
-	data["commanders"] = {"1": {"id": "alina_ward", "charge": 999999, "active": false}}
+	data["commanders"]["1"] = {"id": "alina_ward", "charge": 999999, "active": false}
 	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart, commander_db)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.commander_state(1).charge, loaded.state.commander_of(1).power_cost)
