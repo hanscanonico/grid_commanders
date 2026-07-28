@@ -251,3 +251,28 @@ func test_every_unit_on_the_board_is_still_valid() -> void:
 	for entry: Dictionary in data["units"]:
 		assert_eq(int(entry["carrier"]), SaveCodec.NO_CARRIER)
 	assert_not_null(_decode(data))
+
+
+## COM-55. Not a failing test today — GameState.TEAMS is two long, so a literal pair
+## and a loop agree — and that is precisely why it is written off TEAMS rather than
+## off 1 and 2. `encode` spelled the funds keys out by hand while every other
+## per-side block in the file was built from that list, so it was the one place that
+## knew how many armies there are; the day a third is added this starts failing
+## instead of that army's treasury quietly emptying through a save round-trip.
+func test_every_team_keeps_its_funds_through_a_round_trip() -> void:
+	var state := _first_steps_state()
+	var expected: Dictionary = {}
+	for i in GameState.TEAMS.size():
+		var team: int = GameState.TEAMS[i]
+		state.funds[team] = 1000 + i * 700  # a different purse per side, so a swap shows
+		expected[team] = state.funds[team]
+	var data := SaveCodec.encode(state, [] as Array[int])
+	assert_eq(
+		(data["funds"] as Dictionary).size(),
+		GameState.TEAMS.size(),
+		"one funds entry per side that plays, however many that is"
+	)
+	var loaded := _decode(data)
+	assert_not_null(loaded)
+	for team: int in GameState.TEAMS:
+		assert_eq(loaded.state.funds[team], int(expected[team]), "team %d's funds" % team)

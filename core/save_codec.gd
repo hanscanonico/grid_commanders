@@ -199,6 +199,7 @@ static func encode(
 	for cell: Vector2i in state.capture_progress:
 		progress.append({"x": cell.x, "y": cell.y, "points": state.capture_progress[cell]})
 	var commanders: Dictionary = {}
+	var funds: Dictionary = {}
 	for team in GameState.TEAMS:
 		var co_state := state.commander_state(team)
 		commanders[str(team)] = {
@@ -206,6 +207,11 @@ static func encode(
 			"charge": co_state.charge,
 			"active": co_state.power_active,
 		}
+		# Written from the same list every other per-side block here is written from, and
+		# the same list `decode` reads it back with. Spelled out as two literal keys it was
+		# the one place in this file that knew how many sides there are, so a third army's
+		# treasury went through a save round-trip and came back empty (COM-55).
+		funds[str(team)] = state.funds[team]
 	return {
 		"version": VERSION,
 		"map_path": state.map_path,
@@ -213,7 +219,7 @@ static func encode(
 		"day": state.day,
 		"current_team": state.current_team,
 		"winner": state.winner,
-		"funds": {"1": state.funds[1], "2": state.funds[2]},
+		"funds": funds,
 		"rng_state": str(state.rng.state),  # int64 as string: JSON numbers are lossy
 		"ai_teams": ai_teams,
 		"difficulty": String(difficulty),
