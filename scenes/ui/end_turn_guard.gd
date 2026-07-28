@@ -10,20 +10,15 @@ signal end_requested
 const PANEL_W := 300.0
 const LIST_H := 78.0
 const PAD := 8
-## The board's own direction actions carry keyboard events only; a pad's d-pad
-## and left stick reach the tree as Godot's built-in `ui_*` pair, so the guard
-## answers both. Vertical scrolls the ready-unit list, horizontal picks a button.
+## Scrolling the ready-unit list is the guard's own, and the board's direction
+## actions carry keyboard events only, so it answers Godot's built-in pair — the
+## one a pad's d-pad and left stick arrive as — alongside them. Picking an action
+## is not here: left and right belong to Control focus, wired in _build.
 const SCROLL_ACTIONS: Dictionary = {
 	&"cursor_up": -1,
 	&"ui_up": -1,
 	&"cursor_down": 1,
 	&"ui_down": 1,
-}
-const PICK_ACTIONS: Dictionary = {
-	&"cursor_left": -1,
-	&"ui_left": -1,
-	&"cursor_right": 1,
-	&"ui_right": 1,
 }
 
 var _built := false
@@ -75,20 +70,16 @@ func close() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	var scrolled := _dirs.step(event, SCROLL_ACTIONS.keys())
 	if not visible:
 		return
-	var scrolled := _dirs.step(event, SCROLL_ACTIONS.keys())
-	var picked := _dirs.step(event, PICK_ACTIONS.keys())
 	if not scrolled.is_empty():
 		get_viewport().set_input_as_handled()
 		_scroll_list(SCROLL_ACTIONS[scrolled])
-	elif not picked.is_empty():
-		get_viewport().set_input_as_handled()
-		_step(PICK_ACTIONS[picked])
 	elif event.is_action_pressed(&"confirm"):
 		get_viewport().set_input_as_handled()
-		# Native UI focus may have handled an arrow before this custom action
-		# arrived, so the focused button — not a parallel index — decides.
+		# Focus navigation owns which action is armed, so the focused button —
+		# not a parallel index — decides what confirm takes.
 		_choose(_end_button.has_focus())
 	elif event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
@@ -101,18 +92,6 @@ func _choose(end_anyway: bool) -> void:
 		end_requested.emit()
 	else:
 		review_requested.emit()
-
-
-## Native UI focus navigation moves between the two buttons on its own and marks
-## those presses handled, so the focused button — never a parallel index — is
-## where a step starts.
-func _step(delta: int) -> void:
-	var from := 0
-	for index in _buttons.size():
-		if _buttons[index].has_focus():
-			from = index
-			break
-	_buttons[wrapi(from + delta, 0, _buttons.size())].grab_focus()
 
 
 ## Scrolls the ready-unit list a line at a time, so every name is reachable
@@ -198,4 +177,11 @@ func _build() -> void:
 	UiTheme.apply_button(_end_button, UiTheme.ButtonVariant.SECONDARY)
 	actions.add_child(_end_button)
 	_buttons.assign([_review_button, _end_button])
+	# Two buttons that wrap into each other both ways, so focus navigation always
+	# has a neighbour to move to and no press can fall through it to a second
+	# opinion. Left and right have exactly this one owner.
+	_review_button.focus_neighbor_left = _review_button.get_path_to(_end_button)
+	_review_button.focus_neighbor_right = _review_button.get_path_to(_end_button)
+	_end_button.focus_neighbor_left = _end_button.get_path_to(_review_button)
+	_end_button.focus_neighbor_right = _end_button.get_path_to(_review_button)
 	_built = true

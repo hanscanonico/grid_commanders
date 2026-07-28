@@ -371,6 +371,7 @@ func _is_confirm_press(event: InputEvent) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	var dir := _dirs.step(event, DIR_ACTIONS.keys())
 	if animator.consume_banner_skip(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -412,12 +413,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_range()
 	elif event.is_action_pressed(&"fire_power"):
 		_fire_command_power()  # the shortcut the charged meter advertises
-	else:
-		var dir := _dirs.step(event, DIR_ACTIONS.keys())
-		if not dir.is_empty():
-			var next: Vector2i = cursor_cell + DIR_ACTIONS[dir]
-			if map.in_bounds(next):
-				set_cursor_cell(next)
+	elif not dir.is_empty():
+		var next: Vector2i = cursor_cell + DIR_ACTIONS[dir]
+		if map.in_bounds(next):
+			set_cursor_cell(next)
 
 
 # --- selection / movement flow -----------------------------------------------

@@ -11,6 +11,27 @@ extends GutTest
 const UP_AXIS := JOY_AXIS_LEFT_Y
 const LEFT_AXIS := JOY_AXIS_LEFT_X
 
+
+## The shape every owner of a DirectionalInput obeys: resolve the event first,
+## then let the state it is in decide whether the answer may be used. A hidden
+## menu and a board mid-animation are `active = false`.
+class Consumer:
+	extends RefCounted
+	const ACTIONS: Array = [&"cursor_up", &"cursor_down"]
+
+	var active := false
+	var steps: Array[StringName] = []
+
+	var _dirs := DirectionalInput.new()
+
+	func handle(event: InputEvent) -> void:
+		var dir := _dirs.step(event, ACTIONS)
+		if not active:
+			return
+		if not dir.is_empty():
+			steps.append(dir)
+
+
 var _dirs: DirectionalInput
 
 
@@ -134,3 +155,29 @@ func test_an_unrelated_axis_leaves_the_latch_alone() -> void:
 
 func test_no_direction_names_nothing() -> void:
 	assert_eq(_dirs.step(_motion(UP_AXIS, 0.0), [&"cursor_up", &"cursor_down"]), &"")
+
+
+## A gesture spent while the owner could not act — the menu that closed under the
+## press, the board still animating — must not cost the player the next one.
+func test_a_gesture_released_while_inactive_arms_the_next_one() -> void:
+	var consumer := Consumer.new()
+	consumer.handle(_motion(UP_AXIS, 1.0))
+	consumer.handle(_motion(UP_AXIS, 0.0))
+	consumer.active = true
+	consumer.handle(_motion(UP_AXIS, 1.0))
+	assert_eq(consumer.steps, [&"cursor_down"] as Array[StringName])
+
+
+## The other half of the same rule: a stick already deflected when the owner
+## comes back is a gesture that has been spent, not a fresh one, so the board
+## must not jump a cell the moment a menu closes under a held stick.
+func test_a_gesture_held_across_activation_does_not_land() -> void:
+	var consumer := Consumer.new()
+	consumer.handle(_motion(UP_AXIS, 1.0))
+	consumer.active = true
+	consumer.handle(_motion(UP_AXIS, 0.9))
+	consumer.handle(_motion(UP_AXIS, 1.0))
+	assert_eq(consumer.steps, [] as Array[StringName])
+	consumer.handle(_motion(UP_AXIS, 0.0))
+	consumer.handle(_motion(UP_AXIS, 1.0))
+	assert_eq(consumer.steps, [&"cursor_down"] as Array[StringName])

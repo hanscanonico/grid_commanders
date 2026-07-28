@@ -17,6 +17,13 @@ extends RefCounted
 ## Every threshold and every direction comes from the InputMap: nothing here
 ## reads an axis value, so the action's own deadzone stays the only authority.
 ## State is per instance, so each modal owner latches its own gestures.
+##
+## An owner resolves *every* event it is handed, ahead of whatever decides
+## whether it may act — a hidden menu, a board mid-animation — and then ignores
+## the answer it is in no state to use. The latch stands in for the physical
+## stick, and a stick keeps moving while nobody is listening: a release nobody
+## acted on still has to arm the next gesture, and a push begun there must not
+## land the moment its owner comes back.
 
 var _latched: Dictionary = {}
 

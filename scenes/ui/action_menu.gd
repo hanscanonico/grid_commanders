@@ -74,9 +74,9 @@ func close() -> void:
 ## the chosen row then does is not the input layer's business. An unrecognised
 ## event still falls through unclaimed.
 func _unhandled_input(event: InputEvent) -> void:
+	var dir := _dirs.step(event, ROW_ACTIONS.keys())
 	if not visible:
 		return
-	var dir := _dirs.step(event, ROW_ACTIONS.keys())
 	if not dir.is_empty():
 		get_viewport().set_input_as_handled()
 		_step_index(ROW_ACTIONS[dir])
