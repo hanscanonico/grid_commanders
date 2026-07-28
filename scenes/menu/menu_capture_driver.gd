@@ -16,6 +16,10 @@ extends RefCounted
 ## depend on whether this machine has a match in progress, so neither may the
 ## capture that proves it.
 ##
+## `--demo=menu_setup_context` poses the hot-seat setup without leaving the menu.
+## Its gate also proves that First Steps leads, its description is printed, every
+## help line has copy, and AI difficulty is disabled.
+##
 ## Second, the gate. An overflowing menu renders a perfectly good picture, so a
 ## smoke scenario that only proved a frame was written would have sailed straight
 ## past COM-5 — where a save's presence pushed the title off the top of the
@@ -29,7 +33,8 @@ extends RefCounted
 const DEMO_ARG := "--demo"
 const DEMO_WITH_SAVE := "menu_with_save"
 const DEMO_NO_SAVE := "menu_no_save"
-const DEMO_MODES: Array[String] = [DEMO_WITH_SAVE, DEMO_NO_SAVE]
+const DEMO_SETUP_CONTEXT := "menu_setup_context"
+const DEMO_MODES: Array[String] = [DEMO_WITH_SAVE, DEMO_NO_SAVE, DEMO_SETUP_CONTEXT]
 ## The day `menu_with_save` poses. Three digits because days are uncapped and the
 ## caption is set at micro size in the 122px action column — a capture that only
 ## ever photographs "DAY 4" proves nothing about a long campaign. The board it
@@ -77,6 +82,10 @@ func poses_slot() -> bool:
 	return DEMO_MODES.has(_demo)
 
 
+func poses_setup_context() -> bool:
+	return _demo == DEMO_SETUP_CONTEXT
+
+
 ## The slot the current mode poses: a resumable match on `menu_with_save`, and
 ## null — an empty slot — on `menu_no_save`, whatever the running machine has
 ## saved. The match named is on the roster's longest-named board, so the posed
@@ -107,8 +116,15 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 ## which any frame trivially encloses — and the gate would pass on a layout that
 ## is not the one photographed.
 func capture(path: String, chrome: Dictionary) -> void:
-	var gate := Callable() if chrome.is_empty() else _fits.bind(chrome)
+	var gate := Callable() if chrome.is_empty() else _capture_gate.bind(chrome)
 	await BattleCaptureBatch.finish_capture(_menu, path, gate)
+
+
+func _capture_gate(chrome: Dictionary) -> bool:
+	var fits := _fits(chrome)
+	if poses_setup_context():
+		return bool(_menu.call("_setup_context_ready")) and fits
+	return fits
 
 
 ## Every named control lies fully inside the logical frame.

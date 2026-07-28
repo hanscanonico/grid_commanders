@@ -34,8 +34,9 @@ const BACKDROP_SPAN := Vector2(680, 400)
 var _menu_root: Control
 
 ## The map picker: a scrollable two-up grid of live board thumbnails (MN2). The
-## selected index drives the header, the tooltip, and the match's map_path.
+## selected index drives the header, static facts, tooltip, and match's map_path.
 var _map_header: Label  # the panel's header-right "name · size"
+var _map_caption: Label
 var _map_scroll: ScrollContainer
 var _map_cells: Array[Button] = []
 var _map_marks: Array[Label] = []
@@ -48,6 +49,8 @@ var _fog_on := false
 var _column: VBoxContainer
 var _one_player_button: Button
 var _two_player_button: Button
+var _difficulty_buttons: Array[Button] = []
+var _setup_help_labels: Array[Label] = []
 var _continue_button: Button
 ## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
 var _continue_caption: Label
@@ -103,7 +106,11 @@ func _ready() -> void:
 	_two_player_button.pressed.connect(_open_select.bind([] as Array[int]))
 	_continue_button.pressed.connect(_continue)
 	_quit_button.pressed.connect(get_tree().quit)
-	_one_player_button.grab_focus()
+	if _capture_driver.poses_setup_context():
+		_set_two_player_mode(true)
+		_two_player_button.grab_focus()
+	else:
+		_one_player_button.grab_focus()
 
 	# Dev captures of the selection page: `--co-select` opens it on the Red slot,
 	# `--co-select=blue` advances to the Blue slot, and `--co-select=<commander_id>`
@@ -275,7 +282,7 @@ func _build_setup_panel() -> Control:
 
 	# --- body ---
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 7)
+	body.add_theme_constant_override("separation", 5)
 	col.add_child(_pad(body, 8, 7))
 
 	body.add_child(_build_map_picker())
@@ -287,17 +294,19 @@ func _build_setup_panel() -> Control:
 
 
 ## The map picker: a scrollable two-up grid of live board thumbnails, the whole
-## roster smallest first (MapCatalog.ordered) — the dropdown is gone (MN2). The
+## roster's teaching board first (MapCatalog.ordered) — the dropdown is gone
+## (MN2). The
 ## selected cell gets the raised cream surface, the meridian border and a ✓; scroll
-## follows keyboard focus so every board is reachable without a mouse. Each cell
-## carries the old dropdown's tooltip facts, so nothing is lost in the trade.
+## follows keyboard focus so every board is reachable without a mouse. A static
+## caption beneath the viewport carries the decision-critical facts; each cell
+## keeps the richer tooltip as optional detail.
 func _build_map_picker() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
 	col.add_child(_micro_label("Map"))
 
 	_map_scroll = ScrollContainer.new()
-	_map_scroll.custom_minimum_size = Vector2(0, 148)
+	_map_scroll.custom_minimum_size = Vector2(0, 126)
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(_map_scroll)
 
@@ -312,6 +321,11 @@ func _build_map_picker() -> Control:
 		push_error("main menu: no maps found in %s" % MapCatalog.MAPS_DIR)
 	for i in _maps.size():
 		grid.add_child(_make_map_cell(i, _maps[i]))
+	_map_caption = _setup_help("")
+	_map_caption.custom_minimum_size = Vector2(0, 14)
+	_map_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_map_caption.max_lines_visible = 2
+	col.add_child(_map_caption)
 	_select_map(0)
 	return col
 
@@ -344,7 +358,7 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	content.add_child(thumb)
 
 	var name_label := Label.new()
-	name_label.text = MapCatalog.display_name(map.source_path)
+	name_label.text = _map_cell_name(map, false)
 	name_label.add_theme_font_override("font", UiTheme.display())
 	name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	name_label.add_theme_color_override("font_color", UiTheme.INK)
@@ -379,8 +393,9 @@ func _build_choices_row() -> Control:
 		diff_selected,
 		meridian.color,
 		"How well the computer plays in a 1-Player match",
-		"Never cheats — only its judgement changes",
-		_on_difficulty_selected
+		"1 Player only · judgement changes; never cheats",
+		_on_difficulty_selected,
+		_difficulty_buttons
 	)
 	difficulty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(difficulty)
@@ -391,14 +406,16 @@ func _build_choices_row() -> Control:
 		speed_labels.append(_speed_tiers[i].display_name)
 		if _speed_tiers[i].id == Settings.speed.id:
 			speed_selected = i
+	var speed_buttons: Array[Button] = []
 	var speed := _build_segment(
 		"Speed",
 		speed_labels,
 		speed_selected,
 		meridian.color,
 		"How fast moves and battles play out",
-		"Pacing only — never changes an outcome",
-		_on_speed_selected
+		"Pacing only · outcomes never change",
+		_on_speed_selected,
+		speed_buttons
 	)
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(speed)
@@ -408,6 +425,8 @@ func _build_choices_row() -> Control:
 func _build_toggles_row() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
+	var fog_col := VBoxContainer.new()
+	fog_col.add_theme_constant_override("separation", 2)
 	var fog := _build_toggle(
 		"Fog of war",
 		_fog_on,
@@ -415,8 +434,12 @@ func _build_toggles_row() -> Control:
 		"Off shows the whole map",
 		_on_fog_toggled
 	)
-	fog.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(fog)
+	fog_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fog_col.add_child(fog)
+	fog_col.add_child(_setup_help("Hides tiles beyond your units' sight"))
+	row.add_child(fog_col)
+	var anim_col := VBoxContainer.new()
+	anim_col.add_theme_constant_override("separation", 2)
 	var anim := _build_toggle(
 		"Battle animations",
 		Settings.battle_animations,
@@ -424,8 +447,10 @@ func _build_toggles_row() -> Control:
 		"Any key skips one in progress",
 		_on_animations_toggled
 	)
-	anim.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(anim)
+	anim_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	anim_col.add_child(anim)
+	anim_col.add_child(_setup_help("Full-screen cut-ins · any key skips"))
+	row.add_child(anim_col)
 	return row
 
 
@@ -521,7 +546,8 @@ func _build_segment(
 	accent: Color,
 	tip: String,
 	tip_detail: String,
-	on_select: Callable
+	on_select: Callable,
+	button_sink: Array[Button]
 ) -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
@@ -552,6 +578,7 @@ func _build_segment(
 		group_tip.follow_focus(seg)  # focus lands here, never on the micro-label
 		seg_row.add_child(seg)
 		buttons.append(seg)
+		button_sink.append(seg)
 
 	var restyle := func(index: int) -> void:
 		for i in buttons.size():
@@ -563,6 +590,7 @@ func _build_segment(
 				restyle.call(i)
 				on_select.call(i)
 		)
+	col.add_child(_setup_help(tip_detail))
 	return col
 
 
@@ -575,11 +603,17 @@ func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> 
 	seg.add_theme_stylebox_override("hover", normal)
 	seg.add_theme_stylebox_override("pressed", normal)
 	seg.add_theme_stylebox_override("focus", UiTheme.focus_box())
+	var disabled := UiTheme.segment_box(false, accent)
+	if divided:
+		disabled.border_color = UiTheme.HARD_BORDER
+		disabled.border_width_left = UiTheme.BORDER
+	seg.add_theme_stylebox_override("disabled", disabled)
 	var fg := UiTheme.WHITE if active else UiTheme.INK
 	seg.add_theme_color_override("font_color", fg)
 	seg.add_theme_color_override("font_hover_color", fg)
 	seg.add_theme_color_override("font_pressed_color", fg)
 	seg.add_theme_color_override("font_focus_color", fg)
+	seg.add_theme_color_override("font_disabled_color", UiTheme.NEUTRAL_DARK)
 
 
 ## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
@@ -730,6 +764,16 @@ func _micro_label(text: String) -> Label:
 	return label
 
 
+## Always-visible setup copy. Tooltips can elaborate on these lines, but the
+## choice can be made without hover, a mouse, or prior knowledge.
+func _setup_help(text: String) -> Label:
+	var label := _micro_label(text)
+	label.add_theme_color_override("font_color", UiTheme.NEUTRAL)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_setup_help_labels.append(label)
+	return label
+
+
 ## A thin ink divider between the panel's rows (handoff --border-soft).
 func _rule() -> Control:
 	var rule := ColorRect.new()
@@ -789,11 +833,7 @@ func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool
 	cell.add_theme_stylebox_override("hover", box if selected else _cell_hover_box())
 	cell.add_theme_stylebox_override("pressed", box)
 	cell.add_theme_stylebox_override("focus", UiTheme.focus_box())
-	name_label.text = (
-		"%s ✓" % MapCatalog.display_name(_maps[index].source_path)
-		if selected
-		else MapCatalog.display_name(_maps[index].source_path)
-	)
+	name_label.text = (_map_cell_name(_maps[index], selected))
 	name_label.add_theme_color_override("font_color", UiTheme.INK if selected else UiTheme.NEUTRAL)
 
 
@@ -809,15 +849,32 @@ func _cell_hover_box() -> StyleBoxFlat:
 	return box
 
 
-## The header-right name·size, read off the board itself so no hand-kept table can
-## drift from it. The per-cell tooltip carries property count and the blurb.
+func _map_cell_name(map: MapData, selected: bool) -> String:
+	var name := MapCatalog.display_name(map.source_path)
+	if map.source_path == MapCatalog.BEGINNER_MAP_PATH:
+		name += " · Start Here"
+	if selected:
+		name += " ✓"
+	return name
+
+
+## Header and persistent caption, read off the board itself so no hand-kept table
+## can drift from it. Tooltips repeat the facts but are never required to choose.
 func _refresh_map_facts() -> void:
 	var map := _map_at(_selected_map)
 	if map == null:
 		_map_header.text = ""
+		_map_caption.text = ""
 		return
 	_map_header.text = (
 		"%s · %d×%d" % [MapCatalog.display_name(map.source_path), map.width, map.height]
+	)
+	_map_caption.text = (
+		(
+			"%d×%d · %d properties · %s"
+			% [map.width, map.height, map.property_cells().size(), map.description]
+		)
+		. to_upper()
 	)
 
 
@@ -856,6 +913,11 @@ func _selected_difficulty() -> StringName:
 	return _difficulties[_difficulty_index].id
 
 
+func _set_two_player_mode(two_player: bool) -> void:
+	for button in _difficulty_buttons:
+		button.disabled = two_player
+
+
 # --- flow (unchanged) --------------------------------------------------------
 
 
@@ -863,6 +925,7 @@ func _selected_difficulty() -> StringName:
 ## focus or click leaks through to the buttons underneath.
 func _open_select(ai_teams: Array[int]) -> void:
 	_pending_ai_teams = ai_teams
+	_set_two_player_mode(ai_teams.is_empty())
 	_menu_root.hide()
 	_select_panel.begin(not ai_teams.is_empty())
 
@@ -932,10 +995,36 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 ## What a capture measures itself against: the whole centered stack, plus every
 ## primary action by name. See MenuCaptureDriver._fits for why it is both.
 func _chrome() -> Dictionary:
-	return {
+	var chrome := {
 		"the menu column": _column,
+		"selected map facts": _map_caption,
 		"1 Player": _one_player_button,
 		"2 Player": _two_player_button,
 		"Continue": _continue_button,
 		"Quit": _quit_button,
 	}
+	for i in _setup_help_labels.size():
+		chrome["setup help %d" % (i + 1)] = _setup_help_labels[i]
+	return chrome
+
+
+## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
+## beginner board leads or that a hot-seat setup has no operable AI difficulty.
+func _setup_context_ready() -> bool:
+	var ready := true
+	var map := _map_at(_selected_map)
+	if map == null or map.source_path != MapCatalog.BEGINNER_MAP_PATH:
+		push_error("main menu setup context: beginner board is not the default")
+		ready = false
+	elif not _map_caption.text.contains(map.description.to_upper()):
+		push_error("main menu setup context: selected map description is not visible")
+		ready = false
+	for button in _difficulty_buttons:
+		if not button.disabled:
+			push_error("main menu setup context: two-player difficulty remains operable")
+			ready = false
+	for label in _setup_help_labels:
+		if label.text.strip_edges() == "":
+			push_error("main menu setup context: an option-help line is empty")
+			ready = false
+	return ready

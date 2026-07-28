@@ -161,7 +161,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # endturn and aiturn modes choose End anyway through the same helper, so the new
 # confirmation cannot strand either of those established flows.
 #
-# The menu pair is the same idea one screen earlier: `menu_with_save` poses a
+# The menu scenarios are the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
 # centered menu column plus all four primary actions against the 640x360 frame
 # before it writes a thing. The column is the load-bearing witness, not the
@@ -172,6 +172,8 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # clipped its own title and its Quit, and a returning player met a visibly
 # broken screen while a fresh install never did. Both modes pose the save slot
 # themselves, so neither reads nor writes the running machine's user://save.json.
+# `menu_setup_context` additionally poses hot-seat setup and proves the beginner
+# board, static facts/help, and disabled AI difficulty before photographing them.
 #
 # The mission_strip pair is COM-12's. Every other scenario runs with the
 # first-match hints pinned retired, exactly as they run with the game speed
@@ -203,7 +205,7 @@ DEFAULT_MODES=(
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
-	menu_with_save menu_no_save
+	menu_with_save menu_no_save menu_setup_context
 )
 
 if [[ ! -x "$GODOT" ]]; then

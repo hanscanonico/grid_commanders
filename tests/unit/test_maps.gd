@@ -303,11 +303,12 @@ func test_every_map_describes_itself_for_the_menu() -> void:
 
 
 ## The menu opens on item 0, so the order MapCatalog hands it decides the
-## default match. Smallest board first makes that the quickest one.
-func test_the_menu_offers_the_smallest_board_first() -> void:
+## default match. The teaching board leads; the rest remain smallest first.
+func test_the_menu_offers_the_beginner_board_first_then_smallest() -> void:
 	var maps := MapCatalog.ordered(terrain_db)
 	assert_eq(maps.size(), MapCatalog.paths().size(), "every shipped map should reach the menu")
-	for i in range(1, maps.size()):
+	assert_eq(maps[0].source_path, MapCatalog.BEGINNER_MAP_PATH)
+	for i in range(2, maps.size()):
 		var previous := maps[i - 1]
 		assert_lte(
 			previous.width * previous.height,

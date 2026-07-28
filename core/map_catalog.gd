@@ -11,6 +11,9 @@ extends RefCounted
 ## Node-free like the rest of core/, so tests read exactly what the menu reads.
 
 const MAPS_DIR := "res://maps"
+## The teaching board pinned to item zero in `ordered()`. The menu reads this
+## same key for its START HERE badge, so ordering and explanation cannot drift.
+const BEGINNER_MAP_PATH := "res://maps/first_steps.txt"
 ## Boards that exist to be measured on rather than played: the balance fixtures.
 ## Deliberately a subdirectory, because `paths()` below scans only the top level
 ## — so a fixture is reachable by name from the offline tools and the battle
@@ -37,9 +40,10 @@ static func paths() -> Array[String]:
 	return result
 
 
-## The roster parsed, smallest board first, so the menu's default (item 0) is
-## the quickest match rather than whichever filename sorts first alphabetically.
-## Ties break on filename, so the order is derived from data and still stable.
+## The roster parsed with the teaching board first, then smallest board first.
+## Item zero is the menu's default, so first contact should open on the board
+## written to teach the game rather than merely the shortest duel. The rest keep
+## the established data-derived order; ties break on filename.
 ## Maps that fail to parse are dropped with a pushed error rather than taking
 ## the menu down with them.
 static func ordered(db: TerrainDB) -> Array[MapData]:
@@ -48,7 +52,7 @@ static func ordered(db: TerrainDB) -> Array[MapData]:
 		var map := MapData.load_from_file(path, db)
 		if map != null:
 			maps.append(map)
-	maps.sort_custom(_smaller_first)
+	maps.sort_custom(_beginner_then_smaller)
 	return maps
 
 
@@ -95,7 +99,11 @@ static func resolvable_names() -> Array[String]:
 	return names
 
 
-static func _smaller_first(a: MapData, b: MapData) -> bool:
+static func _beginner_then_smaller(a: MapData, b: MapData) -> bool:
+	var a_is_beginner := a.source_path == BEGINNER_MAP_PATH
+	var b_is_beginner := b.source_path == BEGINNER_MAP_PATH
+	if a_is_beginner != b_is_beginner:
+		return a_is_beginner
 	var area_a := a.width * a.height
 	var area_b := b.width * b.height
 	if area_a != area_b:
