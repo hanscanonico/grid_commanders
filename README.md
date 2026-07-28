@@ -408,8 +408,11 @@ Battle captures and the board scenarios in `make smoke` pin **Instant**: a frame
 which machine took it, and scenarios wait on the scene's state machine rather than a frame count, so
 skipping the theatre
 cannot change what is photographed. It is also four times faster on the scenario that plays a whole
-AI turn, for a byte-identical frame. `make menu-screenshot` and the `menu_` scenarios, which boot
-that same screen, pin **Normal** instead — the menu's
+AI turn, for a byte-identical frame. The one scenario that lifts the pin is `capture_power`, which
+has to let a capture cut-in genuinely play to press the HUD's Fire button into the middle of it; it
+restores the pin before its frame, so what is photographed is still an Instant board.
+`make menu-screenshot` and the `menu_` scenarios, which boot that same screen, pin **Normal**
+instead — the menu's
 drifting backdrop and blinking **PRESS START** pin still under a capture (the animator's `capturing`
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
