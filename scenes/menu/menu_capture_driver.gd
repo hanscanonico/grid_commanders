@@ -39,11 +39,25 @@ const POSED_SAVE_DAY := 128
 
 var _menu: Control
 var _demo := ""
+var _shot_path := ""
 
 
 func _init(menu: Control) -> void:
 	_menu = menu
+	_shot_path = ScreenshotUtil.requested()
 	_demo = CmdArgs.value(CmdArgs.user(), DEMO_ARG)
+	# A smoke batch (--demos=, COM-118) supersedes both — the menu pair runs
+	# inside the one-boot sweep, reached by a scene change.
+	if BattleCaptureBatch.adopt(CmdArgs.user(), menu):
+		_demo = BattleCaptureBatch.demo()
+		_shot_path = BattleCaptureBatch.shot_path()
+
+
+## Where this run's frame lands, batch or not, or "" on an ordinary launch —
+## the menu asks this instead of ScreenshotUtil so a batched menu scenario
+## pins and captures exactly as a --screenshot= one does.
+func shot_path() -> String:
+	return _shot_path
 
 
 ## True when the command line named a mode this driver does not implement, and
@@ -81,7 +95,8 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 	return summary
 
 
-## Saves one frame and quits — after `chrome` clears the frame check, if it was
+## Saves one frame and ends the run — a quit, or the batch's hand-off to the
+## next scenario — after `chrome` clears the frame check, if it was
 ## given any. A `--co-select` capture photographs the selection page over a
 ## hidden menu and passes none: the menu's own geometry is not what that picture
 ## claims.
@@ -93,7 +108,7 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 ## is not the one photographed.
 func capture(path: String, chrome: Dictionary) -> void:
 	var gate := Callable() if chrome.is_empty() else _fits.bind(chrome)
-	await ScreenshotUtil.capture_and_quit(_menu, path, gate)
+	await BattleCaptureBatch.finish_capture(_menu, path, gate)
 
 
 ## Every named control lies fully inside the logical frame.

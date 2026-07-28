@@ -173,7 +173,10 @@ func _ready() -> void:
 	var request := MatchConfig.take()
 	if request == null:
 		request = MatchRequest.new()
-	request.apply_cmdline(CmdArgs.user())
+	# In a smoke batch the current scenario's own --map/--fog replace the
+	# process-level ones (FS3, COM-118); an ordinary launch gets the process
+	# command line unchanged.
+	request.apply_cmdline(BattleCaptureBatch.scenario_args())
 	var built := BattleSetup.build(request, db, unit_db, commander_db)
 	if built == null:
 		# BattleSetup has already pushed what failed. There is no match to play, so
