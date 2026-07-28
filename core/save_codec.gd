@@ -43,9 +43,6 @@ const REQUIRED_KEYS: Array = [
 const REQUIRED_UNIT_KEYS: Array = ["type", "team", "x", "y", "hp", "fuel", "ammo", "acted"]
 const REQUIRED_OWNER_KEYS: Array = ["x", "y", "team"]
 const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
-## What `encode` writes for each side's general — demanded of every save old enough
-## to have a commander block at all. See `_commander_block_error`.
-const REQUIRED_COMMANDER_KEYS: Array = ["id", "charge", "active"]
 
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
@@ -93,6 +90,16 @@ const OPTIONAL_KEY_RULES := {
 const OPTIONAL_UNIT_KEY_RULES := {
 	"carrier": {"since": 1, "shape": Shape.NUMBER},
 	"dived": {"since": 3, "shape": Shape.BOOL},
+}
+## And the same again, per side inside the commander block: all three arrived with the
+## block itself at version 2, which is why they share its version and why a version 1
+## save is asked for none of them. Declared here rather than as a bare key list because
+## every field this codec knows about should say what it is in the one place it says
+## when it arrived — the drift between those two is the whole of COM-54.
+const COMMANDER_KEY_RULES := {
+	"id": {"since": 2, "shape": Shape.STRING},
+	"charge": {"since": 2, "shape": Shape.NUMBER},
+	"active": {"since": 2, "shape": Shape.BOOL},
 }
 
 ## A unit standing on the board rather than riding in something.
@@ -472,9 +479,19 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 ## resumes with both sides commander-less and their meters at zero, which is the very
 ## harm the version gate was added to end (COM-54).
 ##
-## The per-entry fields go with it rather than staying optional. All three have been
-## written for as long as the block has existed, so an entry without a charge is a
-## meter lost, not one that predates the key — the same reasoning, one level down.
+## The per-entry fields go with it rather than staying optional, and they are asked for
+## their shape as well as their presence. All three have been written for as long as the
+## block has existed, so an entry without a charge is a meter lost, not one that predates
+## the key — and an entry whose charge is not a number is a meter lost the same way, by
+## the same reasoning one level down.
+##
+## `active` is the one that bites hardest, and it is not obvious. A String is truthy in
+## GDScript — `if "false":` runs — while `bool()` will not take one at all, so a quoted
+## flag (a plausible hand-edit, or what a tool that stringifies everything would write)
+## either reads as a power that is up or takes the rebuild down with an engine call
+## error half way through, depending only on which spelling reads it. A power's state is
+## what the sim plays the *next turn* under, so this field's damage is not merely how
+## the board looks.
 ##
 ## A version 1 save is not asked, because it knew of no such block: it keeps loading
 ## both sides neutral with an empty meter, which is the match it recorded. That the
@@ -483,16 +500,24 @@ static func _commander_block_error(data: Dictionary, version: int) -> String:
 	if version < int(OPTIONAL_KEY_RULES["commanders"]["since"]):
 		return ""
 	var saved: Dictionary = data["commanders"]
+	var keys := _keys_written_by(version, COMMANDER_KEY_RULES)
 	for team in GameState.TEAMS:
 		var entry: Variant = saved.get(str(team))
 		if not (entry is Dictionary):
 			return "a version %d save is missing the commander for team %d" % [version, team]
-		var missing := _missing_key(entry as Dictionary, REQUIRED_COMMANDER_KEYS)
+		var record := entry as Dictionary
+		var missing := _missing_key(record, keys)
 		if missing != "":
 			return (
 				"a version %d save is missing '%s' for team %d's commander"
 				% [version, missing, team]
 			)
+		for key: String in keys:
+			if not _is_shape(record[key], int(COMMANDER_KEY_RULES[key]["shape"])):
+				return (
+					"a version %d save has a malformed '%s' for team %d's commander"
+					% [version, key, team]
+				)
 	return ""
 
 

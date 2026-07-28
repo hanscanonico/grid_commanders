@@ -122,6 +122,26 @@ func test_a_current_save_holding_the_wrong_kind_of_value_is_refused() -> void:
 		assert_string_contains(SaveCodec.validate(data), key)
 
 
+## The block's own fields, by the reasoning that reached them one level down: a charge
+## that is not a number is a meter lost, and an id that is not a string resolves to a
+## general nobody has, which is that side commander-less.
+##
+## `"active": "false"` is the one a later reader will want to simplify away, so it is
+## spelled out. A String is truthy in GDScript — the assertion below is the trap itself —
+## while `bool()` refuses one outright, so the same quoted flag reads as a power that is
+## up or takes the rebuild down mid-match, depending only on which spelling reads it.
+## A power's state is what the sim plays the next turn under, which makes this the worst
+## of the three rather than the pedantic one.
+func test_a_commander_field_holding_the_wrong_kind_of_value_is_refused() -> void:
+	var wrong := {"id": 3, "charge": "full", "active": "false"}
+	for key: String in wrong:
+		var data := _encoded()
+		data["commanders"]["1"][key] = wrong[key]
+		assert_string_contains(SaveCodec.validate(data), "'%s'" % key)
+	var quoted: Variant = "false"
+	assert_true(true if quoted else false, "a saved 'false' is true wherever it is read")
+
+
 ## The list is a list of *numbers*: `["2"]` survives `is Array` and then coerces to
 ## team 0, which is nobody, so the side it named plays itself.
 func test_an_ai_teams_list_of_things_that_are_not_numbers_is_refused() -> void:
@@ -221,6 +241,6 @@ func test_a_freshly_encoded_save_carries_everything_its_version_promises() -> vo
 		assert_has(_encoded(), key, "encode must write every key its version claims")
 	for key: String in SaveCodec.OPTIONAL_UNIT_KEY_RULES:
 		assert_has((_encoded()["units"] as Array)[0] as Dictionary, key)
-	for key: String in SaveCodec.REQUIRED_COMMANDER_KEYS:
+	for key: String in SaveCodec.COMMANDER_KEY_RULES:
 		for team in GameState.TEAMS:
 			assert_has(_encoded()["commanders"][str(team)] as Dictionary, key)
