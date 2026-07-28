@@ -48,12 +48,12 @@ const STATE_CONTEXT: Dictionary = {
 	State.CONFIRM: ControlHints.END_TURN_GUARD,
 }
 
-const DIR_ACTIONS: Array = [
-	[&"cursor_up", Vector2i.UP],
-	[&"cursor_down", Vector2i.DOWN],
-	[&"cursor_left", Vector2i.LEFT],
-	[&"cursor_right", Vector2i.RIGHT],
-]
+const DIR_ACTIONS: Dictionary = {
+	&"cursor_up": Vector2i.UP,
+	&"cursor_down": Vector2i.DOWN,
+	&"cursor_left": Vector2i.LEFT,
+	&"cursor_right": Vector2i.RIGHT,
+}
 
 # Only the nodes Battle itself drives. Everything the view draws on is handed
 # over in _build_view and deliberately kept out of reach here.
@@ -142,6 +142,9 @@ var _ai_runner: BattleAiRunner
 
 ## Owns the camera zoom level, its clamp against the view, and the zoom keys.
 var _zoom: BattleZoom
+## Answers "was that one step?" for the board cursor, so an analog stick moves a
+## cell per push rather than a cell per axis sample. See DirectionalInput.
+var _dirs := DirectionalInput.new()
 ## Set only when the command line asks for a scripted capture; see _ready.
 var _scenario_driver: BattleScenarioDriver
 ## True for a run that exists to be photographed. Suppresses the presentation's
@@ -361,7 +364,7 @@ func _build_outcome() -> BattleOutcome:
 
 
 ## The one press the two states that swallow play still listen for: the confirm
-## key, or a left click. Shared so the handoff's "I'm ready" and the computer
+## action, or a left click. Shared so the handoff's "I'm ready" and the computer
 ## turn's refusal can never answer different presses.
 func _is_confirm_press(event: InputEvent) -> bool:
 	if event.is_action_pressed(&"confirm"):
@@ -371,6 +374,7 @@ func _is_confirm_press(event: InputEvent) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	var dir := _dirs.step(event, DIR_ACTIONS.keys())
 	if animator.consume_banner_skip(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -412,13 +416,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_range()
 	elif event.is_action_pressed(&"fire_power"):
 		_fire_command_power()  # the shortcut the charged meter advertises
-	else:
-		for dir: Array in DIR_ACTIONS:
-			if event.is_action_pressed(dir[0], true):
-				var next: Vector2i = cursor_cell + dir[1]
-				if map.in_bounds(next):
-					set_cursor_cell(next)
-				return
+	elif not dir.is_empty():
+		var next: Vector2i = cursor_cell + DIR_ACTIONS[dir]
+		if map.in_bounds(next):
+			set_cursor_cell(next)
 
 
 # --- selection / movement flow -----------------------------------------------

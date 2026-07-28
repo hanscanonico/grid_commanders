@@ -1,13 +1,13 @@
 class_name BattleZoom
 extends RefCounted
 ## Owns the battle camera's zoom: the current level, its clamp against the view's
-## minimum, and the keyboard zoom steps. Battle decides when to zoom and the view
+## minimum, and the zoom steps themselves. Battle decides when to zoom and the view
 ## owns the camera itself — this sits between them, split out of battle.gd so the
 ## interaction flow could shed a responsibility (the gdlintrc line ratchet).
 ##
 ## Semantics are unchanged from when this lived in Battle: the floor is the view's
-## min_zoom ceil'd to two decimals, the ceiling is MAX_ZOOM, and each key press
-## steps the level by STEP.
+## min_zoom ceil'd to two decimals, the ceiling is MAX_ZOOM, and each press steps
+## the level by STEP.
 
 const MAX_ZOOM := 5.0
 const STEP := 1.0
@@ -37,9 +37,9 @@ func set_zoom(zoom: float) -> void:
 	_view.set_zoom(_zoom)
 
 
-## The keyboard zoom steps. Returns true when it consumed the event, so the input
-## handler stops there — the two branches this replaced sat first in that chain
-## and swallowed the event the same way.
+## The zoom-step actions — keys, wheel and the pad's shoulders alike. Returns true
+## when it consumed the event, so the input handler stops there — the two branches
+## this replaced sat first in that chain and swallowed the event the same way.
 func handle_input(event: InputEvent) -> bool:
 	if event.is_action_pressed(&"zoom_in"):
 		set_zoom(_zoom + STEP)

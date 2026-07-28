@@ -233,6 +233,16 @@ your own actions only (the computer taking a city retires nothing). Retirement i
 preference in `user://settings.cfg`, so hints never come back across a relaunch; `--reset-hints`
 forgets them all for one machine, which is how a fresh install is staged for testing.
 
+On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
+(A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
+shoulder (RB / R1) zooms in and the left (LB / L1) zooms out, the left face button (X / Square)
+shows a unit's range, and the top face button (Y / Triangle) fires a ready Command Power. The same
+face buttons confirm and back out of menus. One push of the stick is one step: the cursor and a
+menu highlight move a single cell or row per gesture, and the stick has to return to centre before
+it asks again.
+The docked on-screen legend keeps the compact keyboard labels; the actions themselves accept
+mouse, keyboard, or controller throughout.
+
 - Arrow keys / mouse hover: move the grid cursor
 - Mouse wheel or `+` / `-`: zoom
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
@@ -315,8 +325,9 @@ forgets them all for one machine, which is how a fresh install is staged for tes
   already-highlighted answer, which closes it on the same turn with the cursor on the first of
   them, or **End anyway**, which hands play over as before. Left/right pick, up/down
   scroll a list too long to fit, Enter takes the highlighted action and Esc reviews; clicking a
-  button works the same. A turn with nothing left to act skips the panel entirely, and the
-  computer's turns never see it
+  button works the same, as do the controller's D-pad or left stick and confirm/cancel face
+  buttons. A turn with nothing left to act skips the panel entirely, and the computer's turns
+  never see it
 - The same menu is how you leave a match without closing the game. **Save & Main Menu** writes the
   slot exactly as **Save** does and only then goes back — a failed write keeps you on the board and
   says so — while **Main Menu Without Saving** asks a second time first, on a two-row confirmation
@@ -376,9 +387,10 @@ down — every power is re-earned from empty, not refilled by the fighting it en
 
 **Firing.** When the meter fills, a **FIRE** button appears beside it in the HUD bar — for the
 mouse, and only the mouse: it deliberately never takes keyboard focus, so a press is never swallowed
-by a button the battle would have refused anyway. The keyboard has two routes of its own: the `F`
-shortcut the meter's readout advertises, and the map menu (confirm on an empty tile, or cancel with
-nothing selected), which lists the power as its first entry. All three go through the same command.
+by a button the battle would have refused anyway. The keyboard has the `F` shortcut and the
+controller has its top face button; both can also use the map menu (confirm on an empty tile, or
+cancel with nothing selected), which lists the power as its first entry. Every route goes through
+the same command.
 Firing spends the whole cost and raises the power immediately. Most powers last until you end that
 turn; a few — Hold the Line, Vanish, Signal Jam — exist to bother the opponent and so survive their
 turn, ending as yours begins.
