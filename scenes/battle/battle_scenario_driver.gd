@@ -138,6 +138,10 @@ func _init(battle: Battle) -> void:
 	if parts.size() == 2:
 		_select_cell = Vector2i(int(parts[0]), int(parts[1]))
 	_demo = CmdArgs.value(args, DEMO_ARG)
+	# A smoke batch (--demos=, COM-117) supersedes both — see BattleCaptureBatch.
+	if BattleCaptureBatch.adopt(args, battle):
+		_demo = BattleCaptureBatch.demo()
+		_shot_path = BattleCaptureBatch.shot_path()
 
 
 ## True when the command line asked for any scripted flow at all. Battle skips
@@ -169,7 +173,7 @@ func run() -> void:
 		_battle.get_tree().quit(1)
 		return
 	if _shot_path != "":
-		await _save_screenshot_and_quit(_shot_path)
+		await BattleCaptureBatch.finish_capture(_battle, _shot_path)
 
 
 ## Every unit still on screen is one the viewing team is allowed to see.
@@ -1186,7 +1190,3 @@ func _demo_select(cell: Vector2i) -> void:
 func _until_state(wanted: Battle.State) -> void:
 	while _battle.state != wanted:
 		await _battle.get_tree().process_frame
-
-
-func _save_screenshot_and_quit(path: String) -> void:
-	await ScreenshotUtil.capture_and_quit(_battle, path)

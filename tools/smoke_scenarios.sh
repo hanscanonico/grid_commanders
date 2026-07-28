@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 #
-# Presentation smoke check: boots the battle scene once per demo scenario and
-# proves each one still reaches its capture.
+# Presentation smoke check: proves every demo scenario still reaches its
+# capture. Scenarios sharing a boot configuration (scene · fog · map) share one
+# engine process — the driver runs them back-to-back with a scene reload in
+# between (COM-117), so a full sweep opens a handful of windows rather than
+# one per scenario. SMOKE_ISOLATE=1 restores the one-process-per-scenario path
+# verbatim; a failing batch falls back to it by itself, so failures always
+# read per-scenario.
 #
 # This is deliberately NOT a GUT suite. GUT stays limited to core/ and ai/,
 # which are Node-free; the battle scene is verified by driving it. Each demo
@@ -236,18 +241,24 @@ run_with_timeout() {
 }
 
 failed=0
-for mode in "${modes[@]}"; do
+
+# One scenario, one process — the shape the sweep always had, kept verbatim as
+# the SMOKE_ISOLATE=1 path, the menu scenarios' path, and the re-run a failing
+# group gets (see run_group). Prints the scenario's status line and bumps
+# `failed` when it goes wrong.
+run_one_scenario() {
+	local mode="$1"
 	# A cut-in mode carries its matchup in the name; colons are legal in a POSIX
 	# filename but a menace in one, so they become dashes for the capture only.
-	shot="$out_dir/${mode//:/-}.png"
+	local shot="$out_dir/${mode//:/-}.png"
 	printf 'smoke: %-14s ' "$mode"
 	# `victory+fog` is the victory demo with fog on; anything else is the demo
 	# name as written.
-	demo="${mode%+fog}"
+	local demo="${mode%+fog}"
 	# A `menu_` mode boots the project's main scene — the menu — by passing no
 	# scene at all, exactly as `make menu-screenshot` does. Everything else boots
 	# the battle scene.
-	godot_args=(--path .)
+	local godot_args=(--path .)
 	if [[ "$demo" != menu_* ]]; then
 		godot_args+=("$BATTLE")
 	fi
@@ -265,12 +276,12 @@ for mode in "${modes[@]}"; do
 			;;
 	esac
 	run_with_timeout "$SMOKE_TIMEOUT" "$GODOT_GUI" "${godot_args[@]}"
-	status=$?
+	local status=$?
 
 	if ((status == 124)); then
 		echo "TIMEOUT after ${SMOKE_TIMEOUT}s"
 		failed=$((failed + 1))
-		continue
+		return
 	fi
 	# The scene quits through get_tree().quit(), so a non-zero status here is a
 	# real crash and not the engine's noisy-but-harmless exit diagnostics.
@@ -278,22 +289,146 @@ for mode in "${modes[@]}"; do
 		echo "FAILED (exit $status)"
 		sed -n '1,20p' "$out_dir/last.log" >&2
 		failed=$((failed + 1))
-		continue
+		return
 	fi
 	if [[ ! -f "$shot" ]]; then
 		echo "FAILED (no capture written)"
 		failed=$((failed + 1))
-		continue
+		return
 	fi
 	# stat's portable-ish size flag differs between BSD and GNU.
+	local bytes
 	bytes="$(wc -c <"$shot" | tr -d ' ')"
 	if ((bytes < MIN_BYTES)); then
 		echo "FAILED (capture only ${bytes}B, expected >= ${MIN_BYTES}B)"
 		failed=$((failed + 1))
-		continue
+		return
 	fi
 	echo "ok (${bytes}B)"
-done
+}
+
+# FS2 (COM-117): the scenarios differ in only three boot facts — which scene,
+# fog on or off, which map — so the sweep boots the engine once per
+# configuration and the driver runs the group's scenarios in-process
+# (`--demos=`, battle_scenario_driver.gd), reloading the scene between them.
+# The key spells those three facts; scenarios that share it share a boot, and
+# the window count falls from one per scenario to one per configuration.
+group_key() {
+	local mode="$1"
+	local demo="${mode%+fog}"
+	local fog=""
+	[[ "$demo" != "$mode" ]] && fog=fog
+	if [[ "$demo" == menu_* ]]; then
+		echo "menu"
+		return
+	fi
+	# The same map rule run_one_scenario applies, spelled once more because a
+	# bash 3.2 function cannot return an array; keep the two case lists equal.
+	local map=""
+	case "$demo" in
+		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
+			map=the_straits
+			;;
+	esac
+	echo "battle:${fog}:${map}"
+}
+
+# Boots one group in a single process. On success the per-scenario lines are
+# printed from the captures the driver wrote; a group that fails in any way is
+# re-run scenario-by-scenario (risk R2), so the diagnosis a developer reads is
+# always per-scenario, in the same shape as always. run_with_timeout stays as
+# the group-level backstop; the per-scenario deadline lives in the driver,
+# which is the only place the stuck scenario's name is known (risk R3).
+run_group() {
+	local key="$1"
+	shift
+	local members=("$@")
+	local m
+	# The menu pair keeps its own per-scenario driver (MenuCaptureDriver is
+	# deliberately not taught to batch), and a group of one IS the old path.
+	if [[ "$key" == menu ]] || ((${#members[@]} == 1)); then
+		for m in "${members[@]}"; do
+			run_one_scenario "$m"
+		done
+		return
+	fi
+	# Two scenarios photograph glyph edges the process-wide font atlas can
+	# shift: with thirty text-heavy scenarios rasterised before them, each came
+	# out one antialiased column off its fresh-process frame. Running them
+	# first, while the atlas still holds only the boot chrome a fresh process
+	# would also have drawn, keeps every capture byte-identical to the
+	# per-scenario baseline. The merge bar — the byte-diff over a full
+	# SMOKE_KEEP sweep against an SMOKE_ISOLATE=1 one — is what keeps this
+	# list honest when the roster moves; the status lines below still print in
+	# the order the modes were given.
+	local front=() rest=()
+	for m in "${members[@]}"; do
+		case "$m" in
+			commander_info | cutin:bomber:tank) front+=("$m") ;;
+			*) rest+=("$m") ;;
+		esac
+	done
+	local demos=""
+	for m in ${front[@]+"${front[@]}"} ${rest[@]+"${rest[@]}"}; do
+		demos+="${demos:+,}$m"
+	done
+	local godot_args=(--path . "$BATTLE")
+	godot_args+=(-- "--shots-dir=$out_dir" "--demos=$demos" "--scenario-timeout=$SMOKE_TIMEOUT")
+	[[ "$key" == *:fog:* ]] && godot_args+=(--fog)
+	local map="${key##*:}"
+	[[ -n "$map" ]] && godot_args+=(--map="$map")
+	run_with_timeout $((SMOKE_TIMEOUT * ${#members[@]})) "$GODOT_GUI" "${godot_args[@]}"
+	local status=$?
+	local ok=1 shot bytes
+	((status != 0)) && ok=""
+	for m in "${members[@]}"; do
+		shot="$out_dir/${m//:/-}.png"
+		if [[ ! -f "$shot" ]] || (($(wc -c <"$shot" | tr -d ' ') < MIN_BYTES)); then
+			ok=""
+		fi
+	done
+	if [[ -n "$ok" ]]; then
+		for m in "${members[@]}"; do
+			shot="$out_dir/${m//:/-}.png"
+			bytes="$(wc -c <"$shot" | tr -d ' ')"
+			printf 'smoke: %-14s ' "$m"
+			echo "ok (${bytes}B)"
+		done
+		return
+	fi
+	echo "smoke: batch of ${#members[@]} ($key) failed; re-running its scenarios one by one" >&2
+	for m in "${members[@]}"; do
+		run_one_scenario "$m"
+	done
+}
+
+if [[ -n "${SMOKE_ISOLATE:-}" ]]; then
+	# One process per scenario, exactly as the sweep always ran — the escape
+	# hatch risk R1 keeps for bisecting a pass that might lean on a batched
+	# neighbour's leftover state.
+	for mode in "${modes[@]}"; do
+		run_one_scenario "$mode"
+	done
+else
+	# Group in first-appearance order, so the sweep's lines stay deterministic.
+	# bash 3.2 has no associative arrays; with four keys the rescan is nothing.
+	keys=()
+	for mode in "${modes[@]}"; do
+		key="$(group_key "$mode")"
+		seen=""
+		for k in ${keys[@]+"${keys[@]}"}; do
+			[[ "$k" == "$key" ]] && seen=1
+		done
+		[[ -z "$seen" ]] && keys+=("$key")
+	done
+	for key in "${keys[@]}"; do
+		members=()
+		for mode in "${modes[@]}"; do
+			[[ "$(group_key "$mode")" == "$key" ]] && members+=("$mode")
+		done
+		run_group "$key" "${members[@]}"
+	done
+fi
 
 if ((failed > 0)); then
 	echo "smoke: $failed of ${#modes[@]} scenario(s) failed" >&2
