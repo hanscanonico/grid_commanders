@@ -116,8 +116,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
-  end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`) and the transition-input
-  convention (COM-15/U-11) are shipped. D3 is that convention and it has one authority:
+  end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input
+  convention (COM-15/U-11) and the visible match setup (COM-19/U-15) are shipped. The setup slice's
+  one durable fact: **`MapCatalog.BEGINNER_MAP_PATH` is the single authority for which board leads**
+  — `ordered()` pins it at item zero and the menu reads the same key for its Start Here badge, so
+  order and explanation cannot drift; everything else it added (the caption, the per-option help,
+  Difficulty dimmed while 2 Player is the mode in hand) is presentation, gated by the
+  `menu_setup_context` capture. D3 is the transition-input convention and it has one authority:
   `scenes/common/transition_input.gd` (`TransitionInput`) answers "was that a press?" for every
   boundary — a banner is an awaited blocking beat any press skips, no interactive menu may sit
   under a banner or cut-in, and the victory lockup (`scenes/battle/battle_outcome.gd`) opens

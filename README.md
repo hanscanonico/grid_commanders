@@ -27,7 +27,7 @@ Then:
 make run             # boot the game — the menu (map, difficulty, speed, commanders, fog, 1P / 2P / Continue)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
 make verify          # the merge gate: check + lint + format-check + test, in one command
-make smoke           # drive the demo scenarios (the battle scene, plus the menu pair); prove each still renders
+make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams
 make lint            # gdlint — style and smells (config: gdlintrc)
@@ -57,7 +57,7 @@ script graph), reproducible in twelve lines with no GUT involved. No gameplay ob
 gate reads exit status and ignores it.
 
 `make smoke` covers what unit tests deliberately do not: GUT is limited to the Node-free layers
-(see Architecture below), so the battle scene — and, for the `menu_` pair below, the main menu — is
+(see Architecture below), so the battle scene — and, for the `menu_` modes below, the main menu — is
 verified by driving it. Each demo scenario runs the same handlers a player's input reaches and must
 still produce a frame. It renders, so it needs
 a display — it is a local gate, not a headless-CI one. Narrow it with
@@ -67,7 +67,7 @@ so a typo in `MODES` is a failure and not a quiet pass.
 
 The whole sweep runs in one engine process and one window: it hands the driver every scenario as a
 single queue, each entry carrying its own boot facts — scene, fog, map — and the driver reloads the
-battle scene between scenarios and scene-changes for the `menu_` pair. The output lines are
+battle scene between scenarios and scene-changes for the `menu_` modes. The output lines are
 unchanged, and a sweep that fails in any way is automatically re-run one process per scenario, so a
 failure always names a scenario (the batch's own log is kept and reported when that happens).
 `SMOKE_ISOLATE=1 make smoke` skips batching altogether and runs the one-process-per-scenario path,
@@ -91,17 +91,24 @@ A mode whose name begins `menu_` boots the **main menu** instead of the board �
 that photograph a screen the battle scene never draws:
 
 ```sh
-make smoke MODES="menu_with_save"   # Continue live, on a long-named board at DAY 128
-make smoke MODES="menu_no_save"     # the same layout with an empty slot, Continue greyed out
+make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
+make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
+make smoke MODES="menu_setup_context" # the hot-seat setup: every option's help line, AI difficulty dimmed
 ```
 
-Both pose the save slot themselves, so a capture neither reads nor writes the running machine's
-`user://save.json`, and both are tests as well as pictures: each measures the whole centered menu
-column *and* all four primary actions against the 640×360 logical frame and fails the run if any of
-them leaves it. The column is the load-bearing witness — a too-tall one is centered into an offset
-that runs off both ends at once, so no single child is reliable — and the pair exists to hold the
-rule that a save's presence may never change the layout budget, which is what broke when Continue
-first pushed the title and **Quit** out of frame.
+All three pose the save slot themselves, so a capture neither reads nor writes the running machine's
+`user://save.json`, and all three are tests as well as pictures: each measures the whole centered menu
+column, its map caption, every option-help line *and* all four primary actions against the 640×360
+logical frame and fails the run if any of them leaves it. The column is the load-bearing witness — a
+too-tall one is centered into an offset that runs off both ends at once, so no single child is
+reliable — and the first two exist to hold the rule that a save's presence may never change the
+layout budget, which is what broke when Continue first pushed the title and **Quit** out of frame.
+
+`menu_setup_context` adds the half a picture cannot prove: that the beginner board leads the picker
+and its description is printed, that no option-help line is empty, that the reserved caption holds
+for *every* shipped board and not just the one on screen, and that AI difficulty follows the mode —
+it walks the setup back to 1 Player and out again, because a dimmed control photographs the same
+whether it can be undone or not.
 
 The cut-ins — combat and its capture sibling — have their own family of modes, because they are
 deliberately suppressed while capturing — a mid-animation frame is what would make two identical
@@ -150,10 +157,11 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twelve maps ship. The main menu lists them smallest board first — `scrimmage`, `forge`,
-`timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`, `crossfire`, `first_steps`,
-`the_straits`, `ironworks`, `steelworks` — so it opens on `scrimmage`, the quick match, and shows
-each one's size, property count and a one-line pitch as a tooltip. `jet_stream` and `the_straits`
+Twelve maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+`first_steps`, `scrimmage`, `forge`, `timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`,
+`crossfire`, `the_straits`, `ironworks`, `steelworks` — so it opens on `first_steps`, badged
+**Start Here**, and prints the selected board's size, property count and one-line pitch in a caption
+under the grid (the per-cell tooltip repeats them for a mouse). `jet_stream` and `the_straits`
 are the boards air and naval units were added for: the first puts an airfield behind each front, the
 second a port on each coast of one shared channel. Three of the older boards have since been
 retrofitted with the domains that suit them — `isthmus` gained a port and a landing beach per side,
@@ -195,10 +203,16 @@ then start a **1 Player** match against the AI or a **2 Player** hot-seat game. 
 fog setting, difficulty, commanders, and AI sides. A line under it names what it would resume —
 `DAY 13 · ARSENAL` — so the menu alone answers whether the save is the match you meant; when there
 is nothing readable to resume it reads `NO SAVED MATCH` and the button is greyed out (disabled, not
-hidden). **Quit** exits. Each setting's dotted-underlined label — **Speed**, **Difficulty**, **Fog
-of war**, **Battle animations** — explains itself in a tip anchored to it, on hover or on keyboard
-focus, and so do the map cells and the line under **Continue**; leaving, tabbing away or pressing
-Escape dismisses one.
+hidden). **Quit** exits.
+
+Nothing decision-critical is behind the mouse: the map picker prints the selected board's size,
+property count and pitch beneath the grid, and **Difficulty**, **Speed**, **Fog of war** and
+**Battle animations** each carry a permanent one-line explanation. **Difficulty** greys out while
+**2 Player** is the choice in hand — a hot-seat match has no computer to tune — and comes back the
+moment **1 Player** is, including on the way back from commander selection. Each setting's
+dotted-underlined label — **Speed**, **Difficulty**, **Fog of war**, **Battle animations** — still
+elaborates in a tip anchored to it, on hover or on keyboard focus, and so do the map cells and the
+line under **Continue**; leaving, tabbing away or pressing Escape dismisses one.
 
 On the selection page you pick **side 1**'s commander, confirm, then **side 2**'s, confirm — the
 turn chips preview each side's faction name and colour as you browse, mirror rule included. Four

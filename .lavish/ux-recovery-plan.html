@@ -528,7 +528,7 @@
           <!-- ================= MEDIUM ================= -->
           <tr class="gc-issue-row" data-sev="medium">
             <td class="gc-mono font-black">U-15</td>
-            <td><span class="badge badge-info badge-sm text-white">Medium</span></td>
+            <td><span class="badge badge-info badge-sm text-white">Medium</span> <span class="gc-inflight">SHIPPED</span></td>
             <td class="gc-src">FC M-01<br>NP B5</td>
             <td>Match setup hides its decision-critical context in hover tooltips: map size/pitch, AI fairness,
               speed semantics, fog and animation behavior are mouse-hover-only, so keyboard players never see
@@ -536,7 +536,17 @@
               and the popup already touches the screen edge; the next map added will clip.</td>
             <td>Echo the tooltip line (size · properties · description) as a static caption under the dropdown;
               badge or order the beginner map first; one-line option help for each row; disable Difficulty when
-              2&nbsp;Player is chosen.</td>
+              2&nbsp;Player is chosen.
+              <br><em>Shipped (COM-19):</em> the caption sits under MN2's scrollable grid rather than the
+              retired dropdown, and its height is reserved for two lines so no board's description can move the
+              layout. <code>MapCatalog.BEGINNER_MAP_PATH</code> is the one key behind both halves of the
+              beginner promise — <code>ordered()</code> pins First Steps at item zero and
+              <code>main_menu.gd</code> badges the same path <em>Start Here</em>, so order and explanation
+              cannot drift; every other board keeps its size order. Each option carries a permanent help line,
+              and Difficulty is dimmed rather than blanked while 2&nbsp;Player is the mode in hand — mode is
+              menu state, so a Back out of commander selection returns to the setup it left. Presentation-only
+              apart from the catalog's sort key; nothing in <code>core/</code>'s rules or <code>ai/</code>
+              changed. Locked by the <code>menu_setup_context</code> scenario below.</td>
           </tr>
 
           <tr class="gc-issue-row" data-sev="medium">
@@ -962,6 +972,7 @@
           <tr><td class="gc-mono">damage_preview_hp</td><td>Forecast communicates dealt and returned HP unambiguously.</td><td class="gc-mono">U-13</td></tr>
           <tr><td class="gc-mono">power_ready_contrast</td><td>READY and FIRE legible over the brightest and darkest shipped maps.</td><td class="gc-mono">U-14</td></tr>
           <tr><td class="gc-mono">rejected_confirm</td><td>All four refusals answer: acted unit, unit built this turn, occupied destination, CPU turn.</td><td class="gc-mono">U-09</td></tr>
+          <tr><td class="gc-mono">menu_setup_context</td><td>Setup reads without a mouse: beginner board leads and is described, every option has help, AI difficulty follows the mode, and the caption's reserved lines hold for every board.</td><td class="gc-mono">U-15</td></tr>
           <tr><td class="gc-mono">enemy_range_preview</td><td>Clicking an enemy previews reach; R paints its fire ring (regression gate for the shipped range-preview work).</td><td class="gc-mono">U-09</td></tr>
         </tbody>
       </table>
