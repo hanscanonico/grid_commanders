@@ -20,7 +20,10 @@ extends Node
 
 const SETTINGS_PATH := "user://settings.cfg"
 ## Where an unreadable settings file is kept when one has to be written over. See
-## `_set_aside`; nothing reads it back, and that is deliberate.
+## `_set_aside`; nothing reads it back, and that is deliberate. Same name as
+## `SaveGame`'s sibling in the same directory and the opposite thing: there the
+## `.bak` is a step in an atomic replacement and is cleared on every successful
+## swap, here it is a keepsake that is written once and then left alone.
 const BACKUP_SUFFIX := ".bak"
 const SECTION := "game"
 const SPEED_KEY := "speed"
@@ -195,11 +198,26 @@ func _open_for_merge() -> ConfigFile:
 
 
 ## Moves an unreadable settings file out of the way so the next write cannot
-## destroy it. True when the file is safely aside and writing is allowed to
-## proceed; false when it could not be moved, in which case the caller writes
-## nothing — a preference this launch fails to remember costs less than a file
-## from a version this one cannot read.
+## destroy it. True when a preserved copy is on disk and writing may proceed;
+## false when it could not be moved, in which case the caller writes nothing — a
+## preference this launch fails to remember costs less than a file from a version
+## this one cannot read.
+##
+## A copy that is already there is never replaced, and it is the *first* one that
+## is worth keeping: it holds the foreign keys this version never understood,
+## while a second corruption is by definition a corruption of a file this version
+## itself wrote and therefore already understands. So the write is allowed through
+## with nothing set aside rather than renaming over the copy that matters.
 func _set_aside() -> bool:
+	var backup_path := SETTINGS_PATH + BACKUP_SUFFIX
+	if FileAccess.file_exists(backup_path):
+		push_warning(
+			(
+				"Settings: %s is unreadable; %s already holds an earlier copy, kept as it is"
+				% [SETTINGS_PATH, backup_path]
+			)
+		)
+		return true
 	var absolute := ProjectSettings.globalize_path(SETTINGS_PATH)
 	var error := DirAccess.rename_absolute(absolute, absolute + BACKUP_SUFFIX)
 	if error != OK:
@@ -211,7 +229,10 @@ func _set_aside() -> bool:
 		)
 		return false
 	push_warning(
-		"Settings: %s was unreadable; kept as %s and written fresh" % [SETTINGS_PATH, BACKUP_SUFFIX]
+		(
+			"Settings: %s was unreadable; kept as %s and rewritten from whatever parsed before the error"
+			% [SETTINGS_PATH, backup_path]
+		)
 	)
 	return true
 
