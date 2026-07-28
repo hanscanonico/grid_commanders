@@ -120,6 +120,18 @@ func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
 		data["version"] = version
 		data["units"] = [{}]
 		assert_ne(SaveCodec.board_error(data, map), "", "an unreadable version is floored")
+	# The turn and the winner are read the same way and were the last two that were not:
+	# `int()` will not take a Dictionary or an Array, and with the entry lists empty there
+	# is nothing before them to intercept a save that never went through `validate`.
+	for named: Variant in [{}, [], "red"]:
+		data = _encoded()
+		data["units"] = []
+		data["current_team"] = named
+		assert_ne(SaveCodec.board_error(data, map), "", "a turn that is not a side is a reason")
+		data = _encoded()
+		data["units"] = []
+		data["winner"] = named
+		assert_ne(SaveCodec.board_error(data, map), "", "and so is a winner that is not one")
 
 
 func test_an_owned_property_off_the_board_is_rejected() -> void:

@@ -223,12 +223,19 @@ func test_a_computer_side_that_does_not_play_is_refused() -> void:
 ## the field would be the same bug in the other direction: version 2's units carried
 ## no dive flag, so whatever a stray key holds there, it is not damage this codec can
 ## claim to have detected.
+##
+## Which is exactly why it must not be *read* either. Unshaped and still coerced, that
+## stray key was the age rule turned into a crash — `bool()` will not take a String — so
+## the save decodes, and the flag version 2 never wrote reads as the surface it was.
 func test_a_shape_rule_does_not_reach_a_save_too_old_for_the_field() -> void:
 	var data := _encoded()
 	data["version"] = 2
 	data.erase("difficulty")
 	(data["units"] as Array)[0]["dived"] = "surfaced"
 	assert_eq(SaveCodec.validate(data), "", "version 2 knew no dive flag to demand a shape of")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded, "nor one to read")
+	assert_false(loaded.state.units[0].dived)
 
 
 ## The other direction of the block rule: version 1 wrote no commanders at all, so

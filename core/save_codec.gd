@@ -251,6 +251,11 @@ static func decode(
 		push_error("SaveCodec: %s" % error)
 		return null
 
+	# Readable, because `validate` refused anything else above. Every read below that is
+	# not unconditional asks it first: a key a save's version never wrote is not that
+	# field, and `validate` deliberately shapes no such key, so coercing one would be the
+	# age rule turned into a crash.
+	var version := _claimed_version(data)
 	var state := GameState.new()
 	state.map = map
 	state.map_path = String(data["map_path"])
@@ -267,8 +272,9 @@ static func decode(
 		state.property_owners[Vector2i(int(entry.x), int(entry.y))] = int(entry.team)
 	for entry in data.get("capture_progress", []):
 		state.capture_progress[Vector2i(int(entry.x), int(entry.y))] = int(entry.points)
-	_decode_commanders(state, data, commander_db)
+	_decode_commanders(state, data, commander_db, version)
 
+	var dive_flags := version >= int(UNIT_KEY_RULES["dived"]["since"])
 	var carrier_indices: Array[int] = []
 	for entry in data["units"]:
 		var type := unit_db.by_id(StringName(String(entry.type)))
@@ -280,7 +286,7 @@ static func decode(
 		unit.fuel = int(entry.fuel)
 		unit.ammo = int(entry.ammo)
 		unit.acted = bool(entry.acted)
-		unit.dived = bool(entry.get("dived", false))
+		unit.dived = dive_flags and bool(entry["dived"])
 		state.units.append(unit)
 		carrier_indices.append(int(entry.get("carrier", NO_CARRIER)))
 
@@ -311,15 +317,20 @@ static func decode(
 	return result
 
 
-## Restores each side's general, meter and running power. Every step falls back
-## to the neutral commander with an empty meter, which is what makes a version-1
-## save — where the whole block is missing — load as the no-commander match it
-## actually was. From version 2 on those fallbacks are unreachable: `validate` has
-## already refused a block missing a side or a field, so a hollow one never gets
-## this far.
+## Restores each side's general, meter and running power. Both sides stay neutral with an
+## empty meter for a save written before the block existed, which is the no-commander
+## match such a save recorded.
+##
+## That is a question about the *version*, not about what the file happens to hold: a
+## version 1 save has no commander block, so whatever sits under that key is not one, and
+## none of the three coercions below is spent on it. `validate` shapes those fields from
+## version 2 up and does not touch them below — reading them anyway is where the age rule
+## would have become a crash, since `bool()` will not take a String.
 static func _decode_commanders(
-	state: GameState, data: Dictionary, commander_db: CommanderDB
+	state: GameState, data: Dictionary, commander_db: CommanderDB, version: int
 ) -> void:
+	if version < int(KEY_RULES["commanders"]["since"]):
+		return
 	var db := commander_db if commander_db != null else CommanderDB.new()
 	var saved: Variant = data.get("commanders", {})
 	if not (saved is Dictionary):
@@ -462,18 +473,9 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	)
 	if error != "":
 		return error
-	# The turn indexes `funds`, which decode fills for GameState.TEAMS and nothing
-	# else, so a turn belonging to a side that does not play is an invalid-key read
-	# the first time the HUD draws it.
-	var turn := int(data.get("current_team", 0))
-	if not GameState.TEAMS.has(turn):
-		return "the save's turn belongs to team %d, which does not play" % turn
-	# Zero is the running match; anything else is the side that won, and every
-	# command refuses while one stands. A winner no side ever was resumes into a
-	# board locked against every move, announcing a victory nobody could have won.
-	var winner := int(data.get("winner", 0))
-	if winner != 0 and not GameState.TEAMS.has(winner):
-		return "the save was won by team %d, which does not play" % winner
+	error = _turn_and_winner_error(data)
+	if error != "":
+		return error
 	# The computer's sides are teams like any other, and the last one this had never
 	# asked: a save handing the AI a side that does not play resumes with a side nobody
 	# plays at all — `Battle` takes the list as written.
@@ -567,6 +569,35 @@ static func _ai_teams_error(data: Dictionary) -> String:
 	for team: Variant in teams as Array:
 		if not _is_shape(team, Shape.NUMBER):
 			return "'ai_teams' is malformed"
+	return ""
+
+
+## "" when the two sides the envelope names could hold what it gives them, else why they
+## could not.
+##
+## Asked as a shape before it is asked as a side, for the reason the version is: `int()`
+## will not take a Dictionary or an Array, so a save that is about to be told what is
+## wrong with it must not be coerced on the way. `validate` guarantees both are numbers
+## for the decode path and refuses in the same words; this is `board_error`'s standalone
+## half of that, since either is public and either may be handed a raw parsed save. An
+## absent one reads as zero exactly as it always has — which is no winner at all, and a
+## turn belonging to nobody.
+##
+## The turn indexes `funds`, which decode fills for GameState.TEAMS and nothing else, so
+## a turn belonging to a side that does not play is an invalid-key read the first time the
+## HUD draws it. Zero is the running match; anything else is the side that won, and every
+## command refuses while one stands, so a winner no side ever was resumes into a board
+## locked against every move, announcing a victory nobody could have won.
+static func _turn_and_winner_error(data: Dictionary) -> String:
+	for key: String in ["current_team", "winner"]:
+		if not _is_shape(data.get(key, 0), int(KEY_RULES[key]["shape"])):
+			return "'%s' is malformed" % key
+	var turn := int(data.get("current_team", 0))
+	if not GameState.TEAMS.has(turn):
+		return "the save's turn belongs to team %d, which does not play" % turn
+	var winner := int(data.get("winner", 0))
+	if winner != 0 and not GameState.TEAMS.has(winner):
+		return "the save was won by team %d, which does not play" % winner
 	return ""
 
 
