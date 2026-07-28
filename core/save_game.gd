@@ -48,9 +48,21 @@ static func save(
 ) -> bool:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
-		push_error("SaveGame: cannot write %s" % path)
+		push_error("SaveGame: cannot write %s (error %d)" % [path, FileAccess.get_open_error()])
 		return false
 	file.store_string(JSON.stringify(SAVE_CODEC_SCRIPT.encode(state, ai_teams, difficulty), "\t"))
+	# Asked twice, and the handle is closed here rather than left to the local going
+	# out of scope, which is what makes the second question askable at all. A write
+	# that runs out of disk is reported by the store once its buffer spills, and the
+	# tail of it only when the handle is flushed shut — so a save that answered
+	# `true` off the store alone was a save the player could lose.
+	var write_error := file.get_error()
+	file.close()
+	if write_error == OK:
+		write_error = file.get_error()
+	if write_error != OK:
+		push_error("SaveGame: failed writing %s (error %d)" % [path, write_error])
+		return false
 	return true
 
 

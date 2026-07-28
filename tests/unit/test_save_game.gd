@@ -77,6 +77,19 @@ func test_roundtrip_preserves_rng_sequence() -> void:
 	)
 
 
+## COM-51. Every unwritable target this platform can stage — a read-only file, a
+## read-only directory, a directory standing where the file should be, a directory
+## that is not there at all — is refused by `FileAccess.open`, so this is the branch
+## a test can reach and it is now guarded rather than merely believed. The other
+## half of the fix is the one no in-process test can induce: a write that fails
+## *after* a successful open, which is what a full disk does, and what the explicit
+## close and error check exist for.
+func test_save_to_an_unwritable_path_reports_failure() -> void:
+	var state := _first_steps_state()
+	assert_false(SaveGame.save(state, [] as Array[int], "user://no_such_dir/save.json"))
+	assert_push_error("cannot write")
+
+
 func test_missing_file_returns_null() -> void:
 	assert_false(SaveGame.has_save(TEST_PATH))
 	assert_null(SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH))
