@@ -119,7 +119,7 @@ are now re-earned from empty, slowing every commander's power cadence. The
 bug-fix pass of 2026-07-24 then runs the opening side's day-1 `begin_turn` under
 its real commander, resupplies passengers aboard a transport at their side's
 turn start, banks power charge for cargo sunk with its transport, and touched
-the planner itself (`docs/difficulty_check.md` §4 lists those changes) — all of
+the planner itself (`docs/difficulty_check.md` §6 lists those changes) — all of
 which shift doctrines that read supply or charge. The standings below are kept
 as the record of what was measured, not a current claim; re-run the matrix
 before quoting them. Only the runner writes these numbers.

@@ -7,15 +7,17 @@
 ;
 ; threat_aversion is the timidity dial, turned the opposite way from Difficult's.
 ; The DF4 ladder found that over-weighting danger is what actually makes this
-; planner weak (0.5 alone loses 88% of its games), and "flinches from danger" is
+; planner weak (0.5 alone loses 88% of its games — docs/difficulty_check.md §6;
+; §4 is the standing ladder), and "flinches from danger" is
 ; exactly the character Easy wants: it hangs back, refuses trades it should take,
 ; and lets the player dictate the fight. advance_threat_tiles is the same
 ; flinch on the advance path, and Easy gets the larger of the two shipped values
 ; because hanging back is its whole character. The remaining weights say the rest —
 ; poor finishing, fears every counter, runs home early, shrugs at marginal plays,
-; over-buys infantry, and never fields an md tank. The tail keeps Normal's
-; remaining combat roster in its existing order, so every facility stays useful
-; without changing Easy's land-priority prefix or buying transports it cannot use.
+; over-buys infantry, and never fields an md tank. The tail appends Normal's
+; non-transport air and sea combat units in their existing order, so an owned
+; airport or port stays useful. It adds no land unit — the land prefix above is
+; Easy's alone — and no transport, which the planner cannot use.
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.2
@@ -27,7 +29,7 @@ step_cost_penalty = 4.0
 retreat_hp = 60
 min_useful_score = 80.0
 advance_score = 1.0
-build_priority = Array[StringName]([&"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter", &"missiles"])
+build_priority = Array[StringName]([&"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter"])
 capture_unit_target = 4
 air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
 air_answer_target = 2

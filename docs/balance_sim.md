@@ -180,8 +180,8 @@ instead of living in a document nobody has open:
 
 - **Low confidence.** Under 50% of a value's games resolved on the board (`rout`
   or `hq`); the rest were settled by the day-cap tiebreak, which
-  `docs/difficulty_check.md` finding (a) showed can turn over on noise and score
-  the known-weaker side. Probe with a longer `--days=` before believing the
+  `docs/difficulty_check.md` §6's superseded finding (a) showed can turn over on
+  noise and score the known-weaker side. Probe with a longer `--days=` before believing the
   ordering. *"Resolved" and "decisive" are deliberately different words here:* a
   day-cap game **has** a winner and counts as decisive, but it was not resolved
   on the board.

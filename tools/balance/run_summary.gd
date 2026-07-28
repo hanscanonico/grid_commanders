@@ -18,8 +18,8 @@ const MAX_SIDE_BIAS_PP := 5.0
 
 ## Below this share of endings resolved *on the board* (rout/hq), a swept value's
 ## win rate is flagged low-confidence: it was mostly settled by the day-cap
-## tiebreak, which docs/difficulty_check.md finding (a) showed can turn over on
-## noise and score the known-weaker side. Plan R2.
+## tiebreak, which docs/difficulty_check.md §6's superseded finding (a) showed
+## can turn over on noise and score the known-weaker side. Plan R2.
 const MIN_RESOLVED_PCT := 50.0
 
 

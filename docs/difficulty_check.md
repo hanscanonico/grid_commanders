@@ -72,16 +72,16 @@ which compares a full AI turn command for command.
     Difficult's ladder-safe `0.1` the advance penalty maxes out at a hundredth of
     a tile and could only break ties, so the tier's headline "refuses a kill
     zone" never once cost it a step. Cost-scaling the advance term instead is not
-    the fix — that is the R2 coward that prior single-capability probes produced.
+    the fix — that is the R2 coward the superseded probes in §6 measured.
     The floor for a live value is ~1.6: below that a healthy unit cannot buy even
     one tile against a full-strength artillery shot (63 of its 100 points), i.e.
     it is inert where nothing is hurt yet.
     `data/ai/hard.tres` ships `2.0` and `easy.tres` `3.0`; §4 measures those
     values in the current ladder.
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
-  could still add damage to. Ships at `0.0`: earlier isolated probes found the
-  bias harmful, while replanning after every command already exposes a wounded
-  target's finishing shot to the next attacker.
+  could still add damage to. Ships at `0.0`: the superseded probes in §6 found
+  the bias harmful in both shapes tried, while replanning after every command
+  already exposes a wounded target's finishing shot to the next attacker.
 - **S3 `build_reactivity` — counter-building.** Re-ranks each affordable combat
   unit by its damage-chart effectiveness against the enemy's actual cost-weighted
   roster, blended over the static `build_priority` list. With no enemy in sight
@@ -117,13 +117,13 @@ planner and the rules disagree.
 | Pairing | Overall | scrimmage | ironworks | Gate |
 |---|---|---|---|---|
 | Normal over Easy | **43.3%** (26/60) | 63.3% | 23.3% | fail |
-| Difficult over Normal | **65.0%** (39/60) | 70.0% | 60.0% | fail |
+| Difficult over Normal | **66.7%** (40/60) | 70.0% | 63.3% | fail |
 
 Zero rejected commands and zero cap stalls across all 120 — the planner and the
 rules never disagreed, which is the correctness half of this run and it is clean.
 
-This run follows the planner correctness fixes listed in the former DF4 record,
-the current `ironworks` map with its mirrored airfields, and the per-seat
+This run follows the planner correctness fixes listed in §6, the current
+`ironworks` map with its mirrored airfields, and the per-seat
 controller correction in the balance harness. It also follows the production
 coverage fix measured here: Easy and Difficult retain their land-priority
 prefixes, then list every non-transport air and sea combat unit. A capability
@@ -140,9 +140,9 @@ and especially on `ironworks`: Normal wins only 7 of 30 there. The intended
 "timid and weaker" Easy profile therefore needs a separate tuning pass.
 
 **(b) Difficult is stronger, but not enough.** It exactly clears 70% on
-`scrimmage`, takes 60% on `ironworks`, and reaches 65% overall. That is a clear
-improvement over the superseded 50% record, but the gate is defined on the
-combined pairing and remains red.
+`scrimmage`, takes 63.3% on `ironworks`, and reaches 66.7% overall. That is a
+clear improvement over the superseded 50% record, but the gate is defined on the
+combined pairing and remains red by 3.3 points.
 
 The two maps still disagree sharply about Easy: Normal takes 63.3% on
 `scrimmage` but only 23.3% on `ironworks`. The report does not license an
@@ -155,9 +155,9 @@ Mean AI planning per turn in the standing run:
 
 | Tier | ms/turn | over |
 |---|---|---|
-| Easy | 90.8 | 1118 turns |
-| Difficult | 71.7 | 1140 turns |
-| Normal | 42.4 | 2259 turns |
+| Easy | 104.3 | 1118 turns |
+| Difficult | 65.8 | 1138 turns |
+| Normal | 42.1 | 2258 turns |
 
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
@@ -170,7 +170,7 @@ What is not established is the ordering the gate exists to prove.
 
 The production defect and its coverage test stay isolated in their own change.
 The next step is a separate tuning ticket and pull request: tune Easy against
-Normal first, then close Difficult's five-point overall gap, changing one
+Normal first, then close Difficult's 3.3-point overall gap, changing one
 profile hypothesis at a time and rerunning the 15-seed gate. No threshold,
 income, vision, damage, luck, map, or harness change is an acceptable substitute
 for a passing profile ladder. A human playtest at Easy and Difficult remains the
@@ -179,3 +179,78 @@ other required read on whether the measured profiles are also fun.
 `make difficulty-check` exits non-zero while the gate is unmet. That is
 deliberate: it is an opt-in release task, kept out of `make verify`, and a red
 result is the honest status of the claim.
+
+## 6. Superseded measurements
+
+**None of this section is a current claim.** §4 is the standing record. These
+numbers are kept only because code comments and other documents were written
+against them and cite the shapes they found; a fixed anchor is better than a
+dangling reference. Every one of them predates the planner, the maps and the
+harness §4 was measured on, and nothing here has been re-scored by estimate —
+`make difficulty-check` is the only thing allowed to write a standing number.
+
+**What changed under them.** The `advance_threat_tiles` split described in §2
+and its rescaling against the HP a unit has left; the threat-map lookup being
+hoisted out of the per-cell attack and advance loops; the bug-fix pass of
+2026-07-24, which gates the threat map's and the focus-fire follow-up's
+who-may-shoot through `AttackRange.can_engage`, retreats a damaged unit only to
+a property that repairs its domain, and plans every committed path with the
+mover's own vision; the charge-meter fix that stopped a team from banking charge
+while its own power is active; the `ironworks` retrofit of 2026-07-21, which
+gave that board a mirrored pair of day-1 airfields (data-only — no `AIProfile`
+weight and no tier `.tres` moved, as D2/D3 require); the per-seat controller
+correction in the balance harness; and the production-coverage fix §4 measures.
+
+**Superseded standing result — 120 matches, 15 seeds, default 20-day cap:**
+
+| Pairing | Overall | scrimmage | ironworks |
+|---|---|---|---|
+| Normal over Easy | 68.3% (41/60) | 90.0% | 46.7% |
+| Difficult over Normal | 50.0% (30/60) | 53.3% | 46.7% |
+
+**Superseded finding (a) — the day-cap tiebreak can turn over on noise.** On
+that run `ironworks` scored the known-weaker Easy even with Normal (46.7%), and
+re-running at `--days=40` did not help (Normal-over-Easy fell to 37.5% there).
+The reading was that on a large city-rich board inside a day cap, both sides
+sprawl and capture at similar rates and the tiebreak (properties, then units,
+then funds) decides on noise. This is the finding
+`tools/balance/run_summary.gd`'s `MIN_RESOLVED_PCT` and `docs/balance_sim.md`'s
+low-confidence reading rule were written against — the threshold flags a value
+whose games mostly ended on the cap rather than on the board, which is a
+standing reading rule regardless of which run first showed it.
+
+**Superseded finding (b) — isolated single-capability probes.** On `scrimmage`,
+60 matches each, against the then-shipped Normal profile; 50% is parity:
+
+| Variant | Win % | Read |
+|---|---|---|
+| control (Normal vs Normal) | 50.0 | sanity check — the harness is unbiased |
+| `threat_aversion` 0.02 / 0.05 / 0.10 | 56.7 / 53.3 / 58.3 | mild but real gain |
+| `threat_aversion` 0.20 | 35.0 | already harmful |
+| `threat_aversion` 0.50 | 11.7 | catastrophic — the R2 coward |
+| `build_reactivity` 0.3 / 0.6 / 1.0 | 50.0 / 53.3 / 55.0 | mild gain |
+| `kill_bonus` 1.8 + `counter_weight` 0.5 | 50.0 | neutral |
+| `threat` 0.1 + `build` 1.0 | 61.7 | best combination found |
+| `focus_fire_bonus` 0.2 / 0.5 / 1.0 | 43.3 / 41.7 / 43.3 | negative |
+
+The 0.5 row is the "lost 88% of its games" that `data/ai/hard.tres` and
+`data/ai/easy.tres` cite for why `threat_aversion` must stay small: the penalty
+is scaled by the exposed unit's cost and the threat total sums every enemy that
+could reach the cell, so above ~0.15 the discount exceeds the value of almost
+any attack and the planner stops attacking. Easy ships that dial turned the
+other way on purpose.
+
+Focus fire measured negative in **both** shapes, which is what
+`ai/ai_controller.gd`'s `_focus_bonus` comment refers to: as an independent
+bonus scaled by follow-up damage (43.3 / 41.7 / 43.3), and reshaped as a
+proportion of the shot's own value capped at doubling it (43.3 / 46.7 / 46.7 /
+45.0) — better, still below parity, and it dragged the best combination from
+61.7% to 46.7%. The capability is kept, gated, unit-tested and set to `0.0`.
+
+**Superseded turn time:**
+
+| Tier | ms/turn | over |
+|---|---|---|
+| Normal | 72.9 | 2310 turns |
+| Difficult | 102.1 | 1160 turns |
+| Easy | 144.3 | 1154 turns |
