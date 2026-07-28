@@ -19,6 +19,12 @@ extends Node
 ## user://save.json.
 
 const SETTINGS_PATH := "user://settings.cfg"
+## Where an unreadable settings file is kept when one has to be written over. See
+## `_set_aside`; nothing reads it back, and that is deliberate. Same name as
+## `SaveGame`'s sibling in the same directory and the opposite thing: there the
+## `.bak` is a step in an atomic replacement and is cleared on every successful
+## swap, here it is a keepsake that is written once and then left alone.
+const BACKUP_SUFFIX := ".bak"
 const SECTION := "game"
 const SPEED_KEY := "speed"
 const BATTLE_ANIMATIONS_KEY := "battle_animations"
@@ -149,8 +155,9 @@ func _load() -> void:
 
 
 func _save() -> void:
-	var config := ConfigFile.new()
-	config.load(SETTINGS_PATH)  # keep any key a later version of the game wrote
+	var config := _open_for_merge()
+	if config == null:
+		return
 	config.set_value(SECTION, SPEED_KEY, String(speed.id))
 	config.set_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
 	var hints := PackedStringArray()
@@ -159,6 +166,75 @@ func _save() -> void:
 	config.set_value(SECTION, HINTS_KEY, hints)
 	if config.save(SETTINGS_PATH) != OK:
 		push_error("Settings: cannot write %s" % SETTINGS_PATH)
+
+
+## The file, opened so that writing this version's keys back cannot drop anyone
+## else's. Null means write nothing at all.
+##
+## Every write here is a *merge*: the file is read first so a key a later version of
+## the game wrote survives a save by this one. That makes the read's answer
+## load-bearing, and its three cases genuinely different (COM-59) — which is why
+## both writers ask this rather than each spelling out a `load` whose result is easy
+## to drop on the floor, as both of them did.
+##
+## A file that parses is merged into. A file that is simply *absent* is the ordinary
+## first launch: nothing to keep, and a fresh one is exactly right. A file that is
+## there and *unreadable* is the case that used to be destroyed in silence — the
+## config came back holding only whatever parsed before the error, and the save
+## rewrote the file from that, discarding precisely the foreign keys the read exists
+## to preserve. It is now set aside first, so the preference still persists and what
+## could not be read is still on disk for a person to look at.
+##
+## Deliberately not the save slot's treatment. `SaveGame` recovers from its backup on
+## *read*, because a lost match is unrecoverable; a device preference is a speed and
+## two flags, so nothing reads this copy back and it exists for a human.
+func _open_for_merge() -> ConfigFile:
+	var config := ConfigFile.new()
+	if config.load(SETTINGS_PATH) == OK or not FileAccess.file_exists(SETTINGS_PATH):
+		return config
+	if not _set_aside():
+		return null  # refuse to write over what could not be preserved
+	return config
+
+
+## Moves an unreadable settings file out of the way so the next write cannot
+## destroy it. True when a preserved copy is on disk and writing may proceed;
+## false when it could not be moved, in which case the caller writes nothing — a
+## preference this launch fails to remember costs less than a file from a version
+## this one cannot read.
+##
+## A copy that is already there is never replaced, and it is the *first* one that
+## is worth keeping: it holds the foreign keys this version never understood,
+## while a second corruption is by definition a corruption of a file this version
+## itself wrote and therefore already understands. So the write is allowed through
+## with nothing set aside rather than renaming over the copy that matters.
+func _set_aside() -> bool:
+	var backup_path := SETTINGS_PATH + BACKUP_SUFFIX
+	if FileAccess.file_exists(backup_path):
+		push_warning(
+			(
+				"Settings: %s is unreadable; %s already holds an earlier copy, kept as it is"
+				% [SETTINGS_PATH, backup_path]
+			)
+		)
+		return true
+	var absolute := ProjectSettings.globalize_path(SETTINGS_PATH)
+	var error := DirAccess.rename_absolute(absolute, absolute + BACKUP_SUFFIX)
+	if error != OK:
+		push_error(
+			(
+				"Settings: %s is unreadable and could not be set aside (error %d); leaving it alone"
+				% [SETTINGS_PATH, error]
+			)
+		)
+		return false
+	push_warning(
+		(
+			"Settings: %s was unreadable; kept as %s and rewritten from whatever parsed before the error"
+			% [SETTINGS_PATH, backup_path]
+		)
+	)
+	return true
 
 
 func _apply_cmdline() -> void:
@@ -194,8 +270,11 @@ func _apply_cmdline() -> void:
 			# the in-memory value, and a full save would persist that launch-only
 			# override — the exact thing those flags promise never to do.
 			retired_hints = []
-			var config := ConfigFile.new()
-			config.load(SETTINGS_PATH)  # keep every other key as the file has it
+			# Through the same merge as _save, and for the same reason: this writes
+			# one key and must not cost the file the others.
+			var config := _open_for_merge()
+			if config == null:
+				continue
 			config.set_value(SECTION, HINTS_KEY, PackedStringArray())
 			if config.save(SETTINGS_PATH) != OK:
 				push_error("Settings: cannot write %s" % SETTINGS_PATH)
