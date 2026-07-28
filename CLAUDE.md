@@ -218,6 +218,11 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   forward — the plan artifacts track which milestones are done and what each one owes.
   Scope creep is the named top risk.
 - **Balance numbers live in `data/`.** Don't hardcode stats you could put in a `.tres`.
+- **A paragraph defending a workaround means the code is wrong.** If you need to write one to
+  explain or justify an implementation, treat that as the signal — don't document around an
+  avoidable design problem. Fix the underlying code so the implementation is straightforward and
+  idiomatic and needs no lengthy justification. A short comment noting a genuine constraint is
+  fine; a long defence of unusual code is a prompt to reconsider and simplify.
 - **Don't hand-edit** `.import` files or the binary/UID bits of `.tscn`/`.tres` unless you know
   exactly what you're doing — let Godot regenerate them. Do read `.tscn`/`.tres` to understand a
   scene, and prefer editing resource *data* over scene graph plumbing.
