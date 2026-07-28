@@ -58,6 +58,9 @@ class Outcome:
 	## The team that won, decided or scored; 0 only when every tiebreak measure
 	## ties, or when the command cap tripped.
 	var winner := 0
+	## How the match ended — see `termination()` for the four played outcomes.
+	## `invalid_map` and `invalid_planners` are the two refusals instead: the
+	## match never started, so `state` is null and no other field is meaningful.
 	var termination := ""
 	var day_ended := 0
 	var commands := 0

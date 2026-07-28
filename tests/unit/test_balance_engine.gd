@@ -143,6 +143,19 @@ func test_a_match_refuses_one_controller_shared_between_teams() -> void:
 	)
 
 
+func test_a_match_refuses_a_seat_with_no_planner_of_its_own() -> void:
+	for missing: int in [1, 2]:
+		var setup := _setup(42)
+		setup.planners.erase(missing)
+		var outcome := BalanceMatchEngine.play(setup)
+		assert_eq(
+			outcome.termination,
+			"invalid_planners",
+			"team %d has no controller, so there is no match to play" % missing
+		)
+		assert_null(outcome.state, "a refused match never built a board")
+
+
 func test_the_planner_never_proposes_an_illegal_command() -> void:
 	for seed_val in [7, 21, 404]:
 		var outcome := BalanceMatchEngine.play(_setup(seed_val))
