@@ -162,6 +162,9 @@ func _expect_guard(guard: Control, team: int) -> String:
 	for action in ["Review units", "End anyway"]:
 		if not copy.contains(action):
 			return "ready-unit guard has no '%s' action" % action
+	var legend := ControlHints.legend_for(ControlHints.END_TURN_GUARD)
+	if not _control_text(_battle.view.hud_top).contains(legend):
+		return "the top bar does not print the guard's own legend '%s'" % legend
 	return ""
 
 

@@ -27,6 +27,7 @@ enum State {
 	AI_TURN,
 	HANDOFF,
 	INFO,
+	CONFIRM,
 }
 
 ## Which key legend the top bar prints in each state. The mapping is Battle's
@@ -44,6 +45,7 @@ const STATE_CONTEXT: Dictionary = {
 	State.AI_TURN: ControlHints.AI_TURN,
 	State.HANDOFF: ControlHints.HANDOFF,
 	State.INFO: ControlHints.INFO,
+	State.CONFIRM: ControlHints.END_TURN_GUARD,
 }
 
 const DIR_ACTIONS: Array = [
@@ -366,8 +368,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _is_confirm_press(event):
 			confirm_at(cursor_cell)
 		return
-	if state in [State.ANIMATING, State.MENU, State.VICTORY, State.INFO]:
-		return  # the menu and info sheet handle their own input; the rest block it
+	if state in [State.ANIMATING, State.MENU, State.CONFIRM, State.VICTORY, State.INFO]:
+		return  # the menu, guard and info sheet handle their own input; the rest block it
 	if _zoom.handle_input(event):
 		return
 	if event is InputEventMouseMotion:
@@ -694,7 +696,7 @@ func _handle_map_action(action: StringName) -> void:
 func _request_end_turn() -> void:
 	var ready := _ready_units()
 	if not ready.is_empty():
-		state = State.MENU
+		state = State.CONFIRM
 		end_turn_guard.open(game.day, ready, view.identity.theme(game.current_team))
 		return
 	_commit_end_turn()

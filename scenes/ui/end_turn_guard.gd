@@ -59,18 +59,16 @@ func close() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed(&"cursor_up", true):
+	if _pressed(event, &"cursor_up", &"ui_up"):
 		get_viewport().set_input_as_handled()
-		if not _scroll_list(-1):
-			_step(-1)
-	elif event.is_action_pressed(&"cursor_down", true):
+		_scroll_list(-1)
+	elif _pressed(event, &"cursor_down", &"ui_down"):
 		get_viewport().set_input_as_handled()
-		if not _scroll_list(1):
-			_step(1)
-	elif event.is_action_pressed(&"cursor_left", true):
+		_scroll_list(1)
+	elif _pressed(event, &"cursor_left", &"ui_left"):
 		get_viewport().set_input_as_handled()
 		_step(-1)
-	elif event.is_action_pressed(&"cursor_right", true):
+	elif _pressed(event, &"cursor_right", &"ui_right"):
 		get_viewport().set_input_as_handled()
 		_step(1)
 	elif event.is_action_pressed(&"confirm"):
@@ -91,6 +89,12 @@ func _choose(end_anyway: bool) -> void:
 		review_requested.emit()
 
 
+## The board's own direction actions carry keyboard events only; a pad's d-pad
+## reaches the tree as Godot's built-in `ui_*` pair, so the guard answers both.
+func _pressed(event: InputEvent, action: StringName, ui_action: StringName) -> bool:
+	return event.is_action_pressed(action, true) or event.is_action_pressed(ui_action, true)
+
+
 ## Native UI focus navigation moves between the two buttons on its own and marks
 ## those presses handled, so the focused button — never a parallel index — is
 ## where a step starts.
@@ -103,15 +107,11 @@ func _step(delta: int) -> void:
 	_buttons[wrapi(from + delta, 0, _buttons.size())].grab_focus()
 
 
-## Scrolls the ready-unit list a line at a time so a keyboard or controller can
-## read past the modal's bounded band. Returns false when the list fits, leaving
-## up/down to move between the two actions.
-func _scroll_list(delta: int) -> bool:
-	var bar := _list.get_v_scroll_bar()
-	if bar.max_value <= bar.page:
-		return false
+## Scrolls the ready-unit list a line at a time, so every name is reachable
+## without a mouse. ScrollContainer clamps the value, so a list that already
+## fits — or an edge — simply does not move; picking an action is left/right's.
+func _scroll_list(delta: int) -> void:
 	_list.scroll_vertical += delta * maxi(_unit_label.get_line_height(), 1)
-	return true
 
 
 func _build() -> void:
