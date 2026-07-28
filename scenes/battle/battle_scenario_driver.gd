@@ -22,6 +22,11 @@ const DEMO_ARG := "--demo"
 
 ## Demos fix the seed so a capture of the same scenario is the same frame.
 const DEMO_SEED := 2026
+## The two units `stage_rout` plays the last shot of the match between, as the
+## default board parks them: Blue's south-east survivor and the Red tank in range
+## of it without moving.
+const ROUT_LAST_ENEMY_CELL := Vector2i(9, 8)
+const ROUT_ATTACKER_CELL := Vector2i(8, 8)
 ## Where on the cut-in's clock the `cutin` capture is posed: late in the
 ## defender's impact, so the plates are up, the HP has ticked, and the damage
 ## callout is at full. Any moment would be byte-stable — the cut-in is a pure
@@ -162,9 +167,10 @@ func run() -> void:
 	if not requested():
 		return
 	# Demos and captures drive the board, so neither the handoff panel nor the
-	# day-1 banner may sit on top of the frame.
+	# day-1 banner may sit on top, except the flow whose subject is that banner.
 	_battle.leave_handoff()
-	_battle.hide_banner()
+	if _demo != "turn_banner_build_attempt":
+		_battle.hide_banner()
 	if _demo != "":
 		await _run_demo(_demo)
 	elif _select_cell.x >= 0:
@@ -289,6 +295,10 @@ func _run_demo(mode: String) -> void:
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
+		"turn_banner_build_attempt", "outcome_mash_guard":
+			var transition_error := await BattleTransitionScenario.new(_battle).run(mode)
+			if transition_error != "":
+				_fail(transition_error)
 		"powermenu":
 			await _run_power_menu_demo()
 		CAPTURE_POWER_MODE:
@@ -1141,29 +1151,37 @@ func _stage_commander_info() -> void:
 	await _until_state(Battle.State.INFO)
 
 
-## Leaves Blue one nearly-dead unit, then wins through the ordinary
-## select -> Fire flow so the real victory handler runs. `with_commander` gives
-## Red a general first, so the victory lockup is fronted by a portrait.
+## Culls Blue to one nearly-dead unit and kills it through the ordinary
+## select -> Fire flow, so every flow that needs a win reaches VICTORY the way a
+## player does. Shared rather than copied: both call sites are pinned to where
+## the default board parks these two units, and a second copy would let a board
+## edit break one acceptance flow while the other kept passing.
+static func stage_rout(battle: Battle) -> void:
+	for unit in battle.game.units.duplicate():
+		if unit.team == 2 and unit.cell != ROUT_LAST_ENEMY_CELL:
+			battle.game.remove_unit(unit)
+	# The sim was edited behind the scene's back, so the sprites need resyncing:
+	# drop the ones whose units are gone, then redraw the survivor.
+	battle.view.sync_sprites()
+	var last_blue := battle.game.unit_at(ROUT_LAST_ENEMY_CELL)
+	last_blue.hp = 1
+	battle.view.refresh_sprite(last_blue)
+	battle.confirm_at(ROUT_ATTACKER_CELL)  # select the red tank
+	battle.confirm_at(ROUT_ATTACKER_CELL)  # fire in place
+	await until_state_of(battle, Battle.State.MENU)
+	battle.action_menu.choose(&"fire")
+	await until_state_of(battle, Battle.State.TARGETING)
+	battle.confirm_at(battle.cursor_cell)  # kill the last blue unit -> rout
+	await until_state_of(battle, Battle.State.VICTORY)
+
+
+## The staged rout, dressed for a capture: `with_commander` gives Red a general
+## first, so the victory lockup is fronted by a portrait.
 func _run_victory_demo(with_commander: bool = false) -> void:
 	if with_commander:
 		_battle.game.set_commander(1, _battle.commander_db.by_id(&"viktor_draeg"))
 		_battle.view.restage_identity()  # so the win lockup reads the winner's faction, not First Army
-	for unit in _battle.game.units.duplicate():
-		if unit.team == 2 and unit.cell != Vector2i(9, 8):
-			_battle.game.remove_unit(unit)
-	# The sim was edited behind the scene's back, so the sprites need resyncing:
-	# drop the ones whose units are gone, then redraw the survivor.
-	_battle.view.sync_sprites()
-	var last_blue := _battle.game.unit_at(Vector2i(9, 8))
-	last_blue.hp = 1
-	_battle.view.refresh_sprite(last_blue)
-	_battle.confirm_at(Vector2i(8, 8))  # select the red tank
-	_battle.confirm_at(Vector2i(8, 8))  # fire in place
-	await _until_state(Battle.State.MENU)
-	_battle.action_menu.choose(&"fire")
-	await _until_state(Battle.State.TARGETING)
-	_battle.confirm_at(_battle.cursor_cell)  # kill the last blue unit -> rout
-	await _until_state(Battle.State.VICTORY)
+	await stage_rout(_battle)
 
 
 ## Parks on a unit and previews its movement out to the farthest cell it could
@@ -1188,5 +1206,9 @@ func _demo_select(cell: Vector2i) -> void:
 ## Scenarios advance by waiting on the scene's own state machine rather than a
 ## fixed frame count, so they stay correct when animation timings change.
 func _until_state(wanted: Battle.State) -> void:
-	while _battle.state != wanted:
-		await _battle.get_tree().process_frame
+	await until_state_of(_battle, wanted)
+
+
+static func until_state_of(battle: Battle, wanted: Battle.State) -> void:
+	while battle.state != wanted:
+		await battle.get_tree().process_frame

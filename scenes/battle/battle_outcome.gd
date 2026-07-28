@@ -15,6 +15,10 @@ extends RefCounted
 ## and is handed the victory screen's own nodes at build time like BattleAnimator's
 ## banner nodes — this reporter draws on them and nothing else does.
 
+## Buffered cut-in presses die here before either outcome action can own them.
+## Fixed rather than tier-scaled: this is an input safety window, not theatre.
+const INPUT_GUARD_MS := 500
+
 var _battle: Battle
 var victory_screen: PanelContainer
 var victory_portrait: TextureRect
@@ -22,6 +26,7 @@ var victory_faction_label: Label
 var victory_label: Label
 var victory_sub_label: Label
 var rematch_button: Button
+var menu_button: Button
 
 ## True for a `make balance-watch` run: both sides are the computer's and the
 ## match came from a Balance Lab spec. Makes the scene announce its result and
@@ -36,6 +41,8 @@ var _watch_days_cap := BalanceMatchEngine.DEFAULT_DAYS
 ## BalanceMatchEngine.tiebreak instead — the harness's own authority, so the
 ## window and the CSV row agree — and that scored winner is not sim state.
 var _result_winner := 0
+var _input_guard_until_ms := 0
+var _action_armed := false
 
 
 func _init(battle: Battle) -> void:
@@ -81,9 +88,53 @@ func enter_victory() -> void:
 	_bind_victory_commander()
 	victory_screen.show()
 	victory_screen.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	rematch_button.grab_focus()
+	_action_armed = false
+	_input_guard_until_ms = Time.get_ticks_msec() + INPUT_GUARD_MS
+	rematch_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_release_mouse_guard()
+	var focused := victory_screen.get_viewport().gui_get_focus_owner()
+	if focused != null:
+		focused.release_focus()
 	if _watching:
 		_report_watched_result()
+
+
+func _release_mouse_guard() -> void:
+	await _battle.get_tree().create_timer(float(INPUT_GUARD_MS) / 1000.0).timeout
+	if _battle.state != Battle.State.VICTORY:
+		return
+	rematch_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+## Claims transition presses before Battle's board flow sees them. During the
+## guard they do nothing at all; afterwards the first fresh press only reveals
+## the visible focus state and cannot activate an action.
+func consume_input(event: InputEvent) -> bool:
+	if not TransitionInput.is_press(event):
+		return false
+	if Time.get_ticks_msec() < _input_guard_until_ms:
+		return true
+	if not _action_armed:
+		_action_armed = true
+		rematch_button.grab_focus()
+		return true
+	return false
+
+
+## Mouse presses reach a Button before Battle's unhandled-input seam. Both
+## buttons ask here before leaving: an early click is swallowed and unfocused;
+## the first later click highlights its target, and only a subsequent press acts.
+func accepts_action(button: Button) -> bool:
+	if Time.get_ticks_msec() < _input_guard_until_ms:
+		button.release_focus()
+		return false
+	if not _action_armed:
+		_action_armed = true
+		button.grab_focus()
+		return false
+	return true
 
 
 ## The winner lockup — "Verdant League wins!" — or "Draw" for the one case with

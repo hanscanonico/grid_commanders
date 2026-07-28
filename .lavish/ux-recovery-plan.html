@@ -469,7 +469,7 @@
 
           <tr class="gc-issue-row" data-sev="high">
             <td class="gc-mono font-black">U-11</td>
-            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-verified">VERIFIED</span></td>
+            <td><span class="badge badge-warning badge-sm">High</span> <span class="gc-inflight">SHIPPED</span></td>
             <td class="gc-src">FC H-04<br>NP B11 · A6</td>
             <td>Transition boundaries mishandle input in both directions. The day banner plays during the
               ANIMATING state and <em>drops</em> every press — the game elsewhere trains "any key skips", so
@@ -478,7 +478,14 @@
               focused, so one buffered press from a mashed cut-in silently reloads the entire match.</td>
             <td>One convention everywhere (see D3): a press during a banner skips its blocking beat; no
               interactive menu may open beneath a banner or cut-in; the outcome panel swallows input for
-              ~0.5s and takes no default focus, so the first press only highlights.</td>
+              ~0.5s and takes no default focus, so the first press only highlights.
+              <br><em>Shipped (COM-15):</em> every banner (turn, save, speed, ambush, live power) is an
+              awaited blocking beat, and <code>scenes/common/transition_input.gd</code> is the one answer to
+              "was that a press?" both callers ask — <code>Battle</code> retires the visible banner before its
+              board flow sees the event, and <code>battle_outcome.gd</code> swallows presses and clicks for
+              <code>INPUT_GUARD_MS</code> with no default focus, arming an action only on the next press.
+              Presentation-only: nothing in <code>core/</code> or <code>ai/</code> changed. Locked by the
+              <code>turn_banner_build_attempt</code> and <code>outcome_mash_guard</code> scenarios below.</td>
           </tr>
 
           <tr class="gc-issue-row" data-sev="high">

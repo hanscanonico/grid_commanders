@@ -106,8 +106,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   named follow-up (it is also the in-battle info sheet, so restyling it moves commander selection
   too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
-  slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`) and the
-  end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`) are shipped. D1:
+  slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
+  end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`) and the transition-input
+  convention (COM-15/U-11) are shipped. D3 is that convention and it has one authority:
+  `scenes/common/transition_input.gd` (`TransitionInput`) answers "was that a press?" for every
+  boundary — a banner is an awaited blocking beat any press skips, no interactive menu may sit
+  under a banner or cut-in, and the victory lockup (`scenes/battle/battle_outcome.gd`) opens
+  unfocused and eats input for `INPUT_GUARD_MS` so a buffered press cannot restart a match. D1:
   everything in it is presentation-only, and tutorial state is a device preference
   (`user://settings.cfg`, never the match request, never a save). D6: the tutorial
   owns no rule and observes rather than instruments — steps retire off existing `EventBus`
@@ -215,7 +220,9 @@ Follow the official Godot GDScript style guide. Key points:
   argument-taking so it could be tested at all: `MatchRequest` and `CmdArgs` under
   `scenes/common/` (the flag grammar every `make smoke` scenario and Balance Lab row is launched
   with), and `MatchConfig`'s staging, which is reachable without a scene and is where `take()`
-  clearing is held.
+  clearing is held. `TransitionInput` joins them on the same terms: a pure static answer over an
+  `InputEvent`, so the boundary convention every banner and the victory lockup obey is checked
+  without a scene.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 

@@ -74,17 +74,17 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	elif command is CaptureCommand:
 		await _present_capture(command as CaptureCommand, watched_move, animate_path)
 	elif command is JoinCommand:
-		_present_join(command as JoinCommand, join_target, watched_move)
+		await _present_join(command as JoinCommand, join_target, watched_move)
 	elif command is PowerCommand:
-		_present_power(command as PowerCommand)
+		await _present_power(command as PowerCommand)
 	elif command is BuildCommand:
 		_present_build(command as BuildCommand)
 	elif command is DropCommand:
-		_present_move(command, mover, watched_move)
+		await _present_move(command, mover, watched_move)
 		if drop_passenger != null:
 			_battle.view.refresh_sprite(drop_passenger)
 	elif mover != null:
-		_present_move(command, mover, watched_move)
+		await _present_move(command, mover, watched_move)
 
 	# Combat, powers, joins, supply, transport changes, and turn-start upkeep can
 	# all touch more sprites than the acting unit names. One final reconciliation
@@ -100,7 +100,7 @@ func _present_attack(
 	command: AttackCommand, target: Unit, watched: bool, animate_path: bool
 ) -> void:
 	if command.ambushed:
-		_settle_move(command, command.unit, watched)
+		await _settle_move(command, command.unit, watched)
 		return
 	if animate_path and (watched or _battle.perspective.can_see_cell(command.target_cell)):
 		_battle.set_cursor_cell(command.target_cell)
@@ -115,19 +115,19 @@ func _present_capture(command: CaptureCommand, watched: bool, animate_path: bool
 	if command.result != null and command.result.captured:
 		EventBus.property_captured.emit(dest, command.unit.team)
 		_battle.view.repaint_property(dest)
-	_settle_move(command, command.unit, watched)
+	await _settle_move(command, command.unit, watched)
 
 
 func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:
 	if watched:
-		_battle.animator.animate_join(command, command.unit, target)
+		await _battle.animator.animate_join(command, command.unit, target)
 	else:
 		_battle.view.refresh_sprite(command.unit)
 
 
 func _present_power(command: PowerCommand) -> void:
 	Sfx.play(&"fanfare")
-	_battle.animator.show_power_banner(command.commander, command.team)
+	await _battle.animator.show_power_banner(command.commander, command.team)
 
 
 func _present_build(command: BuildCommand) -> void:
@@ -137,14 +137,14 @@ func _present_build(command: BuildCommand) -> void:
 
 
 func _present_move(command: Command, unit: Unit, watched: bool) -> void:
-	_settle_move(command, unit, watched)
+	await _settle_move(command, unit, watched)
 
 
 ## A watched move gets the shared ambush cue; a fogged move is reconciled in
 ## silence so neither the banner nor a cursor pan reveals it.
 func _settle_move(command: Command, unit: Unit, watched: bool) -> void:
 	if watched:
-		_battle.animator.settle_move(command, unit)
+		await _battle.animator.settle_move(command, unit)
 	else:
 		_battle.view.refresh_sprite(unit)
 

@@ -144,4 +144,13 @@ max-public-methods: 21
 # scenes/battle/battle_feedback_scenario.gd, and what stayed here is the
 # four-line dispatch arm that reaches them. COM-94's cut-in split is still the one
 # that is due. The driver sits at exactly 1197.
-max-file-lines: 1197
+#
+# 1197 -> 1214, the scenario driver's an eighth time, for COM-15: the rout every
+# victory flow stages was copied into scenes/battle/battle_transition_scenario.gd
+# for `outcome_mash_guard`, and two copies pinned to the same board cells means a
+# unit moving on the default map breaks one acceptance flow while the other keeps
+# passing. `stage_rout` is now the one staging both call sites reach, so the raise
+# buys a deletion: the transition scenario lost nineteen lines to the driver's
+# seventeen. COM-94's cut-in split is still the one that is due. The driver sits
+# at exactly 1214.
+max-file-lines: 1214

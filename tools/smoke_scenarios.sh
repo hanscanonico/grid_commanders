@@ -183,10 +183,18 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # which is the acceptance criterion a still frame cannot show — a hint retires
 # when the player performs it, and a strip stuck on SELECT photographs just as
 # well as one that advanced.
+#
+# The transition pair is COM-15's two-sided state-boundary gate. The banner mode
+# deliberately keeps day one's card: an attempted build may only skip that beat,
+# never open its menu underneath, and the next press opens production on the
+# clear board. The outcome mode wins through a real attack, sends a buffered
+# Enter into the new lockup, waits out its short mash guard, and proves the next
+# fresh press highlights an action without activating it.
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
 	rejected_confirm enemy_range_preview end_turn_ready_units
+	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish

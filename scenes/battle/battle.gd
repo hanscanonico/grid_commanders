@@ -203,8 +203,8 @@ func _ready() -> void:
 	end_turn_guard.review_requested.connect(_review_ready_units)
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
 	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
-	rematch_button.pressed.connect(_exit.rematch)
-	menu_button.pressed.connect(_exit.to_main_menu)
+	rematch_button.pressed.connect(_request_rematch)
+	menu_button.pressed.connect(_request_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view)
@@ -284,6 +284,15 @@ func hide_banner() -> void:
 	animator.hide_banner()
 
 
+## Status banners use the same blocking/skip convention as the day and ambush
+## cards. Public because BattleExit owns the save result text it presents.
+func present_banner(text: String) -> void:
+	state = State.ANIMATING
+	await animator.show_banner(text)
+	if state == State.ANIMATING:
+		state = State.IDLE
+
+
 ## Hands the view the nodes it draws on. Assignment rather than a constructor
 ## argument list keeps the dependency one-way: the view never learns what a
 ## Battle is.
@@ -344,6 +353,7 @@ func _build_outcome() -> BattleOutcome:
 	built.victory_label = victory_label
 	built.victory_sub_label = victory_sub_label
 	built.rematch_button = rematch_button
+	built.menu_button = menu_button
 	return built
 
 
@@ -358,6 +368,9 @@ func _is_confirm_press(event: InputEvent) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if animator.consume_banner_skip(event):
+		get_viewport().set_input_as_handled()
+		return
 	if state == State.HANDOFF:
 		# Only "I'm ready" gets through while the device is being passed over.
 		if _is_confirm_press(event):
@@ -367,6 +380,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		# The computer's turn refuses play, but it says so rather than going quiet.
 		if _is_confirm_press(event):
 			confirm_at(cursor_cell)
+		return
+	if state == State.VICTORY:
+		if _outcome.consume_input(event):
+			get_viewport().set_input_as_handled()
 		return
 	if state in [State.ANIMATING, State.MENU, State.CONFIRM, State.VICTORY, State.INFO]:
 		return  # the menu, guard and info sheet handle their own input; the rest block it
@@ -674,7 +691,7 @@ func _handle_map_action(action: StringName) -> void:
 		# animation already obeys it. The banner confirms it the way Save does:
 		# the setting is otherwise invisible until something moves.
 		Settings.set_speed(GameSpeed.next(Settings.speed.id).id)
-		animator.show_banner("Speed: %s" % Settings.speed.display_name)
+		present_banner("Speed: %s" % Settings.speed.display_name)
 		return
 	if action == &"save":
 		_exit.save_match()
@@ -746,13 +763,17 @@ func _fire_command_power() -> void:
 	var command := PowerCommand.new()
 	if game.current_team in ai_teams or state not in [State.IDLE, State.MENU]:
 		return
+	# A power may be fired from the HUD while a unit menu is open. Close that
+	# interactive layer before the activation card owns the screen.
+	action_menu.close()
+	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
+		state = State.IDLE
 		return
 	# A power can change movement, vision and HP at once, so the whole board is
 	# redrawn, and the selection — plus any menu the HUD button fired over, whose
 	# rows would otherwise act on it — belongs to rules that no longer apply.
-	action_menu.close()
 	_clear_selection(false)
 	conclude_command(receipt)
 
@@ -761,6 +782,16 @@ func _fire_command_power() -> void:
 ## runner reaches the same terminal flow as a human command.
 func enter_victory() -> void:
 	_outcome.enter_victory()
+
+
+func _request_rematch() -> void:
+	if _outcome.accepts_action(rematch_button):
+		_exit.rematch()
+
+
+func _request_main_menu() -> void:
+	if _outcome.accepts_action(menu_button):
+		_exit.to_main_menu()
 
 
 ## A production property of ours standing empty. Which terrains those are is the
@@ -832,11 +863,16 @@ func _begin_turn() -> void:
 	if _outcome.end_watch_on_day_cap():
 		return
 	Sfx.play(&"fanfare", -8.0)
-	animator.show_banner("Day %d - %s" % [game.day, view.identity.display_name(game.current_team)])
+	state = State.ANIMATING
 	var homes := game.properties_of(game.current_team)
 	if not homes.is_empty():
 		set_cursor_cell(homes[0])
 	EventBus.turn_started.emit(game.current_team, game.day)
+	await animator.show_banner(
+		"Day %d - %s" % [game.day, view.identity.display_name(game.current_team)]
+	)
+	if state != State.ANIMATING:
+		return
 	if game.current_team in ai_teams:
 		state = State.AI_TURN
 		_ai_runner.run()
