@@ -120,6 +120,23 @@ func test_a_successful_save_leaves_no_temp_behind() -> void:
 	assert_false(FileAccess.file_exists(TEMP_PATH), "the temp is renamed over the slot, not left")
 
 
+## COM-51. Every save but a match's first one renames over a slot that is already
+## there, which is the branch the swap exists for and the one a save-once test never
+## reaches: were it to refuse an occupied destination, only the first save of a match
+## would answer `true`.
+func test_a_later_save_replaces_the_one_before_it() -> void:
+	var state := _first_steps_state()
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	state.day = 7
+	state.funds[1] = 8000
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH), "saving over a slot works")
+	assert_false(FileAccess.file_exists(TEMP_PATH))
+	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.day, 7, "the slot holds the later save, whole")
+	assert_eq(loaded.state.funds[1], 8000)
+
+
 func test_missing_file_returns_null() -> void:
 	assert_false(SaveGame.has_save(TEST_PATH))
 	assert_null(SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH))

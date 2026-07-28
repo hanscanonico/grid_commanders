@@ -79,6 +79,10 @@ static func save(
 	if write_error == OK:
 		write_error = file.get_error()
 	if not stored or write_error != OK:
+		# A short write reports itself only through `stored`, leaving the handle's error
+		# at OK — so the diagnostic would otherwise blame the failure on success.
+		if write_error == OK:
+			write_error = ERR_FILE_CANT_WRITE
 		push_error("SaveGame: failed writing %s (error %d)" % [temp_path, write_error])
 		_discard(temp_path)
 		return false
