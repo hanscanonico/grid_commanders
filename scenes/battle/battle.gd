@@ -69,6 +69,7 @@ const DIR_ACTIONS: Array = [
 @onready var handoff_label: Label = %HandoffLabel
 @onready var handoff_button: Button = %HandoffButton
 @onready var commander_info_sheet: CommanderInfoSheet = %CommanderInfoSheet
+@onready var action_feedback: ActionFeedback = %ActionFeedback
 
 var db: TerrainDB
 var unit_db: UnitDB
@@ -352,6 +353,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed(&"confirm") or clicked:
 			leave_handoff()
 		return
+	if state == State.AI_TURN:
+		var clicked := (
+			event is InputEventMouseButton
+			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
+			and (event as InputEventMouseButton).pressed
+		)
+		if event.is_action_pressed(&"confirm") or clicked:
+			confirm_at(cursor_cell)
+		return
 	if state in [State.ANIMATING, State.MENU, State.VICTORY, State.AI_TURN, State.INFO]:
 		return  # the menu and info sheet handle their own input; the rest block it
 	if _zoom.handle_input(event):
@@ -392,8 +402,19 @@ func confirm_at(cell: Vector2i) -> void:
 	match state:
 		State.IDLE:
 			var unit := perspective.visible_unit_at(cell)
-			if unit != null and unit.team == game.current_team and not unit.acted:
-				_select(unit)
+			if unit != null and unit.team == game.current_team:
+				if unit.acted:
+					_reject(
+						(
+							"Ready next day."
+							if action_feedback.was_built_this_turn(unit)
+							else "Already acted."
+						),
+						cell
+					)
+					_enter_preview(unit)
+				else:
+					_select(unit)
 			elif _is_own_empty_factory(cell):
 				_open_build_menu(cell)
 			elif unit != null and perspective.can_see_unit(unit):
@@ -410,6 +431,16 @@ func confirm_at(cell: Vector2i) -> void:
 			elif unit.team == game.current_team and not unit.acted:
 				_clear_preview()
 				_select(unit)  # intel never blocks play — a ready unit still selects
+			elif unit.team == game.current_team:
+				_reject(
+					(
+						"Ready next day."
+						if action_feedback.was_built_this_turn(unit)
+						else "Already acted."
+					),
+					cell
+				)
+				_enter_preview(unit)
 			else:
 				_enter_preview(unit)  # a visible other unit: switch the preview to it
 		State.UNIT_SELECTED:
@@ -425,12 +456,20 @@ func confirm_at(cell: Vector2i) -> void:
 					_pending_special_actions = special
 					planned_path = move_range.path_to(cell)
 					_animate_move()
+				else:
+					_reject("Occupied.", cell)
 		State.TARGETING:
 			if cell in _attack_targets:
 				_execute_attack(cell)
 		State.DROP_TARGETING:
 			if _drop_option != null and cell in _drop_option.cells:
 				_execute_drop(cell)
+		State.AI_TURN:
+			_reject("CPU turn.", cell)
+
+
+func _reject(reason: String, cell: Vector2i) -> void:
+	action_feedback.show_reason(reason, view.screen_pos_for_cell(cell))
 
 
 func _cancel() -> void:
@@ -730,6 +769,7 @@ func _close_commander_info() -> void:
 
 
 func start_turn() -> void:
+	action_feedback.clear_turn()
 	view.set_active_team(game.current_team)
 	if _needs_handoff():
 		_enter_handoff()

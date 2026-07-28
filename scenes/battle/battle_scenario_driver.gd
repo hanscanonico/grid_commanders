@@ -284,6 +284,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
+		"rejected_confirm", "enemy_range_preview":
+			_failed = not (await BattleFeedbackScenario.new(_battle).run(mode))
 		"powermenu":
 			await _run_power_menu_demo()
 		CAPTURE_POWER_MODE:

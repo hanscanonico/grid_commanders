@@ -156,6 +156,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
+	rejected_confirm enemy_range_preview
 	powermenu capture_power victory aiturn
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish
