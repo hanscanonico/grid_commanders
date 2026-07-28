@@ -352,7 +352,7 @@ any attack and the planner stops attacking. Easy ships that dial turned the
 other way on purpose.
 
 Focus fire measured negative in **both** shapes, which is what
-`ai/ai_controller.gd`'s `_focus_bonus` comment refers to: as an independent
+`ai/ai_unit_action_planner.gd`'s `_focus_bonus` comment refers to: as an independent
 bonus scaled by follow-up damage (43.3 / 41.7 / 43.3), and reshaped as a
 proportion of the shot's own value capped at doubling it (43.3 / 46.7 / 46.7 /
 45.0) — better, still below parity, and it dragged the best combination from
