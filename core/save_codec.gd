@@ -19,7 +19,8 @@ extends RefCounted
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
 ## optional only to the versions that predate it, and a save claiming a version that
-## wrote a field has to carry it — see OPTIONAL_KEY_VERSIONS.
+## wrote a field has to carry it, in the shape that version wrote it — see
+## OPTIONAL_KEY_RULES.
 ##
 ## When a format arrives that *cannot* be read this way, it gets its own
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
@@ -46,13 +47,28 @@ const REQUIRED_PROGRESS_KEYS: Array = ["x", "y", "points"]
 ## to have a commander block at all. See `_commander_block_error`.
 const REQUIRED_COMMANDER_KEYS: Array = ["id", "charge", "active"]
 
-## The remaining keys, and the first version that always wrote each. Every one of
-## them has a fallback in `decode`, and the fallback is for *age*, not for damage:
-## a save old enough not to know about a field is entitled to the default, and a
-## save that claims to be new enough is telling the truth about what it contains or
-## it is truncated. Without this the two were indistinguishable, so a key lost to a
-## short write loaded a match that played differently — fog off, captures reset,
-## both sides commander-less — and said nothing (COM-54).
+## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
+## has a single number type: a save read back off disk hands every whole number over
+## as a float, which is why `decode` coerces with `int()` at every read.
+enum Shape { BOOL, NUMBER, STRING, ARRAY, DICTIONARY }
+
+## The remaining keys: for each, the first version that always wrote it and the shape
+## that version wrote. The two live in one entry on purpose — they answer the same
+## question, what a save of a given version promised — because a declaration drifting
+## away from the fallback it describes is the whole of COM-54.
+##
+## Every one of them has a fallback in `decode`, and the fallback is for *age*, not for
+## damage: a save old enough not to know about a field is entitled to the default, and
+## a save that claims to be new enough is telling the truth about what it contains or
+## it is truncated. Without this the two were indistinguishable, so a field lost to a
+## short write — or a typo leaving one holding the wrong kind of value, which `decode`
+## coerces into a plausible default rather than a refusal — loaded a match that played
+## differently: fog off, captures reset, both sides commander-less, a computer opponent
+## resuming as a second human. And said nothing (COM-54).
+##
+## Shape only. Which sides `ai_teams` may name and which side may have won are
+## questions about the board rather than the format, and `board_error` already owns
+## those, so nothing declared here holds a second opinion on them.
 ##
 ## `difficulty` is the awkward one, and it is deliberately listed at 3 rather than 2:
 ## it was added between those two versions without a bump of its own, so a version 2
@@ -62,19 +78,21 @@ const REQUIRED_COMMANDER_KEYS: Array = ["id", "charge", "active"]
 ## their `decode` defaults cannot currently be taken. They stay all the same, for the
 ## reason `board_error` is total: a decoder that answers for any dictionary is one a
 ## later caller cannot reach through a hole in.
-const OPTIONAL_KEY_VERSIONS := {
-	"fog": 1,
-	"winner": 1,
-	"capture_progress": 1,
-	"ai_teams": 1,
-	"commanders": 2,
-	"difficulty": 3,
+const OPTIONAL_KEY_RULES := {
+	"fog": {"since": 1, "shape": Shape.BOOL},
+	"winner": {"since": 1, "shape": Shape.NUMBER},
+	"capture_progress": {"since": 1, "shape": Shape.ARRAY},
+	"ai_teams": {"since": 1, "shape": Shape.ARRAY},
+	"commanders": {"since": 2, "shape": Shape.DICTIONARY},
+	"difficulty": {"since": 3, "shape": Shape.STRING},
 }
 ## The same, per unit entry: `carrier` shipped with the format, `dived` is version 3's
-## whole reason for existing.
-const OPTIONAL_UNIT_KEY_VERSIONS := {
-	"carrier": 1,
-	"dived": 3,
+## whole reason for existing. What a `carrier` number may *be* — a link in range, nobody
+## carrying themselves, no rings — is `_validate_carriers`', which can only ask once the
+## unit count is known; this says no more than that it is a number.
+const OPTIONAL_UNIT_KEY_RULES := {
+	"carrier": {"since": 1, "shape": Shape.NUMBER},
+	"dived": {"since": 3, "shape": Shape.BOOL},
 }
 
 ## A unit standing on the board rather than riding in something.
@@ -254,10 +272,8 @@ static func decode(
 
 	var result := LoadedMatch.new()
 	result.state = state
-	var teams: Variant = data.get("ai_teams", [])
-	if teams is Array:
-		for team in teams as Array:
-			result.ai_teams.append(int(team))
+	for team in data["ai_teams"]:
+		result.ai_teams.append(int(team))
 	# Missing on every save written before difficulty existed; those matches were
 	# played against the shipped AI, which is exactly what Normal is.
 	result.difficulty = StringName(String(data.get("difficulty", String(Difficulty.DEFAULT_ID))))
@@ -335,13 +351,23 @@ static func validate(data: Dictionary) -> String:
 	if missing != "":
 		return "save is missing '%s'" % missing
 	# What a save of *this* version promised to write, it has to have written. See
-	# OPTIONAL_KEY_VERSIONS: below its version a key is old, at or above it is lost.
-	missing = _missing_key(data, _keys_written_by(version, OPTIONAL_KEY_VERSIONS))
+	# OPTIONAL_KEY_RULES: below its version a key is old, at or above it is lost.
+	var written := _keys_written_by(version, OPTIONAL_KEY_RULES)
+	missing = _missing_key(data, written)
 	if missing != "":
 		return "a version %d save is missing '%s'" % [version, missing]
-	# The check above asks only whether the commander block is *there*, which a
-	# hollow one also is. See `_commander_block_error`.
+	# And having written it is not the same as still holding it: a key carrying the
+	# wrong kind of value is the same field lost, wearing a typo.
+	for key: String in written:
+		if not _is_shape(data[key], int(OPTIONAL_KEY_RULES[key]["shape"])):
+			return "'%s' is malformed" % key
+	# Both checks above stop at the envelope, and neither a hollow commander block nor
+	# a list holding something that is not a number is missing or the wrong kind of
+	# value at that level.
 	var error := _commander_block_error(data, version)
+	if error != "":
+		return error
+	error = _ai_teams_error(data)
 	if error != "":
 		return error
 	error = _entries_error(data["owners"], REQUIRED_OWNER_KEYS, "owner")
@@ -352,17 +378,14 @@ static func validate(data: Dictionary) -> String:
 	)
 	if error != "":
 		return error
-	var unit_keys := REQUIRED_UNIT_KEYS + _keys_written_by(version, OPTIONAL_UNIT_KEY_VERSIONS)
+	var unit_keys := REQUIRED_UNIT_KEYS + _keys_written_by(version, OPTIONAL_UNIT_KEY_RULES)
 	error = _entries_error(data["units"], unit_keys, "unit")
 	if error != "":
 		return error
-	var funds: Variant = data["funds"]
-	if not (funds is Dictionary):
-		return "'funds' is malformed"
-	for team in GameState.TEAMS:
-		if not (funds as Dictionary).has(str(team)):
-			return "save has no funds for team %d" % team
-	return ""
+	error = _unit_shapes_error(data["units"] as Array, version)
+	if error != "":
+		return error
+	return _funds_error(data)
 
 
 ## "" when every value in `data` describes something that can exist on `map`, else
@@ -414,6 +437,15 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	var winner := int(data.get("winner", 0))
 	if winner != 0 and not GameState.TEAMS.has(winner):
 		return "the save was won by team %d, which does not play" % winner
+	# The computer's sides are teams like any other, and the last one this had never
+	# asked: a save handing the AI a side that does not play resumes with a side nobody
+	# plays at all — `Battle` takes the list as written.
+	error = _ai_teams_error(data)
+	if error != "":
+		return error
+	for team: Variant in data.get("ai_teams", []) as Array:
+		if not GameState.TEAMS.has(int(team)):
+			return "the save gives team %d to the computer, which does not play" % int(team)
 	for entry: Dictionary in data["units"] as Array:
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		if not map.in_bounds(cell):
@@ -445,15 +477,14 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 ## meter lost, not one that predates the key — the same reasoning, one level down.
 ##
 ## A version 1 save is not asked, because it knew of no such block: it keeps loading
-## both sides neutral with an empty meter, which is the match it recorded.
+## both sides neutral with an empty meter, which is the match it recorded. That the
+## block is a Dictionary at all is the shape pass's answer, not restated here.
 static func _commander_block_error(data: Dictionary, version: int) -> String:
-	if version < int(OPTIONAL_KEY_VERSIONS["commanders"]):
+	if version < int(OPTIONAL_KEY_RULES["commanders"]["since"]):
 		return ""
-	var saved: Variant = data.get("commanders")
-	if not (saved is Dictionary):
-		return "'commanders' is malformed"
+	var saved: Dictionary = data["commanders"]
 	for team in GameState.TEAMS:
-		var entry: Variant = (saved as Dictionary).get(str(team))
+		var entry: Variant = saved.get(str(team))
 		if not (entry is Dictionary):
 			return "a version %d save is missing the commander for team %d" % [version, team]
 		var missing := _missing_key(entry as Dictionary, REQUIRED_COMMANDER_KEYS)
@@ -463,6 +494,66 @@ static func _commander_block_error(data: Dictionary, version: int) -> String:
 				% [version, missing, team]
 			)
 	return ""
+
+
+## "" when the save's computer sides are a list of numbers, else why they are not.
+## *Which* sides those numbers may name is `board_error`'s question, beside the turn
+## and the winner; this one is answered without a board and says no more than that the
+## list is a list of numbers.
+##
+## It is asked at all because `decode` used to skip a malformed one in silence: a save
+## whose `ai_teams` read `2` rather than `[2]` resumed as a two-human hot seat with the
+## computer opponent quietly gone — a match that loads clean and plays differently,
+## which is exactly the harm the version gate was added to end (COM-54).
+static func _ai_teams_error(data: Dictionary) -> String:
+	var teams: Variant = data.get("ai_teams", [])
+	if not (teams is Array):
+		return "'ai_teams' is malformed"
+	for team: Variant in teams as Array:
+		if not _is_shape(team, Shape.NUMBER):
+			return "'ai_teams' is malformed"
+	return ""
+
+
+## "" when every unit entry holds the flags its version wrote in the shape it wrote
+## them. Asked after `_entries_error` has established that the entries are dictionaries
+## carrying the keys at all, which is what lets this read them straight.
+static func _unit_shapes_error(entries: Array, version: int) -> String:
+	for key: String in _keys_written_by(version, OPTIONAL_UNIT_KEY_RULES):
+		var shape := int(OPTIONAL_UNIT_KEY_RULES[key]["shape"])
+		for entry: Dictionary in entries:
+			if not _is_shape(entry[key], shape):
+				return "unit entry's '%s' is malformed" % key
+	return ""
+
+
+## "" when the save carries a purse for every side that plays.
+static func _funds_error(data: Dictionary) -> String:
+	var funds: Variant = data["funds"]
+	if not (funds is Dictionary):
+		return "'funds' is malformed"
+	for team in GameState.TEAMS:
+		if not (funds as Dictionary).has(str(team)):
+			return "save has no funds for team %d" % team
+	return ""
+
+
+## Whether `value` is the kind of thing `shape` describes — the one reader of the
+## shapes declared in the two rule tables, so every field is asked the same way.
+static func _is_shape(value: Variant, shape: int) -> bool:
+	var kind := typeof(value)
+	match shape:
+		Shape.BOOL:
+			return kind == TYPE_BOOL
+		Shape.NUMBER:
+			return kind == TYPE_INT or kind == TYPE_FLOAT
+		Shape.STRING:
+			return kind == TYPE_STRING or kind == TYPE_STRING_NAME
+		Shape.ARRAY:
+			return kind == TYPE_ARRAY
+		Shape.DICTIONARY:
+			return kind == TYPE_DICTIONARY
+	return false
 
 
 ## "" when every entry in `entries` names a cell `map` actually has.
@@ -525,12 +616,13 @@ static func _validate_carriers(indices: Array[int]) -> String:
 	return ""
 
 
-## Every key in `introduced_in` that a save of this `version` was already writing —
-## which is exactly the set it is not allowed to be missing.
-static func _keys_written_by(version: int, introduced_in: Dictionary) -> Array:
+## Every key in `rules` that a save of this `version` was already writing — which is
+## exactly the set it is neither allowed to be missing nor allowed to hold the wrong
+## kind of value. Below its version a key is old and none of those rules reach it.
+static func _keys_written_by(version: int, rules: Dictionary) -> Array:
 	var keys: Array = []
-	for key: String in introduced_in:
-		if version >= int(introduced_in[key]):
+	for key: String in rules:
+		if version >= int(rules[key]["since"]):
 			keys.append(key)
 	return keys
 

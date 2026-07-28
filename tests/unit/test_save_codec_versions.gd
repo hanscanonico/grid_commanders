@@ -1,12 +1,15 @@
 extends GutTest
-## What a save of each version is entitled to be missing (COM-54).
+## What a save of each version is entitled to be missing, and what it has to be
+## holding when it is not (COM-54).
 ##
 ## Eight fields have fallbacks in `decode`, and the fallback is for *age*: a save
 ## written before a field existed is entitled to the default. The two used to be
 ## indistinguishable from damage, so a key lost to a short write or a typo loaded a
 ## match that played differently — fog off, captures reset, both sides
 ## commander-less — and said nothing anywhere. Now the save's own version decides:
-## below the version that introduced a key it is old, at or above it it is lost.
+## below the version that introduced a key it is old, at or above it it is lost — or,
+## present and holding the wrong kind of value, damaged, which a coercion would
+## otherwise have turned back into the very default the version rules out.
 ##
 ## Kept apart from test_save_codec.gd because these cases are about the *format's
 ## history* rather than about one save, and because that file sits at the gdlintrc
@@ -97,7 +100,69 @@ func test_a_current_save_whose_commander_lost_its_charge_is_refused() -> void:
 	assert_string_contains(SaveCodec.validate(data), "'charge'")
 
 
+# --- and what it carries has to be the kind of thing it carried ---------------
+
+
+## Presence was only half of it: a key holding the wrong kind of value is the same
+## field lost, wearing a typo, and `decode`'s coercions turn every one of these into a
+## plausible default rather than a refusal — `bool("no")` is true, `int("2")` is 2 and
+## an `ai_teams` that is not a list is no computer opponent at all.
+func test_a_current_save_holding_the_wrong_kind_of_value_is_refused() -> void:
+	var wrong := {
+		"fog": "yes",
+		"winner": "nobody",
+		"capture_progress": {},
+		"ai_teams": 2,
+		"commanders": [],
+		"difficulty": 3,
+	}
+	for key: String in wrong:
+		var data := _encoded()
+		data[key] = wrong[key]
+		assert_string_contains(SaveCodec.validate(data), key)
+
+
+## The list is a list of *numbers*: `["2"]` survives `is Array` and then coerces to
+## team 0, which is nobody, so the side it named plays itself.
+func test_an_ai_teams_list_of_things_that_are_not_numbers_is_refused() -> void:
+	var data := _encoded()
+	data["ai_teams"] = ["2"]
+	assert_string_contains(SaveCodec.validate(data), "ai_teams")
+
+
+## Which sides those numbers may name is `board_error`'s, with the turn and the
+## winner — so it takes a board to answer, and the save is refused on the way in
+## rather than on the way past `validate`.
+func test_a_computer_side_that_does_not_play_is_refused() -> void:
+	var data := _encoded()
+	data["ai_teams"] = [9]
+	assert_eq(SaveCodec.validate(data), "", "a list of numbers is all this one asks")
+	assert_null(SaveCodec.decode(data, terrain_db, unit_db, chart))
+	assert_push_error("team 9")
+
+
+func test_a_unit_entrys_flags_must_be_the_shape_its_version_wrote() -> void:
+	var data := _encoded()
+	(data["units"] as Array)[0]["dived"] = "surfaced"
+	assert_string_contains(SaveCodec.validate(data), "dived")
+	data = _encoded()
+	(data["units"] as Array)[0]["carrier"] = "none"
+	assert_string_contains(SaveCodec.validate(data), "carrier")
+
+
 # --- an older save is entitled to the defaults --------------------------------
+
+
+## A shape rule is a version rule too. Firing one on a save too old to have written
+## the field would be the same bug in the other direction: version 2's units carried
+## no dive flag, so whatever a stray key holds there, it is not damage this codec can
+## claim to have detected.
+func test_a_shape_rule_does_not_reach_a_save_too_old_for_the_field() -> void:
+	var data := _encoded()
+	data["version"] = 2
+	data.erase("difficulty")
+	(data["units"] as Array)[0]["dived"] = "surfaced"
+	assert_eq(SaveCodec.validate(data), "", "version 2 knew no dive flag to demand a shape of")
 
 
 ## The other direction of the block rule: version 1 wrote no commanders at all, so
@@ -152,9 +217,9 @@ func test_a_version_2_save_may_lack_the_dive_flag_but_not_commanders() -> void:
 ## complete, so the table above cannot be demanding a key nothing produces.
 func test_a_freshly_encoded_save_carries_everything_its_version_promises() -> void:
 	assert_eq(SaveCodec.validate(_encoded()), "")
-	for key: String in SaveCodec.OPTIONAL_KEY_VERSIONS:
+	for key: String in SaveCodec.OPTIONAL_KEY_RULES:
 		assert_has(_encoded(), key, "encode must write every key its version claims")
-	for key: String in SaveCodec.OPTIONAL_UNIT_KEY_VERSIONS:
+	for key: String in SaveCodec.OPTIONAL_UNIT_KEY_RULES:
 		assert_has((_encoded()["units"] as Array)[0] as Dictionary, key)
 	for key: String in SaveCodec.REQUIRED_COMMANDER_KEYS:
 		for team in GameState.TEAMS:
