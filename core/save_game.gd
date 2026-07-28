@@ -12,9 +12,12 @@ extends RefCounted
 ## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use. Which on-disk
 ## versions exist and which still load is SaveCodec's to say — see its header.
 ##
-## The slot is replaced *atomically*, and that is part of what this file promises:
-## a save that fails leaves the previous one exactly as it was, so a full disk costs
-## the player the save they just asked for and never the one they already had.
+## At every instant of a save, on every platform, one whole save is on disk — the
+## previous one or the new one — and that is part of what this file promises: a save
+## that fails leaves the previous one exactly as it was, so a full disk costs the
+## player the save they just asked for and never the one they already had. The
+## replacement keeps that true itself rather than borrowing it from `rename`, which
+## is indivisible on Unix but a delete-then-move on Windows.
 ##
 ## That costs a second copy's worth of free space, and the trade is deliberate: a
 ## volume too full to hold the temp fails the save outright, where writing in place
@@ -50,7 +53,7 @@ static func peek(path: String = SAVE_PATH) -> SAVE_CODEC_SCRIPT.Summary:
 ## `difficulty` trails `path` so every existing caller keeps working; a save
 ## written without one records Normal, which is the tier those matches played at.
 ##
-## The payload lands in a sibling `.tmp` and is only renamed over `path` once the
+## The payload lands in a sibling `.tmp` and is only swapped into `path` once the
 ## write has answered for itself: `FileAccess.open(…, WRITE)` truncates its target
 ## before a single byte is stored, so writing straight into the slot destroyed the
 ## previous save the moment the new one began — a failure the player then read as
@@ -61,9 +64,10 @@ static func save(
 	path: String = SAVE_PATH,
 	difficulty: StringName = Difficulty.DEFAULT_ID
 ) -> bool:
-	# Derived from the caller's path, not from SAVE_PATH, so a test writing its own
-	# slot stages its own temp beside it rather than beside the player's.
+	# Both derived from the caller's path, not from SAVE_PATH, so a test writing its own
+	# slot stages its own temp and backup beside it rather than beside the player's.
 	var temp_path := path + ".tmp"
+	var backup_path := path + ".bak"
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if file == null:
 		push_error(
@@ -74,30 +78,16 @@ static func save(
 	# Bytes, not characters: `store_string` writes UTF-8, so a single accented character
 	# in a map name would make a truncated file look the right length to a `length()`.
 	var expected_bytes := payload.to_utf8_buffer().size()
-	var stored := file.store_string(payload)
-	# The cheap early-outs. The store's own `false` is what a short write raises on Unix
-	# — that path returns it rather than recording a `last_error`, so a save that only
-	# asked `get_error()` still answered `true` over a truncated file. The error is then
-	# asked twice, and the handle is closed here rather than left to the local going out
-	# of scope, because a store whose buffer spilled cleanly can still fail on the tail
-	# the flush pushes out.
-	var write_error := file.get_error()
+	file.store_string(payload)
+	# Closed here rather than left to the local going out of scope, because the tail of
+	# the payload only reaches the disk on the flush the close forces.
 	file.close()
-	if write_error == OK:
-		write_error = file.get_error()
-	if not stored or write_error != OK:
-		# A short write reports itself only through `stored`, leaving the handle's error
-		# at OK — so the diagnostic would otherwise blame the failure on success.
-		if write_error == OK:
-			write_error = ERR_FILE_CANT_WRITE
-		push_error("SaveGame: failed writing %s (error %d)" % [temp_path, write_error])
-		_discard(temp_path)
-		return false
-	# And the authority: what the disk hands back, not what the handle claims. On a full
-	# volume every signal above reads clean — `store_string` returns true and both
-	# `get_error()` calls read OK — while zero bytes land, because the ENOSPC surfaces
-	# inside the buffered flush and no FileAccess call carries it out. Re-opening the
-	# temp is the one question that cannot be answered by a handle that never noticed.
+	# The one authority on whether the write landed is what the disk hands back, and it
+	# has to be: on a full volume `store_string` returns true and `get_error()` reads OK
+	# both before and after the close while zero bytes land, because the ENOSPC surfaces
+	# inside that buffered flush and no FileAccess call carries it out. Asking the handle
+	# is not a cheaper version of this question — it is a different one, and on the
+	# failure the ticket was filed about it answers "saved".
 	var landed_bytes := FileAccess.get_file_as_bytes(temp_path).size()
 	if landed_bytes != expected_bytes:
 		push_error(
@@ -108,23 +98,47 @@ static func save(
 		)
 		_discard(temp_path)
 		return false
-	# POSIX rename replaces the destination in one step, which is what makes the swap
-	# atomic — there is no instant where the slot is neither the old save nor the new.
-	var swap_error := DirAccess.rename_absolute(
-		ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(path)
-	)
+	return _swap_into_place(temp_path, backup_path, path)
+
+
+## The old save is set aside rather than overwritten, because one rename is only
+## indivisible on Unix: Godot's Windows `rename` deletes the destination before it
+## moves, so a slot replaced in a single call has an instant there where it holds
+## neither save — the ticket's own harm, reappearing on the platform nobody tested on.
+## Moving the previous save to a sibling first makes the guarantee the code's rather
+## than the filesystem's: whichever rename fails, one whole save is still on disk and
+## neither stray is left behind.
+static func _swap_into_place(temp_path: String, backup_path: String, path: String) -> bool:
+	var previous := FileAccess.file_exists(path)
+	if previous:
+		var aside := DirAccess.rename_absolute(_absolute(path), _absolute(backup_path))
+		if aside != OK:
+			push_error("SaveGame: cannot set %s aside (error %d)" % [path, aside])
+			_discard(temp_path)
+			return false
+	var swap_error := DirAccess.rename_absolute(_absolute(temp_path), _absolute(path))
 	if swap_error != OK:
 		push_error("SaveGame: cannot replace %s (error %d)" % [path, swap_error])
 		_discard(temp_path)
+		if previous:
+			DirAccess.rename_absolute(_absolute(backup_path), _absolute(path))
 		return false
+	# Unconditional: a backup that outlived a crashed save is stale the moment this one
+	# lands, and the slot it described is the file just replaced.
+	_discard(backup_path)
 	return true
 
 
-## A half-written temp is worse than none: it would outlive the failure and the next
-## save would rename it over a slot it never described.
-static func _discard(temp_path: String) -> void:
-	if FileAccess.file_exists(temp_path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+## A half-written temp — or a backup of a save that is no longer the current one — is
+## worse than none: it would outlive the failure and the next save would rename it over
+## a slot it never described.
+static func _discard(stray_path: String) -> void:
+	if FileAccess.file_exists(stray_path):
+		DirAccess.remove_absolute(_absolute(stray_path))
+
+
+static func _absolute(path: String) -> String:
+	return ProjectSettings.globalize_path(path)
 
 
 ## Returns null (with a pushed error) when the file is missing or invalid.

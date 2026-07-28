@@ -2,6 +2,7 @@ extends GutTest
 
 const TEST_PATH := "user://test_save.json"
 const TEMP_PATH := TEST_PATH + ".tmp"
+const BACKUP_PATH := TEST_PATH + ".bak"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -15,10 +16,11 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	# Both paths are cleared in both shapes — a file where a save landed, and the
-	# directory a failure test parks in the way of the temp or of the slot itself.
+	# All three paths are cleared in both shapes — a file where a save landed, and the
+	# directory a failure test parks in the way of the temp, the backup or the slot.
 	_remove(TEST_PATH)
 	_remove(TEMP_PATH)
+	_remove(BACKUP_PATH)
 
 
 func _remove(path: String) -> void:
@@ -86,10 +88,15 @@ func test_roundtrip_preserves_rng_sequence() -> void:
 	)
 
 
-## COM-51. Every unwritable target reachable without mounting a volume — a read-only
-## file, a read-only directory, a directory standing where the file should be, a
-## directory that is not there at all — is refused by `FileAccess.open`, so this is
-## the branch these tests reach and it is now guarded rather than merely believed.
+## COM-51. Where each unwritable target reachable without mounting a volume now stops,
+## checked against the code rather than assumed: a directory that is not there at all
+## and a read-only directory are refused by `FileAccess.open`, because the temp is
+## opened in that directory — as is a directory standing where the *temp* belongs,
+## which is how the sibling below stages a refused write. A directory standing where
+## the *slot* belongs gets past the write and is refused by the swap instead. A
+## read-only slot *file* is no longer refused anywhere and now saves: the temp opens in
+## the writable parent, and a rename needs write permission on the containing directory
+## rather than on the destination it replaces.
 ##
 ## The failure the ticket was actually filed about needs a volume with no space left,
 ## which is a thing to stage rather than a thing to assert: on one, every signal the
@@ -102,7 +109,7 @@ func test_save_to_an_unwritable_path_reports_failure() -> void:
 	assert_push_error("cannot write")
 
 
-## COM-51. What the atomic swap buys, stated as a promise: a save that cannot be
+## COM-51. What writing through a temp buys, stated as a promise: a save that cannot be
 ## written is a save the player still has. Standing a directory where the temp belongs
 ## refuses the write at the open, one step earlier than a full volume does — but both
 ## fail before anything has touched the slot, which is the guarantee under test.
@@ -121,15 +128,36 @@ func test_a_failed_write_leaves_the_previous_save_intact() -> void:
 
 
 ## COM-51. A temp that outlives its failure is the *next* save's disaster: it would be
-## renamed over a slot it never described. This is the one failure path a test can push
-## far enough to stage a temp at all — the write lands, the swap is what is refused —
-## and nothing is left behind there either.
+## renamed over a slot it never described. A directory standing where the slot belongs
+## is one of the two ways a test can push a save far enough to stage a temp at all —
+## the write lands, the second rename is what is refused. Nothing is set aside on this
+## path: `file_exists` is false of a directory, so there is no previous save to move.
 func test_a_failed_swap_leaves_no_temp_behind() -> void:
 	var state := _first_steps_state()
 	DirAccess.make_dir_absolute(ProjectSettings.globalize_path(TEST_PATH))
 	assert_false(SaveGame.save(state, [] as Array[int], TEST_PATH))
 	assert_push_error("cannot replace")
 	assert_false(FileAccess.file_exists(TEMP_PATH), "the staged temp is discarded, not left")
+	assert_false(FileAccess.file_exists(BACKUP_PATH), "and nothing was set aside to leave")
+
+
+## COM-51. The other way, and the one that exercises the set-aside the swap opens with:
+## a directory sitting where the backup belongs refuses the first of the two renames.
+## What the swap promises is what this asserts — the previous save is still there, whole
+## and loadable, and neither the temp nor a backup outlives the failure.
+func test_a_failed_set_aside_keeps_the_previous_save() -> void:
+	var state := _first_steps_state()
+	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	var good := FileAccess.get_file_as_string(TEST_PATH)
+	DirAccess.make_dir_absolute(ProjectSettings.globalize_path(BACKUP_PATH))
+	state.day = 9
+	assert_false(SaveGame.save(state, [] as Array[int], TEST_PATH))
+	assert_push_error("cannot set")
+	assert_eq(FileAccess.get_file_as_string(TEST_PATH), good, "the old save is byte-identical")
+	assert_false(FileAccess.file_exists(TEMP_PATH), "the staged temp is discarded, not left")
+	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.day, 1, "and it still loads, as the match it recorded")
 
 
 func test_a_successful_save_leaves_no_temp_behind() -> void:
@@ -138,10 +166,10 @@ func test_a_successful_save_leaves_no_temp_behind() -> void:
 	assert_false(FileAccess.file_exists(TEMP_PATH), "the temp is renamed over the slot, not left")
 
 
-## COM-51. Every save but a match's first one renames over a slot that is already
-## there, which is the branch the swap exists for and the one a save-once test never
-## reaches: were it to refuse an occupied destination, only the first save of a match
-## would answer `true`.
+## COM-51. Every save but a match's first one replaces a slot that is already there,
+## which is the branch the set-aside exists for and the one a save-once test never
+## reaches: were the swap to refuse an occupied destination, or to leave its backup
+## standing, only the first save of a match would behave.
 func test_a_later_save_replaces_the_one_before_it() -> void:
 	var state := _first_steps_state()
 	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH))
@@ -149,6 +177,7 @@ func test_a_later_save_replaces_the_one_before_it() -> void:
 	state.funds[1] = 8000
 	assert_true(SaveGame.save(state, [] as Array[int], TEST_PATH), "saving over a slot works")
 	assert_false(FileAccess.file_exists(TEMP_PATH))
+	assert_false(FileAccess.file_exists(BACKUP_PATH), "the set-aside copy is removed, not left")
 	var loaded := SaveGame.load_game(terrain_db, unit_db, chart, TEST_PATH)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.day, 7, "the slot holds the later save, whole")
