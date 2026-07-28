@@ -81,8 +81,8 @@ game_pid=$$
 	# the first restorable app in the front-to-back window order — a launch
 	# can land on the beat between two scenarios, when window teardown briefly
 	# puts system UI in front, and a watcher left without a target restores
-	# nothing for its whole run. Re-run when a restore fails so a target that
-	# has quit (the launching terminal) is replaced rather than wedging us.
+	# nothing for its whole run. Re-run when the target has quit (the
+	# launching terminal) so it is replaced rather than wedging us.
 	seed_target() {
 		local asn cand_pid cand_bundle
 		prev_pid=""
@@ -106,6 +106,14 @@ game_pid=$$
 		prev_pid="$cand_pid"
 		prev_bundle="$cand_bundle"
 	}
+	# Is the adopted target still around? `open -b` on a bundle whose app has
+	# quit *launches* it, so a dead target must never reach the fallback: the
+	# user quit that app on purpose. A live target that merely refused to
+	# activate is kept and retried, not traded for whatever is first in
+	# window order.
+	target_alive() {
+		[[ -n "$prev_pid" ]] && kill -0 "$prev_pid" 2>/dev/null
+	}
 	seed_target
 	# Watch for the game's whole lifetime — the exit condition is the child
 	# dying, nothing else — and restore on every activation. The longer sleep
@@ -128,7 +136,8 @@ game_pid=$$
 			if [[ -x "$activate_bin" && -n "$prev_pid" ]] &&
 				"$activate_bin" "$prev_pid" 2>/dev/null; then
 				restored=1
-			elif [[ -n "$prev_bundle" ]] && open -b "$prev_bundle" 2>/dev/null; then
+			elif target_alive; then
+				[[ -n "$prev_bundle" ]] && open -b "$prev_bundle" 2>/dev/null
 				restored=1
 			fi
 			((restored)) || seed_target
