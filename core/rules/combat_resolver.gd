@@ -138,11 +138,10 @@ static func forecast_at(
 	result.attacker_hp_after_min = result.attacker_hp_before
 	result.attacker_hp_after_max = result.attacker_hp_before
 	var hp_after := maxi(0, defender.hp - damage)
-	if (
-		hp_after > 0
-		and _defender_can_counter(state, defender, defender_cell, attacker, attacker_cell)
-	):
-		var selected_counter := _select_shot(state, defender, attacker)
+	if hp_after > 0:
+		var selected_counter := _counter_shot(
+			state, defender, defender_cell, attacker, attacker_cell
+		)
 		if selected_counter == null:
 			return result
 		var counter := Engagement.create(
@@ -241,9 +240,7 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 		_bank_cargo_losses(state, defender, attacker.team)
 		state.remove_unit(defender)
 		return result
-	if not _defender_can_counter(state, defender, defender.cell, attacker, attacker.cell):
-		return result
-	var selected_counter := _select_shot(state, defender, attacker)
+	var selected_counter := _counter_shot(state, defender, defender.cell, attacker, attacker.cell)
 	if selected_counter == null:
 		return result
 	var counter := Engagement.create(
@@ -284,29 +281,33 @@ static func _bank_cargo_losses(state: GameState, transport: Unit, dealer_team: i
 		_bank_cargo_losses(state, passenger, dealer_team)
 
 
-static func _defender_can_counter(
+## The weapon the defender shoots back with, or null when it does not counter at
+## all. One selection, handed to the caller that prices the counter — asking
+## whether a counter happens and asking what it is fired with are the same
+## question, and the forecast is the AI's inner loop.
+static func _counter_shot(
 	state: GameState,
 	defender: Unit,
 	defender_cell: Vector2i,
 	attacker: Unit,
 	attacker_cell: Vector2i
-) -> bool:
+) -> DamageChart.Shot:
 	# Deliberately the unit type's own range rather than AttackRange: countering
 	# is adjacency, and a doctrine that extends how far a unit can *initiate*
 	# must not turn an indirect into something that shoots back. Only the
 	# distance is decided here, though — whether the shot is possible at all is
 	# AttackRange's, below.
 	if defender.type.max_range != 1:
-		return false  # unarmed and indirect units never counter
+		return null  # unarmed and indirect units never counter
 	if defender.dived:
-		return false  # a submarine that is hiding does not give itself away
+		return null  # a submarine that is hiding does not give itself away
 	var dist := absi(attacker_cell.x - defender_cell.x) + absi(attacker_cell.y - defender_cell.y)
 	if dist != 1:
-		return false  # an indirect attacker fires from beyond counter reach
+		return null  # an indirect attacker fires from beyond counter reach
 	# The same authority the opening shot went through, which is what gives the
 	# dive its edge: a submerged attacker is countered only by a hunter that can
 	# reach under the surface, and shrugged at by everything else.
-	return AttackRange.can_fire(state, defender, attacker)
+	return AttackRange.ready_shot(state, defender, attacker)
 
 
 ## One luck roll, from the attacking commander's range. Always exactly one draw

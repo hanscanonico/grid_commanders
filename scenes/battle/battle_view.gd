@@ -89,6 +89,7 @@ var _sprites: Dictionary = {}  # Unit -> UnitSprite
 ## the node fields and `db`/`map`/`game` are set.
 func setup() -> void:
 	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
+	hud_bottom.chart = game.damage_chart  # and asks the rules which weapons a unit owns
 	# Whose actions the teaching strip may learn from — the computer plays through
 	# the same events and must not retire a hint on the player's behalf. Nothing is
 	# drawn yet: `refresh_hud` decides whether the strip shows at all, and it runs

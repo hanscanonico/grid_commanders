@@ -16,7 +16,7 @@ extends RefCounted
 ## can_engage rather than being pattern-matched into three files.
 ##
 ## So they all ask here instead. Countering is the deliberate exception; see
-## CombatResolver._defender_can_counter.
+## CombatResolver._counter_shot.
 
 
 ## The closest tile this unit can fire at. No doctrine changes it: a minimum
@@ -56,18 +56,27 @@ static func can_engage(state: GameState, attacker: Unit, target: Unit) -> bool:
 	return not target.dived or attacker.type.can_hit_submerged
 
 
-## Whether one of `attacker`'s target-compatible weapons is ready now. Weapon
-## choice and ammo ownership stay in DamageChart; this adds only the submerged
-## target rule that already makes can_engage the who-may-shoot authority.
-static func can_fire(state: GameState, attacker: Unit, target: Unit) -> bool:
+## The weapon `attacker` would fire at `target` right now, or null when none is
+## ready. Weapon choice and ammo ownership stay in DamageChart; this adds only
+## the submerged target rule that already makes can_engage the who-may-shoot
+## authority.
+##
+## Returned rather than merely counted so a caller that needs the slot or its
+## base damage — the resolver, on every shot and every counter — pays for the
+## selection once instead of asking whether it exists and then asking again what
+## it was.
+static func ready_shot(state: GameState, attacker: Unit, target: Unit) -> DamageChart.Shot:
 	if not can_engage(state, attacker, target):
-		return false
-	return (
-		state.damage_chart.select_shot(
-			attacker.type.id, target.type.id, attacker.ammo, attacker.type.max_ammo
-		)
-		!= null
+		return null
+	return state.damage_chart.select_shot(
+		attacker.type.id, target.type.id, attacker.ammo, attacker.type.max_ammo
 	)
+
+
+## Whether one of `attacker`'s target-compatible weapons is ready now, for the
+## callers that only need the yes or no.
+static func can_fire(state: GameState, attacker: Unit, target: Unit) -> bool:
+	return ready_shot(state, attacker, target) != null
 
 
 ## Target-agnostic readiness for callers that are about to build firing

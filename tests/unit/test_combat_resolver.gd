@@ -135,7 +135,10 @@ func test_resolve_luck_bounds_and_hp() -> void:
 	assert_between(result.attack_damage, 68, 68 + CombatResolver.LUCK_MAX)
 	assert_eq(defender.hp, 100 - result.attack_damage)
 	assert_true(result.countered)
-	assert_between(result.counter_damage, 4, 4 + CombatResolver.LUCK_MAX)
+	# The counter is fired from whatever band the opening roll left the infantry
+	# in: 5 * displayed/10 * 0.9 on plains, plus its own luck draw.
+	var counter_base := roundi(5.0 * (defender.displayed_hp() / 10.0) * 0.9)
+	assert_between(result.counter_damage, counter_base, counter_base + CombatResolver.LUCK_MAX)
 
 
 func test_resolve_is_deterministic_for_same_seed() -> void:

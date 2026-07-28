@@ -15,11 +15,13 @@ extends GutTest
 
 var styles: BattleStyleDB
 var units: UnitDB
+var chart: DamageChart
 
 
 func before_each() -> void:
 	styles = BattleStyleDB.load_default()
 	units = UnitDB.load_default()
+	chart = load("res://data/damage_chart.tres")
 
 
 func test_every_unit_names_a_style_that_exists() -> void:
@@ -46,12 +48,32 @@ func test_secondary_units_name_the_small_arms_style() -> void:
 		)
 
 
+## The two tables that describe a secondary have to name the same units: the
+## chart row the weapon is selected from, and the signature it replays with.
+## Either one alone reads like the whole answer and they drift silently — a
+## chart row with no style fires an invisible machine gun, a style with no row
+## dresses a weapon nothing can ever select.
+func test_secondary_styles_and_secondary_chart_rows_agree() -> void:
+	for type in units.all():
+		assert_eq(
+			type.secondary_battle_style != &"unarmed",
+			chart.has_secondary(type.id),
+			(
+				"%s names secondary_battle_style '%s' but %s a secondary chart row"
+				% [
+					type.id,
+					type.secondary_battle_style,
+					"has" if chart.has_secondary(type.id) else "has no"
+				]
+			)
+		)
+
+
 ## The roster's three transports are the only units the damage chart gives no
 ## attack at all. They are staged as defenders and never fire, so their style
 ## must be the one that puts nothing on screen — a transport with a cannon
 ## signature would look armed the first time a doctrine let it counter.
 func test_unarmed_units_have_a_style_that_fires_nothing() -> void:
-	var chart: DamageChart = load("res://data/damage_chart.tres")
 	for type in units.all():
 		var armed := false
 		for other in units.all():

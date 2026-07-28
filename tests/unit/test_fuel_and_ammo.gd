@@ -96,7 +96,7 @@ func test_infinite_ammo_units_never_run_dry() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 i 1 0")
 	state.rng.seed = 4
 	CombatResolver.resolve(state, state.units[0], state.units[1])
-	assert_true(state.units[0].has_ammo())
+	assert_true(AttackRange.has_ready_weapon(state, state.units[0]))
 	assert_eq(state.units[0].ammo, 0, "machine guns track no ammo")
 
 

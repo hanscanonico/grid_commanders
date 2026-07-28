@@ -295,7 +295,7 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   exist because independent second opinions were real bugs here: a fourth opinion on movement made
   the range overlay offer cells the command then refused, and asking the damage chart directly was
   the whole answer only until a submarine could be under the water. Countering is the one
-  deliberate exception on distance, documented on `CombatResolver._defender_can_counter`.
+  deliberate exception on distance, documented on `CombatResolver._counter_shot`.
   `LoadCommand.carriage_error` joined them for the same reason: it owns **may this rider be
   inside this transport at all** (transport, cargo class, capacity, no second level of nesting,
   same team), asked by `LoadCommand.validate` before a board and by `SaveCodec` per wired carrier

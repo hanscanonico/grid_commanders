@@ -55,6 +55,14 @@ func select_shot(
 	return null
 
 
+## Whether this attacker owns a secondary weapon at all. The authority on that
+## question: a secondary is a row in this chart, and the presentation key on
+## UnitType only names how an already-selected one looks.
+func has_secondary(attacker: StringName) -> bool:
+	var row: Dictionary = secondary_chart.get(attacker, {})
+	return not row.is_empty()
+
+
 ## Whether this attacker has any weapon it could fire now, target aside. Used
 ## only to avoid drawing an entirely inert unit into a threat-map flood fill;
 ## target-specific legality still goes through select_shot().
