@@ -114,9 +114,9 @@
     </p>
     <div class="mt-5 flex flex-wrap gap-2">
       <span class="badge badge-warning badge-lg font-bold">FS0–FS3 SHIPPED — plan complete</span>
-      <span class="badge badge-outline badge-lg text-white">49 launches → 5 windows, measured</span>
+      <span class="badge badge-outline badge-lg text-white">50 launches → 5 → 1 window, measured</span>
       <span class="badge badge-outline badge-lg text-white">tools/ plus capture-only presentation seams</span>
-      <span class="badge badge-outline badge-lg text-white">merge bar: 49 byte-identical captures</span>
+      <span class="badge badge-outline badge-lg text-white">merge bar: 53 byte-identical captures</span>
     </div>
   </header>
 
@@ -447,7 +447,7 @@
           <div class="flex flex-wrap items-center gap-3">
             <span class="badge badge-accent badge-lg font-black">FS3</span>
             <h3 class="text-xl font-black">One boot, full stop — stretch, and only if it is free</h3>
-            <span class="badge badge-outline">stop at FS2 if a single byte moves</span>
+            <span class="badge badge-success badge-outline">SHIPPED — COM-118</span>
           </div>
           <p>
             The three battle groups only exist because <code>--fog</code> and <code>--map</code> are
@@ -464,6 +464,26 @@
             unforgiving — <strong>49 byte-identical captures or the milestone does not ship</strong>.
             FS2 alone took the window count from one per scenario to 5 (measured); FS3 is a nicety, not the deliverable.
           </p>
+
+          <div class="alert alert-success items-start">
+            <div>
+              <h4 class="font-black">As built (COM-118)</h4>
+              <p class="text-sm mt-1">
+                Scene, fog and map became <strong>per-scenario boot facts</strong>: each
+                <code>--demos</code> entry carries its own — <code>+fog</code> stays in the mode
+                name and <code>@&lt;map&gt;</code> is appended by the sweep, a boot fact and never
+                part of the label or the capture filename — and the shell collapsed to a single
+                <code>run_batched_sweep</code>. <code>group_key</code> is gone.
+              </p>
+              <ul class="gc-checks text-sm space-y-1 mt-2">
+                <li><strong>The seam is not the card’s.</strong> The line refs above predate the <code>CmdArgs</code>/<code>MatchRequest</code> refactor, and <span class="gc-file">BattleSetup</span> gained no injectable options value: <code>BattleCaptureBatch.scenario_args()</code> hands <span class="gc-file">Battle</span> a synthesized command line with the process-level <code>--map</code>/<code>--fog</code> swapped for the current entry’s, so <code>MatchRequest.apply_cmdline</code> and the whole documented CLI grammar are <em>unchanged</em> — only where the values are read from moved. The one seam line lives in <span class="gc-file">battle.gd</span>’s <code>_ready</code>. The queue is parsed <em>lazily and idempotently</em>, because <code>scenario_args()</code> is asked for the first scenario’s boot facts before any driver exists to <code>adopt</code> it.</li>
+                <li><strong>The menu pair joined the batch.</strong> <code>finish_capture</code> now routes between scenes — <code>reload_current_scene</code> when the next scenario shares the scene, <code>change_scene_to_file</code> when the sweep crosses between the battle and the main menu. <code>MenuCaptureDriver</code> adopts from the same queue, <code>MainMenu</code> asks the driver for its shot path instead of <span class="gc-file">ScreenshotUtil</span> (a batched menu scenario carries no <code>--screenshot=</code> of its own) so its capture pinning still fires, and the menu’s chrome gate passes through <code>finish_capture</code>’s new gate parameter to the same shared shutter. FS2’s “the menu pair stays unbatched” no longer holds.</li>
+                <li><strong>Execution order is still the FS2 finding’s.</strong> Atlas-sensitive pair first, then the default-board battle roster, then the strait and fog boards, then the menu pair last. Status lines still print in the order the modes were given. R2’s fallback to per-scenario re-runs, R3’s in-driver deadline, the batch-log preservation and <span class="gc-file">SMOKE_ISOLATE=1</span> all carry over unchanged.</li>
+                <li><strong>Measured</strong> on a quiet desk: <strong>exactly one window</strong>; FS0 shows 3 sub-second activation events (boot plus scene-change re-activations, each restored by FS1’s watcher), <strong>0.5 s total stolen</strong>, longest 0.17 s, zero wrong-app restores; wall clock <strong>26 s</strong> vs FS2’s 32 s and per-scenario’s 119–125 s.</li>
+                <li><strong>D1 cleared over all 53.</strong> The byte-diff against the FS2-era per-scenario baseline is empty for all 52 overlapping captures; the one non-overlap — <span class="gc-file">end_turn_ready_units</span>, merged into main after the baseline was taken — was verified byte-identical against its own fresh <code>SMOKE_ISOLATE</code> run. A mixed battle/straits/fog/menu five-scenario one-boot run was byte-verified as well, <span class="gc-file">make verify</span> is green and <span class="gc-file">make screenshot</span> stays byte-stable run to run.</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </section>

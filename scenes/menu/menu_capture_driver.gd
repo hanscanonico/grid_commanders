@@ -48,7 +48,7 @@ func _init(menu: Control) -> void:
 	_demo = CmdArgs.value(CmdArgs.user(), DEMO_ARG)
 	# A smoke batch (--demos=, COM-118) supersedes both — the menu pair runs
 	# inside the one-boot sweep, reached by a scene change.
-	if BattleCaptureBatch.adopt(CmdArgs.user(), menu):
+	if BattleCaptureBatch.adopt(menu):
 		_demo = BattleCaptureBatch.demo()
 		_shot_path = BattleCaptureBatch.shot_path()
 

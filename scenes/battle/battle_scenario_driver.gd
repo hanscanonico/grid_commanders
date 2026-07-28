@@ -139,7 +139,7 @@ func _init(battle: Battle) -> void:
 		_select_cell = Vector2i(int(parts[0]), int(parts[1]))
 	_demo = CmdArgs.value(args, DEMO_ARG)
 	# A smoke batch (--demos=, COM-117) supersedes both — see BattleCaptureBatch.
-	if BattleCaptureBatch.adopt(args, battle):
+	if BattleCaptureBatch.adopt(battle):
 		_demo = BattleCaptureBatch.demo()
 		_shot_path = BattleCaptureBatch.shot_path()
 

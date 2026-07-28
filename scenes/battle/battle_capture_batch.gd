@@ -47,24 +47,37 @@ static func requested() -> String:
 	return CmdArgs.value(CmdArgs.user(), DEMOS_ARG)
 
 
-## Adopts the current batch scenario, when the command line carries a group;
-## answers whether it did. The first boot parses the flags; every reload after
-## it takes the next mode off the static queue. Called from the driver's
-## _init so Battle's own capture pinning (game speed, the hint set) reads the
-## current scenario's demo — and the per-scenario deadline (risk R3) is armed
-## here for the same reason: a group process is alive as long as *any*
-## scenario progresses, so the budget has to live where the stuck scenario's
-## name is known.
-static func adopt(args: PackedStringArray, battle: Node) -> bool:
+## Whether this process runs a batch, parsing the queue off the command line
+## the first time it is asked. Every way into a batch goes through here: the
+## first scenario's boot facts are read by `scenario_args()` before any driver
+## exists to adopt it, so the parse cannot live in `adopt` alone or entry #1
+## would boot on the process-level flags the sweep no longer passes. Reloads
+## after the first find the queue already standing and take the next mode off
+## it.
+static func _adopted() -> bool:
+	if _active:
+		return true
+	var args := CmdArgs.user()
 	var demos := CmdArgs.value(args, DEMOS_ARG)
 	if demos == "":
 		return false
-	if not _active:
-		_active = true
-		_modes = demos.split(",")
-		_index = 0
-		_dir = CmdArgs.value(args, SHOTS_DIR_ARG)
-		_timeout = float(CmdArgs.value(args, SCENARIO_TIMEOUT_ARG))
+	_active = true
+	_modes = demos.split(",")
+	_index = 0
+	_dir = CmdArgs.value(args, SHOTS_DIR_ARG)
+	_timeout = float(CmdArgs.value(args, SCENARIO_TIMEOUT_ARG))
+	return true
+
+
+## Adopts the current batch scenario, when the command line carries a group;
+## answers whether it did. Called from the driver's _init so Battle's own
+## capture pinning (game speed, the hint set) reads the current scenario's
+## demo — and the per-scenario deadline (risk R3) is armed here for the same
+## reason: a group process is alive as long as *any* scenario progresses, so
+## the budget has to live where the stuck scenario's name is known.
+static func adopt(battle: Node) -> bool:
+	if not _adopted():
+		return false
 	if _timeout > 0.0:
 		var timer := battle.get_tree().create_timer(_timeout)
 		timer.timeout.connect(_deadline.bind(_index, demo(), battle.get_tree()))
@@ -93,7 +106,7 @@ static func shot_path() -> String:
 ## facts through the unchanged CLI grammar (FS3, COM-118).
 static func scenario_args() -> PackedStringArray:
 	var args := CmdArgs.user()
-	if not _active:
+	if not _adopted():
 		return args
 	var out := PackedStringArray()
 	for arg in args:

@@ -254,8 +254,8 @@ failed=0
 # meter's dark/light legibility comparison.
 #
 # One spelling, two callers — the `--map=` a single scenario boots with and the
-# map third of a batch's group key — so a new water scenario cannot reach one
-# and not the other.
+# `@<map>` a batch entry carries — so a new water scenario cannot reach one and
+# not the other.
 map_for_demo() {
 	case "$1" in
 		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
@@ -367,20 +367,17 @@ run_batched_sweep() {
 			battle_rest+=("$m")
 		fi
 	done
-	local ordered=()
+	local demos="" first="" map
 	for m in ${front[@]+"${front[@]}"} ${battle_rest[@]+"${battle_rest[@]}"} \
 		${boards[@]+"${boards[@]}"} ${menu[@]+"${menu[@]}"}; do
-		ordered+=("$m")
-	done
-	local demos="" map
-	for m in "${ordered[@]}"; do
+		first="${first:-$m}"
 		map="$(map_for_demo "${m%+fog}")"
 		demos+="${demos:+,}${m}${map:+@$map}"
 	done
 	# The boot scene is the first entry's; the driver crosses to the other
 	# scene when the queue does.
 	local godot_args=(--path .)
-	[[ "${ordered[0]%+fog}" != menu_* ]] && godot_args+=("$BATTLE")
+	[[ "${first%+fog}" != menu_* ]] && godot_args+=("$BATTLE")
 	godot_args+=(-- "--shots-dir=$out_dir" "--demos=$demos" "--scenario-timeout=$SMOKE_TIMEOUT")
 	run_with_timeout $((SMOKE_TIMEOUT * ${#members[@]})) "$GODOT_GUI" "${godot_args[@]}"
 	local status=$?
