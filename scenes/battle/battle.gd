@@ -590,7 +590,14 @@ func _handle_unit_action(action: StringName) -> void:
 ## Every committed unit-menu action shares this interaction wrapper. Validation,
 ## application, snapshots, and presentation belong to the pipeline; this method
 ## only decides how the human menu recovers or closes around its receipt.
+##
+## ANIMATING before the await, exactly as _execute_attack sets it, because the
+## pipeline's presentation can hold this flow for seconds — the capture cut-in
+## does — and MENU is a state the HUD's Fire button reaches a command from. Left
+## in MENU, a power fired mid-cut-in entered the pipeline re-entrantly and cleared
+## the selection this flow comes back to (COM-50).
 func _commit(action: StringName, command: Command) -> void:
+	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
 		push_error("%s rejected: %s" % [action, receipt.validation_error])
