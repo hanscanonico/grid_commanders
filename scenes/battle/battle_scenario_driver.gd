@@ -234,7 +234,7 @@ func _fog_hides_unseen() -> bool:
 ## bottom bar's commander block takes, power_ready_contrast is the named
 ## legibility gate, power_mapmenu opens the keyboard route the ready meter
 ## advertises and checks the menu stays inside the board band, power_banner fires
-## a power so its activation card holds, commander_info opens the both-sides
+## a power so its activation card holds, commander_info opens the commander
 ## reference from the map menu, and commander_victory wins with a general so the
 ## victory lockup is fronted by a portrait.
 ##
@@ -302,7 +302,7 @@ func _run_demo(mode: String) -> void:
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
-		"turn_banner_build_attempt", "outcome_mash_guard":
+		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff":
 			var transition_error := await BattleTransitionScenario.new(_battle).run(mode)
 			if transition_error != "":
 				_fail(transition_error)
@@ -332,10 +332,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_mission_strip(mode)
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
-		"commander_victory":
-			await _run_victory_demo(true)  # victory lockup fronted by the winner's face
-		"victory":
-			await _run_victory_demo()
+		"commander_victory", "victory", "side_victory":
+			await BattleVictoryScenario.new(_battle).run(mode)
 		"aiturn":
 			# hand the turn to the Blue AI and wait until it plays back to Red
 			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
@@ -1226,6 +1224,11 @@ func _walk_first_turn() -> void:
 ## Opens the both-sides commander reference through the real map menu, the one
 ## route a player reaches it by. Red and Blue get distinct commanders so the two
 ## cards differ in the capture.
+##
+## Then reads the open sheet back, since this mode is a check as well as a picture:
+## a sheet whose card bodies collapsed to nothing still draws its faction headers
+## and still writes a full-sized PNG, which is exactly how one shipped (COM-47
+## review). CommanderInfoSheet.layout_error owns what "shown" means.
 func _stage_commander_info() -> void:
 	_battle.game.set_commander(1, _battle.commander_db.by_id(&"rhea_sol"))
 	_battle.game.set_commander(2, _battle.commander_db.by_id(&"viktor_draeg"))
@@ -1234,6 +1237,10 @@ func _stage_commander_info() -> void:
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"commanders")
 	await _until_state(Battle.State.INFO)
+	await _settle_menu()  # the grid sizes its columns a frame after the sheet opens
+	var flaw := _battle.commander_info_sheet.layout_error(_battle.game.teams.size())
+	if flaw != "":
+		_fail(flaw)
 
 
 ## Culls Blue to one nearly-dead unit and kills it through the ordinary
@@ -1258,15 +1265,6 @@ static func stage_rout(battle: Battle) -> void:
 	await until_state_of(battle, Battle.State.TARGETING)
 	battle.confirm_at(battle.cursor_cell)  # kill the last blue unit -> rout
 	await until_state_of(battle, Battle.State.VICTORY)
-
-
-## The staged rout, dressed for a capture: `with_commander` gives Red a general
-## first, so the victory lockup is fronted by a portrait.
-func _run_victory_demo(with_commander: bool = false) -> void:
-	if with_commander:
-		_battle.game.set_commander(1, _battle.commander_db.by_id(&"viktor_draeg"))
-		_battle.view.restage_identity()  # so the win lockup reads the winner's faction, not First Army
-	await stage_rout(_battle)
 
 
 ## Parks on a unit and previews its movement out to the farthest cell it could

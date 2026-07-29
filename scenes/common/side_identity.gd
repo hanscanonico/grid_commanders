@@ -31,19 +31,26 @@ const NEUTRAL_ROW := 0
 ## row 0. The runtime property TileSet registers exactly these (BattleView).
 const FACTION_ROWS := 4
 
-## The two original side colours — "classic" themes. Meridian is red, Aurora is
-## blue. A commander-less side or a mirror side falls back to one of these; a
-## faction side never does.
+## Every theme a side may fall back to, in the order it is offered. Both lists
+## hold all four keys and both start with the two original classics — Meridian
+## red and Aurora blue — so every resolution a two-army board ever produced is
+## unchanged, and iron and verdant only ever come up on a board that seats a
+## third or fourth army (four-players plan D5).
+##
+## Four keys against at most four armies is what makes "no two sides share a
+## colour" **provable** rather than merely true so far: each fallback takes the
+## first key nobody has, and there can never be fewer free keys than sides left
+## to place. `_fallback`'s neutral escape hatch became unreachable with this.
 ##
 ## Generic (commander-less) sides claim classics in this order, meridian then
 ## aurora, so a match with no commanders at all renders exactly as it did before
 ## factions: side 1 red, side 2 blue (plan D4).
-const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora"]
-## A mirror side — one whose faction an earlier slot already wears — borrows a
-## classic in this order instead, aurora then meridian, taking the first that is
-## hue-distinct from what is already on the board (plan D3). Iron v Iron ->
-## slate + blue; Aurora v Aurora -> blue + red.
-const _MIRROR_ORDER: Array[StringName] = [&"aurora", &"meridian"]
+const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora", &"iron", &"verdant"]
+## A mirror side — one whose faction an earlier slot already wears — borrows in
+## this order instead, aurora then meridian, taking the first that is hue-distinct
+## from what is already on the board (plan D3). Iron v Iron -> slate + blue;
+## Aurora v Aurora -> blue + red.
+const _MIRROR_ORDER: Array[StringName] = [&"aurora", &"meridian", &"iron", &"verdant"]
 
 var _theme_by_team: Dictionary = {}  # team -> CommanderVisuals.FactionTheme
 var _name_by_team: Dictionary = {}  # team -> String
@@ -97,8 +104,8 @@ func atlas_row(team: int) -> int:
 
 ## Two passes, both in slot order, so the answer is deterministic and total:
 ## faction sides claim their colours first, then commander-less sides take what
-## is left. Every collision falls to the first free classic, so two sides can
-## never resolve to the same colour and the same picks always resolve the same.
+## is left. Every collision falls to the first free theme, so no two sides can
+## resolve to the same colour and the same picks always resolve the same.
 func _resolve(commanders: Dictionary) -> void:
 	var used: Dictionary = {}  # theme key -> true, for every side already placed
 	var roster := _seat_order(commanders)
@@ -136,18 +143,21 @@ func _seat_order(commanders: Dictionary) -> Array[int]:
 	return seats
 
 
-## The first classic theme in `order` whose key is not already on the board.
+## The first theme in `order` whose key is not already on the board.
 ## Distinctness is by theme key, which for the four faction themes is
 ## distinctness by hue — each theme is its own hue — so this is the "fall back by
 ## hue, never by shade" of plan D3, and the "first classic not in use" of D4,
-## the two differing only in which order they try the classics.
+## the two differing only in which order they try the four keys.
 func _fallback(order: Array[StringName], used: Dictionary) -> CommanderVisuals.FactionTheme:
 	for key in order:
 		if not used.has(key):
 			return CommanderVisuals.theme_for_key(key)
-	# Unreachable with two sides and two classics: at most one classic is ever
-	# taken before a fallback runs. Answer neutral rather than crash if a future
-	# third side ever gets here.
+	# Unreachable: both orders hold all four keys and a board seats at most four
+	# armies, so a side reaching a fallback always finds one nobody has taken.
+	# Answering neutral rather than crashing keeps the resolver total, but a
+	# neutral side would be indistinguishable from unowned ground — and
+	# `BattleView._last_seen_owner` maps an atlas row back to a team, so two sides
+	# sharing row 0 would make it name the wrong owner.
 	return CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
 
 

@@ -15,6 +15,10 @@ var team_after := 0
 var day_before := 0
 var day_after := 0
 var winner := 0
+## Armies this command took out of the match, in the order they fell. Empty for
+## every command that felled nobody, which is nearly all of them. The flow layer
+## announces them; the pipeline only reports that it happened.
+var fallen: Array[int] = []
 
 
 func _init(p_command: Command) -> void:

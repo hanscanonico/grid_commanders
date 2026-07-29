@@ -28,9 +28,11 @@ const _NAME_SIZE := 13
 const _MICRO_SIZE := 8
 const _BODY_SIZE := 9
 const _POWER_NAME_SIZE := 11
-const _PORTRAIT_H := 96
+## The portrait band, public because a surface that frames this card checks its
+## own layout against it — a card showing less than its face is showing nothing.
+const PORTRAIT_H := 96
 ## Where the visible band opens on the bust, as a fraction of the square source.
-## The band stays _PORTRAIT_H tall however wide the card is, so a *wider* card shows
+## The band stays PORTRAIT_H tall however wide the card is, so a *wider* card shows
 ## a *shorter* slice of the portrait: at READING_WIDTH the field is 244px — the card
 ## less the panel's 3px border each side — and 96 * 256 / 244 is ~101 of the 256
 ## source rows. Centred, that slice starts below the crown and takes the top off the
@@ -83,7 +85,7 @@ func _build() -> void:
 	# A plain Panel, not a PanelContainer: the latter force-stretches every child
 	# to fill it, which would blow the little emblem up over the whole portrait.
 	_field = Panel.new()
-	_field.custom_minimum_size = Vector2(0, _PORTRAIT_H)
+	_field.custom_minimum_size = Vector2(0, PORTRAIT_H)
 	_field.clip_contents = true
 	rows.add_child(_field)
 

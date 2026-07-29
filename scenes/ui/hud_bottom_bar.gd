@@ -311,15 +311,16 @@ func show_tile(
 	active_team: int,
 	capture_left: int = -1,
 	unit: Unit = null,
-	carrying: String = ""
+	carrying: String = "",
+	allegiance: String = ""
 ) -> void:
 	if not _built:
 		return
-	_show_unit(unit, carrying, active_team)
+	_show_unit(unit, carrying, active_team, allegiance)
 	_show_terrain(terrain, owner_team, capture_left)
 
 
-func _show_unit(unit: Unit, carrying: String, active_team: int) -> void:
+func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: String) -> void:
 	# The block itself stays in the row — it is the expanding child holding the
 	# terrain chip against the right edge — so an empty tile blanks its contents
 	# rather than hiding the block.
@@ -333,7 +334,7 @@ func _show_unit(unit: Unit, carrying: String, active_team: int) -> void:
 	var waited := unit.acted and unit.team == active_team
 	_unit_icon.modulate = UnitSprite.ACTED_TINT if waited else Color.WHITE
 	_unit_name.text = unit.type.display_name
-	_unit_sub.text = _order_line(unit, carrying, waited)
+	_unit_sub.text = _order_line(unit, carrying, waited, allegiance)
 	_pips.set_hp(unit.displayed_hp())
 	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
 	_ammo_label.visible = unit.type.max_ammo > 0
@@ -347,8 +348,13 @@ func _show_unit(unit: Unit, carrying: String, active_team: int) -> void:
 ## state the player is about to act on. The class is the tile-cost vocabulary the
 ## terrain speaks, so naming it here is what lets the bar drop the move-cost row
 ## the old panel carried.
-func _order_line(unit: Unit, carrying: String, waited: bool) -> String:
+func _order_line(unit: Unit, carrying: String, waited: bool, allegiance: String) -> String:
 	var parts := PackedStringArray()
+	# Whose it is, before what it is: with four armies on the board a colour alone
+	# stopped answering "can I shoot that?", and the answer is the viewer's rather
+	# than the tile's. Empty for the viewer's own units, which need no telling.
+	if allegiance != "":
+		parts.append(allegiance.to_upper())
 	parts.append(String(CLASS_LABELS.get(unit.type.move_class, "")).to_upper())
 	if unit.type.min_range > 1:
 		parts.append("RNG %d-%d" % [unit.type.min_range, unit.type.max_range])

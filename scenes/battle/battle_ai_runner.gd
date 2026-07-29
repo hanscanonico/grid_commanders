@@ -81,6 +81,12 @@ func _leave() -> void:
 ## replaced with EndTurn through that same seam; validation is never re-derived
 ## here. The receipt is then handed back to Battle for turn/victory flow, while
 ## this runner keeps ownership of planning and pacing.
+##
+## `conclude_command` is awaited because it can hold a blocking beat of its own —
+## the elimination banner — and the loop above issues the next command on a timer
+## rather than off the scene's state. Left fire-and-forget, an elimination that
+## ended neither the turn nor the match would let the AI's next EndTurn open a
+## second banner over the first, and the two would resolve out of order.
 func _execute(command: Command) -> BattleCommandReceipt:
 	var receipt := await _battle.execute_command(command, true)
 	if receipt.rejected():
@@ -89,5 +95,5 @@ func _execute(command: Command) -> BattleCommandReceipt:
 		if receipt.rejected():
 			_leave()
 			return null
-	_battle.conclude_command(receipt)
+	await _battle.conclude_command(receipt)
 	return receipt
