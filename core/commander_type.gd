@@ -217,10 +217,12 @@ func wants_power(state: GameState, team: int) -> bool:
 # --- subclass toolkit --------------------------------------------------------
 
 
-## The other side. Two-sided today; the first team that is not this one, so a
-## third side would not silently break it.
-func _opponent_of(team: int) -> int:
-	for other in GameState.TEAMS:
+## The other side: the first team in the match roster that is not this one. Asks
+## the roster rather than the legal maximum, so a doctrine never plans against a
+## seat the board did not fill. Two-sided today — a third army makes "the other
+## side" a set, which is the hostility authority's to answer.
+func _opponent_of(state: GameState, team: int) -> int:
+	for other in state.teams:
 		if other != team:
 			return other
 	return team

@@ -52,7 +52,7 @@ var _name_by_team: Dictionary = {}  # team -> String
 ## The identity for a running match, read straight from its commander picks.
 static func for_game(game: GameState) -> SideIdentity:
 	var commanders := {}
-	for team in GameState.TEAMS:
+	for team in game.teams:
 		commanders[team] = game.commander_of(team)
 	return resolve(commanders)
 
@@ -101,8 +101,9 @@ func atlas_row(team: int) -> int:
 ## never resolve to the same colour and the same picks always resolve the same.
 func _resolve(commanders: Dictionary) -> void:
 	var used: Dictionary = {}  # theme key -> true, for every side already placed
-	for slot in GameState.TEAMS.size():
-		var team: int = GameState.TEAMS[slot]
+	var roster := _seat_order(commanders)
+	for slot in roster.size():
+		var team: int = roster[slot]
 		var faction := CommanderVisuals.theme_for(commanders.get(team))
 		if faction.key == CommanderVisuals.NEUTRAL_KEY:
 			continue  # commander-less; placed in the second pass
@@ -113,14 +114,26 @@ func _resolve(commanders: Dictionary) -> void:
 		# classic — a mirror keeps both sides named for the faction and leans on
 		# the slot numeral and commander to tell them apart.
 		_name_by_team[team] = faction.display
-	for slot in GameState.TEAMS.size():
-		var team: int = GameState.TEAMS[slot]
+	for slot in roster.size():
+		var team: int = roster[slot]
 		if _theme_by_team.has(team):
 			continue
 		var worn := _fallback(_GENERIC_ORDER, used)
 		used[worn.key] = true
 		_theme_by_team[team] = worn
 		_name_by_team[team] = _ordinal_army_name(slot)
+
+
+## The seats to place, in seat order: whichever sides the caller asked about.
+## The roster is the match's (`GameState.teams`) or the selection page's pair, and
+## either way it arrives as the keys of the picks — so this resolver never holds a
+## second opinion on how many armies are playing.
+func _seat_order(commanders: Dictionary) -> Array[int]:
+	var seats: Array[int] = []
+	for team: int in commanders:
+		seats.append(team)
+	seats.sort()
+	return seats
 
 
 ## The first classic theme in `order` whose key is not already on the board.

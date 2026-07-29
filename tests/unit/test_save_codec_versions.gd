@@ -246,7 +246,7 @@ func test_a_version_1_save_with_no_commander_block_still_loads_neutral() -> void
 	assert_eq(SaveCodec.validate(data), "", "version 1 knew no commander block")
 	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
 	assert_not_null(loaded)
-	for team in GameState.TEAMS:
+	for team in loaded.state.teams:
 		assert_eq(loaded.state.commander_of(team).id, CommanderType.NEUTRAL_ID)
 		assert_eq(loaded.state.commander_state(team).charge, 0, "and an empty meter")
 
@@ -310,5 +310,5 @@ func test_a_freshly_encoded_save_carries_everything_its_version_promises() -> vo
 	for key: String in SaveCodec.UNIT_KEY_RULES:
 		assert_has((_encoded()["units"] as Array)[0] as Dictionary, key)
 	for key: String in SaveCodec.COMMANDER_KEY_RULES:
-		for team in GameState.TEAMS:
+		for team: int in _encoded()["teams"] as Array:
 			assert_has(_encoded()["commanders"][str(team)] as Dictionary, key)

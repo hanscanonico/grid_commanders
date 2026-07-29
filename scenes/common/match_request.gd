@@ -101,7 +101,7 @@ static func from_match(
 	request.ai_teams = ai_teams_in.duplicate()
 	request.fog_enabled = game.fog_enabled
 	request.difficulty = difficulty_in
-	for team in GameState.TEAMS:
+	for team in game.teams:
 		request.commanders[team] = game.commander_of(team).id
 	return request
 
@@ -145,18 +145,23 @@ func apply_cmdline(args: PackedStringArray) -> void:
 	if CmdArgs.flag(args, "--fog"):
 		fog_enabled = true
 	if CmdArgs.flag(args, "--watch"):
-		# Watch mode (balance plan BS3): both seats are the computer's, each with
+		# Watch mode (balance plan BS3): every seat is the computer's, each with
 		# its own commander and its own tier, and the match RNG is pinned. That is
 		# the whole difference from a normal launch — the sim, the planners and the
 		# animations are the shipped ones, which is what makes the watched match
 		# the same match as its headless row (plan D7).
-		ai_teams = GameState.TEAMS.duplicate()
+		#
+		# *Which* seats those are is the board's answer and no board is loaded yet, so
+		# `BattleSetup` seats the match roster once one is. This is the duel every
+		# board was until a map could seat more (four-players plan D1).
+		ai_teams = MapData.DEFAULT_TEAMS.duplicate()
 		watching = true
 
 
-## `--co=alina_ward,viktor_draeg`: red first, blue second, either side blank for
-## no commander. Keeps headless demos and captures able to pick a matchup without
-## the menu, exactly as `--map` and `--fog` do.
+## `--co=alina_ward,viktor_draeg`: one id per seat in seat order, any of them blank
+## for no commander, and anything past the last seat a board could have dropped.
+## Keeps headless demos and captures able to pick a matchup without the menu,
+## exactly as `--map` and `--fog` do.
 static func parse_co_flag(value: String) -> Dictionary:
 	var picked: Dictionary = {}
 	var ids := value.split(",")

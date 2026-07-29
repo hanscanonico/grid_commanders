@@ -868,7 +868,7 @@ func _set_red_commander(id: StringName, charged: bool) -> CommanderType:
 ## the same one, and no team-int-as-row shortcut can survive it.
 func _stage_faction_commanders() -> void:
 	for slot in FACTION_CO_IDS.size():
-		var team: int = GameState.TEAMS[slot]
+		var team: int = _battle.game.teams[slot]
 		_battle.game.set_commander(team, _battle.commander_db.by_id(FACTION_CO_IDS[slot]))
 	_battle.view.restage_identity()
 

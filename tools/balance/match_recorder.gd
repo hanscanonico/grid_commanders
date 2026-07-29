@@ -266,12 +266,12 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 		lost[team] = int(lost.get(team, 0)) + _count_of(row["lost"])
 		merged[team] = int(merged.get(team, 0)) + int(row["merged"])
 		# A kill is recorded in the row of the side that was *taking the turn*,
-		# so the victim's own team is the other one. Two-sided game; the sim's
-		# own TEAMS list decides who that is.
-		for other in GameState.TEAMS:
+		# so the victim's own team is the other one. Two-sided game; the match's
+		# own roster decides who that is.
+		for other in state.teams:
 			if other != team:
 				killed[other] = int(killed.get(other, 0)) + _count_of(row["killed"])
-	for team in GameState.TEAMS:
+	for team in state.teams:
 		var expected := (
 			int(starting.get(team, 0))
 			+ int(built.get(team, 0))

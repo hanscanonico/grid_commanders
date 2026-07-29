@@ -10,11 +10,13 @@ extends RefCounted
 ##
 ## Version 2 adds the commander block: which general each side is playing, how
 ## much charge their meter holds, and whether their Command Power is up. Version 3
-## adds one flag per unit: whether a submarine is submerged. Both are purely
-## additive, so older saves are still read rather than rejected — a save with no
-## commander block loads with both sides neutral, and one with no dive flag loads
-## with every boat on the surface, which is exactly the match each recorded. New
-## saves are always written at the current version.
+## adds one flag per unit: whether a submarine is submerged. Version 4 adds the
+## match roster — which armies the board seated — because a match stopped being a
+## duel by definition. All three are purely additive, so older saves are still
+## read rather than rejected — a save with no commander block loads with both
+## sides neutral, one with no dive flag loads with every boat on the surface, and
+## one with no roster loads as the duel it was, which is exactly the match each
+## recorded. New saves are always written at the current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -25,9 +27,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 3
+const VERSION := 4
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4]
 
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
@@ -57,6 +59,12 @@ enum Shape { BOOL, NUMBER, STRING, ARRAY, DICTIONARY }
 ## board a cell is are questions about the board rather than the format, and `board_error`
 ## already owns those, so nothing declared here holds a second opinion on them.
 ##
+## `teams` is the exception that proves it, and deliberately so: the roster is not a fact
+## *about* the board, it is the list every other per-side rule here is derived from — whose
+## purse must be present, whose commander, which side may be taking the turn. A roster that
+## is not one the rules could seat has to be refused before any of those are asked, or each
+## of them is asked about a side that never existed. See `_teams_error`.
+##
 ## `difficulty` is the awkward one, and it is deliberately listed at 3 rather than 2:
 ## it was added between those two versions without a bump of its own, so a version 2
 ## save may or may not carry it and only a version 3 save is guaranteed to. Its `since`
@@ -82,6 +90,7 @@ const KEY_RULES := {
 	"ai_teams": {"since": 1, "shape": Shape.ARRAY},
 	"commanders": {"since": 2, "shape": Shape.DICTIONARY},
 	"difficulty": {"since": 3, "shape": Shape.STRING},
+	"teams": {"since": 4, "shape": Shape.ARRAY},
 }
 ## The same, per unit entry: everything but the dive flag shipped with the format, and
 ## `dived` is version 3's whole reason for existing. What a `carrier` number may *be* —
@@ -200,7 +209,7 @@ static func encode(
 		progress.append({"x": cell.x, "y": cell.y, "points": state.capture_progress[cell]})
 	var commanders: Dictionary = {}
 	var funds: Dictionary = {}
-	for team in GameState.TEAMS:
+	for team in state.teams:
 		var co_state := state.commander_state(team)
 		commanders[str(team)] = {
 			"id": String(co_state.type.id),
@@ -215,6 +224,7 @@ static func encode(
 	return {
 		"version": VERSION,
 		"map_path": state.map_path,
+		"teams": state.teams.duplicate(),
 		"fog": state.fog_enabled,
 		"day": state.day,
 		"current_team": state.current_team,
@@ -267,16 +277,18 @@ static func decode(
 	# read at any version because an older save may carry a real tier, and shaped at any
 	# version for exactly that reason. See `_difficulty_error`.
 	var version := _claimed_version(data)
+	var roster := _roster(data)
 	var state := GameState.new()
 	state.map = map
 	state.map_path = String(data["map_path"])
+	state.teams = roster
 	state.damage_chart = damage_chart
 	state.fog_enabled = bool(data.get("fog", false))
 	state.day = int(data["day"])
 	state.current_team = int(data["current_team"])
 	state.winner = int(data.get("winner", 0))
 	var funds: Dictionary = data["funds"]
-	for team in GameState.TEAMS:
+	for team in roster:
 		state.funds[team] = int(funds[str(team)])
 	state.rng.state = int(String(data["rng_state"]))
 	for entry in data["owners"]:
@@ -346,7 +358,7 @@ static func _decode_commanders(
 	var saved: Variant = data.get("commanders", {})
 	if not (saved is Dictionary):
 		return
-	for team in GameState.TEAMS:
+	for team in _roster(data):
 		var entry: Variant = (saved as Dictionary).get(str(team), {})
 		if not (entry is Dictionary):
 			continue
@@ -417,6 +429,11 @@ static func validate(data: Dictionary) -> String:
 	var error := _difficulty_error(data)
 	if error != "":
 		return error
+	# Before anything derived from it: every per-side rule below asks the roster whose
+	# side is whose. See `_teams_error`.
+	error = _teams_error(data)
+	if error != "":
+		return error
 	# The pass stops at each key's own value too, and a Dictionary that is hollow, a list
 	# of things that are not numbers and a number spelled as a word are all perfectly good
 	# values at that level.
@@ -455,7 +472,7 @@ static func validate(data: Dictionary) -> String:
 ## used to load clean and take the game down much later and far away:
 ## `CombatResolver` null-derefs `terrain_at(...).defense_stars` for a unit off the
 ## map, an `hp` of zero puts a corpse on the board that no attack can finish, and a
-## `team` outside `GameState.TEAMS` produces a unit no turn ever readies. Refusing
+## `team` outside the save's roster produces a unit no turn ever readies. Refusing
 ## here is what keeps the delayed crash from ever being the player's first symptom.
 ##
 ## Every cell the save carries is asked the same question, not only the units' — a
@@ -498,8 +515,9 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	error = _ai_teams_error(data)
 	if error != "":
 		return error
+	var roster := _roster(data)
 	for team: Variant in data.get("ai_teams", []) as Array:
-		if not GameState.TEAMS.has(int(team)):
+		if not roster.has(int(team)):
 			return "the save gives team %d to the computer, which does not play" % int(team)
 	for entry: Dictionary in data["units"] as Array:
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
@@ -512,7 +530,7 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 		if hp < MIN_HP or hp > MAX_HP:
 			return "unit '%s' has %d HP, outside %d-%d" % [entry["type"], hp, MIN_HP, MAX_HP]
 		var team := int(entry["team"])
-		if not GameState.TEAMS.has(team):
+		if not roster.has(team):
 			return "unit '%s' belongs to team %d, which does not play" % [entry["type"], team]
 	var cells_error := _cells_on_board(data["owners"], map, "owned property")
 	if cells_error != "":
@@ -549,7 +567,7 @@ static func _commander_block_error(data: Dictionary, version: int) -> String:
 		return ""
 	var saved: Dictionary = data["commanders"]
 	var keys := _keys_written_by(version, COMMANDER_KEY_RULES)
-	for team in GameState.TEAMS:
+	for team in _roster(data):
 		var entry: Variant = saved.get(str(team))
 		if not (entry is Dictionary):
 			return "a version %d save is missing the commander for team %d" % [version, team]
@@ -599,7 +617,7 @@ static func _ai_teams_error(data: Dictionary) -> String:
 ## absent one reads as zero exactly as it always has — which is no winner at all, and a
 ## turn belonging to nobody.
 ##
-## The turn indexes `funds`, which decode fills for GameState.TEAMS and nothing else, so
+## The turn indexes `funds`, which decode fills for the save's roster and nothing else, so
 ## a turn belonging to a side that does not play is an invalid-key read the first time the
 ## HUD draws it. Zero is the running match; anything else is the side that won, and every
 ## command refuses while one stands, so a winner no side ever was resumes into a board
@@ -608,11 +626,12 @@ static func _turn_and_winner_error(data: Dictionary) -> String:
 	for key: String in ["current_team", "winner"]:
 		if not _is_shape(data.get(key, 0), int(KEY_RULES[key]["shape"])):
 			return "'%s' is malformed" % key
+	var roster := _roster(data)
 	var turn := int(data.get("current_team", 0))
-	if not GameState.TEAMS.has(turn):
+	if not roster.has(turn):
 		return "the save's turn belongs to team %d, which does not play" % turn
 	var winner := int(data.get("winner", 0))
-	if winner != 0 and not GameState.TEAMS.has(winner):
+	if winner != 0 and not roster.has(winner):
 		return "the save was won by team %d, which does not play" % winner
 	return ""
 
@@ -656,6 +675,73 @@ static func _difficulty_error(data: Dictionary) -> String:
 	return ""
 
 
+## The armies the save's match seated, which every per-side rule in this file is asked
+## about. A save written before the roster existed played a duel — that is what a match
+## was — so one is what it decodes as, and a two-army save round-trips through version 4
+## naming the same pair it always did.
+##
+## Read only from the version that writes it, which is the gate `_teams_error` is under.
+## Below it the field is not a roster this codec vetted — a hand-edited or merged one
+## would drive every per-side rule off a list nothing refused — so the duel the save
+## recorded by construction is the answer, and `teams` is not read at all.
+##
+## Total, like `board_error` is total and for the same reason: it is asked from
+## `board_error`, which answers for dictionaries `validate` has never seen. A roster that
+## is not one the rules could seat floors to the duel here and is *reported* by
+## `_teams_error`, so nothing downstream is ever handed a side that could not exist.
+static func _roster(data: Dictionary) -> Array[int]:
+	if _claimed_version(data) < int(KEY_RULES["teams"]["since"]):
+		return MapData.DEFAULT_TEAMS.duplicate()
+	var declared: Variant = data.get("teams")
+	if not (declared is Array):
+		return MapData.DEFAULT_TEAMS.duplicate()
+	var roster: Array[int] = []
+	for team: Variant in declared as Array:
+		if not _is_shape(team, Shape.NUMBER):
+			return MapData.DEFAULT_TEAMS.duplicate()
+		roster.append(int(team))
+	if not _is_seatable(roster):
+		return MapData.DEFAULT_TEAMS.duplicate()
+	return roster
+
+
+## "" when the save's roster is one a board could have seated, else why it could not.
+##
+## The one format rule that is about a side rather than a field, and it is here rather
+## than in `board_error` because every other per-side rule is derived from its answer: a
+## roster of `[1, 9]` would have this file demanding a purse and a commander for team 9,
+## and reporting their absence as the damage instead of the cause. `MapData` refuses the
+## same roster at parse, so a save claiming one describes a match no board could produce.
+##
+## Asked only of the version that writes it. Below that there is no roster to be wrong —
+## the save recorded a duel by construction.
+static func _teams_error(data: Dictionary) -> String:
+	if _claimed_version(data) < int(KEY_RULES["teams"]["since"]):
+		return ""
+	var declared: Array = data["teams"]
+	var roster: Array[int] = []
+	for team: Variant in declared:
+		if not _is_shape(team, Shape.NUMBER):
+			return "'teams' is malformed"
+		roster.append(int(team))
+	if not _is_seatable(roster):
+		return "the save seats teams %s, which no board could have dealt" % [roster]
+	return ""
+
+
+## Whether `roster` is a roster a board may seat: at least one army, and the seats taken
+## in order from 1 with no gaps. `MapData._build_roster`'s rule, asked of a save rather
+## than of a board — seats are positional everywhere downstream, so a hole is a side every
+## list indexes past.
+static func _is_seatable(roster: Array[int]) -> bool:
+	if roster.is_empty() or roster.size() > MapData.PLAYER_TEAMS.size():
+		return false
+	for slot in roster.size():
+		if roster[slot] != MapData.PLAYER_TEAMS[slot]:
+			return false
+	return true
+
+
 ## "" when the save's RNG state is a whole number spelled out in full, else why it is
 ## not. The one field a shape cannot finish: a 64-bit state does not survive JSON's
 ## single number type, so it is stored as text and `Shape.STRING` is satisfied by any
@@ -671,7 +757,7 @@ static func _rng_state_error(data: Dictionary) -> String:
 ## "" when the save carries a purse for every side that plays, and every purse is money.
 static func _funds_error(data: Dictionary) -> String:
 	var funds: Dictionary = data["funds"]
-	for team in GameState.TEAMS:
+	for team in _roster(data):
 		if not funds.has(str(team)):
 			return "save has no funds for team %d" % team
 		if not _is_shape(funds[str(team)], FUNDS_SHAPE):

@@ -4,7 +4,11 @@ extends RefCounted
 ## and whose turn it is. Scenes render from this; commands mutate it.
 ## No Node dependencies.
 
-const TEAMS: Array[int] = [1, 2]
+## Every team the rules recognise: the legal maximum, not this match's roster.
+## Ask `teams` for who is actually playing — the bound is only for the questions
+## that have no match to ask, such as whether a save names a side that could ever
+## have existed. Re-exported from the board, which is the roster authority.
+const TEAMS: Array[int] = MapData.PLAYER_TEAMS
 const CAPTURE_POINTS := 20
 const INCOME_PER_PROPERTY := 1000
 
@@ -17,6 +21,11 @@ const CHARGE_PCT_LOST := 100
 const CHARGE_PCT_DEALT := 50
 
 var map: MapData
+## The armies this match seats, in turn order. Seeded by `create` from the map,
+## which is the roster authority (four-players plan D1) — never a menu setting,
+## never `TEAMS`. A state assembled by hand (a save being decoded, a movement
+## fixture) plays the duel every board played before a map could say otherwise.
+var teams: Array[int] = MapData.DEFAULT_TEAMS.duplicate()
 var units: Array[Unit] = []
 var damage_chart: DamageChart
 ## Match RNG (combat luck). Set `rng.seed` explicitly for deterministic
@@ -62,7 +71,9 @@ static func create(
 	state.map = p_map
 	state.damage_chart = p_damage_chart
 	state.property_owners = p_map.initial_owners()
-	for team in TEAMS:
+	state.teams = p_map.teams()
+	state.current_team = state.teams[0]
+	for team in state.teams:
 		state.funds[team] = 0
 	for entry: Dictionary in p_map.starting_units:
 		var type: UnitType = unit_db.by_symbol(entry.symbol)
@@ -236,14 +247,14 @@ func advance_unit(unit: Unit, path: Array[Vector2i]) -> bool:
 
 
 func next_team() -> int:
-	var index := TEAMS.find(current_team)
-	return TEAMS[(index + 1) % TEAMS.size()]
+	var index := teams.find(current_team)
+	return teams[(index + 1) % teams.size()]
 
 
 func _check_rout(dead_team: int) -> void:
 	if winner != 0 or not units_of(dead_team).is_empty():
 		return
-	for team in TEAMS:
+	for team in teams:
 		if team != dead_team:
 			winner = team
 			return

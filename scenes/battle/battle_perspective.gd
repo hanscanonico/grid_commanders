@@ -21,13 +21,14 @@ class DropOption:
 
 
 var _game: GameState
-var _viewing_team: int = GameState.TEAMS[0]
+var _viewing_team: int = 0
 var _blacked_out := false
 var _visible_cells: Dictionary = {}
 
 
 func _init(p_game: GameState) -> void:
 	_game = p_game
+	_viewing_team = p_game.teams[0]  # until the first refresh names the real viewer
 
 
 ## Recomputes the read model after a committed action or turn change. A hot-seat

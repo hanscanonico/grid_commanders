@@ -23,10 +23,24 @@ extends RefCounted
 ## reachability, the symmetry the tag above claims, and the water a port or a
 ## shoal needs — are asserted over every shipped map by tests/unit/test_maps.gd,
 ## which names each one and the failure it prevents.
+##
+## The board is also the roster authority (four-players plan D1): how many armies
+## a match seats is read off the teams its [owners] and [units] name, never from a
+## menu setting. See `teams()`.
 
 const NEUTRAL := 0
 ## Comment line that opts a map into the mirror check in tests/unit/test_maps.gd.
 const SYMMETRIC_TAG := "symmetric"
+
+## Every team a board may seat, in seat order — the legal maximum a roster is a
+## prefix of. The one bound on the question, re-exported as `GameState.TEAMS`
+## rather than restated there: a board naming a fifth army fails at parse instead
+## of loading clean and seating a side that never gets a turn.
+const PLAYER_TEAMS: Array[int] = [1, 2, 3, 4]
+## The smallest roster a board can seat, and what a board that names nobody gets.
+## A match is at least a duel — a terrain-only board is a fixture rather than a
+## match, and most movement tests build one.
+const DEFAULT_TEAMS: Array[int] = [1, 2]
 
 var width := 0
 var height := 0
@@ -42,6 +56,9 @@ var _terrain: Array[TerrainType] = []  # row-major, width * height entries
 var _owners: Dictionary = {}  # Vector2i -> int (team); missing key = neutral
 var _property_cells: Array[Vector2i] = []  # cached by property_cells()
 var _property_cells_built := false
+## The seats this board deals, built by `_build_roster` when `parse` finishes.
+## Empty on a MapData nothing has parsed into; `teams()` answers for that.
+var _teams: Array[int] = []
 
 
 static func load_from_file(path: String, db: TerrainDB) -> MapData:
@@ -85,6 +102,7 @@ static func parse(text: String, db: TerrainDB) -> MapData:
 	if map.width == 0 or map.height == 0:
 		push_error("MapData: map has no terrain rows")
 		return null
+	map._build_roster()
 	return map
 
 
@@ -118,6 +136,19 @@ func property_cells() -> Array[Vector2i]:
 					_property_cells.append(Vector2i(x, y))
 		_property_cells_built = true
 	return _property_cells.duplicate()
+
+
+## The armies this board seats, in seat order: seat 1 up to the highest one its
+## [owners] and [units] name, and never fewer than a duel. `GameState.create`
+## copies it into the match roster, so how many armies play is a property of the
+## board (four-players plan D1). Returns a copy, like `initial_owners`.
+func teams() -> Array[int]:
+	return _teams.duplicate() if not _teams.is_empty() else DEFAULT_TEAMS.duplicate()
+
+
+## How many armies the board seats — what the menu prints beside the size.
+func player_count() -> int:
+	return teams().size()
 
 
 func size() -> Vector2i:
@@ -165,8 +196,8 @@ func _set_owner_from_line(line: String) -> bool:
 		return false
 	var team := int(parts[0])
 	var cell := Vector2i(int(parts[1]), int(parts[2]))
-	if team <= 0:
-		push_error("MapData: owner team must be >= 1 in '%s'" % line)
+	if not PLAYER_TEAMS.has(team):
+		push_error(_team_bound_message("owner", line))
 		return false
 	if not in_bounds(cell):
 		push_error("MapData: owner cell %s out of bounds" % cell)
@@ -188,11 +219,37 @@ func _append_unit_from_line(line: String) -> bool:
 		return false
 	var team := int(parts[0])
 	var cell := Vector2i(int(parts[2]), int(parts[3]))
-	if team <= 0:
-		push_error("MapData: unit team must be >= 1 in '%s'" % line)
+	if not PLAYER_TEAMS.has(team):
+		push_error(_team_bound_message("unit", line))
 		return false
 	if not in_bounds(cell):
 		push_error("MapData: unit cell %s out of bounds" % cell)
 		return false
 	starting_units.append({"team": team, "symbol": parts[1], "cell": cell})
 	return true
+
+
+## Reads the roster off the board, once, at the end of `parse` — the last line may
+## be the one that seats the last army.
+##
+## Seats run from 1 up to the highest one the board names, never fewer than the
+## two a match needs. Two things make it a range rather than the exact set of
+## teams mentioned. Seats are positional everywhere downstream — turn order, the
+## seat strip, the colour fallback — so a hole is a side every one of those
+## indexes past; and a board that only ever mentions one army (which most test
+## fixtures are, and which no match is) has always been played as a duel with an
+## empty seat opposite.
+func _build_roster() -> void:
+	var seats := DEFAULT_TEAMS.size()
+	for cell: Vector2i in _owners:
+		seats = maxi(seats, _owners[cell])
+	for entry: Dictionary in starting_units:
+		seats = maxi(seats, entry.team)
+	_teams = PLAYER_TEAMS.slice(0, seats)
+
+
+func _team_bound_message(what: String, line: String) -> String:
+	return (
+		"MapData: %s team must be 1..%d in '%s'"
+		% [what, PLAYER_TEAMS[PLAYER_TEAMS.size() - 1], line]
+	)
