@@ -22,13 +22,17 @@ func vision_bonus(_state: GameState, unit: Unit) -> int:
 ## Asked of *his* commander about an enemy unit, which is what makes this the
 ## one hook a doctrine uses to reach the other side of the board. Vision floors
 ## the total at 0, so a jammed scout goes blind rather than inside-out.
-func enemy_vision_bonus(state: GameState, unit: Unit) -> int:
-	return jam_vision_penalty if _is_active(state, _opponent_of(state, unit.team)) else 0
+func enemy_vision_bonus(state: GameState, team: int, _unit: Unit) -> int:
+	return jam_vision_penalty if _is_active(state, team) else 0
 
 
+## A jam is a hostile effect, so it stops at the side boundary rather than at his
+## own army: asked of the allegiance authority, which is what keeps the power's
+## two halves agreeing about who the enemy is — the ongoing debuff already asks it
+## through Vision's sight loop and enemy_vision_bonus.
 func on_power_activated(state: GameState, team: int) -> void:
 	for unit in state.units:
-		if unit.team == team:
+		if state.allied(unit.team, team):
 			continue
 		unit.fuel = maxi(0, unit.fuel - jam_fuel_loss)
 		if unit.type.max_ammo > 0:
@@ -40,6 +44,6 @@ func on_power_activated(state: GameState, team: int) -> void:
 ## shot: a tile of sight and a turn of fuel and ammo change what the opponent
 ## can do next turn whichever side is closing the distance.
 func wants_power(state: GameState, team: int) -> bool:
-	if _can_strike(state, team, team, false):
+	if _can_strike_an_opponent(state, team, false):
 		return true
-	return _can_strike(state, team, _opponent_of(state, team), false)
+	return _opponents_can_strike(state, team, false)

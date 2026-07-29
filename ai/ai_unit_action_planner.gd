@@ -164,7 +164,9 @@ func _consider_captures(
 		if not reachable.can_stop_at(cell):
 			continue
 		var terrain := state.map.terrain_at(cell)
-		if not terrain.is_property or state.owner_at(cell) == unit.team:
+		# Through the allegiance authority, not `== unit.team`: an ally's ground is
+		# already the side's, and `CaptureCommand` turns the attempt down.
+		if not terrain.is_property or state.allied(state.owner_at(cell), unit.team):
 			continue
 		var score := profile.capture_score
 		if terrain.id == &"hq":
@@ -296,7 +298,9 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 	if unit.type.can_capture:
 		var capturable: Array[Vector2i] = []
 		for cell in state.map.property_cells():
-			if state.owner_at(cell) != unit.team:
+			# Through the allegiance authority, so the planner never walks a unit at
+			# a capture `CaptureCommand` would refuse: an ally's ground is held.
+			if not state.allied(state.owner_at(cell), unit.team):
 				capturable.append(cell)
 		if not capturable.is_empty():
 			goal.cell = _nearest(unit.cell, capturable)

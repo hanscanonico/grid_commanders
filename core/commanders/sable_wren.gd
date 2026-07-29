@@ -50,7 +50,7 @@ func hides_unit(state: GameState, unit: Unit) -> bool:
 func wants_power(state: GameState, team: int) -> bool:
 	if not _has_unit_in_cover(state, team):
 		return false
-	return _can_strike(state, team, _opponent_of(state, team), false)
+	return _opponents_can_strike(state, team, false)
 
 
 func _has_unit_in_cover(state: GameState, team: int) -> bool:

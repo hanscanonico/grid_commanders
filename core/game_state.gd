@@ -26,6 +26,16 @@ var map: MapData
 ## never `TEAMS`. A state assembled by hand (a save being decoded, a movement
 ## fixture) plays the duel every board played before a map could say otherwise.
 var teams: Array[int] = MapData.DEFAULT_TEAMS.duplicate()
+## team -> side id, how the armies are grouped. Empty is a free-for-all, where
+## every army is its own side — which is what every match was before groupings
+## existed, and is why the empty dictionary makes `allied` answer exactly what
+## `a == b` answered everywhere it replaced.
+##
+## The match's choice, not the board's (four-players plan D1): the same map hosts
+## a free-for-all, a 2v2 and a 3v1. Written once at setup from the `MatchRequest`
+## and never by a command. The side ids themselves are opaque — nothing compares
+## them for anything but equality.
+var sides: Dictionary = {}
 var units: Array[Unit] = []
 var damage_chart: DamageChart
 ## Match RNG (combat luck). Set `rng.seed` explicitly for deterministic
@@ -148,6 +158,50 @@ func bank_losses(victim: Unit, hp_lost: int, dealer_team: int) -> void:
 	add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
 
 
+# --- allegiance --------------------------------------------------------------
+
+
+## Whether two armies stand together. **The single hostility authority** — ask
+## it, never re-derive (four-players plan D2). Every site that used to write
+## `team != mine` routes through here, which is what makes a 2v2 and a
+## free-for-all differ by one dictionary instead of by a dozen expressions that
+## have to be found and kept in step.
+##
+## An army always stands with itself, and an army with no side entry stands alone.
+## So on an empty `sides` this is exactly `a == b`, and every routed site answers
+## what it always answered — the regression guarantee the whole milestone rests on.
+##
+## What allies share is sight and purpose: they cannot shoot or capture each
+## other, they pass through each other, and they never spring an ambush. What they
+## never share is infrastructure — funds, production, repair, resupply, joining
+## and transports all stay strictly `owner == unit.team`, each noted where an ally
+## might be expected.
+func allied(a: int, b: int) -> bool:
+	if a == b:
+		return true
+	return sides.has(a) and sides.has(b) and sides[a] == sides[b]
+
+
+## Every army standing with `team`, itself included, in seat order. What a side's
+## shared sight is composed over.
+func side_of(team: int) -> Array[int]:
+	var members: Array[int] = []
+	for other in teams:
+		if allied(team, other):
+			members.append(other)
+	return members
+
+
+## Every army in the roster hostile to `team`, in seat order. One element in a
+## duel, which is why every shipped doctrine keeps the behaviour it had.
+func enemies_of(team: int) -> Array[int]:
+	var others: Array[int] = []
+	for other in teams:
+		if not allied(team, other):
+			others.append(other)
+	return others
+
+
 # --- board -------------------------------------------------------------------
 
 
@@ -220,7 +274,7 @@ func advance_unit(unit: Unit, path: Array[Vector2i]) -> bool:
 	var ambushed := false
 	for i in range(1, path.size()):
 		var blocker := unit_at(path[i])
-		if blocker != null and blocker.team != unit.team:
+		if blocker != null and not allied(blocker.team, unit.team):
 			ambushed = true
 			# Never end on a cell a friendly is passing-through, nor past the
 			# origin: back up to the last cell that is actually free to stand on.

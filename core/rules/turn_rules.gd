@@ -67,6 +67,10 @@ static func _lost_to_empty_tank(state: GameState, unit: Unit) -> bool:
 ## Whether the property `unit` stands on is one of ours *and* refits its domain.
 ## The single answer to that question: repair and resupply both ask it, so no
 ## property can ever refuel something it refuses to repair.
+##
+## `owner_at == unit.team`, deliberately not `allied` (four-players plan D2):
+## allies share sight and purpose, never infrastructure. An ally's workshop does
+## not repair your tanks, and the funds the repair is billed against are its own.
 static func _serviced_here(state: GameState, unit: Unit) -> bool:
 	if state.owner_at(unit.cell) != unit.team:
 		return false

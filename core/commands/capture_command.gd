@@ -45,8 +45,10 @@ func validate(state: GameState) -> String:
 	var terrain := state.map.terrain_at(dest)
 	if not terrain.is_property:
 		return "destination is not a property"
-	if state.owner_at(dest) == unit.team:
-		return "property already owned"
+	# An ally's property is not capturable — a side does not take ground off
+	# itself. Neutral ground stays open to everyone: team 0 stands with nobody.
+	if state.allied(state.owner_at(dest), unit.team):
+		return "property already held by your side"
 	return ""
 
 

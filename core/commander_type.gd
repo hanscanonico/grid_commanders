@@ -151,9 +151,14 @@ func vision_bonus(_state: GameState, _unit: Unit) -> int:
 
 
 ## Vision this commander strips from an *enemy* unit (Orin Flux's Signal Jam).
-## Asked of every commander except the viewing unit's own, so it is the one hook
-## a team's doctrine uses to reach across the table.
-func enemy_vision_bonus(_state: GameState, _unit: Unit) -> int:
+## Asked of every commander hostile to the unit, so it is the one hook a team's
+## doctrine uses to reach across the table.
+##
+## `team` is the army this commander leads. It is passed rather than recovered,
+## because "the other side" stopped being a single team the moment a board could
+## seat four: two armies both playing Orin Flux each answer for their own meter,
+## and neither can be mistaken for the other.
+func enemy_vision_bonus(_state: GameState, _team: int, _unit: Unit) -> int:
 	return 0
 
 
@@ -211,27 +216,51 @@ func on_power_activated(_state: GameState, _team: int) -> void:
 ##
 ## Rule-based, lookahead-free and RNG-free, like the planner that calls it.
 func wants_power(state: GameState, team: int) -> bool:
-	return _can_strike(state, team, team, true)
+	return _can_strike_an_opponent(state, team, true)
 
 
 # --- subclass toolkit --------------------------------------------------------
 
 
-## The other side: the first team in the match roster that is not this one. Asks
-## the roster rather than the legal maximum, so a doctrine never plans against a
-## seat the board did not fill. Two-sided today — a third army makes "the other
-## side" a set, which is the hostility authority's to answer.
-func _opponent_of(state: GameState, team: int) -> int:
-	for other in state.teams:
-		if other != team:
-			return other
-	return team
+## Every army hostile to this one, in seat order — asked of the one allegiance
+## authority rather than worked out here (four-players plan D2). One element in a
+## duel, which is what pins every shipped doctrine to the behaviour it had.
+func _opponents_of(state: GameState, team: int) -> Array[int]:
+	return state.enemies_of(team)
 
 
-## True when a unit of `attacker_team` can bring one of the opposing side into
-## range. `ready_only` limits the attackers to units that have not acted, which
-## is the right question about the side whose turn it is and the wrong one about
-## the side waiting to reply.
+## True when any army hostile to `team` can bring one of `team`'s own side into
+## range. The offensive read's mirror, and the gate the powers that fire on being
+## attacked are measured with: they want to know whether anyone out there can
+## reach them, not which one.
+##
+## Each rival is measured against `team`'s side and never against another rival,
+## so a fight between two other armies is not mistaken for a threat to this one.
+func _opponents_can_strike(state: GameState, team: int, ready_only: bool) -> bool:
+	for other in _opponents_of(state, team):
+		if _can_strike(state, team, other, team, ready_only):
+			return true
+	return false
+
+
+## True when `team`'s own units can bring some rival's side into range. The
+## offensive read every power whose value lands on the turn it fires is gated on.
+## `team` measures its own army's reach, never its ally's.
+func _can_strike_an_opponent(state: GameState, team: int, ready_only: bool) -> bool:
+	for other in _opponents_of(state, team):
+		if _can_strike(state, team, team, other, ready_only):
+			return true
+	return false
+
+
+## True when a unit of `attacker_team` can bring a unit of `defender_team`'s side
+## into range. The two sides are named separately because the question is asked
+## both ways round: "can I reach them" and "can they reach me" differ in which
+## army shoots *and* in whose army is being shot at, and reusing one filter for
+## both counted a fight between two other armies as a threat to a third.
+## `ready_only` limits the attackers to units that have not acted, which is the
+## right question about the side whose turn it is and the wrong one about the
+## side waiting to reply.
 ##
 ## Reach is Manhattan distance against movement plus firing range, ignoring
 ## terrain cost. It over-estimates deliberately: the failure worth avoiding is a
@@ -240,7 +269,9 @@ func _opponent_of(state: GameState, team: int) -> int:
 ## Anything hidden from `team` — the commander doing the asking — is skipped on
 ## both sides of the question, so no doctrine plans around a unit its own side
 ## cannot see. Vision owns that judgement; it is not re-derived here.
-func _can_strike(state: GameState, team: int, attacker_team: int, ready_only: bool) -> bool:
+func _can_strike(
+	state: GameState, team: int, attacker_team: int, defender_team: int, ready_only: bool
+) -> bool:
 	for unit in state.units:
 		if unit.team != attacker_team or unit.carrier != null or unit.type.max_range <= 0:
 			continue
@@ -252,7 +283,7 @@ func _can_strike(state: GameState, team: int, attacker_team: int, ready_only: bo
 		if not AttackRange.is_indirect(unit):
 			reach += MovementResolver.move_budget(state, unit)
 		for target in state.units:
-			if target.team == attacker_team or target.carrier != null:
+			if not state.allied(target.team, defender_team) or target.carrier != null:
 				continue
 			if Vision.is_hidden_from(state, team, target):
 				continue
@@ -284,6 +315,12 @@ func _can_reach_capture(state: GameState, team: int, extra_move: int = 0) -> boo
 			if not reach.can_stop_at(cell):
 				continue
 			var terrain := state.map.terrain_at(cell)
-			if terrain != null and terrain.is_property and state.owner_at(cell) != team:
+			if terrain == null or not terrain.is_property:
+				continue
+			# Through the allegiance authority, not `!= team`: an ally's ground is
+			# already the side's and `CaptureCommand` turns the attempt down, so a
+			# doctrine measuring it would spend a full meter on a march the rules
+			# refuse.
+			if not state.allied(state.owner_at(cell), team):
 				return true
 	return false

@@ -54,7 +54,7 @@ static func validate_path_steps(
 		var occupant := state.unit_at(unit_path[i])
 		if (
 			occupant != null
-			and occupant.team != unit_moving.team
+			and not state.allied(occupant.team, unit_moving.team)
 			and Vision.can_see_unit(state, unit_moving.team, occupant, visible)
 		):
 			return "path is blocked by an enemy"
@@ -75,14 +75,15 @@ func validate(state: GameState) -> String:
 	var dest: Vector2i = path[path.size() - 1]
 	var dest_occupant := state.unit_at(dest)
 	if dest_occupant != null and dest_occupant != unit:
-		# A friendly (always seen) blocks; a hidden enemy is left to spring the
-		# ambush on apply rather than refused, which would reveal it. A visible
-		# enemy never reaches here — validate_path_steps already caught it.
+		# Anyone on this unit's own side (always seen) blocks: allies are walked
+		# through, never stopped on, exactly like your own units. A hidden enemy is
+		# left to spring the ambush on apply rather than refused, which would reveal
+		# it. A visible enemy never reaches here — validate_path_steps caught it.
 		var visible: Dictionary = (
 			Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
 		)
 		if (
-			dest_occupant.team == unit.team
+			state.allied(dest_occupant.team, unit.team)
 			or Vision.can_see_unit(state, unit.team, dest_occupant, visible)
 		):
 			return "destination is occupied"

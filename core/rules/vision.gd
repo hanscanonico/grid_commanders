@@ -21,6 +21,12 @@ const PROPERTY_VISION := 2
 
 
 ## Vector2i -> true for every cell `team` can currently see.
+##
+## A side sees as one: the set is the union over every army standing with `team`
+## (four-players plan D2). Composed here, in the visibility authority, rather than
+## by the callers — so `BattlePerspective`, the overlays and the AI's fog-limited
+## pathing all inherit shared sight without any of them knowing it happened. In a
+## free-for-all the side is the army alone and this is the loop it always was.
 static func visible_cells(state: GameState, team: int) -> Dictionary:
 	var cells: Dictionary = {}
 	if not state.fog_enabled:
@@ -28,15 +34,18 @@ static func visible_cells(state: GameState, team: int) -> Dictionary:
 			for x in state.map.width:
 				cells[Vector2i(x, y)] = true
 		return cells
-	for unit in state.units_of(team):
-		if unit.carrier != null:
-			continue
-		var co := state.commander_of(team)
-		_reveal_around(
-			state, cells, unit.cell, _sight_of(state, unit), co.sees_into_cover(state, unit)
-		)
-	for cell in state.properties_of(team):
-		_reveal_around(state, cells, cell, PROPERTY_VISION, false)
+	for member in state.side_of(team):
+		for unit in state.units_of(member):
+			if unit.carrier != null:
+				continue
+			# The unit's *own* commander, not the viewer's: a doctrine lengthens the
+			# sight of the units it commands, and an ally's eyes are its own.
+			var co := state.commander_of(member)
+			_reveal_around(
+				state, cells, unit.cell, _sight_of(state, unit), co.sees_into_cover(state, unit)
+			)
+		for cell in state.properties_of(member):
+			_reveal_around(state, cells, cell, PROPERTY_VISION, false)
 	return cells
 
 
@@ -51,7 +60,7 @@ static func visible_cells(state: GameState, team: int) -> Dictionary:
 static func can_see_unit(
 	state: GameState, viewer_team: int, unit: Unit, visible: Dictionary
 ) -> bool:
-	if unit.team == viewer_team:
+	if state.allied(unit.team, viewer_team):
 		return true
 	# Asked before the fog check, not after it, because one of the things it
 	# answers — a submerged submarine — hides on a clear day too.
@@ -77,7 +86,7 @@ static func can_see_unit(
 ## not a matter of how far anyone can see. Both are lifted by standing next to
 ## it — hunting a submarine means closing with it.
 static func is_hidden_from(state: GameState, viewer_team: int, unit: Unit) -> bool:
-	if unit.team == viewer_team:
+	if state.allied(unit.team, viewer_team):
 		return false
 	if unit.dived:
 		return not _has_neighbour_from(state, unit.cell, viewer_team)
@@ -86,24 +95,27 @@ static func is_hidden_from(state: GameState, viewer_team: int, unit: Unit) -> bo
 	return state.commander_of(unit.team).hides_unit(state, unit)
 
 
-## True when `team` has a unit standing on a tile orthogonally adjacent to `cell`.
+## True when `team`'s side has a unit standing on a tile orthogonally adjacent to
+## `cell`. Side-wide because hunting a submarine is closing with it, and a side
+## that shares its sight shares what its ally has closed with.
 static func _has_neighbour_from(state: GameState, cell: Vector2i, team: int) -> bool:
-	for other in state.units_of(team):
-		if other.carrier != null:
-			continue
-		if absi(other.cell.x - cell.x) + absi(other.cell.y - cell.y) == 1:
-			return true
+	for member in state.side_of(team):
+		for other in state.units_of(member):
+			if other.carrier != null:
+				continue
+			if absi(other.cell.x - cell.x) + absi(other.cell.y - cell.y) == 1:
+				return true
 	return false
 
 
 ## How far a unit sees: its type's range, plus what its own commander adds, less
-## what any enemy commander jams away. Floored at 0 — a jammed unit goes blind,
-## never inside-out.
+## what every hostile commander jams away. Floored at 0 — a jammed unit goes
+## blind, never inside-out. An ally's doctrine never jams: who is hostile is
+## `GameState.allied`'s answer, asked through `enemies_of`.
 static func _sight_of(state: GameState, unit: Unit) -> int:
 	var radius := unit.type.vision + state.commander_of(unit.team).vision_bonus(state, unit)
-	for team in state.teams:
-		if team != unit.team:
-			radius += state.commander_of(team).enemy_vision_bonus(state, unit)
+	for team in state.enemies_of(unit.team):
+		radius += state.commander_of(team).enemy_vision_bonus(state, team, unit)
 	return maxi(0, radius)
 
 

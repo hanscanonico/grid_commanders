@@ -43,7 +43,8 @@ static func unit_actions(
 	if can_fire:
 		actions.append({"id": &"fire", "label": "Fire"})
 	var terrain := game.map.terrain_at(dest)
-	if unit.type.can_capture and terrain.is_property and game.owner_at(dest) != unit.team:
+	var takeable := not game.allied(game.owner_at(dest), unit.team)
+	if unit.type.can_capture and terrain.is_property and takeable:
 		actions.append({"id": &"capture", "label": "Capture"})
 	for i in drop_options.size():
 		# One passenger drops under a plain "Drop"; a Lander's two are named apart.

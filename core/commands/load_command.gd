@@ -43,6 +43,8 @@ func validate(state: GameState) -> String:
 static func carriage_error(state: GameState, transport: Unit, rider: Unit) -> String:
 	if transport == rider:
 		return "a unit cannot carry itself"
+	# `!= rider.team`, deliberately not `allied` (four-players plan D2): a transport
+	# is infrastructure, and allies share sight and purpose rather than hulls.
 	if transport.team != rider.team:
 		return "no friendly transport for this unit"
 	if transport.type.transport_capacity <= 0:

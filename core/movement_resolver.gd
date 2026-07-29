@@ -128,16 +128,17 @@ static func reachable(
 				continue
 			var occupant := state.unit_at(next)
 			var unseen := false
-			if occupant != null and occupant.team != seer:
+			if occupant != null and not state.allied(occupant.team, seer):
 				if state.fog_enabled and not visible_computed:
 					visible = Vision.visible_cells(state, seer)
 					visible_computed = true
 				unseen = not Vision.can_see_unit(state, seer, occupant, visible)
-			# A seen enemy is a wall and a seen friend is passed but not stopped on;
-			# a unit the sighting team cannot see is planned through as if empty, and
-			# looks like a place to stop, because nobody planning this move has a way
-			# to know to avoid it — the trap springs on commit.
-			if occupant != null and not unseen and occupant.team != unit.team:
+			# A seen enemy is a wall; anyone on the mover's own side — its own units
+			# and its allies alike — is passed but not stopped on. A unit the sighting
+			# team cannot see is planned through as if empty, and looks like a place to
+			# stop, because nobody planning this move has a way to know to avoid it —
+			# the trap springs on commit.
+			if occupant != null and not unseen and not state.allied(occupant.team, unit.team):
 				continue
 			var next_cost: int = result.costs[current] + step
 			if next_cost > budget:

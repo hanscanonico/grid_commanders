@@ -67,6 +67,11 @@ var days_cap := BalanceMatchEngine.DEFAULT_DAYS
 ## Lab's own parser needs the commander and difficulty databases. `BattleSetup`
 ## resolves them, so a spec means the same thing in the window as in the report.
 var side_specs: Dictionary = {}
+## team -> side id: how the armies are grouped into sides. Empty is a free-for-all
+## — every army its own side — which is every match until a seat strip can say
+## otherwise (four-players plan D1: the grouping is the *match's* choice, never
+## the board's, so the same map hosts a free-for-all, a 2v2 and a 3v1).
+var sides: Dictionary = {}
 
 
 ## The main menu's choices. `resume` is the Continue button: the saved match
@@ -77,7 +82,8 @@ static func from_menu(
 	fog_enabled_in: bool,
 	difficulty_in: StringName,
 	commanders_in: Dictionary,
-	resume_in: bool
+	resume_in: bool,
+	sides_in: Dictionary = {}
 ) -> MatchRequest:
 	var request := MatchRequest.new()
 	request.map_path = map_path_in
@@ -86,6 +92,7 @@ static func from_menu(
 	request.difficulty = difficulty_in
 	request.commanders = commanders_in.duplicate()
 	request.resume = resume_in
+	request.sides = sides_in.duplicate()
 	return request
 
 
@@ -101,6 +108,7 @@ static func from_match(
 	request.ai_teams = ai_teams_in.duplicate()
 	request.fog_enabled = game.fog_enabled
 	request.difficulty = difficulty_in
+	request.sides = game.sides.duplicate()  # a rematch keeps the grouping it was played under
 	for team in game.teams:
 		request.commanders[team] = game.commander_of(team).id
 	return request
