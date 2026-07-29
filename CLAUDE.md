@@ -174,6 +174,26 @@ that must survive any change; the full rationale, milestones and risk registers 
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
   net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
+- `four-players-plan.html` — up to four armies, milestones FP1–FP6; **only FP1 (the roster becomes
+  data) is shipped**. D1: **the map is the roster authority** — `MapData.teams()` / `player_count()`
+  are read off the seats a board's `[owners]` and `[units]` name, `GameState.create` copies that
+  into `GameState.teams` and starts on `teams[0]`, and how many armies play is never a menu
+  setting. Ask `state.teams` for who is playing; `GameState.TEAMS` survives only as the legal
+  maximum and is re-exported from `MapData.PLAYER_TEAMS`, which enforces `1..4` per line at parse
+  so the bound has one owner. The plan's "contiguous from 1" as a *validated* rule is superseded by
+  the rule that replaced it: a roster is a **range** — seat 1 up to the highest seat the board
+  names, floored at a duel (`MapData.DEFAULT_TEAMS`) — so contiguity is structural rather than
+  breakable, and the many fixtures that name a single team keep playing the duel they always did
+  (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
+  The save format is version 4: the envelope records `teams`, a v3 save decodes as the duel it
+  recorded, and `SaveCodec._teams_error` refuses a roster no board could deal *before* any per-side
+  check is derived from it. `tests/unit/test_maps.gd`'s HQ and base lints hold each board to its
+  **own** roster, never a global constant. Everything else the plan names is future work: the
+  `state.allied()` hostility authority and ally vision (FP2), elimination and N-way victory (FP3),
+  four-key colour fallbacks and standings (FP4 — which is why seats 3–4 render neutral grey), the
+  seat strip and slot-walk commander select (FP5), shipped 4-army boards and the README doc pass
+  (FP6). Every shipped board is still a duel; `maps/fixtures/quartet.txt` is the one four-army
+  board and is a fixture, out of the menu and out of the map lint.
 
 ## Architecture — the rules that matter most
 
