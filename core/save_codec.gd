@@ -800,9 +800,17 @@ static func _decode_eliminated(data: Dictionary) -> Dictionary:
 ##     still zero — victory is not re-derived on load — and the first `EndTurn`
 ##     then indexes an empty roster, after the power expiry has already run: the
 ##     turn is stuck for good and the save gave no warning.
-##   - the turn, and the winner when there is one, belong to armies that are still
-##     in it. A fallen side cannot be handed a turn it takes no part in, and a
-##     match cannot have been won by an army that was taken off the board.
+##   - the winner, when there is one, is still in the match. A match cannot have
+##     been won by an army that was taken off the board.
+##
+## A fallen army *holding the turn* is deliberately admitted, and that is the line
+## this function draws. It is a state the sim genuinely reaches — with three or more
+## armies, the side taking its turn loses its last unit to a counter-attack or to an
+## empty tank, `_check_rout` fells it there and then, and no winner follows because
+## others are still fighting, so the hand has not moved when the player saves. It
+## also resumes cleanly: `next_team()` skips the fallen seat and the day wrap reads
+## the *roster*, so the very next `EndTurn` hands play on correctly. Refusing it
+## would not protect anybody; it would condemn the only save slot a player has.
 ##
 ## The list is allowed to be empty (nobody has fallen) and allowed to be everyone
 ## but one (the match is over and `winner` says so).
@@ -823,9 +831,6 @@ static func _eliminated_error(data: Dictionary) -> String:
 		fallen[int(team)] = true
 	if fallen.size() >= roster.size():
 		return "the save eliminates every army, leaving nobody to take the turn"
-	var turn := int(data.get("current_team", 0))
-	if fallen.has(turn):
-		return "the save's turn belongs to team %d, which it has eliminated" % turn
 	var winner := int(data.get("winner", 0))
 	if winner != 0 and fallen.has(winner):
 		return "the save was won by team %d, which it has eliminated" % winner

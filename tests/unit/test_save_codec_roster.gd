@@ -140,13 +140,29 @@ func test_a_save_eliminating_every_army_is_refused() -> void:
 	assert_string_contains(SaveCodec.validate(data), "leaving nobody to take the turn")
 
 
-## A fallen army holds nothing and takes no turn, so a save handing it one resumes
-## into a side that cannot act with the board waiting on it.
-func test_a_save_eliminating_the_army_holding_the_turn_is_refused() -> void:
-	var data := _encoded()
-	data["current_team"] = 2
-	data["eliminated"] = [2]
-	assert_string_contains(SaveCodec.validate(data), "which it has eliminated")
+## And the case that is deliberately *not* refused, because the sim reaches it: with
+## more than two armies, the side taking its turn can lose its last unit — to a
+## counter-attack, or to an empty tank in its own start-of-turn tick — and fall there
+## and then, with others still fighting so no winner follows and the hand never moves.
+## A player saving at that moment must get their match back, and it resumes cleanly:
+## the rotation skips the fallen seat, so the very next end of turn hands play on.
+func test_a_save_whose_turn_belongs_to_a_fallen_army_still_loads() -> void:
+	const BOARD := "res://maps/fixtures/quartet.txt"
+	var map := MapData.load_from_file(BOARD, terrain_db)
+	var state := GameState.create(map, unit_db, chart)
+	state.map_path = BOARD
+	assert_eq(state.current_team, 1, "the lead army holds the turn")
+	for unit in state.units_of(1):
+		state.remove_unit(unit)  # the shot that takes the last one
+	assert_true(state.is_eliminated(1), "so it falls on its own turn")
+	assert_eq(state.current_team, 1, "with the hand still its own")
+	assert_eq(state.winner, 0, "and three armies still fighting")
+	var data := SaveCodec.encode(state, [] as Array[int])
+	assert_eq(SaveCodec.validate(data), "", "the save a player would write here must load")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.current_team, 1)
+	assert_eq(loaded.state.next_team(), 2, "and the rotation hands play straight on")
 
 
 func test_a_save_won_by_an_army_it_eliminated_is_refused() -> void:
