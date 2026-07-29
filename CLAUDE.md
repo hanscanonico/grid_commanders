@@ -387,6 +387,8 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
 - **Be concise.** Keep responses, summaries, and explanations short — lead with the answer, cut
   background the reader didn't ask for, and skip restating what the diff or the conversation
   already shows. Same goes for commit messages, PR bodies, and code comments.
+- **Speak simply.** Use plain words and short sentences. Prefer everyday language over jargon, and
+  when a technical term is needed, say what it means in a few words.
 
 ## Commits
 
