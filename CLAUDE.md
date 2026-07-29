@@ -197,8 +197,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   threat map, the doctrines' `_opponents_of`. Allies share sight — `Vision` composes a side's
   visible set as the union over its member armies, so every viewer inherits it without composing
   anything — and purpose, **never infrastructure**: funds, production, repair, resupply, join and
-  transports all stay `owner == unit.team`. Nothing writes a non-empty `sides` yet; FP5 opens the
-  seam. Everything else the plan names is future work: elimination and N-way victory (FP3),
+  transports all stay `owner == unit.team`. The grouping is the *match's* choice, not the board's,
+  so it rides on `MatchRequest.sides` and `BattleSetup.build` writes it onto the state — the plan's
+  "sides from `MatchConfig`" is superseded by the rule that `MatchConfig` carries exactly one typed
+  request and nothing else. Nothing writes a non-empty `sides` yet; FP5 opens the seam.
+  Everything else the plan names is future work: elimination and N-way victory (FP3),
   four-key colour fallbacks and standings (FP4 — which is why seats 3–4 render neutral grey), the
   seat strip, slot-walk commander select and the `--sides=` flag (FP5), shipped 4-army boards and
   the README doc pass (FP6). Every shipped board is still a duel; `maps/fixtures/quartet.txt` is
@@ -382,17 +385,17 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   planning and pacing, save policy, and victory presentation — do not move those into the
   pipeline. The headless `BalanceMatchEngine` stays separate.
 - **Which match to play is a typed request, not an autoload's fields.**
-  `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, sides, fog,
-  tier, commanders, resume, seed, watch, day cap, raw side specs — and is built by one of three
-  adapters: `from_menu`, `from_match` (a rematch, derived from the *live* `GameState`, so a match
-  resumed from a save replays its own board and commanders) and `apply_cmdline`, layered over
-  either on **every** battle boot, which is how a headless capture and a menu launch reach the same
-  board by the same route. `BattleSetup.build(request, …)` reads no autoload, scans no command line
-  and writes nothing back; it returns `null` with a pushed error when the board or the state cannot
-  be built (`assert` is stripped from a release build), and `Battle` disables itself rather than
-  dereferencing a null map. `MatchConfig` carries exactly one staged request, and `take()` clearing
-  is load-bearing rather than tidy: it is what makes a resume that found no save on disk unable to
-  latch into the next boot.
+  `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, seats, how
+  they group into sides, fog, tier, commanders, resume, seed, watch, day cap, raw side specs — and
+  is built by one of three adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
+  `GameState`, so a match resumed from a save replays its own board and commanders) and
+  `apply_cmdline`, layered over either on **every** battle boot, which is how a headless capture
+  and a menu launch reach the same board by the same route. `BattleSetup.build(request, …)` reads
+  no autoload, scans no command line and writes nothing back; it returns `null` with a pushed error
+  when the board or the state cannot be built (`assert` is stripped from a release build), and
+  `Battle` disables itself rather than dereferencing a null map. `MatchConfig` carries exactly one
+  staged request, and `take()` clearing is load-bearing rather than tidy: it is what makes a resume
+  that found no save on disk unable to latch into the next boot.
 - **The command line is parsed in one place.** `scenes/common/cmd_args.gd` (`CmdArgs`) — `user()`
   is the only `OS.get_cmdline_user_args()` call outside `tools/`, and the six inline scans it
   replaced are why one flag was last-wins and another first-wins with nobody deciding either.
