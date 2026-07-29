@@ -175,9 +175,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
   net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
-- `four-players-plan.html` — up to four armies, milestones FP1–FP6; **FP1 (the roster becomes data),
-  FP2 (hostility gets one authority), FP3 (an army can fall, a side can win), FP4 (four liveries
-  on one board) and FP5 (seats and sides at the table) are shipped**.
+- `four-players-plan.html` — up to four armies, milestones FP1–FP6, **all shipped**: FP1 (the
+  roster becomes data), FP2 (hostility gets one authority), FP3 (an army can fall, a side can win),
+  FP4 (four liveries on one board), FP5 (seats and sides at the table) and FP6 (the boards, and the
+  proof of play).
   D1: **the map is the roster authority** — `MapData.teams()` / `player_count()`
   are read off the seats a board's `[owners]` and `[units]` name, `GameState.create` copies that
   into `GameState.teams` and starts on `teams[0]`, and how many armies play is never a menu
@@ -271,8 +272,17 @@ that must survive any change; the full rationale, milestones and risk registers 
   is the sibling of `CommanderInfoSheet.layout_error` and exists for the same reason: unsorted rows
   stack at the container's origin, inside every frame and drawn in none of it, so enclosure alone
   photographed the strip as bare panel.
-  `maps/compass.txt` is the shipped four-army board — pulled forward from FP6 because without one
-  the seat strip is UI no player can reach — and is land-only (the AI cannot ferry, naval R1).
+  `maps/compass.txt` (four armies at the compass points) and `maps/trident.txt` (three around a
+  central massif) are the shipped boards that seat more than a duel; Compass was pulled forward into
+  FP5 because without one the seat strip is UI no player can reach. Both are land-only — the AI
+  cannot plan a ferry (naval R1), so a board it may have to fight across in any grouping has to let
+  every army reach every other on foot. Neither carries the `# symmetric` tag: that lint is a
+  *duel* instrument, and fairness on these is by design review instead (rotational layout, one HQ
+  and one base per army held by the FP1-retargeted lints, and the win spread across seats in the
+  soak). 3v1 is deliberately asymmetric — a challenge grouping, compensated by commander pick and
+  tier, never by the board. `tests/unit/test_alliance_soak.gd` plays the shipped boards in the
+  groupings their seat strips offer, not only the fixture: a grouping that ran only on a fixture is
+  a capability nobody can pick.
   `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the map lint — sized to fit
   the battle viewport whole, and the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog`
   scenarios run on. FP6 still owes Trident (a 3-army board), the AI-vs-AI soaks in all three

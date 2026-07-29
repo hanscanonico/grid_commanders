@@ -160,14 +160,15 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Fourteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
-`boot_camp`, `scrimmage`, `forge`, `compass`, `timberline`, `arsenal`, `riverline`, `isthmus`,
-`jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on
+Fifteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+`boot_camp`, `scrimmage`, `forge`, `trident`, `compass`, `timberline`, `arsenal`, `riverline`,
+`isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on
 `boot_camp`, badged **Tutorial**, and prints the selected board's size, army count, property count
 and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
 `compass` is the one board that seats **four armies** — an HQ and a base at each compass point with
-eight cities between them — and so the one that offers the grouping presets in the seat strip; every
-other shipped board is a duel. `boot_camp` is also the only board the first-match mission strip runs
+eight cities between them — and so the one that offers the grouping presets in the seat strip.
+`trident` seats **three**, each a prong of the fork around a central massif, where the only grouping
+worth naming is a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only board the first-match mission strip runs
 on — see **Controls** below. `jet_stream` and `the_straits`
 are the boards air and naval units were added for: the first puts an airfield behind each front, the
 second a port on each coast of one shared channel.
@@ -175,9 +176,9 @@ Three of the older boards have since been retrofitted with the domains that suit
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
-because the five things it teaches are the land game's. `compass` stays land-only too: the computer
-cannot plan a ferry, so a board it may have to fight across in any grouping has to let every army
-reach every other on foot.
+because the five things it teaches are the land game's. `compass` and `trident` stay land-only too:
+the computer cannot plan a ferry, so a board it may have to fight across in any grouping has to let
+every army reach every other on foot.
 
 `forge`, `arsenal` and `steelworks` are the production boards, and the only ones that hand out **no
 starting units at all**: what you get instead is factories — two to four bases a side where the rest

@@ -24,6 +24,10 @@ extends GutTest
 ## quietly unexercised again.
 
 const FIXTURE := "res://maps/fixtures/quartet.txt"
+## The shipped boards that seat more than a duel — what FP6 makes the capability
+## real on, as opposed to the fixture, which no player can pick.
+const COMPASS := "res://maps/compass.txt"
+const TRIDENT := "res://maps/trident.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -59,12 +63,24 @@ func test_the_ai_plays_every_grouping_without_the_rules_refusing_it() -> void:
 	_soak("3v1", {1: 0, 2: 0, 3: 0}, 613)
 
 
+## The same proof on the boards a player actually reaches. A grouping that only
+## ever ran on a fixture is a capability nobody can use (COM-49): these are the
+## shipped four- and three-army boards, played in the groupings their seat strips
+## offer.
+func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> void:
+	_soak("compass free-for-all", {}, 620, COMPASS)
+	_soak("compass 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 621, COMPASS)
+	_soak("compass 3v1", {1: 0, 2: 0, 3: 0}, 622, COMPASS)
+	_soak("trident free-for-all", {}, 623, TRIDENT)
+	_soak("trident 2v1", {1: 0, 2: 0}, 624, TRIDENT)
+
+
 ## Plays the board out with `sides` applied and a planner per army. Fails on the
 ## first command the rules turn down — which is the whole point — and on a run
 ## that never ends.
-func _soak(label: String, sides: Dictionary, rng_seed: int) -> void:
-	var map := MapData.load_from_file(FIXTURE, terrain_db)
-	assert_not_null(map, "the four-army fixture should parse")
+func _soak(label: String, sides: Dictionary, rng_seed: int, board: String = FIXTURE) -> void:
+	var map := MapData.load_from_file(board, terrain_db)
+	assert_not_null(map, "%s should parse" % board)
 	if map == null:
 		return
 	var state := GameState.create(map, unit_db, chart)
