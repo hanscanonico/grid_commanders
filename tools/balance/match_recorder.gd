@@ -36,6 +36,11 @@ extends RefCounted
 ##                      cargo goes down with its transport either way
 ##   - EndTurnCommand — an air or sea unit whose tank ran dry in the start-of-turn
 ##                      tick (Orin Flux's jam can cause this a turn later)
+##   - CaptureCommand — an HQ taken eliminates its owner (four-players plan D3),
+##                      which sweeps that army's whole remaining force off the
+##                      board. Nothing was shot, so those units are `forfeited`:
+##                      counting them as kills would credit the capturer with
+##                      destroying an army at full cost that it never fought
 ##   - JoinCommand    — the mover merges into its twin: it left the board and
 ##                      nothing died, so it is counted apart from both kills and
 ##                      losses and the reconciliation still closes
@@ -66,6 +71,7 @@ const TIMELINE_COLUMNS: Array[String] = [
 	"killed_value",
 	"lost_value",
 	"merged",
+	"forfeited",
 	"unit_count",
 	"army_value",
 	"properties",
@@ -102,6 +108,10 @@ class TurnRow:
 	## Units that left the board without dying (a Join merge). Not a kill and not
 	## a loss; carried so the reconciliation can close.
 	var merged := 0
+	## Units an elimination swept off the board when their army's HQ fell. Nobody
+	## shot them, so they are neither a kill for the capturer nor a loss in an
+	## exchange — same standing as `merged`, and carried for the same reason.
+	var forfeited := 0
 	var captures := 0
 	var power_fired := false
 	var commands := 0
@@ -218,7 +228,12 @@ func end_match(state: GameState) -> void:
 ## start-of-turn tick runs inside the *previous* side's EndTurnCommand, and a dry
 ## tank strands a unit there.
 static func _carries_attribution(turn: TurnRow) -> bool:
-	return not turn.killed.is_empty() or not turn.lost.is_empty() or turn.merged > 0
+	return (
+		not turn.killed.is_empty()
+		or not turn.lost.is_empty()
+		or turn.merged > 0
+		or turn.forfeited > 0
+	)
 
 
 # --- output ------------------------------------------------------------------
@@ -255,6 +270,7 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 	var lost: Dictionary = {}
 	var killed: Dictionary = {}
 	var merged: Dictionary = {}
+	var forfeited: Dictionary = {}
 	for row in _rows.slice(_match_row_start):
 		var team: int = row["team"]
 		if row["funds_start"] - row["spent"] != row["funds_end"]:
@@ -267,10 +283,13 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 		merged[team] = int(merged.get(team, 0)) + int(row["merged"])
 		# A kill is recorded in the row of the side that was *taking the turn*,
 		# so the victim's own team is the other one. Two-sided game; the match's
-		# own roster decides who that is.
+		# own roster decides who that is. A forfeit is the same shape of fact —
+		# the row belongs to the army that took the HQ, the units belonged to the
+		# army that lost it — so it folds in the same way.
 		for other in state.teams:
 			if other != team:
 				killed[other] = int(killed.get(other, 0)) + _count_of(row["killed"])
+				forfeited[other] = int(forfeited.get(other, 0)) + int(row["forfeited"])
 	for team in state.teams:
 		var expected := (
 			int(starting.get(team, 0))
@@ -278,11 +297,15 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 			- int(lost.get(team, 0))
 			- int(killed.get(team, 0))
 			- int(merged.get(team, 0))
+			- int(forfeited.get(team, 0))
 		)
 		var actual := state.units_of(team).size()
 		if expected != actual:
 			return (
-				"team %d: %d started + %d built - %d lost - %d killed by enemy - %d merged = %d, board has %d"
+				(
+					"team %d: %d started + %d built - %d lost - %d killed by enemy"
+					+ " - %d merged - %d forfeited = %d, board has %d"
+				)
 				% [
 					team,
 					int(starting.get(team, 0)),
@@ -290,6 +313,7 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 					int(lost.get(team, 0)),
 					int(killed.get(team, 0)),
 					int(merged.get(team, 0)),
+					int(forfeited.get(team, 0)),
 					expected,
 					actual,
 				]
@@ -335,6 +359,7 @@ func _close_turn(state: GameState) -> void:
 		"killed_value": _turn.killed_value,
 		"lost_value": _turn.lost_value,
 		"merged": _turn.merged,
+		"forfeited": _turn.forfeited,
 		"unit_count": state.units_of(team).size(),
 		"army_value": _army_value(state, team),
 		"properties": state.properties_of(team).size(),
@@ -396,6 +421,9 @@ func _attribute(removed: Array[Unit], command: Command) -> void:
 		if not _explains_removals(command):
 			_unattributed += 1
 			continue
+		if command is CaptureCommand:
+			_turn.forfeited += 1  # swept off with its HQ; nothing shot it
+			continue
 		if unit.team == _turn.team:
 			_tally(_turn.lost, unit.type.id)
 			_turn.lost_value += unit.type.cost
@@ -407,10 +435,10 @@ func _attribute(removed: Array[Unit], command: Command) -> void:
 ## The commands a unit may legitimately leave the board through. Attack kills
 ## directly; EndTurn's start-of-turn tick strands an empty tank; Capture takes an
 ## HQ, and since elimination (four-players plan D3) that takes its owner's whole
-## army off with it; Power is listed because a future one-shot effect that damages
-## is a doctrine change, not a recorder change. Anything else removing a unit is a
-## rule the recorder has not been told about, and it is counted as unattributed
-## rather than guessed at.
+## army off with it — as `forfeited` rather than as anybody's kill; Power is listed
+## because a future one-shot effect that damages is a doctrine change, not a
+## recorder change. Anything else removing a unit is a rule the recorder has not
+## been told about, and it is counted as unattributed rather than guessed at.
 func _explains_removals(command: Command) -> bool:
 	return (
 		command is AttackCommand

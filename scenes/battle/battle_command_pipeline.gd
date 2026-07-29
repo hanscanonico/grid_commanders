@@ -25,6 +25,7 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	receipt.validation_error = command.validate(game)
 	if receipt.rejected():
 		return receipt
+	var standing_before := game.eliminated.size()
 
 	# A command may remove any of these objects. Hold the exact instances the
 	# animator must replay before the sim mutates its collections.
@@ -91,9 +92,25 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	# covers every family, including cargo removed with a transport.
 	_battle.view.sync_sprites()
 	_battle.refresh_fog()
+	if game.eliminated.size() > standing_before:
+		_repaint_properties(game)
 	_battle.refresh_panel()
 	_battle.refresh_hud()
 	return receipt
+
+
+## An army falling forfeits every property it held to neutral at once, which no
+## single-cell repaint covers: `_present_capture` recolours the one cell that was
+## captured, and the fog pass only repaints when fog is on. Without this the board
+## keeps painting a dead army's cities in its colour — and the tile card, which
+## reads the colour back off the tile, keeps naming it as the owner.
+##
+## After the fog refresh, so each cell is offered to the viewer's current vision:
+## `repaint_property` withholds a cell the viewer cannot see, and the fog pass
+## lands it the moment they scout it.
+func _repaint_properties(game: GameState) -> void:
+	for cell: Vector2i in game.property_owners:
+		_battle.view.repaint_property(cell)
 
 
 func _present_attack(

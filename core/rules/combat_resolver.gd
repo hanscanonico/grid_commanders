@@ -267,8 +267,6 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	return result
 
 
-## Cargo that drowns with its transport banks the same as if each passenger had
-## been killed in the open: the value basis is the passenger's remaining HP
 ## Command Power charge, as a percentage of the value destroyed in an exchange:
 ## the side that *loses* the HP banks the first, the side that dealt it banks the
 ## second. Asymmetric on purpose — the aggressor cannot out-charge the defender on
@@ -294,7 +292,9 @@ static func bank_losses(state: GameState, victim: Unit, hp_lost: int, dealer_tea
 	state.add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
 
 
-## fraction of its cost, split by the same loser/dealer rates _bank_losses gives
+## Cargo that drowns with its transport banks the same as if each passenger had
+## been killed in the open: the value basis is the passenger's remaining HP
+## fraction of its cost, split by the same loser/dealer rates bank_losses gives
 ## the transport itself. Recurses because remove_unit's erase does — an old save
 ## may nest transports even though the load commands now refuse it. This runs
 ## before remove_unit so cargo_of can still see the passengers, and stays here in

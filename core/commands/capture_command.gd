@@ -1,7 +1,8 @@
 class_name CaptureCommand
 extends Command
-## Moves a capture-capable unit onto a property and chips at its capture
-## points. Reaching zero flips ownership; taking the enemy HQ wins the match.
+## Moves a capture-capable unit onto a property and chips at its capture points.
+## Reaching zero flips ownership; taking an enemy HQ takes that army out of the
+## match, which ends the match only once every survivor stands on one side.
 
 
 ## The snapshot the capture cut-in replays (plan D1). Filled by apply() at the

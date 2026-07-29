@@ -159,6 +159,29 @@ func test_the_turn_skips_a_fallen_army_and_the_day_wraps_on_the_first_survivor()
 	assert_eq(state.day, 2, "which is when the day advances")
 
 
+## The day counts rounds of the board's roster, not of whoever is left. When the
+## army holding the turn falls during it, the next seat is both the next hand and
+## the new lead survivor — so asking "is this the first survivor?" would turn the
+## day on the spot and give the other two a whole fresh day to finish the round
+## they were already playing.
+func test_the_lead_army_falling_on_its_own_turn_does_not_turn_the_day_early() -> void:
+	var state := _state("[terrain]\n......\n[units]\n1 i 0 0\n2 i 2 0\n3 i 4 0")
+	state.day = 5
+	assert_eq(state.current_team, 1, "day 5 opens on the lead army")
+	_rout(state, 1)
+	assert_true(state.is_eliminated(1), "which then falls during its own turn")
+	assert_eq(state.winner, 0, "two armies are still fighting")
+	EndTurnCommand.new().apply(state)
+	assert_eq(state.current_team, 2)
+	assert_eq(state.day, 5, "team 2 plays the rest of the round it was already in")
+	EndTurnCommand.new().apply(state)
+	assert_eq(state.current_team, 3)
+	assert_eq(state.day, 5, "and so does team 3")
+	EndTurnCommand.new().apply(state)
+	assert_eq(state.current_team, 2, "now the hand rolls back past the last seat")
+	assert_eq(state.day, 6, "which is the one day that round cost")
+
+
 func test_a_fallen_army_earns_no_income() -> void:
 	var state := _state(
 		"[terrain]\nCC....\n[owners]\n2 0 0\n2 1 0\n[units]\n1 i 3 0\n2 i 2 0\n3 i 5 0"

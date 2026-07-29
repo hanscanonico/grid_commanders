@@ -127,3 +127,42 @@ func test_a_save_allying_a_team_that_does_not_play_is_refused() -> void:
 
 func test_a_current_save_without_the_grouping_is_refused() -> void:
 	assert_string_contains(SaveCodec.validate(_without("sides", SaveCodec.VERSION)), "sides")
+
+
+## The casualty list arrived at version 6 and is checked for the same reason the
+## roster is: each of these decodes clean and breaks later, which is the delayed
+## crash the codec exists to keep out. A list naming everyone loads with `winner`
+## still zero — victory is not re-derived on load — and the first EndTurn then has
+## nobody to hand the turn to, aborting after the power expiry has already run.
+func test_a_save_eliminating_every_army_is_refused() -> void:
+	var data := _encoded()
+	data["eliminated"] = [1, 2]
+	assert_string_contains(SaveCodec.validate(data), "leaving nobody to take the turn")
+
+
+## A fallen army holds nothing and takes no turn, so a save handing it one resumes
+## into a side that cannot act with the board waiting on it.
+func test_a_save_eliminating_the_army_holding_the_turn_is_refused() -> void:
+	var data := _encoded()
+	data["current_team"] = 2
+	data["eliminated"] = [2]
+	assert_string_contains(SaveCodec.validate(data), "which it has eliminated")
+
+
+func test_a_save_won_by_an_army_it_eliminated_is_refused() -> void:
+	var data := _encoded()
+	data["winner"] = 2
+	data["eliminated"] = [2]
+	assert_string_contains(SaveCodec.validate(data), "which it has eliminated")
+
+
+## And the state each of those is the corruption of: one army down, the match
+## still running, the turn with somebody who is still in it.
+func test_a_save_eliminating_one_of_several_armies_is_accepted() -> void:
+	const BOARD := "res://maps/fixtures/quartet.txt"
+	var map := MapData.load_from_file(BOARD, terrain_db)
+	var state := GameState.create(map, unit_db, chart)
+	state.map_path = BOARD
+	state.eliminate(4)
+	var data := SaveCodec.encode(state, [] as Array[int])
+	assert_eq(SaveCodec.validate(data), "")

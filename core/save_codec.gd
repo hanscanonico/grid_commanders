@@ -787,13 +787,25 @@ static func _decode_eliminated(data: Dictionary) -> Dictionary:
 	return fallen
 
 
-## "" when the save's casualty list names armies that play, else why it does not.
+## "" when the save's casualty list describes a match that could still be resumed,
+## else why it does not.
 ##
-## An army that does not play cannot have fallen, and one that has fallen holds
-## nothing and takes no turn — so a stray entry would quietly take a side out of a
-## match it was never in. The list is allowed to be empty (nobody has fallen) and
-## allowed to be everyone but one (the match is over and `winner` says so); what
-## it may not do is name a seat the board never dealt.
+## Three rules, and each of them refuses a save that would otherwise load clean and
+## break later — the delayed-crash class `board_error` exists to keep out:
+##
+##   - every name is a seat the board dealt. An army that does not play cannot
+##     have fallen, so a stray entry quietly takes a side out of a match it was
+##     never in.
+##   - somebody is left standing. A list naming everyone decodes with `winner`
+##     still zero — victory is not re-derived on load — and the first `EndTurn`
+##     then indexes an empty roster, after the power expiry has already run: the
+##     turn is stuck for good and the save gave no warning.
+##   - the turn, and the winner when there is one, belong to armies that are still
+##     in it. A fallen side cannot be handed a turn it takes no part in, and a
+##     match cannot have been won by an army that was taken off the board.
+##
+## The list is allowed to be empty (nobody has fallen) and allowed to be everyone
+## but one (the match is over and `winner` says so).
 ##
 ## Asked only of the version that writes it. Below that a match ended at the first
 ## elimination, so there was no list to be wrong.
@@ -802,11 +814,21 @@ static func _eliminated_error(data: Dictionary) -> String:
 		return ""
 	var saved: Array = data["eliminated"]
 	var roster := _roster(data)
+	var fallen: Dictionary = {}
 	for team: Variant in saved:
 		if not _is_shape(team, Shape.NUMBER):
 			return "'eliminated' is malformed"
 		if not roster.has(int(team)):
 			return "the save eliminates team %d, which does not play" % int(team)
+		fallen[int(team)] = true
+	if fallen.size() >= roster.size():
+		return "the save eliminates every army, leaving nobody to take the turn"
+	var turn := int(data.get("current_team", 0))
+	if fallen.has(turn):
+		return "the save's turn belongs to team %d, which it has eliminated" % turn
+	var winner := int(data.get("winner", 0))
+	if winner != 0 and fallen.has(winner):
+		return "the save was won by team %d, which it has eliminated" % winner
 	return ""
 
 

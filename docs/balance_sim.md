@@ -107,7 +107,7 @@ property lines cross.
 | Money | `funds_start · income · spent · funds_end` | See below |
 | Production | `built · built_value` | `infantry x2;tank` and its summed cost |
 | Combat | `killed · lost · killed_value · lost_value` | See attribution below |
-| Board | `merged · unit_count · army_value · properties · captures` | End-of-turn strength; `army_value` = Σ cost × HP fraction, because a 2 HP tank isn't a tank |
+| Board | `merged · forfeited · unit_count · army_value · properties · captures` | End-of-turn strength; `army_value` = Σ cost × HP fraction, because a 2 HP tank isn't a tank |
 | Powers | `power_charge · power_fired` | Meter percentage at turn end; whether the power went off |
 | Cost | `commands · planning_ms` | Commands issued and AI planning time |
 
@@ -146,14 +146,20 @@ command that caused them**, never by blindly diffing the board:
 | `AttackCommand`, target dies | the acting side's `killed` |
 | `AttackCommand`, attacker dies to counter-fire | the acting side's `lost` |
 | `EndTurnCommand`, an empty tank at the start-of-turn tick | the owner's `lost` |
+| `CaptureCommand`, an HQ falls and its owner is eliminated | `forfeited` — neither a kill nor a loss |
 | `JoinCommand`, the mover merges into its twin | `merged` — neither a kill nor a loss |
 | `LoadCommand`, a passenger boards | **nothing** — it never left `state.units` |
+
+An eliminated army's remaining units are **forfeited, not killed**: nobody shot
+them, so crediting the capturer with destroying an army at full cost would inflate
+every exchange figure the report reads off `killed_value`. They still leave the
+board, so the census counts them.
 
 Anything else that removes a unit is *unattributed*, and unattributed removals
 fail the run. Every match is also reconciled against its own final board:
 
 ```
-started + built − lost − killed-by-the-enemy − merged  =  units on the board
+started + built − lost − killed-by-the-enemy − merged − forfeited  =  units on the board
 ```
 
 A miscount is a red build, not a quiet lie in the data someone then tunes

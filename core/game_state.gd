@@ -338,9 +338,14 @@ func winners() -> Array[int]:
 	return standing
 
 
-## Takes an army off the board for good: its units are removed, its ground reverts
-## to **neutral** rather than to whoever beat it, and any capture it had underway
-## is abandoned.
+## Takes an army off the board for good: its units are removed and its ground
+## reverts to **neutral** rather than to whoever beat it.
+##
+## Its ground changing hands resets the capture progress standing on it, the same
+## as any other ownership change. That progress is a *survivor's*, not the fallen
+## army's — these are the cells it owned, so the only unit that can be part-way
+## through one is somebody else's — so a nearly-finished capture is lost the moment
+## the city under it goes loose, and has to be started again.
 ##
 ## Neutral rather than forfeit is the deliberate half (plan D3). Handing a fallen
 ## empire wholesale to its conqueror would snowball a side that was already
