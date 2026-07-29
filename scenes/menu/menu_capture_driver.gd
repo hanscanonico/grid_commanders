@@ -110,8 +110,8 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 ## Saves one frame and ends the run — a quit, or the batch's hand-off to the
 ## next scenario — after `chrome` clears the frame check, if it was
 ## given any. A `--co-select` capture photographs the selection page over a
-## hidden menu and passes none: the menu's own geometry is not what that picture
-## claims.
+## hidden menu, so it hands in that page's own chrome instead: the menu's
+## geometry is not what that picture claims.
 ##
 ## The check goes in as the capture's gate rather than being run here, so it
 ## measures the settled layout the PNG is written from. A container that sorted

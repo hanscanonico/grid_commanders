@@ -179,10 +179,11 @@ func apply_cmdline(args: PackedStringArray) -> void:
 ## partial grouping as, so honouring it is the flag agreeing with the hostility
 ## authority rather than second-guessing it.
 ##
-## A grouping that is dropped is always said out loud, whether it was unparseable
-## or degenerate: a grouping nobody meant is a match nobody meant, and quietly
-## playing it is worse than playing the free-for-all. Both spellings of a
-## free-for-all are *not* drops and stay silent — they mean what they say.
+## This parses and nothing else: it refuses only what it cannot read, out loud,
+## because a grouping nobody meant is a match nobody meant. Whether a grouping
+## leaves anybody hostile depends on the seats the *board* deals, which no flag
+## can see — `BattleSetup.build` answers that once a board is loaded, the same
+## layering `--watch`'s seat list already uses.
 static func parse_sides_flag(value: String) -> Dictionary:
 	var grouped: Dictionary = {}
 	var groups := value.strip_edges().split("v", false)
@@ -193,14 +194,6 @@ static func parse_sides_flag(value: String) -> Dictionary:
 				push_error("battle: --sides=%s is not a grouping; ignoring it" % value)
 				return {}
 			grouped[int(seat)] = side
-	# Every seat in one group is a board with nobody to fight. Which seats a board
-	# deals is the board's answer and no board is loaded here, so the bound is the
-	# largest roster one may deal: a single group naming that many leaves no seat
-	# outside it whatever board this plays on. A single group naming fewer is the
-	# documented pair-against-loners and is honoured.
-	if groups.size() == 1 and grouped.size() >= GameState.TEAMS.size():
-		push_error("battle: --sides=%s leaves nobody to fight; ignoring it" % value)
-		return {}
 	# A group per army is the free-for-all the empty dictionary already says, and
 	# spelling one out is not a mistake to report.
 	if grouped.size() == groups.size():

@@ -199,7 +199,16 @@ func _pose_seats(args: PackedStringArray) -> void:
 			)
 	if not CmdArgs.has(args, "--menu-preset"):
 		return
-	var preset := int(CmdArgs.value(args, "--menu-preset"))
+	var wanted_preset := CmdArgs.value(args, "--menu-preset")
+	if not wanted_preset.is_valid_int():
+		push_error(
+			(
+				"main menu: '%s' is not a grouping preset; this capture shows the grouping in hand"
+				% wanted_preset
+			)
+		)
+		return
+	var preset := int(wanted_preset)
 	if preset < 0 or preset >= SeatStrip.PRESETS.size():
 		push_error(
 			"main menu: no grouping preset %d; this capture shows the grouping in hand" % preset

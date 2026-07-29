@@ -522,14 +522,22 @@ func _refresh_chips() -> void:
 			# is visible without claiming a livery nothing has chosen.
 			_paint_chip(_chips[i], _chip_labels[i], "%d · %s" % [seat, who], null)
 			continue
-		# The terse form names the livery the seat wears rather than its faction,
-		# which is the footer chips' own wording on the menu behind this page.
-		var faction := (
-			String(identity.theme(seat).key).capitalize() if terse else identity.display_name(seat)
-		)
 		_paint_chip(
-			_chips[i], _chip_labels[i], "%d · %s — %s" % [seat, faction, who], identity.theme(seat)
+			_chips[i],
+			_chip_labels[i],
+			"%d · %s — %s" % [seat, _seat_name(identity, seat, terse), who],
+			identity.theme(seat)
 		)
+
+
+## What a chip calls a seat, asked of the identity that owns the answer and
+## shortened to its first word for the terse form — never re-derived from the
+## theme key, because a mirror side keeps its faction's name while its colour is
+## borrowed (faction-identity D3), and a chip reading the key would then
+## contradict the commander card beside it.
+func _seat_name(identity: SideIdentity, seat: int, terse: bool) -> String:
+	var full := identity.display_name(seat)
+	return full.get_slice(" ", 0) if terse else full
 
 
 func _seat_role(seat: int, terse: bool) -> String:
