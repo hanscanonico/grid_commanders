@@ -22,6 +22,9 @@ var _built := false
 ## The card grid; columns are rebuilt per match, because how many there are is the
 ## board's answer and not this scene's.
 var _cards: GridContainer
+## One scroll frame per open card, in layout order — each holds exactly its card,
+## which is what `layout_error` measures the shown slice against.
+var _frames: Array[ScrollContainer] = []
 var _close_button: Button
 
 
@@ -45,6 +48,7 @@ func open(commanders_by_team: Dictionary, sides: Dictionary = {}) -> void:
 	for child in _cards.get_children():
 		child.queue_free()
 		_cards.remove_child(child)
+	_frames.clear()
 	for team: int in _seat_order(commanders_by_team, sides):
 		_titled_card(_cards, identity, team).bind(commanders_by_team.get(team))
 	show()
@@ -144,6 +148,12 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
 	column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	# A grid row is only as tall as its shortest-demanding child asks to be, so a
+	# column that does not expand ends at the header band and leaves the scroll
+	# frame below it zero pixels high — the card renders, into nothing. When these
+	# columns were direct children of an HBox that filled the sheet the height came
+	# for free; under the grid it has to be asked for.
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(column)
 
 	var side := identity.theme(team)
@@ -181,7 +191,34 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	frame.add_child(card)
+	_frames.append(frame)
 	return card
+
+
+## Why the open sheet is not showing what it was opened with, or "" when it is.
+##
+## A read off the live controls rather than a look at the frame, the way the
+## cut-in scenarios read their atlas rows back off the posed art: the smoke
+## sweep's bar is a file size, so a sheet that drew its faction headers over
+## collapsed columns wrote a perfectly healthy PNG and passed (COM-47 review).
+## The slice each card is *shown* through is the measure — a card sized normally
+## inside a zero-tall scroll frame renders into nothing — and one that cannot even
+## show its portrait band is showing nothing worth photographing.
+func layout_error(expected_cards: int) -> String:
+	if _frames.size() != expected_cards:
+		return (
+			"the commander sheet laid out %d cards for %d armies"
+			% [_frames.size(), expected_cards]
+		)
+	for frame in _frames:
+		var card: Control = frame.get_child(0)
+		var shown := card.get_global_rect().intersection(frame.get_global_rect()).size.y
+		if shown < CommanderCard.PORTRAIT_H:
+			return (
+				"a commander card is shown %.0fpx tall, less than its %dpx portrait band"
+				% [shown, CommanderCard.PORTRAIT_H]
+			)
+	return ""
 
 
 func _shortcut_input(event: InputEvent) -> void:

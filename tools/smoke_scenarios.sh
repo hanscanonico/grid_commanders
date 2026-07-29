@@ -188,6 +188,24 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # when the player performs it, and a strip stuck on SELECT photographs just as
 # well as one that advanced.
 #
+# commander_info is a check as well as a picture, and the only one whose check is
+# about its own layout. It was passing on a blank screen: the sweep's bar is a file
+# size, and a sheet that drew its faction headers over collapsed columns wrote a
+# perfectly healthy PNG (COM-47 review). Rather than commit a reference frame — the
+# sweep has no golden images, and its own notes above record how far glyph edges
+# move between runs — the scenario reads the open sheet back off the live controls
+# and fails the run unless every card is shown at least its portrait band, which is
+# the same shape of check the cut-in family's atlas rows already get.
+#
+# mixed_seat_handoff is the four-players D7 gate, on the quartet board with fog on:
+# two seats at the table and two played by the computer, which is a roster nothing a
+# player can set up produces until FP5. It drives whole turns through the live end-
+# turn route and proves the three things a still frame cannot — that the blackout
+# fires for the incoming person across an intervening computer turn, that a computer
+# turn is watched through the fog of the person who just played rather than the first
+# human seat, and that the last player standing is never asked to hand the device to
+# themselves.
+#
 # The transition pair is COM-15's two-sided state-boundary gate. The banner mode
 # deliberately keeps day one's card: an attempted build may only skip that beat,
 # never open its menu underneath, and the next press opens production on the
@@ -204,6 +222,7 @@ DEFAULT_MODES=(
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner commander_info commander_victory side_victory
+	mixed_seat_handoff+fog
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
@@ -278,10 +297,12 @@ map_for_demo() {
 		mission_strip | mission_strip_retired)
 			echo boot_camp
 			;;
-		side_victory)
-			# The only board that seats four armies, which is the whole point of the
-			# frame: four liveries behind a lockup that names a side rather than one
-			# of them (four-players plan D5).
+		side_victory | mixed_seat_handoff)
+			# The only board that seats four armies. For side_victory that is the whole
+			# point of the frame: four liveries behind a lockup that names a side rather
+			# than one of them (four-players plan D5). mixed_seat_handoff needs four
+			# seats for a different reason — it is the only roster that can put a
+			# computer's turn between two people's (D7).
 			echo quartet
 			;;
 	esac

@@ -302,7 +302,7 @@ func _run_demo(mode: String) -> void:
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
-		"turn_banner_build_attempt", "outcome_mash_guard":
+		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff":
 			var transition_error := await BattleTransitionScenario.new(_battle).run(mode)
 			if transition_error != "":
 				_fail(transition_error)
@@ -1224,6 +1224,11 @@ func _walk_first_turn() -> void:
 ## Opens the both-sides commander reference through the real map menu, the one
 ## route a player reaches it by. Red and Blue get distinct commanders so the two
 ## cards differ in the capture.
+##
+## Then reads the open sheet back, since this mode is a check as well as a picture:
+## a sheet whose card bodies collapsed to nothing still draws its faction headers
+## and still writes a full-sized PNG, which is exactly how one shipped (COM-47
+## review). CommanderInfoSheet.layout_error owns what "shown" means.
 func _stage_commander_info() -> void:
 	_battle.game.set_commander(1, _battle.commander_db.by_id(&"rhea_sol"))
 	_battle.game.set_commander(2, _battle.commander_db.by_id(&"viktor_draeg"))
@@ -1232,6 +1237,10 @@ func _stage_commander_info() -> void:
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"commanders")
 	await _until_state(Battle.State.INFO)
+	await _settle_menu()  # the grid sizes its columns a frame after the sheet opens
+	var flaw := _battle.commander_info_sheet.layout_error(_battle.game.teams.size())
+	if flaw != "":
+		_fail(flaw)
 
 
 ## Culls Blue to one nearly-dead unit and kills it through the ordinary
