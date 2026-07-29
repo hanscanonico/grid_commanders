@@ -156,9 +156,14 @@ static func _tuned(path: String) -> FontFile:
 
 
 ## The default side identities a commander-less match plays as: team 1 in the
-## classic meridian red, team 2 in aurora blue. The menu's faction hues — the 1P
-## and 2P button fills, the identity chip dots, the selected-map border — all read
-## from this, so they stay CommanderVisuals' colours and never a fourth copy.
+## classic meridian red, team 2 in aurora blue. The menu's faction hues — the
+## Start button fill, the seat strip's accent, the identity chip dots, the
+## selected-map border — all read from this, so they stay CommanderVisuals'
+## colours and never a fourth copy.
+##
+## `seats` is the board's roster, floored at a duel: a four-army board's third and
+## fourth seats resolve to no theme under the two-seat default and would draw
+## neutral grey wherever the menu previews them (the thumbnails, the footer chips).
 static func menu_identity(seats: int = 2) -> SideIdentity:
 	var picks: Dictionary = {}
 	for seat in range(1, maxi(2, seats) + 1):

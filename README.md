@@ -24,7 +24,7 @@ target fails with "Godot binary not found". Symlink the one you already have:
 Then:
 
 ```sh
-make run             # boot the game — the menu (map, difficulty, speed, commanders, fog, 1P / 2P / Continue)
+make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
 make verify          # the merge gate: check + lint + format-check + test, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
@@ -93,22 +93,25 @@ that photograph a screen the battle scene never draws:
 ```sh
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
-make smoke MODES="menu_setup_context" # the hot-seat setup: every option's help line, AI difficulty dimmed
+make smoke MODES="menu_setup_context" # an all-human table: every option's help line, AI difficulty dimmed
 ```
 
 All three pose the save slot themselves, so a capture neither reads nor writes the running machine's
 `user://save.json`, and all three are tests as well as pictures: each measures the whole centered menu
-column, its map caption, every option-help line *and* all four primary actions against the 640×360
-logical frame and fails the run if any of them leaves it. The column is the load-bearing witness — a
-too-tall one is centered into an offset that runs off both ends at once, so no single child is
-reliable — and the first two exist to hold the rule that a save's presence may never change the
-layout budget, which is what broke when Continue first pushed the title and **Quit** out of frame.
+column, its map caption, every option-help line, every seat row *and* all three primary actions
+against the 640×360 logical frame and fails the run if any of them leaves it. The column is the
+load-bearing witness — a too-tall one is centered into an offset that runs off both ends at once, so
+no single child is reliable — and the first two exist to hold the rule that a save's presence may
+never change the layout budget, which is what broke when Continue first pushed the title and **Quit**
+out of frame. Enclosure is not the whole gate: rows a container has not sorted yet keep their minimum
+size and stack on one spot, inside every frame and drawn in none of it, so the seat strip is also
+asked whether it is the table it was dealt.
 
 `menu_setup_context` adds the half a picture cannot prove: that the tutorial board leads the picker
 and its description is printed, that no option-help line is empty, that the reserved caption holds
-for *every* shipped board and not just the one on screen, and that AI difficulty follows the mode —
-it walks the setup back to 1 Player and out again, because a dimmed control photographs the same
-whether it can be undone or not.
+for *every* shipped board and not just the one on screen, and that AI difficulty follows the table —
+it seats a computer and unseats it again, because a dimmed control photographs the same whether it
+can be undone or not.
 
 The cut-ins — combat and its capture sibling — have their own family of modes, because they are
 deliberately suppressed while capturing — a mid-animation frame is what would make two identical
@@ -157,19 +160,24 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Thirteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
-`boot_camp`, `scrimmage`, `forge`, `timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`,
-`crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on `boot_camp`,
-badged **Tutorial**, and prints the selected board's size, property count and one-line pitch in a
-caption under the grid (the per-cell tooltip repeats them for a mouse). `boot_camp` is also the only
-board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
+Fourteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+`boot_camp`, `scrimmage`, `forge`, `compass`, `timberline`, `arsenal`, `riverline`, `isthmus`,
+`jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on
+`boot_camp`, badged **Tutorial**, and prints the selected board's size, army count, property count
+and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
+`compass` is the one board that seats **four armies** — an HQ and a base at each compass point with
+eight cities between them — and so the one that offers the grouping presets in the seat strip; every
+other shipped board is a duel. `boot_camp` is also the only board the first-match mission strip runs
+on — see **Controls** below. `jet_stream` and `the_straits`
 are the boards air and naval units were added for: the first puts an airfield behind each front, the
 second a port on each coast of one shared channel.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
-because the five things it teaches are the land game's.
+because the five things it teaches are the land game's. `compass` stays land-only too: the computer
+cannot plan a ferry, so a board it may have to fight across in any grouping has to let every army
+reach every other on foot.
 
 `forge`, `arsenal` and `steelworks` are the production boards, and the only ones that hand out **no
 starting units at all**: what you get instead is factories — two to four bases a side where the rest
@@ -180,9 +188,12 @@ change: defeat is only ever checked when a unit dies, and the AI's planner alrea
 production when it has nothing to move.
 
 Command-line flags still override the menu so demos and tools can skip it: `--map=crossfire`,
-`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=slow`, and `--co=alina_ward,viktor_draeg` (red
-first, blue second; either side may be left blank for no commander) — e.g.
+`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=slow`, `--co=alina_ward,viktor_draeg` (one id per
+seat in seat order; any of them may be left blank for no commander) and `--sides=1+3v2+4` (armies
+joined by `+` stand together, groups separated by `v` fight each other) — e.g.
 `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn -- --map=crossfire --fog`.
+`--sides=1v2v3v4` and an absent flag are the same free-for-all; a grouping that cannot be read, or
+that leaves the board's armies with nobody to fight, is reported and the free-for-all played instead.
 
 Adding a map is dropping a `.txt` in `maps/` — the menu auto-discovers it and `tests/unit/`
 holds it to the playability invariants (one HQ and a base per side, reachable HQs, a claimed
@@ -197,32 +208,43 @@ Any Godot 4.7+ works too — open the project folder in the editor.
 
 ## Main menu
 
-The game boots to the menu: pick a map, a **Difficulty** and a **Speed**, toggle **Fog of war**
-and **Battle animations** (the full-screen combat and capture cut-ins — a saved preference, on by
-default),
-then start a **1 Player** match against the AI or a **2 Player** hot-seat game. Either opens the
-**commander selection page**; **Continue** skips selection and resumes the save with its own map,
-fog setting, difficulty, commanders, and AI sides. A line under it names what it would resume —
-`DAY 13 · ARSENAL` — so the menu alone answers whether the save is the match you meant; when there
-is nothing readable to resume it reads `NO SAVED MATCH` and the button is greyed out (disabled, not
-hidden). **Quit** exits.
+The game boots to the menu: pick a map, set the **seats**, pick a **Difficulty** and a **Speed**,
+toggle **Fog of war** and **Battle animations** (the full-screen combat and capture cut-ins — a saved
+preference, on by default),
+then press **Start**, which opens the **commander selection page**; **Continue** skips selection and
+resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
+under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
+is the match you meant; when there is nothing readable to resume it reads `NO SAVED MATCH` and the
+button is greyed out (disabled, not hidden). **Quit** exits.
 
-Nothing decision-critical is behind the mouse: the map picker prints the selected board's size,
-property count and pitch beneath the grid, and **Difficulty**, **Speed**, **Fog of war** and
-**Battle animations** each carry a permanent one-line explanation. **Difficulty** greys out while
-**2 Player** is the choice in hand — a hot-seat match has no computer to tune — and comes back the
-moment **1 Player** is, including on the way back from commander selection. Each setting's
-dotted-underlined label — **Speed**, **Difficulty**, **Fog of war**, **Battle animations** — still
-elaborates in a tip anchored to it, on hover or on keyboard focus, and so do the map cells and the
-line under **Continue**; leaving, tabbing away or pressing Escape dismisses one.
+The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
+it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
+side badge — one letter per army the board seats, **A** to **D**: armies sharing a badge fight as
+allies, and armies each on their own badge are a free-for-all. The defaults are the one-click paths
+the two old mode buttons gave you — seat 1 human, every other seat the computer's, every army its own
+side — so a duel still sets up in the clicks it always did: **Human/A** against **CPU/B**. Putting a
+person in every seat is the old hot-seat game. A four-army board additionally offers one-tap
+**Free-for-all**, **2v2** and **3v1** groupings. **Start** greys out, and says why, if the badges
+leave nobody with anyone to fight.
 
-On the selection page you pick **side 1**'s commander, confirm, then **side 2**'s, confirm — the
-turn chips preview each side's faction name and colour as you browse, mirror rule included. Four
+Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
+count, property count and pitch beneath the grid, and **Difficulty**, **Speed**, **Fog of war** and
+**Battle animations** each carry a permanent one-line explanation. **Difficulty** is match-wide — it
+tunes every CPU seat at the table, never one of them — and greys out the moment there is no computer
+seated at all, coming back as soon as one is. Each setting's dotted-underlined label — **Speed**,
+**Difficulty**, **Fog of war**, **Battle animations** — still elaborates in a tip anchored to it, on
+hover or on keyboard focus, and so do the map cells and the line under **Continue**; leaving, tabbing
+away or pressing Escape dismisses one.
+
+The selection page is a walk through the seats: you pick **P1**'s commander, confirm, then **P2**'s,
+and so on to the last seat the board deals — the chips along the top preview each seat's faction name
+and colour as you browse, mirror rule included, and say **CPU** for a seat the computer plays. Four
 faction tabs and three peer portraits let you browse; one focused card shows the highlighted
 general's doctrine and Command Power in full (no hover tooltips), and a deliberate **No Commander**
 plays the plain rules.
-Mouse, keyboard, and controller all navigate it, and **Back** returns to the menu without discarding
-the map or fog choice. Nothing is committed until both sides are locked.
+Mouse, keyboard, and controller all navigate it, and **Back** rewinds one seat — from the first it
+returns to the menu without discarding the map, seat or fog choices. Nothing is committed until every
+seat is locked.
 
 In battle the side in hand gets a portrait and charge meter in the docked bottom HUD bar — the
 portrait field in the side's resolved faction colour, the power named beside the meter it charges,
@@ -233,10 +255,11 @@ the victory screen.
 
 ## Controls
 
-You play the first side; the computer plays the second. Its turn plays itself — play is blocked
-while the AI moves, attacks, captures, and builds (a confirm during it answers *CPU turn.* rather
-than going quiet), and the cursor follows each of its actions so you can watch. `make hotseat`
-drops the AI and lets two players share the keyboard instead.
+By default you play the first side and the computer plays the rest; the seat strip in the menu is
+what changes that. A computer turn plays itself — play is blocked while the AI moves, attacks,
+captures, and builds (a confirm during it answers *CPU turn.* rather than going quiet), and the
+cursor follows each of its actions so you can watch. `make hotseat` drops the AI and lets two players
+share the keyboard instead.
 
 Either way, only the team whose day it is can act; a banner announces each turn and the cursor
 jumps to that team's first property. Every banner — the day card, the save and speed confirmations,
@@ -515,8 +538,9 @@ Pick **Easy**, **Normal** or **Difficult** in the menu, or pass `--difficulty=ea
 It steers exactly one thing: which `AIProfile` the computer plans with. **No tier is handed an
 advantage** — income, dice, the damage formula, and what the AI is allowed to see (the standing
 board-wide sight described under Fog of war) are identical at Easy and at Difficult, so a harder
-opponent is only ever a better-judging one. It is inert in a 2-Player hot-seat, and a save
-records the tier it was played at.
+opponent is only ever a better-judging one. It is match-wide — every CPU seat plans at the same tier,
+never one per seat — so it is inert at a table with nobody but people at it, and a save records the
+tier it was played at.
 
 - **Easy** — timid by design. It over-weights danger, retreats early, refuses good trades, passes
   up marginal plays, under-staffs property races, finishes poorly, and never fields an md tank.

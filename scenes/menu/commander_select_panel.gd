@@ -1,10 +1,10 @@
 class_name CommanderSelectPanel
 extends Control
 ## The dedicated commander selection page (readiness plan G2). Shown over the
-## main menu without tearing it down, so the map, fog, and mode choices behind it
-## survive a Back. The player edits Red, confirms, edits Blue, confirms, and only
-## then are both ids handed back for the match — nothing reaches MatchConfig until
-## both sides are locked.
+## main menu without tearing it down, so the map, fog, and seat choices behind it
+## survive a Back. The player walks the seats the board deals — edit, confirm,
+## on to the next — and only when the last one is locked are the picks handed back
+## for the match; nothing reaches MatchConfig before that.
 ##
 ## One focused CommanderCard carries the full doctrine and power copy; four
 ## faction tabs and three peer portraits let the player browse, and a deliberate
@@ -14,8 +14,8 @@ extends Control
 ## No information hides behind hover, and none behind colour alone — the emblem
 ## and faction name back every tint.
 ##
-## Pure presentation: it reads CommanderDB to list the roster and emits the two
-## chosen ids. It never starts the battle or touches core/.
+## Pure presentation: it reads CommanderDB to list the roster and emits the chosen
+## ids, one per seat. It never starts the battle or touches core/.
 
 signal confirmed(picks: Dictionary)
 signal cancelled
@@ -546,9 +546,9 @@ func _seat_role(seat: int, terse: bool) -> String:
 	return "P%d" % seat if terse else "Player %d" % seat
 
 
-## The identity the current picks would produce: the locked or previewed side 1,
-## and the previewed side 2 once it is being edited. Resolving the whole thing
-## rather than each chip alone is what lets the mirror fallback show live.
+## The identity the current picks would produce: every seat already locked, plus
+## the one being previewed in hand. Resolving the whole thing rather than each
+## chip alone is what lets the mirror fallback show live.
 func _preview_identity() -> SideIdentity:
 	var picks: Dictionary = {}
 	for i in _picks.size():

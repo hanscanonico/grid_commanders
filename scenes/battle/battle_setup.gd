@@ -78,7 +78,8 @@ static func build(
 	result.game.map_path = map_path
 	result.game.fog_enabled = request.fog_enabled
 	# How the armies group is the match's choice, not the board's (plan D1). Empty
-	# is a free-for-all, which is every match until a seat strip can say otherwise.
+	# is a free-for-all, which is what an ungrouped seat strip and an absent
+	# `--sides=` both hand in.
 	#
 	# Whether a grouping leaves anybody to fight is the *board's* answer, so it is
 	# checked here rather than where the grouping was written: `--sides=1+2` is a

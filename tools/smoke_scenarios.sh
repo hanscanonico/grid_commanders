@@ -163,7 +163,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 #
 # The menu scenarios are the same idea one screen earlier: `menu_with_save` poses a
 # resumable match and `menu_no_save` poses none, and each measures the whole
-# centered menu column plus all four primary actions against the 640x360 frame
+# centered menu column, every seat row and all three primary actions against the 640x360 frame
 # before it writes a thing. The column is the load-bearing witness, not the
 # wordmark: a too-tall column is centered into an offset that runs off both ends
 # at once, so the wordmark's own rect sat at exactly y=0 in a visibly sheared
@@ -172,9 +172,9 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # clipped its own title and its Quit, and a returning player met a visibly
 # broken screen while a fresh install never did. Both modes pose the save slot
 # themselves, so neither reads nor writes the running machine's user://save.json.
-# `menu_setup_context` additionally poses hot-seat setup and proves the tutorial
-# board leads, static facts/help, and disabled AI difficulty before photographing
-# them.
+# `menu_setup_context` additionally poses an all-human table and proves the
+# tutorial board leads, static facts/help, and disabled AI difficulty — a table
+# with no computer at it has none to tune — before photographing them.
 #
 # The mission_strip pair is COM-12's, and since COM-122 both run on the tutorial
 # board — the only one the strip teaches on. Every other scenario runs with the
@@ -198,8 +198,9 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # the same shape of check the cut-in family's atlas rows already get.
 #
 # mixed_seat_handoff is the four-players D7 gate, on the quartet board with fog on:
-# two seats at the table and two played by the computer, which is a roster nothing a
-# player can set up produces until FP5. It drives whole turns through the live end-
+# two seats at the table and two played by the computer — a roster the menu's seat
+# strip can now set up, posed here so the gate does not walk a menu to reach it.
+# It drives whole turns through the live end-
 # turn route and proves the three things a still frame cannot — that the blackout
 # fires for the incoming person across an intervening computer turn, that a computer
 # turn is watched through the fog of the person who just played rather than the first

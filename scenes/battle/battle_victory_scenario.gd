@@ -35,9 +35,9 @@ func _run_duel_victory(with_commander: bool) -> void:
 ## maps/fixtures/quartet.txt — tools/smoke_scenarios.sh hands it that board — so
 ## all four liveries are on screen behind the lockup.
 ##
-## The grouping is set here rather than through the menu because nothing a player
-## can reach writes `sides` until FP5; this poses the state FP5 will produce. The
-## two losing armies are eliminated through the sim's own `eliminate`, so the
+## The grouping is set here rather than through the menu — the seat strip writes
+## the same `sides`, and a capture should not depend on walking a menu to reach
+## it. The two losing armies are eliminated through the sim's own `eliminate`, so the
 ## banner, the standings line and the neutralised ground are the real ones.
 func _run_side_victory() -> void:
 	var game := _battle.game

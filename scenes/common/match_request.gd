@@ -68,9 +68,10 @@ var days_cap := BalanceMatchEngine.DEFAULT_DAYS
 ## resolves them, so a spec means the same thing in the window as in the report.
 var side_specs: Dictionary = {}
 ## team -> side id: how the armies are grouped into sides. Empty is a free-for-all
-## — every army its own side — which is every match until a seat strip can say
-## otherwise (four-players plan D1: the grouping is the *match's* choice, never
-## the board's, so the same map hosts a free-for-all, a 2v2 and a 3v1).
+## — every army its own side — which is what the menu's seat strip and `--sides=`
+## both produce for an ungrouped table (four-players plan D1: the grouping is the
+## *match's* choice, never the board's, so the same map hosts a free-for-all, a
+## 2v2 and a 3v1).
 var sides: Dictionary = {}
 
 

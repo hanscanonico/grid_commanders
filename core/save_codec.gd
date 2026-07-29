@@ -724,8 +724,8 @@ static func _roster(data: Dictionary) -> Array[int]:
 
 ## The grouping as JSON writes it: side ids keyed by the army's number as text,
 ## like `funds` and `commanders` beside it. An empty grouping stays an empty
-## dictionary, so a free-for-all — every match until a seat strip can say
-## otherwise — records as one rather than as a list of one-army sides.
+## dictionary, so a free-for-all — what an ungrouped table hands in — records as
+## one rather than as a list of one-army sides.
 static func _encode_sides(sides: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for team: int in sides:

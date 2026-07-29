@@ -1117,9 +1117,9 @@ func _on_selection_confirmed(picks: Dictionary) -> void:
 	_start(_pending_ai_teams, false, picks)
 
 
-## Back from selection returns to the setup exactly as it was left: the mode that
-## opened the page is still the one in hand, and the button that chose it takes
-## focus back — which re-applies that mode rather than assuming one.
+## Back from selection returns to the setup exactly as it was left: the strip
+## still holds the table that opened the page, Start takes focus back, and the
+## panel re-reads the seats rather than assuming what they say.
 func _on_selection_cancelled() -> void:
 	_menu_root.show()
 	_refresh_seats()  # the strip is unchanged, but the panel re-reads it either way

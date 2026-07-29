@@ -158,7 +158,8 @@ func _capture_gate(chrome_source: Callable, context_ok: bool) -> bool:
 
 ## Every named control lies fully inside the logical frame.
 ##
-## The menu hands in its whole centered column *and* its four primary actions.
+## The menu hands in its whole centered column, every seat row *and* its three
+## primary actions.
 ## The column is the load-bearing check: a too-tall one is centered into an
 ## offset that runs off both ends at once, so its individual children are poor
 ## witnesses — the wordmark's own rect sat at exactly y=0 in a build whose title
