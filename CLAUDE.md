@@ -227,7 +227,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   bar: `commander-balance`'s `matches.csv` moves only in `blue_props` / `red_props` / `blue_units`,
   always to 0, always for the loser, with every decision-bearing column and `difficulty-check`
   identical. The AI's `hq_capture_multiplier` was priced when an HQ ended the match and now buys an
-  elimination; it is deliberately **not** retuned until the FP6 soak says otherwise.
+  elimination; the FP6 soak looked and left it alone, so it stays as priced. Same answer for
+  `ThreatMap`'s cap on incoming damage: it flattens the gradient as rivals multiply, and the soak
+  found matches concluding with the AI capturing, building and firing powers throughout, so neither
+  number is retuned. If the AI ever does visibly cower on a crowded board the fix is an `AIProfile`
+  weight, not code.
   D5: **four armies get four faces, and every face is presentation.** Both of `SideIdentity`'s
   fallback orders hold all four theme keys with their first two entries untouched, so every
   two-army resolution is byte-identical to before and iron/verdant only ever come up on a board
@@ -279,8 +283,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   every army reach every other on foot. Neither carries the `# symmetric` tag: that lint is a
   *duel* instrument, and fairness on these is by design review instead (rotational layout, one HQ
   and one base per army held by the FP1-retargeted lints, and the win spread across seats in the
-  soak). 3v1 is deliberately asymmetric — a challenge grouping, compensated by commander pick and
-  tier, never by the board. `tests/unit/test_alliance_soak.gd` plays the shipped boards in the
+  soak). That last instrument is load-bearing: Compass's first layout passed every lint — one HQ and
+  one base an army was true of it — and still gave two of the four armies cities 2–3 tiles out while
+  the other two walked 5–6, which showed up only as free-for-all wins spanning two seats of four. The
+  cities are now a ring closed under a half turn, every army's nearest two at exactly 4 and 5 tiles;
+  keep that property if you edit the board, because no lint holds it. 3v1 is deliberately asymmetric
+  — a challenge grouping, compensated by commander pick and tier, never by the board.
+  `tests/unit/test_alliance_soak.gd` plays the shipped boards in the
   groupings their seat strips offer, not only the fixture: a grouping that ran only on a fixture is
   a capability nobody can pick.
   `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the map lint — sized to fit

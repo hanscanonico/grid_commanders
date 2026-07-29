@@ -10,7 +10,8 @@ extends GutTest
 ## anything alone: `MatchRequest.parse_sides_flag` reads the words, and
 ## `BattleSetup.build` is where a grouping meets the seats a board actually deals.
 
-## Every shipped board but one seats two; Compass is the four-army board FP5 ships.
+## Most shipped boards seat two; Compass is the four-army board (Trident seats
+## three), so it is the one that exercises every shape of the grammar.
 const DUEL_BOARD := "res://maps/scrimmage.txt"
 const FOUR_ARMY_BOARD := "res://maps/compass.txt"
 

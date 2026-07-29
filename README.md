@@ -162,14 +162,15 @@ Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes
 
 Fifteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
 `boot_camp`, `scrimmage`, `forge`, `trident`, `compass`, `timberline`, `arsenal`, `riverline`,
-`isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on
-`boot_camp`, badged **Tutorial**, and prints the selected board's size, army count, property count
-and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`compass` is the one board that seats **four armies** — an HQ and a base at each compass point with
-eight cities between them — and so the one that offers the grouping presets in the seat strip.
-`trident` seats **three**, each a prong of the fork around a central massif, where the only grouping
-worth naming is a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only board the first-match mission strip runs
-on — see **Controls** below. `jet_stream` and `the_straits`
+`isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it
+opens on `boot_camp`, badged **Tutorial**, and prints the selected board's size, army count, property
+count and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
+`compass` is the one board that seats **four armies** — an HQ and a base at each compass point, with
+eight cities in a ring that closes under a half turn, so every army's nearest two sit the same
+distance out — and so the one that offers the grouping presets in the seat strip. `trident` seats
+**three**, each a prong of the fork around a central massif, where the only grouping worth naming is
+a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
+board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
 are the boards air and naval units were added for: the first puts an airfield behind each front, the
 second a port on each coast of one shared channel.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`

@@ -1,6 +1,6 @@
 extends GutTest
-## Four AI armies playing out every grouping on one board (COM-45, four-players
-## plan FP2).
+## AI armies playing out every grouping — on the fixture (COM-45, four-players
+## plan FP2) and on the shipped boards that seat more than a duel (COM-49, FP6).
 ##
 ## The unit tests beside this one ask the authority a question at a time. This
 ## one asks the whole engine at once, because the rule it guards lives in two
@@ -10,10 +10,12 @@ extends GutTest
 ## split is exactly what an AI-vs-AI soak catches and a unit test cannot: the same
 ## lesson `test_commander_match_soak.gd` was written for.
 ##
-## Every grouping runs on `maps/fixtures/quartet.txt`, whose four armies are what
-## makes a 2v2 and a 3v1 expressible at all. The menu's seat strip writes the same
-## `sides`, but the groupings are set directly here so the soak never has to walk
-## a menu to reach one.
+## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
+## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
+## them on `maps/compass.txt` and `maps/trident.txt`, because a grouping that only
+## ever ran on a fixture is a capability no player can pick. The menu's seat strip
+## writes the same `sides`, but the groupings are set directly here so the soak
+## never has to walk a menu to reach one.
 ##
 ## Each army is seated with a doctrine, and with a meter full enough to weigh
 ## firing it, on purpose. Without one every commander hook stays at its neutral
@@ -24,8 +26,7 @@ extends GutTest
 ## quietly unexercised again.
 
 const FIXTURE := "res://maps/fixtures/quartet.txt"
-## The shipped boards that seat more than a duel — what FP6 makes the capability
-## real on, as opposed to the fixture, which no player can pick.
+## The shipped boards that seat more than a duel: four armies, then three.
 const COMPASS := "res://maps/compass.txt"
 const TRIDENT := "res://maps/trident.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
