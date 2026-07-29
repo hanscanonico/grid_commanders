@@ -680,11 +680,18 @@ static func _difficulty_error(data: Dictionary) -> String:
 ## was — so one is what it decodes as, and a two-army save round-trips through version 4
 ## naming the same pair it always did.
 ##
+## Read only from the version that writes it, which is the gate `_teams_error` is under.
+## Below it the field is not a roster this codec vetted — a hand-edited or merged one
+## would drive every per-side rule off a list nothing refused — so the duel the save
+## recorded by construction is the answer, and `teams` is not read at all.
+##
 ## Total, like `board_error` is total and for the same reason: it is asked from
 ## `board_error`, which answers for dictionaries `validate` has never seen. A roster that
 ## is not one the rules could seat floors to the duel here and is *reported* by
 ## `_teams_error`, so nothing downstream is ever handed a side that could not exist.
 static func _roster(data: Dictionary) -> Array[int]:
+	if _claimed_version(data) < int(KEY_RULES["teams"]["since"]):
+		return MapData.DEFAULT_TEAMS.duplicate()
 	var declared: Variant = data.get("teams")
 	if not (declared is Array):
 		return MapData.DEFAULT_TEAMS.duplicate()

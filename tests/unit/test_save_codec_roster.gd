@@ -54,6 +54,22 @@ func test_a_version_3_save_with_no_roster_loads_as_a_duel() -> void:
 	)
 
 
+## The roster is read from the version that writes it and no earlier one. A save
+## claiming version 3 recorded a duel whatever a `teams` key on it says — hand-edited,
+## or merged in from a newer slot — and nothing vetted that key, so reading it would
+## point every per-side check at armies the save has no purse for and report the
+## missing purse as the damage instead of the cause.
+func test_a_version_3_save_carrying_a_roster_still_loads_as_the_duel_it_recorded() -> void:
+	var data := _encoded()
+	data["version"] = 3
+	data["teams"] = [1, 2, 3, 4]
+	assert_eq(SaveCodec.validate(data), "", "version 3 knew no roster, so it has none to be wrong")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	assert_eq(loaded.state.teams, MapData.DEFAULT_TEAMS, "the duel it actually recorded")
+	assert_eq(loaded.state.funds.size(), MapData.DEFAULT_TEAMS.size(), "a purse per army, no more")
+
+
 ## The one format rule that is about a side rather than a field: every per-side
 ## check in the codec is derived from the roster, so a roster no board could have
 ## dealt has to be refused before it is asked about anyone's purse or commander.

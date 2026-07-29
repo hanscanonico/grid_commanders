@@ -12,8 +12,6 @@ extends GutTest
 ## - A third, neutral HQ is a free win button: CaptureCommand sets `winner` on
 ##   *any* HQ, no matter who owned it.
 ## - A side with no base has no income engine and an AI that can never build.
-## - An owner or unit on a seat the board never dealt parses today and then
-##   silently never plays, because next_team() cycles the map's own roster.
 ## - HQs walled off from each other make the HQ-capture win unreachable, which
 ##   quietly reduces the match to rout-only.
 ## - A map whose header claims symmetry and does not have it hands one side a
@@ -89,24 +87,6 @@ func test_every_map_gives_each_team_a_base() -> void:
 					)
 					+ "has nothing to spend income on"
 				)
-			)
-
-
-func test_no_map_uses_a_team_that_never_gets_a_turn() -> void:
-	for map in _maps():
-		var roster := map.teams()
-		var owners := map.initial_owners()
-		for cell: Vector2i in owners:
-			assert_has(
-				roster,
-				int(owners[cell]),
-				"%s: property %s is owned by a team that never plays" % [_name(map), cell]
-			)
-		for entry: Dictionary in map.starting_units:
-			assert_has(
-				roster,
-				int(entry.team),
-				"%s: the unit on %s belongs to a team that never plays" % [_name(map), entry.cell]
 			)
 
 

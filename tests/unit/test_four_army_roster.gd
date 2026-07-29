@@ -5,8 +5,13 @@ extends GutTest
 ## Every other test in the suite builds a duel, because every shipped board is
 ## one. That is exactly why this file exists: the roster was a compile-time
 ## constant, so a four-army board parsed cleanly and then played a match with two
-## seats empty — no funds, no turn, and a phantom victory the moment one of their
-## units died. Each assertion below is one of those silences.
+## seats empty — no funds and no turn. Each assertion below is one of those
+## silences.
+##
+## Victory is not one of them and is still open: `GameState._check_rout` crowns
+## the first surviving team in the roster, so on this board killing one army's
+## last unit hands the win to another while two more are still playing. Roster-aware
+## rout and N-way victory are FP3's scope.
 ##
 ## The board is `maps/fixtures/quartet.txt`, which lives under fixtures/ so it is
 ## reachable by name and absent from the menu, the map lint and the AI soak.
