@@ -24,7 +24,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 @export var counter_weight: float = 0.6
 ## Base value of taking a property, tuned to sit near a city's worth.
 @export var capture_score: float = 900.0
-## Capturing the enemy HQ ends the match, so it is worth a multiple of a city.
+## Capturing an enemy HQ takes that army out of the match (four-players plan D3),
+## which in a duel is the win, so it is worth a multiple of a city. Priced when an
+## HQ ended the match outright and left there on purpose until the FP6 soak.
 @export var hq_capture_multiplier: float = 3.0
 ## Added per capture point already chipped off, so the AI finishes what it
 ## started instead of wandering to a fresh property.

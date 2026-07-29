@@ -66,6 +66,10 @@ class Outcome:
 	var commands := 0
 	var rejected := 0
 	var cap_stall := false
+	## Set when a capture took an army out of the match — the HQ ending, which the
+	## final board can no longer be asked about now that elimination clears the
+	## loser's units away with it. Observed by the loop; see `termination()`.
+	var hq_captured := false
 	var turn_cap_hits := 0
 	var powers: Dictionary = {}
 	var first_ready: Dictionary = {}
@@ -131,7 +135,12 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 		if recorder != null:
 			recorder.before_apply(state, command, planning_usec)
 		commands_this_turn = 0 if command is EndTurnCommand else commands_this_turn + 1
+		var fallen_before := state.eliminated.size()
 		command.apply(state)
+		# The one fact about *how* a match ended that the board no longer carries:
+		# a capture that took an army out of the match is the HQ ending.
+		if command is CaptureCommand and state.eliminated.size() > fallen_before:
+			outcome.hq_captured = true
 		if recorder != null:
 			recorder.after_apply(state, command)
 		outcome.commands += 1
@@ -148,7 +157,7 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 	# distinguishable in the CSV.
 	if outcome.winner == 0 and not outcome.cap_stall:
 		outcome.winner = tiebreak(state)
-	outcome.termination = termination(state, outcome.cap_stall)
+	outcome.termination = termination(state, outcome.cap_stall, outcome.hq_captured)
 	return outcome
 
 
@@ -159,14 +168,18 @@ static func _has_independent_planners(setup: Setup) -> bool:
 	return setup.planners[1] != setup.planners[2]
 
 
-## rout (loser has no units), hq (loser was routed off its HQ but still has
-## units), day_cap (reached the day limit; the row's winner was decided on
-## score), or command_cap (a match that would not resolve — a bug, and a hard
-## failure of the run).
-static func termination(state: GameState, cap_stall: bool) -> String:
+## rout (the loser lost its last unit), hq (the loser's HQ was taken), day_cap
+## (reached the day limit; the row's winner was decided on score), or command_cap
+## (a match that would not resolve — a bug, and a hard failure of the run).
+##
+## `hq_captured` is observed by the match loop rather than read back off the
+## board, because since elimination (four-players plan D3) an HQ capture takes its
+## owner's units off with it — so "the loser still has units" stopped telling the
+## two endings apart. The loop watches for a capture that took an army out; the
+## sim gained nothing to be watched (balance plan D2).
+static func termination(state: GameState, cap_stall: bool, hq_captured: bool) -> String:
 	if state.winner != 0:
-		var loser := swap_team(state.winner)
-		return "rout" if state.units_of(loser).is_empty() else "hq"
+		return "hq" if hq_captured else "rout"
 	if cap_stall:
 		return "command_cap"
 	return "day_cap"

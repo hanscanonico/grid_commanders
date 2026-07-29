@@ -288,15 +288,24 @@ func test_a_day_cap_match_is_scored_on_properties_then_units_then_funds() -> voi
 	assert_eq(BalanceMatchEngine.tiebreak(state), 2, "properties rank first of all")
 
 
+## The two decided endings are told apart by what the loop *saw*, not by what the
+## final board holds: since elimination (four-players plan D3) an HQ capture takes
+## its owner's units off the board with it, so "the loser still has units" stopped
+## distinguishing them. An unfinished match answers the same either way.
 func test_termination_names_how_the_match_ended() -> void:
 	var state := GameState.create(MapData.parse(BOARD, terrain_db), unit_db, chart)
-	assert_eq(BalanceMatchEngine.termination(state, false), "day_cap")
-	assert_eq(BalanceMatchEngine.termination(state, true), "command_cap")
+	assert_eq(BalanceMatchEngine.termination(state, false, false), "day_cap")
+	assert_eq(BalanceMatchEngine.termination(state, true, false), "command_cap")
 	state.winner = 1
-	assert_eq(BalanceMatchEngine.termination(state, false), "hq", "the loser still has units")
+	assert_eq(
+		BalanceMatchEngine.termination(state, false, true), "hq", "a capture took the army out"
+	)
+	assert_eq(BalanceMatchEngine.termination(state, false, false), "rout", "nothing captured an HQ")
+	# And the board being swept clear no longer decides it either way round.
 	for unit in state.units_of(2):
 		state.units.erase(unit)
-	assert_eq(BalanceMatchEngine.termination(state, false), "rout")
+	assert_eq(BalanceMatchEngine.termination(state, false, true), "hq")
+	assert_eq(BalanceMatchEngine.termination(state, false, false), "rout")
 
 
 func test_a_short_day_cap_stops_the_match_there() -> void:

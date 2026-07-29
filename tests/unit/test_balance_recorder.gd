@@ -4,9 +4,9 @@ extends GutTest
 ## The recorder classifies every unit that leaves the board by the command that
 ## caused it (balance plan D3), and a unit vanishing is not always a death: a
 ## Join merges two units, a Load hides one inside a transport, an empty tank
-## strands an aircraft at the start of a turn. Each of those is pinned here, so a
-## miscount is a red build rather than a quiet lie in a report someone tunes
-## against.
+## strands an aircraft at the start of a turn, an HQ falling sweeps its owner's
+## whole army off the board. Each of those is pinned here, so a miscount is a red
+## build rather than a quiet lie in a report someone tunes against.
 ##
 ## The recorder is Node-free precisely so these can be plain unit tests.
 
@@ -226,6 +226,35 @@ func test_only_a_completed_capture_counts() -> void:
 	var second := _close(recorder, state)
 	assert_eq(second["captures"], 1, "the turn it flips is the turn it counts")
 	assert_eq(second["properties"], 1)
+
+
+## Taking an HQ eliminates its owner (four-players plan D3), which sweeps that
+## army's whole remaining force off the board in one command. Nobody shot those
+## units, so recording them as kills would credit the capturer with destroying an
+## army at full cost that it never fought — and `killed_value` is what the report's
+## exchange figures are read off. They are forfeited instead, which leaves the
+## census closing all the same.
+func test_an_army_swept_off_by_an_hq_capture_is_forfeited_rather_than_killed() -> void:
+	var state := _state("[terrain]\n.Q..\n[owners]\n2 1 0\n[units]\n1 i 1 0\n2 t 3 0")
+	state.capture_progress[Vector2i(1, 0)] = 1  # one turn finishes it
+	var recorder := _recorder(state)
+	_apply(recorder, state, CaptureCommand.new(state.units[0], _path([Vector2i(1, 0)])))
+	assert_true(state.is_eliminated(2), "the HQ's owner is out of the match")
+	# The match ended on the capture, so the turn closes the way the harness closes
+	# it — there is no EndTurnCommand after a winner.
+	recorder.end_match(state)
+	var row := recorder.rows()[recorder.rows().size() - 1]
+	assert_eq(row["team"], 1)
+	assert_eq(row["forfeited"], 1, "the tank left the board with its army")
+	assert_eq(row["killed"], "", "but nobody shot it")
+	assert_eq(row["killed_value"], 0, "so no exchange value is banked for it")
+	assert_eq(row["merged"], 0)
+	assert_eq(recorder.unattributed(), 0)
+	assert_eq(
+		recorder.reconcile(state, {1: 1, 2: 1}),
+		"",
+		"the census still closes: 1 started - 1 forfeited = 0 on the board"
+	)
 
 
 func test_army_value_prorates_by_hp() -> void:

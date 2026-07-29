@@ -233,7 +233,7 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	result.attack_damage = base + _luck(state, fight)
 	# Banked before the unit is removed: a kill charges for the HP it actually
 	# took off, not for the overkill the roll happened to produce.
-	state.bank_losses(defender, mini(result.attack_damage, defender.hp), attacker.team)
+	bank_losses(state, defender, mini(result.attack_damage, defender.hp), attacker.team)
 	defender.hp = maxi(0, defender.hp - result.attack_damage)
 	if defender.hp == 0:
 		result.defender_died = true
@@ -258,13 +258,38 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 		defender.ammo = maxi(0, defender.ammo - 1)
 	result.countered = true
 	result.counter_damage = counter_base + _luck(state, counter)
-	state.bank_losses(attacker, mini(result.counter_damage, attacker.hp), defender.team)
+	bank_losses(state, attacker, mini(result.counter_damage, attacker.hp), defender.team)
 	attacker.hp = maxi(0, attacker.hp - result.counter_damage)
 	if attacker.hp == 0:
 		result.attacker_died = true
 		_bank_cargo_losses(state, attacker, defender.team)
 		state.remove_unit(attacker)
 	return result
+
+
+## Command Power charge, as a percentage of the value destroyed in an exchange:
+## the side that *loses* the HP banks the first, the side that dealt it banks the
+## second. Asymmetric on purpose — the aggressor cannot out-charge the defender on
+## the same trade, so a player winning the field does not run away with the meter
+## as well.
+const CHARGE_PCT_LOST := 100
+const CHARGE_PCT_DEALT := 50
+
+
+## Banks both sides' share of one unit losing `hp_lost` internal HP. Value is the
+## victim's cost prorated by the HP taken off it — halving a 7 000 Tank is 3 500
+## points — and all of it is integer math so replays stay exact.
+##
+## Lives here rather than on `GameState` because it is a rule about an exchange
+## rather than a fact about the board, and this is the only place an exchange
+## happens: every charge the economy ever banks comes out of the three calls
+## below. The state still owns the meter itself (`add_charge` caps it).
+static func bank_losses(state: GameState, victim: Unit, hp_lost: int, dealer_team: int) -> void:
+	if hp_lost <= 0:
+		return
+	var value := victim.type.cost * hp_lost / 100
+	state.add_charge(victim.team, value * CHARGE_PCT_LOST / 100)
+	state.add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
 
 
 ## Cargo that drowns with its transport banks the same as if each passenger had
@@ -277,7 +302,7 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 ## turn_rules erases cargo without a fight and deliberately banks nothing.
 static func _bank_cargo_losses(state: GameState, transport: Unit, dealer_team: int) -> void:
 	for passenger in state.cargo_of(transport):
-		state.bank_losses(passenger, passenger.hp, dealer_team)
+		bank_losses(state, passenger, passenger.hp, dealer_team)
 		_bank_cargo_losses(state, passenger, dealer_team)
 
 

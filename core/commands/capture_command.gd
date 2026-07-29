@@ -1,7 +1,8 @@
 class_name CaptureCommand
 extends Command
-## Moves a capture-capable unit onto a property and chips at its capture
-## points. Reaching zero flips ownership; taking the enemy HQ wins the match.
+## Moves a capture-capable unit onto a property and chips at its capture points.
+## Reaching zero flips ownership; taking an enemy HQ takes that army out of the
+## match, which ends the match only once every survivor stands on one side.
 
 
 ## The snapshot the capture cut-in replays (plan D1). Filled by apply() at the
@@ -68,9 +69,14 @@ func apply(state: GameState) -> void:
 		state.capture_progress[dest] = remaining
 		return
 	state.capture_progress.erase(dest)
+	var fallen := state.owner_at(dest)
 	state.set_owner(dest, unit.team)
-	if state.map.terrain_at(dest).id == &"hq":
-		state.winner = unit.team
+	# Taking an HQ no longer ends the match — it takes its owner out of it (plan
+	# D3). The seat changes hands first, so the conqueror keeps the HQ it stood on
+	# while the rest of that army's ground goes neutral. A neutral HQ eliminates
+	# nobody: there is no army behind it to fall.
+	if state.map.terrain_at(dest).id == &"hq" and fallen != MapData.NEUTRAL:
+		state.eliminate(fallen)
 
 
 ## Capture points chipped off per turn: the unit's displayed HP, adjusted by its
