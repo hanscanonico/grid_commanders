@@ -12,10 +12,14 @@ extends GutTest
 ## are pinned by `tests/unit/test_elimination.gd`, which plays out the four-army
 ## cases on its own fixtures.
 ##
-## The board is `maps/fixtures/quartet.txt`, which lives under fixtures/ so it is
-## reachable by name and absent from the menu, the map lint and the AI soak.
+## Most of it plays `maps/fixtures/quartet.txt`, which lives under fixtures/ so it
+## is reachable by name and absent from the menu, the map lint and the AI soak.
+## The save round-trip at the end plays the shipped `maps/compass.txt` instead,
+## because what it has to prove is that a board a player can actually pick — in a
+## grouping the seat strip can produce — survives the trip.
 
 const FIXTURE := "res://maps/fixtures/quartet.txt"
+const COMPASS := "res://maps/compass.txt"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -96,10 +100,10 @@ func test_a_four_army_match_survives_a_save_round_trip() -> void:
 ## time — and it is the shape a player actually saves: a real board, a grouping
 ## the seat strip can produce, and an army already gone.
 func test_a_four_army_2v2_survives_a_mid_match_save() -> void:
-	var map := MapData.load_from_file("res://maps/compass.txt", terrain_db)
+	var map := MapData.load_from_file(COMPASS, terrain_db)
 	assert_not_null(map, "Compass should parse")
 	var state := GameState.create(map, unit_db, chart)
-	state.map_path = "res://maps/compass.txt"
+	state.map_path = COMPASS
 	state.sides = {1: 0, 3: 0, 2: 1, 4: 1}
 	state.fog_enabled = true
 	state.day = 7

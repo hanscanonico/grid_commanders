@@ -197,11 +197,11 @@ func _pose_seats(args: PackedStringArray) -> void:
 					]
 				)
 			)
-	# The picker scrolls the selection into view, which needs a laid-out tree — a
-	# capture taken on the same frame photographs the board it was showing before.
-	if wanted != "":
+		# The picker scrolls the selection into view, which needs a laid-out tree —
+		# a capture on the same frame photographs the board it was showing before.
 		await get_tree().process_frame
-		_map_scroll.ensure_control_visible(_map_cells[_selected_map])
+		if _selected_map < _map_cells.size():
+			_map_scroll.ensure_control_visible(_map_cells[_selected_map])
 		await get_tree().process_frame
 	if not CmdArgs.has(args, "--menu-preset"):
 		return

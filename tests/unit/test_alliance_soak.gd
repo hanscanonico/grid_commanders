@@ -70,9 +70,9 @@ func test_the_ai_plays_every_grouping_without_the_rules_refusing_it() -> void:
 func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> void:
 	_soak("compass free-for-all", {}, 620, COMPASS)
 	_soak("compass 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 621, COMPASS)
-	_soak("compass 3v1", {1: 0, 2: 0, 3: 0}, 622, COMPASS)
+	_soak("compass 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 622, COMPASS)
 	_soak("trident free-for-all", {}, 623, TRIDENT)
-	_soak("trident 2v1", {1: 0, 2: 0}, 624, TRIDENT)
+	_soak("trident 2v1", {1: 0, 2: 0, 3: 1}, 624, TRIDENT)
 
 
 ## Plays the board out with `sides` applied and a planner per army. Fails on the

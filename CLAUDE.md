@@ -285,8 +285,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   a capability nobody can pick.
   `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the map lint — sized to fit
   the battle viewport whole, and the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog`
-  scenarios run on. FP6 still owes Trident (a 3-army board), the AI-vs-AI soaks in all three
-  groupings at all three tiers, and the plan artifact's own milestone pass.
+  scenarios run on. All that remains of FP6 is the plan artifact's own milestone pass —
+  `.lavish/four-players-plan.html`'s internal status markers, which this project never updated.
 
 ## Architecture — the rules that matter most
 
