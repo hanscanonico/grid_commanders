@@ -8,9 +8,10 @@ extends Control
 ## CommanderSelectPanel and CommanderCard — the layout is regular and data-driven,
 ## and code-built styleboxes are the one form this repo can review in a diff (D1).
 ##
-## The flow is untouched. "1 Player" and "2 Player" open the CommanderSelectPanel
-## (readiness plan G2), shown *over* this menu so the map and fog choices survive a
-## Back; no request is staged until both commanders are confirmed there.
+## The flow is untouched. "Start" opens the CommanderSelectPanel (readiness plan
+## G2) for the seats the strip has dealt, shown *over* this menu so the map and fog
+## choices survive a Back; no request is staged until every seat's commander is
+## confirmed there.
 ## "Continue" bypasses selection — a saved match restores its own commanders. It
 ## is disabled, not hidden, when there is nothing to resume (plan section 2), and
 ## it names what it would resume on the micro-line beneath it: "DAY 4 · SCRIMMAGE".
@@ -72,8 +73,9 @@ var _quit_button: Button
 var _press_start: Label
 
 var _select_panel: CommanderSelectPanel
-## The AI sides the chosen mode will play; carried across the selection page so
-## `confirmed` knows whether it was a one-player or hot-seat start.
+## The seats the computer will play, taken off the strip when Start was pressed
+## and carried across the selection page so `confirmed` stages the same table the
+## player set up rather than re-asking a strip they may have walked back to.
 var _pending_ai_teams: Array[int] = []
 
 ## The roster in dropdown order, parsed once at load so the tooltips and header
@@ -141,39 +143,70 @@ func _ready() -> void:
 	# in each grouping, which is the frame a two-army board cannot show.
 	_pose_seats(CmdArgs.user())
 
-	# Dev captures of the selection page: `--co-select` opens it on the Red slot,
-	# `--co-select=blue` advances to the Blue slot, and `--co-select=<commander_id>`
-	# browses to one named general — the roster's copy is not all one length, so a
-	# capture that only ever photographs the first card proves nothing about the
-	# longest. An ordinary capture (no such flag) photographs the menu itself.
+	# Dev captures of the selection page: `--co-select` opens it on seat 1,
+	# `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
+	# `--co-select=<commander_id>` browses to one named general — the roster's copy is
+	# not all one length, so a capture that only ever photographs the first card
+	# proves nothing about the longest. The seat form matters for the same reason on
+	# the other axis: the chip bar is widest at the *last* seat, where every chip
+	# carries its full form. An ordinary capture (no such flag) photographs the menu.
 	var select_mode := CmdArgs.value(CmdArgs.user(), "--co-select", "red")
 	if select_mode != "":
 		_open_select([2] as Array[int])
 		if select_mode == "blue":
-			_select_panel.debug_advance_to_blue()
+			_select_panel.debug_advance_to_seat(2)
+		elif select_mode.is_valid_int():
+			_select_panel.debug_advance_to_seat(int(select_mode))
 		elif select_mode != "red":
 			_select_panel.debug_preview(StringName(select_mode))
 	if shot_path != "":
-		await _capture_driver.capture(shot_path, _chrome() if select_mode == "" else {})
+		# The select page measures itself against its own chrome, not the menu's: it
+		# is the picture being taken, and the menu behind it is hidden.
+		var chrome := _chrome() if select_mode == "" else _select_panel.chrome()
+		await _capture_driver.capture(shot_path, chrome)
 
 
 ## Dev captures only: selects a board and applies a grouping preset, so the seat
 ## strip can be photographed at more seats than the default board deals. Not on
 ## any play path — a run with neither flag does nothing here.
+##
+## A miss on either flag is said out loud rather than posed quietly: the capture
+## would then be taken on the default board in the default grouping and look
+## exactly like a correct run, which is the failure `debug_preview` and
+## `apply_cmdline`'s `--map` both refuse for the same reason — a typo has to be
+## visible in the output or the shot proves the wrong thing.
 func _pose_seats(args: PackedStringArray) -> void:
 	var wanted := CmdArgs.value(args, "--menu-map")
 	if wanted != "":
 		var path := MapCatalog.resolve(wanted)
+		var found := false
 		for i in _maps.size():
 			if _maps[i].source_path == path:
 				_select_map(i)
+				found = true
 				break
+		if not found:
+			var shown := _map_at(_selected_map)
+			push_error(
+				(
+					"main menu: no board '%s'; this capture shows %s. Known: %s"
+					% [
+						wanted,
+						"no board" if shown == null else MapCatalog.display_name(shown.source_path),
+						", ".join(MapCatalog.resolvable_names()),
+					]
+				)
+			)
 	if not CmdArgs.has(args, "--menu-preset"):
 		return
 	var preset := int(CmdArgs.value(args, "--menu-preset"))
-	if preset >= 0 and preset < SeatStrip.PRESETS.size():
-		_seat_strip.apply_preset_at(preset)
-		_refresh_seats()
+	if preset < 0 or preset >= SeatStrip.PRESETS.size():
+		push_error(
+			"main menu: no grouping preset %d; this capture shows the grouping in hand" % preset
+		)
+		return
+	_seat_strip.apply_preset_at(preset)
+	_refresh_seats()
 
 
 # --- layout ------------------------------------------------------------------
@@ -237,7 +270,9 @@ func _paint_backdrop(animate: bool) -> void:
 	var board := _maps[_maps.size() - 1]
 	var period := Vector2(board.width * BACKDROP_TILE, board.height * BACKDROP_TILE)
 	var field := TextureRect.new()
-	field.texture = MapThumbnail.bake(board, UiTheme.menu_identity(), BACKDROP_TILE)
+	field.texture = MapThumbnail.bake(
+		board, UiTheme.menu_identity(board.player_count()), BACKDROP_TILE
+	)
 	field.stretch_mode = TextureRect.STRETCH_TILE
 	field.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	field.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -406,7 +441,10 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	button.add_child(content)
 
 	var thumb := MapThumbnail.new()
-	thumb.setup(map, UiTheme.menu_identity(), THUMB)
+	# The board's own roster, never the two-seat default: a four-army board's third
+	# and fourth HQs resolve to no theme under a duel's identity and would draw
+	# neutral grey, so the picker would show a duel where the match seats four.
+	thumb.setup(map, UiTheme.menu_identity(map.player_count()), THUMB)
 	thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	content.add_child(thumb)
 
@@ -462,8 +500,11 @@ func _build_choices_row() -> Control:
 		diff_labels,
 		diff_selected,
 		meridian.color,
-		"How well the computer plays in a 1-Player match",
-		"1 Player only · judgement changes; never cheats",
+		"How well the computer plays, at every CPU seat at the table",
+		# Kept shorter than the line it replaced: a help line's own text is its
+		# minimum width, so a longer sentence here widens the whole centred column
+		# past the 640px frame — which `_chrome` refuses to photograph.
+		"Every CPU seat · judgement; never cheats",
 		_on_difficulty_selected,
 		_difficulty_buttons
 	)
@@ -660,11 +701,7 @@ func _build_segment(
 				restyle.call(i)
 				on_select.call(i)
 		)
-	# An empty detail means no line at all, rather than a blank one: the seat rows
-	# say their piece once for the whole strip, and the setup-context gate holds
-	# every registered help line to being non-empty.
-	if tip_detail != "":
-		col.add_child(_option_help(tip_detail))
+	col.add_child(_option_help(tip_detail))
 	return col
 
 
@@ -781,10 +818,6 @@ func _paint_check(check: Panel, mark: Label, on: bool) -> void:
 	mark.visible = on
 
 
-## A faction identity chip — a coloured dot and the default side's faction name,
-## the classic meridian/aurora identities a commander-less match plays as. Speaks
-## faction, never "Red"/"Blue" (faction-identity D5): the words are the theme's,
-## the hue is CommanderVisuals', resolved through the default identity (plan D4).
 ## Re-deals the footer chips for a board that seats `count` armies. Every seat
 ## gets its colour and its P-number, so the strip above and the chips below name
 ## the same table.
@@ -799,6 +832,10 @@ func _refresh_chips(count: int) -> void:
 		_chips.add_child(_identity_chip(identity, seat, "P%d" % seat))
 
 
+## A faction identity chip — a coloured dot and the seat's faction name, the
+## classic meridian/aurora identities a commander-less match plays as. Speaks
+## faction, never "Red"/"Blue" (faction-identity D5): the words are the theme's,
+## the hue is CommanderVisuals', resolved through the default identity (plan D4).
 func _identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 	var theme := identity.theme(team)
 	var chip := PanelContainer.new()

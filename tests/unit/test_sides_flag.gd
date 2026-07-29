@@ -32,11 +32,30 @@ func test_sides_leaves_a_seat_it_never_names_on_its_own() -> void:
 
 ## Both spellings of a free-for-all produce the empty dictionary — the value the
 ## hostility authority reads as "every army its own side", and the one every match
-## carried before groupings existed.
+## carried before groupings existed. Neither is a mistake, so neither is reported.
 func test_a_free_for_all_is_the_empty_grouping() -> void:
 	assert_true(MatchRequest.parse_sides_flag("1v2v3v4").is_empty())
 	assert_true(MatchRequest.parse_sides_flag("").is_empty())
-	assert_true(MatchRequest.parse_sides_flag("1+2+3+4").is_empty(), "one side is nobody to fight")
+	assert_push_error_count(0)
+
+
+## One group naming a seat that a board might not deal is the documented
+## pair-against-loners, and is honoured: the seats it skips have no entry, which
+## is exactly what `GameState.allied` reads as standing alone.
+func test_a_group_that_names_only_some_seats_is_honoured() -> void:
+	var grouped := MatchRequest.parse_sides_flag("1+2")
+	assert_eq(grouped[1], grouped[2], "the pair the flag names stands together")
+	assert_false(grouped.has(3), "and a seat it skips keeps its own side")
+	assert_false(grouped.has(4))
+	assert_push_error_count(0)
+
+
+## The one genuinely degenerate grouping: every seat any board may deal, all on one
+## side, so nobody has anyone to fight. Dropped like an unparseable one — and, like
+## an unparseable one, said out loud rather than quietly played as a free-for-all.
+func test_a_grouping_with_nobody_to_fight_is_refused_out_loud() -> void:
+	assert_true(MatchRequest.parse_sides_flag("1+2+3+4").is_empty())
+	assert_push_error("leaves nobody to fight")
 
 
 func test_an_unparseable_grouping_is_refused_rather_than_half_applied() -> void:

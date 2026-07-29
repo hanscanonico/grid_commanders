@@ -175,9 +175,14 @@ func apply_cmdline(args: PackedStringArray) -> void:
 ## every board played before groupings existed.
 ##
 ## A seat the flag never names keeps its own side, so `--sides=1+2` on a four-army
-## board is a pair against two loners. Anything unparseable is said out loud and
-## dropped rather than half-applied: a grouping nobody meant is a match nobody
-## meant, and quietly playing it is worse than playing the free-for-all.
+## board is a pair against two loners — which is what `GameState.allied` reads a
+## partial grouping as, so honouring it is the flag agreeing with the hostility
+## authority rather than second-guessing it.
+##
+## A grouping that is dropped is always said out loud, whether it was unparseable
+## or degenerate: a grouping nobody meant is a match nobody meant, and quietly
+## playing it is worse than playing the free-for-all. Both spellings of a
+## free-for-all are *not* drops and stay silent — they mean what they say.
 static func parse_sides_flag(value: String) -> Dictionary:
 	var grouped: Dictionary = {}
 	var groups := value.strip_edges().split("v", false)
@@ -188,9 +193,17 @@ static func parse_sides_flag(value: String) -> Dictionary:
 				push_error("battle: --sides=%s is not a grouping; ignoring it" % value)
 				return {}
 			grouped[int(seat)] = side
-	# One group is everybody on one side — a board with nobody to fight — and a
-	# group per army is the free-for-all the empty dictionary already says.
-	if groups.size() < 2 or grouped.size() == groups.size():
+	# Every seat in one group is a board with nobody to fight. Which seats a board
+	# deals is the board's answer and no board is loaded here, so the bound is the
+	# largest roster one may deal: a single group naming that many leaves no seat
+	# outside it whatever board this plays on. A single group naming fewer is the
+	# documented pair-against-loners and is honoured.
+	if groups.size() == 1 and grouped.size() >= GameState.TEAMS.size():
+		push_error("battle: --sides=%s leaves nobody to fight; ignoring it" % value)
+		return {}
+	# A group per army is the free-for-all the empty dictionary already says, and
+	# spelling one out is not a mistake to report.
+	if grouped.size() == groups.size():
 		return {}
 	return grouped
 

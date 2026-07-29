@@ -48,6 +48,7 @@ var _current: CommanderType
 var _faction_index := 0
 
 var _card: CommanderCard
+var _title: Label
 var _chip_bar: HBoxContainer
 var _chips: Array[PanelContainer] = []
 var _chip_labels: Array[Label] = []
@@ -97,11 +98,21 @@ func begin(seats: int, ai_seats: Array[int] = []) -> void:
 	_grab_first_mini()
 
 
-## Dev capture only: locks the current Red preview and advances to the Blue slot,
-## so a screenshot can prove the confirm → Blue transition and the chip/summary
-## update. Drives the same _confirm the Confirm button does. Not on any play path.
-func debug_advance_to_blue() -> void:
-	_confirm()
+## Dev capture only: locks each seat's current preview until `seat` is the one in
+## hand, so a screenshot can prove the confirm → next seat transition and the
+## chip/summary update. Seat-indexed rather than "Blue" because the walk is as
+## long as the board's roster now, and the widest chip bar is the *last* seat —
+## the state the top bar has to be photographed in to prove it fits.
+## Drives the same _confirm the Confirm button does. Not on any play path.
+func debug_advance_to_seat(seat: int) -> void:
+	if seat < 1 or seat > _picks.size():
+		push_error("No seat %d: this capture shows seat %d, not that one." % [seat, _slot + 1])
+		return
+	while _slot + 1 < seat:
+		var before := _slot
+		_confirm()
+		if _slot == before:
+			return
 
 
 ## Dev capture only: browses to one commander by id, through the same tab-and-focus
@@ -117,6 +128,24 @@ func debug_preview(id: StringName) -> void:
 	if not _db.has(id):
 		push_error("No commander '%s': this capture shows the first card, not that one." % id)
 	_focus_commander(id)
+
+
+## What a capture of this page measures itself against: the title, every seat
+## chip, and all three actions. The setup panel behind this one has had such a
+## gate since COM-5 — a page that renders a perfectly good picture with a control
+## off the right edge is exactly what a frame check is for — and this page had
+## none, which is how a top bar that grew from a fixed pair of chips to one per
+## seat shipped without anyone walking it at four.
+func chrome() -> Dictionary:
+	var named := {
+		"the select page title": _title,
+		"No Commander": _no_co_button,
+		"Back": _back_button,
+		"Confirm Pick": _confirm_button,
+	}
+	for i in _chips.size():
+		named["seat chip %d" % (i + 1)] = _chips[i]
+	return named
 
 
 # --- build -------------------------------------------------------------------
@@ -185,13 +214,13 @@ func _build_topbar() -> HBoxContainer:
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 6)
 
-	var title := Label.new()
-	title.text = "SELECT COMMANDER"
-	title.add_theme_font_override("font", UiTheme.display(true))
-	title.add_theme_font_size_override("font_size", _TITLE_SIZE)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar.add_child(title)
+	_title = Label.new()
+	_title.text = "SELECT COMMANDER"
+	_title.add_theme_font_override("font", UiTheme.display(true))
+	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(_title)
 
 	# One chip per seat, built when the page opens: how many there are is the
 	# board's answer, not this page's.
@@ -473,22 +502,40 @@ func _focus_commander(id: StringName) -> void:
 # --- chrome refresh ----------------------------------------------------------
 
 
-## The two turn chips, live from the picks as they stand. Side 1 is always
-## relevant — being edited or already locked — so it stays filled and shows its
-## faction; side 2 fills only while it is the side in hand, and the moment both
-## land on one faction it shows the borrowed classic (D3), not a day-1 surprise.
+## The seat chips, live from the picks as they stand. A seat already walked past
+## or in hand stays filled and shows its livery; the seats after it are named but
+## uncoloured, and the moment two land on one faction the later one shows the
+## borrowed classic (D3), not a day-1 surprise.
+##
+## A roster past a duel takes the terse form — "1 · Meridian — P1" rather than
+## "1 · Meridian Coalition — Player 1" — because by the last seat every chip
+## carries the long one, and four of those run off the right of a 640px frame.
+## A duel keeps the long form, so a two-seat page is unchanged.
 func _refresh_chips() -> void:
 	var identity := _preview_identity()
+	var terse := _chips.size() > DUEL_SEATS
 	for i in _chips.size():
 		var seat := i + 1
-		var who := "CPU" if _ai_seats.has(seat) else "Player %d" % seat
+		var who := _seat_role(seat, terse)
 		if i > _slot:
 			# Not reached yet: named but uncoloured, so the walk's remaining length
 			# is visible without claiming a livery nothing has chosen.
 			_paint_chip(_chips[i], _chip_labels[i], "%d · %s" % [seat, who], null)
 			continue
-		var label := "%d · %s — %s" % [seat, identity.display_name(seat), who]
-		_paint_chip(_chips[i], _chip_labels[i], label, identity.theme(seat))
+		# The terse form names the livery the seat wears rather than its faction,
+		# which is the footer chips' own wording on the menu behind this page.
+		var faction := (
+			String(identity.theme(seat).key).capitalize() if terse else identity.display_name(seat)
+		)
+		_paint_chip(
+			_chips[i], _chip_labels[i], "%d · %s — %s" % [seat, faction, who], identity.theme(seat)
+		)
+
+
+func _seat_role(seat: int, terse: bool) -> String:
+	if _ai_seats.has(seat):
+		return "CPU"
+	return "P%d" % seat if terse else "Player %d" % seat
 
 
 ## The identity the current picks would produce: the locked or previewed side 1,

@@ -39,6 +39,12 @@ var _human: Array[bool] = []
 var _side: Array[int] = []
 var _rows: GridContainer
 var _presets: HBoxContainer
+## Per seat, parallel to `_seats`: how to repaint that row's two segments without
+## rebuilding the strip. A rebuild frees the very button whose `pressed` is
+## running — which on a preset press left a keyboard player with no focus owner —
+## so every in-place change repaints through these instead.
+var _human_restyle: Array[Callable] = []
+var _side_restyle: Array[Callable] = []
 var _accent: Color = Color.WHITE
 var _style_segment: Callable
 var _micro_label: Callable
@@ -68,9 +74,7 @@ func set_roster(count: int) -> void:
 		_human.append(_human.is_empty())
 		_side.append(_side.size())
 	_human.resize(count)
-	_side.resize(count)
-	for i in count:
-		_side[i] = mini(_side[i], SIDE_LABELS.size() - 1)
+	_side = normalised_sides(_side, count)
 	_rebuild()
 
 
@@ -123,7 +127,8 @@ func set_human(index: int, human: bool) -> void:
 	if index < 0 or index >= _human.size():
 		return
 	_human[index] = human
-	_rebuild()
+	if index < _human_restyle.size():
+		_human_restyle[index].call(0 if human else 1)
 	changed.emit()
 
 
@@ -133,6 +138,32 @@ func apply_preset_at(index: int) -> void:
 	if index < 0 or index >= PRESETS.size():
 		return
 	_apply_preset(PRESETS[index]["sides"])
+
+
+## The sides `count` seats stand on once the roster has changed under them: the
+## surviving values re-packed into a dense 0..n-1 range, falling back to the
+## default — every army its own side — when what is left has nobody to fight.
+##
+## Shrinking a roster is why both halves exist, and clamping to a constant
+## answered neither: the first three seats of a 3v1 leave a duel with both armies
+## on side A, where Start greys with "give at least two sides somebody to fight"
+## on an ordinary two-army board, and a seat left on side C leaves a badge row of
+## two with nothing selected, because a row draws as many badges as the board
+## seats. Static and pure so that path is checkable without a scene, on the terms
+## `MatchRequest` and `TransitionInput` are (CLAUDE.md, Testing).
+static func normalised_sides(sides_in: Array[int], count: int) -> Array[int]:
+	var packed: Dictionary = {}
+	var settled: Array[int] = []
+	for i in count:
+		var stood_on: int = sides_in[i] if i < sides_in.size() else i
+		if not packed.has(stood_on):
+			packed[stood_on] = packed.size()
+		settled.append(int(packed[stood_on]))
+	if count >= 2 and packed.size() < 2:
+		settled.clear()
+		for i in count:
+			settled.append(i)
+	return settled
 
 
 func _distinct_sides() -> int:
@@ -146,6 +177,8 @@ func _rebuild() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
+	_human_restyle.clear()
+	_side_restyle.clear()
 	add_theme_constant_override("separation", 3)
 	# Two seats to a line: a duel is one row, the height the panel already had, and
 	# a four-army board costs one extra line rather than three. The setup panel
@@ -182,21 +215,31 @@ func _seat_row(index: int) -> Control:
 		_segment(
 			PackedStringArray(["Human", "CPU"]),
 			0 if _human[index] else 1,
-			func(choice: int) -> void: _set_human(index, choice == 0)
+			func(choice: int) -> void: _set_human(index, choice == 0),
+			_human_restyle
 		)
 	)
 	var badges := PackedStringArray()
 	for label: String in SIDE_LABELS.slice(0, maxi(2, _seats.size())):
 		badges.append(label)
 	row.add_child(
-		_segment(badges, _side[index], func(choice: int) -> void: _set_side(index, choice))
+		_segment(
+			badges, _side[index], func(choice: int) -> void: _set_side(index, choice), _side_restyle
+		)
 	)
 	return row
 
 
 ## A run of joined toggle buttons, styled by the panel so it matches every other
-## segmented control on the screen.
-func _segment(labels: PackedStringArray, selected: int, on_select: Callable) -> Control:
+## segmented control on the screen. `restyle_sink` collects the callable that
+## moves the highlight, so a change made anywhere else — a preset, the capture
+## pose — repaints this run rather than rebuilding the strip around it.
+func _segment(
+	labels: PackedStringArray,
+	selected: int,
+	on_select: Callable,
+	restyle_sink: Array[Callable] = []
+) -> Control:
 	var frame := PanelContainer.new()
 	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -219,6 +262,7 @@ func _segment(labels: PackedStringArray, selected: int, on_select: Callable) -> 
 		for i in buttons.size():
 			_style_segment.call(buttons[i], i == index, i > 0, _accent)
 	restyle.call(selected)
+	restyle_sink.append(restyle)
 	for i in labels.size():
 		buttons[i].pressed.connect(
 			func() -> void:
@@ -247,10 +291,15 @@ func _refresh_presets() -> void:
 		_presets.add_child(button)
 
 
+## Repaints in place rather than rebuilding: a preset is applied from the `pressed`
+## of one of the strip's own buttons, and freeing that button mid-signal releases
+## focus with nothing to give it back to — a keyboard or gamepad player pressing
+## "2v2" was left with no focus owner at all.
 func _apply_preset(pattern: Array) -> void:
 	for i in mini(_side.size(), pattern.size()):
 		_side[i] = int(pattern[i])
-	_rebuild()
+	for i in mini(_side_restyle.size(), _side.size()):
+		_side_restyle[i].call(_side[i])
 	changed.emit()
 
 
