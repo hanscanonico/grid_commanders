@@ -68,9 +68,14 @@ func apply(state: GameState) -> void:
 		state.capture_progress[dest] = remaining
 		return
 	state.capture_progress.erase(dest)
+	var fallen := state.owner_at(dest)
 	state.set_owner(dest, unit.team)
-	if state.map.terrain_at(dest).id == &"hq":
-		state.winner = unit.team
+	# Taking an HQ no longer ends the match — it takes its owner out of it (plan
+	# D3). The seat changes hands first, so the conqueror keeps the HQ it stood on
+	# while the rest of that army's ground goes neutral. A neutral HQ eliminates
+	# nobody: there is no army behind it to fall.
+	if state.map.terrain_at(dest).id == &"hq" and fallen != MapData.NEUTRAL:
+		state.eliminate(fallen)
 
 
 ## Capture points chipped off per turn: the unit's displayed HP, adjusted by its

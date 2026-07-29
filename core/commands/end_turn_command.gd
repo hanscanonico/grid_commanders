@@ -13,7 +13,9 @@ func validate(state: GameState) -> String:
 func apply(state: GameState) -> void:
 	_expire_power(state, state.current_team)
 	var next := state.next_team()
-	if next == state.teams[0]:
+	# The day turns when the hand comes back round to the first *surviving* army,
+	# so an army leaving the rotation never costs a day.
+	if next == state.active_teams()[0]:
 		state.day += 1
 	state.current_team = next
 	TurnRules.begin_turn(state)

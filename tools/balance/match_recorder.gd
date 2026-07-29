@@ -404,13 +404,20 @@ func _attribute(removed: Array[Unit], command: Command) -> void:
 			_turn.killed_value += unit.type.cost
 
 
-## The commands a death may legitimately come out of. Attack kills directly;
-## EndTurn's start-of-turn tick strands an empty tank; Power is listed because a
-## future one-shot effect that damages is a doctrine change, not a recorder
-## change. Anything else removing a unit is a rule the recorder has not been
-## told about, and it is counted as unattributed rather than guessed at.
+## The commands a unit may legitimately leave the board through. Attack kills
+## directly; EndTurn's start-of-turn tick strands an empty tank; Capture takes an
+## HQ, and since elimination (four-players plan D3) that takes its owner's whole
+## army off with it; Power is listed because a future one-shot effect that damages
+## is a doctrine change, not a recorder change. Anything else removing a unit is a
+## rule the recorder has not been told about, and it is counted as unattributed
+## rather than guessed at.
 func _explains_removals(command: Command) -> bool:
-	return command is AttackCommand or command is EndTurnCommand or command is PowerCommand
+	return (
+		command is AttackCommand
+		or command is EndTurnCommand
+		or command is PowerCommand
+		or command is CaptureCommand
+	)
 
 
 func _record_build(build: BuildCommand) -> void:

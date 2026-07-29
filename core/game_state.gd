@@ -12,14 +12,6 @@ const TEAMS: Array[int] = MapData.PLAYER_TEAMS
 const CAPTURE_POINTS := 20
 const INCOME_PER_PROPERTY := 1000
 
-## Command Power charge, as a percentage of the value destroyed in an exchange:
-## the side that *loses* the HP banks the first, the side that dealt it banks
-## the second. Asymmetric on purpose — the aggressor cannot out-charge the
-## defender on the same trade, so a player winning the field does not run away
-## with the meter as well.
-const CHARGE_PCT_LOST := 100
-const CHARGE_PCT_DEALT := 50
-
 var map: MapData
 ## The armies this match seats, in turn order. Seeded by `create` from the map,
 ## which is the roster authority (four-players plan D1) — never a menu setting,
@@ -51,8 +43,20 @@ var property_owners: Dictionary = {}
 ## In-progress captures: property cell -> capture points remaining.
 ## Cleared when the capturing unit leaves the cell or dies.
 var capture_progress: Dictionary = {}
-## 0 while the match runs; the winning team once decided.
+## 0 while the match runs; once decided, the winning **side's lead army** — its
+## lowest seat. Kept scalar on purpose (four-players plan D3): every command's
+## `winner != 0` gate, the Balance Lab's outcome and watch mode's diffable
+## `watch: team %d wins on day %d` line all read it and none of them changed.
+## `winners()` is the whole side, for presentation.
 var winner: int = 0
+## team -> true for every army that has fallen — routed off the board, or its HQ
+## taken. A fallen army holds nothing, fields nothing, takes no turn and earns no
+## income; `active_teams` is the roster without them.
+##
+## Modelled rather than inferred from an empty unit list, because the two are not
+## the same question: an army with no units on day one has not fallen, and an army
+## whose HQ was taken still had units the moment before.
+var eliminated: Dictionary = {}
 ## Fog of war (a match option; see Vision for the rules).
 var fog_enabled := false
 ## team -> CommanderState. A team with no entry plays the neutral commander,
@@ -145,17 +149,6 @@ func add_charge(team: int, points: int) -> void:
 	if not co_state.type.has_power() or points <= 0 or co_state.power_active:
 		return
 	co_state.charge = mini(co_state.charge + points, co_state.type.power_cost)
-
-
-## Banks both sides' share of one unit losing `hp_lost` internal HP. Value is
-## the victim's cost prorated by the HP taken off it — halving a 7 000 Tank is
-## 3 500 points — and all of it is integer math so replays stay exact.
-func bank_losses(victim: Unit, hp_lost: int, dealer_team: int) -> void:
-	if hp_lost <= 0:
-		return
-	var value := victim.type.cost * hp_lost / 100
-	add_charge(victim.team, value * CHARGE_PCT_LOST / 100)
-	add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
 
 
 # --- allegiance --------------------------------------------------------------
@@ -300,15 +293,95 @@ func advance_unit(unit: Unit, path: Array[Vector2i]) -> bool:
 	return ambushed
 
 
+## The next army to play, skipping the fallen. Falls back to the current team
+## when nobody else survives — the match is over by then, and a rotation that
+## could not answer would be a rotation that hangs.
 func next_team() -> int:
 	var index := teams.find(current_team)
-	return teams[(index + 1) % teams.size()]
+	for step in range(1, teams.size() + 1):
+		var candidate: int = teams[(index + step) % teams.size()]
+		if not is_eliminated(candidate):
+			return candidate
+	return current_team
 
 
-func _check_rout(dead_team: int) -> void:
-	if winner != 0 or not units_of(dead_team).is_empty():
-		return
+# --- elimination and victory -------------------------------------------------
+
+
+func is_eliminated(team: int) -> bool:
+	return eliminated.has(team)
+
+
+## The armies still in the match, in seat order.
+func active_teams() -> Array[int]:
+	var alive: Array[int] = []
 	for team in teams:
-		if team != dead_team:
-			winner = team
+		if not is_eliminated(team):
+			alive.append(team)
+	return alive
+
+
+## The winning side, in seat order — empty while the match runs. The presentation
+## half of `winner`, which stays the side's lead army so nothing that reads a
+## single victor had to change.
+##
+## Survivors only. An ally that fell on the way did not win the match, and naming
+## it on the victory screen beside the army that outlived it would be the one
+## place elimination went unsaid.
+func winners() -> Array[int]:
+	if winner == 0:
+		return []
+	var standing: Array[int] = []
+	for team in side_of(winner):
+		if not is_eliminated(team):
+			standing.append(team)
+	return standing
+
+
+## Takes an army off the board for good: its units are removed, its ground reverts
+## to **neutral** rather than to whoever beat it, and any capture it had underway
+## is abandoned.
+##
+## Neutral rather than forfeit is the deliberate half (plan D3). Handing a fallen
+## empire wholesale to its conqueror would snowball a side that was already
+## winning; leaving it loose makes it contested ground that any survivor can go
+## and take. The one exception falls out of ordering rather than a rule: an HQ
+## taken by capture belongs to the capturer before this runs, so a conqueror keeps
+## the seat it actually stood on and nothing else.
+##
+## Idempotent, and the flag is set first: removing units routes back through
+## `_check_rout`, which stops at an army that has already fallen.
+func eliminate(team: int) -> void:
+	if is_eliminated(team):
+		return
+	eliminated[team] = true
+	for unit in units_of(team):
+		remove_unit(unit)
+	for cell in properties_of(team):
+		property_owners[cell] = MapData.NEUTRAL
+		capture_progress.erase(cell)
+	_check_victory()
+
+
+## An army with nothing left on the board has fallen. Reached from `remove_unit`,
+## so it answers on the shot that took the last unit rather than at the next turn
+## boundary — including a counter-attack that kills the attacker on its own turn.
+func _check_rout(dead_team: int) -> void:
+	if winner != 0 or is_eliminated(dead_team) or not units_of(dead_team).is_empty():
+		return
+	eliminate(dead_team)
+
+
+## The match ends when every surviving army stands on one side. In a duel that is
+## the first elimination, which is why this replaced the old "award it to the
+## first other team" without moving a single duel outcome.
+func _check_victory() -> void:
+	if winner != 0:
+		return
+	var alive := active_teams()
+	if alive.is_empty():
+		return  # everyone fell in the same breath; nobody won
+	for team in alive:
+		if not allied(alive[0], team):
 			return
+	winner = alive[0]  # the side's lead army; `winners()` lists the rest

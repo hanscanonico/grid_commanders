@@ -13,12 +13,15 @@ extends RefCounted
 ## adds one flag per unit: whether a submarine is submerged. Version 4 adds the
 ## match roster — which armies the board seated — because a match stopped being a
 ## duel by definition. Version 5 adds the grouping: which armies stood together,
-## because a roster stopped implying who was fighting whom. All four are purely
-## additive, so older saves are still read rather than rejected — a save with no
-## commander block loads with both sides neutral, one with no dive flag loads with
-## every boat on the surface, one with no roster loads as the duel it was, and one
-## with no grouping loads as the free-for-all it was, which is exactly the match
-## each recorded. New saves are always written at the current version.
+## because a roster stopped implying who was fighting whom. Version 6 adds the
+## fallen, because an army leaving the board stopped being the end of the match.
+## All five are purely additive, so older saves are still read rather than
+## rejected — a save with no commander block loads with both sides neutral, one
+## with no dive flag loads with every boat on the surface, one with no roster
+## loads as the duel it was, one with no grouping loads as the free-for-all it
+## was, and one with no casualty list loads with every army it names still
+## standing, which is exactly the match each recorded. New saves are always
+## written at the current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -29,9 +32,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 5
+const VERSION := 6
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6]
 
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
@@ -94,6 +97,7 @@ const KEY_RULES := {
 	"difficulty": {"since": 3, "shape": Shape.STRING},
 	"teams": {"since": 4, "shape": Shape.ARRAY},
 	"sides": {"since": 5, "shape": Shape.DICTIONARY},
+	"eliminated": {"since": 6, "shape": Shape.ARRAY},
 }
 ## The same, per unit entry: everything but the dive flag shipped with the format, and
 ## `dived` is version 3's whole reason for existing. What a `carrier` number may *be* —
@@ -229,6 +233,7 @@ static func encode(
 		"map_path": state.map_path,
 		"teams": state.teams.duplicate(),
 		"sides": _encode_sides(state.sides),
+		"eliminated": _encode_eliminated(state),
 		"fog": state.fog_enabled,
 		"day": state.day,
 		"current_team": state.current_team,
@@ -287,6 +292,7 @@ static func decode(
 	state.map_path = String(data["map_path"])
 	state.teams = roster
 	state.sides = _decode_sides(data)
+	state.eliminated = _decode_eliminated(data)
 	state.damage_chart = damage_chart
 	state.fog_enabled = bool(data.get("fog", false))
 	state.day = int(data["day"])
@@ -440,6 +446,9 @@ static func validate(data: Dictionary) -> String:
 	if error != "":
 		return error
 	error = _sides_error(data)
+	if error != "":
+		return error
+	error = _eliminated_error(data)
 	if error != "":
 		return error
 	# The pass stops at each key's own value too, and a Dictionary that is hollow, a list
@@ -746,6 +755,59 @@ static func _decode_sides(data: Dictionary) -> Dictionary:
 			return {}
 		out[int(name)] = int(side)
 	return out
+
+
+## The armies that had fallen, in seat order — a plain list, because unlike the
+## grouping there is nothing to say about one beyond that it is out.
+static func _encode_eliminated(state: GameState) -> Array:
+	var fallen: Array = []
+	for team in state.teams:
+		if state.is_eliminated(team):
+			fallen.append(team)
+	return fallen
+
+
+## The casualty list a save recorded, or empty for one written before an army
+## could fall without ending the match — which is the state every such save was
+## in, since the first elimination was the victory.
+##
+## Floors on anything it cannot read, like its siblings; `_eliminated_error`
+## reports a list that is wrong rather than leaving it to be inferred here.
+static func _decode_eliminated(data: Dictionary) -> Dictionary:
+	var fallen: Dictionary = {}
+	if _claimed_version(data) < int(KEY_RULES["eliminated"]["since"]):
+		return fallen
+	var saved: Variant = data.get("eliminated")
+	if not (saved is Array):
+		return fallen
+	for team: Variant in saved as Array:
+		if not _is_shape(team, Shape.NUMBER):
+			return {}
+		fallen[int(team)] = true
+	return fallen
+
+
+## "" when the save's casualty list names armies that play, else why it does not.
+##
+## An army that does not play cannot have fallen, and one that has fallen holds
+## nothing and takes no turn — so a stray entry would quietly take a side out of a
+## match it was never in. The list is allowed to be empty (nobody has fallen) and
+## allowed to be everyone but one (the match is over and `winner` says so); what
+## it may not do is name a seat the board never dealt.
+##
+## Asked only of the version that writes it. Below that a match ended at the first
+## elimination, so there was no list to be wrong.
+static func _eliminated_error(data: Dictionary) -> String:
+	if _claimed_version(data) < int(KEY_RULES["eliminated"]["since"]):
+		return ""
+	var saved: Array = data["eliminated"]
+	var roster := _roster(data)
+	for team: Variant in saved:
+		if not _is_shape(team, Shape.NUMBER):
+			return "'eliminated' is malformed"
+		if not roster.has(int(team)):
+			return "the save eliminates team %d, which does not play" % int(team)
+	return ""
 
 
 ## "" when the save's grouping names armies that play and gives each a side, else
