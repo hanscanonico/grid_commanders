@@ -175,7 +175,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
   net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
 - `four-players-plan.html` — up to four armies, milestones FP1–FP6; **FP1 (the roster becomes data),
-  FP2 (hostility gets one authority) and FP3 (an army can fall, a side can win) are shipped**.
+  FP2 (hostility gets one authority), FP3 (an army can fall, a side can win) and FP4 (four liveries
+  on one board) are shipped**.
   D1: **the map is the roster authority** — `MapData.teams()` / `player_count()`
   are read off the seats a board's `[owners]` and `[units]` name, `GameState.create` copies that
   into `GameState.teams` and starts on `teams[0]`, and how many armies play is never a menu
@@ -225,11 +226,37 @@ that must survive any change; the full rationale, milestones and risk registers 
   always to 0, always for the loser, with every decision-bearing column and `difficulty-check`
   identical. The AI's `hq_capture_multiplier` was priced when an HQ ended the match and now buys an
   elimination; it is deliberately **not** retuned until the FP6 soak says otherwise.
-  Everything else the plan names is future work: the elimination banner, four-key colour fallbacks
-  and standings (FP4 — which is why seats 3–4 render neutral grey), the
-  seat strip, slot-walk commander select and the `--sides=` flag (FP5), shipped 4-army boards and
-  the README doc pass (FP6). Every shipped board is still a duel; `maps/fixtures/quartet.txt` is
-  the one four-army board and is a fixture, out of the menu and out of the map lint.
+  D5: **four armies get four faces, and every face is presentation.** Both of `SideIdentity`'s
+  fallback orders hold all four theme keys with their first two entries untouched, so every
+  two-army resolution is byte-identical to before and iron/verdant only ever come up on a board
+  seating a third or fourth army — which is what makes "no two sides share a colour" *provable*
+  (four keys against at most four armies) rather than true so far, and `_fallback`'s neutral escape
+  unreachable. Unreachable matters: `BattleView._last_seen_owner` maps an atlas row back to a team,
+  so two sides sharing row 0 would name the wrong owner. An army falling is announced through the
+  ordinary turn banner — the pipeline reports it on `BattleCommandReceipt.fallen`, the flow layer
+  says it: `Battle.conclude_command` awaits the banner **before** the turn hands over, so it lands
+  on the board that produced it, and suppresses it while `animator.capturing` like the cut-ins.
+  Elimination is public information, fog or no fog. The victory lockup reads `winners()` so a
+  victory that belongs to a side names the side, de-duplicated because two allies may share a
+  faction ("wins!" for one name, "win!" for several); the standings line under it reads
+  `GameState.eliminated` in insertion order — the order of the match, not of the seating — and is
+  empty on a duel, where the one elimination *is* the victory. Watch mode's diffable line is
+  untouched. The commander info sheet takes the roster whole (`open(commanders_by_team, sides)`),
+  one card per seat two to a row with allies adjacent, and `CommanderInfoSheet.layout_error` is what
+  the `commander_info` smoke scenario reads the open sheet back against — the sweep's bar is a file
+  size, and a sheet with collapsed columns wrote a healthy PNG. The bar's unit card gains one
+  allegiance word, asked of `GameState.allied` and relative to `BattlePerspective.viewing_team()`,
+  never to whoever holds the turn.
+  D7: **`Battle._last_human_team` is the one key for both the viewer and the handoff** — while a
+  computer plays, the board renders through the fog of the human who played last, information they
+  already had; a human turn blacks out whenever the previous *human* seat was someone else, across
+  any number of intervening AI turns. One human at the table is never asked to hand the device to
+  themselves, and two humans hot-seating gate exactly as they did before four armies.
+  Everything else the plan names is future work: the seat strip, slot-walk commander select and the
+  `--sides=` flag (FP5), shipped 3- and 4-army boards, the AI soaks and the README doc pass (FP6).
+  Every shipped board is still a duel; `maps/fixtures/quartet.txt` is the one four-army board and is
+  a fixture, out of the menu and out of the map lint — sized to fit the battle viewport whole, and
+  the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog` scenarios run on.
 
 ## Architecture — the rules that matter most
 

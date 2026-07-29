@@ -227,8 +227,9 @@ the map or fog choice. Nothing is committed until both sides are locked.
 In battle the side in hand gets a portrait and charge meter in the docked bottom HUD bar — the
 portrait field in the side's resolved faction colour, the power named beside the meter it charges,
 and a readout that reads the live charge, `READY · F`, or `ACTIVE` — plus a faction-tinted
-activation card when a power fires, a both-sides reference sheet from the map menu (which also says
-what makes the meter rise), and a portrait on the victory screen.
+activation card when a power fires, a reference sheet from the map menu carrying one card per army
+in the match, allies side by side (which also says what makes the meter rise), and a portrait on
+the victory screen.
 
 ## Controls
 
@@ -239,9 +240,9 @@ drops the AI and lets two players share the keyboard instead.
 
 Either way, only the team whose day it is can act; a banner announces each turn and the cursor
 jumps to that team's first property. Every banner — the day card, the save and speed confirmations,
-"Ambush!", a power's activation card — holds play for its beat, and any key, mouse button or pad
-button skips it. The press does that and nothing else: it never lands on the board underneath, and
-no menu opens beneath a banner.
+"Ambush!", an army's elimination, a power's activation card — holds play for its beat, and any key,
+mouse button or pad button skips it. The press does that and nothing else: it never lands on the
+board underneath, and no menu opens beneath a banner.
 
 A first match on `boot_camp`, the **Tutorial** board, opens with a **mission strip** over the grid:
 the objective line and five hints — select, move, capture, build, end turn — each retiring for good
@@ -376,16 +377,23 @@ mouse, keyboard, or controller throughout.
   plus a **FIRE** button (see Commanders below); then the unit on the hovered tile, if any — its
   sprite, name, HP as ten pips, fuel and ammo out of their maximums — `MAIN 6/9 · MG ∞` for one
   that also carries a machine gun, and no ammo readout at all for one that needs none — and an
-  order line naming its movement class, its range when it is an indirect,
-  `DIVED`, `LOW FUEL`, `CARRYING …` when it is a loaded transport, and `WAITED` or `READY`, with
+  order line opening with `ENEMY` — or `ALLY`, once a match seats armies standing together — for a
+  unit that is not yours and nothing at all for one that is, then naming its movement class, its
+  range when it is an indirect, `DIVED`, `LOW FUEL`, `CARRYING …` when it is a loaded transport,
+  and `WAITED` or `READY`, with
   the sprite greyed once it has acted this turn; then, pinned right, the tile's artwork, name,
   defense stars, owner, and `CAP N` while a capture is in progress. With nothing under the cursor
   the unit and tile thirds go blank and the bar keeps its height — the board never shifts
+- An army that loses its HQ or its last unit is out of the match, announced by a banner — *Iron
+  Dominion eliminated* — over the board that felled it, before play hands over. In a duel that is
+  the win, so the banner runs straight into the victory screen
 - Taking the enemy HQ or destroying every enemy unit ends the match on a victory screen naming
   the winner and the day, with **Rematch** (same map, fog, commanders, and sides) and **Main Menu**.
   It opens with neither action highlighted and ignores presses and clicks for half a second, so a
   key still held from the last battle cannot restart the match; the first press after that only
-  highlights an action, and a second one takes it
+  highlights an action, and a second one takes it. Armies that won together are named together —
+  *Meridian Coalition & Aurora Compact win!* — and from two eliminations up the day line lists who
+  fell, in the order they fell
 
 ## Commanders
 

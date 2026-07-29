@@ -165,5 +165,10 @@ max-public-methods: 21
 # cell, an overlay that withheld nothing, and a staging cell the board already
 # occupies. Eighty-five lines for the staged board, the two overlays and the shared
 # layer check. COM-94's cut-in split is still the one that is due and still not a
-# fog leak's job. The driver sits at exactly 1299.
+# fog leak's job.
+#
+# Held at 1299 through COM-47 (FP4): sitting at exactly the ratchet meant any
+# addition tripped it, so the three victory poses moved out to
+# scenes/battle/battle_victory_scenario.gd — a split, which is this repo's
+# established answer — and the driver came back under at 1297 lines.
 max-file-lines: 1299

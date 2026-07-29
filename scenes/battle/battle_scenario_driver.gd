@@ -234,7 +234,7 @@ func _fog_hides_unseen() -> bool:
 ## bottom bar's commander block takes, power_ready_contrast is the named
 ## legibility gate, power_mapmenu opens the keyboard route the ready meter
 ## advertises and checks the menu stays inside the board band, power_banner fires
-## a power so its activation card holds, commander_info opens the both-sides
+## a power so its activation card holds, commander_info opens the commander
 ## reference from the map menu, and commander_victory wins with a general so the
 ## victory lockup is fronted by a portrait.
 ##

@@ -12,7 +12,7 @@ extends Control
 ##
 ## Reuses the same CommanderCard the selection page does; the only thing new is a
 ## faction header over each, named and tinted by the resolved side identity (a
-## mirror shows the borrowed classic). Pure presentation — it reads the two
+## mirror shows the borrowed classic). Pure presentation — it reads the match's
 ## CommanderTypes and closes itself; Battle owns when it opens and blocks board
 ## input while it is up.
 
@@ -105,7 +105,7 @@ func _build() -> void:
 	rows.add_theme_constant_override("separation", 6)
 	margin.add_child(rows)
 
-	# No page title: the two faction headers below already name what this is, and on
+	# No page title: the faction headers below already name what this is, and on
 	# a 360px-tall screen the row it would cost is the difference between the cards
 	# fitting and the Close button being crowded.
 	# Two to a row: a duel is one row of two exactly as it always was, and four
@@ -207,8 +207,7 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 func layout_error(expected_cards: int) -> String:
 	if _frames.size() != expected_cards:
 		return (
-			"the commander sheet laid out %d cards for %d armies"
-			% [_frames.size(), expected_cards]
+			"the commander sheet laid out %d cards for %d armies" % [_frames.size(), expected_cards]
 		)
 	for frame in _frames:
 		var card: Control = frame.get_child(0)

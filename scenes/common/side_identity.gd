@@ -104,8 +104,8 @@ func atlas_row(team: int) -> int:
 
 ## Two passes, both in slot order, so the answer is deterministic and total:
 ## faction sides claim their colours first, then commander-less sides take what
-## is left. Every collision falls to the first free classic, so two sides can
-## never resolve to the same colour and the same picks always resolve the same.
+## is left. Every collision falls to the first free theme, so no two sides can
+## resolve to the same colour and the same picks always resolve the same.
 func _resolve(commanders: Dictionary) -> void:
 	var used: Dictionary = {}  # theme key -> true, for every side already placed
 	var roster := _seat_order(commanders)
@@ -143,11 +143,11 @@ func _seat_order(commanders: Dictionary) -> Array[int]:
 	return seats
 
 
-## The first classic theme in `order` whose key is not already on the board.
+## The first theme in `order` whose key is not already on the board.
 ## Distinctness is by theme key, which for the four faction themes is
 ## distinctness by hue — each theme is its own hue — so this is the "fall back by
 ## hue, never by shade" of plan D3, and the "first classic not in use" of D4,
-## the two differing only in which order they try the classics.
+## the two differing only in which order they try the four keys.
 func _fallback(order: Array[StringName], used: Dictionary) -> CommanderVisuals.FactionTheme:
 	for key in order:
 		if not used.has(key):
