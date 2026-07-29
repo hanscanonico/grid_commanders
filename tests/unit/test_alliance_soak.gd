@@ -11,8 +11,9 @@ extends GutTest
 ## lesson `test_commander_match_soak.gd` was written for.
 ##
 ## Every grouping runs on `maps/fixtures/quartet.txt`, whose four armies are what
-## makes a 2v2 and a 3v1 expressible at all. Nothing a player can reach writes
-## `sides` yet (FP5), so the groupings are set directly here.
+## makes a 2v2 and a 3v1 expressible at all. The menu's seat strip writes the same
+## `sides`, but the groupings are set directly here so the soak never has to walk
+## a menu to reach one.
 ##
 ## Each army is seated with a doctrine, and with a meter full enough to weigh
 ## firing it, on purpose. Without one every commander hook stays at its neutral
