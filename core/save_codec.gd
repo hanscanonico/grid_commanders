@@ -12,11 +12,13 @@ extends RefCounted
 ## much charge their meter holds, and whether their Command Power is up. Version 3
 ## adds one flag per unit: whether a submarine is submerged. Version 4 adds the
 ## match roster — which armies the board seated — because a match stopped being a
-## duel by definition. All three are purely additive, so older saves are still
-## read rather than rejected — a save with no commander block loads with both
-## sides neutral, one with no dive flag loads with every boat on the surface, and
-## one with no roster loads as the duel it was, which is exactly the match each
-## recorded. New saves are always written at the current version.
+## duel by definition. Version 5 adds the grouping: which armies stood together,
+## because a roster stopped implying who was fighting whom. All four are purely
+## additive, so older saves are still read rather than rejected — a save with no
+## commander block loads with both sides neutral, one with no dive flag loads with
+## every boat on the surface, one with no roster loads as the duel it was, and one
+## with no grouping loads as the free-for-all it was, which is exactly the match
+## each recorded. New saves are always written at the current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -27,9 +29,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 4
+const VERSION := 5
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5]
 
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
@@ -91,6 +93,7 @@ const KEY_RULES := {
 	"commanders": {"since": 2, "shape": Shape.DICTIONARY},
 	"difficulty": {"since": 3, "shape": Shape.STRING},
 	"teams": {"since": 4, "shape": Shape.ARRAY},
+	"sides": {"since": 5, "shape": Shape.DICTIONARY},
 }
 ## The same, per unit entry: everything but the dive flag shipped with the format, and
 ## `dived` is version 3's whole reason for existing. What a `carrier` number may *be* —
@@ -225,6 +228,7 @@ static func encode(
 		"version": VERSION,
 		"map_path": state.map_path,
 		"teams": state.teams.duplicate(),
+		"sides": _encode_sides(state.sides),
 		"fog": state.fog_enabled,
 		"day": state.day,
 		"current_team": state.current_team,
@@ -282,6 +286,7 @@ static func decode(
 	state.map = map
 	state.map_path = String(data["map_path"])
 	state.teams = roster
+	state.sides = _decode_sides(data)
 	state.damage_chart = damage_chart
 	state.fog_enabled = bool(data.get("fog", false))
 	state.day = int(data["day"])
@@ -432,6 +437,9 @@ static func validate(data: Dictionary) -> String:
 	# Before anything derived from it: every per-side rule below asks the roster whose
 	# side is whose. See `_teams_error`.
 	error = _teams_error(data)
+	if error != "":
+		return error
+	error = _sides_error(data)
 	if error != "":
 		return error
 	# The pass stops at each key's own value too, and a Dictionary that is hollow, a list
@@ -703,6 +711,66 @@ static func _roster(data: Dictionary) -> Array[int]:
 	if not _is_seatable(roster):
 		return MapData.DEFAULT_TEAMS.duplicate()
 	return roster
+
+
+## The grouping as JSON writes it: side ids keyed by the army's number as text,
+## like `funds` and `commanders` beside it. An empty grouping stays an empty
+## dictionary, so a free-for-all — every match until a seat strip can say
+## otherwise — records as one rather than as a list of one-army sides.
+static func _encode_sides(sides: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for team: int in sides:
+		out[str(team)] = int(sides[team])
+	return out
+
+
+## The grouping a save recorded, keyed back to army numbers. Empty for a save
+## written before the grouping existed, which is the free-for-all every match was.
+##
+## Read below its own version deliberately — like `_roster` it is asked from
+## `board_error`, which answers for dictionaries `validate` has never seen, so it
+## floors rather than trusts. A malformed grouping is *reported* by `_sides_error`;
+## here it reads as no grouping at all, which is the only total answer.
+static func _decode_sides(data: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if _claimed_version(data) < int(KEY_RULES["sides"]["since"]):
+		return out
+	var saved: Variant = data.get("sides")
+	if not (saved is Dictionary):
+		return out
+	for key: Variant in saved as Dictionary:
+		var side: Variant = (saved as Dictionary)[key]
+		if not _is_shape(side, Shape.NUMBER):
+			return {}
+		out[int(String(key))] = int(side)
+	return out
+
+
+## "" when the save's grouping names armies that play and gives each a side, else
+## why it does not.
+##
+## Its own check rather than a clause of `_teams_error`, because the two answer
+## different questions: the roster says who is at the table, the grouping says who
+## stands with whom. A grouping is allowed to be partial — naming two armies as a
+## pair leaves the rest each their own side, which is exactly a 3v1 — so the only
+## rules are that every army it names is one that plays and every side id is a
+## number. A grouping naming an army the roster does not is a save describing a
+## match no board could produce, and it would silently allow or forbid a shot.
+##
+## Asked only of the version that writes it. Below that there is no grouping to be
+## wrong: the save recorded a free-for-all by construction.
+static func _sides_error(data: Dictionary) -> String:
+	if _claimed_version(data) < int(KEY_RULES["sides"]["since"]):
+		return ""
+	var saved: Dictionary = data["sides"]
+	var roster := _roster(data)
+	for key: Variant in saved:
+		var name := String(key)
+		if not name.is_valid_int() or not roster.has(int(name)):
+			return "the save allies team %s, which does not play" % name
+		if not _is_shape(saved[key], Shape.NUMBER):
+			return "the save's side for team %s is malformed" % name
+	return ""
 
 
 ## "" when the save's roster is one a board could have seated, else why it could not.

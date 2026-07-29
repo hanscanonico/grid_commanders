@@ -27,8 +27,8 @@ func validate(state: GameState) -> String:
 	var target := state.unit_at(target_cell)
 	if target == null:
 		return "no unit at the target cell"
-	if target.team == unit.team:
-		return "cannot attack a friendly unit"
+	if state.allied(target.team, unit.team):
+		return "cannot attack a unit on your own side"
 	if not AttackRange.covers(state, unit, path[path.size() - 1], target_cell):
 		return "target out of range"
 	if AttackRange.ready_shot(state, unit, target) == null:

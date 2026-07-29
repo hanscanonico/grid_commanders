@@ -54,7 +54,10 @@ func validate(state: GameState) -> String:
 		var visible: Dictionary = (
 			Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
 		)
-		if occupant.team == unit.team or Vision.can_see_unit(state, unit.team, occupant, visible):
+		if (
+			state.allied(occupant.team, unit.team)
+			or Vision.can_see_unit(state, unit.team, occupant, visible)
+		):
 			return "drop cell is occupied"
 	return ""
 

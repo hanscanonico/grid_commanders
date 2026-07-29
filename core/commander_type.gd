@@ -151,9 +151,14 @@ func vision_bonus(_state: GameState, _unit: Unit) -> int:
 
 
 ## Vision this commander strips from an *enemy* unit (Orin Flux's Signal Jam).
-## Asked of every commander except the viewing unit's own, so it is the one hook
-## a team's doctrine uses to reach across the table.
-func enemy_vision_bonus(_state: GameState, _unit: Unit) -> int:
+## Asked of every commander hostile to the unit, so it is the one hook a team's
+## doctrine uses to reach across the table.
+##
+## `team` is the army this commander leads. It is passed rather than recovered,
+## because "the other side" stopped being a single team the moment a board could
+## seat four: two armies both playing Orin Flux each answer for their own meter,
+## and neither can be mistaken for the other.
+func enemy_vision_bonus(_state: GameState, _team: int, _unit: Unit) -> int:
 	return 0
 
 
@@ -217,15 +222,22 @@ func wants_power(state: GameState, team: int) -> bool:
 # --- subclass toolkit --------------------------------------------------------
 
 
-## The other side: the first team in the match roster that is not this one. Asks
-## the roster rather than the legal maximum, so a doctrine never plans against a
-## seat the board did not fill. Two-sided today — a third army makes "the other
-## side" a set, which is the hostility authority's to answer.
-func _opponent_of(state: GameState, team: int) -> int:
-	for other in state.teams:
-		if other != team:
-			return other
-	return team
+## Every army hostile to this one, in seat order — asked of the one allegiance
+## authority rather than worked out here (four-players plan D2). One element in a
+## duel, which is what pins every shipped doctrine to the behaviour it had.
+func _opponents_of(state: GameState, team: int) -> Array[int]:
+	return state.enemies_of(team)
+
+
+## True when any army hostile to `team` can bring one of `team`'s side into
+## range. The offensive read's mirror, and the gate the powers that fire on being
+## attacked are measured with: they want to know whether anyone out there can
+## reach them, not which one.
+func _opponents_can_strike(state: GameState, team: int, ready_only: bool) -> bool:
+	for other in _opponents_of(state, team):
+		if _can_strike(state, team, other, ready_only):
+			return true
+	return false
 
 
 ## True when a unit of `attacker_team` can bring one of the opposing side into
@@ -252,7 +264,7 @@ func _can_strike(state: GameState, team: int, attacker_team: int, ready_only: bo
 		if not AttackRange.is_indirect(unit):
 			reach += MovementResolver.move_budget(state, unit)
 		for target in state.units:
-			if target.team == attacker_team or target.carrier != null:
+			if state.allied(target.team, attacker_team) or target.carrier != null:
 				continue
 			if Vision.is_hidden_from(state, team, target):
 				continue

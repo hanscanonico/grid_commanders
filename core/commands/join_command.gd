@@ -20,6 +20,8 @@ func validate(state: GameState) -> String:
 	var target := state.unit_at(path[path.size() - 1])
 	if target == null or target == unit:
 		return "no unit to join at the destination"
+	# `!= unit.team`, deliberately not `allied` (four-players plan D2): merging two
+	# armies' units would move one side's spent funds onto the other's board.
 	if target.team != unit.team or target.type != unit.type:
 		return "can only join an identical friendly unit"
 	if target.acted:

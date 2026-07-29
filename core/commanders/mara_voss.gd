@@ -38,4 +38,4 @@ func defense_bonus(state: GameState, fight: Engagement) -> int:
 ## attacked banking a meter she never spends, because the turn she wants to
 ## spend it on is the one she is not playing.
 func wants_power(state: GameState, team: int) -> bool:
-	return _can_strike(state, team, _opponent_of(state, team), false)
+	return _opponents_can_strike(state, team, false)

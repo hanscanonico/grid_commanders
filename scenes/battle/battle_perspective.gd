@@ -69,7 +69,7 @@ func attackable_cells(unit: Unit, dest: Vector2i, moved: bool) -> Array[Vector2i
 	if AttackRange.is_indirect(unit) and moved:
 		return cells
 	for other in _game.units:
-		if other.team == unit.team or other.carrier != null:
+		if _game.allied(other.team, unit.team) or other.carrier != null:
 			continue
 		if not can_see_unit(other):
 			continue
@@ -116,7 +116,7 @@ func threat_overlay_cells(unit: Unit) -> Array[Vector2i]:
 
 ## Whole for a unit on the viewer's own side, scouted ground only for another side's.
 func _viewer_safe(cells: Array[Vector2i], unit: Unit) -> Array[Vector2i]:
-	if unit.team == _viewing_team:
+	if _game.allied(unit.team, _viewing_team):
 		return cells
 	var scouted: Array[Vector2i] = []
 	for cell in cells:

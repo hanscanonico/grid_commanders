@@ -77,6 +77,9 @@ static func build(
 		return null
 	result.game.map_path = map_path
 	result.game.fog_enabled = request.fog_enabled
+	# How the armies group is the match's choice, not the board's (plan D1). Empty
+	# is a free-for-all, which is every match until a seat strip can say otherwise.
+	result.game.sides = request.sides.duplicate()
 	# Watch mode seats every army with a planner, and which armies those are is the
 	# board's answer (four-players plan D1) — not knowable when the flag was parsed,
 	# which is why the request could only carry the duel it assumed.

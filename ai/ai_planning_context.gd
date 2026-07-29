@@ -68,11 +68,13 @@ func threat_map() -> ThreatMap:
 
 ## The enemy units this planner may act on. The AI sees the whole board on
 ## purpose, with exactly one exception: a unit a doctrine has hidden is hidden
-## from it too. Vision owns that exception; visibility is never re-derived here.
+## from it too. Vision owns that exception; visibility is never re-derived here,
+## and neither is hostility — an ally is not an enemy, so it is never fired on,
+## never feared in the threat map and never pathed around as a blocker.
 static func _scan_visible_enemies(p_state: GameState, p_team: int) -> Array[Unit]:
 	var enemies: Array[Unit] = []
 	for unit in p_state.units:
-		if unit.team == p_team or unit.carrier != null:
+		if p_state.allied(unit.team, p_team) or unit.carrier != null:
 			continue
 		if Vision.is_hidden_from(p_state, p_team, unit):
 			continue

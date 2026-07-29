@@ -38,6 +38,8 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 func _has_mixed_neighbour(state: GameState, unit: Unit, from: Vector2i) -> bool:
 	for dir in MovementResolver.DIRECTIONS:
 		var other := state.unit_at(from + dir)
+		# `!= unit.team`, deliberately not `allied` (four-players plan D2): combined
+		# arms is what *her* army fields beside itself, not what stands nearby.
 		if other == null or other == unit or other.team != unit.team:
 			continue
 		if other.type.move_class != unit.type.move_class:

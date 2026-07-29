@@ -83,3 +83,42 @@ func test_a_save_seating_teams_no_board_could_deal_is_refused() -> void:
 func test_a_current_save_without_the_roster_is_refused() -> void:
 	var data := _without("teams", SaveCodec.VERSION)
 	assert_string_contains(SaveCodec.validate(data), "teams")
+
+
+## The grouping arrived at version 5, because a roster stopped implying who was
+## fighting whom. Every save written before it recorded a free-for-all — that is
+## what a match was — so the absent field is age, not damage.
+func test_a_version_4_save_with_no_grouping_loads_as_a_free_for_all() -> void:
+	var data := _without("sides", 4)
+	assert_eq(SaveCodec.validate(data), "", "version 4 knew no grouping")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	assert_true(loaded.state.sides.is_empty())
+	assert_false(loaded.state.allied(1, 2), "which is every army standing alone")
+
+
+func test_a_grouping_survives_a_round_trip() -> void:
+	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
+	var state := GameState.create(map, unit_db, chart)
+	state.map_path = "res://maps/first_steps.txt"
+	state.sides = {1: 7, 2: 7}
+	var data := SaveCodec.encode(state, [] as Array[int])
+	assert_eq(SaveCodec.validate(data), "")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	assert_true(loaded.state.allied(1, 2), "the two armies resume standing together")
+	assert_eq(loaded.state.sides, {1: 7, 2: 7}, "side ids are opaque and travel as written")
+
+
+## A grouping naming an army the roster does not is a save describing a match no
+## board could produce — and it would silently allow or forbid a shot.
+func test_a_save_allying_a_team_that_does_not_play_is_refused() -> void:
+	var data := _encoded()
+	data["sides"] = {"3": 0}
+	assert_string_contains(SaveCodec.validate(data), "which does not play")
+	data["sides"] = {"1": "friendly"}
+	assert_string_contains(SaveCodec.validate(data), "malformed")
+
+
+func test_a_current_save_without_the_grouping_is_refused() -> void:
+	assert_string_contains(SaveCodec.validate(_without("sides", SaveCodec.VERSION)), "sides")

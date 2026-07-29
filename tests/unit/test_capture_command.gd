@@ -83,7 +83,7 @@ func test_non_capture_unit_rejected() -> void:
 func test_own_property_rejected() -> void:
 	var state := _state("[terrain]\nC.\n[owners]\n1 0 0\n[units]\n1 i 0 0")
 	var command := CaptureCommand.new(state.units[0], _path([Vector2i(0, 0)]))
-	assert_eq(command.validate(state), "property already owned")
+	assert_eq(command.validate(state), "property already held by your side")
 
 
 func test_non_property_rejected() -> void:
