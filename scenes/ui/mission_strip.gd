@@ -5,6 +5,12 @@ extends PanelContainer
 ## player performs it (UX recovery plan U-08, decision D6: teach by doing, retire
 ## by success).
 ##
+## It only runs on the tutorial board. Which board that is, is
+## `MapCatalog.teaches`' answer and nothing else's (COM-122): a player who picked
+## a board to play on picked a match, not a lesson, and the strip stays down —
+## including its *retirement*, so an ordinary game can never burn through the
+## steps of a tutorial its player has not opened yet.
+##
 ## **It owns no rule and asks nothing of the sim.** Every step retires off the
 ## same `EventBus` signals the scene already animates, so this observes the game
 ## rather than instrumenting it: no command grew a callback, no state machine
@@ -34,6 +40,10 @@ const _PAD := 5
 ## Teams a human is playing. Only their actions retire a step; the computer plays
 ## through the same events and must not teach the strip anything.
 var _human_teams: Array[int] = [1]
+## Whether this match is being played on the tutorial board. False everywhere
+## else, which is the whole of COM-122: no strip, and no step retired behind the
+## player's back.
+var _teaching := false
 var _built := false
 var _objective_label: Label
 var _step_label: Label
@@ -54,11 +64,13 @@ func _ready() -> void:
 	EventBus.turn_started.connect(_on_turn_started)
 
 
-## Tells the strip whose actions to watch. Called once by BattleView.setup;
-## nothing is drawn until `refresh`, because whether the strip shows at all
-## depends on a hint pin a capture run applies after the view is built.
-func setup(human_teams: Array[int]) -> void:
+## Tells the strip whose actions to watch and whether this board teaches at all.
+## Called once by BattleView.setup; nothing is drawn until `refresh`, because
+## whether the strip shows also depends on a hint pin a capture run applies after
+## the view is built.
+func setup(human_teams: Array[int], teaching: bool) -> void:
 	_human_teams = human_teams
+	_teaching = teaching
 
 
 ## Redraws from `Settings.retired_hints` and hides the strip for good once they
@@ -69,8 +81,9 @@ func refresh() -> void:
 	var step := TutorialHints.next_step(Settings.retired_hints)
 	# Nobody to teach is as good a reason to stay down as nothing left to teach:
 	# a `make balance-watch` replay is both sides' computer, and a strip asking
-	# the empty chair to select a unit would sit there for the whole match.
-	visible = not step.is_empty() and not _human_teams.is_empty()
+	# the empty chair to select a unit would sit there for the whole match. A
+	# board that is not the tutorial is the third (COM-122).
+	visible = _teaching and not step.is_empty() and not _human_teams.is_empty()
 	if not visible:
 		return
 	_objective_label.text = TutorialHints.OBJECTIVE
@@ -121,7 +134,7 @@ func _on_turn_started(team: int, _day: int) -> void:
 
 
 func _retire_for(team: int, id: StringName) -> void:
-	if team not in _human_teams or id in Settings.retired_hints:
+	if not _teaching or team not in _human_teams or id in Settings.retired_hints:
 		return
 	Settings.retire_hint(id)
 	refresh()

@@ -121,8 +121,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
   end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input
   convention (COM-15/U-11) and the visible match setup (COM-19/U-15) are shipped. The setup slice's
-  one durable fact: **`MapCatalog.BEGINNER_MAP_PATH` is the single authority for which board leads**
-  — `ordered()` pins it at item zero and the menu reads the same key for its Start Here badge, so
+  one durable fact: **`MapCatalog.TUTORIAL_MAP_PATH` is the single authority for which board leads**
+  — `ordered()` pins it at item zero and the menu reads the same key for its Tutorial badge, so
   order and explanation cannot drift; everything else it added (the caption, the per-option help,
   Difficulty dimmed while 2 Player is the mode in hand) is presentation, gated by the
   `menu_setup_context` capture. D3 is the transition-input convention and it has one authority:
@@ -134,7 +134,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   (`user://settings.cfg`, never the match request, never a save). D6: the tutorial
   owns no rule and observes rather than instruments — steps retire off existing `EventBus`
   signals, filtered to human sides so the computer cannot retire a hint; nothing in `core/` or
-  `ai/` gained a hook. A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so
+  `ai/` gained a hook. **The strip runs on the tutorial board and nowhere else** (COM-122,
+  superseding the plan's "no tutorial map"): `MapCatalog.teaches` is the one answer to which board
+  that is, and the gate covers *retirement* as well as visibility, so an ordinary match can never
+  burn steps of a tutorial its player has not opened. `maps/boot_camp.txt` is shaped to the promise
+  — turn one can reach a neutral property and afford a build, checked by `tests/unit/test_maps.gd`.
+  A capture pins the hint set (`Settings.pin_hints`, from `Battle._ready`) so
   `make smoke` frames don't depend on play history; `--reset-hints` is the one `Settings` flag
   that deliberately writes. The key legend (`scenes/ui/control_hints.gd`) is printed by
   **`Battle.state`'s setter** via `Battle.STATE_CONTEXT` — never refreshed from the dozen sites

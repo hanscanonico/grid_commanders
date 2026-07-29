@@ -304,10 +304,10 @@ func test_every_map_describes_itself_for_the_menu() -> void:
 
 ## The menu opens on item 0, so the order MapCatalog hands it decides the
 ## default match. The teaching board leads; the rest remain smallest first.
-func test_the_menu_offers_the_beginner_board_first_then_smallest() -> void:
+func test_the_menu_offers_the_tutorial_board_first_then_smallest() -> void:
 	var maps := MapCatalog.ordered(terrain_db)
 	assert_eq(maps.size(), MapCatalog.paths().size(), "every shipped map should reach the menu")
-	assert_eq(maps[0].source_path, MapCatalog.BEGINNER_MAP_PATH)
+	assert_eq(maps[0].source_path, MapCatalog.TUTORIAL_MAP_PATH)
 	for i in range(2, maps.size()):
 		var previous := maps[i - 1]
 		assert_lte(
@@ -315,6 +315,85 @@ func test_the_menu_offers_the_beginner_board_first_then_smallest() -> void:
 			maps[i].width * maps[i].height,
 			"%s should not come before %s" % [_name(previous), _name(maps[i])]
 		)
+
+
+## COM-122: the strip teaches on one board and no other, so exactly one shipped
+## map may answer to `teaches` — and it has to be a map that ships, not a path
+## that was renamed out from under the constant.
+func test_exactly_one_shipped_board_teaches() -> void:
+	var teaching: Array[String] = []
+	for path in MapCatalog.paths():
+		if MapCatalog.teaches(path):
+			teaching.append(path)
+	assert_eq(
+		teaching,
+		[MapCatalog.TUTORIAL_MAP_PATH],
+		(
+			"the mission strip runs on the tutorial board alone — every other board "
+			+ "is an ordinary match and shows no hints"
+		)
+	)
+
+
+## The tutorial board is the one map whose *shape* is a promise: the mission
+## strip asks for select, move, capture, build and end turn on the first turn, so
+## a board where the player cannot reach a neutral property or afford a unit on
+## day one teaches steps it cannot let them perform. Nothing in the parser
+## notices — it would load and play perfectly well as an ordinary duel.
+func test_the_tutorial_board_can_answer_every_step_it_teaches() -> void:
+	var map := MapData.load_from_file(MapCatalog.TUTORIAL_MAP_PATH, terrain_db)
+	assert_not_null(map, "the tutorial board should parse")
+	if map == null:
+		return
+	var game := GameState.create(map, unit_db)
+	assert_not_null(game, "the tutorial board should build a GameState")
+	if game == null:
+		return
+	var team: int = GameState.TEAMS[0]
+	assert_gt(_capturable_in_reach(game, team), 0, _step_failure("Capture"))
+	assert_gt(_affordable_builds(game, team), 0, _step_failure("Build"))
+
+
+## Every property `team` does not own that one of its capturing units can stop on
+## this turn. Asked through MovementResolver rather than by counting steps, so it
+## answers with the rules the board is actually played under.
+func _capturable_in_reach(game: GameState, team: int) -> int:
+	var found := 0
+	for unit in game.units_of(team):
+		if not unit.type.can_capture:
+			continue
+		var reach := MovementResolver.reachable(game, unit)
+		for cell in reach.cells():
+			if not reach.can_stop_at(cell):
+				continue
+			if game.map.terrain_at(cell).is_property and game.owner_at(cell) != team:
+				found += 1
+	return found
+
+
+## How many units `team` could actually buy on day one. Every candidate goes
+## through BuildCommand.validate, which owns the answer — funds, the terrain's
+## roster and an occupied pad are all its call, not a second opinion's.
+func _affordable_builds(game: GameState, team: int) -> int:
+	var found := 0
+	for cell in game.map.property_cells():
+		for type in unit_db.all():
+			if BuildCommand.new(team, type, cell).validate(game) == "":
+				found += 1
+	return found
+
+
+func _step_failure(step: String) -> String:
+	return (
+		(
+			"%s: the mission strip teaches %s on this board, so turn one has to let "
+			% [
+				MapCatalog.TUTORIAL_MAP_PATH.get_file(),
+				step,
+			]
+		)
+		+ "the player perform it"
+	)
 
 
 # --- helpers -----------------------------------------------------------------

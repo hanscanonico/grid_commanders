@@ -1198,14 +1198,14 @@ func _stage_mission_strip(mode: String) -> void:
 
 
 ## Every step of the loop except the capture, in the order the strip teaches them.
-## Wait rather than Capture on the city, so the third step stays un-performed.
+## Cells are the tutorial board's, the only one the strip teaches on (COM-122).
 func _walk_first_turn() -> void:
-	_battle.confirm_at(Vector2i(4, 3))  # select the red infantry -> retires "select"
-	_battle.confirm_at(Vector2i(3, 4))  # move it onto the neutral city
+	_battle.confirm_at(Vector2i(4, 3))  # select the road infantry -> retires "select"
+	_battle.confirm_at(Vector2i(4, 2))  # move it up the road toward the neutral city
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"wait")  # commit the move -> retires "move"
 	await _until_state(Battle.State.IDLE)
-	_battle.confirm_at(Vector2i(3, 2))  # the red base -> the build menu
+	_battle.confirm_at(Vector2i(2, 1))  # the friendly base -> the build menu
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"infantry")  # -> retires "build"
 	await _until_state(Battle.State.IDLE)

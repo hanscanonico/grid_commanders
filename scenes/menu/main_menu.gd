@@ -890,8 +890,8 @@ func _cell_hover_box() -> StyleBoxFlat:
 
 func _map_cell_name(map: MapData, selected: bool) -> String:
 	var cell_name := MapCatalog.display_name(map.source_path)
-	if map.source_path == MapCatalog.BEGINNER_MAP_PATH:
-		cell_name += " · Start Here"
+	if MapCatalog.teaches(map.source_path):
+		cell_name += " · Tutorial"
 	if selected:
 		cell_name += " ✓"
 	return cell_name
@@ -1057,13 +1057,13 @@ func _chrome() -> Dictionary:
 
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
-## beginner board leads, that a hot-seat setup has no operable AI difficulty, or
+## tutorial board leads, that a hot-seat setup has no operable AI difficulty, or
 ## that the caption's budget holds for a board this frame does not show.
 func _setup_context_ready() -> bool:
 	var passed := true
 	var map := _map_at(_selected_map)
-	if map == null or map.source_path != MapCatalog.BEGINNER_MAP_PATH:
-		push_error("main menu setup context: beginner board is not the default")
+	if map == null or not MapCatalog.teaches(map.source_path):
+		push_error("main menu setup context: tutorial board is not the default")
 		passed = false
 	elif not _map_caption.text.contains(map.description.to_upper()):
 		push_error("main menu setup context: selected map description is not visible")

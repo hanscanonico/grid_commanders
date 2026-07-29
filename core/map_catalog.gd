@@ -12,8 +12,10 @@ extends RefCounted
 
 const MAPS_DIR := "res://maps"
 ## The teaching board pinned to item zero in `ordered()`. The menu reads this
-## same key for its START HERE badge, so ordering and explanation cannot drift.
-const BEGINNER_MAP_PATH := "res://maps/first_steps.txt"
+## same key for its TUTORIAL badge and MissionStrip asks `teaches()` about it, so
+## which board leads, which board says so, and which board hints cannot drift
+## apart (COM-122).
+const TUTORIAL_MAP_PATH := "res://maps/boot_camp.txt"
 ## Boards that exist to be measured on rather than played: the balance fixtures.
 ## Deliberately a subdirectory, because `paths()` below scans only the top level
 ## — so a fixture is reachable by name from the offline tools and the battle
@@ -40,7 +42,7 @@ static func paths() -> Array[String]:
 	return result
 
 
-## The roster parsed with the teaching board first, then smallest board first.
+## The roster parsed with the tutorial board first, then smallest board first.
 ## Item zero is the menu's default, so first contact should open on the board
 ## written to teach the game rather than merely the shortest duel. The rest keep
 ## the established data-derived order; ties break on filename.
@@ -52,8 +54,15 @@ static func ordered(db: TerrainDB) -> Array[MapData]:
 		var map := MapData.load_from_file(path, db)
 		if map != null:
 			maps.append(map)
-	maps.sort_custom(_beginner_then_smaller)
+	maps.sort_custom(_tutorial_then_smaller)
 	return maps
+
+
+## Whether a board is one the first-match teaching strip runs on. The one answer
+## to that question: every other board is an ordinary match and shows no hints,
+## so a player who came back for a second game is not taught again (COM-122).
+static func teaches(map_path: String) -> bool:
+	return map_path == TUTORIAL_MAP_PATH
 
 
 ## The dropdown label for a map path: "first_steps.txt" -> "First Steps".
@@ -99,11 +108,11 @@ static func resolvable_names() -> Array[String]:
 	return names
 
 
-static func _beginner_then_smaller(a: MapData, b: MapData) -> bool:
-	var a_is_beginner := a.source_path == BEGINNER_MAP_PATH
-	var b_is_beginner := b.source_path == BEGINNER_MAP_PATH
-	if a_is_beginner != b_is_beginner:
-		return a_is_beginner
+static func _tutorial_then_smaller(a: MapData, b: MapData) -> bool:
+	var a_teaches := teaches(a.source_path)
+	var b_teaches := teaches(b.source_path)
+	if a_teaches != b_teaches:
+		return a_teaches
 	var area_a := a.width * a.height
 	var area_b := b.width * b.height
 	if area_a != area_b:

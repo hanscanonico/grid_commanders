@@ -743,9 +743,21 @@
         <div class="card-body p-5">
           <h3 class="font-black">D6 · Teach by doing, retire by success</h3>
           <p class="text-sm leading-relaxed">
-            Progressive, dismissible hints triggered by real scene events — no separate tutorial ruleset, no
-            blocking slideshow, no tutorial map. The mission strip observes the same commands and events the
+            Progressive, dismissible hints triggered by real scene events — no separate tutorial ruleset and no
+            blocking slideshow. The mission strip observes the same commands and events the
             scene already animates; each hint retires permanently after the player performs the action once.
+          </p>
+          <p class="text-sm leading-relaxed mt-3">
+            <strong>Amended by COM-122:</strong> the original wording also ruled out a tutorial <em>map</em>, and
+            that half is withdrawn. Hints over <em>every</em> board is what the clause actually bought, and a
+            player who picked a board picked a match, not a lesson. So the strip now runs on
+            <code>maps/boot_camp.txt</code> and nowhere else. The rest of the decision is untouched — it is still
+            the same five observed steps, still no ruleset of its own, still nothing in <code>core/</code> or
+            <code>ai/</code>. What changed is <em>where</em>, and the where has one authority:
+            <code>MapCatalog.teaches</code>, which also pins that board to item zero and badges it. The gate
+            covers retirement as well as visibility, or an ordinary match would quietly spend the steps of a
+            tutorial its player has not opened yet. Later this board is what the campaign's opening mission
+            becomes.
           </p>
         </div>
       </div>
