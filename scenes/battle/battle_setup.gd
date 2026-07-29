@@ -78,8 +78,21 @@ static func build(
 	result.game.map_path = map_path
 	result.game.fog_enabled = request.fog_enabled
 	# How the armies group is the match's choice, not the board's (plan D1). Empty
-	# is a free-for-all, which is every match until a seat strip can say otherwise.
+	# is a free-for-all, which is what an ungrouped seat strip and an absent
+	# `--sides=` both hand in.
+	#
+	# Whether a grouping leaves anybody to fight is the *board's* answer, so it is
+	# checked here rather than where the grouping was written: `--sides=1+2` is a
+	# pair against two loners on a four-army board and an alliance of everybody on
+	# a duel, and only a loaded roster tells the two apart. An alliance of everybody
+	# is a match no command can advance — every attack and capture is refused, so no
+	# army can ever fall — and the free-for-all is the honest thing to play instead.
 	result.game.sides = request.sides.duplicate()
+	if not result.game.sides.is_empty() and not _anyone_is_hostile(result.game):
+		push_error(
+			"battle: the grouping allies every army on %s; playing the free-for-all" % map_path
+		)
+		result.game.sides = {}
 	# Watch mode seats every army with a planner, and which armies those are is the
 	# board's answer (four-players plan D1) — not knowable when the flag was parsed,
 	# which is why the request could only carry the duel it assumed.
@@ -93,6 +106,15 @@ static func build(
 	else:
 		result.game.rng.randomize()
 	return result
+
+
+## Whether any army on the board has an enemy at all, asked of the one hostility
+## authority (plan D2) rather than by comparing the grouping's own values.
+static func _anyone_is_hostile(game: GameState) -> bool:
+	for team in game.teams:
+		if not game.enemies_of(team).is_empty():
+			return true
+	return false
 
 
 ## The request's commander ids together with the Balance Lab's

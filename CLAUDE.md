@@ -124,8 +124,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   one durable fact: **`MapCatalog.TUTORIAL_MAP_PATH` is the single authority for which board leads**
   — `ordered()` pins it at item zero and the menu reads the same key for its Tutorial badge, so
   order and explanation cannot drift; everything else it added (the caption, the per-option help,
-  Difficulty dimmed while 2 Player is the mode in hand) is presentation, gated by the
-  `menu_setup_context` capture. D3 is the transition-input convention and it has one authority:
+  Difficulty dimmed while no computer is seated — asked of the seat strip since FP5, not of a mode)
+  is presentation, gated by the `menu_setup_context` capture. D3 is the transition-input convention
+  and it has one authority:
   `scenes/common/transition_input.gd` (`TransitionInput`) answers "was that a press?" for every
   boundary — a banner is an awaited blocking beat any press skips, no interactive menu may sit
   under a banner or cut-in, and the victory lockup (`scenes/battle/battle_outcome.gd`) opens
@@ -175,8 +176,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
   net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
 - `four-players-plan.html` — up to four armies, milestones FP1–FP6; **FP1 (the roster becomes data),
-  FP2 (hostility gets one authority), FP3 (an army can fall, a side can win) and FP4 (four liveries
-  on one board) are shipped**.
+  FP2 (hostility gets one authority), FP3 (an army can fall, a side can win), FP4 (four liveries
+  on one board) and FP5 (seats and sides at the table) are shipped**.
   D1: **the map is the roster authority** — `MapData.teams()` / `player_count()`
   are read off the seats a board's `[owners]` and `[units]` name, `GameState.create` copies that
   into `GameState.teams` and starts on `teams[0]`, and how many armies play is never a menu
@@ -203,7 +204,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   transports all stay `owner == unit.team`. The grouping is the *match's* choice, not the board's,
   so it rides on `MatchRequest.sides` and `BattleSetup.build` writes it onto the state — the plan's
   "sides from `MatchConfig`" is superseded by the rule that `MatchConfig` carries exactly one typed
-  request and nothing else. Nothing writes a non-empty `sides` yet; FP5 opens the seam.
+  request and nothing else. Its two writers are the menu's seat strip and `--sides=` (D6).
   D3: **elimination is a modelled state and victory belongs to a side** — `GameState.eliminated`,
   `is_eliminated` and `active_teams()` say who is still in; ask them, never infer a fallen army from
   an empty unit list (one with no units on day one has not fallen). An army falls when its last unit
@@ -252,11 +253,30 @@ that must survive any change; the full rationale, milestones and risk registers 
   already had; a human turn blacks out whenever the previous *human* seat was someone else, across
   any number of intervening AI turns. One human at the table is never asked to hand the device to
   themselves, and two humans hot-seating gate exactly as they did before four armies.
-  Everything else the plan names is future work: the seat strip, slot-walk commander select and the
-  `--sides=` flag (FP5), shipped 3- and 4-army boards, the AI soaks and the README doc pass (FP6).
-  Every shipped board is still a duel; `maps/fixtures/quartet.txt` is the one four-army board and is
-  a fixture, out of the menu and out of the map lint — sized to fit the battle viewport whole, and
-  the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog` scenarios run on.
+  D6: **`scenes/menu/seat_strip.gd` (`SeatStrip`) is the menu's one answer to who plays each army
+  and who stands with whom** — it takes the board's roster and hands back `ai_teams()` and `sides()`,
+  and the two mode buttons it replaced are gone, so no menu state mirrors either fact. A free-for-all
+  is the **empty** dictionary, from the strip and from `MatchRequest.parse_sides_flag` alike, because
+  that is what `GameState.allied` reads as "every army its own side" and what every match carried
+  before groupings existed. `--sides=1+3v2+4` is that flag's grammar, `--red`/`--blue` stay developer
+  vocabulary for seats 1–2, and an unreadable grouping is refused out loud and dropped to the
+  free-for-all rather than half-applied. Whether a grouping leaves anybody hostile is the *board's*
+  answer, so `BattleSetup.build` asks `GameState.enemies_of` once a roster is loaded and plays the
+  free-for-all if nobody is opposed — no flag can see the seats. Difficulty stays match-wide by the
+  ticket's instruction, asked of the seats (a table with no computer has nothing to tune) rather than
+  of a mode; per-seat tiers remain the Balance Lab's CLI grammar. Commander select is a slot walk of
+  N chips and N confirms emitting `confirmed(picks: Dictionary)`, with Back rewinding one seat, and
+  it gained the same kind of capture gate the setup panel has had since COM-5 (`chrome()`), because
+  a bar that grew from two chips to one per seat can run off a 640px frame. `SeatStrip.layout_error`
+  is the sibling of `CommanderInfoSheet.layout_error` and exists for the same reason: unsorted rows
+  stack at the container's origin, inside every frame and drawn in none of it, so enclosure alone
+  photographed the strip as bare panel.
+  `maps/compass.txt` is the shipped four-army board — pulled forward from FP6 because without one
+  the seat strip is UI no player can reach — and is land-only (the AI cannot ferry, naval R1).
+  `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the map lint — sized to fit
+  the battle viewport whole, and the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog`
+  scenarios run on. FP6 still owes Trident (a 3-army board), the AI-vs-AI soaks in all three
+  groupings at all three tiers, and the plan artifact's own milestone pass.
 
 ## Architecture — the rules that matter most
 
@@ -339,7 +359,9 @@ Follow the official Godot GDScript style guide. Key points:
   `InputEvent`, so the boundary convention every banner and the victory lockup obey is checked
   without a scene. `DirectionalInput` joins it on the same terms: a pure answer over an
   `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and
-  every menu obey is checked without a pad.
+  every menu obey is checked without a pad. `SeatStrip.normalised_sides` joins them on the same
+  terms and for the same reason: the grouping arithmetic a shrinking roster runs through is static
+  and pure, so it is checked without building the strip.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 

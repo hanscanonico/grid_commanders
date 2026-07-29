@@ -9,8 +9,9 @@ const BUILD_CELL := Vector2i(3, 2)
 const OUTCOME_GUARD_SECONDS := 0.55
 ## The mixed roster `mixed_seat_handoff` poses on the four-army fixture: seats 1
 ## and 3 at the table, 2 and 4 played by the computer, so a computer turn sits
-## between the two people every round. That is the arrangement D7 is about and
-## nothing a player can set up reaches it until FP5.
+## between the two people every round. That is the arrangement D7 is about; the
+## menu's seat strip can set it up, but this scenario poses it directly so the
+## flow gate does not depend on the menu.
 const MIXED_AI_SEATS: Array[int] = [2, 4]
 const FIRST_HUMAN_SEAT := 1
 const SECOND_HUMAN_SEAT := 3
@@ -99,10 +100,9 @@ func _run_outcome_mash_guard() -> String:
 
 
 ## The mixed-seat viewer and handoff (COM-47, four-players plan D7), driven on the
-## four-army fixture with fog on. Nothing a player can set up seats people and
-## computers on the same board until FP5, so the roster is posed here the way
-## side_victory poses `sides`; without this flow the whole policy rests on a
-## reading of the code.
+## four-army fixture with fog on. The roster is posed here rather than launched
+## through the menu, the way side_victory poses `sides`; without this flow the
+## whole policy rests on a reading of the code.
 ##
 ## Three claims, every one of which photographs exactly like its opposite:
 ##  - the blackout fires for the incoming person even though the turn before theirs

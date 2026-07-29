@@ -1,10 +1,10 @@
 class_name CommanderSelectPanel
 extends Control
 ## The dedicated commander selection page (readiness plan G2). Shown over the
-## main menu without tearing it down, so the map, fog, and mode choices behind it
-## survive a Back. The player edits Red, confirms, edits Blue, confirms, and only
-## then are both ids handed back for the match — nothing reaches MatchConfig until
-## both sides are locked.
+## main menu without tearing it down, so the map, fog, and seat choices behind it
+## survive a Back. The player walks the seats the board deals — edit, confirm,
+## on to the next — and only when the last one is locked are the picks handed back
+## for the match; nothing reaches MatchConfig before that.
 ##
 ## One focused CommanderCard carries the full doctrine and power copy; four
 ## faction tabs and three peer portraits let the player browse, and a deliberate
@@ -14,13 +14,15 @@ extends Control
 ## No information hides behind hover, and none behind colour alone — the emblem
 ## and faction name back every tint.
 ##
-## Pure presentation: it reads CommanderDB to list the roster and emits the two
-## chosen ids. It never starts the battle or touches core/.
+## Pure presentation: it reads CommanderDB to list the roster and emits the chosen
+## ids, one per seat. It never starts the battle or touches core/.
 
-signal confirmed(red_id: StringName, blue_id: StringName)
+signal confirmed(picks: Dictionary)
 signal cancelled
 
-enum Side { RED, BLUE }
+## How many seats a duel deals — the roster every board had before a map could
+## seat more, and what `begin` falls back to if it is handed nothing.
+const DUEL_SEATS := 2
 
 const _TITLE_SIZE := 15
 const _MINI_H := 82
@@ -37,19 +39,19 @@ var _db: CommanderDB
 var _by_faction: Dictionary = {}
 var _faction_keys: Array[StringName] = []
 
-var _one_player := true
-var _side := Side.RED
-var _red_id: StringName = CommanderType.NEUTRAL_ID
-var _blue_id: StringName = CommanderType.NEUTRAL_ID
+var _slot := 0
+var _picks: Array[StringName] = []
+## Seats the computer plays, so a chip can say CPU rather than Player N.
+var _ai_seats: Array[int] = []
 ## The commander currently previewed (not yet locked) for the active side.
 var _current: CommanderType
 var _faction_index := 0
 
 var _card: CommanderCard
-var _red_chip: PanelContainer
-var _red_chip_label: Label
-var _blue_chip: PanelContainer
-var _blue_chip_label: Label
+var _title: Label
+var _chip_bar: HBoxContainer
+var _chips: Array[PanelContainer] = []
+var _chip_labels: Array[Label] = []
 var _tab_buttons: Array[Button] = []
 var _mini_buttons: Array[Button] = []
 var _mini_marks: Array[ColorRect] = []
@@ -80,24 +82,37 @@ func _group_roster() -> void:
 			_by_faction[key].append(commander)
 
 
-## Opens the page for a fresh pair of picks. `one_player` only changes how the
-## opponent slot is labelled (CPU vs Player 2); both sides are chosen here.
-func begin(one_player: bool) -> void:
-	_one_player = one_player
-	_side = Side.RED
-	_red_id = CommanderType.NEUTRAL_ID
-	_blue_id = CommanderType.NEUTRAL_ID
+## Opens the page for a fresh set of picks, one per seat the board deals.
+## `ai_seats` only changes how a slot is labelled — CPU rather than Player N —
+## because every seat's commander is chosen here whoever ends up playing it.
+func begin(seats: int, ai_seats: Array[int] = []) -> void:
+	_ai_seats = ai_seats.duplicate()
+	_slot = 0
+	_picks.clear()
+	for _i in maxi(DUEL_SEATS, seats):
+		_picks.append(CommanderType.NEUTRAL_ID)
+	_build_chips()
 	show()
 	_refresh_chips()
 	_set_faction(0)
 	_grab_first_mini()
 
 
-## Dev capture only: locks the current Red preview and advances to the Blue slot,
-## so a screenshot can prove the confirm → Blue transition and the chip/summary
-## update. Drives the same _confirm the Confirm button does. Not on any play path.
-func debug_advance_to_blue() -> void:
-	_confirm()
+## Dev capture only: locks each seat's current preview until `seat` is the one in
+## hand, so a screenshot can prove the confirm → next seat transition and the
+## chip/summary update. Seat-indexed rather than "Blue" because the walk is as
+## long as the board's roster now, and the widest chip bar is the *last* seat —
+## the state the top bar has to be photographed in to prove it fits.
+## Drives the same _confirm the Confirm button does. Not on any play path.
+func debug_advance_to_seat(seat: int) -> void:
+	if seat < 1 or seat > _picks.size():
+		push_error("No seat %d: this capture shows seat %d, not that one." % [seat, _slot + 1])
+		return
+	while _slot + 1 < seat:
+		var before := _slot
+		_confirm()
+		if _slot == before:
+			return
 
 
 ## Dev capture only: browses to one commander by id, through the same tab-and-focus
@@ -113,6 +128,24 @@ func debug_preview(id: StringName) -> void:
 	if not _db.has(id):
 		push_error("No commander '%s': this capture shows the first card, not that one." % id)
 	_focus_commander(id)
+
+
+## What a capture of this page measures itself against: the title, every seat
+## chip, and all three actions. The setup panel behind this one has had such a
+## gate since COM-5 — a page that renders a perfectly good picture with a control
+## off the right edge is exactly what a frame check is for — and this page had
+## none, which is how a top bar that grew from a fixed pair of chips to one per
+## seat shipped without anyone walking it at four.
+func chrome() -> Dictionary:
+	var named := {
+		"the select page title": _title,
+		"No Commander": _no_co_button,
+		"Back": _back_button,
+		"Confirm Pick": _confirm_button,
+	}
+	for i in _chips.size():
+		named["seat chip %d" % (i + 1)] = _chips[i]
+	return named
 
 
 # --- build -------------------------------------------------------------------
@@ -181,23 +214,19 @@ func _build_topbar() -> HBoxContainer:
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 6)
 
-	var title := Label.new()
-	title.text = "SELECT COMMANDER"
-	title.add_theme_font_override("font", UiTheme.display(true))
-	title.add_theme_font_size_override("font_size", _TITLE_SIZE)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar.add_child(title)
+	_title = Label.new()
+	_title.text = "SELECT COMMANDER"
+	_title.add_theme_font_override("font", UiTheme.display(true))
+	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(_title)
 
-	_red_chip = PanelContainer.new()
-	_red_chip_label = _small_label(9)
-	_red_chip.add_child(_pad(_red_chip_label, 7, 3))
-	bar.add_child(_red_chip)
-
-	_blue_chip = PanelContainer.new()
-	_blue_chip_label = _small_label(9)
-	_blue_chip.add_child(_pad(_blue_chip_label, 7, 3))
-	bar.add_child(_blue_chip)
+	# One chip per seat, built when the page opens: how many there are is the
+	# board's answer, not this page's.
+	_chip_bar = HBoxContainer.new()
+	_chip_bar.add_theme_constant_override("separation", 4)
+	bar.add_child(_chip_bar)
 	return bar
 
 
@@ -399,25 +428,27 @@ func _preview_neutral() -> void:
 func _confirm() -> void:
 	if _current == null:
 		return
-	if _side == Side.RED:
-		_red_id = _current.id
-		_side = Side.BLUE
+	_picks[_slot] = _current.id
+	if _slot + 1 < _picks.size():
+		_slot += 1
 		_refresh_chips()
 		_set_faction(0)
 		_grab_first_mini()
-	else:
-		_blue_id = _current.id
-		confirmed.emit(_red_id, _blue_id)
+		return
+	var chosen: Dictionary = {}
+	for i in _picks.size():
+		chosen[i + 1] = _picks[i]
+	confirmed.emit(chosen)
 
 
 func _back() -> void:
-	if _side == Side.BLUE:
-		_side = Side.RED  # return to editing Red, restoring the locked pick
+	if _slot > 0:
+		_slot -= 1  # back to the seat before, restoring the pick it locked
 		_refresh_chips()
-		_focus_commander(_red_id)
-	else:
-		hide()
-		cancelled.emit()
+		_focus_commander(_picks[_slot])
+		return
+	hide()
+	cancelled.emit()
 
 
 ## The page's two global keys, and the footer has always promised both: Esc backs
@@ -471,30 +502,80 @@ func _focus_commander(id: StringName) -> void:
 # --- chrome refresh ----------------------------------------------------------
 
 
-## The two turn chips, live from the picks as they stand. Side 1 is always
-## relevant — being edited or already locked — so it stays filled and shows its
-## faction; side 2 fills only while it is the side in hand, and the moment both
-## land on one faction it shows the borrowed classic (D3), not a day-1 surprise.
+## The seat chips, live from the picks as they stand. A seat already walked past
+## or in hand stays filled and shows its livery; the seats after it are named but
+## uncoloured, and the moment two land on one faction the later one shows the
+## borrowed classic (D3), not a day-1 surprise.
+##
+## A roster past a duel takes the terse form — "1 · Meridian — P1" rather than
+## "1 · Meridian Coalition — Player 1" — because by the last seat every chip
+## carries the long one, and four of those run off the right of a 640px frame.
+## A duel keeps the long form, so a two-seat page is unchanged.
 func _refresh_chips() -> void:
 	var identity := _preview_identity()
-	_paint_chip(
-		_red_chip, _red_chip_label, "1 · %s — You" % identity.display_name(1), identity.theme(1)
-	)
-	var opponent := "CPU" if _one_player else "Player 2"
-	if _side == Side.BLUE:
-		var label := "2 · %s — %s" % [identity.display_name(2), opponent]
-		_paint_chip(_blue_chip, _blue_chip_label, label, identity.theme(2))
-	else:
-		_paint_chip(_blue_chip, _blue_chip_label, "2 · %s" % opponent, null)
+	var terse := _chips.size() > DUEL_SEATS
+	for i in _chips.size():
+		var seat := i + 1
+		var who := _seat_role(seat, terse)
+		if i > _slot:
+			# Not reached yet: named but uncoloured, so the walk's remaining length
+			# is visible without claiming a livery nothing has chosen.
+			_paint_chip(_chips[i], _chip_labels[i], "%d · %s" % [seat, who], null)
+			continue
+		_paint_chip(
+			_chips[i],
+			_chip_labels[i],
+			"%d · %s — %s" % [seat, _seat_name(identity, seat, terse), who],
+			identity.theme(seat)
+		)
 
 
-## The identity the current picks would produce: the locked or previewed side 1,
-## and the previewed side 2 once it is being edited. Resolving the whole thing
-## rather than each chip alone is what lets the mirror fallback show live.
+## What a chip calls a seat, asked of the identity that owns the answer and
+## shortened to its first word for the terse form — never re-derived from the
+## theme key, because a mirror side keeps its faction's name while its colour is
+## borrowed (faction-identity D3), and a chip reading the key would then
+## contradict the commander card beside it.
+func _seat_name(identity: SideIdentity, seat: int, terse: bool) -> String:
+	var full := identity.display_name(seat)
+	return full.get_slice(" ", 0) if terse else full
+
+
+func _seat_role(seat: int, terse: bool) -> String:
+	if _ai_seats.has(seat):
+		return "CPU"
+	return "P%d" % seat if terse else "Player %d" % seat
+
+
+## The identity the current picks would produce: every seat already locked, plus
+## the one being previewed in hand. Resolving the whole thing rather than each
+## chip alone is what lets the mirror fallback show live.
 func _preview_identity() -> SideIdentity:
-	var one: CommanderType = _current if _side == Side.RED else _db.by_id(_red_id)
-	var two: CommanderType = _current if _side == Side.BLUE else null
-	return SideIdentity.resolve({1: one, 2: two})
+	var picks: Dictionary = {}
+	for i in _picks.size():
+		if i < _slot:
+			picks[i + 1] = _db.by_id(_picks[i])
+		elif i == _slot:
+			picks[i + 1] = _current
+		else:
+			picks[i + 1] = null
+	return SideIdentity.resolve(picks)
+
+
+## Deals one chip per seat. Rebuilt on every `begin`, because how many seats
+## there are is the board's answer and the page is opened per match.
+func _build_chips() -> void:
+	for child in _chip_bar.get_children():
+		_chip_bar.remove_child(child)
+		child.queue_free()
+	_chips.clear()
+	_chip_labels.clear()
+	for _i in _picks.size():
+		var chip := PanelContainer.new()
+		var label := _small_label(9)
+		chip.add_child(_pad(label, 7, 3))
+		_chip_bar.add_child(chip)
+		_chips.append(chip)
+		_chip_labels.append(label)
 
 
 ## Fills a chip in a side's theme, or greys it (theme null) when the side is not
@@ -508,13 +589,16 @@ func _paint_chip(
 
 
 func _refresh_summary() -> void:
-	var slot := "Side 1" if _side == Side.RED else "Side 2"
+	var slot := "Side %d of %d" % [_slot + 1, _picks.size()]
 	var text := "%s — browse a faction, then Confirm." % slot
 	if _current != null:
 		var theme := CommanderVisuals.theme_for(_current)
 		text = "%s · %s\nSelected: %s." % [slot, theme.display, _current.display_name]
-	if _side == Side.BLUE:
-		text += "  Side 1 is locked in %s." % _db.by_id(_red_id).display_name
+	if _slot > 0:
+		var locked := PackedStringArray()
+		for i in _slot:
+			locked.append("Side %d is %s" % [i + 1, _db.by_id(_picks[i]).display_name])
+		text += "  %s." % ", ".join(locked)
 	_summary_label.text = text
 
 

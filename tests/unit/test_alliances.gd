@@ -2,10 +2,10 @@ extends GutTest
 ## What standing together means, asked of the one allegiance authority (COM-45,
 ## four-players plan FP2/D2).
 ##
-## Nothing a player can reach writes `sides` yet — every reachable match is a
-## free-for-all — so these fixtures set it directly. That split is the point: the
-## seam has to be provably correct before FP5 opens it, and every case below has a
-## free-for-all twin that shows the same board answering the way it always did.
+## The menu's seat strip and `--sides=` both write `sides`, but these fixtures set
+## it directly so the authority is asked without walking a menu to reach a
+## grouping. Every case below has a free-for-all twin that shows the same board
+## answering the way it always did.
 ##
 ## Allies share sight and purpose: they cannot shoot or capture each other, they
 ## walk through each other, and they never spring an ambush. They never share
