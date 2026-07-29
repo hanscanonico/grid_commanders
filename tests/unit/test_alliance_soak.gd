@@ -13,8 +13,21 @@ extends GutTest
 ## Every grouping runs on `maps/fixtures/quartet.txt`, whose four armies are what
 ## makes a 2v2 and a 3v1 expressible at all. Nothing a player can reach writes
 ## `sides` yet (FP5), so the groupings are set directly here.
+##
+## Each army is seated with a doctrine, and with a meter full enough to weigh
+## firing it, on purpose. Without one every commander hook stays at its neutral
+## default, so a grouping only ever reaches the commands — and the reads a
+## doctrine makes about the other side of the board ("can anyone reach me", "is
+## there ground I can take") are exactly where an alliance is easiest to get
+## wrong. Each grouping asserts a power actually fired, so the hooks cannot go
+## quietly unexercised again.
 
 const FIXTURE := "res://maps/fixtures/quartet.txt"
+## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
+## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
+## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
+## rival can reach them — and Orin's jamming reaches across the table.
+const DOCTRINES: Array[StringName] = [&"tomas_reed", &"mara_voss", &"orin_flux", &"nia_rowan"]
 ## Long enough for four armies to bank income, build and meet, without making the
 ## suite pay for a full match per grouping.
 const DAYS := 10
@@ -25,12 +38,14 @@ const COMMAND_CAP := 900
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
+var commander_db: CommanderDB
 
 
 func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+	commander_db = CommanderDB.load_default()
 
 
 ## Free-for-all, 2v2 each way round, and a 3v1 — the three groupings the plan
@@ -54,6 +69,14 @@ func _soak(label: String, sides: Dictionary, rng_seed: int) -> void:
 	var state := GameState.create(map, unit_db, chart)
 	state.sides = sides
 	state.rng.seed = rng_seed
+	# Seated with a full meter, so the doctrine reads are asked from day one under
+	# every grouping instead of waiting on charge a short fixture match may never
+	# bank. Firing is still the doctrine's own call, which is what is being tested.
+	for i in state.teams.size():
+		var team: int = state.teams[i]
+		state.set_commander(team, commander_db.by_id(DOCTRINES[i % DOCTRINES.size()]))
+		var co_state := state.commander_state(team)
+		co_state.charge = co_state.type.power_cost
 	state.fog_enabled = rng_seed % 2 == 1  # so the shared-sight path is walked too
 	# One controller per army: a controller caches a threat map for the turn it is
 	# planning, and two armies sharing one would read each other's.
@@ -61,6 +84,7 @@ func _soak(label: String, sides: Dictionary, rng_seed: int) -> void:
 	for team in state.teams:
 		planners[team] = AIController.new(unit_db)
 	var commands := 0
+	var powers := 0
 	while state.winner == 0 and state.day <= DAYS and commands < COMMAND_CAP:
 		var ai: AIController = planners[state.current_team]
 		var command := ai.plan_next_command(state)
@@ -75,8 +99,11 @@ func _soak(label: String, sides: Dictionary, rng_seed: int) -> void:
 			return
 		command.apply(state)
 		commands += 1
-	gut.p("%-16s %4d commands, day %d" % [label, commands, state.day])
+		if command is PowerCommand:
+			powers += 1
+	gut.p("%-16s %4d commands, %d powers, day %d" % [label, commands, powers, state.day])
 	assert_lt(commands, COMMAND_CAP, "%s: the match never progressed" % label)
+	assert_gt(powers, 0, "%s: no power fired, so no doctrine read the board" % label)
 	_assert_no_friendly_fire(label, state, sides)
 
 

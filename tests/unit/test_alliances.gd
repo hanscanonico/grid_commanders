@@ -234,6 +234,17 @@ func test_a_defensive_power_ignores_a_fight_between_two_other_armies() -> void:
 	assert_true(mara.wants_power(state, 2), "the army actually in range of one does want it")
 
 
+## The doctrines measured in capture points ask the same question `CaptureCommand`
+## answers, so they have to get the same answer: ground an ally already holds is
+## not ground to march on, and a power spent reaching it buys nothing.
+func test_a_capture_power_does_not_march_on_an_allys_ground() -> void:
+	# The infantry stands on its own city; the only other property is team 2's.
+	const BOARD := "[terrain]\nCC..\n[owners]\n2 0 0\n1 1 0\n[units]\n1 i 1 0"
+	var tomas: CommanderType = load("res://data/commanders/tomas_reed.tres")
+	assert_true(tomas.wants_power(_state(BOARD), 1), "a rival's city is ground to take")
+	assert_false(tomas.wants_power(_state(BOARD, [1, 2]), 1), "an ally's is already the side's")
+
+
 # --- deliberately not shared -------------------------------------------------
 
 

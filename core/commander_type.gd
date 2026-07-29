@@ -315,6 +315,12 @@ func _can_reach_capture(state: GameState, team: int, extra_move: int = 0) -> boo
 			if not reach.can_stop_at(cell):
 				continue
 			var terrain := state.map.terrain_at(cell)
-			if terrain != null and terrain.is_property and state.owner_at(cell) != team:
+			if terrain == null or not terrain.is_property:
+				continue
+			# Through the allegiance authority, not `!= team`: an ally's ground is
+			# already the side's and `CaptureCommand` turns the attempt down, so a
+			# doctrine measuring it would spend a full meter on a march the rules
+			# refuse.
+			if not state.allied(state.owner_at(cell), team):
 				return true
 	return false
