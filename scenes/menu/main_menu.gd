@@ -162,7 +162,7 @@ func _ready() -> void:
 	if shot_path != "":
 		# The select page measures itself against its own chrome, not the menu's: it
 		# is the picture being taken, and the menu behind it is hidden.
-		var chrome := _chrome() if select_mode == "" else _select_panel.chrome()
+		var chrome := _chrome if select_mode == "" else _select_panel.chrome
 		await _capture_driver.capture(shot_path, chrome)
 
 
@@ -1192,7 +1192,31 @@ func _chrome() -> Dictionary:
 	}
 	for i in _setup_help_labels.size():
 		chrome["option help %d" % (i + 1)] = _setup_help_labels[i]
+	# Every seat by name, the way the select page names its chips: a control the
+	# gate does not name is a control that can silently vanish, which is how the
+	# strip came to be photographed as bare panel.
+	var seats := _seat_strip.rows()
+	for i in seats.size():
+		chrome["seat %d" % (i + 1)] = seats[i]
 	return chrome
+
+
+## The other half of naming the seat strip in a capture: the rows are in `_chrome`
+## so one off the frame refuses the picture, and this is how a *blank* one does.
+## An unsorted row is inside every frame (see SeatStrip.layout_error), so the frame
+## check alone would have photographed the empty band again.
+##
+## Claimed only while the strip is on screen: a `--co-select` capture photographs
+## the selection page over a hidden menu, and a control the picture does not show
+## is not one this frame promises anything about.
+func _seats_laid_out() -> bool:
+	if not _seat_strip.is_visible_in_tree():
+		return true
+	var error := _seat_strip.layout_error()
+	if error == "":
+		return true
+	push_error("main menu: %s" % error)
+	return false
 
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the

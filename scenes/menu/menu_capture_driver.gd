@@ -108,26 +108,52 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 
 
 ## Saves one frame and ends the run — a quit, or the batch's hand-off to the
-## next scenario — after `chrome` clears the frame check, if it was
-## given any. A `--co-select` capture photographs the selection page over a
-## hidden menu, so it hands in that page's own chrome instead: the menu's
-## geometry is not what that picture claims.
+## next scenario — after the chrome `chrome_source` names clears the frame check.
+## A `--co-select` capture photographs the selection page over a hidden menu, so
+## it hands in that page's own chrome instead: the menu's geometry is not what
+## that picture claims.
 ##
-## The check goes in as the capture's gate rather than being run here, so it
+## The chrome is asked for as a callable rather than handed over as a dictionary
+## because the controls it names are not all the ones the screen ends up with: the
+## seat strip re-deals its rows whenever the roster changes, so a list gathered at
+## build time holds freed nodes by the time the shutter fires.
+##
+## The frame check goes in as the capture's gate rather than being run here, so it
 ## measures the settled layout the PNG is written from. A container that sorted
 ## its children a frame late would otherwise be measured small — or at zero size,
 ## which any frame trivially encloses — and the gate would pass on a layout that
 ## is not the one photographed.
-func capture(path: String, chrome: Dictionary) -> void:
-	var gate := Callable() if chrome.is_empty() else _capture_gate.bind(chrome)
+##
+## The setup-context check is the one that cannot: it *walks* the menu — every
+## board's caption, the table with and without a computer at it — and each step
+## re-deals the seat strip, freeing its rows and adding new ones. Run from inside
+## the gate it left them unsorted at the moment the shutter fired, and the
+## acceptance frame for the seat strip photographed bare panel (COM-48). So it
+## runs here, on a settled frame of its own, and hands its verdict forward:
+## ScreenshotUtil's settle then lays the restored strip out before the frame is
+## written. The walk is not wrong; the picture was early.
+func capture(path: String, chrome_source: Callable) -> void:
+	var context_ok := true
+	if poses_setup_context():
+		for i in ScreenshotUtil.SETTLE_FRAMES:
+			await _menu.get_tree().process_frame
+		context_ok = bool(_menu.call("_setup_context_ready"))
+	var gate := _capture_gate.bind(chrome_source, context_ok)
 	await BattleCaptureBatch.finish_capture(_menu, path, gate)
 
 
-func _capture_gate(chrome: Dictionary) -> bool:
-	var fits := _fits(chrome)
-	if poses_setup_context():
-		return bool(_menu.call("_setup_context_ready")) and fits
-	return fits
+## Deliberately not short-circuiting anywhere: a failed run should name every
+## promise that broke, not just the first.
+##
+## `_fits` is not the whole gate because enclosure cannot tell blank from present.
+## Rows a container has not sorted yet keep their minimum size and stack at its
+## origin — inside every frame, and drawn in none of it — which is exactly how the
+## seat strip came to be photographed as bare panel. So the strip is asked whether
+## it is the table it was dealt, the way the commander sheet is (COM-48, FP4).
+func _capture_gate(chrome_source: Callable, context_ok: bool) -> bool:
+	var fits := _fits(chrome_source.call())
+	var laid_out := bool(_menu.call("_seats_laid_out"))
+	return fits and laid_out and context_ok
 
 
 ## Every named control lies fully inside the logical frame.

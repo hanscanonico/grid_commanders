@@ -120,6 +120,46 @@ func seat_count() -> int:
 	return _seats.size()
 
 
+## The row control per seat, in seat order — empty before a roster is dealt. The
+## capture gate names each one so a seat row that left the frame refuses the
+## picture: a row is what a seat *is* on screen, and the strip's own rect outlives
+## its rows by a sort, so measuring the container proved nothing.
+func rows() -> Array[Control]:
+	var named: Array[Control] = []
+	if _rows == null:
+		return named
+	for child in _rows.get_children():
+		named.append(child as Control)
+	return named
+
+
+## Why this strip is not the table it was dealt, or "" when it is — the sibling of
+## `CommanderInfoSheet.layout_error`, and there for the same reason: a blank
+## control writes a perfectly healthy PNG.
+##
+## The frame check cannot answer this one. A row the grid has not sorted yet keeps
+## its minimum size and sits at the grid's origin, so it is enclosed by every frame
+## and drawn in none of it — every seat stacked on one spot, which is precisely
+## what a strip re-dealt after the settle photographed as bare panel (COM-48).
+## Overlap is therefore the honest question, and it costs no state: rows the
+## container has laid out occupy their own ground.
+func layout_error() -> String:
+	var laid := rows()
+	if laid.size() != _seats.size():
+		return "the seat strip laid out %d rows for %d seats" % [laid.size(), _seats.size()]
+	for i in laid.size():
+		var rect := laid[i].get_global_rect()
+		if not rect.has_area():
+			return "seat row %d occupies nothing (%s)" % [i + 1, rect]
+		for j in range(i + 1, laid.size()):
+			if rect.intersects(laid[j].get_global_rect()):
+				return (
+					"seat rows %d and %d overlap at %s, so the strip is not laid out"
+					% [i + 1, j + 1, rect]
+				)
+	return ""
+
+
 ## Seats or unseats a person at `index`. Public because the setup-context capture
 ## walks the table rather than photographing one arrangement of it — the same
 ## reason the difficulty rule is asked of the seats and not of a mode flag.
