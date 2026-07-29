@@ -383,7 +383,7 @@ func refresh_fog() -> void:
 ## label names the same side the tile shows — never outing a capture out of sight.
 func _last_seen_owner(cell: Vector2i) -> int:
 	var row: int = terrain_layer.get_cell_atlas_coords(cell).y
-	for team in GameState.TEAMS:
+	for team in game.teams:
 		if identity.atlas_row(team) == row:
 			return team
 	return MapData.NEUTRAL
@@ -429,7 +429,7 @@ func refresh_keys(context: StringName) -> void:
 ## then has nobody to teach and stays down.
 func _human_teams() -> Array[int]:
 	var out: Array[int] = []
-	for team in GameState.TEAMS:
+	for team in game.teams:
 		if team not in ai_teams:
 			out.append(team)
 	return out

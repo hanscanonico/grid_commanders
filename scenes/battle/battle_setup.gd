@@ -77,6 +77,11 @@ static func build(
 		return null
 	result.game.map_path = map_path
 	result.game.fog_enabled = request.fog_enabled
+	# Watch mode seats every army with a planner, and which armies those are is the
+	# board's answer (four-players plan D1) — not knowable when the flag was parsed,
+	# which is why the request could only carry the duel it assumed.
+	if request.watching:
+		result.ai_teams = result.game.teams.duplicate()
 	# A pinned seed is what makes a watched match *the* match rather than another
 	# one like it: the AI is lookahead-free and RNG-free, so the seed is the only
 	# thing left that could make two runs of one spec diverge.

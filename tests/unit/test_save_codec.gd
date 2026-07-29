@@ -55,8 +55,8 @@ func test_encode_decode_restores_the_match_without_touching_disk() -> void:
 ## every version ever written still has to load, since a save on someone's disk
 ## does not get upgraded when the game does.
 func test_encoded_save_declares_the_current_version() -> void:
-	assert_eq(int(_encoded()["version"]), 3)
-	assert_eq(SaveCodec.VERSION, 3)
+	assert_eq(int(_encoded()["version"]), 4)
+	assert_eq(SaveCodec.VERSION, 4)
 	assert_eq(SaveGame.VERSION, SaveCodec.VERSION, "the facade must report the codec's version")
 	for version in range(1, SaveCodec.VERSION + 1):
 		assert_has(
@@ -253,26 +253,26 @@ func test_every_unit_on_the_board_is_still_valid() -> void:
 	assert_not_null(_decode(data))
 
 
-## COM-55. Not a failing test today — GameState.TEAMS is two long, so a literal pair
-## and a loop agree — and that is precisely why it is written off TEAMS rather than
-## off 1 and 2. `encode` spelled the funds keys out by hand while every other
-## per-side block in the file was built from that list, so it was the one place that
-## knew how many armies there are; the day a third is added this starts failing
-## instead of that army's treasury quietly emptying through a save round-trip.
+## COM-55. `encode` spelled the funds keys out by hand while every other per-side
+## block in the file was built from a list, so it was the one place that knew how
+## many armies there are — a third army's treasury emptied through a save round
+## trip. Written off the match's own roster rather than off 1 and 2, so it is the
+## roster it follows the day a board deals more seats.
 func test_every_team_keeps_its_funds_through_a_round_trip() -> void:
 	var state := _first_steps_state()
 	var expected: Dictionary = {}
-	for i in GameState.TEAMS.size():
-		var team: int = GameState.TEAMS[i]
+	for i in state.teams.size():
+		var team: int = state.teams[i]
 		state.funds[team] = 1000 + i * 700  # a different purse per side, so a swap shows
 		expected[team] = state.funds[team]
 	var data := SaveCodec.encode(state, [] as Array[int])
 	assert_eq(
 		(data["funds"] as Dictionary).size(),
-		GameState.TEAMS.size(),
+		state.teams.size(),
 		"one funds entry per side that plays, however many that is"
 	)
 	var loaded := _decode(data)
 	assert_not_null(loaded)
-	for team: int in GameState.TEAMS:
+	assert_eq(loaded.state.teams, state.teams, "and the roster itself survives the trip")
+	for team: int in state.teams:
 		assert_eq(loaded.state.funds[team], int(expected[team]), "team %d's funds" % team)

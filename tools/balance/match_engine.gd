@@ -93,7 +93,7 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 		return outcome
 	state.rng.seed = setup.seed_val
 	outcome.state = state
-	for team in GameState.TEAMS:
+	for team in state.teams:
 		outcome.powers[team] = 0
 		outcome.first_ready[team] = -1
 		outcome.first_fired[team] = -1
@@ -153,7 +153,7 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 
 
 static func _has_independent_planners(setup: Setup) -> bool:
-	for team: int in GameState.TEAMS:
+	for team: int in setup.map.teams():
 		if not (setup.planners.get(team) is AIController):
 			return false
 	return setup.planners[1] != setup.planners[2]
@@ -215,7 +215,7 @@ static func _match_id(setup: Setup) -> String:
 	if name == "":
 		name = "map"
 	var sides: Array[String] = []
-	for team in GameState.TEAMS:
+	for team in setup.map.teams():
 		var co: CommanderType = setup.commanders.get(team)
 		var co_id := String(co.id) if co != null else String(CommanderType.NEUTRAL_ID)
 		sides.append("%s-%s" % [co_id, setup.tiers.get(team, Difficulty.DEFAULT_ID)])

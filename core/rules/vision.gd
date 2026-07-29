@@ -101,7 +101,7 @@ static func _has_neighbour_from(state: GameState, cell: Vector2i, team: int) -> 
 ## never inside-out.
 static func _sight_of(state: GameState, unit: Unit) -> int:
 	var radius := unit.type.vision + state.commander_of(unit.team).vision_bonus(state, unit)
-	for team in GameState.TEAMS:
+	for team in state.teams:
 		if team != unit.team:
 			radius += state.commander_of(team).enemy_vision_bonus(state, unit)
 	return maxi(0, radius)

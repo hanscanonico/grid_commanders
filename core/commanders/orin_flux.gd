@@ -23,7 +23,7 @@ func vision_bonus(_state: GameState, unit: Unit) -> int:
 ## one hook a doctrine uses to reach the other side of the board. Vision floors
 ## the total at 0, so a jammed scout goes blind rather than inside-out.
 func enemy_vision_bonus(state: GameState, unit: Unit) -> int:
-	return jam_vision_penalty if _is_active(state, _opponent_of(unit.team)) else 0
+	return jam_vision_penalty if _is_active(state, _opponent_of(state, unit.team)) else 0
 
 
 func on_power_activated(state: GameState, team: int) -> void:
@@ -42,4 +42,4 @@ func on_power_activated(state: GameState, team: int) -> void:
 func wants_power(state: GameState, team: int) -> bool:
 	if _can_strike(state, team, team, false):
 		return true
-	return _can_strike(state, team, _opponent_of(team), false)
+	return _can_strike(state, team, _opponent_of(state, team), false)

@@ -13,7 +13,7 @@ func validate(state: GameState) -> String:
 func apply(state: GameState) -> void:
 	_expire_power(state, state.current_team)
 	var next := state.next_team()
-	if next == GameState.TEAMS[0]:
+	if next == state.teams[0]:
 		state.day += 1
 	state.current_team = next
 	TurnRules.begin_turn(state)

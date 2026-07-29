@@ -58,7 +58,7 @@ func test_watch_gives_both_seats_to_the_computer() -> void:
 	var request := MatchRequest.new()
 	request.apply_cmdline(_args(["--watch"]))
 	assert_true(request.watching, "watch mode announced")
-	assert_eq(request.ai_teams, GameState.TEAMS, "both sides planned")
+	assert_eq(request.ai_teams, MapData.DEFAULT_TEAMS, "the duel the board has yet to widen")
 
 
 func test_seed_pins_the_match_rng() -> void:
@@ -126,8 +126,12 @@ func test_a_blank_side_in_co_plays_without_a_commander() -> void:
 	request.apply_cmdline(_args(["--co=,viktor_draeg"]))
 	assert_false(request.commanders.has(RED), "red has no commander")
 	assert_eq(request.commanders[BLUE], &"viktor_draeg")
-	var extra := MatchRequest.parse_co_flag("alina_ward,viktor_draeg,someone_else")
-	assert_eq(extra.size(), GameState.TEAMS.size(), "ids past the last team are dropped")
+	var over := ",".join(["a", "b", "c", "d", "e"])
+	assert_eq(
+		MatchRequest.parse_co_flag(over).size(),
+		GameState.TEAMS.size(),
+		"ids past the last seat a board could deal are dropped"
+	)
 
 
 ## `--co=` with nothing after it clears the menu's picks, which is how a capture

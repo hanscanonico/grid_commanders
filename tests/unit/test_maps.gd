@@ -12,8 +12,8 @@ extends GutTest
 ## - A third, neutral HQ is a free win button: CaptureCommand sets `winner` on
 ##   *any* HQ, no matter who owned it.
 ## - A side with no base has no income engine and an AI that can never build.
-## - A team-3 owner or unit parses today and then silently never plays, because
-##   next_team() cycles GameState.TEAMS.
+## - An owner or unit on a seat the board never dealt parses today and then
+##   silently never plays, because next_team() cycles the map's own roster.
 ## - HQs walled off from each other make the HQ-capture win unreachable, which
 ##   quietly reduces the match to rout-only.
 ## - A map whose header claims symmetry and does not have it hands one side a
@@ -60,13 +60,13 @@ func test_every_map_gives_each_team_exactly_one_hq_it_owns() -> void:
 			hq_owners.append(map.owner_at(cell))
 		assert_eq(
 			hq_owners.size(),
-			GameState.TEAMS.size(),
+			map.player_count(),
 			(
 				"%s: one HQ per team and no spares — an unowned HQ is a free win, " % _name(map)
 				+ "since capturing any HQ ends the match"
 			)
 		)
-		for team in GameState.TEAMS:
+		for team in map.teams():
 			assert_eq(
 				hq_owners.count(team), 1, "%s: team %d should start on one HQ" % [_name(map), team]
 			)
@@ -74,7 +74,7 @@ func test_every_map_gives_each_team_exactly_one_hq_it_owns() -> void:
 
 func test_every_map_gives_each_team_a_base() -> void:
 	for map in _maps():
-		for team in GameState.TEAMS:
+		for team in map.teams():
 			var bases := 0
 			for cell in _cells_of_terrain(map, BASE):
 				if map.owner_at(cell) == team:
@@ -94,16 +94,17 @@ func test_every_map_gives_each_team_a_base() -> void:
 
 func test_no_map_uses_a_team_that_never_gets_a_turn() -> void:
 	for map in _maps():
+		var roster := map.teams()
 		var owners := map.initial_owners()
 		for cell: Vector2i in owners:
 			assert_has(
-				GameState.TEAMS,
+				roster,
 				int(owners[cell]),
 				"%s: property %s is owned by a team that never plays" % [_name(map), cell]
 			)
 		for entry: Dictionary in map.starting_units:
 			assert_has(
-				GameState.TEAMS,
+				roster,
 				int(entry.team),
 				"%s: the unit on %s belongs to a team that never plays" % [_name(map), entry.cell]
 			)
@@ -349,7 +350,7 @@ func test_the_tutorial_board_can_answer_every_step_it_teaches() -> void:
 	assert_not_null(game, "the tutorial board should build a GameState")
 	if game == null:
 		return
-	var team: int = GameState.TEAMS[0]
+	var team: int = game.teams[0]
 	assert_gt(_capturable_in_reach(game, team), 0, _step_failure("Capture"))
 	assert_gt(_affordable_builds(game, team), 0, _step_failure("Build"))
 
@@ -523,7 +524,7 @@ func _mirror_error(map: MapData) -> String:
 	for cell: Vector2i in owners:
 		var twin: Vector2i = map.mirrored(cell)
 		var twin_owner := int(owners.get(twin, MapData.NEUTRAL))
-		if twin_owner != _opposing(int(owners[cell])):
+		if twin_owner != _opposing(map, int(owners[cell])):
 			return (
 				"%s starts owned by team %d, but %s does not mirror it" % [cell, owners[cell], twin]
 			)
@@ -535,13 +536,14 @@ func _mirror_error(map: MapData) -> String:
 		if not by_cell.has(twin):
 			return "the unit on %s has no counterpart on %s" % [entry.cell, twin]
 		var other: Dictionary = by_cell[twin]
-		if other.symbol != entry.symbol or int(other.team) != _opposing(int(entry.team)):
+		if other.symbol != entry.symbol or int(other.team) != _opposing(map, int(entry.team)):
 			return "the unit on %s is not mirrored by the one on %s" % [entry.cell, twin]
 	return ""
 
 
-## The other side, read off GameState.TEAMS rather than hardcoded as `3 - team`,
-## so this says what it means while the game stays two-sided.
-func _opposing(team: int) -> int:
-	var index := GameState.TEAMS.find(team)
-	return GameState.TEAMS[(index + 1) % GameState.TEAMS.size()]
+## The other side, read off the board's own roster rather than hardcoded as
+## `3 - team`, so this says what it means while a mirrored board stays two-sided.
+func _opposing(map: MapData, team: int) -> int:
+	var roster := map.teams()
+	var index := roster.find(team)
+	return roster[(index + 1) % roster.size()]

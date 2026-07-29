@@ -125,7 +125,9 @@ func test_unit_non_numeric_coordinate_rejected() -> void:
 
 func test_unit_bad_team_rejected() -> void:
 	assert_null(MapData.parse("[terrain]\n..\n[units]\n0 i 1 0", db))
-	assert_push_error("unit team must be >= 1")
+	assert_push_error("unit team must be 1..4")
+	assert_null(MapData.parse("[terrain]\n..\n[units]\n5 i 1 0", db))
+	assert_push_error("unit team must be 1..4")
 
 
 func test_loads_first_steps_map() -> void:
@@ -141,3 +143,29 @@ func test_loads_first_steps_map() -> void:
 	# borders are sea
 	assert_eq(map.terrain_at(Vector2i(0, 0)).id, &"sea")
 	assert_eq(map.terrain_at(Vector2i(19, 14)).id, &"sea")
+
+
+func test_owner_bad_team_rejected() -> void:
+	assert_null(MapData.parse("[terrain]\n.C\n[owners]\n0 1 0", db))
+	assert_push_error("owner team must be 1..4")
+	assert_null(MapData.parse("[terrain]\n.C\n[owners]\n5 1 0", db))
+	assert_push_error("owner team must be 1..4")
+
+
+## The board is the roster authority (four-players plan D1): how many armies play
+## is read off the seats [owners] and [units] name, and nothing else can say.
+func test_the_roster_runs_up_to_the_highest_seat_the_board_names() -> void:
+	var owned := MapData.parse("[terrain]\n.CCC\n[owners]\n1 1 0\n3 2 0", db)
+	assert_eq(owned.teams(), [1, 2, 3] as Array[int], "an owner on seat 3 deals three seats")
+	assert_eq(owned.player_count(), 3)
+	var garrisoned := MapData.parse("[terrain]\n....\n[units]\n4 i 0 0", db)
+	assert_eq(garrisoned.teams(), [1, 2, 3, 4] as Array[int], "a unit on seat 4 deals four")
+
+
+## A board that names one army, or none at all, is a fixture rather than a match —
+## most movement tests build one — and a duel is what every one of them has always
+## been played as.
+func test_a_board_that_names_nobody_still_seats_a_duel() -> void:
+	assert_eq(MapData.parse("[terrain]\n....\n", db).teams(), MapData.DEFAULT_TEAMS)
+	var lone := MapData.parse("[terrain]\n.C..\n[owners]\n1 1 0", db)
+	assert_eq(lone.teams(), MapData.DEFAULT_TEAMS, "one army named is still a duel's seats")

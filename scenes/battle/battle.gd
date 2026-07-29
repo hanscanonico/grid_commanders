@@ -252,7 +252,7 @@ func _ready() -> void:
 ## controller caches a threat map for the turn it is planning and two teams
 ## sharing one would be reading each other's.
 func _build_planners(built: BattleSetup.BuiltMatch) -> void:
-	for team in GameState.TEAMS:
+	for team in built.game.teams:
 		var tier: Difficulty = built.per_team_difficulty.get(team, built.difficulty)
 		planners[team] = AIController.new(unit_db, tier.profile())
 
@@ -898,7 +898,7 @@ func _needs_handoff() -> bool:
 	if game.current_team in ai_teams:
 		return false
 	var humans := 0
-	for team in GameState.TEAMS:
+	for team in game.teams:
 		if team not in ai_teams:
 			humans += 1
 	return humans > 1
@@ -930,7 +930,7 @@ func leave_handoff() -> void:
 func _viewing_team() -> int:
 	if game.current_team not in ai_teams:
 		return game.current_team
-	for team in GameState.TEAMS:
+	for team in game.teams:
 		if team not in ai_teams:
 			return team
 	return game.current_team
