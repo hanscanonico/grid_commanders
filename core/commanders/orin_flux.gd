@@ -26,9 +26,13 @@ func enemy_vision_bonus(state: GameState, team: int, _unit: Unit) -> int:
 	return jam_vision_penalty if _is_active(state, team) else 0
 
 
+## A jam is a hostile effect, so it stops at the side boundary rather than at his
+## own army: asked of the allegiance authority, which is what keeps the power's
+## two halves agreeing about who the enemy is — the ongoing debuff already asks it
+## through Vision's sight loop and enemy_vision_bonus.
 func on_power_activated(state: GameState, team: int) -> void:
 	for unit in state.units:
-		if unit.team == team:
+		if state.allied(unit.team, team):
 			continue
 		unit.fuel = maxi(0, unit.fuel - jam_fuel_loss)
 		if unit.type.max_ammo > 0:

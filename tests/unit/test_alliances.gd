@@ -245,6 +245,35 @@ func test_a_capture_power_does_not_march_on_an_allys_ground() -> void:
 	assert_false(tomas.wants_power(_state(BOARD, [1, 2]), 1), "an ally's is already the side's")
 
 
+## Signal Jam is the one power that reaches across the table, and both of its
+## halves have to agree on where the table ends. The ongoing debuff asks the
+## authority through Vision; the one-shot strip has to ask it too.
+func test_a_jamming_power_drains_a_rival_and_leaves_an_ally_alone() -> void:
+	const BOARD := "[terrain]\n====\n[units]\n1 r 0 0\n2 t 2 0\n3 t 3 0"
+	var orin: OrinFlux = load("res://data/commanders/orin_flux.tres")
+	var jam := func(state: GameState) -> void:
+		state.set_commander(1, orin)
+		state.add_charge(1, orin.power_cost)
+		var command := PowerCommand.new()
+		assert_eq(command.validate(state), "", "the meter is full and the power is legal")
+		command.apply(state)
+	var allies := _state(BOARD, [1, 3])
+	var rival := allies.units[1]
+	var ally := allies.units[2]
+	var full_fuel := ally.fuel
+	var full_ammo := ally.ammo
+	jam.call(allies)
+	assert_eq(rival.fuel, full_fuel - orin.jam_fuel_loss, "a rival loses fuel")
+	assert_eq(rival.ammo, full_ammo - orin.jam_ammo_loss, "and a shell")
+	assert_eq(ally.fuel, full_fuel, "an ally keeps its fuel")
+	assert_eq(ally.ammo, full_ammo, "and its shells")
+	# The twin: with nobody allied, the same third army is jammed like any other.
+	var rivals := _state(BOARD)
+	jam.call(rivals)
+	assert_eq(rivals.units[2].fuel, full_fuel - orin.jam_fuel_loss, "fuel goes")
+	assert_eq(rivals.units[2].ammo, full_ammo - orin.jam_ammo_loss, "and so does a shell")
+
+
 # --- deliberately not shared -------------------------------------------------
 
 
