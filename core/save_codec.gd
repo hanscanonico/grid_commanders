@@ -727,10 +727,11 @@ static func _encode_sides(sides: Dictionary) -> Dictionary:
 ## The grouping a save recorded, keyed back to army numbers. Empty for a save
 ## written before the grouping existed, which is the free-for-all every match was.
 ##
-## Read below its own version deliberately — like `_roster` it is asked from
-## `board_error`, which answers for dictionaries `validate` has never seen, so it
-## floors rather than trusts. A malformed grouping is *reported* by `_sides_error`;
-## here it reads as no grouping at all, which is the only total answer.
+## Gated on its own version for the plain reason that a save below it recorded no
+## grouping — the free-for-all every match was. Total, like `_roster`: a key that is
+## not an army number, or a side that is not one, reads as no grouping at all rather
+## than as a coercion nobody asked for, since `int("abc")` is 0 and 0 is the neutral
+## owner. A malformed grouping is *reported* by `_sides_error`.
 static func _decode_sides(data: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	if _claimed_version(data) < int(KEY_RULES["sides"]["since"]):
@@ -740,9 +741,10 @@ static func _decode_sides(data: Dictionary) -> Dictionary:
 		return out
 	for key: Variant in saved as Dictionary:
 		var side: Variant = (saved as Dictionary)[key]
-		if not _is_shape(side, Shape.NUMBER):
+		var name := String(key)
+		if not name.is_valid_int() or not _is_shape(side, Shape.NUMBER):
 			return {}
-		out[int(String(key))] = int(side)
+		out[int(name)] = int(side)
 	return out
 
 
@@ -756,6 +758,10 @@ static func _decode_sides(data: Dictionary) -> Dictionary:
 ## rules are that every army it names is one that plays and every side id is a
 ## number. A grouping naming an army the roster does not is a save describing a
 ## match no board could produce, and it would silently allow or forbid a shot.
+##
+## A grouping putting every army on one side is deliberately not refused: FP3 makes
+## "every surviving army shares one side" the victory condition, so that state is
+## about to be a match that ends rather than a match no board could produce.
 ##
 ## Asked only of the version that writes it. Below that there is no grouping to be
 ## wrong: the save recorded a free-for-all by construction.

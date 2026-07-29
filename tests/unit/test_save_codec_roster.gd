@@ -97,17 +97,22 @@ func test_a_version_4_save_with_no_grouping_loads_as_a_free_for_all() -> void:
 	assert_false(loaded.state.allied(1, 2), "which is every army standing alone")
 
 
+## A real 2v2, on the one board that seats four: the grouping has to come back
+## naming the same pairs, and side ids are opaque so they travel as written.
 func test_a_grouping_survives_a_round_trip() -> void:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
+	const BOARD := "res://maps/fixtures/quartet.txt"
+	var map := MapData.load_from_file(BOARD, terrain_db)
 	var state := GameState.create(map, unit_db, chart)
-	state.map_path = "res://maps/first_steps.txt"
-	state.sides = {1: 7, 2: 7}
+	state.map_path = BOARD
+	state.sides = {1: 7, 3: 7, 2: 9, 4: 9}
 	var data := SaveCodec.encode(state, [] as Array[int])
 	assert_eq(SaveCodec.validate(data), "")
 	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
 	assert_not_null(loaded)
-	assert_true(loaded.state.allied(1, 2), "the two armies resume standing together")
-	assert_eq(loaded.state.sides, {1: 7, 2: 7}, "side ids are opaque and travel as written")
+	assert_true(loaded.state.allied(1, 3), "the pair resumes standing together")
+	assert_true(loaded.state.allied(2, 4), "and so does the pair across the board")
+	assert_false(loaded.state.allied(1, 2), "the two sides resume hostile")
+	assert_eq(loaded.state.sides, {1: 7, 3: 7, 2: 9, 4: 9}, "side ids travel as written")
 
 
 ## A grouping naming an army the roster does not is a save describing a match no

@@ -174,8 +174,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
   net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
-- `four-players-plan.html` — up to four armies, milestones FP1–FP6; **only FP1 (the roster becomes
-  data) is shipped**. D1: **the map is the roster authority** — `MapData.teams()` / `player_count()`
+- `four-players-plan.html` — up to four armies, milestones FP1–FP6; **FP1 (the roster becomes data)
+  and FP2 (hostility gets one authority) are shipped**. D1: **the map is the roster authority** —
+  `MapData.teams()` / `player_count()`
   are read off the seats a board's `[owners]` and `[units]` name, `GameState.create` copies that
   into `GameState.teams` and starts on `teams[0]`, and how many armies play is never a menu
   setting. Ask `state.teams` for who is playing; `GameState.TEAMS` survives only as the legal
@@ -185,15 +186,23 @@ that must survive any change; the full rationale, milestones and risk registers 
   names, floored at a duel (`MapData.DEFAULT_TEAMS`) — so contiguity is structural rather than
   breakable, and the many fixtures that name a single team keep playing the duel they always did
   (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
-  The save format is version 4: the envelope records `teams`, a v3 save decodes as the duel it
-  recorded, and `SaveCodec._teams_error` refuses a roster no board could deal *before* any per-side
-  check is derived from it. `tests/unit/test_maps.gd`'s HQ and base lints hold each board to its
-  **own** roster, never a global constant. Everything else the plan names is future work: the
-  `state.allied()` hostility authority and ally vision (FP2), elimination and N-way victory (FP3),
+  The save format is version 5: the roster arrived at 4, the grouping at 5, an older save decodes
+  as the free-for-all duel it recorded, and `SaveCodec._teams_error` / `_sides_error` refuse a
+  roster or grouping no board could deal *before* any per-side check is derived from it.
+  `tests/unit/test_maps.gd`'s HQ and base lints hold each board to its **own** roster, never a
+  global constant. D2: **`GameState.allied(a, b)` is the single hostility authority** — ask it,
+  never re-derive `team != mine`; `sides` (empty = free-for-all) is the grouping, `enemies_of` and
+  `side_of` are its two readings, and every site that used to compare team ints goes through it:
+  attack and capture targeting, movement pass-through and ambush, vision, the AI's enemy set and
+  threat map, the doctrines' `_opponents_of`. Allies share sight — `Vision` composes a side's
+  visible set as the union over its member armies, so every viewer inherits it without composing
+  anything — and purpose, **never infrastructure**: funds, production, repair, resupply, join and
+  transports all stay `owner == unit.team`. Nothing writes a non-empty `sides` yet; FP5 opens the
+  seam. Everything else the plan names is future work: elimination and N-way victory (FP3),
   four-key colour fallbacks and standings (FP4 — which is why seats 3–4 render neutral grey), the
-  seat strip and slot-walk commander select (FP5), shipped 4-army boards and the README doc pass
-  (FP6). Every shipped board is still a duel; `maps/fixtures/quartet.txt` is the one four-army
-  board and is a fixture, out of the menu and out of the map lint.
+  seat strip, slot-walk commander select and the `--sides=` flag (FP5), shipped 4-army boards and
+  the README doc pass (FP6). Every shipped board is still a duel; `maps/fixtures/quartet.txt` is
+  the one four-army board and is a fixture, out of the menu and out of the map lint.
 
 ## Architecture — the rules that matter most
 

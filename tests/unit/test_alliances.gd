@@ -12,6 +12,9 @@ extends GutTest
 ## infrastructure — funds, production, repair, resupply, joining and transports
 ## stay each army's own, which the last group here pins.
 
+## The defensive doctrine both gating cases below are measured with.
+const MARA_VOSS := "res://data/commanders/mara_voss.tres"
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -210,13 +213,25 @@ func test_a_defensive_power_is_gated_against_every_rival_not_the_first() -> void
 	# Team 2 is out of everyone's reach; team 3's tank is on top of team 1.
 	const BOARD := "[terrain]\n..........\n[units]\n1 i 0 0\n2 i 9 0\n3 t 1 0"
 	var state := _state(BOARD)
-	var mara: CommanderType = load("res://data/commanders/mara_voss.tres")
+	var mara: CommanderType = load(MARA_VOSS)
 	state.set_commander(1, mara)
 	assert_true(mara.wants_power(state, 1), "the third army's guns count")
 	# Regrouped so team 3 stands with her, nobody left in reach is hostile.
 	var friendly := _state(BOARD, [1, 3])
 	friendly.set_commander(1, mara)
 	assert_false(mara.wants_power(friendly, 1), "an ally's guns do not")
+
+
+## The mirror of the case above, and the one a single "is anyone in a fight?"
+## filter got wrong: two rivals brawling at the far end of the board is not a
+## threat to a third army nobody can reach.
+func test_a_defensive_power_ignores_a_fight_between_two_other_armies() -> void:
+	# Teams 2 and 3 are on top of each other, and both are a board away from team 1.
+	const BOARD := "[terrain]\n....................\n[units]\n1 i 0 0\n2 t 18 0\n3 t 19 0"
+	var state := _state(BOARD)
+	var mara: CommanderType = load(MARA_VOSS)
+	assert_false(mara.wants_power(state, 1), "a fight she is not in is not her fight")
+	assert_true(mara.wants_power(state, 2), "the army actually in range of one does want it")
 
 
 # --- deliberately not shared -------------------------------------------------

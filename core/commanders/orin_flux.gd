@@ -40,6 +40,6 @@ func on_power_activated(state: GameState, team: int) -> void:
 ## shot: a tile of sight and a turn of fuel and ammo change what the opponent
 ## can do next turn whichever side is closing the distance.
 func wants_power(state: GameState, team: int) -> bool:
-	if _can_strike(state, team, team, false):
+	if _can_strike_an_opponent(state, team, false):
 		return true
 	return _opponents_can_strike(state, team, false)
