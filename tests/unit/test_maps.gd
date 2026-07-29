@@ -9,11 +9,16 @@ extends GutTest
 ## cannot enter. What neither catches is a map that loads perfectly and is then
 ## unplayable — and each assertion below is one of those:
 ##
-## - A third, neutral HQ is a free win button: CaptureCommand sets `winner` on
-##   *any* HQ, no matter who owned it.
+## - An HQ is the building whose capture fells its owner, so a board owes each
+##   army exactly one and no spares. An army holding no HQ cannot be taken out by
+##   capture at all, which quietly reduces the board to rout-only for it; and a
+##   spare, unowned HQ fells nobody — CaptureCommand skips MapData.NEUTRAL,
+##   because there is no army behind it — so it is a building that looks decisive
+##   and tells the player the match can be won somewhere it cannot.
 ## - A side with no base has no income engine and an AI that can never build.
-## - HQs walled off from each other make the HQ-capture win unreachable, which
-##   quietly reduces the match to rout-only.
+## - HQs walled off from each other put every army's HQ beyond the others' reach,
+##   so no army can ever be felled by capture, which quietly reduces the match to
+##   rout-only.
 ## - A map whose header claims symmetry and does not have it hands one side a
 ##   terrain or income edge that no amount of playtesting attributes correctly.
 ## - A port with no sailable water beside it builds hulls that can never leave
@@ -60,8 +65,8 @@ func test_every_map_gives_each_team_exactly_one_hq_it_owns() -> void:
 			hq_owners.size(),
 			map.player_count(),
 			(
-				"%s: one HQ per team and no spares — an unowned HQ is a free win, " % _name(map)
-				+ "since capturing any HQ ends the match"
+				"%s: one HQ per team and no spares — an army with no HQ can only be " % _name(map)
+				+ "routed, and an unowned HQ fells nobody while looking like it would"
 			)
 		)
 		for team in map.teams():
@@ -96,8 +101,8 @@ func test_every_map_keeps_its_hqs_reachable_on_foot() -> void:
 			_hq_connection_error(map),
 			"",
 			(
-				"%s: infantry must be able to walk between the HQs, or the " % _name(map)
-				+ "HQ-capture win condition can never happen"
+				"%s: infantry must be able to walk between the HQs, or no army can " % _name(map)
+				+ "ever be felled by capture and only a rout can end the match"
 			)
 		)
 
