@@ -8,10 +8,9 @@ extends GutTest
 ## seats empty — no funds and no turn. Each assertion below is one of those
 ## silences.
 ##
-## Victory is not one of them and is still open: `GameState._check_rout` crowns
-## the first surviving team in the roster, so on this board killing one army's
-## last unit hands the win to another while two more are still playing. Roster-aware
-## rout and N-way victory are FP3's scope.
+## Victory is not one of them: elimination and N-way victory shipped with FP3 and
+## are pinned by `tests/unit/test_elimination.gd`, which plays out the four-army
+## cases on its own fixtures.
 ##
 ## The board is `maps/fixtures/quartet.txt`, which lives under fixtures/ so it is
 ## reachable by name and absent from the menu, the map lint and the AI soak.

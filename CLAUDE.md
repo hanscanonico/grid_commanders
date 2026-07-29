@@ -174,9 +174,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
   honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
   net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
-- `four-players-plan.html` — up to four armies, milestones FP1–FP6; **FP1 (the roster becomes data)
-  and FP2 (hostility gets one authority) are shipped**. D1: **the map is the roster authority** —
-  `MapData.teams()` / `player_count()`
+- `four-players-plan.html` — up to four armies, milestones FP1–FP6; **FP1 (the roster becomes data),
+  FP2 (hostility gets one authority) and FP3 (an army can fall, a side can win) are shipped**.
+  D1: **the map is the roster authority** — `MapData.teams()` / `player_count()`
   are read off the seats a board's `[owners]` and `[units]` name, `GameState.create` copies that
   into `GameState.teams` and starts on `teams[0]`, and how many armies play is never a menu
   setting. Ask `state.teams` for who is playing; `GameState.TEAMS` survives only as the legal
@@ -186,9 +186,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   names, floored at a duel (`MapData.DEFAULT_TEAMS`) — so contiguity is structural rather than
   breakable, and the many fixtures that name a single team keep playing the duel they always did
   (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
-  The save format is version 5: the roster arrived at 4, the grouping at 5, an older save decodes
-  as the free-for-all duel it recorded, and `SaveCodec._teams_error` / `_sides_error` refuse a
-  roster or grouping no board could deal *before* any per-side check is derived from it.
+  The save format is version 6: the roster arrived at 4, the grouping at 5, the fallen at 6 (the
+  plan's "save v4 carries `eliminated`" is superseded by that ordering), an older save decodes as
+  the free-for-all duel it recorded with every army it names still standing, and
+  `SaveCodec._teams_error` / `_sides_error` / `_eliminated_error` refuse a roster, grouping or
+  casualty list no board could deal *before* any per-side check is derived from it.
   `tests/unit/test_maps.gd`'s HQ and base lints hold each board to its **own** roster, never a
   global constant. D2: **`GameState.allied(a, b)` is the single hostility authority** — ask it,
   never re-derive `team != mine`; `sides` (empty = free-for-all) is the grouping, `enemies_of` and
@@ -201,8 +203,30 @@ that must survive any change; the full rationale, milestones and risk registers 
   so it rides on `MatchRequest.sides` and `BattleSetup.build` writes it onto the state — the plan's
   "sides from `MatchConfig`" is superseded by the rule that `MatchConfig` carries exactly one typed
   request and nothing else. Nothing writes a non-empty `sides` yet; FP5 opens the seam.
-  Everything else the plan names is future work: elimination and N-way victory (FP3),
-  four-key colour fallbacks and standings (FP4 — which is why seats 3–4 render neutral grey), the
+  D3: **elimination is a modelled state and victory belongs to a side** — `GameState.eliminated`,
+  `is_eliminated` and `active_teams()` say who is still in; ask them, never infer a fallen army from
+  an empty unit list (one with no units on day one has not fallen). An army falls when its last unit
+  dies (`_check_rout`, on the shot itself) or its HQ is captured, and `eliminate()` is the one way
+  out: units removed, properties to **neutral** rather than to the conqueror — handing a fallen
+  empire to the side already winning would snowball it, while loose ground stays contested and any
+  survivor can go and take it — and the capture progress standing on them cleared (that progress is
+  a survivor's, so a nearly-finished capture is lost). The match resolves when every survivor
+  shares one side. `winner` stays **scalar, the winning side's lead army**, so every `winner != 0`
+  gate, the Balance Lab's outcome and watch mode's diffable line are untouched; `winners()` is the
+  presentation reading and lists that side's **survivors only** — an ally that fell on the way did
+  not win. `next_team()` skips the fallen, the day advances on wrap to the first surviving army, and
+  income never runs for one. In a duel the first elimination is still the victory, same day and same
+  winner: that parity is the merge bar, pinned by the existing rout and HQ tests plus
+  `tests/unit/test_elimination.gd`. Because elimination now clears the loser's units on *both* win
+  paths, `BalanceMatchEngine.termination(state, cap_stall, hq_captured)` is **told** an HQ fell
+  instead of inferring it from an empty board — the sim gained no telemetry hook (balance plan D2) —
+  and a fallen army ending with nothing is why FP3 is the one accepted departure from the byte-diff
+  bar: `commander-balance`'s `matches.csv` moves only in `blue_props` / `red_props` / `blue_units`,
+  always to 0, always for the loser, with every decision-bearing column and `difficulty-check`
+  identical. The AI's `hq_capture_multiplier` was priced when an HQ ended the match and now buys an
+  elimination; it is deliberately **not** retuned until the FP6 soak says otherwise.
+  Everything else the plan names is future work: the elimination banner, four-key colour fallbacks
+  and standings (FP4 — which is why seats 3–4 render neutral grey), the
   seat strip, slot-walk commander select and the `--sides=` flag (FP5), shipped 4-army boards and
   the README doc pass (FP6). Every shipped board is still a duel; `maps/fixtures/quartet.txt` is
   the one four-army board and is a fixture, out of the menu and out of the map lint.
