@@ -1258,8 +1258,6 @@ static func stage_rout(battle: Battle) -> void:
 	await until_state_of(battle, Battle.State.VICTORY)
 
 
-## The staged rout, dressed for a capture: `with_commander` gives Red a general
-## first, so the victory lockup is fronted by a portrait.
 ## Parks on a unit and previews its movement out to the farthest cell it could
 ## actually stop on, which is the frame `--select` exists to capture.
 func _demo_select(cell: Vector2i) -> void:

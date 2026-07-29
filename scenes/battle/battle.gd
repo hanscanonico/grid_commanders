@@ -676,7 +676,7 @@ func _commit(action: StringName, command: Command) -> void:
 		_undo_move_preview()
 		return
 	_clear_selection(false)
-	conclude_command(receipt)
+	await conclude_command(receipt)
 
 
 func _handle_build_action(action: StringName) -> void:
@@ -690,7 +690,7 @@ func _handle_build_action(action: StringName) -> void:
 		state = State.IDLE
 		return
 	state = State.IDLE
-	conclude_command(receipt)
+	await conclude_command(receipt)
 
 
 func _handle_map_action(action: StringName) -> void:
@@ -764,7 +764,7 @@ func _commit_end_turn() -> void:
 	if receipt.rejected():
 		push_error("EndTurnCommand rejected: %s" % receipt.validation_error)
 		return
-	conclude_command(receipt)
+	await conclude_command(receipt)
 
 
 ## Fires the current team's Command Power. Reached from the HUD button, the F
@@ -790,7 +790,7 @@ func _fire_command_power() -> void:
 	# redrawn, and the selection — plus any menu the HUD button fired over, whose
 	# rows would otherwise act on it — belongs to rules that no longer apply.
 	_clear_selection(false)
-	conclude_command(receipt)
+	await conclude_command(receipt)
 
 
 ## Locks input and shows the already-decided winner. Public because the AI turn
@@ -922,18 +922,29 @@ func _announce_fallen(fallen: Array[int]) -> void:
 ## vision, so the incoming player confirms before anything is painted. AI turns
 ## and fog-off matches never gate.
 ##
-## Keyed to the last human seat rather than to the seat immediately before this
-## one (four-players plan D7): with two humans and two computers the device
-## changes hands across intervening AI turns, and asking only "was the previous
-## turn another person's" would hand player B a board still painted with player
-## A's vision. The same player taking two turns in a row — everyone else having
-## fallen — is not a handoff and is not asked for one.
+## Two halves. The seat count is why a solo player is never asked: one human at
+## the table means nobody to hand the device to, so that match gates exactly as
+## it did before four armies. The last-human comparison on top of it is the
+## four-players plan's D7 refinement: with two humans and two computers the
+## device still changes hands across intervening AI turns, and asking only "was
+## the previous turn another person's" would hand player B a board still painted
+## with player A's vision. Nobody having played yet counts as a change of hands —
+## `_last_human_team` is 0 there, which differs from any seat — so a fresh match
+## gates on day one and a resumed save gates for whoever loaded it. The same
+## player taking two turns in a row, everyone else having fallen, is not a
+## handoff and is not asked for one.
 func _needs_handoff() -> bool:
 	if not game.fog_enabled or game.winner != 0:
 		return false
 	if game.current_team in ai_teams:
 		return false
-	return _last_human_team != 0 and _last_human_team != game.current_team
+	var humans := 0
+	for team in game.teams:
+		if team not in ai_teams:
+			humans += 1
+	if humans <= 1:
+		return false
+	return _last_human_team != game.current_team
 
 
 func _enter_handoff() -> void:
@@ -1038,7 +1049,7 @@ func _execute_drop(drop_cell: Vector2i) -> void:
 	_drop_options = []
 	_drop_option = null
 	_clear_selection(false)
-	conclude_command(receipt)
+	await conclude_command(receipt)
 
 
 func _execute_attack(target_cell: Vector2i) -> void:
@@ -1054,7 +1065,7 @@ func _execute_attack(target_cell: Vector2i) -> void:
 		_exit_targeting_to_menu()
 		return
 	_clear_selection(false)
-	conclude_command(receipt)
+	await conclude_command(receipt)
 
 
 ## Whether a damage forecast applies at all is a flow question — only the

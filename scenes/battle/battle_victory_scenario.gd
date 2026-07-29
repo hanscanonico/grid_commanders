@@ -21,6 +21,8 @@ func run(mode: String) -> void:
 	await _run_duel_victory(mode == "commander_victory")
 
 
+## The staged rout, dressed for a capture: `with_commander` gives Red a general
+## first, so the victory lockup is fronted by a portrait.
 func _run_duel_victory(with_commander: bool) -> void:
 	if with_commander:
 		_battle.game.set_commander(1, _battle.commander_db.by_id(&"viktor_draeg"))
@@ -59,5 +61,6 @@ func _run_side_victory() -> void:
 	for cell: Vector2i in game.property_owners:
 		_battle.view.repaint_property(cell)
 	_battle.enter_victory()
-	while _battle.state != Battle.State.VICTORY:
-		await _battle.get_tree().process_frame
+	# Synchronous, so there is no transition to wait on — only the one frame the
+	# lockup needs to have drawn before the shutter opens.
+	await _battle.get_tree().process_frame
