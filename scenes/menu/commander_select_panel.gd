@@ -17,10 +17,12 @@ extends Control
 ## Pure presentation: it reads CommanderDB to list the roster and emits the two
 ## chosen ids. It never starts the battle or touches core/.
 
-signal confirmed(red_id: StringName, blue_id: StringName)
+signal confirmed(picks: Dictionary)
 signal cancelled
 
-enum Side { RED, BLUE }
+## How many seats a duel deals — the roster every board had before a map could
+## seat more, and what `begin` falls back to if it is handed nothing.
+const DUEL_SEATS := 2
 
 const _TITLE_SIZE := 15
 const _MINI_H := 82
@@ -37,19 +39,18 @@ var _db: CommanderDB
 var _by_faction: Dictionary = {}
 var _faction_keys: Array[StringName] = []
 
-var _one_player := true
-var _side := Side.RED
-var _red_id: StringName = CommanderType.NEUTRAL_ID
-var _blue_id: StringName = CommanderType.NEUTRAL_ID
+var _slot := 0
+var _picks: Array[StringName] = []
+## Seats the computer plays, so a chip can say CPU rather than Player N.
+var _ai_seats: Array[int] = []
 ## The commander currently previewed (not yet locked) for the active side.
 var _current: CommanderType
 var _faction_index := 0
 
 var _card: CommanderCard
-var _red_chip: PanelContainer
-var _red_chip_label: Label
-var _blue_chip: PanelContainer
-var _blue_chip_label: Label
+var _chip_bar: HBoxContainer
+var _chips: Array[PanelContainer] = []
+var _chip_labels: Array[Label] = []
 var _tab_buttons: Array[Button] = []
 var _mini_buttons: Array[Button] = []
 var _mini_marks: Array[ColorRect] = []
@@ -80,13 +81,16 @@ func _group_roster() -> void:
 			_by_faction[key].append(commander)
 
 
-## Opens the page for a fresh pair of picks. `one_player` only changes how the
-## opponent slot is labelled (CPU vs Player 2); both sides are chosen here.
-func begin(one_player: bool) -> void:
-	_one_player = one_player
-	_side = Side.RED
-	_red_id = CommanderType.NEUTRAL_ID
-	_blue_id = CommanderType.NEUTRAL_ID
+## Opens the page for a fresh set of picks, one per seat the board deals.
+## `ai_seats` only changes how a slot is labelled — CPU rather than Player N —
+## because every seat's commander is chosen here whoever ends up playing it.
+func begin(seats: int, ai_seats: Array[int] = []) -> void:
+	_ai_seats = ai_seats.duplicate()
+	_slot = 0
+	_picks.clear()
+	for _i in maxi(DUEL_SEATS, seats):
+		_picks.append(CommanderType.NEUTRAL_ID)
+	_build_chips()
 	show()
 	_refresh_chips()
 	_set_faction(0)
@@ -189,15 +193,11 @@ func _build_topbar() -> HBoxContainer:
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(title)
 
-	_red_chip = PanelContainer.new()
-	_red_chip_label = _small_label(9)
-	_red_chip.add_child(_pad(_red_chip_label, 7, 3))
-	bar.add_child(_red_chip)
-
-	_blue_chip = PanelContainer.new()
-	_blue_chip_label = _small_label(9)
-	_blue_chip.add_child(_pad(_blue_chip_label, 7, 3))
-	bar.add_child(_blue_chip)
+	# One chip per seat, built when the page opens: how many there are is the
+	# board's answer, not this page's.
+	_chip_bar = HBoxContainer.new()
+	_chip_bar.add_theme_constant_override("separation", 4)
+	bar.add_child(_chip_bar)
 	return bar
 
 
@@ -399,25 +399,27 @@ func _preview_neutral() -> void:
 func _confirm() -> void:
 	if _current == null:
 		return
-	if _side == Side.RED:
-		_red_id = _current.id
-		_side = Side.BLUE
+	_picks[_slot] = _current.id
+	if _slot + 1 < _picks.size():
+		_slot += 1
 		_refresh_chips()
 		_set_faction(0)
 		_grab_first_mini()
-	else:
-		_blue_id = _current.id
-		confirmed.emit(_red_id, _blue_id)
+		return
+	var chosen: Dictionary = {}
+	for i in _picks.size():
+		chosen[i + 1] = _picks[i]
+	confirmed.emit(chosen)
 
 
 func _back() -> void:
-	if _side == Side.BLUE:
-		_side = Side.RED  # return to editing Red, restoring the locked pick
+	if _slot > 0:
+		_slot -= 1  # back to the seat before, restoring the pick it locked
 		_refresh_chips()
-		_focus_commander(_red_id)
-	else:
-		hide()
-		cancelled.emit()
+		_focus_commander(_picks[_slot])
+		return
+	hide()
+	cancelled.emit()
 
 
 ## The page's two global keys, and the footer has always promised both: Esc backs
@@ -477,24 +479,48 @@ func _focus_commander(id: StringName) -> void:
 ## land on one faction it shows the borrowed classic (D3), not a day-1 surprise.
 func _refresh_chips() -> void:
 	var identity := _preview_identity()
-	_paint_chip(
-		_red_chip, _red_chip_label, "1 · %s — You" % identity.display_name(1), identity.theme(1)
-	)
-	var opponent := "CPU" if _one_player else "Player 2"
-	if _side == Side.BLUE:
-		var label := "2 · %s — %s" % [identity.display_name(2), opponent]
-		_paint_chip(_blue_chip, _blue_chip_label, label, identity.theme(2))
-	else:
-		_paint_chip(_blue_chip, _blue_chip_label, "2 · %s" % opponent, null)
+	for i in _chips.size():
+		var seat := i + 1
+		var who := "CPU" if _ai_seats.has(seat) else "Player %d" % seat
+		if i > _slot:
+			# Not reached yet: named but uncoloured, so the walk's remaining length
+			# is visible without claiming a livery nothing has chosen.
+			_paint_chip(_chips[i], _chip_labels[i], "%d · %s" % [seat, who], null)
+			continue
+		var label := "%d · %s — %s" % [seat, identity.display_name(seat), who]
+		_paint_chip(_chips[i], _chip_labels[i], label, identity.theme(seat))
 
 
 ## The identity the current picks would produce: the locked or previewed side 1,
 ## and the previewed side 2 once it is being edited. Resolving the whole thing
 ## rather than each chip alone is what lets the mirror fallback show live.
 func _preview_identity() -> SideIdentity:
-	var one: CommanderType = _current if _side == Side.RED else _db.by_id(_red_id)
-	var two: CommanderType = _current if _side == Side.BLUE else null
-	return SideIdentity.resolve({1: one, 2: two})
+	var picks: Dictionary = {}
+	for i in _picks.size():
+		if i < _slot:
+			picks[i + 1] = _db.by_id(_picks[i])
+		elif i == _slot:
+			picks[i + 1] = _current
+		else:
+			picks[i + 1] = null
+	return SideIdentity.resolve(picks)
+
+
+## Deals one chip per seat. Rebuilt on every `begin`, because how many seats
+## there are is the board's answer and the page is opened per match.
+func _build_chips() -> void:
+	for child in _chip_bar.get_children():
+		_chip_bar.remove_child(child)
+		child.queue_free()
+	_chips.clear()
+	_chip_labels.clear()
+	for _i in _picks.size():
+		var chip := PanelContainer.new()
+		var label := _small_label(9)
+		chip.add_child(_pad(label, 7, 3))
+		_chip_bar.add_child(chip)
+		_chips.append(chip)
+		_chip_labels.append(label)
 
 
 ## Fills a chip in a side's theme, or greys it (theme null) when the side is not
@@ -508,13 +534,16 @@ func _paint_chip(
 
 
 func _refresh_summary() -> void:
-	var slot := "Side 1" if _side == Side.RED else "Side 2"
+	var slot := "Side %d of %d" % [_slot + 1, _picks.size()]
 	var text := "%s — browse a faction, then Confirm." % slot
 	if _current != null:
 		var theme := CommanderVisuals.theme_for(_current)
 		text = "%s · %s\nSelected: %s." % [slot, theme.display, _current.display_name]
-	if _side == Side.BLUE:
-		text += "  Side 1 is locked in %s." % _db.by_id(_red_id).display_name
+	if _slot > 0:
+		var locked := PackedStringArray()
+		for i in _slot:
+			locked.append("Side %d is %s" % [i + 1, _db.by_id(_picks[i]).display_name])
+		text += "  %s." % ", ".join(locked)
 	_summary_label.text = text
 
 

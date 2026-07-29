@@ -159,8 +159,11 @@ static func _tuned(path: String) -> FontFile:
 ## classic meridian red, team 2 in aurora blue. The menu's faction hues — the 1P
 ## and 2P button fills, the identity chip dots, the selected-map border — all read
 ## from this, so they stay CommanderVisuals' colours and never a fourth copy.
-static func menu_identity() -> SideIdentity:
-	return SideIdentity.resolve({1: null, 2: null})
+static func menu_identity(seats: int = 2) -> SideIdentity:
+	var picks: Dictionary = {}
+	for seat in range(1, maxi(2, seats) + 1):
+		picks[seat] = null
+	return SideIdentity.resolve(picks)
 
 
 # --- stylebox factories ------------------------------------------------------

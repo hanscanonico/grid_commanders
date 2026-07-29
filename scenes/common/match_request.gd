@@ -146,6 +146,8 @@ func apply_cmdline(args: PackedStringArray) -> void:
 		side_specs[GameState.TEAMS[0]] = CmdArgs.value(args, "--red")
 	if CmdArgs.has(args, "--blue"):
 		side_specs[GameState.TEAMS[1]] = CmdArgs.value(args, "--blue")
+	if CmdArgs.has(args, "--sides"):
+		sides = parse_sides_flag(CmdArgs.value(args, "--sides"))
 	if CmdArgs.has(args, "--seed"):
 		seed_value = maxi(0, int(CmdArgs.value(args, "--seed")))
 	if CmdArgs.flag(args, "--hotseat"):
@@ -164,6 +166,33 @@ func apply_cmdline(args: PackedStringArray) -> void:
 		# board was until a map could seat more (four-players plan D1).
 		ai_teams = MapData.DEFAULT_TEAMS.duplicate()
 		watching = true
+
+
+## `--sides=1+3v2+4`: armies joined by `+` stand together, groups separated by `v`
+## fight each other. `--sides=1v2v3v4` and an absent flag are both free-for-alls,
+## and both produce an empty dictionary — the value `GameState.allied` reads as
+## "every army its own side", so a free-for-all launched this way is the match
+## every board played before groupings existed.
+##
+## A seat the flag never names keeps its own side, so `--sides=1+2` on a four-army
+## board is a pair against two loners. Anything unparseable is said out loud and
+## dropped rather than half-applied: a grouping nobody meant is a match nobody
+## meant, and quietly playing it is worse than playing the free-for-all.
+static func parse_sides_flag(value: String) -> Dictionary:
+	var grouped: Dictionary = {}
+	var groups := value.strip_edges().split("v", false)
+	for side in groups.size():
+		for army: String in groups[side].split("+", false):
+			var seat := army.strip_edges()
+			if not seat.is_valid_int():
+				push_error("battle: --sides=%s is not a grouping; ignoring it" % value)
+				return {}
+			grouped[int(seat)] = side
+	# One group is everybody on one side — a board with nobody to fight — and a
+	# group per army is the free-for-all the empty dictionary already says.
+	if groups.size() < 2 or grouped.size() == groups.size():
+		return {}
+	return grouped
 
 
 ## `--co=alina_ward,viktor_draeg`: one id per seat in seat order, any of them blank

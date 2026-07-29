@@ -51,14 +51,17 @@ var _fog_on := false
 ## it hands a too-tall column a negative offset, so an overflow runs off *both*
 ## ends at once and no single child is a reliable witness to it.
 var _column: VBoxContainer
-var _one_player_button: Button
-var _two_player_button: Button
+var _start_button: Button
+## The footer identity chips, one per seat. Rebuilt from the roster rather than
+## written out, so a board that seats four shows four.
+var _chips: HBoxContainer
+## Why Start is refusing, under the button. A greyed control with no reason is the
+## affordance this menu was burned by once already (COM-19).
+var _seat_refusal: Label
+## Who sits where and who stands with whom (plan D6). The one authority on both,
+## asked at launch rather than mirrored into menu state.
+var _seat_strip: SeatStrip
 var _difficulty_buttons: Array[Button] = []
-## Which mode the setup is dressed for. Real menu state rather than an argument of
-## the press: hot-seat has no computer to tune, so Difficulty dims the moment
-## 2 Player is the choice in hand, comes back with 1 Player, and survives a Back
-## out of commander selection with the button that set it still focused.
-var _two_player_mode := false
 var _setup_help_labels: Array[Label] = []
 var _continue_button: Button
 ## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
@@ -111,21 +114,32 @@ func _ready() -> void:
 	_select_panel.cancelled.connect(_on_selection_cancelled)
 
 	_refresh_continue()
-	_one_player_button.pressed.connect(_open_select.bind([2] as Array[int]))
-	_two_player_button.pressed.connect(_open_select.bind([] as Array[int]))
-	# Focus is what dresses the panel for a mode, so the rule that hot-seat has no
-	# AI difficulty is readable before it is committed to rather than only after.
-	# Focus and the press are the only two writers: a keyboard, a pad and a click
-	# all produce one, while a pointer merely passing over a button produces
-	# neither, so what the panel shows can never disagree with the choice in hand.
-	_one_player_button.focus_entered.connect(_set_two_player_mode.bind(false))
-	_two_player_button.focus_entered.connect(_set_two_player_mode.bind(true))
+	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
+	# The strip is the only writer of who plays what, so the rule that a table with
+	# no computer at it has no difficulty to tune follows it rather than a mode
+	# flag — and follows it the moment a seat changes, not only once Start is
+	# pressed, so the panel can never disagree with the match in hand.
+	_seat_strip.changed.connect(_refresh_seats)
+	# The map picker chooses a board while it is being built, before the strip and
+	# the footer chips exist, so the selection is re-read once everything does —
+	# the roster is the board's answer and both of them are downstream of it.
+	_refresh_map_facts()
 	_continue_button.pressed.connect(_continue)
 	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses_setup_context():
-		_two_player_button.grab_focus()
-	else:
-		_one_player_button.grab_focus()
+		# The frame that photographs the dimmed Difficulty: a table of nothing but
+		# people has no computer to tune. Posed by seating everyone rather than by
+		# focusing a mode button, because the seats are the rule's subject now.
+		for seat in _seat_strip.seat_count():
+			_seat_strip.set_human(seat, true)
+		_refresh_seats()
+	_start_button.grab_focus()
+
+	# Dev captures of the seat strip: `--menu-map=<name>` selects a board by the
+	# name MapCatalog knows it by, and `--menu-preset=<n>` applies one of
+	# SeatStrip.PRESETS by index. Together they photograph the strip at four seats
+	# in each grouping, which is the frame a two-army board cannot show.
+	_pose_seats(CmdArgs.user())
 
 	# Dev captures of the selection page: `--co-select` opens it on the Red slot,
 	# `--co-select=blue` advances to the Blue slot, and `--co-select=<commander_id>`
@@ -141,6 +155,25 @@ func _ready() -> void:
 			_select_panel.debug_preview(StringName(select_mode))
 	if shot_path != "":
 		await _capture_driver.capture(shot_path, _chrome() if select_mode == "" else {})
+
+
+## Dev captures only: selects a board and applies a grouping preset, so the seat
+## strip can be photographed at more seats than the default board deals. Not on
+## any play path — a run with neither flag does nothing here.
+func _pose_seats(args: PackedStringArray) -> void:
+	var wanted := CmdArgs.value(args, "--menu-map")
+	if wanted != "":
+		var path := MapCatalog.resolve(wanted)
+		for i in _maps.size():
+			if _maps[i].source_path == path:
+				_select_map(i)
+				break
+	if not CmdArgs.has(args, "--menu-preset"):
+		return
+	var preset := int(CmdArgs.value(args, "--menu-preset"))
+	if preset >= 0 and preset < SeatStrip.PRESETS.size():
+		_seat_strip.apply_preset_at(preset)
+		_refresh_seats()
 
 
 # --- layout ------------------------------------------------------------------
@@ -303,6 +336,7 @@ func _build_setup_panel() -> Control:
 
 	body.add_child(_build_map_picker())
 	body.add_child(_rule())
+	body.add_child(_build_seats_row())
 	body.add_child(_build_choices_row())
 	body.add_child(_rule())
 	body.add_child(_build_toggles_row())
@@ -321,7 +355,11 @@ func _build_map_picker() -> Control:
 	col.add_child(_micro_label("Map"))
 
 	_map_scroll = ScrollContainer.new()
-	_map_scroll.custom_minimum_size = Vector2(0, 126)
+	# 126 before the seat strip took its lines of the panel's fixed height. The
+	# picker is the one control here that scrolls by design, so it is the one that
+	# gives ground: a board stays one flick away, where a seat row pushed past the
+	# bottom would have been off the frame entirely (`_chrome` refuses that).
+	_map_scroll.custom_minimum_size = Vector2(0, 80)
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(_map_scroll)
 
@@ -386,6 +424,23 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	_map_cells.append(button)
 	_map_marks.append(name_label)
 	return button
+
+
+## The seat strip: who plays each army the board deals, and who stands with whom.
+## Built with this panel's own segment builder so a seat row is the same control
+## the difficulty and speed rows are — see SeatStrip, which owns the state.
+func _build_seats_row() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	# No section label: each row already says which seat it is, and the panel's
+	# height budget is real (see `_chrome`).
+	_seat_strip = SeatStrip.new()
+	_seat_strip.configure(UiTheme.menu_identity().theme(1).color, _style_segment, _micro_label)
+	col.add_child(_seat_strip)
+	# No help line: the grouping buttons name themselves, each segment carries the
+	# sentence as a tip, and the panel's height is fixed — a line spent here is a
+	# line off the map picker.
+	return col
 
 
 func _build_choices_row() -> Control:
@@ -473,14 +528,16 @@ func _build_action_stack(animate: bool) -> Control:
 	col.custom_minimum_size = Vector2(UiTheme.ACTION_W, 0)
 
 	var identity := UiTheme.menu_identity()
-	_one_player_button = _action_button(
-		"1 Player", "VS AI", UiTheme.ButtonVariant.PRIMARY, identity.theme(1)
+	# One action where there were two modes: who is playing is the seat strip's to
+	# say now, so this button only has to mean "with these seats" (plan D6).
+	_start_button = _action_button(
+		"Start", "MATCH", UiTheme.ButtonVariant.PRIMARY, identity.theme(1)
 	)
-	_two_player_button = _action_button(
-		"2 Player", "HOT-SEAT", UiTheme.ButtonVariant.PRIMARY, identity.theme(2)
-	)
-	col.add_child(_one_player_button)
-	col.add_child(_two_player_button)
+	col.add_child(_start_button)
+	_seat_refusal = _micro_label("")
+	_seat_refusal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_seat_refusal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(_seat_refusal)
 
 	_continue_button = _action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
 	col.add_child(_continue_button)
@@ -507,12 +564,12 @@ func _build_action_stack(animate: bool) -> Control:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
 
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 4)
-	chips.alignment = BoxContainer.ALIGNMENT_CENTER
-	chips.add_child(_identity_chip(identity, 1, "P1"))
-	chips.add_child(_identity_chip(identity, 2, "P2"))
-	col.add_child(chips)
+	# One chip per seat the board deals, rebuilt when the map changes — the pair
+	# used to be spelled out here, which is why a third army had nowhere to appear.
+	_chips = HBoxContainer.new()
+	_chips.add_theme_constant_override("separation", 4)
+	_chips.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(_chips)
 
 	_press_start = Label.new()
 	_press_start.text = "PRESS START"
@@ -603,7 +660,11 @@ func _build_segment(
 				restyle.call(i)
 				on_select.call(i)
 		)
-	col.add_child(_option_help(tip_detail))
+	# An empty detail means no line at all, rather than a blank one: the seat rows
+	# say their piece once for the whole strip, and the setup-context gate holds
+	# every registered help line to being non-empty.
+	if tip_detail != "":
+		col.add_child(_option_help(tip_detail))
 	return col
 
 
@@ -724,6 +785,20 @@ func _paint_check(check: Panel, mark: Label, on: bool) -> void:
 ## the classic meridian/aurora identities a commander-less match plays as. Speaks
 ## faction, never "Red"/"Blue" (faction-identity D5): the words are the theme's,
 ## the hue is CommanderVisuals', resolved through the default identity (plan D4).
+## Re-deals the footer chips for a board that seats `count` armies. Every seat
+## gets its colour and its P-number, so the strip above and the chips below name
+## the same table.
+func _refresh_chips(count: int) -> void:
+	if _chips == null:
+		return
+	for child in _chips.get_children():
+		_chips.remove_child(child)
+		child.queue_free()
+	var identity := UiTheme.menu_identity(count)
+	for seat in range(1, count + 1):
+		_chips.add_child(_identity_chip(identity, seat, "P%d" % seat))
+
+
 func _identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 	var theme := identity.theme(team)
 	var chip := PanelContainer.new()
@@ -910,11 +985,23 @@ func _refresh_map_facts() -> void:
 	)
 	_map_caption.text = (
 		(
-			"%d×%d · %d properties · %s"
-			% [map.width, map.height, map.property_cells().size(), map.description]
+			"%d×%d · %d armies · %d properties · %s"
+			% [
+				map.width,
+				map.height,
+				map.player_count(),
+				map.property_cells().size(),
+				map.description,
+			]
 		)
 		. to_upper()
 	)
+	# How many seats there are is the board's answer (plan D1), so the strip is
+	# re-dealt from the selection rather than from anything the player set.
+	if _seat_strip != null:
+		_seat_strip.set_roster(map.player_count())
+		_refresh_seats()
+	_refresh_chips(map.player_count())
 
 
 func _map_at(index: int) -> MapData:
@@ -952,14 +1039,21 @@ func _selected_difficulty() -> StringName:
 	return _difficulties[_difficulty_index].id
 
 
-## The one writer of the mode and of what it dresses. Hot-seat has no computer to
-## tune, so its Difficulty is inert; every route back to one player — the button,
-## a Back out of selection, the next boot — runs through here, so the tiers can
-## never be left stranded behind a mode nobody is in any more.
-func _set_two_player_mode(two_player: bool) -> void:
-	_two_player_mode = two_player
+## Re-dresses the panel for the seats now at the table. Difficulty tunes the
+## computer, so a table with nobody but people at it has none to tune and the
+## tiers go inert — the same rule the two mode buttons carried, asked of the
+## seats instead of of a mode flag (COM-19, generalised by plan D6).
+##
+## The one writer of both, so the tiers can never be left stranded behind a table
+## nobody is sitting at any more, and Start can never offer a match the sim would
+## resolve before anyone moved.
+func _refresh_seats() -> void:
+	var all_human := _seat_strip.ai_teams().is_empty()
 	for button in _difficulty_buttons:
-		button.disabled = two_player
+		button.disabled = all_human
+	_start_button.disabled = not _seat_strip.valid()
+	_seat_refusal.text = _seat_strip.refusal().to_upper()
+	_seat_refusal.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
 
 
 # --- flow (unchanged) --------------------------------------------------------
@@ -969,13 +1063,12 @@ func _set_two_player_mode(two_player: bool) -> void:
 ## focus or click leaks through to the buttons underneath.
 func _open_select(ai_teams: Array[int]) -> void:
 	_pending_ai_teams = ai_teams
-	_set_two_player_mode(ai_teams.is_empty())
 	_menu_root.hide()
-	_select_panel.begin(not ai_teams.is_empty())
+	_select_panel.begin(_seat_strip.seat_count(), ai_teams)
 
 
-func _on_selection_confirmed(red_id: StringName, blue_id: StringName) -> void:
-	_start(_pending_ai_teams, false, {1: red_id, 2: blue_id})
+func _on_selection_confirmed(picks: Dictionary) -> void:
+	_start(_pending_ai_teams, false, picks)
 
 
 ## Back from selection returns to the setup exactly as it was left: the mode that
@@ -983,8 +1076,8 @@ func _on_selection_confirmed(red_id: StringName, blue_id: StringName) -> void:
 ## focus back — which re-applies that mode rather than assuming one.
 func _on_selection_cancelled() -> void:
 	_menu_root.show()
-	var chosen := _two_player_button if _two_player_mode else _one_player_button
-	chosen.grab_focus()
+	_refresh_seats()  # the strip is unchanged, but the panel re-reads it either way
+	_start_button.grab_focus()
 
 
 ## Names the saved match under the Continue button, so the menu alone answers
@@ -1031,7 +1124,8 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 		_fog_on,
 		_selected_difficulty(),
 		commanders,
-		load_save
+		load_save,
+		_seat_strip.sides()
 	)
 	MatchConfig.stage(request)
 	get_tree().change_scene_to_file(BATTLE_SCENE)
@@ -1046,8 +1140,7 @@ func _chrome() -> Dictionary:
 	var chrome := {
 		"the menu column": _column,
 		"selected map facts": _map_caption,
-		"1 Player": _one_player_button,
-		"2 Player": _two_player_button,
+		"Start": _start_button,
 		"Continue": _continue_button,
 		"Quit": _quit_button,
 	}
@@ -1079,23 +1172,26 @@ func _setup_context_ready() -> bool:
 	return passed
 
 
-## The mode is state, so the gate walks it rather than photographing one side of
-## it: hot-seat dims Difficulty, one player brings it back operable. The posed
-## hot-seat mode is restored before the frame is written.
+## Who is at the table is state, so the gate walks it rather than photographing
+## one side of it: a table of nothing but people has no computer to tune and its
+## Difficulty goes inert, and seating one computer brings the tiers back. The
+## posed all-human table is restored before the frame is written.
 func _difficulty_follows_mode() -> bool:
 	var passed := true
-	if not _two_player_mode:
-		push_error("main menu setup context: hot-seat mode is not the posed state")
+	if not _seat_strip.ai_teams().is_empty():
+		push_error("main menu setup context: the all-human table is not the posed state")
 		passed = false
-	_set_two_player_mode(false)
+	_seat_strip.set_human(_seat_strip.seat_count() - 1, false)
+	_refresh_seats()
 	for button in _difficulty_buttons:
 		if button.disabled:
-			push_error("main menu setup context: one-player difficulty stays disabled")
+			push_error("main menu setup context: difficulty stays disabled with a CPU seated")
 			passed = false
-	_set_two_player_mode(true)
+	_seat_strip.set_human(_seat_strip.seat_count() - 1, true)
+	_refresh_seats()
 	for button in _difficulty_buttons:
 		if not button.disabled:
-			push_error("main menu setup context: two-player difficulty remains operable")
+			push_error("main menu setup context: difficulty remains operable with nobody to tune")
 			passed = false
 	return passed
 
