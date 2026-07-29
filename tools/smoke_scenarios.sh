@@ -172,10 +172,12 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # clipped its own title and its Quit, and a returning player met a visibly
 # broken screen while a fresh install never did. Both modes pose the save slot
 # themselves, so neither reads nor writes the running machine's user://save.json.
-# `menu_setup_context` additionally poses hot-seat setup and proves the beginner
-# board, static facts/help, and disabled AI difficulty before photographing them.
+# `menu_setup_context` additionally poses hot-seat setup and proves the tutorial
+# board leads, static facts/help, and disabled AI difficulty before photographing
+# them.
 #
-# The mission_strip pair is COM-12's. Every other scenario runs with the
+# The mission_strip pair is COM-12's, and since COM-122 both run on the tutorial
+# board — the only one the strip teaches on. Every other scenario runs with the
 # first-match hints pinned retired, exactly as they run with the game speed
 # pinned — otherwise whether a teaching card sits over the board would depend on
 # how much of the game the person running the sweep had already played. These two
@@ -261,7 +263,9 @@ failed=0
 # need water on the map; the default board has none. power_ready_contrast
 # borrows the same board for a different reason: it is power_ready over the
 # bright, sea-heavy strait rather than the dim default, so the pair is the
-# meter's dark/light legibility comparison.
+# meter's dark/light legibility comparison. The mission_strip pair needs the
+# tutorial board because that is now the only one the strip teaches on at all
+# (COM-122) — on any other board the scenarios would photograph a blank sky.
 #
 # One spelling, two callers — the `--map=` a single scenario boots with and the
 # `@<map>` a batch entry carries — so a new water scenario cannot reach one and
@@ -270,6 +274,9 @@ map_for_demo() {
 	case "$1" in
 		divemenu | dive | power_ready_contrast | *:sub | *:sub:* | *:cruiser | *:battleship | *:lander)
 			echo the_straits
+			;;
+		mission_strip | mission_strip_retired)
+			echo boot_camp
 			;;
 	esac
 }

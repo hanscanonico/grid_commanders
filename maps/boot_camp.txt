@@ -1,0 +1,35 @@
+# The teaching board: select, move, capture, build and end turn all fit day one.
+# symmetric
+# 12x9, tied with scrimmage for the smallest frame in the roster, and laid out so
+# nothing the mission strip asks for is far away: the road runs out of the base,
+# the first neutral city sits two steps up it from the infantry that starts on
+# the road, and each army is three units so a first match reads rather than
+# crowds. tests/unit/test_maps.gd holds the board to that promise.
+# Mirrors on (x, y) -> (11 - x, 8 - y).
+# Symbols: . plains  F woods  M mountain  = road  ~ river
+#          C city  B base  Q HQ  S sea
+[terrain]
+............
+.QB==.......
+....=C......
+..F.=.......
+...======...
+.......=.F..
+......C=....
+.......==BQ.
+............
+[owners]
+# team x y — only the HQ and the base start owned; both cities are up for grabs,
+# which is what gives the capture step something to teach on.
+1 1 1
+1 2 1
+2 9 7
+2 10 7
+[units]
+# team symbol x y — i infantry, m mech
+1 i 4 3
+1 i 3 1
+1 m 3 3
+2 i 7 5
+2 i 8 7
+2 m 8 5

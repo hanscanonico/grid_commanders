@@ -104,7 +104,7 @@ too-tall one is centered into an offset that runs off both ends at once, so no s
 reliable — and the first two exist to hold the rule that a save's presence may never change the
 layout budget, which is what broke when Continue first pushed the title and **Quit** out of frame.
 
-`menu_setup_context` adds the half a picture cannot prove: that the beginner board leads the picker
+`menu_setup_context` adds the half a picture cannot prove: that the tutorial board leads the picker
 and its description is printed, that no option-help line is empty, that the reserved caption holds
 for *every* shipped board and not just the one on screen, and that AI difficulty follows the mode —
 it walks the setup back to 1 Player and out again, because a dimmed control photographs the same
@@ -157,17 +157,19 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twelve maps ship. The main menu leads with the teaching board and lists the rest smallest first —
-`first_steps`, `scrimmage`, `forge`, `timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`,
-`crossfire`, `the_straits`, `ironworks`, `steelworks` — so it opens on `first_steps`, badged
-**Start Here**, and prints the selected board's size, property count and one-line pitch in a caption
-under the grid (the per-cell tooltip repeats them for a mouse). `jet_stream` and `the_straits`
+Thirteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+`boot_camp`, `scrimmage`, `forge`, `timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`,
+`crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on `boot_camp`,
+badged **Tutorial**, and prints the selected board's size, property count and one-line pitch in a
+caption under the grid (the per-cell tooltip repeats them for a mouse). `boot_camp` is also the only
+board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
 are the boards air and naval units were added for: the first puts an airfield behind each front, the
-second a port on each coast of one shared channel. Three of the older boards have since been
-retrofitted with the domains that suit them — `isthmus` gained a port and a landing beach per side,
-`ironworks` and `crossfire` an airfield each — while `first_steps`, `scrimmage`, `timberline` and
-`riverline` deliberately stay land-only, because each is built on a barrier that wings or hulls
-would simply erase.
+second a port on each coast of one shared channel.
+Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
+gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
+`boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
+because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
+because the five things it teaches are the land game's.
 
 `forge`, `arsenal` and `steelworks` are the production boards, and the only ones that hand out **no
 starting units at all**: what you get instead is factories — two to four bases a side where the rest
@@ -241,11 +243,13 @@ jumps to that team's first property. Every banner — the day card, the save and
 button skips it. The press does that and nothing else: it never lands on the board underneath, and
 no menu opens beneath a banner.
 
-A first match opens with a **mission strip** over the board: the objective line and five hints —
-select, move, capture, build, end turn — each retiring for good the first time you perform it, on
-your own actions only (the computer taking a city retires nothing). Retirement is a device
-preference in `user://settings.cfg`, so hints never come back across a relaunch; `--reset-hints`
-forgets them all for one machine, which is how a fresh install is staged for testing.
+A first match on `boot_camp`, the **Tutorial** board, opens with a **mission strip** over the grid:
+the objective line and five hints — select, move, capture, build, end turn — each retiring for good
+the first time you perform it, on your own actions only (the computer taking a city retires
+nothing). Every other board is an ordinary match: no strip, and nothing retired behind your back.
+Retirement is a device preference in `user://settings.cfg`, so hints never come back across a
+relaunch; `--reset-hints` forgets them all for one machine, which is how a fresh install is staged
+for testing.
 
 On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
 (A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right

@@ -539,10 +539,12 @@
               2&nbsp;Player is chosen.
               <br><em>Shipped (COM-19):</em> the caption sits under MN2's scrollable grid rather than the
               retired dropdown, and its height is reserved for two lines so no board's description can move the
-              layout. <code>MapCatalog.BEGINNER_MAP_PATH</code> is the one key behind both halves of the
-              beginner promise — <code>ordered()</code> pins First Steps at item zero and
-              <code>main_menu.gd</code> badges the same path <em>Start Here</em>, so order and explanation
-              cannot drift; every other board keeps its size order. Each option carries a permanent help line,
+              layout. <code>MapCatalog.TUTORIAL_MAP_PATH</code> is the one key behind both halves of the
+              beginner promise — <code>ordered()</code> pins that board at item zero and
+              <code>main_menu.gd</code> badges the same path, so order and explanation
+              cannot drift; every other board keeps its size order. (COM-122 renamed the key from
+              <code>BEGINNER_MAP_PATH</code> and moved it off First Steps: the pinned board is now
+              <code>boot_camp</code> and the badge reads <em>Tutorial</em> — see D6 below.) Each option carries a permanent help line,
               and Difficulty is dimmed rather than blanked while 2&nbsp;Player is the mode in hand — mode is
               menu state, so a Back out of commander selection returns to the setup it left. Presentation-only
               apart from the catalog's sort key; nothing in <code>core/</code>'s rules or <code>ai/</code>
@@ -743,9 +745,21 @@
         <div class="card-body p-5">
           <h3 class="font-black">D6 · Teach by doing, retire by success</h3>
           <p class="text-sm leading-relaxed">
-            Progressive, dismissible hints triggered by real scene events — no separate tutorial ruleset, no
-            blocking slideshow, no tutorial map. The mission strip observes the same commands and events the
+            Progressive, dismissible hints triggered by real scene events — no separate tutorial ruleset and no
+            blocking slideshow. The mission strip observes the same commands and events the
             scene already animates; each hint retires permanently after the player performs the action once.
+          </p>
+          <p class="text-sm leading-relaxed mt-3">
+            <strong>Amended by COM-122:</strong> the original wording also ruled out a tutorial <em>map</em>, and
+            that half is withdrawn. Hints over <em>every</em> board is what the clause actually bought, and a
+            player who picked a board picked a match, not a lesson. So the strip now runs on
+            <code>maps/boot_camp.txt</code> and nowhere else. The rest of the decision is untouched — it is still
+            the same five observed steps, still no ruleset of its own, still nothing in <code>core/</code> or
+            <code>ai/</code>. What changed is <em>where</em>, and the where has one authority:
+            <code>MapCatalog.teaches</code>, which also pins that board to item zero and badges it. The gate
+            covers retirement as well as visibility, or an ordinary match would quietly spend the steps of a
+            tutorial its player has not opened yet. Later this board is what the campaign's opening mission
+            becomes.
           </p>
         </div>
       </div>

@@ -91,10 +91,11 @@ func setup() -> void:
 	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
 	hud_bottom.chart = game.damage_chart  # and asks the rules which weapons a unit owns
 	# Whose actions the teaching strip may learn from — the computer plays through
-	# the same events and must not retire a hint on the player's behalf. Nothing is
-	# drawn yet: `refresh_hud` decides whether the strip shows at all, and it runs
-	# after a capture run has had its chance to pin the hints away.
-	mission_strip.setup(_human_teams())
+	# the same events and must not retire a hint on the player's behalf — and
+	# whether this board teaches at all, which is MapCatalog's answer (COM-122).
+	# Nothing is drawn yet: `refresh_hud` decides whether the strip shows, and it
+	# runs after a capture run has had its chance to pin the hints away.
+	mission_strip.setup(_human_teams(), MapCatalog.teaches(map.source_path))
 	terrain_layer.tile_set = _build_tile_set()
 	# The terrain atlas is drawn at 4x the world grid (see TERRAIN_PX), so the
 	# layer is scaled back down to keep one cell = TILE. Overlays and the cursor

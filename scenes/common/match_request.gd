@@ -28,6 +28,11 @@ extends RefCounted
 ## state — a resumed match plays at today's preference, not the one it was saved
 ## under — so they travel in `user://settings.cfg` and never through here.
 
+## The board a battle scene booted directly comes up on — `make screenshot` and
+## every smoke scenario that names no `--map=`. Deliberately *not*
+## `MapCatalog.TUTORIAL_MAP_PATH`: that one is which board the *menu* leads with,
+## and moving this too would reshoot the whole sweep, whose merge bar is
+## byte-identical captures (COM-122).
 const DEFAULT_MAP_PATH := "res://maps/first_steps.txt"
 
 ## The board. A path, already resolved: `--map=` accepts a catalog *name*, and

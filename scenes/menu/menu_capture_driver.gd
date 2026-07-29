@@ -17,7 +17,7 @@ extends RefCounted
 ## capture that proves it.
 ##
 ## `--demo=menu_setup_context` poses the hot-seat setup without leaving the menu.
-## Its gate also proves that First Steps leads, its description is printed, every
+## Its gate also proves that the tutorial board leads, its description is printed, every
 ## help line has copy, and AI difficulty follows the mode — it walks the mode back
 ## to one player and out again, because "disabled" photographs the same whether it
 ## can be undone or not. It measures the caption on every board for the same
