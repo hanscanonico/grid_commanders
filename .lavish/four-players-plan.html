@@ -102,7 +102,7 @@
 
     <!-- ============================== HERO ============================== -->
     <header class="gc-hero px-6 py-10 md:px-12">
-      <p class="gc-kicker opacity-80">Grid Commanders · New capability · Proposed · rev 2</p>
+      <p class="gc-kicker opacity-80">Grid Commanders · New capability · Shipped · rev 2</p>
       <h1 class="text-3xl md:text-4xl font-black mt-2">Four Armies — Free-for-All, 2v2, or 3v1</h1>
       <p class="mt-3 max-w-3xl opacity-90">
         Every match today is a duel: <span class="gc-file">core/game_state.gd:7</span> pins
@@ -295,7 +295,7 @@
         <p class="text-sm">The number of armies is a property of the <em>board</em>, read from the
         map file — never a menu setting. Rejected: growing the constant to <code>[1, 2, 3, 4]</code>
         globally, which would seed four funds entries and four CO slots into every duel, fail the
-        one-HQ-per-team lint on all thirteen shipped maps at once, and make a 2-player save claim
+        one-HQ-per-team lint on all thirteen shipped duel boards at once, and make a 2-player save claim
         teams that never played. The <em>grouping</em> is the opposite: pure match setup, chosen at
         the seat strip, carried as <span class="gc-file">MatchConfig</span>'s one new field —
         <code>sides: Dictionary</code> (team → side id), empty meaning free-for-all. The same board
@@ -422,7 +422,7 @@
       <div class="grid gap-4">
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">FP1 · The roster becomes data <span class="badge badge-sm">size M</span></h3>
+          <h3 class="font-black">FP1 · The roster becomes data <span class="badge badge-sm">size M</span> <span class="badge badge-success badge-sm">shipped</span></h3>
           <p class="text-sm mt-1 mb-2">Teams flow from the map into a per-match roster; nothing a
           player can reach changes. The whole milestone is provably inert on 2-army maps.</p>
           <ul class="gc-checks text-sm">
@@ -446,7 +446,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">FP2 · Hostility gets one authority <span class="badge badge-sm">size M</span></h3>
+          <h3 class="font-black">FP2 · Hostility gets one authority <span class="badge badge-sm">size M</span> <span class="badge badge-success badge-sm">shipped</span></h3>
           <p class="text-sm mt-1 mb-2">The allegiance seam of D2, wired while still unreachable:
           with no UI writing <code>sides</code>, every match is a free-for-all and every routed site
           answers exactly what <code>team != mine</code> answered.</p>
@@ -474,7 +474,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">FP3 · An army can fall; a side can win <span class="badge badge-sm">size M</span></h3>
+          <h3 class="font-black">FP3 · An army can fall; a side can win <span class="badge badge-sm">size M</span> <span class="badge badge-success badge-sm">shipped</span></h3>
           <p class="text-sm mt-1 mb-2">The elimination model of D3, sim-side. In a duel the first
           elimination still ends the match on the same day with the same winner — pinned by the
           existing rout and HQ tests.</p>
@@ -501,7 +501,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">FP4 · Four liveries on one board <span class="badge badge-sm">size S</span></h3>
+          <h3 class="font-black">FP4 · Four liveries on one board <span class="badge badge-sm">size S</span> <span class="badge badge-success badge-sm">shipped</span></h3>
           <p class="text-sm mt-1 mb-2">Presentation learns to seat four armies and say who stands
           with whom; every 2-player frame stays pixel-identical.</p>
           <ul class="gc-checks text-sm">
@@ -527,7 +527,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">FP5 · Seats and sides at the table <span class="badge badge-sm">size M</span></h3>
+          <h3 class="font-black">FP5 · Seats and sides at the table <span class="badge badge-sm">size M</span> <span class="badge badge-success badge-sm">shipped</span></h3>
           <p class="text-sm mt-1 mb-2">The menu flow of D6 — the first moment a player can
           <em>reach</em> a 3–4 army match, in any grouping.</p>
           <ul class="gc-checks text-sm">
@@ -552,7 +552,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">FP6 · The boards, and the proof of play <span class="badge badge-sm">size M</span></h3>
+          <h3 class="font-black">FP6 · The boards, and the proof of play <span class="badge badge-sm">size M</span> <span class="badge badge-success badge-sm">shipped</span></h3>
           <p class="text-sm mt-1 mb-2">The capability is only real when shipped maps use it and the
           AI demonstrably fights on them.</p>
           <ul class="gc-checks text-sm">

@@ -294,8 +294,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   a capability nobody can pick.
   `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the map lint — sized to fit
   the battle viewport whole, and the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog`
-  scenarios run on. All that remains of FP6 is the plan artifact's own milestone pass —
-  `.lavish/four-players-plan.html`'s internal status markers, which this project never updated.
+  scenarios run on. The plan artifact carries its own milestone pass: FP1–FP6 are marked shipped in
+  `.lavish/four-players-plan.html`, whose decisions stay as authored — every supersession is here.
 
 ## Architecture — the rules that matter most
 
