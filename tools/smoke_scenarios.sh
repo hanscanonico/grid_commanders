@@ -172,8 +172,9 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # clipped its own title and its Quit, and a returning player met a visibly
 # broken screen while a fresh install never did. Both modes pose the save slot
 # themselves, so neither reads nor writes the running machine's user://save.json.
-# `menu_setup_context` additionally poses hot-seat setup and proves the beginner
-# board, static facts/help, and disabled AI difficulty before photographing them.
+# `menu_setup_context` additionally poses hot-seat setup and proves the tutorial
+# board leads, static facts/help, and disabled AI difficulty before photographing
+# them.
 #
 # The mission_strip pair is COM-12's, and since COM-122 both run on the tutorial
 # board — the only one the strip teaches on. Every other scenario runs with the

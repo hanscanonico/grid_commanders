@@ -162,9 +162,9 @@ Thirteen maps ship. The main menu leads with the teaching board and lists the re
 `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it opens on `boot_camp`,
 badged **Tutorial**, and prints the selected board's size, property count and one-line pitch in a
 caption under the grid (the per-cell tooltip repeats them for a mouse). `boot_camp` is also the only
-board the first-match mission strip teaches on: every other one is an ordinary match with no hints
-over it (COM-122). `jet_stream` and `the_straits` are the boards air and naval units were added for:
-the first puts an airfield behind each front, the second a port on each coast of one shared channel.
+board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
+are the boards air and naval units were added for: the first puts an airfield behind each front, the
+second a port on each coast of one shared channel.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
@@ -243,11 +243,13 @@ jumps to that team's first property. Every banner — the day card, the save and
 button skips it. The press does that and nothing else: it never lands on the board underneath, and
 no menu opens beneath a banner.
 
-A first match opens with a **mission strip** over the board: the objective line and five hints —
-select, move, capture, build, end turn — each retiring for good the first time you perform it, on
-your own actions only (the computer taking a city retires nothing). Retirement is a device
-preference in `user://settings.cfg`, so hints never come back across a relaunch; `--reset-hints`
-forgets them all for one machine, which is how a fresh install is staged for testing.
+A first match on `boot_camp`, the **Tutorial** board, opens with a **mission strip** over the grid:
+the objective line and five hints — select, move, capture, build, end turn — each retiring for good
+the first time you perform it, on your own actions only (the computer taking a city retires
+nothing). Every other board is an ordinary match: no strip, and nothing retired behind your back.
+Retirement is a device preference in `user://settings.cfg`, so hints never come back across a
+relaunch; `--reset-hints` forgets them all for one machine, which is how a fresh install is staged
+for testing.
 
 On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
 (A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
