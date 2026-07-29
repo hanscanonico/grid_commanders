@@ -87,6 +87,11 @@ var game: GameState
 var planners: Dictionary = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
+## The last human seat that actually took a turn, or 0 before anyone has. What
+## the fogged handoff and the AI-turn viewer are both keyed to (four-players plan
+## D7), because with mixed seats the device changes hands across intervening
+## computer turns and "the seat before this one" stops meaning "the last person".
+var _last_human_team := 0
 ## The tier this match is being played at, as BattleSetup resolved it — from the
 ## menu, a `--difficulty=` flag, or the resumed save itself. Held here because
 ## the scene is what a save asks for it: it is the id SaveGame records, and the
@@ -277,6 +282,7 @@ func execute_command(command: Command, animate_path: bool = false) -> BattleComm
 func conclude_command(receipt: BattleCommandReceipt) -> void:
 	if not receipt.applied:
 		return
+	await _announce_fallen(receipt.fallen)
 	if receipt.turn_changed:
 		start_turn()
 	elif receipt.winner != 0:
@@ -838,7 +844,10 @@ func _open_map_menu() -> void:
 ## takes focus and closes itself. Reached from the map menu, never from a hover.
 func _open_commander_info() -> void:
 	state = State.INFO
-	commander_info_sheet.open(game.commander_of(1), game.commander_of(2))
+	var picks: Dictionary = {}
+	for team in game.teams:
+		picks[team] = game.commander_of(team)
+	commander_info_sheet.open(picks, game.sides)
 
 
 func _close_commander_info() -> void:
@@ -886,22 +895,45 @@ func _begin_turn() -> void:
 		state = State.AI_TURN
 		_ai_runner.run()
 	else:
+		_last_human_team = game.current_team
 		state = State.IDLE
 
 
-## Fogged hot-seat only: two humans sharing one screen must not see each
-## other's vision, so the incoming player confirms before anything is painted.
-## AI turns and fog-off matches never gate.
+## Says out loud that an army has left the match. Public information, fog or no
+## fog — every side learns that a seat emptied, because the board they are playing
+## on just changed shape.
+##
+## Uses the same blocking beat every other banner does, so Instant clamps it and
+## any press skips it; suppressed while `capturing`, like the cut-ins, so posed
+## frames stay byte-stable. Awaited before the turn hands over, so the banner
+## lands on the board that produced it rather than over the next player's.
+func _announce_fallen(fallen: Array[int]) -> void:
+	if fallen.is_empty() or animator.capturing:
+		return
+	var was := state
+	state = State.ANIMATING
+	for team: int in fallen:
+		await animator.show_banner("%s eliminated" % view.identity.display_name(team))
+	if state == State.ANIMATING:
+		state = was
+
+
+## Fogged hot-seat only: two humans sharing one screen must not see each other's
+## vision, so the incoming player confirms before anything is painted. AI turns
+## and fog-off matches never gate.
+##
+## Keyed to the last human seat rather than to the seat immediately before this
+## one (four-players plan D7): with two humans and two computers the device
+## changes hands across intervening AI turns, and asking only "was the previous
+## turn another person's" would hand player B a board still painted with player
+## A's vision. The same player taking two turns in a row — everyone else having
+## fallen — is not a handoff and is not asked for one.
 func _needs_handoff() -> bool:
 	if not game.fog_enabled or game.winner != 0:
 		return false
 	if game.current_team in ai_teams:
 		return false
-	var humans := 0
-	for team in game.teams:
-		if team not in ai_teams:
-			humans += 1
-	return humans > 1
+	return _last_human_team != 0 and _last_human_team != game.current_team
 
 
 func _enter_handoff() -> void:
@@ -924,12 +956,18 @@ func leave_handoff() -> void:
 	_begin_turn()
 
 
-## The perspective fog is drawn from: the human whose turn it is, or the
-## first human team while the AI plays. The AI sees everything bar one thing:
-## a unit a doctrine hides is hidden from it too — see Vision.is_hidden_from.
+## The perspective fog is drawn from: the human whose turn it is, or — while the
+## computer plays — the human who played last (four-players plan D7). Information
+## they already had, which is the whole test: rendering through *any other*
+## human's fog while an AI turn runs would show one player what another had
+## scouted. With one human at the table this is their fog all match, exactly as
+## before. The AI sees everything bar one thing: a unit a doctrine hides is hidden
+## from it too — see Vision.is_hidden_from.
 func _viewing_team() -> int:
 	if game.current_team not in ai_teams:
 		return game.current_team
+	if _last_human_team != 0 and _last_human_team not in ai_teams:
+		return _last_human_team
 	for team in game.teams:
 		if team not in ai_teams:
 			return team

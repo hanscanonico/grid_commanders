@@ -84,7 +84,10 @@ func enter_victory() -> void:
 	_battle.animator.hide_banner()
 	Sfx.play(&"fanfare")
 	victory_label.text = _result_text()
+	var standings := _standings_text()
 	victory_sub_label.text = "Day %d" % _battle.game.day
+	if standings != "":
+		victory_sub_label.text += "  ·  %s" % standings
 	_bind_victory_commander()
 	victory_screen.show()
 	victory_screen.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -137,12 +140,46 @@ func accepts_action(button: Button) -> bool:
 	return true
 
 
-## The winner lockup — "Verdant League wins!" — or "Draw" for the one case with
-## no winner: a watched match that hit the day cap with every tiebreak level.
+## The winner lockup — "Verdant League wins!", or "Meridian Coalition & Iron
+## Dominion win!" when a side won together — or "Draw" for the one case with no
+## winner: a watched match that hit the day cap with every tiebreak level.
+##
+## Reads `winners()` rather than the scalar, because a victory that belongs to a
+## side has to name the side; the scalar is still what the lockup is *keyed* to,
+## so a duel prints exactly the sentence it always did. A scored day-cap win has
+## no elimination behind it and names its one team.
 func _result_text() -> String:
 	if _result_winner == 0:
 		return "Draw"
-	return "%s wins!" % _battle.view.identity.display_name(_result_winner)
+	var side := _battle.game.winners()
+	if side.size() <= 1:
+		return "%s wins!" % _battle.view.identity.display_name(_result_winner)
+	# Distinct names, because two allies may share a faction — a mirror keeps both
+	# sides named for it and leans on the livery to tell them apart (SideIdentity).
+	# "Meridian Coalition & Meridian Coalition win!" is not a sentence.
+	var names := PackedStringArray()
+	for team: int in side:
+		var name := _battle.view.identity.display_name(team)
+		if not names.has(name):
+			names.append(name)
+	if names.size() == 1:
+		return "%s wins!" % names[0]
+	return "%s win!" % " & ".join(names)
+
+
+## Who fell, in the order they fell — the standings line under the lockup. Read
+## straight off `eliminated`, whose keys are in insertion order, so this is the
+## order of the match rather than of the seating.
+##
+## Empty on a duel, where the one elimination *is* the victory and saying so twice
+## adds nothing; a longer match earned the account of how it got there.
+func _standings_text() -> String:
+	var fallen := PackedStringArray()
+	for team: int in _battle.game.eliminated:
+		fallen.append(_battle.view.identity.display_name(team))
+	if fallen.size() < 2:
+		return ""
+	return "Eliminated: %s" % ", ".join(fallen)
 
 
 ## The one line BS3's replay-fidelity check reads: a watched match must end with

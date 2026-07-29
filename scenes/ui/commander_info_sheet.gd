@@ -1,10 +1,14 @@
 class_name CommanderInfoSheet
 extends Control
-## The in-battle commander reference: both sides' full cards, opened from the
-## battle menu rather than a hover tooltip (readiness plan G3). Showing both is
-## deliberate and safe — a commander's identity and doctrine are match metadata,
-## not a fog-hidden unit position, so nothing here leaks what the viewer cannot
-## see on the board.
+## The in-battle commander reference: every army's full card, opened from the
+## battle menu rather than a hover tooltip (readiness plan G3). Showing them all
+## is deliberate and safe — a commander's identity and doctrine are match
+## metadata, not a fog-hidden unit position, so nothing here leaks what the viewer
+## cannot see on the board.
+##
+## One card per seat the board dealt, laid out two to a row and ordered so allies
+## sit together (four-players plan D5): a duel is the single row it always was, a
+## 2v2 is a pair over a pair.
 ##
 ## Reuses the same CommanderCard the selection page does; the only thing new is a
 ## faction header over each, named and tinted by the resolved side identity (a
@@ -15,14 +19,9 @@ extends Control
 signal closed
 
 var _built := false
-var _red_card: CommanderCard
-var _blue_card: CommanderCard
-## The two headers, retitled and retinted per match from the resolved identity —
-## a captured commander's faction, or a mirror's borrowed classic (SideIdentity).
-var _red_header: PanelContainer
-var _red_title: Label
-var _blue_header: PanelContainer
-var _blue_title: Label
+## The card grid; columns are rebuilt per match, because how many there are is the
+## board's answer and not this scene's.
+var _cards: GridContainer
 var _close_button: Button
 
 
@@ -31,30 +30,45 @@ func _ready() -> void:
 	hide()
 
 
-## Shows both sides' cards and takes focus, so a controller or keyboard can close
+## Shows one card per army and takes focus, so a controller or keyboard can close
 ## it without reaching for the mouse.
-func open(red_co: CommanderType, blue_co: CommanderType) -> void:
+##
+## `commanders_by_team` is the match's picks and `sides` its grouping — both taken
+## whole rather than as a pair, because how many armies play is the board's answer
+## (four-players plan D1) and how they group is the match's.
+func open(commanders_by_team: Dictionary, sides: Dictionary = {}) -> void:
 	if not _built:
 		_build()
 	# The same resolver the board uses, so a mirror match shows the borrowed
 	# classic here too: two Iron doctrines read "IRON DOMINION" over slate and blue.
-	var identity := SideIdentity.resolve({1: red_co, 2: blue_co})
-	_retitle(_red_header, _red_title, identity, 1)
-	_retitle(_blue_header, _blue_title, identity, 2)
-	_red_card.bind(red_co)
-	_blue_card.bind(blue_co)
+	var identity := SideIdentity.resolve(commanders_by_team)
+	for child in _cards.get_children():
+		child.queue_free()
+		_cards.remove_child(child)
+	for team: int in _seat_order(commanders_by_team, sides):
+		_titled_card(_cards, identity, team).bind(commanders_by_team.get(team))
 	show()
 	_close_button.grab_focus.call_deferred()
 
 
-## Names and tints one card header from a side's resolved identity.
-func _retitle(header: PanelContainer, title: Label, identity: SideIdentity, team: int) -> void:
-	var theme := identity.theme(team)
-	var box := StyleBoxFlat.new()
-	box.bg_color = theme.color
-	header.add_theme_stylebox_override("panel", box)
-	title.text = identity.display_name(team).to_upper()
-	title.add_theme_color_override("font_color", theme.ink)
+## The seats to lay out, allies adjacent: sides ordered by their lowest seat, and
+## each side's members in seat order. A free-for-all is therefore plain seat
+## order, which is what a duel has always shown.
+static func _seat_order(commanders_by_team: Dictionary, sides: Dictionary) -> Array[int]:
+	var seats: Array[int] = []
+	for team: int in commanders_by_team:
+		seats.append(team)
+	seats.sort()
+	var grouped: Array[int] = []
+	for team in seats:
+		if grouped.has(team):
+			continue
+		grouped.append(team)
+		for other in seats:
+			if other != team and sides.has(team) and sides.get(other) == sides[team]:
+				if not grouped.has(other):
+					grouped.append(other)
+	return grouped
 
 
 func _build() -> void:
@@ -90,23 +104,16 @@ func _build() -> void:
 	# No page title: the two faction headers below already name what this is, and on
 	# a 360px-tall screen the row it would cost is the difference between the cards
 	# fitting and the Close button being crowded.
-	var cards := HBoxContainer.new()
-	cards.add_theme_constant_override("separation", 12)
-	cards.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	# The two columns are as wide as a card and no wider, so the pair is centred here
-	# rather than stretched to the margins.
-	cards.alignment = BoxContainer.ALIGNMENT_CENTER
-	rows.add_child(cards)
-	# Headers built blank; open() titles and tints them per match from the
-	# resolved identity, so this scene never hardcodes a side name or colour.
-	var red := _titled_card(cards)
-	_red_card = red[0]
-	_red_header = red[1]
-	_red_title = red[2]
-	var blue := _titled_card(cards)
-	_blue_card = blue[0]
-	_blue_header = blue[1]
-	_blue_title = blue[2]
+	# Two to a row: a duel is one row of two exactly as it always was, and four
+	# armies are a 2x2 rather than a strip too wide for the screen. Columns are
+	# built per match by open(), because how many there are is the board's answer.
+	_cards = GridContainer.new()
+	_cards.columns = 2
+	_cards.add_theme_constant_override("h_separation", 12)
+	_cards.add_theme_constant_override("v_separation", 6)
+	_cards.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cards.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	rows.add_child(_cards)
 
 	# The meter's number is a funds-valued damage total, but the exact accounting
 	# is less important here than the missing player-facing answer to "what makes
@@ -130,16 +137,23 @@ func _build() -> void:
 	_built = true
 
 
-## Builds one column — a header band over a CommanderCard — and hands back
-## [card, header, title label] so open() can title and tint the header per match.
-func _titled_card(parent: Node) -> Array:
+## Builds one column — a header band over a CommanderCard — named and tinted from
+## the side's resolved identity, so this scene never hardcodes a name or a colour
+## and a mirror shows the classic it borrowed.
+func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderCard:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
 	column.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	parent.add_child(column)
 
+	var side := identity.theme(team)
 	var header := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = side.color
+	header.add_theme_stylebox_override("panel", box)
 	var label := Label.new()
+	label.text = identity.display_name(team).to_upper()
+	label.add_theme_color_override("font_color", side.ink)
 	label.add_theme_font_size_override("font_size", 10)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var margin := MarginContainer.new()
@@ -167,7 +181,7 @@ func _titled_card(parent: Node) -> Array:
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	frame.add_child(card)
-	return [card, header, label]
+	return card
 
 
 func _shortcut_input(event: InputEvent) -> void:

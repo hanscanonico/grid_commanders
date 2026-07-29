@@ -458,8 +458,28 @@ func refresh_panel(cell: Vector2i) -> void:
 	# tile to fade off: it never covers the cell it describes. Which cell that is
 	# the board says for itself, with the cursor brackets already on it.
 	hud_bottom.show_tile(
-		map.terrain_at(cell), owner, game.current_team, capture_left, hovered, carrying
+		map.terrain_at(cell),
+		owner,
+		game.current_team,
+		capture_left,
+		hovered,
+		carrying,
+		_allegiance_of(hovered)
 	)
+
+
+## One word for whose side a unit is on, from the *viewer's* seat: "Ally" for
+## another army standing with them, "Enemy" for anyone else, and nothing at all
+## for their own units, which need no telling. Asked of the one hostility
+## authority, so the bar and the commands can never disagree about who may be
+## shot (four-players plan D2).
+func _allegiance_of(unit: Unit) -> String:
+	if unit == null:
+		return ""
+	var viewer := perspective.viewing_team()
+	if unit.team == viewer:
+		return ""
+	return "Ally" if game.allied(unit.team, viewer) else "Enemy"
 
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing

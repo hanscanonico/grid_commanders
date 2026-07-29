@@ -39,6 +39,13 @@ func refresh(viewing_team: int, blacked_out: bool) -> void:
 	_visible_cells = {} if blacked_out else Vision.visible_cells(_game, viewing_team)
 
 
+## Whose eyes the board is currently drawn through. Read by surfaces that have to
+## say something *relative to the viewer* — the bar's allegiance word — rather
+## than relative to whoever holds the turn.
+func viewing_team() -> int:
+	return _viewing_team
+
+
 ## Whether the viewer may see activity on `cell`. Cell and unit visibility stay
 ## separate because a doctrine or a dive can hide a unit on visible ground.
 func can_see_cell(cell: Vector2i) -> bool:

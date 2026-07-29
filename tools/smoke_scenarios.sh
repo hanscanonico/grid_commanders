@@ -203,7 +203,7 @@ DEFAULT_MODES=(
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
-	power_mapmenu power_banner commander_info commander_victory
+	power_mapmenu power_banner commander_info commander_victory side_victory
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
@@ -277,6 +277,12 @@ map_for_demo() {
 			;;
 		mission_strip | mission_strip_retired)
 			echo boot_camp
+			;;
+		side_victory)
+			# The only board that seats four armies, which is the whole point of the
+			# frame: four liveries behind a lockup that names a side rather than one
+			# of them (four-players plan D5).
+			echo quartet
 			;;
 	esac
 }

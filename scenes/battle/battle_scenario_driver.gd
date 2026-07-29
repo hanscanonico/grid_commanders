@@ -332,10 +332,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_mission_strip(mode)
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
-		"commander_victory":
-			await _run_victory_demo(true)  # victory lockup fronted by the winner's face
-		"victory":
-			await _run_victory_demo()
+		"commander_victory", "victory", "side_victory":
+			await BattleVictoryScenario.new(_battle).run(mode)
 		"aiturn":
 			# hand the turn to the Blue AI and wait until it plays back to Red
 			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
@@ -1262,13 +1260,6 @@ static func stage_rout(battle: Battle) -> void:
 
 ## The staged rout, dressed for a capture: `with_commander` gives Red a general
 ## first, so the victory lockup is fronted by a portrait.
-func _run_victory_demo(with_commander: bool = false) -> void:
-	if with_commander:
-		_battle.game.set_commander(1, _battle.commander_db.by_id(&"viktor_draeg"))
-		_battle.view.restage_identity()  # so the win lockup reads the winner's faction, not First Army
-	await stage_rout(_battle)
-
-
 ## Parks on a unit and previews its movement out to the farthest cell it could
 ## actually stop on, which is the frame `--select` exists to capture.
 func _demo_select(cell: Vector2i) -> void:

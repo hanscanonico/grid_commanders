@@ -94,9 +94,24 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	_battle.refresh_fog()
 	if game.eliminated.size() > standing_before:
 		_repaint_properties(game)
+		receipt.fallen = _fallen_since(game, standing_before)
 	_battle.refresh_panel()
 	_battle.refresh_hud()
 	return receipt
+
+
+## The armies that fell during this command, in the order they fell. `eliminated`
+## keys are in insertion order, so the tail past the count taken before the
+## command is exactly what it felled — and a command can fell more than one, when
+## the last survivor of a side goes down with the shot that decides the match.
+static func _fallen_since(game: GameState, standing_before: int) -> Array[int]:
+	var fallen: Array[int] = []
+	var seen := 0
+	for team: int in game.eliminated:
+		seen += 1
+		if seen > standing_before:
+			fallen.append(team)
+	return fallen
 
 
 ## An army falling forfeits every property it held to neutral at once, which no
