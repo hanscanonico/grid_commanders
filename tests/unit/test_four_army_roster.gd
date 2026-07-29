@@ -12,10 +12,14 @@ extends GutTest
 ## are pinned by `tests/unit/test_elimination.gd`, which plays out the four-army
 ## cases on its own fixtures.
 ##
-## The board is `maps/fixtures/quartet.txt`, which lives under fixtures/ so it is
-## reachable by name and absent from the menu, the map lint and the AI soak.
+## Most of it plays `maps/fixtures/quartet.txt`, which lives under fixtures/ so it
+## is reachable by name and absent from the menu, the map lint and the AI soak.
+## The save round-trip at the end plays the shipped `maps/compass.txt` instead,
+## because what it has to prove is that a board a player can actually pick — in a
+## grouping the seat strip can produce — survives the trip.
 
 const FIXTURE := "res://maps/fixtures/quartet.txt"
+const COMPASS := "res://maps/compass.txt"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -88,3 +92,43 @@ func test_a_four_army_match_survives_a_save_round_trip() -> void:
 	assert_eq(loaded.ai_teams, [3, 4] as Array[int], "seats 3 and 4 stay the computer's")
 	for i in state.teams.size():
 		assert_eq(loaded.state.funds[state.teams[i]], 500 + i * 100, "seat %d's purse" % (i + 1))
+
+
+## A four-army 2v2 taken mid-match through a save and back (COM-49). The roster,
+## the grouping and the casualty list all arrived in different format versions, so
+## this is the one case that proves they survive together rather than one at a
+## time — and it is the shape a player actually saves: a real board, a grouping
+## the seat strip can produce, and an army already gone.
+func test_a_four_army_2v2_survives_a_mid_match_save() -> void:
+	var map := MapData.load_from_file(COMPASS, terrain_db)
+	assert_not_null(map, "Compass should parse")
+	var state := GameState.create(map, unit_db, chart)
+	state.map_path = COMPASS
+	state.sides = {1: 0, 3: 0, 2: 1, 4: 1}
+	state.fog_enabled = true
+	state.day = 7
+	state.funds[1] = 4200
+	EndTurnCommand.new().apply(state)  # the hand has moved on; day and turn are real
+	state.eliminate(4)
+	assert_eq(state.winner, 0, "three armies still play")
+
+	var data := SaveCodec.encode(state, [2, 4] as Array[int], &"hard")
+	assert_eq(SaveCodec.validate(data), "")
+	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
+	assert_not_null(loaded)
+	var back := loaded.state
+	assert_eq(back.teams, [1, 2, 3, 4] as Array[int], "the board still seats four")
+	assert_true(back.allied(1, 3), "the pair resumes standing together")
+	assert_true(back.allied(2, 4))
+	assert_false(back.allied(1, 2), "and still opposed")
+	assert_true(back.is_eliminated(4), "the fallen army resumes fallen")
+	assert_eq(back.active_teams(), [1, 2, 3] as Array[int])
+	assert_eq(back.current_team, state.current_team, "the turn is where it was")
+	assert_eq(back.day, state.day)
+	assert_eq(back.funds[1], state.funds[1])
+	assert_true(back.fog_enabled)
+	assert_eq(loaded.ai_teams, [2, 4] as Array[int])
+	assert_eq(loaded.difficulty, &"hard")
+	# The board itself, not just the envelope: an eliminated army holds nothing.
+	assert_true(back.units_of(4).is_empty())
+	assert_eq(back.properties_of(4).size(), 0, "its ground went neutral before the save")

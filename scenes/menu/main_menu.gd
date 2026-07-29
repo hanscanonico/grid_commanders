@@ -141,7 +141,7 @@ func _ready() -> void:
 	# name MapCatalog knows it by, and `--menu-preset=<n>` applies one of
 	# SeatStrip.PRESETS by index. Together they photograph the strip at four seats
 	# in each grouping, which is the frame a two-army board cannot show.
-	_pose_seats(CmdArgs.user())
+	await _pose_seats(CmdArgs.user())
 
 	# Dev captures of the selection page: `--co-select` opens it on seat 1,
 	# `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
@@ -197,6 +197,12 @@ func _pose_seats(args: PackedStringArray) -> void:
 					]
 				)
 			)
+		# The picker scrolls the selection into view, which needs a laid-out tree —
+		# a capture on the same frame photographs the board it was showing before.
+		await get_tree().process_frame
+		if _selected_map < _map_cells.size():
+			_map_scroll.ensure_control_visible(_map_cells[_selected_map])
+		await get_tree().process_frame
 	if not CmdArgs.has(args, "--menu-preset"):
 		return
 	var wanted_preset := CmdArgs.value(args, "--menu-preset")
