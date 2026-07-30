@@ -69,7 +69,7 @@ func confirm_abandon() -> void:
 ## Playing row, Esc, a click past the menu — lands back on the board with nothing
 ## changed, which is the whole point of asking twice.
 func handle_confirm_action(action: StringName) -> void:
-	_battle.state = Battle.State.IDLE
+	_battle.state = _battle.rest_state()
 	if action == &"abandon":
 		to_main_menu()
 

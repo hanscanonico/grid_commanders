@@ -510,6 +510,22 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   `make screenshot` stays byte-stable, posed cut-ins go through `pose_at` — and it only plays when
   the *viewer* can see both combatants, asked of `BattlePerspective` (and so of `Vision`), never
   re-derived.
+- **A computer turn is held between commands, never inside one.** `Battle.pause_gate` is the one
+  point `BattleAiRunner` stops at, so Esc during an AI turn is *requested* and honoured at the next
+  boundary — where the board has settled and nothing of that turn's own is on screen, which is what
+  keeps "no interactive menu sits under a banner or a cut-in" (ux-recovery D3) true here rather
+  than by luck. The press still gets an answer of its own, so a pause never reads as a dead key.
+  `Battle.rest_state()` is the single answer to where a closing menu, sheet or banner lands — the
+  player's board, or the frozen board of a paused turn — because IDLE mid-computer-turn hands over
+  a board nobody may play; ask it, never spell `State.IDLE` for "back to rest" again. The pause is
+  presentation and nothing else: no rule, no command and nothing under `core/` or `ai/` learns it
+  happened, the runner picks its turn up where it stopped, and the only thing the menu itself
+  changes is `BattleMenus.map_actions(game, commandable)` dropping the two rows that would act for
+  the side on turn. The wake-up is a signal rather than a flag the runner polls, so leaving the
+  match from the pause menu takes the parked await with the scene instead of resuming into a board
+  that is gone. It matters most in a watched match, where every turn is a computer's and there was
+  otherwise no route to a menu — or out — at all; `ai_pause` in `BattleTransitionScenario` is the
+  driven proof, and the claim it exists for is that a resumed turn really resumes.
 
 ## Communication
 

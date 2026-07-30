@@ -135,6 +135,13 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # battle scene, which would leave the run with nothing to capture, so the two
 # completed exits are proved by driving the real scenes instead (see the ticket).
 #
+# ai_pause is the same route one turn later: the map menu opened *during* a
+# computer turn, which is the only way to a menu at all in a match where every
+# turn is one. It ends the player's turn for real, waits for the AI to take the
+# board, asks for the pause the way Esc does, and then reads the rows back —
+# because the two that act for the side on turn have to be gone, and a menu that
+# still carried them would photograph exactly as well.
+#
 # after_build_menu is COM-11's, and it is a *sequence* rather than a screen: the
 # three battle menus share one ActionMenu, a PanelContainer grows to fit its rows
 # and never shrinks back on its own, and the eleven-row build menu used to leave its
@@ -227,7 +234,7 @@ DEFAULT_MODES=(
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
 	rejected_confirm enemy_range_preview end_turn_ready_units
 	turn_banner_build_attempt outcome_mash_guard
-	powermenu capture_power victory aiturn
+	powermenu capture_power victory aiturn ai_pause
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror

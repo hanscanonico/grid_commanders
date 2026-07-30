@@ -12,8 +12,15 @@ extends Node2D
 ## `execute_command` and `conclude_command` are the AI runner's committed-action
 ## seam. The first delegates to BattleCommandPipeline; the second consumes its
 ## turn/winner facts only after the caller has finished its own interaction-state
-## cleanup. `start_turn`, `enter_victory`, `refresh_fog`, `refresh_hud`, and
+## cleanup. `pause_gate` is the runner's third: the one point a computer turn can
+## be held at. `start_turn`, `enter_victory`, `refresh_fog`, `refresh_hud`, and
 ## `refresh_panel` are the remaining public presentation entry points.
+
+## The wake-up a paused computer turn waits on. A signal rather than a flag the
+## runner polls, because leaving the match through the pause menu frees this
+## scene: the await then dies with the object it was made on, instead of resuming
+## into a board that is gone.
+signal pause_lifted
 
 enum State {
 	IDLE,
@@ -25,6 +32,7 @@ enum State {
 	DROP_TARGETING,
 	VICTORY,
 	AI_TURN,
+	PAUSED,
 	HANDOFF,
 	INFO,
 	CONFIRM,
@@ -43,6 +51,7 @@ const STATE_CONTEXT: Dictionary = {
 	State.DROP_TARGETING: ControlHints.DROP_TARGETING,
 	State.VICTORY: ControlHints.VICTORY,
 	State.AI_TURN: ControlHints.AI_TURN,
+	State.PAUSED: ControlHints.PAUSED,
 	State.HANDOFF: ControlHints.HANDOFF,
 	State.INFO: ControlHints.INFO,
 	State.CONFIRM: ControlHints.END_TURN_GUARD,
@@ -87,6 +96,16 @@ var game: GameState
 var planners: Dictionary = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
+## A pause the player asked for during a computer turn, not yet taken effect. The
+## runner honours it at its next command boundary rather than the press doing it
+## here, because a menu opened mid-command would be painted over by the banner or
+## turn hand-over that command ends with — and nothing interactive may sit under a
+## banner or a cut-in (ux-recovery plan D3).
+var _pause_requested := false
+## True from the moment that pause takes effect until the board is handed back.
+## What makes PAUSED, rather than IDLE, the state everything opened from the pause
+## menu comes back to; see rest_state.
+var _paused := false
 ## The last human seat that actually took a turn, or 0 before anyone has. What
 ## the fogged handoff and the AI-turn viewer are both keyed to (four-players plan
 ## D7), because with mixed seats the device changes hands across intervening
@@ -289,6 +308,52 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 		enter_victory()
 
 
+## Asks for the board back while the computer is playing. Public because the Esc
+## the AI-turn legend advertises is one route to it and a scripted driver is the
+## other. The answer is immediate even though the pause is not: the runner stops
+## at its next command boundary, up to one animation away, so the press says it
+## landed rather than leaving the player pressing it again. A second press re-arms
+## nothing, but it is answered again: the chip fades on a clock of its own, and a
+## slow command outlives it, so the key would otherwise read as dead.
+func request_pause() -> void:
+	if _paused:
+		return
+	_pause_requested = true
+	action_feedback.show_reason("Pausing...", view.screen_pos_for_cell(cursor_cell))
+
+
+## The AI runner's pause point, awaited between commands. Returns at once unless a
+## pause is pending; otherwise it holds the turn with the board exactly as the last
+## command left it, and opens the menu the pause was asked for.
+func pause_gate() -> void:
+	if not _pause_requested:
+		return
+	_pause_requested = false
+	_paused = true
+	_open_map_menu()
+	await pause_lifted
+
+
+## Hands a paused turn back to the computer. Every way out of the pause menu rests
+## on PAUSED; this is the one that leaves it, and the runner picks the turn up
+## where it stopped.
+func resume_turn() -> void:
+	if not _paused:
+		return
+	_paused = false
+	state = State.AI_TURN
+	pause_lifted.emit()
+
+
+## Where a closing menu, sheet or banner lands: the player's own board, or the
+## frozen board of a paused computer turn. One answer for all of them, because
+## "back to rest" used to be spelled IDLE at each site, and IDLE mid-computer-turn
+## hands the player a board they may not play. Public because the abandon
+## confirmation BattleExit owns ends the same way.
+func rest_state() -> State:
+	return State.PAUSED if _paused else State.IDLE
+
+
 ## The banner belongs to the animator, but dismissing it is something a caller
 ## asks the *scene* to do — the scenario driver clears it before a capture.
 func hide_banner() -> void:
@@ -301,7 +366,7 @@ func present_banner(text: String) -> void:
 	state = State.ANIMATING
 	await animator.show_banner(text)
 	if state == State.ANIMATING:
-		state = State.IDLE
+		state = rest_state()
 
 
 ## Hands the view the nodes it draws on. Assignment rather than a constructor
@@ -389,10 +454,26 @@ func _unhandled_input(event: InputEvent) -> void:
 			leave_handoff()
 		return
 	if state == State.AI_TURN:
+		# Esc is the one key that does something here: it asks for the board back.
+		if event.is_action_pressed(&"cancel"):
+			request_pause()
+			return
 		# The computer's turn refuses play, but it says so rather than going quiet.
 		if _is_confirm_press(event):
 			confirm_at(cursor_cell)
 		return
+	if state == State.PAUSED:
+		# The confirm *key* hands the turn back, Esc reopens the menu, and everything
+		# else falls through — the cursor still walks the frozen board and the panel
+		# reads it, which is half of what a pause is for. A click is deliberately not
+		# a resume: it is how a mouse player places the cursor to read a tile, and
+		# handing the turn back for that would take the pause away mid-look.
+		if event.is_action_pressed(&"confirm"):
+			resume_turn()
+			return
+		if event.is_action_pressed(&"cancel"):
+			_open_map_menu()
+			return
 	if state == State.VICTORY:
 		if _outcome.consume_input(event):
 			get_viewport().set_input_as_handled()
@@ -694,7 +775,7 @@ func _handle_build_action(action: StringName) -> void:
 
 
 func _handle_map_action(action: StringName) -> void:
-	state = State.IDLE
+	state = rest_state()
 	if action == &"power":
 		_fire_command_power()
 		return
@@ -836,7 +917,11 @@ func _open_map_menu() -> void:
 	# Its first row is the Command Power, which is one of the two routes the charged
 	# meter in the bottom bar advertises (F is the other). Nothing floats over the
 	# board any more, so the menu only has to clamp inside the band between the bars.
-	action_menu.open(BattleMenus.map_actions(game), view.screen_pos_for_cell(cursor_cell))
+	# Opened over a paused computer turn it drops the rows that would act for that
+	# turn — the menu is the same, whose turn it is is not.
+	action_menu.open(
+		BattleMenus.map_actions(game, not _paused), view.screen_pos_for_cell(cursor_cell)
+	)
 
 
 ## Opens the both-sides commander reference over the board. A modal, like the
@@ -852,7 +937,7 @@ func _open_commander_info() -> void:
 
 func _close_commander_info() -> void:
 	if state == State.INFO:
-		state = State.IDLE
+		state = rest_state()
 
 
 func start_turn() -> void:
@@ -896,6 +981,10 @@ func _begin_turn() -> void:
 		_ai_runner.run()
 	else:
 		_last_human_team = game.current_team
+		# A pause asked for on the computer's last command has been answered by the
+		# turn itself; carrying it forward would stop the *next* computer turn on
+		# a press made two turns ago.
+		_pause_requested = false
 		state = State.IDLE
 
 
