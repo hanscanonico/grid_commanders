@@ -94,8 +94,8 @@ var volley_to := Vector2.ZERO
 ## and how high they arc. Never null while a volley is up.
 var volley_style: BattleStyle
 ## How many figures are firing it. Held separately from `muzzles`, which is only
-## populated for the few frames the barrels are alight — the volley outlives the
-## flash, and a squad that has already stopped flashing is still five men firing.
+## populated while the barrels are alight — a gun's volley outlives its one flash,
+## and a squad that has already stopped flashing is still five men firing.
 var volley_figures := 1
 ## The lob height this particular volley uses. Held here rather than read off the
 ## style, because an indirect weapon arcs higher than the same style fired flat
@@ -252,8 +252,8 @@ func _draw_tracer_dash(at: Vector2, toward: float, tint: Color) -> void:
 ## A heavy round: one dark shot, lit along its top edge and shaded underneath, with
 ## two short dashes of its own passage behind it. Dark on purpose — a shell is a
 ## lump of metal, and the thing that makes it legible against sky and ground alike
-## is that it is the only round in the game that reads as a silhouette rather than
-## as a light source.
+## is that it is the only round *fired* at a target that reads as a silhouette
+## rather than as a light source — the bomb is dark too, but it is dropped.
 func _draw_shell(at: Vector2, toward: float, tint: Color) -> void:
 	for trail in 2:
 		var back := at - Vector2(toward * (9.0 + trail * 7.0), 0.0)
