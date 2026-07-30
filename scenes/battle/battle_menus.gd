@@ -131,14 +131,21 @@ static func build_actions(
 ## into one: which of the two a player wants turns entirely on whether the single
 ## save slot may be overwritten, and a row that decided that quietly would be
 ## wrong for half of them either way.
-static func map_actions(game: GameState) -> Array[Dictionary]:
+##
+## `commandable` is false when this opens over a turn that is not the player's —
+## the pause they may take while the computer plays. The two rows that would *act*
+## for the side on turn go with it; everything else stays, because the match, the
+## device settings and the ways out are exactly what a pause is opened for.
+static func map_actions(game: GameState, commandable: bool = true) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	var co_state := game.commander_state(game.current_team)
-	if co_state.is_ready():
-		actions.append({"id": &"power", "label": co_state.type.power_name})
+	if commandable:
+		var co_state := game.commander_state(game.current_team)
+		if co_state.is_ready():
+			actions.append({"id": &"power", "label": co_state.type.power_name})
 	actions.append({"id": &"commanders", "label": "Commanders"})
 	actions.append({"id": &"speed", "label": "Speed: %s" % Settings.speed.display_name})
-	actions.append({"id": &"end_turn", "label": "End Turn"})
+	if commandable:
+		actions.append({"id": &"end_turn", "label": "End Turn"})
 	actions.append({"id": &"save", "label": "Save"})
 	actions.append({"id": &"save_and_quit", "label": "Save & Main Menu"})
 	actions.append({"id": &"quit", "label": "Main Menu Without Saving"})

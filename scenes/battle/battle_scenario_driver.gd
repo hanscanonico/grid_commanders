@@ -308,7 +308,7 @@ func _run_demo(mode: String) -> void:
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
-		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff":
+		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff", "ai_pause":
 			var transition_error := await BattleTransitionScenario.new(_battle).run(mode)
 			if transition_error != "":
 				_fail(transition_error)

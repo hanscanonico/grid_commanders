@@ -1,9 +1,10 @@
 class_name BattleTransitionScenario
 extends RefCounted
 ## Driven acceptance flows for the state boundaries a turn crosses: the input
-## convention (COM-15) and the mixed-seat viewer and handoff (COM-47). They use
-## the same public Battle entry points and input events a player does, and return
-## a diagnostic rather than owning the smoke run's exit code.
+## convention (COM-15), the mixed-seat viewer and handoff (COM-47), and the pause
+## a player may take while the computer plays. They use the same public Battle
+## entry points and input events a player does, and return a diagnostic rather
+## than owning the smoke run's exit code.
 
 const BUILD_CELL := Vector2i(3, 2)
 const OUTCOME_GUARD_SECONDS := 0.55
@@ -18,6 +19,9 @@ const SECOND_HUMAN_SEAT := 3
 ## How long a wait on the other side of a computer turn may take. Generous: an AI
 ## turn plans, and this only has to catch a flow that will never arrive.
 const TURN_WAIT_FRAMES := 1800
+## The computer's seat on the default board `ai_pause` runs on — the one side
+## Battle plays itself unless `--hotseat` clears it.
+const AI_SEAT := 2
 
 var _battle: Battle
 
@@ -34,6 +38,8 @@ func run(mode: String) -> String:
 			return await _run_outcome_mash_guard()
 		"mixed_seat_handoff":
 			return await _run_mixed_seat_handoff()
+		"ai_pause":
+			return await _run_ai_pause()
 	return "unknown transition scenario: %s" % mode
 
 
@@ -163,6 +169,105 @@ func _run_mixed_seat_handoff() -> String:
 	return ""
 
 
+## The board a player may take back while the computer plays. In a watched match
+## every turn is a computer's, so without this there is no route to a menu — or out
+## of the match — at all; in an ordinary one it is the same route, one turn early.
+##
+## Every claim here photographs exactly like its opposite, which is why the frame
+## is not the check:
+##  - Esc during the computer's turn reaches a menu at all;
+##  - that menu is missing the two rows that would act for the side on turn, and the
+##    side on turn is not the player's;
+##  - closing it leaves the turn *held* rather than handing it back, so the pause is
+##    a place to stand and not a flicker;
+##  - and confirming hands it back to a runner that picks up where it stopped. That
+##    last one is the failure worth catching: a pause that never resumes is a match
+##    frozen for good, and it looks exactly like a pause that does.
+##
+## Ends back in the pause menu, so the capture is of the screen the mode is named
+## for. The second pause lands on the same turn as the first — a computer turn on
+## this board runs to many commands, and the pause is honoured at any boundary
+## between two of them.
+func _run_ai_pause() -> String:
+	var error := await _end_turn_into(AI_SEAT)
+	if error != "":
+		return error
+	error = await _wait_for_state(Battle.State.AI_TURN, "the computer taking its turn")
+	if error != "":
+		return error
+	await _press_key(KEY_ESCAPE)
+	error = await _wait_for_state(Battle.State.MENU, "Esc during the computer's turn")
+	if error != "":
+		return error
+	error = _check_pause_rows()
+	if error != "":
+		return error
+
+	_battle.action_menu.choose(&"cancel")
+	error = await _wait_for_state(Battle.State.PAUSED, "closing the pause menu")
+	if error != "":
+		return error
+	var acted := _acted_count(AI_SEAT)
+	await _press_key(KEY_ENTER)
+	if _battle.state != Battle.State.AI_TURN:
+		return "confirming a paused turn left state %s, not the computer's" % _battle.state
+	for frame in TURN_WAIT_FRAMES:
+		if _acted_count(AI_SEAT) != acted or _battle.game.current_team != AI_SEAT:
+			break
+		await _battle.get_tree().process_frame
+	if _acted_count(AI_SEAT) == acted and _battle.game.current_team == AI_SEAT:
+		return "the resumed computer turn never issued another command"
+
+	if _battle.game.current_team != AI_SEAT:
+		return "the computer's turn ended before the pause could be posed"
+	await _press_key(KEY_ESCAPE)
+	error = await _wait_for_state(Battle.State.MENU, "a second Esc")
+	if error != "":
+		return error
+	# The press is answered before the pause itself lands, and the chip that says so
+	# fades on a real-time clock of its own. Waited out rather than posed, so the
+	# frame this mode leaves behind is the same one every run.
+	for frame in TURN_WAIT_FRAMES:
+		if not _battle.action_feedback.visible:
+			return ""
+		await _battle.get_tree().process_frame
+	return "the pause notice never cleared"
+
+
+## The rows the pause menu was opened with, read back off the live buttons rather
+## than recomputed: what is under test is which menu Battle asked for, and the
+## builder answers that question with itself.
+func _check_pause_rows() -> String:
+	var expected := BattleMenus.map_actions(_battle.game, false)
+	for row: Dictionary in expected:
+		if row.id == &"power" or row.id == &"end_turn":
+			return "the pause menu offers '%s', which would act for the computer" % row.id
+	var buttons := _battle.action_menu.rows.get_children()
+	if buttons.size() != expected.size():
+		return (
+			"the pause menu shows %d rows against the %d it should have"
+			% [buttons.size(), expected.size()]
+		)
+	for i in expected.size():
+		# ActionMenu prints a two-character arm marker ("> " or two spaces) ahead of
+		# every label, so the row is compared from behind it.
+		var text := (buttons[i] as Button).text.substr(2)
+		if text != String(expected[i].label):
+			return "pause menu row %d reads '%s', not '%s'" % [i, text, expected[i].label]
+	return ""
+
+
+## How much of a side has already moved this turn — the cheapest thing a command
+## the computer issues is certain to change, so the resumed turn can be watched for
+## one without waiting the whole turn out.
+func _acted_count(team: int) -> int:
+	var acted := 0
+	for unit: Unit in _battle.game.units:
+		if unit.team == team and unit.acted:
+			acted += 1
+	return acted
+
+
 ## Ends the human turn in hand through the live map menu — the same helper the
 ## endturn and aiturn modes use, guard and all — and waits for `team` to take it.
 func _end_turn_into(team: int) -> String:
@@ -179,6 +284,16 @@ func _expect_viewer(team: int) -> String:
 		"team %d's turn is drawn through team %d's fog, not team %d's who played last"
 		% [_battle.game.current_team, viewer, team]
 	)
+
+
+## Bounded twin of `_until_state`: a flow that never arrives is named rather than
+## left to the sweep's own deadline, which only knows the scenario.
+func _wait_for_state(wanted: Battle.State, what: String) -> String:
+	for frame in TURN_WAIT_FRAMES:
+		if _battle.state == wanted:
+			return ""
+		await _battle.get_tree().process_frame
+	return "%s left the scene in state %s, not %s" % [what, _battle.state, wanted]
 
 
 func _wait_for_team(team: int) -> String:

@@ -316,6 +316,14 @@ mouse, keyboard, or controller throughout.
   blocks play: *Already acted.* on one of yours that has spent its day, *Ready next day.* on one you
   built this turn, *Occupied.* on a destination in range held by a friendly unit the mover can
   neither load into nor join, and *CPU turn.* while the computer is playing
+- Cancel *while the computer is playing* pauses it, and the top bar says so before you press it
+  (`CPU PLAYING   ESC · PAUSE`). The turn stops at its next command rather than mid-animation, so
+  the press is answered by a *Pausing…* chip and the board settles a beat later under the same map
+  menu you get on your own turn — minus the two rows that would act for the side in hand, End Turn
+  and the Command Power. Closing that menu leaves the match held (`PAUSED   ENTER · RESUME   ESC ·
+  MENU`), with the cursor free to walk the board and read tiles; confirm hands the turn back and
+  the computer picks up where it stopped. In a match where every seat is a computer's this is the
+  only way to a menu at all — and so the only way out short of quitting the application
 - `R`, while any unit's movement range is on screen — selected or previewed — toggles a red
   overlay of the cells that unit could bring under fire this turn: a direct unit firing from
   anywhere it could stop, an indirect only from where it stands, since it cannot move and shoot.

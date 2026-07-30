@@ -10,6 +10,10 @@ extends RefCounted
 ## reaching past them, so an AI turn resolves and animates exactly as a player's
 ## does. Battle holds one of these for the whole scene and calls `run()` when a
 ## computer team's turn opens.
+##
+## It is also where a computer turn can be paused: `Battle.pause_gate` is awaited
+## between commands, so the player's Esc is honoured at a boundary where the board
+## has settled rather than in the middle of one — see the two call sites.
 
 ## Safety net: a planner bug can never hang the match, only force a turn to end.
 ## Read from the harness rather than declared here, because the headless engine
@@ -30,6 +34,9 @@ func _init(battle: Battle) -> void:
 ## mirrors: it awaits its own animations and never blocks Battle's frame.
 func run() -> void:
 	var game := _battle.game
+	# A pause asked for during the previous turn's last command is answered before
+	# this one spends a frame on itself; see Battle.pause_gate.
+	await _battle.pause_gate()
 	# Battle awaits the day banner itself before handing the turn over, so this is
 	# only the pacing padding that follows it, not a wait for the banner.
 	var start_delay := Settings.speed.start_delay_seconds()
@@ -48,6 +55,11 @@ func run() -> void:
 		if receipt.winner != 0 or receipt.turn_changed:
 			return
 		await _think()
+		# The one place a computer turn can be held: between two commands, with the
+		# board settled and no banner or cut-in of its own on screen. A watched match
+		# would otherwise have no way back to the menu at all, since every turn in it
+		# is a computer's.
+		await _battle.pause_gate()
 	push_error("AI hit the per-turn command cap; forcing end of turn")
 	await _execute(EndTurnCommand.new())
 
