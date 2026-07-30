@@ -267,8 +267,9 @@ the victory screen.
 By default you play the first side and the computer plays the rest; the seat strip in the menu is
 what changes that. A computer turn plays itself — play is blocked while the AI moves, attacks,
 captures, and builds (a confirm during it answers *CPU turn.* rather than going quiet), and the
-cursor follows each of its actions so you can watch. `make hotseat` drops the AI and lets two players
-share the keyboard instead.
+cursor follows each of its actions so you can watch. Cancel is the one key that still acts: it
+pauses the turn and opens the map menu (see the controls list below). `make hotseat` drops the AI
+and lets two players share the keyboard instead.
 
 Either way, only the team whose day it is can act; a banner announces each turn and the cursor
 jumps to that team's first property. Every banner — the day card, the save and speed confirmations,
