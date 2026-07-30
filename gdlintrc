@@ -171,4 +171,16 @@ max-public-methods: 21
 # addition tripped it, so the three victory poses moved out to
 # scenes/battle/battle_victory_scenario.gd — a split, which is this repo's
 # established answer — and the driver came back under at 1297 lines.
-max-file-lines: 1299
+#
+# 1299 -> 1305, the scenario driver's a ninth time, for the weapon-aware cut-in.
+# A unit now picks between two weapons by matchup, so the five firing signatures
+# are the thing that changed — and every cut-in capture froze the frame *after* the
+# round landed, which shows what a hit looks like and nothing at all of what threw
+# it. `cutin_volley` is the same staging posed mid-flight, and it is eight lines:
+# one pose, one suffix, and reading the suffix where the kill pose was already
+# read. Six of the eight are the note explaining which frame it catches and why.
+# Nothing came out because there is nothing loose left at this size — COM-94's
+# split (the cut-in family, a third of the file, twelve smoke scenarios resting on
+# it) is still the one that is due, and it is not a signature change's job: doing
+# both at once would leave neither half reviewable. The driver sits at exactly 1305.
+max-file-lines: 1305

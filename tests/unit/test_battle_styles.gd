@@ -94,6 +94,75 @@ func test_unarmed_units_have_a_style_that_fires_nothing() -> void:
 		)
 
 
+## The whole point of two weapons: the *same* attacker reads differently depending
+## on what it is shooting at. A tank strafes a foot squad with its machine gun and
+## slams a vehicle with its cannon, and the cut-in has to announce and draw the one
+## the rules actually picked.
+##
+## Pinned as a table of named matchups because this is the one place the two halves
+## meet — DamageChart.select_shot decides the slot, BattleStyleDB.for_weapon dresses
+## it — and either half can be right on its own while the pair says the wrong thing.
+## Nothing here touches the cut-in; both collaborators are Node-free (see above).
+const MATCHUPS: Array[Array] = [
+	[&"tank", &"mech", &"small_arms"],
+	[&"tank", &"infantry", &"small_arms"],
+	[&"tank", &"tank", &"cannon"],
+	[&"md_tank", &"infantry", &"small_arms"],
+	[&"md_tank", &"md_tank", &"cannon"],
+	[&"mech", &"tank", &"rocket"],
+	[&"mech", &"infantry", &"small_arms"],
+	[&"rockets", &"infantry", &"rocket"],
+	[&"rockets", &"tank", &"rocket"],
+	[&"bomber", &"tank", &"bomb"],
+	[&"sub", &"battleship", &"torpedo"],
+	[&"artillery", &"mech", &"cannon"],
+]
+## And the three that never fire at anything. A transport is only ever a defender,
+## so what matters is that it stays silent rather than which weapon it would pick.
+const SILENT: Array[StringName] = [&"apc", &"t_copter", &"lander"]
+
+
+func test_the_selected_weapon_is_dressed_by_the_matchup() -> void:
+	for row in MATCHUPS:
+		var attacker: UnitType = units.by_id(row[0])
+		var shot := chart.select_shot(row[0], row[1], attacker.max_ammo, attacker.max_ammo)
+		assert_not_null(shot, "%s should have a shot at %s" % [row[0], row[1]])
+		if shot == null:
+			continue
+		assert_eq(
+			styles.for_weapon(attacker, shot.slot),
+			styles.by_id(row[2]),
+			"%s vs %s should replay as '%s'" % [row[0], row[1], row[2]]
+		)
+
+
+## The chip beside the unit's name is the label off the style the rules selected, so
+## a signature that fires has to say what it is — an unlabelled one leaves the plate
+## announcing nothing while the frame is full of tracer.
+func test_every_firing_style_names_itself_and_a_silent_one_does_not() -> void:
+	for id in styles.ids():
+		var style := styles.by_id(id)
+		assert_eq(
+			style.label != &"",
+			style.fires(),
+			(
+				"style '%s' %s but its chip label is '%s'"
+				% [id, "fires" if style.fires() else "is silent", style.label]
+			)
+		)
+
+
+func test_a_transport_selects_no_weapon_against_anything() -> void:
+	for id in SILENT:
+		var type := units.by_id(id)
+		for other in units.all():
+			assert_null(
+				chart.select_shot(id, other.id, type.max_ammo, type.max_ammo),
+				"%s should have no shot at %s" % [id, other.id]
+			)
+		assert_eq(styles.for_unit(type).label, &"", "%s should announce no weapon" % id)
+
+
 ## The fallback is the safety net BattleStyleDB's whole contract rests on, so it
 ## has to hold even with no files on disk at all.
 func test_an_unknown_style_falls_back_to_unarmed_rather_than_null() -> void:

@@ -13,7 +13,9 @@ extends RefCounted
 const STYLE_DIR := "res://data/battle_anim"
 
 ## The style anything unrecognised falls back to. Built in code rather than
-## loaded, so the fallback cannot itself be the missing file.
+## loaded, so the fallback cannot itself be the missing file. It overrides every
+## `@export` default that assumes a weapon: a silent style flashes no muzzle and
+## slams no hull back, so this and `unarmed.tres` stay one answer.
 static var _unarmed: BattleStyle
 
 var _by_id: Dictionary = {}
@@ -43,6 +45,7 @@ static func unarmed() -> BattleStyle:
 		_unarmed.id = &"unarmed"
 		_unarmed.projectile = BattleStyle.NONE
 		_unarmed.muzzle = 0.0
+		_unarmed.recoil = 0.0
 	return _unarmed
 
 
@@ -80,6 +83,11 @@ func by_id(id: StringName) -> BattleStyle:
 
 func has(id: StringName) -> bool:
 	return _by_id.has(id)
+
+
+## Every registered id, for a caller holding the whole shelf to one rule.
+func ids() -> Array:
+	return _by_id.keys()
 
 
 func size() -> int:

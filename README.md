@@ -121,6 +121,7 @@ modes carry the matchup in the name:
 ```sh
 make smoke MODES="cutin"                      # the frontline tanks, defender survives
 make smoke MODES="cutin_ko"                   # the same pair, defender routed
+make smoke MODES="cutin_volley"               # the same pair, frozen with the round still in the air
 make smoke MODES="cutin:bomber:tank"          # any matchup, staged wherever it fits the board
 make smoke MODES="cutin_skip"                 # walks a skip across every beat; must never hang
 make smoke MODES="capture_cutin"              # a completing capture, late in its banner
@@ -129,6 +130,12 @@ make smoke MODES="capture_cutin_skip"         # the same skip walk over the capt
 make smoke MODES="cutin_iron_commander"       # Iron v Verdant: the cut-in must wear the board's factions
 make smoke MODES="capture_cutin_iron_commander"   # the same, on the marching squad and the property
 ```
+
+`cutin_volley` is the only one posed *before* the round lands, and that is its reason to exist: a
+unit picks its weapon by matchup, so each weapon's own firing signature — the machine gun's
+stream, the cannon's shell, the missile, the lobbed bomb, the torpedo's wake, the flak burst — is
+only on screen while the shot is in flight. The impact frames show what a hit looks like and
+nothing of what threw it.
 
 The two `_iron_commander` variants are the only cut-in modes that run *with* commanders, and that is
 their whole reason to exist: a commander-less side draws in the row its slot number names, so a
@@ -347,10 +354,12 @@ mouse, keyboard, or controller throughout.
   unlimited ammunition alongside that main gun, and the rules pick between the two for you: the
   machine gun is always what they answer infantry, Mechs and copters with, and it takes over
   against everything else they can hit — every land and air target; ships stay the main gun's
-  alone — once the main gun runs dry, so those three are never silenced. At the
-  start of your turn every unit standing on a property that services it, or in reach of one of your
-  APCs, is refilled — and a transport tops up every unit riding aboard it. Which property services
-  what is the point: a city refits vehicles, an airport
+  alone — once the main gun runs dry, so those three are never silenced. Which one it was is on
+  screen: the battle cut-in gives every weapon its own muzzle, round and recoil, and names it on a
+  chip beside the unit — the same tank strafes a foot squad and slams its cannon into another one.
+  At the start of your turn every unit standing on a property that services it, or in reach of one
+  of your APCs, is refilled — and a transport tops up every unit riding aboard it. Which property
+  services what is the point: a city refits vehicles, an airport
   aircraft, a port hulls, and none of them does another's job
 - A submarine adds one row of its own: **Dive** takes it under, **Surface** brings
   it back. Submerged, only a Cruiser or another Sub can engage it, and it is

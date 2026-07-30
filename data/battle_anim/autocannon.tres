@@ -6,9 +6,13 @@
 script = ExtResource("1")
 id = &"autocannon"
 projectile = &"flak"
+label = &"AUTOCANNON"
 shots_per_figure = 2
 sfx = &"flak"
 travel_scale = 0.95
 arc = 10.0
 tint = Color(1, 0.88, 0.55, 1)
 muzzle = 12.0
+sustained = true
+recoil = 0.50
+impact_radius = 0.0

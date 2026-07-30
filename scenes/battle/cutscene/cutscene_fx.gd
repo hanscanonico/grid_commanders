@@ -1,8 +1,16 @@
 class_name CutsceneFx
 extends Control
 ## The cut-in's overlay layer: whatever crosses the seam or sits on top of both
-## halves — muzzle flash, the volley in flight, the damage each side took, and
-## the VS badge that holds the frame together before the first shot.
+## halves — muzzle flash, the volley in flight, the mark it leaves where it lands,
+## the damage each side took, and the VS badge that holds the frame together before
+## the first shot.
+##
+## Three of those are keyed to the *weapon* rather than the unit, because a unit
+## with two of them picks by matchup: the round's silhouette, the flash at the
+## barrel and the burst on the target all come off the BattleStyle the rules
+## already selected. That is the whole shape of it — a tank strafing a foot squad
+## and the same tank shelling a tank are two different reads of one attacker, and
+## nothing below decides which; it is handed the style and draws it.
 ##
 ## Like CutsceneSide it only draws. Every field below is written by
 ## CombatCutscene once per frame from its own clock, and every number it prints
@@ -16,15 +24,65 @@ const KO_TAG := "K.O."
 const INK := Color(0.078, 0.090, 0.102)
 const FLASH_GOLD := Color(0.988, 0.847, 0.353)
 const KO_RED := Color(0.902, 0.302, 0.243)
+## A rocket's three body colours and how far it pitches off level, in radians.
+const ROCKET_HULL := Color(0.910, 0.925, 0.937)
+const ROCKET_FIN := Color(0.667, 0.702, 0.729)
+const ROCKET_FLAME := Color(1.0, 0.478, 0.235)
+const ROCKET_PITCH := deg_to_rad(22.0)
+## A shell's body, and the tick a strafing round leaves where it hit.
+const SHELL_BODY := Color(0.184, 0.200, 0.220)
+const SPARK_TINT := Color(1.0, 0.878, 0.541)
+## The puffs it leaves, and how far back along its own arc each one sits.
+const ROCKET_PUFFS := 4
+const ROCKET_PUFF_LAG := 0.09
+## The backblast cone behind a launch tube, as multiples of the muzzle radius: how
+## far back it reaches and how wide it has spread by then.
+const BACKBLAST_REACH := 2.6
+const BACKBLAST_FLARE := 1.1
 
 ## Ceiling on rounds drawn per volley. Five figures firing three apiece is
 ## fifteen dashes on a 640 px stage, which reads as a smear rather than a burst.
 const MAX_ROUNDS := 8
 ## How far apart, in travel progress, consecutive rounds leave the barrel.
 const ROUND_STAGGER := 0.085
+## A sustained weapon's stream: how many rounds are in the air at once, how far
+## apart they left, and how much faster the stream cycles than the window it runs
+## in. The overshoot is the whole point — rounds are still leaving the barrel
+## after the first has arrived, which is what makes a burst read as continuous
+## fire rather than as one wave of dashes crossing the frame.
+const STREAM_ROUNDS := 6
+const STREAM_STAGGER := 0.11
+const STREAM_CYCLE := 1.45
+## Fixed vertical spread across a stream's rounds, so a burst walks across the
+## target instead of drilling one hole. Deterministic, like everything here.
+const STREAM_SPREAD := 5.0
 ## How far below the firing line a torpedo runs. The firing line is at the hull's
 ## gun, so this is roughly the waterline the wake belongs on.
 const WAKE_DEPTH := 26.0
+## How far gravity has dragged a bomb down by the time it arrives, on top of its
+## own lob. Kept under the lob's height so the release still reads as upward.
+const BOMB_FALL := 48.0
+## The muzzle strobe's rate, in flashes per second, for a sustained weapon. Fast
+## enough to read as a barrel alight rather than as a countable blink.
+const STROBE_HZ := 18.0
+## A struck squad's spark ticks: how many, how far they scatter either way of the
+## hit, how big, and how fast each blinks in and out over the impact.
+const SPARK_COUNT := 5
+const SPARK_SPREAD := Vector2(9.0, 7.0)
+const SPARK_SIZE := 5.0
+const SPARK_FLICKER := 22.0
+## Rising smoke behind an impact burst: four squares, thrown out along a fan and
+## lifted as they go.
+const SMOKE_COUNT := 4
+const SMOKE_SIZE := 8.0
+const SMOKE_FAN := 0.5
+const SMOKE_LIFT := 13.0
+const SMOKE_TINT := Color(0.47, 0.49, 0.53)
+## How many spokes each fireball is torn into. The kill blast fills the frame and
+## can carry the detail; an impact burst a third of its size cannot, and reads as a
+## circle again once the teeth get that fine.
+const IMPACT_SPOKES := 12
+const BLAST_SPOKES := 18
 
 # --- pose, written every frame by CombatCutscene ------------------------------
 
@@ -36,8 +94,8 @@ var volley_to := Vector2.ZERO
 ## and how high they arc. Never null while a volley is up.
 var volley_style: BattleStyle
 ## How many figures are firing it. Held separately from `muzzles`, which is only
-## populated for the few frames the barrels are alight — the volley outlives the
-## flash, and a squad that has already stopped flashing is still five men firing.
+## populated while the barrels are alight — a gun's volley outlives its one flash,
+## and a squad that has already stopped flashing is still five men firing.
 var volley_figures := 1
 ## The lob height this particular volley uses. Held here rather than read off the
 ## style, because an indirect weapon arcs higher than the same style fired flat
@@ -45,9 +103,22 @@ var volley_figures := 1
 ## every unit that names it.
 var volley_arc := 0.0
 ## Every barrel alight this frame — one per standing figure. Empty for all but
-## the handful of frames after a volley leaves.
+## the handful of frames after a volley leaves, and for the dark half of a
+## sustained weapon's strobe, which the director simply does not populate.
 var muzzles := PackedVector2Array()
 var muzzle_radius := 0.0
+## Which flash the alight barrels wear. Held as the projectile kind rather than
+## the style, because that is the vocabulary the rounds already switch on: a
+## launcher vents backwards out of its tube, everything else throws a star.
+var muzzle_kind := BattleStyle.NONE
+## Which way those barrels point, +1 toward screen right. The backblast is the one
+## thing at a muzzle that has to know, because it comes out the other end.
+var muzzle_toward := 1.0
+## The hit the volley landed, 0 -> 1, where it landed, and what landed. Zero for a
+## shot that cost the target nothing: a miss shakes the frame but leaves no mark.
+var impact_p := 0.0
+var impact_at := Vector2.ZERO
+var impact_style: BattleStyle
 ## The kill blast, 0 -> 1, and where it goes off.
 var blast_p := 0.0
 var blast_at := Vector2.ZERO
@@ -79,6 +150,8 @@ func _draw() -> void:
 		_draw_muzzle(at)
 	if volley_p > 0.0 and volley_p < 1.0 and volley_style != null:
 		_draw_volley()
+	if impact_p > 0.0 and impact_p < 1.0 and impact_style != null:
+		_draw_impact()
 	if blast_p > 0.0 and blast_p < 1.0:
 		_draw_blast()
 	_draw_callout(atk_at, atk_amount, atk_tag, atk_p)
@@ -92,12 +165,42 @@ func _draw() -> void:
 func _draw_volley() -> void:
 	if not volley_style.fires():
 		return
+	if volley_style.sustained:
+		_draw_stream()
+		return
 	var rounds := mini(volley_style.shots_per_figure * maxi(volley_figures, 1), MAX_ROUNDS)
 	for i in rounds:
 		var lag := clampf(volley_p - i * ROUND_STAGGER, 0.0, 1.0)
 		if lag <= 0.0 or lag >= 1.0:
 			continue
 		_draw_round(lag, i)
+
+
+## A sustained weapon's stream. Same silhouettes as a volley — a machine gun throws
+## tracer and an autocannon throws air-bursting flak, and which is which is still
+## the projectile's business — but the timing is a burst's rather than a salvo's:
+## unclamped, so a round that has arrived is gone rather than parked on the target,
+## and cycling faster than the window, so rounds are still leaving after the first
+## has landed and the barrel never looks like it stopped.
+##
+## Squad size still tells: a lone straggler's three rounds are a thinner stream
+## than a full squad's six, which is what `shots_per_figure` has always meant.
+func _draw_stream() -> void:
+	var rounds := mini(volley_style.shots_per_figure * maxi(volley_figures, 1), STREAM_ROUNDS)
+	for i in rounds:
+		var lag := volley_p * STREAM_CYCLE - i * STREAM_STAGGER
+		if lag <= 0.0 or lag >= 1.0:
+			continue
+		_draw_round(lag, i)
+
+
+## Where one round of a stream rides, as a fixed offset off the firing line. The
+## step is coprime with the span, so six consecutive rounds land on six different
+## rungs and the spray never settles into a visible ladder — and it is arithmetic
+## rather than a roll, so a posed still is the same still every run.
+static func _rung(index: int) -> float:
+	var span := roundi(STREAM_SPREAD * 2.0) + 1
+	return float((index * 37) % span) - STREAM_SPREAD
 
 
 ## One round, at `lag` along its travel, drawn the way its projectile kind says.
@@ -112,13 +215,16 @@ func _draw_round(lag: float, index: int) -> void:
 		BattleStyle.TORPEDO:
 			_draw_torpedo(at, toward, tint)
 		BattleStyle.BOMB:
-			# Released moving forward and then owned by gravity, so it lands on
-			# the target rather than flying at it.
-			at.y += lag * lag * 74.0 + (index % 2) * 9.0
+			# Lobbed clear of the aircraft and then owned by gravity, so it rises
+			# a little, tips over and lands on the target rather than flying at
+			# it. Sum of the two, not a choice between them: the lob is what makes
+			# it read as thrown and the fall is what makes it read as dropped.
+			at.y -= sin(lag * PI) * volley_arc
+			at.y += lag * lag * BOMB_FALL + (index % 2) * 9.0
 			_draw_bomb(at, tint)
 		BattleStyle.FLAK:
 			at.y -= sin(lag * PI) * volley_arc
-			at.y += (index % 3 - 1) * 7.0
+			at.y += _rung(index)
 			_draw_flak(at, lag, tint)
 		BattleStyle.ROCKET:
 			at.y -= sin(lag * PI) * volley_arc
@@ -129,28 +235,36 @@ func _draw_round(lag: float, index: int) -> void:
 			at.y += (index % 3 - 1) * 3.0
 			_draw_shell(at, toward, tint)
 		_:
-			at.y += (index % 3 - 1) * 3.0
+			at.y += _rung(index)
 			_draw_tracer_dash(at, toward, tint)
 
 
 ## The default: a bright dash with a hard outline, so it reads over sky, ground
-## and a unit alike.
+## and a unit alike. Short on purpose — six of these in the air at once are a burst,
+## and lengthening them turns the same six into one smear.
 func _draw_tracer_dash(at: Vector2, toward: float, tint: Color) -> void:
-	var length := 14.0
-	var body := Rect2(at.x - (length if toward < 0.0 else 0.0), at.y - 2.0, length, 4.0)
+	var length := 9.0
+	var body := Rect2(at.x - (length if toward < 0.0 else 0.0), at.y - 1.5, length, 3.0)
 	draw_rect(body.grow(1.0), Color(INK, tint.a * 0.8))
 	draw_rect(body, tint)
 
 
-## A heavy round: a hot head with a short streak of its own smoke behind it, so
-## a single shell is as legible as a wall of tracer.
+## A heavy round: one dark shot, lit along its top edge and shaded underneath, with
+## two short dashes of its own passage behind it. Dark on purpose — a shell is a
+## lump of metal, and the thing that makes it legible against sky and ground alike
+## is that it is the only round *fired* at a target that reads as a silhouette
+## rather than as a light source — the bomb is dark too, but it is dropped.
 func _draw_shell(at: Vector2, toward: float, tint: Color) -> void:
-	for trail in 3:
-		var back := at - Vector2(toward * (7.0 + trail * 6.0), -trail * 1.5)
-		draw_circle(back, 4.0 - trail, Color(tint, tint.a * (0.4 - trail * 0.1)))
-	draw_circle(at, 6.0, Color(INK, tint.a * 0.9))
-	draw_circle(at, 4.5, tint)
-	draw_circle(at, 2.0, Color(1.0, 1.0, 1.0, tint.a))
+	for trail in 2:
+		var back := at - Vector2(toward * (9.0 + trail * 7.0), 0.0)
+		var length := 6.0 - trail * 2.0
+		draw_rect(
+			Rect2(back.x - (length if toward < 0.0 else 0.0), back.y - 1.0, length, 2.0),
+			Color(tint, tint.a * (0.5 - trail * 0.18))
+		)
+	draw_circle(at, 6.0, Color(INK, tint.a))
+	draw_circle(at, 4.5, Color(SHELL_BODY, tint.a))
+	draw_circle(at + Vector2(-toward * 1.2, -1.4), 2.0, Color(tint, tint.a * 0.8))
 
 
 ## Anti-air fire: rounds that go off in the air rather than arriving, so the
@@ -163,21 +277,51 @@ func _draw_flak(at: Vector2, lag: float, tint: Color) -> void:
 	draw_circle(at, puff * 0.45, Color(1.0, 1.0, 1.0, tint.a * fade))
 
 
-## A dart dragging a column of smoke that thickens and greys behind it.
+## A rocket: a grey fuselage with a red nosecone and a swept tail fin, flame out
+## the back, riding its arc nose-first — pitched up while it is climbing and down
+## once it is falling, which is the one cue that tells a launcher from a gun at a
+## glance. Behind it, four puffs left along the same arc it flew.
 func _draw_rocket(at: Vector2, toward: float, lag: float, tint: Color) -> void:
-	for trail in 5:
-		var back := at - Vector2(toward * (9.0 + trail * 8.0), 0.0)
-		var puff := 2.0 + trail * 1.6
-		var smoke := clampf(0.42 - trail * 0.07, 0.0, 1.0) * minf(lag * 4.0, 1.0)
-		draw_circle(back, puff, Color(0.78, 0.76, 0.78, smoke * tint.a))
-	var nose := at + Vector2(toward * 6.0, 0.0)
+	for puff in ROCKET_PUFFS:
+		var back := lag - (puff + 1) * ROCKET_PUFF_LAG
+		if back <= 0.0:
+			continue
+		var fade := clampf(0.42 - puff * 0.09, 0.0, 1.0) * tint.a
+		draw_circle(_arced(back), 3.0 + puff * 0.75, Color(SMOKE_TINT.lightened(0.45), fade))
+	# Pitch follows the arc's own slope: nose up over the climb, level at the top,
+	# nose down into the target. The mirror rides in the transform's x scale, so the
+	# body below is written once, forward-facing, for both halves of the frame.
+	draw_set_transform(at, cos(lag * PI) * -ROCKET_PITCH * toward, Vector2(toward, 1.0))
+	_draw_rocket_body(tint.a)
+	draw_set_transform(Vector2.ZERO)
+
+
+## The rocket itself, in its own frame: origin at the middle of the fuselage, +x
+## pointing where it is going, and the tail's flame trailing off the far side.
+func _draw_rocket_body(alpha: float) -> void:
 	draw_colored_polygon(
-		PackedVector2Array(
-			[nose, at + Vector2(-toward * 6.0, -3.5), at + Vector2(-toward * 6.0, 3.5)]
-		),
-		tint
+		PackedVector2Array([Vector2(-2.0, -3.0), Vector2(-2.0, 3.0), Vector2(-5.0, 0.0)]),
+		Color(ROCKET_FIN, alpha)
 	)
-	draw_circle(at - Vector2(toward * 7.0, 0.0), 3.0, Color(FLASH_GOLD, tint.a))
+	draw_circle(Vector2(-6.5, 0.0), 2.2, Color(ROCKET_FLAME, alpha * 0.9))
+	draw_circle(Vector2(-5.0, 0.0), 3.2, Color(FLASH_GOLD, alpha))
+	draw_circle(Vector2(-4.0, 0.0), 1.6, Color(1.0, 1.0, 1.0, alpha))
+	draw_rect(Rect2(-4.0, -1.5, 8.0, 3.0), Color(INK, alpha))
+	draw_rect(Rect2(-3.5, -1.0, 7.0, 2.0), Color(ROCKET_HULL, alpha))
+	draw_rect(Rect2(-3.5, 0.2, 7.0, 0.8), Color(ROCKET_HULL.darkened(0.3), alpha))
+	draw_colored_polygon(
+		PackedVector2Array([Vector2(4.0, -1.6), Vector2(4.0, 1.6), Vector2(7.5, 0.0)]),
+		Color(KO_RED, alpha)
+	)
+
+
+## A point on the volley's own arc, at `lag` along it. What the rocket's smoke
+## trail is laid along, so the puffs sit where the round actually was rather than
+## on the straight line between the barrel and the target.
+func _arced(lag: float) -> Vector2:
+	var at := volley_from.lerp(volley_to, lag)
+	at.y -= sin(lag * PI) * volley_arc
+	return at
 
 
 ## A bomb: small, dark, and falling — the only round in the game whose shape
@@ -203,11 +347,22 @@ func _draw_torpedo(at: Vector2, toward: float, tint: Color) -> void:
 	draw_circle(depth, 2.5, tint)
 
 
-## A four-pointed star at the barrel, drawn for the few frames after a volley
-## leaves. One per standing figure, so a full squad lights up along its whole
-## front and a lone survivor gives off a single flash.
+## What one alight barrel looks like. One per standing figure, so a full squad
+## lights up along its whole front and a lone survivor gives off a single flash.
+##
+## A launcher is the one that differs: a tube vents as much backwards as forwards,
+## so it gets a round flash and a cone of backblast out of its own rear instead of
+## a gun's four-pointed star.
 func _draw_muzzle(at: Vector2) -> void:
 	if muzzle_radius <= 0.0:
+		return
+	if muzzle_kind == BattleStyle.ROCKET:
+		# Three rings falling off rather than one disc: a tube lights the air around
+		# it, and a hard edge on that reads as a painted dot.
+		_draw_backblast(at)
+		draw_circle(at, muzzle_radius, Color(FLASH_GOLD, 0.35))
+		draw_circle(at, muzzle_radius * 0.72, Color(FLASH_GOLD, 0.8))
+		draw_circle(at, muzzle_radius * 0.38, Color(1.0, 1.0, 1.0, 0.95))
 		return
 	var points := PackedVector2Array()
 	for i in 8:
@@ -216,6 +371,97 @@ func _draw_muzzle(at: Vector2) -> void:
 		points.append(at + Vector2(cos(angle), sin(angle)) * reach)
 	draw_colored_polygon(points, FLASH_GOLD)
 	draw_circle(at, muzzle_radius * 0.35, Color(1.0, 1.0, 1.0, 0.95))
+
+
+## The wedge of exhaust out of the back of a launch tube, widening away from it.
+func _draw_backblast(at: Vector2) -> void:
+	var back := -muzzle_toward
+	var reach := muzzle_radius * BACKBLAST_REACH
+	var flare := muzzle_radius * BACKBLAST_FLARE
+	draw_colored_polygon(
+		PackedVector2Array(
+			[
+				at + Vector2(0.0, -muzzle_radius * 0.4),
+				at + Vector2(0.0, muzzle_radius * 0.4),
+				at + Vector2(back * reach, flare),
+				at + Vector2(back * reach, -flare),
+			]
+		),
+		Color(ROCKET_HULL, 0.32)
+	)
+
+
+## What the hit looks like on the receiving side, keyed to the weapon that landed
+## — the other half of "the shot is chosen by matchup": a tank strafing infantry
+## has to leave sparks stitched across them, and the same tank shelling a tank has
+## to leave a hole. Suppressed entirely when the shot cost the target nothing, and
+## kept well under the kill blast, which owns the frame when it comes.
+func _draw_impact() -> void:
+	if impact_style.impact_radius <= 0.0:
+		_draw_sparks()
+		return
+	var reach := ramp(impact_p, [0.0, 0.35, 1.0], [0.0, 1.0, 0.78]) * impact_style.impact_radius
+	var alpha := ramp(impact_p, [0.0, 0.15, 0.75, 1.0], [0.0, 1.0, 0.55, 0.0])
+	_draw_smoke_squares(alpha)
+	# Torn rings rather than nested discs, for the reason the kill blast gives
+	# below: three concentric circles at this size read as a bullseye.
+	_draw_flare(impact_at, reach, Color(KO_RED, alpha * 0.9), 0.0, IMPACT_SPOKES)
+	_draw_flare(impact_at, reach * 0.62, Color(FLASH_GOLD, alpha), 0.4, IMPACT_SPOKES)
+	_draw_flare(impact_at, reach * 0.3, Color(1.0, 1.0, 1.0, alpha), 0.8, IMPACT_SPOKES)
+
+
+## Four squares of smoke thrown up out of the burst along a fan and lifting as they
+## go, so the hit leaves something behind rather than simply switching off.
+func _draw_smoke_squares(alpha: float) -> void:
+	var reach := ramp(impact_p, [0.0, 1.0], [3.0, impact_style.impact_radius * 1.06])
+	for i in SMOKE_COUNT:
+		var angle := -PI * 0.5 + (i - (SMOKE_COUNT - 1) * 0.5) * SMOKE_FAN
+		var at := (
+			impact_at
+			+ Vector2(cos(angle), sin(angle)) * reach
+			+ Vector2(0.0, -impact_p * SMOKE_LIFT)
+		)
+		draw_rect(
+			Rect2(at - Vector2(SMOKE_SIZE, SMOKE_SIZE) * 0.5, Vector2(SMOKE_SIZE, SMOKE_SIZE)),
+			Color(SMOKE_TINT, alpha * 0.8)
+		)
+
+
+## A stream's impact: spark ticks flickering across the target, and no burst at
+## all. Many small hits arriving one after another is the whole read, so each tick
+## blinks on its own beat of the impact rather than fading in step with the rest.
+func _draw_sparks() -> void:
+	var alpha := ramp(impact_p, [0.0, 0.8, 1.0], [1.0, 1.0, 0.0])
+	for i in SPARK_COUNT:
+		if (int(impact_p * SPARK_FLICKER) + i) % 3 == 0:
+			continue
+		draw_colored_polygon(_spark_points(impact_at + _scatter(i)), Color(SPARK_TINT, alpha))
+
+
+## Where one tick lands, either way of the hit. Arithmetic off the index with two
+## steps that stride most of the way across their spans each time, which is what
+## makes five ticks read as a stitch across the target — coprimality alone only
+## buys "never repeats", and a step of ±1 mod its span never repeats either while
+## laying the ticks down in one tight diagonal. The steps belong to *these* spans:
+## the reference used 53 and 29 against spans of 36 and 30, and halving the
+## spreads for a 640px stage is what left them reduced to ±1. Being arithmetic
+## rather than a roll, a posed still catches the same five every run.
+static func _scatter(index: int) -> Vector2:
+	return Vector2(
+		float((index * 7) % int(SPARK_SPREAD.x * 2.0)) - SPARK_SPREAD.x,
+		float((index * 5) % int(SPARK_SPREAD.y * 2.0)) - SPARK_SPREAD.y
+	)
+
+
+## One tick: a small four-pointed star, the same silhouette as a muzzle flash and
+## deliberately so — a spark is a round going off where it landed.
+static func _spark_points(at: Vector2) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in 8:
+		var reach := SPARK_SIZE if i % 2 == 0 else SPARK_SIZE * 0.35
+		var angle := float(i) * PI / 4.0
+		points.append(at + Vector2(cos(angle), sin(angle)) * reach)
+	return points
 
 
 ## The kill blast: a shock ring running out ahead of a ragged fireball, debris
@@ -233,22 +479,23 @@ func _draw_blast() -> void:
 	_draw_smoke()
 	var core := ramp(blast_p, [0.0, 0.22, 1.0], [4.0, 54.0, 18.0])
 	var core_alpha := ramp(blast_p, [0.0, 0.15, 0.7, 1.0], [0.0, 1.0, 0.6, 0.0])
-	_draw_flare(core, Color(KO_RED, core_alpha * 0.9), 0.0)
-	_draw_flare(core * 0.68, Color(FLASH_GOLD, core_alpha), 0.42)
-	_draw_flare(core * 0.34, Color(1.0, 1.0, 1.0, core_alpha), 0.84)
+	_draw_flare(blast_at, core, Color(KO_RED, core_alpha * 0.9), 0.0, BLAST_SPOKES)
+	_draw_flare(blast_at, core * 0.68, Color(FLASH_GOLD, core_alpha), 0.42, BLAST_SPOKES)
+	_draw_flare(blast_at, core * 0.34, Color(1.0, 1.0, 1.0, core_alpha), 0.84, BLAST_SPOKES)
 
 
-## One ragged ring of the fireball: alternating long and short spokes, rotated so
-## the three layers do not line their teeth up.
-func _draw_flare(reach: float, tint: Color, turn: float) -> void:
+## One ragged ring of a fireball: alternating long and short spokes, rotated so
+## stacked layers do not line their teeth up. Shared by the weapon's impact burst
+## and the kill blast, which is why nothing here knows which it is drawing — only
+## how big, how torn and how bright.
+func _draw_flare(at: Vector2, reach: float, tint: Color, turn: float, spokes: int) -> void:
 	if reach <= 0.0 or tint.a <= 0.0:
 		return
 	var points := PackedVector2Array()
-	var spokes := 18
 	for i in spokes:
 		var angle := turn + float(i) * TAU / spokes
 		var length := reach if i % 2 == 0 else reach * 0.66
-		points.append(blast_at + Vector2(cos(angle), sin(angle) * 0.86) * length)
+		points.append(at + Vector2(cos(angle), sin(angle) * 0.86) * length)
 	draw_colored_polygon(points, tint)
 
 

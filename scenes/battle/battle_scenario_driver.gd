@@ -32,13 +32,19 @@ const ROUT_ATTACKER_CELL := Vector2i(8, 8)
 ## callout is at full. Any moment would be byte-stable — the cut-in is a pure
 ## function of its clock — but this is the one that shows the most.
 const CUT_IN_POSE := 0.95
-## And where `cutin_ko` is posed: the blast at its brightest, a third of the way
-## into the death beat, with the K.O. tag already up.
+## And the other two: `cutin_ko` on the blast at its brightest, a third of the way
+## into the death beat with the K.O. tag already up; `cutin_volley` on the round
+## still in the air, early enough that even the fastest style is short of the target
+## and the barrels that flash once are still alight — which is what makes it the
+## frame the weapon *signatures* are checkable in, where the impact pose shows only
+## what a hit looks like and nothing of what threw it.
 const KO_POSE := 1.15
+const VOLLEY_POSE := 0.46
 ## Cut-in modes are `cutin[_ko][:<attacker>:<defender>]`, so they are recognised
 ## by prefix and parsed rather than matched name-for-name.
 const CUT_IN_MODE := "cutin"
 const KO_SUFFIX := "_ko"
+const VOLLEY_SUFFIX := "_volley"
 ## The capture cut-in's poses. `capture_cutin` freezes a completing capture late
 ## in its banner — the property already flipped, the meter at zero, the specks
 ## out; `capture_cutin_partial` freezes an occupying one over its OCCUPYING tag.
@@ -83,11 +89,11 @@ const SKIP_FRAMES: Array[int] = [0, 1, 2, 4, 8, 16, 32, 64, 128, 240]
 ## asked for. That is the one failure the row checks cannot catch, because the
 ## frame they check *is* correct; it is simply not the frame that was asked for.
 ##
-## Combat takes at most one suffix, since all three are `ends_with` and only the
+## Combat takes at most one suffix, since all four are `ends_with` and only the
 ## last would be honoured — `cutin_ko_skip` would drop its `_ko` in silence.
 ## Capture reads `_partial` off the front, so it composes with one of the other
 ## two and must lead.
-const CUT_IN_SUFFIXES: Array[String] = ["", KO_SUFFIX, SKIP_SUFFIX, FACTION_SUFFIX]
+const CUT_IN_SUFFIXES: Array[String] = ["", KO_SUFFIX, VOLLEY_SUFFIX, SKIP_SUFFIX, FACTION_SUFFIX]
 const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	"",
 	PARTIAL_SUFFIX,
@@ -589,6 +595,7 @@ func _check_overlay_scouted(what: String, layer: TileMapLayer) -> int:
 ##
 ##   --demo=cutin                    the two frontline tanks, defender survives
 ##   --demo=cutin_ko                 the same pair, defender routed
+##   --demo=cutin_volley             the same pair, frozen with the round in the air
 ##   --demo=cutin:bomber:fighter     that matchup, staged wherever it fits
 ##   --demo=cutin_ko:artillery:mech  and the same with a kill
 ##   --demo=cutin_iron_commander     the same tanks, Iron v Verdant, and fought
@@ -639,9 +646,10 @@ func _stage_cut_in(spec: String) -> void:
 	_battle.view.sync_sprites()
 	if parts[0].ends_with(SKIP_SUFFIX):
 		await _spam_skip(result, attacker, defender)
-	_battle.animator.cutscene.pose_at(
-		result, attacker, defender, KO_POSE if lethal else CUT_IN_POSE
-	)
+	var pose := KO_POSE if lethal else CUT_IN_POSE
+	if parts[0].ends_with(VOLLEY_SUFFIX):
+		pose = VOLLEY_POSE
+	_battle.animator.cutscene.pose_at(result, attacker, defender, pose)
 	_check_cut_in_rows(attacker, defender)
 
 

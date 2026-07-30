@@ -67,6 +67,14 @@ const WRECK_TINT := Color(0.22, 0.20, 0.21)
 const PIP_COUNT := 10
 const PIP_SIZE := Vector2(6, 8)
 const PIP_GAP := 1.0
+## The weapon chip beside the unit's name: its type size, the padding inside its
+## border, and how far it sits off the name. Small and bordered rather than loud —
+## it answers "which of its two guns is this" without competing with the name.
+const CHIP_FONT_PX := 7
+const CHIP_PAD := Vector2(4.0, 3.0)
+const CHIP_GAP := 8.0
+const CHIP_BORDER := Color(1.0, 1.0, 1.0, 0.25)
+const CHIP_TEXT := Color(1.0, 1.0, 1.0, 0.68)
 const MAX_STARS := 4
 const STAR_STEP := 11.0
 ## How far plate content is held off the frame's outer edge. Generous on purpose:
@@ -93,6 +101,11 @@ var owner_row := 0
 var accent := Color.WHITE
 ## True for the defender's half: art, plates and squad all face the other way.
 var mirror := false
+## What this side is shooting with, for the chip beside its name — the label off the
+## BattleStyle the rules already selected, written here by the director. Empty draws
+## no chip, which is what an unarmed unit and a defender that never answers both
+## want: a chip on a silent side would announce a weapon the frame never shows.
+var weapon_label := ""
 
 # --- pose, written every frame by CombatCutscene ------------------------------
 
@@ -481,6 +494,31 @@ func _draw_name_row(plate: Rect2) -> void:
 		-1,
 		12,
 		Color(1.0, 1.0, 1.0, plate_p)
+	)
+	_draw_weapon_chip(font, plate, PLATE_MARGIN + text_width + CHIP_GAP)
+
+
+## The weapon chip: a bordered box holding one word, set inward of the unit's name
+## so it reads as an annotation on it. Laid out from the same outward measure the
+## rest of the plate uses, so it lands beside the name on either half.
+func _draw_weapon_chip(font: Font, plate: Rect2, from_edge: float) -> void:
+	if weapon_label == "":
+		return
+	var text := font.get_string_size(weapon_label, HORIZONTAL_ALIGNMENT_LEFT, -1, CHIP_FONT_PX)
+	var box := Vector2(text.x + CHIP_PAD.x * 2.0, CHIP_FONT_PX + CHIP_PAD.y * 2.0)
+	var left := _outward_px(from_edge) - (box.x if mirror else 0.0)
+	var top := plate.position.y + (PLATE_TOP_H - box.y) * 0.5 - 1.0
+	var frame := Rect2(left, top, box.x, box.y)
+	draw_rect(frame, Color(INK, 0.35 * plate_p))
+	draw_rect(frame, Color(CHIP_BORDER, CHIP_BORDER.a * plate_p), false, 1.0)
+	draw_string(
+		font,
+		Vector2(left + CHIP_PAD.x, top + box.y - CHIP_PAD.y - 1.0),
+		weapon_label,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		CHIP_FONT_PX,
+		Color(CHIP_TEXT, CHIP_TEXT.a * plate_p)
 	)
 
 
