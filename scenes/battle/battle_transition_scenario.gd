@@ -209,7 +209,10 @@ func _run_ai_pause() -> String:
 		return error
 	var acted := _acted_count(AI_SEAT)
 	await _press_key(KEY_ENTER)
-	if _battle.state != Battle.State.AI_TURN:
+	# The state is read two frames after the press, and an instant-speed runner can
+	# have finished the turn by then. That case has its own diagnostic below; this
+	# check answers only for a turn that is still the computer's.
+	if _battle.state != Battle.State.AI_TURN and _battle.game.current_team == AI_SEAT:
 		return "confirming a paused turn left state %s, not the computer's" % _battle.state
 	for frame in TURN_WAIT_FRAMES:
 		if _acted_count(AI_SEAT) != acted or _battle.game.current_team != AI_SEAT:

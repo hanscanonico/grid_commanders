@@ -312,9 +312,11 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 ## the AI-turn legend advertises is one route to it and a scripted driver is the
 ## other. The answer is immediate even though the pause is not: the runner stops
 ## at its next command boundary, up to one animation away, so the press says it
-## landed rather than leaving the player pressing it again.
+## landed rather than leaving the player pressing it again. A second press re-arms
+## nothing, but it is answered again: the chip fades on a clock of its own, and a
+## slow command outlives it, so the key would otherwise read as dead.
 func request_pause() -> void:
-	if _pause_requested or _paused:
+	if _paused:
 		return
 	_pause_requested = true
 	action_feedback.show_reason("Pausing...", view.screen_pos_for_cell(cursor_cell))
@@ -461,10 +463,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			confirm_at(cursor_cell)
 		return
 	if state == State.PAUSED:
-		# Confirm hands the turn back, Esc reopens the menu, and everything else
-		# falls through — the cursor still walks the frozen board and the panel
-		# reads it, which is half of what a pause is for.
-		if _is_confirm_press(event):
+		# The confirm *key* hands the turn back, Esc reopens the menu, and everything
+		# else falls through — the cursor still walks the frozen board and the panel
+		# reads it, which is half of what a pause is for. A click is deliberately not
+		# a resume: it is how a mouse player places the cursor to read a tile, and
+		# handing the turn back for that would take the pause away mid-look.
+		if event.is_action_pressed(&"confirm"):
 			resume_turn()
 			return
 		if event.is_action_pressed(&"cancel"):
