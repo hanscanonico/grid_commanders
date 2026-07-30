@@ -89,7 +89,7 @@ const SKIP_FRAMES: Array[int] = [0, 1, 2, 4, 8, 16, 32, 64, 128, 240]
 ## asked for. That is the one failure the row checks cannot catch, because the
 ## frame they check *is* correct; it is simply not the frame that was asked for.
 ##
-## Combat takes at most one suffix, since all three are `ends_with` and only the
+## Combat takes at most one suffix, since all four are `ends_with` and only the
 ## last would be honoured — `cutin_ko_skip` would drop its `_ko` in silence.
 ## Capture reads `_partial` off the front, so it composes with one of the other
 ## two and must lead.

@@ -439,12 +439,17 @@ func _draw_sparks() -> void:
 
 
 ## Where one tick lands, either way of the hit. Arithmetic off the index with two
-## steps coprime to their spans, so five ticks scatter without ever repeating a
-## position — and, being arithmetic, a posed still catches the same five every run.
+## steps that stride most of the way across their spans each time, which is what
+## makes five ticks read as a stitch across the target — coprimality alone only
+## buys "never repeats", and a step of ±1 mod its span never repeats either while
+## laying the ticks down in one tight diagonal. The steps belong to *these* spans:
+## the reference used 53 and 29 against spans of 36 and 30, and halving the
+## spreads for a 640px stage is what left them reduced to ±1. Being arithmetic
+## rather than a roll, a posed still catches the same five every run.
 static func _scatter(index: int) -> Vector2:
 	return Vector2(
-		float((index * 53) % int(SPARK_SPREAD.x * 2.0)) - SPARK_SPREAD.x,
-		float((index * 29) % int(SPARK_SPREAD.y * 2.0)) - SPARK_SPREAD.y
+		float((index * 7) % int(SPARK_SPREAD.x * 2.0)) - SPARK_SPREAD.x,
+		float((index * 5) % int(SPARK_SPREAD.y * 2.0)) - SPARK_SPREAD.y
 	)
 
 
