@@ -222,10 +222,13 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
 	_play.accent = _accent_of(attacker.team)
+	var atk_terrain := _terrain_at(attacker.cell)
+	var def_terrain := _terrain_at(defender.cell)
 	_atk.bind(
 		attacker,
 		_row_of(attacker.team),
-		_terrain_at(attacker.cell),
+		atk_terrain,
+		_paving_for(atk_terrain),
 		_owner_row_at(attacker.cell),
 		false,
 		_play.accent
@@ -233,7 +236,8 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 	_def.bind(
 		defender,
 		_row_of(defender.team),
-		_terrain_at(defender.cell),
+		def_terrain,
+		_paving_for(def_terrain),
 		_owner_row_at(defender.cell),
 		true,
 		_accent_of(defender.team)
@@ -286,6 +290,23 @@ func _row_of(team: int) -> int:
 ## the same way. Row 0 for unowned and for plain terrain, which the side applies.
 func _owner_row_at(cell: Vector2i) -> int:
 	return view.identity.atlas_row(view.game.owner_at(cell))
+
+
+## What paves the floor under a cell: the cell's own terrain where that art is a
+## surface, and the surface it names where the art is an object that stands on one
+## instead. Resolved here rather than in the side, which is handed everything it
+## draws — and falling back to the terrain itself, so a board naming a paving that
+## does not exist stages the way it always did rather than not at all.
+func _paving_for(of: TerrainType) -> TerrainType:
+	if not of.stands_in_cutin():
+		return of
+	var paving := view.db.by_id(of.cutin_ground)
+	if paving == null:
+		push_warning(
+			"CombatCutscene: %s paves with unknown terrain '%s'" % [of.id, of.cutin_ground]
+		)
+		return of
+	return paving
 
 
 ## The cell's terrain. An attacker fires from the cell it has already been moved

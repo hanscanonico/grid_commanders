@@ -20,3 +20,5 @@ builds = Array[StringName]([&"foot", &"boot", &"tires", &"treads"])
 services = Array[StringName]([&"land"])
 atlas_col = 6
 team_tinted = true
+cutin_ground = &"road"
+cutin_scenery = &"buildings"
