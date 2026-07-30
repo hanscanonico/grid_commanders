@@ -55,7 +55,14 @@ const SHAKE_FREQ := Vector2(91.0, 77.0)
 ## shoots straight, and the arc is what tells them apart at a glance — so it is
 ## asked of AttackRange, the single authority on who is indirect, rather than
 ## re-derived from min_range here.
-const INDIRECT_LOB := 2.6
+##
+## Held well under a doubling because the styles' own arcs are no longer flat: a
+## rocket lobs high on its own now, and multiplying that again put a rocket battery's
+## round through the top of the band.
+const INDIRECT_LOB := 1.5
+## How long a barrel stays alight after it fires. A sustained weapon ignores this
+## and burns for its whole volley instead — see `_flashing`.
+const FLASH_HOLD := 0.12
 
 
 ## The windows every beat is read out of, in seconds from the wipe. A window of
@@ -231,6 +238,11 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 		true,
 		_accent_of(defender.team)
 	)
+	# The chip names the weapon the *rules* selected, read straight off the style
+	# the snapshotted slot resolved to. A defender that never answered gets none:
+	# there is nothing for it to be shooting with.
+	_atk.weapon_label = String(_atk_style.label)
+	_def.weapon_label = String(_def_style.label) if result.countered else ""
 	_atk.hp_shown = result.attacker_hp_before
 	_def.hp_shown = result.defender_hp_before
 	_squads(_atk, result.attacker_hp_before, _atk_hp_after, result.attacker_died)
@@ -338,7 +350,7 @@ func _apply() -> void:
 
 	_atk.clock = _play.t
 	_atk.plate_p = plates
-	_atk.lunge = _lunge(atk_ready)
+	_atk.lunge = _lunge(atk_ready, _atk_style.recoil)
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
 	_atk.hp_shown = _tick(_result.attacker_hp_before, _atk_hp_after, atk_hit)
 	_atk.fall_p = _play.window(_topple(_beats.atk_impact))
@@ -347,7 +359,7 @@ func _apply() -> void:
 
 	_def.clock = _play.t
 	_def.plate_p = plates
-	_def.lunge = _lunge(ctr_ready)
+	_def.lunge = _lunge(ctr_ready, _def_style.recoil)
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
 	_def.hp_shown = _tick(_result.defender_hp_before, _def_hp_after, def_hit)
 	_def.fall_p = _play.window(_topple(_beats.def_impact))
@@ -390,10 +402,12 @@ func _frame_fx(present: float) -> void:
 		_aim(_def, _atk, returning, _def_style)
 	_fx.muzzles = PackedVector2Array()
 	_fx.muzzle_radius = 0.0
-	if _flashing(_beats.atk_fire) and _atk_style.fires():
-		_flash_barrels(_atk, _atk_style)
-	elif _flashing(_beats.def_fire) and _def_style.fires():
-		_flash_barrels(_def, _def_style)
+	_fx.muzzle_kind = BattleStyle.NONE
+	if _flashing(_beats.atk_fire, _beats.atk_travel, _atk_style) and _atk_style.fires():
+		_flash_barrels(_atk, _def, _atk_style)
+	elif _flashing(_beats.def_fire, _beats.def_travel, _def_style) and _def_style.fires():
+		_flash_barrels(_def, _atk, _def_style)
+	_frame_impact()
 	var def_gone := _play.window(_beats.def_death)
 	_fx.blast_p = def_gone if def_gone > 0.0 else _play.window(_beats.atk_death)
 	_fx.blast_at = (
@@ -432,13 +446,40 @@ func _aim(from: CutsceneSide, at: CutsceneSide, progress: float, style: BattleSt
 	_fx.volley_to = at.position + at.center_point()
 
 
-## Lights every standing figure's barrel on the firing side.
-func _flash_barrels(side: CutsceneSide, style: BattleStyle) -> void:
+## Lights every standing figure's barrel on the firing side, pointed at the other.
+func _flash_barrels(side: CutsceneSide, at_side: CutsceneSide, style: BattleStyle) -> void:
 	var points := PackedVector2Array()
 	for at in side.muzzle_points():
 		points.append(side.position + at)
 	_fx.muzzles = points
 	_fx.muzzle_radius = style.muzzle
+	_fx.muzzle_kind = style.projectile
+	_fx.muzzle_toward = signf(
+		(at_side.position + at_side.center_point()).x - (side.position + side.center_point()).x
+	)
+
+
+## The mark the landing volley leaves on whoever took it. Only one is ever up, for
+## the same reason only one volley is: the counter cannot start until the opening
+## shot has landed.
+##
+## A shot that cost the target nothing leaves nothing — the frame still shakes and
+## the squad still flinches, because being shot at is not the same as being missed
+## by nobody, but there is no hole to draw. `attack_damage` is the sim's own
+## number, read rather than re-derived from the HP snapshots.
+func _frame_impact() -> void:
+	var def_hit := _play.window(_beats.def_impact)
+	var atk_hit := _play.window(_beats.atk_impact)
+	_fx.impact_p = 0.0
+	_fx.impact_style = null
+	if def_hit > 0.0 and def_hit < 1.0 and _result.attack_damage > 0:
+		_fx.impact_p = def_hit
+		_fx.impact_style = _atk_style
+		_fx.impact_at = _def.position + _def.center_point()
+	elif atk_hit > 0.0 and atk_hit < 1.0 and _result.counter_damage > 0:
+		_fx.impact_p = atk_hit
+		_fx.impact_style = _def_style
+		_fx.impact_at = _atk.position + _atk.center_point()
 
 
 ## Fires the shot and explosion sounds as their beats come up. Silent during a
@@ -475,11 +516,14 @@ static func _callout(impact: Vector2, death: Vector2) -> Vector2:
 	return Vector2(impact.x + 0.08, end)
 
 
-## Pull back, then thrust, then settle — the recoil every volley opens with.
-static func _lunge(ready: float) -> float:
+## Pull back, then thrust, then settle — the recoil every volley opens with, scaled
+## by how much of it the weapon earns. A cannon slams its hull back and a machine
+## gun barely twitches, which is the difference between the two reads of the same
+## tank the whole feature is about.
+static func _lunge(ready: float, recoil: float) -> float:
 	if ready <= 0.0:
 		return 0.0
-	return CutsceneFx.ramp(ready, [0.0, 0.4, 0.7, 1.0], [0.0, -7.0, 13.0, 5.0])
+	return CutsceneFx.ramp(ready, [0.0, 0.4, 0.7, 1.0], [0.0, -7.0, 13.0, 5.0]) * recoil
 
 
 ## HP holds for the first third of the impact, then runs down to the number the
@@ -491,9 +535,20 @@ static func _tick(before: int, after: int, progress: float) -> int:
 	return roundi(lerpf(before, after, clampf((progress - 0.35) / 0.65, 0.0, 1.0)))
 
 
-## True for the few frames a barrel is alight after `at`.
-func _flashing(at: float) -> bool:
-	return at > 0.0 and _play.t >= at and _play.t < at + 0.09
+## True while a barrel is alight. A gun flashes once as the round leaves; a burst
+## weapon burns for its whole volley, strobing — it is firing the entire time its
+## stream is in the air, and one flash at the front of that reads as a single shot.
+##
+## The strobe is a function of the clock like everything else here, so a posed still
+## catches it mid-cycle at the same point every run.
+func _flashing(at: float, travel: Vector2, style: BattleStyle) -> bool:
+	if at <= 0.0 or _play.t < at:
+		return false
+	if not style.sustained:
+		return _play.t < at + FLASH_HOLD
+	if _play.t >= travel.y:
+		return false
+	return int(_play.t * CutsceneFx.STROBE_HZ * 2.0) % 2 == 0
 
 
 ## Just above a side's squad, in the overlay's coordinates — where that side's

@@ -6,9 +6,13 @@
 script = ExtResource("1")
 id = &"small_arms"
 projectile = &"tracer"
+label = &"MG"
 shots_per_figure = 3
 sfx = &"shot"
 travel_scale = 0.85
 arc = 0.0
 tint = Color(1, 0.94, 0.62, 1)
 muzzle = 9.0
+sustained = true
+recoil = 0.40
+impact_radius = 0.0

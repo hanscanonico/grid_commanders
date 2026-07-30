@@ -82,5 +82,10 @@ func has(id: StringName) -> bool:
 	return _by_id.has(id)
 
 
+## Every registered id, for a caller holding the whole shelf to one rule.
+func ids() -> Array:
+	return _by_id.keys()
+
+
 func size() -> int:
 	return _by_id.size()

@@ -6,9 +6,13 @@
 script = ExtResource("1")
 id = &"unarmed"
 projectile = &"none"
+label = &""
 shots_per_figure = 1
 sfx = &"shot"
 travel_scale = 1.0
 arc = 0.0
 tint = Color(1, 1, 1, 1)
 muzzle = 0.0
+sustained = false
+recoil = 0.00
+impact_radius = 0.0

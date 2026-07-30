@@ -103,6 +103,15 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # attack, which is the only case that frames a volley with no counter coming
 # back. cutin_skip is a test rather than a picture; see _spam_skip.
 #
+# `cutin_volley` is the same staging frozen with the round still in the air, and it
+# exists because the impact pose above shows what a hit looks like and nothing at
+# all of what threw it. Since a unit picks its weapon by matchup, that is where the
+# five signatures actually differ: tank-vs-mech is the machine gun's stream and
+# plain `cutin_volley` is the same tank's cannon, mech-vs-tank the rocket, and the
+# bomber, sub and anti-air entries the lobbed drop, the wake and the flak. The
+# paired impact frames (cutin:tank:mech, cutin:mech:tank) are the other half of it:
+# a strafing hit leaves sparks and no burst, a rocket leaves a hole.
+#
 # Every one of those runs commander-less, though, and a commander-less side draws
 # in the row its slot number names — so for a while none of them could see a
 # cut-in surface reading a team int where an atlas row belongs (COM-10: Iron
@@ -226,6 +235,9 @@ DEFAULT_MODES=(
 	mixed_seat_handoff+fog
 	cutin cutin_ko cutin_skip cutin_iron_commander
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
+	cutin:tank:mech cutin:mech:tank
+	cutin_volley cutin_volley:tank:mech cutin_volley:mech:tank
+	cutin_volley:bomber:tank cutin_volley:sub:cruiser cutin_volley:anti_air:infantry
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
 	menu_with_save menu_no_save menu_setup_context
 )

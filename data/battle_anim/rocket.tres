@@ -6,9 +6,13 @@
 script = ExtResource("1")
 id = &"rocket"
 projectile = &"rocket"
+label = &"MISSILE"
 shots_per_figure = 1
 sfx = &"rocket"
 travel_scale = 1.25
-arc = 18.0
+arc = 55.0
 tint = Color(1, 0.72, 0.42, 1)
-muzzle = 13.0
+muzzle = 9.0
+sustained = false
+recoil = 0.75
+impact_radius = 31.0

@@ -6,9 +6,13 @@
 script = ExtResource("1")
 id = &"cannon"
 projectile = &"shell"
+label = &"CANNON"
 shots_per_figure = 1
 sfx = &"shot"
 travel_scale = 1.15
-arc = 26.0
+arc = 35.0
 tint = Color(1, 0.83, 0.45, 1)
 muzzle = 16.0
+sustained = false
+recoil = 1.00
+impact_radius = 21.0

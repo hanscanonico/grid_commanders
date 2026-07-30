@@ -6,9 +6,13 @@
 script = ExtResource("1")
 id = &"bomb"
 projectile = &"bomb"
+label = &"BOMBS"
 shots_per_figure = 2
 sfx = &"shot"
 travel_scale = 1.35
-arc = 0.0
+arc = 60.0
 tint = Color(0.86, 0.86, 0.88, 1)
 muzzle = 0.0
+sustained = false
+recoil = 1.00
+impact_radius = 31.0
