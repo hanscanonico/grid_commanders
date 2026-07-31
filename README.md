@@ -308,8 +308,10 @@ mouse, keyboard, or controller throughout.
 - Arrow keys / mouse hover: move the grid cursor
 - Mouse wheel or `+` / `-`: zoom
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
-  its movement range; move the cursor within range to preview the path, then confirm a destination
-  to move there. Remaining fuel caps that range, so a dry unit is stranded where it stands
+  its movement range; move the cursor within range to preview the path — a red arrow laid squarely
+  along the cells the unit would walk, its head on the one it would stop on — then confirm a
+  destination to move there. Remaining fuel caps that range, so a dry unit is stranded where it
+  stands
 - Cancel (`Esc` / `X` / `Backspace`): deselect, or undo an uncommitted move — and, with nothing
   selected, open the map menu, which is the control the top bar's resting key legend names
 - Confirm or left-click on a unit you *cannot* command — an enemy, or one of yours that has
@@ -433,7 +435,8 @@ mouse, keyboard, or controller throughout.
   single one Continue reads
 - The HUD is two opaque bars docked above and below the board, never panels floating on it: the
   board sits in the band they leave over, and only transient things — damage numbers, the capture
-  counter, the attack forecast, the action menu, the first-match mission strip — are ever drawn
+  counter and the badge on the tile being taken, the movement arrow, the attack forecast, the
+  action menu, the first-match mission strip — are ever drawn
   over terrain. The **top bar** carries the day, the side in hand as a faction colour chip and
   name, that commander's doctrine, the funds, a `T · THREAT` chip — dim while the threat lens is
   down, red while it is up — and a one-line **key legend** that swaps with the
@@ -449,8 +452,12 @@ mouse, keyboard, or controller throughout.
   range when it is an indirect, `DIVED`, `LOW FUEL`, `CARRYING …` when it is a loaded transport,
   and `WAITED` or `READY`, with
   the sprite greyed once it has acted this turn; then, pinned right, the tile's artwork, name,
-  defense stars, owner, and `CAP N` while a capture is in progress. With nothing under the cursor
-  the unit and tile thirds go blank and the bar keeps its height — the board never shifts
+  defense stars, owner, and `CAP N` while a capture is in progress — a count the tile itself also
+  wears, as a green flag and the points still owed, so contested properties read at a glance
+  instead of one cursor walk at a time. Under fog only the tiles you can currently see carry it: a
+  capture you have not scouted stays as unannounced as the flip that will follow it. With nothing
+  under the cursor the unit and tile thirds go blank and the bar keeps its height — the board
+  never shifts
 - An army that loses its HQ or its last unit is out of the match, announced by a banner — *Iron
   Dominion eliminated* — over the board that felled it, before play hands over. In a duel that is
   the win, so the banner runs straight into the victory screen
