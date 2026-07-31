@@ -338,8 +338,8 @@ func _draw_hill(base_y: float, center_x: float, width: float, height: float, tin
 	for i in steps + 1:
 		var t := float(i) / steps
 		points.append(Vector2(center_x - width * 0.5 + width * t, base_y - sin(t * PI) * height))
-	points.append(Vector2(center_x + width * 0.5, base_y))
-	points.append(Vector2(center_x - width * 0.5, base_y))
+	# The arc already ends on both base corners and the polygon closes itself, so
+	# appending them again would duplicate vertices and fail triangulation.
 	draw_colored_polygon(points, tint)
 
 
