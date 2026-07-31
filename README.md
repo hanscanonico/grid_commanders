@@ -129,6 +129,7 @@ make smoke MODES="capture_cutin_partial"      # an occupying capture, the proper
 make smoke MODES="capture_cutin_skip"         # the same skip walk over the capture cut-in
 make smoke MODES="cutin_iron_commander"       # Iron v Verdant: the cut-in must wear the board's factions
 make smoke MODES="capture_cutin_iron_commander"   # the same, on the marching squad and the property
+make smoke MODES="cutin_scenery:mech:mech"    # fought over woods and mountain: trees one half, peaks the other
 ```
 
 `cutin_volley` is the only one posed *before* the round lands, and that is its reason to exist: a
@@ -142,6 +143,14 @@ their whole reason to exist: a commander-less side draws in the row its slot num
 surface reading a team int where an atlas row belongs looks correct in every other capture. They
 stage Iron against Verdant — rows 3 and 4, neither equal to its slot — and fight over a property
 apiece, so the armies, the ground and the flipping building all carry a faction row.
+
+`cutin_scenery` covers the other half of the ground plane. A terrain either *paves* that plane with
+its own art or *stands* a drawn shape on it, and three shapes stand: `cutin_iron_commander` already
+fights over a base and an HQ and so sweeps the buildings, but every other mode fights on plains,
+road or open water, all of which pave — leaving trees and peaks photographed by nothing, though
+either turns up the moment a unit fires from woods or a mountain. This one stands the pair on the
+default board's adjacent woods and mountain, one shape per half, and carries its matchup because a
+mountain takes foot and boot only.
 
 Every cut-in mode is a test as well as a picture: each reads the atlas rows back off the posed art
 and fails the run unless every one is the row `SideIdentity` gives that side. A cut-in painted in
