@@ -226,13 +226,14 @@ because the five things it teaches are the land game's. `foursquare`, `compass`,
 plan a ferry, so a board it may have to fight
 across in any grouping has to let every army reach every other on foot — which on `windrose` leaves
 the air as the one domain that ignores the board's walls.
-The multi-army boards seat their armies at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW —
-so the fair duel on a four-seat board is an opposite pair, 1&3 or 2&4. A square board makes that
-true by quarter-turn; `heartland` is 28×20 and cannot rotate onto itself, so it is laid out under
-the rectangle's own symmetry instead, mirrored left-right and top-bottom. Every seat's corner is
-then a reflection of both its neighbours' and an exact half-turn of its opposite's: no seat is
-favoured, and each has the same near neighbour (15 cells of HQ separation across the short axis)
-and far one (23 across the long).
+`heartland` seats its armies at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW — so its
+fair duel is an opposite pair, 1&3 or 2&4, the same convention `foursquare`, `pinwheel` and
+`windrose` follow on their squares (`compass` seats its four at the compass points, and `trident`'s
+three are the prongs). The plan's rotational convention assumes a board that turns onto itself;
+`heartland` is 28×20 and cannot, so it is laid out under the rectangle's own symmetry instead,
+mirrored left-right and top-bottom. Every seat's corner is then a reflection of both its
+neighbours' and an exact half-turn of its opposite's: no seat is favoured, and each has the same
+near neighbour (15 cells of HQ separation across the short axis) and far one (23 across the long).
 
 `forge`, `foursquare`, `arsenal` and `steelworks` are the production boards, and the only ones that
 hand out **no starting units at all**: what you get instead is factories. On `forge`, `arsenal` and
