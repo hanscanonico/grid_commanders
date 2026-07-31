@@ -15,13 +15,16 @@ extends RefCounted
 ## duel by definition. Version 5 adds the grouping: which armies stood together,
 ## because a roster stopped implying who was fighting whom. Version 6 adds the
 ## fallen, because an army leaving the board stopped being the end of the match.
-## All five are purely additive, so older saves are still read rather than
-## rejected — a save with no commander block loads with both sides neutral, one
-## with no dive flag loads with every boat on the surface, one with no roster
-## loads as the duel it was, one with no grouping loads as the free-for-all it
-## was, and one with no casualty list loads with every army it names still
-## standing, which is exactly the match each recorded. New saves are always
-## written at the current version.
+## Version 7 adds each army's home HQ, because a seat may now stay empty and an HQ
+## may change hands, so which HQ fells which army stopped being re-derivable from a
+## board mid-match. All six are purely additive, so older saves are still read
+## rather than rejected — a save with no commander block loads with both sides
+## neutral, one with no dive flag loads with every boat on the surface, one with no
+## roster loads as the duel it was, one with no grouping loads as the free-for-all
+## it was, one with no casualty list loads with every army it names still standing,
+## and one with no home HQs takes them from the map it names, which is exactly
+## where every army in such a save began. New saves are always written at the
+## current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -32,9 +35,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 6
+const VERSION := 7
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7]
 
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
@@ -98,6 +101,7 @@ const KEY_RULES := {
 	"teams": {"since": 4, "shape": Shape.ARRAY},
 	"sides": {"since": 5, "shape": Shape.DICTIONARY},
 	"eliminated": {"since": 6, "shape": Shape.ARRAY},
+	"home_hq": {"since": 7, "shape": Shape.ARRAY},
 }
 ## The same, per unit entry: everything but the dive flag shipped with the format, and
 ## `dived` is version 3's whole reason for existing. What a `carrier` number may *be* —
@@ -128,6 +132,15 @@ const PROGRESS_KEY_RULES := {
 	"x": {"since": 1, "shape": Shape.NUMBER},
 	"y": {"since": 1, "shape": Shape.NUMBER},
 	"points": {"since": 1, "shape": Shape.NUMBER},
+}
+## And per army in the home-HQ list, which is a third list of that same shape: a
+## cell and one number about it. Listed at 7 rather than 1 because that is the
+## version that started writing it, which is what keeps an older save from being
+## asked for fields it never promised.
+const HOME_HQ_KEY_RULES := {
+	"x": {"since": 7, "shape": Shape.NUMBER},
+	"y": {"since": 7, "shape": Shape.NUMBER},
+	"team": {"since": 7, "shape": Shape.NUMBER},
 }
 ## And per side inside the commander block: all three arrived with the block itself at
 ## version 2, which is why they share its version and why a version 1 save is asked for
@@ -234,6 +247,7 @@ static func encode(
 		"teams": state.teams.duplicate(),
 		"sides": _encode_sides(state.sides),
 		"eliminated": _encode_eliminated(state),
+		"home_hq": _encode_home_hq(state),
 		"fog": state.fog_enabled,
 		"day": state.day,
 		"current_team": state.current_team,
@@ -293,6 +307,7 @@ static func decode(
 	state.teams = roster
 	state.sides = _decode_sides(data)
 	state.eliminated = _decode_eliminated(data)
+	state.home_hq = _decode_home_hq(data, map, roster)
 	state.damage_chart = damage_chart
 	state.fog_enabled = bool(data.get("fog", false))
 	state.day = int(data["day"])
@@ -451,6 +466,9 @@ static func validate(data: Dictionary) -> String:
 	error = _eliminated_error(data)
 	if error != "":
 		return error
+	error = _home_hq_error(data)
+	if error != "":
+		return error
 	# The pass stops at each key's own value too, and a Dictionary that is hollow, a list
 	# of things that are not numbers and a number spelled as a word are all perfectly good
 	# values at that level.
@@ -552,7 +570,39 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	var cells_error := _cells_on_board(data["owners"], map, "owned property")
 	if cells_error != "":
 		return cells_error
-	return _cells_on_board(data.get("capture_progress", []), map, "capture in progress")
+	cells_error = _cells_on_board(data.get("capture_progress", []), map, "capture in progress")
+	if cells_error != "":
+		return cells_error
+	return _home_hq_board_error(data, map, version)
+
+
+## "" when every home HQ the save names is an HQ standing on `map`, else why one is
+## not. `_home_hq_error`'s half of the same field, split for the reason the whole
+## file is split: which cells exist and what stands on them is the board's answer.
+##
+## The terrain check is the one that matters. A home HQ on a cell that is not an HQ
+## is an army that cannot be captured out of the match at all — a save that loads
+## clean and plays a rule short, which is the class of damage this pair exists to
+## refuse.
+##
+## Gated on the version that writes the field, like its sibling, and for a second
+## reason here: `board_error` floors an unreadable version to the oldest one, which
+## asks a home-HQ entry for none of its fields — so the reads below would be
+## coercions over records nothing checked.
+static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -> String:
+	if version < int(KEY_RULES["home_hq"]["since"]):
+		return ""
+	var error := _entries_error(data.get("home_hq"), HOME_HQ_KEY_RULES, version, "home HQ")
+	if error != "":
+		return error
+	error = _cells_on_board(data["home_hq"], map, "home HQ")
+	if error != "":
+		return error
+	for entry: Dictionary in data["home_hq"] as Array:
+		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
+		if map.terrain_at(cell).id != GameState.HQ_TERRAIN:
+			return "team %d's home HQ at %s is not an HQ" % [int(entry["team"]), cell]
+	return ""
 
 
 ## "" when a save of `version` carries the commander block that version wrote, else
@@ -787,6 +837,82 @@ static func _decode_eliminated(data: Dictionary) -> Dictionary:
 	return fallen
 
 
+## Where each army began: `{team, x, y}` per seat that has a home HQ, in seat
+## order. A list rather than a dictionary keyed by team because it is the same
+## shape of thing as `owners` and `capture_progress` beside it — a cell and one
+## number about it — and shares their per-entry checks.
+static func _encode_home_hq(state: GameState) -> Array:
+	var homes: Array = []
+	for team in state.teams:
+		if state.home_hq.has(team):
+			var cell: Vector2i = state.home_hq[team]
+			homes.append({"team": team, "x": cell.x, "y": cell.y})
+	return homes
+
+
+## Where each army began, for the match being resumed.
+##
+## Below the version that writes it the answer comes from the *map*, and is exact
+## rather than a guess: such a save always seated the board's full roster, so every
+## army it names began on the HQ its map file gave it. Which is why this is not
+## inferred from the save's own ownership — mid-match a conqueror owns the HQ it
+## took as well as its own, and "the HQ this team owns" has two answers exactly
+## when the distinction matters.
+##
+## Floors on anything it cannot read, like its siblings, and to the same map-derived
+## answer; `_home_hq_error` reports a list that is wrong rather than leaving it to
+## be papered over here.
+static func _decode_home_hq(data: Dictionary, map: MapData, roster: Array[int]) -> Dictionary:
+	if _claimed_version(data) < int(KEY_RULES["home_hq"]["since"]):
+		return GameState.home_hqs(map, roster)
+	var saved: Variant = data.get("home_hq")
+	if not (saved is Array):
+		return GameState.home_hqs(map, roster)
+	var homes: Dictionary = {}
+	for entry: Variant in saved as Array:
+		if not (entry is Dictionary):
+			return GameState.home_hqs(map, roster)
+		var record := entry as Dictionary
+		for key: String in HOME_HQ_KEY_RULES:
+			if not _is_shape(record.get(key), int(HOME_HQ_KEY_RULES[key]["shape"])):
+				return GameState.home_hqs(map, roster)
+		homes[int(record["team"])] = Vector2i(int(record["x"]), int(record["y"]))
+	return homes
+
+
+## "" when the save's home HQs name armies that play, at most one each, else why
+## they do not.
+##
+## A home HQ is what an army is beheaded through, so a stray entry is a seat that
+## can be taken out of a match it was never in, and a second entry for one army is
+## an ambiguity the last line silently wins — either way the match loads clean and
+## the rule that ends it fires on the wrong cell. Whether the cell is a real HQ on a
+## real board is `board_error`'s, which has the map this one deliberately does not.
+##
+## An army with *no* entry is fine and stays fine: a board is allowed to deal a seat
+## no HQ, and such an army simply cannot be captured out of the match.
+##
+## Asked only of the version that writes it. Below that there is no list to be
+## wrong — `_decode_home_hq` takes the map's answer, which no save can damage.
+static func _home_hq_error(data: Dictionary) -> String:
+	var version := _claimed_version(data)
+	if version < int(KEY_RULES["home_hq"]["since"]):
+		return ""
+	var error := _entries_error(data["home_hq"], HOME_HQ_KEY_RULES, version, "home HQ")
+	if error != "":
+		return error
+	var roster := _roster(data)
+	var seen: Dictionary = {}
+	for entry: Dictionary in data["home_hq"] as Array:
+		var team := int(entry["team"])
+		if not roster.has(team):
+			return "the save gives a home HQ to team %d, which does not play" % team
+		if seen.has(team):
+			return "the save gives team %d two home HQs" % team
+		seen[team] = true
+	return ""
+
+
 ## "" when the save's casualty list describes a match that could still be resumed,
 ## else why it does not.
 ##
@@ -892,16 +1018,25 @@ static func _teams_error(data: Dictionary) -> String:
 	return ""
 
 
-## Whether `roster` is a roster a board may seat: at least one army, and the seats taken
-## in order from 1 with no gaps. `MapData._build_roster`'s rule, asked of a save rather
-## than of a board — seats are positional everywhere downstream, so a hole is a side every
-## list indexes past.
+## Whether `roster` is a roster a match may have seated: at least a duel, at most the
+## seats the rules recognise, each of them a real seat, each named once, in seat order.
+##
+## A *gap* is legal and was not always: a board is still authored full and
+## `MapData._build_roster` still deals its seats from 1 with none missing, but a match
+## fills any two or more of them (open-seats plan D1), so `[1, 3, 4]` is the perfectly
+## ordinary state of a four-seat board played by three. What stays refused is a roster no
+## seating could have produced — a seat outside the rules, a seat twice, seats out of
+## order, or too few armies to have a match at all — because every per-side rule in this
+## file is derived from this list, and one that is wrong reports the damage rather than
+## the cause.
 static func _is_seatable(roster: Array[int]) -> bool:
-	if roster.is_empty() or roster.size() > MapData.PLAYER_TEAMS.size():
+	if roster.size() < GameState.MIN_SEATS or roster.size() > MapData.PLAYER_TEAMS.size():
 		return false
-	for slot in roster.size():
-		if roster[slot] != MapData.PLAYER_TEAMS[slot]:
+	var previous := 0
+	for team in roster:
+		if not MapData.PLAYER_TEAMS.has(team) or team <= previous:
 			return false
+		previous = team
 	return true
 
 

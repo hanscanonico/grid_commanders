@@ -11,6 +11,13 @@ extends RefCounted
 const TEAMS: Array[int] = MapData.PLAYER_TEAMS
 const CAPTURE_POINTS := 20
 const INCOME_PER_PROPERTY := 1000
+## The terrain a seat is beheaded through. Named once here because two rules read
+## it — which HQ is a team's home, and whether taking one ends that team — and a
+## third spelling of the id is a third place to get it wrong.
+const HQ_TERRAIN := &"hq"
+## The smallest roster a seating may leave. Below it there is no match: one army
+## has already won and none has nobody to play. See `create`.
+const MIN_SEATS := 2
 
 var map: MapData
 ## The armies this match seats, in turn order. Seeded by `create` from the map,
@@ -57,6 +64,21 @@ var winner: int = 0
 ## the same question: an army with no units on day one has not fallen, and an army
 ## whose HQ was taken still had units the moment before.
 var eliminated: Dictionary = {}
+## team -> the cell its HQ **started** on. Recorded by `create` for every seat the
+## match fills, and by the codec for every match it loads; nothing else writes it,
+## because where an army began is not something a turn can change.
+##
+## It exists because "capturing an HQ eliminates its owner" is only exact while
+## every HQ has a living owner and no army holds two (open-seats plan D3). A
+## vacant seat's HQ has no owner to fell, and a survivor who takes a fallen army's
+## HQ owns two — so that rule would let a rival behead them through the outpost
+## they conquered. Only a team's *home* HQ fells it; every other one is a
+## high-value property with HQ terrain stars, captured like a city.
+##
+## A team with no entry — a hand-built fixture, a board that deals it no HQ —
+## cannot be eliminated by capture at all, which is the honest answer when nothing
+## ever recorded a home to lose.
+var home_hq: Dictionary = {}
 ## Fog of war (a match option; see Vision for the rules).
 var fog_enabled := false
 ## team -> CommanderState. A team with no entry plays the neutral commander,
@@ -75,21 +97,45 @@ var map_path := ""
 ## radius, a repair discount — is resolved against its real commander rather
 ## than the neutral one. Callers that name commanders must pass them here, not
 ## set_commander after: begin_turn only runs once, and it runs inside create.
+##
+## `p_seats` is which of the board's seats this match fills — empty means every
+## one of them, which is today's behaviour verbatim (open-seats plan D1). The map
+## still owns how many seats exist and where they sit; the match only chooses
+## which are taken, and the choice bends downward only. A seat left out **never
+## enters the state**: no purse, no commander, no turn, no banner. Its starting
+## units are skipped and its properties open neutral, so its HQ and base become
+## ground anyone may take — the same semantics a fallen army's ground gets.
+##
+## Which is the invariant worth holding onto, and the reason nothing downstream
+## needed changing: **a reduced match on a big board produces exactly the state a
+## small board would have produced.**
 static func create(
 	p_map: MapData,
 	unit_db: UnitDB,
 	p_damage_chart: DamageChart = null,
-	p_commanders: Dictionary = {}
+	p_commanders: Dictionary = {},
+	p_seats: Array[int] = []
 ) -> GameState:
 	var state := GameState.new()
 	state.map = p_map
 	state.damage_chart = p_damage_chart
-	state.property_owners = p_map.initial_owners()
-	state.teams = p_map.teams()
+	state.teams = _filled_seats(p_map.teams(), p_seats)
+	if state.teams.size() < MIN_SEATS:
+		push_error(
+			(
+				"GameState: seats %s leave %d of the board's %s, which is no match"
+				% [p_seats, state.teams.size(), p_map.teams()]
+			)
+		)
+		return null
+	state.property_owners = _owners_of(p_map, state.teams)
+	state.home_hq = home_hqs(p_map, state.teams)
 	state.current_team = state.teams[0]
 	for team in state.teams:
 		state.funds[team] = 0
 	for entry: Dictionary in p_map.starting_units:
+		if not state.teams.has(entry.team):
+			continue  # a vacant seat fields nothing
 		var type: UnitType = unit_db.by_symbol(entry.symbol)
 		if type == null:
 			push_error("GameState: unknown unit symbol '%s'" % entry.symbol)
@@ -111,6 +157,60 @@ static func create(
 		state.set_commander(team, p_commanders[team])
 	TurnRules.begin_turn(state)  # day-1 income and upkeep for the first player
 	return state
+
+
+## The board's roster narrowed to the seats a match fills, in seat order. Empty
+## `seats` is every one of them.
+##
+## Never a renumber: closing seat 2 of four leaves `[1, 3, 4]`, because `[owners]`,
+## `[units]`, the liveries and the commander picks are all keyed by the seat's own
+## number. Turn order is roster order over what is left, and the day still wraps on
+## the roster, so a gap costs nothing — both read the list by index.
+static func _filled_seats(roster: Array[int], seats: Array[int]) -> Array[int]:
+	if seats.is_empty():
+		return roster
+	var filled: Array[int] = []
+	for team in roster:
+		if seats.has(team):
+			filled.append(team)
+	return filled
+
+
+## The board's starting ownership with the vacant seats' ground opened up. A
+## property nobody at the table owns is neutral rather than absent from the board:
+## it is the prize a reduced match is played over.
+static func _owners_of(map: MapData, roster: Array[int]) -> Dictionary:
+	var owners := map.initial_owners()
+	for cell: Vector2i in owners.keys():
+		if not roster.has(owners[cell]):
+			owners.erase(cell)
+	return owners
+
+
+## Where each of `roster` starts: `team -> HQ cell`, for the seats a board deals an
+## HQ. **The one derivation of a home HQ**, shared by `create` and by the codec
+## reading a save written before the field existed — which is exact, because such a
+## save always played the board's full roster and every army still began on the HQ
+## its map file gave it.
+##
+## Read off the map rather than off a running board on purpose: mid-match, a
+## conqueror owns the HQ it took as well as the one it started on, so "the HQ this
+## team owns" stops being a question with one answer. The map's answer never moves.
+##
+## Cells are walked in sorted order so a board that hands one seat two HQs still
+## names the same home every time it is loaded.
+static func home_hqs(map: MapData, roster: Array[int]) -> Dictionary:
+	var owners := map.initial_owners()
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in owners:
+		cells.append(cell)
+	cells.sort()
+	var homes: Dictionary = {}
+	for cell in cells:
+		var team: int = owners[cell]
+		if not homes.has(team) and roster.has(team) and map.terrain_at(cell).id == HQ_TERRAIN:
+			homes[team] = cell
+	return homes
 
 
 # --- commanders --------------------------------------------------------------
