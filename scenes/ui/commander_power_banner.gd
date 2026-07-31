@@ -51,8 +51,8 @@ func _build() -> void:
 	row.add_theme_constant_override("separation", 0)
 	add_child(row)
 
-	# A fixed-size portrait field: an explicit height so the portrait fills it, and
-	# a width the HBox will not stretch (it has no expand flag).
+	# A fixed-size portrait field: an explicit height the portrait is fitted into,
+	# and a width the HBox will not stretch (it has no expand flag).
 	_field = Panel.new()
 	_field.custom_minimum_size = Vector2(104, 108)
 	_field.clip_contents = true

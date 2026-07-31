@@ -635,11 +635,11 @@ tiles are generated programmer art. The aircraft, the fleet, and the Missiles la
 hand-authored isometric sprites, vendored under `assets/sprites/units`, and the airport and port
 buildings are the same class of art, vendored under `assets/sprites/iso_buildings`. The iron and
 verdant rows of every unit and property are design-system faction tints vendored beside the art
-they colour — committed sources, not script output. The commander portraits and faction emblems are generated
-too (`make portraits`) — project-original vector art drawn to the commander-portrait design
-handoff's spec, no third-party pixels. All sound is generated placeholder chiptune (`make sfx`). There is no music yet — it
-needs licensed tracks. Third-party asset licenses must be tracked in `assets/LICENSES.md`. No
-Nintendo assets or names may ever be used.
+they colour — committed sources, not script output. The commander portraits and faction emblems are
+generated too (`make portraits`) — project-original vector art drawn to the "Heroic Commander
+Portraits" design handoff's spec, no third-party pixels. All sound is generated placeholder chiptune
+(`make sfx`). There is no music yet — it needs licensed tracks. Third-party asset licenses must be
+tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
 `make tiles` rebuilds the art in seven ordered steps: `sprites-check` and `unit-sprites-check`
 verify the build inputs, `ground` draws the terrain headless, `sprites` composites the PixVoxel art
