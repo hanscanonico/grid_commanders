@@ -273,6 +273,27 @@ func test_every_shoal_can_be_reached_by_a_landing_craft() -> void:
 			)
 
 
+## A property no army can walk to is income nobody collects — unless something
+## can be *delivered* to it, which is the whole point of an island of cities.
+## Air freight is not a promise the board can make — a t-copter needs an airport
+## somebody happens to own — so the lander is the yardstick, and it unloads from
+## a shoal or a port and nowhere else (DropCommand, over UnitType.unload_terrain).
+## An offshore property therefore owes its own landmass one of those, and one a
+## lander can actually sail to. Without it the cities are scenery that pays nobody for
+## the whole match, and nothing else on the board says so — the map parses, the
+## HQs connect, and the beach lint above is silent because there is no beach.
+func test_every_property_off_the_mainland_can_be_landed_on() -> void:
+	for map in _maps():
+		assert_eq(
+			_delivery_error(map),
+			"",
+			(
+				"%s: a property no army can walk to is only a prize if a landing " % _name(map)
+				+ "craft can put a soldier beside it"
+			)
+		)
+
+
 ## The two lints above pass on every shipped map, which is only reassuring if
 ## they can fail at all. These two check the mechanism against a board built to
 ## break it, so "green" keeps meaning something after the next map lands.
@@ -285,6 +306,23 @@ func test_the_shared_water_lint_can_tell_two_seas_apart() -> void:
 	assert_false(
 		_flood(map, ports[0], TerrainType.SHIP).has(ports[1]),
 		"a hull cannot sail across dry land, and the lint has to notice"
+	)
+
+
+## Same treatment for the delivery lint: one island city with no beach, and the
+## same island with one, so "green" means the check looked rather than shrugged.
+func test_the_delivery_lint_can_tell_a_prize_from_a_marooned_city() -> void:
+	var marooned := MapData.parse("[terrain]\nPSSSS\nSSSCS\nSSSSS\n", terrain_db)
+	assert_not_null(marooned)
+	assert_ne(
+		_delivery_error(marooned),
+		"",
+		"a city ringed by open water can never be captured, and the lint has to notice"
+	)
+	var landable := MapData.parse("[terrain]\nPSSSS\nSSSC_\nSSSSS\n", terrain_db)
+	assert_not_null(landable)
+	assert_eq(
+		_delivery_error(landable), "", "the same city with a beach beside it is a prize, not a trap"
 	)
 
 
@@ -531,6 +569,40 @@ func _is_land(map: MapData, cell: Vector2i, with_shoals: bool) -> bool:
 	if terrain == null or not terrain.is_passable(TerrainType.FOOT):
 		return false
 	return with_shoals or terrain.id != SHOAL
+
+
+## The first property this board strands, as a sentence, or "" when every one of
+## them is either walkable from an HQ or landable from a dock. Walkable is asked
+## first because it is the ordinary case: on a board with no islands at all this
+## returns before a single lander flood runs.
+func _delivery_error(map: MapData) -> String:
+	var walkable := {}
+	for hq in _cells_of_terrain(map, HQ):
+		walkable.merge(_flood(map, hq, TerrainType.FOOT))
+	var beachable := {}
+	for port in _cells_of_terrain(map, PORT):
+		beachable.merge(_flood(map, port, TerrainType.LANDER))
+	for cell in map.property_cells():
+		if walkable.has(cell) or _has_landing_point(map, cell, beachable):
+			continue
+		return (
+			"no lander can put a soldier on the %s at %s"
+			% [map.terrain_at(cell).display_name, cell]
+		)
+	return ""
+
+
+## Whether the landmass holding `cell` carries a beach or a dock a lander can
+## sail to — the two terrains a landing craft may unload from, so the two that
+## turn an island into ground an army can stand on.
+func _has_landing_point(map: MapData, cell: Vector2i, beachable: Dictionary) -> bool:
+	for ashore: Vector2i in _flood(map, cell, TerrainType.FOOT):
+		if not beachable.has(ashore):
+			continue
+		var id := map.terrain_at(ashore).id
+		if id == SHOAL or id == PORT:
+			return true
+	return false
 
 
 ## Flood fills from one HQ over every cell infantry can enter and reports the

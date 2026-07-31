@@ -381,7 +381,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   the rectangle's own mirror symmetry since 28×20 cannot quarter-turn, so the fair duel's opposite
   pair is an exact half-turn — added after this plan by COM-133), `maps/pinwheel.txt` (four corners
   on a 14×14 whose road blades run clockwise into the
-  next seat's flank around a wooded hub — added after this plan by COM-129), `maps/trident.txt`
+  next seat's flank around a wooded hub — added after this plan by COM-129), `maps/atoll.txt` (four
+  home shores on a closed ring of land around one lagoon, a port each and a neutral island of
+  cities in the middle — the four-army naval board, added by COM-131 under the open-seats plan's
+  OS3), `maps/trident.txt`
   (three around a central massif), `maps/marchlands.txt` (22×16, the board built for the 2v2 —
   seats 1&2 north of a wooded ridge, 3&4 south, so `--sides=1+2v3+4` is a shared front; a
   non-square board has no quarter turn, so it closes under the rectangle's two flips and half turn
@@ -392,8 +395,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   show aircraft actually built) are the shipped
   boards that seat more than a duel; Compass was pulled forward into FP5 because without one the
   seat strip is UI no
-  player can reach. None carries water — the AI cannot plan a ferry (naval R1), so a board it
-  may have to fight across in any grouping has to let every army reach every other on foot. None
+  player can reach. All but Atoll are land-only — the AI cannot plan a ferry (naval R1), so a board
+  it may have to fight across in any grouping has to let every army reach every other on foot —
+  and Atoll satisfies R1 by shape instead: its land ring keeps every army walkable to every other,
+  its lagoon is one body of water every port opens onto, and the ferry-only island is a prize the
+  AI deliberately leaves alone; `test_maps.gd`'s water lints (one sea per board's ports, offshore
+  properties landable from a dock) hold both facts. None
   carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's and Windrose's
   layouts close under a quarter turn, not the tag's half turn — and fairness on these is by
   design review instead (rotational or mirrored layout, one HQ and a base per army held by the

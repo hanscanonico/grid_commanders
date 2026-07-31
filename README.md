@@ -176,15 +176,16 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty maps ship. The main menu leads with the teaching board and lists the rest smallest first —
-`boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`, `timberline`,
-`arsenal`, `riverline`, `isthmus`, `jet_stream`, `windrose`, `crossfire`, `first_steps`,
-`the_straits`, `marchlands`, `ironworks`, `steelworks`, `heartland` — so it opens on `boot_camp`,
-badged **Tutorial**, and prints the selected board's size,
+Twenty-one maps ship. The main menu leads with the teaching board and lists the rest smallest
+first — `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`,
+`timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`, `windrose`, `crossfire`,
+`first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland` — so it
+opens on `boot_camp`, badged **Tutorial**, and prints the selected board's size,
 army count (a range, `2–4 armies`, on a board where seats can be closed), property count and
 one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands` and `heartland` seat **four armies**,
-and so offer the one-tap table presets in the seat strip. `foursquare` is the smallest, 12×12 and the
+`foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands`, `heartland` and `atoll` seat **four
+armies**, and so offer the one-tap table presets in the seat strip. `foursquare` is the smallest,
+12×12 and the
 quickest full free-for-all in the roster: a seat in each corner in reading order — 1 NW, 2 NE, 3 SE,
 4 SW — laid out under a quarter turn rather than the half turn `# symmetric` checks, so the two
 opposite pairs make a fair duel and every seat's nearest cities sit the same distance out. It is also
@@ -211,7 +212,12 @@ the half turn.
 `heartland` at 28×20 is the **largest board in the game** and
 the grand tier's: a lattice of 48 neutral cities, **two bases** to each seat's one HQ, roads down the
 diagonals to a central crossroads, and woods for cover rather than a chokepoint anywhere — the
-economy scales with the area, so a board this size still escalates. `trident` seats
+economy scales with the area, so a board this size still escalates.
+`atoll` is the naval one, and the only four-army board with water on it: four home shores at the
+corners in the same reading order on a closed ring of land around one lagoon, a port each, and
+eight neutral cities on a central island no road reaches. The whole board turns onto itself under a
+quarter turn, which is what makes every seat's shore, dock and first city the same distance out.
+`trident` seats
 **three**, each a prong of the fork around a central massif, where the only grouping worth naming is
 a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
 board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
@@ -225,7 +231,11 @@ because the five things it teaches are the land game's. `foursquare`, `compass`,
 `trident`, `marchlands`, `windrose` and `heartland` carry no water either: the computer cannot
 plan a ferry, so a board it may have to fight
 across in any grouping has to let every army reach every other on foot — which on `windrose` leaves
-the air as the one domain that ignores the board's walls.
+the air as the one domain that ignores the board's walls. `atoll` is how a four-army
+board carries a sea anyway — its land is one closed ring, so every army can still walk to every
+other, and its water is one lagoon every dock opens onto, so a fleet built at any port can sail to
+any other without a transport. The island in the middle is the one thing on it a ferry is needed
+for, which is why it is a prize a player takes and the computer leaves alone.
 `heartland` seats its armies at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW — so its
 fair duel is an opposite pair, 1&3 or 2&4, the same convention `foursquare`, `pinwheel` and
 `windrose` follow on their squares (`compass` seats its four at the compass points, and `trident`'s

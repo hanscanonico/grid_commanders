@@ -13,7 +13,8 @@ extends GutTest
 ## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
 ## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/heartland.txt`,
-## `maps/pinwheel.txt`, `maps/trident.txt` and `maps/marchlands.txt`, because a
+## `maps/pinwheel.txt`, `maps/trident.txt`, `maps/marchlands.txt` and
+## `maps/atoll.txt`, because a
 ## grouping that only ever ran on a fixture is a capability no player can pick.
 ## The menu's seat strip writes the same `sides`, but the groupings are set
 ## directly here so the soak never has to walk a menu to reach one.
@@ -48,6 +49,11 @@ const TRIDENT := "res://maps/trident.txt"
 ## The 2v2 board — four armies, paired across the ridge rather than diagonally.
 const MARCHLANDS := "res://maps/marchlands.txt"
 const WINDROSE := "res://maps/windrose.txt"
+## The four-army naval board, and the reason it is soaked rather than left to the
+## map lints: every other board in this file is dry, so a grouping that reached
+## the land planner and not the sea one would go unnoticed. Here the armies share
+## sight across water, target across it, and buy from a dock as well as a base.
+const ATOLL := "res://maps/atoll.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -112,6 +118,9 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("windrose free-for-all", {}, 625, WINDROSE)
 	_soak("windrose 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 626, WINDROSE)
 	_soak("windrose 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, WINDROSE)
+	_soak("atoll free-for-all", {}, 636, ATOLL)
+	_soak("atoll 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 637, ATOLL)
+	_soak("atoll 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 638, ATOLL)
 
 
 ## Pinwheel, over the seatings its own layout promises: the four-army groupings,
