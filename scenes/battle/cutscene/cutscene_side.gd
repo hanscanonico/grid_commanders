@@ -8,10 +8,12 @@ extends Control
 ## never advances time, and never decides an outcome. `mirror` is the only
 ## difference between the attacker's half and the defender's.
 ##
-## The ground is the board's own terrain art, tiled in three receding bands, and
-## the figure is the board's own unit art — blown up, never redrawn (plan D2).
-## The one thing derived rather than drawn is the horizon ridge's colour, which
-## is averaged off the terrain tile so a new terrain needs no entry anywhere.
+## The ground is the board's own terrain art, tiled in receding bands, and the
+## figure is the board's own unit art — blown up, never redrawn (plan D2). The
+## scenery a standing terrain puts on that ground is the one exception, and says
+## so where it is declared (TerrainType.cutin_scenery). The other thing derived
+## rather than drawn is the horizon ridge's colour, which is averaged off the
+## terrain tile so a new terrain needs no entry anywhere.
 
 const PLATE_TOP_H := 26
 const PLATE_BOT_H := 20
@@ -384,9 +386,11 @@ func _draw_hill(base_y: float, center_x: float, width: float, height: float, tin
 
 
 ## A terrain whose art is an object rather than a texture, stood on the paved
-## floor: the board's own cell, blown up the way a unit's sprite is, three times
-## along the strip. Nothing is drawn for a terrain that paves — there the floor
-## already *is* that terrain, which is the whole of the distinction.
+## floor: four silhouettes at four depths along the strip, drawn rather than
+## blitted and coloured from the board's own cell. That is the cut-in's one
+## departure from plan D2 — TerrainType.cutin_scenery carries why. Nothing is
+## drawn for a terrain that paves: there the floor already *is* that terrain,
+## which is the whole of the distinction.
 func _draw_scenery(arena: Rect2) -> void:
 	if terrain == null or terrain.cutin_scenery == TerrainType.NO_SCENERY:
 		return

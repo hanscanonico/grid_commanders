@@ -112,6 +112,15 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # paired impact frames (cutin:tank:mech, cutin:mech:tank) are the other half of it:
 # a strafing hit leaves sparks and no burst, a rocket leaves a hole.
 #
+# `cutin_scenery:mech:mech` is the other half of the ground plane. A terrain either
+# paves that plane with its own art or stands a drawn shape on it, and the three
+# shapes need three frames: `cutin_iron_commander` fights over a base and an HQ and
+# so sweeps the buildings, but every other mode here fights on plains, road or open
+# water, all of which pave — leaving trees and peaks drawn by nothing the sweep ever
+# photographed, though either turns up the moment a unit fires from woods or a
+# mountain. This one stands the pair on the default board's adjacent woods and
+# mountain, one shape per half. Mechs because a mountain takes foot and boot only.
+#
 # Every one of those runs commander-less, though, and a commander-less side draws
 # in the row its slot number names — so for a while none of them could see a
 # cut-in surface reading a team int where an atlas row belongs (COM-10: Iron
@@ -240,7 +249,7 @@ DEFAULT_MODES=(
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner commander_info commander_victory side_victory
 	mixed_seat_handoff+fog
-	cutin cutin_ko cutin_skip cutin_iron_commander
+	cutin cutin_ko cutin_skip cutin_iron_commander cutin_scenery:mech:mech
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech
 	cutin:tank:mech cutin:mech:tank
 	cutin_volley cutin_volley:tank:mech cutin_volley:mech:tank

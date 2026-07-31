@@ -80,6 +80,19 @@ that must survive any change; the full rationale, milestones and risk registers 
   `BattleStyleDb.for_weapon` and never re-decides. D5: how a weapon looks is a `BattleStyle`
   under `data/battle_anim/`, `UnitType.battle_style` / `secondary_battle_style` are presentation keys
   like `atlas_col`, and no gameplay number may ever appear in a style.
+  D2 ("board art, blown up; nothing redrawn") holds for the ground plane and the figures, and has
+  **one recorded departure, the cut-in's scenery**: in the cut-in a terrain either *paves* the ground
+  or *stands* on it, said by two presentation keys on `TerrainType` beside `atlas_col` —
+  `cutin_ground` (the surface a standing terrain is paved with) and `cutin_scenery` (the shape it
+  stands), asked through `stands_in_cutin()` and never by terrain id. Paving with an object's own
+  art carpets the frame in tiny repeated towers, and standing the atlas cell as-is brings its
+  opaque ground plate with it and reads as a framed picture — so the shape is **drawn**, with its
+  colour still sampled off that same cell (over `OBJECT_WINDOW`, the middle, because a peak is grey
+  on a green square and the whole-cell average returns grass). The two keys are one decision in two
+  fields and nothing at draw time can see them disagree, so `tests/unit/test_terrain_db.gd` lints
+  them together: set together or not at all, a known shape, and a pavement that exists and does not
+  itself stand. `cutin_scenery:mech:mech` in the smoke sweep is the frame trees and peaks are drawn
+  in; `cutin_iron_commander` is the buildings'.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips

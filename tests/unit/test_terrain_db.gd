@@ -81,6 +81,44 @@ func test_every_terrain_is_flyable_at_cost_one() -> void:
 		)
 
 
+## The cut-in's two presentation keys are one decision written in two fields, and
+## nothing at draw time can tell that they disagree: `stands_in_cutin` reads
+## `cutin_ground` alone and the scenery reads `cutin_scenery` alone. A terrain
+## carrying only one of them paves the frame with its own art *and* stands
+## silhouettes on it — the carpet the split exists to stop — and the wrong
+## pavement is just as silent: an id no terrain answers to falls back to the cell
+## itself, and one that stands rather than paves floors the frame in buildings,
+## since the lookup is done once and never followed further. A shape outside the
+## vocabulary is the third: the renderer's match falls through to buildings, so a
+## typo puts towers on a mountain. All three come from a data edit, so this is
+## where they are caught.
+func test_cut_in_ground_and_scenery_are_one_decision() -> void:
+	var shapes: Array[StringName] = [TerrainType.BUILDINGS, TerrainType.TREES, TerrainType.PEAKS]
+	for terrain in db.all():
+		assert_eq(
+			terrain.stands_in_cutin(),
+			terrain.cutin_scenery != TerrainType.NO_SCENERY,
+			"%s should name a pavement and a shape together, or neither" % terrain.id
+		)
+		if not terrain.stands_in_cutin():
+			continue
+		assert_has(shapes, terrain.cutin_scenery, "%s stands an unknown shape" % terrain.id)
+		var paving := db.by_id(terrain.cutin_ground)
+		assert_not_null(
+			paving,
+			(
+				"%s is paved with '%s', which no terrain answers to"
+				% [terrain.id, terrain.cutin_ground]
+			)
+		)
+		if paving == null:
+			continue
+		assert_false(
+			paving.stands_in_cutin(),
+			"%s stands on %s, which stands rather than paves" % [terrain.id, paving.id]
+		)
+
+
 ## Which property builds what, and which refits what, is terrain data — the
 ## facilities the base game shipped with have to keep saying what they always
 ## meant, or every land unit quietly loses production and repair.

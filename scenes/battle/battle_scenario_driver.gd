@@ -75,6 +75,16 @@ const FACTION_DEFENDER_CELL := Vector2i(17, 11)  # HQ
 ## And the side `capture_cutin_iron_commander` takes its property *from*, so the
 ## flip crosses between two faction rows rather than out of neutral row 0.
 const FACTION_CAPTURE_FROM := 2
+## `cutin_scenery` fights over the woods and the mountain that sit one above the
+## other in the west of the default board. A terrain either paves the cut-in's
+## ground plane or stands on it, and three shapes stand: `_iron_commander` already
+## sweeps the buildings, and every other cut-in mode fights on plains, road or open
+## water, all of which pave — so trees and peaks had no frame in the sweep at all,
+## which is how both went unphotographed while being reachable from any woods or
+## mountain in ordinary play.
+const SCENERY_SUFFIX := "_scenery"
+const SCENERY_ATTACKER_CELL := Vector2i(4, 5)  # woods
+const SCENERY_DEFENDER_CELL := Vector2i(4, 6)  # mountain
 ## `cutin_skip` walks a skip across the whole cut-in — see _spam_skip. One entry
 ## per beat boundary and a couple past the end, which is where a double-finish
 ## would show up.
@@ -93,7 +103,9 @@ const SKIP_FRAMES: Array[int] = [0, 1, 2, 4, 8, 16, 32, 64, 128, 240]
 ## last would be honoured — `cutin_ko_skip` would drop its `_ko` in silence.
 ## Capture reads `_partial` off the front, so it composes with one of the other
 ## two and must lead.
-const CUT_IN_SUFFIXES: Array[String] = ["", KO_SUFFIX, VOLLEY_SUFFIX, SKIP_SUFFIX, FACTION_SUFFIX]
+const CUT_IN_SUFFIXES: Array[String] = [
+	"", KO_SUFFIX, VOLLEY_SUFFIX, SKIP_SUFFIX, FACTION_SUFFIX, SCENERY_SUFFIX
+]
 const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	"",
 	PARTIAL_SUFFIX,
@@ -601,6 +613,8 @@ func _check_overlay_scouted(what: String, layer: TileMapLayer) -> int:
 ##   --demo=cutin_iron_commander     the same tanks, Iron v Verdant, and fought
 ##                                   over a property apiece so the ground under
 ##                                   each half carries a faction row too
+##   --demo=cutin_scenery:mech:mech  fought across the woods and the mountain, so
+##                                   one half stands trees and the other peaks
 ##
 ## One suffix off CUT_IN_SUFFIXES, then an optional `:<attacker>:<defender>`;
 ## anything else fails the run rather than falling back to the plain variant.
@@ -641,6 +655,8 @@ func _stage_cut_in(spec: String) -> void:
 		return
 	if factions:
 		_stage_owned_ground(attacker, defender)
+	if parts[0].ends_with(SCENERY_SUFFIX) and not _stage_wild_ground(attacker, defender):
+		return
 	defender.hp = 10 if lethal else 74
 	var result := CombatResolver.resolve(game, attacker, defender)
 	_battle.view.sync_sprites()
@@ -885,18 +901,52 @@ func _stage_faction_commanders() -> void:
 ## only: the frontline cells the other modes fight over are plains, where the
 ## owner row is never read at all.
 func _stage_owned_ground(attacker: Unit, defender: Unit) -> void:
-	var game := _battle.game
 	var cells: Array[Vector2i] = [FACTION_ATTACKER_CELL, FACTION_DEFENDER_CELL]
+	_stand_pair_on(attacker, defender, cells)
+	_battle.game.set_owner(FACTION_ATTACKER_CELL, attacker.team)
+	_battle.game.set_owner(FACTION_DEFENDER_CELL, defender.team)
+	for cell in cells:
+		_battle.view.repaint_property(cell)
+
+
+## Stands the pair on the woods and the mountain in the west, one shape of drawn
+## scenery per half of the frame. The sibling of `_stage_owned_ground`, and there
+## for the same kind of reason: the cells the other cut-in modes fight over all
+## *pave* the ground plane, so the two scenery shapes that are not a building were
+## drawn by nothing the sweep photographed.
+##
+## A mountain takes foot and boot only, which is why the mode is spelled with its
+## matchup (`cutin_scenery:mech:mech`) — a pair that could not legally be standing
+## on the ground the frame is about is refused out loud rather than posed on it.
+## False fails the run; the caller stages nothing further.
+func _stage_wild_ground(attacker: Unit, defender: Unit) -> bool:
+	var cells: Array[Vector2i] = [SCENERY_ATTACKER_CELL, SCENERY_DEFENDER_CELL]
+	var pair: Array[Unit] = [attacker, defender]
+	for slot in cells.size():
+		var terrain := _battle.map.terrain_at(cells[slot])
+		if terrain.is_passable(pair[slot].type.move_class):
+			continue
+		_fail(
+			(
+				"cutin demo: a %s cannot stand on the %s at %s"
+				% [pair[slot].type.display_name, terrain.display_name, cells[slot]]
+			)
+		)
+		return false
+	_stand_pair_on(attacker, defender, cells)
+	return true
+
+
+## Clears two cells of everything but the pair and stands the pair on them, in
+## order. The half the two ground-staging variants above share.
+func _stand_pair_on(attacker: Unit, defender: Unit, cells: Array[Vector2i]) -> void:
+	var game := _battle.game
 	for cell in cells:
 		var sitting := game.unit_at(cell)
 		if sitting != null and sitting != attacker and sitting != defender:
 			game.remove_unit(sitting)
-	attacker.cell = FACTION_ATTACKER_CELL
-	defender.cell = FACTION_DEFENDER_CELL
-	game.set_owner(FACTION_ATTACKER_CELL, attacker.team)
-	game.set_owner(FACTION_DEFENDER_CELL, defender.team)
-	for cell in cells:
-		_battle.view.repaint_property(cell)
+	attacker.cell = cells[0]
+	defender.cell = cells[1]
 	_battle.view.sync_sprites()
 
 

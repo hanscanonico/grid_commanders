@@ -53,9 +53,12 @@ const LANDER := &"lander"  # transports that also beach on shoals
 ## The split is what the art itself already says. A cell of grass is a *texture*
 ## and tiles into a field; a cell of city is a *building*, and paving with it
 ## carpets the frame in tiny repeated towers. The capture cut-in has always drawn
-## a property this way — a plane, with the board's own cell standing on it — so
-## this is the combat cut-in learning its sibling's trick, not a new idea, and
-## the art is still the board's own, blown up and never redrawn (plan D2).
+## a property this way — a plane, with the property standing on it — so this is
+## the combat cut-in learning its sibling's trick, not a new idea.
+##
+## The floor this key names is the board's own art, tiled and never redrawn
+## (plan D2). What stands on it is not: see `cutin_scenery` for the one place the
+## cut-in departs from D2, and why.
 @export var cutin_ground: StringName = &""
 
 ## Scenery shapes. What each looks like is CutsceneSide's business; this is the
@@ -67,11 +70,14 @@ const TREES := &"trees"  # woods
 const PEAKS := &"peaks"  # mountain
 
 ## Which of those this terrain stands, for the terrains that stand rather than
-## pave. The silhouette is drawn rather than blitted because the atlas cell is a
-## square of ground with the object *on* it — stood up as-is, every building
-## comes with a plate behind it and reads as a framed picture instead of a tower.
-## Its colour is still sampled from that same cell, so a property standing here
-## wears its owner's faction exactly as the board paints it.
+## pave. The silhouette is drawn rather than blitted, and that is a deliberate
+## departure from plan D2 ("the board's own art, blown up, never redrawn") — this
+## one key and nothing else. The reason is the art: an atlas cell is a square of
+## ground with the object drawn *on* it, so stood up as-is every building comes
+## with its opaque ground plate behind it and reads as a framed picture rather
+## than a tower. Its colour is still sampled from that same cell, so a property
+## standing here wears its owner's faction exactly as the board paints it, and the
+## ground plane under it and the unit figures on it stay the board's own art.
 @export var cutin_scenery: StringName = NO_SCENERY
 
 
