@@ -12,10 +12,17 @@ extends GutTest
 ##
 ## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
-## them on `maps/compass.txt` and `maps/trident.txt`, because a grouping that only
-## ever ran on a fixture is a capability no player can pick. The menu's seat strip
-## writes the same `sides`, but the groupings are set directly here so the soak
-## never has to walk a menu to reach one.
+## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/pinwheel.txt` and
+## `maps/trident.txt`, because a grouping that only ever ran on a fixture is a
+## capability no player can pick. The menu's seat strip writes the same `sides`,
+## but the groupings are set directly here so the soak never has to walk a menu
+## to reach one.
+##
+## Pinwheel is also played with seats left open (COM-129): its whole claim is that
+## the corners are one quarter turn apart, so the duel it promises is an
+## opposite-seat pair — and a duel is a *seating*, not a grouping. The seat strip
+## writes the same `seats`, and the closed corners' HQs sit there unowned, which is
+## the shape the open-seats plan's R3 warns about.
 ##
 ## Each army is seated with a doctrine, and with a meter full enough to weigh
 ## firing it, on purpose. Without one every commander hook stays at its neutral
@@ -29,6 +36,7 @@ const FIXTURE := "res://maps/fixtures/quartet.txt"
 ## The shipped boards that seat more than a duel: four armies, then three.
 const COMPASS := "res://maps/compass.txt"
 const FOURSQUARE := "res://maps/foursquare.txt"
+const PINWHEEL := "res://maps/pinwheel.txt"
 const TRIDENT := "res://maps/trident.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
@@ -80,15 +88,32 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("trident 2v1", {1: 0, 2: 0, 3: 1}, 624, TRIDENT)
 
 
+## Pinwheel, over the seatings its own layout promises: the four-army groupings,
+## both opposite-seat duels — the pair the quarter turn makes fair — and a
+## three-way with one corner left open.
+func test_the_ai_plays_pinwheel_at_every_seating_its_corners_offer() -> void:
+	_soak("pinwheel free-for-all", {}, 630, PINWHEEL)
+	_soak("pinwheel 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 631, PINWHEEL)
+	_soak("pinwheel 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 632, PINWHEEL)
+	_soak("pinwheel duel 1v3", {}, 633, PINWHEEL, [1, 3] as Array[int])
+	_soak("pinwheel duel 2v4", {}, 634, PINWHEEL, [2, 4] as Array[int])
+	_soak("pinwheel three-way", {}, 635, PINWHEEL, [1, 2, 3] as Array[int])
+
+
 ## Plays the board out with `sides` applied and a planner per army. Fails on the
 ## first command the rules turn down — which is the whole point — and on a run
 ## that never ends.
-func _soak(label: String, sides: Dictionary, rng_seed: int, board: String = FIXTURE) -> void:
+func _soak(
+	label: String, sides: Dictionary, rng_seed: int, board: String = FIXTURE, seats: Array[int] = []
+) -> void:
 	var map := MapData.load_from_file(board, terrain_db)
 	assert_not_null(map, "%s should parse" % board)
 	if map == null:
 		return
-	var state := GameState.create(map, unit_db, chart)
+	var state := GameState.create(map, unit_db, chart, {}, seats)
+	assert_not_null(state, "%s should seat %s" % [board, seats])
+	if state == null:
+		return
 	state.sides = sides
 	state.rng.seed = rng_seed
 	# Seated with a full meter, so the doctrine reads are asked from day one under
