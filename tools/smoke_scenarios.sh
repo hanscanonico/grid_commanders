@@ -336,7 +336,8 @@ map_for_demo() {
 			echo boot_camp
 			;;
 		side_victory | mixed_seat_handoff)
-			# The only board that seats four armies. For side_victory that is the whole
+			# The four-army fixture — sized to fit the battle viewport whole, which no
+			# shipped four-seat board is. For side_victory four seats are the whole
 			# point of the frame: four liveries behind a lockup that names a side rather
 			# than one of them (four-players plan D5). mixed_seat_handoff needs four
 			# seats for a different reason — it is the only roster that can put a
