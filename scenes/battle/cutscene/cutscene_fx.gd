@@ -83,6 +83,13 @@ const SMOKE_TINT := Color(0.47, 0.49, 0.53)
 ## circle again once the teeth get that fine.
 const IMPACT_SPOKES := 12
 const BLAST_SPOKES := 18
+## Smallest fireball worth drawing, in pixels of radius. An impact burst ramps its
+## reach up from zero, and a star that fine has its spokes land on the same float:
+## the triangulator refuses the degenerate polygon and the frame logs an error. Half
+## a pixel of radius is under one pixel across, so nothing that would have shown is
+## skipped — measured, the triangulator takes every flare from 0.3 px up anywhere on
+## the stage and only trips below that.
+const MIN_FLARE_REACH := 0.5
 
 # --- pose, written every frame by CombatCutscene ------------------------------
 
@@ -489,7 +496,7 @@ func _draw_blast() -> void:
 ## and the kill blast, which is why nothing here knows which it is drawing — only
 ## how big, how torn and how bright.
 func _draw_flare(at: Vector2, reach: float, tint: Color, turn: float, spokes: int) -> void:
-	if reach <= 0.0 or tint.a <= 0.0:
+	if reach < MIN_FLARE_REACH or tint.a <= 0.0:
 		return
 	var points := PackedVector2Array()
 	for i in spokes:
