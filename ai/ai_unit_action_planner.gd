@@ -80,6 +80,7 @@ func _consider_attacks(
 			var score: float = (
 				_attack_score(unit, enemy, forecast)
 				+ _focus_bonus(context, unit, enemy, forecast)
+				+ _defend_bonus(state, unit, enemy)
 				- dest_penalty
 			)
 			if score > plan.score:
@@ -153,6 +154,37 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 		if forecast.can_attack:
 			total += forecast.attack_damage
 	return total
+
+
+## What shooting `enemy` off ground our own side holds is worth, on top of what
+## the shot is worth on its own. Priced off the capture list read backwards (D3),
+## in its arithmetic and its order: the property is worth what taking it is worth,
+## a home HQ multiplies that price because losing that one ends the army, and the
+## progress already chipped out of us rides on top unscaled, exactly as the
+## progress term does in the capture list.
+##
+## Only a capture-capable enemy counts. A tank parked on our city takes nothing
+## from us, and the danger it poses is the threat map's job — paying for it here
+## as well would price one fear twice.
+func _defend_bonus(state: GameState, unit: Unit, enemy: Unit) -> float:
+	if profile.defend_weight <= 0.0 or not enemy.type.can_capture:
+		return 0.0
+	var cell := enemy.cell
+	if not state.map.terrain_at(cell).is_property:
+		return 0.0
+	# Through the allegiance authority, never `owner == unit.team`: an ally's city
+	# is the side's city, and neutral ground is nobody's to lose.
+	var owner := state.owner_at(cell)
+	if not state.allied(owner, unit.team):
+		return 0.0
+	var score := profile.capture_score
+	# Asked of the home-HQ authority, never of the terrain id: an HQ a survivor
+	# conquered fells nobody, so defending it is worth a city and no more.
+	if state.home_hq.has(owner) and state.home_hq[owner] == cell:
+		score *= profile.hq_capture_multiplier
+	var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
+	score += (GameState.CAPTURE_POINTS - points) * profile.capture_progress_bonus
+	return profile.defend_weight * score
 
 
 func _consider_captures(
@@ -280,8 +312,9 @@ static func _position_rank(
 	return high - dist
 
 
-## Fuel-critical units seek refit, damaged units seek repair, capturers seek a
-## non-owned property, and everyone else seeks the nearest visible enemy.
+## Fuel-critical units seek refit, damaged units seek repair, a besieged home HQ
+## calls everyone else home, capturers seek a non-owned property, and whoever is
+## left seeks the nearest visible enemy.
 func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	if context.goals.has(unit):
 		return context.goals[unit]
@@ -300,6 +333,12 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 			goal.cell = _nearest(unit.cell, repairs)
 			context.goals[unit] = goal
 			return goal
+	var besieged := _besieged_home_hqs(context, unit)
+	if not besieged.is_empty():
+		goal.cell = _nearest(unit.cell, besieged)
+		goal.stand_off = AttackRange.is_indirect(unit)
+		context.goals[unit] = goal
+		return goal
 	if unit.type.can_capture:
 		var capturable: Array[Vector2i] = []
 		for cell in state.map.property_cells():
@@ -319,6 +358,26 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 		goal.stand_off = AttackRange.is_indirect(unit)
 	context.goals[unit] = goal
 	return goal
+
+
+## Home HQs of our own side with a capture-capable enemy standing on them, in
+## enemy scan order. The one property kind that pulls a unit off the front: a
+## city changes hands and can be taken back, a home HQ ends the army that loses
+## it. Defending anything smaller is left to units that already had a shot.
+func _besieged_home_hqs(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if profile.defend_weight <= 0.0:
+		return cells
+	var state := context.state
+	for enemy in context.visible_enemies:
+		if not enemy.type.can_capture:
+			continue
+		var owner := state.owner_at(enemy.cell)
+		if not state.allied(owner, unit.team):
+			continue
+		if state.home_hq.has(owner) and state.home_hq[owner] == enemy.cell:
+			cells.append(enemy.cell)
+	return cells
 
 
 ## The profile's retreat line, moved by the commander's doctrine — a general

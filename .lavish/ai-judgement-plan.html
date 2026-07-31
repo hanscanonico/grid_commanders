@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — AI Judgement Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-amber: #e0a441;
+      --gc-blue: #3276c6;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem 1rem;
+      padding: .6rem 1.5rem;
+      background: rgba(10,33,55,.97);
+      border-bottom: 2px solid var(--gc-water-dark);
+    }
+    .gc-nav a { color: rgba(255,255,255,.72); font: 600 .8rem ui-monospace, monospace; text-decoration: none; }
+    .gc-nav a:hover, .gc-nav a:focus-visible { color: white; }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid var(--gc-amber); }
+    .gc-risk-low { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-free { color: var(--gc-grass-dark); font-weight: 700; }
+    .gc-gap { color: var(--gc-red); font-weight: 700; }
+    .gc-quote {
+      border-left: 5px solid var(--gc-water);
+      background: color-mix(in srgb, var(--gc-water) 8%, transparent);
+      font-style: italic;
+    }
+    table.gc-tight td, table.gc-tight th { vertical-align: top; }
+    .gc-chain {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: .4rem;
+    }
+    .gc-chain-step {
+      flex: 1 1 8rem;
+      padding: .6rem .7rem;
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      background: white;
+      font-size: .82rem;
+      line-height: 1.35;
+    }
+    .gc-chain-step.is-ours { background: color-mix(in srgb, var(--gc-grass) 26%, white); }
+    .gc-chain-step.is-theirs { background: color-mix(in srgb, var(--gc-road) 45%, white); }
+    .gc-chain-step b { display: block; font: 800 .78rem ui-monospace, monospace; letter-spacing: .04em; }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="gc-hero px-6 py-10 md:px-12">
+    <p class="gc-kicker mb-2 opacity-80">Grid Commanders · design of record · draft 1 · 2026-07-31</p>
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight">AI Judgement</h1>
+    <p class="mt-3 max-w-3xl text-base md:text-lg opacity-90">
+      Three things a player notices inside the first hour: the computer ignores the infantry
+      about to take its headquarters, it throws units into fights it cannot survive, and it
+      arrives one unit at a time. They look like three bugs. They are one shape — the planner
+      scores <em>each unit alone, one command at a time, with no model of what happens next</em>.
+      This plan gives it the three things a <span class="gc-file">.tres</span> number cannot:
+      sight of what the enemy is <em>achieving</em>, a price on its own survival, and a reason to
+      travel together.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-outline badge-lg text-white border-white/40">Milestones AJ1–AJ4</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D6</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R7</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">core/ untouched</span>
+      <span class="badge badge-lg bg-white/90 text-slate-900 border-white">Ships inert · BL2 switches it on</span>
+    </div>
+  </header>
+
+  <nav class="gc-nav">
+    <a href="#table">1 · At the table</a>
+    <a href="#boundary">2 · The BL2 boundary</a>
+    <a href="#decisions">3 · Decisions</a>
+    <a href="#milestones">4 · Milestones</a>
+    <a href="#risks">5 · Risks</a>
+    <a href="#scope">6 · Out of scope</a>
+  </nav>
+
+  <main class="px-6 py-10 md:px-12 space-y-14">
+
+  <!-- ============================ 1. AT THE TABLE ============================ -->
+  <section id="table">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">01</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">What you can see at the table</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Three observations from play, each with its cause in code. None of them needs new
+          telemetry to see; all three are readable in one 352-line file.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <p class="gc-quote px-4 py-2">
+            “When the HQ is attacked the AI does not really care and still attacks other units
+            even if it is going to lose because of this.”
+          </p>
+          <h3 class="font-bold"><span class="gc-gap">Cause 1.</span> The planner prices a target by what it <em>is</em>, never by what it is <em>doing</em>.</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">_attack_score</span> (<span class="gc-file">ai_unit_action_planner.gd:92</span>) is
+              <code>target cost × damage fraction</code>, kill-boosted, minus the discounted counter. Nothing else.</li>
+            <li><span class="gc-file">state.capture_progress</span> is read in exactly one place
+              (<span class="gc-file">:174</span>) — the AI's <em>own</em> captures. Progress standing on the AI's ground is never looked at.</li>
+            <li><span class="gc-file">profile.hq_capture_multiplier</span> (<span class="gc-file">ai_profile.gd:30</span>) exists only for the offence. There is no defensive counterpart anywhere in <span class="gc-file">ai/</span>.</li>
+            <li>The insult on top: HQ terrain carries the board's best defence stars, so the forecast damage against a unit standing there is <em>low</em> — which makes the infantry about to win the match score <strong>worse</strong> than the same infantry in a field. The planner is actively steered away from the one unit that matters.</li>
+          </ul>
+          <p class="text-sm opacity-80">
+            Losing the home HQ is elimination (four-players D3). No score the planner computes can see it coming.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <p class="gc-quote px-4 py-2">
+            “The AI seems a little bit suicidal — it attacks relentlessly but sometimes it makes no
+            sense. It should think: this Md Tank can attack me next turn, better to step back
+            because it will one-shot me.”
+          </p>
+          <h3 class="font-bold"><span class="gc-gap">Cause 2.</span> Two halves — a dial at zero, and a structural gap no dial reaches.</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>The dial.</strong> <span class="gc-file">data/ai/default.tres</span> ships
+              <code>threat_aversion 0.0</code> and <code>advance_threat_tiles 0.0</code>. At zero the
+              <span class="gc-file">ThreatMap</span> is never even built (<span class="gc-file">:72</span>).
+              Easy runs 0.3 / 3.0 and Difficult 0.1 / 2.0 — <em>the tier most people play is the only one with none</em>.
+              The only risk Normal prices is the target's own counter-attack, discounted to 0.6.</li>
+            <li><strong>The structure.</strong> Retreat lives <em>only</em> in the
+              <span class="gc-file">_advance_command</span> fallback (<span class="gc-file">:39–42</span>), reached only
+              when nothing clears <code>min_useful_score</code>. So <code>retreat_hp = 45</code> does not mean
+              “at 45 HP pull back” — it means “at 45 HP, <em>if you had nothing to do anyway</em>, walk toward
+              a repair property.” A 15 HP tank with any half-decent shot takes it and dies.</li>
+            <li><strong>And the map cannot tell one-shot from chipped.</strong>
+              <span class="gc-file">incoming_damage</span> (<span class="gc-file">threat_map.gd:77</span>) sums expected
+              damage and caps it at the unit's HP, so “an Md Tank deletes me” and “three units chip me for the same
+              total” price identically. On the advance path the penalty is denominated in <em>tiles</em> while the unit's
+              worth is in <em>funds</em>, so a 20,000 bomber flinches exactly as hard as a 1,000 infantry.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <p class="gc-quote px-4 py-2">
+            “The AI never groups units, it attacks one by one.”
+          </p>
+          <h3 class="font-bold"><span class="gc-gap">Cause 3.</span> One capability disabled on purpose; the other has never existed.</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>Targeting.</strong> <span class="gc-file">_focus_bonus</span> (<span class="gc-file">:119</span>) is
+              built and ships at <code>0.0</code> in all three tiers. The ladder is why
+              (<span class="gc-file">difficulty_check.md:345</span>): 0.2 / 0.5 / 1.0 → 43.3 / 41.7 / 43.3 %, all under the
+              50 % baseline. Its stated reason: re-planning after every command already exposes a wounded target's
+              finishing shot for free, and biasing the <em>first</em> shot drags it off its own best trade. So the pile-on
+              you occasionally see is <em>incidental</em> — it happens only when a second attacker was already in range.
+              Nothing ever moves a unit into range <em>because</em> a target was softened.</li>
+            <li><strong>Approach.</strong> There is no cohesion code at all.
+              <span class="gc-file">_advance_goal</span> (<span class="gc-file">:285</span>) computes each unit's goal in
+              complete isolation — nearest visible enemy, or nearest capturable property — and
+              <span class="gc-file">_advance_command</span> minimises distance to it.
+              <em>Nothing in the file ever reads where the other friendlies are.</em></li>
+            <li>Consequences: a tank (6 move), an artillery and a mech (2 move) get the same goal and travel at their own
+              speeds, so the tank arrives three turns early, alone, and dies. Nothing waits — no staging cell, no line.
+              And <span class="gc-file">_nearest</span> gives each unit its <em>own</em> closest enemy, so flanks chase
+              different targets and the army fans out instead of concentrating.</li>
+            <li><span class="gc-file">plan_next_command</span> (<span class="gc-file">ai_controller.gd:33</span>) is greedy
+              per <em>command</em>: best single action across all ready units, apply, re-plan from scratch. There is no
+              joint plan for a turn anywhere in the architecture. “Attacks one by one” is literally what it does.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="alert alert-info mt-6 items-start">
+      <div>
+        <h3 class="font-bold">The one sentence</h3>
+        <p class="text-sm mt-1">
+          The planner has no model of the board's future: not what the enemy is <em>achieving</em> (the HQ),
+          not what the enemy will <em>do next turn</em> (the Md Tank), and not what its <em>own other units</em>
+          are doing (the trickle). Three symptoms, one absence.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 2. BOUNDARY ============================ -->
+  <section id="boundary">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">02</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">The boundary with the balance retune — read this before writing code</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          <span class="gc-file">.lavish/balance-retune-plan.html</span> already owns half of observation 2, and it owns it
+          well. Its atlas — 20,280 matches, 305 core-hours — found the same defect from the other end and named it:
+          <em>“Normal is the only tier with zero self-preservation.”</em> Its <strong>BL2</strong> is the ladder repair.
+          This plan must not be a second design of record for that work.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+          <h3 class="font-bold text-lg">What BL2's dials <span class="gc-free">can</span> buy</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm mt-2">
+            <li>Normal flinching from a kill zone at all — <code>threat_aversion</code> 0.0 → 0.05 / 0.1, inside the band the ladder measured as a real gain.</li>
+            <li>Normal giving up ground to dodge a lethal shot while walking — <code>advance_threat_tiles</code> 0.0 → 1.6 / 2.0.</li>
+            <li>Sharper finishing and trade weights — <code>kill_bonus</code>, <code>counter_weight</code>.</li>
+            <li>An earlier walk home for the wounded — <code>retreat_hp</code>.</li>
+          </ul>
+          <p class="text-sm mt-3 opacity-80">
+            That is a real fix for the <em>character</em> of observation 2, and the atlas says it is worth a great deal:
+            Normal beats Easy only <strong>15.6 %</strong> over a long horizon today.
+          </p>
+        </div>
+      </div>
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+          <h3 class="font-bold text-lg">What no number in <span class="gc-file">data/ai/</span> <span class="gc-gap">can</span> buy</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm mt-2">
+            <li><strong>Defence of ground.</strong> There is no term to weight. Observation 1 is untouched by every dial that exists.</li>
+            <li><strong>Retreat outbidding a shot.</strong> <code>retreat_hp</code> only steers where an <em>idle</em> unit walks; it can never reach a unit that has an attack available, because that unit never reaches the fallback.</li>
+            <li><strong>Arriving together.</strong> There is no cohesion term for a weight to scale. Observation 3 is untouched.</li>
+            <li><strong>Value-denominated caution.</strong> <code>advance_threat_tiles</code> is in tiles by construction; “this shot costs me 20,000 funds” cannot be said in that currency.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mt-5">
+      <div class="card-body">
+        <h3 class="font-bold text-lg">The interleave — and it is available right now</h3>
+        <p class="text-sm mt-1">
+          The balance retune is <strong>Draft 1 with zero shipped milestones</strong>: BL1 has not run. Its central
+          structural claim is that <em>every commander number is measured on the Normal planner</em>, so BL2 rights the
+          ladder and then <strong>freezes Normal</strong> for BL3–BL5. If this plan's capabilities land <em>after</em> that
+          freeze, they unfreeze Normal and every roster number BL3–BL5 measured is stale the moment they land —
+          the exact failure the retune's “wrong order” panel warns about, arriving from a direction it did not anticipate.
+        </p>
+        <p class="text-sm mt-3">
+          Landing them <em>before</em> BL2 costs nothing, because <strong>every capability here ships at
+          <code>0.0</code></strong> (D1). Both committed reports stay byte-identical, Normal does not move, BL1's baseline
+          stays valid — and BL2 simply arrives to a wider set of dials than it expected, with recommended bands already
+          measured for them.
+        </p>
+        <div class="gc-chain mt-4">
+          <div class="gc-chain-step is-ours"><b>AJ1</b>Defend what is being taken · inert</div>
+          <div class="gc-chain-step is-ours"><b>AJ2</b>Withdrawal that can outbid a shot · inert</div>
+          <div class="gc-chain-step is-ours"><b>AJ3</b>Cohesion + focus fire re-measured · inert</div>
+          <div class="gc-chain-step is-ours"><b>AJ4</b>Characterise the dials → bands</div>
+          <div class="gc-chain-step is-theirs"><b>BL1</b>Baseline + long-horizon gate</div>
+          <div class="gc-chain-step is-theirs"><b>BL2</b>Ladder + <em>switch on</em> + freeze</div>
+          <div class="gc-chain-step is-theirs"><b>BL3–BL5</b>Roster tune on the frozen planner</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-warning mt-5 items-start">
+      <div>
+        <h3 class="font-bold">The honest cost, stated plainly</h3>
+        <p class="text-sm mt-1">
+          The repo's working rule is “ship something playable each milestone”. <strong>AJ1–AJ4 are not playable.</strong>
+          An inert capability changes nothing a player can feel; the moment the computer starts defending its
+          headquarters is BL2, not AJ1. That is a deliberate trade and it buys one thing: not invalidating a
+          305 core-hour measurement and the entire roster tune that stands on it. If that trade is unacceptable, the
+          alternative is discussed and <em>rejected</em> in D2 — read it before overriding this.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 3. DECISIONS ============================ -->
+  <section id="decisions">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">03</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Decisions</h2>
+        <p class="mt-1 max-w-3xl opacity-80">Locked unless a later plan supersedes them in writing.</p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D1 — Every capability ships at <code>0.0</code>, and <code>0.0</code> skips the code</h3>
+          <p class="text-sm">
+            Exactly the pattern the difficulty plan established for S1–S3: at zero, the code that reads the weight never
+            runs. So the shipped AI is byte-identical to today's, on the same RNG stream, and
+            <span class="gc-file">test_capability_defaults_plan_exactly_like_the_shipped_profile</span>
+            (<span class="gc-file">tests/unit/test_ai_smarts.gd:480</span>) keeps passing <em>unchanged</em>. That test is
+            this plan's merge bar, not its casualty — BL2 is where it moves, as the retune's own D2 already records.
+          </p>
+          <p class="text-sm">
+            <strong>Merge bar for AJ1–AJ3:</strong> a fixed-seed byte-diff of <code>make commander-balance</code> and
+            <code>make difficulty-check</code> on both sides of every pull request, both reports identical, no exceptions.
+            This plan claims <em>no</em> accepted departure — unlike four-players FP3, which had a structural one. If a
+            report moves, a default is not actually zero.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D2 — This plan owns <em>capabilities</em>; BL2 owns Normal's <em>numbers</em></h3>
+          <p class="text-sm">
+            No AJ milestone edits a shipped value in <span class="gc-file">data/ai/*.tres</span>. New fields are written
+            into all three tiers at zero (R7), and that is the only edit those files take. AJ4's deliverable is a
+            <em>recommended band</em> per dial, in the §6 probe-table shape
+            <span class="gc-file">docs/difficulty_check.md</span> already uses — so BL2 reads it the way it already reads
+            the <code>threat_aversion</code> table.
+          </p>
+          <p class="text-sm">
+            <strong>The rejected alternative, named:</strong> lighting up <span class="gc-file">hard.tres</span> early, so
+            Difficult gets the behaviour immediately while Normal stays frozen. It is tempting — the roster tune is
+            measured on Normal, so Difficult looks free. It is not: BL2's exit criterion is
+            <em>Difficult-over-Normal ≥ 70 %</em>, so moving Difficult moves the gate BL2 is trying to hit, and BL2 would
+            be tuning one rung against a moving other. One tier at a time, in BL2. <em>If the reviewer wants the
+            behaviour in the game sooner, the right lever is to run BL1+BL2 sooner, not to split the ladder.</em>
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D3 — Denial is priced at the price of capture, read backwards</h3>
+          <p class="text-sm">
+            One price list, both directions. <span class="gc-file">_consider_attacks</span> gains a bonus for shooting a
+            capture-capable enemy standing on ground our side owns, built from the <em>same three numbers</em>
+            <span class="gc-file">_consider_captures</span> already uses — <code>capture_score</code>,
+            <code>capture_progress_bonus</code>, <code>hq_capture_multiplier</code> — scaled by one new dial,
+            <code>defend_weight</code>. At 1.0, denying a capture is worth exactly what making one is worth.
+          </p>
+          <p class="text-sm">
+            That symmetry is not a coincidence to be tuned away later: they are the same event seen from two sides, and
+            <span class="gc-file">_best_unit_plan</span> already compares capture scores against attack scores directly,
+            so the two are in the same currency <em>by construction</em>. A separate defensive price list would be a second
+            opinion about what a property is worth.
+          </p>
+          <p class="text-sm font-semibold mt-1">Three details that are decisions, not implementation:</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>Only capture-capable enemies count.</strong> A tank parked on our city takes nothing from us; the
+              danger it poses is the threat map's job, and paying twice for it is R3.</li>
+            <li><strong>The ground is our <em>side's</em></strong>, asked of <span class="gc-file">GameState.allied</span>
+              — an ally's city is the side's city (four-players D2), and it is never re-derived as
+              <code>owner == unit.team</code>.</li>
+            <li><strong>The HQ multiplier applies only to a <em>home</em> HQ</strong>, asked of
+              <span class="gc-file">GameState.home_hq</span> (four-players D3, open-seats D3) and never
+              <code>terrain_at(cell).id == &"hq"</code>. A survivor standing on an HQ they conquered cannot be beheaded
+              through it, so defending it is worth a city and no more — and a vacant seat's HQ has nobody to fell.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D4 — Withdrawal is a scored candidate, not a fallback — and it is denominated in <em>value</em></h3>
+          <p class="text-sm">
+            <span class="gc-file">_consider_withdraw</span> joins <span class="gc-file">_consider_attacks</span>,
+            <span class="gc-file">_consider_captures</span> and <span class="gc-file">_consider_dive</span> inside
+            <span class="gc-file">_best_unit_plan</span>, competing on one score.
+            <span class="gc-file">_consider_dive</span> is the precedent and the proof it fits: a non-attack action that
+            already outbids a shot when the board says it should.
+          </p>
+          <p class="text-sm">
+            Its score is <code>withdraw_weight × unit.type.cost × damage_avoided / 100</code> — <strong>value</strong>, the
+            same currency <span class="gc-file">_attack_score</span> is in, which is precisely what
+            <code>advance_threat_tiles</code> could not be. This is the whole of the “that Md Tank one-shots me, step
+            back” case: an Md Tank facing certain death puts its own 16,000 on the table against a marginal trade and
+            wins the argument. It is also what finally makes a wounded unit's survival competitive with its last shot.
+          </p>
+          <p class="text-sm">
+            It reads the same <span class="gc-file">ThreatMap</span> the other two dials read, the same way —
+            <code>incoming_damage</code> at a candidate cell. No second opinion about danger, and no new geometry: the
+            destination is chosen from the <span class="gc-file">MovementResolver.reachable</span> the planner already
+            built.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D5 — Cohesion is a term on the advance path, not a formation manager</h3>
+          <p class="text-sm">
+            No groups, no leaders, no squad objects, no roles. <span class="gc-file">_advance_value</span> gains one term:
+            <code>−cohesion_tiles × max(0, distance_to_nearest_friendly − cohesion_radius)</code>, in <em>tiles</em>, which
+            is what that function is already denominated in. A unit inside the radius pays nothing; beyond it, it is
+            pulled back toward its army.
+          </p>
+          <p class="text-sm">
+            The “wait for the slow ones” behaviour is <strong>emergent and deliberately not coded</strong>: the goal term
+            still pulls forward, so the equilibrium is a clump that advances at the speed of its rear. There is no waiting
+            state to enter, leave, or get stuck in.
+          </p>
+          <p class="text-sm">
+            <strong>The rejected alternative:</strong> an explicit formation manager with assigned leaders and shared
+            objectives. It needs cross-turn state the planner has nowhere to keep — <span class="gc-file">AIPlanningContext</span>
+            is rebuilt every command and only the threat map deliberately survives — and it would be a second opinion
+            about where a unit should stand, competing with the goal it already has.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D6 — Nothing under <span class="gc-file">core/</span> is touched, and no new telemetry</h3>
+          <p class="text-sm">
+            Every read goes through an authority that already exists: <span class="gc-file">AttackRange</span> (who may
+            shoot what, how far, with which weapon), <span class="gc-file">MovementResolver</span> (reach and budget),
+            <span class="gc-file">CombatResolver.forecast_at</span> (damage — luck-free, draws no RNG, and a pure read that
+            never stands a unit somewhere to ask), <span class="gc-file">Vision.is_hidden_from</span> (via the existing
+            <code>visible_enemies</code> scan, so the AI's sight rule is unchanged),
+            <span class="gc-file">GameState.allied</span> (hostility),
+            <span class="gc-file">GameState.home_hq</span> (the elimination stake) and
+            <span class="gc-file">GameState.capture_progress</span> (already read from the other side).
+          </p>
+          <p class="text-sm">
+            Same rule as the balance plan's D2 and the doctrine plan's D4: <strong>the planner observes, it never
+            instruments</strong>. Every new term is pure, RNG-free, and iterates collections
+            <span class="gc-file">AIPlanningContext</span> already snapshots in scan order — so determinism, replay and
+            the save format are all untouched.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 4. MILESTONES ============================ -->
+  <section id="milestones">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">04</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Milestones</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Four, each independently mergeable, each ending with <code>make verify</code> green and both committed reports
+          byte-identical. Four new <code>@export</code>s in total.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AJ1 — Defend what is being taken <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+          <p class="text-sm opacity-80">Answers observation 1. One dial: <code>defend_weight</code>, default <code>0.0</code>.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><code>defend_weight</code> on <span class="gc-file">AIProfile</span>, written into all three tiers at zero.</li>
+            <li><span class="gc-file">_defend_bonus(state, unit, enemy)</span> in the unit planner, added inside
+              <span class="gc-file">_consider_attacks</span> beside <span class="gc-file">_focus_bonus</span> — the same
+              seam, so the destination penalty and the forecast are computed exactly once as they are today.</li>
+            <li>Built from D3's mirrored price list, with the three qualifications D3 locks.</li>
+            <li><strong>The advance path: only the home HQ diverts.</strong> If a capture-capable hostile stands on a home
+              HQ belonging to our side, that cell becomes the advance goal — placed <em>ahead</em> of the capture and
+              nearest-enemy clauses in <span class="gc-file">_advance_goal</span>. Ordinary cities are defended
+              opportunistically, on the attack path only, because a city is a setback and the headquarters is the match.
+              R2 is why this line is drawn here rather than wider.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — an AI turn where the only sane move is shooting the capturer off
+            the home HQ; a second where a juicier kill elsewhere must lose the argument; and the inert-at-zero pin, which
+            is the same fixture with the dial off.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; new tests fail before the change and pass after.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AJ2 — Self-preservation that can outbid a shot</h3>
+          <p class="text-sm opacity-80">Answers the structural half of observation 2 — the half BL2's dials cannot reach. One dial: <code>withdraw_weight</code>, default <code>0.0</code>.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">_consider_withdraw</span> in <span class="gc-file">_best_unit_plan</span>, per D4.
+              Builds the threat map on its own when &gt; 0, exactly as <code>threat_aversion</code> does.</li>
+            <li>The destination is the reachable cell of least <code>incoming_damage</code>, tie-broken by step cost and
+              then scan order. No new pathing, no new geometry, no new fill.</li>
+            <li>A withdrawal that also lands on a property servicing the unit's domain scores higher — which is what finally
+              makes <code>retreat_hp</code> mean what its own comment says it means, instead of only steering an idle walk.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — the user's case as a fixture: a wounded Md Tank inside a lethal
+            threat ring with a marginal attack available. It must step back at <code>withdraw_weight &gt; 0</code> and must
+            still take the shot at <code>0.0</code>. Plus a fixture proving a <em>healthy</em> unit does not flinch from a
+            survivable shot, which is the R3 boundary.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the “attacks and dies” fixture reverses; the
+            sweep's wall clock recorded (R6).</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AJ3 — Fight as an army</h3>
+          <p class="text-sm opacity-80">Answers observation 3. Two dials — <code>cohesion_tiles</code> (default <code>0.0</code>) and <code>cohesion_radius</code> (default <code>2</code>) — and one measurement.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>One term in <span class="gc-file">_advance_value</span>, per D5, over
+              <span class="gc-file">context.friendly_units</span> — already built, already scan-ordered.</li>
+            <li><strong>Then the other half of the milestone, which is a measurement rather than code:</strong> re-run the
+              <code>focus_fire_bonus</code> ladder probe <em>with cohesion live</em>. The standing negative result was
+              measured on a planner whose units arrive one at a time — focus fire had nothing to focus. If it measures
+              positive now, it is a recommended band for BL2. If it measures negative again, it stays at zero and the plan
+              records the <em>second</em> refutation, which is worth having: it stops the next person re-deriving it.
+              Either outcome is a deliverable.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — cohesion is pure arithmetic over a unit list, so a fixture with one
+            fast and one slow unit pins that the fast one holds short of the front at <code>cohesion_tiles &gt; 0</code> and
+            runs ahead at zero.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the focus-fire re-measurement written into
+            <span class="gc-file">docs/difficulty_check.md</span> whichever way it lands.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AJ4 — Characterise the dials, hand BL2 the bands</h3>
+          <p class="text-sm opacity-80">No code. The deliverable is a table.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>One axis per probe, COM-120 style, on the focused presets the docs already define —
+              <code>make difficulty-check</code> on boards that resolve, and
+              <code>make commander-balance BAL="--commanders=… --seeds=…"</code>. <strong>Never the atlas</strong>: it cost
+              305 core-hours and is a verdict instrument, not an iteration loop.</li>
+            <li>Because every shipped tier is at zero, each probe runs against a <em>hand-built</em> profile rather than a
+              committed one — so there are no rejected values to restore, because nothing was ever written to
+              <span class="gc-file">data/</span>.</li>
+            <li><strong>The one deliberately two-dimensional probe</strong> is <code>(cohesion_tiles, cohesion_radius)</code>,
+              for the reason R1 gives.</li>
+            <li><strong>Deliverable</strong>: a §6-shaped probe table per dial — the band that helps, the cliff that hurts —
+              plus the R3 cross-term note, committed to <span class="gc-file">docs/difficulty_check.md</span>.</li>
+            <li><strong>Explicitly not a deliverable</strong>: a shipped tier value. That is BL2 (D2).</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Exit</strong> — the table is committed and all three
+            <span class="gc-file">data/ai/*.tres</span> are untouched but for the four new fields at their defaults.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 5. RISKS ============================ -->
+  <section id="risks">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">05</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Risk register</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Ordered by how much they would cost if ignored. Every mitigation is either a design line already drawn above or
+          a probe AJ4 is required to run.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R1 — The clump is artillery bait, and Command Power bait <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">Cohesion concentrates the army, and concentration is exactly what an artillery shot and every
+            area Command Power are priced against. A tighter army that dies to one power is worse than a scattered one.</p>
+          <p class="text-sm"><strong>Mitigation:</strong> <code>cohesion_radius</code> is a dial rather than a constant, and
+            AJ4 measures the pair together rather than one at a time — the plan's only deliberately two-dimensional probe.
+            If the band is empty, cohesion ships at zero and AJ3's value is the refutation plus the focus-fire
+            re-measurement.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R2 — The army marches home <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">A defence goal any unit may adopt empties the front the moment one infantry steps on a city.
+            The failure mode is a computer that shuttles its whole army between two properties while the player takes the
+            rest of the board.</p>
+          <p class="text-sm"><strong>Mitigation is the design, not a dial:</strong> only the <em>home HQ</em> diverts the
+            advance path, and ordinary properties are defended only by units that already had a shot available anyway. If
+            even that empties the front, the diversion is narrowed by reachability — never widened to more property kinds.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R3 — Three dials, one fear, counted three times <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm"><code>threat_aversion</code> (attacks, in value), <code>advance_threat_tiles</code> (advances, in
+            tiles) and the new <code>withdraw_weight</code> (its own candidate, in value) all read one
+            <span class="gc-file">ThreatMap</span>. Turned on together they can price the same Md Tank three times and
+            reproduce the R2 coward from a new direction — the 0.5 row that lost 88 % of its games. This is the single most
+            likely way this plan makes the AI <em>worse</em>.</p>
+          <p class="text-sm"><strong>Mitigation:</strong> AJ4 probes <code>withdraw_weight</code> twice — with the other two
+            at zero, and at the values BL2 is likely to ship — and reports both. The probe table states in writing that
+            these three are one axis with three heads, so BL2 never tunes one of them alone.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R4 — The ladder measures the whole thing negative <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">Entirely possible. Caution has already measured negative once past its band, and focus fire
+            measured negative in three shapes. A plan that adds judgement is not entitled to assume judgement wins.</p>
+          <p class="text-sm"><strong>Mitigation is the plan's own posture:</strong> every capability ships at zero, so a
+            refuted dial costs nothing to leave in place, and zeroing a misbehaving smart is the established remedy —
+            <code>focus_fire_bonus</code> is the precedent, kept rather than deleted precisely so the ladder can re-test it
+            in one edit. A plan that ends with four zeros and four probe tables has still bought something real: the next
+            person does not spend the compute again.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R5 — Determinism and scan order <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">Every new term iterates a collection already snapshotted in scan order and every comparison
+            stays strict (<code>&gt;</code>), so ties still break by scan order.
+            <strong>The genuinely new surface</strong> is that <span class="gc-file">_consider_withdraw</span> puts a new
+            <em>kind</em> of command into the competition, so a tie can newly land between two different command types —
+            decided by the fixed order of the <span class="gc-file">_consider_*</span> calls in
+            <span class="gc-file">_best_unit_plan</span>. That order is part of the contract and gets a test.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R6 — Cost <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">The threat map is one flood fill per visible enemy. <code>withdraw_weight &gt; 0</code> makes it
+            build on turns where nothing attacks — which is exactly when it is cheapest to skip today. On the largest
+            boards (Confluence, 32×24) that is not free.</p>
+          <p class="text-sm"><strong>Mitigation:</strong> the existing per-turn cache is keyed on the day and the enemy set
+            and already survives across commands, so the cost is once per turn rather than once per decision. AJ2 records
+            the sweep's wall clock on both sides of the change.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low">
+        <div class="card-body gap-1">
+          <h3 class="font-bold">R7 — Tier inheritance <span class="badge badge-success badge-sm align-middle">low</span></h3>
+          <p class="text-sm">A profile that omits a new <code>@export</code> inherits the class default, so adding one field
+            silently retunes exactly the tiers that left it out.</p>
+          <p class="text-sm"><strong>Mitigation:</strong> write all four fields into all three
+            <span class="gc-file">.tres</span> files explicitly, held by
+            <span class="gc-file">tests/unit/test_ai_profile.gd</span>, which exists for this and already holds every shipped
+            tier to it.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 6. OUT OF SCOPE ============================ -->
+  <section id="scope">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">06</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Deliberately out of scope</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Scope creep is this repo's named top risk, and “make the AI smarter” is the most open-ended brief on the board.
+          These are the things this plan is <em>not</em>.
+        </p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table table-zebra gc-tight">
+        <thead>
+          <tr><th class="w-1/3">Not in scope</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Turn-level search</strong></td>
+            <td><span class="gc-file">plan_next_command</span> stays greedy and one command at a time. Joint optimisation
+              over a whole turn is a different program with a different cost, and every observation here is answerable
+              without it.</td>
+          </tr>
+          <tr>
+            <td><strong>Multi-turn lookahead</strong></td>
+            <td>No horizon beyond the one turn the threat map already models. “What will they do in three turns” is not a
+              question this architecture asks.</td>
+          </tr>
+          <tr>
+            <td><strong>Transports and ferrying</strong></td>
+            <td>Naval R1 stands: the planner still cannot plan a load–move–unload across turns, and nothing here changes
+              it. Ferry-only ground on Atoll and Confluence stays deliberately unclaimed.</td>
+          </tr>
+          <tr>
+            <td><strong>Any combat number</strong></td>
+            <td><span class="gc-file">CombatResolver</span> and the damage chart are not opened. These are judgement
+              weights; they change how the planner <em>ranks</em> its own candidates and nothing else (difficulty D2).</td>
+          </tr>
+          <tr>
+            <td><strong>Per-tier capability gating</strong></td>
+            <td>Every dial exists at every tier; only its value differs. A tier may retune a strength, never gate a
+              behaviour.</td>
+          </tr>
+          <tr>
+            <td><strong>The AI's sight rule</strong></td>
+            <td>Unchanged — omniscient except doctrine-hidden, through <span class="gc-file">Vision.is_hidden_from</span>.
+              Widening it needs its own plan decision, and defending a headquarters does not require one.</td>
+          </tr>
+          <tr>
+            <td><strong>Commander doctrine advice</strong></td>
+            <td>The three <span class="gc-file">CommanderType</span> hooks stay as the doctrine plan shipped them. A
+              doctrine that wants to defend harder is a follow-up, not this plan — and it would double-count against
+              <code>defend_weight</code> if written carelessly (doctrine D4).</td>
+          </tr>
+          <tr>
+            <td><strong>Shipping a tier value</strong></td>
+            <td>BL2. See D2 — and note the alternative was considered and rejected there, not overlooked.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert mt-6 items-start">
+      <div>
+        <h3 class="font-bold">Where this plan is recorded</h3>
+        <p class="text-sm mt-1">
+          On merge of AJ1, this plan joins the “Designs of record” index in <span class="gc-file">CLAUDE.md</span> with its
+          scope and its surviving invariants, and <span class="gc-file">.lavish/balance-retune-plan.html</span> gains a
+          one-line pointer at BL2 noting that the dial set it tunes was widened here. <span class="gc-file">.lavish/</span>
+          is gitignored, so this file needs <code>git add -f</code> or it stays untracked.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="px-6 py-8 md:px-12 border-t border-base-300 text-sm opacity-70">
+    <p><strong>Grid Commanders — AI Judgement.</strong> Draft 1, 2026-07-31. Milestones AJ1–AJ4 · Decisions D1–D6 · Risks R1–R7.</p>
+    <p class="mt-1">
+      Reads with: <span class="gc-file">balance-retune-plan.html</span> (owns Normal's numbers; BL2 switches these dials on),
+      <span class="gc-file">difficulty-modes-plan.html</span> (the never-cheats lock and the S1–S3 pattern this follows),
+      <span class="gc-file">commander-doctrine-ai-plan.html</span> (the advisory hooks these must not double-count),
+      <span class="gc-file">docs/difficulty_check.md</span> (the ladder, and the probe-table shape AJ4 writes in).
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>

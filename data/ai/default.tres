@@ -26,3 +26,4 @@ threat_aversion = 0.0
 advance_threat_tiles = 0.0
 focus_fire_bonus = 0.0
 build_reactivity = 0.0
+defend_weight = 0.0
