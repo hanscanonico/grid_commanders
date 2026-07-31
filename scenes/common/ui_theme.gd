@@ -165,8 +165,19 @@ static func _tuned(path: String) -> FontFile:
 ## fourth seats resolve to no theme under the two-seat default and would draw
 ## neutral grey wherever the menu previews them (the thumbnails, the footer chips).
 static func menu_identity(seats: int = 2) -> SideIdentity:
-	var picks: Dictionary = {}
+	var roster: Array[int] = []
 	for seat in range(1, maxi(2, seats) + 1):
+		roster.append(seat)
+	return menu_identity_of(roster)
+
+
+## The same, for a match that fills only some of the board's seats: the identities
+## are resolved over the seats that *play*, which is what the battle will do with
+## the very same roster (`GameState.teams`). Asking about the whole board instead
+## would preview a closed seat's livery beside armies that are not wearing it.
+static func menu_identity_of(seats: Array[int]) -> SideIdentity:
+	var picks: Dictionary = {}
+	for seat in seats:
 		picks[seat] = null
 	return SideIdentity.resolve(picks)
 

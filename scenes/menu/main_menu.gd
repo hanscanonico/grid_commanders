@@ -836,14 +836,17 @@ func _paint_check(check: Panel, mark: Label, on: bool) -> void:
 ## Re-deals the footer chips for a board that seats `count` armies. Every seat
 ## gets its colour and its P-number, so the strip above and the chips below name
 ## the same table.
-func _refresh_chips(count: int) -> void:
+## One chip per army at the table — the seats that play, not the seats the board
+## deals, so closing one takes its livery off the footer as it takes it off the
+## board. Resolved over that same roster, which is what the battle resolves over.
+func _refresh_chips(seats: Array[int]) -> void:
 	if _chips == null:
 		return
 	for child in _chips.get_children():
 		_chips.remove_child(child)
 		child.queue_free()
-	var identity := UiTheme.menu_identity(count)
-	for seat in range(1, count + 1):
+	var identity := UiTheme.menu_identity_of(seats)
+	for seat in seats:
 		_chips.add_child(_identity_chip(identity, seat, "P%d" % seat))
 
 
@@ -1037,11 +1040,11 @@ func _refresh_map_facts() -> void:
 	)
 	_map_caption.text = (
 		(
-			"%d×%d · %d armies · %d properties · %s"
+			"%d×%d · %s · %d properties · %s"
 			% [
 				map.width,
 				map.height,
-				map.player_count(),
+				_armies_label(map.player_count()),
 				map.property_cells().size(),
 				map.description,
 			]
@@ -1053,7 +1056,16 @@ func _refresh_map_facts() -> void:
 	if _seat_strip != null:
 		_seat_strip.set_roster(map.player_count())
 		_refresh_seats()
-	_refresh_chips(map.player_count())
+
+
+## "4 armies" for a board whose seats all have to be filled, "2–4 armies" for one
+## where some may close (open-seats plan D4). A range rather than a count because a
+## count is what the board deals and the shelf's widest capability is what a player
+## scrolling the list is choosing between.
+func _armies_label(seats: int) -> String:
+	if seats <= SeatStrip.MIN_FILLED:
+		return "%d armies" % seats
+	return "%d–%d armies" % [SeatStrip.MIN_FILLED, seats]
 
 
 func _map_at(index: int) -> MapData:
@@ -1106,6 +1118,10 @@ func _refresh_seats() -> void:
 	_start_button.disabled = not _seat_strip.valid()
 	_seat_refusal.text = _seat_strip.refusal().to_upper()
 	_seat_refusal.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
+	# The chips are dressed from the table too, not from the board: a seat closed
+	# here is an army that will not be on the map, so its livery leaves the footer
+	# in the same tap (open-seats plan D4).
+	_refresh_chips(_seat_strip.seats())
 
 
 # --- flow (unchanged) --------------------------------------------------------
@@ -1116,7 +1132,9 @@ func _refresh_seats() -> void:
 func _open_select(ai_teams: Array[int]) -> void:
 	_pending_ai_teams = ai_teams
 	_menu_root.hide()
-	_select_panel.begin(_seat_strip.seat_count(), ai_teams)
+	# The filled seats, not the board's: a commander belongs to an army that plays,
+	# so a closed seat is not a slot to walk (open-seats plan D4).
+	_select_panel.begin(_seat_strip.seats(), ai_teams)
 
 
 func _on_selection_confirmed(picks: Dictionary) -> void:
@@ -1177,7 +1195,8 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 		_selected_difficulty(),
 		commanders,
 		load_save,
-		_seat_strip.sides()
+		_seat_strip.sides(),
+		_seat_strip.seats()
 	)
 	MatchConfig.stage(request)
 	get_tree().change_scene_to_file(BATTLE_SCENE)
