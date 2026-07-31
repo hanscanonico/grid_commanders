@@ -176,14 +176,18 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Fifteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
-`boot_camp`, `scrimmage`, `forge`, `trident`, `compass`, `timberline`, `arsenal`, `riverline`,
-`isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`, `steelworks` — so it
-opens on `boot_camp`, badged **Tutorial**, and prints the selected board's size, army count, property
-count and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`compass` is the one board that seats **four armies** — an HQ and a base at each compass point, with
-eight cities in a ring that closes under a half turn, so every army's nearest two sit the same
-distance out — and so the one that offers the grouping presets in the seat strip. `trident` seats
+Sixteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+`boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `timberline`, `arsenal`,
+`riverline`, `isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`,
+`steelworks` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected board's size,
+army count, property count and one-line pitch in a caption under the grid (the per-cell tooltip
+repeats them for a mouse).
+`foursquare` and `compass` seat **four armies**. `foursquare` is the small one, 12×12 and the
+quickest full free-for-all in the roster: a seat in each corner in reading order — 1 NW, 2 NE, 3 SE,
+4 SW — laid out under a quarter turn rather than the half turn `# symmetric` checks, so the two
+opposite pairs make a fair duel and every seat's nearest cities sit the same distance out. It is also
+a production board (below): nobody opens holding an army. `compass` is the larger one — an HQ and a
+base at each compass point, with eight cities in a ring that closes under a half turn. `trident` seats
 **three**, each a prong of the fork around a central massif, where the only grouping worth naming is
 a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
 board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
@@ -193,14 +197,17 @@ Three of the older boards have since been retrofitted with the domains that suit
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
-because the five things it teaches are the land game's. `compass` and `trident` stay land-only too:
-the computer cannot plan a ferry, so a board it may have to fight across in any grouping has to let
-every army reach every other on foot.
+because the five things it teaches are the land game's. `foursquare`, `compass` and `trident` stay
+land-only too: the computer cannot plan a ferry, so a board it may have to fight across in any
+grouping has to let every army reach every other on foot.
 
-`forge`, `arsenal` and `steelworks` are the production boards, and the only ones that hand out **no
-starting units at all**: what you get instead is factories — two to four bases a side where the rest
-of the roster tops out at two, an owned airport a side on the larger two, and neutral bases and
-airports to expand production itself. The opening is a build order rather than a march, and
+`forge`, `foursquare`, `arsenal` and `steelworks` are the production boards, and the only ones that
+hand out **no starting units at all**: what you get instead is factories. On `forge`, `arsenal` and
+`steelworks` that means two to four bases a side where the rest of the roster tops out at two, an
+owned airport a side on the larger two, and neutral bases and airports to expand production itself.
+`foursquare` is the lean one and the four-way answer to `forge`: one base an army, no airport, no
+neutral base — just twelve neutral cities — so 2000 a day until somebody takes ground, and the
+whole match is the escalation curve. The opening is a build order rather than a march, and
 `steelworks` at 26×18 is the largest board in the game. An empty day 1 is legal without any rules
 change: defeat is only ever checked when a unit dies, and the AI's planner already falls through to
 production when it has nothing to move.
@@ -214,8 +221,9 @@ joined by `+` stand together, groups separated by `v` fight each other) — e.g.
 that leaves the board's armies with nobody to fight, is reported and the free-for-all played instead.
 
 Adding a map is dropping a `.txt` in `maps/` — the menu auto-discovers it and `tests/unit/`
-holds it to the playability invariants (one HQ and a base per side, reachable HQs, a claimed
-`# symmetric` tag that actually mirrors) and plays an AI-vs-AI match on it. Boards that use the
+holds it to the playability invariants (one HQ and a base per side, the same starting buildings for
+every seat, reachable HQs, a claimed `# symmetric` tag that actually mirrors) and plays an AI-vs-AI
+match on it. Boards that use the
 water get four more: every port opens onto sailable sea, all of a map's ports share one body of it
 (the AI cannot ferry, so a fleet it cannot sail to is a fleet it can never fight), every beach is
 reachable by a lander, and no beach chain quietly joins two landmasses — a shoal costs every land

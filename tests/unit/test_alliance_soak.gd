@@ -28,6 +28,7 @@ extends GutTest
 const FIXTURE := "res://maps/fixtures/quartet.txt"
 ## The shipped boards that seat more than a duel: four armies, then three.
 const COMPASS := "res://maps/compass.txt"
+const FOURSQUARE := "res://maps/foursquare.txt"
 const TRIDENT := "res://maps/trident.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
@@ -72,6 +73,9 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("compass free-for-all", {}, 620, COMPASS)
 	_soak("compass 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 621, COMPASS)
 	_soak("compass 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 622, COMPASS)
+	_soak("foursquare ffa", {}, 625, FOURSQUARE)
+	_soak("foursquare 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 626, FOURSQUARE)
+	_soak("foursquare 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, FOURSQUARE)
 	_soak("trident free-for-all", {}, 623, TRIDENT)
 	_soak("trident 2v1", {1: 0, 2: 0, 3: 1}, 624, TRIDENT)
 

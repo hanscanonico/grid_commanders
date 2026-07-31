@@ -328,14 +328,19 @@ that must survive any change; the full rationale, milestones and risk registers 
   is the sibling of `CommanderInfoSheet.layout_error` and exists for the same reason: unsorted rows
   stack at the container's origin, inside every frame and drawn in none of it, so enclosure alone
   photographed the strip as bare panel.
-  `maps/compass.txt` (four armies at the compass points) and `maps/trident.txt` (three around a
-  central massif) are the shipped boards that seat more than a duel; Compass was pulled forward into
-  FP5 because without one the seat strip is UI no player can reach. Both are land-only — the AI
-  cannot plan a ferry (naval R1), so a board it may have to fight across in any grouping has to let
-  every army reach every other on foot. Neither carries the `# symmetric` tag: that lint is a
-  *duel* instrument, and fairness on these is by design review instead (rotational layout, one HQ
-  and one base per army held by the FP1-retargeted lints, and the win spread across seats in the
-  soak). That last instrument is load-bearing: Compass's first layout passed every lint — one HQ and
+  `maps/compass.txt` (four armies at the compass points), `maps/foursquare.txt` (four seats at the
+  corners of a 12×12 build-first board, the four-way answer to Forge — added after this plan by
+  COM-128) and `maps/trident.txt` (three around a central massif) are the shipped boards that seat
+  more than a duel; Compass was pulled forward into FP5 because without one the seat strip is UI no
+  player can reach. All three are land-only — the AI cannot plan a ferry (naval R1), so a board it
+  may have to fight across in any grouping has to let every army reach every other on foot. None
+  carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's layout closes
+  under a quarter turn, not the tag's half turn — and fairness on these is by design review instead
+  (rotational layout, one HQ and one base per army held by the FP1-retargeted lints, every seat
+  opening on the same buildings by kind held by `test_maps.gd`'s starting-property lint — added
+  with Foursquare because no three- or four-seat board can carry the tag — and the win spread
+  across seats in the soak). That last instrument is load-bearing: Compass's first layout passed
+  every lint — one HQ and
   one base an army was true of it — and still gave two of the four armies cities 2–3 tiles out while
   the other two walked 5–6, which showed up only as free-for-all wins spanning two seats of four. The
   cities are now a ring closed under a half turn, every army's nearest two at exactly 4 and 5 tiles;

@@ -1,0 +1,38 @@
+# The four-way forge: nobody starts with an army, so day one is four build menus.
+# Seats sit at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW — so the
+# opposite pairs 1&3 and 2&4 make the fair duel. The board is laid out under a
+# quarter turn, (x, y) -> (11 - y, x), rather than the 180-degree mirror the
+# `# symmetric` tag checks: that tag is a duel instrument and this board seats
+# four, so every seat's shield, spoke and nearest city is the same shape turned
+# a quarter. Each army holds an HQ and one base and nothing else, which is 2000
+# a day until it takes ground: the whole match is the escalation curve.
+# Twelve neutral cities, all contested, in three rings of four — one at each
+# corner of the ring road (4 steps from home), one on each edge (4 and 5 steps
+# from the two seats that share it), and the four-city hub in the middle, which
+# vehicles reach only by the four road spokes.
+# Land only: the AI cannot plan a ferry, so every army has to reach every other
+# on foot.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+.........F..
+.QB.FCM.M.Q.
+F.=...F.==B.
+.M=C====C...
+...=M=FM=.F.
+.MF=FCC==.C.
+.C.==CCF=FM.
+.F.=MF=M=...
+...C====C=M.
+.B==.F...=.F
+.Q.M.MCF.BQ.
+..F.........
+[owners]
+# team x y — only the HQ and the base start owned; every city is up for grabs.
+1 1 1
+1 2 1
+2 10 1
+2 10 2
+3 10 10
+3 9 10
+4 1 10
+4 1 9

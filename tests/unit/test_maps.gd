@@ -16,6 +16,10 @@ extends GutTest
 ##   because there is no army behind it — so it is a building that looks decisive
 ##   and tells the player the match can be won somewhere it cannot.
 ## - A side with no base has no income engine and an AI that can never build.
+## - Seats opening on different buildings open on different income and different
+##   production. The `# symmetric` tag catches that on a duel, but it is a
+##   180-degree instrument no three- or four-seat board can carry, so the
+##   per-seat property count is the lint that holds those level.
 ## - HQs walled off from each other put every army's HQ beyond the others' reach,
 ##   so no army can ever be felled by capture, which quietly reduces the match to
 ##   rout-only.
@@ -91,6 +95,30 @@ func test_every_map_gives_each_team_a_base() -> void:
 						% [_name(map), team]
 					)
 					+ "has nothing to spend income on"
+				)
+			)
+
+
+## Two armies opening on different buildings open on different income and
+## different production, and nothing downstream attributes the result to the
+## board rather than to the play. The `# symmetric` tag catches it on a duel by
+## checking the whole mirror — but that tag is a 180-degree instrument, so a
+## board seating three or four armies cannot carry it, and this is the only lint
+## holding the seats level on exactly the boards where the arithmetic is hardest.
+func test_every_map_deals_each_team_the_same_starting_properties() -> void:
+	for map in _maps():
+		var roster := map.teams()
+		var lead := _starting_properties(map, roster[0])
+		for team in roster:
+			assert_eq(
+				_starting_properties(map, team),
+				lead,
+				(
+					(
+						"%s: team %d opens holding %s while team %d holds %s — every seat "
+						% [_name(map), team, _starting_properties(map, team), roster[0], lead]
+					)
+					+ "owes the same buildings, or the board decides the match before it starts"
 				)
 			)
 
@@ -409,6 +437,25 @@ func _cells_of_terrain(map: MapData, terrain_id: StringName) -> Array[Vector2i]:
 			if map.terrain_at(cell).id == terrain_id:
 				cells.append(cell)
 	return cells
+
+
+## What `team` opens the match holding, as "base x1, hq x1" — kind by kind and
+## sorted, so two seats' openings compare as one string and a failure prints
+## both sides of the difference rather than a count that does not say of what.
+func _starting_properties(map: MapData, team: int) -> String:
+	var counts := {}
+	var owners := map.initial_owners()
+	for cell: Vector2i in owners:
+		if int(owners[cell]) != team:
+			continue
+		var id := map.terrain_at(cell).id
+		counts[id] = int(counts.get(id, 0)) + 1
+	var ids := counts.keys()
+	ids.sort()
+	var parts := PackedStringArray()
+	for id: StringName in ids:
+		parts.append("%s x%d" % [id, counts[id]])
+	return "nothing" if parts.is_empty() else ", ".join(parts)
 
 
 ## Every cell `move_class` can reach from `start`, `start` included.
