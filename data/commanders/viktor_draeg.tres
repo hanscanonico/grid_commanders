@@ -20,5 +20,5 @@ foot_attack_pct = -10
 breakthrough_class = &"treads"
 breakthrough_move_bonus = 1
 breakthrough_star_pierce = 1
-armour_build_bias = -4
+armour_build_bias = -2
 foot_build_bias = 4

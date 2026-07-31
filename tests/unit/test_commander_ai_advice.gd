@@ -212,12 +212,13 @@ func _built_id(command: Command) -> StringName:
 
 ## Seven thousand in the bank buys the doctrine, not the list: the neutral
 ## commander takes the default's tank, Tomas Reed pulls a mech ahead of it,
-## Rhea Sol artillery, and Viktor Draeg still armour.
+## and Viktor Draeg still buys armour. Rhea Sol buys the tank too — her pull is
+## deliberately too mild to divert top-end funds (test_rhea_sol.gd pins it).
 func test_seven_thousand_buys_each_doctrine_its_own_unit() -> void:
 	var funds := 7000
 	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, CommanderType.NEUTRAL_ID, funds)), &"tank")
 	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"tomas_reed", funds)), &"mech")
-	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"rhea_sol", funds)), &"artillery")
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"rhea_sol", funds)), &"tank")
 	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"viktor_draeg", funds)), &"tank")
 
 

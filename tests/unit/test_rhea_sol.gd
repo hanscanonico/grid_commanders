@@ -146,3 +146,17 @@ func test_the_power_expires_with_the_turn() -> void:
 	assert_eq(AttackRange.maximum(state, state.units[0]), 4)
 	EndTurnCommand.new().apply(state)
 	assert_eq(AttackRange.maximum(state, state.units[0]), 3)
+
+
+# --- production advice -------------------------------------------------------
+
+
+## The pull is mild by measurement, not oversight: at -4 the doctrine matrix
+## priced her at 34% — an army of guns the planner cannot move-and-fire — so
+## the bias orders the cheap end of the build list and leaves its top alone.
+func test_build_advice_pulls_indirects_mildly() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 g 0 0\n2 t 1 0")
+	var co := state.commander_of(1)
+	assert_eq(co.build_bias(state, 1, unit_db.by_id(&"artillery")), -2)
+	assert_eq(co.build_bias(state, 1, unit_db.by_id(&"rockets")), -2, "keyed on being indirect")
+	assert_eq(co.build_bias(state, 1, unit_db.by_id(&"tank")), 0)

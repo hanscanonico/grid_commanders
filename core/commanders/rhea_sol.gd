@@ -15,8 +15,12 @@ extends CommanderType
 @export var indirect_defense_pct: int = -10
 @export var saturation_attack_pct: int = 20
 @export var saturation_range_bonus: int = 1
-## Build-list places her indirects are pulled up: the siege line is the doctrine.
-@export var indirect_build_bias: int = -4
+## Build-list places her indirects are pulled up: the siege line is the
+## doctrine. Mild on purpose, and measured: at -4 the first full matrix with
+## doctrine advice priced her at 34% — an army of guns the planner cannot
+## move-and-fire — so the pull orders the cheap end of the list and leaves the
+## top of it alone.
+@export var indirect_build_bias: int = -2
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:

@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Commander Doctrine AI Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid #e0a441; }
+    .gc-risk-low { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-free { color: var(--gc-grass-dark); font-weight: 700; }
+    .gc-gap { color: var(--gc-red); font-weight: 700; }
+    table.gc-roster td, table.gc-roster th { vertical-align: top; }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="gc-hero px-6 py-10 md:px-12">
+    <p class="gc-kicker mb-2 opacity-80">Grid Commanders · design of record · shipped</p>
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight">Commander Doctrine AI</h1>
+    <p class="mt-3 max-w-3xl text-base md:text-lg opacity-90">
+      Each general's army, when a computer plays it, should <em>play like that general</em>: Sable
+      Wren's line lives in the woods, Viktor Draeg fields armour, Tomas Reed floods the map with
+      infantry, Gideon Holt rotates worn units home because his repairs are cheap. This plan closes
+      the gap between the doctrines the sim already enforces and the choices the planner makes.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-outline badge-lg text-white border-white/40">Milestones CA1–CA4</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D5</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R6</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">core/ untouched except CommanderType hooks</span>
+    </div>
+  </header>
+
+  <main class="px-6 py-10 md:px-12 space-y-14">
+
+  <!-- ============================ 1. WHAT IS ALREADY FREE ============================ -->
+  <section id="free">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">1</span>
+      <h2 class="text-2xl font-extrabold">Half of this already works, for free — the plan is the other half</h2>
+    </div>
+    <p class="max-w-4xl mb-4">
+      The planner never re-derives a rule: it scores attacks with
+      <span class="gc-file">CombatResolver.forecast</span>, walks moves with
+      <span class="gc-file">MovementResolver.reachable</span>, and both call every
+      <span class="gc-file">CommanderType</span> hook unconditionally. So every <b>combat and
+      movement passive already steers the AI</b> without a line of AI code: Cass Orlov's finisher
+      bonus raises the forecast on wounded targets and the kill multiplier compounds it; Rhea Sol's
+      indirect bonus makes her artillery outscore her tanks; Nia Rowan's terrain discount makes the
+      flood fill reach farther through woods, so her infantry already route through them; Mara
+      Voss's initiate penalty already discounts the attacks she shouldn't open. Power <em>timing</em>
+      is also solved: <span class="gc-file">wants_power</span> lives on each doctrine
+      (commanders plan, C4) and five generals already override it.
+    </p>
+    <p class="max-w-4xl mb-4">
+      What the resolvers <b>cannot</b> carry into the planner is everything that is not a forecast
+      of a single exchange:
+    </p>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-4">
+        <h3 class="font-bold"><span class="gc-gap">Gap 1 — Ground.</span> The advance path is terrain-blind.</h3>
+        <p class="text-sm"><span class="gc-file">_advance_value</span> is distance to a goal minus
+        threat, nothing else. No unit — anyone's — prefers to end a quiet move on defensive
+        terrain, so Wren's woods bonus, Voss's hold-the-line and Ward's mixed-line adjacency never
+        shape a turn that doesn't fire a shot.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-4">
+        <h3 class="font-bold"><span class="gc-gap">Gap 2 — Production.</span> One global build list for twelve doctrines.</h3>
+        <p class="text-sm"><span class="gc-file">AIProfile.build_priority</span> is the same for
+        every general. Draeg (armour +15%) buys the same roster as Reed (foot +15%, vehicles −10%),
+        so both waste their bonus half the time and pay their malus the other half.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-4">
+        <h3 class="font-bold"><span class="gc-gap">Gap 3 — Power setup.</span> Nobody stages their own power.</h3>
+        <p class="text-sm">Wren's <span class="gc-file">wants_power</span> correctly refuses to
+        fire Vanish with nobody in cover — but the planner never <em>puts</em> anyone in cover, so
+        on open ground she can sit on a full meter all match. The gate and the planner disagree
+        about whose job the precondition is. Rook is the mirror image: he never overrode
+        <span class="gc-file">wants_power</span>, so Rapid Redeployment (−20% attack, the
+        repositioning power) fires on the default <em>offensive</em> read — exactly the turn it
+        penalises.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-4">
+        <h3 class="font-bold"><span class="gc-gap">Gap 4 — Economics.</span> Retreat is priced for the neutral commander.</h3>
+        <p class="text-sm"><span class="gc-file">AIProfile.retreat_hp</span> = 45 for everyone.
+        Holt repairs at 80% and tops the army up when the depots open; his units should rotate home
+        earlier because the round trip costs him less. He has no combat hook at all, so the
+        forecasts give his AI nothing.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================ 2. DECISIONS ============================ -->
+  <section id="decisions">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">2</span>
+      <h2 class="text-2xl font-extrabold">Decisions</h2>
+    </div>
+
+    <div class="space-y-5">
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D1 — Advice lives on <span class="gc-file">CommanderType</span>, beside <span class="gc-file">wants_power</span></h3>
+        <p class="text-sm max-w-4xl">The AI-advisory hooks join the doctrine subclass, with their
+        numbers <code>@export</code> on the general's <span class="gc-file">.tres</span> — exactly
+        the pattern <span class="gc-file">wants_power</span> set and defended: "a general's sense of
+        timing lives beside the rest of its doctrine instead of in the planner." A general's sense
+        of <em>ground</em> and <em>production</em> belongs in the same file, where the doctrine it
+        expresses is three lines up. The base class returns zero from every advisory hook, so the
+        neutral commander — and any general with nothing to say — advises nothing and the planner
+        is bit-for-bit what it was.</p>
+        <p class="text-sm max-w-4xl mt-1"><b>Rejected:</b> a mirror tree of adviser classes under
+        <span class="gc-file">ai/commanders/</span>. Twelve more files, each doctrine split across
+        two trees that can drift apart — the exact bug class the hook-layer split has bitten this
+        repo with before. The hooks are advisory reads of sim state; they don't make
+        <span class="gc-file">core/</span> depend on the planner.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D2 — One planner dial: <span class="gc-file">AIProfile.doctrine_weight</span></h3>
+        <p class="text-sm max-w-4xl">How strongly advice re-ranks candidates is a planner weight,
+        so it lives on <span class="gc-file">AIProfile</span> like every other one. <code>0.0</code>
+        skips the hooks entirely — the <span class="gc-file">threat_aversion</span> pattern: at zero
+        the code that reads them never runs and planning is byte-identical to today. The shipped
+        default is <b>on at every tier</b>: a commander's personality is a <em>match fact</em> the
+        player chose, not a difficulty smart — Easy's Sable Wren still loves woods; the tiers may
+        retune the strength but never gate the behaviour. This stays inside the difficulty lock
+        ("difficulty may only change which AIProfile the planner weighs moves with"): it is one more
+        field on the same resource. Per <span class="gc-file">AIProfile</span>'s own header rule,
+        the field is written into <b>every</b> profile under <span class="gc-file">data/ai/</span>,
+        and <span class="gc-file">test_ai_profile.gd</span> holds them to it.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D3 — Exactly three hooks, each mapped to one planner seam</h3>
+        <div class="overflow-x-auto"><table class="table table-sm mt-2">
+          <thead><tr><th>Hook (on CommanderType)</th><th>Currency</th><th>Planner seam</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>stand_value(state, unit, cell) -> int</code></td>
+              <td><b>Tiles</b>, like <span class="gc-file">advance_threat_tiles</span> — how many
+              tiles of progress standing here is worth giving up.</td>
+              <td><span class="gc-file">_advance_value</span> adds
+              <code>doctrine_weight × stand_value</code>. The advance path <em>only</em>: attack
+              destinations already price doctrine through the forecast's counter and terrain
+              (R1 below).</td>
+            </tr>
+            <tr>
+              <td><code>build_bias(state, team, unit_type) -> int</code></td>
+              <td><b>Places on the build list</b>, like
+              <span class="gc-file">duplicate_priority_cost</span> — negative pulls a unit up,
+              positive pushes it down.</td>
+              <td><span class="gc-file">_build_rank</span>'s priority tier, after the reactive/static
+              rank and duplicate cost. The air-answer and capture-shortage tiers outrank it
+              untouched: no doctrine talks the AI out of answering bombers.</td>
+            </tr>
+            <tr>
+              <td><code>retreat_hp_delta(state, unit) -> int</code></td>
+              <td><b>Displayed-HP points</b> added to
+              <span class="gc-file">profile.retreat_hp</span>.</td>
+              <td><span class="gc-file">_advance_goal</span>'s repair gate.</td>
+            </tr>
+          </tbody>
+        </table></div>
+        <p class="text-sm max-w-4xl mt-2"><b>Power staging is not a fourth hook.</b>
+        <code>stand_value</code> receives the state, and the meter is sim state
+        (<span class="gc-file">commander_state(team).charge</span> vs
+        <span class="gc-file">power_cost</span>) — so Wren's implementation simply values woods more
+        as Vanish approaches READY. The precondition and the gate that checks it end up reading the
+        same doctrine file.</p>
+        <p class="text-sm max-w-4xl mt-1"><b>Rejected:</b> a per-commander
+        <span class="gc-file">build_priority</span> list override. Twelve hand-ordered lists to keep
+        in sync with the roster and with S3's reactive re-rank; a rank <em>delta</em> composes with
+        both and with the duplicate tax instead of replacing them.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D4 — Advice never cheats, never rolls, never double-counts</h3>
+        <p class="text-sm max-w-4xl">Three standing rules for every hook implementation, enforced by
+        review and by the seam tests: <b>(1)</b> it reads only what the planner already reads —
+        terrain, its own units, its own meter; anything of the enemy's goes through the same
+        <span class="gc-file">Vision.is_hidden_from</span> discipline
+        <span class="gc-file">_can_strike</span> uses. <b>(2)</b> It is pure, integer-valued and
+        RNG-free, so planning stays deterministic and scan-order ties still break as they do today.
+        <b>(3)</b> It never reads the damage chart — expected damage is the forecast's job, and a
+        hook that re-derived it would count the same doctrine twice (once in the forecast, once in
+        the advice).</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D5 — The merge bar, restated for a change that is supposed to move balance</h3>
+        <p class="text-sm max-w-4xl">Advice changes AI decisions <em>by design</em>, so the
+        byte-diff bar splits: <b><span class="gc-file">make difficulty-check</span> stays
+        byte-stable</b> (its matches seat no commanders; neutral advice is structurally zero, and
+        that identity is the proof the seam is inert when unused) — while
+        <b><span class="gc-file">make commander-balance</span> is expected to move</b> and is
+        regenerated and <em>read</em>, per <span class="gc-file">docs/commander_balance.md</span>,
+        with the July 2026 grand sweep as the baseline. That sweep is also the motivation: its
+        Gideon and Sable findings are partly artefacts of an AI that doesn't play either doctrine —
+        a commander the planner can't express is measured weaker than the commander is.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================ 3. THE TWELVE, ONE BY ONE ============================ -->
+  <section id="roster">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">3</span>
+      <h2 class="text-2xl font-extrabold">The twelve, one by one</h2>
+    </div>
+    <p class="max-w-4xl mb-3 text-sm">
+      <span class="gc-free">FREE</span> = already flows through the resolvers today.
+      <span class="gc-gap">ADVICE</span> = what this plan adds. Every number named below is an
+      <code>@export</code> on the general's <span class="gc-file">.tres</span>, starting values to
+      be tuned in CA4. Three generals get <b>no advice at all</b> — that the seam permits saying
+      nothing is part of the design.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="table table-sm gc-roster">
+        <thead><tr><th class="w-40">Commander</th><th>Doctrine the sim enforces</th><th>What the AI does about it</th></tr></thead>
+        <tbody>
+          <tr><td><b>Sable Wren</b><br><span class="text-xs opacity-70">Verdant · Vanish</span></td>
+            <td>Woods +1 star, roads −10%, Vanish hides + ambushes from cover (ROUND).</td>
+            <td><span class="gc-free">FREE:</span> ambush attack bonus in forecasts while active;
+            <span class="gc-file">wants_power</span> already gates on cover + being reachable.
+            <span class="gc-gap">ADVICE:</span> <code>stand_value</code> favours woods for combat
+            units, scaling up as the meter fills and while Vanish runs — which is what finally
+            breaks the <b>Vanish stall</b> (full meter, nobody in cover, forever). The road malus
+            needs nothing: it prices attacks via forecast, and quiet moves shouldn't dodge roads.</td></tr>
+          <tr><td><b>Mara Voss</b><br><span class="text-xs opacity-70">Iron · Hold the Line</span></td>
+            <td>Counters +20%, initiating −10%; Hold the Line +30% def / +40% counter (ROUND).</td>
+            <td><span class="gc-free">FREE:</span> the initiate malus already discounts her opening
+            attacks; power timing is her bespoke defensive read.
+            <span class="gc-gap">ADVICE:</span> <code>stand_value</code> favours high-star terrain
+            for direct combat units while an opponent can strike her side — she receives the fight
+            on ground worth receiving it on.</td></tr>
+          <tr><td><b>Alina Ward</b><br><span class="text-xs opacity-70">Meridian · Coordinated Push</span></td>
+            <td>+10% beside a friendly of a different movement class; Push buffs and moves the line.</td>
+            <td><span class="gc-free">FREE:</span> attacks fired from beside a mixed neighbour
+            already forecast higher (the hook reads the firing cell).
+            <span class="gc-gap">ADVICE:</span> <code>stand_value</code> favours cells adjacent to
+            an own-team, different-class unit, so the mixed line the bonus wants <em>forms</em> on
+            quiet turns instead of by accident.</td></tr>
+          <tr><td><b>Gideon Holt</b><br><span class="text-xs opacity-70">Meridian · Open the Depots</span></td>
+            <td>Supply range 2, repairs at 80%, depots heal + resupply the whole side.</td>
+            <td><span class="gc-free">FREE:</span> power timing is his bespoke worn-army read; no
+            combat hook, so forecasts carry nothing — correctly.
+            <span class="gc-gap">ADVICE:</span> <code>retreat_hp_delta</code> positive: cheap
+            repairs make the round trip home a better trade for him than for anyone else.</td></tr>
+          <tr><td><b>Nia Rowan</b><br><span class="text-xs opacity-70">Verdant · Ghost March</span></td>
+            <td>Foot units walk woods/mountains at a discount; March adds move + sight (no combat hook).</td>
+            <td><span class="gc-free">FREE:</span> the discount is inside the flood fill, so her
+            infantry already reach and route through rough ground; her bespoke
+            <span class="gc-file">wants_power</span> counts capturable ground with the march's own
+            movement. <span class="gc-gap">ADVICE: none.</span> Her doctrine is mobility, not
+            position — biasing her to <em>stand</em> in woods would misread it.</td></tr>
+          <tr><td><b>Tomas Reed</b><br><span class="text-xs opacity-70">Verdant · Popular Uprising</span></td>
+            <td>Foot +15%, vehicles −10%, capture +20%; Uprising takes a property in one turn.</td>
+            <td><span class="gc-free">FREE:</span> both combat modifiers in every forecast; his
+            bespoke <span class="gc-file">wants_power</span> waits for reachable ground.
+            <span class="gc-gap">ADVICE:</span> <code>build_bias</code> pulls mech and infantry up
+            — a wide, cheap army is his doctrine; the capture-shortage tier already handles the
+            first few, this keeps the width coming after it is satisfied.</td></tr>
+          <tr><td><b>Viktor Draeg</b><br><span class="text-xs opacity-70">Iron · Armoured Breakthrough</span></td>
+            <td>Tanks +15%, foot −10%; Breakthrough moves and un-covers treads.</td>
+            <td><span class="gc-free">FREE:</span> both modifiers in every forecast; power move
+            bonus flows into the flood fill on the turn it runs.
+            <span class="gc-gap">ADVICE:</span> <code>build_bias</code> pulls
+            <span class="gc-file">armour_ids</span> up and his foot units down — he pays for armour;
+            the AI should buy what he paid for.</td></tr>
+          <tr><td><b>Rhea Sol</b><br><span class="text-xs opacity-70">Meridian · Grid Saturation</span></td>
+            <td>Indirects +10% att / −10% def; Saturation adds +20% and a tile of range.</td>
+            <td><span class="gc-free">FREE:</span> bonuses in forecasts; the range bonus flows into
+            <span class="gc-file">AttackRange</span>, so target lists and standoff distance are
+            already right on the power turn.
+            <span class="gc-gap">ADVICE:</span> <code>build_bias</code> pulls artillery, rockets
+            and other indirects up — the siege line is the doctrine.</td></tr>
+          <tr><td><b>Cassian Rook</b><br><span class="text-xs opacity-70">Aurora · Rapid Redeployment</span></td>
+            <td>Light units +1 move, heavies −10%; Redeploy +2 move, −20% attack.</td>
+            <td><span class="gc-free">FREE:</span> move bonuses in the flood fill, heavy malus in
+            forecasts. <span class="gc-gap">ADVICE:</span> two pieces. A
+            <b><span class="gc-file">wants_power</span> override</b> — today he inherits the
+            offensive default and fires the −20% power on the turn he attacks; the right read is
+            repositional: ground or a capture to gain and <em>no</em> good fight this turn (the
+            inverse gate). And <code>build_bias</code> pulls
+            <span class="gc-file">light_ids</span> up. This is the one behaviour fix in the plan
+            that is a <em>correction</em>, not an addition.</td></tr>
+          <tr><td><b>Cass Orlov</b><br><span class="text-xs opacity-70">Iron · No Escape</span></td>
+            <td>+15% vs wounded, −10% def; No Escape widens "wounded" and speeds recon/tank.</td>
+            <td><span class="gc-free">FREE:</span> the finisher bonus raises forecasts on wounded
+            targets and <span class="gc-file">kill_bonus</span> compounds it — the planner already
+            plays her like a finisher. <span class="gc-gap">ADVICE: none.</span></td></tr>
+          <tr><td><b>Lyra Quill</b><br><span class="text-xs opacity-70">Aurora · Perfect Solution</span></td>
+            <td>Luck floor 4, −5% def; Solution maxes every roll for a turn.</td>
+            <td><span class="gc-free">FREE:</span> power timing (offensive default) fits her.
+            <span class="gc-gap">ADVICE: none.</span> Known limit, accepted: forecasts are
+            deliberately luck-free, so her raised floor is invisible to scoring. Pricing luck into
+            forecasts would change the damage preview every player sees — out of scope, noted in R1.</td></tr>
+          <tr><td><b>Orin Flux</b><br><span class="text-xs opacity-70">Aurora · Signal Jam</span></td>
+            <td>Scouts +1 vision; Jam strips enemy fuel/ammo and a tile of their sight (ROUND).</td>
+            <td><span class="gc-free">FREE:</span> his bespoke contact-read
+            <span class="gc-file">wants_power</span>; the jam's effects need no planning.
+            <span class="gc-gap">ADVICE:</span> <code>build_bias</code> pulls
+            <span class="gc-file">scout_ids</span> up, mildly. Honest accounting: vision buys the
+            AI less than it buys a human — its targeting is omniscient-except-doctrine-hidden and
+            only its <em>pathing</em> is fog-limited — so his is the smallest bias on the roster,
+            not a pretence that the AI scouts.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================ 4. MILESTONES ============================ -->
+  <section id="milestones">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">4</span>
+      <h2 class="text-2xl font-extrabold">Milestones</h2>
+    </div>
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">CA1 — The seam <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+        <p class="text-sm max-w-4xl">The three advisory hooks on
+        <span class="gc-file">CommanderType</span> (neutral returns zero),
+        <span class="gc-file">doctrine_weight</span> on <span class="gc-file">AIProfile</span> and
+        written into every <span class="gc-file">data/ai/*.tres</span>, and the three planner
+        read-sites (<span class="gc-file">_advance_value</span>,
+        <span class="gc-file">_build_rank</span>, <span class="gc-file">_advance_goal</span>). No
+        commander implements anything yet.</p>
+        <p class="text-sm max-w-4xl mt-1"><b>Gate:</b> with <code>doctrine_weight = 0</code> or a
+        neutral commander, planning is byte-identical — proven by
+        <span class="gc-file">make difficulty-check</span> staying byte-stable and a seam GUT test
+        that plans the same fixed-seed turn with the field at 0 and with a no-advice commander.
+        <span class="gc-file">test_ai_profile.gd</span> extended for the new field.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">CA2 — The ground doctrines <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+        <p class="text-sm max-w-4xl"><code>stand_value</code> for Wren, Voss and Ward, meter-aware
+        for Wren; the Rook <span class="gc-file">wants_power</span> correction. Each ships with a
+        GUT test asserting the observable choice on a fixed board: Wren's tank ends an equal-distance
+        advance in woods rather than plains, and <b>stages into cover on a near-full meter so a
+        subsequent turn can fire Vanish</b> (the stall, as a regression test); Voss holds the
+        mountain when reachable; Ward's quiet move ends beside a different-class friendly; Rook
+        banks his meter on a turn he could attack and spends it on a turn he can only gain ground.</p>
+        <p class="text-sm max-w-4xl mt-1"><b>Gate:</b> the four tests, plus
+        <span class="gc-file">make verify</span>; <span class="gc-file">difficulty-check</span>
+        still byte-stable.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">CA3 — The economy doctrines <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+        <p class="text-sm max-w-4xl"><code>build_bias</code> for Draeg, Reed, Sol, Rook and Flux;
+        <code>retreat_hp_delta</code> for Holt. Tests assert rank order out of
+        <span class="gc-file">_build_rank</span> per commander (Draeg's base ranks a tank over the
+        infantry the default list ties it with; Reed the inverse; Sol's base pulls artillery ahead)
+        and that the air-answer and capture-shortage tiers still win over any bias; Holt's
+        60&nbsp;HP tank seeks repair where the neutral commander's advances.</p>
+        <p class="text-sm max-w-4xl mt-1"><b>Gate:</b> the tests, <span class="gc-file">make verify</span>,
+        and a played sanity check of one Draeg-vs-Reed watch match: the two rosters visibly diverge.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">CA4 — The proof, and the tune <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+        <p class="text-sm max-w-4xl">Regenerate <span class="gc-file">make commander-balance</span>
+        and read it against the July 2026 grand-sweep baseline per
+        <span class="gc-file">docs/commander_balance.md</span> — the question is whether the
+        doctrine-played commanders' win rates move toward each other, with Wren and Holt (the sweep's
+        named outliers) the ones to watch. Tune the advisory <code>@export</code>s and
+        <code>doctrine_weight</code> on that evidence; every tuning change is a
+        <span class="gc-file">.tres</span> edit. Update
+        <span class="gc-file">docs/commander_balance.md</span> with the new baseline and CLAUDE.md's
+        plan index with this plan's entry.</p>
+        <p class="text-sm max-w-4xl mt-1"><b>Gate:</b> the report regenerated and its findings
+        written down; no commander's advice made the AI <em>worse</em> with that commander than the
+        neutral planner was (the sweep answers this per pairing); an AI-vs-AI soak with commanders
+        seated completes on the shipped boards.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================ 5. RISKS ============================ -->
+  <section id="risks">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">5</span>
+      <h2 class="text-2xl font-extrabold">Risk register</h2>
+    </div>
+    <div class="space-y-3">
+      <div class="card bg-base-100 shadow-sm gc-risk-high"><div class="card-body py-4">
+        <h3 class="font-bold">R1 — Double counting a doctrine</h3>
+        <p class="text-sm max-w-4xl">The forecasts already carry every combat passive; advice that
+        re-prices one (Wren valuing woods <em>because of the ambush damage</em>, say) counts it
+        twice and over-rotates the AI. Mitigation is D4's third rule — hooks never read the damage
+        chart — and the review question for every implementation: "is this value visible to a
+        forecast?" If yes, the hook stays silent about it. Lyra is the accepted inverse case: luck
+        is visible to no forecast, and stays unpriced.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm gc-risk-high"><div class="card-body py-4">
+        <h3 class="font-bold">R2 — Advice that fights the planner</h3>
+        <p class="text-sm max-w-4xl">A tile-denominated bias too large stops armies advancing at
+        all (the <span class="gc-file">advance_threat_tiles</span> lesson: below ~1.6 it is inert,
+        far above it the unit cowers). Starting values sit near the working threat-dial numbers,
+        and CA4's soak is the check that every army still closes, captures and wins. If a doctrine
+        AI visibly stalls, the fix is the <span class="gc-file">.tres</span> number, not code.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R3 — The balance reports move and the bar blurs</h3>
+        <p class="text-sm max-w-4xl">Every commander-seated report changes by design, so "the diff
+        is expected" could hide a real regression. D5 keeps one hard identity —
+        <span class="gc-file">difficulty-check</span> byte-stable, since it seats no commanders —
+        and makes the commander-balance regeneration a <em>read</em> deliverable with named
+        questions, not a rubber stamp. Both-sides regeneration per the recorded merge-bar
+        procedure (reports/ is gitignored).</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R4 — Determinism and scan order</h3>
+        <p class="text-sm max-w-4xl">Advice joins score comparisons that break ties by scan order
+        with strict operators. Integer-valued hooks scaled by one float keep the arithmetic stable;
+        the CA1 seam test runs a fixed-seed turn twice and byte-compares the command log. No hook
+        may allocate per-call state or read the RNG.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R5 — A hook that peeks</h3>
+        <p class="text-sm max-w-4xl">Advice reading enemy positions without the
+        <span class="gc-file">Vision.is_hidden_from</span> filter would let a doctrine plan around
+        units its side cannot see — a cheat, and a violation of the difficulty plan's lock in
+        spirit. Voss's "while an opponent can strike" gate reuses
+        <span class="gc-file">_opponents_can_strike</span>, which already carries the discipline;
+        any new enemy-reading helper goes through the same toolkit.</p>
+      </div></div>
+      <div class="card bg-base-100 shadow-sm gc-risk-low"><div class="card-body py-4">
+        <h3 class="font-bold">R6 — Tier inheritance trap</h3>
+        <p class="text-sm max-w-4xl">A new AIProfile field left out of a shipped tier's
+        <span class="gc-file">.tres</span> silently inherits the code default — the exact trap the
+        class header documents. <span class="gc-file">doctrine_weight</span> is written into every
+        profile under <span class="gc-file">data/ai/</span> in CA1 and
+        <span class="gc-file">test_ai_profile.gd</span> holds them to it, as it does for every
+        other field.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================ 6. OUT OF SCOPE ============================ -->
+  <section id="out-of-scope">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">6</span>
+      <h2 class="text-2xl font-extrabold">Deliberately out of scope</h2>
+    </div>
+    <ul class="list-disc pl-6 space-y-2 text-sm max-w-4xl">
+      <li><b>Multi-turn intent.</b> Rook's "true" redeploy — planning a repositioning <em>turn</em>
+      and cashing it in later — needs plan-ahead the greedy planner doesn't have. His fix here is
+      the corrected trigger and build bias; a lookahead planner is its own future plan.</li>
+      <li><b>Luck in forecasts.</b> Pricing Lyra's floor into scoring means pricing it into
+      <span class="gc-file">CombatResolver.forecast</span>, which is also the player's damage
+      preview. Not for this plan.</li>
+      <li><b>Transports.</b> Still unbuilt, still naval plan R1. No doctrine bias may pull a
+      transport into the build (the hooks bias ranks; transports have no rank to bias).</li>
+      <li><b>Per-commander AIProfiles.</b> The tier × commander matrix as twelve more
+      <span class="gc-file">.tres</span> files would fork every future weight twelve ways. One dial
+      plus per-doctrine numbers on the commander's own resource covers it.</li>
+      <li><b>Telemetry.</b> The balance simulator observes and never instruments (balance plan D2);
+      nothing here adds a hook for it.</li>
+    </ul>
+  </section>
+
+  </main>
+
+  <footer class="px-6 py-6 md:px-12 text-xs opacity-70 border-t border-base-300">
+    Grid Commanders · Commander Doctrine AI plan · drafted and shipped 2026-07-31 · status:
+    <b>shipped</b> — milestones CA1–CA4 landed; the Rook-gate refinement is recorded in
+    CLAUDE.md's plan index, where every supersession lives. Companion plans: commanders-plan.html
+    (doctrine + powers),
+    difficulty-modes-plan.html (the no-cheating lock), balance-simulator-plan.html (the instruments CA4 reads).
+  </footer>
+</div>
+</body>
+</html>

@@ -15,7 +15,9 @@ extends CommanderType
 @export var breakthrough_move_bonus: int = 1
 @export var breakthrough_star_pierce: int = 1
 ## Build-list places: armour pulled up, his discounted foot units pushed down.
-@export var armour_build_bias: int = -4
+## The pull is milder than the push, and measured: at -4 the first full matrix
+## with doctrine advice made him the roster's outlier at 65%.
+@export var armour_build_bias: int = -2
 @export var foot_build_bias: int = 4
 
 
