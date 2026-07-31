@@ -1,0 +1,81 @@
+# A wooded ridge splits the march in two; four passes are the only fast ways over.
+# Seats sit at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW — and this is
+# the board built for the alliance grouping: `--sides=1+2v3+4` puts a pair on each
+# side of the ridge, so allies share a front instead of standing back to back. The
+# corner convention and that pairing agree rather than fight — 1 and 2 *are* the
+# north, 3 and 4 the south — and each pair still keeps its own purse.
+#
+# The fair duel stays the opposite-seat pair (1&3, 2&4); here it is simply the
+# longest march, corner to corner across the ridge. Fairness is not a quarter turn:
+# 22x16 is not square, so no 90-degree rotation maps this board onto itself. It is
+# laid out under the whole rectangle's symmetry instead — north/south flip,
+# east/west flip and the half turn — which carries all four corners onto each other,
+# so every pairing is fair by construction: the 2v2 across the ridge by the flip,
+# the opposite-seat duel by the half turn. That is a superset of what a quarter turn
+# would have bought, and it is the fairness this board is *for*.
+#
+# No `# symmetric` tag: that lint is a 180-degree *duel* instrument (FP6/R5), and
+# four seats have no opposing pair for it to check.
+#
+# Land only, like the other multi-army boards: the computer cannot plan a ferry, so
+# a board it may have to fight across in any grouping lets every army walk to every
+# other. The mountain shoulders wall the ridge for anything on treads; the four road
+# passes (x = 3, 8, 13, 18) and the woods flanking them are the whole crossing, and
+# the lateral road behind each pair is how an ally reinforces the lane next door.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+F.........FF.........F
+..QB..............BQ..
+...================...
+.C.=..C.=....=.C..=.C.
+..F=...F=....=F...=F..
+...=..C.=.CC.=.C..=...
+.F.=C.F.=F..F=.F.C=.F.
+MMF=FMMF=FMMF=FMMF=FMM
+MMF=FMMF=FMMF=FMMF=FMM
+.F.=C.F.=F..F=.F.C=.F.
+...=..C.=.CC.=.C..=...
+..F=...F=....=F...=F..
+.C.=..C.=....=.C..=.C.
+...================...
+..QB..............BQ..
+F.........FF.........F
+[owners]
+# team x y — HQ, base and two cities per seat, identical under the flips above.
+# The twelve cities either side of the ridge start neutral: they are the front.
+1 2 1
+1 3 1
+1 1 3
+1 6 3
+2 19 1
+2 18 1
+2 20 3
+2 15 3
+3 19 14
+3 18 14
+3 20 12
+3 15 12
+4 2 14
+4 3 14
+4 1 12
+4 6 12
+[units]
+# team symbol x y — i infantry, m mech, r recon.
+# The standard screen, one set per seat: two rifles to open the capture race, a
+# mech for the ridge and a recon for the lateral road.
+1 i 4 1
+1 i 1 2
+1 m 2 3
+1 r 4 2
+2 i 17 1
+2 i 20 2
+2 m 19 3
+2 r 17 2
+3 i 17 14
+3 i 20 13
+3 m 19 12
+3 r 17 13
+4 i 4 14
+4 i 1 13
+4 m 2 12
+4 r 4 13

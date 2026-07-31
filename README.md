@@ -176,25 +176,32 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Seventeen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+Eighteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
 `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`, `timberline`,
 `arsenal`, `riverline`, `isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`,
-`ironworks`, `steelworks` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
-board's size,
+`marchlands`, `ironworks`, `steelworks` — so it opens on `boot_camp`, badged **Tutorial**, and
+prints the selected board's size,
 army count (a range, `2–4 armies`, on a board where seats can be closed), property count and
 one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`foursquare`, `compass` and `pinwheel` seat **four armies**, and so offer the one-tap table presets
-in the seat strip. `foursquare` is the smallest, 12×12 and the
+`foursquare`, `compass`, `pinwheel` and `marchlands` seat **four armies**, and so offer the one-tap
+table presets in the seat strip. `foursquare` is the smallest, 12×12 and the
 quickest full free-for-all in the roster: a seat in each corner in reading order — 1 NW, 2 NE, 3 SE,
 4 SW — laid out under a quarter turn rather than the half turn `# symmetric` checks, so the two
 opposite pairs make a fair duel and every seat's nearest cities sit the same distance out. It is also
-a production board (below): nobody opens holding an army. `compass` is the widest — an HQ and a
+a production board (below): nobody opens holding an army. `compass` puts an HQ and a
 base at each compass point, with eight cities in a ring that closes under a half turn, so every
 army's nearest two sit the same distance out. `pinwheel` seats its four at the same corners on a
 14×14 laid out under the same quarter turn, `(x, y) -> (13 - y, x)`: four road blades leave their
 own base, run the long edge clockwise and hook into the *next* seat's flank, so the opening question
 is whether to race the wheel or cut the wooded hub in the middle. The infantry screens of
 neighbouring seats meet on day 2; opposite seats — the fair duel, 1&3 or 2&4 — take until day 3.
+`marchlands` at 22×16 is the largest of the four and the board built for the **2v2**: a wooded
+ridge splits it north from south with four road passes over, seats 1 and 2 north of the ridge and
+3 and 4 south, so `--sides=1+2v3+4` gives each pair a shared front and its own purse instead of two
+armies standing back to back. It is not laid out on a quarter turn — a 22×16 rectangle cannot be —
+but on the whole rectangle's symmetry, the two flips and the half turn, which carries every corner
+onto every other: the 2v2 across the ridge is fair by the flip, an opposite-seat duel (1&3, 2&4) by
+the half turn.
 `trident` seats
 **three**, each a prong of the fork around a central massif, where the only grouping worth naming is
 a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
@@ -205,8 +212,9 @@ Three of the older boards have since been retrofitted with the domains that suit
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
-because the five things it teaches are the land game's. `foursquare`, `compass`, `pinwheel` and
-`trident` stay land-only too: the computer cannot plan a ferry, so a board it may have to fight
+because the five things it teaches are the land game's. `foursquare`, `compass`, `pinwheel`,
+`trident` and `marchlands` stay land-only too: the computer cannot plan a ferry, so a board it may
+have to fight
 across in any grouping has to let every army reach every other on foot.
 
 `forge`, `foursquare`, `arsenal` and `steelworks` are the production boards, and the only ones that
