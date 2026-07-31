@@ -12,17 +12,23 @@ extends GutTest
 ##
 ## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
-## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/pinwheel.txt` and
-## `maps/trident.txt`, because a grouping that only ever ran on a fixture is a
-## capability no player can pick. The menu's seat strip writes the same `sides`,
-## but the groupings are set directly here so the soak never has to walk a menu
-## to reach one.
+## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/pinwheel.txt`,
+## `maps/trident.txt` and `maps/marchlands.txt`, because a grouping that only ever
+## ran on a fixture is a capability no player can pick. The menu's seat strip
+## writes the same `sides`, but the groupings are set directly here so the soak
+## never has to walk a menu to reach one.
 ##
 ## Pinwheel is also played with seats left open (COM-129): its whole claim is that
 ## the corners are one quarter turn apart, so the duel it promises is an
 ## opposite-seat pair — and a duel is a *seating*, not a grouping. The seat strip
 ## writes the same `seats`, and the closed corners' HQs sit there unowned, which is
 ## the shape the open-seats plan's R3 warns about.
+##
+## Marchlands is the one board that exists *for* a grouping: its ridge puts seats
+## 1 and 2 north of it and 3 and 4 south, so `1+2v3+4` is a shared front rather
+## than two armies that happen not to shoot each other. That makes it the one
+## board where an alliance bug would show up as terrain — a pair advancing into
+## the lane its ally holds — so it is soaked in its own pairing first.
 ##
 ## Each army is seated with a doctrine, and with a meter full enough to weigh
 ## firing it, on purpose. Without one every commander hook stays at its neutral
@@ -38,6 +44,8 @@ const COMPASS := "res://maps/compass.txt"
 const FOURSQUARE := "res://maps/foursquare.txt"
 const PINWHEEL := "res://maps/pinwheel.txt"
 const TRIDENT := "res://maps/trident.txt"
+## The 2v2 board — four armies, paired across the ridge rather than diagonally.
+const MARCHLANDS := "res://maps/marchlands.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -86,6 +94,12 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("foursquare 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, FOURSQUARE)
 	_soak("trident free-for-all", {}, 623, TRIDENT)
 	_soak("trident 2v1", {1: 0, 2: 0, 3: 1}, 624, TRIDENT)
+	# The pairing Marchlands is laid out for goes first: north of the ridge against
+	# south, which is also the one grouping on any shipped board where allies start
+	# side by side rather than opposite each other.
+	_soak("marchlands 2v2", {1: 0, 2: 0, 3: 1, 4: 1}, 625, MARCHLANDS)
+	_soak("marchlands free-for-all", {}, 626, MARCHLANDS)
+	_soak("marchlands 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, MARCHLANDS)
 
 
 ## Pinwheel, over the seatings its own layout promises: the four-army groupings,
