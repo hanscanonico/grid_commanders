@@ -44,3 +44,4 @@ advance_threat_tiles = 3.0
 focus_fire_bonus = 0.0
 build_reactivity = 0.0
 defend_weight = 0.0
+withdraw_weight = 0.0
