@@ -110,10 +110,12 @@ var map_path := ""
 ## needed changing: **a reduced match on a big board produces exactly the state a
 ## small board would have produced.**
 ##
-## Refused (null, with a pushed error) two ways, because `create` is the one
+## Refused (null, with a pushed error) three ways, because `create` is the one
 ## authority every route in — the menu, a rematch, `--seats=` — has to pass, and it
-## does not guess: a seating naming a seat the board never dealt, and one leaving
-## fewer than `MIN_SEATS` armies.
+## does not guess: a seating naming the same seat twice, one naming a seat the board
+## never dealt, and one leaving fewer than `MIN_SEATS` armies. Which is the same
+## reading of a legal seating `SaveCodec._is_seatable` holds a save to, so the sim
+## and the loader cannot disagree about what a match may have been played with.
 static func create(
 	p_map: MapData,
 	unit_db: UnitDB,
@@ -124,6 +126,10 @@ static func create(
 	var state := GameState.new()
 	state.map = p_map
 	state.damage_chart = p_damage_chart
+	var repeated := _repeated_seat(p_seats)
+	if repeated != 0:
+		push_error("GameState: seats %s name seat %d twice" % [p_seats, repeated])
+		return null
 	var unseated := _unseated(p_map.teams(), p_seats)
 	if not unseated.is_empty():
 		push_error(
@@ -174,6 +180,24 @@ static func create(
 		state.set_commander(team, p_commanders[team])
 	TurnRules.begin_turn(state)  # day-1 income and upkeep for the first player
 	return state
+
+
+## The first seat a seating names twice, or 0 — no board deals seat 0 — when it
+## names none twice.
+##
+## A repeat is refused rather than absorbed, even though the roster it would have
+## produced is the right one: it is a seating nobody could have meant, `_filled_seats`
+## would silently make it mean something, and the count check would then report a
+## short roster for a list that names enough seats. It is also what a save is held to
+## (`SaveCodec._is_seatable`), and two authorities answering "is this a legal seating"
+## differently is how the two drift apart.
+static func _repeated_seat(seats: Array[int]) -> int:
+	var seen: Dictionary = {}
+	for team in seats:
+		if seen.has(team):
+			return team
+		seen[team] = true
+	return 0
 
 
 ## The seats a seating names that the board never dealt, in the order named. Empty

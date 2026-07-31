@@ -105,6 +105,20 @@ func test_a_home_hq_the_board_deals_but_the_save_omits_is_refused() -> void:
 	)
 
 
+## The pin the field is carried for, doing its job: an entry pointing at a real HQ
+## that is somebody else's is the same wrong-cell harm as a missing one, and it is
+## also what a map edit that moved a home would look like from here.
+func test_a_home_hq_pinned_to_another_armys_hq_is_refused() -> void:
+	var map := MapData.load_from_file(QUARTET, terrain_db)
+	var data := SaveCodec.encode(_quartet(), [] as Array[int])
+	data["home_hq"][0] = {"team": 1, "x": 14, "y": 7}
+	assert_eq(SaveCodec.validate(data), "", "one entry per army, each an army that plays")
+	assert_eq(
+		SaveCodec.board_error(data, map),
+		"the save homes team 1 at (14, 7), but its board starts it at (1, 1)"
+	)
+
+
 ## And the allowance that survives it: a board is free to deal a seat no HQ, so an
 ## army the map never homed is owed no entry and the save is clean without one.
 func test_an_army_the_board_never_homed_is_owed_no_entry() -> void:
@@ -112,7 +126,6 @@ func test_an_army_the_board_never_homed_is_owed_no_entry() -> void:
 	assert_not_null(map)
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
-	state.map_path = QUARTET
 	assert_eq(state.home_hq, {}, "a board with no HQ on it homes nobody")
 	var data := SaveCodec.encode(state, [] as Array[int])
 	assert_eq(SaveCodec.validate(data), "")

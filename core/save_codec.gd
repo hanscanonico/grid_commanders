@@ -582,14 +582,20 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 ## split: which cells exist, what stands on them, and which armies a board homes at
 ## all are the board's answers.
 ##
-## Two ways an army ends up unbeheadable, which is the damage this pair exists to
-## refuse — a save that loads clean and plays a rule short. A home HQ on a cell that
-## is not an HQ is one; a *missing* entry for an army the board does start on an HQ
-## is the same harm reached by deleting rather than editing, so the expected set is
-## `GameState.home_hqs` — the one derivation, asked of this save's map and roster.
+## The expected answer is `GameState.home_hqs` — the one derivation, asked of this
+## save's map and roster — and the save is held to it whole: same armies, same cells.
+## Which is the pin the field is carried for, finally enforced rather than merely
+## claimed: a save whose board has since moved is refused here instead of resuming
+## silently re-homed.
+##
+## Every way it can be wrong is the same harm — an army beheaded through a cell that
+## is not its head, or through none at all, in a match that loads clean and plays a
+## rule short. A cell that is not an HQ says so first, because it is the most
+## specific thing that can be said about it.
 ##
 ## Which keeps the allowance it has to keep: a board is free to deal a seat no HQ,
-## and `home_hqs` names no such seat, so no entry is demanded for it.
+## and `home_hqs` names no such seat, so no entry is demanded for it — nor allowed
+## for it, since a home the board never dealt is one nothing on the board answers to.
 ##
 ## Gated on the version that writes the field, like its sibling, and for a second
 ## reason here: `board_error` floors an unreadable version to the oldest one, which
@@ -604,13 +610,21 @@ static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -
 	error = _cells_on_board(data["home_hq"], map, "home HQ")
 	if error != "":
 		return error
+	var expected := GameState.home_hqs(map, _roster(data))
 	var homed: Dictionary = {}
 	for entry: Dictionary in data["home_hq"] as Array:
+		var team := int(entry["team"])
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		if map.terrain_at(cell).id != GameState.HQ_TERRAIN:
-			return "team %d's home HQ at %s is not an HQ" % [int(entry["team"]), cell]
-		homed[int(entry["team"])] = true
-	var expected := GameState.home_hqs(map, _roster(data))
+			return "team %d's home HQ at %s is not an HQ" % [team, cell]
+		if not expected.has(team):
+			return "the save homes team %d at %s, but its board homes it nowhere" % [team, cell]
+		if expected[team] != cell:
+			return (
+				"the save homes team %d at %s, but its board starts it at %s"
+				% [team, cell, expected[team]]
+			)
+		homed[team] = true
 	for team: int in expected:
 		if not homed.has(team):
 			return "the save gives team %d no home HQ, but its board starts it on one" % team

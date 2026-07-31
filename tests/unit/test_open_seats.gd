@@ -190,6 +190,20 @@ func test_a_seating_that_leaves_fewer_than_two_armies_is_refused() -> void:
 	assert_push_error("seats [9] name [9]")
 
 
+## A seating nobody could have meant, refused rather than absorbed — and reported as
+## the repeat it is, not as the short roster `_filled_seats` would have made of it.
+## The save format has always held a roster to this; the sim now answers the same.
+func test_a_seating_that_names_the_same_seat_twice_is_refused() -> void:
+	var map := MapData.load_from_file(QUARTET, terrain_db)
+	assert_null(
+		GameState.create(map, unit_db, chart, {}, [1, 1, 3] as Array[int]),
+		"a repeat is refused even though the roster it would leave is a real one"
+	)
+	assert_push_error("seats [1, 1, 3] name seat 1 twice")
+	assert_null(GameState.create(map, unit_db, chart, {}, [1, 1] as Array[int]))
+	assert_push_error("name seat 1 twice")
+
+
 ## A commander is state like a purse is, so a pick for a seat nobody filled is
 ## dropped with the rest of that seat — both the menu and a rematch hand `create`
 ## every pick they hold, without knowing which seats the seating closed.
