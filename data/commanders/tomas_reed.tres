@@ -19,3 +19,4 @@ vehicle_attack_pct = -10
 capture_pct = 20
 uprising_capture_pct = 100
 uprising_move_bonus = 1
+foot_build_bias = -5

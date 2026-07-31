@@ -14,6 +14,8 @@ extends CommanderType
 @export var redeploy_move_bonus: int = 2
 ## Negative on purpose: a repositioning turn, not an attacking one.
 @export var redeploy_attack_pct: int = -20
+## Build-list places his fast units are pulled up.
+@export var light_build_bias: int = -3
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:
@@ -42,3 +44,8 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 ## toolkit exists to avoid.
 func wants_power(state: GameState, team: int) -> bool:
 	return _can_reach_capture(state, team, redeploy_move_bonus)
+
+
+## Production advice: the units his doctrine speeds up are the ones he fields.
+func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
+	return light_build_bias if unit_type.id in light_ids else 0

@@ -13,6 +13,10 @@ extends CommanderType
 @export var jam_vision_penalty: int = -1
 @export var jam_fuel_loss: int = 10
 @export var jam_ammo_loss: int = 1
+## Build-list places his scouts are pulled up — the smallest bias on the
+## roster, honestly: the AI's targeting is omniscient-except-hidden, so extra
+## sight buys its fog-limited *pathing* something and its aim nothing.
+@export var scout_build_bias: int = -2
 
 
 func vision_bonus(_state: GameState, unit: Unit) -> int:
@@ -47,3 +51,8 @@ func wants_power(state: GameState, team: int) -> bool:
 	if _can_strike_an_opponent(state, team, false):
 		return true
 	return _opponents_can_strike(state, team, false)
+
+
+## Production advice: the units his doctrine gives eyes are the ones he fields.
+func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
+	return scout_build_bias if unit_type.id in scout_ids else 0

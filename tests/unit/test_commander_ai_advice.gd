@@ -54,12 +54,14 @@ class EarlyRepairAdviser:
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
+var commander_db: CommanderDB
 
 
 func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+	commander_db = CommanderDB.load_default()
 
 
 func _state(map_text: String) -> GameState:
@@ -188,6 +190,45 @@ func test_urgent_tiers_and_transports_ignore_the_bias() -> void:
 		&"md_tank",
 		"an unarmed transport has no rank for a bias to move"
 	)
+
+
+# --- the shipped economy doctrines -------------------------------------------
+
+
+func _build_as(map_text: String, commander_id: StringName, funds: int) -> Command:
+	var state := _state(map_text)
+	if commander_id != CommanderType.NEUTRAL_ID:
+		state.set_commander(1, commander_db.by_id(commander_id))
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = funds
+	return AIController.new(unit_db).plan_next_command(state)
+
+
+func _built_id(command: Command) -> StringName:
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	return (command as BuildCommand).unit_type.id
+
+
+## Seven thousand in the bank buys the doctrine, not the list: the neutral
+## commander takes the default's tank, Tomas Reed pulls a mech ahead of it,
+## Rhea Sol artillery, and Viktor Draeg still armour.
+func test_seven_thousand_buys_each_doctrine_its_own_unit() -> void:
+	var funds := 7000
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, CommanderType.NEUTRAL_ID, funds)), &"tank")
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"tomas_reed", funds)), &"mech")
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"rhea_sol", funds)), &"artillery")
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"viktor_draeg", funds)), &"tank")
+
+
+## Four thousand is where the scouts show: the neutral commander banks a turn
+## for artillery, while Orin Flux and Cassian Rook pull the recon — a unit the
+## default list never buys at all — onto its tail and take it now.
+func test_four_thousand_buys_the_scout_doctrines_a_recon() -> void:
+	var banked := _build_as(FUNDED_BASE_BOARD, CommanderType.NEUTRAL_ID, 4000)
+	assert_true(banked is EndTurnCommand, "the neutral commander banks, got %s" % banked)
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"orin_flux", 4000)), &"recon")
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"cassian_rook", 4000)), &"recon")
 
 
 # --- retreat_hp_delta --------------------------------------------------------

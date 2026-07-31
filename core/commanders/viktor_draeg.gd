@@ -14,6 +14,9 @@ extends CommanderType
 @export var breakthrough_class: StringName = TerrainType.TREADS
 @export var breakthrough_move_bonus: int = 1
 @export var breakthrough_star_pierce: int = 1
+## Build-list places: armour pulled up, his discounted foot units pushed down.
+@export var armour_build_bias: int = -4
+@export var foot_build_bias: int = 4
 
 
 func attack_bonus(_state: GameState, fight: Engagement) -> int:
@@ -37,3 +40,13 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 	if not _is_active(state, unit.team):
 		return 0
 	return breakthrough_move_bonus if unit.type.move_class == breakthrough_class else 0
+
+
+## Production advice: he pays for armour at the bottom of the roster, so the
+## planner buys what he paid for and skips what his doctrine discounts.
+func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
+	if unit_type.id in armour_ids:
+		return armour_build_bias
+	if unit_type.id in foot_ids:
+		return foot_build_bias
+	return 0

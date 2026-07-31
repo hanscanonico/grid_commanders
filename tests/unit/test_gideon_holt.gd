@@ -135,3 +135,18 @@ func test_the_power_costs_no_funds() -> void:
 	PowerCommand.new().apply(state)
 	assert_eq(state.units[0].hp, 60)
 	assert_eq(state.funds[1], 0)
+
+
+# --- economy advice ----------------------------------------------------------
+
+
+## Repairs at 80% move the planner's retreat line: a tank at 55 HP turns for
+## the repair city that the neutral planner — pinned by the advice-seam tests —
+## would still fight on with.
+func test_cheap_repairs_send_a_wounded_tank_home_earlier() -> void:
+	var state := _state("[terrain]\nC.............\n[owners]\n1 0 0\n[units]\n1 t 4 0\n2 i 13 0")
+	state.units[0].hp = 55
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is MoveCommand, "expected a move, got %s" % command)
+	var path: Array[Vector2i] = (command as MoveCommand).path
+	assert_lt(path[path.size() - 1].x, 4, "the tank turns for the repair city")

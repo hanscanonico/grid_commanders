@@ -19,3 +19,4 @@ heavy_ids = Array[StringName]([&"tank", &"md_tank"])
 heavy_attack_pct = -10
 redeploy_move_bonus = 2
 redeploy_attack_pct = -20
+light_build_bias = -3

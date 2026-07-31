@@ -91,7 +91,13 @@ static func has_ready_weapon(state: GameState, unit: Unit) -> bool:
 ## counters, and is never countered. A property of the weapon, so it is read
 ## from the type and no doctrine turns a direct unit into an indirect one.
 static func is_indirect(unit: Unit) -> bool:
-	return unit.type.min_range > 1
+	return is_indirect_type(unit.type)
+
+
+## The same answer asked of the type alone, for callers weighing a unit that
+## does not exist yet — production advice, not a live shot.
+static func is_indirect_type(type: UnitType) -> bool:
+	return type.min_range > 1
 
 
 ## The cells `unit` could fire *from* this turn. An indirect unit cannot move and
