@@ -1,0 +1,88 @@
+# A ring of home shores around one lagoon, and an island of cities in the middle.
+# Four armies, one at each corner in reading order: 1 NW, 2 NE, 3 SE, 4 SW, so
+# the opposite pairs are 1&3 and 2&4. The board turns onto itself under a quarter
+# turn -- (x, y) -> (19 - y, x) -- which is why every seat's shore, road, port and
+# first city sit at identical distances and no duel on it needs a mirror tag.
+# The land is one closed ring: every army can walk to every other, which is what
+# keeps a capture able to end the match. The lagoon it encloses is one body of
+# water touching all four ports, so a fleet built at any dock can sail to any
+# other without a ferry -- the naval plan's R1, satisfied by the shape rather
+# than by the planner, which cannot ferry at all.
+# The eight cities on the central island are the reason to own a navy: no road
+# reaches them, so they belong to whoever lands infantry there. A lander beaches
+# on one of the four shoals; a t-copter needs no beach at all.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+#          A airport  P port  S sea  * reef  _ shoal
+[terrain]
+.....FF.........C...
+.QB=...FC...C....=Q.
+.===..M....F..F..=B.
+C..=.F.......======.
+...=A..SSSSSSP.A....
+..F=.SSSSSSSSSS.F..F
+...=PS*SSSSSS*S..M.F
+.C..SSSSS_SSSSSS..F.
+..F.SSSSMC.MSSSS..C.
+....SSSS.CCC_SSS....
+....SSS_CCC.SSSS....
+.C..SSSSM.CMSSSS.F..
+.F..SSSSSS_SSSSS..C.
+F.M..S*SSSSSS*SP=...
+F..F.SSSSSSSSSS.=F..
+....A.PSSSSSS..A=...
+.======.......F.=..C
+.B=..F..F....M..===.
+.Q=....C...CF...=BQ.
+...C.........FF.....
+[owners]
+# team x y -- HQ, base, airport and port start owned; every city on
+# the board is neutral, the island's included.
+1 1 1
+1 2 1
+1 4 4
+1 4 6
+2 18 1
+2 18 2
+2 13 4
+2 15 4
+3 15 13
+3 15 15
+3 17 18
+3 18 18
+4 4 15
+4 6 15
+4 1 17
+4 1 18
+[units]
+1 m 0 2
+1 r 4 2
+1 i 1 3
+1 i 2 3
+1 t 4 3
+1 g 2 4
+1 l 5 5
+1 c 5 6
+2 m 17 0
+2 i 16 1
+2 g 15 2
+2 i 16 2
+2 t 16 4
+2 r 17 4
+2 c 13 5
+2 l 14 5
+3 c 14 13
+3 l 14 14
+3 g 17 15
+3 t 15 16
+3 i 17 16
+3 i 18 16
+3 r 15 17
+3 m 19 17
+4 l 5 14
+4 c 6 14
+4 r 2 15
+4 t 3 15
+4 i 3 17
+4 g 4 17
+4 i 3 18
+4 m 2 19
