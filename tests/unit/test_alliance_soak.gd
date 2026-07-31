@@ -12,11 +12,11 @@ extends GutTest
 ##
 ## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
-## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/pinwheel.txt`,
-## `maps/trident.txt` and `maps/marchlands.txt`, because a grouping that only ever
-## ran on a fixture is a capability no player can pick. The menu's seat strip
-## writes the same `sides`, but the groupings are set directly here so the soak
-## never has to walk a menu to reach one.
+## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/heartland.txt`,
+## `maps/pinwheel.txt`, `maps/trident.txt` and `maps/marchlands.txt`, because a
+## grouping that only ever ran on a fixture is a capability no player can pick.
+## The menu's seat strip writes the same `sides`, but the groupings are set
+## directly here so the soak never has to walk a menu to reach one.
 ##
 ## Pinwheel is also played with seats left open (COM-129): its whole claim is that
 ## the corners are one quarter turn apart, so the duel it promises is an
@@ -42,6 +42,7 @@ const FIXTURE := "res://maps/fixtures/quartet.txt"
 ## The shipped boards that seat more than a duel: four armies, then three.
 const COMPASS := "res://maps/compass.txt"
 const FOURSQUARE := "res://maps/foursquare.txt"
+const HEARTLAND := "res://maps/heartland.txt"
 const PINWHEEL := "res://maps/pinwheel.txt"
 const TRIDENT := "res://maps/trident.txt"
 ## The 2v2 board — four armies, paired across the ridge rather than diagonally.
@@ -93,6 +94,9 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("foursquare ffa", {}, 625, FOURSQUARE)
 	_soak("foursquare 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 626, FOURSQUARE)
 	_soak("foursquare 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, FOURSQUARE)
+	_soak("heartland ffa", {}, 640, HEARTLAND)
+	_soak("heartland 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 641, HEARTLAND)
+	_soak("heartland 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 642, HEARTLAND)
 	_soak("trident free-for-all", {}, 623, TRIDENT)
 	_soak("trident 2v1", {1: 0, 2: 0, 3: 1}, 624, TRIDENT)
 	# The pairing Marchlands is laid out for goes first: north of the ridge against
