@@ -146,7 +146,7 @@ command that caused them**, never by blindly diffing the board:
 | `AttackCommand`, target dies | the acting side's `killed` |
 | `AttackCommand`, attacker dies to counter-fire | the acting side's `lost` |
 | `EndTurnCommand`, an empty tank at the start-of-turn tick | the owner's `lost` |
-| `CaptureCommand`, an HQ falls and its owner is eliminated | `forfeited` — neither a kill nor a loss |
+| `CaptureCommand`, a home HQ falls and its owner is eliminated | `forfeited` — neither a kill nor a loss |
 | `JoinCommand`, the mover merges into its twin | `merged` — neither a kill nor a loss |
 | `LoadCommand`, a passenger boards | **nothing** — it never left `state.units` |
 
