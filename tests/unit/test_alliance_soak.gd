@@ -12,10 +12,11 @@ extends GutTest
 ##
 ## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
-## them on `maps/compass.txt`, `maps/pinwheel.txt` and `maps/trident.txt`, because
-## a grouping that only ever ran on a fixture is a capability no player can pick.
-## The menu's seat strip writes the same `sides`, but the groupings are set
-## directly here so the soak never has to walk a menu to reach one.
+## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/pinwheel.txt` and
+## `maps/trident.txt`, because a grouping that only ever ran on a fixture is a
+## capability no player can pick. The menu's seat strip writes the same `sides`,
+## but the groupings are set directly here so the soak never has to walk a menu
+## to reach one.
 ##
 ## Pinwheel is also played with seats left open (COM-129): its whole claim is that
 ## the corners are one quarter turn apart, so the duel it promises is an

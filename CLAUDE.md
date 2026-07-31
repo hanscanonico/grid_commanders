@@ -346,9 +346,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   photographed the strip as bare panel.
   `maps/compass.txt` (four armies at the compass points), `maps/foursquare.txt` (four seats at the
   corners of a 12×12 build-first board, the four-way answer to Forge — added after this plan by
-  COM-128) and `maps/trident.txt` (three around a central massif) are the shipped boards that seat
+  COM-128), `maps/pinwheel.txt` (four corners on a 14×14 whose road blades run clockwise into the
+  next seat's flank around a wooded hub — added after this plan by COM-129) and `maps/trident.txt`
+  (three around a central massif) are the shipped boards that seat
   more than a duel; Compass was pulled forward into FP5 because without one the seat strip is UI no
-  player can reach. All three are land-only — the AI cannot plan a ferry (naval R1), so a board it
+  player can reach. All four are land-only — the AI cannot plan a ferry (naval R1), so a board it
   may have to fight across in any grouping has to let every army reach every other on foot. None
   carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's layout closes
   under a quarter turn, not the tag's half turn — and fairness on these is by design review instead
