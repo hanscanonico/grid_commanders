@@ -166,11 +166,10 @@ unit-placeholders:
 sfx:
 	$(GODOT) --headless --path . -s res://tools/generate_sfx.gd
 
-# Regenerates the placeholder commander portraits (256x256 busts) and the four
-# faction emblems, then re-imports so the new PNGs register. These are committed
-# art, so this only needs rerunning when tools/generate_portraits.gd changes or
-# a commander is added. Placeholders until the final portrait pass — see the
-# commander-readiness plan's D1/R1.
+# Regenerates the commander portraits (220x268 busts, drawn as SVG by
+# tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
+# the new PNGs register. These are committed art, so this only needs rerunning
+# when either generator changes or a commander is added.
 portraits:
 	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd
 	$(GODOT) --headless --path . --import

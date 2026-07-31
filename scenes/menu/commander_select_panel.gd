@@ -375,7 +375,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	content.add_child(stage)
 	var portrait := TextureRect.new()
 	portrait.texture = CommanderVisuals.portrait_for(commander)
-	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait.texture_filter = CommanderVisuals.ART_FILTER
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)

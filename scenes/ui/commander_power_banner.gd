@@ -51,16 +51,18 @@ func _build() -> void:
 	row.add_theme_constant_override("separation", 0)
 	add_child(row)
 
-	# A fixed-size portrait field: an explicit height so the portrait fills it, and
-	# a width the HBox will not stretch (it has no expand flag).
+	# A fixed-size portrait field: an explicit height the portrait is fitted into,
+	# and a width the HBox will not stretch (it has no expand flag).
 	_field = Panel.new()
 	_field.custom_minimum_size = Vector2(104, 108)
 	_field.clip_contents = true
 	row.add_child(_field)
 	_portrait = TextureRect.new()
-	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait.texture_filter = CommanderVisuals.ART_FILTER
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	# Whole rather than cropped, as on the card: this is the one surface that shows
+	# a general full size, and the framed window they stand in is half the drawing.
+	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_field.add_child(_portrait)
 
