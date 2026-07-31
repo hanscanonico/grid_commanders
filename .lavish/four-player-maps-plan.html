@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Four-Player Maps &amp; Open Seats Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > *,
+    :where([style*="display: grid"], [style*="display:grid"], [style*="display: flex"], [style*="display:flex"]) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+      --gc-iron: #6d6f7e;
+      --gc-verdant: #4e9a5c;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,.03) 25%, transparent 25%);
+      background-size: 32px 32px, 32px 32px, 64px 64px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid #d58a24; }
+    .gc-risk-good { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-locked { border-color: var(--gc-grass-dark); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gc-grass-dark) 30%, transparent); }
+    .gc-checks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-checks li::before { content: "✓"; color: var(--gc-grass-dark); font-weight: 900; }
+    .gc-crosses li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-crosses li::before { content: "✗"; color: var(--gc-red); font-weight: 900; }
+    .gc-mode {
+      border: 2px solid var(--gc-water-dark);
+      border-radius: .6rem;
+      overflow: hidden;
+      background: white;
+    }
+    .gc-mode header { color: white; padding: .65rem .9rem; font-weight: 900; display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+    .gc-mode .body { padding: .8rem .9rem; font-size: .9rem; }
+    table.gc-nums td, table.gc-nums th { font-size: .85rem; }
+    table.gc-nums td:first-child { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: .8rem; }
+    .gc-flow {
+      display: grid;
+      gap: .35rem;
+      font: 600 .82rem/1.45 ui-monospace, Menlo, monospace;
+      background: #10263a;
+      color: #dbe9f6;
+      border-radius: .6rem;
+      padding: .9rem 1rem;
+    }
+    .gc-flow .dim { opacity: .55; }
+    .gc-flow .hot { color: #ffd27a; }
+    .gc-board {
+      display: grid;
+      grid-template-columns: repeat(7, 1.35rem);
+      grid-auto-rows: 1.35rem;
+      gap: 2px;
+      background: var(--gc-water-dark);
+      padding: 4px;
+      border-radius: .45rem;
+      width: max-content;
+    }
+    .gc-board.grand {
+      grid-template-columns: repeat(9, 1.05rem);
+      grid-auto-rows: 1.05rem;
+    }
+    .gc-board.small {
+      grid-template-columns: repeat(5, 1.35rem);
+    }
+    .gc-board span { border-radius: 2px; background: var(--gc-grass); }
+    .gc-board .w { background: var(--gc-water); }
+    .gc-board .r { background: var(--gc-red); }
+    .gc-board .b { background: var(--gc-blue); }
+    .gc-board .i { background: var(--gc-iron); }
+    .gc-board .v { background: var(--gc-verdant); }
+    .gc-board .n { background: #cfc8b8; }
+    .gc-board .f { background: var(--gc-grass-dark); }
+    .gc-seat {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      border: 2px solid var(--gc-water-dark);
+      border-radius: .45rem;
+      background: white;
+      padding: .3rem .6rem;
+      font: 700 .8rem ui-monospace, Menlo, monospace;
+    }
+    .gc-seat.closed { opacity: .45; border-style: dashed; background: repeating-linear-gradient(45deg, #fff 0 6px, #eee 6px 12px); }
+  </style>
+</head>
+<body>
+  <div class="gc-shell">
+
+    <!-- ============================== HERO ============================== -->
+    <header class="gc-hero px-6 py-10 md:px-12">
+      <p class="gc-kicker opacity-80">Grid Commanders · Content + capability · Proposed · rev 3 · builds on the Four Armies plan</p>
+      <h1 class="text-3xl md:text-4xl font-black mt-2">Four-Player Maps &amp; Open Seats — a 4-seat board plays 2, 3, or 4</h1>
+      <p class="mt-3 max-w-3xl opacity-90">
+        The Four Armies plan (<span class="gc-file">.lavish/four-players-plan.html</span>, rev 2 —
+        COM-44→49, unimplemented) seats up to four armies and lets the match group them; its FP6
+        ships the first two multi-army boards, <strong>Trident</strong> (3) and
+        <strong>Compass</strong> (4). This plan finishes the thought in two moves. First, a roster:
+        <strong>eight more four-seat boards in three tiers</strong> — a small pair for the
+        lunch-break brawl, a standard trio (one for the land war, one for the air, one for the sea),
+        and a grand trio half again their size, built for the long game — so four armies is a shelf
+        of maps, not a demo. Second, a capability the Four Armies
+        design deliberately does not have: <strong>a seat may stay empty</strong>. Its D1 makes the
+        map the roster authority — the board says four, the match plays four. Here that authority
+        bends <em>downward only</em>: the map still owns how many seats exist and where they sit; the
+        match chooses which of them are filled, any two or more. A 4-seat board becomes a duel or a
+        three-way without touching the file; a vacant seat's start dissolves to neutral ground worth
+        fighting over.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="gc-seat"><span class="badge badge-xs" style="background:var(--gc-red); border:0;"></span> Seat 1 · Human</span>
+        <span class="gc-seat"><span class="badge badge-xs" style="background:var(--gc-blue); border:0;"></span> Seat 2 · CPU</span>
+        <span class="gc-seat closed"><span class="badge badge-xs" style="background:var(--gc-iron); border:0;"></span> Seat 3 · Empty</span>
+        <span class="gc-seat"><span class="badge badge-xs" style="background:var(--gc-verdant); border:0;"></span> Seat 4 · CPU</span>
+      </div>
+    </header>
+
+    <!-- ============================== 1 · WHERE THIS STANDS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">1</span>
+        <h2 class="text-2xl font-black">Where this stands — a layer on Four Armies, not a rival</h2>
+      </div>
+      <p class="max-w-3xl mb-4">
+        Everything here assumes the Four Armies milestones FP1–FP6 land first, and touches their
+        mechanisms rather than duplicating them. The dependency is real and one-way:
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-5">
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">What Four Armies already provides</h3>
+          <ul class="gc-checks text-sm mt-2">
+            <li><strong>The roster as data</strong> — FP1 derives <code>GameState.teams</code> from
+            the map's <code>[owners]</code> + <code>[units]</code>, bounds teams to 1–4 contiguous in
+            the file, and gives <code>MapData</code> a <code>player_count</code>. This plan reads that
+            roster; it never re-parses.</li>
+            <li><strong>One hostility authority</strong> — FP2's <code>state.allied(a, b)</code> and
+            the sides grouping. Open seats compose with any grouping: sides simply may not name an
+            empty seat.</li>
+            <li><strong>Elimination</strong> — FP3 models a fallen army: units removed, properties to
+            neutral, survivors play on. An empty seat is <em>not</em> an elimination (§3 D1), but the
+            "properties revert to neutral, stay capturable" precedent is exactly the semantics a
+            vacant start borrows.</li>
+            <li><strong>The seat strip</strong> — FP5's per-seat Human/CPU rows with side badges and
+            presets. The Empty state is one more value on a control that already exists per seat.</li>
+            <li><strong>Retargeted lints</strong> — FP1/FP6 point <span class="gc-file">tests/unit/test_maps.gd</span>
+            at each map's own roster (one HQ and base per army). The three new boards are authored
+            <em>full</em> and lint as 4-army maps; emptiness is match state, never file state.</li>
+          </ul>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">What Four Armies deliberately does not do</h3>
+          <ul class="gc-crosses text-sm mt-2">
+            <li><strong>Fewer armies than the board offers</strong> — its D1: "the number of armies is
+            a property of the board, read from the map file — never a menu setting." True as a
+            <em>ceiling</em>; this plan adds the floor. The rejection D1 argued against (growing a
+            global constant, seeding four funds entries into every duel) stays rejected — nothing
+            here widens a 2-seat board.</li>
+            <li><strong>A second HQ's meaning</strong> — FP3 keys elimination to "the HQ's owner",
+            which is exact while every HQ has a living owner. A vacant seat's HQ has none, and a
+            survivor who captures a fallen army's HQ suddenly owns two. §3 D3 sharpens this once, for
+            both cases.</li>
+            <li><strong>More boards</strong> — FP6 ships two proof boards and stops. The shipped
+            duel-roster instruments (the menu, the map lint, the per-map soak) already discover maps
+            through <code>MapCatalog.paths()</code> (<span class="gc-file">core/map_catalog.gd:27</span>),
+            so shipping a board is still dropping a <code>.txt</code> in <span class="gc-file">maps/</span> —
+            the content cost is authorship and proof, not plumbing.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="gc-flow">
+        <span class="dim"># The seam, end to end — one new fact flows left to right</span>
+        <span>map file <span class="dim">(4 seats, authored full, lints as 4-army)</span></span>
+        <span>&nbsp;&nbsp;→ menu seat strip <span class="hot">Human / CPU / Empty</span> per seat <span class="dim">(≥2 filled, ≥2 sides)</span></span>
+        <span>&nbsp;&nbsp;→ MatchRequest.<span class="hot">seats</span> <span class="dim">(empty array = every seat, today's behaviour)</span></span>
+        <span>&nbsp;&nbsp;→ GameState.create(map, …, <span class="hot">seats</span>) <span class="dim">roster = map roster ∩ seats; vacant starts dissolve to neutral</span></span>
+        <span>&nbsp;&nbsp;→ save v4 records the roster it already records <span class="dim">— resume, rematch, watch mode all inherit for free</span></span>
+      </div>
+    </section>
+
+    <!-- ============================== 2 · THE DESIGN ============================== -->
+    <section class="px-6 py-8 md:px-12 bg-base-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">2</span>
+        <h2 class="text-2xl font-black">The design — the map offers seats, the match fills them</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <div class="gc-mode">
+          <header style="background:var(--gc-water-dark);">A seat, not a mode</header>
+          <div class="body">
+            A board's seats are its authored starting positions — team ids 1..N in the file, each
+            with its HQ, base and livery. The match fills each seat with a human, a CPU, or nobody.
+            <strong>Filled seats play exactly as Four Armies specifies; an empty seat simply never
+            enters the state.</strong> No funds entry, no commander slot, no turn, no banner — the
+            sim cannot tell a Compass duel from a board that was authored with two seats.
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">The vacant start dissolves</header>
+          <div class="body">
+            An empty seat's <code>[units]</code> rows are skipped and its <code>[owners]</code> rows
+            fall to neutral — its HQ and base become high-ground income properties anyone may
+            capture, the same "fallen empires are contested ground" rule FP3 applies to the
+            eliminated. The map <em>file</em> is never edited and no terrain converts — this is
+            match-time state, so the map-retrofit plan's conversion rules are not even in play.
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-water-dark);">Seats keep their numbers</header>
+          <div class="body">
+            Closing seat 2 on a 4-seat board leaves roster <code>[1, 3, 4]</code> — never a renumber,
+            because <code>[owners]</code>, <code>[units]</code>, liveries and commander picks are all
+            keyed by the seat's team id. Turn order stays roster order over the filled seats; the day
+            advances on wrap to the first of them. FP1's "contiguous from 1" stays a <em>file</em>
+            rule; the match roster may be any subset of it.
+          </div>
+        </div>
+      </div>
+      <p class="max-w-3xl mb-4">
+        The generalisation is deliberate: nothing below is four-specific. <strong>Any board with N
+        seats plays 2..N</strong> — Compass plays 2, 3 or 4; Trident plays 2 or 3; a duel board
+        offers no seat to close and its setup screen is pixel-identical to today. "Play a 4-player
+        map with 2 or 3" is the headline case of one rule, not three features.
+      </p>
+      <div class="gc-flow">
+        <span class="dim"># Compass with seat 3 empty — a three-way on a four-seat board</span>
+        <span>seats filled {1, 2, 4} · sides empty ⇒ free-for-all of three</span>
+        <span>seat 3's HQ, base → neutral · its infantry never spawn · <span class="hot">no funds[3], no turn 3</span></span>
+        <span>day wraps 4 → 1 · elimination and victory exactly as FP3 wrote them for three armies</span>
+        <span class="dim">save mid-match → envelope roster [1, 2, 4] → resume rebuilds the same three-army match</span>
+      </div>
+    </section>
+
+    <!-- ============================== 3 · DECISIONS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">3</span>
+        <h2 class="text-2xl font-black">Decisions</h2>
+      </div>
+      <div class="grid gap-4">
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D1 · An empty seat never enters the state — it is not an elimination</h3>
+            <span class="badge badge-outline">proposed</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            Two ways to model a vacant seat: an army eliminated on day 0, or an army that never
+            existed. <strong>Never existed wins.</strong> Day-0 elimination would drag a ghost
+            through the whole presentation layer — a name in the standings, a livery the info sheet
+            lays out, an entry the elimination banner has to be taught to skip, an
+            <code>eliminated</code> record in every save — and every one of those is a place the
+            ghost can leak. Instead <code>GameState.create</code> gains one defaulted parameter,
+            <code>p_seats</code> (empty = every map team, today's behaviour verbatim), intersects it
+            with the map roster, and builds only the filled seats. FP1's invariant strengthens
+            rather than bends: <em>a reduced match on a big board produces exactly the state a small
+            board would have produced</em> — which is also why the Balance Lab, the codec and every
+            downstream consumer need nothing.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> a menu-side map preprocessor that hands the sim a doctored
+            <code>MapData</code>. It would put a second opinion about the roster between the file and
+            the state — the exact drift D1 of Four Armies exists to prevent — and watch mode,
+            rematch and the CLI would each need their own copy of the doctoring.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D2 · The seats are the match's fourth setup fact, carried by MatchRequest</h3>
+            <span class="badge badge-outline">proposed</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            Board, sides, commanders — and now seats. <span class="gc-file">scenes/common/match_request.gd</span>
+            gains <code>seats: Array[int]</code> (empty = all), flowing through all three adapters:
+            <code>from_menu</code> reads the seat strip; <code>from_match</code> copies the live
+            <code>state.teams</code>, so a rematch of a reduced match is the same reduced match;
+            <code>apply_cmdline</code> reads the one new flag, <code>--seats=1,3,4</code> —
+            <code>has()</code>-gated like every override, and a <code>--seats=</code> that names
+            fewer than two of the board's seats fails the build with a pushed error, it does not
+            guess. Sides validation tightens by one clause: a side may only name a filled seat.
+            <code>--co=</code> stays positional over the <em>filled</em> roster in seat order —
+            commanders belong to armies that play.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D3 · Elimination keys to the home HQ — one rule covers vacant and conquered HQs</h3>
+            <span class="badge badge-outline">proposed · sharpens Four Armies FP3/D3</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            FP3 says "HQ capture eliminates the HQ's owner". Open seats force the question that rule
+            leaves open: what is an HQ nobody owns? And its sibling was already lurking in FP3
+            itself: a survivor who captures a fallen army's HQ owns two HQs — and "eliminate the
+            HQ's owner" would then let a rival behead them through the <em>captured outpost</em>.
+            One rule closes both: <strong><code>GameState.create</code> records each filled seat's
+            starting HQ cell as its <code>home_hq</code>, and only capturing a team's home HQ
+            eliminates it.</strong> Every other HQ — a vacant seat's from day 1, a fallen army's
+            after FP3's reversion — is a high-value income property with HQ terrain stars, captured
+            like a city. The save envelope carries <code>home_hq</code> per team (it cannot be
+            re-derived once the map's HQs have changed hands). In a duel on a duel board the home HQ
+            is the only HQ a team could ever lose, so today's behaviour is pinned unchanged.
+          </p>
+          <p class="text-sm mt-2 max-w-3xl">
+            <strong>Rejected:</strong> downgrading a vacant HQ's terrain to a city at match start —
+            it keeps "every HQ has an owner" true but mutates terrain per match, splits the board
+            from its file, and does nothing for the two-HQ edge FP3 already has.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D4 · Empty is the seat strip's third state; presets stay one tap</h3>
+            <span class="badge badge-outline">proposed</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            FP5's seat row cycles <strong>Human → CPU → Empty</strong> — Empty offered only while
+            closing that seat leaves at least two filled (so a duel board never shows it, and the
+            last two seats of any board cannot close). Setup validation becomes "≥2 seats filled, ≥2
+            sides among the filled". The presets row gains the reduced counts on multi-seat boards —
+            <em>Free-for-all</em>, <em>2v2</em>, <em>3v1</em> joined by <em>Duel</em> (fills the
+            board's opposite-seat pair, §4's authoring convention, human in seat 1) and
+            <em>Three-way</em> on 4-seat boards — so "I just want a duel on Windrose" is one tap, not
+            four cycles. The map list's player count (FP5) becomes a range where seats can close:
+            <strong>"2–4 players"</strong>. Commander select's slot walk (FP5/D6) walks the filled
+            seats only. Defaults are untouched: picking a 4-seat map still opens all four seats,
+            seat 1 human, the rest CPU, free-for-all.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">D5 · Boards are authored full; reduced fairness is a convention, not a parser feature</h3>
+            <span class="badge badge-outline">proposed</span>
+          </div>
+          <p class="text-sm mt-2 max-w-3xl">
+            Every new board lints as a full 4-army map — one HQ per seat, production and property
+            counts equal across seats, funds-fair by review per FP6/R5. Reduced play then leans on geometry: <strong>the authoring convention
+            is that opposite seats (1&amp;3, 2&amp;4) make the fair duel</strong> — the Duel preset
+            encodes it, and on a 90°-rotational board it is fair by construction. Three-on-four is
+            honest about being casual: closing any seat of a rotational board leaves one army with a
+            quieter flank and more neutral ground to race for, which is a texture, not a defect — a
+            player who wants a fair three-way has Trident. No new map-file metadata, no recommended-
+            seating section in the format: the convention lives in the boards' header comments and
+            the preset, and a future N-way symmetry lint (already named future work in FP6/R5)
+            remains the structural answer.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== 4 · THE BOARDS ============================== -->
+    <section class="px-6 py-8 md:px-12 bg-base-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">4</span>
+        <h2 class="text-2xl font-black">The boards — eight four-seat maps, three tiers</h2>
+      </div>
+      <p class="max-w-3xl mb-4">
+        Compass (FP6) proves four armies on land. These eight give the shelf a spread, in three
+        tiers. The <strong>small pair</strong> is the quick game — four armies in contact by day 2.
+        The <strong>standard trio</strong> sits near the shipped boards' footprint (the largest today
+        is Crossfire at 20×15) — each a distinct movement-domain character. The
+        <strong>grand trio</strong> is half again bigger — boards where a 2v2 has room for real
+        fronts, production runs two bases per seat, and a match is won over a campaign, not a
+        skirmish. All eight are 90°-rotationally laid out so the Duel preset is fair by construction,
+        seats at the corners in reading order (1 NW, 2 NE, 3 SE, 4 SW — opposite pairs 1&amp;3,
+        2&amp;4). Schematics are the <em>character</em> of each board; authorship happens in the
+        milestones, under the retargeted lints.
+      </p>
+      <h3 class="font-black mb-3">The small pair</h3>
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">Foursquare · the four-way forge</header>
+          <div class="body md:flex md:gap-4 md:items-start">
+            <div class="gc-board small mb-3 md:mb-0 flex-none" aria-hidden="true">
+              <span class="r"></span><span></span><span class="n"></span><span></span><span class="b"></span>
+              <span></span><span class="f"></span><span></span><span class="f"></span><span></span>
+              <span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span>
+              <span></span><span class="f"></span><span></span><span class="f"></span><span></span>
+              <span class="v"></span><span></span><span class="n"></span><span></span><span class="i"></span>
+            </div>
+            <div>
+              The smallest four-seat board, ~12×12, and a <strong>build-first</strong> one: no
+              <code>[units]</code> section, per the production plan's D1 — four HQs, four bases, a
+              handful of cities, and day 1 is four build menus opening at once. The four-way answer
+              to Forge: the whole match is the escalation curve, and a full FFA fits in a sitting.
+              Land only, per the production boards' D3.
+            </div>
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">Pinwheel · first contact, day 2</header>
+          <div class="body md:flex md:gap-4 md:items-start">
+            <div class="gc-board small mb-3 md:mb-0 flex-none" aria-hidden="true">
+              <span class="r"></span><span class="n"></span><span></span><span class="f"></span><span class="b"></span>
+              <span class="f"></span><span></span><span class="n"></span><span></span><span class="n"></span>
+              <span></span><span class="n"></span><span class="n"></span><span class="n"></span><span></span>
+              <span class="n"></span><span></span><span class="n"></span><span></span><span class="f"></span>
+              <span class="v"></span><span class="f"></span><span></span><span class="n"></span><span class="i"></span>
+            </div>
+            <div>
+              ~14×14 with a standard infantry-screen start and the roads laid as a rotational spiral
+              — each seat's fast lane runs <em>clockwise</em> into its neighbour's flank, so the
+              opening question is whether to race the wheel or cut across the wooded hub. The
+              chaotic little brawl of the shelf; a duel on opposite seats plays like a compact
+              classic. Land only.
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm max-w-3xl mb-6 opacity-80">
+        A deliberate menu consequence: <code>MapCatalog.ordered()</code> sorts the beginner board
+        first, then by area — so Foursquare lands right behind First Steps, and the second board a
+        new player scrolls past reads <strong>"2–4 players"</strong>. The shelf's widest capability
+        advertises itself without a single menu change.
+      </p>
+      <h3 class="font-black mb-3">The standard trio</h3>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">Windrose · land &amp; air</header>
+          <div class="body">
+            <div class="gc-board mb-3" aria-hidden="true">
+              <span class="r"></span><span></span><span class="f"></span><span></span><span class="f"></span><span></span><span class="b"></span>
+              <span></span><span class="r"></span><span></span><span class="n"></span><span></span><span class="b"></span><span></span>
+              <span class="f"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="f"></span>
+              <span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span>
+              <span class="f"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="f"></span>
+              <span></span><span class="v"></span><span></span><span class="n"></span><span></span><span class="i"></span><span></span>
+              <span class="v"></span><span></span><span class="f"></span><span></span><span class="f"></span><span></span><span class="i"></span>
+            </div>
+            The first multi-army air board: an airfield per seat, a contested neutral airfield dead
+            centre, mountain passes between neighbours. T-copters make the diagonal — the duel
+            pairing fights across the long axis while the flanks stay neutral income. ~18×18,
+            <code>[units]</code> opening with the standard infantry screen.
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-water-dark);">Atoll · the sea between</header>
+          <div class="body">
+            <div class="gc-board mb-3" aria-hidden="true">
+              <span class="r"></span><span></span><span class="f"></span><span class="w"></span><span class="f"></span><span></span><span class="b"></span>
+              <span></span><span class="r"></span><span class="w"></span><span class="w"></span><span class="w"></span><span class="b"></span><span></span>
+              <span class="f"></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span class="f"></span>
+              <span class="w"></span><span class="w"></span><span class="n"></span><span class="n"></span><span class="n"></span><span class="w"></span><span class="w"></span>
+              <span class="f"></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span class="f"></span>
+              <span></span><span class="v"></span><span class="w"></span><span class="w"></span><span class="w"></span><span class="i"></span><span></span>
+              <span class="v"></span><span></span><span class="f"></span><span class="w"></span><span class="f"></span><span></span><span class="i"></span>
+            </div>
+            One connected central sea, one port per seat, a neutral island of cities in the middle.
+            The naval plan's standing R1 is satisfied by construction — every fleet reaches every
+            other across open water, no ferry required — and the island is why a navy is worth
+            building: it is capturable only by what a lander or t-copter delivers. ~20×20.
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">Marchlands · the 2v2 board</header>
+          <div class="body">
+            <div class="gc-board mb-3" aria-hidden="true">
+              <span class="r"></span><span></span><span class="n"></span><span class="f"></span><span class="n"></span><span></span><span class="b"></span>
+              <span></span><span class="r"></span><span></span><span class="f"></span><span></span><span class="b"></span><span></span>
+              <span class="n"></span><span></span><span class="n"></span><span class="f"></span><span class="n"></span><span></span><span class="n"></span>
+              <span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span>
+              <span class="n"></span><span></span><span class="n"></span><span class="f"></span><span class="n"></span><span></span><span class="n"></span>
+              <span></span><span class="v"></span><span></span><span class="f"></span><span></span><span class="i"></span><span></span>
+              <span class="v"></span><span></span><span class="n"></span><span class="f"></span><span class="n"></span><span></span><span class="i"></span>
+            </div>
+            Built for the alliance groupings: a wooded ridge splits north from south, roads run the
+            lanes, and the seat pairing across the ridge (1&amp;2 north, 3&amp;4 south — allied via
+            <code>--sides=1+2v3+4</code>) gives each pair a shared front and separate purses. Land
+            only, per the production boards' precedent. The largest of the three, ~22×16.
+          </div>
+        </div>
+      </div>
+      <h3 class="font-black mb-3 mt-6">The grand trio</h3>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">Heartland · the great plain</header>
+          <div class="body">
+            <div class="gc-board grand mb-3" aria-hidden="true">
+              <span class="r"></span><span class="r"></span><span></span><span class="f"></span><span class="n"></span><span class="f"></span><span></span><span class="b"></span><span class="b"></span>
+              <span class="r"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="b"></span>
+              <span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span>
+              <span class="f"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="f"></span>
+              <span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span>
+              <span class="v"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="n"></span><span></span><span class="i"></span>
+              <span class="v"></span><span class="v"></span><span></span><span class="f"></span><span class="n"></span><span class="f"></span><span></span><span class="i"></span><span class="i"></span>
+            </div>
+            The big open land war, ~28×20: a dense lattice of neutral cities, two bases per seat,
+            roads on the diagonals, woods for cover instead of chokepoints. Where Marchlands channels
+            a 2v2 into lanes, Heartland lets fronts form anywhere and the capture race decide where —
+            the board the income curve was always pointing at. Land only.
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-water-dark);">Causeway · islands in chains</header>
+          <div class="body">
+            <div class="gc-board grand mb-3" aria-hidden="true">
+              <span class="r"></span><span class="r"></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span class="b"></span><span class="b"></span>
+              <span class="r"></span><span></span><span></span><span class="w"></span><span class="w"></span><span class="w"></span><span></span><span></span><span class="b"></span>
+              <span class="w"></span><span></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span></span><span class="w"></span>
+              <span class="w"></span><span class="w"></span><span class="n"></span><span class="n"></span><span class="w"></span><span class="n"></span><span class="n"></span><span class="w"></span><span class="w"></span>
+              <span class="w"></span><span></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span></span><span class="w"></span>
+              <span class="v"></span><span></span><span></span><span class="w"></span><span class="w"></span><span class="w"></span><span></span><span></span><span class="i"></span>
+              <span class="v"></span><span class="v"></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span class="i"></span><span class="i"></span>
+            </div>
+            ~30×22: four home islands and a neutral mid-sea chain, every island linked by shoal
+            causeways and bridges — so land armies march everywhere on their own feet and naval R1
+            is satisfied twice over, while navies fight for the crossings that make the marches
+            short. One port and two bases per seat; the causeways are the whole game.
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-grass-dark);">Confluence · everything the game has</header>
+          <div class="body">
+            <div class="gc-board grand mb-3" aria-hidden="true">
+              <span class="r"></span><span class="r"></span><span></span><span class="n"></span><span class="f"></span><span class="n"></span><span></span><span class="b"></span><span class="b"></span>
+              <span class="r"></span><span></span><span class="n"></span><span></span><span class="w"></span><span></span><span class="n"></span><span></span><span class="b"></span>
+              <span></span><span class="n"></span><span></span><span class="w"></span><span class="w"></span><span class="w"></span><span></span><span class="n"></span><span></span>
+              <span class="n"></span><span></span><span class="w"></span><span class="w"></span><span class="n"></span><span class="w"></span><span class="w"></span><span></span><span class="n"></span>
+              <span></span><span class="n"></span><span></span><span class="w"></span><span class="w"></span><span class="w"></span><span></span><span class="n"></span><span></span>
+              <span class="v"></span><span></span><span class="n"></span><span></span><span class="w"></span><span></span><span class="n"></span><span></span><span class="i"></span>
+              <span class="v"></span><span class="v"></span><span></span><span class="n"></span><span class="f"></span><span class="n"></span><span></span><span class="i"></span><span class="i"></span>
+            </div>
+            The flagship, ~32×24: rivers run from each quadrant into a central sea, and every seat
+            fields all three domains — two bases, an airfield and a port apiece, a harbour island
+            where the rivers meet. The board that shows the whole roster at once; the one a 3v1
+            challenge match wants, with the lone seat picking the domain the three neglect.
+          </div>
+        </div>
+      </div>
+      <p class="text-sm max-w-3xl opacity-80">
+        Naming keeps FP6's family feel (Trident, Compass — instruments and geography, no faction
+        words). All eight take the standard header: one-line pitch, no <code># symmetric</code> tag
+        (it stays a 180° duel instrument per FP6/R5), seat convention noted in a comment. The grand
+        tier deliberately scales <em>economy</em> with area — two bases per seat and a denser city
+        lattice — because a big board on a duel-board income is a slow board, not a grand one; the
+        map lints hold one HQ per seat everywhere, and property parity per seat at whatever count the
+        board sets.
+      </p>
+    </section>
+
+    <!-- ============================== 5 · MILESTONES ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">5</span>
+        <h2 class="text-2xl font-black">Milestones — each one shippable</h2>
+      </div>
+      <div class="grid gap-4">
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">OS1 · A seat may stay empty — sim</h3>
+            <span class="badge">size M</span>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><span class="gc-file">core/game_state.gd</span> — <code>create(…, p_seats)</code>
+            defaulted empty; roster = map roster ∩ seats (order preserved), vacant
+            <code>[units]</code> rows skipped, vacant <code>[owners]</code> rows left neutral;
+            <code>home_hq</code> recorded per filled seat.</li>
+            <li><span class="gc-file">core/commands/capture_command.gd</span> — elimination gates on
+            <code>home_hq</code> (D3); any other HQ captures as a property. Duel behaviour pinned by
+            the existing HQ tests.</li>
+            <li><span class="gc-file">core/save_codec.gd</span> — envelope gains <code>home_hq</code>;
+            rides save v4 if this lands with the Four Armies chain, else v4→v5. A reduced roster
+            already round-trips because the envelope records <code>teams</code>.</li>
+            <li>Tests: reduced-roster creation (funds keys, turn rotation, day wrap over a gap),
+            vacant HQ captured as property, home-HQ elimination with a second HQ owned, save
+            round-trip of a reduced match mid-capture; the 4-army fixture from FP1 reused with
+            <code>p_seats = [1, 3]</code> and <code>[1, 2, 4]</code>.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; both Lab gates byte-diff
+            clean against main (default path provably untouched); <code>make screenshot</code>
+            byte-identical.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">OS2 · Closing seats at the table — menu, CLI, save</h3>
+            <span class="badge">size M</span>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li><span class="gc-file">scenes/common/match_request.gd</span> — <code>seats</code>
+            through all three adapters (D2); sides validation refuses an empty seat;
+            <code>--seats=</code> in <span class="gc-file">battle_setup.gd</span>'s grammar, wired
+            like every flag through <code>CmdArgs</code>.</li>
+            <li><span class="gc-file">scenes/menu/main_menu.gd</span> — the third seat state and its
+            guard (≥2 filled), the Duel / Three-way presets, the "2–4 players" range label.</li>
+            <li><span class="gc-file">scenes/menu/commander_select_panel.gd</span> — slot walk over
+            filled seats only; footer chips build per filled seat.</li>
+            <li>Watch mode: <code>--watch --seats=1,3</code> seats AIs on exactly the filled roster —
+            the reduced soak grammar OS3 needs.</li>
+            <li><strong>Proof:</strong> the setup matrix played at the desk — Compass duel (preset,
+            one tap), Compass three-way vs two CPUs, Trident duel, a reduced 2v2 attempt correctly
+            refused (three filled seats cannot make two sides of two), rematch of a reduced match,
+            resume of a reduced save; a duel board's setup pixel-identical to today.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">OS3 · The small pair and the standard trio — Foursquare, Pinwheel, Windrose, Atoll, Marchlands</h3>
+            <span class="badge">size L</span>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>Five boards authored per §4, under the retargeted lints (one HQ per seat, property
+            parity per army; Atoll additionally under the water lints ports and shoals already
+            carry). Foursquare's omitted <code>[units]</code> section is already legal — the
+            production plan's D1 made zero starting units a parser fact, not a flag — so the small
+            pair costs authorship only.</li>
+            <li>AI-vs-AI soaks, seeded, per board: full FFA, 2v2, 3v1 at all three tiers (the FP6
+            matrix), <em>plus the reduced seatings this plan adds</em> — every opposite-seat duel
+            and one three-way per board — checking conclusion, orderly elimination, no ally fire,
+            and on Atoll that navies actually sail (naval R1's "fleets must reach each other"
+            observed, not assumed). The small pair's soaks double as the cheapest end of the matrix
+            — a Foursquare FFA is the fastest four-army integration test the project will own.</li>
+            <li>Menu: the five boards discovered and ordered by <code>MapCatalog</code>
+            automatically — Foursquare's second-slot placement per §4 confirmed at the desk;
+            captions, thumbnails (4 liveries via <code>SideIdentity</code>) verified.</li>
+            <li>README + CLAUDE.md: the seats rule, the home-HQ rule, <code>--seats=</code>, the
+            five boards.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; soak winner/day lines in the
+            PR; a posed 4-army frame per board for the gallery.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex flex-wrap items-baseline gap-2">
+            <h3 class="font-black">OS4 · The grand trio — Heartland, Causeway, Confluence</h3>
+            <span class="badge">size L</span>
+          </div>
+          <ul class="text-sm mt-2 gc-checks">
+            <li>Three boards authored per §4's grand tier — two bases per seat, the denser economy —
+            under the same lints; Causeway and Confluence under the water lints.</li>
+            <li>The full OS3 soak matrix again, per board — and two measurements the standard trio
+            does not need: <strong>AI turn wall-clock</strong> on the busiest mid-game day (the
+            grand tier's unit counts are the largest the planner has ever carried), and
+            <strong>match length in days</strong> against the watch-mode day cap, so a grand FFA
+            provably concludes rather than timing out.</li>
+            <li>Camera and HUD sanity at the desk: cursor travel, <code>make screenshot</code>
+            framing and the minimap-less pan on a 32×24 board — presentation observations filed as
+            their own issues if they bite, never fixed inside this milestone.</li>
+            <li>README board table extended; the gallery gains a posed frame per board.</li>
+            <li><strong>Proof:</strong> <code>make verify</code> green; soak winner/day/wall-clock
+            lines in the PR. Ships after OS3, and may trail it — the shelf is useful at three.</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== 6 · RISKS ============================== -->
+    <section class="px-6 py-8 md:px-12 bg-base-100">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">6</span>
+        <h2 class="text-2xl font-black">Risks</h2>
+      </div>
+      <div class="grid gap-3">
+        <div class="card border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">R1 · The foundation is still on paper</h3>
+          <p class="text-sm mt-1 max-w-3xl">FP1–FP6 are Backlog issues, not merged code. Every
+          mechanism this plan cites from them (the derived roster, <code>allied()</code>, the seat
+          strip) may land differently than written. Mitigation: this plan binds to
+          <em>mechanisms and decisions</em>, never line numbers, and OS1 must not start before FP3
+          merges — the chain is COM-44→49, then OS1→OS4. If Four Armies is descoped, only §4's
+          boards survive as-is (authored full, played full).</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R2 · The Lab's byte-stability bar, again</h3>
+          <p class="text-sm mt-1 max-w-3xl">OS1 touches <code>GameState.create</code> and the capture
+          command — the Lab's substrate. Same standing procedure: a defaulted parameter and a rule
+          (home HQ) that is definitionally today's on a duel board; both gates byte-diffed against
+          main before merge, per <span class="gc-file">docs/balance_sim.md</span>.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R3 · Sparse boards bend the AI's opening</h3>
+          <p class="text-sm mt-1 max-w-3xl">A Compass duel has twice the neutral property of a duel
+          board — the opening becomes a capture race the profiles were not tuned on, and a vacant
+          seat's neutral HQ/base are unusually rich prizes. The soak observes; if the AI misplays
+          the race, the fix is an <code>AIProfile</code> weight, never code — the difficulty plan's
+          standing rule.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R4 · Atoll is the first four-front naval board</h3>
+          <p class="text-sm mt-1 max-w-3xl">Naval R1 (the AI never builds transports) is satisfied by
+          the connected sea, but four navies on one water body is unmeasured. If the soak shows
+          stalls or a dead domain, the fallback is authored, not engineered: shrink the sea's weight
+          in the economy (fewer ports, richer land) rather than touching <code>ai/</code>. Shipping
+          Atoll later than the other two is an acceptable split.</p>
+        </div>
+        <div class="card border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R5 · The grand tier stretches the AI's clock and the game's pacing</h3>
+          <p class="text-sm mt-1 max-w-3xl">Four armies × two bases × a 32×24 board is more units
+          than the planner has ever carried in one turn, and more days than a watch soak has ever
+          waited out. The threat-map cache is per-turn and the planner is O(units × reachable
+          cells), so the cost is real but linear-ish — OS4 measures it before anyone tunes anything.
+          If a grand board drags, the levers are authored in order: economy density (fewer
+          properties), then board size — never a special case in <code>ai/</code>, and never a
+          change to the shared planner for one board's sake. Pacing for humans is what the
+          game-speed setting already owns; nothing here touches it.</p>
+        </div>
+        <div class="card border p-4 gc-risk-good">
+          <h3 class="font-black text-sm">R6 · Save compatibility</h3>
+          <p class="text-sm mt-1 max-w-3xl">Low. The envelope already records the roster; the one
+          addition is <code>home_hq</code>, carried under the codec's versioning
+          (<code>READABLE_VERSIONS</code>). A pre-open-seats save decodes with every seat filled and
+          each team's home HQ inferable as the only HQ it owns — exact for every save such a version
+          could have written.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== 7 · OUT OF SCOPE ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">7</span>
+        <h2 class="text-2xl font-black">Explicitly out of scope</h2>
+      </div>
+      <ul class="gc-crosses text-sm max-w-3xl grid gap-2">
+        <li><strong>Seat swapping and handicaps</strong> — choosing to <em>play</em> seat 3 while
+        seat 1 sits empty is already possible (close 1, fill 3); moving a livery or start between
+        seats, or compensating a reduced seating with funds or income, is not. Fairness stays
+        board-authored.</li>
+        <li><strong>Map-file metadata for seatings</strong> — no <code>[meta]</code> section, no
+        recommended-pairs syntax. The opposite-seat convention plus the Duel preset carry it; a
+        format extension needs its own case.</li>
+        <li><strong>An N-way symmetry lint</strong> — named future work in FP6/R5 and still is.</li>
+        <li><strong>The Balance Lab on multi-seat boards</strong> — the Lab stays a duel instrument
+        (Four Armies D8). Open seats make "a duel on Compass" expressible, but the Lab's seat swap
+        and schema stay two-seat; reduced-board balance evidence comes from the OS3 soaks.</li>
+        <li><strong>Retrofitting shipped duel boards to more seats</strong> — the thirteen stay
+        duels; widening one is the deliberate, separate decision the map-retrofit plan requires.</li>
+        <li><strong>AI coordination, diplomacy, network play</strong> — exactly where Four Armies
+        left them: elsewhere, or nowhere.</li>
+      </ul>
+    </section>
+
+    <!-- ============================== FOOTER ============================== -->
+    <footer class="gc-hero px-6 py-6 md:px-12 text-sm">
+      <p class="opacity-85">
+        Grid Commanders · four-player-maps plan rev 3 (rev 2 adds the grand trio — Heartland,
+        Causeway, Confluence — and its OS4 milestone; rev 3 adds the small pair — Foursquare,
+        Pinwheel — to OS3; both per review) · builds on
+        <span class="gc-file">.lavish/four-players-plan.html</span> (rev 2 — the roster, sides,
+        elimination and seat strip this plan extends; chained after COM-49),
+        <span class="gc-file">naval-air-units-plan.html</span> (standing R1 governing Atoll),
+        <span class="gc-file">map-retrofit-plan.html</span> (why emptiness is match state, never a
+        file edit) and <span class="gc-file">balance-simulator-plan.html</span> (the byte-stability
+        merge bar). Survey evidence: Four Armies rev 2 four-layer sweep, July 2026, plus current
+        <span class="gc-file">core/map_catalog.gd</span> / <span class="gc-file">core/game_state.gd</span> /
+        <span class="gc-file">core/map_data.gd</span> traces on <code>main</code> @ <code>6978957</code>.
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

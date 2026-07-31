@@ -369,6 +369,45 @@ that must survive any change; the full rationale, milestones and risk registers 
   the battle viewport whole, and the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog`
   scenarios run on. The plan artifact carries its own milestone pass: FP1–FP6 are marked shipped in
   `.lavish/four-players-plan.html`, whose decisions stay as authored — every supersession is here.
+- `four-player-maps-plan.html` — a seat may stay empty, and eight more four-seat boards: OS1 (the
+  sim), OS2 (the table), OS3 and OS4 (the shelf). Builds on four-players and never duplicates it.
+  D1: **the map's roster authority bends downward only** — the board still owns how many seats
+  exist and where they sit, the match owns which of them are filled, any two or more.
+  `GameState.create` gains a defaulted `p_seats` (empty = every seat, today's behaviour verbatim)
+  and a closed seat **never enters the state**: no purse, no commander, no turn, no banner, its
+  `[units]` rows skipped and its `[owners]` rows opened to neutral, so its HQ and base become ground
+  anyone may take. Modelling it as a day-0 *elimination* is the rejected alternative and stays
+  rejected — a ghost in the standings, the liveries, the banner and every save is a ghost that
+  leaks. So is a menu-side preprocessor handing the sim a doctored `MapData`: that is a second
+  opinion about the roster between the file and the state, which is the drift four-players D1
+  exists to prevent. The invariant to hold onto, and why nothing downstream needed changing: **a
+  reduced match on a big board produces exactly the state a small board would have produced.**
+  Seats keep their own numbers — closing seat 2 of four leaves `[1, 3, 4]`, never a renumber,
+  because `[owners]`, `[units]`, the liveries and the commander picks are all keyed by the seat's
+  team id — and `create` is the one authority that refuses a seating, out loud and with no guessing:
+  a seat the board never dealt, a seat named twice, or fewer than `MIN_SEATS` armies left.
+  D3: **`GameState.home_hq` is the single authority for what an army can be beheaded through** —
+  ask it, never `terrain_at(cell).id == "hq"`. "Capturing an HQ eliminates its owner" is exact only
+  while every HQ has a living owner and no army holds two, and this milestone breaks the first while
+  a conqueror already broke the second: a vacant seat's HQ has nobody to fell, and a survivor
+  holding a conquered HQ must not be beheadable through it. Recorded by `create` from the map's
+  starting ownership (`GameState.home_hqs`, the one derivation, read off the *map* because
+  mid-match "the HQ this team owns" has two answers exactly when it matters), and carried in save
+  v7 — the map derives the same answer, so what persisting it buys is the **pin**: a save whose
+  board has since moved an HQ is refused rather than silently re-homed, which
+  `SaveCodec._home_hq_board_error` enforces cell by cell. Every other HQ is a high-value property
+  with HQ terrain stars, captured like a city.
+  D2: **seats are the match's fourth setup fact** — `MatchRequest.seats` (empty = all) through all
+  three adapters: `from_menu` reads the strip, `from_match` copies the live `state.teams` so a
+  rematch of a reduced match is that match again, `apply_cmdline` reads `--seats=1,3,4` and reads it
+  **before `--co=`**, because a commander list is positional over the seats that *play*. The request
+  parses and does not vet; the board is where a seating is refused.
+  D4 is the seat strip's third state and lives in the four-players D6 entry above, beside the rest
+  of the strip. D5: **boards are authored full and reduced fairness is a convention, not a parser
+  feature** — every four-seat board lints as a four-army map, and the authoring convention is that
+  **opposite seats (1&3, 2&4) make the fair duel**, which the Duel preset encodes and a
+  90°-rotational layout makes true by construction. No map-file metadata for seatings, no
+  recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
 
 ## Architecture — the rules that matter most
 
