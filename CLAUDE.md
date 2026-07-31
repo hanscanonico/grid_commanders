@@ -581,6 +581,11 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   forward — the plan artifacts track which milestones are done and what each one owes.
   Scope creep is the named top risk.
 - **Balance numbers live in `data/`.** Don't hardcode stats you could put in a `.tres`.
+- **Dense commenting is a smell — fix the code, not the commentary.** If a block needs a running
+  narration to follow, the names, the split, or the shape are wrong: extract it into a well-named
+  function, rename what it walks, or drop the branch that made it confusing. A comment earns its
+  place explaining *why* — a constraint, a non-obvious ordering, a source of truth — never *what*
+  the line already says.
 - **A paragraph defending a workaround means the code is wrong.** If you need to write one to
   explain or justify an implementation, treat that as the signal — don't document around an
   avoidable design problem. Fix the underlying code so the implementation is straightforward and
