@@ -330,6 +330,10 @@ func _run_demo(mode: String) -> void:
 			await _stage_capture_power_race()
 		"ambush", "vanish":
 			_run_vanish_demo(mode)
+		"field_overlays":
+			var overlay_error := await BattleOverlayScenario.new(_battle).run()
+			if overlay_error != "":
+				_fail(overlay_error)
 		"preview_fog":
 			await _stage_preview_fog()
 		"power_charging":
@@ -570,7 +574,7 @@ func _stage_preview_fog() -> void:
 	var whole := MovementResolver.reachable(game, enemy).cells().size()
 	_battle.confirm_at(enemy.cell)  # a unit Red cannot command -> preview, not select
 	await _until_state(Battle.State.PREVIEW)
-	var shown := _check_overlay_scouted("move preview", _battle.view.move_overlay)
+	var shown := _check_overlay_scouted("move preview", _battle.overlays.move_layer)
 	# Vacuous otherwise: an overlay narrowed down to nothing, or one that never had a
 	# cell to lose, would pass the check above without proving anything. `whole` is
 	# what the raw authority would have painted, so this is the withholding itself.
@@ -583,7 +587,7 @@ func _stage_preview_fog() -> void:
 		)
 		return
 	_battle.toggle_range()
-	_check_overlay_scouted("fire ring", _battle.view.attack_overlay)
+	_check_overlay_scouted("fire ring", _battle.overlays.attack_layer)
 	_battle.set_cursor_cell(enemy.cell)
 
 

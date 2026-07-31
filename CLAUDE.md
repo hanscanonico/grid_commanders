@@ -122,6 +122,38 @@ that must survive any change; the full rationale, milestones and risk registers 
   the fill to walk is still the rejected answer. Everything else is presentation, gated by the same
   `perspective.can_see_unit` fog rule targeting uses and then masked to scouted ground by
   `BattlePerspective._viewer_safe`; `make screenshot` stays byte-stable.
+- **Field overlays** (no plan artifact; the *Field Overlays* design handoff, and this entry is its
+  record) — the threat lens, the arrowed movement path and the capture pip. **Nothing under `core/`
+  or `ai/` was touched, because the handoff's rules helpers already existed**: its `threat()` /
+  `ring()` / `pathTo()` are `AttackRange.threat_cells` / `ring_cells` and
+  `MovementResolver.Reach.path_to`, same indirect rule and all. So the whole slice is presentation,
+  and its four decisions are:
+  D1: **the lens is a union over the one per-unit authority, never a second walk** —
+  `BattlePerspective.all_threat_overlay_cells` calls `threat_overlay_cells` once per hostile unit
+  the viewer can see, so it inherits both the sight rule the fill is keyed to and the scouted-ground
+  mask, and the range preview's D1 keeps holding without being restated. It repaints from
+  `Battle.refresh_fog`, the pass that already reruns after every committed command and turn change,
+  and costs nothing while the lens is down. It belongs to no unit and no selection: nothing clears
+  it but the player, because a lens that switched itself off when a unit was picked up would be off
+  exactly when the question it answers is being asked.
+  D2: **the lens gets its own layer, striped** — `attack_layer` is already two things (R's fire ring
+  *and* the pickable targets during `TARGETING`), so a lens sharing it would either erase a target
+  list or be mistaken for one. `T` raises it; `R` still shows one unit's ring, indirect units
+  included, which is why the handoff's separate min–max ring needed no code at all.
+  D3: **`scenes/battle/battle_overlays.gd` (`BattleOverlays`) owns the transient paint** — reach,
+  fire, threat, route, capture chips — and `BattleView` keeps the board itself. The split is what
+  the `max-public-methods` ratchet bought rather than a raise; ask `overlays` for anything laid
+  *over* the board and `view` for the board.
+  D4: **the two board marks are drawn, and every number in them was handed over.** `PathArrow`
+  splits into a pure `segments(path)` (checked by `tests/unit/test_path_arrow.gd`, no scene) and a
+  `_draw` that only paints what it returns; `CapturePips` is dumb like `UnitSprite` and never calls
+  back into `capture_strength` — Battle puts `GameState.capture_progress` through the same fog gate
+  the board uses and hands the result over. Both wear outlined marks rather than filled panels: the
+  handoff's ink chip is trim on its 44px tile and covers the building being captured on this
+  board's 16. Every captured battle frame shifts, because the threat chip is permanent top-bar
+  chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
+  on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
+  a pip.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

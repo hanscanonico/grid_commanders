@@ -297,7 +297,8 @@ for testing.
 On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
 (A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
 shoulder (RB / R1) zooms in and the left (LB / L1) zooms out, the left face button (X / Square)
-shows a unit's range, and the top face button (Y / Triangle) fires a ready Command Power. The same
+shows a unit's range, the left stick's click (button 7) raises and lowers the threat lens, and the
+top face button (Y / Triangle) fires a ready Command Power. The same
 face buttons confirm and back out of menus. One push of the stick is one step: the cursor and a
 menu highlight move a single cell or row per gesture, and the stick has to return to centre before
 it asks again.
@@ -307,8 +308,10 @@ mouse, keyboard, or controller throughout.
 - Arrow keys / mouse hover: move the grid cursor
 - Mouse wheel or `+` / `-`: zoom
 - Confirm (`Enter` / `Space` / `Z`) or left-click on one of *your* units: select it and highlight
-  its movement range; move the cursor within range to preview the path, then confirm a destination
-  to move there. Remaining fuel caps that range, so a dry unit is stranded where it stands
+  its movement range; move the cursor within range to preview the path — a red arrow laid squarely
+  along the cells the unit would walk, its head on the one it would stop on — then confirm a
+  destination to move there. Remaining fuel caps that range, so a dry unit is stranded where it
+  stands
 - Cancel (`Esc` / `X` / `Backspace`): deselect, or undo an uncommitted move — and, with nothing
   selected, open the map menu, which is the control the top bar's resting key legend names
 - Confirm or left-click on a unit you *cannot* command — an enemy, or one of yours that has
@@ -341,6 +344,19 @@ mouse, keyboard, or controller throughout.
   on another side's it is the same reading as the blue beneath it, drawn from what you have
   scouted. It shows what the weapon *reaches* — a unit with no shot left still shows its ring, one
   resupply from meaning it — and it paints over the blue until pressed again
+- `T` raises and lowers the **threat lens**: red stripes over every cell a side hostile to you
+  could bring under fire, all of them at once. It is `R`'s sibling and its opposite in scope —
+  `R` asks what *this* unit reaches, the lens asks where it is unsafe to stand. It issues nothing
+  and belongs to no unit, so unlike the fire ring it survives selection, movement and the turn:
+  nothing puts it down but pressing `T` again. The top bar's `T · THREAT` chip says which it is,
+  dim while the lens is down and red while it is up. It is the red half of the same bargain the
+  blue makes: only enemies you have actually spotted are in it, and their reach is drawn on ground
+  you have scouted, so under fog an unshaded cell is not a promise of safety — only that nothing
+  you have found covers it. A unit you have never scouted, one sitting in woods, or one a
+  commander's doctrine is hiding all shoot into cells the lens leaves clear. Turn fog off and
+  those go with it — every one but a submerged submarine, which is under the water rather than
+  merely out of sight and so stays unshaded on a clear day too, until one of your units is
+  standing beside it
 - After a move, the action menu opens: **Fire** (offered only when an enemy the unit has a ready
   weapon for is in range from the destination), **Capture** (offered when a capture-capable
   unit ends on a property you don't own), **Drop** and **Supply** (see transports below),
@@ -419,9 +435,11 @@ mouse, keyboard, or controller throughout.
   single one Continue reads
 - The HUD is two opaque bars docked above and below the board, never panels floating on it: the
   board sits in the band they leave over, and only transient things — damage numbers, the capture
-  counter, the attack forecast, the action menu, the first-match mission strip — are ever drawn
+  counter and the badge on the tile being taken, the movement arrow, the attack forecast, the
+  action menu, the first-match mission strip — are ever drawn
   over terrain. The **top bar** carries the day, the side in hand as a faction colour chip and
-  name, that commander's doctrine, the funds, and a one-line **key legend** that swaps with the
+  name, that commander's doctrine, the funds, a `T · THREAT` chip — dim while the threat lens is
+  down, red while it is up — and a one-line **key legend** that swaps with the
   interaction — `ENTER · SELECT   ESC · MENU   +/- · ZOOM` at rest, `ENTER · FIRE   ESC · BACK`
   while targeting, and so on. The **bottom bar** carries, left to right: the commander's
   portrait, name, power name, and — for a side playing a power — the charge meter with its
@@ -434,8 +452,12 @@ mouse, keyboard, or controller throughout.
   range when it is an indirect, `DIVED`, `LOW FUEL`, `CARRYING …` when it is a loaded transport,
   and `WAITED` or `READY`, with
   the sprite greyed once it has acted this turn; then, pinned right, the tile's artwork, name,
-  defense stars, owner, and `CAP N` while a capture is in progress. With nothing under the cursor
-  the unit and tile thirds go blank and the bar keeps its height — the board never shifts
+  defense stars, owner, and `CAP N` while a capture is in progress — a count the tile itself also
+  wears, as a green flag and the points still owed, so contested properties read at a glance
+  instead of one cursor walk at a time. Under fog only the tiles you can currently see carry it: a
+  capture you have not scouted stays as unannounced as the flip that will follow it. With nothing
+  under the cursor the unit and tile thirds go blank and the bar keeps its height — the board
+  never shifts
 - An army that loses its HQ or its last unit is out of the match, announced by a banner — *Iron
   Dominion eliminated* — over the board that felled it, before play hands over. In a duel that is
   the win, so the banner runs straight into the victory screen

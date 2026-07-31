@@ -121,6 +121,33 @@ func threat_overlay_cells(unit: Unit) -> Array[Vector2i]:
 	return _viewer_safe(AttackRange.threat_cells(_game, unit, _viewing_team), unit)
 
 
+## Every cell any side hostile to the viewer could bring under fire this turn —
+## the survey lens, as against the one-unit reading above.
+##
+## A union over `threat_overlay_cells`, never a second walk: the per-unit answer
+## already carries the sight rule the fill is keyed to and the mask that keeps
+## another side's ring on scouted ground, and a lens that recomputed either would
+## be the fourth opinion on firing geometry this repo has had to consolidate.
+##
+## A carried passenger is skipped for the same reason `attackable_cells` skips
+## one — it is not on the board to shoot from — and a unit the viewer cannot see
+## contributes nothing, so the lens never outlines a submarine or an ambush.
+func all_threat_overlay_cells() -> Array[Vector2i]:
+	var seen := {}
+	for unit in _game.units:
+		if _game.allied(unit.team, _viewing_team) or unit.carrier != null:
+			continue
+		if not can_see_unit(unit):
+			continue
+		for cell in threat_overlay_cells(unit):
+			seen[cell] = true
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in seen:
+		cells.append(cell)
+	cells.sort()
+	return cells
+
+
 ## Whole for a unit on the viewer's own side, scouted ground only for another side's.
 func _viewer_safe(cells: Array[Vector2i], unit: Unit) -> Array[Vector2i]:
 	if _game.allied(unit.team, _viewing_team):

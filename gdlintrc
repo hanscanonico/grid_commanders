@@ -29,6 +29,18 @@ max-returns: 12
 # commander chip occupied, and back down to 21 when the docked HUD bars retired
 # both: there is no floating chip left for a menu to dodge, so the geometry seam
 # came out with it. Adding to BattleView still means moving something out first.
+#
+# BattleView is down to 19 and no longer the widest class: the field overlays
+# wanted a fourth painter and a fifth mark on the board, it was sitting at exactly
+# 21, so the transient paint moved out to scenes/battle/battle_overlays.gd rather
+# than the ceiling moving — the ratchet doing exactly the job it is for. What is
+# left there is the board itself: terrain, sprites, fog, the two HUD bars, the
+# forecast.
+#
+# The number stays at 21 because it now binds core/game_state.gd and the two
+# save-codec suites, which sit there. It is a repo-wide ceiling, so it only comes
+# down when the widest class does — and lowering it to BattleView's new count would
+# fail three files that have not changed.
 max-public-methods: 21
 
 # Ratchet, not a target: scenes/battle/battle.gd is the longest file and is
@@ -197,4 +209,14 @@ max-public-methods: 21
 # was the faction variant's already, and both now reach `_stand_pair_on` for it.
 # COM-94's split is still the one that is due, and adding the frame that would
 # photograph the split going wrong is not the change to do it inside.
-max-file-lines: 1355
+#
+# 1355 -> 1359, the scenario driver's an eleventh time, for the field overlays — and
+# like COM-13's raise, this is one that moved something out first. `field_overlays`
+# poses all three new marks in one frame (a capture chip counting down, the arrowed
+# route round a corner, the threat lens up) because each is legible alone and the
+# only open question is whether they are legible together — three reds and a blue
+# over the same terrain. The flow lives in scenes/battle/battle_overlay_scenario.gd,
+# the way BattleVictoryScenario and BattleFeedbackScenario do; what stayed here is
+# the four-line dispatch arm that reaches it. COM-94's cut-in split is still the one
+# that is due. The driver sits at exactly 1359.
+max-file-lines: 1359

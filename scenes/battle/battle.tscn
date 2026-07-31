@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/ui/hud_bottom_bar.gd" id="2"]
@@ -12,6 +12,8 @@
 [ext_resource type="Script" path="res://scenes/ui/mission_strip.gd" id="10"]
 [ext_resource type="Script" path="res://scenes/ui/action_feedback.gd" id="11"]
 [ext_resource type="Script" path="res://scenes/ui/end_turn_guard.gd" id="12"]
+[ext_resource type="Script" path="res://scenes/battle/path_arrow.gd" id="13"]
+[ext_resource type="Script" path="res://scenes/battle/capture_pips.gd" id="14"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
@@ -27,14 +29,16 @@ modulate = Color(0.35, 0.55, 1, 0.75)
 [node name="AttackOverlay" type="TileMapLayer" parent="."]
 modulate = Color(1, 0.35, 0.3, 0.8)
 
-[node name="PathLine" type="Line2D" parent="."]
-width = 3.0
-default_color = Color(1, 0.92, 0.3, 0.95)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
+[node name="ThreatOverlay" type="TileMapLayer" parent="."]
+modulate = Color(1, 0.35, 0.3, 0.38)
+
+[node name="PathArrow" type="Node2D" parent="."]
+script = ExtResource("13")
 
 [node name="Units" type="Node2D" parent="."]
+
+[node name="CapturePips" type="Node2D" parent="."]
+script = ExtResource("14")
 
 [node name="FogLayer" type="TileMapLayer" parent="."]
 modulate = Color(0.07, 0.08, 0.12, 0.34)
