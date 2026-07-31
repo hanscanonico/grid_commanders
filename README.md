@@ -1,7 +1,7 @@
 # Grid Commanders
 
 A turn-based tactics game in the style of Advance Wars, built with Godot 4.7 and
-typed GDScript. Fifteen designs of record ship with it under `.lavish/`; `CLAUDE.md` lists them and
+typed GDScript. Its designs of record ship with it under `.lavish/`; `CLAUDE.md` lists them and
 which decisions each one owns.
 
 ## Running
@@ -176,15 +176,15 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Eighteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
+Nineteen maps ship. The main menu leads with the teaching board and lists the rest smallest first —
 `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`, `timberline`,
-`arsenal`, `riverline`, `isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`,
-`marchlands`, `ironworks`, `steelworks` — so it opens on `boot_camp`, badged **Tutorial**, and
-prints the selected board's size,
+`arsenal`, `riverline`, `isthmus`, `jet_stream`, `windrose`, `crossfire`, `first_steps`,
+`the_straits`, `marchlands`, `ironworks`, `steelworks` — so it opens on `boot_camp`, badged
+**Tutorial**, and prints the selected board's size,
 army count (a range, `2–4 armies`, on a board where seats can be closed), property count and
 one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`foursquare`, `compass`, `pinwheel` and `marchlands` seat **four armies**, and so offer the one-tap
-table presets in the seat strip. `foursquare` is the smallest, 12×12 and the
+`foursquare`, `compass`, `pinwheel`, `windrose` and `marchlands` seat **four armies**, and so offer
+the one-tap table presets in the seat strip. `foursquare` is the smallest, 12×12 and the
 quickest full free-for-all in the roster: a seat in each corner in reading order — 1 NW, 2 NE, 3 SE,
 4 SW — laid out under a quarter turn rather than the half turn `# symmetric` checks, so the two
 opposite pairs make a fair duel and every seat's nearest cities sit the same distance out. It is also
@@ -195,7 +195,13 @@ army's nearest two sit the same distance out. `pinwheel` seats its four at the s
 own base, run the long edge clockwise and hook into the *next* seat's flank, so the opening question
 is whether to race the wheel or cut the wooded hub in the middle. The infantry screens of
 neighbouring seats meet on day 2; opposite seats — the fair duel, 1&3 or 2&4 — take until day 3.
-`marchlands` at 22×16 is the largest of the four and the board built for the **2v2**: a wooded
+`windrose` is the four-army air board: 17×17, laid out under a **quarter
+turn** about its centre cell, seats at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW — so the
+opposite pairs 1&3 and 2&4 duel across the long diagonal. Each army opens on an HQ, a base, its own
+airfield and two cities; a fifth, neutral airfield stands on the centre cell, and mountain ridges
+wall each quadrant off from its two neighbours with one pass apiece, so armour meets a neighbour at a
+chokepoint or goes the long way round through the middle while a t-copter simply crosses.
+`marchlands` at 22×16 is the largest of the five and the board built for the **2v2**: a wooded
 ridge splits it north from south with four road passes over, seats 1 and 2 north of the ridge and
 3 and 4 south, so `--sides=1+2v3+4` gives each pair a shared front and its own purse instead of two
 armies standing back to back. It is not laid out on a quarter turn — a 22×16 rectangle cannot be —
@@ -213,9 +219,10 @@ gained a port and a landing beach per side, `ironworks` and `crossfire` an airfi
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
 because the five things it teaches are the land game's. `foursquare`, `compass`, `pinwheel`,
-`trident` and `marchlands` stay land-only too: the computer cannot plan a ferry, so a board it may
-have to fight
-across in any grouping has to let every army reach every other on foot.
+`trident`, `marchlands` and `windrose` carry no water either: the computer cannot plan a ferry, so
+a board it may have to fight
+across in any grouping has to let every army reach every other on foot — which on `windrose` leaves
+the air as the one domain that ignores the board's walls.
 
 `forge`, `foursquare`, `arsenal` and `steelworks` are the production boards, and the only ones that
 hand out **no starting units at all**: what you get instead is factories. On `forge`, `arsenal` and
@@ -241,9 +248,9 @@ that leaves the board's armies with nobody to fight, is reported and the free-fo
 naming one twice, or leaving fewer than two armies is refused and no match is built.
 
 Adding a map is dropping a `.txt` in `maps/` — the menu auto-discovers it and `tests/unit/`
-holds it to the playability invariants (one HQ and a base per side, the same starting buildings for
-every seat, reachable HQs, a claimed `# symmetric` tag that actually mirrors) and plays an AI-vs-AI
-match on it. Boards that use the
+holds it to the playability invariants (one HQ and a base per side, reachable HQs, the same
+properties dealt to every seat kind for kind, a claimed `# symmetric` tag that actually mirrors)
+and plays an AI-vs-AI match on it. Boards that use the
 water get four more: every port opens onto sailable sea, all of a map's ports share one body of it
 (the AI cannot ferry, so a fleet it cannot sail to is a fleet it can never fight), every beach is
 reachable by a lander, and no beach chain quietly joins two landmasses — a shoal costs every land

@@ -46,6 +46,7 @@ const PINWHEEL := "res://maps/pinwheel.txt"
 const TRIDENT := "res://maps/trident.txt"
 ## The 2v2 board — four armies, paired across the ridge rather than diagonally.
 const MARCHLANDS := "res://maps/marchlands.txt"
+const WINDROSE := "res://maps/windrose.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -100,6 +101,13 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("marchlands 2v2", {1: 0, 2: 0, 3: 1, 4: 1}, 625, MARCHLANDS)
 	_soak("marchlands free-for-all", {}, 626, MARCHLANDS)
 	_soak("marchlands 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, MARCHLANDS)
+	# Windrose is the first board where an alliance owns airfields, so it is the
+	# first where a shared side can put something over the ridge that the ground
+	# war is channelled by — and where an ally's airfield is a pad the other side
+	# of a mountain wall.
+	_soak("windrose free-for-all", {}, 625, WINDROSE)
+	_soak("windrose 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 626, WINDROSE)
+	_soak("windrose 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 627, WINDROSE)
 
 
 ## Pinwheel, over the seatings its own layout promises: the four-army groupings,

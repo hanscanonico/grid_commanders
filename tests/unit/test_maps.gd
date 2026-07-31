@@ -99,28 +99,44 @@ func test_every_map_gives_each_team_a_base() -> void:
 			)
 
 
-## Two armies opening on different buildings open on different income and
-## different production, and nothing downstream attributes the result to the
-## board rather than to the play. The `# symmetric` tag catches it on a duel by
-## checking the whole mirror — but that tag is a 180-degree instrument, so a
-## board seating three or four armies cannot carry it, and this is the only lint
-## holding the seats level on exactly the boards where the arithmetic is hardest.
-func test_every_map_deals_each_team_the_same_starting_properties() -> void:
+## Income and production are what an army fights with, so two seats that open on
+## different holdings are playing two different matches — and the difference
+## reads back as "that commander is stronger" rather than "that seat is", which
+## is the one attribution no amount of playtesting recovers from. Nothing else
+## catches it: a board that hands one side a spare city parses, loads and plays
+## perfectly, and is quietly unfair every time.
+##
+## Counted by kind, because a base is not a city: equal totals with one seat
+## holding the only airfield is the same defect wearing a fair number.
+func test_every_map_deals_each_team_the_same_properties() -> void:
 	for map in _maps():
-		var roster := map.teams()
-		var lead := _starting_properties(map, roster[0])
-		for team in roster:
-			assert_eq(
-				_starting_properties(map, team),
-				lead,
-				(
+		var by_team := _owned_properties_by_team(map)
+		var lead: Dictionary = by_team[map.teams()[0]]
+		var kinds := {}
+		for team: int in by_team:
+			for id: StringName in by_team[team]:
+				kinds[id] = true
+		for id: StringName in kinds:
+			for team in map.teams():
+				var counts: Dictionary = by_team[team]
+				assert_eq(
+					int(counts.get(id, 0)),
+					int(lead.get(id, 0)),
 					(
-						"%s: team %d opens holding %s while team %d holds %s — every seat "
-						% [_name(map), team, _starting_properties(map, team), roster[0], lead]
+						(
+							"%s: team %d opens on %d %s to team %d's %d — a seat with more "
+							% [
+								_name(map),
+								team,
+								int(counts.get(id, 0)),
+								id,
+								map.teams()[0],
+								int(lead.get(id, 0)),
+							]
+						)
+						+ "income or more production is an edge no playtest attributes right"
 					)
-					+ "owes the same buildings, or the board decides the match before it starts"
 				)
-			)
 
 
 func test_every_map_keeps_its_hqs_reachable_on_foot() -> void:
@@ -439,23 +455,21 @@ func _cells_of_terrain(map: MapData, terrain_id: StringName) -> Array[Vector2i]:
 	return cells
 
 
-## What `team` opens the match holding, as "base x1, hq x1" — kind by kind and
-## sorted, so two seats' openings compare as one string and a failure prints
-## both sides of the difference rather than a count that does not say of what.
-func _starting_properties(map: MapData, team: int) -> String:
-	var counts := {}
-	var owners := map.initial_owners()
-	for cell: Vector2i in owners:
-		if int(owners[cell]) != team:
+## What each seat opens holding, `team -> {terrain id -> count}`, with an entry
+## for every seat the board deals — an army that starts on nothing still has to
+## be compared against the one that started on something.
+func _owned_properties_by_team(map: MapData) -> Dictionary:
+	var by_team := {}
+	for team in map.teams():
+		by_team[team] = {}
+	for cell in map.property_cells():
+		var team := map.owner_at(cell)
+		if team == MapData.NEUTRAL:
 			continue
+		var counts: Dictionary = by_team[team]
 		var id := map.terrain_at(cell).id
 		counts[id] = int(counts.get(id, 0)) + 1
-	var ids := counts.keys()
-	ids.sort()
-	var parts := PackedStringArray()
-	for id: StringName in ids:
-		parts.append("%s x%d" % [id, counts[id]])
-	return "nothing" if parts.is_empty() else ", ".join(parts)
+	return by_team
 
 
 ## Every cell `move_class` can reach from `start`, `start` included.

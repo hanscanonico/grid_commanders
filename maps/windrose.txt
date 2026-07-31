@@ -1,0 +1,71 @@
+# Four airfields around a fifth: whoever holds the centre owns the sky.
+# Seats sit at the corners in reading order -- 1 NW, 2 NE, 3 SE, 4 SW -- so the
+# opposite pairs 1&3 and 2&4 duel across the long diagonal. The board is laid out
+# under a 90-degree rotation about the centre cell, which is what makes that duel
+# fair by construction; no `# symmetric` tag, because that one asserts the
+# 180-degree mirror a two-army board is held to.
+# Each army opens on an HQ, a base, its own airfield and two cities. Everything
+# else is neutral: two flank cities per quadrant, a ring of four around the
+# middle, and the fifth airfield on the centre cell -- the prize the board turns
+# on, since it is the only pad short of an army's own corner, so anything with
+# wings either holds the middle or flies home to refuel.
+# A mountain ridge runs down each arm of the cross, leaving every neighbouring
+# pair one pass out by the rim: armour meets a neighbour at that chokepoint or
+# goes the long way round through the open middle. Nothing walls the sky -- a
+# t-copter crosses the diagonal in a handful of turns while a tank spends the
+# match on it.
+# Land and air only -- no water, because the computer cannot plan a ferry and
+# every army here has to be able to walk to every other.
+# Symbols: . plains  F woods  M mountain  C city  B base  Q HQ  A airport
+[terrain]
+.......MMM.......
+.QB.C...M...C.AQ.
+.A.F..C...C..F.B.
+..F.....M.....F..
+.C..F..MMM..F..C.
+.......MMM.......
+..C...CF.FC...C..
+M...MMF...FMM...M
+MM.MMM..A..MMM.MM
+M...MMF...FMM...M
+..C...CF.FC...C..
+.......MMM.......
+.C..F..MMM..F..C.
+..F.....M.....F..
+.B.F..C...C..F.A.
+.QA.C...M...C.BQ.
+.......MMM.......
+[owners]
+1 1 1
+1 2 1
+1 1 2
+1 4 1
+1 1 4
+2 15 1
+2 15 2
+2 14 1
+2 15 4
+2 12 1
+3 15 15
+3 14 15
+3 15 14
+3 12 15
+3 15 12
+4 1 15
+4 1 14
+4 2 15
+4 1 12
+4 4 15
+[units]
+1 i 3 1
+1 i 1 3
+1 m 2 2
+2 i 15 3
+2 i 13 1
+2 m 14 2
+3 i 13 15
+3 i 15 13
+3 m 14 14
+4 i 1 13
+4 i 3 15
+4 m 2 14
