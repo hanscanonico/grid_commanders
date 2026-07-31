@@ -22,12 +22,15 @@ class BuildWants:
 	var owned: Dictionary = {}
 	## Unit id -> place in S3's standing tier, best first.
 	var reactive_order: Dictionary = {}
+	## Unit id -> places of commander re-rank, already scaled by doctrine_weight.
+	var doctrine_bias: Dictionary = {}
 
 	static func from_facts(
 		friendly_units: Array[Unit],
 		p_outgunned_in_the_air: bool,
 		capture_unit_target: int,
-		p_reactive_order: Dictionary
+		p_reactive_order: Dictionary,
+		p_doctrine_bias: Dictionary
 	) -> BuildWants:
 		var wants := BuildWants.new()
 		wants.outgunned_in_the_air = p_outgunned_in_the_air
@@ -39,10 +42,14 @@ class BuildWants:
 				capture_units += 1
 		wants.short_of_capture_units = capture_units < capture_unit_target
 		wants.reactive_order = p_reactive_order
+		wants.doctrine_bias = p_doctrine_bias
 		return wants
 
 	func count_of(id: StringName) -> int:
 		return int(owned.get(id, 0))
+
+	func bias_of(id: StringName) -> int:
+		return int(doctrine_bias.get(id, 0))
 
 	func first_priority_rank() -> int:
 		return TIER_STRIDE * 2
@@ -64,7 +71,8 @@ func plan(context: AIPlanningContext) -> Command:
 		context.friendly_units,
 		_outgunned_in_the_air(context),
 		profile.capture_unit_target,
-		_reactive_order(context)
+		_reactive_order(context),
+		_doctrine_bias(context)
 	)
 	var best_cell := Vector2i.ZERO
 	var best_choice: UnitType = null
@@ -130,6 +138,10 @@ func _worth_waiting_for(
 ## How much the team wants `unit_type`, lower being more wanted: answer enemy
 ## aircraft, fill the capture roster, follow the standing priority, then any
 ## capture unit. Transports reach no tier and remain unbuilt.
+##
+## The commander's doctrine bias moves a unit within the priority tier only —
+## the urgent tiers above outrank any doctrine, and the tier floor keeps a
+## pulled-up unit from reading as urgent to the banking rule.
 func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 	if wants.outgunned_in_the_air:
 		var answer := profile.air_answer_ids.find(unit_type.id)
@@ -138,14 +150,35 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 	if unit_type.can_capture and wants.short_of_capture_units:
 		return TIER_STRIDE
 	var duplicates := wants.count_of(unit_type.id) * profile.duplicate_priority_cost
+	var bias := wants.bias_of(unit_type.id)
 	if wants.reactive_order.has(unit_type.id):
-		return TIER_STRIDE * 2 + int(wants.reactive_order[unit_type.id]) + duplicates
+		var reactive := int(wants.reactive_order[unit_type.id])
+		return TIER_STRIDE * 2 + maxi(0, reactive + duplicates + bias)
 	var priority := profile.build_priority.find(unit_type.id)
 	if priority >= 0:
-		return TIER_STRIDE * 2 + priority + duplicates
+		return TIER_STRIDE * 2 + maxi(0, priority + duplicates + bias)
+	if bias < 0 and unit_type.max_range > 0:
+		# A doctrine may pull a combat unit the list omits onto its tail — never
+		# a transport, which stays without a rank to move.
+		return TIER_STRIDE * 2 + maxi(0, profile.build_priority.size() + duplicates + bias)
 	if unit_type.can_capture:
 		return TIER_STRIDE * 3
 	return RANK_NONE
+
+
+## Unit id -> how far the commander's doctrine moves it on the build list,
+## scaled by the profile's doctrine weight. Empty when the dial is off — the
+## hook is then never called, which keeps a zero-weight profile byte-identical.
+func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
+	if profile.doctrine_weight <= 0.0:
+		return {}
+	var commander := context.state.commander_of(context.team)
+	var bias: Dictionary = {}
+	for unit_type in context.unit_types:
+		var advice := commander.build_bias(context.state, context.team, unit_type)
+		if advice != 0:
+			bias[unit_type.id] = int(roundf(profile.doctrine_weight * float(advice)))
+	return bias
 
 
 ## S3. Orders combat units by how well they answer the enemy's cost-weighted

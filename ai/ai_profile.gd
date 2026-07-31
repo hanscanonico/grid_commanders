@@ -96,6 +96,14 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## below this it heads for the nearest property that services it. Zero disables
 ## the behaviour and lets units fly until they drop.
 @export var refuel_margin_turns: int = 1
+## How strongly a commander's advisory hooks re-rank the planner's own
+## candidates — stand_value on the advance path, build_bias on the build list,
+## retreat_hp_delta on the repair gate (see CommanderType's AI-advice section).
+## 1.0 takes the doctrine's numbers as written; 0 never calls the hooks and
+## restores the doctrine-blind planner byte for byte. A commander's personality
+## is a match fact rather than a difficulty smart, so every tier ships with it
+## on — a tier may retune the strength, never gate the behaviour.
+@export var doctrine_weight: float = 1.0
 
 # --- Difficult-tier capabilities ---------------------------------------------
 #

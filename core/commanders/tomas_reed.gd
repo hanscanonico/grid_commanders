@@ -17,6 +17,9 @@ extends CommanderType
 ## +100 doubles the chip, so 10 displayed HP takes a property in one turn.
 @export var uprising_capture_pct: int = 100
 @export var uprising_move_bonus: int = 1
+## Build-list places his foot units are pulled up: a wide, cheap army is the
+## doctrine, so the width keeps coming after the capture roster is filled.
+@export var foot_build_bias: int = -5
 
 
 func attack_bonus(_state: GameState, fight: Engagement) -> int:
@@ -42,6 +45,11 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 ## grants, since a property one step out of reach is precisely what firing fixes.
 func wants_power(state: GameState, team: int) -> bool:
 	return _can_reach_capture(state, team, uprising_move_bonus)
+
+
+## Production advice, keyed on movement class like the rest of the doctrine.
+func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
+	return foot_build_bias if unit_type.move_class in foot_classes else 0
 
 
 func _is_foot(unit: Unit) -> bool:

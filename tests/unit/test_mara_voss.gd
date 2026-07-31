@@ -109,3 +109,27 @@ func test_the_power_stacks_onto_the_counter_bonus() -> void:
 	assert_eq(
 		state.commander_of(1).attack_bonus(state, fight), 60, "20 passive + 40 from the power"
 	)
+
+
+# --- ground advice -----------------------------------------------------------
+
+
+## Cover is only advice while somebody can actually come to her.
+func test_stand_advice_wants_stars_only_under_threat() -> void:
+	var state := _state("[terrain]\n.F=.......\n[units]\n1 t 0 0\n2 t 6 0")
+	var co := state.commander_of(1)
+	var tank := state.units[0]
+	assert_eq(co.stand_value(state, tank, Vector2i(1, 0)), 2, "woods are two stars")
+	assert_eq(co.stand_value(state, tank, Vector2i(2, 0)), 0, "a road holds nothing")
+
+
+func test_stand_advice_is_quiet_out_of_contact() -> void:
+	var line := ".F" + ".".repeat(18)
+	var state := _state("[terrain]\n%s\n[units]\n1 t 0 0\n2 t 19 0" % line)
+	assert_eq(state.commander_of(1).stand_value(state, state.units[0], Vector2i(1, 0)), 0)
+
+
+## Indirect units sit the advice out, like both halves of her combat doctrine.
+func test_stand_advice_sits_out_for_indirect_units() -> void:
+	var state := _state("[terrain]\n.F........\n[units]\n1 g 0 0\n2 t 6 0")
+	assert_eq(state.commander_of(1).stand_value(state, state.units[0], Vector2i(1, 0)), 0)

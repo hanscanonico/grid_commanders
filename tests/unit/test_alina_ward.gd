@@ -114,3 +114,16 @@ func test_the_power_stacks_with_the_adjacency_bonus() -> void:
 	PowerCommand.new().apply(state)
 	# 75 * 1.2 * 0.9 = 81
 	assert_eq(_damage(state, state.units[0], state.units[2]), 81)
+
+
+# --- ground advice -----------------------------------------------------------
+
+
+## The same neighbour test the attack bonus reads, asked about a cell the unit
+## is only considering: beside the infantry counts, beside nothing does not.
+func test_stand_advice_wants_a_mixed_neighbour() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 t 0 0\n1 i 2 1\n2 i 3 0")
+	var co := state.commander_of(1)
+	var tank := state.units[0]
+	assert_eq(co.stand_value(state, tank, Vector2i(2, 0)), 1, "the infantry is below this cell")
+	assert_eq(co.stand_value(state, tank, Vector2i(0, 1)), 0, "nothing stands beside this one")

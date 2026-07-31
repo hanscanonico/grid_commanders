@@ -20,6 +20,10 @@ extends CommanderType
 @export var cover_terrain: StringName = &"woods"
 @export var road_terrain: StringName = &"road"
 @export var ambush_attack_pct: int = 40
+## Tiles of progress a quiet move gives up to stand in cover — the everyday
+## preference, and the strong one once Vanish is banked or running.
+@export var cover_stand_tiles: int = 1
+@export var vanish_stand_tiles: int = 4
 
 
 func star_bonus(state: GameState, fight: Engagement) -> int:
@@ -51,6 +55,21 @@ func wants_power(state: GameState, team: int) -> bool:
 	if not _has_unit_in_cover(state, team):
 		return false
 	return _opponents_can_strike(state, team, false)
+
+
+## Ground advice: her army is worth more in cover, so a quiet move prefers to
+## end there — mildly while the meter fills, strongly once Vanish is banked or
+## up. The strong case is what breaks the Vanish stall: wants_power above
+## refuses to fire with nobody in cover, and without this the planner never put
+## anyone there, so an open-map Wren sat on a full meter all match. Preference
+## only, never priced off the ambush damage — the forecasts already carry that.
+func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
+	if _terrain_at(state, cell) != cover_terrain:
+		return 0
+	var co_state := state.commander_state(unit.team)
+	if co_state.power_active or co_state.is_ready():
+		return vanish_stand_tiles
+	return cover_stand_tiles
 
 
 func _has_unit_in_cover(state: GameState, team: int) -> bool:

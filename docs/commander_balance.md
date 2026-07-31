@@ -165,8 +165,63 @@ Reed high, Cass Orlov and Rhea Sol low), which makes them a base-game tuning pas
 rather than anything the air and naval rosters introduced — and per the rule at
 the top of this document, a review trigger rather than an automatic nerf.
 
+### Measured with the doctrine-aware AI (commander-doctrine-ai plan, CA4)
+
+Two full batches (1,728 matches each), regenerated on both sides of the change
+at the same base commit because `reports/` is gitignored: the baseline from
+`main` (`99c9c30`), the other from the branch that gave the planner the
+commander-advice seam. `make difficulty-check` seats no commanders, and its
+`matches.csv` stayed **identical in every column** across the change — the
+seam moved no doctrine-free decision. (Both bare 4-seed runs read red against
+the ladder gate, identically; `docs/difficulty_check.md` §5 says that subset
+"can read red without a regression" and is never the number to quote — the
+standing 15-seed gate result of 2026-07-28 is unaffected.)
+
+| | `main` (`99c9c30`) | with doctrine advice |
+|---|---|---|
+| Win-rate spread | 34.7 – 64.2 % (30 pp, 3 WARN) | 29.9 – 62.2 % (32 pp, 4 WARN) |
+| First-side bias | +43.2 pp | +39.4 pp |
+| Rejected commands / cap stalls | 0 / 0 | 0 / 0 |
+
+What moved, and why it is the change working rather than noise — the field as a
+whole got stronger, so the no-advice commanders drifted −2 to −5 pp and any
+delta inside that band is environment, not identity:
+
+- **Cassian Rook +7.6 → 46.2 (WARN → ok).** The `wants_power` correction:
+  Rapid Redeployment no longer fires on the offensive default — the exact turn
+  its −20 % attack penalises — but for ground its movement can buy.
+- **Mara Voss +4.5 → 49.3 and Alina Ward → 46.9 (from 59.0).** Ground advice
+  centres both: Voss receives fights on starred terrain, Ward's mixed line
+  forms on purpose instead of by accident.
+- **Sable Wren +8.3 → 59.0.** Vanish actually fires now — staging into cover as
+  the meter fills broke the stall where `wants_power` waited forever on woods
+  the planner never filled. Her strength is the doctrine finally playing;
+  watch-band, review trigger.
+- **Viktor Draeg +9.0 → 62.2 and Tomas Reed +4.9 → 60.1 (both WARN).** Identity
+  expressed upward. Draeg's armour pull first measured 64.9 % at bias −4 and
+  ships tempered to −2; both stay review triggers per the rule at the top, not
+  automatic nerfs.
+- **Rhea Sol: the tempering lesson.** At bias −4 she measured **34.4 %** — the
+  pull bought an army of guns the planner cannot move-and-fire, advice fighting
+  the planner exactly as the plan's R2 predicted. Shipped at −2 she measures
+  46.9 %, inside the field shift. The fix was the `.tres` number, not code.
+- **Cass Orlov 29.9 and Gideon Holt 61.5.** The pre-existing outliers, same
+  names as every earlier measurement; still the base-game tuning pass.
+
+The first-side bias **improved** (43.2 → 39.4 pp) — doctrine advice makes the
+second player's answer slightly better — but remains far outside this
+document's ≤ 5 pp threshold, as it has since banking shipped; that standing
+accepted trade is documented in the N4 section above and does not belong to
+this change.
+
 ### Balance changelog
 
+- **2026-07-31 — the doctrine-advice exports ship, two of them tempered by
+  measurement** (commander-doctrine-ai plan, CA4). Every advising general's
+  `.tres` gains its advisory numbers; `rhea_sol` `indirect_build_bias` measured
+  −4 → 34.4 % and ships at **−2** (46.9 %); `viktor_draeg` `armour_build_bias`
+  measured −4 → 64.9 % and ships at **−2** (62.2 %). Evidence: the paired full
+  batches in the section above. No pre-existing balance value moved.
 - **2026-07-23 — every commander, `power_cost`, +2 000 across the roster**
   (8 000→10 000, 9 000→11 000, 10 000→12 000, 11 000→13 000, 12 000→14 000).
   Evidence: human play — powers were firing too often to stay an event. This is

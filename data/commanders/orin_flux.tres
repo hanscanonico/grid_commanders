@@ -18,3 +18,4 @@ scout_vision_bonus = 1
 jam_vision_penalty = -1
 jam_fuel_loss = 10
 jam_ammo_loss = 1
+scout_build_bias = -2

@@ -154,6 +154,36 @@ that must survive any change; the full rationale, milestones and risk registers 
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
   on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
   a pip.
+- `commander-doctrine-ai-plan.html` — each general's army, played by the computer, plays like
+  that general: milestones CA1–CA4, all shipped. Half of it was already true and the plan's first
+  job is saying so: the planners score through the same resolvers the rules run, so every combat
+  and movement passive steers the AI with no AI code, and `wants_power` timing was already
+  doctrine-owned. What shipped is the other half. D1/D3: three advisory hooks on `CommanderType`
+  beside `wants_power` — `stand_value` (tiles, the advance path only), `build_bias` (build-list
+  places, the priority tier only: a negative bias may pull an unlisted *combat* unit onto the
+  list's tail, which is how a doctrine buys the recon, and no bias reaches a transport or
+  outranks the air-answer and capture-shortage tiers), `retreat_hp_delta` (the repair gate) —
+  every number `@export` on the general's `.tres`. D2: `AIProfile.doctrine_weight` is the one
+  planner dial, written into every tier and on at every tier — a commander's personality is a
+  match fact, not a difficulty smart — and 0 skips the hooks entirely, restoring the
+  doctrine-blind planner byte for byte, which is how the difficulty lock survives. D4: advice
+  reads only what the planner already reads (enemies through `Vision.is_hidden_from`), is pure,
+  integer and RNG-free, and **never reads the damage chart** — the forecasts already carry every
+  combat hook, so advice that re-priced one would count the same doctrine twice; Lyra Quill's
+  luck floor stays unpriced by the same rule from the other side, because forecasts are
+  deliberately luck-free. Wren valuing cover more as Vanish banks is what broke the Vanish stall
+  (full meter, nobody in woods, forever — `test_sable_wren.gd` pins the stage-then-fire turn).
+  The plan's Rook clause ("no good fight this turn") is superseded by the shipped gate:
+  Redeployment fires for ground its movement can buy, *regardless* of the fight, because the
+  commander match soak showed an army in constant contact otherwise banks the meter all match —
+  the banked-meter failure the toolkit exists to avoid. Three generals advise nothing on purpose
+  (Orlov, Quill, Rowan): forecasts already play them right, and a silent doctrine is the seam
+  working, not missing. `core/commander_type.gd` carries the repo's one `max-public-methods`
+  ignore — its width is the hook contract twelve subclasses override, so the split the ratchet
+  usually buys would be the mirror hook tree the commanders plan's D1 rejects; the ceiling stays
+  21 for every facade-shaped class. D5: `make difficulty-check` stays byte-stable (it seats no
+  commanders, and neutral advice is structurally zero); `make commander-balance` moved by design
+  and was regenerated and read — `docs/commander_balance.md` records the measurement.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

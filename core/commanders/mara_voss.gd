@@ -14,6 +14,9 @@ extends CommanderType
 @export var initiate_attack_pct: int = -10
 @export var hold_defense_pct: int = 30
 @export var hold_counter_pct: int = 40
+## Tiles of progress a quiet move gives up per defence star of the ground it
+## ends on, while an enemy can actually come to her.
+@export var hold_stand_tiles_per_star: int = 1
 
 
 ## Indirect units never counter at all, so neither half applies to them.
@@ -39,3 +42,35 @@ func defense_bonus(state: GameState, fight: Engagement) -> int:
 ## spend it on is the one she is not playing.
 func wants_power(state: GameState, team: int) -> bool:
 	return _opponents_can_strike(state, team, false)
+
+
+## Ground advice: when an enemy can reach the cell — and only then — a direct
+## unit receives the fight on the best-covered ground available. Out of contact
+## she marches like anyone else: a defensive doctrine is not a refusal to
+## advance. Indirect units sit it out, like both halves of her combat doctrine.
+func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
+	if unit.type.max_range <= 0 or AttackRange.is_indirect(unit):
+		return 0
+	var terrain := state.map.terrain_at(cell)
+	if terrain == null or terrain.defense_stars <= 0:
+		return 0
+	if not _enemy_can_reach(state, unit.team, cell):
+		return 0
+	return hold_stand_tiles_per_star * terrain.defense_stars
+
+
+## True when any enemy this team can see could bring `cell` under fire next
+## turn — the same Manhattan over-estimate the power gates use, with hidden
+## units left to Vision's judgement like everywhere else in the toolkit.
+func _enemy_can_reach(state: GameState, team: int, cell: Vector2i) -> bool:
+	for enemy in state.units:
+		if state.allied(enemy.team, team) or enemy.carrier != null or enemy.type.max_range <= 0:
+			continue
+		if Vision.is_hidden_from(state, team, enemy):
+			continue
+		var reach := AttackRange.maximum(state, enemy)
+		if not AttackRange.is_indirect(enemy):
+			reach += MovementResolver.move_budget(state, enemy)
+		if absi(enemy.cell.x - cell.x) + absi(enemy.cell.y - cell.y) <= reach:
+			return true
+	return false

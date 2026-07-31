@@ -242,7 +242,8 @@ func _advance_command(
 	return MoveCommand.new(unit, reachable.path_to(best_cell))
 
 
-## Higher is better: closeness to the goal less what standing there invites.
+## Higher is better: closeness to the goal less what standing there invites,
+## plus whatever the commander's doctrine thinks of the ground itself.
 func _advance_value(
 	state: GameState,
 	unit: Unit,
@@ -254,6 +255,10 @@ func _advance_value(
 	if threat != null:
 		var incoming := threat.incoming_damage(state, unit, cell)
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
+	if profile.doctrine_weight > 0.0:
+		var advice := state.commander_of(unit.team).stand_value(state, unit, cell)
+		if advice != 0:
+			value += profile.doctrine_weight * float(advice)
 	return value
 
 
@@ -289,7 +294,7 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 			goal.cell = _nearest(unit.cell, refits)
 			context.goals[unit] = goal
 			return goal
-	if unit.hp <= profile.retreat_hp:
+	if unit.hp <= _retreat_threshold(state, unit):
 		var repairs := _servicing_properties(context, unit)
 		if not repairs.is_empty():
 			goal.cell = _nearest(unit.cell, repairs)
@@ -314,6 +319,17 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 		goal.stand_off = AttackRange.is_indirect(unit)
 	context.goals[unit] = goal
 	return goal
+
+
+## The profile's retreat line, moved by the commander's doctrine — a general
+## who repairs cheaply rotates wounded units home earlier than the neutral one.
+func _retreat_threshold(state: GameState, unit: Unit) -> int:
+	var threshold := profile.retreat_hp
+	if profile.doctrine_weight > 0.0:
+		var delta := state.commander_of(unit.team).retreat_hp_delta(state, unit)
+		if delta != 0:
+			threshold += int(roundf(profile.doctrine_weight * float(delta)))
+	return threshold
 
 
 ## Owned properties that refuel and repair this unit's movement domain.

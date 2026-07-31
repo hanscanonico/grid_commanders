@@ -18,3 +18,5 @@ road_defense_pct = -10
 cover_terrain = &"woods"
 road_terrain = &"road"
 ambush_attack_pct = 40
+cover_stand_tiles = 1
+vanish_stand_tiles = 4

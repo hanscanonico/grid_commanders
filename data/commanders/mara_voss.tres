@@ -17,3 +17,4 @@ counter_attack_pct = 20
 initiate_attack_pct = -10
 hold_defense_pct = 30
 hold_counter_pct = 40
+hold_stand_tiles_per_star = 1

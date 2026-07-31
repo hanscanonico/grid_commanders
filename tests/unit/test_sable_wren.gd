@@ -177,3 +177,45 @@ func test_vanish_covers_the_opponents_turn() -> void:
 	EndTurnCommand.new().apply(state)
 	visible = Vision.visible_cells(state, 2)
 	assert_true(Vision.can_see_unit(state, 2, state.units[0], visible), "and back as hers opens")
+
+
+# --- ground advice -----------------------------------------------------------
+
+## Fourteen tiles of plains, one woods cell off the march, an enemy Tank too
+## far to shoot this turn: the staging board for the Vanish stall.
+const STAGING_BOARD := """
+[terrain]
+..............
+.....F........
+[units]
+1 t 1 0
+2 t 9 0
+"""
+
+
+## A banked Vanish with nobody in cover used to be a stall: wants_power
+## (rightly) refused to fire, and the planner never put anyone in the woods it
+## was waiting for. Stand advice closes the loop in one turn — the tank stages
+## into cover, and the very next ask fires the power over it.
+func test_a_full_meter_walks_her_into_cover_and_then_fires() -> void:
+	var state := _state(STAGING_BOARD)
+	state.add_charge(1, state.commander_of(1).power_cost)
+	var ai := AIController.new(unit_db)
+	var staged := ai.plan_next_command(state)
+	assert_true(staged is MoveCommand, "expected the staging move, got %s" % staged)
+	var path: Array[Vector2i] = (staged as MoveCommand).path
+	assert_eq(path[path.size() - 1], Vector2i(5, 1), "the tank should stop in the woods")
+	assert_eq(staged.validate(state), "")
+	staged.apply(state)
+	var next := ai.plan_next_command(state)
+	assert_true(next is PowerCommand, "with her line in cover, Vanish fires")
+
+
+## The everyday preference is one tile, so an empty meter stays on the march
+## rather than trading three tiles of progress for cover.
+func test_an_empty_meter_does_not_detour_for_cover() -> void:
+	var state := _state(STAGING_BOARD)
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is MoveCommand, "expected an advance, got %s" % command)
+	var path: Array[Vector2i] = (command as MoveCommand).path
+	assert_eq(path[path.size() - 1], Vector2i(7, 0), "the march continues on the open row")

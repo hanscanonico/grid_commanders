@@ -18,6 +18,9 @@ extends CommanderType
 ## tops up the whole side at once, so firing it for a single scratched unit
 ## wastes most of it.
 @export var depot_want_units: int = 2
+## Displayed-HP points added to the planner's retreat line: repairs cost him
+## 80%, so the trip home pays off at a wound everyone else fights on with.
+@export var retreat_bonus_hp: int = 15
 
 
 func supply_range(_state: GameState, _unit: Unit) -> int:
@@ -49,6 +52,12 @@ func wants_power(state: GameState, team: int) -> bool:
 		if worn >= depot_want_units:
 			return true
 	return false
+
+
+## Economy advice: the one commander whose doctrine is priced in repairs moves
+## the planner's retreat line, not its build list.
+func retreat_hp_delta(_state: GameState, _unit: Unit) -> int:
+	return retreat_bonus_hp
 
 
 ## A pip of damage gone, half the tank spent, or the magazine empty.

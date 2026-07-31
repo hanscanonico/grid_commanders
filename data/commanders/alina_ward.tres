@@ -17,3 +17,4 @@ combined_arms_pct = 10
 push_attack_pct = 10
 push_defense_pct = 10
 push_move_bonus = 1
+line_stand_tiles = 1
