@@ -157,10 +157,11 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 
 
 ## What shooting `enemy` off ground our own side holds is worth, on top of what
-## the shot is worth on its own. Priced off the capture list read backwards (D3):
-## the property is worth what taking it is worth, the progress already chipped
-## out of us is worth what chipping it is worth, and a home HQ multiplies both
-## because losing that one ends the army.
+## the shot is worth on its own. Priced off the capture list read backwards (D3),
+## in its arithmetic and its order: the property is worth what taking it is worth,
+## a home HQ multiplies that price because losing that one ends the army, and the
+## progress already chipped out of us rides on top unscaled, exactly as the
+## progress term does in the capture list.
 ##
 ## Only a capture-capable enemy counts. A tank parked on our city takes nothing
 ## from us, and the danger it poses is the threat map's job — paying for it here
@@ -335,6 +336,7 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 	var besieged := _besieged_home_hqs(context, unit)
 	if not besieged.is_empty():
 		goal.cell = _nearest(unit.cell, besieged)
+		goal.stand_off = AttackRange.is_indirect(unit)
 		context.goals[unit] = goal
 		return goal
 	if unit.type.can_capture:

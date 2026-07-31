@@ -184,6 +184,31 @@ func test_a_besieged_home_hq_turns_the_advance_around() -> void:
 	assert_lt(_destination(wary).x, 15, "with the HQ under siege it turns around and heads home")
 
 
+## An indirect unit answering the siege has to stop where it can shoot. The HQ
+## cell is a goal to bring under fire, never one to reach: walked onto or up
+## against, an artillery (min_range 2) sits in its own dead zone and can never
+## fire from there, so the diversion would strand it beside the capturer.
+func test_a_besieged_home_hq_is_a_standoff_goal_for_an_indirect_unit() -> void:
+	var board := (
+		"[terrain]\n"
+		+ "Q...........\n"
+		+ "............\n"
+		+ "[owners]\n1 0 0\n"
+		+ "[units]\n1 g 5 1\n2 i 0 0\n2 i 9 1"
+	)
+	var blind := _plan(board, 0.0, 5)
+	assert_true(blind is MoveCommand, "expected an advance, got %s" % blind)
+	assert_gt(_destination(blind).x, 5, "blind, the artillery closes on the nearer enemy east")
+
+	var wary := _plan(board, 1.0, 5)
+	assert_true(wary is MoveCommand, "expected an advance, got %s" % wary)
+	var dest := _destination(wary)
+	var dist := absi(dest.x) + absi(dest.y)
+	assert_between(
+		dist, 2, 3, "the artillery has to stop inside its firing ring, not on the HQ it defends"
+	)
+
+
 ## The same board with the siege on a city instead. The advance must not turn:
 ## an ordinary property is defended by whoever already had a shot, never by
 ## emptying the front.
