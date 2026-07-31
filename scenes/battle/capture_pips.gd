@@ -14,7 +14,7 @@ extends Node2D
 ## never asks CaptureCommand.capture_strength — the count is a presentation split
 ## of a number the sim already holds (capture-animation plan D1).
 
-const TILE := 16
+const TILE := BattleView.TILE
 
 ## The badge sits in the tile's top-left, which is the corner left over:
 ## UnitSprite hangs its HP badge below and right of centre and its fuel badge

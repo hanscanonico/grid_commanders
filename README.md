@@ -297,7 +297,8 @@ for testing.
 On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
 (A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
 shoulder (RB / R1) zooms in and the left (LB / L1) zooms out, the left face button (X / Square)
-shows a unit's range, and the top face button (Y / Triangle) fires a ready Command Power. The same
+shows a unit's range, the left stick's click (button 7) raises and lowers the threat lens, and the
+top face button (Y / Triangle) fires a ready Command Power. The same
 face buttons confirm and back out of menus. One push of the stick is one step: the cursor and a
 menu highlight move a single cell or row per gesture, and the stick has to return to centre before
 it asks again.
@@ -341,6 +342,12 @@ mouse, keyboard, or controller throughout.
   on another side's it is the same reading as the blue beneath it, drawn from what you have
   scouted. It shows what the weapon *reaches* — a unit with no shot left still shows its ring, one
   resupply from meaning it — and it paints over the blue until pressed again
+- `T` raises and lowers the **threat lens**: red stripes over every cell a side hostile to you
+  could bring under fire, all of them at once. It is `R`'s sibling and its opposite in scope —
+  `R` asks what *this* unit reaches, the lens asks where it is unsafe to stand. It issues nothing
+  and belongs to no unit, so unlike the fire ring it survives selection, movement and the turn:
+  nothing puts it down but pressing `T` again. The top bar's `T · THREAT` chip says which it is,
+  dim while the lens is down and red while it is up
 - After a move, the action menu opens: **Fire** (offered only when an enemy the unit has a ready
   weapon for is in range from the destination), **Capture** (offered when a capture-capable
   unit ends on a property you don't own), **Drop** and **Supply** (see transports below),
@@ -421,7 +428,8 @@ mouse, keyboard, or controller throughout.
   board sits in the band they leave over, and only transient things — damage numbers, the capture
   counter, the attack forecast, the action menu, the first-match mission strip — are ever drawn
   over terrain. The **top bar** carries the day, the side in hand as a faction colour chip and
-  name, that commander's doctrine, the funds, and a one-line **key legend** that swaps with the
+  name, that commander's doctrine, the funds, a `T · THREAT` chip — dim while the threat lens is
+  down, red while it is up — and a one-line **key legend** that swaps with the
   interaction — `ENTER · SELECT   ESC · MENU   +/- · ZOOM` at rest, `ENTER · FIRE   ESC · BACK`
   while targeting, and so on. The **bottom bar** carries, left to right: the commander's
   portrait, name, power name, and — for a side playing a power — the charge meter with its

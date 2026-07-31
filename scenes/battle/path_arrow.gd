@@ -13,7 +13,7 @@ extends Node2D
 ## without a scene the way SeatStrip.normalised_sides and TransitionInput are.
 ## `_draw` only paints what that returns.
 
-const TILE := 16
+const TILE := BattleView.TILE
 
 ## Bar thickness, how far the arrowhead reaches past the cell centre, and half
 ## its base — the design reference's 10/12/18 against a 44px tile, brought down
@@ -105,7 +105,7 @@ func _draw() -> void:
 
 func _paint(offset: Vector2, color: Color) -> void:
 	for segment in _segments:
-		var centre := Vector2(segment.cell * TILE) + Vector2(TILE, TILE) / 2.0 + offset
+		var centre := BattleView.cell_center(segment.cell) + offset
 		for arm in segment.arms:
 			draw_rect(bar_rect(centre, arm), color)
 		draw_rect(Rect2(centre - Vector2(BAR, BAR) / 2.0, Vector2(BAR, BAR)), color)
