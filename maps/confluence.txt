@@ -1,0 +1,97 @@
+# Four rivers, one sea: every army fields ground, air and sea from its own corner.
+# The flagship, and the largest board the game ships. Seats sit at the corners in
+# reading order -- 1 NW, 2 NE, 3 SE, 4 SW -- so the fair duel is an opposite pair,
+# 1 against 3 or 2 against 4. A 32x24 rectangle cannot be turned a quarter turn onto
+# itself, so the four homes are congruent by the rectangle's own symmetry instead:
+# an opposite pair maps onto the other by a half turn exactly, an adjacent pair by a
+# mirror. Every seat is the same walk from the middle and an opposite pair the same
+# walk from each other; only the two edge runs differ, because the board is wider
+# than it is tall. No `# symmetric` tag: that lint is a duel instrument.
+# Each corner holds two bases, an airport and a port, so one seat can field the whole
+# roster -- which is the question a 3v1 asks here: which domain will the three
+# neglect? The tidal arm that starts at each home port runs down into the central sea,
+# so all four fleets share one body of water and none needs a ferry to meet another
+# (naval R1). The land is one piece for the same reason: every arm stops short of the
+# board edge, so the coast walks around every one of them and every army can march on
+# every other. Four neutral docks make the harbour island where the arms meet -- a
+# lander's prize, since nothing walks there. The freshwater tributary beside each home
+# is foot-only; the home road bridges it, and that bridge is the tributary's one
+# crossing within the home band -- not a gate on the corner, which stays open to
+# wheels and tracks around the arm's end along the perimeter road.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ  A airport  P port  S sea  _ shoal  * reef
+[terrain]
+.....C.~.FM..........MF.~.C.....
+=QB.C..~.CFF........FFC.~..C.BQ=
+=.=A===+=====C====C=====+===A=.=
+=B..=..~....M......M....~..=..B=
+=...PSS_...C..F..F..C..._SSP...=
+=C....SS.....M....M.....SS....C=
+=..F..FSS...C......C...SSF..F..=
+=...M...SS...F.SS.F...SS...M...=
+=FC..FM..SS.F.SSSS.F.SS..MF..CF=
+C...F.....SSSSSSSSSSSS.....F...C
+=.MM..CFF._SS*SSSS*SS_.FFC..MM.=
+=....M..M.SSSSSPPSSSSS.M..M....=
+=....M..M.SSSSSPPSSSSS.M..M....=
+=.MM..CFF._SS*SSSS*SS_.FFC..MM.=
+C...F.....SSSSSSSSSSSS.....F...C
+=FC..FM..SS.F.SSSS.F.SS..MF..CF=
+=...M...SS...F.SS.F...SS...M...=
+=..F..FSS...C......C...SSF..F..=
+=C....SS.....M....M.....SS....C=
+=...PSS_...C..F..F..C..._SSP...=
+=B..=..~....M......M....~..=..B=
+=.=A===+=====C====C=====+===A=.=
+=QB.C..~.CFF........FFC.~..C.BQ=
+.....C.~.FM..........MF.~.C.....
+[owners]
+1 5 0
+1 1 1
+1 2 1
+1 4 1
+1 3 2
+1 1 3
+1 4 4
+1 1 5
+2 26 0
+2 27 1
+2 29 1
+2 30 1
+2 28 2
+2 30 3
+2 27 4
+2 30 5
+3 30 18
+3 27 19
+3 30 20
+3 28 21
+3 27 22
+3 29 22
+3 30 22
+3 26 23
+4 1 18
+4 4 19
+4 1 20
+4 3 21
+4 1 22
+4 2 22
+4 4 22
+4 5 23
+[units]
+1 i 3 1
+1 r 5 1
+1 m 2 4
+1 i 3 4
+2 r 26 1
+2 i 28 1
+2 i 28 4
+2 m 29 4
+3 i 28 19
+3 m 29 19
+3 r 26 22
+3 i 28 22
+4 m 2 19
+4 i 3 19
+4 i 3 22
+4 r 5 22

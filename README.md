@@ -176,19 +176,19 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-one maps ship. The main menu leads with the teaching board and lists the rest smallest
+Twenty-three maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`,
 `timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`, `windrose`, `crossfire`,
-`first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland` — so it
-opens on `boot_camp`, badged **Tutorial**, and prints the selected board's size,
-army count (a range, `2–4 armies`, on a board where seats can be closed), property count and
-one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands`, `heartland` and `atoll` seat **four
-armies**, and so offer the one-tap table presets in the seat strip. `foursquare` is the smallest,
-12×12 and the
-quickest full free-for-all in the roster: a seat in each corner in reading order — 1 NW, 2 NE, 3 SE,
-4 SW — laid out under a quarter turn rather than the half turn `# symmetric` checks, so the two
-opposite pairs make a fair duel and every seat's nearest cities sit the same distance out. It is also
+`first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
+`causeway`, `confluence` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
+board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
+count and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
+`foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands`, `heartland`, `atoll`, `causeway` and
+`confluence` seat **four armies**, and so offer the one-tap table presets in the seat strip.
+`foursquare` is the smallest, 12×12 and the quickest full free-for-all in the roster: a seat in each
+corner in reading order — 1 NW, 2 NE, 3 SE, 4 SW — laid out under a quarter turn rather than the
+half turn `# symmetric` checks, so the two opposite pairs make a fair duel and every seat's nearest
+cities sit the same distance out. It is also
 a production board (below): nobody opens holding an army. `compass` puts an HQ and a
 base at each compass point, with eight cities in a ring that closes under a half turn, so every
 army's nearest two sit the same distance out. `pinwheel` seats its four at the same corners on a
@@ -209,20 +209,32 @@ armies standing back to back. It is not laid out on a quarter turn — a 22×16 
 but on the whole rectangle's symmetry, the two flips and the half turn, which carries every corner
 onto every other: the 2v2 across the ridge is fair by the flip, an opposite-seat duel (1&3, 2&4) by
 the half turn.
-`heartland` at 28×20 is the **largest board in the game** and
-the grand tier's: a lattice of 48 neutral cities, **two bases** to each seat's one HQ, roads down the
-diagonals to a central crossroads, and woods for cover rather than a chokepoint anywhere — the
-economy scales with the area, so a board this size still escalates.
-`atoll` is the naval one, and the only four-army board with water on it: four home shores at the
+`atoll` is the naval one, and the first four-army board with water on it: four home shores at the
 corners in the same reading order on a closed ring of land around one lagoon, a port each, and
 eight neutral cities on a central island no road reaches. The whole board turns onto itself under a
 quarter turn, which is what makes every seat's shore, dock and first city the same distance out.
-`trident` seats
-**three**, each a prong of the fork around a central massif, where the only grouping worth naming is
-a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
-board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
-are the boards air and naval units were added for: the first puts an airfield behind each front, the
-second a port on each coast of one shared channel.
+`heartland` at 28×20 opens the grand tier: a lattice of 48 neutral cities, **two bases** to each
+seat's one HQ, roads down the diagonals to a central crossroads, and woods for cover rather than a
+chokepoint anywhere — the economy scales with the area, so a board this size still escalates.
+`causeway` at 30×22 and `confluence` at 32×24 finish it, and `confluence` is the **largest board in
+the game**. `causeway` is four island homes joined to a neutral mid-sea chain by bridges: the land is
+a tree with no loop in it, which is what lets every army march on every other *and* leaves the water
+one body every port opens onto. `confluence` is the only four-army board where **every seat fields
+all three domains** — two bases, an airport and a port apiece, four rivers running into one central
+sea, and a harbour island of neutral docks nothing walks to. It is the board a 3v1 wants, and asks
+which domain the three will neglect.
+
+Both grand water boards are **slow, and worth knowing about before you start one**. A
+computer-versus-computer free-for-all on either tends to run past forty days without an army falling
+— `causeway` is more than half water and the bridges are its only crossings, and `confluence` is
+simply a lot of ground to hold. `confluence` settles fastest as a 3v1, inside a fortnight. For both,
+a shorter day cap or a human at the table suits them better than an unattended match.
+
+`trident` seats **three**, each a prong of the fork around a central massif, where the only grouping
+worth naming is a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is
+also the only board the first-match mission strip runs on — see **Controls** below. `jet_stream`
+and `the_straits` are the boards air and naval units were added for: the first puts an airfield
+behind each front, the second a port on each coast of one shared channel.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,

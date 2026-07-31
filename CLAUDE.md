@@ -392,15 +392,24 @@ that must survive any change; the full rationale, milestones and risk registers 
   `maps/windrose.txt` (COM-130's four-seat air board: 17×17 under an exact quarter turn about its
   centre cell, an airfield per seat plus a contested neutral one on the centre, and the one
   shipped board whose armies start holding cities — air frames are expensive and the soak had to
-  show aircraft actually built) are the shipped
+  show aircraft actually built), `maps/causeway.txt` (30×22, four island homes bridged to a neutral
+  mid-sea chain — added after this plan by COM-134) and `maps/confluence.txt` (32×24, two bases, an
+  airport and a port to a seat, four tidal arms running into one central sea, and a harbour island
+  of neutral docks nothing walks to — added after this plan by COM-135) are the shipped
   boards that seat more than a duel; Compass was pulled forward into FP5 because without one the
   seat strip is UI no
-  player can reach. All but Atoll are land-only — the AI cannot plan a ferry (naval R1), so a board
-  it may have to fight across in any grouping has to let every army reach every other on foot —
-  and Atoll satisfies R1 by shape instead: its land ring keeps every army walkable to every other,
-  its lagoon is one body of water every port opens onto, and the ferry-only island is a prize the
-  AI deliberately leaves alone; `test_maps.gd`'s water lints (one sea per board's ports, offshore
-  properties landable from a dock) hold both facts. None
+  player can reach. **Every army has to be able to march on every other** — the AI cannot plan a
+  ferry (naval R1) — which is why most of them carry no water at all. Atoll, Causeway and
+  Confluence are the three that do, and a four-army water board has to hold that rule *and* keep
+  the sea one body every port opens onto, or the fleets it lets you build can never meet: Atoll by
+  closing its land into one ring around the lagoon its ports all open onto, Causeway by keeping its
+  land a tree with no loop in it and no cell on the board edge, Confluence by stopping every river
+  arm short of the edge so the coast walks around it. Their ferry-only prizes — Atoll's island of
+  cities, Confluence's harbour of docks — are ground the AI deliberately leaves alone. Both rules
+  already have lints — `test_maps.gd` keeps every HQ reachable on foot, every port on one shared
+  body of water, every offshore property landable from a dock and no shoal chain quietly bridging
+  two landmasses — so none of the three needed a new one; what is authoring rather than lint is the
+  *shape* that satisfies them, so keep the ring, the tree and the short arms if you edit one. None
   carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's and Windrose's
   layouts close under a quarter turn, not the tag's half turn — and fairness on these is by
   design review instead (rotational or mirrored layout, one HQ and a base per army held by the

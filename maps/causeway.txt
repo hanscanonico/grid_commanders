@@ -1,0 +1,112 @@
+# Four island homes chained by causeways: the armies walk, the fleets fight for the crossings.
+# Grand board, 30x22. Seats sit at the corners in reading order - 1 NW, 2 NE,
+# 3 SE, 4 SW - so the opposite pairs 1&3 and 2&4 make the fair duel.
+#
+# A 30x22 rectangle cannot be turned a quarter turn onto itself, so a true
+# 90-degree layout is impossible here. The board carries the rectangle's whole
+# symmetry group instead: it is identical under a half turn and under both
+# mirror axes, which makes all four corner seats congruent to each other - the
+# guarantee a quarter turn would have bought. No `# symmetric` tag: that one is
+# a two-army instrument and this board seats four.
+#
+# The causeways are the whole game. Land is one connected piece - every army
+# reaches every other on its own feet, so the computer never needs the ferry it
+# cannot plan - and the sea is one connected body every port opens onto, so
+# fleets always find each other. Both at once is what the shape is for: the land
+# is a tree (corner island -> causeway -> islet -> spine -> centre and back out
+# again) with no loop in it and no cell touching the board edge, which is
+# exactly the condition under which the water around it stays whole.
+#
+# Where this departs from the schematic: the spans are bridges, not shoals. A
+# shoal costs every land class what road does, so a chain of them across water
+# is a bridge the header never mentions - and the map lint says so out loud. The
+# crossings are drawn as what they are, and the shoals stay what they are for:
+# eight landing beaches on the island coasts where a lander puts armour ashore.
+#
+# The middle is the neutral chain - four cities on the two islets and, on the
+# centre island, four more cities behind four neutral ports. Whoever holds the
+# centre docks mid-sea and owns both crossings of the spine.
+#
+# Symbols: . plains  F woods  M mountain  = road  + bridge  C city  B base
+#          Q HQ  P port  S sea  _ shoal  * reef
+[terrain]
+SSSSSS*SSSSSSSSSSSSSSSS*SSSSSS
+SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+SSSS.C.F.._SSSSSSSS_..F.C.SSSS
+SSSP...FM.SSSSSSSSSS.MF...PSSS
+SSS.QB..MC.SS.CC.SS.CM..BQ.SSS
+SSS.=======++====++=======.SSS
+SSSC..F.B..++.==.++..B.F..CSSS
+SSS..F.C..SSSF==FSSS..C.F..SSS
+SSS_......SSSS++SSSS......_SSS
+SSSSSSSSSSSSS....SSSSSSSSSSSSS
+SSSSSSSS*SSSSPCCPSSSS*SSSSSSSS
+SSSSSSSS*SSSSPCCPSSSS*SSSSSSSS
+SSSSSSSSSSSSS....SSSSSSSSSSSSS
+SSS_......SSSS++SSSS......_SSS
+SSS..F.C..SSSF==FSSS..C.F..SSS
+SSSC..F.B..++.==.++..B.F..CSSS
+SSS.=======++====++=======.SSS
+SSS.QB..MC.SS.CC.SS.CM..BQ.SSS
+SSSP...FM.SSSSSSSSSS.MF...PSSS
+SSSS.C.F.._SSSSSSSS_..F.C.SSSS
+SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+SSSSSS*SSSSSSSSSSSSSSSS*SSSSSS
+[owners]
+1 4 4
+1 5 4
+1 8 6
+1 3 3
+1 5 2
+1 9 4
+1 3 6
+1 7 7
+2 25 4
+2 24 4
+2 21 6
+2 26 3
+2 24 2
+2 20 4
+2 26 6
+2 22 7
+3 25 17
+3 24 17
+3 21 15
+3 26 18
+3 24 19
+3 20 17
+3 26 15
+3 22 14
+4 4 17
+4 5 17
+4 8 15
+4 3 18
+4 5 19
+4 9 17
+4 3 15
+4 7 14
+[units]
+1 i 4 3
+1 i 6 6
+1 m 5 3
+1 t 6 5
+1 g 5 5
+1 c 2 4
+2 i 25 3
+2 i 23 6
+2 m 24 3
+2 t 23 5
+2 g 24 5
+2 c 27 4
+3 i 25 18
+3 i 23 15
+3 m 24 18
+3 t 23 16
+3 g 24 16
+3 c 27 17
+4 i 4 18
+4 i 6 15
+4 m 5 18
+4 t 6 16
+4 g 5 16
+4 c 2 17
