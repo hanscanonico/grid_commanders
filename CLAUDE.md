@@ -184,6 +184,29 @@ that must survive any change; the full rationale, milestones and risk registers 
   21 for every facade-shaped class. D5: `make difficulty-check` stays byte-stable (it seats no
   commanders, and neutral advice is structurally zero); `make commander-balance` moved by design
   and was regenerated and read — `docs/commander_balance.md` records the measurement.
+- `ai-judgement-plan.html` — the three things the planner cannot see: what the enemy is
+  *achieving*, what it will *do next turn*, and what our own other units are doing. Milestones
+  AJ1–AJ4; **AJ1 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
+  the point: **this plan owns planner *capabilities*, BL2 owns Normal's *numbers*** (D2), so no
+  AJ milestone edits a shipped value in `data/ai/` and AJ4's deliverable is a probe band in
+  `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
+  the code**, the same contract as the difficulty plan's S1–S3 — so the merge bar for every AJ
+  milestone is a fixed-seed byte-diff of *both* balance reports with **no accepted departure**,
+  and `test_capability_defaults_plan_exactly_like_the_shipped_profile` keeps passing unchanged
+  (BL2 is where it moves). D6: nothing under `core/` is touched and no telemetry is added —
+  every read goes through an authority that already exists.
+  AJ1's own two decisions: **denial is priced at the price of capture, read backwards** (D3) —
+  `_defend_bonus` is built from the same `capture_score` / `capture_progress_bonus` /
+  `hq_capture_multiplier` arithmetic `_consider_captures` uses, scaled by `defend_weight`, so at
+  1.0 denying a capture is worth exactly what making one is and the two compete in one `UnitPlan`
+  without a conversion; only a **capture-capable** enemy earns it (what a tank parked on our city
+  threatens is the threat map's job, and paying twice is the plan's R3), the ground is our
+  *side's* through `GameState.allied`, and the HQ multiplier is asked of `GameState.home_hq`,
+  never `terrain_at(cell).id == "hq"` — an HQ a survivor conquered fells nobody, so defending it
+  is worth a city and no more. And **only a besieged home HQ diverts the advance path**
+  (`_besieged_home_hqs`, the plan's R2): a city is a setback defended by whoever already had a
+  shot, an HQ is the match, and a defence goal any unit may adopt for any property empties the
+  front the moment one infantry steps on a city.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

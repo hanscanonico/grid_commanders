@@ -146,6 +146,25 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## 0 keeps the static build_priority order exactly.
 @export var build_reactivity: float = 0.0
 
+# --- Judgement capabilities ---------------------------------------------------
+#
+# The AI Judgement plan's dials. Same zero-default contract as the block above —
+# at 0 the code that reads one never runs, so the shipped AI is byte-identical to
+# the AI that predates them — but *not* the same purpose: these are not a tier's
+# smarts. Every tier is expected to carry a live value once the balance retune's
+# BL2 measures one (AI Judgement D2); until then all three ship at 0 everywhere
+# and `docs/difficulty_check.md` carries the bands.
+
+## What removing an enemy from ground our own side holds is worth, as a multiple
+## of what taking that ground would be worth to us. The price list is the capture
+## one read backwards — capture_score, capture_progress_bonus and
+## hq_capture_multiplier, in that arithmetic — so at 1.0 denying a capture is
+## worth exactly what making one is (AI Judgement D3). 0 skips it entirely.
+##
+## Denominated in VALUE, like _attack_score and like _consider_captures, which is
+## what lets the three compete in one UnitPlan without a conversion.
+@export var defend_weight: float = 0.0
+
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps
 ## a missing or broken file from taking the AI out entirely — it plays with the
