@@ -1,7 +1,7 @@
 # Grid Commanders
 
 A turn-based tactics game in the style of Advance Wars, built with Godot 4.7 and
-typed GDScript. Fifteen designs of record ship with it under `.lavish/`; `CLAUDE.md` lists them and
+typed GDScript. Its designs of record ship with it under `.lavish/`; `CLAUDE.md` lists them and
 which decisions each one owns.
 
 ## Running
@@ -249,8 +249,8 @@ naming one twice, or leaving fewer than two armies is refused and no match is bu
 
 Adding a map is dropping a `.txt` in `maps/` — the menu auto-discovers it and `tests/unit/`
 holds it to the playability invariants (one HQ and a base per side, reachable HQs, the same
-properties dealt to every seat kind for kind, a claimed
-`# symmetric` tag that actually mirrors) and plays an AI-vs-AI match on it. Boards that use the
+properties dealt to every seat kind for kind, a claimed `# symmetric` tag that actually mirrors)
+and plays an AI-vs-AI match on it. Boards that use the
 water get four more: every port opens onto sailable sea, all of a map's ports share one body of it
 (the AI cannot ferry, so a fleet it cannot sail to is a fleet it can never fight), every beach is
 reachable by a lander, and no beach chain quietly joins two landmasses — a shoal costs every land

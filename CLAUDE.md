@@ -348,20 +348,24 @@ that must survive any change; the full rationale, milestones and risk registers 
   corners of a 12×12 build-first board, the four-way answer to Forge — added after this plan by
   COM-128), `maps/pinwheel.txt` (four corners on a 14×14 whose road blades run clockwise into the
   next seat's flank around a wooded hub — added after this plan by COM-129), `maps/trident.txt`
-  (three around a central massif) and `maps/marchlands.txt` (22×16, the board built for the 2v2 —
+  (three around a central massif), `maps/marchlands.txt` (22×16, the board built for the 2v2 —
   seats 1&2 north of a wooded ridge, 3&4 south, so `--sides=1+2v3+4` is a shared front; a
   non-square board has no quarter turn, so it closes under the rectangle's two flips and half turn
-  instead, which its header explains — added by COM-132, the open-seats plan's OS3) are the shipped
+  instead, which its header explains — added by COM-132, the open-seats plan's OS3) and
+  `maps/windrose.txt` (COM-130's four-seat air board: 17×17 under an exact quarter turn about its
+  centre cell, an airfield per seat plus a contested neutral one on the centre, and the one
+  shipped board whose armies start holding cities — air frames are expensive and the soak had to
+  show aircraft actually built) are the shipped
   boards that seat more than a duel; Compass was pulled forward into FP5 because without one the
   seat strip is UI no
-  player can reach. All five are land-only — the AI cannot plan a ferry (naval R1), so a board it
+  player can reach. None carries water — the AI cannot plan a ferry (naval R1), so a board it
   may have to fight across in any grouping has to let every army reach every other on foot. None
-  carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's layout closes
-  under a quarter turn, not the tag's half turn — and fairness on these is by design review
-  instead (rotational or mirrored layout, one HQ and one base per army held by the
+  carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's and Windrose's
+  layouts close under a quarter turn, not the tag's half turn — and fairness on these is by
+  design review instead (rotational or mirrored layout, one HQ and one base per army held by the
   FP1-retargeted lints, every seat
-  opening on the same buildings by kind held by `test_maps.gd`'s starting-property lint — added
-  with Foursquare because no three- or four-seat board can carry the tag — and the win spread
+  opening on the same properties kind for kind held by `test_maps.gd`'s property-parity lint —
+  because no three- or four-seat board can carry the tag — and the win spread
   across seats in the soak). That last instrument is load-bearing: Compass's first layout passed
   every lint — one HQ and
   one base an army was true of it — and still gave two of the four armies cities 2–3 tiles out while
