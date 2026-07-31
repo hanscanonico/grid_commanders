@@ -8,15 +8,46 @@ extends Control
 ## never advances time, and never decides an outcome. `mirror` is the only
 ## difference between the attacker's half and the defender's.
 ##
-## The ground is the board's own terrain art, tiled in three receding bands, and
-## the figure is the board's own unit art — blown up, never redrawn (plan D2).
-## The one thing derived rather than drawn is the horizon ridge's colour, which
-## is averaged off the terrain tile so a new terrain needs no entry anywhere.
+## The ground is the board's own terrain art, tiled in receding bands, and the
+## figure is the board's own unit art — blown up, never redrawn (plan D2). The
+## scenery a standing terrain puts on that ground is the one exception, and says
+## so where it is declared (TerrainType.cutin_scenery). The other thing derived
+## rather than drawn is the horizon ridge's colour, which is averaged off the
+## terrain tile so a new terrain needs no entry anywhere.
 
 const PLATE_TOP_H := 26
 const PLATE_BOT_H := 20
 ## Share of the arena the ground plane fills, measured up from the bottom.
 const GROUND_RATIO := 0.45
+## The same plane as a top edge and a depth, both measured *down* the arena —
+## the frame the scenery's depth shading is written in.
+const _GROUND_TOP := 1.0 - GROUND_RATIO
+const _GROUND_DEPTH := GROUND_RATIO
+## Where a standing terrain's art is stood on that plane: how far in from the
+## outer edge, how far down the arena its base rests, and its size *relative to
+## its own kind* — a ridge and a pine are not the same object at two scales, so
+## the absolute height is the shape's (below) and only the variation is here.
+## Four of them at different depths, so a city reads as a place with buildings in
+## it rather than as a row of identical cut-outs. Every base sits above the
+## squad's own line (FEET_RATIO), which is what keeps a city's towers behind the
+## tanks fighting over it instead of in front of them.
+const SCENERY_SLOTS: Array[Vector3] = [
+	Vector3(0.05, 0.72, 0.86),
+	Vector3(0.27, 0.63, 0.70),
+	Vector3(0.63, 0.66, 0.92),
+	Vector3(0.85, 0.74, 1.0),
+]
+## How tall each kind stands at full size. A ridge dwarfs a pine, and a tower
+## splits the difference while going far higher than either above the horizon.
+const TREE_PX := 40.0
+const PEAK_PX := 64.0
+const BUILDING_PX := 68.0
+## How far the dark edge around a drawn silhouette reaches past it.
+const SCENERY_EDGE := 1.6
+## The part of an atlas cell that is the object rather than the ground around it:
+## the middle, where every one of these tiles draws its peak, canopy or building.
+## The scenery's colour is averaged over this and nothing else.
+const OBJECT_WINDOW := Rect2i(20, 14, 24, 30)
 ## Figures are the 64 px atlas art at its own resolution — nearest-neighbour
 ## scaling of pixel art to a fractional size drops rows unevenly, so it isn't.
 const FIGURE_PX := 64
@@ -63,6 +94,10 @@ const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
 const PLATE_TEXT := Color(1.0, 1.0, 1.0, 0.88)
 ## What a knocked-out figure burns down to on its way off the field.
 const WRECK_TINT := Color(0.22, 0.20, 0.21)
+## The snowline on a ridge, and a building's two window states.
+const SNOW := Color(0.933, 0.953, 0.965)
+const WINDOW_LIT := Color(0.969, 0.788, 0.282, 0.85)
+const WINDOW_DARK := Color(0.749, 0.902, 0.949, 0.45)
 
 const PIP_COUNT := 10
 const PIP_SIZE := Vector2(6, 8)
@@ -84,13 +119,19 @@ const PLATE_MARGIN := 26.0
 ## The matching hold-off from the seam, for the content that sits against it.
 const SEAM_MARGIN := 18.0
 
-## Cached average colour per terrain atlas cell — the horizon ridge's tint. Keyed
-## by atlas (column, row) rather than terrain id so an owner-tinted city ridge
-## follows the same team colour the board paints.
+## Cached average colour per sampled atlas band — the horizon ridge's tint and the
+## scenery's. Keyed by atlas (column, row, depth) rather than terrain id so an
+## owner-tinted city ridge follows the same team colour the board paints, and the
+## two depths one cell is read at cannot overwrite each other.
 static var _tint_cache: Dictionary = {}
 
 var unit: Unit
 var terrain: TerrainType
+## The terrain whose art paves the floor. The cell's own for an open surface, and
+## the surface named by `TerrainType.cutin_ground` for a terrain that stands on
+## one instead — resolved by the director, because the side is handed what it
+## draws and looks nothing up.
+var ground: TerrainType
 ## The atlas row the cell's owner draws its property art in — already resolved
 ## through SideIdentity by the director, never a team int. Neutral (and unowned)
 ## is row 0, which is what an untinted tile wants anyway.
@@ -159,17 +200,19 @@ func bind(
 	p_unit: Unit,
 	p_unit_row: int,
 	p_terrain: TerrainType,
+	p_ground: TerrainType,
 	p_owner_row: int,
 	p_mirror: bool,
 	p_accent: Color
 ) -> void:
 	unit = p_unit
 	terrain = p_terrain
+	ground = p_ground
 	owner_row = p_owner_row
 	accent = p_accent
 	mirror = p_mirror
 	_art = UnitSprite.texture_for(p_unit.type, p_unit_row)
-	_ridge_tint = _ground_tint(p_terrain.atlas_col, _atlas_row())
+	_ridge_tint = _ground_tint(ground.atlas_col, _ground_row())
 	_flying = p_unit.type.domain == UnitType.AIR
 	_floating = p_unit.type.domain == UnitType.SEA
 
@@ -184,6 +227,9 @@ func drawn_unit_row() -> int:
 	return int(_art.region.position.y) / UnitSprite.SPRITE_PX
 
 
+## The row the *cell's own* art is drawn in — the paved floor for a surface, the
+## standing scenery for a property. Both come off `_atlas_row`, so the driver's
+## faction check reads the same answer whichever of the two the terrain is.
 func drawn_ground_row() -> int:
 	if terrain == null:
 		return -1
@@ -247,6 +293,7 @@ func _draw() -> void:
 	var arena := _arena()
 	_draw_sky(arena)
 	_draw_ground(arena)
+	_draw_scenery(arena)
 	_draw_squad(arena)
 	_draw_vignette(arena)
 	_draw_plates()
@@ -288,12 +335,7 @@ func _draw_ground(arena: Rect2) -> void:
 	var floor_y := arena.position.y + arena.size.y
 	var depth := floor_y - horizon
 	var atlas := _terrain_atlas()
-	var source := Rect2(
-		terrain.atlas_col * BattleView.TERRAIN_PX,
-		_atlas_row() * BattleView.TERRAIN_PX,
-		BattleView.TERRAIN_PX,
-		BattleView.TERRAIN_PX
-	)
+	var source := _cell_region(ground, _ground_row())
 	var y := horizon
 	var row_h := depth * 0.05
 	while y < floor_y:
@@ -341,6 +383,127 @@ func _draw_hill(base_y: float, center_x: float, width: float, height: float, tin
 	# The arc already ends on both base corners and the polygon closes itself, so
 	# appending them again would duplicate vertices and fail triangulation.
 	draw_colored_polygon(points, tint)
+
+
+## A terrain whose art is an object rather than a texture, stood on the paved
+## floor: four silhouettes at four depths along the strip, drawn rather than
+## blitted and coloured from the board's own cell. That is the cut-in's one
+## departure from plan D2 — TerrainType.cutin_scenery carries why. Nothing is
+## drawn for a terrain that paves: there the floor already *is* that terrain,
+## which is the whole of the distinction.
+func _draw_scenery(arena: Rect2) -> void:
+	if terrain == null or terrain.cutin_scenery == TerrainType.NO_SCENERY:
+		return
+	# The colour is the cell's own, averaged off the atlas at the row its owner
+	# paints it in — so a base standing here is the same slate or green the board
+	# shows, and a neutral one the same grey, without a table of scenery colours
+	# anywhere. Each shape darkens it to taste; the average of a whole cell is
+	# already muted, and darkening it again here turned a pine into a black blob.
+	var tint := _object_tint(terrain.atlas_col, _atlas_row())
+	var kind := terrain.cutin_scenery
+	var full := (
+		TREE_PX
+		if kind == TerrainType.TREES
+		else (PEAK_PX if kind == TerrainType.PEAKS else BUILDING_PX)
+	)
+	for slot in SCENERY_SLOTS:
+		var base := Vector2(_outward(slot.x), arena.position.y + arena.size.y * slot.y)
+		var height := full * slot.z
+		# Distance drains contrast here exactly as it does on the ground rows, so
+		# the one furthest back sits behind the field rather than on top of it.
+		var lit := lerpf(0.86, 1.0, clampf((slot.y - _GROUND_TOP) / _GROUND_DEPTH, 0.0, 1.0))
+		var shade := Color(tint.r * lit, tint.g * lit, tint.b * lit, 1.0)
+		draw_set_transform(base + Vector2(0.0, -2.0), 0.0, Vector2(1.0, 0.24))
+		draw_circle(Vector2.ZERO, height * 0.3, Color(0.078, 0.102, 0.133, 0.22))
+		draw_set_transform(Vector2.ZERO)
+		match kind:
+			TerrainType.TREES:
+				_draw_tree(base, height, shade)
+			TerrainType.PEAKS:
+				_draw_peak(base, height, shade)
+			_:
+				_draw_building(base, height, shade)
+
+
+## A conifer: a short dark trunk under three stacked skirts, each narrower and a
+## shade lighter than the one below, which is what makes a flat triangle read as
+## a tree rather than as a road sign.
+func _draw_tree(base: Vector2, height: float, shade: Color) -> void:
+	var half := height * 0.30
+	draw_rect(
+		Rect2(base.x - height * 0.05, base.y - height * 0.30, height * 0.10, height * 0.30),
+		shade.darkened(0.45)
+	)
+	for tier in 3:
+		var top := base.y - height * (0.42 + tier * 0.22)
+		var bottom := top + height * 0.30
+		var spread := half * (1.0 - tier * 0.24)
+		_outlined_triangle(
+			Vector2(base.x - spread, bottom),
+			Vector2(base.x + spread, bottom),
+			Vector2(base.x, top),
+			shade.darkened(0.34 - tier * 0.11)
+		)
+
+
+## A triangle with a hard dark edge around it. Scenery is drawn in the terrain's
+## own colour, and woods over plains is green on green — the outline is what keeps
+## a pine legible against ground the same hue, the way every round in the volley
+## carries one for the same reason.
+func _outlined_triangle(a: Vector2, b: Vector2, c: Vector2, fill: Color) -> void:
+	var middle := (a + b + c) / 3.0
+	var grown := PackedVector2Array()
+	for corner in [a, b, c]:
+		grown.append(corner + (corner - middle).normalized() * SCENERY_EDGE)
+	draw_colored_polygon(grown, Color(INK, 0.55))
+	draw_colored_polygon(PackedVector2Array([a, b, c]), fill)
+
+
+## A ridge: one broad triangle with a snowline capping it.
+func _draw_peak(base: Vector2, height: float, shade: Color) -> void:
+	var half := height * 0.78
+	var apex := Vector2(base.x, base.y - height)
+	_outlined_triangle(
+		Vector2(base.x - half, base.y), Vector2(base.x + half, base.y), apex, shade.darkened(0.28)
+	)
+	var cap := height * 0.34
+	var cap_half := half * cap / height
+	draw_colored_polygon(
+		PackedVector2Array(
+			[
+				Vector2(apex.x - cap_half, apex.y + cap),
+				Vector2(apex.x + cap_half, apex.y + cap),
+				apex,
+			]
+		),
+		SNOW
+	)
+
+
+## A block with a darker parapet and lit windows. The windows are what sell it at
+## this size — a plain rectangle reads as a wall, and two rows of squares read as
+## somewhere people are.
+func _draw_building(base: Vector2, height: float, shade: Color) -> void:
+	var width := height * 0.52
+	var left := base.x - width * 0.5
+	draw_rect(Rect2(left, base.y - height, width, height), shade.darkened(0.18))
+	draw_rect(Rect2(left, base.y - height, width, height * 0.07), shade.darkened(0.45))
+	# The sunless face, so the block has a corner rather than being a flat card.
+	draw_rect(
+		Rect2(left + width * 0.82, base.y - height, width * 0.18, height), shade.darkened(0.38)
+	)
+	var columns := 2
+	var rows := maxi(2, int(height / 14.0))
+	var pane := Vector2(width * 0.17, height * 0.055)
+	for row in rows:
+		for column in columns:
+			var at := Vector2(
+				left + width * (0.22 + column * 0.34), base.y - height * 0.86 + row * height * 0.13
+			)
+			if at.y + pane.y > base.y - height * 0.06:
+				continue
+			var pane_tint := WINDOW_LIT if (row + column) % 3 == 0 else WINDOW_DARK
+			draw_rect(Rect2(at, pane), pane_tint)
 
 
 ## Cinematic framing: the arena darkens toward its edges so the eye lands on the
@@ -596,10 +759,26 @@ func _inward(delta: float) -> float:
 	return -delta if mirror else delta
 
 
-## The terrain atlas row this side's ground is drawn from: the owner's faction row
-## on a property, the untinted row 0 on plain terrain and on anything unowned.
+## The terrain atlas row this cell's own art is drawn from: the owner's faction
+## row on a property, the untinted row 0 on plain terrain and on anything unowned.
 func _atlas_row() -> int:
 	return owner_row if terrain.team_tinted else SideIdentity.NEUTRAL_ROW
+
+
+## And the row the paved floor is drawn from — asked of the *paving* terrain, not
+## the cell's. A city stands on road, and road wears nobody's colours.
+func _ground_row() -> int:
+	return owner_row if ground.team_tinted else SideIdentity.NEUTRAL_ROW
+
+
+## One cell of the terrain atlas, as a source rect.
+static func _cell_region(of: TerrainType, row: int) -> Rect2:
+	return Rect2(
+		of.atlas_col * BattleView.TERRAIN_PX,
+		row * BattleView.TERRAIN_PX,
+		BattleView.TERRAIN_PX,
+		BattleView.TERRAIN_PX
+	)
 
 
 static func _terrain_atlas() -> Texture2D:
@@ -610,7 +789,26 @@ static func _terrain_atlas() -> Texture2D:
 ## off the art rather than tabled here, so a new terrain — or a repainted one —
 ## needs no entry in the presentation layer at all.
 static func _ground_tint(column: int, row: int) -> Color:
-	var key := Vector2i(column, row)
+	return _cell_tint(column, row, Rect2i(0, 0, BattleView.TERRAIN_PX, BattleView.TERRAIN_PX))
+
+
+## And the colour of the *object* on that cell, for the scenery standing here.
+##
+## Only the middle of the cell is sampled, and that window is the whole idea: a
+## mountain tile is a grey peak drawn on a green square, so averaging the square
+## returns grass and paints the ridge the colour of the field it rises out of.
+## Every one of these tiles is its object drawn centred with its ground around the
+## outside — true of the peak, the canopy and the tower alike, which is why one
+## window serves all three and no shape needs a colour of its own.
+static func _object_tint(column: int, row: int) -> Color:
+	return _cell_tint(column, row, OBJECT_WINDOW)
+
+
+## Average colour over one window of one atlas cell. Sampled off the art rather
+## than tabled here, so a new terrain — or a repainted one — needs no entry in
+## the presentation layer at all.
+static func _cell_tint(column: int, row: int, window: Rect2i) -> Color:
+	var key := [column, row, window]
 	if _tint_cache.has(key):
 		return _tint_cache[key]
 	var tint := Color.SLATE_GRAY
@@ -618,8 +816,8 @@ static func _ground_tint(column: int, row: int) -> Color:
 	if image != null:
 		var total := Color(0.0, 0.0, 0.0)
 		var samples := 0
-		for y in range(0, BattleView.TERRAIN_PX, 4):
-			for x in range(0, BattleView.TERRAIN_PX, 4):
+		for y in range(window.position.y, window.end.y, 2):
+			for x in range(window.position.x, window.end.x, 2):
 				var pixel := image.get_pixel(
 					column * BattleView.TERRAIN_PX + x, row * BattleView.TERRAIN_PX + y
 				)

@@ -57,8 +57,10 @@ const STREAM_CYCLE := 1.45
 ## target instead of drilling one hole. Deterministic, like everything here.
 const STREAM_SPREAD := 5.0
 ## How far below the firing line a torpedo runs. The firing line is at the hull's
-## gun, so this is roughly the waterline the wake belongs on.
+## gun, so this is roughly the waterline the wake belongs on. Four dashes behind
+## it, each fainter and thinner than the last.
 const WAKE_DEPTH := 26.0
+const WAKE_DASHES := 4
 ## How far gravity has dragged a bomb down by the time it arrives, on top of its
 ## own lob. Kept under the lob's height so the release still reads as upward.
 const BOMB_FALL := 48.0
@@ -343,7 +345,7 @@ func _draw_bomb(at: Vector2, tint: Color) -> void:
 ## wake behind it is what the eye actually follows.
 func _draw_torpedo(at: Vector2, toward: float, tint: Color) -> void:
 	var depth := at + Vector2(0.0, WAKE_DEPTH)
-	for trail in 5:
+	for trail in WAKE_DASHES:
 		var back := depth - Vector2(toward * (8.0 + trail * 11.0), 0.0)
 		var foam := clampf(0.6 - trail * 0.11, 0.0, 1.0)
 		draw_rect(

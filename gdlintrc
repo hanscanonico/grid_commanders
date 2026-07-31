@@ -183,4 +183,18 @@ max-public-methods: 21
 # split (the cut-in family, a third of the file, twelve smoke scenarios resting on
 # it) is still the one that is due, and it is not a signature change's job: doing
 # both at once would leave neither half reviewable. The driver sits at exactly 1305.
-max-file-lines: 1305
+#
+# 1305 -> 1355, the scenario driver's a tenth time, for the cut-in's scenery. A
+# terrain now either paves the cut-in's ground plane or stands a drawn shape on it,
+# and three shapes stand — but `cutin_iron_commander` fights over a base and an HQ
+# and every other cut-in mode fights on plains, road or open water, all of which
+# pave. So the buildings had a frame and trees and peaks had none, though either
+# turns up the moment a unit fires from woods or a mountain. `cutin_scenery` stands
+# the pair on the default board's adjacent woods and mountain, one shape per half,
+# and refuses a pair that could not legally be standing there rather than posing it
+# — a mountain takes foot and boot only, which is why the mode carries its matchup.
+# The raise does buy a deletion: clearing two cells and standing the pair on them
+# was the faction variant's already, and both now reach `_stand_pair_on` for it.
+# COM-94's split is still the one that is due, and adding the frame that would
+# photograph the split going wrong is not the change to do it inside.
+max-file-lines: 1355

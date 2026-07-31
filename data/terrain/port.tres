@@ -23,3 +23,5 @@ services = Array[StringName]([&"sea"])
 conceals = false
 atlas_col = 10
 team_tinted = true
+cutin_ground = &"sea"
+cutin_scenery = &"buildings"

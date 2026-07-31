@@ -19,3 +19,5 @@ is_property = false
 conceals = true
 atlas_col = 2
 team_tinted = false
+cutin_ground = &"plains"
+cutin_scenery = &"trees"

@@ -16,3 +16,5 @@ move_costs = {
 is_property = false
 atlas_col = 3
 team_tinted = false
+cutin_ground = &"plains"
+cutin_scenery = &"peaks"

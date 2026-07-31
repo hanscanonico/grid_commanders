@@ -43,6 +43,48 @@ const LANDER := &"lander"  # transports that also beach on shoals
 @export var atlas_col: int = 0
 ## Properties have team-colored variants on rows 1+ of the atlas.
 @export var team_tinted: bool = false
+## Presentation key, like `atlas_col`: in the battle cut-in a terrain either
+## *paves* the ground or *stands* on it, and this names the pavement for the ones
+## that stand. Empty — the default, and every open surface — paves: the cut-in
+## tiles this terrain's own art across the floor, which is what grass, road and
+## water want. Set, it names the terrain whose art the floor is tiled with
+## instead, and this one's art is stood up on it as scenery.
+##
+## The split is what the art itself already says. A cell of grass is a *texture*
+## and tiles into a field; a cell of city is a *building*, and paving with it
+## carpets the frame in tiny repeated towers. The capture cut-in has always drawn
+## a property this way — a plane, with the property standing on it — so this is
+## the combat cut-in learning its sibling's trick, not a new idea.
+##
+## The floor this key names is the board's own art, tiled and never redrawn
+## (plan D2). What stands on it is not: see `cutin_scenery` for the one place the
+## cut-in departs from D2, and why.
+@export var cutin_ground: StringName = &""
+
+## Scenery shapes. What each looks like is CutsceneSide's business; this is the
+## vocabulary the two agree on, the way BattleStyle's projectile kinds are the
+## one CutsceneFx shares.
+const NO_SCENERY := &""
+const BUILDINGS := &"buildings"  # city, base, HQ, port, airport
+const TREES := &"trees"  # woods
+const PEAKS := &"peaks"  # mountain
+
+## Which of those this terrain stands, for the terrains that stand rather than
+## pave. The silhouette is drawn rather than blitted, and that is a deliberate
+## departure from plan D2 ("the board's own art, blown up, never redrawn") — this
+## one key and nothing else. The reason is the art: an atlas cell is a square of
+## ground with the object drawn *on* it, so stood up as-is every building comes
+## with its opaque ground plate behind it and reads as a framed picture rather
+## than a tower. Its colour is still sampled from that same cell, so a property
+## standing here wears its owner's faction exactly as the board paints it, and the
+## ground plane under it and the unit figures on it stay the board's own art.
+@export var cutin_scenery: StringName = NO_SCENERY
+
+
+## True when this terrain's art is an object that stands in the cut-in rather
+## than a surface that paves it. Ask this; never test the id.
+func stands_in_cutin() -> bool:
+	return cutin_ground != &""
 
 
 func move_cost(move_class: StringName) -> int:
