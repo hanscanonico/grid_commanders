@@ -376,7 +376,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   photographed the strip as bare panel.
   `maps/compass.txt` (four armies at the compass points), `maps/foursquare.txt` (four seats at the
   corners of a 12×12 build-first board, the four-way answer to Forge — added after this plan by
-  COM-128), `maps/pinwheel.txt` (four corners on a 14×14 whose road blades run clockwise into the
+  COM-128), `maps/heartland.txt` (four corners of a 28×20 great plain, the grand tier's first —
+  two bases a seat and a 48-city lattice because the tier scales economy with area, laid out under
+  the rectangle's own mirror symmetry since 28×20 cannot quarter-turn, so the fair duel's opposite
+  pair is an exact half-turn — added after this plan by COM-133), `maps/pinwheel.txt` (four corners
+  on a 14×14 whose road blades run clockwise into the
   next seat's flank around a wooded hub — added after this plan by COM-129), `maps/trident.txt`
   (three around a central massif), `maps/marchlands.txt` (22×16, the board built for the 2v2 —
   seats 1&2 north of a wooded ridge, 3&4 south, so `--sides=1+2v3+4` is a shared front; a
@@ -392,7 +396,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   may have to fight across in any grouping has to let every army reach every other on foot. None
   carries the `# symmetric` tag: that lint is a *duel* instrument — Foursquare's and Windrose's
   layouts close under a quarter turn, not the tag's half turn — and fairness on these is by
-  design review instead (rotational or mirrored layout, one HQ and one base per army held by the
+  design review instead (rotational or mirrored layout, one HQ and a base per army held by the
   FP1-retargeted lints, every seat
   opening on the same properties kind for kind held by `test_maps.gd`'s property-parity lint —
   because no three- or four-seat board can carry the tag — and the win spread
