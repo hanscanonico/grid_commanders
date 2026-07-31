@@ -4,11 +4,12 @@ extends GutTest
 ##
 ## The default is the offensive read every commander used to share — an enemy
 ## inside the reach of a unit that has not acted. That is right for the powers
-## whose value lands on the turn they fire, and wrong for the four that are not
+## whose value lands on the turn they fire, and wrong for the five that are not
 ## about this turn's fight at all: Hold the Line wants the *opponent's* turn,
 ## Open the Depots wants a worn-down army and no fight, Popular Uprising wants
-## ground, Vanish wants somewhere to hide. Each of those overrides it, so the
-## planner keeps asking one question.
+## ground, Vanish wants somewhere to hide, and Rapid Redeployment wants ground
+## its movement can buy. Each of those overrides it, so the planner keeps
+## asking one question.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -149,6 +150,27 @@ func test_vanish_fires_when_an_enemy_can_reach_her_line_in_cover() -> void:
 func test_vanish_holds_when_nobody_is_in_cover() -> void:
 	var state := _state("[terrain]\n........\n[units]\n1 i 0 0\n2 t 5 0", &"sable_wren")
 	assert_false(_wants(state), "both halves of Vanish key on cover, so it would do nothing")
+
+
+# --- Cassian Rook: a repositioning read --------------------------------------
+
+
+## Redeployment costs the turn's damage, so the old offensive default fired it
+## on exactly the turn it penalises: a pure fight, with nothing for the
+## movement to buy. Ground is what opens it now.
+func test_redeployment_refuses_a_pure_fight() -> void:
+	var state := _state("[terrain]\n......\n[units]\n1 t 0 0\n2 i 2 0", &"cassian_rook")
+	assert_true(CommanderType.neutral().wants_power(state, 1), "the old default fired here")
+	assert_false(_wants(state), "a shot this turn with no ground to take wastes the movement")
+
+
+## It spends on ground instead, measured with the power's own move bonus: an
+## infantry marches three, so a city at five fires and one at six holds.
+func test_redeployment_fires_exactly_for_ground_the_bonus_puts_in_reach() -> void:
+	var near := _state("[terrain]\n.....C......\n[units]\n1 i 0 0", &"cassian_rook")
+	assert_true(_wants(near), "five tiles is a march only the redeploy bonus completes")
+	var far := _state("[terrain]\n......C.....\n[units]\n1 i 0 0", &"cassian_rook")
+	assert_false(_wants(far), "six tiles is beyond even the boosted march")
 
 
 # --- Nia Rowan and Orin Flux -------------------------------------------------

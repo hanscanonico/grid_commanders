@@ -30,3 +30,15 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 	if _is_active(state, unit.team):
 		bonus += redeploy_move_bonus
 	return bonus
+
+
+## Redeployment pays in position and charges the turn's damage for it, so the
+## default offensive read fired it on exactly the turn it penalises — a fight,
+## with nothing for the movement to buy. It fires for ground instead, like
+## every power measured in something other than damage: a capture the army can
+## stand on this turn, counted with the power's own move bonus. Deliberately
+## not gated on the fight being absent: an army in constant contact would then
+## bank the meter all match, and a banked meter never spent is the failure the
+## toolkit exists to avoid.
+func wants_power(state: GameState, team: int) -> bool:
+	return _can_reach_capture(state, team, redeploy_move_bonus)

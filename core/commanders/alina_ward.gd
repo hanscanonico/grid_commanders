@@ -11,6 +11,9 @@ extends CommanderType
 @export var push_attack_pct: int = 10
 @export var push_defense_pct: int = 10
 @export var push_move_bonus: int = 1
+## Tiles of progress a quiet move gives up to end beside a friendly of another
+## movement class, so the mixed line the passive pays for forms on purpose.
+@export var line_stand_tiles: int = 1
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:
@@ -28,6 +31,13 @@ func defense_bonus(state: GameState, fight: Engagement) -> int:
 
 func move_bonus(state: GameState, unit: Unit) -> int:
 	return push_move_bonus if _is_active(state, unit.team) else 0
+
+
+## Ground advice: a quiet move worth nothing else ends beside a different-class
+## friendly when one is in reach — the same neighbour test the attack bonus
+## reads, asked of a cell the unit is only thinking about standing on.
+func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
+	return line_stand_tiles if _has_mixed_neighbour(state, unit, cell) else 0
 
 
 ## A friendly of a *different* movement class on one of the four cells around
