@@ -45,14 +45,31 @@ const MIN_FILLED := GameState.MIN_SEATS
 ## already express in one tap.
 ##
 ## `seats` is per seat and may be shorter than the board (nothing is closed past
-## its end); `sides` is the grouping the filled seats stand in. The seating half is
-## what the two open-seats presets add — Duel fills the opposite-seat pair, which
-## §4's authoring convention makes the fair one on every four-seat board, and
-## Three-way drops the last seat.
+## its end); `sides` is the grouping the filled seats stand in. Every preset
+## carries both, so each button produces the table its tooltip promises whatever
+## seating was in hand — "2v2" pressed after "Duel" is still four armies in two
+## pairs, not two survivors packed onto one side. Duel fills the opposite-seat
+## pair, which §4's authoring convention makes the fair one on every four-seat
+## board, and Three-way drops the last seat.
 const PRESETS: Array[Dictionary] = [
-	{"label": "Free-for-all", "sides": [0, 1, 2, 3], "help": "Every army for itself"},
-	{"label": "2v2", "sides": [0, 1, 0, 1], "help": "Seats 1+3 against 2+4"},
-	{"label": "3v1", "sides": [0, 0, 0, 1], "help": "Seats 1+2+3 against 4"},
+	{
+		"label": "Free-for-all",
+		"sides": [0, 1, 2, 3],
+		"seats": [Seat.HUMAN, Seat.CPU, Seat.CPU, Seat.CPU],
+		"help": "Every army for itself",
+	},
+	{
+		"label": "2v2",
+		"sides": [0, 1, 0, 1],
+		"seats": [Seat.HUMAN, Seat.CPU, Seat.CPU, Seat.CPU],
+		"help": "Seats 1+3 against 2+4",
+	},
+	{
+		"label": "3v1",
+		"sides": [0, 0, 0, 1],
+		"seats": [Seat.HUMAN, Seat.CPU, Seat.CPU, Seat.CPU],
+		"help": "Seats 1+2+3 against 4",
+	},
 	{
 		"label": "Duel",
 		"sides": [0, 1, 2, 3],
@@ -118,8 +135,8 @@ func set_roster(count: int) -> void:
 		_who.append(Seat.HUMAN if _who.is_empty() else Seat.CPU)
 		_side.append(_side.size())
 	_who.resize(count)
+	_who = reopened_seats(_who, _closable())
 	_side = normalised_sides(_side, count)
-	_settle_seats()
 	_rebuild()
 
 
@@ -289,6 +306,28 @@ static func normalised_sides(sides_in: Array[int], count: int) -> Array[int]:
 		settled.clear()
 		for i in count:
 			settled.append(i)
+	return settled
+
+
+## The seating `who_in` becomes once the roster has shrunk under it: closed seats
+## reopened to the computer — the default everywhere past seat 1 — until the table
+## is a match again, and every one of them reopened when the board is not
+## `closable`, because such a board builds no Empty button at all and a seat
+## closed there would be unreachable state: invisible, impossible to reopen, and
+## greying Start with nothing on screen explaining why. Static and pure on the
+## same terms as `normalised_sides`, so the shrink path is checked without a
+## scene (CLAUDE.md, Testing).
+static func reopened_seats(who_in: Array[int], closable: bool) -> Array[int]:
+	var settled: Array[int] = []
+	var filled := 0
+	for seat in who_in:
+		settled.append(seat)
+		if seat != Seat.EMPTY:
+			filled += 1
+	for i in settled.size():
+		if settled[i] == Seat.EMPTY and (not closable or filled < MIN_FILLED):
+			settled[i] = Seat.CPU
+			filled += 1
 	return settled
 
 

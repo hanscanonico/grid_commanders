@@ -1,11 +1,17 @@
 extends GutTest
-## The seat strip's grouping arithmetic (COM-48, four-players plan D6): what the
-## sides seats stand on become when the board under them changes.
+## The seat strip's shrink arithmetic (COM-48, four-players plan D6; COM-126,
+## open-seats D4): what the sides seats stand on — and the seating itself —
+## become when the board under them changes.
 ##
-## `SeatStrip.normalised_sides` is a pure static answer over the sides in hand and
-## the new roster, so the path a player actually walks — pick a four-army board,
-## group it, pick a duel — is checked without a scene, on the terms `MatchRequest`
-## and `TransitionInput` are (CLAUDE.md, Testing).
+## `SeatStrip.normalised_sides` and `SeatStrip.reopened_seats` are pure static
+## answers over what is in hand and the new roster, so the path a player actually
+## walks — pick a four-army board, close a seat, pick a duel — is checked without
+## a scene, on the terms `MatchRequest` and `TransitionInput` are (CLAUDE.md,
+## Testing).
+
+const HUMAN := SeatStrip.Seat.HUMAN
+const CPU := SeatStrip.Seat.CPU
+const EMPTY := SeatStrip.Seat.EMPTY
 
 
 ## A roster that grows deals the new seats their own side, which is the default
@@ -47,3 +53,39 @@ func test_packing_preserves_who_stands_with_whom() -> void:
 	assert_eq(settled[0], settled[2], "the seats that stood together still do")
 	assert_eq(settled[1], settled[3])
 	assert_ne(settled[0], settled[1], "and the pairs are still opposed")
+
+
+## A board below the closable threshold builds no Empty button, so a closed seat
+## surviving the shrink would be unreachable state: every one reopens, to the
+## computer, matching the strip's own seat defaults.
+func test_a_shrink_to_an_unclosable_board_reopens_every_closed_seat() -> void:
+	assert_eq(
+		SeatStrip.reopened_seats([HUMAN, EMPTY] as Array[int], false), [HUMAN, CPU] as Array[int]
+	)
+	assert_eq(
+		SeatStrip.reopened_seats([EMPTY, EMPTY] as Array[int], false), [CPU, CPU] as Array[int]
+	)
+
+
+## A closable board keeps a closed seat the player chose, but never fewer filled
+## seats than a match: the Duel seating truncated to three seats is still a duel,
+## and one truncated below the minimum reopens in seat order until it is one.
+func test_a_closable_shrink_reopens_only_until_the_table_is_a_match() -> void:
+	assert_eq(
+		SeatStrip.reopened_seats([HUMAN, EMPTY, CPU] as Array[int], true),
+		[HUMAN, EMPTY, CPU] as Array[int]
+	)
+	assert_eq(
+		SeatStrip.reopened_seats([HUMAN, EMPTY, EMPTY] as Array[int], true),
+		[HUMAN, CPU, EMPTY] as Array[int]
+	)
+
+
+## A seating that already fills every seat passes through untouched, whatever the
+## board offers — reopening is a repair, not a re-deal.
+func test_a_full_seating_is_left_alone() -> void:
+	for closable in [true, false]:
+		assert_eq(
+			SeatStrip.reopened_seats([HUMAN, CPU, CPU] as Array[int], closable),
+			[HUMAN, CPU, CPU] as Array[int]
+		)
