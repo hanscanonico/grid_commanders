@@ -229,9 +229,10 @@ Both grand water boards are **slow, and worth knowing about before you start one
 computer-versus-computer free-for-all on either tends to run past forty days without an army falling
 — `causeway` is more than half water and the bridges are its only crossings, and `confluence` is
 simply a lot of ground to hold. `confluence` settles fastest as a 3v1, inside a fortnight. For both,
-a shorter day cap or a human at the table suits them better than an unattended match. `trident` seats
-**three**, each a prong of the fork around a central massif, where the only grouping worth naming is
-a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
+a shorter day cap or a human at the table suits them better than an unattended match.
+
+`trident` seats **three**, each a prong of the fork around a central massif, where the only grouping
+worth naming is a pair against the odd one out. Every other shipped board is a duel. `boot_camp` is also the only
 board the first-match mission strip runs on — see **Controls** below. `jet_stream` and `the_straits`
 are the boards air and naval units were added for: the first puts an airfield behind each front, the
 second a port on each coast of one shared channel.

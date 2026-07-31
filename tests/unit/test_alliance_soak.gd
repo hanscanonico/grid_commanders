@@ -13,8 +13,8 @@ extends GutTest
 ## The first case runs every grouping on `maps/fixtures/quartet.txt`, whose four
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
 ## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/heartland.txt`,
-## `maps/pinwheel.txt`, `maps/trident.txt`, `maps/marchlands.txt` and
-## `maps/atoll.txt`, because a
+## `maps/pinwheel.txt`, `maps/windrose.txt`, `maps/atoll.txt`, `maps/causeway.txt`,
+## `maps/confluence.txt`, `maps/trident.txt` and `maps/marchlands.txt`, because a
 ## grouping that only ever ran on a fixture is a capability no player can pick.
 ## The menu's seat strip writes the same `sides`, but the groupings are set
 ## directly here so the soak never has to walk a menu to reach one.

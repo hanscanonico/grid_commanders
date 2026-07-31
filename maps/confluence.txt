@@ -14,9 +14,10 @@
 # (naval R1). The land is one piece for the same reason: every arm stops short of the
 # board edge, so the coast walks around every one of them and every army can march on
 # every other. Four neutral docks make the harbour island where the arms meet -- a
-# lander's prize, since nothing walks there. The freshwater tributary above each home
-# is foot-only; the home road bridges it, and that bridge is the corner's one gate for
-# anything with wheels or tracks.
+# lander's prize, since nothing walks there. The freshwater tributary beside each home
+# is foot-only; the home road bridges it, and that bridge is the tributary's one
+# crossing within the home band -- not a gate on the corner, which stays open to
+# wheels and tracks around the arm's end along the perimeter road.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ  A airport  P port  S sea  _ shoal  * reef
 [terrain]
