@@ -310,20 +310,36 @@ that must survive any change; the full rationale, milestones and risk registers 
   already had; a human turn blacks out whenever the previous *human* seat was someone else, across
   any number of intervening AI turns. One human at the table is never asked to hand the device to
   themselves, and two humans hot-seating gate exactly as they did before four armies.
-  D6: **`scenes/menu/seat_strip.gd` (`SeatStrip`) is the menu's one answer to who plays each army
-  and who stands with whom** — it takes the board's roster and hands back `ai_teams()` and `sides()`,
-  and the two mode buttons it replaced are gone, so no menu state mirrors either fact. A free-for-all
+  D6: **`scenes/menu/seat_strip.gd` (`SeatStrip`) is the menu's one answer to who sits at the
+  table, who plays each army and who stands with whom** — it takes the board's roster and hands
+  back `seats()`, `ai_teams()` and `sides()`, and the two mode buttons it replaced are gone, so no
+  menu state mirrors any of those facts. A seat's third state is **Empty** (open-seats D4), offered
+  only while closing it leaves at least two seats filled — so a duel board never builds the button
+  and its setup screen stays pixel-identical, and the last two filled seats of any board cannot
+  close. A closed seat wears no side badge: it brings no army, so it stands on no side, and the
+  sides re-pack over the filled seats (`normalised_sides` / `reopened_seats`, both static and pure
+  so the shrink path is checked without a scene). The presets are tables — Duel and Three-way
+  joined the row — each setting a seating *and* a grouping (Duel fills the opposite pair 1+3, the
+  fair one under the four-seat boards' authoring convention). A free-for-all
   is the **empty** dictionary, from the strip and from `MatchRequest.parse_sides_flag` alike, because
   that is what `GameState.allied` reads as "every army its own side" and what every match carried
   before groupings existed. `--sides=1+3v2+4` is that flag's grammar, `--red`/`--blue` stay developer
   vocabulary for seats 1–2, and an unreadable grouping is refused out loud and dropped to the
-  free-for-all rather than half-applied. Whether a grouping leaves anybody hostile is the *board's*
+  free-for-all rather than half-applied — as is one allying a seat the same launch closed
+  (`BattleSetup._sides_off_the_roster` draws the line: refused only when the board deals the seat
+  *and* this match closed it; a grouping naming a seat the board never deals stays tolerated, being
+  one written for a wider roster rather than a contradiction). The computer's seats are narrowed to
+  the filled table *silently*, unlike the grouping, because nothing a player types can reach
+  `ai_teams` — it is the request's own default or `--watch`'s roster, and narrowing a default is
+  not discarding an instruction. Whether a grouping leaves anybody hostile is the *board's*
   answer, so `BattleSetup.build` asks `GameState.enemies_of` once a roster is loaded and plays the
   free-for-all if nobody is opposed — no flag can see the seats. Difficulty stays match-wide by the
   ticket's instruction, asked of the seats (a table with no computer has nothing to tune) rather than
   of a mode; per-seat tiers remain the Balance Lab's CLI grammar. Commander select is a slot walk of
-  N chips and N confirms emitting `confirmed(picks: Dictionary)`, with Back rewinding one seat, and
-  it gained the same kind of capture gate the setup panel has had since COM-5 (`chrome()`), because
+  the filled seats — one chip and one confirm per seat that plays, with picks, chips and liveries
+  keyed to the seat's own number — emitting `confirmed(picks: Dictionary)`, with Back rewinding one
+  seat, and it gained the same kind of capture gate the setup panel has had since COM-5
+  (`chrome()`), because
   a bar that grew from two chips to one per seat can run off a 640px frame. `SeatStrip.layout_error`
   is the sibling of `CommanderInfoSheet.layout_error` and exists for the same reason: unsorted rows
   stack at the container's origin, inside every frame and drawn in none of it, so enclosure alone
@@ -435,9 +451,10 @@ Follow the official Godot GDScript style guide. Key points:
   `InputEvent`, so the boundary convention every banner and the victory lockup obey is checked
   without a scene. `DirectionalInput` joins it on the same terms: a pure answer over an
   `InputEvent` and the `InputMap`, so the one-step-per-gesture convention the board cursor and
-  every menu obey is checked without a pad. `SeatStrip.normalised_sides` joins them on the same
-  terms and for the same reason: the grouping arithmetic a shrinking roster runs through is static
-  and pure, so it is checked without building the strip.
+  every menu obey is checked without a pad. `SeatStrip.normalised_sides` and
+  `SeatStrip.reopened_seats` join them on the same terms and for the same reason: the grouping and
+  seating arithmetic a shrinking roster runs through is static and pure, so it is checked without
+  building the strip.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 
@@ -534,8 +551,10 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   planning and pacing, save policy, and victory presentation — do not move those into the
   pipeline. The headless `BalanceMatchEngine` stays separate.
 - **Which match to play is a typed request, not an autoload's fields.**
-  `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, seats, how
-  they group into sides, fog, tier, commanders, resume, seed, watch, day cap, raw side specs — and
+  `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, which of its
+  seats play (`seats`, empty = every one; `--seats=` is read before `--co=` because the commander
+  list is positional over the seats that play), who plays them, how they group into sides, fog,
+  tier, commanders, resume, seed, watch, day cap, raw side specs — and
   is built by one of three adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
   `GameState`, so a match resumed from a save replays its own board and commanders) and
   `apply_cmdline`, layered over either on **every** battle boot, which is how a headless capture

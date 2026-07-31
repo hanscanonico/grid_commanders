@@ -180,9 +180,10 @@ Sixteen maps ship. The main menu leads with the teaching board and lists the res
 `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `timberline`, `arsenal`,
 `riverline`, `isthmus`, `jet_stream`, `crossfire`, `first_steps`, `the_straits`, `ironworks`,
 `steelworks` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected board's size,
-army count, property count and one-line pitch in a caption under the grid (the per-cell tooltip
-repeats them for a mouse).
-`foursquare` and `compass` seat **four armies**. `foursquare` is the small one, 12×12 and the
+army count (a range, `2–4 armies`, on a board where seats can be closed), property count and
+one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
+`foursquare` and `compass` seat **four armies**, and so offer the one-tap table presets in the seat
+strip. `foursquare` is the small one, 12×12 and the
 quickest full free-for-all in the roster: a seat in each corner in reading order — 1 NW, 2 NE, 3 SE,
 4 SW — laid out under a quarter turn rather than the half turn `# symmetric` checks, so the two
 opposite pairs make a fair duel and every seat's nearest cities sit the same distance out. It is also
@@ -213,12 +214,16 @@ change: defeat is only ever checked when a unit dies, and the AI's planner alrea
 production when it has nothing to move.
 
 Command-line flags still override the menu so demos and tools can skip it: `--map=crossfire`,
-`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=slow`, `--co=alina_ward,viktor_draeg` (one id per
-seat in seat order; any of them may be left blank for no commander) and `--sides=1+3v2+4` (armies
-joined by `+` stand together, groups separated by `v` fight each other) — e.g.
+`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=slow`, `--seats=1,3` (which of the board's seats
+play — an unnamed seat stays empty: its units never enter and its properties open neutral),
+`--co=alina_ward,viktor_draeg` (one id per playing seat in seat order; any of them may be left blank
+for no commander) and `--sides=1+3v2+4` (armies joined by `+` stand together, groups separated by
+`v` fight each other) — e.g.
 `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn -- --map=crossfire --fog`.
 `--sides=1v2v3v4` and an absent flag are the same free-for-all; a grouping that cannot be read, or
-that leaves the board's armies with nobody to fight, is reported and the free-for-all played instead.
+that leaves the board's armies with nobody to fight, is reported and the free-for-all played instead
+— as is one allying a seat the same launch closed. A `--seats=` naming a seat the board never deals,
+naming one twice, or leaving fewer than two armies is refused and no match is built.
 
 Adding a map is dropping a `.txt` in `maps/` — the menu auto-discovers it and `tests/unit/`
 holds it to the playability invariants (one HQ and a base per side, the same starting buildings for
@@ -246,12 +251,17 @@ button is greyed out (disabled, not hidden). **Quit** exits.
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
 side badge — one letter per army the board seats, **A** to **D**: armies sharing a badge fight as
-allies, and armies each on their own badge are a free-for-all. The defaults are the one-click paths
-the two old mode buttons gave you — seat 1 human, every other seat the computer's, every army its own
-side — so a duel still sets up in the clicks it always did: **Human/A** against **CPU/B**. Putting a
-person in every seat is the old hot-seat game. A four-army board additionally offers one-tap
-**Free-for-all**, **2v2** and **3v1** groupings. **Start** greys out, and says why, if the badges
-leave nobody with anyone to fight.
+allies, and armies each on their own badge are a free-for-all. A board seating more than two adds a
+third choice, **Empty**: a closed seat brings no army at all — its units never enter and its
+properties open neutral for the others to take — so its side badge disappears with it, and the
+button greys out whenever closing one more seat would leave fewer than two armies (a duel board
+never shows it at all). The defaults are the one-click paths the two old mode buttons gave you —
+every seat open, seat 1 human, every other seat the computer's, every army its own side — so a duel
+still sets up in the clicks it always did: **Human/A** against **CPU/B**. Putting a
+person in every seat is the old hot-seat game. A four-army board additionally offers one-tap tables
+— **Free-for-all**, **2v2**, **3v1**, **Duel** and **Three-way** — each setting the seating and the
+grouping together (**Duel** seats the opposite pair, 1 and 3). **Start** greys out, and says why, if
+fewer than two armies are seated or the badges leave nobody with anyone to fight.
 
 Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
 count, property count and pitch beneath the grid, and **Difficulty**, **Speed**, **Fog of war** and
@@ -262,8 +272,9 @@ seated at all, coming back as soon as one is. Each setting's dotted-underlined l
 hover or on keyboard focus, and so do the map cells and the line under **Continue**; leaving, tabbing
 away or pressing Escape dismisses one.
 
-The selection page is a walk through the seats: you pick **P1**'s commander, confirm, then **P2**'s,
-and so on to the last seat the board deals — the chips along the top preview each seat's faction name
+The selection page is a walk through the seats that play — a seat closed in the strip is skipped:
+you pick **P1**'s commander, confirm, then the next seated player's, and so on — the chips along
+the top preview each seat's faction name
 and colour as you browse, mirror rule included, and say **CPU** for a seat the computer plays. Four
 faction tabs and three peer portraits let you browse; one focused card shows the highlighted
 general's doctrine and Command Power in full (no hover tooltips), and a deliberate **No Commander**
