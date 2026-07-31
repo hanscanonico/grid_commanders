@@ -58,9 +58,11 @@ func _build() -> void:
 	_field.clip_contents = true
 	row.add_child(_field)
 	_portrait = TextureRect.new()
-	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait.texture_filter = CommanderVisuals.PORTRAIT_FILTER
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	# Whole rather than cropped, as on the card: this is the one surface that shows
+	# a general full size, and the framed window they stand in is half the drawing.
+	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_field.add_child(_portrait)
 

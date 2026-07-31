@@ -31,17 +31,6 @@ const _POWER_NAME_SIZE := 11
 ## The portrait band, public because a surface that frames this card checks its
 ## own layout against it — a card showing less than its face is showing nothing.
 const PORTRAIT_H := 96
-## Where the visible band opens on the bust, as a fraction of the square source.
-## The band stays PORTRAIT_H tall however wide the card is, so a *wider* card shows
-## a *shorter* slice of the portrait: at READING_WIDTH the field is 244px — the card
-## less the panel's 3px border each side — and 96 * 256 / 244 is ~101 of the 256
-## source rows. Centred, that slice starts below the crown and takes the top off the
-## head. Against the generator's geometry (tools/generate_portraits.gd) the highest
-## headwear opens at source row 30, the hair cap at 40, the eyes span 101-115, and
-## the widest identifying accessory — the headset earcup — reaches 124, so a band
-## opening at row 33 holds all of them. What it gives up instead is the chin at 157:
-## the trade this screen wants, since a face is recognised from the top down.
-const _PORTRAIT_CROP_TOP := 0.13
 
 var _commander: CommanderType
 var _built := false
@@ -90,19 +79,22 @@ func _build() -> void:
 	rows.add_child(_field)
 
 	_portrait = TextureRect.new()
-	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait.texture_filter = CommanderVisuals.PORTRAIT_FILTER
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	# Centred whole rather than cropped to fill: the portrait carries its own
+	# ink-bordered window with the head breaking over its top edge, and a band this
+	# wide can only fill by cutting that composition in half. Fitted, it stands on
+	# the faction field the way the design's card frames it, at any card width.
+	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_field.add_child(_portrait)
-	# Framed from the field's measured width rather than anchored to its rect: both
-	# player-facing surfaces pin the card to READING_WIDTH, but the dev gallery lets
-	# it sit as narrow as MIN_WIDTH, and the crop has to open on the same part of the
-	# bust at any of them.
-	_field.resized.connect(_reframe_portrait)
-	_reframe_portrait()
 
 	_emblem = TextureRect.new()
 	_emblem.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	# IGNORE_SIZE, or the 64px source becomes the control's minimum and the 22 below
+	# is clamped straight back up to it — which is how the badge has been drawing at
+	# three times its size, unnoticed while an opaque bust filled the field behind it.
+	_emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_emblem.position = Vector2(6, 6)
 	_emblem.size = Vector2(22, 22)
 	_field.add_child(_emblem)
@@ -195,16 +187,6 @@ func _apply() -> void:
 		_power_text_label.text = _commander.power_text
 	else:
 		_power_box.visible = false
-
-
-## Sizes the portrait to a square as wide as the field and slides it up, so the band
-## the field clips to opens at _PORTRAIT_CROP_TOP of the bust rather than at its
-## middle. A square source in a square rect scales without cropping sideways, so the
-## whole framing decision is this one vertical offset.
-func _reframe_portrait() -> void:
-	var width := _field.size.x
-	_portrait.size = Vector2(width, width)
-	_portrait.position = Vector2(0.0, -_PORTRAIT_CROP_TOP * width)
 
 
 ## Whether the power lasts only the owner's turn or through the round — the one

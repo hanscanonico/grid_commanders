@@ -57,9 +57,18 @@ const HARD_BORDER := Color(0.067, 0.086, 0.098)
 const PORTRAIT_DIR := "res://assets/portraits/commanders"
 const FACTION_DIR := "res://assets/portraits/factions"
 const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
-## Master portrait size the generator writes and the fallbacks match.
-const PORTRAIT_PX := 256
+## Master portrait size the generator writes and the fallbacks match. Taller than
+## it is wide: a portrait is a framed window with the bust breaking out of its
+## top, so it composes onto a faction-coloured field rather than filling one.
+const PORTRAIT_SIZE := Vector2i(220, 268)
 const EMBLEM_PX := 64
+## How a portrait is sampled, everywhere one is drawn. Linear, alone in a game
+## whose art is otherwise nearest-neighbour: the busts are vector illustration
+## baked at twice the largest field that shows them, and every surface lands on
+## its own fractional scale (a 31px HUD chip, a 96px card band, a 104px banner).
+## Nearest at those ratios frays the ink outlines the whole style rests on.
+## battle.tscn's VictoryPortrait carries the same value as `texture_filter = 2`.
+const PORTRAIT_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR
 
 ## The neutral commander has no faction; it renders in this iron-grey so "No
 ## Commander" still reads as a deliberate, styled choice rather than a blank.
@@ -206,7 +215,7 @@ static func _cached(path: String, on_missing: Callable) -> Texture2D:
 
 
 static func _fallback_portrait() -> Texture2D:
-	var image := Image.create(PORTRAIT_PX, PORTRAIT_PX, false, Image.FORMAT_RGBA8)
+	var image := Image.create(PORTRAIT_SIZE.x, PORTRAIT_SIZE.y, false, Image.FORMAT_RGBA8)
 	image.fill(theme_for_key(NEUTRAL_KEY).color)
 	return ImageTexture.create_from_image(image)
 
