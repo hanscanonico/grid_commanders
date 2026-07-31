@@ -9,6 +9,8 @@ extends GutTest
 ## So each is asserted separately here rather than trusted to the one flag they
 ## all read.
 
+const STRAITS := "res://maps/the_straits.txt"
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -25,6 +27,23 @@ func _state(map_text: String) -> GameState:
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
 	return state
+
+
+## The shipped naval board, which deals each fleet a submarine — the state a save
+## test needs, because a save is read back against the map it names.
+func _straits_state() -> GameState:
+	var map := MapData.load_from_file(STRAITS, terrain_db)
+	var state := GameState.create(map, unit_db, chart)
+	assert_not_null(state)
+	state.map_path = STRAITS
+	return state
+
+
+func _sub_of(state: GameState, team: int) -> Unit:
+	for unit in state.units_of(team):
+		if unit.type.id == &"sub":
+			return unit
+	return null
 
 
 func _path(cells: Array) -> Array[Vector2i]:
@@ -207,17 +226,20 @@ func test_a_sub_that_stays_under_too_long_is_lost() -> void:
 
 
 func test_a_dive_survives_a_save() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 0 0")
-	state.map_path = "res://maps/the_straits.txt"
-	state.units[0].dived = true
+	# The map is reloaded from res:// on the way back in and every per-board check
+	# is then asked of *that* board, so the round trip is played on the real one —
+	# a hand-written strait claiming the straits' path is a save whose board and
+	# whose map disagree, which the codec is right to refuse.
+	var state := _straits_state()
+	var sub := _sub_of(state, 1)
+	assert_not_null(sub, "the straits deal each fleet a submarine")
+	sub.dived = true
 	var encoded := SaveCodec.encode(state, [2] as Array[int])
-	# The map is reloaded from res:// on the way back in, so the round trip needs a
-	# board that exists; the boat is placed onto it by the decode, not the map.
 	var loaded := SaveCodec.decode(encoded, terrain_db, unit_db, chart)
 	assert_not_null(loaded)
 	if loaded == null:
 		return
-	assert_true(loaded.state.units[0].dived, "a submerged boat must not surface on load")
+	assert_true(_sub_of(loaded.state, 1).dived, "a submerged boat must not surface on load")
 
 
 ## A save written before the dive existed has no flag to read, and every boat in

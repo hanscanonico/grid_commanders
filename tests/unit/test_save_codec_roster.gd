@@ -74,10 +74,28 @@ func test_a_version_3_save_carrying_a_roster_still_loads_as_the_duel_it_recorded
 ## check in the codec is derived from the roster, so a roster no board could have
 ## dealt has to be refused before it is asked about anyone's purse or commander.
 func test_a_save_seating_teams_no_board_could_deal_is_refused() -> void:
-	for roster: Array in [[1, 9], [2, 3], [], [1, 2, 3, 4, 5]]:
+	for roster: Array in [[1, 9], [2, 1], [1, 1], [1], [], [1, 2, 3, 4, 5]]:
 		var data := _encoded()
 		data["teams"] = roster
 		assert_string_contains(SaveCodec.validate(data), "no board could have dealt")
+
+
+## And the gap that is deliberately *not* refused any more: a board is authored full,
+## but a match fills any two or more of its seats (open-seats plan D1), so a roster
+## with a hole in it is an ordinary reduced match rather than damage. The seats keep
+## their own numbers — closing seat 2 of four leaves `[1, 3, 4]`, never a renumber.
+func test_a_save_seating_a_reduced_roster_is_accepted() -> void:
+	for roster: Array in [[1, 3], [2, 4], [1, 3, 4], [2, 3, 4]]:
+		var data := _encoded()
+		data["teams"] = roster
+		data["funds"] = {}
+		data["commanders"] = {}
+		data["home_hq"] = []
+		data["current_team"] = roster[0]
+		for team: int in roster:
+			data["funds"][str(team)] = 0
+			data["commanders"][str(team)] = {"id": "neutral", "charge": 0, "active": false}
+		assert_eq(SaveCodec.validate(data), "", "seats %s is a match somebody played" % [roster])
 
 
 func test_a_current_save_without_the_roster_is_refused() -> void:

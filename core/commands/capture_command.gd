@@ -1,7 +1,7 @@
 class_name CaptureCommand
 extends Command
 ## Moves a capture-capable unit onto a property and chips at its capture points.
-## Reaching zero flips ownership; taking an enemy HQ takes that army out of the
+## Reaching zero flips ownership; taking an army's **home** HQ takes it out of the
 ## match, which ends the match only once every survivor stands on one side.
 
 
@@ -71,11 +71,17 @@ func apply(state: GameState) -> void:
 	state.capture_progress.erase(dest)
 	var fallen := state.owner_at(dest)
 	state.set_owner(dest, unit.team)
-	# Taking an HQ no longer ends the match — it takes its owner out of it (plan
-	# D3). The seat changes hands first, so the conqueror keeps the HQ it stood on
-	# while the rest of that army's ground goes neutral. A neutral HQ eliminates
-	# nobody: there is no army behind it to fall.
-	if state.map.terrain_at(dest).id == &"hq" and fallen != MapData.NEUTRAL:
+	# Taking an HQ no longer ends the match — it takes its owner out of it (four-
+	# players plan D3). The seat changes hands first, so the conqueror keeps the HQ
+	# it stood on while the rest of that army's ground goes neutral.
+	#
+	# And only a team's *home* HQ fells it (open-seats plan D3). Every other HQ on
+	# the board — a vacant seat's, or one a survivor conquered earlier — is a
+	# property with HQ terrain stars and nothing more: an unowned HQ has no army
+	# behind it to fall, and a conqueror holding two must not be beheadable through
+	# the one it took. `home_hq` answers both at once, since it is keyed by the army
+	# and neutral never has an entry.
+	if state.home_hq.get(fallen) == dest:
 		state.eliminate(fallen)
 
 

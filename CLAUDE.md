@@ -234,11 +234,15 @@ that must survive any change; the full rationale, milestones and risk registers 
   names, floored at a duel (`MapData.DEFAULT_TEAMS`) — so contiguity is structural rather than
   breakable, and the many fixtures that name a single team keep playing the duel they always did
   (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
-  The save format is version 6: the roster arrived at 4, the grouping at 5, the fallen at 6 (the
-  plan's "save v4 carries `eliminated`" is superseded by that ordering), an older save decodes as
+  The save format is version 7: the roster arrived at 4, the grouping at 5, the fallen at 6 (the
+  plan's "save v4 carries `eliminated`" is superseded by that ordering), each army's home HQ at 7 —
+  a save below v7 takes its home HQs from the map it names, which is exact because such a save
+  always seated the board's full roster. An older save decodes as
   the free-for-all duel it recorded with every army it names still standing, and
-  `SaveCodec._teams_error` / `_sides_error` / `_eliminated_error` refuse a roster, grouping or
-  casualty list no board could deal *before* any per-side check is derived from it.
+  `SaveCodec._teams_error` / `_sides_error` / `_eliminated_error` / `_home_hq_error` refuse a
+  roster, grouping, casualty list or home-HQ list no seating could have produced *before* any
+  per-side check is derived from it (a roster with a gap, `[1, 3]`, is now an ordinary reduced
+  match rather than damage — open-seats D1).
   `tests/unit/test_maps.gd`'s HQ and base lints hold each board to its **own** roster, never a
   global constant. D2: **`GameState.allied(a, b)` is the single hostility authority** — ask it,
   never re-derive `team != mine`; `sides` (empty = free-for-all) is the grouping, `enemies_of` and
@@ -254,7 +258,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   D3: **elimination is a modelled state and victory belongs to a side** — `GameState.eliminated`,
   `is_eliminated` and `active_teams()` say who is still in; ask them, never infer a fallen army from
   an empty unit list (one with no units on day one has not fallen). An army falls when its last unit
-  dies (`_check_rout`, on the shot itself) or its HQ is captured, and `eliminate()` is the one way
+  dies (`_check_rout`, on the shot itself) or its **home** HQ is captured — `GameState.home_hq`,
+  recorded by `create` from the map's starting ownership and carried in the save; any other HQ (a
+  vacant seat's, or one a survivor conquered) is a high-value property captured like a city — and
+  `eliminate()` is the one way
   out: units removed, properties to **neutral** rather than to the conqueror — handing a fallen
   empire to the side already winning would snowball it, while loose ground stays contested and any
   survivor can go and take it — and the capture progress standing on them cleared (that progress is

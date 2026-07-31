@@ -458,7 +458,8 @@ mouse, keyboard, or controller throughout.
   capture you have not scouted stays as unannounced as the flip that will follow it. With nothing
   under the cursor the unit and tile thirds go blank and the bar keeps its height — the board
   never shifts
-- An army that loses its HQ or its last unit is out of the match, announced by a banner — *Iron
+- An army that loses its home HQ — the one it started the match on — or its last unit is out of
+  the match, announced by a banner — *Iron
   Dominion eliminated* — over the board that felled it, before play hands over. In a duel that is
   the win, so the banner runs straight into the victory screen
 - Taking the enemy HQ or destroying every enemy unit ends the match on a victory screen naming
