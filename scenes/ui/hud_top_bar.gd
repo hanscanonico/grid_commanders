@@ -24,6 +24,7 @@ var _chip: Panel
 var _faction_label: Label
 var _doctrine_label: Label
 var _funds_label: Label
+var _threat_label: Label
 var _keys_label: Label
 
 
@@ -71,6 +72,14 @@ func _build() -> void:
 	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)
 	row.add_child(_funds_label)
 	row.add_child(UiTheme.hud_divider(_RULE_H))
+	# The threat lens, stated as a chip rather than a legend entry: it is a way of
+	# looking at the board rather than a key that does something in one interaction,
+	# so it has to say both that T exists *and* whether the lens is currently up —
+	# which a legend line, swapped per context and already full, cannot do. The copy
+	# is still ControlHints'.
+	_threat_label = UiTheme.hud_label(ControlHints.THREAT_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	row.add_child(_threat_label)
+	row.add_child(UiTheme.hud_divider(_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that
 	# was true but was also the only control the game ever named out loud (COM-12).
@@ -101,6 +110,16 @@ func show_turn(
 	_faction_label.text = faction.to_upper()
 	_doctrine_label.text = doctrine
 	_funds_label.text = _thousands(funds)
+
+
+## Lights the threat chip while the lens is up. Colour only — the text never
+## changes, so the chip reads as the same control in both states rather than as
+## two different ones, and the bar's layout cannot shift when it is toggled.
+func show_threat_lens(on: bool) -> void:
+	if _threat_label != null:
+		_threat_label.add_theme_color_override(
+			"font_color", UiTheme.DANGER if on else UiTheme.INK_3
+		)
 
 
 ## Swaps the key legend for the interaction the player is now in. Called on every

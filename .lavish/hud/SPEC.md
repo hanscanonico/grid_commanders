@@ -37,7 +37,15 @@ the map viewport — the board keeps every pixel it has.
 
 **Top bar (46px)** — turn state that never changes mid-action: day counter,
 faction colour chip + name, the commander's **doctrine** (the always-on
-passive), funds, menu hint. Funds right-aligned so the number sits still.
+passive), funds, threat-lens chip, menu hint. Funds right-aligned so the number
+sits still.
+
+The **threat chip** is the one thing on either bar that reports a *view* rather
+than a fact about the match: `T · THREAT`, dim while the lens is down and
+`--red` while it is up. It sits beside the key legend rather than inside it,
+because the legend is swapped per interaction and this control outlives every
+one of them — and because the resting legend is already at its width. Its words
+are `ControlHints`', like every other key this HUD names.
 
 **Bottom bar (92px)** — everything that changes as you move: `CommanderFace`
 portrait, name, power name, charge meter with its `powerCost` readout and the

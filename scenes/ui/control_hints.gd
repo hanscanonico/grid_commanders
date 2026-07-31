@@ -24,6 +24,15 @@ extends RefCounted
 ## by the same test; the bar clips rather than overflows either way.
 const MAX_CHARS := 40
 
+## The threat lens's chip, which the top bar prints beside the legend rather than
+## inside it. Its own line because the lens is not a key that does something *in a
+## context* — it is a way of looking at the board that outlives every one of them,
+## and the per-context legend is full: IDLE's is already exactly MAX_CHARS.
+##
+## Still ControlHints' copy, though. A key named anywhere else is a key that
+## eventually names a binding the InputMap no longer has.
+const THREAT_CHIP := "T · THREAT"
+
 const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"
 const PREVIEW := &"preview"

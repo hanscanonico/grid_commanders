@@ -172,6 +172,15 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # BattleFeedbackScenario rather than in the driver, which is why the driver's line
 # ceiling moved by the dispatch arm and not by the scenarios.
 #
+# field_overlays is the one frame that has to hold three overlays at once: a
+# capture chip counting down, the arrowed route to the cell under the cursor, and
+# the threat lens shading everywhere the other side can shoot. Each reads fine
+# alone — which is why it is photographed together. Three reds and a blue over the
+# same terrain is the only question this scenario asks, and no per-overlay capture
+# can answer it. It checks what a picture cannot: that the capture left progress
+# to draw, that the raised lens is shading something, and that the cursor is on a
+# reachable stop, since an empty overlay photographs as a perfectly good board.
+#
 # end_turn_ready_units is COM-14's two-sided gate. It first opens the guard with
 # live units ready and reads the count, every name/coordinate, and both choices
 # back from the modal, then answers it three ways, because "operable" is a claim
@@ -241,7 +250,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
-	rejected_confirm enemy_range_preview end_turn_ready_units
+	rejected_confirm enemy_range_preview end_turn_ready_units field_overlays
 	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn ai_pause
 	mission_strip mission_strip_retired

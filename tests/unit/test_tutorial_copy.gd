@@ -142,3 +142,16 @@ func test_legends_are_ascii_only() -> void:
 			assert_true(
 				code < 128 or code == 0x00B7, "non-ASCII in %s legend: %s" % [context, legend]
 			)
+
+
+## The threat chip stands beside the legend rather than inside it, so it is held
+## to the same two rules by hand: it shares the bar's width with a legend that
+## may already be running at MAX_CHARS, and it is printed in the same Silkscreen.
+func test_the_threat_chip_fits_beside_the_legend() -> void:
+	assert_lt(ControlHints.THREAT_CHIP.length(), ControlHints.MAX_CHARS / 3)
+
+
+func test_the_threat_chip_is_ascii_only() -> void:
+	for i in ControlHints.THREAT_CHIP.length():
+		var code := ControlHints.THREAT_CHIP.unicode_at(i)
+		assert_true(code < 128 or code == 0x00B7, "non-ASCII in the threat chip")

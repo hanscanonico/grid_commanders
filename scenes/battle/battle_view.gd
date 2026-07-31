@@ -1,7 +1,8 @@
 class_name BattleView
 extends RefCounted
-## Draws battle state: terrain, unit sprites, movement and attack overlays,
-## fog, the two docked HUD bars, and the damage forecast.
+## Draws battle state: terrain, unit sprites, fog, the two docked HUD bars, and
+## the damage forecast — the board itself, in other words. The transient paint
+## laid over it while a question is being asked belongs to BattleOverlays.
 ##
 ## The HUD is chrome outside the map, not slabs on top of it: a fixed-height bar
 ## above the board and one below, with the board's viewport computed from what
@@ -24,7 +25,6 @@ const TILE := 16
 ## keep their detail; TerrainLayer is scaled down to compensate.
 const TERRAIN_PX := 64
 const ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
-const OVERLAY_PATH := "res://assets/tiles/overlay.png"
 const ATLAS_SOURCE_ID := 0
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
@@ -33,10 +33,7 @@ var terrain_layer: TileMapLayer
 ## Painted beyond the map edges — a darkened continuation of the board that
 ## fills the screen when the camera is far enough out to show the whole map.
 var backdrop_layer: TileMapLayer
-var move_overlay: TileMapLayer
-var attack_overlay: TileMapLayer
 var fog_layer: TileMapLayer
-var path_line: Line2D
 var units_root: Node2D
 var cursor: Sprite2D
 var camera: Camera2D
@@ -103,8 +100,6 @@ func setup() -> void:
 	terrain_layer.scale = Vector2.ONE * (float(TILE) / float(TERRAIN_PX))
 	backdrop_layer.tile_set = terrain_layer.tile_set
 	backdrop_layer.scale = terrain_layer.scale
-	move_overlay.tile_set = _build_overlay_tile_set()
-	attack_overlay.tile_set = move_overlay.tile_set
 	fog_layer.tile_set = _build_fog_tile_set()
 	_paint_map()
 	_paint_backdrop()
@@ -139,18 +134,7 @@ func _build_tile_set() -> TileSet:
 	return tile_set
 
 
-func _build_overlay_tile_set() -> TileSet:
-	var tile_set := TileSet.new()
-	tile_set.tile_size = Vector2i(TILE, TILE)
-	var atlas := TileSetAtlasSource.new()
-	atlas.texture = load(OVERLAY_PATH)
-	atlas.texture_region_size = Vector2i(TILE, TILE)
-	atlas.create_tile(Vector2i.ZERO)
-	tile_set.add_source(atlas, ATLAS_SOURCE_ID)
-	return tile_set
-
-
-## The fog gets its own tile rather than sharing the move/attack overlay's.
+## The fog gets its own tile rather than sharing BattleOverlays'.
 ## `overlay.png` carries a brighter one-pixel border, which is what rings a single
 ## range cell — but painted across a whole fogged region that border becomes a
 ## grid of dark outlines around every cell, and the shroud reads as a field of
@@ -324,34 +308,6 @@ func restage_identity() -> void:
 	refresh_panel(_cursor_cell())
 
 
-# --- overlays ----------------------------------------------------------------
-
-
-## Highlights reachable cells — a unit's movement range, or where a transport
-## could unload. An empty list clears the overlay, so callers never need a
-## separate "and now hide it" call.
-func paint_move_overlay(cells: Array[Vector2i]) -> void:
-	move_overlay.clear()
-	for cell in cells:
-		move_overlay.set_cell(cell, ATLAS_SOURCE_ID, Vector2i.ZERO)
-
-
-## Highlights the cells a unit may fire at. Empty clears, as above.
-func paint_attack_overlay(cells: Array[Vector2i]) -> void:
-	attack_overlay.clear()
-	for cell in cells:
-		attack_overlay.set_cell(cell, ATLAS_SOURCE_ID, Vector2i.ZERO)
-
-
-## Traces the planned route. A path too short to draw clears the line.
-func update_path_line(path: Array[Vector2i]) -> void:
-	path_line.clear_points()
-	if path.size() < 2:
-		return
-	for cell in path:
-		path_line.add_point(cell_center(cell))
-
-
 # --- fog ---------------------------------------------------------------------
 
 
@@ -415,6 +371,11 @@ func refresh_hud() -> void:
 	# has to say "something changed" — and a turn boundary is when a step most
 	# often did (COM-12).
 	mission_strip.refresh()
+
+
+## Lights the top bar's threat chip to match the lens on the board.
+func refresh_threat_lens(on: bool) -> void:
+	hud_top.show_threat_lens(on)
 
 
 ## Prints the keys that do something in the interaction the player is now in.

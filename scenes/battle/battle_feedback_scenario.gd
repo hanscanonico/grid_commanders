@@ -79,10 +79,10 @@ func _run_enemy_range_preview() -> String:
 	_battle.confirm_at(Vector2i(9, 8))
 	if _battle.state != Battle.State.PREVIEW:
 		return "enemy confirm did not enter PREVIEW"
-	if _battle.view.move_overlay.get_used_cells().is_empty():
+	if _battle.overlays.move_layer.get_used_cells().is_empty():
 		return "enemy preview painted no movement reach"
 	await _press(&"show_range")
-	if _battle.view.attack_overlay.get_used_cells().is_empty():
+	if _battle.overlays.attack_layer.get_used_cells().is_empty():
 		return "R painted no enemy fire ring"
 	return ""
 

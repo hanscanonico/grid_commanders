@@ -138,6 +138,11 @@ var planned_path: Array[Vector2i] = []
 var _previewed: Unit
 ## Whether R's red fire ring is painted; every exit from a range state clears it.
 var _range_shown := false
+## Whether T's threat lens is up. Unlike the fire ring it belongs to no unit and
+## no selection, so nothing clears it but the player: it is a way of looking at
+## the board, and one that switched itself off whenever a unit was picked up would
+## be off exactly when the question it answers is being asked.
+var _threat_shown := false
 var _attack_targets: Array[Vector2i] = []
 ## Viewer-safe cargo choices for the open unit menu, and the one being targeted.
 ## Each typed option keeps its passenger and cells together.
@@ -150,6 +155,10 @@ var _build_cell := Vector2i.ZERO
 ## Everything this scene draws. Battle decides what happens; the view decides
 ## how it looks. Nothing here reaches past it into a TileMapLayer or a sprite.
 var view: BattleView
+## The transient paint over that board — reach, fire, threat, route, capture
+## chips. Its own collaborator rather than more of the view, because it is the
+## half of the drawing this flow raises and clears as it moves.
+var overlays: BattleOverlays
 ## Viewer-safe read policy shared by Battle, the renderer and every presentation
 ## collaborator. Vision and AttackRange remain the rule authorities it asks.
 var perspective: BattlePerspective
@@ -224,6 +233,8 @@ func _ready() -> void:
 	perspective = BattlePerspective.new(game)
 	view = _build_view()
 	view.setup()
+	overlays = _build_overlays()
+	overlays.setup()
 	animator = _build_animator()
 	_command_pipeline = BattleCommandPipeline.new(self)
 	_outcome = _build_outcome()
@@ -376,10 +387,7 @@ func _build_view() -> BattleView:
 	var built := BattleView.new()
 	built.terrain_layer = $TerrainLayer
 	built.backdrop_layer = $Backdrop
-	built.move_overlay = $MoveOverlay
-	built.attack_overlay = $AttackOverlay
 	built.fog_layer = $FogLayer
-	built.path_line = $PathLine
 	built.units_root = $Units
 	built.cursor = cursor
 	built.camera = camera
@@ -396,6 +404,19 @@ func _build_view() -> BattleView:
 	built.perspective = perspective
 	built.ai_teams = ai_teams
 	built.identity = SideIdentity.for_game(game)  # the side resolver; Battle reads view.identity
+	return built
+
+
+## Same assignment-not-constructor shape as _build_view, and for the same reason.
+## The overlays hold no game state at all — every cell they paint is worked out by
+## a rule authority and handed over — so the node fields are the whole of it.
+func _build_overlays() -> BattleOverlays:
+	var built := BattleOverlays.new()
+	built.move_layer = $MoveOverlay
+	built.attack_layer = $AttackOverlay
+	built.threat_layer = $ThreatOverlay
+	built.path_arrow = $PathArrow
+	built.capture_pips = $CapturePips
 	return built
 
 
@@ -500,6 +521,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cancel()
 	elif event.is_action_pressed(&"show_range"):
 		toggle_range()
+	elif event.is_action_pressed(&"show_threat"):
+		toggle_threat()
 	elif event.is_action_pressed(&"fire_power"):
 		_fire_command_power()  # the shortcut the charged meter advertises
 	elif not dir.is_empty():
@@ -590,7 +613,7 @@ func _cancel() -> void:
 	elif state == State.TARGETING:
 		_exit_targeting_to_menu()
 	elif state == State.DROP_TARGETING:
-		view.paint_move_overlay([])
+		overlays.paint_move([])
 		_drop_options = []
 		_drop_option = null
 		_on_move_animation_done()  # back to the unit menu
@@ -606,8 +629,8 @@ func _select(unit: Unit) -> void:
 	move_range = MovementResolver.reachable(game, unit)
 	planned_path = [unit.cell]
 	_range_shown = false
-	view.paint_move_overlay(move_range.cells())
-	view.update_path_line(planned_path)
+	overlays.paint_move(move_range.cells())
+	overlays.trace_path(planned_path)
 	state = State.UNIT_SELECTED
 
 
@@ -619,9 +642,9 @@ func _clear_selection(refresh_board: bool = true) -> void:
 	_drop_options = []
 	_drop_option = null
 	_range_shown = false
-	view.paint_move_overlay([])
-	view.paint_attack_overlay([])
-	view.update_path_line([])
+	overlays.paint_move([])
+	overlays.paint_attack([])
+	overlays.trace_path([])
 	view.update_damage_preview(null, cursor_cell)
 	state = State.IDLE
 	if refresh_board:
@@ -637,17 +660,17 @@ func _enter_preview(unit: Unit) -> void:
 	# to either side, and both whose sight fills it and how much of it the viewer may
 	# be shown are viewer policy.
 	_range_shown = false
-	view.paint_move_overlay(perspective.move_overlay_cells(unit))
-	view.paint_attack_overlay([])
-	view.update_path_line([])  # a preview plans no route
+	overlays.paint_move(perspective.move_overlay_cells(unit))
+	overlays.paint_attack([])
+	overlays.trace_path([])  # a preview plans no route
 	state = State.PREVIEW
 
 
 func _clear_preview() -> void:
 	_previewed = null
 	_range_shown = false
-	view.paint_move_overlay([])
-	view.paint_attack_overlay([])
+	overlays.paint_move([])
+	overlays.paint_attack([])
 	state = State.IDLE
 
 
@@ -665,17 +688,45 @@ func toggle_range() -> void:
 		return
 	_range_shown = not _range_shown
 	if _range_shown:
-		view.paint_attack_overlay(perspective.threat_overlay_cells(unit))
+		overlays.paint_attack(perspective.threat_overlay_cells(unit))
 	else:
-		view.paint_attack_overlay([])
+		overlays.paint_attack([])
+
+
+## T raises and lowers the threat lens: every cell the hostile sides could bring
+## under fire, all of them at once. R's sibling and its opposite in scope — R asks
+## "what does *this* unit reach", the lens asks "where is it unsafe to stand" —
+## which is why they paint on separate layers and read as different shading.
+##
+## Public for the same reason toggle_range is: the scenario driver walks the flows
+## a player's input reaches. It issues nothing and belongs to no unit, so unlike
+## the fire ring it survives selection, movement and the turn.
+func toggle_threat() -> void:
+	_threat_shown = not _threat_shown
+	_refresh_threat()
+
+
+## Repaints the lens from the current viewer. Cheap while it is down — the sweep
+## is skipped entirely — which is what lets refresh_fog run it after every
+## committed command without pricing a board-wide firing walk nobody asked for.
+func _refresh_threat() -> void:
+	var cells: Array[Vector2i] = []
+	if _threat_shown:
+		cells = perspective.all_threat_overlay_cells()
+	overlays.paint_threat(cells)
+	# The chip is told the state rather than left to infer it from an empty list: a
+	# raised lens with nothing under it is not a lowered one, and the player who
+	# just pressed T needs to see that the answer was "nowhere", not that the key
+	# did nothing.
+	view.refresh_threat_lens(_threat_shown)
 
 
 func _animate_move() -> void:
 	state = State.ANIMATING
 	_range_shown = false
-	view.paint_move_overlay([])
-	view.paint_attack_overlay([])  # a fire ring shown with R does not survive the move
-	view.update_path_line([])
+	overlays.paint_move([])
+	overlays.paint_attack([])  # a fire ring shown with R does not survive the move
+	overlays.trace_path([])
 	await animator.animate_path(view.sprite_for(selected), planned_path)
 	_on_move_animation_done()
 
@@ -1083,6 +1134,24 @@ func _viewing_team() -> int:
 func refresh_fog() -> void:
 	perspective.refresh(_viewing_team(), state == State.HANDOFF)
 	view.refresh_fog()
+	# Both overlays below are drawn from whoever is now looking, so they ride the
+	# one pass that already reruns after every committed command and turn change
+	# rather than growing refresh paths of their own. A blackout empties them
+	# without a special case: that viewer can see no cell and no unit.
+	_refresh_capture_pips()
+	_refresh_threat()
+
+
+## The capture chips, rebuilt from the sim's own progress table and put through
+## the same fog gate the board is: a capture the viewer has not scouted stays as
+## unannounced as the ownership flip that will follow it. A presentation split of
+## a number the sim already holds — never a call back into capture_strength.
+func _refresh_capture_pips() -> void:
+	var pips := {}
+	for cell: Vector2i in game.capture_progress:
+		if perspective.can_see_cell(cell):
+			pips[cell] = game.capture_progress[cell]
+	overlays.show_capture_pips(pips)
 
 
 func refresh_hud() -> void:
@@ -1093,11 +1162,11 @@ func refresh_hud() -> void:
 ## sprite back and returning to the range view (AW-style B-cancel).
 func _undo_move_preview() -> void:
 	view.refresh_sprite(selected)
-	view.paint_move_overlay(move_range.cells())
+	overlays.paint_move(move_range.cells())
 	state = State.UNIT_SELECTED
 	set_cursor_cell(selected.cell)
 	planned_path = [selected.cell]
-	view.update_path_line(planned_path)
+	overlays.trace_path(planned_path)
 
 
 # --- attack flow -------------------------------------------------------------
@@ -1105,12 +1174,12 @@ func _undo_move_preview() -> void:
 
 func _enter_targeting() -> void:
 	state = State.TARGETING
-	view.paint_attack_overlay(_attack_targets)
+	overlays.paint_attack(_attack_targets)
 	set_cursor_cell(_attack_targets[0])
 
 
 func _exit_targeting_to_menu() -> void:
-	view.paint_attack_overlay([])
+	overlays.paint_attack([])
 	view.update_damage_preview(null, cursor_cell)
 	_on_move_animation_done()  # recomputes targets and reopens the menu
 
@@ -1123,7 +1192,7 @@ func _exit_targeting_to_menu() -> void:
 func _enter_drop_targeting(index: int) -> void:
 	state = State.DROP_TARGETING
 	_drop_option = _drop_options[index]
-	view.paint_move_overlay(_drop_option.cells)
+	overlays.paint_move(_drop_option.cells)
 	set_cursor_cell(_drop_option.cells[0])
 
 
@@ -1143,9 +1212,9 @@ func _execute_drop(drop_cell: Vector2i) -> void:
 
 func _execute_attack(target_cell: Vector2i) -> void:
 	var command := AttackCommand.new(selected, planned_path, target_cell)
-	view.paint_attack_overlay([])
+	overlays.paint_attack([])
 	view.update_damage_preview(null, cursor_cell)
-	view.update_path_line([])
+	overlays.trace_path([])
 	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
@@ -1182,7 +1251,7 @@ func set_cursor_cell(cell: Vector2i) -> void:
 	if state == State.UNIT_SELECTED:
 		if move_range.has(cell) and move_range.can_stop_at(cell):
 			planned_path = move_range.path_to(cell)
-		view.update_path_line(planned_path)
+		overlays.trace_path(planned_path)
 	elif state == State.TARGETING:
 		_update_damage_preview()
 
