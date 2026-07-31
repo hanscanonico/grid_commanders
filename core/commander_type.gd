@@ -1,3 +1,9 @@
+# gdlint: ignore=max-public-methods
+# The width is the contract, not an accretion: every public method here is one
+# rule seam twelve doctrine subclasses may override, so "move something out"
+# would mean a second hook tree beside this one — the split the commander plan's
+# D1 rejects. The repo-wide ratchet stays where it is; this file alone answers
+# for its own count, and a new method still needs to be a new doctrine seam.
 class_name CommanderType
 extends Resource
 ## One general: who they are, the Command Power they charge toward, and the
@@ -217,6 +223,40 @@ func on_power_activated(_state: GameState, _team: int) -> void:
 ## Rule-based, lookahead-free and RNG-free, like the planner that calls it.
 func wants_power(state: GameState, team: int) -> bool:
 	return _can_strike_an_opponent(state, team, true)
+
+
+# --- AI advice ---------------------------------------------------------------
+#
+# Advisory hooks the computer planner may ask, on wants_power's terms:
+# rule-based, lookahead-free, RNG-free, and reading only what the planner
+# already reads — anything of the enemy's goes through Vision.is_hidden_from,
+# never around it. The base class advises nothing, so the neutral commander and
+# any general with no opinion leave planning bit-for-bit unchanged; the planner
+# scales every answer by its own doctrine_weight and skips the hooks entirely
+# at zero. A hook never reads the damage chart: expected damage is the
+# forecast's job, and the forecasts already carry every combat hook above, so
+# advice that re-priced one would count the same doctrine twice.
+
+
+## How many tiles of forward progress standing on `cell` is worth to this
+## doctrine when `unit` has nothing better to do this turn — the currency of
+## the planner's advance path. Positive prefers the cell.
+func stand_value(_state: GameState, _unit: Unit, _cell: Vector2i) -> int:
+	return 0
+
+
+## Places this doctrine moves `unit_type` on the planner's build list —
+## negative pulls it up, positive pushes it down. Advisory only: the planner's
+## urgent tiers (answering aircraft, filling the capture roster) outrank any
+## bias, and no bias reaches a transport, which has no rank anywhere to move.
+func build_bias(_state: GameState, _team: int, _unit_type: UnitType) -> int:
+	return 0
+
+
+## Displayed-HP points added to the planner's retreat threshold for `unit`, so
+## a doctrine that repairs cheaply can rotate its wounded home earlier.
+func retreat_hp_delta(_state: GameState, _unit: Unit) -> int:
+	return 0
 
 
 # --- subclass toolkit --------------------------------------------------------
