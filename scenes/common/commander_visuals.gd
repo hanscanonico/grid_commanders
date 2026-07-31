@@ -60,15 +60,18 @@ const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
 ## Master portrait size the generator writes and the fallbacks match. Taller than
 ## it is wide: a portrait is a framed window with the bust breaking out of its
 ## top, so it composes onto a faction-coloured field rather than filling one.
+## The bake checks each rasterised image against this and fails loudly on a
+## mismatch, so changing the drawing's viewBox or scale cannot silently pass it by.
 const PORTRAIT_SIZE := Vector2i(220, 268)
 const EMBLEM_PX := 64
-## How a portrait is sampled, everywhere one is drawn. Linear, alone in a game
-## whose art is otherwise nearest-neighbour: the busts are vector illustration
-## baked at twice the largest field that shows them, and every surface lands on
-## its own fractional scale (a 31px HUD chip, a 96px card band, a 104px banner).
-## Nearest at those ratios frays the ink outlines the whole style rests on.
+## How commander art is sampled, everywhere it is drawn — the busts and the
+## faction emblems alike. Linear, alone in a game whose art is otherwise
+## nearest-neighbour: both are baked larger than any field that shows them, and
+## every surface lands on its own fractional scale (a 31px HUD chip, a 96px card
+## band, a 104px banner, a 22px emblem badge off a 64px source). Nearest at those
+## ratios drops whole rows and frays the ink outlines the style rests on.
 ## battle.tscn's VictoryPortrait carries the same value as `texture_filter = 2`.
-const PORTRAIT_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR
+const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR
 
 ## The neutral commander has no faction; it renders in this iron-grey so "No
 ## Commander" still reads as a deliberate, styled choice rather than a blank.

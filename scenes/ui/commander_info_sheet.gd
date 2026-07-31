@@ -181,11 +181,10 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(frame)
 
-	# READING_WIDTH, the width the select page asks for, and not a pixel more: the
-	# portrait band is a fixed height, so a wider card shows a *shorter* slice of the
-	# bust (see CommanderCard._PORTRAIT_CROP_TOP). Stretched to fill this column the
-	# slice lost the lower arc of the glasses, eyepatch and headset that keep the
-	# twelve busts apart. Pinned, both surfaces frame a general identically.
+	# READING_WIDTH, the width the select page asks for, and not a pixel more: it is
+	# the width every line of shipped copy needs to stop wrapping, and pinning it
+	# here is what makes this sheet and the select page frame a general identically.
+	# Stretched to fill this column instead, the same card reads as a second design.
 	var card := CommanderCard.new()
 	card.custom_minimum_size.x = CommanderCard.READING_WIDTH
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

@@ -38,6 +38,15 @@ func _init() -> void:
 			push_error("generate_portraits: could not rasterise %s" % commander.id)
 			quit(1)
 			return
+		if image.get_size() != CommanderVisuals.PORTRAIT_SIZE:
+			push_error(
+				(
+					"generate_portraits: %s rasterised at %s, but PORTRAIT_SIZE is %s"
+					% [commander.id, image.get_size(), CommanderVisuals.PORTRAIT_SIZE]
+				)
+			)
+			quit(1)
+			return
 		var path := "%s/%s.png" % [CommanderVisuals.PORTRAIT_DIR, commander.id]
 		image.save_png(ProjectSettings.globalize_path(path))
 		count += 1
@@ -53,20 +62,25 @@ func _init() -> void:
 # --- portraits ---------------------------------------------------------------
 
 
-## One general's bust. A commander the handoff has no face spec for — the
-## neutral seat, or a general added ahead of their art — falls back to the
-## featureless silhouette rather than failing the bake.
+## One general's bust. A commander the handoff has no face spec for falls back to
+## the featureless silhouette rather than failing the bake. That is the empty
+## seat's own portrait, so it passes quietly; for anyone else it means a general
+## added ahead of their art would ship reading as "No Commander", which the bake
+## says out loud rather than reporting as a success.
 func _draw_portrait(commander: CommanderType) -> Image:
-	var face := FaceSvg.new(CommanderVisuals.theme_for(commander))
-	var svg := (
-		face.build(commander.id)
-		if FaceSvg.has_face(commander.id)
-		else (
-			FaceSvg
-			. new(CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY))
-			. build_neutral()
-		)
-	)
+	var svg := ""
+	if FaceSvg.has_face(commander.id):
+		svg = FaceSvg.new(CommanderVisuals.theme_for(commander)).build(commander.id)
+	else:
+		if commander.id != CommanderType.NEUTRAL_ID:
+			push_warning(
+				(
+					"generate_portraits: no face spec for %s — baking the neutral silhouette"
+					% commander.id
+				)
+			)
+		var neutral := CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
+		svg = FaceSvg.new(neutral).build_neutral()
 	var image := Image.new()
 	if image.load_svg_from_string(svg, PORTRAIT_SCALE) != OK:
 		return null

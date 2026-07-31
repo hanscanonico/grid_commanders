@@ -79,7 +79,7 @@ func _build() -> void:
 	rows.add_child(_field)
 
 	_portrait = TextureRect.new()
-	_portrait.texture_filter = CommanderVisuals.PORTRAIT_FILTER
+	_portrait.texture_filter = CommanderVisuals.ART_FILTER
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	# Centred whole rather than cropped to fill: the portrait carries its own
 	# ink-bordered window with the head breaking over its top edge, and a band this
@@ -90,7 +90,7 @@ func _build() -> void:
 	_field.add_child(_portrait)
 
 	_emblem = TextureRect.new()
-	_emblem.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_emblem.texture_filter = CommanderVisuals.ART_FILTER
 	# IGNORE_SIZE, or the 64px source becomes the control's minimum and the 22 below
 	# is clamped straight back up to it — which is how the badge has been drawing at
 	# three times its size, unnoticed while an opaque bust filled the field behind it.

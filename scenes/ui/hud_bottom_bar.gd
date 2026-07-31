@@ -122,7 +122,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	_portrait_field.clip_contents = true
 	row.add_child(_portrait_field)
 	_portrait = TextureRect.new()
-	_portrait.texture_filter = CommanderVisuals.PORTRAIT_FILTER
+	_portrait.texture_filter = CommanderVisuals.ART_FILTER
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
