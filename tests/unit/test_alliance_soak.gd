@@ -46,6 +46,11 @@ const FOURSQUARE := "res://maps/foursquare.txt"
 const HEARTLAND := "res://maps/heartland.txt"
 const PINWHEEL := "res://maps/pinwheel.txt"
 const TRIDENT := "res://maps/trident.txt"
+## The grand tier's two water boards: the only shipped boards where four armies
+## share one sea, so they are the only place an allied pair can put a fleet
+## between a rival and its own coast.
+const CAUSEWAY := "res://maps/causeway.txt"
+const CONFLUENCE := "res://maps/confluence.txt"
 ## The 2v2 board — four armies, paired across the ridge rather than diagonally.
 const MARCHLANDS := "res://maps/marchlands.txt"
 const WINDROSE := "res://maps/windrose.txt"
@@ -121,6 +126,15 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("atoll free-for-all", {}, 636, ATOLL)
 	_soak("atoll 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 637, ATOLL)
 	_soak("atoll 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 638, ATOLL)
+	# The grand tier's water boards. Both put four fleets on one sea, so an ally's
+	# coast is reachable by a rival's hull without a ferry the planner cannot plan
+	# — which is the arrangement naval R1 makes every four-army water board prove.
+	_soak("causeway free-for-all", {}, 650, CAUSEWAY)
+	_soak("causeway 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 651, CAUSEWAY)
+	_soak("causeway 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 652, CAUSEWAY)
+	_soak("confluence free-for-all", {}, 655, CONFLUENCE)
+	_soak("confluence 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 656, CONFLUENCE)
+	_soak("confluence 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 657, CONFLUENCE)
 
 
 ## Pinwheel, over the seatings its own layout promises: the four-army groupings,
