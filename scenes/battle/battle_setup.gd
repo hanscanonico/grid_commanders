@@ -71,7 +71,12 @@ static func build(
 	# begin_turn runs against its real doctrine (a supply radius, a repair discount)
 	# rather than the neutral one it would see if commanders were set afterward.
 	var commanders := _resolve_commanders(result, commander_db, difficulty_db, request)
-	result.game = GameState.create(result.map, unit_db, chart, commanders)
+	# The seating rides in with everything else and is vetted where it can be: only
+	# the board knows which seats it deals, so `create` refuses a seating naming one
+	# it does not, or leaving fewer than two armies, and says which (open-seats D2).
+	# There is no guessing and no silent filling — a `--seats=` nobody could play
+	# leaves no match, and `Battle` disables itself rather than inventing one.
+	result.game = GameState.create(result.map, unit_db, chart, commanders, request.seats)
 	if result.game == null:
 		push_error("battle: failed to build game state from %s" % map_path)
 		return null
@@ -87,12 +92,40 @@ static func build(
 	# a duel, and only a loaded roster tells the two apart. An alliance of everybody
 	# is a match no command can advance — every attack and capture is refused, so no
 	# army can ever fall — and the free-for-all is the honest thing to play instead.
+	#
+	# A grouping may only name a seat this match fills (open-seats D2) — meaning one
+	# the board deals and the seating then closed. Those two statements arrive in the
+	# same launch and contradict each other, so the grouping described a different
+	# match and honouring the rest of it would half-apply something nobody asked for.
+	# Refused the same way an unreadable one is: out loud, and dropped to the
+	# free-for-all rather than half-applied (four-players D6).
+	#
+	# A seat the board never deals at all is the *other* case and stays tolerated:
+	# `--sides=1+3v2+4` on a two-army board is one grouping written for any roster,
+	# which degenerates to the duel that board seats. Nothing there contradicts
+	# anything — the flag simply reached further than the file.
 	result.game.sides = request.sides.duplicate()
+	var vacant := _sides_off_the_roster(result.game, request.sides)
+	if not vacant.is_empty():
+		push_error(
+			(
+				"battle: the grouping allies %s, which %s does not seat; playing the free-for-all"
+				% [vacant, map_path]
+			)
+		)
+		result.game.sides = {}
 	if not result.game.sides.is_empty() and not _anyone_is_hostile(result.game):
 		push_error(
 			"battle: the grouping allies every army on %s; playing the free-for-all" % map_path
 		)
 		result.game.sides = {}
+	# The computer's seats are narrowed to the table for a related reason: a planner
+	# on a seat nobody is in plays nobody. Silently, unlike the grouping above, and
+	# the difference is whose statement is being dropped — nothing a player types can
+	# reach this list. It is the request's own default (seat 2, the opponent every
+	# launch has had) or `--watch`'s roster, and narrowing a default to a fact stated
+	# later is not the same as discarding something somebody asked for.
+	result.ai_teams = _seated_ai_teams(result.game, result.ai_teams)
 	# Watch mode seats every army with a planner, and which armies those are is the
 	# board's answer (four-players plan D1) — not knowable when the flag was parsed,
 	# which is why the request could only carry the duel it assumed.
@@ -106,6 +139,29 @@ static func build(
 	else:
 		result.game.rng.randomize()
 	return result
+
+
+## The armies a grouping names that this match **closed** — seats the board deals
+## and the seating left out. Empty for every grouping that describes the table in
+## play, including a partial one (a pair against loners, and always was) and one
+## reaching past the board's own roster (a grouping written for a wider map).
+static func _sides_off_the_roster(game: GameState, grouped: Dictionary) -> Array[int]:
+	var dealt := game.map.teams()
+	var vacant: Array[int] = []
+	for team: int in grouped:
+		if dealt.has(team) and not game.teams.has(team):
+			vacant.append(team)
+	return vacant
+
+
+## `wanted` narrowed to the seats this match actually fills. So closing the seat the
+## computer had leaves a table of people — which is what closing it said.
+static func _seated_ai_teams(game: GameState, wanted: Array[int]) -> Array[int]:
+	var seated: Array[int] = []
+	for team in wanted:
+		if game.teams.has(team):
+			seated.append(team)
+	return seated
 
 
 ## Whether any army on the board has an enemy at all, asked of the one hostility

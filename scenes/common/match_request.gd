@@ -73,6 +73,16 @@ var side_specs: Dictionary = {}
 ## *match's* choice, never the board's, so the same map hosts a free-for-all, a
 ## 2v2 and a 3v1).
 var sides: Dictionary = {}
+## Which of the board's seats this match fills, in seat order — **empty is every
+## one of them**, which is what every launch said before a seat could close.
+##
+## The match's fourth setup fact (open-seats plan D2), beside the board, the sides
+## and the commanders. The board still owns how many seats exist and where they
+## sit; this only says which are taken, so a four-seat map plays a duel without
+## being copied into a second, smaller file. `GameState.create` is what refuses a
+## seating that names a seat no board deals or leaves fewer than two armies — this
+## object states the request, it does not vet it against a map it has not loaded.
+var seats: Array[int] = []
 
 
 ## The main menu's choices. `resume` is the Continue button: the saved match
@@ -84,7 +94,8 @@ static func from_menu(
 	difficulty_in: StringName,
 	commanders_in: Dictionary,
 	resume_in: bool,
-	sides_in: Dictionary = {}
+	sides_in: Dictionary = {},
+	seats_in: Array[int] = []
 ) -> MatchRequest:
 	var request := MatchRequest.new()
 	request.map_path = map_path_in
@@ -94,6 +105,7 @@ static func from_menu(
 	request.commanders = commanders_in.duplicate()
 	request.resume = resume_in
 	request.sides = sides_in.duplicate()
+	request.seats = seats_in.duplicate()
 	return request
 
 
@@ -110,6 +122,9 @@ static func from_match(
 	request.fog_enabled = game.fog_enabled
 	request.difficulty = difficulty_in
 	request.sides = game.sides.duplicate()  # a rematch keeps the grouping it was played under
+	# And the seating, off the live roster: a rematch of a reduced match is *that*
+	# match again, not the full board it was played on a corner of.
+	request.seats = game.teams.duplicate()
 	for team in game.teams:
 		request.commanders[team] = game.commander_of(team).id
 	return request
@@ -139,8 +154,13 @@ func apply_cmdline(args: PackedStringArray) -> void:
 			map_path = resolved
 	if CmdArgs.has(args, "--days"):
 		days_cap = maxi(1, int(CmdArgs.value(args, "--days")))
+	# Read before `--co`, and that order is the whole reason it sits here: a
+	# commander list is positional over the seats that *play*, so the seating has to
+	# be known before the list is dealt out over it.
+	if CmdArgs.has(args, "--seats"):
+		seats = parse_seats_flag(CmdArgs.value(args, "--seats"))
 	if CmdArgs.has(args, "--co"):
-		commanders = parse_co_flag(CmdArgs.value(args, "--co"))
+		commanders = parse_co_flag(CmdArgs.value(args, "--co"), filled_roster())
 	if CmdArgs.has(args, "--difficulty"):
 		difficulty = StringName(CmdArgs.value(args, "--difficulty").strip_edges())
 	if CmdArgs.has(args, "--red"):
@@ -202,15 +222,52 @@ static func parse_sides_flag(value: String) -> Dictionary:
 	return grouped
 
 
+## The seats a commander list is dealt out over: the ones this request fills, or
+## every seat the rules recognise when it fills them all. Not the board's roster —
+## no board is loaded when the flags are read — which costs nothing, because
+## `parse_co_flag` drops anything past the last seat either way.
+func filled_roster() -> Array[int]:
+	return seats if not seats.is_empty() else GameState.TEAMS
+
+
+## `--seats=1,3,4`: which of the board's seats play, in the order written. An empty
+## list is every seat, which is what the flag's absence already means — so
+## `--seats=` clears a seating a rematch or the menu had put there, the same way
+## `--co=` clears the commanders it picked.
+##
+## Parses and nothing else, like `parse_sides_flag` beside it: whether these are
+## seats the *board* deals, and whether enough of them are left to make a match, are
+## questions about a map no flag can see. `GameState.create` is the one authority on
+## both and refuses out loud, so a `--seats=` naming one army fails the build rather
+## than quietly playing something else.
+##
+## What it does refuse is a list it cannot read — a seating nobody meant is a match
+## nobody meant, and silently playing the whole board instead would look exactly
+## like a run that named no seats at all.
+static func parse_seats_flag(value: String) -> Array[int]:
+	var filled: Array[int] = []
+	for entry: String in value.split(",", false):
+		var seat := entry.strip_edges()
+		if not seat.is_valid_int():
+			push_error("battle: --seats=%s is not a seating; playing every seat" % value)
+			return []
+		filled.append(int(seat))
+	return filled
+
+
 ## `--co=alina_ward,viktor_draeg`: one id per seat in seat order, any of them blank
 ## for no commander, and anything past the last seat a board could have dropped.
 ## Keeps headless demos and captures able to pick a matchup without the menu,
 ## exactly as `--map` and `--fog` do.
-static func parse_co_flag(value: String) -> Dictionary:
+##
+## Positional over `roster`, which is the seats that actually play: commanders
+## belong to armies, so on `--seats=1,3` the second id is seat 3's general and not a
+## pick for a chair nobody is in.
+static func parse_co_flag(value: String, roster: Array[int] = GameState.TEAMS) -> Dictionary:
 	var picked: Dictionary = {}
 	var ids := value.split(",")
-	for i in mini(ids.size(), GameState.TEAMS.size()):
+	for i in mini(ids.size(), roster.size()):
 		var id := ids[i].strip_edges()
 		if id != "":
-			picked[GameState.TEAMS[i]] = StringName(id)
+			picked[roster[i]] = StringName(id)
 	return picked

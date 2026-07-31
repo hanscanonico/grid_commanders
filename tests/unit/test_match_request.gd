@@ -174,10 +174,9 @@ func test_the_menu_adapter_carries_every_choice() -> void:
 	assert_true(request.fog_enabled)
 	assert_eq(request.difficulty, &"hard")
 	assert_true(request.resume, "Continue asked to resume")
+	assert_eq(request.seats, [] as Array[int], "a table nobody closed a seat at")
 
 
-## Continue stages `resume`, and the flags are layered over it afterwards. A
-## resumed match must still be a resumed match once they are.
 func test_the_flags_do_not_cancel_a_resume() -> void:
 	var request := MatchRequest.from_menu(
 		MatchRequest.DEFAULT_MAP_PATH, [BLUE] as Array[int], false, &"normal", {}, true

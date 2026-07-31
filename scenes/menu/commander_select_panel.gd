@@ -41,6 +41,11 @@ var _faction_keys: Array[StringName] = []
 
 var _slot := 0
 var _picks: Array[StringName] = []
+## The seats being walked, in seat order — parallel to `_picks`. The seats that
+## *play*, which on a board with one closed is not `1..n`: a commander belongs to
+## an army, so a chip, a livery and the confirmed pick all key to the seat's own
+## number rather than to its place in the walk (open-seats plan D4).
+var _seats: Array[int] = []
 ## Seats the computer plays, so a chip can say CPU rather than Player N.
 var _ai_seats: Array[int] = []
 ## The commander currently previewed (not yet locked) for the active side.
@@ -82,14 +87,21 @@ func _group_roster() -> void:
 			_by_faction[key].append(commander)
 
 
-## Opens the page for a fresh set of picks, one per seat the board deals.
+## Opens the page for a fresh set of picks, one per seat the match fills.
 ## `ai_seats` only changes how a slot is labelled — CPU rather than Player N —
 ## because every seat's commander is chosen here whoever ends up playing it.
-func begin(seats: int, ai_seats: Array[int] = []) -> void:
+##
+## A caller naming no seats gets the duel every board was before one could be
+## closed, which is what keeps this page openable from a fixture or a capture that
+## has no strip to ask.
+func begin(seats: Array[int], ai_seats: Array[int] = []) -> void:
 	_ai_seats = ai_seats.duplicate()
+	_seats = seats.duplicate()
+	while _seats.size() < DUEL_SEATS:
+		_seats.append(_seats.size() + 1)
 	_slot = 0
 	_picks.clear()
-	for _i in maxi(DUEL_SEATS, seats):
+	for _i in _seats.size():
 		_picks.append(CommanderType.NEUTRAL_ID)
 	_build_chips()
 	show()
@@ -437,7 +449,7 @@ func _confirm() -> void:
 		return
 	var chosen: Dictionary = {}
 	for i in _picks.size():
-		chosen[i + 1] = _picks[i]
+		chosen[_seats[i]] = _picks[i]
 	confirmed.emit(chosen)
 
 
@@ -515,7 +527,7 @@ func _refresh_chips() -> void:
 	var identity := _preview_identity()
 	var terse := _chips.size() > DUEL_SEATS
 	for i in _chips.size():
-		var seat := i + 1
+		var seat: int = _seats[i]
 		var who := _seat_role(seat, terse)
 		if i > _slot:
 			# Not reached yet: named but uncoloured, so the walk's remaining length
@@ -553,11 +565,11 @@ func _preview_identity() -> SideIdentity:
 	var picks: Dictionary = {}
 	for i in _picks.size():
 		if i < _slot:
-			picks[i + 1] = _db.by_id(_picks[i])
+			picks[_seats[i]] = _db.by_id(_picks[i])
 		elif i == _slot:
-			picks[i + 1] = _current
+			picks[_seats[i]] = _current
 		else:
-			picks[i + 1] = null
+			picks[_seats[i]] = null
 	return SideIdentity.resolve(picks)
 
 
