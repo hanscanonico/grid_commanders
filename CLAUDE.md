@@ -150,9 +150,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   back into `capture_strength` — Battle puts `GameState.capture_progress` through the same fog gate
   the board uses and hands the result over. Both wear outlined marks rather than filled panels: the
   handoff's ink chip is trim on its 44px tile and covers the building being captured on this
-  board's 16. Every captured frame shifts, because the threat chip is permanent top-bar chrome and
-  so is in all of them; the `capture` and new `field_overlays` frames additionally move on the
-  board itself, the path no longer being a yellow polyline and capturing tiles now carrying a pip.
+  board's 16. Every captured battle frame shifts, because the threat chip is permanent top-bar
+  chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
+  on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
+  a pip.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

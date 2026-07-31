@@ -347,7 +347,12 @@ mouse, keyboard, or controller throughout.
   `R` asks what *this* unit reaches, the lens asks where it is unsafe to stand. It issues nothing
   and belongs to no unit, so unlike the fire ring it survives selection, movement and the turn:
   nothing puts it down but pressing `T` again. The top bar's `T · THREAT` chip says which it is,
-  dim while the lens is down and red while it is up
+  dim while the lens is down and red while it is up. It is the red half of the same bargain the
+  blue makes: only enemies you have actually spotted are in it, and their reach is drawn on ground
+  you have scouted, so under fog an unshaded cell is not a promise of safety — only that nothing
+  you have found covers it. A unit you have never scouted, one sitting in woods, a dived submarine
+  or one a commander's doctrine is hiding all shoot into cells the lens leaves clear. Turn fog off
+  and the lens is complete
 - After a move, the action menu opens: **Fire** (offered only when an enemy the unit has a ready
   weapon for is in range from the destination), **Capture** (offered when a capture-capable
   unit ends on a property you don't own), **Drop** and **Supply** (see transports below),
