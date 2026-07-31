@@ -1,0 +1,60 @@
+# Four road blades turn clockwise around a wooded hub: race the wheel or cut it.
+# Seats sit at the corners in reading order — 1 NW, 2 NE, 3 SE, 4 SW — so the
+# opposite pairs 1&3 and 2&4 make the fair duel. The whole board is laid out on a
+# 90-degree rotation, (x, y) -> (13 - y, x): each seat's quarter is the previous
+# seat's quarter turned once, which is why a duel on opposite seats is fair by
+# construction. No `# symmetric` tag — that one asserts a 180-degree *duel*
+# mirror, and this is a four-seat board.
+# Each blade leaves its own base, runs the long edge clockwise, then hooks into
+# the next seat's flank rather than its face. Cutting the hub instead is two
+# ranks of woods behind a rock at each corner: shorter, slower, and worth
+# holding. Land only — the computer cannot plan a ferry, so every army has to be
+# able to walk to every other.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+..............
+.QB========.Q.
+...C.C....=.B.
+.====.....=C=.
+.=........=.=.
+.=...MFFM..C=.
+.=...FFFF...=.
+.=...FFFF...=.
+.=C..MFFM...=.
+.=.=........=.
+.=C=.....====.
+.B.=....C.C...
+.Q.========BQ.
+..............
+[owners]
+# team x y — an HQ and a base per seat, nothing else; all eight cities are
+# contested, two within reach of each corner.
+1 1 1
+1 2 1
+2 12 1
+2 12 2
+3 12 12
+3 11 12
+4 1 12
+4 1 11
+[units]
+# team symbol x y — i infantry, m mech, r recon.
+# The standard infantry screen, one quarter turned four times: two rifles
+# forward, a mech for the hub and a recon on the blade. The screens meet on
+# day 2.
+1 i 4 2
+1 i 2 2
+1 m 2 4
+1 r 4 1
+2 i 11 4
+2 i 11 2
+2 m 9 2
+2 r 12 4
+3 i 9 11
+3 i 11 11
+3 m 11 9
+3 r 9 12
+4 i 2 9
+4 i 2 11
+4 m 4 11
+4 r 1 9
