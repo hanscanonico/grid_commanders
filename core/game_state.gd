@@ -109,6 +109,11 @@ var map_path := ""
 ## Which is the invariant worth holding onto, and the reason nothing downstream
 ## needed changing: **a reduced match on a big board produces exactly the state a
 ## small board would have produced.**
+##
+## Refused (null, with a pushed error) two ways, because `create` is the one
+## authority every route in — the menu, a rematch, `--seats=` — has to pass, and it
+## does not guess: a seating naming a seat the board never dealt, and one leaving
+## fewer than `MIN_SEATS` armies.
 static func create(
 	p_map: MapData,
 	unit_db: UnitDB,
@@ -119,6 +124,15 @@ static func create(
 	var state := GameState.new()
 	state.map = p_map
 	state.damage_chart = p_damage_chart
+	var unseated := _unseated(p_map.teams(), p_seats)
+	if not unseated.is_empty():
+		push_error(
+			(
+				"GameState: seats %s name %s, which the board's %s does not deal"
+				% [p_seats, unseated, p_map.teams()]
+			)
+		)
+		return null
 	state.teams = _filled_seats(p_map.teams(), p_seats)
 	if state.teams.size() < MIN_SEATS:
 		push_error(
@@ -154,13 +168,32 @@ static func create(
 			return null
 		state.units.append(Unit.create(type, entry.team, cell))
 	for team: int in p_commanders:
+		# D1 once more: a vacant seat never enters the state, and a commander is state.
+		if not state.teams.has(team):
+			continue
 		state.set_commander(team, p_commanders[team])
 	TurnRules.begin_turn(state)  # day-1 income and upkeep for the first player
 	return state
 
 
+## The seats a seating names that the board never dealt, in the order named. Empty
+## `seats` names nothing and so misses nothing.
+##
+## Refusing on these rather than quietly dropping them is the same decision as
+## refusing a seating that leaves one army: `--seats=` is typed by hand, and a typo
+## that narrows the roster in silence launches a different match than the one asked
+## for — which is the failure nobody would think to look for.
+static func _unseated(roster: Array[int], seats: Array[int]) -> Array[int]:
+	var unknown: Array[int] = []
+	for team in seats:
+		if not roster.has(team):
+			unknown.append(team)
+	return unknown
+
+
 ## The board's roster narrowed to the seats a match fills, in seat order. Empty
-## `seats` is every one of them.
+## `seats` is every one of them; every seat named is one the board deals, which
+## `_unseated` has already answered for.
 ##
 ## Never a renumber: closing seat 2 of four leaves `[1, 3, 4]`, because `[owners]`,
 ## `[units]`, the liveries and the commander picks are all keyed by the seat's own

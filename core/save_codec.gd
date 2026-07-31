@@ -15,9 +15,10 @@ extends RefCounted
 ## duel by definition. Version 5 adds the grouping: which armies stood together,
 ## because a roster stopped implying who was fighting whom. Version 6 adds the
 ## fallen, because an army leaving the board stopped being the end of the match.
-## Version 7 adds each army's home HQ, because a seat may now stay empty and an HQ
-## may change hands, so which HQ fells which army stopped being re-derivable from a
-## board mid-match. All six are purely additive, so older saves are still read
+## Version 7 adds each army's home HQ, which pins where every army began against a
+## later edit of the map file it names: the board still derives the same answer, so
+## carrying it is what lets a save whose board has since moved be *refused* rather
+## than silently re-homed. All six are purely additive, so older saves are still read
 ## rather than rejected — a save with no commander block loads with both sides
 ## neutral, one with no dive flag loads with every boat on the surface, one with no
 ## roster loads as the duel it was, one with no grouping loads as the free-for-all
@@ -576,14 +577,19 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	return _home_hq_board_error(data, map, version)
 
 
-## "" when every home HQ the save names is an HQ standing on `map`, else why one is
-## not. `_home_hq_error`'s half of the same field, split for the reason the whole
-## file is split: which cells exist and what stands on them is the board's answer.
+## "" when the save's home HQs are the ones its board deals, else why they are not.
+## `_home_hq_error`'s half of the same field, split for the reason the whole file is
+## split: which cells exist, what stands on them, and which armies a board homes at
+## all are the board's answers.
 ##
-## The terrain check is the one that matters. A home HQ on a cell that is not an HQ
-## is an army that cannot be captured out of the match at all — a save that loads
-## clean and plays a rule short, which is the class of damage this pair exists to
-## refuse.
+## Two ways an army ends up unbeheadable, which is the damage this pair exists to
+## refuse — a save that loads clean and plays a rule short. A home HQ on a cell that
+## is not an HQ is one; a *missing* entry for an army the board does start on an HQ
+## is the same harm reached by deleting rather than editing, so the expected set is
+## `GameState.home_hqs` — the one derivation, asked of this save's map and roster.
+##
+## Which keeps the allowance it has to keep: a board is free to deal a seat no HQ,
+## and `home_hqs` names no such seat, so no entry is demanded for it.
 ##
 ## Gated on the version that writes the field, like its sibling, and for a second
 ## reason here: `board_error` floors an unreadable version to the oldest one, which
@@ -598,10 +604,16 @@ static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -
 	error = _cells_on_board(data["home_hq"], map, "home HQ")
 	if error != "":
 		return error
+	var homed: Dictionary = {}
 	for entry: Dictionary in data["home_hq"] as Array:
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		if map.terrain_at(cell).id != GameState.HQ_TERRAIN:
 			return "team %d's home HQ at %s is not an HQ" % [int(entry["team"]), cell]
+		homed[int(entry["team"])] = true
+	var expected := GameState.home_hqs(map, _roster(data))
+	for team: int in expected:
+		if not homed.has(team):
+			return "the save gives team %d no home HQ, but its board starts it on one" % team
 	return ""
 
 
@@ -852,12 +864,17 @@ static func _encode_home_hq(state: GameState) -> Array:
 
 ## Where each army began, for the match being resumed.
 ##
-## Below the version that writes it the answer comes from the *map*, and is exact
-## rather than a guess: such a save always seated the board's full roster, so every
-## army it names began on the HQ its map file gave it. Which is why this is not
-## inferred from the save's own ownership — mid-match a conqueror owns the HQ it
-## took as well as its own, and "the HQ this team owns" has two answers exactly
-## when the distinction matters.
+## The map plus the roster derive the same answer — `GameState.home_hqs` is that one
+## derivation — so what carrying the field buys is the map file no longer being able
+## to move a home under a save that is already on disk: the pair of validators above
+## refuse a save whose board has changed instead of re-homing an army in silence.
+##
+## Below the version that writes it there is nothing to read and the map answers,
+## which is exact rather than a guess: such a save always seated the board's full
+## roster, so every army it names began on the HQ its map file gave it. Never
+## inferred from the save's own ownership either way — mid-match a conqueror owns
+## the HQ it took as well as its own, and "the HQ this team owns" has two answers
+## exactly when the distinction matters.
 ##
 ## Floors on anything it cannot read, like its siblings, and to the same map-derived
 ## answer; `_home_hq_error` reports a list that is wrong rather than leaving it to
@@ -889,8 +906,9 @@ static func _decode_home_hq(data: Dictionary, map: MapData, roster: Array[int]) 
 ## the rule that ends it fires on the wrong cell. Whether the cell is a real HQ on a
 ## real board is `board_error`'s, which has the map this one deliberately does not.
 ##
-## An army with *no* entry is fine and stays fine: a board is allowed to deal a seat
-## no HQ, and such an army simply cannot be captured out of the match.
+## An army with *no* entry is `board_error`'s too, and for the same reason: whether
+## one was owed depends on whether the board homes that seat at all, which is a
+## question only the map answers.
 ##
 ## Asked only of the version that writes it. Below that there is no list to be
 ## wrong — `_decode_home_hq` takes the map's answer, which no save can damage.

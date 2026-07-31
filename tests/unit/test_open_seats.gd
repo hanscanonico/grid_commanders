@@ -12,6 +12,10 @@ extends GutTest
 ## The home HQ is the same milestone's other half. "Capturing an HQ eliminates its
 ## owner" is exact only while every HQ has a living owner and no army holds two —
 ## and open seats break the first while a conqueror already broke the second.
+##
+## What a reduced match and a home HQ cost the *save format* is the same milestone
+## again, in test_open_seats_save.gd — split off because this file sits at the
+## gdlintrc max-public-methods ceiling.
 
 const QUARTET := "res://maps/fixtures/quartet.txt"
 ## Three armies in a row of HQs, each on its own, with room below to stand. Seat 3
@@ -152,11 +156,23 @@ func test_the_turn_rolls_over_a_closed_seat_and_the_day_wraps_on_the_last_one() 
 	assert_eq(state.day, 2, "which is where the day turns")
 
 
-func test_seats_the_board_never_dealt_are_simply_not_at_the_table() -> void:
+## Named by id rather than dropped in silence: `--seats=` is typed by hand, so a
+## seat the board never dealt is a typo, and playing whatever survived it would
+## launch a different match than the one asked for.
+func test_seats_the_board_never_dealt_are_refused_by_id() -> void:
 	var state := _quartet([1, 2, 3, 4] as Array[int])
-	assert_eq(state.teams, [1, 2, 3, 4] as Array[int])
-	var duel := _state("[terrain]\n....\n[units]\n1 i 0 0\n2 i 3 0", [1, 2, 3] as Array[int])
-	assert_eq(duel.teams, [1, 2] as Array[int], "a duel board has no third seat to fill")
+	assert_eq(state.teams, [1, 2, 3, 4] as Array[int], "naming every seat is still the full board")
+	var map := MapData.load_from_file(QUARTET, terrain_db)
+	assert_null(
+		GameState.create(map, unit_db, chart, {}, [1, 2, 5] as Array[int]),
+		"a stray seat is refused even though two good ones would have made a match"
+	)
+	assert_push_error("seats [1, 2, 5] name [5]")
+	assert_null(
+		_state("[terrain]\n....\n[units]\n1 i 0 0\n2 i 3 0", [1, 2, 3] as Array[int]),
+		"a duel board has no third seat to fill"
+	)
+	assert_push_error("name [3]")
 
 
 ## Refused rather than guessed at: one army is not a match, and `create` is where
@@ -171,7 +187,19 @@ func test_a_seating_that_leaves_fewer_than_two_armies_is_refused() -> void:
 		GameState.create(map, unit_db, chart, {}, [9] as Array[int]),
 		"and neither is a seating naming nobody the board deals"
 	)
-	assert_push_error("seats [9] leave 0 of the board's")
+	assert_push_error("seats [9] name [9]")
+
+
+## A commander is state like a purse is, so a pick for a seat nobody filled is
+## dropped with the rest of that seat — both the menu and a rematch hand `create`
+## every pick they hold, without knowing which seats the seating closed.
+func test_a_closed_seats_commander_never_enters_the_state() -> void:
+	var map := MapData.load_from_file(QUARTET, terrain_db)
+	var pick: CommanderType = load("res://data/commanders/tomas_reed.tres")
+	var picks := {1: pick, 2: pick, 3: pick}
+	var state := GameState.create(map, unit_db, chart, picks, [1, 3] as Array[int])
+	assert_not_null(state)
+	assert_eq(state.commanders.keys(), [1, 3], "seat 2's pick was dropped with seat 2")
 
 
 # --- the home HQ -------------------------------------------------------------
@@ -232,69 +260,3 @@ func test_the_home_hq_is_where_an_army_began_not_where_it_stands() -> void:
 	_capture(state, state.units_of(2)[0], Vector2i(3, 0))
 	assert_eq(state.home_hq[2], Vector2i(1, 0), "conquest does not move a home")
 	assert_eq(state.home_hq[3], Vector2i(3, 0), "nor does losing one")
-
-
-# --- the save carries it -----------------------------------------------------
-
-
-func test_a_reduced_match_round_trips_mid_capture() -> void:
-	var state := _quartet([1, 3] as Array[int])
-	state.capture_progress[Vector2i(14, 7)] = 8  # a vacant seat's HQ, half taken
-	state.funds[3] = 4200
-	var data := SaveCodec.encode(state, [3] as Array[int])
-	assert_eq(SaveCodec.validate(data), "")
-	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
-	assert_not_null(loaded)
-	assert_eq(loaded.state.teams, [1, 3] as Array[int], "the reduced roster resumes reduced")
-	assert_eq(loaded.state.funds, state.funds)
-	assert_eq(loaded.state.home_hq, state.home_hq)
-	assert_eq(loaded.state.capture_progress[Vector2i(14, 7)], 8)
-	assert_eq(loaded.state.owner_at(Vector2i(14, 7)), MapData.NEUTRAL, "and so does the loose HQ")
-
-
-## Exact rather than a guess: a save written before the field existed always seated
-## the board's full roster, so every army it names began on the HQ its map gave it.
-func test_a_save_written_before_home_hqs_takes_them_from_its_map() -> void:
-	var state := _quartet()
-	var data := SaveCodec.encode(state, [] as Array[int])
-	data.erase("home_hq")
-	data["version"] = 6
-	assert_eq(SaveCodec.validate(data), "", "version 6 knew no home HQs to demand")
-	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart)
-	assert_not_null(loaded)
-	assert_eq(loaded.state.home_hq, state.home_hq)
-
-
-func test_a_current_save_without_home_hqs_is_refused() -> void:
-	var data := SaveCodec.encode(_quartet(), [] as Array[int])
-	data.erase("home_hq")
-	assert_eq(SaveCodec.validate(data), "a version 7 save is missing 'home_hq'")
-
-
-func test_a_home_hq_for_an_army_that_does_not_play_is_refused() -> void:
-	var data := SaveCodec.encode(_quartet([1, 3] as Array[int]), [] as Array[int])
-	data["home_hq"].append({"team": 2, "x": 14, "y": 7})
-	assert_eq(SaveCodec.validate(data), "the save gives a home HQ to team 2, which does not play")
-
-
-func test_two_home_hqs_for_one_army_are_refused() -> void:
-	var data := SaveCodec.encode(_quartet(), [] as Array[int])
-	data["home_hq"].append({"team": 1, "x": 14, "y": 7})
-	assert_eq(SaveCodec.validate(data), "the save gives team 1 two home HQs")
-
-
-## The board's half of the same field. A home HQ that is not an HQ is an army no
-## capture can ever take out of the match — a save that loads clean and plays a
-## rule short.
-func test_a_home_hq_that_is_not_an_hq_is_refused() -> void:
-	var map := MapData.load_from_file(QUARTET, terrain_db)
-	var data := SaveCodec.encode(_quartet(), [] as Array[int])
-	data["home_hq"][0] = {"team": 1, "x": 0, "y": 0}
-	assert_eq(SaveCodec.board_error(data, map), "team 1's home HQ at (0, 0) is not an HQ")
-
-
-func test_a_home_hq_off_the_board_is_refused() -> void:
-	var map := MapData.load_from_file(QUARTET, terrain_db)
-	var data := SaveCodec.encode(_quartet(), [] as Array[int])
-	data["home_hq"][0] = {"team": 1, "x": 99, "y": 99}
-	assert_eq(SaveCodec.board_error(data, map), "home HQ at (99, 99) is off a 16x9 board")
