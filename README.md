@@ -202,10 +202,11 @@ land-only too: the computer cannot plan a ferry, so a board it may have to fight
 grouping has to let every army reach every other on foot.
 
 `forge`, `foursquare`, `arsenal` and `steelworks` are the production boards, and the only ones that
-hand out **no starting units at all**: what you get instead is factories — two to four bases a side
-where the rest of the roster tops out at two, an owned airport a side on the larger two, and neutral
-bases and airports to expand production itself. `foursquare` is the lean one and the four-way answer
-to `forge`: one base an army and no starting city, so 2000 a day until somebody takes ground, and the
+hand out **no starting units at all**: what you get instead is factories. On `forge`, `arsenal` and
+`steelworks` that means two to four bases a side where the rest of the roster tops out at two, an
+owned airport a side on the larger two, and neutral bases and airports to expand production itself.
+`foursquare` is the lean one and the four-way answer to `forge`: one base an army, no airport, no
+neutral base — just twelve neutral cities — so 2000 a day until somebody takes ground, and the
 whole match is the escalation curve. The opening is a build order rather than a march, and
 `steelworks` at 26×18 is the largest board in the game. An empty day 1 is legal without any rules
 change: defeat is only ever checked when a unit dies, and the AI's planner already falls through to
