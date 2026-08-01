@@ -7,8 +7,9 @@ extends GutTest
 ## cohesion term is one penalty on the advance path (D5) — no groups, no
 ## leaders, no waiting state.
 ##
-## Profiles are built here rather than loaded, so the shipped tiers staying at 0
-## (D2 — BL2 sets the live value) is a balance fact and never a test failure.
+## Profiles are built here rather than loaded, because what these pin is the
+## behaviour of the capability at a chosen weight. What a shipped tier sets it
+## to is a balance decision, and retuning one must never break this suite.
 
 ## A tank (6 move) and a mech (2 move) side by side, the enemy twenty-two tiles
 ## east. Blind, the tank is gone by the end of the first turn.

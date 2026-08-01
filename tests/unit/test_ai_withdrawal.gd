@@ -61,7 +61,7 @@ func _plan(map_text: String, withdraw_weight: float, hp: int) -> Command:
 	for unit in state.units:
 		if unit.cell == OUR_TANK:
 			unit.hp = hp
-	var profile := AIProfile.new()  # every other capability off; the Normal baseline
+	var profile := AIProfile.new()  # Normal's shipped numbers; only withdraw_weight varies
 	profile.withdraw_weight = withdraw_weight
 	return AIController.new(unit_db, profile).plan_next_command(state)
 

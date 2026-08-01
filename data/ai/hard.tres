@@ -3,8 +3,10 @@
 [ext_resource type="Script" path="res://ai/ai_profile.gd" id="1"]
 
 ; Difficult. Weights set by the DF4 AI-vs-AI ladder, not by taste — see
-; docs/difficulty_check.md for the measurements behind each one (§4 for the
-; standing ladder, §6 for the superseded probes the dials were first set from).
+; docs/difficulty_check.md for the measurements behind each one (the standing
+; verdict at the top of that file and §4c for the current ladder, §4 for the
+; last one measured before the Judgement dials went live, §6 for the superseded
+; probes the dials were first set from).
 ;
 ; threat_aversion is deliberately small: the penalty is scaled by the exposed
 ; unit's cost, so on a contested front the incoming total saturates and anything
@@ -58,7 +60,7 @@ threat_aversion = 0.1
 advance_threat_tiles = 2.0
 focus_fire_bonus = 0.0
 build_reactivity = 0.6
-defend_weight = 0.0
+defend_weight = 2.5
 withdraw_weight = 0.0
-cohesion_tiles = 0.0
+cohesion_tiles = 1.5
 cohesion_radius = 2

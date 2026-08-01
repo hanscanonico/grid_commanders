@@ -65,9 +65,10 @@ commander-balance:
 # both sides swapped. Unlike commander balance this one *is* a gate — with no
 # economy or damage handicap at any tier, the higher tier's win rate is the only
 # evidence that "smarter, not cheating" is true, so a shortfall fails the run.
-# Narrow it for iteration, e.g.:
+# It fails today, knowingly — read docs/difficulty_check.md's standing verdict
+# before treating a red run as a regression. Narrow it for iteration, e.g.:
 #   make difficulty-check DIFF="--seeds=2 --days=15"
-# The committed artifacts of a tuning pass are data/ai/{easy,hard}.tres and
+# The committed artifacts of a tuning pass are the profiles under data/ai/ and
 # docs/difficulty_check.md, never the generated report.
 DIFF ?=
 difficulty-check:

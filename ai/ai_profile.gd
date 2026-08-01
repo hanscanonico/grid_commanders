@@ -3,10 +3,10 @@ extends Resource
 ## Everything AIController weighs when it picks a command. Pure data, so
 ## difficulty and iteration are edits to a .tres rather than to planner logic.
 ##
-## The defaults here match `data/ai/default.tres` and reproduce the behaviour
-## the planner had when these were constants: same state plus same profile
-## yields the same command. Tests that care about a specific weight build a
-## profile explicitly rather than leaning on the default file.
+## The defaults here match `data/ai/default.tres`, so an install whose profile
+## file is missing plays the same game as one with it. Same state plus same
+## profile yields the same command; tests that care about a specific weight
+## build a profile explicitly rather than leaning on the default file.
 ##
 ## Adding an `@export` here also means writing it into every profile under
 ## `data/ai/`: a tier that omits a field inherits the default below, so editing a
@@ -110,10 +110,11 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # --- Difficult-tier capabilities ---------------------------------------------
 #
 # Each gates a planner smart the base AI lacks. Every default is 0, which skips
-# the capability entirely: at 0 the code that reads it never runs, so Normal and
-# Easy plan exactly as the pre-difficulty AI did, on the same RNG stream. Only
-# data/ai/hard.tres turns them on. These change how the planner *ranks* its own
-# candidate moves — never a combat number, which stays owned by CombatResolver.
+# the capability entirely: at 0 the code that reads it never runs, and it never
+# draws from the RNG stream. Which tier carries which value is a balance fact
+# with one authority, docs/difficulty_check.md — do not restate it here. These
+# change how the planner *ranks* its own candidate moves — never a combat
+# number, which stays owned by CombatResolver.
 
 ## How heavily a destination's expected incoming damage next turn discounts an
 ## *attack's* score, as a fraction of the exposed unit's cost. >0 builds a
@@ -150,13 +151,22 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 
 # --- Judgement capabilities ---------------------------------------------------
 #
-# The AI Judgement plan's dials. Same zero-default contract as the block above —
-# at 0 the code that reads one never runs, so the shipped AI is byte-identical to
-# the AI that predates them — but *not* the same purpose: these are not a tier's
-# smarts. Each is a candidate for a live value the balance retune's BL2 sets (AI
-# Judgement D2); until then all three tiers ship them inert — at 0, or, like
-# cohesion_radius, gated by a dial that is. `docs/difficulty_check.md` §4b is
-# AJ4's measured band per dial, and it recommends withdraw_weight stay at 0.
+# The AI Judgement plan's dials, and unlike the block above these are *not* a
+# tier's smarts: noticing an enemy taking your ground and moving as an army are
+# basic competence, which is why they are not gated to one tier.
+#
+# 0 still skips a capability entirely — that is the code property, and the
+# per-capability suites under tests/unit/ build explicit profiles to prove it.
+# These defaults track data/ai/default.tres so an install with no profile file
+# plays the same game as one with it, which is what
+# test_default_profile_matches_the_built_in_defaults is for; tuning one of these
+# means editing both, in the same commit. Which tier ships which value, and what
+# it cost the difficulty ladder, is docs/difficulty_check.md's to say.
+#
+# withdraw_weight is held at 0 by the code rather than by balance: at 0.05 it
+# stops an artillery short of maximum standoff, which
+# test_indirect_unit_backs_off_into_firing_range catches — a defect in how the
+# refuge is priced rather than a tuning preference.
 
 ## What removing an enemy from ground our own side holds is worth, as a multiple
 ## of what taking that ground would be worth to us. The price list is the capture
@@ -165,8 +175,11 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## worth exactly what making one is (AI Judgement D3). 0 skips it entirely.
 ##
 ## Denominated in VALUE, like _attack_score and like _consider_captures, which is
-## what lets the three compete in one UnitPlan without a conversion.
-@export var defend_weight: float = 0.0
+## what lets the three compete in one UnitPlan without a conversion — and which
+## is also this dial's ceiling: the bonus is linear and priced on the same scale
+## as a kill, so a rich enough target outbids even a match-ending capture no
+## matter how high the weight goes (docs/difficulty_check.md §4c).
+@export var defend_weight: float = 2.0
 ## What stepping out of the enemy's reach is worth, as a fraction of the cost of
 ## the unit doing the stepping, per point of HP the incoming fire would have
 ## taken. 0 skips it entirely; >0 builds the per-turn threat map on its own, with
@@ -189,10 +202,11 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## deliberately not coded: the goal term still pulls forward, so the equilibrium
 ## is a column that advances at the speed of its rear rather than a formation
 ## with a state to enter and get stuck in.
-@export var cohesion_tiles: float = 0.0
+@export var cohesion_tiles: float = 1.0
 ## How far apart units may drift before cohesion_tiles starts charging them.
-## Inert while cohesion_tiles is 0, which is why it may ship non-zero without
-## moving a single planned command.
+## Inert while cohesion_tiles is 0, so a tier that switches cohesion off need not
+## also reset this one. It was probed together with cohesion_tiles and never
+## apart, so move the pair together — see docs/difficulty_check.md.
 @export var cohesion_radius: int = 2
 
 

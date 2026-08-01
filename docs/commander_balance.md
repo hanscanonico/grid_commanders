@@ -120,7 +120,10 @@ bug-fix pass of 2026-07-24 then runs the opening side's day-1 `begin_turn` under
 its real commander, resupplies passengers aboard a transport at their side's
 turn start, banks power charge for cargo sunk with its transport, and touched
 the planner itself (`docs/difficulty_check.md` §6 lists those changes) — all of
-which shift doctrines that read supply or charge. The standings below are kept
+which shift doctrines that read supply or charge. The AI Judgement dials then
+went live on 2026-08-01, moving `data/ai/default.tres` — the profile every
+commander in this matrix is planned with — so the CA4 standings predate the
+planner too (`docs/difficulty_check.md` §4c). The standings below are kept
 as the record of what was measured, not a current claim; re-run the matrix
 before quoting them. Only the runner writes these numbers.
 
@@ -175,7 +178,7 @@ commander-advice seam. `make difficulty-check` seats no commanders, and its
 seam moved no doctrine-free decision. (Both bare 4-seed runs read red against
 the ladder gate, identically; `docs/difficulty_check.md` §5 says that subset
 "can read red without a regression" and is never the number to quote — the
-standing 15-seed gate result of 2026-07-28 is unaffected.)
+15-seed gate result then standing (2026-07-28) is unaffected.)
 
 | | `main` (`99c9c30`) | with doctrine advice |
 |---|---|---|

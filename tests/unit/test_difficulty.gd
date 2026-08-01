@@ -1,7 +1,11 @@
 extends GutTest
 ## The difficulty tier seam (plan DF1): the three tiers load, Normal is the
-## shipped AI bit for bit, an unknown id still plays, and the wiring is not inert
+## planner's own defaults, an unknown id still plays, and the wiring is not inert
 ## — Easy's profile must provably reach a different command than Normal's.
+
+## Our HQ at (0,0) with an enemy infantry standing on it, our tank one tile away,
+## and a fatter target — an enemy tank — the same distance the other way.
+const HQ_SIEGE := "[terrain]\nQ....\n.....\n[owners]\n1 0 0\n[units]\n1 t 1 1\n2 i 0 0\n2 t 2 1"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -42,9 +46,10 @@ func test_difficult_is_the_label_for_the_hard_id() -> void:
 	assert_eq(db.by_id(&"hard").display_name, "Difficult")
 
 
-## The pin that keeps Normal honest: it is the planner's own defaults, so a
-## same-seed replay of an existing match stays identical. A new weight added to
-## AIProfile without a default of "off" fails here, which is the point.
+## The pin that keeps Normal honest: the tier is the planner's own defaults, so
+## an install whose profile file is missing plays the same game. The weights
+## named here are the pre-difficulty set; parity across every field, including
+## the ones added since, is test_ai_profile.gd's.
 func test_normal_is_the_planner_defaults() -> void:
 	var normal := db.by_id(&"normal").profile()
 	var defaults := AIProfile.new()
@@ -61,8 +66,9 @@ func test_normal_is_the_planner_defaults() -> void:
 	assert_eq(normal.build_priority, defaults.build_priority)
 
 
-## Every Difficult-tier capability is off at Normal, so none of that code runs on
-## the tier the game has always shipped.
+## Every Difficult-tier capability is off at Normal, so none of that code runs
+## there. The AI Judgement dials are a separate set and Normal carries two of
+## them live — docs/difficulty_check.md §4c, never this list.
 func test_normal_leaves_every_capability_off() -> void:
 	var normal := db.by_id(&"normal").profile()
 	assert_almost_eq(normal.threat_aversion, 0.0, 0.0001)
@@ -93,6 +99,25 @@ func test_difficult_turns_the_capabilities_on() -> void:
 		0.0001,
 		"focus fire is benched by measurement; switching it back on is a DF4 decision"
 	)
+
+
+func _defends_its_hq(tier: StringName) -> bool:
+	var state := _state(HQ_SIEGE)
+	state.capture_progress[Vector2i(0, 0)] = 5
+	var command := AIController.new(unit_db, db.by_id(tier).profile()).plan_next_command(state)
+	return command is AttackCommand and (command as AttackCommand).target_cell == Vector2i(0, 0)
+
+
+## What test_ai_defence.gd pins at a chosen weight, pinned here at the weights
+## players actually get: the dial has to be large enough on Normal and Difficult
+## to outbid an ordinary rival, because a defence that loses to any tank on the
+## board is the reported defect it went live to answer. Easy declines on purpose
+## — rushing its headquarters is a beginner's affordance, not an oversight.
+## docs/difficulty_check.md §4c is the measured boundary, Rockets included.
+func test_normal_and_difficult_defend_a_headquarters_being_taken() -> void:
+	assert_true(_defends_its_hq(&"normal"), "Normal must answer a capture of its own HQ")
+	assert_true(_defends_its_hq(&"hard"), "Difficult must answer it too")
+	assert_false(_defends_its_hq(&"easy"), "Easy leaves its HQ open on purpose")
 
 
 ## Easy's timidity is mechanical, not cosmetic: over-weighting danger is what the

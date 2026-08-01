@@ -8,7 +8,8 @@
 ; threat_aversion is the timidity dial, turned the opposite way from Difficult's.
 ; The DF4 ladder found that over-weighting danger is what actually makes this
 ; planner weak (0.5 alone loses 88% of its games — docs/difficulty_check.md §6;
-; §4 is the standing ladder), and "flinches from danger" is
+; the standing verdict is at the top of that file and §4c is the current
+; ladder), and "flinches from danger" is
 ; exactly the character Easy wants: it hangs back, refuses trades it should take,
 ; and lets the player dictate the fight. advance_threat_tiles is the same
 ; flinch on the advance path, and Easy gets the larger of the two shipped values
@@ -45,5 +46,5 @@ focus_fire_bonus = 0.0
 build_reactivity = 0.0
 defend_weight = 0.0
 withdraw_weight = 0.0
-cohesion_tiles = 0.0
-cohesion_radius = 2
+cohesion_tiles = 0.5
+cohesion_radius = 4

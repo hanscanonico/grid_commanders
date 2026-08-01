@@ -670,27 +670,27 @@ tier it was played at.
 
 - **Easy** — timid by design. It over-weights danger, retreats early, refuses good trades, passes
   up marginal plays, under-staffs property races, finishes poorly, and never fields an md tank.
-  The AI-vs-AI ladder measures Normal taking 71.7% from it overall, clearing the 70% gate — but
-  the two boards disagree sharply about it: 93.3% on `scrimmage`, where Normal won every game
-  that ended on the board, against an even 50.0% on `ironworks`, where every match instead ran
-  out the day cap and was scored on the tiebreak. `docs/difficulty_check.md` carries the standing
-  numbers and how to read that split.
-- **Normal** — the shipped AI, bit for bit. A test pins its profile to the planner's own defaults,
-  so a same-seed replay of an old match still plays out identically.
+  It also lets its army spread out and has no instinct to defend ground you are taking from it,
+  so marching on its headquarters is a plan that works.
+- **Normal** — the shipped AI. It notices an enemy capturing its property and answers, and it
+  advances as a column rather than one unit at a time. A test pins its profile to the planner's
+  own defaults, so an install whose profile file is missing plays exactly the same game.
 - **Difficult** — the same economy and the same dice, with more on its mind. It builds a **threat
   map** each turn (what could shoot each cell next turn, forecast through the same combat resolver
   you see in the damage preview) and weighs it two ways: a shot is discounted by what the firing
   cell invites in return, scaled against the unit's own cost, and a unit that is only advancing
   will give up tiles of progress rather than end its move in a kill zone. It also **counter-builds**
-  against your actual roster instead of a fixed shopping list. The AI-vs-AI ladder measures it
-  taking 71.7% from Normal overall, clearing the 70% gate; `docs/difficulty_check.md` carries the
-  standing numbers and tuning record.
+  against your actual roster instead of a fixed shopping list, defends its ground harder than
+  Normal, and keeps a tighter column.
 
 Each tier is a `.tres` under `data/difficulty/` pointing at a profile in `data/ai/`, so retuning
-one is a data edit. `make difficulty-check` plays the tiers against each other headless and
-reports whether the ladder actually orders — see `docs/difficulty_check.md` for the standing
-result, and for the superseded probes the weights were first set from, including one capability
-that measured *negative* and ships switched off.
+one is a data edit. What separates the tiers is judgement and never a handicap — but how far apart
+they actually measure is its own question, and today the answer is "not far enough": the AI-vs-AI
+ladder `make difficulty-check` plays comes out narrower than the 70% margin this project holds
+itself to, because the capabilities that made Normal competent closed the gap the ladder measures.
+`docs/difficulty_check.md` carries the standing numbers, why that shortfall was accepted rather
+than tuned away by making Normal worse, and the superseded probes the weights were first set from
+— including one capability that measured *negative* and ships switched off.
 
 ## Architecture
 
