@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="KonradVale" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/konrad_vale.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"konrad_vale"
+display_name = "Konrad Vale"
+faction = "Iron Dominion"
+doctrine_text = "All units cost 20% more to build and gain +10% attack and defence."
+power_name = "Overwhelming Force"
+power_text = "All units gain +25% attack and ignore one terrain defence star this turn."
+power_quotes = Array[String](["Quality is a budget line. Pay it.", "One of mine is worth three of yours."])
+power_cost = 14000
+power_duration = 0
+unit_cost_pct = 120
+elite_attack_pct = 10
+elite_defense_pct = 10
+overwhelming_attack_pct = 25
+overwhelming_star_pierce = 1
+cheap_cost_ceiling = 5000
+cheap_build_bias = 3
