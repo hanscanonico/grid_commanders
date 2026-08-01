@@ -451,7 +451,7 @@ func _explains_removals(command: Command) -> bool:
 func _record_build(build: BuildCommand) -> void:
 	if _turn == null or build.unit_type == null:
 		return
-	_turn.spent += build.unit_type.cost
+	_turn.spent += build.paid_cost
 	_turn.built_value += build.unit_type.cost
 	_tally(_turn.built, build.unit_type.id)
 
@@ -520,7 +520,7 @@ func _log_entry(state: GameState, command: Command) -> Dictionary:
 		var build := command as BuildCommand
 		entry["unit"] = String(build.unit_type.id) if build.unit_type != null else ""
 		entry["to"] = _cell(build.cell)
-		entry["cost"] = build.unit_type.cost if build.unit_type != null else 0
+		entry["cost"] = build.paid_cost
 	elif command is PowerCommand:
 		var power := command as PowerCommand
 		entry["commander"] = String(power.commander.id) if power.commander != null else ""

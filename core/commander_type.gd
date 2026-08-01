@@ -200,6 +200,13 @@ func repair_cost_pct(_state: GameState, _unit: Unit) -> int:
 	return 100
 
 
+## What this army pays to build `unit_type`, as a percentage of its base value.
+## UnitPricing applies the floor and rounding; the base value itself remains the
+## currency used by charge, repair, target scoring and balance valuation.
+func build_cost_pct(_state: GameState, _team: int, _unit_type: UnitType) -> int:
+	return 100
+
+
 # --- powers ------------------------------------------------------------------
 
 

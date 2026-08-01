@@ -13,6 +13,9 @@ var unit_type: UnitType
 var cell: Vector2i
 ## Populated by apply() so the presentation layer can spawn its sprite.
 var built_unit: Unit
+## Exact purchase price paid. Kept beside built_unit so observers record the
+## applied command rather than re-deriving history after the fact.
+var paid_cost := 0
 
 
 func _init(p_team: int, p_unit_type: UnitType, p_cell: Vector2i) -> void:
@@ -42,13 +45,14 @@ func validate(state: GameState) -> String:
 			"%s does not build %s"
 			% [terrain.display_name.to_lower(), unit_type.display_name.to_lower()]
 		)
-	if state.funds[team] < unit_type.cost:
+	if state.funds[team] < UnitPricing.cost_for(state, team, unit_type):
 		return "insufficient funds"
 	return ""
 
 
 func apply(state: GameState) -> void:
-	state.funds[team] -= unit_type.cost
+	paid_cost = UnitPricing.cost_for(state, team, unit_type)
+	state.funds[team] -= paid_cost
 	built_unit = Unit.create(unit_type, team, cell)
 	built_unit.acted = true
 	state.units.append(built_unit)
