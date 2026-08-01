@@ -678,7 +678,8 @@ res://
 │              # ai_profile.gd owns every weight; NO Node references
 ├─ maps/        # map scenes / map resources
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
-├─ tools/       # offline scripts: balance harness (tools/balance/), art & sfx pipeline
+├─ tools/       # offline scripts: balance harness (tools/balance/), replay analyser
+│              # (tools/replay/), art & sfx pipeline
 ├─ docs/        # balance_sim.md, commander_balance.md, difficulty_check.md
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)
 ```
@@ -704,8 +705,9 @@ Follow the official Godot GDScript style guide. Key points:
 ## Testing
 
 - Tests use **GUT** (Godot Unit Test) and live in `tests/`, mirroring `core/` and `ai/`.
-- **Test the Node-free layers only** — `core/`, plus `ai/` and the offline balance harness in
-  `tools/balance/`, all of which are Node-free for exactly this reason. That's where the rules
+- **Test the Node-free layers only** — `core/`, plus `ai/`, the offline balance harness in
+  `tools/balance/` and the replay analyser in `tools/replay/`, all of which are Node-free for
+  exactly this reason. That's where the rules
   live and where bugs hurt. Presentation is verified by playing the scene, not by unit tests.
   The narrow exception is the launch layer that was deliberately made Node-free and
   argument-taking so it could be tested at all: `MatchRequest` and `CmdArgs` under
@@ -823,10 +825,12 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, which of its
   seats play (`seats`, empty = every one; `--seats=` is read before `--co=` because the commander
   list is positional over the seats that play), who plays them, how they group into sides, fog,
-  tier, commanders, resume, seed, watch, day cap, raw side specs — and
-  is built by one of three adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
-  `GameState`, so a match resumed from a save replays its own board and commanders) and
-  `apply_cmdline`, layered over either on **every** battle boot, which is how a headless capture
+  tier, commanders, resume, seed, watch, day cap, raw side specs, the recording to watch — and
+  is built by one of four adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
+  `GameState`, so a match resumed from a save replays its own board and commanders),
+  `from_replay` (a recording, which states its own board, seating, grouping, commanders and fog in
+  its opening envelope, so naming the file is the whole request) and
+  `apply_cmdline`, layered over any of them on **every** battle boot, which is how a headless capture
   and a menu launch reach the same board by the same route. `BattleSetup.build(request, …)` reads
   no autoload, scans no command line and writes nothing back; it returns `null` with a pushed error
   when the board or the state cannot be built (`assert` is stripped from a release build), and

@@ -306,7 +306,8 @@ then press **Start**, which opens the **commander selection page**; **Continue**
 resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
 under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
 is the match you meant; when there is nothing readable to resume it reads `NO SAVED MATCH` and the
-button is greyed out (disabled, not hidden). **Quit** exits.
+button is greyed out (disabled, not hidden). **Replays** opens the recordings page (see Replays
+below), and **Quit** exits.
 
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
@@ -670,6 +671,10 @@ them, oldest pruned. There is nothing to arm and nothing to remember: the match 
 the one you did not know was interesting until it ended. The slot is claimed by the first command
 rather than by the boot, so a match opened and left takes nobody else's place in the ten.
 
+**Replays** on the main menu is the way in: it lists what has been recorded, newest first, each row
+naming the board, the commanders that played it and when — pick one and it plays, **Back** lands on
+the setup exactly as it was left. From a terminal, name the file instead:
+
 ```sh
 make replay REPLAY=~/Library/Application\ Support/Godot/app_userdata/Grid\ Commanders/replays/<file>.jsonl
 ```
@@ -788,11 +793,13 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   Assets below); and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`) and the
-  Balance Lab (`docs/balance_sim.md`) alike; plus `tools/focus_timeline.sh`, the focus-theft
+  Balance Lab (`docs/balance_sim.md`) alike; the recording reader under `tools/replay/` (Replays
+  above); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
-  offline balance harness under `tools/balance/`, and the launch layer that states which match to
-  play (`MatchRequest`, `CmdArgs`) — each written that way for exactly this reason.
+  offline balance harness under `tools/balance/`, the recording reader under `tools/replay/`, and
+  the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
+  way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT).
 
 ## Assets
