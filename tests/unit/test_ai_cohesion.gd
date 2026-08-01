@@ -50,6 +50,17 @@ const BESIEGED_HOME_HQ := (
 	+ "[units]\n1 t 14 1\n1 m 15 1\n1 g 16 1\n2 i 2 0\n2 i 23 1"
 )
 
+## An infantry at the western end of a column that is advancing east, the only
+## neutral city seven tiles further west. Neither of the units it marches with
+## can capture, so nobody else is going, and the enemy is far enough east that
+## the column is still walking when the city changes hands.
+const CAPTURER_BEHIND_THE_COLUMN := (
+	"[terrain]\n"
+	+ ".........C..............................\n"
+	+ "........................................\n"
+	+ "[units]\n1 i 16 0\n1 t 17 1\n1 g 18 1\n2 i 39 1"
+)
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -144,10 +155,11 @@ func test_a_lone_hull_is_not_dragged_toward_the_land_column() -> void:
 	)
 
 
-## Cohesion shapes the ordinary advance and nothing else. An errand — refit,
-## repair, a besieged home HQ — is denominated in the same tiles the goal term
-## is, and the column's pull is the stronger of the two, so taxing an errand
-## cancels it: the unit sits at the column's edge and never arrives.
+## Cohesion shapes the advance on the enemy and nothing else. An errand — refit,
+## repair, a besieged home HQ, a property to take — is denominated in the same
+## tiles the goal term is, and the column's pull is the stronger of the two, so
+## taxing an errand cancels it: the unit sits at the column's edge and never
+## arrives.
 func test_a_wounded_unit_still_walks_home_to_repair() -> void:
 	var wounds := {"t": 30}
 	var blind := _march(WOUNDED_BEHIND_THE_COLUMN, _profile(0.0), 2, wounds)
@@ -165,3 +177,19 @@ func test_a_besieged_home_hq_still_turns_the_army_around() -> void:
 
 	var together := _march(BESIEGED_HOME_HQ, _profile(1.5, 1.0), 2)
 	assert_eq(together["t"], blind["t"], "and cohesion must not slow the defence to a walk")
+
+
+## Taking ground is how the game is won, and the ground is routinely nowhere near
+## the column. A taxed capturer trails its company east instead and the army
+## never earns a thing.
+func test_a_capturer_still_walks_out_to_its_property() -> void:
+	var blind := _march(CAPTURER_BEHIND_THE_COLUMN, _profile(0.0), 3)
+	assert_lte(int(blind["i"]), 9, "blind, the infantry reaches the neutral city")
+
+	var together := _march(CAPTURER_BEHIND_THE_COLUMN, _profile(1.5), 3)
+	assert_eq(together["i"], blind["i"], "and cohesion must not hold it back with the column")
+	assert_lte(
+		absi(int(together["t"]) - int(together["g"])),
+		2,
+		"while the units actually advancing on the enemy still close up"
+	)

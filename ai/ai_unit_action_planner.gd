@@ -375,10 +375,11 @@ func _advance_value(
 ## column. Free inside cohesion_radius, then linear — so a fast unit is pulled
 ## back toward its slower company without any of them ever entering a waiting
 ## state: the goal term still pulls forward, and the column advances at the speed
-## of its rear because that is where the equilibrium sits. A goal that does not
-## keep formation is untaxed: both terms are in tiles and the errand's is the
-## smaller pull, so charging it would stall a unit at the column's edge — walking
-## neither home to repair nor back to a besieged HQ.
+## of its rear because that is where the equilibrium sits. Only the advance on
+## the enemy is taxed: both terms are in tiles and an errand's is the smaller
+## pull, so charging one would stall a unit at the column's edge — walking
+## neither home to repair, back to a besieged HQ, nor out to the property that
+## pays for the war, which is routinely nowhere near the column.
 func _cohesion_penalty(
 	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, column: Array[Vector2i]
 ) -> float:
@@ -438,7 +439,8 @@ static func _position_rank(
 
 ## Fuel-critical units seek refit, damaged units seek repair, a besieged home HQ
 ## calls everyone else home, capturers seek a non-owned property, and whoever is
-## left seeks the nearest visible enemy.
+## left seeks the nearest visible enemy. Only that last one keeps formation: the
+## others are errands sending a unit away from its company on purpose.
 func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	if context.goals.has(unit):
 		return context.goals[unit]
@@ -449,21 +451,18 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 		var refits := _servicing_properties(context, unit)
 		if not refits.is_empty():
 			goal.cell = _nearest(unit.cell, refits)
-			goal.keeps_formation = false
 			context.goals[unit] = goal
 			return goal
 	if unit.hp <= _retreat_threshold(state, unit):
 		var repairs := _servicing_properties(context, unit)
 		if not repairs.is_empty():
 			goal.cell = _nearest(unit.cell, repairs)
-			goal.keeps_formation = false
 			context.goals[unit] = goal
 			return goal
 	var besieged := _besieged_home_hqs(context, unit)
 	if not besieged.is_empty():
 		goal.cell = _nearest(unit.cell, besieged)
 		goal.stand_off = AttackRange.is_indirect(unit)
-		goal.keeps_formation = false
 		context.goals[unit] = goal
 		return goal
 	if unit.type.can_capture:
@@ -483,6 +482,7 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 	if not enemy_cells.is_empty():
 		goal.cell = _nearest(unit.cell, enemy_cells)
 		goal.stand_off = AttackRange.is_indirect(unit)
+		goal.keeps_formation = true
 	context.goals[unit] = goal
 	return goal
 

@@ -228,16 +228,22 @@ that must survive any change; the full rationale, milestones and risk registers 
   its **own movement domain** beyond `cohesion_radius` — in *tiles*, which is what
   `_advance_value` is denominated in. There are no groups, no leaders and **no waiting state**: the
   goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
-  and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls (the plan's R1).
+  and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls — which is D5's
+  emergent waiting, played on a board. (The plan's R1, the clump being artillery and Command Power
+  bait, is untouched by that test and stays open: AJ4's `(cohesion_tiles, cohesion_radius)` probe
+  owns it.)
   Same domain because an army keeps company with what can keep up with it — otherwise a lone hull
   is dragged toward a land column it can never join. Same **team**, and deliberately not the whole
   side: formation is the army's, while defended ground is the side's, which is why AJ1's
   `_defend_bonus` reaches across the alliance through `GameState.allied` and this does not. The
-  term taxes the **ordinary** advance and nothing else: `AIPlanningContext.AdvanceGoal.keeps_formation`
-  is false on the three errands `_advance_goal` computes before the enemy goal — refit, repair and
-  the besieged home HQ — and `_cohesion_penalty` returns zero for them, because both terms count in
-  tiles and the column's pull is the stronger, so charging an errand cancels it outright: a wounded
-  unit trails the column and never repairs, and AJ1's diversion never turns anybody around. The
+  term taxes the **advance on the enemy** and nothing else, which is the one goal D5 describes it
+  for: `AIPlanningContext.AdvanceGoal.keeps_formation` defaults to **false** and only that goal
+  turns it on, so every errand `_advance_goal` computes before it — refit, repair, the besieged home
+  HQ and a property to capture — goes untaxed by construction rather than by a list of exceptions,
+  and `_cohesion_penalty` returns zero for them. Both terms count in tiles and the column's pull is
+  the stronger, so charging an errand cancels it outright: a wounded unit trails the column and
+  never repairs, an infantry sits at the column's edge and takes no ground, and AJ1's diversion
+  never turns anybody around. The
   rejected alternative is an explicit formation manager: it needs cross-turn state the planner has
   nowhere to keep (`AIPlanningContext` is rebuilt every command, and only the threat map
   deliberately survives).
