@@ -94,7 +94,7 @@
 
     <!-- ============================== HERO ============================== -->
     <header class="gc-hero px-6 py-10 md:px-12">
-      <p class="gc-kicker opacity-80">Grid Commanders · Stretch item · Proposed for review · rev 1</p>
+      <p class="gc-kicker opacity-80">Grid Commanders · Stretch item · RP1–RP4 shipped · rev 1</p>
       <h1 class="text-3xl md:text-4xl font-black mt-2">Match Replay — watch it again, and read what the computer did wrong</h1>
       <p class="mt-3 max-w-3xl opacity-90">
         A match ends and it is gone. This plan keeps it. <strong>Every match records itself</strong>
@@ -262,12 +262,12 @@
         <span class="gc-section-number">3</span>
         <h2 class="text-2xl font-black">Decisions</h2>
       </div>
-      <p class="max-w-3xl mb-4 text-sm opacity-80">Seven, all proposed rather than locked. D3
+      <p class="max-w-3xl mb-4 text-sm opacity-80">Seven, all locked and shipped. D3
       (self-verifying) and D6 (the analyser's discipline) are the two that decide whether this
       feature ages well; D5 is the most taste-shaped.</p>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
-        <h3 class="font-black mb-2">D1 · A replay is an opening envelope and a command log <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D1 · A replay is an opening envelope and a command log <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm">The opening is <code>SaveCodec.encode(state, ai_teams, difficulty)</code>
         <strong>verbatim</strong>, taken in <code>Battle._ready</code> immediately after
         <code>BattleSetup.build</code> and before a single command. Not a <code>MatchRequest</code>,
@@ -284,7 +284,7 @@
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
-        <h3 class="font-black mb-2">D2 · The recorder observes, at the two brokers that already exist <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D2 · The recorder observes, at the two brokers that already exist <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm">Balance plan D2 restated for a second instrument: <strong>nothing under
         <code>core/</code> or <code>ai/</code> gains a signal, a hook or a field.</strong> There are
         exactly two call sites, and both are places a command already changes hands:
@@ -298,7 +298,7 @@
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
-        <h3 class="font-black mb-2">D3 · A replay verifies itself, or halts and says where <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D3 · A replay verifies itself, or halts and says where <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm">Every entry carries <code>ck</code>, a digest of the board the command
         left behind. Playback recomputes it after each apply and <strong>stops at the first
         mismatch, naming the command index, the day and the side</strong>. This is not paranoia
@@ -313,7 +313,7 @@
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
-        <h3 class="font-black mb-2">D4 · Playback is presentation; the sim never learns it is a replay <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D4 · Playback is presentation; the sim never learns it is a replay <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm"><code>BattleReplayRunner</code> is <code>BattleAiRunner</code>'s sibling:
         it feeds recorded commands to <code>Battle.execute_command</code>, awaits
         <code>conclude_command</code>, paces off <code>Settings.speed</code> and holds at
@@ -329,7 +329,7 @@
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
-        <h3 class="font-black mb-2">D5 · The viewer is omniscient, and the recording is always on <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D5 · The viewer is omniscient, and the recording is always on <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm"><strong>Omniscient:</strong> a replay shows the whole board whatever fog
         the match was played under. The match is over, so there is nobody to hide it from — and a
         fogged AI-versus-AI match watched through one army's eyes is mostly a black rectangle, which
@@ -344,7 +344,7 @@
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4 mb-4">
-        <h3 class="font-black mb-2">D6 · The analyser asks the rules; it never asks the planner <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D6 · The analyser asks the rules; it never asks the planner <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm">Every counterfactual comes from <code>AttackRange</code>,
         <code>MovementResolver</code> and <code>CombatResolver.forecast_at</code> — the same
         authorities the planner itself scores through, which is exactly why a finding drawn from
@@ -361,7 +361,7 @@
       </div>
 
       <div class="card bg-base-100 border gc-proposed p-4">
-        <h3 class="font-black mb-2">D7 · <code>--watch</code> stays; <code>--replay</code> is a second instrument <span class="badge badge-warning badge-sm">proposed</span></h3>
+        <h3 class="font-black mb-2">D7 · <code>--watch</code> stays; <code>--replay</code> is a second instrument <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
         <p class="text-sm">Today's <code>--watch</code> re-plans a Balance Lab row from its seed and
         is the balance plan's BS3 replay-fidelity check: it is <em>supposed</em> to diverge when the
         AI changes, and <code>BattleOutcome</code>'s one diffable line is what proves the window and
@@ -383,7 +383,7 @@
       <div class="grid gap-4">
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">RP1 · The format and the recorder <span class="badge badge-sm">size M · core + two call sites</span></h3>
+          <h3 class="font-black">RP1 · The format and the recorder <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size M · core + two call sites</span></h3>
           <p class="text-sm mt-2">Two new Node-free files, both driven directly by GUT.
           <code>core/replay_codec.gd</code> (<code>ReplayCodec</code>) is pure:
           <code>encode_command(Command) → Dictionary</code>,
@@ -405,7 +405,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">RP2 · Watching one <span class="badge badge-sm">size M · scene layer</span></h3>
+          <h3 class="font-black">RP2 · Watching one <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size M · scene layer</span></h3>
           <ul class="gc-checks text-sm mt-2 grid gap-1">
             <li><code>MatchRequest.replay_path</code> and <code>--replay=&lt;path&gt;</code>, read
             through <code>CmdArgs</code> like every other flag — so a replay boot and a menu launch
@@ -427,7 +427,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">RP3 · Finding one <span class="badge badge-sm">size S · menu</span></h3>
+          <h3 class="font-black">RP3 · Finding one <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size S · menu</span></h3>
           <p class="text-sm mt-2">A Replays row on the main menu opening a list built from
           <code>ReplayFile.list()</code> — board, days played, who sat where, how it ended — each
           entry staging a <code>MatchRequest</code> with <code>replay_path</code> and changing
@@ -437,7 +437,7 @@
         </div>
 
         <div class="card bg-base-100 border p-4">
-          <h3 class="font-black">RP4 · Reading one <span class="badge badge-sm">size M · tools only</span></h3>
+          <h3 class="font-black">RP4 · Reading one <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size M · tools only</span></h3>
           <p class="text-sm mt-2"><code>tools/replay/replay_analysis.gd</code> (Node-free) plus
           <code>tools/run_replay_report.gd</code> and <code>make replay-report REPLAY=…</code>,
           writing <code>reports/replay_&lt;id&gt;.md</code> and <code>.json</code> — gitignored, like

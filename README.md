@@ -48,6 +48,7 @@ make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a relea
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
+make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
@@ -691,6 +692,31 @@ survive the *game* moving underneath it. Retune a `.tres`, fix a rule, add a doc
 yesterday's recording describes a match this build would not play — without the digest it would
 quietly play a different one and look fine. Replays are disposable: nothing resumes from one, so a
 stale one is deleted rather than migrated.
+
+### Reading one
+
+A recording can also be read instead of watched:
+
+```sh
+make replay-report REPLAY=<file>        # add ARGS="--team=2" for one side
+```
+
+It re-issues every command offline and reports what the sides left on the table, ranked, into
+`reports/replay/<name>/findings.md` and `.json`. Nine detectors: `walk_into_fire` (a move out of
+safety into ground the enemy can kill it on), `worse_shot` (a better target was in range from the
+same cell), `hoarding` (funds left on an idle factory), `missed_capture`, `idle_unit`,
+`banked_power`, `stranded_transport`, `oscillation` and `undefended_hq`.
+
+Every counterfactual comes from the **rules** — `AttackRange`, `MovementResolver`,
+`CombatResolver.forecast_at`, the same authorities the planner scores through — and never from the
+planner itself. Nothing under `ai/` has a why-hook, and no finding claims to know what the computer
+was thinking: it says what happened, what was available instead, and roughly what the difference was
+worth. That is what makes a finding a fact about the *game* rather than about one revision of the
+AI, and it is why the report survives the planner being rewritten.
+
+It is **evidence, not a gate**, and deliberately out of `make verify`: several detectors fire on a
+doctrine playing exactly as intended — Sable Wren sitting in woods is an `idle_unit`, and a
+commander whose power wants a particular board is a `banked_power`.
 
 The Balance Lab writes them too. `make balance-sim SIM="… --replays"` puts one file per match in a
 `replays/` directory beside its report, named by the same match id the CSV rows carry, so a

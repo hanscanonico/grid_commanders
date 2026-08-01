@@ -587,7 +587,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
-  offline analyser). **Nothing shipped yet.** D1: **a replay is an opening envelope and a command
+  offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command
   log** — the opening is `SaveCodec.encode` verbatim (so it carries the roster, the grouping, the
   commanders' charge and `rng_state`, and a resumed save records correctly), and the format owns
   only the command list; map + seed rebuilt through `create` is the rejected alternative, being a
@@ -612,7 +612,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   `make replay-report` stays out of `make verify`. D7: `--watch` (re-plan from a seed, the balance
   plan's BS3 fidelity instrument) and `--replay=` (immune to AI changes by design) are two
   instruments, not one. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
-  match, recorded and re-issued, reproducing every checkpoint and an identical final board.
+  match, recorded and re-issued, reproducing every checkpoint and an identical final board. The
+  analyser's nine detectors each have a fixture that fires them exactly once
+  (`tests/unit/test_replay_analysis.gd` over `maps/fixtures/analysis.txt`), because a false positive
+  costs more than a miss — it sends the reader looking at a doctrine that was playing correctly.
+  `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was
+  survivable**, since a unit already inside the same fire did not walk into anything and reporting
+  it buries the moves that did.
 
 ## Architecture — the rules that matter most
 
