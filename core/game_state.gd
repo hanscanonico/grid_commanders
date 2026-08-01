@@ -445,6 +445,7 @@ func advance_unit(unit: Unit, path: Array[Vector2i]) -> bool:
 	unit.fuel = maxi(0, unit.fuel - fuel_spent)
 	unit.cell = dest
 	unit.acted = true
+	unit.refreshable = true
 	for passenger in cargo_of(unit):
 		passenger.cell = dest
 	return ambushed

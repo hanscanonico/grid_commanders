@@ -49,6 +49,13 @@ enum Duration {
 	ROUND,
 }
 
+## When the AI may consider firing the power. Most commanders act before their
+## army; refresh doctrines wait until every ordinary action has been spent.
+enum Timing {
+	BEFORE_ACTIONS,
+	AFTER_ACTIONS,
+}
+
 @export var id: StringName = NEUTRAL_ID
 @export var display_name: String = "No Commander"
 ## Which of the four powers this general belongs to. Flavour and UI grouping;
@@ -66,6 +73,7 @@ enum Duration {
 ## commander has no power, which also stops its meter ever filling.
 @export var power_cost: int = 0
 @export var power_duration: Duration = Duration.OWNER_TURN
+@export var power_timing: Timing = Timing.BEFORE_ACTIONS
 
 static var _neutral: CommanderType
 
@@ -224,9 +232,9 @@ func on_power_activated(_state: GameState, _team: int) -> void:
 	pass
 
 
-## Whether the AI should spend a full meter now. Asked once per planning pass,
-## before any unit acts; the meter being full and the power being legal are
-## already settled by PowerCommand, so this is only the question of timing.
+## Whether the AI should spend a full meter now. Asked at this commander's
+## declared timing; the meter being full and the power being legal are already
+## settled by PowerCommand, so this is only the doctrine's board question.
 ##
 ## The default is the offensive read — "there is a fight to have this turn" —
 ## which is correct for every power whose value lands on the turn it fires: the

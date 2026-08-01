@@ -9,6 +9,9 @@ var cell: Vector2i
 var hp: int = 100
 ## True once the unit has used its action this turn.
 var acted: bool = false
+## True when the unit's last committed action this turn did not attack. Kept
+## separate from acted so a refresh power remains exact across a mid-turn save.
+var refreshable: bool = false
 ## Remaining fuel; movement spends it point-for-point with terrain cost.
 var fuel: int = 99
 ## Remaining primary ammo; only meaningful when type.max_ammo > 0.

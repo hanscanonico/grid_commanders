@@ -18,6 +18,7 @@ static func begin_turn(state: GameState) -> void:
 	state.funds[team] += state.properties_of(team).size() * GameState.INCOME_PER_PROPERTY
 	for unit in state.units_of(team):
 		unit.acted = false
+		unit.refreshable = false
 		if unit.carrier != null:
 			continue  # cargo burns no upkeep; its transport refills it below
 		_burn_upkeep(unit)
