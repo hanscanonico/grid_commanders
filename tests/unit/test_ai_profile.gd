@@ -1,7 +1,8 @@
 extends GutTest
-## The AIProfile seam: the shipped profile must still hold the numbers the
-## planner used when they were constants, and the planner must actually read
-## the profile it was handed rather than a hardcoded copy.
+## The AIProfile seam: the shipped file and the class defaults must agree field
+## for field, so an install missing its profile file plays the same game, and
+## the planner must actually read the profile it was handed rather than a
+## hardcoded copy.
 
 const TIER_DIR := "res://data/ai"
 

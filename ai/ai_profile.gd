@@ -3,10 +3,10 @@ extends Resource
 ## Everything AIController weighs when it picks a command. Pure data, so
 ## difficulty and iteration are edits to a .tres rather than to planner logic.
 ##
-## The defaults here match `data/ai/default.tres` and reproduce the behaviour
-## the planner had when these were constants: same state plus same profile
-## yields the same command. Tests that care about a specific weight build a
-## profile explicitly rather than leaning on the default file.
+## The defaults here match `data/ai/default.tres`, so an install whose profile
+## file is missing plays the same game as one with it. Same state plus same
+## profile yields the same command; tests that care about a specific weight
+## build a profile explicitly rather than leaning on the default file.
 ##
 ## Adding an `@export` here also means writing it into every profile under
 ## `data/ai/`: a tier that omits a field inherits the default below, so editing a
