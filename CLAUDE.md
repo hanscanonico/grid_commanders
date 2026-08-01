@@ -186,7 +186,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and was regenerated and read — `docs/commander_balance.md` records the measurement.
 - `ai-judgement-plan.html` — the three things the planner cannot see: what the enemy is
   *achieving*, what it will *do next turn*, and what our own other units are doing. Milestones
-  AJ1–AJ4; **AJ1–AJ3 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
+  AJ1–AJ4, **all shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
   the point: **this plan owns planner *capabilities*, BL2 owns Normal's *numbers*** (D2), so no
   AJ milestone edits a shipped value in `data/ai/` and AJ4's deliverable is a probe band in
   `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
@@ -230,8 +230,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
   and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls — which is D5's
   emergent waiting, played on a board. (The plan's R1, the clump being artillery and Command Power
-  bait, is untouched by that test and stays open: AJ4's `(cohesion_tiles, cohesion_radius)` probe
-  owns it.)
+  bait, is untouched by that test and stays open; where AJ4's `(cohesion_tiles, cohesion_radius)`
+  probe left it is below.)
   Same domain because an army keeps company with what can keep up with it — otherwise a lone hull
   is dragged toward a land column it can never join. Same **team**, and deliberately not the whole
   side: formation is the army's, while defended ground is the side's, which is why AJ1's
@@ -252,8 +252,29 @@ that must survive any change; the full rationale, milestones and risk registers 
   out: every measurement taken agreed on the sign, but each review round changed the planner it had
   been taken on, so no number stayed current while the milestone's code was still moving. It now
   sits in AJ4 beside the sweep's wall clock already deferred there from AJ2 — a measurement belongs
-  on the milestone that adds no code. `docs/difficulty_check.md` §4b records that the re-test is
-  owed, and `focus_fire_bonus` stays at 0 meanwhile on §6's standing probes.
+  on the milestone that adds no code.
+  AJ4 is that milestone and it adds none: **`docs/difficulty_check.md` §4b is the measured band for
+  every dial these four milestones added, and it is what BL2 reads instead of guessing.** Its
+  results, all at n=16 and therefore directions rather than magnitudes: `cohesion_tiles` 1.0–2.0 at
+  `cohesion_radius` **2** is the largest gain measured anywhere in this plan (+25 points over
+  control) and **tight beats loose** — radius 4 never clears the control, so the two axes had to be
+  probed together, and 2.0 is the top of the probe rather than a measured ceiling; `defend_weight`
+  moves one match of sixteen, identically at all four values tried, which is **one observation
+  rather than four** and by the section's own calibration a hint — 0.25–0.5 is offered for BL2 to
+  re-measure at its own width, never as a measured band; and **two of the four dials are
+  recommended off** — `withdraw_weight` measures negative at every value tried, and
+  `focus_fire_bonus` is refuted a third time, now with cohesion live, which retires the argument
+  that it only ever failed for want of a column to focus. What the section does **not** know is the
+  more useful half of it, and §4b lists it in one place: **R3 is untested, not refuted** — the
+  probe never ran threat-dials-off *and* `withdraw`-off, so it cannot separate withdrawal's cost
+  from Difficult simply being weaker without its shipped threat smarts, and R3's tune-them-together
+  instruction stands on its original reasoning; **R1 is unobserved rather than refuted** — the
+  tightest column measured best, but both sides are the same planner and neither punishes
+  concentration, so the instrument is structurally blind to the risk and R1 belongs to a human
+  playtest. R6's wall clock: **a live threat-map dial roughly doubles Normal's per-turn planning
+  time** (33 → 63 ms) — that comparison's other two columns are forced configurations rather than
+  shipped tiers (Easy and Difficult already build the map), so §4's standing turn-time table is
+  still the shipped number.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

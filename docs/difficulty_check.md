@@ -93,8 +93,9 @@ which compares a full AI turn command for command.
   (the AI Judgement plan's R3).
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
   could still add damage to. Ships at `0.0`: the superseded probes in §6 found
-  the bias harmful in both shapes tried, while replanning after every command
-  already exposes a wounded target's finishing shot to the next attacker.
+  the bias harmful in both shapes tried and §4b's re-test with cohesion live
+  found it negative again, while replanning after every command already exposes
+  a wounded target's finishing shot to the next attacker.
 - **S3 `build_reactivity` — counter-building.** Re-ranks each affordable combat
   unit by its damage-chart effectiveness against the enemy's actual cost-weighted
   roster, blended over the static `build_priority` list. With no enemy in sight
@@ -256,33 +257,227 @@ Mean AI planning per turn in the standing run:
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
 
-## 4b. Focus fire with cohesion live — the re-test is owed by AJ4
+## 4b. The AI Judgement dials — measured bands (AJ4)
 
-`focus_fire_bonus` has shipped at `0.0` since DF3 because §6's probes measured it
-harmful in every shape tried. The AI Judgement plan argued that verdict deserved
-one re-test rather than inheritance: focus fire was measured on a planner whose
-units *arrive one at a time*, so a bias toward ganging up had nothing to gang up
-with. AJ3 gave the planner `cohesion_tiles`, so the question was reopened under
-the condition that was missing.
+The AI Judgement plan added three planner capabilities, each shipping at `0.0`
+in every tier so the shipped AI is byte-identical to the AI that predates them:
+`defend_weight` (AJ1), `withdraw_weight` (AJ2), `cohesion_tiles` /
+`cohesion_radius` (AJ3). **This section is AJ4's whole deliverable: the band each
+one helps in, the cliff it hurts past where one was found, and — in the closing
+list — what the probe could not answer, so the balance retune's BL2 can set a
+live value from evidence rather than from taste.** AJ4 adds no code, which is why
+these numbers stay true — two earlier attempts to take them inside a code
+milestone went stale the moment a review round moved the planner.
 
-**The re-test was attempted during AJ3 and its numbers are not recorded here,
-because they could not be kept current.** Every measurement taken agreed on the
-sign — no live `focus_fire_bonus` value beat the `0.0` control — but each round of
-review changed the planner the table had been measured on, and the table went
-stale three times over. The measurement was not wrong, it was mis-placed: a
-number taken inside a code milestone cannot stay current while that milestone's
-code is still moving. **The standing re-test is therefore owed by the AI
-Judgement plan's AJ4, on frozen code**, alongside the sweep's wall clock already
-deferred there from AJ2 for the same reason.
+**Method.** The ladder is the instrument. Difficult carries the dial under test,
+Normal does not, so `hard`-over-`normal` moves with the dial and the `0` row is
+the control. One axis per probe, tiers edited temporarily and restored from
+`HEAD` — nothing was committed to `data/`. `--seeds=4 --days=30`, 16 matches a
+row, on the gate's two boards.
 
-**`focus_fire_bonus` stays at `0.0` in the meantime**, on §6's standing probes,
-and the reason DF3 gave still stands — the planner re-plans after every command,
-so a wounded target's finishing shot is already visible to the next attacker for
-free, and biasing the *first* shot pulls it off its own best trade. Cohesion is
-not obviously an answer to that, because cohesion fixes *where units are*, not
-which of them shoots first. The dial stays in the code rather than being deleted,
-for the reason it always did: zeroing a misbehaving smart is the remedy, and the
-ladder can re-test it in one edit.
+**Read every row as a direction, not a magnitude.** 16 matches is a quarter of
+§4's standing 60, `ironworks` resolves badly under a clock (§5), and every number
+here is AI-vs-AI, where a mistake only costs you if the opponent punishes it. A
+6-point move at this width is a hint; a 25-point move is a finding. §5's warning
+about this exact 16-match subset applies to every row below — it can read red
+without a regression or green through one — so no colour here is a number to
+quote.
+
+**Control: `hard` over `normal` = 62.5%** (scrimmage 50.0, ironworks 75.0).
+
+### `defend_weight` — one match flips, and it flips at every value
+
+| value | hard over normal | scrimmage | ironworks |
+|---|---|---|---|
+| 0 — control | 62.5% | 50.0 | 75.0 |
+| 0.25 | **68.8%** | 62.5 | 75.0 |
+| 0.5 | **68.8%** | 62.5 | 75.0 |
+| 1.0 | **68.8%** | 62.5 | 75.0 |
+| 2.0 | **68.8%** | 62.5 | 75.0 |
+
+**The whole effect is one match of sixteen.** `scrimmage` goes 4/8 → 5/8 and
+`ironworks` does not move, identically at all four live values — most plausibly
+the same single match flipping the same way four times, which is **one
+observation, not four confirmations**: the rows are not independent of each
+other. The flat line is the shape the design predicts (the bonus either flips a
+decision or it does not, and once it is large enough to flip the ones available
+it cannot flip them harder), but flatness across dependent rows is not evidence
+for that shape. By this section's own calibration a 6-point move at this width is
+a hint, and this is exactly that: a hint. **Suggested band: 0.25–0.5, as
+something for BL2 to re-measure at its own sample width before shipping it live,
+not a measured band.** Take the low end if it survives that — it buys the whole
+effect that was seen, and a smaller number has less room to distort a board this
+probe did not cover.
+
+### `withdraw_weight` — measures negative at every value tried
+
+| value | hard over normal | scrimmage | ironworks |
+|---|---|---|---|
+| 0 — control | 62.5% | 50.0 | 75.0 |
+| 0.02 | 56.2% | 50.0 | 62.5 |
+| 0.05 | 50.0% | 25.0 | 75.0 |
+| 0.1 | 50.0% | 25.0 | 75.0 |
+| 0.25 | 50.0% | 37.5 | 62.5 |
+
+**Every live value is worse than the control, and the damage arrives early.**
+This is the plan's own R4 landing on the dial its author expected least: AJ2 is
+the milestone that most directly answers the reported defect, and it is the one
+the ladder likes least. Two readings are consistent with the numbers and this
+probe cannot separate them — a unit that survives by withdrawing is a unit that
+did not trade, and in an AI-vs-AI attrition race not trading is losing; or the
+refuge choice is right but the *price* is wrong, because the dial pays full cost
+× damage-avoided while an attack pays only its own value. **Recommended: leave at
+`0.0`, and do not ship it live on this evidence.** The capability stays in the
+code, which is the standing remedy for a misbehaving smart — `focus_fire_bonus`
+is the precedent, kept at zero for four measurement rounds and re-testable in one
+edit. A human playtest is the missing instrument here: "the AI throws units away"
+is a complaint about how a match *feels*, and the ladder only scores who wins.
+
+### `cohesion_tiles` × `cohesion_radius` — the largest gain measured, and tight beats loose
+
+| | radius 2 | radius 4 |
+|---|---|---|
+| 0.5 | 68.8% | 50.0% |
+| 1.0 | 75.0% | 62.5% |
+| 2.0 | **87.5%** | 62.5% |
+
+The plan's one deliberately two-dimensional probe, and the reason it was worth
+running: the two axes do not behave alike. At radius 2 the dial climbs steeply to
+**+25 points over control**; at radius 4 it never beats the control by more than
+nothing. A column that closes to two tiles fights as one army; a column allowed
+to spread to four does not. **Recommended band: `cohesion_tiles` 1.0–2.0 at
+`cohesion_radius` 2.** This is the strongest result in the section by a wide
+margin — the only dial whose effect is unambiguous at this sample width.
+
+**2.0 is the top of the probe, not a measured ceiling.** The curve is still
+rising there (68.8 → 75.0 → 87.5 at radius 2) and no upper cliff was located, so
+the band is bounded above by what was tried rather than by evidence. Finding the
+cliff is on the open list below.
+
+**R1 is not observed, and that is not the same as refuted.** The plan's named risk
+was that a tight column is artillery bait and Command Power bait; the tightest
+setting measured is the best one. But both sides here are the same planner, and
+neither is good at punishing concentration — the instrument is blind to exactly
+the failure R1 describes. **R1 stays open and belongs to a human playtest**, not
+to this table.
+
+### `focus_fire_bonus` with cohesion live — the third refutation
+
+| value | hard over normal | scrimmage | ironworks |
+|---|---|---|---|
+| 0.0 — control | 62.5% | 62.5 | 62.5 |
+| 0.2 | 62.5% | 50.0 | 75.0 |
+| 0.5 | 56.2% | 37.5 | 75.0 |
+| 1.0 | 37.5% | 37.5 | 37.5 |
+
+Both tiers at `cohesion_tiles = 1.0`, so this is the re-test AJ3 argued for and
+could not keep current: focus fire measured on a planner whose units *do* now
+arrive together. **It is negative again** — 0.2 ties the control and everything
+above it falls away. `focus_fire_bonus` stays at `0.0`, now on three independent
+refutations, and the DF3 reasoning is the one that survives: the planner re-plans
+after every command, so a wounded target's finishing shot is already free to the
+next attacker, and biasing the *first* shot pulls it off its own best trade.
+Cohesion fixes **where units are**, not which of them shoots first — those turn
+out to be separate problems, which is itself the useful result.
+
+### The cross-term — three of the four cells, so AI Judgement R3 stays open
+
+`threat_aversion`, `advance_threat_tiles` and `withdraw_weight` read one
+`ThreatMap`, so the plan's R3 predicted they would price a single enemy three
+times and reproduce the coward §6 measured at 11.7%. The probe turned the other
+two off underneath `withdraw_weight`:
+
+| configuration | hard over normal |
+|---|---|
+| control — threat dials at shipped values, `withdraw` off | 62.5% |
+| `withdraw` 0.05, threat dials at shipped values | 50.0% |
+| `withdraw` 0.05, threat dials **off** | 37.5% |
+| `withdraw` 0.1, threat dials at shipped values | 50.0% |
+| `withdraw` 0.1, threat dials **off** | 50.0% |
+
+**The cell that would price the cross-term was never run: threat dials off *and*
+`withdraw` off.** Turning the threat dials off changes `hard` alone — `normal`
+ships them at `0.0` — so without that fourth cell these rows cannot separate
+withdrawal's marginal cost from `hard` simply being weaker without its shipped
+threat smarts. The arithmetic makes it plain: if the missing cell were also
+37.5%, withdrawal costs **0** with the other dials off against **−12.5** with
+them on, which **confirms** R3 rather than refuting it. The rows as printed are
+equally consistent with either reading, so **R3 is untested, not refuted, and it
+stays open.**
+
+The missing cell is one row — `hard` with `threat_aversion`,
+`advance_threat_tiles` and `withdraw_weight` all at `0.0`, `normal` unchanged —
+and BL2 should fold it into its own sweeps. R3's instruction stands on the
+reasoning it was written from and owes nothing to this probe: these three dials
+share one map and one another's job, so tune them together and never one at a
+time.
+
+### The wall clock (AI Judgement R6)
+
+Deferred here from AJ2, and measurable only now that a dial exists to make the
+threat map build on a tier that otherwise never builds one. Mean AI planning time
+per turn, same sweep:
+
+| configuration | normal | hard | easy |
+|---|---|---|---|
+| every threat dial forced to `0.0` on all three tiers | 33.2 ms | 37.9 ms | 65.7 ms |
+| `withdraw` 0.1 on all three, so all three build the map | 63.0 ms | 75.6 ms | 105.2 ms |
+
+**Neither row is a shipped tier.** `easy.tres` ships `threat_aversion` 0.3 /
+`advance_threat_tiles` 3.0 and `hard.tres` ships 0.1 / 2.0, so Easy and Difficult
+build the threat map today and only Normal does not. Both rows here are forced
+configurations, and the `hard` and `easy` columns therefore straddle a change
+those two tiers have already partly paid for — they do **not** supersede §4's
+standing turn-time table, which measures the shipped tiers and reports different
+numbers (Easy 71.6, Difficult 53.7).
+
+**Normal is the column this comparison is valid for, and there a live
+threat-map dial roughly doubles per-turn planning time: 33 → 63 ms.** It is a
+real cost and it is an affordable one: the absolute numbers are tens of
+milliseconds on the gate's boards, against turns a human spends seconds on. It is
+worth knowing before BL2 turns a dial on for a tier that previously never built
+the map at all — Normal is exactly that tier. R6's mitigation stands as written
+for the map *build*, which the per-turn cache already amortises; what this
+measures is the build plus the per-cell `forecast_at` sweep that reads it.
+
+### What BL2 is being handed
+
+| dial | recommendation | confidence |
+|---|---|---|
+| `cohesion_tiles` / `cohesion_radius` | **1.0–2.0 at radius 2** | strongest result here (+25); 2.0 is the top of the probe |
+| `defend_weight` | **0.25–0.5, as a hint** | one match of sixteen flipped, at every value — re-measure |
+| `withdraw_weight` | **stay at 0.0** | negative at every value tried |
+| `focus_fire_bonus` | **stay at 0.0** | third independent refutation |
+
+Two of the four are recommendations to *not* ship a dial, which is what a
+measurement milestone is for. And one caveat covers the whole table: it is
+measured on Difficult, against Normal, on two boards, by a planner playing
+itself. A human playtest can still overturn any row here — most plausibly
+`withdraw_weight`, whose defect is about how a match feels rather than who wins
+it, and `cohesion_tiles`, whose best setting this instrument is structurally
+unable to punish.
+
+### What this section does not know
+
+The honest half of the handover. None of these is a hedge on a row above; each is
+a question the probe was not shaped to answer.
+
+- **R3's missing cell.** Threat dials off *and* `withdraw_weight` off was never
+  run, so the cross-term is unpriced and R3 stays open rather than refuted. One
+  row fills it.
+- **Cohesion's upper cliff.** 2.0 is the highest value tried and the curve is
+  still rising at it, so the recommended band is bounded above by the probe, not
+  by evidence.
+- **`defend_weight`'s size.** One match of sixteen flipped, at all four values;
+  the four rows are not independent observations. BL2's wider sample is what
+  decides whether the effect is there at all.
+- **R1, the artillery-bait risk.** Unobserved rather than refuted: both sides are
+  the same planner and neither punishes concentration, so the instrument is
+  structurally blind to the exact failure R1 names. It belongs to a human
+  playtest.
+- **How any of this feels.** The ladder scores who wins. The defect that started
+  the plan — "the computer throws units away" — is a complaint about a match's
+  texture, and no row here can settle it.
 
 ## 5. Where this leaves the feature
 
