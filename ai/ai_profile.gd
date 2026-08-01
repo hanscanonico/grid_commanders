@@ -153,23 +153,20 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 #
 # The AI Judgement plan's dials, and unlike the block above these are *not* a
 # tier's smarts: noticing an enemy taking your ground and moving as an army are
-# basic competence, so every tier carries a value and Easy's is weaker rather
-# than absent.
+# basic competence, which is why they are not gated to one tier.
 #
 # 0 still skips a capability entirely — that is the code property, and the
 # per-capability suites under tests/unit/ build explicit profiles to prove it.
-# What is no longer true is that the *shipped* value is 0. These defaults track
-# data/ai/default.tres so an install with no profile file plays the same game as
-# one with it, which is what test_default_profile_matches_the_built_in_defaults
-# is for; tuning one of these means editing both, in the same commit.
+# These defaults track data/ai/default.tres so an install with no profile file
+# plays the same game as one with it, which is what
+# test_default_profile_matches_the_built_in_defaults is for; tuning one of these
+# means editing both, in the same commit. Which tier ships which value, and what
+# it cost the difficulty ladder, is docs/difficulty_check.md's to say.
 #
-# They went live against the difficulty ladder's advice, which is recorded rather
-# than hidden: no tier split found could hold the DF4 ordering once Normal became
-# competent, because that gate measures the *gap* between tiers and improving the
-# middle rung closes it. `docs/difficulty_check.md` carries the failing numbers
-# and the reasoning. withdraw_weight stays at 0 for a stronger reason than the
-# ladder — at 0.05 it stops an artillery short of maximum standoff, which is a
-# positioning regression rather than a matter of taste.
+# withdraw_weight is held at 0 by the code rather than by balance: at 0.05 it
+# stops an artillery short of maximum standoff, which
+# test_indirect_unit_backs_off_into_firing_range catches — a defect in how the
+# refuge is priced rather than a tuning preference.
 
 ## What removing an enemy from ground our own side holds is worth, as a multiple
 ## of what taking that ground would be worth to us. The price list is the capture
@@ -205,8 +202,8 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 @export var cohesion_tiles: float = 1.0
 ## How far apart units may drift before cohesion_tiles starts charging them.
 ## Inert while cohesion_tiles is 0, so a tier that switches cohesion off need not
-## also reset this one. The tiers that mean it ship radius 2; Easy's looser 4 is
-## deliberately the setting the probe read as weak.
+## also reset this one. It was probed together with cohesion_tiles and never
+## apart, so move the pair together — see docs/difficulty_check.md.
 @export var cohesion_radius: int = 2
 
 
