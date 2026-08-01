@@ -473,10 +473,10 @@ func _build_pick(map_text: String, profile: AIProfile) -> StringName:
 # --- the Normal pin -----------------------------------------------------------
 
 
-## The guarantee the whole plan rests on: with every capability at its default,
-## the planner produces the same commands it always did. Played out over a full
-## AI turn on a real map, command for command, against a controller built from
-## the shipped profile.
+## The guarantee the whole plan rests on: an install whose profile file is
+## missing plays the same game as one with it, because AIProfile's own defaults
+## and data/ai/default.tres carry the same numbers. Played out over a full AI
+## turn on a real map, command for command.
 func test_capability_defaults_plan_exactly_like_the_shipped_profile() -> void:
 	var shipped := _plan_a_turn(AIController.new(unit_db, AIProfile.load_default()))
 	var defaults := _plan_a_turn(AIController.new(unit_db, AIProfile.new()))

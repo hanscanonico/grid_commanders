@@ -195,8 +195,20 @@ that must survive any change; the full rationale, milestones and risk registers 
   `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
   the code**, the same contract as the difficulty plan's S1–S3 — so the merge bar for every AJ
   milestone is a fixed-seed byte-diff of *both* balance reports with **no accepted departure**,
-  and `test_capability_defaults_plan_exactly_like_the_shipped_profile` keeps passing unchanged
-  (BL2 is where it moves). D6: nothing under `core/` is touched and no telemetry is added —
+  and `test_capability_defaults_plan_exactly_like_the_shipped_profile` keeps passing unchanged.
+  D1's *inert* half is superseded as of 2026-08-01, when the dials went live ahead of BL2: on
+  every tier `defend_weight` and `cohesion_tiles` / `cohesion_radius` now carry a value scaled to
+  the tier's character, and `ai/ai_profile.gd`'s class defaults moved with `data/ai/default.tres`
+  because the invariant that pin protects is that an install with no profile file plays the same
+  game — which is also what that test now pins, rather than parity with the pre-dial planner.
+  `withdraw_weight` is the one still at `0.0`, and for a positioning defect rather than the
+  ladder: at 0.05 it stops an artillery short of maximum standoff
+  (`test_indirect_unit_backs_off_into_firing_range`), so the refuge's price wants fixing first.
+  What survives untouched is the code property — **`0.0` still skips a capability entirely**,
+  proven by the per-capability suites that build explicit zeroed profiles — and the cost is
+  recorded rather than hidden: the DF4 ladder now fails knowingly, because that gate measures the
+  *gap* between tiers and making Normal competent closes it (`docs/difficulty_check.md` §4c).
+  D6: nothing under `core/` is touched and no telemetry is added —
   every read goes through an authority that already exists.
   AJ1's own two decisions: **denial is priced at the price of capture, read backwards** (D3) —
   `_defend_bonus` is built from the same `capture_score` / `capture_progress_bonus` /
@@ -258,9 +270,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   on the milestone that adds no code.
   AJ4 is that milestone and it adds none: **`docs/difficulty_check.md` §4b is the measured band for
   every dial these four milestones added, and it is what BL2 reads instead of guessing.** Its
-  results, all at n=16 and therefore directions rather than magnitudes: `cohesion_tiles` 1.0–2.0 at
-  `cohesion_radius` **2** is the largest gain measured anywhere in this plan (+25 points over
-  control) and **tight beats loose** — radius 4 never clears the control, so the two axes had to be
+  results, all at n=16 and therefore directions rather than magnitudes — and §4b's headline is now
+  **downgraded to a hypothesis by §4c**, which re-measured it at 15 seeds with every tier carrying
+  the dial and found the direction consistently opposite: `cohesion_tiles` 1.0–2.0 at
+  `cohesion_radius` **2** was the largest move measured anywhere in this plan (+25 points over
+  control) and **tight beat loose** — radius 4 never clears the control, so the two axes had to be
   probed together, and 2.0 is the top of the probe rather than a measured ceiling; `defend_weight`
   moves one match of sixteen, identically at all four values tried, which is **one observation
   rather than four** and by the section's own calibration a hint — 0.25–0.5 is offered for BL2 to

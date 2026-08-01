@@ -15,9 +15,10 @@ This was accepted rather than tuned away, and the reasoning is short. The
 capabilities that closed the gap — noticing an enemy taking your ground, and
 advancing as an army rather than one unit at a time — are basic competence, and
 withholding them from Normal to protect a spread is a worse game for the person
-actually playing it. Every tier split tried failed the gate (three at 15 seeds,
-recorded in §4c), because this gate measures the *difference* between tiers and
-improving the middle rung necessarily shrinks it.
+actually playing it. Every tier split tried failed the gate — four at 15 seeds,
+three exploratory plus the one that shipped, all recorded in §4c — because this
+gate measures the *difference* between tiers and improving the middle rung
+necessarily shrinks it.
 
 Two things make the failure easier to accept than it reads. The gate is a
 20-day-cap instrument, and the Grand Balance Atlas — 20,280 matches at a
@@ -150,10 +151,14 @@ every seed** so a first-side advantage cancels.
 Rejected commands and cap stalls are hard failures on top: they would mean the
 planner and the rules disagree.
 
-## 4. What the measurement says
+## 4. What the measurement said before the dials went live
 
-**Standing result — measured 2026-07-28, 120 matches, 15 seeds, default
-20-day cap:**
+**This section is the pre-2026-08-01 record, not the standing one.** The
+standing verdict is at the top of this file and the current numbers are in §4c;
+everything below is kept because it is the control §4c is read against — the
+last measurement of the ladder before the AI Judgement dials shipped live.
+
+**Measured 2026-07-28, 120 matches, 15 seeds, default 20-day cap:**
 
 | Pairing | Overall | scrimmage | ironworks | Gate |
 |---|---|---|---|---|
@@ -209,8 +214,8 @@ resolved there. The honest reading is that **Easy's measured weakness is proven
 on `scrimmage` and unproven on `ironworks`**: on a large city-rich board the
 cheaper, capture-light Easy profile is not behind on the tiebreak's currency,
 and given forty days it is ahead on the board. The gate is defined on the
-combined pairing at the default cap and is met there; this is the caveat that
-comes with it, not a re-scoring of it. See §6's superseded finding (a) — the
+combined pairing at the default cap and was met there in this run; this is the
+caveat that came with it, not a re-scoring of it. See §6's superseded finding (a) — the
 same board showed the same shape before this tune, so it is a property of
 `ironworks` inside a day cap rather than something these four weights introduced.
 
@@ -284,17 +289,27 @@ Mean AI planning per turn in the standing run:
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
 
-## 4b. The AI Judgement dials — measured bands (AJ4)
+## 4b. The AI Judgement dials — probe bands (AJ4)
 
-The AI Judgement plan added three planner capabilities, each shipping at `0.0`
-in every tier so the shipped AI is byte-identical to the AI that predates them:
-`defend_weight` (AJ1), `withdraw_weight` (AJ2), `cohesion_tiles` /
-`cohesion_radius` (AJ3). **This section is AJ4's whole deliverable: the band each
+> **Downgraded by §4c (2026-08-01): read everything below as hypotheses, not
+> findings.** These rows were measured at n=16 with the dials live on Difficult
+> alone; the 15-seed splits in §4c carried them on every tier and moved
+> consistently the other way. The cohesion headline in particular did not
+> survive the wider sample. Nothing here has been re-scored — it is kept as the
+> probe it was, and §4c is the current record.
+
+The AI Judgement plan added three planner capabilities: `defend_weight` (AJ1),
+`withdraw_weight` (AJ2), `cohesion_tiles` / `cohesion_radius` (AJ3). Each of
+them shipped at `0.0` in every tier while this section was measured, so the AI
+under probe was the AI that predates them plus the one dial being tried; since
+2026-08-01 three of the four ship live and §4c records what that cost.
+**This section is AJ4's whole deliverable: the band each
 one helps in, the cliff it hurts past where one was found, and — in the closing
 list — what the probe could not answer, so the balance retune's BL2 can set a
 live value from evidence rather than from taste.** AJ4 adds no code, which is why
-these numbers stay true — two earlier attempts to take them inside a code
-milestone went stale the moment a review round moved the planner.
+these numbers stay true of the planner they were taken on — two earlier attempts
+to take them inside a code milestone went stale the moment a review round moved
+the planner.
 
 **Method.** The ladder is the instrument. Difficult carries the dial under test,
 Normal does not, so `hard`-over-`normal` moves with the dial and the `0` row is
@@ -360,7 +375,7 @@ is the precedent, kept at zero for four measurement rounds and re-testable in on
 edit. A human playtest is the missing instrument here: "the AI throws units away"
 is a complaint about how a match *feels*, and the ladder only scores who wins.
 
-### `cohesion_tiles` × `cohesion_radius` — the largest gain measured, and tight beats loose
+### `cohesion_tiles` × `cohesion_radius` — the largest gain measured here, and not reproduced (see §4c)
 
 | | radius 2 | radius 4 |
 |---|---|---|
@@ -372,9 +387,13 @@ The plan's one deliberately two-dimensional probe, and the reason it was worth
 running: the two axes do not behave alike. At radius 2 the dial climbs steeply to
 **+25 points over control**; at radius 4 it never beats the control by more than
 nothing. A column that closes to two tiles fights as one army; a column allowed
-to spread to four does not. **Recommended band: `cohesion_tiles` 1.0–2.0 at
-`cohesion_radius` 2.** This is the strongest result in the section by a wide
-margin — the only dial whose effect is unambiguous at this sample width.
+to spread to four does not. **Suggested band: `cohesion_tiles` 1.0–2.0 at
+`cohesion_radius` 2.** This is the largest move in the section by a wide margin,
+and at the time it was read as the one dial whose effect was unambiguous at this
+sample width. **§4c withdrew that confidence**: at 15 seeds, with Normal
+carrying cohesion too, Difficult at exactly 2.0 / radius 2 scored below its own
+dial-at-zero baseline in every split tried. The band above is a hypothesis for
+BL2 to re-measure, not a finding.
 
 **2.0 is the top of the probe, not a measured ceiling.** The curve is still
 rising there (68.8 → 75.0 → 87.5 at radius 2) and no upper cliff was located, so
@@ -471,7 +490,7 @@ measures is the build plus the per-cell `forecast_at` sweep that reads it.
 
 | dial | recommendation | confidence |
 |---|---|---|
-| `cohesion_tiles` / `cohesion_radius` | **1.0–2.0 at radius 2** | strongest result here (+25); 2.0 is the top of the probe |
+| `cohesion_tiles` / `cohesion_radius` | **1.0–2.0 at radius 2, as a hypothesis** | largest move here (+25) but **not reproduced at 15 seeds — see §4c**; 2.0 is the top of the probe |
 | `defend_weight` | **0.25–0.5, as a hint** | one match of sixteen flipped, at every value — re-measure |
 | `withdraw_weight` | **stay at 0.0** | negative at every value tried |
 | `focus_fire_bonus` | **stay at 0.0** | third independent refutation |
@@ -522,7 +541,8 @@ instinct to defend its own ground — which is judgement rather than a handicap 
 so stays inside the never-cheats rule. It also gives a beginner a real
 affordance: rushing an Easy AI's headquarters now works.
 
-**Three tier splits were measured at 15 seeds. None passed.**
+**Four tier splits were measured at 15 seeds — three exploratory, plus the one
+that shipped, which is the last row of the table. None passed.**
 
 | Easy / Normal / Difficult (cohesion + defend) | Normal over Easy | Difficult over Normal |
 |---|---|---|
@@ -538,6 +558,23 @@ over Easy reached 76.7%, comfortably the best result on that pairing ever
 recorded here, and the same configuration put Difficult over Normal at its worst.
 The two halves of the gate pull against each other once the middle rung gets
 better, and no split of these three dials resolves it.
+
+**The shipped split is the weakest of the four on Difficult-over-Normal, and
+that was a choice.** The row above it — `none / 0.5+0.25 / 2.0+0.5` — ties it on
+Normal-over-Easy at 68.3% and beats it by ten points on the other pairing,
+63.3% against 53.3%. It buys that separation by halving Normal's cohesion from
+1.0 to 0.5, which is to say by making the tier most people actually play less
+competent, and that is the opposite of what this change is for: the whole point
+of turning the dials on was that a column and a defended headquarters are basic
+competence rather than a difficulty smart. Naming the trade in both directions,
+because it is real in both: the cost of shipping the split we shipped is that
+Difficult is now only marginally stronger than Normal, so a player choosing
+Difficult gets less for it than they used to. That is a product cost, not only
+a gate number. **If BL2 decides tier separation matters more than Normal's
+competence, `none / 0.5+0.25 / 2.0+0.5` is the alternative to evaluate first** —
+it is measured, it is on the same 15 seeds, and it is the cheapest way back to a
+visible spread. The instruction at the top of this file still stands: prefer
+making Difficult better to making Normal worse.
 
 **§4b's headline does not survive the wider sample.** That section reports
 `cohesion_tiles` 2.0 at radius 2 as +25 points over control, measured at n=16 and
@@ -559,9 +596,11 @@ answers the "the AI throws units away" report, so this is the open thread.
 ## 5. Where this leaves the feature
 
 Everything the plan asked to be built and measured is now shipping: the tier
-plumbing, menu picker, save key, all three capabilities, production coverage,
-and a passing DF4 ladder. No threshold, income, vision, damage, luck, map,
-harness, or simulation code changed to obtain the pass.
+plumbing, menu picker, save key, all three capabilities and production coverage.
+The DF4 ladder itself does **not** pass — see the standing verdict at the top of
+this file and §4c for why that was accepted. What has never moved to obtain a
+number, passing or failing, is the rest of it: no threshold, income, vision,
+damage, luck, map, harness, or simulation code has been touched by this feature.
 
 Two reads stay open, and neither is a reason to hold the tune.
 
@@ -579,11 +618,12 @@ board that can resolve, not a weight that flatters the tiebreak.
 
 `make difficulty-check` remains an opt-in release task outside `make verify`.
 Run at the standing invocation — `make difficulty-check DIFF="--seeds=15"` — it
-exits non-zero whenever a future profile or planner change breaks the gate. The
-bare target is the 4-seed default (16 matches a pairing, a strict subset of the
-standing 60): a fast smoke of the same code path, not the gate. With the
-standing pairings only 1.7 points clear of the threshold, that subset can read
-red without a regression or green through one, so a colour from it is never the
+reports the gate, and today it exits non-zero on the knowingly-failing ladder
+above; it is BL2's instrument for reading a repair rather than a green light to
+protect. The bare target is the 4-seed default (16 matches a pairing, a strict
+subset of the standing 60): a fast smoke of the same code path, not the gate.
+Both pairings sit within a few points of the threshold, so that subset can read
+red without a regression or green through one, and a colour from it is never the
 number to quote.
 
 ## 6. Superseded measurements

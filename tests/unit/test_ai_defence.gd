@@ -47,7 +47,7 @@ func _state(map_text: String, hq_points_left: int = GameState.CAPTURE_POINTS) ->
 
 
 func _profile(defend_weight: float) -> AIProfile:
-	var profile := AIProfile.new()  # every capability off; the Normal baseline
+	var profile := AIProfile.new()  # Normal's shipped numbers; only defend_weight varies
 	profile.defend_weight = defend_weight
 	return profile
 

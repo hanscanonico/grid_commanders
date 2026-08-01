@@ -110,10 +110,12 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # --- Difficult-tier capabilities ---------------------------------------------
 #
 # Each gates a planner smart the base AI lacks. Every default is 0, which skips
-# the capability entirely: at 0 the code that reads it never runs, so Normal and
-# Easy plan exactly as the pre-difficulty AI did, on the same RNG stream. Only
-# data/ai/hard.tres turns them on. These change how the planner *ranks* its own
-# candidate moves — never a combat number, which stays owned by CombatResolver.
+# the capability entirely: at 0 the code that reads it never runs, and it never
+# draws from the RNG stream. These four stay Difficult-only — data/ai/hard.tres
+# is the one profile that turns them on, so Normal and Easy plan without them.
+# (The Judgement dials below are the ones every tier now carries.) These change
+# how the planner *ranks* its own candidate moves — never a combat number, which
+# stays owned by CombatResolver.
 
 ## How heavily a destination's expected incoming damage next turn discounts an
 ## *attack's* score, as a fraction of the exposed unit's cost. >0 builds a
@@ -203,8 +205,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## with a state to enter and get stuck in.
 @export var cohesion_tiles: float = 1.0
 ## How far apart units may drift before cohesion_tiles starts charging them.
-## Inert while cohesion_tiles is 0, which is why it may ship non-zero without
-## moving a single planned command.
+## Inert while cohesion_tiles is 0, so a tier that switches cohesion off need not
+## also reset this one. The tiers that mean it ship radius 2; Easy's looser 4 is
+## deliberately the setting the probe read as weak.
 @export var cohesion_radius: int = 2
 
 
