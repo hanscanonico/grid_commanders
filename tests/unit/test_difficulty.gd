@@ -42,9 +42,10 @@ func test_difficult_is_the_label_for_the_hard_id() -> void:
 	assert_eq(db.by_id(&"hard").display_name, "Difficult")
 
 
-## The pin that keeps Normal honest: it is the planner's own defaults, so a
-## same-seed replay of an existing match stays identical. A new weight added to
-## AIProfile without a default of "off" fails here, which is the point.
+## The pin that keeps Normal honest: the tier is the planner's own defaults, so
+## an install whose profile file is missing plays the same game. The weights
+## named here are the pre-difficulty set; parity across every field, including
+## the ones added since, is test_ai_profile.gd's.
 func test_normal_is_the_planner_defaults() -> void:
 	var normal := db.by_id(&"normal").profile()
 	var defaults := AIProfile.new()
@@ -61,8 +62,9 @@ func test_normal_is_the_planner_defaults() -> void:
 	assert_eq(normal.build_priority, defaults.build_priority)
 
 
-## Every Difficult-tier capability is off at Normal, so none of that code runs on
-## the tier the game has always shipped.
+## Every Difficult-tier capability is off at Normal, so none of that code runs
+## there. The AI Judgement dials are a separate set and Normal carries two of
+## them live — docs/difficulty_check.md §4c, never this list.
 func test_normal_leaves_every_capability_off() -> void:
 	var normal := db.by_id(&"normal").profile()
 	assert_almost_eq(normal.threat_aversion, 0.0, 0.0001)
