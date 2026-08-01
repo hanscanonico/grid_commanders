@@ -201,6 +201,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   the tier's character, and `ai/ai_profile.gd`'s class defaults moved with `data/ai/default.tres`
   because the invariant that pin protects is that an install with no profile file plays the same
   game — which is also what that test now pins, rather than parity with the pre-dial planner.
+  `defend_weight` ships at the **top** of the range AJ4 probed (2.0 Normal, 2.5 Difficult): the
+  probe measured it flat from 0.25 to 2.0, so a low value bought no measurable safety and left the
+  reported HQ defect reproducing against any rival worth a Recon or more. It reduces that defect
+  rather than ending it — the bonus is linear and priced on the same scale as a kill, so a rich
+  enough target (Rockets, which cannot counter) still outbids a match-ending capture at any weight;
+  the ceiling is the pricing *shape*, and `docs/difficulty_check.md` §4c is the measured boundary.
   `withdraw_weight` is the one still at `0.0`, and for a positioning defect rather than the
   ladder: at 0.05 it stops an artillery short of maximum standoff
   (`test_indirect_unit_backs_off_into_firing_range`), so the refuge's price wants fixing first.
@@ -277,8 +283,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   control) and **tight beat loose** — radius 4 never clears the control, so the two axes had to be
   probed together, and 2.0 is the top of the probe rather than a measured ceiling; `defend_weight`
   moves one match of sixteen, identically at all four values tried, which is **one observation
-  rather than four** and by the section's own calibration a hint — 0.25–0.5 is offered for BL2 to
-  re-measure at its own width, never as a measured band; and **two of the four dials are
+  rather than four** and by the section's own calibration a hint — flat from 0.25 to 2.0, offered
+  for BL2 to re-measure at its own width and never as a measured band; and **two of the four dials are
   recommended off** — `withdraw_weight` measures negative at every value tried, and
   `focus_fire_bonus` is refuted a third time, now with cohesion live, which retires the argument
   that it only ever failed for want of a column to focus. What the section does **not** know is the

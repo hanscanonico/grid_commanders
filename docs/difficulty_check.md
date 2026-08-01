@@ -347,9 +347,14 @@ it cannot flip them harder), but flatness across dependent rows is not evidence
 for that shape. By this section's own calibration a 6-point move at this width is
 a hint, and this is exactly that: a hint. **Suggested band: 0.25–0.5, as
 something for BL2 to re-measure at its own sample width before shipping it live,
-not a measured band.** Take the low end if it survives that — it buys the whole
-effect that was seen, and a smaller number has less room to distort a board this
-probe did not cover.
+not a measured band.**
+
+**§4c did not take the low end, and says why.** This section originally advised
+it — the whole measured effect is bought there, and a smaller number has less
+room to distort a board the probe did not cover. What that reasoning missed is
+that a flat line offers nothing to be safe *from*, while the low end left the
+reported defect reproducing on the shipped tiers. The live values are 2.0 on
+Normal and 2.5 on Difficult, and the coverage they buy is measured in §4c.
 
 ### `withdraw_weight` — measures negative at every value tried
 
@@ -491,7 +496,7 @@ measures is the build plus the per-cell `forecast_at` sweep that reads it.
 | dial | recommendation | confidence |
 |---|---|---|
 | `cohesion_tiles` / `cohesion_radius` | **1.0–2.0 at radius 2, as a hypothesis** | largest move here (+25) but **not reproduced at 15 seeds — see §4c**; 2.0 is the top of the probe |
-| `defend_weight` | **0.25–0.5, as a hint** | one match of sixteen flipped, at every value — re-measure |
+| `defend_weight` | **0.25–2.0, flat, as a hint** | one match of sixteen flipped, at every value — re-measure; §4c ships the top of it |
 | `withdraw_weight` | **stay at 0.0** | negative at every value tried |
 | `focus_fire_bonus` | **stay at 0.0** | third independent refutation |
 
@@ -533,13 +538,64 @@ Difficult; this is what happened when every tier carried them.
 | tier | `defend_weight` | `withdraw_weight` | `cohesion_tiles` | `cohesion_radius` |
 |---|---|---|---|---|
 | Easy | 0.0 | 0.0 | 0.5 | 4 |
-| Normal | 0.35 | 0.0 | 1.0 | 2 |
-| Difficult | 0.5 | 0.0 | 1.5 | 2 |
+| Normal | 2.0 | 0.0 | 1.0 | 2 |
+| Difficult | 2.5 | 0.0 | 1.5 | 2 |
 
 Easy carries the configuration §4b measured as *weak* — a loose column and no
 instinct to defend its own ground — which is judgement rather than a handicap and
 so stays inside the never-cheats rule. It also gives a beginner a real
-affordance: rushing an Easy AI's headquarters now works.
+affordance: rushing an Easy AI's headquarters now works, deliberately.
+
+**`defend_weight` shipped at 0.35 / 0.5 first, and was raised the same day.**
+Those were chosen on the reasoning that the low end of §4b's band is safer, and
+the measurement does not support it: §4b found this dial *flat* from 0.25 to 2.0,
+every value scoring 68.8% against a 62.5% control, so there is nothing measurable
+to be safer from. What the low value did buy was a defect: at 0.35 the report
+that started this plan — "when the HQ is attacked the AI does not really care" —
+still reproduced against any rival worth roughly a Recon or more, and played out
+to an actual elimination. 2.0 is the top of the range §4b measured and 2.5 keeps
+Difficult a step above Normal.
+
+**Which rivals the shipped weights now cover, measured on the AJ1 fixture
+shape** — our HQ under capture, our Tank one tile away, a rival enemy the same
+distance the other way, swept across how rich that rival is and at four capture
+stages (results identical at all four):
+
+| rival at (2,1) | cost | Easy — the dial-off control | Normal 2.0 | Difficult 2.5 |
+|---|---|---|---|---|
+| Infantry | 1000 | ignores | **defends** | **defends** |
+| Mech | 3000 | defends | **defends** | **defends** |
+| Recon | 4000 | ignores | **defends** | **defends** |
+| Artillery | 6000 | ignores | **defends** | **defends** |
+| Tank | 7000 | ignores | **defends** | **defends** |
+| Anti-Air | 8000 | ignores | **defends** | **defends** |
+| Rockets | 15000 | ignores | *ignores* | *ignores* |
+| Md Tank | 16000 | defends | defends | defends |
+
+Read the Easy column first: it is `defend_weight` 0.0, so the two rows where it
+already defends are not the dial's doing — a Tank's shot at a Mech or at an Md
+Tank is a poor enough trade to lose to the HQ on its own. The dial changes the
+choice in six of the eight rows, and **one rival still outbids a headquarters
+about to fall: Rockets.** Its crossover is between 3.0 and 4.0 (Recon's and
+Tank's are between 0.5 and 1.0), and it sits that high because an indirect unit
+cannot return fire, so the attack it offers is priced as pure profit.
+
+**That last row is the dial's ceiling, and no value removes it.** The defence
+bonus is linear and denominated in the same currency as a kill — which is what
+lets the two compete in one `UnitPlan` at all (AJ1 D3) — so a rich enough target
+always outbids a capture, including one that would end the army. Raising the
+weight moves the crossover; it cannot make a match-ending capture
+incommensurable with an ordinary kill. **The structural follow-up is the pricing
+*shape*, not the value:** losing a home HQ is not a setback of some number of
+funds, and a defence that answers it should probably not be scored as a bonus on
+the same scale as a trade. That is BL2's or a successor plan's to decide; this
+section only records that the value has been pushed as far as it usefully goes.
+
+**The ladder numbers below were measured at 0.35 / 0.5 and were not re-run for
+the raise.** §4b measured the dial flat across this whole range, the gate is
+already failing knowingly, so re-running 120 matches to re-confirm a flat line
+was not judged worth it. If a later pass finds the ladder moved by this dial
+after all, §4b's flatness is what to disbelieve first.
 
 **Four tier splits were measured at 15 seeds — three exploratory, plus the one
 that shipped, which is the last row of the table. None passed.**
@@ -550,7 +606,11 @@ that shipped, which is the last row of the table. None passed.**
 | 0.5·r4+0 / 1.5+0.35 / 2.0+0.5 | 66.7% | 56.7% |
 | none / 1.0+0.25 / 2.0+0.5 | **76.7%** | 51.7% |
 | none / 0.5+0.25 / 2.0+0.5 | 68.3% | 63.3% |
-| **shipped** — 0.5·r4+0 / 1.0+0.35 / 1.5+0.5 | 68.3% | 53.3% |
+| **shipped cohesion** — 0.5·r4+0 / 1.0+0.35 / 1.5+0.5 | 68.3% | 53.3% |
+
+The last row is the shipped cohesion split, measured before `defend_weight` was
+raised to 2.0 / 2.5; that raise is above and is unmeasured on the ladder by
+choice.
 
 The shape is consistent and it is not a tuning failure: **improving Normal
 shrinks the gap the gate measures.** The third row is the clearest case — Normal
