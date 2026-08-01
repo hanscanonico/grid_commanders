@@ -256,51 +256,33 @@ Mean AI planning per turn in the standing run:
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
 
-## 4b. Focus fire, re-measured with cohesion live (AI Judgement AJ3)
+## 4b. Focus fire with cohesion live — the re-test is owed by AJ4
 
 `focus_fire_bonus` has shipped at `0.0` since DF3 because §6's probes measured it
 harmful in every shape tried. The AI Judgement plan argued that verdict deserved
 one re-test rather than inheritance: focus fire was measured on a planner whose
 units *arrive one at a time*, so a bias toward ganging up had nothing to gang up
-with. AJ3 gave the planner `cohesion_tiles`, so the question was reopened once,
-under the condition that was missing.
+with. AJ3 gave the planner `cohesion_tiles`, so the question was reopened under
+the condition that was missing.
 
-**It measures negative again, at every live value.** Both tiers at
-`cohesion_tiles = 1.0`; only `focus_fire_bonus` moves, and only on Difficult, so
-the `0.0` row is the control:
+**The re-test was attempted during AJ3 and its numbers are not recorded here,
+because they could not be kept current.** Every measurement taken agreed on the
+sign — no live `focus_fire_bonus` value beat the `0.0` control — but each round of
+review changed the planner the table had been measured on, and the table went
+stale three times over. The measurement was not wrong, it was mis-placed: a
+number taken inside a code milestone cannot stay current while that milestone's
+code is still moving. **The standing re-test is therefore owed by the AI
+Judgement plan's AJ4, on frozen code**, alongside the sweep's wall clock already
+deferred there from AJ2 for the same reason.
 
-| `focus_fire_bonus` (Difficult) | Difficult over Normal | scrimmage | ironworks |
-|---|---|---|---|
-| 0.0 — control | 62.5% | 50.0% | 75.0% |
-| 0.2 | 31.2% | 25.0% | 37.5% |
-| 0.5 | 31.2% | 25.0% | 37.5% |
-| 1.0 | 50.0% | 25.0% | 75.0% |
-
-**Read this as a direction, not a magnitude.** 4 seeds and a 30-day cap, 16
-matches a row — a fraction of §4's standing 60, and on the same two boards, one
-of which (`ironworks`) §5 already records as resolving badly under a clock. What
-it is good for is the sign, and the sign is unambiguous: every live value is
-worse than the control, the worst by 31 points, and none of them recovers it.
-The overall column is not monotonic, and the two per-map columns say why: on
-`scrimmage` focus fire halves the tier's rate and holds it there at every value
-tried, while `ironworks` is what makes the total bounce — the same board §5
-records as resolving nothing under a clock, so its column is the one least worth
-reading a trend into. None of the four rows is a gate reading either: the ladder
-gate is §4's, taken at the shipped `cohesion_tiles = 0.0` over 60 matches, and
-every row here runs a value that does not ship. Only the comparison *within* the
-table is meaningful.
-
-**So `focus_fire_bonus` stays at `0.0`, now on evidence rather than inheritance,
-and the reason DF3 gave still stands** — the planner re-plans after every
-command, so a wounded target's finishing shot is already visible to the next
-attacker for free, and biasing the *first* shot pulls it off its own best trade.
-Cohesion does not change that, because cohesion fixes *where units are*, not
+**`focus_fire_bonus` stays at `0.0` in the meantime**, on §6's standing probes,
+and the reason DF3 gave still stands — the planner re-plans after every command,
+so a wounded target's finishing shot is already visible to the next attacker for
+free, and biasing the *first* shot pulls it off its own best trade. Cohesion is
+not obviously an answer to that, because cohesion fixes *where units are*, not
 which of them shoots first. The dial stays in the code rather than being deleted,
 for the reason it always did: zeroing a misbehaving smart is the remedy, and the
 ladder can re-test it in one edit.
-
-The AI Judgement plan's AJ4 owns the bands for the three dials that milestone
-added; this row is AJ3's own and covers only `focus_fire_bonus`.
 
 ## 5. Where this leaves the feature
 

@@ -314,7 +314,7 @@
         <div class="gc-chain mt-4">
           <div class="gc-chain-step is-ours"><b>AJ1</b>Defend what is being taken · inert</div>
           <div class="gc-chain-step is-ours"><b>AJ2</b>Withdrawal that can outbid a shot · inert</div>
-          <div class="gc-chain-step is-ours"><b>AJ3</b>Cohesion + focus fire re-measured · inert</div>
+          <div class="gc-chain-step is-ours"><b>AJ3</b>Cohesion on the advance path · inert</div>
           <div class="gc-chain-step is-ours"><b>AJ4</b>Characterise the dials → bands</div>
           <div class="gc-chain-step is-theirs"><b>BL1</b>Baseline + long-horizon gate</div>
           <div class="gc-chain-step is-theirs"><b>BL2</b>Ladder + <em>switch on</em> + freeze</div>
@@ -558,22 +558,25 @@
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body gap-2">
           <h3 class="font-bold text-lg">AJ3 — Fight as an army <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
-          <p class="text-sm opacity-80">Answers observation 3. Two dials — <code>cohesion_tiles</code> (default <code>0.0</code>) and <code>cohesion_radius</code> (default <code>2</code>) — and one measurement.</p>
+          <p class="text-sm opacity-80">Answers observation 3. Two dials — <code>cohesion_tiles</code> (default <code>0.0</code>) and <code>cohesion_radius</code> (default <code>2</code>) — and the goal exemptions that keep them off every errand.</p>
           <ul class="list-disc list-inside space-y-1 text-sm">
             <li>One term in <span class="gc-file">_advance_value</span>, per D5, over
               <span class="gc-file">context.friendly_units</span> — already built, already scan-ordered.</li>
-            <li><strong>Then the other half of the milestone, which is a measurement rather than code:</strong> re-run the
-              <code>focus_fire_bonus</code> ladder probe <em>with cohesion live</em>. The standing negative result was
-              measured on a planner whose units arrive one at a time — focus fire had nothing to focus. If it measures
-              positive now, it is a recommended band for BL2. If it measures negative again, it stays at zero and the plan
-              records the <em>second</em> refutation, which is worth having: it stops the next person re-deriving it.
-              Either outcome is a deliverable. <strong>Measured: it is negative again, at every live value</strong> — with both tiers at <code>cohesion_tiles 1.0</code> and only <code>focus_fire_bonus</code> moving on Difficult, Difficult-over-Normal falls from 62.5 % (control) to 31.2 → 31.2 → 50.0 %. So the dial stays at 0 on evidence rather than inheritance, and <span class="gc-file">docs/difficulty_check.md</span> §4b records the second refutation and its limits.</li>
+            <li><strong>The goal exemptions, which are the other half of the milestone:</strong>
+              <code>AdvanceGoal.keeps_formation</code> defaults to <em>false</em> and only the ordinary advance on the enemy
+              turns it on, so every errand <span class="gc-file">_advance_goal</span> computes first — refit, repair, a
+              property to capture, and AJ1's besieged home HQ — goes untaxed by construction rather than by a list of
+              exceptions. Both terms count in tiles and the column's pull is the stronger, so charging an errand cancels it
+              outright.</li>
           </ul>
           <p class="text-sm mt-2"><strong>Tests</strong> — cohesion is pure arithmetic over a unit list, so a fixture with one
             fast and one slow unit pins that the fast one holds short of the front at <code>cohesion_tiles &gt; 0</code> and
-            runs ahead at zero.</p>
-          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the focus-fire re-measurement written into
-            <span class="gc-file">docs/difficulty_check.md</span> whichever way it lands.</p>
+            runs ahead at zero, and a six-day fixture pins that the column advances rather than stalls (R1). One fixture per
+            exempt errand pins that it still reaches its objective with the dial live.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical. The <code>focus_fire_bonus</code> re-test
+            <em>with cohesion live</em> was attempted here and <strong>moves to AJ4</strong>: every measurement taken agreed
+            on the sign, but each review round changed the planner it had been measured on, so no number stayed current
+            inside a milestone whose code was still moving.</p>
         </div>
       </div>
 
@@ -596,6 +599,15 @@
             <li><strong>And the sweep's wall clock</strong>, deferred here from AJ2 (R6): recorded with the dials that build
               the threat map live against the same sweep with them at zero, which is the only comparison in which the
               cost is real.</li>
+            <li><strong>And the <code>focus_fire_bonus</code> re-test <em>with cohesion live</em></strong>, deferred here from
+              AJ3. The standing negative result was measured on a planner whose units arrive one at a time — focus fire had
+              nothing to focus. If it measures positive now, it is a recommended band for BL2; if negative again, it stays at
+              zero and the plan records the <em>second</em> refutation, which stops the next person re-deriving it. Either
+              outcome is a deliverable.</li>
+            <li><strong>Why both measurements landed here rather than in the milestones that named them</strong>:
+              a measurement belongs on frozen code. AJ2's wall clock had no live dial to time and AJ3's focus-fire table went
+              stale at every review round that touched the planner — AJ4 is the milestone that adds none, so it is the only
+              one whose numbers stay true after it ships.</li>
             <li><strong>Explicitly not a deliverable</strong>: a shipped tier value. That is BL2 (D2).</li>
           </ul>
           <p class="text-sm mt-2"><strong>Exit</strong> — the table is committed and all three

@@ -247,11 +247,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   rejected alternative is an explicit formation manager: it needs cross-turn state the planner has
   nowhere to keep (`AIPlanningContext` is rebuilt every command, and only the threat map
   deliberately survives).
-  AJ3 also re-measured `focus_fire_bonus` with cohesion live, because the standing negative verdict
-  was taken on a planner whose units arrive one at a time: **it measures negative again, at every
-  live value** (62.5 % control → 31.2 → 31.2 → 50.0), so it stays at 0 on evidence rather than
-  inheritance — `docs/difficulty_check.md` §4b is the record and states its own limits. Cohesion
-  fixes *where units are*, not which of them shoots first.
+  **AJ3 owns the cohesion term and its goal exemptions; the two measurements are AJ4's, on frozen
+  code.** The `focus_fire_bonus` re-test *with cohesion live* was attempted inside AJ3 and moved
+  out: every measurement taken agreed on the sign, but each review round changed the planner it had
+  been taken on, so no number stayed current while the milestone's code was still moving. It now
+  sits in AJ4 beside the sweep's wall clock already deferred there from AJ2 — a measurement belongs
+  on the milestone that adds no code. `docs/difficulty_check.md` §4b records that the re-test is
+  owed, and `focus_fire_bonus` stays at 0 meanwhile on §6's standing probes.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
