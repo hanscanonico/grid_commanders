@@ -84,6 +84,9 @@ func enter_victory() -> void:
 	_battle.animator.hide_banner()
 	Sfx.play(&"fanfare")
 	victory_label.text = _result_text()
+	# A playback has no match to play again: the button restarts the recording, and
+	# the word on it has to be the one that names what pressing it does.
+	rematch_button.text = "Restart" if _battle.replay_path != "" else "Rematch"
 	var standings := _standings_text()
 	victory_sub_label.text = "Day %d" % _battle.game.day
 	if standings != "":

@@ -679,7 +679,8 @@ through — the same animations, cut-ins, banners, ambush cues and elimination c
 at the next command boundary and opens the map menu, exactly as it does during a computer turn —
 without the two save rows, because a recording is a match already played and writing it to the one
 save slot would come back as a hot-seat game nobody was sitting at. While it is paused, `S` takes
-one more command and stops again, and Enter lets it run.
+one more command and stops again, and Enter lets it run. When it ends, the victory screen's first
+action reads **Restart** and plays the recording again rather than starting a match on its board.
 The board is drawn **omniscient** whatever fog the match was played under: the match is over, so
 there is nobody left to hide it from, and a fogged AI-versus-AI match watched through one army's
 eyes is mostly a black rectangle.

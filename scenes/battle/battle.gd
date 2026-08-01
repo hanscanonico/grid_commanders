@@ -330,9 +330,9 @@ func _match_label() -> String:
 
 
 ## Which key legend this state prints. A replay borrows `AI_TURN` and the PAUSED
-## it can be interrupted into — somebody else is playing and you are watching,
-## which is exactly those states — so only the words differ, and a paused replay
-## has one key a paused computer turn does not: the step.
+## it can be interrupted into — somebody else is playing and you are watching — so
+## only the words differ, and a paused replay names one key a paused turn cannot:
+## the step.
 func _legend_for(value: State) -> String:
 	if _replay != null and value == State.AI_TURN:
 		return ControlHints.REPLAY
@@ -396,6 +396,7 @@ func request_pause() -> void:
 	if _paused:
 		return
 	_pause_requested = true
+	_stepping = false  # this press wants the menu, so a step in flight stops being one
 	action_feedback.show_reason("Pausing...", view.screen_pos_for_cell(cursor_cell))
 
 

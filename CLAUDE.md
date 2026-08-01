@@ -609,12 +609,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   `replay_step` (S) takes exactly one more command and re-parks on the board rather than under that
   menu, and the menu itself drops the two save rows (`BattleMenus.map_actions`'s `savable`) because a
   playback seats no computer — saved and resumed, a recorded AI match would come back as a hot-seat
-  one. For the same reason the victory lockup's rematch re-stages `MatchRequest.from_replay` off
-  `Battle.replay_path` rather than deriving a live match from the recorded board. D5: omniscient
-  viewer, always-on recording into ten rotating slots under `user://replays/`, appended per command
-  so a crash costs the last line rather than the file — and the slot is claimed by the **first
-  command**, never the boot, because the slots rotate and a match nobody played must not evict one
-  somebody did. D6: **the analyser asks the rules, never the planner** —
+  one. For the same reason the victory lockup's rematch button reads **Restart** over a playback and
+  re-stages `MatchRequest.from_replay` off `Battle.replay_path` rather than deriving a live match
+  from the recorded board. D5: omniscient viewer, always-on recording into ten rotating slots under
+  `user://replays/`, appended per command so a crash costs the last line rather than the file — and
+  the slot is claimed by the **first command**, never the boot, because the slots rotate and a match
+  nobody played must not evict one somebody did. D6: **the analyser asks the rules, never the
+  planner** —
   counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
   why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so
   `make replay-report` stays out of `make verify`. D7: `--watch` (re-plan from a seed, the balance
