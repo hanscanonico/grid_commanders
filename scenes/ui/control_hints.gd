@@ -41,6 +41,7 @@ const TARGETING := &"targeting"
 const DROP_TARGETING := &"drop_targeting"
 const ANIMATING := &"animating"
 const AI_TURN := &"ai_turn"
+const REPLAY := &"replay"
 const PAUSED := &"paused"
 const HANDOFF := &"handoff"
 const VICTORY := &"victory"
@@ -62,6 +63,9 @@ const LEGENDS: Dictionary = {
 	# one that takes the board back, so the legend names it rather than only
 	# saying whose turn it is.
 	AI_TURN: "CPU PLAYING   ESC · PAUSE",
+	# A replay borrows AI_TURN's state — somebody else is playing and you are
+	# watching — so it needs its own words to say that nobody is playing at all.
+	REPLAY: "REPLAY   ESC · PAUSE",
 	PAUSED: "PAUSED   ENTER · RESUME   ESC · MENU",
 	HANDOFF: "ENTER · READY",
 	VICTORY: "UP/DOWN · PICK   ENTER · OK",

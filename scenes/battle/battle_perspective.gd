@@ -24,10 +24,20 @@ var _game: GameState
 var _viewing_team: int = 0
 var _blacked_out := false
 var _visible_cells: Dictionary = {}
+## Set for a replay: the match is over, so there is nobody left to hide it from
+## (replay plan D5). It is a *viewer* policy and nothing else — `fog_enabled` on
+## the state stays exactly as the match was played, because the sim has to resolve
+## the recorded moves the way it did, ambushes and all.
+##
+## Two short-circuits cover the whole surface: every other query here composes off
+## `can_see_cell` and `can_see_unit`, so nothing can be omniscient in one answer
+## and fogged in another.
+var _omniscient := false
 
 
-func _init(p_game: GameState) -> void:
+func _init(p_game: GameState, p_omniscient: bool = false) -> void:
 	_game = p_game
+	_omniscient = p_omniscient
 	_viewing_team = p_game.teams[0]  # until the first refresh names the real viewer
 
 
@@ -35,8 +45,10 @@ func _init(p_game: GameState) -> void:
 ## handoff hides every cell and unit, including the incoming team's own pieces.
 func refresh(viewing_team: int, blacked_out: bool) -> void:
 	_viewing_team = viewing_team
-	_blacked_out = blacked_out
-	_visible_cells = {} if blacked_out else Vision.visible_cells(_game, viewing_team)
+	_blacked_out = blacked_out and not _omniscient
+	_visible_cells = (
+		{} if _blacked_out or _omniscient else Vision.visible_cells(_game, viewing_team)
+	)
 
 
 ## Whose eyes the board is currently drawn through. Read by surfaces that have to
@@ -49,11 +61,15 @@ func viewing_team() -> int:
 ## Whether the viewer may see activity on `cell`. Cell and unit visibility stay
 ## separate because a doctrine or a dive can hide a unit on visible ground.
 func can_see_cell(cell: Vector2i) -> bool:
+	if _omniscient:
+		return true
 	return not _blacked_out and (not _game.fog_enabled or _visible_cells.has(cell))
 
 
 ## Whether the viewer may see `unit`, including doctrine and dive hiding.
 func can_see_unit(unit: Unit) -> bool:
+	if _omniscient:
+		return true
 	if _blacked_out:
 		return false
 	return Vision.can_see_unit(_game, _viewing_team, unit, _visible_cells)

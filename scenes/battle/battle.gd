@@ -127,7 +127,7 @@ var state := State.IDLE:
 	set(value):
 		state = value
 		if view != null:  # nothing to tell during _ready, before the view exists
-			view.refresh_keys(STATE_CONTEXT.get(state, ControlHints.IDLE))
+			view.refresh_keys(_legend_for(state))
 
 var selected: Unit
 var move_range: MovementResolver.MoveRange
@@ -171,6 +171,16 @@ var _command_pipeline: BattleCommandPipeline
 ## Plays computer turns — the AI's side of the interaction flow. Held for the
 ## whole scene; `run()` is fired when a computer team's turn opens.
 var _ai_runner: BattleAiRunner
+## Set only for `--replay=`: the recording being played back, and the runner that
+## walks it. Non-null is what makes this scene a viewing of a finished match
+## rather than a playing of a live one — nobody plans, nobody may act, and the
+## board is drawn omniscient because there is no longer anyone to hide it from.
+var _replay: ReplayPlayer
+var _replay_runner: BattleReplayRunner
+## The recording this match is writing as it is played, or null while replaying
+## one. Opened before the first command and closed on the way out; the pipeline
+## does the observing.
+var _recording: ReplayFile
 
 ## Owns the camera zoom level, its clamp against the view, and the zoom keys.
 var _zoom: BattleZoom
@@ -229,14 +239,24 @@ func _ready() -> void:
 	game = built.game
 	ai_teams = built.ai_teams
 	difficulty = built.difficulty
+	_replay = built.replay
+	if _replay != null:
+		_replay_runner = BattleReplayRunner.new(self, _replay)
 	_build_planners(built)
-	perspective = BattlePerspective.new(game)
+	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
 	view.setup()
 	overlays = _build_overlays()
 	overlays.setup()
 	animator = _build_animator()
-	_command_pipeline = BattleCommandPipeline.new(self)
+	# Dev-only capture flows. The driver is held for the whole scene: `run` awaits,
+	# and a RefCounted nobody references is freed mid-scenario. Asked this early
+	# because whether this run exists to be photographed also decides whether it
+	# records itself — a sweep must not leave a recording per scenario in the
+	# player's slots.
+	var driver := BattleScenarioDriver.new(self)
+	_capturing = driver.requested()
+	_command_pipeline = BattleCommandPipeline.new(self, _open_recording())
 	_outcome = _build_outcome()
 	_outcome.configure(request.watching, request.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
@@ -250,10 +270,6 @@ func _ready() -> void:
 	_zoom = BattleZoom.new(view)
 	_zoom.setup()
 	set_cursor_cell(Vector2i.ZERO)
-	# Dev-only capture flows. The driver is held for the whole scene: `run`
-	# awaits, and a RefCounted nobody references is freed mid-scenario.
-	var driver := BattleScenarioDriver.new(self)
-	_capturing = driver.requested()
 	animator.capturing = _capturing
 	if _capturing:
 		# A capture pins its own pace and ignores the device preference: a frame
@@ -278,6 +294,48 @@ func _ready() -> void:
 		camera.position_smoothing_enabled = false
 		_scenario_driver = driver
 		_scenario_driver.run()
+
+
+## The recorder this match writes itself through, or null when there is nothing to
+## record: a replay is already a recording, and a capture run's scenarios would
+## fill the player's slots with matches nobody played.
+##
+## A failed open is not a failed match — the recording is a convenience, so it says
+## so once through `ReplayFile` and the match plays on without one.
+func _open_recording() -> ReplayRecorder:
+	if _replay != null or _capturing:
+		return null
+	# Sortable, and that is the whole of why the slot is named by a clock: the
+	# directory then lists chronologically without reading a single file.
+	var started := Time.get_datetime_string_from_system()
+	_recording = ReplayFile.open_slot(started.replace(":", "-"))
+	if _recording == null:
+		return null
+	var recorder := ReplayRecorder.new(_recording)
+	recorder.begin(game, ai_teams, difficulty.id, _match_label(), started)
+	return recorder
+
+
+## What the replay menu calls this match: the board, and who was at the table.
+func _match_label() -> String:
+	var sides := PackedStringArray()
+	for team in game.teams:
+		sides.append(view.identity.display_name(team))
+	return "%s · %s" % [MapCatalog.display_name(game.map_path), " vs ".join(sides)]
+
+
+## Which key legend this state prints. A replay borrows `AI_TURN` — somebody else
+## is playing and you are watching, which is exactly that state — so only the
+## words differ.
+func _legend_for(value: State) -> String:
+	if value == State.AI_TURN and _replay != null:
+		return ControlHints.REPLAY
+	return STATE_CONTEXT.get(value, ControlHints.IDLE)
+
+
+func _exit_tree() -> void:
+	if _recording != null:
+		_recording.close()
 
 
 ## Gives every team its planner. The tier is the one lever difficulty pulls —
@@ -1027,6 +1085,13 @@ func _begin_turn() -> void:
 	)
 	if state != State.ANIMATING:
 		return
+	if _replay != null:
+		# Every seat is the recording's, whoever played it. AI_TURN is the state for
+		# "somebody else is playing" and carries the pause seam this needs, so the
+		# runner and the legend are the only things that differ.
+		state = State.AI_TURN
+		_replay_runner.run()
+		return
 	if game.current_team in ai_teams:
 		state = State.AI_TURN
 		_ai_runner.run()
@@ -1074,6 +1139,10 @@ func _announce_fallen(fallen: Array[int]) -> void:
 ## player taking two turns in a row, everyone else having fallen, is not a
 ## handoff and is not asked for one.
 func _needs_handoff() -> bool:
+	# Nobody is being handed the device during a replay, and the board is drawn
+	# omniscient anyway — a blackout would blank a match that has no secrets left.
+	if _replay != null:
+		return false
 	if not game.fog_enabled or game.winner != 0:
 		return false
 	if game.current_team in ai_teams:

@@ -47,6 +47,7 @@ make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a relea
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
+make replay REPLAY=<file> # re-watch a recorded match
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
@@ -657,6 +658,42 @@ instead — the menu's
 drifting backdrop and blinking **PRESS START** pin still under a capture (the animator's `capturing`
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
+
+## Replays
+
+**Every match records itself** as it is played, to a rotating slot under `user://replays/` — ten of
+them, oldest pruned. There is nothing to arm and nothing to remember: the match worth re-watching is
+the one you did not know was interesting until it ended.
+
+```sh
+make replay REPLAY=~/Library/Application\ Support/Godot/app_userdata/Grid\ Commanders/replays/<file>.jsonl
+```
+
+A recording plays back **in the battle scene**, through the same executor a player's click goes
+through — the same animations, cut-ins, banners, ambush cues and elimination cards. `Esc` pauses it
+at the next command boundary and opens the map menu, exactly as it does during a computer turn.
+The board is drawn **omniscient** whatever fog the match was played under: the match is over, so
+there is nobody left to hide it from, and a fogged AI-versus-AI match watched through one army's
+eyes is mostly a black rectangle.
+
+A replay is **an opening board and the commands that were applied to it** — never a video and never
+a series of states. The opening line is a save envelope verbatim (so it carries the roster, the
+grouping, each commander's charge and the RNG state, and a match resumed from a save records
+correctly from wherever it was picked up); every line after it is one applied command, appended as
+it happens, so a crash costs the last line rather than the file. A twenty-day match is about 100 KB.
+
+Each line also carries a **digest of the board that command left behind**, and playback stops at the
+first mismatch and names the command. That is the one thing a command log cannot do for itself:
+survive the *game* moving underneath it. Retune a `.tres`, fix a rule, add a doctrine hook, and
+yesterday's recording describes a match this build would not play — without the digest it would
+quietly play a different one and look fine. Replays are disposable: nothing resumes from one, so a
+stale one is deleted rather than migrated.
+
+The Balance Lab writes them too. `make balance-sim SIM="… --replays"` puts one file per match in a
+`replays/` directory beside its report, named by the same match id the CSV rows carry, so a
+suspicious row becomes a match you can watch. That is a different instrument from `make
+balance-watch`, which re-plans a row from its seed and is *supposed* to diverge when the AI changes;
+a replay cannot diverge, because the decisions are in the file.
 
 ## Difficulty
 

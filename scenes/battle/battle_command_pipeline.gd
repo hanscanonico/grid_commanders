@@ -8,10 +8,17 @@ extends RefCounted
 ## with their existing owners.
 
 var _battle: Battle
+## The match's recording, or null when there is nothing to record. It lives here
+## because this is where a command is applied, and a recorder must see exactly the
+## commands that reached the board — no more (a refused plan returns above) and no
+## fewer. It observes and nothing else: replay plan D2, the same rule the Balance
+## Lab's telemetry holds to.
+var _recorder: ReplayRecorder
 
 
-func _init(battle: Battle) -> void:
+func _init(battle: Battle, recorder: ReplayRecorder = null) -> void:
 	_battle = battle
+	_recorder = recorder
 
 
 ## Executes one command. Human movement is already previewed on the board;
@@ -52,7 +59,11 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		if watched_build:
 			_battle.set_cursor_cell(build.cell)
 
+	if _recorder != null:
+		_recorder.before_apply(game, command)
 	command.apply(game)
+	if _recorder != null:
+		_recorder.after_apply(game)
 	receipt.applied = true
 	receipt.ambushed = command.ambushed
 	receipt.team_after = game.current_team

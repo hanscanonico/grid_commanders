@@ -55,6 +55,16 @@ var commanders: Dictionary = {}
 var resume := false
 ## `--seed=`. Negative means randomize, which is every match but a watched one.
 var seed_value := -1
+## `--replay=<path>`: watch a recorded match instead of playing one. The recording
+## brings its own board, seating, grouping, commanders and fog — it opens on a
+## `SaveCodec` envelope, exactly as `resume` does — so everything above is ignored
+## when this is set and the file is actually readable.
+##
+## Deliberately not `--watch` with a file attached: that flag re-plans a Balance Lab
+## row from its seed and must keep diverging when the AI changes, which is the whole
+## of its job (replay plan D7). This one cannot diverge, because the decisions are in
+## the file.
+var replay_path := ""
 ## `--watch`: both seats are the computer's and the match came from a Balance Lab
 ## spec. The scene prints its result and exits when the match ends, so a watched
 ## run can be diffed against the CSV row it was launched from.
@@ -154,6 +164,8 @@ func apply_cmdline(args: PackedStringArray) -> void:
 			map_path = resolved
 	if CmdArgs.has(args, "--days"):
 		days_cap = maxi(1, int(CmdArgs.value(args, "--days")))
+	if CmdArgs.has(args, "--replay"):
+		replay_path = CmdArgs.value(args, "--replay").strip_edges()
 	# Read before `--co`, and that order is the whole reason it sits here: a
 	# commander list is positional over the seats that *play*, so the seating has to
 	# be known before the list is dealt out over it.
