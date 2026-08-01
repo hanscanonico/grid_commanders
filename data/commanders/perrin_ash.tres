@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PerrinAsh" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/perrin_ash.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"perrin_ash"
+display_name = "Perrin Ash"
+faction = "Aurora Compact"
+doctrine_text = "Air units gain +10% attack."
+power_name = "Air Superiority"
+power_text = "Air units gain a further +10% attack through the opponent's next turn."
+power_quotes = Array[String](["Altitude is the only high ground that moves.", "Down there, everything is a target."])
+power_cost = 9000
+power_duration = 1
+air_attack_pct = 10
+superiority_attack_pct = 10
