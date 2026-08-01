@@ -23,18 +23,31 @@ extends RefCounted
 ## the board, so it never touches the file, which is what keeps "re-apply every
 ## line in order" a complete description of the match rather than a description
 ## plus a filter.
+##
+## ## Why the file is opened by the first command
+##
+## A match records itself from its first move, not from its boot. The slots are
+## rotating and few (`ReplayFile.KEEP`), so a file claimed at boot means booting a
+## match and leaving it evicts the oldest recording of a match somebody played and
+## leaves a header nobody can watch. The opener is therefore a Callable held until
+## there is a line worth writing, and the header goes down ahead of it.
 
-## Where finished lines go. Null records to memory instead, which is what a test
-## wants and what `lines()` reads back.
+## Opens the file finished lines go to, called once and only when the first
+## command has been recorded. Unset records to memory instead, which is what a
+## test wants and what `lines()` reads back.
+var _open_sink: Callable
 var _sink: ReplayFile
+var _sink_opened := false
 var _lines: Array[Dictionary] = []
 var _seq := 0
+## The line the opening was encoded as, written ahead of the first command line.
+var _header: Dictionary = {}
 ## The line being built between `before_apply` and `after_apply`.
 var _pending: Dictionary = {}
 
 
-func _init(sink: ReplayFile = null) -> void:
-	_sink = sink
+func _init(open_sink: Callable = Callable()) -> void:
+	_open_sink = open_sink
 
 
 ## Opens the recording on the board the match starts from — after the state is
@@ -48,7 +61,9 @@ func begin(
 	label: String = "",
 	recorded: String = ""
 ) -> void:
-	_emit(ReplayCodec.header(SaveCodec.encode(state, ai_teams, difficulty), label, recorded))
+	_header = ReplayCodec.header(SaveCodec.encode(state, ai_teams, difficulty), label, recorded)
+	if _open_sink.is_null():
+		_lines.append(_header)
 
 
 ## Called once a command has been validated and is about to be applied.
@@ -80,8 +95,18 @@ func close() -> void:
 		_sink.close()
 
 
+## Writes one command line, opening the file on the first of them. A failed open
+## is tried once and never again: the match plays on unrecorded rather than
+## pushing the same disk error at every command.
 func _emit(line: Dictionary) -> void:
-	if _sink == null:
+	if _open_sink.is_null():
 		_lines.append(line)
+		return
+	if not _sink_opened:
+		_sink_opened = true
+		_sink = _open_sink.call()
+		if _sink != null:
+			_sink.append(_header)
+	if _sink == null:
 		return
 	_sink.append(line)

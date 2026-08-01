@@ -31,12 +31,16 @@ func _clear() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s" % [DIR, name]))
 
 
-func _opening() -> Dictionary:
+func _state() -> GameState:
 	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
 	var state := GameState.create(map, unit_db, chart)
 	state.map_path = "res://maps/first_steps.txt"
 	state.day = 4
-	return SaveCodec.encode(state, [2] as Array[int])
+	return state
+
+
+func _opening() -> Dictionary:
+	return SaveCodec.encode(_state(), [2] as Array[int])
 
 
 ## A slot holding a header and two moves, closed.
@@ -151,6 +155,34 @@ func test_opening_a_slot_makes_room_for_itself() -> void:
 	for i in ReplayFile.KEEP + 3:
 		_write_one("%04d" % i)
 	assert_eq(ReplayFile.list(DIR).size(), ReplayFile.KEEP)
+
+
+## The slots rotate and there are few of them, so a boot that claimed one and was
+## left before a single move would evict a match somebody played and leave a
+## header nobody can watch. The recorder therefore holds the opener until there is
+## a line worth writing.
+func test_a_match_with_no_commands_claims_no_slot() -> void:
+	var state := _state()
+	var recorder := ReplayRecorder.new(func() -> ReplayFile: return ReplayFile.open_slot("9", DIR))
+	recorder.begin(state, [2] as Array[int])
+	recorder.close()
+	assert_eq(ReplayFile.list(DIR).size(), 0, "an abandoned boot evicts nothing")
+
+
+func test_the_first_command_opens_the_slot_and_writes_the_header_ahead_of_it() -> void:
+	var state := _state()
+	var recorder := ReplayRecorder.new(func() -> ReplayFile: return ReplayFile.open_slot("9", DIR))
+	recorder.begin(state, [2] as Array[int], Difficulty.DEFAULT_ID, "a match")
+	recorder.before_apply(state, EndTurnCommand.new())
+	recorder.after_apply(state)
+	recorder.close()
+
+	var listed := ReplayFile.list(DIR)
+	assert_eq(listed.size(), 1)
+	var replay := ReplayFile.read(listed[0].path)
+	assert_not_null(replay, "the header must have gone down before the command")
+	assert_eq(replay.label, "a match")
+	assert_eq(replay.entries.size(), 1)
 
 
 func test_pruning_a_directory_that_is_not_there_is_not_an_error() -> void:

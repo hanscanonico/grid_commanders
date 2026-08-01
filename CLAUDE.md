@@ -604,21 +604,34 @@ that must survive any change; the full rationale, milestones and risk registers 
   `BattleAiRunner`'s sibling driving `Battle.execute_command`, no planner is built, and
   **`game.fog_enabled` is untouched** (fog is an input to `MoveCommand.validate` and to the ambush,
   so switching it off would resolve the recorded moves differently), which is why the omniscient
-  viewer is a `BattlePerspective` flag and nothing else. D5: omniscient viewer, always-on recording
-  into ten rotating slots under `user://replays/`, appended per command so a crash costs the last
-  line rather than the file. D6: **the analyser asks the rules, never the planner** —
+  viewer is a `BattlePerspective` flag and nothing else. Playback borrows `State.AI_TURN` and its
+  pause seam, so the replay controls are the pause menu's: Esc parks the runner between commands,
+  `replay_step` (S) takes exactly one more command and re-parks on the board rather than under that
+  menu, and the menu itself drops the two save rows (`BattleMenus.map_actions`'s `savable`) because a
+  playback seats no computer — saved and resumed, a recorded AI match would come back as a hot-seat
+  one. For the same reason the victory lockup's rematch re-stages `MatchRequest.from_replay` off
+  `Battle.replay_path` rather than deriving a live match from the recorded board. D5: omniscient
+  viewer, always-on recording into ten rotating slots under `user://replays/`, appended per command
+  so a crash costs the last line rather than the file — and the slot is claimed by the **first
+  command**, never the boot, because the slots rotate and a match nobody played must not evict one
+  somebody did. D6: **the analyser asks the rules, never the planner** —
   counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
   why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so
   `make replay-report` stays out of `make verify`. D7: `--watch` (re-plan from a seed, the balance
   plan's BS3 fidelity instrument) and `--replay=` (immune to AI changes by design) are two
-  instruments, not one. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
+  instruments, not one; a `--replay=` naming no file is a viewing that named nothing and is refused
+  out loud (`MatchRequest.replay_requested` is the fact `BattleSetup` reads), never quietly played
+  as an ordinary match on the default board. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
   match, recorded and re-issued, reproducing every checkpoint and an identical final board. The
   analyser's nine detectors each have a fixture that fires them exactly once
   (`tests/unit/test_replay_analysis.gd` over `maps/fixtures/analysis.txt`), because a false positive
   costs more than a miss — it sends the reader looking at a doctrine that was playing correctly.
   `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was
   survivable**, since a unit already inside the same fire did not walk into anything and reporting
-  it buries the moves that did.
+  it buries the moves that did. `oscillation` carries the same shape from the other side: it says
+  "having fought nothing", so it fires only when nothing was fought or captured across **both**
+  turns the walk spans — a unit that went out, took its shot and came home is not walking in a
+  circle, and a finding whose own detail line the board contradicts is worse than a miss.
 
 ## Architecture — the rules that matter most
 

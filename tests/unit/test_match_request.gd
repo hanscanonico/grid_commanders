@@ -65,6 +65,24 @@ func test_replay_names_a_recording_to_watch() -> void:
 	var request := MatchRequest.new()
 	request.apply_cmdline(_args(["--replay=  user://replays/a.jsonl  "]))
 	assert_eq(request.replay_path, "user://replays/a.jsonl", "trimmed, not resolved")
+	assert_true(request.replay_requested, "and this launch is a viewing")
+
+
+## `make replay` with no `REPLAY=` passes exactly this, and a launch that fell
+## back to an ordinary match on the default board would look just like the replay
+## working. The flag is still a viewing; naming no file is what BattleSetup
+## refuses.
+func test_an_empty_replay_flag_still_asks_for_a_replay() -> void:
+	var request := MatchRequest.new()
+	request.apply_cmdline(_args(["--replay="]))
+	assert_eq(request.replay_path, "")
+	assert_true(request.replay_requested)
+
+
+func test_a_launch_naming_no_replay_is_not_a_viewing() -> void:
+	var request := MatchRequest.new()
+	request.apply_cmdline(_args(["--fog"]))
+	assert_false(request.replay_requested)
 
 
 ## The two look alike from the outside and are opposite instruments (replay plan

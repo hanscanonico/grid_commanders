@@ -136,7 +136,15 @@ static func build_actions(
 ## the pause they may take while the computer plays. The two rows that would *act*
 ## for the side on turn go with it; everything else stays, because the match, the
 ## device settings and the ways out are exactly what a pause is opened for.
-static func map_actions(game: GameState, commandable: bool = true) -> Array[Dictionary]:
+##
+## `savable` is false over a replay, and takes the two save rows with it. A
+## recording is a match already played: there is no turn to come back to, and
+## writing it would spend the single save slot on a board the player can only
+## watch — resumed, it would come up as a hot-seat match nobody is sitting at,
+## because a replay seats no computer.
+static func map_actions(
+	game: GameState, commandable: bool = true, savable: bool = true
+) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	if commandable:
 		var co_state := game.commander_state(game.current_team)
@@ -146,8 +154,9 @@ static func map_actions(game: GameState, commandable: bool = true) -> Array[Dict
 	actions.append({"id": &"speed", "label": "Speed: %s" % Settings.speed.display_name})
 	if commandable:
 		actions.append({"id": &"end_turn", "label": "End Turn"})
-	actions.append({"id": &"save", "label": "Save"})
-	actions.append({"id": &"save_and_quit", "label": "Save & Main Menu"})
+	if savable:
+		actions.append({"id": &"save", "label": "Save"})
+		actions.append({"id": &"save_and_quit", "label": "Save & Main Menu"})
 	actions.append({"id": &"quit", "label": "Main Menu Without Saving"})
 	actions.append(CANCEL)
 	return actions

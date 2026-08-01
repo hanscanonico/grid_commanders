@@ -417,10 +417,16 @@
             <li><code>BattlePerspective</code> gains the omniscient flag; the handoff blackout is
             skipped in replay mode.</li>
             <li>Controls: <code>Esc</code> pauses through the existing
-            <code>request_pause</code> / <code>pause_gate</code> seam onto a replay-flavoured menu
-            (Resume · Restart · Main Menu); a step key advances one command while paused; speed is
-            the existing device preference. <code>Battle.STATE_CONTEXT</code> gains the legend, so
-            the top bar prints keys that work here — never refreshed from the call sites.</li>
+            <code>request_pause</code> / <code>pause_gate</code> seam onto a replay-flavoured menu —
+            the live map menu with the two save rows dropped, since a playback seats no computer and
+            a resumed recording would come back as a hot-seat match, and with the lockup's restart
+            re-staging <code>MatchRequest.from_replay</code> rather than the recorded board;
+            <code>replay_step</code> (S) advances one command while paused and re-parks on the board
+            rather than under that menu; speed is the existing device preference.
+            <code>Battle.STATE_CONTEXT</code> gains the legend, so the top bar prints keys that work
+            here — never refreshed from the call sites, and a paused replay prints its own
+            (<code>ControlHints.REPLAY_PAUSED</code>) because it has the step key a paused computer
+            turn does not.</li>
             <li><code>make replay REPLAY=&lt;path&gt;</code>, windowed through
             <code>tools/godot_gui.sh</code> like every GUI target.</li>
           </ul>

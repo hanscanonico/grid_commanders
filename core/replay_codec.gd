@@ -75,7 +75,11 @@ const REQUIRED_KEYS := {
 ## carries a minus sign nobody can read.
 const _DIGEST_MASK := 0xFFFF_FFFF_FFFF
 const _DIGEST_SEED := 1469598103
-const _DIGEST_PRIME := 1000003
+## Under 2^15, so a 48-bit accumulator times it stays inside a signed 64-bit
+## integer. A wider prime lands the product past that ceiling and only comes back
+## in range by two's-complement wraparound — which is the same promise `hash()` is
+## avoided for below, and a digest that moved would refuse every replay on disk.
+const _DIGEST_PRIME := 16381
 ## Wider than any board this game will ever hold, so packing a cell into one
 ## integer for the sort below cannot make two different cells collide.
 const _CELL_STRIDE := 4096

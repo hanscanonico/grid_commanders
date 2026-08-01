@@ -83,8 +83,16 @@ func to_main_menu() -> void:
 ## last chose. Derived from the live GameState rather than from what was staged
 ## for this scene, which is why a resumed match rematches its own board; see
 ## MatchRequest.from_match.
+##
+## A replay restarts the *recording* instead, which is the only thing it could
+## honestly do: a playback seats no computer, so a request derived from its board
+## would open the recorded match as a hot-seat game nobody was playing.
 func rematch() -> void:
-	MatchConfig.stage(
-		MatchRequest.from_match(_battle.game, _battle.ai_teams, _battle.difficulty.id)
-	)
+	MatchConfig.stage(_rematch_request())
 	_battle.get_tree().reload_current_scene()
+
+
+func _rematch_request() -> MatchRequest:
+	if _battle.replay_path != "":
+		return MatchRequest.from_replay(_battle.replay_path)
+	return MatchRequest.from_match(_battle.game, _battle.ai_teams, _battle.difficulty.id)

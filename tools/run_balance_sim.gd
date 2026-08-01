@@ -362,12 +362,12 @@ func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
 		1: AIController.new(unit_db, difficulty_db.by_id(job.red.tier).profile()),
 		2: AIController.new(unit_db, difficulty_db.by_id(job.blue.tier).profile()),
 	}
-	var replay := _open_replay(setup.match_id)
-	if replay != null:
-		setup.replay = ReplayRecorder.new(replay)
+	if _write_replays:
+		var match_id := setup.match_id
+		setup.replay = ReplayRecorder.new(func() -> ReplayFile: return _open_replay(match_id))
 	var outcome := BalanceMatchEngine.play(setup, recorder)
-	if replay != null:
-		replay.close()
+	if setup.replay != null:
+		setup.replay.close()
 	if outcome.state == null:
 		push_error("balance-sim: could not build a match on '%s'" % job.map_name)
 		return {}
@@ -506,12 +506,11 @@ func _run_name() -> String:
 	return "_".join(parts).replace(":", "-").replace(" ", "").replace("(", "").replace(")", "")
 
 
-## This match's recording, or null when the run was not asked for any. Named by
-## match id like the timeline rows are, so a suspicious CSV row and the file that
-## replays it share a key.
+## This match's recording. Named by match id like the timeline rows are, so a
+## suspicious CSV row and the file that replays it share a key. Called by the
+## recorder on the first command rather than up front, so a match that never
+## reaches one leaves no file behind.
 func _open_replay(match_id: String) -> ReplayFile:
-	if not _write_replays:
-		return null
 	var dir := BalanceReportWriter.prepare_dir(_artifact_dir.path_join("replays"))
 	var name := match_id.replace(":", "-").replace("/", "-")
 	return ReplayFile.open_at(dir.path_join(name + ReplayFile.EXTENSION))

@@ -667,7 +667,8 @@ should read as the tier a fresh install ships with.
 
 **Every match records itself** as it is played, to a rotating slot under `user://replays/` — ten of
 them, oldest pruned. There is nothing to arm and nothing to remember: the match worth re-watching is
-the one you did not know was interesting until it ended.
+the one you did not know was interesting until it ended. The slot is claimed by the first command
+rather than by the boot, so a match opened and left takes nobody else's place in the ten.
 
 ```sh
 make replay REPLAY=~/Library/Application\ Support/Godot/app_userdata/Grid\ Commanders/replays/<file>.jsonl
@@ -675,7 +676,10 @@ make replay REPLAY=~/Library/Application\ Support/Godot/app_userdata/Grid\ Comma
 
 A recording plays back **in the battle scene**, through the same executor a player's click goes
 through — the same animations, cut-ins, banners, ambush cues and elimination cards. `Esc` pauses it
-at the next command boundary and opens the map menu, exactly as it does during a computer turn.
+at the next command boundary and opens the map menu, exactly as it does during a computer turn —
+without the two save rows, because a recording is a match already played and writing it to the one
+save slot would come back as a hot-seat game nobody was sitting at. While it is paused, `S` takes
+one more command and stops again, and Enter lets it run.
 The board is drawn **omniscient** whatever fog the match was played under: the match is over, so
 there is nobody left to hide it from, and a fogged AI-versus-AI match watched through one army's
 eyes is mostly a black rectangle.

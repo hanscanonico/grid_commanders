@@ -121,6 +121,11 @@ class Walk:
 	var idle: Dictionary = {}
 	## Unit -> the cells it has stood on at the end of its owner's last two turns.
 	var tracks: Dictionary = {}
+	## Unit -> consecutive turns of its owner's it has ended without firing or
+	## capturing. A walk back onto the cell it left is only a circle if nothing was
+	## done at the far end of it, and the window that has to be true over is the two
+	## turns `tracks` covers.
+	var quiet: Dictionary = {}
 	## Unit -> consecutive turns it has held cargo without dropping any.
 	var loaded: Dictionary = {}
 	## team -> consecutive turns ended with a full meter unfired.
@@ -129,6 +134,8 @@ class Walk:
 	var acted: Dictionary = {}
 	## Units that captured something during it, and whether a power went off.
 	var captured: Dictionary = {}
+	## Units that fired during it.
+	var fought: Dictionary = {}
 	var fired_power := false
 	var dropped: Dictionary = {}
 
@@ -178,6 +185,7 @@ static func run(
 		if command is EndTurnCommand:
 			walk.acted = {}
 			walk.captured = {}
+			walk.fought = {}
 			walk.dropped = {}
 			walk.fired_power = false
 	report.days = state.day
@@ -210,6 +218,7 @@ static func _before_apply(walk: Walk, state: GameState, command: Command) -> voi
 	if command is DropCommand:
 		walk.dropped[(command as DropCommand).unit] = true
 	if command is AttackCommand:
+		walk.fought[(command as AttackCommand).unit] = true
 		_check_shot(walk, state, command as AttackCommand)
 	elif actor != null and command.get("path") is Array:
 		_check_landing(walk, state, command, actor)
@@ -464,18 +473,24 @@ static func _check_transport(walk: Walk, state: GameState, unit: Unit) -> void:
 
 ## Back where it was two turns ago, having done nothing in between: a unit being
 ## walked in a circle by a planner that keeps changing its mind.
+##
+## A unit that fired or captured at either end of the walk is not one of those —
+## it went somewhere to do something and came back — so it is skipped rather than
+## reported with a detail line the board contradicts.
 static func _check_oscillation(walk: Walk, state: GameState, unit: Unit) -> void:
+	var busy := walk.fought.has(unit) or walk.captured.has(unit)
+	var quiet := 0 if busy else int(walk.quiet.get(unit, 0)) + 1
+	walk.quiet[unit] = quiet
 	var seen: Array = walk.tracks.get(unit, [])
-	if seen.size() >= 2 and seen[0] == unit.cell and seen[1] != unit.cell:
-		if not walk.acted.has(unit) or not walk.captured.has(unit):
-			_add(
-				walk,
-				"oscillation",
-				state,
-				unit,
-				"is back on %s after leaving it, having fought nothing" % unit.cell,
-				SEVERITY["oscillation"]
-			)
+	if seen.size() >= 2 and seen[0] == unit.cell and seen[1] != unit.cell and quiet >= 2:
+		_add(
+			walk,
+			"oscillation",
+			state,
+			unit,
+			"is back on %s after leaving it, having fought nothing" % unit.cell,
+			SEVERITY["oscillation"]
+		)
 	seen = [seen[1] if seen.size() >= 2 else unit.cell, unit.cell]
 	walk.tracks[unit] = seen
 

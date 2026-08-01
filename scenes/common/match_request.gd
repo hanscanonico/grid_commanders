@@ -65,6 +65,12 @@ var seed_value := -1
 ## of its job (replay plan D7). This one cannot diverge, because the decisions are in
 ## the file.
 var replay_path := ""
+## Whether this launch is a *viewing* of a recording at all, which is not the same
+## question as which file it names. `--replay=` with nothing after it asked for a
+## recording and named none, and a launch that fell back to an ordinary match on
+## the default board would look exactly like the replay working — so the two facts
+## are kept apart and `BattleSetup` refuses the empty one out loud.
+var replay_requested := false
 ## `--watch`: both seats are the computer's and the match came from a Balance Lab
 ## spec. The scene prints its result and exits when the match ends, so a watched
 ## run can be diffed against the CSV row it was launched from.
@@ -146,6 +152,7 @@ static func from_match(
 static func from_replay(path: String) -> MatchRequest:
 	var request := MatchRequest.new()
 	request.replay_path = path
+	request.replay_requested = true
 	return request
 
 
@@ -175,6 +182,7 @@ func apply_cmdline(args: PackedStringArray) -> void:
 		days_cap = maxi(1, int(CmdArgs.value(args, "--days")))
 	if CmdArgs.has(args, "--replay"):
 		replay_path = CmdArgs.value(args, "--replay").strip_edges()
+		replay_requested = true
 	# Read before `--co`, and that order is the whole reason it sits here: a
 	# commander list is positional over the seats that *play*, so the seating has to
 	# be known before the list is dealt out over it.

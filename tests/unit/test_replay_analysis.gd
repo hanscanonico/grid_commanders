@@ -252,6 +252,29 @@ func test_oscillation_is_a_unit_walked_back_where_it_came_from() -> void:
 	assert_eq(_count(report, "oscillation"), 1)
 
 
+## The detector says "having fought nothing", so a unit that went out, took its
+## shot and came home must not be one of them: the finding would contradict the
+## board it names, which is the false positive this instrument cannot afford.
+func test_a_unit_that_fought_on_the_way_out_is_not_oscillating() -> void:
+	var state := _bare_state()
+	_stand(state, &"infantry", 1, Vector2i(3, 1))
+	_stand(state, &"infantry", 2, Vector2i(5, 1))
+	var report := _run(
+		state,
+		[
+			{"c": "end_turn"},  # seat 1 ends turn 1 standing on (3, 1)
+			{"c": "end_turn"},
+			{"c": "attack", "path": [[3, 1], [4, 1]], "target": [5, 1]},
+			{"c": "end_turn"},  # turn 2 ends on (4, 1), having shot from it
+			{"c": "end_turn"},
+			{"c": "move", "path": [[4, 1], [3, 1]]},
+			{"c": "end_turn"},  # turn 3 ends back on (3, 1)
+			{"c": "end_turn"},
+		]
+	)
+	assert_eq(_count(report, "oscillation"), 0)
+
+
 func test_a_unit_walking_somewhere_is_not_oscillating() -> void:
 	var state := _bare_state()
 	_stand(state, &"infantry", 1, Vector2i(3, 1))
