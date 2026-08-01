@@ -265,22 +265,30 @@ units *arrive one at a time*, so a bias toward ganging up had nothing to gang up
 with. AJ3 gave the planner `cohesion_tiles`, so the question was reopened once,
 under the condition that was missing.
 
-**It measures negative again, and monotonically.** Both tiers at
+**It measures negative again, at every live value.** Both tiers at
 `cohesion_tiles = 1.0`; only `focus_fire_bonus` moves, and only on Difficult, so
 the `0.0` row is the control:
 
 | `focus_fire_bonus` (Difficult) | Difficult over Normal | scrimmage | ironworks |
 |---|---|---|---|
-| 0.0 — control | 75.0% | 62.5% | 87.5% |
-| 0.2 | 50.0% | 25.0% | 75.0% |
-| 0.5 | 50.0% | 25.0% | 75.0% |
-| 1.0 | 31.2% | 25.0% | 37.5% |
+| 0.0 — control | 62.5% | 50.0% | 75.0% |
+| 0.2 | 31.2% | 25.0% | 37.5% |
+| 0.5 | 31.2% | 25.0% | 37.5% |
+| 1.0 | 50.0% | 25.0% | 75.0% |
 
 **Read this as a direction, not a magnitude.** 4 seeds and a 30-day cap, 16
 matches a row — a fraction of §4's standing 60, and on the same two boards, one
 of which (`ironworks`) §5 already records as resolving badly under a clock. What
 it is good for is the sign, and the sign is unambiguous: every live value is
-worse than the control and the largest is worse by 44 points.
+worse than the control, the worst by 31 points, and none of them recovers it.
+The overall column is not monotonic, and the two per-map columns say why: on
+`scrimmage` focus fire halves the tier's rate and holds it there at every value
+tried, while `ironworks` is what makes the total bounce — the same board §5
+records as resolving nothing under a clock, so its column is the one least worth
+reading a trend into. None of the four rows is a gate reading either: the ladder
+gate is §4's, taken at the shipped `cohesion_tiles = 0.0` over 60 matches, and
+every row here runs a value that does not ship. Only the comparison *within* the
+table is meaningful.
 
 **So `focus_fire_bonus` stays at `0.0`, now on evidence rather than inheritance,
 and the reason DF3 gave still stands** — the planner re-plans after every

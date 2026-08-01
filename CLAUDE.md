@@ -242,8 +242,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   nowhere to keep (`AIPlanningContext` is rebuilt every command, and only the threat map
   deliberately survives).
   AJ3 also re-measured `focus_fire_bonus` with cohesion live, because the standing negative verdict
-  was taken on a planner whose units arrive one at a time: **it measures negative again and
-  monotonically** (75.0 % control → 50.0 → 50.0 → 31.2), so it stays at 0 on evidence rather than
+  was taken on a planner whose units arrive one at a time: **it measures negative again, at every
+  live value** (62.5 % control → 31.2 → 31.2 → 50.0), so it stays at 0 on evidence rather than
   inheritance — `docs/difficulty_check.md` §4b is the record and states its own limits. Cohesion
   fixes *where units are*, not which of them shoots first.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
