@@ -330,13 +330,16 @@ func _advance_command(
 	var threat: ThreatMap = null
 	if profile.advance_threat_tiles > 0.0:
 		threat = context.threat_map()
+	# Worked out once for the whole sweep rather than per candidate cell: who this
+	# unit travels with does not depend on where it is thinking of standing.
+	var column := _column_cells(context, unit)
 	var best_cell := unit.cell
-	var best_value := _advance_value(state, unit, unit.cell, goal, threat)
+	var best_value := _advance_value(state, unit, unit.cell, goal, threat, column)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var value := _advance_value(state, unit, cell, goal, threat)
+		var value := _advance_value(state, unit, cell, goal, threat, column)
 		var cost: int = reachable.costs[cell]
 		if value > best_value or (is_equal_approx(value, best_value) and cost < best_cost):
 			best_value = value
@@ -345,24 +348,65 @@ func _advance_command(
 	return MoveCommand.new(unit, reachable.path_to(best_cell))
 
 
-## Higher is better: closeness to the goal less what standing there invites,
-## plus whatever the commander's doctrine thinks of the ground itself.
+## Higher is better: closeness to the goal less what standing there invites and
+## what running ahead of the column costs, plus whatever the commander's doctrine
+## thinks of the ground itself.
 func _advance_value(
 	state: GameState,
 	unit: Unit,
 	cell: Vector2i,
 	goal: AIPlanningContext.AdvanceGoal,
-	threat: ThreatMap
+	threat: ThreatMap,
+	column: Array[Vector2i]
 ) -> float:
 	var value := -float(_position_rank(state, unit, cell, goal))
 	if threat != null:
 		var incoming := threat.incoming_damage(state, unit, cell)
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
+	value -= _cohesion_penalty(cell, column)
 	if profile.doctrine_weight > 0.0:
 		var advice := state.commander_of(unit.team).stand_value(state, unit, cell)
 		if advice != 0:
 			value += profile.doctrine_weight * float(advice)
 	return value
+
+
+## Tiles of forward progress standing at `cell` costs for being adrift of the
+## column. Free inside cohesion_radius, then linear — so a fast unit is pulled
+## back toward its slower company without any of them ever entering a waiting
+## state: the goal term still pulls forward, and the column advances at the speed
+## of its rear because that is where the equilibrium sits.
+func _cohesion_penalty(cell: Vector2i, column: Array[Vector2i]) -> float:
+	if profile.cohesion_tiles <= 0.0 or column.is_empty():
+		return 0.0
+	var apart := _nearest_distance(cell, column)
+	if apart <= profile.cohesion_radius:
+		return 0.0
+	return profile.cohesion_tiles * float(apart - profile.cohesion_radius)
+
+
+## The other units this one marches with: same team, on the board, and in the
+## same movement domain. Same domain because an army keeps company with what can
+## keep up with it — without that a lone boat is dragged toward a land column it
+## can never join, and an aircraft toward ground it does not fight over.
+func _column_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if profile.cohesion_tiles <= 0.0:
+		return cells
+	for other in context.friendly_units:
+		if other == unit or other.carrier != null:
+			continue
+		if other.type.domain != unit.type.domain:
+			continue
+		cells.append(other.cell)
+	return cells
+
+
+static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
+	var best := absi(cells[0].x - from.x) + absi(cells[0].y - from.y)
+	for cell in cells:
+		best = mini(best, absi(cell.x - from.x) + absi(cell.y - from.y))
+	return best
 
 
 ## Direct units close on the goal. Indirect units stop inside their firing ring,

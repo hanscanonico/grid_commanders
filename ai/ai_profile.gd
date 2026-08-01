@@ -181,6 +181,18 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## dials over one map can price a single enemy three times, so tune them together
 ## and never alone — see docs/difficulty_check.md.
 @export var withdraw_weight: float = 0.0
+## How many tiles of forward progress a unit gives up per tile it is adrift of
+## the nearest unit it travels with. 0 skips it entirely.
+##
+## Denominated in TILES, because _advance_value is. The waiting is emergent and
+## deliberately not coded: the goal term still pulls forward, so the equilibrium
+## is a column that advances at the speed of its rear rather than a formation
+## with a state to enter and get stuck in.
+@export var cohesion_tiles: float = 0.0
+## How far apart units may drift before cohesion_tiles starts charging them.
+## Inert while cohesion_tiles is 0, which is why it may ship non-zero without
+## moving a single planned command.
+@export var cohesion_radius: int = 2
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps
