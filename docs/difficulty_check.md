@@ -256,6 +256,44 @@ Mean AI planning per turn in the standing run:
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
 
+## 4b. Focus fire, re-measured with cohesion live (AI Judgement AJ3)
+
+`focus_fire_bonus` has shipped at `0.0` since DF3 because §6's probes measured it
+harmful in every shape tried. The AI Judgement plan argued that verdict deserved
+one re-test rather than inheritance: focus fire was measured on a planner whose
+units *arrive one at a time*, so a bias toward ganging up had nothing to gang up
+with. AJ3 gave the planner `cohesion_tiles`, so the question was reopened once,
+under the condition that was missing.
+
+**It measures negative again, and monotonically.** Both tiers at
+`cohesion_tiles = 1.0`; only `focus_fire_bonus` moves, and only on Difficult, so
+the `0.0` row is the control:
+
+| `focus_fire_bonus` (Difficult) | Difficult over Normal | scrimmage | ironworks |
+|---|---|---|---|
+| 0.0 — control | 75.0% | 62.5% | 87.5% |
+| 0.2 | 50.0% | 25.0% | 75.0% |
+| 0.5 | 50.0% | 25.0% | 75.0% |
+| 1.0 | 31.2% | 25.0% | 37.5% |
+
+**Read this as a direction, not a magnitude.** 4 seeds and a 30-day cap, 16
+matches a row — a fraction of §4's standing 60, and on the same two boards, one
+of which (`ironworks`) §5 already records as resolving badly under a clock. What
+it is good for is the sign, and the sign is unambiguous: every live value is
+worse than the control and the largest is worse by 44 points.
+
+**So `focus_fire_bonus` stays at `0.0`, now on evidence rather than inheritance,
+and the reason DF3 gave still stands** — the planner re-plans after every
+command, so a wounded target's finishing shot is already visible to the next
+attacker for free, and biasing the *first* shot pulls it off its own best trade.
+Cohesion does not change that, because cohesion fixes *where units are*, not
+which of them shoots first. The dial stays in the code rather than being deleted,
+for the reason it always did: zeroing a misbehaving smart is the remedy, and the
+ladder can re-test it in one edit.
+
+The AI Judgement plan's AJ4 owns the bands for the three dials that milestone
+added; this row is AJ3's own and covers only `focus_fire_bonus`.
+
 ## 5. Where this leaves the feature
 
 Everything the plan asked to be built and measured is now shipping: the tier

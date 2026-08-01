@@ -557,7 +557,7 @@
 
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body gap-2">
-          <h3 class="font-bold text-lg">AJ3 — Fight as an army</h3>
+          <h3 class="font-bold text-lg">AJ3 — Fight as an army <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
           <p class="text-sm opacity-80">Answers observation 3. Two dials — <code>cohesion_tiles</code> (default <code>0.0</code>) and <code>cohesion_radius</code> (default <code>2</code>) — and one measurement.</p>
           <ul class="list-disc list-inside space-y-1 text-sm">
             <li>One term in <span class="gc-file">_advance_value</span>, per D5, over
@@ -567,7 +567,7 @@
               measured on a planner whose units arrive one at a time — focus fire had nothing to focus. If it measures
               positive now, it is a recommended band for BL2. If it measures negative again, it stays at zero and the plan
               records the <em>second</em> refutation, which is worth having: it stops the next person re-deriving it.
-              Either outcome is a deliverable.</li>
+              Either outcome is a deliverable. <strong>Measured: it is negative again, and monotonically</strong> — with both tiers at <code>cohesion_tiles 1.0</code> and only <code>focus_fire_bonus</code> moving on Difficult, Difficult-over-Normal falls 75.0 % (control) → 50.0 → 50.0 → 31.2 %. So the dial stays at 0 on evidence rather than inheritance, and <span class="gc-file">docs/difficulty_check.md</span> §4b records the second refutation and its limits.</li>
           </ul>
           <p class="text-sm mt-2"><strong>Tests</strong> — cohesion is pure arithmetic over a unit list, so a fixture with one
             fast and one slow unit pins that the fast one holds short of the front at <code>cohesion_tiles &gt; 0</code> and

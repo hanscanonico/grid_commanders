@@ -186,7 +186,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and was regenerated and read — `docs/commander_balance.md` records the measurement.
 - `ai-judgement-plan.html` — the three things the planner cannot see: what the enemy is
   *achieving*, what it will *do next turn*, and what our own other units are doing. Milestones
-  AJ1–AJ4; **AJ1 and AJ2 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
+  AJ1–AJ4; **AJ1–AJ3 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
   the point: **this plan owns planner *capabilities*, BL2 owns Normal's *numbers*** (D2), so no
   AJ milestone edits a shipped value in `data/ai/` and AJ4's deliverable is a probe band in
   `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
@@ -223,6 +223,21 @@ that must survive any change; the full rationale, milestones and risk registers 
   cell never pulls a unit off its own square. Three dials now read one `ThreatMap`
   (`threat_aversion`, `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
   times — the plan's R3 — so **tune them together and never alone**.
+  AJ3's one decision: **cohesion is a term on the advance path, not a formation manager** (D5).
+  `_cohesion_penalty` charges a unit `cohesion_tiles` per tile it is adrift of the nearest unit in
+  its **own movement domain** beyond `cohesion_radius` — in *tiles*, which is what
+  `_advance_value` is denominated in. There are no groups, no leaders and **no waiting state**: the
+  goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
+  and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls (the plan's R1).
+  Same domain because an army keeps company with what can keep up with it — otherwise a lone hull
+  is dragged toward a land column it can never join. The rejected alternative is an explicit
+  formation manager: it needs cross-turn state the planner has nowhere to keep
+  (`AIPlanningContext` is rebuilt every command, and only the threat map deliberately survives).
+  AJ3 also re-measured `focus_fire_bonus` with cohesion live, because the standing negative verdict
+  was taken on a planner whose units arrive one at a time: **it measures negative again and
+  monotonically** (75.0 % control → 50.0 → 50.0 → 31.2), so it stays at 0 on evidence rather than
+  inheritance — `docs/difficulty_check.md` §4b is the record and states its own limits. Cohesion
+  fixes *where units are*, not which of them shoots first.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
