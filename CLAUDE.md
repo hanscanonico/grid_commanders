@@ -585,6 +585,34 @@ that must survive any change; the full rationale, milestones and risk registers 
   **opposite seats (1&3, 2&4) make the fair duel**, which the Duel preset encodes and a
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
+- `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
+  one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
+  offline analyser). **Nothing shipped yet.** D1: **a replay is an opening envelope and a command
+  log** — the opening is `SaveCodec.encode` verbatim (so it carries the roster, the grouping, the
+  commanders' charge and `rng_state`, and a resumed save records correctly), and the format owns
+  only the command list; map + seed rebuilt through `create` is the rejected alternative, being a
+  second opinion about what a match opens as. A line names its actor by the cell it acted from,
+  which is unambiguous because a carried unit can never act. D2: **the recorder observes at the two
+  brokers that already exist** — `BattleCommandPipeline.execute` and `BalanceMatchEngine.play`,
+  each side of `apply` exactly as `BalanceMatchRecorder` is already handed a command; nothing under
+  `core/` or `ai/` gains a hook, and `tools/check_scripts.sh` already enforces that the live broker
+  is the only one. D3: **a replay verifies itself** — every line carries a 48-bit board digest
+  (48 because JSON has one number type and a double holds integers exactly only to 2^53), and
+  playback halts at the first mismatch naming the command, because the one thing a command log
+  cannot survive is the game changing underneath it; a replay is disposable, so a stale one is
+  deleted rather than migrated. D4: **playback is presentation** — `BattleReplayRunner` is
+  `BattleAiRunner`'s sibling driving `Battle.execute_command`, no planner is built, and
+  **`game.fog_enabled` is untouched** (fog is an input to `MoveCommand.validate` and to the ambush,
+  so switching it off would resolve the recorded moves differently), which is why the omniscient
+  viewer is a `BattlePerspective` flag and nothing else. D5: omniscient viewer, always-on recording
+  into ten rotating slots under `user://replays/`, appended per command so a crash costs the last
+  line rather than the file. D6: **the analyser asks the rules, never the planner** —
+  counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
+  why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so
+  `make replay-report` stays out of `make verify`. D7: `--watch` (re-plan from a seed, the balance
+  plan's BS3 fidelity instrument) and `--replay=` (immune to AI changes by design) are two
+  instruments, not one. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
+  match, recorded and re-issued, reproducing every checkpoint and an identical final board.
 
 ## Architecture — the rules that matter most
 
