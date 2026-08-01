@@ -47,6 +47,8 @@ make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a relea
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
+make replay REPLAY=<file> # re-watch a recorded match
+make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
@@ -94,12 +96,15 @@ that photograph a screen the battle scene never draws:
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
 make smoke MODES="menu_setup_context" # an all-human table: every option's help line, AI difficulty dimmed
+make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 ```
 
-All three pose the save slot themselves, so a capture neither reads nor writes the running machine's
-`user://save.json`, and all three are tests as well as pictures: each measures the whole centered menu
-column, its map caption, every option-help line, every seat row *and* all three primary actions
-against the 640×360 logical frame and fails the run if any of them leaves it. The column is the
+All four pose what they photograph, so a capture neither reads nor writes the running machine's
+`user://save.json` or its recordings, and all four are tests as well as pictures: each measures the
+named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first three
+measure the whole centered menu column, its map caption, every option-help line, every seat row *and*
+its primary actions; `menu_replays` photographs its own page over a hidden menu, so it measures that
+page's title, first row and Back instead — the menu's geometry is not what that picture claims. The column is the
 load-bearing witness — a too-tall one is centered into an offset that runs off both ends at once, so
 no single child is reliable — and the first two exist to hold the rule that a save's presence may
 never change the layout budget, which is what broke when Continue first pushed the title and **Quit**
@@ -301,7 +306,8 @@ then press **Start**, which opens the **commander selection page**; **Continue**
 resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
 under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
 is the match you meant; when there is nothing readable to resume it reads `NO SAVED MATCH` and the
-button is greyed out (disabled, not hidden). **Quit** exits.
+button is greyed out (disabled, not hidden). **Replays** opens the recordings page (see Replays
+below), and **Quit** exits.
 
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
@@ -658,6 +664,76 @@ drifting backdrop and blinking **PRESS START** pin still under a capture (the an
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
 
+## Replays
+
+**Every match records itself** as it is played, to a rotating slot under `user://replays/` — ten of
+them, oldest pruned. There is nothing to arm and nothing to remember: the match worth re-watching is
+the one you did not know was interesting until it ended. The slot is claimed by the first command
+rather than by the boot, so a match opened and left takes nobody else's place in the ten.
+
+**Replays** on the main menu is the way in: it lists what has been recorded, newest first, each row
+naming the board, the commanders that played it and when — pick one and it plays, **Back** lands on
+the setup exactly as it was left. From a terminal, name the file instead:
+
+```sh
+make replay REPLAY=~/Library/Application\ Support/Godot/app_userdata/Grid\ Commanders/replays/<file>.jsonl
+```
+
+A recording plays back **in the battle scene**, through the same executor a player's click goes
+through — the same animations, cut-ins, banners, ambush cues and elimination cards. `Esc` pauses it
+at the next command boundary and opens the map menu, exactly as it does during a computer turn —
+without the two save rows, because a recording is a match already played and writing it to the one
+save slot would come back as a hot-seat game nobody was sitting at. While it is paused, `S` takes
+one more command and stops again, and Enter lets it run. When it ends, the victory screen's first
+action reads **Restart** and plays the recording again rather than starting a match on its board.
+The board is drawn **omniscient** whatever fog the match was played under: the match is over, so
+there is nobody left to hide it from, and a fogged AI-versus-AI match watched through one army's
+eyes is mostly a black rectangle.
+
+A replay is **an opening board and the commands that were applied to it** — never a video and never
+a series of states. The opening line is a save envelope verbatim (so it carries the roster, the
+grouping, each commander's charge and the RNG state, and a match resumed from a save records
+correctly from wherever it was picked up); every line after it is one applied command, appended as
+it happens, so a crash costs the last line rather than the file. A twenty-day match is about 100 KB.
+
+Each line also carries a **digest of the board that command left behind**, and playback stops at the
+first mismatch and names the command. That is the one thing a command log cannot do for itself:
+survive the *game* moving underneath it. Retune a `.tres`, fix a rule, add a doctrine hook, and
+yesterday's recording describes a match this build would not play — without the digest it would
+quietly play a different one and look fine. Replays are disposable: nothing resumes from one, so a
+stale one is deleted rather than migrated.
+
+### Reading one
+
+A recording can also be read instead of watched:
+
+```sh
+make replay-report REPLAY=<file>        # add ARGS="--team=2" for one side
+```
+
+It re-issues every command offline and reports what the sides left on the table, ranked, into
+`reports/replay/<name>/findings.md` and `.json`. Nine detectors: `walk_into_fire` (a move out of
+safety into ground the enemy can kill it on), `worse_shot` (a better target was in range from the
+same cell), `hoarding` (funds left on an idle factory), `missed_capture`, `idle_unit`,
+`banked_power`, `stranded_transport`, `oscillation` and `undefended_hq`.
+
+Every counterfactual comes from the **rules** — `AttackRange`, `MovementResolver`,
+`CombatResolver.forecast_at`, the same authorities the planner scores through — and never from the
+planner itself. Nothing under `ai/` has a why-hook, and no finding claims to know what the computer
+was thinking: it says what happened, what was available instead, and roughly what the difference was
+worth. That is what makes a finding a fact about the *game* rather than about one revision of the
+AI, and it is why the report survives the planner being rewritten.
+
+It is **evidence, not a gate**, and deliberately out of `make verify`: several detectors fire on a
+doctrine playing exactly as intended — Sable Wren sitting in woods is an `idle_unit`, and a
+commander whose power wants a particular board is a `banked_power`.
+
+The Balance Lab writes them too. `make balance-sim SIM="… --replays"` puts one file per match in a
+`replays/` directory beside its report, named by the same match id the CSV rows carry, so a
+suspicious row becomes a match you can watch. That is a different instrument from `make
+balance-watch`, which re-plans a row from its seed and is *supposed* to diverge when the AI changes;
+a replay cannot diverge, because the decisions are in the file.
+
 ## Difficulty
 
 Pick **Easy**, **Normal** or **Difficult** in the menu, or pass `--difficulty=easy|normal|hard`.
@@ -717,11 +793,13 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   Assets below); and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`) and the
-  Balance Lab (`docs/balance_sim.md`) alike; plus `tools/focus_timeline.sh`, the focus-theft
+  Balance Lab (`docs/balance_sim.md`) alike; the recording reader under `tools/replay/` (Replays
+  above); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
-  offline balance harness under `tools/balance/`, and the launch layer that states which match to
-  play (`MatchRequest`, `CmdArgs`) — each written that way for exactly this reason.
+  offline balance harness under `tools/balance/`, the recording reader under `tools/replay/`, and
+  the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
+  way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT).
 
 ## Assets

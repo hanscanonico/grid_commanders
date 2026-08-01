@@ -585,6 +585,54 @@ that must survive any change; the full rationale, milestones and risk registers 
   **opposite seats (1&3, 2&4) make the fair duel**, which the Duel preset encodes and a
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
+- `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
+  one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
+  offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command
+  log** — the opening is `SaveCodec.encode` verbatim (so it carries the roster, the grouping, the
+  commanders' charge and `rng_state`, and a resumed save records correctly), and the format owns
+  only the command list; map + seed rebuilt through `create` is the rejected alternative, being a
+  second opinion about what a match opens as. A line names its actor by the cell it acted from,
+  which is unambiguous because a carried unit can never act. D2: **the recorder observes at the two
+  brokers that already exist** — `BattleCommandPipeline.execute` and `BalanceMatchEngine.play`,
+  each side of `apply` exactly as `BalanceMatchRecorder` is already handed a command; nothing under
+  `core/` or `ai/` gains a hook, and `tools/check_scripts.sh` already enforces that the live broker
+  is the only one. D3: **a replay verifies itself** — every line carries a 48-bit board digest
+  (48 because JSON has one number type and a double holds integers exactly only to 2^53), and
+  playback halts at the first mismatch naming the command, because the one thing a command log
+  cannot survive is the game changing underneath it; a replay is disposable, so a stale one is
+  deleted rather than migrated. D4: **playback is presentation** — `BattleReplayRunner` is
+  `BattleAiRunner`'s sibling driving `Battle.execute_command`, no planner is built, and
+  **`game.fog_enabled` is untouched** (fog is an input to `MoveCommand.validate` and to the ambush,
+  so switching it off would resolve the recorded moves differently), which is why the omniscient
+  viewer is a `BattlePerspective` flag and nothing else. Playback borrows `State.AI_TURN` and its
+  pause seam, so the replay controls are the pause menu's: Esc parks the runner between commands,
+  `replay_step` (S) takes exactly one more command and re-parks on the board rather than under that
+  menu, and the menu itself drops the two save rows (`BattleMenus.map_actions`'s `savable`) because a
+  playback seats no computer — saved and resumed, a recorded AI match would come back as a hot-seat
+  one. For the same reason the victory lockup's rematch button reads **Restart** over a playback and
+  re-stages `MatchRequest.from_replay` off `Battle.replay_path` rather than deriving a live match
+  from the recorded board. D5: omniscient viewer, always-on recording into ten rotating slots under
+  `user://replays/`, appended per command so a crash costs the last line rather than the file — and
+  the slot is claimed by the **first command**, never the boot, because the slots rotate and a match
+  nobody played must not evict one somebody did. D6: **the analyser asks the rules, never the
+  planner** —
+  counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
+  why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so
+  `make replay-report` stays out of `make verify`. D7: `--watch` (re-plan from a seed, the balance
+  plan's BS3 fidelity instrument) and `--replay=` (immune to AI changes by design) are two
+  instruments, not one; a `--replay=` naming no file is a viewing that named nothing and is refused
+  out loud (`MatchRequest.replay_requested` is the fact `BattleSetup` reads), never quietly played
+  as an ordinary match on the default board. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
+  match, recorded and re-issued, reproducing every checkpoint and an identical final board. The
+  analyser's nine detectors each have a fixture that fires them exactly once
+  (`tests/unit/test_replay_analysis.gd` over `maps/fixtures/analysis.txt`), because a false positive
+  costs more than a miss — it sends the reader looking at a doctrine that was playing correctly.
+  `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was
+  survivable**, since a unit already inside the same fire did not walk into anything and reporting
+  it buries the moves that did. `oscillation` carries the same shape from the other side: it says
+  "having fought nothing", so it fires only when nothing was fought or captured across **both**
+  turns the walk spans — a unit that went out, took its shot and came home is not walking in a
+  circle, and a finding whose own detail line the board contradicts is worse than a miss.
 
 ## Architecture — the rules that matter most
 
@@ -630,7 +678,8 @@ res://
 │              # ai_profile.gd owns every weight; NO Node references
 ├─ maps/        # map scenes / map resources
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
-├─ tools/       # offline scripts: balance harness (tools/balance/), art & sfx pipeline
+├─ tools/       # offline scripts: balance harness (tools/balance/), replay analyser
+│              # (tools/replay/), art & sfx pipeline
 ├─ docs/        # balance_sim.md, commander_balance.md, difficulty_check.md
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)
 ```
@@ -656,8 +705,9 @@ Follow the official Godot GDScript style guide. Key points:
 ## Testing
 
 - Tests use **GUT** (Godot Unit Test) and live in `tests/`, mirroring `core/` and `ai/`.
-- **Test the Node-free layers only** — `core/`, plus `ai/` and the offline balance harness in
-  `tools/balance/`, all of which are Node-free for exactly this reason. That's where the rules
+- **Test the Node-free layers only** — `core/`, plus `ai/`, the offline balance harness in
+  `tools/balance/` and the replay analyser in `tools/replay/`, all of which are Node-free for
+  exactly this reason. That's where the rules
   live and where bugs hurt. Presentation is verified by playing the scene, not by unit tests.
   The narrow exception is the launch layer that was deliberately made Node-free and
   argument-taking so it could be tested at all: `MatchRequest` and `CmdArgs` under
@@ -775,10 +825,12 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   `scenes/common/match_request.gd` (`MatchRequest`) states one launch in full — board, which of its
   seats play (`seats`, empty = every one; `--seats=` is read before `--co=` because the commander
   list is positional over the seats that play), who plays them, how they group into sides, fog,
-  tier, commanders, resume, seed, watch, day cap, raw side specs — and
-  is built by one of three adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
-  `GameState`, so a match resumed from a save replays its own board and commanders) and
-  `apply_cmdline`, layered over either on **every** battle boot, which is how a headless capture
+  tier, commanders, resume, seed, watch, day cap, raw side specs, the recording to watch — and
+  is built by one of four adapters: `from_menu`, `from_match` (a rematch, derived from the *live*
+  `GameState`, so a match resumed from a save replays its own board and commanders),
+  `from_replay` (a recording, which states its own board, seating, grouping, commanders and fog in
+  its opening envelope, so naming the file is the whole request) and
+  `apply_cmdline`, layered over any of them on **every** battle boot, which is how a headless capture
   and a menu launch reach the same board by the same route. `BattleSetup.build(request, …)` reads
   no autoload, scans no command line and writes nothing back; it returns `null` with a pushed error
   when the board or the state cannot be built (`assert` is stripped from a release build), and

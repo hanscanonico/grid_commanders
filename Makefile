@@ -96,6 +96,30 @@ balance-sim:
 balance-watch: import
 	$(GODOT_GUI) --path . $(BATTLE) -- --watch $(SIM)
 
+# Watch a recorded match. Every match records itself to a rotating slot under
+# user://replays/ as it is played, and `make balance-sim SIM="... --replays"`
+# writes one per headless match beside its report:
+#   make replay REPLAY=~/Library/Application\ Support/Godot/app_userdata/Grid\ Commanders/replays/<file>.jsonl
+# Unlike `balance-watch`, which re-plans a row from its seed, this re-issues the
+# commands that were actually played — so it is immune to AI changes by design,
+# and stops out loud when a rules or data edit means the board no longer matches.
+REPLAY ?=
+replay: import
+	$(GODOT_GUI) --path . $(BATTLE) -- --replay="$(REPLAY)"
+
+# Read a recording instead of watching it: re-issue every command offline and
+# report what the sides left on the table — a unit that stood still, funds never
+# spent, a Command Power banked to the end, a tank walked into three guns.
+#   make replay-report REPLAY=<file> [ARGS="--team=2"]
+# Every counterfactual comes from the rules, never from the planner, so a finding
+# is about the game rather than about one revision of ai/. It is evidence and not
+# a gate — several detectors fire on a doctrine playing exactly as intended — so
+# it stays out of `make verify`. Writes to reports/ (gitignored).
+ARGS ?=
+replay-report:
+	$(GODOT) --headless --path . -s res://tools/run_replay_report.gd -- \
+		--replay="$(REPLAY)" $(ARGS)
+
 # Every .gd file that is actually ours: skips the engine cache, vendored addons,
 # the engine binary, and .claude/worktrees, which holds whole nested checkouts of
 # this same repo and would otherwise be linted as if it were project source.
@@ -194,4 +218,4 @@ gallery-screenshot: import
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-watch
+	balance-sim balance-watch replay replay-report

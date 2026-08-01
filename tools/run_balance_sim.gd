@@ -27,6 +27,7 @@ extends SceneTree
 ##     --tier=normal             the tier both sides play at, for --sweep=commanders
 ##     --commander=alina_ward    the doctrine both sides carry, for --sweep=tiers
 ##     --no-commands             skip commands.jsonl (a big sweep's is large)
+##     --replays                 also write a watchable replay per match
 ##     --out=reports/...         output directory (default reports/balance_sim/<run>)
 ##
 ## Writes five files (four with --no-commands), all gitignored with reports/:
@@ -35,6 +36,11 @@ extends SceneTree
 ##   commands.jsonl— one line per applied command (plan Q3)
 ##   summary.json  — the aggregates and flags
 ##   report.html   — the same numbers, drawn (plan BS4)
+##
+## With `--replays`, a `replays/` directory beside them holds one file per match,
+## named by match id. `commands.jsonl` describes what happened and this can be
+## re-issued, which is the difference: a suspicious row becomes
+## `make replay REPLAY=<that file>` (replay plan D7).
 ##
 ## Determinism: same map + seed + side specs => byte-identical rows, because the
 ## RNG is seeded, the AI is lookahead-free and RNG-free, and nothing here reads
@@ -104,6 +110,10 @@ var _pinned_seed := -1
 var _days_cap := BalanceMatchEngine.DEFAULT_DAYS
 var _out_dir := ""
 var _log_commands := true
+var _write_replays := false
+## Where this run's artifacts go, resolved once at startup rather than at write
+## time: the replays are opened while the matches are being played.
+var _artifact_dir := ""
 
 var _maps: Dictionary = {}  # name -> MapData, loaded once and shared
 
@@ -128,6 +138,7 @@ func _init() -> void:
 	if not _parse_args():
 		quit(2)
 		return
+	_artifact_dir = _out_dir if _out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
 	var jobs := _build_jobs()
 	if jobs.is_empty():
 		push_error("balance-sim: nothing to play")
@@ -185,6 +196,8 @@ func _parse_args() -> bool:
 			_out_dir = arg.get_slice("=", 1).strip_edges()
 		elif arg == "--no-commands":
 			_log_commands = false
+		elif arg == "--replays":
+			_write_replays = true
 		else:
 			push_error("balance-sim: unknown flag '%s'" % arg)
 			return false
@@ -349,7 +362,12 @@ func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
 		1: AIController.new(unit_db, difficulty_db.by_id(job.red.tier).profile()),
 		2: AIController.new(unit_db, difficulty_db.by_id(job.blue.tier).profile()),
 	}
+	if _write_replays:
+		var match_id := setup.match_id
+		setup.replay = ReplayRecorder.new(func() -> ReplayFile: return _open_replay(match_id))
 	var outcome := BalanceMatchEngine.play(setup, recorder)
+	if setup.replay != null:
+		setup.replay.close()
 	if outcome.state == null:
 		push_error("balance-sim: could not build a match on '%s'" % job.map_name)
 		return {}
@@ -488,10 +506,20 @@ func _run_name() -> String:
 	return "_".join(parts).replace(":", "-").replace(" ", "").replace("(", "").replace(")", "")
 
 
+## This match's recording. Named by match id like the timeline rows are, so a
+## suspicious CSV row and the file that replays it share a key. Called by the
+## recorder on the first command rather than up front, so a match that never
+## reaches one leaves no file behind.
+func _open_replay(match_id: String) -> ReplayFile:
+	var dir := BalanceReportWriter.prepare_dir(_artifact_dir.path_join("replays"))
+	var name := match_id.replace(":", "-").replace("/", "-")
+	return ReplayFile.open_at(dir.path_join(name + ReplayFile.EXTENSION))
+
+
 func _write(
 	matches: Array[Dictionary], recorder: BalanceMatchRecorder, summary: Dictionary
 ) -> void:
-	var out := _out_dir if _out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
+	var out := _artifact_dir
 	var dir := BalanceReportWriter.prepare_dir(out)
 	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), matches, MATCH_COLUMNS)
 	BalanceReportWriter.write_csv(

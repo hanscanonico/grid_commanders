@@ -37,13 +37,21 @@ const DEMO_ARG := "--demo"
 const DEMO_WITH_SAVE := "menu_with_save"
 const DEMO_NO_SAVE := "menu_no_save"
 const DEMO_SETUP_CONTEXT := "menu_setup_context"
-const DEMO_MODES: Array[String] = [DEMO_WITH_SAVE, DEMO_NO_SAVE, DEMO_SETUP_CONTEXT]
+const DEMO_REPLAYS := "menu_replays"
+const DEMO_MODES: Array[String] = [DEMO_WITH_SAVE, DEMO_NO_SAVE, DEMO_SETUP_CONTEXT, DEMO_REPLAYS]
 ## The day `menu_with_save` poses. Three digits because days are uncapped and the
 ## caption is set at micro size in the 122px action column — a capture that only
 ## ever photographs "DAY 4" proves nothing about a long campaign. The board it
 ## names is the roster's longest, handed in by the menu rather than typed here,
 ## in the tradition of `--co-select=<commander_id>`.
 const POSED_SAVE_DAY := 128
+## What `menu_replays` lists. The first is about as long as a real label gets —
+## the widest board name against two of the longest commander names.
+const POSED_REPLAY_LABELS: Array[String] = [
+	"Steelworks · Cassian Rook vs Viktor Draeg",
+	"Compass · Alina Ward vs Sable Wren",
+	"Boot Camp · Player 1 vs CPU",
+]
 
 var _menu: Control
 var _demo := ""
@@ -87,6 +95,29 @@ func poses_slot() -> bool:
 
 func poses_setup_context() -> bool:
 	return _demo == DEMO_SETUP_CONTEXT
+
+
+func poses_replays() -> bool:
+	return _demo == DEMO_REPLAYS
+
+
+## The recording list `menu_replays` poses, for the reason `posed_slot` poses a
+## save: how many matches the machine that took the frame happens to have played
+## is not something a capture may depend on. Long labels rather than tidy ones —
+## the row is the widest thing on the page, and a frame that only ever
+## photographed "Forge · Player 1 vs CPU" would prove nothing about a real one.
+func posed_replays() -> Array[ReplayFile.Summary]:
+	var posed: Array[ReplayFile.Summary] = []
+	for i in POSED_REPLAY_LABELS.size():
+		var summary := ReplayFile.Summary.new()
+		summary.path = "user://replays/posed-%d%s" % [i, ReplayFile.EXTENSION]
+		summary.label = POSED_REPLAY_LABELS[i]
+		# Spelled the way a recording spells it — `Time.get_datetime_string_from_system`
+		# — so the posed row is the shape of a real one. Only the *file* name mangles
+		# the colons, and that never reaches the page.
+		summary.recorded = "2026-08-0%dT19:06:48" % (i + 1)
+		posed.append(summary)
+	return posed
 
 
 ## The slot the current mode poses: a resumable match on `menu_with_save`, and

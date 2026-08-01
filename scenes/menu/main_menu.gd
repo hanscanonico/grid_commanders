@@ -69,10 +69,12 @@ var _continue_button: Button
 var _continue_caption: Label
 ## The tip hanging off that line, re-worded with it by `_refresh_continue`.
 var _continue_tip: Tooltip
+var _replay_button: Button
 var _quit_button: Button
 var _press_start: Label
 
 var _select_panel: CommanderSelectPanel
+var _replay_panel: ReplayPickerPanel
 ## The seats the computer will play, taken off the strip when Start was pressed
 ## and carried across the selection page so `confirmed` stages the same table the
 ## player set up rather than re-asking a strip they may have walked back to.
@@ -115,6 +117,11 @@ func _ready() -> void:
 	_select_panel.confirmed.connect(_on_selection_confirmed)
 	_select_panel.cancelled.connect(_on_selection_cancelled)
 
+	_replay_panel = ReplayPickerPanel.new()
+	add_child(_replay_panel)
+	_replay_panel.picked.connect(_on_replay_picked)
+	_replay_panel.cancelled.connect(_on_replay_cancelled)
+
 	_refresh_continue()
 	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
 	# The strip is the only writer of who plays what, so the rule that a table with
@@ -127,6 +134,7 @@ func _ready() -> void:
 	# the roster is the board's answer and both of them are downstream of it.
 	_refresh_map_facts()
 	_continue_button.pressed.connect(_continue)
+	_replay_button.pressed.connect(_open_replays)
 	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses_setup_context():
 		# The frame that photographs the dimmed Difficulty: a table of nothing but
@@ -150,6 +158,14 @@ func _ready() -> void:
 	# proves nothing about the longest. The seat form matters for the same reason on
 	# the other axis: the chip bar is widest at the *last* seat, where every chip
 	# carries its full form. An ordinary capture (no such flag) photographs the menu.
+	# The replays page photographs a posed list over a hidden menu, exactly as the
+	# selection page below does, so it hands in its own chrome for the same reason:
+	# the menu's geometry is not what that picture claims.
+	if _capture_driver.poses_replays():
+		_open_replays()
+		await _capture_driver.capture(shot_path, _replay_panel.chrome)
+		return
+
 	var select_mode := CmdArgs.value(CmdArgs.user(), "--co-select", "red")
 	if select_mode != "":
 		_open_select([2] as Array[int])
@@ -612,6 +628,11 @@ func _build_action_stack(animate: bool) -> Control:
 	# A disabled button takes no focus — the case the hoverable caption covers.
 	_continue_tip.follow_focus(_continue_button)
 	col.add_child(_continue_caption)
+
+	# Below Continue, above Quit: it is the third thing you can do with a match, and
+	# the only surface that tells a player their matches are being recorded at all.
+	_replay_button = _action_button("Replays", "", UiTheme.ButtonVariant.SECONDARY, null)
+	col.add_child(_replay_button)
 
 	_quit_button = _action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_quit_button)
@@ -1150,6 +1171,26 @@ func _on_selection_cancelled() -> void:
 	_start_button.grab_focus()
 
 
+func _open_replays() -> void:
+	_menu_root.hide()
+	_replay_panel.begin(
+		_capture_driver.posed_replays() if _capture_driver.poses_replays() else ReplayFile.list()
+	)
+
+
+## A recording states its own board, seating, commanders and fog, so watching one
+## is the shortest launch this menu makes: name the file and go.
+func _on_replay_picked(path: String) -> void:
+	MatchConfig.stage(MatchRequest.from_replay(path))
+	get_tree().change_scene_to_file(BATTLE_SCENE)
+
+
+## Back lands on the setup exactly as it was left, like the select page's Back.
+func _on_replay_cancelled() -> void:
+	_menu_root.show()
+	_replay_button.grab_focus()
+
+
 ## Names the saved match under the Continue button, so the menu alone answers
 ## "is this the match I meant?" — the whole point of labelling the slot. The day
 ## and board are read off the save envelope's own keys (SaveGame.peek); nothing is
@@ -1213,6 +1254,7 @@ func _chrome() -> Dictionary:
 		"selected map facts": _map_caption,
 		"Start": _start_button,
 		"Continue": _continue_button,
+		"Replays": _replay_button,
 		"Quit": _quit_button,
 	}
 	for i in _setup_help_labels.size():

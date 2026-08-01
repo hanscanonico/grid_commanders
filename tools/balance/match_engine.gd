@@ -51,6 +51,10 @@ class Setup:
 	## derived from the spec; a caller that plays the same spec twice — the two
 	## seatings of a mirror — must supply its own, or the two would collide.
 	var match_id := ""
+	## Optional, and the caller's to open and close: a recording of the match as a
+	## replayable command log. Handed each command either side of `apply` exactly as
+	## `recorder` is, and like it, it never influences a decision.
+	var replay: ReplayRecorder = null
 
 
 class Outcome:
@@ -95,6 +99,10 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 	if state == null:
 		outcome.termination = "invalid_map"
 		return outcome
+	# Nothing in the loop reads this and no report column carries it. It is set
+	# because a recording of this match has to say which board to rebuild, and the
+	# state is where every other consumer of that answer looks — see BattleSetup.
+	state.map_path = setup.map.source_path
 	state.rng.seed = setup.seed_val
 	outcome.state = state
 	for team in state.teams:
@@ -104,6 +112,11 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 		outcome.starting_units[team] = state.units_of(team).size()
 	if recorder != null:
 		recorder.begin_match(_match_id(setup), state, setup.tiers)
+	if setup.replay != null:
+		# Every seat here is the computer's. The tier is left at the default because a
+		# replay builds no planner to weigh with it, and the per-side tiers this match
+		# played at are the CSV's to say.
+		setup.replay.begin(state, state.teams, Difficulty.DEFAULT_ID, _match_id(setup))
 
 	var commands_this_turn := 0
 	while (
@@ -134,6 +147,8 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 				outcome.first_fired[team] = state.day
 		if recorder != null:
 			recorder.before_apply(state, command, planning_usec)
+		if setup.replay != null:
+			setup.replay.before_apply(state, command)
 		commands_this_turn = 0 if command is EndTurnCommand else commands_this_turn + 1
 		var fallen_before := state.eliminated.size()
 		command.apply(state)
@@ -143,6 +158,8 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 			outcome.hq_captured = true
 		if recorder != null:
 			recorder.after_apply(state, command)
+		if setup.replay != null:
+			setup.replay.after_apply(state)
 		outcome.commands += 1
 
 	if recorder != null:

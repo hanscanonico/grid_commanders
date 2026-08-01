@@ -29,6 +29,13 @@ class BuiltMatch:
 	## mode fills it; a normal match has one computer opponent at one tier, and
 	## `difficulty` above is that tier and the one the save records.
 	var per_team_difficulty: Dictionary = {}
+	## Set only for `--replay=`: the recording this match is a playback of. Null for
+	## every match that is actually being played, which is what everything
+	## downstream asks it.
+	var replay: ReplayPlayer = null
+	## The file it was read from, so restarting a playback can open the same
+	## recording again. A replay has no live board to derive a rematch from.
+	var replay_path := ""
 
 
 ## Null, with a pushed error, when the board or the state cannot be built — the
@@ -44,6 +51,8 @@ static func build(
 	var difficulty_db := DifficultyDB.load_default()
 	result.ai_teams = request.ai_teams.duplicate()
 	result.difficulty = difficulty_db.by_id(request.difficulty)
+	if request.replay_requested:
+		return _build_replay(request, terrain_db, unit_db, chart, commander_db, difficulty_db)
 	if request.resume and SaveGame.has_save():
 		var loaded := SaveGame.load_game(
 			terrain_db, unit_db, chart, SaveGame.SAVE_PATH, commander_db
@@ -138,6 +147,43 @@ static func build(
 		result.game.rng.seed = request.seed_value
 	else:
 		result.game.rng.randomize()
+	return result
+
+
+## A recorded match, opened on the board it was recorded from. Null when the file
+## is not a replay this build reads — or when the launch named no file at all,
+## which `make replay` with no `REPLAY=` does. Both are a refusal rather than a
+## fallback: a `--replay=` that quietly played a fresh match on the default board
+## would look exactly like the replay working.
+##
+## The opening rebuilds through `SaveCodec.decode`, the same route `resume` takes
+## above, so the recording brings its own board, roster, grouping, commanders and
+## fog. Nobody plans: `ai_teams` is empty because every command is already written
+## down, and the tier is carried only because a save envelope records one.
+static func _build_replay(
+	request: MatchRequest,
+	terrain_db: TerrainDB,
+	unit_db: UnitDB,
+	chart: DamageChart,
+	commander_db: CommanderDB,
+	difficulty_db: DifficultyDB
+) -> BuiltMatch:
+	if request.replay_path == "":
+		push_error("battle: --replay names no recording; there is no match to play")
+		return null
+	var recording := ReplayFile.read(request.replay_path)
+	if recording == null:
+		return null  # ReplayFile has already said what is wrong with the file
+	var player := ReplayPlayer.new(recording, unit_db)
+	var loaded := player.opening(terrain_db, chart, commander_db)
+	if loaded == null:
+		return null  # SaveCodec has already said what is wrong with the opening
+	var result := BuiltMatch.new()
+	result.replay = player
+	result.replay_path = request.replay_path
+	result.game = loaded.state
+	result.map = loaded.state.map
+	result.difficulty = difficulty_db.by_id(loaded.difficulty)
 	return result
 
 

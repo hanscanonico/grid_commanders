@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Match Replay Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > *,
+    :where([style*="display: grid"], [style*="display:grid"], [style*="display: flex"], [style*="display:flex"]) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+      --gc-amber: #d58a24;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,.03) 25%, transparent 25%);
+      background-size: 32px 32px, 32px 32px, 64px 64px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    pre.gc-code {
+      background: #10202f; color: #d7e6f2; border-radius: .4rem; padding: .9rem 1rem;
+      font: 500 .78rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+      overflow-x: auto; border: 2px solid var(--gc-water-dark);
+    }
+    pre.gc-code .k { color: #8fd0ff; }
+    pre.gc-code .s { color: #b6e58a; }
+    pre.gc-code .c { color: #7d94a6; font-style: italic; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid var(--gc-amber); }
+    .gc-risk-good { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-proposed { border-color: var(--gc-amber); box-shadow: 0 0 0 2px color-mix(in srgb, #d58a24 30%, transparent); }
+    .gc-checks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-checks li::before { content: "✓"; color: var(--gc-grass-dark); font-weight: 900; }
+    .gc-crosses li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-crosses li::before { content: "✗"; color: var(--gc-red); font-weight: 900; }
+    .gc-flow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font: 700 .8rem ui-monospace, monospace; }
+    .gc-flow .node { border: 2px solid var(--gc-water-dark); background: white; border-radius: .3rem; padding: .35rem .6rem; }
+    .gc-flow .arrow { color: var(--gc-water-dark); font-weight: 900; }
+    table.gc-table { width: 100%; font-size: .82rem; border-collapse: collapse; }
+    table.gc-table th, table.gc-table td { border: 1px solid color-mix(in srgb, var(--gc-ink) 20%, transparent); padding: .45rem .6rem; text-align: left; vertical-align: top; }
+    table.gc-table th { background: color-mix(in srgb, var(--gc-water) 14%, transparent); font-weight: 800; }
+  </style>
+</head>
+<body>
+  <div class="gc-shell">
+
+    <!-- ============================== HERO ============================== -->
+    <header class="gc-hero px-6 py-10 md:px-12">
+      <p class="gc-kicker opacity-80">Grid Commanders · Stretch item · RP1–RP4 shipped · rev 1</p>
+      <h1 class="text-3xl md:text-4xl font-black mt-2">Match Replay — watch it again, and read what the computer did wrong</h1>
+      <p class="mt-3 max-w-3xl opacity-90">
+        A match ends and it is gone. This plan keeps it. <strong>Every match records itself</strong>
+        to a rotating slot as it is played; <strong>any recording plays back in the battle scene</strong>
+        with the real animations, cut-ins and banners, at whatever speed you like, pausable and
+        steppable; and <strong>an offline pass reads one and reports the computer's obvious
+        mistakes</strong> — the unit that stood still all game, the funds never spent, the Command
+        Power banked to the last day, the tank walked into three guns.
+      </p>
+      <p class="mt-3 max-w-3xl opacity-90">
+        Nothing here is a new simulation. A replay is <em>an opening board and the commands that
+        were applied to it</em>, played back through the same pipeline the computer's own turns go
+        through. <code>CLAUDE.md</code>'s third architecture rule already named this as what the
+        command pattern was for: <em>"a serializable log for save/replay"</em>. This is the second
+        half of that sentence, collected.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="badge badge-lg" style="background:var(--gc-blue); color:white; border:0;">Commands, not frames</span>
+        <span class="badge badge-lg" style="background:var(--gc-grass); border:0;">Nothing under core/ or ai/ gains a hook</span>
+        <span class="badge badge-lg" style="background:var(--gc-road); border:0;">Every match records itself</span>
+        <span class="badge badge-lg" style="background:var(--gc-red); color:white; border:0;">A replay verifies itself or halts</span>
+      </div>
+    </header>
+
+    <!-- ============================== 1 · SEAMS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">1</span>
+        <h2 class="text-2xl font-black">The seams already exist</h2>
+      </div>
+      <p class="max-w-3xl mb-4">
+        Every part this needs is already built, tested and load-bearing. What is missing is that
+        none of them have been introduced to each other, and that the one log the repo does write
+        is <em>descriptive</em> rather than <em>replayable</em>.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">Determinism is already a promise, and it is narrow</h3>
+          <p class="text-sm mt-1">Same seed plus same commands ⇒ same result, stated in
+          <span class="gc-file">CLAUDE.md</span> and true because the match RNG has exactly
+          <strong>one</strong> consumer in the whole repo:
+          <span class="gc-file">core/rules/combat_resolver.gd:343</span>. Everything else — capture
+          points, income, repair, upkeep, doctrine hooks — is integer arithmetic over public state.
+          A replay does not have to <em>reproduce</em> a match; it only has to re-issue it.</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">There is exactly one place a live command is applied</h3>
+          <p class="text-sm mt-1"><span class="gc-file">scenes/battle/battle_command_pipeline.gd</span>
+          is the live scene's single mutation seam, and
+          <span class="gc-file">tools/check_scripts.sh</span> <em>fails the build</em> if a second
+          <code>.apply(game)</code> appears anywhere under <code>scenes/battle</code>. The recorder
+          needs one call site and the repo already guarantees there is only one to find.
+          <span class="gc-file">tools/balance/match_engine.gd</span> is the headless twin, and it
+          already brokers <code>before_apply</code> / <code>after_apply</code> for the Balance Lab.</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">A whole board already serialises, validator included</h3>
+          <p class="text-sm mt-1"><code>SaveCodec.encode(state, ai_teams, difficulty)</code> states
+          map path, roster, sides, seats, fog, funds, owners, capture progress, home HQs, every
+          unit, every commander's charge — <strong>and <code>rng_state</code></strong>. It is
+          version 7, additive, and <code>decode</code> refuses a board no seating could have
+          produced, field by field. A replay's opening frame is that dictionary, unchanged, which
+          is also why a replay of a <em>resumed</em> save needs no thought at all.</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">A per-command log already exists — and is not replayable</h3>
+          <p class="text-sm mt-1"><code>BalanceMatchRecorder._log_entry</code>
+          (<span class="gc-file">tools/balance/match_recorder.gd:500</span>) writes one JSONL record
+          per applied command: type, from, to, damage, deaths. It is deliberately deterministic and
+          clock-free. But it names a unit by its <em>type id</em> — <code>"infantry"</code> — which
+          answers "what happened" and cannot answer "do it again". One field's worth of difference,
+          and the reason RP1 is a new codec rather than a flag on that one.</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">A driver that is not a player already exists</h3>
+          <p class="text-sm mt-1"><span class="gc-file">scenes/battle/battle_ai_runner.gd</span> is
+          110 lines that feed commands into <code>Battle.execute_command</code>, await
+          <code>conclude_command</code>, pace off <code>Settings.speed</code> and stop at
+          <code>Battle.pause_gate()</code>. The replay runner is that file with the planner swapped
+          for a cursor into an array — every animation, cut-in, banner, elimination card and
+          victory lockup comes along for free.</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">Every counterfactual the analyser wants is a public static</h3>
+          <p class="text-sm mt-1"><code>AttackRange.threat_cells</code> /
+          <code>ring_cells</code> / <code>ready_shot</code>,
+          <code>MovementResolver.reachable</code>, and
+          <code>CombatResolver.forecast_at</code> — which takes the defender's cell precisely so a
+          caller can ask "how hard am I hit if I stop here?" <em>without standing a unit there</em>.
+          "What could this unit have done instead?" is a question the rules already answer for the
+          planner; the analyser asks the same authorities, and never the planner (D6).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== 2 · WHAT A REPLAY IS ============================== -->
+    <section class="px-6 py-8 md:px-12 bg-base-200/60">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">2</span>
+        <h2 class="text-2xl font-black">What a replay is</h2>
+      </div>
+      <p class="max-w-3xl mb-4">
+        A JSONL stream: <strong>one header line stating the opening board, then one line per
+        applied command</strong>, appended as the match plays. Not a movie, not a series of states,
+        and not a screen recording — the file holds only what a human or a planner decided, and the
+        sim works out the rest exactly as it did the first time.
+      </p>
+
+      <div class="gc-flow mb-5">
+        <span class="node">opening envelope</span><span class="arrow">→</span>
+        <span class="node">SaveCodec.decode</span><span class="arrow">→</span>
+        <span class="node">GameState</span><span class="arrow">→</span>
+        <span class="node">command #1 … #n</span><span class="arrow">→</span>
+        <span class="node">BattleCommandPipeline</span><span class="arrow">→</span>
+        <span class="node">the same match</span>
+      </div>
+
+      <pre class="gc-code"><span class="c">// line 0 — the header. `opening` is a SaveCodec envelope, verbatim.</span>
+{<span class="k">"replay"</span>: 1, <span class="k">"recorded"</span>: <span class="s">"2026-08-01T18:04:22"</span>, <span class="k">"label"</span>: <span class="s">"Ironworks · Alina Ward vs Cass Orlov"</span>,
+ <span class="k">"opening"</span>: { <span class="k">"version"</span>: 7, <span class="k">"map_path"</span>: <span class="s">"res://maps/ironworks.txt"</span>, <span class="k">"day"</span>: 1, <span class="k">"rng_state"</span>: <span class="s">"4083…"</span>, … }}
+
+<span class="c">// then one line per command that was actually applied.</span>
+{<span class="k">"n"</span>:0, <span class="k">"d"</span>:1, <span class="k">"t"</span>:1, <span class="k">"c"</span>:<span class="s">"move"</span>,    <span class="k">"at"</span>:[3,7], <span class="k">"path"</span>:[[3,7],[4,7],[5,7]],            <span class="k">"ck"</span>:1917348201}
+{<span class="k">"n"</span>:1, <span class="k">"d"</span>:1, <span class="k">"t"</span>:1, <span class="k">"c"</span>:<span class="s">"capture"</span>, <span class="k">"at"</span>:[8,2], <span class="k">"path"</span>:[[8,2],[8,3]],                    <span class="k">"ck"</span>: 733910044}
+{<span class="k">"n"</span>:2, <span class="k">"d"</span>:1, <span class="k">"t"</span>:1, <span class="k">"c"</span>:<span class="s">"build"</span>,   <span class="k">"cell"</span>:[2,9], <span class="k">"unit"</span>:<span class="s">"mech"</span>,                          <span class="k">"ck"</span>:2044118876}
+{<span class="k">"n"</span>:3, <span class="k">"d"</span>:1, <span class="k">"t"</span>:1, <span class="k">"c"</span>:<span class="s">"attack"</span>,  <span class="k">"at"</span>:[6,4], <span class="k">"path"</span>:[[6,4]], <span class="k">"target"</span>:[7,4],           <span class="k">"ck"</span>: 158802391}
+{<span class="k">"n"</span>:4, <span class="k">"d"</span>:1, <span class="k">"t"</span>:1, <span class="k">"c"</span>:<span class="s">"end_turn"</span>,                                                <span class="k">"ck"</span>:1290334517}</pre>
+
+      <div class="grid md:grid-cols-3 gap-4 mt-5">
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black text-sm">Which unit? The cell it acted from.</h3>
+          <p class="text-sm mt-1"><code>at</code> is <code>path[0]</code>, and it is unambiguous
+          because <strong>a carried unit can never act</strong> —
+          <code>MoveCommand.validate_path_steps</code> refuses one outright — so every unit that
+          can appear in this field is alone on its cell. No ids to mint, no index to keep in step,
+          and the log stays readable by eye. <code>DropCommand</code>'s named passenger is the one
+          exception and rides as a cargo index, deterministic because
+          <code>GameState.cargo_of</code> walks <code>state.units</code> in order.</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black text-sm"><code>ck</code> — the board after, in one integer.</h3>
+          <p class="text-sm mt-1">A cheap deterministic digest of day, hand, funds, owners and every
+          unit's cell and health. Written on record, checked on playback. It is what turns "this
+          replay is from before you retuned the Mech" from a silently different match into a named
+          halt at command #114 (D3).</p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black text-sm">Rejected commands are not in it.</h3>
+          <p class="text-sm mt-1">The recorder sits <em>after</em> <code>apply()</code>. A plan the
+          pipeline refused never touched the board, so it never touched the file — which is what
+          keeps "re-apply every line in order" a complete description of the match rather than a
+          description plus a filter.</p>
+        </div>
+      </div>
+
+      <p class="max-w-3xl mt-5 text-sm opacity-80">
+        Size: a 20-day AI-versus-AI match is roughly 400–700 commands, so ~60–100&nbsp;KB of JSON.
+        Ten rotating slots cost under a megabyte in <code>user://replays/</code>.
+      </p>
+    </section>
+
+    <!-- ============================== 3 · DECISIONS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">3</span>
+        <h2 class="text-2xl font-black">Decisions</h2>
+      </div>
+      <p class="max-w-3xl mb-4 text-sm opacity-80">Seven, all locked and shipped. D3
+      (self-verifying) and D6 (the analyser's discipline) are the two that decide whether this
+      feature ages well; D5 is the most taste-shaped.</p>
+
+      <div class="card bg-base-100 border gc-proposed p-4 mb-4">
+        <h3 class="font-black mb-2">D1 · A replay is an opening envelope and a command log <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm">The opening is <code>SaveCodec.encode(state, ai_teams, difficulty)</code>
+        <strong>verbatim</strong>, taken in <code>Battle._ready</code> immediately after
+        <code>BattleSetup.build</code> and before a single command. Not a <code>MatchRequest</code>,
+        and not the map path plus a seed: the envelope already carries the roster, the seating, the
+        grouping, the fog flag, the commanders <em>with their charge</em>, the day-1 board after
+        <code>TurnRules.begin_turn</code> has run inside <code>GameState.create</code>, and
+        <code>rng_state</code> itself — so a replay starts from a board rather than from a recipe for
+        one. Two things fall out for free: a match <em>resumed from a save</em> records correctly
+        from wherever it was picked up, and the format inherits <code>SaveCodec</code>'s whole
+        total validator instead of growing a second one. <strong>Rejected:</strong> recording
+        map + seed + setup and rebuilding by re-running <code>create</code> — one more independent
+        opinion about what a match opens as, which is the drift the four-players and open-seats
+        plans both spent a decision preventing.</p>
+      </div>
+
+      <div class="card bg-base-100 border gc-proposed p-4 mb-4">
+        <h3 class="font-black mb-2">D2 · The recorder observes, at the two brokers that already exist <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm">Balance plan D2 restated for a second instrument: <strong>nothing under
+        <code>core/</code> or <code>ai/</code> gains a signal, a hook or a field.</strong> There are
+        exactly two call sites, and both are places a command already changes hands:
+        <code>BattleCommandPipeline.execute</code> after <code>command.apply(game)</code>, and
+        <code>BalanceMatchEngine.play</code> beside its existing <code>recorder.after_apply</code>.
+        The first is the live scene's single mutation seam and
+        <span class="gc-file">tools/check_scripts.sh</span> already fails a build that grows a
+        second one, so "one call site" is enforced rather than remembered. What is recorded is
+        therefore bit-for-bit the shipped game, and the recording cannot bend the game toward
+        being recordable.</p>
+      </div>
+
+      <div class="card bg-base-100 border gc-proposed p-4 mb-4">
+        <h3 class="font-black mb-2">D3 · A replay verifies itself, or halts and says where <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm">Every entry carries <code>ck</code>, a digest of the board the command
+        left behind. Playback recomputes it after each apply and <strong>stops at the first
+        mismatch, naming the command index, the day and the side</strong>. This is not paranoia
+        about the sim — it is the honest answer to the one thing a command log cannot survive: the
+        game changing underneath it. Retune a <code>.tres</code>, fix a rule, add a doctrine hook,
+        and yesterday's replay is describing a match this build would not play. Without the digest
+        it would quietly play a <em>different</em> match and look fine. With it, the halt is also
+        the diagnostic — the seq number names the exact command whose meaning moved, which is a
+        genuinely useful thing to hand a bisect. <strong>A replay is disposable:</strong> nothing
+        resumes from one, nothing is scored off one, and a stale one is deleted rather than
+        migrated. That is what buys the right to have no upgrade path.</p>
+      </div>
+
+      <div class="card bg-base-100 border gc-proposed p-4 mb-4">
+        <h3 class="font-black mb-2">D4 · Playback is presentation; the sim never learns it is a replay <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm"><code>BattleReplayRunner</code> is <code>BattleAiRunner</code>'s sibling:
+        it feeds recorded commands to <code>Battle.execute_command</code>, awaits
+        <code>conclude_command</code>, paces off <code>Settings.speed</code> and holds at
+        <code>Battle.pause_gate()</code> — the same boundary that already keeps "no interactive menu
+        under a banner or a cut-in" true for computer turns. <strong>No planner is built</strong>
+        (a replay has nothing to decide), and — the load-bearing half —
+        <strong><code>game.fog_enabled</code> is not touched</strong>. Fog is an input to
+        <code>MoveCommand.validate</code> and to <code>GameState.advance_unit</code>'s ambush, so a
+        replay that switched it off would resolve the recorded moves differently and every ambush in
+        the match would evaporate. Omniscience is therefore a flag on
+        <span class="gc-file">scenes/battle/battle_perspective.gd</span> — the one adapter from the
+        vision authority to viewer policy — and nowhere else.</p>
+      </div>
+
+      <div class="card bg-base-100 border gc-proposed p-4 mb-4">
+        <h3 class="font-black mb-2">D5 · The viewer is omniscient, and the recording is always on <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm"><strong>Omniscient:</strong> a replay shows the whole board whatever fog
+        the match was played under. The match is over, so there is nobody to hide it from — and a
+        fogged AI-versus-AI match watched through one army's eyes is mostly a black rectangle, which
+        is the opposite of the point. The blackout a hot-seat handoff raises is skipped for the same
+        reason: nobody is being handed the device. <strong>Always on:</strong> every match records
+        itself into <code>user://replays/</code>, oldest pruned past ten, appended per command so a
+        crash costs the tail rather than the file. The interesting match is the one you did not know
+        was interesting until it ended, and a feature you have to remember to arm is a feature that
+        is off when it matters. <strong>Rejected:</strong> an opt-in <code>--record</code> flag, and
+        a single slot mirroring <code>save.json</code> — the first fails the sentence above, the
+        second means the match you want is always the one before the one you just played.</p>
+      </div>
+
+      <div class="card bg-base-100 border gc-proposed p-4 mb-4">
+        <h3 class="font-black mb-2">D6 · The analyser asks the rules; it never asks the planner <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm">Every counterfactual comes from <code>AttackRange</code>,
+        <code>MovementResolver</code> and <code>CombatResolver.forecast_at</code> — the same
+        authorities the planner itself scores through, which is exactly why a finding drawn from
+        them is a finding about the <em>game</em> rather than about one revision of
+        <code>ai/</code>. <strong>Nothing under <code>ai/</code> gains a why-hook</strong>, no
+        "reason" string is threaded out of a planner, and no report ever claims to know what the
+        computer was thinking. A finding says what happened, what was available instead, and what
+        the difference was worth; the judgement stays with the reader. This is the same line balance
+        plan D2 drew — the instrument observes, and the observed thing is the shipped one — and it is
+        what keeps the analyser useful after the planner is rewritten. <strong>Corollary:</strong> a
+        finding is evidence, never a gate. <code>make replay-report</code> stays out of
+        <code>make verify</code>, because several detectors fire on a doctrine playing exactly as it
+        is meant to.</p>
+      </div>
+
+      <div class="card bg-base-100 border gc-proposed p-4">
+        <h3 class="font-black mb-2">D7 · <code>--watch</code> stays; <code>--replay</code> is a second instrument <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">locked</span></h3>
+        <p class="text-sm">Today's <code>--watch</code> re-plans a Balance Lab row from its seed and
+        is the balance plan's BS3 replay-fidelity check: it is <em>supposed</em> to diverge when the
+        AI changes, and <code>BattleOutcome</code>'s one diffable line is what proves the window and
+        the CSV agree. <code>--replay=</code> is the opposite by design — immune to AI changes,
+        because the decisions are in the file. Both ship, both keep their own Makefile target, and
+        neither is described in terms of the other. What the Lab gains is
+        <code>--replays</code>: one recording per match, named by <code>match_id</code>, so a
+        suspicious row in <code>matches.csv</code> becomes a file you can watch <em>and</em> feed to
+        the analyser.</p>
+      </div>
+    </section>
+
+    <!-- ============================== 4 · MILESTONES ============================== -->
+    <section class="px-6 py-8 md:px-12 bg-base-200/60">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">4</span>
+        <h2 class="text-2xl font-black">Milestones — each one shippable</h2>
+      </div>
+      <div class="grid gap-4">
+
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">RP1 · The format and the recorder <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size M · core + two call sites</span></h3>
+          <p class="text-sm mt-2">Two new Node-free files, both driven directly by GUT.
+          <code>core/replay_codec.gd</code> (<code>ReplayCodec</code>) is pure:
+          <code>encode_command(Command) → Dictionary</code>,
+          <code>command_from(GameState, Dictionary) → Command</code>,
+          <code>checkpoint(GameState) → int</code>, and an envelope validator built the way
+          <code>SaveCodec.KEY_RULES</code> is — one table, presence and shape read off it, because
+          two lists that have to agree by hand is the drift COM-54 was about.
+          <code>core/replay_file.gd</code> (<code>ReplayFile</code>) is storage only, in
+          <code>SaveGame</code>'s tradition: open a slot under <code>user://replays/</code>, append,
+          close, <code>list()</code> summaries, prune past ten.</p>
+          <p class="text-sm mt-2">Wired in at the two brokers of D2, plus <code>--replays</code> on
+          <code>tools/run_balance_sim.gd</code>.</p>
+          <p class="text-sm mt-2"><strong>The merge bar</strong> is
+          <code>tests/unit/test_replay_fidelity.gd</code>: play a seeded AI-versus-AI match through
+          <code>BalanceMatchEngine</code> with a writer attached, re-apply the log to a fresh state,
+          and assert every checkpoint matches and the final boards are identical, unit for unit.
+          <code>tests/unit/test_replay_codec.gd</code> round-trips every command class beside it,
+          including a Drop with a named passenger and a move an ambush cut short.</p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">RP2 · Watching one <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size M · scene layer</span></h3>
+          <ul class="gc-checks text-sm mt-2 grid gap-1">
+            <li><code>MatchRequest.replay_path</code> and <code>--replay=&lt;path&gt;</code>, read
+            through <code>CmdArgs</code> like every other flag — so a replay boot and a menu launch
+            reach the board by the same route.</li>
+            <li><code>BattleSetup.build</code> builds a replay's state from the envelope through the
+            same <code>SaveCodec.decode</code> path <code>resume</code> already uses, and hands
+            <code>Battle</code> the command list.</li>
+            <li><code>scenes/battle/battle_replay_runner.gd</code> — the runner of D4.</li>
+            <li><code>BattlePerspective</code> gains the omniscient flag; the handoff blackout is
+            skipped in replay mode.</li>
+            <li>Controls: <code>Esc</code> pauses through the existing
+            <code>request_pause</code> / <code>pause_gate</code> seam onto a replay-flavoured menu —
+            the live map menu with the two save rows dropped, since a playback seats no computer and
+            a resumed recording would come back as a hot-seat match, and with the lockup's restart
+            re-staging <code>MatchRequest.from_replay</code> rather than the recorded board;
+            <code>replay_step</code> (S) advances one command while paused and re-parks on the board
+            rather than under that menu; speed is the existing device preference.
+            <code>Battle.STATE_CONTEXT</code> gains the legend, so the top bar prints keys that work
+            here — never refreshed from the call sites, and a paused replay prints its own
+            (<code>ControlHints.REPLAY_PAUSED</code>) because it has the step key a paused computer
+            turn does not.</li>
+            <li><code>make replay REPLAY=&lt;path&gt;</code>, windowed through
+            <code>tools/godot_gui.sh</code> like every GUI target.</li>
+          </ul>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">RP3 · Finding one <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size S · menu</span></h3>
+          <p class="text-sm mt-2">A Replays row on the main menu opening a list built from
+          <code>ReplayFile.list()</code> — board, days played, who sat where, how it ended — each
+          entry staging a <code>MatchRequest</code> with <code>replay_path</code> and changing
+          scene. It gets the capture gate its siblings have (<code>SeatStrip.layout_error</code>'s
+          shape, and for its reason: an unsorted list stacks at the container's origin and
+          photographs as a bare panel) and a <code>menu_replays</code> scenario in the smoke sweep.</p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">RP4 · Reading one <span class="badge badge-sm" style="background:var(--gc-grass); border:0;">shipped</span> <span class="badge badge-sm">size M · tools only</span></h3>
+          <p class="text-sm mt-2"><code>tools/replay/replay_analysis.gd</code> (Node-free) plus
+          <code>tools/run_replay_report.gd</code> and <code>make replay-report REPLAY=…</code>,
+          writing <code>reports/replay_&lt;id&gt;.md</code> and <code>.json</code> — gitignored, like
+          every other report. It re-applies the log to a fresh state and, at each decision point,
+          compares what was done with what the rules say was available:</p>
+          <div class="overflow-x-auto mt-3">
+            <table class="gc-table">
+              <thead><tr><th>finding</th><th>what it asks</th></tr></thead>
+              <tbody>
+                <tr><td><code>idle_unit</code></td><td>a ready unit ended its turn without moving or firing while an enemy or a takeable property was in reach</td></tr>
+                <tr><td><code>hoarding</code></td><td>funds ≥ the cheapest buildable at an owned, empty production property at end of turn</td></tr>
+                <tr><td><code>walk_into_fire</code></td><td>a move ended on a cell whose incoming threat (<code>AttackRange.threat_cells</code>) ≥ the unit's health, with no shot fired</td></tr>
+                <tr><td><code>worse_shot</code></td><td>an attack was taken when another target in range had a strictly better <code>forecast_at</code> (dealt minus countered)</td></tr>
+                <tr><td><code>missed_capture</code></td><td>a capture-capable unit could reach a property its side does not hold, and did something else</td></tr>
+                <tr><td><code>banked_power</code></td><td>a full meter carried for N of the owner's own turns — the Vanish-stall class, from the commander-doctrine plan</td></tr>
+                <tr><td><code>oscillation</code></td><td>a unit returned to a cell it held two turns earlier, having acted in neither</td></tr>
+                <tr><td><code>stranded_transport</code></td><td>a loaded transport made no progress toward a legal drop for N turns — naval R1's known hole, measured</td></tr>
+                <tr><td><code>undefended_hq</code></td><td>an enemy stood within one turn's reach of a home HQ with nothing able to contest it</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm mt-3">Findings are ranked evidence carrying day, side, unit, cell and the
+          counterfactual. Tests are hand-authored fixture logs in which each detector must fire
+          exactly once — a detector with no fixture is a detector nobody can trust.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== 5 · RISKS ============================== -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">5</span>
+        <h2 class="text-2xl font-black">Risks</h2>
+      </div>
+      <div class="grid gap-3">
+        <div class="card bg-base-100 border gc-risk-high p-4">
+          <h3 class="font-black text-sm">R1 · A data or rules edit invalidates every existing replay</h3>
+          <p class="text-sm mt-1">Certain, not hypothetical — the repo retunes <code>.tres</code>
+          files as a matter of course. D3's checkpoint converts it from a silent lie into a named
+          halt, and D5's "replays are disposable" is what makes that acceptable: nothing resumes
+          from one, so there is no migration to owe. <em>Watch item:</em> if the halt turns out to
+          fire on ordinary balance passes often enough to be annoying, the answer is to stamp the
+          data revision in the header and refuse up front with a clearer message — not to weaken
+          the digest.</p>
+        </div>
+        <div class="card bg-base-100 border gc-risk-medium p-4">
+          <h3 class="font-black text-sm">R2 · The one guarded live seam gains a side effect</h3>
+          <p class="text-sm mt-1">Recording adds a call inside
+          <code>BattleCommandPipeline.execute</code>, the file
+          <code>check_scripts.sh</code> holds to exactly one apply and one validate. The call is a
+          single <code>record</code> after <code>apply</code> writing to an append-only stream, so
+          the greps are unaffected — but the invariant is worth naming here, because "the pipeline
+          gained a second responsibility" is how a seam stops being one.</p>
+        </div>
+        <div class="card bg-base-100 border gc-risk-medium p-4">
+          <h3 class="font-black text-sm">R3 · Analyser false positives</h3>
+          <p class="text-sm mt-1">Several detectors fire on a doctrine playing correctly — Sable
+          Wren sitting in woods is <code>idle_unit</code>; a commander whose power wants a
+          particular board state is <code>banked_power</code>. Mitigation is honesty about what the
+          instrument is (D6: evidence, never a gate, never in <code>make verify</code>) and tuning
+          the N-thresholds against a real recorded match rather than a fixture.</p>
+        </div>
+        <div class="card bg-base-100 border gc-risk-medium p-4">
+          <h3 class="font-black text-sm">R4 · Playback diverges on something the log does not carry</h3>
+          <p class="text-sm mt-1">The whole design rests on the sim reading nothing but the board,
+          the commands and the seeded RNG. Today that is true and narrowly so — one RNG consumer,
+          no clock in <code>core/</code>, <code>GameSpeed</code> forbidden from reaching it. RP1's
+          fidelity test is the standing proof, and it belongs in <code>make test</code> so a future
+          change that quietly widens the input surface fails there rather than in a report nobody
+          ran.</p>
+        </div>
+        <div class="card bg-base-100 border gc-risk-good p-4">
+          <h3 class="font-black text-sm">R5 · Disk and privacy</h3>
+          <p class="text-sm mt-1">Bounded by construction: ten slots, ~100&nbsp;KB each, in
+          <code>user://</code> beside the save and the settings. A replay holds board coordinates
+          and nothing else — no paths on disk beyond the <code>res://</code> map path the save
+          format already stores, and no player identity, because the game has none.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== 6 · OUT OF SCOPE ============================== -->
+    <section class="px-6 py-8 md:px-12 bg-base-200/60">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">6</span>
+        <h2 class="text-2xl font-black">Explicitly out of scope</h2>
+      </div>
+      <ul class="gc-crosses text-sm grid gap-2 max-w-3xl">
+        <li><strong>Replays as saves.</strong> A replay never resumes into a playable match, and
+        <code>save.json</code> is untouched. Two formats with two jobs; the moment one is asked to
+        do the other's, D3's "disposable" stops being true and R1 becomes a migration problem.</li>
+        <li><strong>Rewind and scrubbing.</strong> Step forward and pause, yes. Seeking backwards
+        means replaying from the opening to the target command, which is buildable on exactly this
+        format later and is not worth the interface now.</li>
+        <li><strong>Branching from a replay</strong> ("what if I had gone left?"). It is the natural
+        next idea and it is a different feature — it needs a match to fork <em>into</em>, which is
+        the save format's job, not this one's.</li>
+        <li><strong>Video export.</strong> Out of scope here and already parked elsewhere — the
+        promo-recording work has its own branch.</li>
+        <li><strong>A why-hook in the planner.</strong> D6. Whatever the analyser cannot infer from
+        the rules, it does not report.</li>
+        <li><strong>Retuning anything.</strong> This plan ships an instrument. Acting on what it
+        finds is a separate pass with its own merge bar — <code>make commander-balance</code> and
+        <code>make difficulty-check</code>, as always.</li>
+      </ul>
+    </section>
+
+    <footer class="px-6 py-6 md:px-12 text-sm opacity-70">
+      Grid Commanders · Match Replay plan · rev 1 · sibling of
+      <code>balance-simulator-plan.html</code> (the instrument it borrows its discipline from) and
+      <code>four-players-plan.html</code> (the save format it borrows its opening from).
+    </footer>
+
+  </div>
+</body>
+</html>
