@@ -258,19 +258,23 @@ that must survive any change; the full rationale, milestones and risk registers 
   results, all at n=16 and therefore directions rather than magnitudes: `cohesion_tiles` 1.0–2.0 at
   `cohesion_radius` **2** is the largest gain measured anywhere in this plan (+25 points over
   control) and **tight beats loose** — radius 4 never clears the control, so the two axes had to be
-  probed together; `defend_weight` helps by a consistent +6 and is **flat from 0.25 to 2.0**, which
-  is the shape the design predicts (a bonus either flips a decision or it does not), so the low end
-  is the recommendation; and **two of the four dials are recommended off** — `withdraw_weight`
-  measures negative at every value tried, and `focus_fire_bonus` is refuted a third time, now with
-  cohesion live, which retires the argument that it only ever failed for want of a column to focus.
-  Two findings there are worth carrying: **R3's cross-term is real but backwards** — turning the
-  other two threat dials *off* underneath `withdraw_weight` makes the AI worse, not better, so the
-  three are complementary rather than compounding into the coward R3 predicted, though its
-  instruction to tune them together still stands; and **R1 is unobserved rather than refuted** —
-  the tightest column measured best, but both sides are the same planner and neither punishes
+  probed together, and 2.0 is the top of the probe rather than a measured ceiling; `defend_weight`
+  moves one match of sixteen, identically at all four values tried, which is **one observation
+  rather than four** and by the section's own calibration a hint — 0.25–0.5 is offered for BL2 to
+  re-measure at its own width, never as a measured band; and **two of the four dials are
+  recommended off** — `withdraw_weight` measures negative at every value tried, and
+  `focus_fire_bonus` is refuted a third time, now with cohesion live, which retires the argument
+  that it only ever failed for want of a column to focus. What the section does **not** know is the
+  more useful half of it, and §4b lists it in one place: **R3 is untested, not refuted** — the
+  probe never ran threat-dials-off *and* `withdraw`-off, so it cannot separate withdrawal's cost
+  from Difficult simply being weaker without its shipped threat smarts, and R3's tune-them-together
+  instruction stands on its original reasoning; **R1 is unobserved rather than refuted** — the
+  tightest column measured best, but both sides are the same planner and neither punishes
   concentration, so the instrument is structurally blind to the risk and R1 belongs to a human
-  playtest. R6's wall clock: **a live threat-map dial roughly doubles per-turn planning time**
-  (Normal 33 → 63 ms), which matters most for Normal, the tier that otherwise never builds the map.
+  playtest. R6's wall clock: **a live threat-map dial roughly doubles Normal's per-turn planning
+  time** (33 → 63 ms) — that comparison's other two columns are forced configurations rather than
+  shipped tiers (Easy and Difficult already build the map), so §4's standing turn-time table is
+  still the shipped number.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
