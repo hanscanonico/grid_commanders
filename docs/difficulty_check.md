@@ -49,9 +49,9 @@ wins more games — which is what the gate measures.
 
 | Tier | id | Profile | Character |
 |---|---|---|---|
-| Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, finishes poorly, under-fields capturers, no md tank |
-| Normal | `normal` | `data/ai/default.tres` | The shipped AI, bit for bit |
-| Difficult | `hard` | `data/ai/hard.tres` | Threat-aware and counter-building, sharper trade weights |
+| Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, finishes poorly, under-fields capturers, no md tank, loose column, no instinct to defend its own ground |
+| Normal | `normal` | `data/ai/default.tres` | The planner's own defaults: answers an enemy taking its property, advances as a column |
+| Difficult | `hard` | `data/ai/hard.tres` | Threat-aware and counter-building, sharper trade weights, defends harder and keeps a tighter column |
 
 Each tier is a `Difficulty` resource in `data/difficulty/` — a label plus one of
 those profiles. Retuning a tier is editing its `.tres`.
@@ -106,8 +106,8 @@ longer exists.
     The floor for a live value is ~1.6: below that a healthy unit cannot buy even
     one tile against a full-strength artillery shot (63 of its 100 points), i.e.
     it is inert where nothing is hurt yet.
-    `data/ai/hard.tres` ships `2.0` and `easy.tres` `3.0`; §4 measures those
-    values in the current ladder.
+    `data/ai/hard.tres` ships `2.0` and `easy.tres` `3.0`; §4 measured those
+    values in the ladder as it stood before the Judgement dials went live.
   - **`withdraw_weight` — withdrawals, in value.** Stepping out of a firing ring
     is a scored candidate rather than the advance fallback, worth
     `withdraw_weight × unit cost × damage avoided / 100` — the same currency an
@@ -219,7 +219,7 @@ caveat that came with it, not a re-scoring of it. See §6's superseded finding (
 same board showed the same shape before this tune, so it is a property of
 `ironworks` inside a day cap rather than something these four weights introduced.
 
-The probe is a read on the standing result, not a second gate: the gate is the
+The probe is a read on that result, not a second gate: the gate is the
 default cap, and `--days=40` is not a tier `.tres` change, so nothing above was
 retuned against it.
 
@@ -278,13 +278,18 @@ planner, maps and harness as everything under it; its per-map split is in §6.
 
 ### Turn time (risk R3)
 
-Mean AI planning per turn in the standing run:
+Mean AI planning per turn in that run:
 
 | Tier | ms/turn | over |
 |---|---|---|
 | Easy | 71.6 | 1072 turns |
 | Difficult | 53.7 | 1146 turns |
 | Normal | 33.7 | 2210 turns |
+
+**These numbers predate the Judgement dials and are no longer a reading of the
+shipped tiers**: every tier now runs the cohesion term on every advance, and
+nothing since has re-measured them. Normal still builds no threat map, which is
+the half of §4b's comparison that stands.
 
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
@@ -318,7 +323,7 @@ the control. One axis per probe, tiers edited temporarily and restored from
 row, on the gate's two boards.
 
 **Read every row as a direction, not a magnitude.** 16 matches is a quarter of
-§4's standing 60, `ironworks` resolves badly under a clock (§5), and every number
+the gate's 60, `ironworks` resolves badly under a clock (§5), and every number
 here is AI-vs-AI, where a mistake only costs you if the opponent punishes it. A
 6-point move at this width is a hint; a 25-point move is a finding. §5's warning
 about this exact 16-match subset applies to every row below — it can read red
@@ -479,8 +484,9 @@ per turn, same sweep:
 build the threat map today and only Normal does not. Both rows here are forced
 configurations, and the `hard` and `easy` columns therefore straddle a change
 those two tiers have already partly paid for — they do **not** supersede §4's
-standing turn-time table, which measures the shipped tiers and reports different
-numbers (Easy 71.6, Difficult 53.7).
+turn-time table, which reports different numbers (Easy 71.6, Difficult 53.7).
+Neither table is a reading of the tiers as they ship today: §4's predates the
+Judgement dials, and no run since has re-measured them.
 
 **Normal is the column this comparison is valid for, and there a live
 threat-map dial roughly doubles per-turn planning time: 33 → 63 ms.** It is a

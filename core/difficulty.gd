@@ -16,7 +16,7 @@ const DEFAULT_ID := &"normal"
 @export var id: StringName = DEFAULT_ID
 @export var display_name: String = "Normal"
 ## The AI's judgement at this tier. Easy and Difficult ship their own profile;
-## Normal points at data/ai/default.tres, so Normal is the shipped AI unchanged.
+## Normal points at data/ai/default.tres, so Normal is the planner's own defaults.
 @export var ai_profile: AIProfile
 
 
