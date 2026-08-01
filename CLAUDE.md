@@ -230,9 +230,17 @@ that must survive any change; the full rationale, milestones and risk registers 
   goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
   and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls (the plan's R1).
   Same domain because an army keeps company with what can keep up with it — otherwise a lone hull
-  is dragged toward a land column it can never join. The rejected alternative is an explicit
-  formation manager: it needs cross-turn state the planner has nowhere to keep
-  (`AIPlanningContext` is rebuilt every command, and only the threat map deliberately survives).
+  is dragged toward a land column it can never join. Same **team**, and deliberately not the whole
+  side: formation is the army's, while defended ground is the side's, which is why AJ1's
+  `_defend_bonus` reaches across the alliance through `GameState.allied` and this does not. The
+  term taxes the **ordinary** advance and nothing else: `AIPlanningContext.AdvanceGoal.keeps_formation`
+  is false on the three errands `_advance_goal` computes before the enemy goal — refit, repair and
+  the besieged home HQ — and `_cohesion_penalty` returns zero for them, because both terms count in
+  tiles and the column's pull is the stronger, so charging an errand cancels it outright: a wounded
+  unit trails the column and never repairs, and AJ1's diversion never turns anybody around. The
+  rejected alternative is an explicit formation manager: it needs cross-turn state the planner has
+  nowhere to keep (`AIPlanningContext` is rebuilt every command, and only the threat map
+  deliberately survives).
   AJ3 also re-measured `focus_fire_bonus` with cohesion live, because the standing negative verdict
   was taken on a planner whose units arrive one at a time: **it measures negative again and
   monotonically** (75.0 % control → 50.0 → 50.0 → 31.2), so it stays at 0 on evidence rather than

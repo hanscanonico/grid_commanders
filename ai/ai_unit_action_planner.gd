@@ -363,7 +363,7 @@ func _advance_value(
 	if threat != null:
 		var incoming := threat.incoming_damage(state, unit, cell)
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
-	value -= _cohesion_penalty(cell, column)
+	value -= _cohesion_penalty(cell, goal, column)
 	if profile.doctrine_weight > 0.0:
 		var advice := state.commander_of(unit.team).stand_value(state, unit, cell)
 		if advice != 0:
@@ -375,9 +375,14 @@ func _advance_value(
 ## column. Free inside cohesion_radius, then linear — so a fast unit is pulled
 ## back toward its slower company without any of them ever entering a waiting
 ## state: the goal term still pulls forward, and the column advances at the speed
-## of its rear because that is where the equilibrium sits.
-func _cohesion_penalty(cell: Vector2i, column: Array[Vector2i]) -> float:
-	if profile.cohesion_tiles <= 0.0 or column.is_empty():
+## of its rear because that is where the equilibrium sits. A goal that does not
+## keep formation is untaxed: both terms are in tiles and the errand's is the
+## smaller pull, so charging it would stall a unit at the column's edge — walking
+## neither home to repair nor back to a besieged HQ.
+func _cohesion_penalty(
+	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, column: Array[Vector2i]
+) -> float:
+	if profile.cohesion_tiles <= 0.0 or column.is_empty() or not goal.keeps_formation:
 		return 0.0
 	var apart := _nearest_distance(cell, column)
 	if apart <= profile.cohesion_radius:
@@ -388,7 +393,11 @@ func _cohesion_penalty(cell: Vector2i, column: Array[Vector2i]) -> float:
 ## The other units this one marches with: same team, on the board, and in the
 ## same movement domain. Same domain because an army keeps company with what can
 ## keep up with it — without that a lone boat is dragged toward a land column it
-## can never join, and an aircraft toward ground it does not fight over.
+## can never join, and an aircraft toward ground it does not fight over. Same
+## team, and deliberately not the whole side: a unit cannot rely on an army it
+## does not command to hold station with it. The asymmetry with `_defend_bonus`,
+## which does reach across the alliance through `GameState.allied`, is the point
+## — defended ground is the side's, formation is the army's.
 func _column_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	if profile.cohesion_tiles <= 0.0:
@@ -440,18 +449,21 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 		var refits := _servicing_properties(context, unit)
 		if not refits.is_empty():
 			goal.cell = _nearest(unit.cell, refits)
+			goal.keeps_formation = false
 			context.goals[unit] = goal
 			return goal
 	if unit.hp <= _retreat_threshold(state, unit):
 		var repairs := _servicing_properties(context, unit)
 		if not repairs.is_empty():
 			goal.cell = _nearest(unit.cell, repairs)
+			goal.keeps_formation = false
 			context.goals[unit] = goal
 			return goal
 	var besieged := _besieged_home_hqs(context, unit)
 	if not besieged.is_empty():
 		goal.cell = _nearest(unit.cell, besieged)
 		goal.stand_off = AttackRange.is_indirect(unit)
+		goal.keeps_formation = false
 		context.goals[unit] = goal
 		return goal
 	if unit.type.can_capture:
