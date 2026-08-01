@@ -153,10 +153,10 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # The AI Judgement plan's dials. Same zero-default contract as the block above —
 # at 0 the code that reads one never runs, so the shipped AI is byte-identical to
 # the AI that predates them — but *not* the same purpose: these are not a tier's
-# smarts. Every tier is expected to carry a live value once the balance retune's
-# BL2 measures one (AI Judgement D2); until then all three tiers ship them inert
-# — at 0, or, like cohesion_radius, gated by a dial that is — and
-# `docs/difficulty_check.md` is where AJ4's probe bands land.
+# smarts. Each is a candidate for a live value the balance retune's BL2 sets (AI
+# Judgement D2); until then all three tiers ship them inert — at 0, or, like
+# cohesion_radius, gated by a dial that is. `docs/difficulty_check.md` §4b is
+# AJ4's measured band per dial, and it recommends withdraw_weight stay at 0.
 
 ## What removing an enemy from ground our own side holds is worth, as a multiple
 ## of what taking that ground would be worth to us. The price list is the capture

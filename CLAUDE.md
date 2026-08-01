@@ -230,8 +230,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
   and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls — which is D5's
   emergent waiting, played on a board. (The plan's R1, the clump being artillery and Command Power
-  bait, is untouched by that test and stays open: AJ4's `(cohesion_tiles, cohesion_radius)` probe
-  owns it.)
+  bait, is untouched by that test and stays open; where AJ4's `(cohesion_tiles, cohesion_radius)`
+  probe left it is below.)
   Same domain because an army keeps company with what can keep up with it — otherwise a lone hull
   is dragged toward a land column it can never join. Same **team**, and deliberately not the whole
   side: formation is the army's, while defended ground is the side's, which is why AJ1's

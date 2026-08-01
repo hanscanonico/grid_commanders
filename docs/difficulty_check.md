@@ -93,8 +93,9 @@ which compares a full AI turn command for command.
   (the AI Judgement plan's R3).
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
   could still add damage to. Ships at `0.0`: the superseded probes in §6 found
-  the bias harmful in both shapes tried, while replanning after every command
-  already exposes a wounded target's finishing shot to the next attacker.
+  the bias harmful in both shapes tried and §4b's re-test with cohesion live
+  found it negative again, while replanning after every command already exposes
+  a wounded target's finishing shot to the next attacker.
 - **S3 `build_reactivity` — counter-building.** Re-ranks each affordable combat
   unit by its damage-chart effectiveness against the enemy's actual cost-weighted
   roster, blended over the static `build_priority` list. With no enemy in sight
@@ -379,7 +380,7 @@ next attacker, and biasing the *first* shot pulls it off its own best trade.
 Cohesion fixes **where units are**, not which of them shoots first — those turn
 out to be separate problems, which is itself the useful result.
 
-### The R3 cross-term — three of the four cells, so R3 stays open
+### The cross-term — three of the four cells, so AI Judgement R3 stays open
 
 `threat_aversion`, `advance_threat_tiles` and `withdraw_weight` read one
 `ThreatMap`, so the plan's R3 predicted they would price a single enemy three
@@ -411,7 +412,7 @@ reasoning it was written from and owes nothing to this probe: these three dials
 share one map and one another's job, so tune them together and never one at a
 time.
 
-### The wall clock (R6)
+### The wall clock (AI Judgement R6)
 
 Deferred here from AJ2, and measurable only now that a dial exists to make the
 threat map build on a tier that otherwise never builds one. Mean AI planning time
