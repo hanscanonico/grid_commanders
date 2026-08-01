@@ -206,6 +206,9 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # clipped its own title and its Quit, and a returning player met a visibly
 # broken screen while a fresh install never did. Both modes pose the save slot
 # themselves, so neither reads nor writes the running machine's user://save.json.
+# `menu_replays` opens the recordings page over a posed list, for the reason
+# `menu_with_save` poses a save: how many matches the machine running the sweep
+# happens to have played is not something a frame may depend on.
 # `menu_setup_context` additionally poses an all-human table and proves the
 # tutorial board leads, static facts/help, and disabled AI difficulty — a table
 # with no computer at it has none to tune — before photographing them.
@@ -264,7 +267,7 @@ DEFAULT_MODES=(
 	cutin_volley cutin_volley:tank:mech cutin_volley:mech:tank
 	cutin_volley:bomber:tank cutin_volley:sub:cruiser cutin_volley:anti_air:infantry
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
-	menu_with_save menu_no_save menu_setup_context
+	menu_with_save menu_no_save menu_setup_context menu_replays
 )
 
 if [[ ! -x "$GODOT" ]]; then

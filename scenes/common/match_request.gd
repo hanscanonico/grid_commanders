@@ -140,6 +140,15 @@ static func from_match(
 	return request
 
 
+## A recording to watch. The fourth adapter, and the smallest: a replay states its
+## own board, seating, grouping, commanders and fog in its opening envelope, so
+## naming the file is the whole request.
+static func from_replay(path: String) -> MatchRequest:
+	var request := MatchRequest.new()
+	request.replay_path = path
+	return request
+
+
 ## Layers the command line over whatever this request already says. Every flag
 ## here is an override, so a menu launch with no flags is unchanged and a
 ## headless capture gets the board it named.

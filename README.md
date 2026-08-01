@@ -95,12 +95,15 @@ that photograph a screen the battle scene never draws:
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
 make smoke MODES="menu_setup_context" # an all-human table: every option's help line, AI difficulty dimmed
+make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 ```
 
-All three pose the save slot themselves, so a capture neither reads nor writes the running machine's
-`user://save.json`, and all three are tests as well as pictures: each measures the whole centered menu
-column, its map caption, every option-help line, every seat row *and* all three primary actions
-against the 640×360 logical frame and fails the run if any of them leaves it. The column is the
+All four pose what they photograph, so a capture neither reads nor writes the running machine's
+`user://save.json` or its recordings, and all four are tests as well as pictures: each measures the
+named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first three
+measure the whole centered menu column, its map caption, every option-help line, every seat row *and*
+its primary actions; `menu_replays` photographs its own page over a hidden menu, so it measures that
+page's title, first row and Back instead — the menu's geometry is not what that picture claims. The column is the
 load-bearing witness — a too-tall one is centered into an offset that runs off both ends at once, so
 no single child is reliable — and the first two exist to hold the rule that a save's presence may
 never change the layout budget, which is what broke when Continue first pushed the title and **Quit**
