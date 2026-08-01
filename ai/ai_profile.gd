@@ -33,7 +33,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 @export var capture_progress_bonus: float = 45.0
 ## Charged per step of movement, so all else equal the closer option wins.
 @export var step_cost_penalty: float = 4.0
-## At or below this HP a unit heads for a friendly property to repair.
+## At or below this HP a unit's *advance goal* becomes a friendly property that
+## repairs it. Only the fallback, so a unit with anything worth doing never
+## reaches it — leaving a shot to save itself is withdraw_weight's job.
 @export var retreat_hp: int = 45
 ## Scores below this are not worth acting on; the unit advances instead.
 @export var min_useful_score: float = 40.0

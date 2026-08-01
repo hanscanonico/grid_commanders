@@ -3,7 +3,7 @@ extends RefCounted
 ## Chooses the highest-scored action from the current team's ready units.
 ##
 ## Greedy, deterministic, and deliberately coarse: combat, capture, diving,
-## retreat, and fallback movement stay together because they compete for one
+## withdrawal, and fallback movement stay together because they compete for one
 ## UnitPlan score. AIController remains the public façade.
 
 
