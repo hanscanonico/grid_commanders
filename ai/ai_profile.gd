@@ -111,11 +111,10 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 #
 # Each gates a planner smart the base AI lacks. Every default is 0, which skips
 # the capability entirely: at 0 the code that reads it never runs, and it never
-# draws from the RNG stream. These four stay Difficult-only — data/ai/hard.tres
-# is the one profile that turns them on, so Normal and Easy plan without them.
-# (The Judgement dials below are the ones every tier now carries.) These change
-# how the planner *ranks* its own candidate moves — never a combat number, which
-# stays owned by CombatResolver.
+# draws from the RNG stream. Which tier carries which value is a balance fact
+# with one authority, docs/difficulty_check.md — do not restate it here. These
+# change how the planner *ranks* its own candidate moves — never a combat
+# number, which stays owned by CombatResolver.
 
 ## How heavily a destination's expected incoming damage next turn discounts an
 ## *attack's* score, as a fraction of the exposed unit's cost. >0 builds a

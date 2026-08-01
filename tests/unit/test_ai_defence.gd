@@ -6,9 +6,9 @@ extends GutTest
 ## The zero runs double as the inertness pin the plan's D1 owes: at 0 the code
 ## added here never runs and the command is the one the pre-AJ1 planner picked.
 ##
-## Profiles are built here rather than loaded from data/ai/, so the shipped tiers
-## staying at 0 (D2 — BL2 sets the live value) is a balance fact and never a test
-## failure.
+## Profiles are built here rather than loaded from data/ai/, because what these
+## pin is the behaviour of the capability at a chosen weight. What a shipped tier
+## sets it to is a balance decision, and retuning one must never break this suite.
 
 ## Our HQ at (0,0) with an enemy infantry standing on it, our tank one tile away,
 ## and a fatter target — an enemy tank — the same distance in the other

@@ -133,7 +133,7 @@ longer exists.
 
 ```sh
 make difficulty-check                       # default: 4 seeds
-make difficulty-check DIFF="--seeds=15"     # the standing result below
+make difficulty-check DIFF="--seeds=15"     # the standing invocation (§4c)
 ```
 
 It is the same runner as the commander matrix in `--difficulty-check` mode, so a
@@ -559,8 +559,8 @@ recorded here, and the same configuration put Difficult over Normal at its worst
 The two halves of the gate pull against each other once the middle rung gets
 better, and no split of these three dials resolves it.
 
-**The shipped split is the weakest of the four on Difficult-over-Normal, and
-that was a choice.** The row above it — `none / 0.5+0.25 / 2.0+0.5` — ties it on
+**The shipped split is dominated on Difficult-over-Normal, and that was a
+choice.** The row above it — `none / 0.5+0.25 / 2.0+0.5` — ties it on
 Normal-over-Easy at 68.3% and beats it by ten points on the other pairing,
 63.3% against 53.3%. It buys that separation by halving Normal's cohesion from
 1.0 to 0.5, which is to say by making the tier most people actually play less
@@ -628,7 +628,9 @@ number to quote.
 
 ## 6. Superseded measurements
 
-**None of this section is a current claim.** §4 is the standing record. These
+**None of this section is a current claim.** The standing verdict is at the top
+of this file and §4c holds the current measurements; §4 is the last record
+before the Judgement dials went live. These
 numbers are kept only because code comments and other documents were written
 against them and cite the shapes they found, or — for the COM-120 control
 directly below — because §4's tuning table cannot be read as an improvement

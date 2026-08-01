@@ -290,8 +290,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   concentration, so the instrument is structurally blind to the risk and R1 belongs to a human
   playtest. R6's wall clock: **a live threat-map dial roughly doubles Normal's per-turn planning
   time** (33 → 63 ms) — that comparison's other two columns are forced configurations rather than
-  shipped tiers (Easy and Difficult already build the map), so §4's standing turn-time table is
-  still the shipped number.
+  shipped tiers (Easy and Difficult already build the map). Normal still builds no threat map, so
+  that half stands; but §4's turn-time table was measured before the dials went live and Normal
+  now runs the cohesion term on every advance, so it is no longer a reading of the shipped tiers
+  and nothing since has re-measured them.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
