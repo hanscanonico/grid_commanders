@@ -14,8 +14,8 @@ extends SceneTree
 ##
 ## Usage (headless; see `make commander-balance`):
 ##   Godot --headless --path . -s res://tools/run_commander_balance.gd -- [flags]
-##     --commanders=alina_ward,viktor_draeg   subset (default: all twelve)
-##     --scenarios=clash,ridge                subset (default: all three)
+##     --commanders=alina_ward,viktor_draeg   subset (default: full roster)
+##     --scenarios=clash,ridge                subset (default: all five)
 ##     --seeds=4                              paired seed count (default: 4)
 ##     --neutral                              add each commander vs No Commander
 ##     --days=20                              day cap before a match is a draw
@@ -81,7 +81,7 @@ const DIFFICULTY_CSV_COLUMNS: Array[String] = [
 	"cap_stall",
 ]
 
-## Three 180-degree rotationally-symmetric boards (see _assert_symmetric), so
+## Five 180-degree rotationally-symmetric boards (see _assert_symmetric), so
 ## neither side gets a terrain or income edge and a first-side bias in the
 ## results is the doctrines' doing, not the map's.
 ##
@@ -92,7 +92,9 @@ const DIFFICULTY_CSV_COLUMNS: Array[String] = [
 ## a doctrine tuned only against tanks is tuned against a third of the game, and
 ## the hooks that read a unit's move class or domain (Viktor Draeg's breakthrough,
 ## Nia Rowan's terrain discount, Cassian Rook's heavies) behave differently when
-## half the army is not on the ground.
+## half the army is not on the ground. holdings gives economy doctrines enough
+## income to express their cost curve; channel gives naval doctrines one shared
+## ocean around a land bridge where the ground armies still engage immediately.
 ##
 ## Its lake is centred, which is what keeps it self-symmetric under the rotation
 ## while both fleets share one basin — and it is small enough that the land armies
@@ -102,12 +104,12 @@ const DIFFICULTY_CSV_COLUMNS: Array[String] = [
 ## bias out of the tiebreak alone. A fixture that does not resolve measures the
 ## clock, not the doctrines.
 ##
-## The three live in maps/fixtures/ rather than as strings in this file, so the
+## The five live in maps/fixtures/ rather than as strings in this file, so the
 ## Balance Lab can name one with `--map=` and the battle scene can boot one for
 ## watch mode. That directory is deliberately *not* maps/ itself: MapCatalog
 ## scans only the top level, so a fixture stays out of the menu, out of the map
 ## lint, and out of the shipped roster.
-const SCENARIO_NAMES: Array[String] = ["clash", "ridge", "combined"]
+const SCENARIO_NAMES: Array[String] = ["clash", "ridge", "combined", "holdings", "channel"]
 
 const CSV_COLUMNS: Array[String] = [
 	"scenario",
