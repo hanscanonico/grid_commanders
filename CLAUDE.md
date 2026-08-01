@@ -186,7 +186,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and was regenerated and read — `docs/commander_balance.md` records the measurement.
 - `ai-judgement-plan.html` — the three things the planner cannot see: what the enemy is
   *achieving*, what it will *do next turn*, and what our own other units are doing. Milestones
-  AJ1–AJ4; **AJ1–AJ3 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
+  AJ1–AJ4, **all shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
   the point: **this plan owns planner *capabilities*, BL2 owns Normal's *numbers*** (D2), so no
   AJ milestone edits a shipped value in `data/ai/` and AJ4's deliverable is a probe band in
   `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
@@ -252,8 +252,25 @@ that must survive any change; the full rationale, milestones and risk registers 
   out: every measurement taken agreed on the sign, but each review round changed the planner it had
   been taken on, so no number stayed current while the milestone's code was still moving. It now
   sits in AJ4 beside the sweep's wall clock already deferred there from AJ2 — a measurement belongs
-  on the milestone that adds no code. `docs/difficulty_check.md` §4b records that the re-test is
-  owed, and `focus_fire_bonus` stays at 0 meanwhile on §6's standing probes.
+  on the milestone that adds no code.
+  AJ4 is that milestone and it adds none: **`docs/difficulty_check.md` §4b is the measured band for
+  every dial these four milestones added, and it is what BL2 reads instead of guessing.** Its
+  results, all at n=16 and therefore directions rather than magnitudes: `cohesion_tiles` 1.0–2.0 at
+  `cohesion_radius` **2** is the largest gain measured anywhere in this plan (+25 points over
+  control) and **tight beats loose** — radius 4 never clears the control, so the two axes had to be
+  probed together; `defend_weight` helps by a consistent +6 and is **flat from 0.25 to 2.0**, which
+  is the shape the design predicts (a bonus either flips a decision or it does not), so the low end
+  is the recommendation; and **two of the four dials are recommended off** — `withdraw_weight`
+  measures negative at every value tried, and `focus_fire_bonus` is refuted a third time, now with
+  cohesion live, which retires the argument that it only ever failed for want of a column to focus.
+  Two findings there are worth carrying: **R3's cross-term is real but backwards** — turning the
+  other two threat dials *off* underneath `withdraw_weight` makes the AI worse, not better, so the
+  three are complementary rather than compounding into the coward R3 predicted, though its
+  instruction to tune them together still stands; and **R1 is unobserved rather than refuted** —
+  the tightest column measured best, but both sides are the same planner and neither punishes
+  concentration, so the instrument is structurally blind to the risk and R1 belongs to a human
+  playtest. R6's wall clock: **a live threat-map dial roughly doubles per-turn planning time**
+  (Normal 33 → 63 ms), which matters most for Normal, the tier that otherwise never builds the map.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
