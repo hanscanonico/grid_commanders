@@ -5,13 +5,31 @@ what the measurement currently says. This is the committed record of the
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
-**Standing verdict: the gate passes.** Normal takes 71.7% from Easy and
-Difficult takes 71.7% from Normal; both adjacent pairings clear the required
-70%, with zero rejected commands and zero cap stalls. One caveat travels with
-it: Difficult's ordering holds on both boards and survives a longer day cap,
-while Easy's is a board result on `scrimmage` and a day-cap tiebreak on
-`ironworks`. Details and the tuning record follow — read §4 before changing a
-weight.
+**Standing verdict: the gate FAILS, knowingly.** Measured 2026-08-01 at 15
+seeds with the AI Judgement dials live: Normal takes **68.3%** from Easy and
+Difficult **53.3%** from Normal, against a required 70%. Zero rejected commands
+and zero cap stalls, so the planner and the rules still agree — what is gone is
+the *gap* between tiers, not the correctness of any of them.
+
+This was accepted rather than tuned away, and the reasoning is short. The
+capabilities that closed the gap — noticing an enemy taking your ground, and
+advancing as an army rather than one unit at a time — are basic competence, and
+withholding them from Normal to protect a spread is a worse game for the person
+actually playing it. Every tier split tried failed the gate (three at 15 seeds,
+recorded in §4c), because this gate measures the *difference* between tiers and
+improving the middle rung necessarily shrinks it.
+
+Two things make the failure easier to accept than it reads. The gate is a
+20-day-cap instrument, and the Grand Balance Atlas — 20,280 matches at a
+250-day cap — already found this ladder **inverted** at long horizons (Easy >
+Difficult > Normal, Normal over Easy just 15.6%), so a passing 71.7% was never
+evidence the tiers were truly ordered; it measured who was ahead early. And the
+balance retune's BL2 owns righting the ladder as a whole, Normal and Difficult
+together, on a horizon that resolves — which is the work this needs.
+
+**So: do not read the numbers above as a target to restore by weakening Normal.**
+Restoring the ordering is BL2's job and it should do it by making Difficult
+better, not the middle rung worse. Details and the tuning record follow.
 
 ## 1. What difficulty is allowed to change
 
@@ -41,9 +59,18 @@ those profiles. Retuning a tier is editing its `.tres`.
 
 Difficult's extra judgement is three `@export` weights on `AIProfile`, each
 defaulting to `0.0`, which skips the capability entirely. At `0` the code that
-reads it never runs, so **Normal plans exactly as the pre-difficulty AI did, on
-the same RNG stream** — pinned by `test_capability_defaults_plan_exactly_like_the_shipped_profile`,
-which compares a full AI turn command for command.
+reads it never runs, so **Normal carries none of these three** and they remain
+what the tier ladder is built out of.
+
+That is still true of S1–S3 below. What is **no longer** true is the wider claim
+this section used to make — that Normal plans exactly as the pre-difficulty AI
+did. Since 2026-08-01 Normal carries the AI Judgement dials `defend_weight` and
+`cohesion_tiles` live (§4c), so it plans differently from the pre-difficulty AI
+by design. `test_capability_defaults_plan_exactly_like_the_shipped_profile` still
+passes and still means something, but what it now pins is that
+`AIProfile.new()` and `data/ai/default.tres` agree — an install missing its
+profile file plays the same game — rather than parity with a planner that no
+longer exists.
 
 - **S1 threat awareness — two dials on one map.** Builds a per-turn `ThreatMap`
   (`ai/threat_map.gd`): for every visible enemy, its `MovementResolver` reach ×
@@ -478,6 +505,56 @@ a question the probe was not shaped to answer.
 - **How any of this feels.** The ladder scores who wins. The defect that started
   the plan — "the computer throws units away" — is a complaint about a match's
   texture, and no row here can settle it.
+
+## 4c. Going live, and what it cost the ladder (2026-08-01)
+
+The AI Judgement dials shipped live. §4b measured them one at a time on
+Difficult; this is what happened when every tier carried them.
+
+| tier | `defend_weight` | `withdraw_weight` | `cohesion_tiles` | `cohesion_radius` |
+|---|---|---|---|---|
+| Easy | 0.0 | 0.0 | 0.5 | 4 |
+| Normal | 0.35 | 0.0 | 1.0 | 2 |
+| Difficult | 0.5 | 0.0 | 1.5 | 2 |
+
+Easy carries the configuration §4b measured as *weak* — a loose column and no
+instinct to defend its own ground — which is judgement rather than a handicap and
+so stays inside the never-cheats rule. It also gives a beginner a real
+affordance: rushing an Easy AI's headquarters now works.
+
+**Three tier splits were measured at 15 seeds. None passed.**
+
+| Easy / Normal / Difficult (cohesion + defend) | Normal over Easy | Difficult over Normal |
+|---|---|---|
+| all dials 0 — the old baseline | 71.7% | 71.7% |
+| 0.5·r4+0 / 1.5+0.35 / 2.0+0.5 | 66.7% | 56.7% |
+| none / 1.0+0.25 / 2.0+0.5 | **76.7%** | 51.7% |
+| none / 0.5+0.25 / 2.0+0.5 | 68.3% | 63.3% |
+| **shipped** — 0.5·r4+0 / 1.0+0.35 / 1.5+0.5 | 68.3% | 53.3% |
+
+The shape is consistent and it is not a tuning failure: **improving Normal
+shrinks the gap the gate measures.** The third row is the clearest case — Normal
+over Easy reached 76.7%, comfortably the best result on that pairing ever
+recorded here, and the same configuration put Difficult over Normal at its worst.
+The two halves of the gate pull against each other once the middle rung gets
+better, and no split of these three dials resolves it.
+
+**§4b's headline does not survive the wider sample.** That section reports
+`cohesion_tiles` 2.0 at radius 2 as +25 points over control, measured at n=16 and
+called unambiguous. Difficult carried exactly that value in all three splits
+above and scored 56.7 / 51.7 / 63.3 — every one *below* the 71.7% it managed with
+the dial at zero. The conditions are not identical (Normal carries cohesion too
+in each), so this is not a strict refutation, but the direction is consistently
+opposite and the honest reading is that a 16-match row could not support the
+confidence §4b placed in it. Treat §4b as hypotheses, not findings.
+
+**`withdraw_weight` ships at 0, and for a better reason than the ladder.** At
+0.05 it makes an artillery stop short of maximum standoff —
+`test_indirect_unit_backs_off_into_firing_range` catches it — so the unit ends
+its move inside more firing rings while gaining nothing. That is a positioning
+defect in how the refuge is priced, not a matter of taste, and it wants fixing
+before the dial is worth turning on. It is also the dial that most directly
+answers the "the AI throws units away" report, so this is the open thread.
 
 ## 5. Where this leaves the feature
 
