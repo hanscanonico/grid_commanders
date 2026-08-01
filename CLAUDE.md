@@ -186,7 +186,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and was regenerated and read — `docs/commander_balance.md` records the measurement.
 - `ai-judgement-plan.html` — the three things the planner cannot see: what the enemy is
   *achieving*, what it will *do next turn*, and what our own other units are doing. Milestones
-  AJ1–AJ4; **AJ1 and AJ2 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
+  AJ1–AJ4; **AJ1–AJ3 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
   the point: **this plan owns planner *capabilities*, BL2 owns Normal's *numbers*** (D2), so no
   AJ milestone edits a shipped value in `data/ai/` and AJ4's deliverable is a probe band in
   `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
@@ -223,6 +223,37 @@ that must survive any change; the full rationale, milestones and risk registers 
   cell never pulls a unit off its own square. Three dials now read one `ThreatMap`
   (`threat_aversion`, `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
   times — the plan's R3 — so **tune them together and never alone**.
+  AJ3's one decision: **cohesion is a term on the advance path, not a formation manager** (D5).
+  `_cohesion_penalty` charges a unit `cohesion_tiles` per tile it is adrift of the nearest unit in
+  its **own movement domain** beyond `cohesion_radius` — in *tiles*, which is what
+  `_advance_value` is denominated in. There are no groups, no leaders and **no waiting state**: the
+  goal term still pulls forward, so the equilibrium is a column advancing at the speed of its rear,
+  and `tests/unit/test_ai_cohesion.gd` pins that it advances rather than stalls — which is D5's
+  emergent waiting, played on a board. (The plan's R1, the clump being artillery and Command Power
+  bait, is untouched by that test and stays open: AJ4's `(cohesion_tiles, cohesion_radius)` probe
+  owns it.)
+  Same domain because an army keeps company with what can keep up with it — otherwise a lone hull
+  is dragged toward a land column it can never join. Same **team**, and deliberately not the whole
+  side: formation is the army's, while defended ground is the side's, which is why AJ1's
+  `_defend_bonus` reaches across the alliance through `GameState.allied` and this does not. The
+  term taxes the **advance on the enemy** and nothing else, which is the one goal D5 describes it
+  for: `AIPlanningContext.AdvanceGoal.keeps_formation` defaults to **false** and only that goal
+  turns it on, so every errand `_advance_goal` computes before it — refit, repair, the besieged home
+  HQ and a property to capture — goes untaxed by construction rather than by a list of exceptions,
+  and `_cohesion_penalty` returns zero for them. Both terms count in tiles and the column's pull is
+  the stronger, so charging an errand cancels it outright: a wounded unit trails the column and
+  never repairs, an infantry sits at the column's edge and takes no ground, and AJ1's diversion
+  never turns anybody around. The
+  rejected alternative is an explicit formation manager: it needs cross-turn state the planner has
+  nowhere to keep (`AIPlanningContext` is rebuilt every command, and only the threat map
+  deliberately survives).
+  **AJ3 owns the cohesion term and its goal exemptions; the two measurements are AJ4's, on frozen
+  code.** The `focus_fire_bonus` re-test *with cohesion live* was attempted inside AJ3 and moved
+  out: every measurement taken agreed on the sign, but each review round changed the planner it had
+  been taken on, so no number stayed current while the milestone's code was still moving. It now
+  sits in AJ4 beside the sweep's wall clock already deferred there from AJ2 — a measurement belongs
+  on the milestone that adds no code. `docs/difficulty_check.md` §4b records that the re-test is
+  owed, and `focus_fire_bonus` stays at 0 meanwhile on §6's standing probes.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

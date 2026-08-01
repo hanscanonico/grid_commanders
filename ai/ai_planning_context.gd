@@ -11,9 +11,15 @@ extends RefCounted
 
 ## Where a unit should head when it has nothing better to do. `stand_off` marks
 ## goals we want to shoot rather than reach, so indirect units stop at range.
+## `keeps_formation` is true on the advance on the enemy and on nothing else:
+## that is the one goal cohesion shapes. Every errand an army sends a unit away
+## on — refit, repair, a besieged home HQ, a property to take — must go untaxed,
+## or the column's pull cancels the errand and the unit never arrives, so the
+## default falls on the safe side.
 class AdvanceGoal:
 	var cell: Vector2i = Vector2i.ZERO
 	var stand_off: bool = false
+	var keeps_formation: bool = false
 
 
 var state: GameState
