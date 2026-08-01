@@ -534,7 +534,7 @@
 
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body gap-2">
-          <h3 class="font-bold text-lg">AJ2 — Self-preservation that can outbid a shot</h3>
+          <h3 class="font-bold text-lg">AJ2 — Self-preservation that can outbid a shot <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
           <p class="text-sm opacity-80">Answers the structural half of observation 2 — the half BL2's dials cannot reach. One dial: <code>withdraw_weight</code>, default <code>0.0</code>.</p>
           <ul class="list-disc list-inside space-y-1 text-sm">
             <li><span class="gc-file">_consider_withdraw</span> in <span class="gc-file">_best_unit_plan</span>, per D4.
@@ -548,8 +548,10 @@
             threat ring with a marginal attack available. It must step back at <code>withdraw_weight &gt; 0</code> and must
             still take the shot at <code>0.0</code>. Plus a fixture proving a <em>healthy</em> unit does not flinch from a
             survivable shot, which is the R3 boundary.</p>
-          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the “attacks and dies” fixture reverses; the
-            sweep's wall clock recorded (R6).</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the “attacks and dies” fixture reverses.
+            The sweep's wall clock moves to AJ4 (R6): at <code>withdraw_weight</code> <code>0.0</code> the threat map is
+            never built on this path, so a timing taken here would measure a code path that does not execute, and the
+            measurement belongs where the dials are exercised live.</p>
         </div>
       </div>
 
@@ -591,6 +593,9 @@
               for the reason R1 gives.</li>
             <li><strong>Deliverable</strong>: a §6-shaped probe table per dial — the band that helps, the cliff that hurts —
               plus the R3 cross-term note, committed to <span class="gc-file">docs/difficulty_check.md</span>.</li>
+            <li><strong>And the sweep's wall clock</strong>, deferred here from AJ2 (R6): recorded with the dials that build
+              the threat map live against the same sweep with them at zero, which is the only comparison in which the
+              cost is real.</li>
             <li><strong>Explicitly not a deliverable</strong>: a shipped tier value. That is BL2 (D2).</li>
           </ul>
           <p class="text-sm mt-2"><strong>Exit</strong> — the table is committed and all three
@@ -686,8 +691,9 @@
             build on turns where nothing attacks — which is exactly when it is cheapest to skip today. On the largest
             boards (Confluence, 32×24) that is not free.</p>
           <p class="text-sm"><strong>Mitigation:</strong> the existing per-turn cache is keyed on the day and the enemy set
-            and already survives across commands, so the cost is once per turn rather than once per decision. AJ2 records
-            the sweep's wall clock on both sides of the change.</p>
+            and already survives across commands, so the cost is once per turn rather than once per decision. AJ4 records
+            the sweep's wall clock on both sides of the change — not AJ2, whose dials ship at zero and so never build the
+            map at all.</p>
         </div>
       </div>
 

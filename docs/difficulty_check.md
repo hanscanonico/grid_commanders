@@ -56,7 +56,7 @@ which compares a full AI turn command for command.
   so scoring a hypothetical move is a pure read — nothing is moved to ask. Cached once per turn, keyed on the day and the enemy set, so a
   new day always rebuilds it and a counter-kill mid-turn does too.
 
-  The map is read by two weights, because the two paths that read it do not score
+  The map is read by three weights, because the paths that read it do not score
   in the same unit:
 
   - **`threat_aversion` — attacks, in value.** An attack's score is
@@ -80,6 +80,17 @@ which compares a full AI turn command for command.
     it is inert where nothing is hurt yet.
     `data/ai/hard.tres` ships `2.0` and `easy.tres` `3.0`; §4 measures those
     values in the current ladder.
+  - **`withdraw_weight` — withdrawals, in value.** Stepping out of a firing ring
+    is a scored candidate rather than the advance fallback, worth
+    `withdraw_weight × unit cost × damage avoided / 100` — the same currency an
+    attack scores in, so a wounded unit's survival can outbid its own marginal
+    shot. It belongs to the AI Judgement plan, **not** to S1–S3: it is a planner
+    capability every tier carries at `0.0`, never a Difficult-tier smart.
+
+  These three dials read one map, so a single enemy can be priced by all three at
+  once — its shot discounting an attack, its reach costing an advance tiles, and
+  its damage buying a withdrawal. Tune them together and never one at a time
+  (the AI Judgement plan's R3).
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
   could still add damage to. Ships at `0.0`: the superseded probes in §6 found
   the bias harmful in both shapes tried, while replanning after every command

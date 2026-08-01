@@ -33,7 +33,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 @export var capture_progress_bonus: float = 45.0
 ## Charged per step of movement, so all else equal the closer option wins.
 @export var step_cost_penalty: float = 4.0
-## At or below this HP a unit heads for a friendly property to repair.
+## At or below this HP a unit's *advance goal* becomes a friendly property that
+## repairs it. Only the fallback, so a unit with anything worth doing never
+## reaches it — leaving a shot to save itself is withdraw_weight's job.
 @export var retreat_hp: int = 45
 ## Scores below this are not worth acting on; the unit advances instead.
 @export var min_useful_score: float = 40.0
@@ -164,6 +166,21 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## Denominated in VALUE, like _attack_score and like _consider_captures, which is
 ## what lets the three compete in one UnitPlan without a conversion.
 @export var defend_weight: float = 0.0
+## What stepping out of the enemy's reach is worth, as a fraction of the cost of
+## the unit doing the stepping, per point of HP the incoming fire would have
+## taken. 0 skips it entirely; >0 builds the per-turn threat map on its own, with
+## or without threat_aversion.
+##
+## Denominated in VALUE — cost x damage avoided — which is the whole reason it is
+## a third dial rather than a wider advance_threat_tiles: that one is counted in
+## tiles, so it cannot say "this shot costs me sixteen thousand funds". Here an
+## md tank facing certain death outbids a marginal trade and an infantry facing
+## the same shot does not.
+##
+## Reads the same ThreatMap threat_aversion and advance_threat_tiles read. Three
+## dials over one map can price a single enemy three times, so tune them together
+## and never alone — see docs/difficulty_check.md.
+@export var withdraw_weight: float = 0.0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps

@@ -186,7 +186,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and was regenerated and read — `docs/commander_balance.md` records the measurement.
 - `ai-judgement-plan.html` — the three things the planner cannot see: what the enemy is
   *achieving*, what it will *do next turn*, and what our own other units are doing. Milestones
-  AJ1–AJ4; **AJ1 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
+  AJ1–AJ4; **AJ1 and AJ2 shipped**. It is scoped against `balance-retune-plan.html` and the boundary is
   the point: **this plan owns planner *capabilities*, BL2 owns Normal's *numbers*** (D2), so no
   AJ milestone edits a shipped value in `data/ai/` and AJ4's deliverable is a probe band in
   `docs/difficulty_check.md`, never a tier value. D1: **every dial ships at `0.0` and `0.0` skips
@@ -207,6 +207,22 @@ that must survive any change; the full rationale, milestones and risk registers 
   (`_besieged_home_hqs`, the plan's R2): a city is a setback defended by whoever already had a
   shot, an HQ is the match, and a defence goal any unit may adopt for any property empties the
   front the moment one infantry steps on a city.
+  AJ2's one decision: **withdrawal is a scored candidate, not the fallback, and it is priced in
+  value** (D4). `_consider_withdraw` sits in `_best_unit_plan` beside `_consider_attacks` /
+  `_consider_captures` / `_consider_dive` — `_consider_dive` is the precedent, a non-attack action
+  that already outbids a shot when the board says so — and it is called **last**, so a withdrawal
+  that merely ties with a shot loses to it. `retreat_hp` never reached this case and could not:
+  it steers the advance *fallback*, which a unit holding any half-decent shot never reaches, which
+  is why a wounded tank took the shot and died. The score is
+  `withdraw_weight × cost × damage_avoided / 100` — the currency `_attack_score` is already in, and
+  the whole reason this is a third dial rather than a wider `advance_threat_tiles` (that one counts
+  in *tiles* and so cannot say "this shot costs me sixteen thousand funds"). The refuge is the
+  reachable cell of least `ThreatMap.incoming_damage`, then ground that repairs us, then the
+  shortest walk — three keys in that order, and **safety outranks repair**, so a workshop inside a
+  firing ring is not a refuge; standing still enters the comparison at cost zero, so a merely-equal
+  cell never pulls a unit off its own square. Three dials now read one `ThreatMap`
+  (`threat_aversion`, `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
+  times — the plan's R3 — so **tune them together and never alone**.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

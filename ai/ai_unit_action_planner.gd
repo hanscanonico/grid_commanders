@@ -3,7 +3,7 @@ extends RefCounted
 ## Chooses the highest-scored action from the current team's ready units.
 ##
 ## Greedy, deterministic, and deliberately coarse: combat, capture, diving,
-## retreat, and fallback movement stay together because they compete for one
+## withdrawal, and fallback movement stay together because they compete for one
 ## UnitPlan score. AIController remains the public façade.
 
 
@@ -36,6 +36,9 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> UnitPlan:
 	_consider_attacks(context, unit, reachable, plan)
 	_consider_captures(context.state, unit, reachable, plan)
 	_consider_dive(context, unit, plan)
+	# Last on purpose: every comparison here is strict, so a withdrawal that only
+	# ties with a shot loses to it. Running away has to be strictly better.
+	_consider_withdraw(context, unit, reachable, plan)
 	if plan.score < profile.min_useful_score:
 		plan.command = _advance_command(context, unit, reachable)
 		plan.score = profile.advance_score
@@ -210,6 +213,74 @@ func _consider_captures(
 		if score > plan.score:
 			plan.score = score
 			plan.command = CaptureCommand.new(unit, reachable.path_to(cell))
+
+
+## Whether stepping out of what the enemy can reach beats everything else this
+## unit could do this turn.
+##
+## Deliberately a *candidate* rather than the fallback retreat_hp steers. Retreat
+## only ever reached a unit with nothing better to do — it lives past the
+## min_useful_score gate — so a wounded tank holding any half-decent shot took
+## the shot and died. Here survival competes for the same UnitPlan score the shot
+## does, which is the only place it can win.
+func _consider_withdraw(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: UnitPlan
+) -> void:
+	if profile.withdraw_weight <= 0.0:
+		return
+	var state := context.state
+	var threat := context.threat_map()
+	var staying := threat.incoming_damage(state, unit, unit.cell)
+	if staying <= 0:
+		return  # nothing is aiming at us, so there is nothing to buy
+	var refits := _repair_cells(context, unit)
+	var best_cell := unit.cell
+	var best_incoming := staying
+	var best_repairs := refits.has(unit.cell)
+	var best_cost := 0
+	for cell in reachable.cells():
+		if not reachable.can_stop_at(cell):
+			continue
+		var incoming := threat.incoming_damage(state, unit, cell)
+		var repairs := refits.has(cell)
+		var cost: int = reachable.costs[cell]
+		if _better_refuge(incoming, repairs, cost, best_incoming, best_repairs, best_cost):
+			best_cell = cell
+			best_incoming = incoming
+			best_repairs = repairs
+			best_cost = cost
+	var avoided := staying - best_incoming
+	if avoided <= 0:
+		return  # nowhere we can reach is safer than standing still
+	var score := profile.withdraw_weight * float(unit.type.cost) * float(avoided) / 100.0
+	if score > plan.score:
+		plan.score = score
+		plan.command = MoveCommand.new(unit, reachable.path_to(best_cell))
+
+
+## Safety first, then ground that puts the unit back together, then the shortest
+## walk. Three keys in priority order, which is why this is a function rather
+## than a condition inside the loop. Standing still enters the comparison at cost
+## zero, so a cell that is merely as safe never pulls a unit off its own square.
+static func _better_refuge(
+	incoming: int, repairs: bool, cost: int, best_incoming: int, best_repairs: bool, best_cost: int
+) -> bool:
+	if incoming != best_incoming:
+		return incoming < best_incoming
+	if repairs != best_repairs:
+		return repairs
+	return cost < best_cost
+
+
+## Our own properties that would repair this unit, empty while it is unhurt: a
+## healthy unit has no reason to prefer a workshop to any other safe cell.
+## Infrastructure is `owner == unit.team` and never `allied` (four-players D2),
+## which is the question _servicing_properties already asks.
+func _repair_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
+	var none: Array[Vector2i] = []
+	if unit.hp >= 100:
+		return none
+	return _servicing_properties(context, unit)
 
 
 ## A submarine's one decision: whether to be under the water.
