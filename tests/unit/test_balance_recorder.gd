@@ -74,7 +74,8 @@ func test_a_kill_is_the_attacker_s_and_a_counter_death_is_its_loss() -> void:
 	var recorder := _recorder(state)
 	_apply(recorder, state, AttackCommand.new(tank, _path([Vector2i(0, 0)]), Vector2i(1, 0)))
 	_apply(recorder, state, AttackCommand.new(mech, _path([Vector2i(2, 0)]), Vector2i(3, 0)))
-	var row := _close(recorder, state)
+	recorder.end_match(state)
+	var row: Dictionary = recorder.rows()[recorder.rows().size() - 1]
 	assert_eq(row["team"], 1)
 	assert_eq(row["killed"], "infantry", "the enemy the tank shot down")
 	assert_eq(row["lost"], "mech", "counter-fire kills our own, on our own turn")
@@ -210,6 +211,24 @@ func test_repeated_builds_of_one_type_are_tallied_with_a_count() -> void:
 	var row := _close(recorder, state)
 	assert_eq(row["built"], "infantry x2", "the same type twice is one entry with a count")
 	assert_eq(row["built_value"], infantry_type.cost * 2)
+
+
+func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
+	state.set_commander(1, CommanderDB.load_default().by_id(&"dane_ferrow"))
+	state.units[1].hp = 10
+	state.funds[2] = 5000
+	var recorder := _recorder(state)
+	_apply(
+		recorder,
+		state,
+		AttackCommand.new(state.units[0], _path([Vector2i.ZERO]), Vector2i(1, 0))
+	)
+	recorder.end_match(state)
+	var row: Dictionary = recorder.rows()[recorder.rows().size() - 1]
+	assert_eq(row["plunder"], 1600)
+	assert_eq(row["funds_start"] + row["plunder"] - row["spent"], row["funds_end"])
+	assert_eq(recorder.reconcile(state, {1: 1, 2: 1}), "")
 
 
 func test_only_a_completed_capture_counts() -> void:

@@ -69,6 +69,7 @@ func test_neutral_hooks_return_the_pre_commander_rules() -> void:
 	assert_eq(co.supply_range(state, tank), 1)
 	assert_eq(co.repair_cost_pct(state, tank), 100)
 	assert_eq(co.build_cost_pct(state, 1, tank.type), 100)
+	assert_eq(co.kill_bounty_pct(state, 1, infantry), 0)
 	var plains := terrain_db.by_symbol(".")
 	assert_eq(co.terrain_cost(state, tank, plains, 1), 1, "neutral passes the base cost through")
 

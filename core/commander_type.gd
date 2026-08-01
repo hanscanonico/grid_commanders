@@ -207,6 +207,13 @@ func build_cost_pct(_state: GameState, _team: int, _unit_type: UnitType) -> int:
 	return 100
 
 
+## Percentage of a destroyed unit's base value transferred from its owner to
+## this commander's army. Zero is the neutral rule; CombatResolver owns the
+## kill gate and the victim-funds clamp.
+func kill_bounty_pct(_state: GameState, _team: int, _victim: Unit) -> int:
+	return 0
+
+
 # --- powers ------------------------------------------------------------------
 
 

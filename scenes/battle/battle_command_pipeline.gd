@@ -33,6 +33,7 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	if receipt.rejected():
 		return receipt
 	var standing_before := game.eliminated.size()
+	var acting_funds_before := int(game.funds.get(receipt.team_before, 0))
 
 	# A command may remove any of these objects. Hold the exact instances the
 	# animator must replay before the sim mutates its collections.
@@ -72,6 +73,9 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		receipt.team_after != receipt.team_before or receipt.day_after != receipt.day_before
 	)
 	receipt.winner = game.winner
+	var bounty_delta := 0
+	if command is AttackCommand:
+		bounty_delta = int(game.funds.get(receipt.team_before, 0)) - acting_funds_before
 
 	if mover != null:
 		EventBus.unit_moved.emit(mover)
@@ -82,7 +86,9 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	receipt.watched = watched_move or watched_build
 
 	if command is AttackCommand:
-		await _present_attack(command as AttackCommand, attack_target, watched_move, animate_path)
+		await _present_attack(
+			command as AttackCommand, attack_target, watched_move, animate_path, bounty_delta
+		)
 	elif command is CaptureCommand:
 		await _present_capture(command as CaptureCommand, watched_move, animate_path)
 	elif command is JoinCommand:
@@ -140,7 +146,11 @@ func _repaint_properties(game: GameState) -> void:
 
 
 func _present_attack(
-	command: AttackCommand, target: Unit, watched: bool, animate_path: bool
+	command: AttackCommand,
+	target: Unit,
+	watched: bool,
+	animate_path: bool,
+	bounty_delta: int
 ) -> void:
 	if command.ambushed:
 		await _settle_move(command, command.unit, watched)
@@ -148,6 +158,12 @@ func _present_attack(
 	if animate_path and (watched or _battle.perspective.can_see_cell(command.target_cell)):
 		_battle.set_cursor_cell(command.target_cell)
 	await _battle.animator.animate_combat(command.result, command.unit, target)
+	if bounty_delta != 0 and (watched or _battle.perspective.can_see_cell(command.target_cell)):
+		var sign := "+" if bounty_delta > 0 else "-"
+		_battle.action_feedback.show_reason(
+			"Bounty %s%d" % [sign, absi(bounty_delta)],
+			_battle.view.screen_pos_for_cell(command.target_cell)
+		)
 
 
 func _present_capture(command: CaptureCommand, watched: bool, animate_path: bool) -> void:

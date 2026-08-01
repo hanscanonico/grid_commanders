@@ -62,6 +62,7 @@ const TIMELINE_COLUMNS: Array[String] = [
 	"tier",
 	"funds_start",
 	"income",
+	"plunder",
 	"spent",
 	"funds_end",
 	"built",
@@ -98,6 +99,9 @@ class TurnRow:
 	var tier := ""
 	var funds_start := 0
 	var income := 0
+	## Signed funds moved by kill bounties while this side acted: positive for a
+	## kill, negative when its attacker died to a counter.
+	var plunder := 0
 	var spent := 0
 	var built: Dictionary = {}  # unit id -> count
 	var built_value := 0
@@ -138,6 +142,7 @@ var _incoming_team := 0
 var _incoming_funds := 0
 var _capture_cell := Vector2i.ZERO
 var _capture_owner_before := 0
+var _command_funds_before := 0
 
 
 ## `log_commands` off keeps the per-command JSONL out of memory entirely, which
@@ -168,6 +173,7 @@ func begin_match(match_id: String, state: GameState, tiers: Dictionary) -> void:
 func before_apply(state: GameState, command: Command, planning_usec: int = 0) -> void:
 	if _turn == null:
 		return
+	_command_funds_before = int(state.funds.get(_turn.team, 0))
 	_turn.commands += 1
 	_turn.planning_usec += planning_usec
 	if command is CaptureCommand:
@@ -184,6 +190,8 @@ func before_apply(state: GameState, command: Command, planning_usec: int = 0) ->
 
 
 func after_apply(state: GameState, command: Command) -> void:
+	if command is AttackCommand:
+		_record_plunder(state)
 	var removed := _removed_units(state)
 	if command is EndTurnCommand:
 		# The incoming side's tick has now run inside apply(): income, paid
@@ -273,10 +281,17 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 	var forfeited: Dictionary = {}
 	for row in _rows.slice(_match_row_start):
 		var team: int = row["team"]
-		if row["funds_start"] - row["spent"] != row["funds_end"]:
+		if row["funds_start"] + row["plunder"] - row["spent"] != row["funds_end"]:
 			return (
-				"day %d team %d: funds_start %d - spent %d != funds_end %d"
-				% [row["day"], team, row["funds_start"], row["spent"], row["funds_end"]]
+				"day %d team %d: funds_start %d + plunder %d - spent %d != funds_end %d"
+				% [
+					row["day"],
+					team,
+					row["funds_start"],
+					row["plunder"],
+					row["spent"],
+					row["funds_end"],
+				]
 			)
 		built[team] = int(built.get(team, 0)) + _count_of(row["built"])
 		lost[team] = int(lost.get(team, 0)) + _count_of(row["lost"])
@@ -350,6 +365,7 @@ func _close_turn(state: GameState) -> void:
 		"tier": _turn.tier,
 		"funds_start": _turn.funds_start,
 		"income": _turn.income,
+		"plunder": _turn.plunder,
 		"spent": _turn.spent,
 		"funds_end": int(state.funds.get(team, 0)),
 		"built": _tally_text(_turn.built),
@@ -454,6 +470,15 @@ func _record_build(build: BuildCommand) -> void:
 	_turn.spent += build.paid_cost
 	_turn.built_value += build.unit_type.cost
 	_tally(_turn.built, build.unit_type.id)
+
+
+## The acting side is always one participant in its own attack. A direct kill
+## raises its purse; dying to the counter lowers it. Reading the signed delta
+## keeps the recorder an observer and makes the row's funds equation close.
+func _record_plunder(state: GameState) -> void:
+	if _turn == null:
+		return
+	_turn.plunder += int(state.funds.get(_turn.team, 0)) - _command_funds_before
 
 
 ## A capture that *completed* this turn — ownership actually changed hands.
