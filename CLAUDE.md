@@ -311,8 +311,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   and nothing since has re-measured them.
 - `ai-economy-plan.html` — the planner reads the map as an *economy* rather than as the fight in
   front of it: enough infantry to race for the board, capture goals that fan out across it, and a
-  price on the ground that builds tanks. Milestones AE1–AE4, **AE1 and AE2 shipped**. It is scoped against
-  `ai-judgement-plan.html` (capabilities) and the balance retune (numbers) and inherits both
+  price on the ground that builds tanks. Milestones AE1–AE4, **AE1 and AE2 shipped**. It is scoped
+  against `ai-judgement-plan.html` (capabilities) and the balance retune (numbers) and inherits both
   boundaries verbatim. D1: **every dial ships inert and inert skips the code** — the merge bar for
   every milestone is a fixed-seed byte-diff of *both* balance reports, `make commander-balance` and
   `make difficulty-check`, with no accepted departure, and `reports/` is gitignored so both sides
@@ -836,9 +836,9 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
 - **`AIController` is a façade, not a planning bucket.** It asks for Command Power first, then
   delegates to exactly two coarse collaborators: `AIUnitActionPlanner` and
   `AIProductionPlanner`. `AIPlanningContext` is the one owner of scan-ordered per-decision facts
-  (friendlies, visible enemies, properties, unit types, goals and the production roster) and the
-  threat map cache shared across decisions in a turn. Preserve strict comparator order and profile
-  reads when moving AI code; never tune a `.tres` in an extraction.
+  (friendlies, visible enemies, properties, unit types, goals, capture claims and the production
+  roster) and the threat map cache shared across decisions in a turn. Preserve strict comparator
+  order and profile reads when moving AI code; never tune a `.tres` in an extraction.
 - **Doctrine hooks take an `Engagement`, not two `Unit`s.** `core/rules/engagement.gd` carries the
   effective values a shot is resolved with: the cell it is *actually* fired from and the HP the
   formula should use — which is what keeps the damage preview and the resolved attack on
