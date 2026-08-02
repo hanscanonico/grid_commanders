@@ -473,7 +473,7 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 			if not state.allied(state.owner_at(cell), unit.team):
 				capturable.append(cell)
 		if not capturable.is_empty():
-			goal.cell = _nearest(unit.cell, capturable)
+			goal.cell = _claimed_property(context, unit, capturable)
 			context.goals[unit] = goal
 			return goal
 	var enemy_cells: Array[Vector2i] = []
@@ -485,6 +485,66 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 		goal.keeps_formation = true
 	context.goals[unit] = goal
 	return goal
+
+
+## Which of `cells` this unit walks to once capture goals are claimed, so that
+## three infantry near three properties take three of them instead of following
+## each other onto the nearest (AI Economy D3).
+##
+## The claim is an assignment, re-derived from the board on every ask and stored
+## nowhere: the closest unit-property pair is settled first, then the next, and a
+## property stops accepting once `capture_claim_depth` units hold it. That is what
+## makes "the nearest unit still takes the nearest property; the second one is
+## pushed to the next" true — D3's own sentence, and the arithmetic it offered for
+## it (drop a property when that many rivals are closer to it) cannot produce it:
+## a unit at the front of a column is closest to every property at once, so the
+## units behind it keep nothing and converge exactly as they do today. The
+## decision D3 locks — derived rather than stored, ties by scan order — is
+## untouched; only its formula is superseded.
+##
+## Every tie is settled by scan order, over the whole triple, because two units
+## exactly equidistant from one property have to be separated by something: a tie
+## broken any other way lets them swap goals between replans so both walk and
+## neither arrives. A unit left unplaced — the board holds more capturers than
+## `capture_claim_depth` places — walks to the nearest property, which is the
+## shipped answer and is why claiming can never send a capturer at the enemy
+## instead.
+func _claimed_property(context: AIPlanningContext, unit: Unit, cells: Array[Vector2i]) -> Vector2i:
+	if profile.capture_claim_depth <= 0:
+		return _nearest(unit.cell, cells)
+	var seekers: Array[Unit] = []
+	for other in context.friendly_units:
+		if other.type.can_capture and other.carrier == null:
+			seekers.append(other)
+	var bids: Array = []
+	for u in seekers.size():
+		for c in cells.size():
+			bids.append([_steps(seekers[u].cell, cells[c]), u, c])
+	bids.sort_custom(_by_distance_then_scan_order)
+	var held: Dictionary = {}
+	var placed: Dictionary = {}
+	for bid in bids:
+		var u: int = bid[1]
+		var c: int = bid[2]
+		if placed.has(u) or int(held.get(c, 0)) >= profile.capture_claim_depth:
+			continue
+		placed[u] = c
+		held[c] = int(held.get(c, 0)) + 1
+	var mine := seekers.find(unit)
+	if not placed.has(mine):
+		return _nearest(unit.cell, cells)
+	return cells[placed[mine]]
+
+
+## Shortest walk first, every tie broken by scan order — of the unit, then of the
+## property. A total order, so the assignment cannot depend on the sort being
+## stable and replans off one board always agree.
+static func _by_distance_then_scan_order(a: Array, b: Array) -> bool:
+	if a[0] != b[0]:
+		return a[0] < b[0]
+	if a[1] != b[1]:
+		return a[1] < b[1]
+	return a[2] < b[2]
 
 
 ## Home HQs of our own side with a capture-capable enemy standing on them, in
@@ -529,10 +589,17 @@ func _servicing_properties(context: AIPlanningContext, unit: Unit) -> Array[Vect
 
 static func _nearest(from: Vector2i, cells: Array[Vector2i]) -> Vector2i:
 	var best := cells[0]
-	var best_dist := absi(best.x - from.x) + absi(best.y - from.y)
+	var best_dist := _steps(from, best)
 	for cell in cells:
-		var dist := absi(cell.x - from.x) + absi(cell.y - from.y)
+		var dist := _steps(from, cell)
 		if dist < best_dist:
 			best_dist = dist
 			best = cell
 	return best
+
+
+## Manhattan tiles between two cells — the goal-side measure of "how far", used
+## by the nearest-goal walk and by the claim that filters its candidates, so the
+## two cannot disagree about which unit is closer.
+static func _steps(from: Vector2i, to: Vector2i) -> int:
+	return absi(to.x - from.x) + absi(to.y - from.y)

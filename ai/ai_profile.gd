@@ -230,6 +230,23 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## roster is already urgent, so a property-rich board spends and a property-poor
 ## one banks, out of the same branch.
 @export var capture_units_per_property: float = 0.0
+## How many capture units may claim one property as their goal. 0 turns claiming
+## off and leaves the shipped nearest-property walk untouched; 1 is classic
+## claiming, the nearest unit takes it and the next one is pushed to the next
+## property; higher values let that many units travel to one contested property
+## together.
+##
+## Denominated in UNITS, not tiles or value: it is a count of places rather than a
+## price, because a claim is about who goes where and never about what the ground
+## is worth. Derived from the board every time a goal is asked for and never
+## stored (AI Economy D3) — the goal cache is one command deep by design, and a
+## claim that outlived a command would have to be invalidated against a board
+## that moves after every one.
+##
+## Spreading is untaxed by cohesion_tiles, which exempts every errand, so this
+## number is the only thing limiting how thin a line the capture units form. Probe
+## it against cohesion_tiles as a pair, never alone — see docs/difficulty_check.md.
+@export var capture_claim_depth: int = 0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps

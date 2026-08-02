@@ -311,7 +311,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and nothing since has re-measured them.
 - `ai-economy-plan.html` — the planner reads the map as an *economy* rather than as the fight in
   front of it: enough infantry to race for the board, capture goals that fan out across it, and a
-  price on the ground that builds tanks. Milestones AE1–AE4, **AE1 shipped**. It is scoped against
+  price on the ground that builds tanks. Milestones AE1–AE4, **AE1 and AE2 shipped**. It is scoped against
   `ai-judgement-plan.html` (capabilities) and the balance retune (numbers) and inherits both
   boundaries verbatim. D1: **every dial ships inert and inert skips the code** — the merge bar for
   every milestone is a fixed-seed byte-diff of *both* balance reports, `make commander-balance` and
@@ -347,6 +347,28 @@ that must survive any change; the full rationale, milestones and risk registers 
   everywhere — is guarded by a property-*poor* fixture in `tests/unit/test_ai_economy.gd`, which is
   the milestone's real bar: D6's board-dependence is a claim about two boards and only one of them
   is the bug.
+  AE2's decision is D3: **a capture goal is claimed by derivation, never by stored state.** Every
+  capture unit used to walk to its own nearest property with nothing marking one as already
+  somebody's, so units standing near each other took the same tile together — and on a board dense
+  in properties there is always a nearer tile than the far corner, so the far corner was never
+  anybody's goal at any point in the match. `capture_claim_depth` is how many units may claim one
+  property; `AIUnitActionPlanner._claimed_property` is the one place that answers, inside the
+  capture clause of `_advance_goal`, and at 0 it is the shipped `_nearest` call untouched.
+  **D3's arithmetic is superseded and its decision is not.** The formula it offered — drop a
+  property when that many rivals are strictly closer to it — cannot produce the outcome D3 itself
+  states ("the nearest unit still takes the nearest property; the second one is pushed to the
+  next"), because a unit at the front of a column is closest to *every* property at once, so the
+  units behind it keep nothing and converge exactly as before. What ships instead is an
+  **assignment**: the closest unit-property pair settles first, then the next, and a property stops
+  accepting once `capture_claim_depth` units hold it. It is re-derived from the board on every ask
+  and stored nowhere, which is the whole of what D3 locks — the rejected claims registry stays
+  rejected, and `AIPlanningContext.begin` still clears `goals` every command. **Every tie is
+  settled by scan order** over the whole (distance, unit, property) triple, so the sort needs no
+  stability and replans off one board always agree; R6's pin is `test_replay_fidelity.gd` plus the
+  reversed-pair fixture in `tests/unit/test_ai_economy.gd`. A unit left unplaced — more capturers
+  than `capture_claim_depth` places — falls back to the nearest property, so claiming can never
+  send a capturer at the enemy instead. `MovementResolver` is untouched: this filters the candidate
+  list the shipped walk already collects and is no new fill, path or geometry.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
