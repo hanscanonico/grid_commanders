@@ -60,7 +60,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 	&"artillery",
 	&"mech",
 ]
-## Infantry are bought until the team has this many capture-capable units.
+## The floor under the capture roster: infantry are bought until the team has at
+## least this many capture-capable units, however little there is left to take.
+## What raises it above the floor is capture_units_per_property.
 @export var capture_unit_target: int = 3
 ## What to buy when the enemy is flying and we cannot reach them, best first.
 ## Nothing in build_priority is guaranteed to answer air, so this is asked ahead
@@ -208,6 +210,26 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## also reset this one. It was probed together with cohesion_tiles and never
 ## apart, so move the pair together — see docs/difficulty_check.md.
 @export var cohesion_radius: int = 2
+
+# --- Economy capabilities -----------------------------------------------------
+#
+# The AI Economy plan's dials: a model of the map as an economy rather than as a
+# fight. Same contract as the two blocks above — 0 skips the code, and the
+# defaults here track data/ai/default.tres. Which tier ships which value is
+# docs/difficulty_check.md's to say.
+
+## Capture-capable units the team wants per property its side does not hold. The
+## target is max(capture_unit_target, ceil(this x unowned)), so this raises the
+## floor rather than replacing it, and 0 leaves the floor as the whole answer
+## (AI Economy D5).
+##
+## It counts what is left to take rather than the size of the board, which is
+## what makes it self-damping: the target falls as the map fills, and an army
+## that has taken everything wants no more infantry. That is also how the board
+## reaches the banking rule without the banking rule changing (D6) — a short
+## roster is already urgent, so a property-rich board spends and a property-poor
+## one banks, out of the same branch.
+@export var capture_units_per_property: float = 0.0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps

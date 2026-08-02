@@ -309,6 +309,42 @@ that must survive any change; the full rationale, milestones and risk registers 
   that half stands; but §4's turn-time table was measured before the dials went live and Normal
   now runs the cohesion term on every advance, so it is no longer a reading of the shipped tiers
   and nothing since has re-measured them.
+- `ai-economy-plan.html` — the planner reads the map as an *economy* rather than as the fight in
+  front of it: enough infantry to race for the board, capture goals that fan out across it, and a
+  price on the ground that builds tanks. Milestones AE1–AE4, **AE1 shipped**. It is scoped against
+  `ai-judgement-plan.html` (capabilities) and the balance retune (numbers) and inherits both
+  boundaries verbatim. D1: **every dial ships inert and inert skips the code** — the merge bar for
+  every milestone is a fixed-seed byte-diff of *both* balance reports, `make commander-balance` and
+  `make difficulty-check`, with no accepted departure, and `reports/` is gitignored so both sides
+  are generated. D2: **this plan owns planner capabilities, BL2 owns the tier numbers** — no AE
+  milestone edits a shipped value in `data/ai/`, and AE4's deliverable is a probe band in
+  `docs/difficulty_check.md`, never a tier value. D7: nothing under `core/` is touched and no
+  telemetry is added — every read goes through an authority that already exists
+  (`MapData.property_cells`, `GameState.properties_of` / `allied` / `home_hq`,
+  `TerrainType.builds`, `UnitPricing.cost_for`).
+  AE1's decision is D5: **the capture roster scales with what is left to take, floored at today's
+  number.** `AIProfile.capture_unit_target` is now the *floor* rather than the answer and
+  `capture_units_per_property` is what raises it — the target is
+  `max(capture_unit_target, ceil(rate × unowned))`, where `unowned` counts property cells this
+  team's **side** does not hold, asked of `GameState.allied` exactly as `_advance_goal` already
+  reads it. That flat target happened to equal the roster every shipped board deals, so the urgent
+  build tier was empty before the first command of every match and the AI opened by banking on a
+  board covered in neutral ground. It counts what is *left* rather than the size of the board,
+  which is what makes it self-damping: the target falls as the map fills, so an army that has taken
+  everything wants no more infantry and the priority list resumes with nothing to switch off.
+  `AIProductionPlanner._capture_unit_target` is the one place that asks, one scan per build
+  decision; `AIPlanningContext` gained nothing, because this is not a per-decision fact the unit
+  planner shares.
+  D6 rides on D5 and is why no banking code moved: **`_worth_waiting_for` already refuses to bank
+  whenever something urgent is wanted**, and a short capture roster is urgent — so the same branch
+  now banks on a small board and spends on a big one, and a property count is the board asking
+  whether there is a race on without anything in `ai/` having an opinion about map size.
+  `save_up_turns` is deliberately left alone: its comment carries the first-side-bias measurement
+  (+5.6 pp at no banking, +14.9 at two turns, +20.2 at three) that a retune would trade away.
+  The plan's R2 — a rate that wins the property race by deleting the expensive half of the roster
+  everywhere — is guarded by a property-*poor* fixture in `tests/unit/test_ai_economy.gd`, which is
+  the milestone's real bar: D6's board-dependence is a claim about two boards and only one of them
+  is the bug.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

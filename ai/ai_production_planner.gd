@@ -70,7 +70,7 @@ func plan(context: AIPlanningContext) -> Command:
 	var wants := BuildWants.from_facts(
 		context.friendly_units,
 		_outgunned_in_the_air(context),
-		profile.capture_unit_target,
+		_capture_unit_target(context),
 		_reactive_order(context),
 		_doctrine_bias(context)
 	)
@@ -96,6 +96,24 @@ func plan(context: AIPlanningContext) -> Command:
 	if _worth_waiting_for(context, facilities, wants, funds, best_rank):
 		return null
 	return BuildCommand.new(context.team, best_choice, best_cell)
+
+
+## How many capture-capable units the team wants: the profile's floor, raised by
+## what is still out there to take (AI Economy D5). At rate 0 the board is never
+## scanned and the floor is the whole answer, which is the shipped planner.
+##
+## Ground an ally holds is not a target, through the same allegiance authority
+## the unit planner's capture goal already reads it with.
+func _capture_unit_target(context: AIPlanningContext) -> int:
+	if profile.capture_units_per_property <= 0.0:
+		return profile.capture_unit_target
+	var state := context.state
+	var unowned := 0
+	for cell in state.map.property_cells():
+		if not state.allied(state.owner_at(cell), context.team):
+			unowned += 1
+	var wanted := ceili(profile.capture_units_per_property * float(unowned))
+	return maxi(profile.capture_unit_target, wanted)
 
 
 ## The best unit this facility can produce for the money, or null.

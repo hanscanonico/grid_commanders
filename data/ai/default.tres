@@ -30,3 +30,4 @@ defend_weight = 2.0
 withdraw_weight = 0.0
 cohesion_tiles = 1.0
 cohesion_radius = 2
+capture_units_per_property = 0.0
