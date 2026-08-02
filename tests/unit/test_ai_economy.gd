@@ -116,6 +116,27 @@ const WOUNDED_AND_HEALTHY := (
 const WOUNDED_CELL := Vector2i(0, 6)
 const WOUNDED_HP := 30
 
+## The same two corridors, with the wounded infantry standing on the middle
+## property rather than walking toward it: whatever its HP says, that unit is
+## taking that tile, so the healthy one belongs in the far corridor.
+const CAPTURING_AND_WOUNDED := (
+	"[terrain]\n"
+	+ "...........C\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ "...........C\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ "CSSSSSSSSSSS\n"
+	+ "[owners]\n1 0 8\n"
+	+ "[units]\n1 i 0 3\n1 i 11 5\n"
+)
+
+## The middle property of `CAPTURING_AND_WOUNDED`, wounded infantry and all.
+const CAPTURING_CELL := Vector2i(11, 5)
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -338,6 +359,23 @@ func test_a_unit_an_errand_has_taken_claims_no_property() -> void:
 		_rows_after_a_day(WOUNDED_AND_HEALTHY, _claiming(1)),
 		[0, 5] as Array[int],
 		"and unwounded that same unit does claim it, pushing the other to the far corridor"
+	)
+
+
+## The errand exclusion stops at the tile itself. The wounded infantry is standing
+## on the middle property and spends its turn capturing it, so the repair clause
+## never answers for it and its claim has to hold — otherwise the healthy
+## infantry is sent at ground that is about to change hands.
+func test_a_wounded_capturer_on_its_property_keeps_the_claim() -> void:
+	assert_eq(
+		_rows_after_a_day(CAPTURING_AND_WOUNDED, _claiming(0), CAPTURING_CELL),
+		[5, 5] as Array[int],
+		"blind, the healthy infantry walks the property the wounded one is already taking"
+	)
+	assert_eq(
+		_rows_after_a_day(CAPTURING_AND_WOUNDED, _claiming(1), CAPTURING_CELL),
+		[0, 5] as Array[int],
+		"claimed, the tile being captured is held and the healthy infantry takes the far corridor"
 	)
 
 

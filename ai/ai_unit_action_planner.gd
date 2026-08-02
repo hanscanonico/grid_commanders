@@ -502,16 +502,18 @@ func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.A
 ## three infantry near three properties take three of them instead of following
 ## each other onto the nearest (AI Economy D3).
 ##
-## The claim is an assignment, re-derived from the board on every ask and stored
-## nowhere: the closest unit-property pair is settled first, then the next, and a
-## property stops accepting once `capture_claim_depth` units hold it. That is what
-## makes "the nearest unit still takes the nearest property; the second one is
-## pushed to the next" true — D3's own sentence, and the arithmetic it offered for
-## it (drop a property when that many rivals are closer to it) cannot produce it:
-## a unit at the front of a column is closest to every property at once, so the
-## units behind it keep nothing and converge exactly as they do today. The
-## decision D3 locks — derived rather than stored, ties by scan order — is
-## untouched; only its formula is superseded.
+## The claim is an assignment, settled once per command and cleared by
+## `AIPlanningContext.begin` — exactly `goals`' lifetime, so D3's rejected
+## cross-decision claims registry stays rejected. The closest unit-property pair
+## is settled first, then the next, and a property stops accepting once
+## `capture_claim_depth` units hold it. That is what makes "the nearest unit still
+## takes the nearest property; the second one is pushed to the next" true — D3's
+## own sentence, and the arithmetic it offered for it (drop a property when that
+## many rivals are closer to it) cannot produce it: a unit at the front of a
+## column is closest to every property at once, so the units behind it keep
+## nothing and converge exactly as they do today. The decision D3 locks — nothing
+## carried between commands, ties by scan order — is untouched; only its formula
+## is superseded.
 ##
 ## Every tie is settled by scan order, over the whole triple, because two units
 ## exactly equidistant from one property have to be separated by something: a tie
@@ -537,13 +539,15 @@ func _claimed_property(context: AIPlanningContext, unit: Unit, cells: Array[Vect
 ## errand has already claimed never walks to the property it would take here, so
 ## it would leave the ground it stood on unvisited and push the unit behind it
 ## off. The asking unit is always a seeker — it passed those same clauses on the
-## way in.
+## way in — and so is one standing on a cell of `cells`, which is taking that
+## property rather than walking anywhere. A wounded capturer one tile short of a
+## property is the accepted residual: it is dropped until it stands on the tile.
 func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array[Vector2i]) -> void:
 	var seekers: Array[Unit] = []
 	for other in context.friendly_units:
 		if not other.type.can_capture or other.carrier != null:
 			continue
-		if other == unit or _errand_goal(context, other) == null:
+		if other == unit or cells.has(other.cell) or _errand_goal(context, other) == null:
 			seekers.append(other)
 	var bids: Array = []
 	for u in seekers.size():

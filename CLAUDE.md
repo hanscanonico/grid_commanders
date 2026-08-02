@@ -360,9 +360,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   next"), because a unit at the front of a column is closest to *every* property at once, so the
   units behind it keep nothing and converge exactly as before. What ships instead is an
   **assignment**: the closest unit-property pair settles first, then the next, and a property stops
-  accepting once `capture_claim_depth` units hold it. It is re-derived from the board on every ask
-  and stored nowhere, which is the whole of what D3 locks — the rejected claims registry stays
-  rejected, and `AIPlanningContext.begin` still clears `goals` every command. **Every tie is
+  accepting once `capture_claim_depth` units hold it. It is settled once per command into
+  `AIPlanningContext.capture_claims` and cleared by `begin` — exactly `goals`' lifetime, which is
+  the whole of what D3 locks: nothing about a claim survives a command, so the rejected
+  cross-decision claims registry stays rejected. **Every tie is
   settled by scan order** over the whole (distance, unit, property) triple, so the sort needs no
   stability and replans off one board always agree; R6's pin is `test_replay_fidelity.gd` plus the
   reversed-pair fixture in `tests/unit/test_ai_economy.gd`. A unit left unplaced — more capturers
