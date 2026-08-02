@@ -251,6 +251,25 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-02 — Cass Orlov loses her −10 % defence.** The standing low outlier,
+  named in every measurement since wave 2, tuned by deleting the penalty half of
+  her doctrine: `defense_pct` and the `defense_bonus` override are gone, so her
+  army defends like anyone else's and she is a finisher who pays nothing for it.
+  Evidence: paired full batches (6,480 matches each) regenerated on both sides at
+  base commit `b7b6168`, since `reports/` is gitignored.
+
+  | | before | after |
+  |---|---:|---:|
+  | Cass Orlov | 38.9 % WARN | **51.1 % ok** |
+  | Win-rate spread | 27.1 – 67.1 % (40.0 pp, 6 WARN) | 26.1 – 66.5 % (40.4 pp, 5 WARN) |
+  | First-side bias | +38.2 pp | +39.0 pp |
+  | Rejected commands / cap stalls | 0 / 0 | 0 / 0 |
+
+  No other name moved up, and none moved down by more than 1.5 pp (Mara Voss
+  0.0, Cassian Rook −1.5) — one commander got stronger, so the field it is
+  measured against got fractionally weaker. The remaining WARN names are
+  unchanged and still the review set: Iris Colt low (the written exception
+  above), Gideon Holt, Tomas Reed, Viktor Draeg and Konrad Vale high.
 - **2026-07-31 — the doctrine-advice exports ship, two of them tempered by
   measurement** (commander-doctrine-ai plan, CA4). Every advising general's
   `.tres` gains its advisory numbers; `rhea_sol` `indirect_build_bias` measured

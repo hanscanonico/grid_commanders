@@ -183,16 +183,17 @@ func test_she_hits_nearly_dead_units_harder() -> void:
 	)
 
 
-func test_her_own_units_are_softer() -> void:
+## The finisher's bonus costs her nothing: her army defends like anyone else's.
+func test_her_own_units_defend_normally() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0", &"cass_orlov")
-	# Tank MG into her Infantry: 75 * (200 - 90)/100 * 0.9 = 74.25 -> 74.
+	# Tank MG into her Infantry: 75 * (200 - 100)/100 * 0.9 = 67.5 -> 68.
 	assert_eq(
 		(
 			CombatResolver
 			. forecast(state, state.units[1], Vector2i(1, 0), state.units[0])
 			. attack_damage
 		),
-		74
+		68
 	)
 
 

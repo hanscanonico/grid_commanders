@@ -1,15 +1,13 @@
 class_name CassOrlov
 extends CommanderType
-## Iron Dominion. A finisher: she is paid to close out wounded units and paid
-## for it in her own durability, so her army trades well and holds badly. No
-## Escape widens the definition of "wounded" from nearly-dead to merely hurt,
-## which is what turns a good turn into a rout.
+## Iron Dominion. A finisher: she is paid to close out wounded units, so her
+## army trades best against a hurt one. No Escape widens the definition of
+## "wounded" from nearly-dead to merely hurt, which is what turns a good turn
+## into a rout.
 
 ## Enemies at or below this displayed HP are worth the passive bonus.
 @export var finish_hp: int = 5
 @export var finish_attack_pct: int = 15
-## Negative on purpose: what the bonus above costs her.
-@export var defense_pct: int = -10
 ## No Escape counts anything short of full health as damaged.
 @export var no_escape_hp: int = 9
 @export var no_escape_attack_pct: int = 30
@@ -24,10 +22,6 @@ func attack_bonus(state: GameState, fight: Engagement) -> int:
 	if _is_active(state, fight.attacker.team) and fight.defender_hp <= no_escape_hp:
 		bonus += no_escape_attack_pct
 	return bonus
-
-
-func defense_bonus(_state: GameState, _fight: Engagement) -> int:
-	return defense_pct
 
 
 func move_bonus(state: GameState, unit: Unit) -> int:
