@@ -263,7 +263,7 @@ both reports before and after:
 `turn_ms` is mean planning wall-clock and was never reproducible run to run —
 that is why `docs/difficulty_check.md` already reports it and never gates on it.
 
-The three balance fixtures moved out of that file into `maps/fixtures/`, so the
+The balance fixtures live in `maps/fixtures/` rather than in that file, so the
 Lab can name one with `--map=` and the battle scene can boot one for watch mode.
 That directory is deliberately *not* `maps/` itself: `MapCatalog.paths()` scans
 only the top level, so a fixture stays out of the menu, the map lint and the
@@ -289,8 +289,8 @@ make balance-sim SIM="--map=clash --sweep=commanders --tier=normal --seeds=8 --d
 Three of the four known outliers point the way the committed record says, and the
 two extremes are the two names it calls out. Rhea Sol does not, and that is worth
 stating rather than rounding off: **this is not the same measurement.** The
-committed record is the full commander-versus-commander matrix over three
-fixtures; this is each commander against *no commander* on one board. A doctrine
+committed record is the full commander-versus-commander matrix over every
+fixture; this is each commander against *no commander* on one board. A doctrine
 that is weak against other doctrines but fine against a neutral opponent will
 read differently here, which is exactly the case a vs-neutral sweep cannot see.
 Use `make commander-balance` for the roster-against-itself question; the Lab's

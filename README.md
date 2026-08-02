@@ -42,7 +42,7 @@ make portraits       # regenerate the commander portraits + faction emblems
 make import          # (re)import assets headless
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
-make gallery-screenshot   # render all thirteen commander cards (the G1 gate)
+make gallery-screenshot   # render all nineteen commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
@@ -337,7 +337,7 @@ The selection page is a walk through the seats that play — a seat closed in th
 you pick **P1**'s commander, confirm, then the next seated player's, and so on — the chips along
 the top preview each seat's faction name
 and colour as you browse, mirror rule included, and say **CPU** for a seat the computer plays. Four
-faction tabs and three peer portraits let you browse; one focused card shows the highlighted
+faction tabs and a peer portrait per member let you browse; one focused card shows the highlighted
 general's doctrine and Command Power in full (no hover tooltips), and a deliberate **No Commander**
 plays the plain rules.
 Mouse, keyboard, and controller all navigate it, and **Back** rewinds one seat — from the first it
@@ -487,7 +487,8 @@ mouse, keyboard, or controller throughout.
   nothing worse. That is what makes airfields and ports worth taking rather than decoration
 - Confirm on one of your empty production properties — a base, an airport or a port: the build menu
   lists what *that* facility makes, cheapest first, each row drawing the unit's artwork in your
-  team's colours beside its name and cost; rows you can't afford are greyed out. A bought unit
+  team's colours beside its name and the price *your* side pays for it — a commander whose doctrine
+  moves prices moves this menu with it; rows you can't afford are greyed out. A bought unit
   spawns exhausted and acts next turn
 - Confirm on an empty tile, or cancel with nothing selected: the map menu opens with **End Turn**,
   which hands play to the other team (the day counter advances when the rotation wraps back to the
@@ -553,13 +554,14 @@ mouse, keyboard, or controller throughout.
 ## Commanders
 
 Each side may field a general whose *doctrine* bends the rules for their whole army — attack and
-defence, movement, vision, supply, capture — and who charges toward one **Command Power** that
-bends them further for a turn.
+defence, movement, vision, supply, capture, what a unit costs to build and what a kill is worth in
+funds — and who charges toward one **Command Power** that bends them further for a turn.
 
-Twelve ship, three to each of four factions (Meridian Coalition, Iron Dominion, Aurora Compact,
-Verdant League). `data/commanders/` is the roster: one `.tres` per general, carrying their
-doctrine line, power name and description, and every balance number. Read it — or the selection
-page's card, which binds the same fields — rather than a list here, so the numbers have one home.
+Eighteen ship, spread across four factions (five each to the Meridian Coalition and the Iron
+Dominion, four each to the Aurora Compact and the Verdant League). `data/commanders/` is the
+roster: one `.tres` per general, carrying their doctrine line, power name and description, and
+every balance number. Read it — or the selection page's card, which binds the same fields —
+rather than a list here, so the numbers have one home.
 
 **Colours and names.** A side wears its commander's faction: pick Verdant League and your army is
 green and called *Verdant League* everywhere — the board, the day banner, the HUD bars, the

@@ -873,14 +873,10 @@ func _stand(type: UnitType, team: int, cell: Vector2i) -> Unit:
 
 
 ## Sets Red's commander and, optionally, fills its meter, then refreshes the HUD
-## so the bars read the state under test. Node-free like the rest of the driver:
-## it only writes sim state the presentation then reflects.
-##
-## `id` is the scenario's own default and yields to a general the launch already
-## seated: a stage that overwrote it would make `--co=` unable to reach the frames
-## that need a power — the banner, its quote and the meter — for any general but
-## the one hardcoded here. Neutral is not a seating (it is what an unnamed side
-## already holds), so the sweep, which names none, stages exactly what it did.
+## so the bars read the state under test. Node-free: it writes only sim state.
+## `id` is the scenario's default and yields to a general the launch already seated,
+## so `--co=` reaches the frames that need a power — banner, quote, meter — for any
+## general. Neutral is no seating, so the sweep, which names none, stages as before.
 func _set_red_commander(id: StringName, charged: bool) -> CommanderType:
 	var seated := _battle.game.commander_of(1)
 	var co := seated if seated.has_power() else _battle.commander_db.by_id(id)
