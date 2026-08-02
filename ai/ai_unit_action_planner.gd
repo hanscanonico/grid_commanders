@@ -445,26 +445,12 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 	if context.goals.has(unit):
 		return context.goals[unit]
 	var state := context.state
+	var errand := _errand_goal(context, unit)
+	if errand != null:
+		context.goals[unit] = errand
+		return errand
 	var goal := AIPlanningContext.AdvanceGoal.new()
 	goal.cell = unit.cell
-	if unit.running_dry(profile.refuel_margin_turns):
-		var refits := _servicing_properties(context, unit)
-		if not refits.is_empty():
-			goal.cell = _nearest(unit.cell, refits)
-			context.goals[unit] = goal
-			return goal
-	if unit.hp <= _retreat_threshold(state, unit):
-		var repairs := _servicing_properties(context, unit)
-		if not repairs.is_empty():
-			goal.cell = _nearest(unit.cell, repairs)
-			context.goals[unit] = goal
-			return goal
-	var besieged := _besieged_home_hqs(context, unit)
-	if not besieged.is_empty():
-		goal.cell = _nearest(unit.cell, besieged)
-		goal.stand_off = AttackRange.is_indirect(unit)
-		context.goals[unit] = goal
-		return goal
 	if unit.type.can_capture:
 		var capturable: Array[Vector2i] = []
 		for cell in state.map.property_cells():
@@ -485,6 +471,31 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 		goal.keeps_formation = true
 	context.goals[unit] = goal
 	return goal
+
+
+## The three goals that outrank a capture — refit when fuel-critical, repair when
+## wounded, a besieged home HQ — or null when none of them claims this unit. It
+## is the question the capture claim asks of every other capturer too, which is
+## what keeps a unit an errand has already taken from claiming ground it will
+## never walk to.
+func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
+	var goal := AIPlanningContext.AdvanceGoal.new()
+	if unit.running_dry(profile.refuel_margin_turns):
+		var refits := _servicing_properties(context, unit)
+		if not refits.is_empty():
+			goal.cell = _nearest(unit.cell, refits)
+			return goal
+	if unit.hp <= _retreat_threshold(context.state, unit):
+		var repairs := _servicing_properties(context, unit)
+		if not repairs.is_empty():
+			goal.cell = _nearest(unit.cell, repairs)
+			return goal
+	var besieged := _besieged_home_hqs(context, unit)
+	if not besieged.is_empty():
+		goal.cell = _nearest(unit.cell, besieged)
+		goal.stand_off = AttackRange.is_indirect(unit)
+		return goal
+	return null
 
 
 ## Which of `cells` this unit walks to once capture goals are claimed, so that
@@ -512,9 +523,27 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 func _claimed_property(context: AIPlanningContext, unit: Unit, cells: Array[Vector2i]) -> Vector2i:
 	if profile.capture_claim_depth <= 0:
 		return _nearest(unit.cell, cells)
+	if not context.capture_claims.has(unit):
+		_assign_capture_claims(context, unit, cells)
+	if context.capture_claims.has(unit):
+		return context.capture_claims[unit]
+	return _nearest(unit.cell, cells)
+
+
+## Settles the whole assignment at once and writes every seeker's answer into the
+## context, because one command's board gives every one of them the same answer.
+##
+## The seekers are the capture units that reach the capture clause at all: one an
+## errand has already claimed never walks to the property it would take here, so
+## it would leave the ground it stood on unvisited and push the unit behind it
+## off. The asking unit is always a seeker — it passed those same clauses on the
+## way in.
+func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array[Vector2i]) -> void:
 	var seekers: Array[Unit] = []
 	for other in context.friendly_units:
-		if other.type.can_capture and other.carrier == null:
+		if not other.type.can_capture or other.carrier != null:
+			continue
+		if other == unit or _errand_goal(context, other) == null:
 			seekers.append(other)
 	var bids: Array = []
 	for u in seekers.size():
@@ -530,10 +559,10 @@ func _claimed_property(context: AIPlanningContext, unit: Unit, cells: Array[Vect
 			continue
 		placed[u] = c
 		held[c] = int(held.get(c, 0)) + 1
-	var mine := seekers.find(unit)
-	if not placed.has(mine):
-		return _nearest(unit.cell, cells)
-	return cells[placed[mine]]
+	for u in seekers.size():
+		var seeker := seekers[u]
+		var claim := cells[placed[u]] if placed.has(u) else _nearest(seeker.cell, cells)
+		context.capture_claims[seeker] = claim
 
 
 ## Shortest walk first, every tie broken by scan order — of the unit, then of the

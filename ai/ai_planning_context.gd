@@ -33,6 +33,11 @@ var unit_types: Array[UnitType] = []
 var enemy_roster: Array = []
 ## Unit -> AdvanceGoal, populated only when that unit reaches its fallback move.
 var goals: Dictionary = {}
+## Unit -> claimed property cell, settled for every capturer at once the first
+## time one asks. Exactly `goals`' lifetime — cleared by `begin`, so it is one
+## command deep and nothing about a claim survives the board moving, which is
+## what keeps AI Economy D3's rejected claims registry rejected.
+var capture_claims: Dictionary = {}
 
 var _unit_db: UnitDB
 var _threat_map: ThreatMap = null
@@ -59,6 +64,7 @@ func begin(p_state: GameState) -> void:
 	for enemy in visible_enemies:
 		enemy_roster.append([enemy.type.cost, enemy.type.id])
 	goals.clear()
+	capture_claims.clear()
 
 
 ## The threat map for the current turn, built on first use and rebuilt whenever

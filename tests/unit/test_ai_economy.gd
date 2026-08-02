@@ -92,6 +92,30 @@ const EQUIDISTANT_BOARD := (
 const HIGH_ROAD := "1 i 0 4\n"
 const LOW_ROAD := "1 i 0 6\n"
 
+## Two corridors and a repairing city of our own at the bottom of the trunk. The
+## infantry at (0, 6) is closest to the middle property and the one at (0, 3) is
+## next, so blind the second is pushed out to the far corridor — but wound the
+## first and the repair clause takes it before it ever reaches a capture goal.
+const WOUNDED_AND_HEALTHY := (
+	"[terrain]\n"
+	+ "...........C\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ "...........C\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ "CSSSSSSSSSSS\n"
+	+ "[owners]\n1 0 8\n"
+	+ "[units]\n1 i 0 3\n1 i 0 6\n"
+)
+
+## The cell the wounded infantry of `WOUNDED_AND_HEALTHY` stands on, and the HP
+## that puts it under the shipped retreat line.
+const WOUNDED_CELL := Vector2i(0, 6)
+const WOUNDED_HP := 30
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -119,10 +143,15 @@ func _claiming(depth: int) -> AIProfile:
 ## it on, in scan order. On the corridor boards the row IS the goal: the trunk is
 ## the only passable column, so closing on a corridor's property means walking the
 ## trunk toward that corridor.
-func _rows_after_a_day(map_text: String, profile: AIProfile) -> Array[int]:
+func _rows_after_a_day(
+	map_text: String, profile: AIProfile, wounded: Vector2i = Vector2i(-1, -1)
+) -> Array[int]:
 	var map := MapData.parse(map_text, terrain_db)
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
+	var hurt := state.unit_at(wounded)
+	if hurt != null:
+		hurt.hp = WOUNDED_HP
 	var ai := AIController.new(unit_db, profile)
 	for _step in range(12):
 		var command := ai.plan_next_command(state)
@@ -285,6 +314,30 @@ func test_an_exact_tie_is_settled_by_scan_order_and_stays_settled() -> void:
 		_rows_after_a_day(low_first, _claiming(1)),
 		[5, 1] as Array[int],
 		"listed the other way round, the other unit keeps it — the tiebreak is scan order"
+	)
+
+
+## A claim is only worth making by a unit that will walk it. The infantry closest
+## to the middle property is wounded and has a repairing city of its own to go to,
+## so the repair clause answers for it long before any capture goal does — and if
+## it claimed the middle property anyway, the healthy infantry behind it would be
+## pushed out to the far corridor and the nearest property would go unvisited by
+## anybody, which is the very defect claiming exists to end.
+func test_a_unit_an_errand_has_taken_claims_no_property() -> void:
+	assert_eq(
+		_rows_after_a_day(WOUNDED_AND_HEALTHY, _claiming(0), WOUNDED_CELL),
+		[5, 8] as Array[int],
+		"blind, the healthy infantry walks the middle property and the wounded one repairs"
+	)
+	assert_eq(
+		_rows_after_a_day(WOUNDED_AND_HEALTHY, _claiming(1), WOUNDED_CELL),
+		[5, 8] as Array[int],
+		"claimed, the property nearest the wounded unit is still the healthy one's goal"
+	)
+	assert_eq(
+		_rows_after_a_day(WOUNDED_AND_HEALTHY, _claiming(1)),
+		[0, 5] as Array[int],
+		"and unwounded that same unit does claim it, pushing the other to the far corridor"
 	)
 
 
