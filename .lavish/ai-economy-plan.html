@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — AI Economy Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-amber: #e0a441;
+      --gc-blue: #3276c6;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem 1rem;
+      padding: .6rem 1.5rem;
+      background: rgba(10,33,55,.97);
+      border-bottom: 2px solid var(--gc-water-dark);
+    }
+    .gc-nav a { color: rgba(255,255,255,.72); font: 600 .8rem ui-monospace, monospace; text-decoration: none; }
+    .gc-nav a:hover, .gc-nav a:focus-visible { color: white; }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid var(--gc-amber); }
+    .gc-risk-low { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-free { color: var(--gc-grass-dark); font-weight: 700; }
+    .gc-gap { color: var(--gc-red); font-weight: 700; }
+    .gc-quote {
+      border-left: 5px solid var(--gc-water);
+      background: color-mix(in srgb, var(--gc-water) 8%, transparent);
+      font-style: italic;
+    }
+    table.gc-tight td, table.gc-tight th { vertical-align: top; }
+    .gc-chain {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: .4rem;
+    }
+    .gc-chain-step {
+      flex: 1 1 8rem;
+      padding: .6rem .7rem;
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      background: white;
+      font-size: .82rem;
+      line-height: 1.35;
+    }
+    .gc-chain-step.is-ours { background: color-mix(in srgb, var(--gc-grass) 26%, white); }
+    .gc-chain-step.is-theirs { background: color-mix(in srgb, var(--gc-road) 45%, white); }
+    .gc-chain-step b { display: block; font: 800 .78rem ui-monospace, monospace; letter-spacing: .04em; }
+    .gc-board {
+      font: 700 .72rem/1.05 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre;
+      overflow-x: auto;
+      background: color-mix(in srgb, var(--gc-water) 10%, white);
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      padding: .7rem .8rem;
+    }
+    .gc-stat {
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      background: white;
+      padding: .7rem .8rem;
+      box-shadow: 3px 3px 0 color-mix(in srgb, var(--gc-ink) 18%, transparent);
+    }
+    .gc-stat b { display: block; font: 800 1.5rem/1.1 ui-monospace, monospace; }
+    .gc-stat span { font-size: .78rem; opacity: .78; }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="gc-hero px-6 py-10 md:px-12">
+    <p class="gc-kicker mb-2 opacity-80">Grid Commanders · design of record · proposed · AE1–AE4 · 2026-08-02</p>
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight">AI Economy</h1>
+    <p class="mt-3 max-w-3xl text-base md:text-lg opacity-90">
+      A player wins a match on Difficult and cannot say what they did. They were not out-fought —
+      the computer attacked all match, and on day 12 an infantry of its was standing on their
+      headquarters. They were out-<em>earned</em>: 43 properties to 21, four idle factory turns
+      in the opening, and half the board the computer never sent a single unit toward. This plan
+      gives the planner the thing that no combat weight reaches — <em>a model of the map as an
+      economy</em>: enough infantry to race for it, goals that fan out across it, and a price on
+      the ground that builds tanks.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-outline badge-lg text-white border-white/40">Milestones AE1–AE4</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D7</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R8</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">core/ untouched</span>
+      <span class="badge badge-lg bg-white/90 text-slate-900 border-white">Every dial ships inert · BL2 switches it on</span>
+    </div>
+  </header>
+
+  <nav class="gc-nav">
+    <a href="#table">1 · At the table</a>
+    <a href="#boundary">2 · The BL2 boundary</a>
+    <a href="#decisions">3 · Decisions</a>
+    <a href="#milestones">4 · Milestones</a>
+    <a href="#risks">5 · Risks</a>
+    <a href="#scope">6 · Out of scope</a>
+  </nav>
+
+  <main class="px-6 py-10 md:px-12 space-y-14">
+
+  <!-- ============================ 1. AT THE TABLE ============================ -->
+  <section id="table">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">01</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">What you can see at the table</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          One match, read out of its own recording. Nothing here is an impression: every number
+          below comes from a replay the game wrote by itself and from the offline analyser that
+          re-issues it, and every cause is a line of shipped code.
+        </p>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mb-6">
+      <div class="card-body gap-3">
+        <p class="gc-quote px-4 py-2">
+          “I have the feeling the AI just let me take the whole map.”
+        </p>
+        <p class="text-sm">
+          The feeling is right about the result and wrong about the cause. The computer was not
+          passive — it opened an attack on day 2, fought a running battle down the western corridor
+          for fourteen days, and on <strong>day 12 began capturing the player's home headquarters</strong>
+          and was killed before the second turn of it. It lost because it never bought, and never
+          sent, anything that could take ground.
+        </p>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mt-2">
+          <div class="gc-stat"><b>43&nbsp;/&nbsp;21</b><span>capture commands, player / computer</span></div>
+          <div class="gc-stat"><b>day&nbsp;4</b><span>the computer's first build — a 16 000 Md Tank</span></div>
+          <div class="gc-stat"><b>14 900</b><span>funds banked on day 9, factory idle</span></div>
+          <div class="gc-stat"><b>x&nbsp;≤&nbsp;15</b><span>every property the computer ever captured</span></div>
+        </div>
+        <p class="text-sm opacity-80 mt-1">
+          Marchlands, Difficult, fog off. Player seat 1 (Dane Ferrow), computer seat 4 (Alina Ward),
+          seats 2 and 3 closed. Player won on day 21.
+          Recording: <span class="gc-file">user://replays/2026-08-02T16-58-22.jsonl</span>.
+          Reproduce with <code>make replay-report REPLAY=&lt;file&gt; ARGS="--team=4"</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <!-- Observation 1 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <h3 class="font-bold text-lg">Observation 1 — it opened with three idle factory turns, on purpose</h3>
+          <div class="gc-chain my-1">
+            <div class="gc-chain-step is-ours"><b>Player</b>d1 infantry · d2 APC · d3 infantry · d4 tank</div>
+            <div class="gc-chain-step is-theirs"><b>Computer</b>d1 bank 4 000 · d2 bank 8 000 · d3 bank 12 000 · d4 Md Tank</div>
+          </div>
+          <h4 class="font-bold text-sm mt-1"><span class="gc-gap">Cause.</span> The infantry target is exactly the starting roster, so the urgent tier is empty on turn one of every board.</h4>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><code>capture_unit_target = 3</code> (<span class="gc-file">ai_profile.gd:64</span>, and <code>3</code> in
+              every tier <span class="gc-file">.tres</span>). Every shipped board deals each army
+              <strong>2 infantry + 1 mech</strong>, and those are the only two units with
+              <code>can_capture = true</code>. So <code>wants.short_of_capture_units</code> is
+              <em>false before the first command of the match</em>.</li>
+            <li>With the urgent tier empty, <span class="gc-file">_build_rank</span>
+              (<span class="gc-file">ai_production_planner.gd:147</span>) falls through to the priority
+              list, whose head on Difficult is <code>md_tank</code> at 16 000.</li>
+            <li><span class="gc-file">_worth_waiting_for</span> (<span class="gc-file">:119</span>) then asks one
+              question and only one: <em>could I afford something better within
+              <code>save_up_turns</code>?</em> Yes — so bank. It never asks what an idle factory costs
+              while the map is being taken.</li>
+            <li>The banking rule's own guard is <code>best_rank &lt; wants.first_priority_rank()</code>,
+              which is to say <strong>“never bank when something urgent is wanted.”</strong> The guard
+              works perfectly. It is simply never true, because the target is met at boot.</li>
+          </ul>
+          <p class="text-sm opacity-80">
+            The analyser names it four times without knowing why:
+            <code>hoarding</code> on days 1, 2, 3 and 9 — “ended the turn on 14 900 funds with an idle
+            factory that builds from 1 000.”
+          </p>
+          <h4 class="font-bold text-sm mt-2">The call is not wrong everywhere — it is wrong <em>here</em></h4>
+          <p class="text-sm">
+            Saving three turns for a Md Tank is a fine trade on a cramped board with little to take,
+            where the match really is decided by which side fields the stronger few units. What makes it
+            the wrong call on Marchlands is the <strong>twenty neutral properties</strong> sitting on it:
+            every turn spent banking is a turn the other side converts into permanent income, and that
+            compounds while a one-off 16 000 purchase does not.
+          </p>
+          <p class="text-sm">
+            <strong>So the fix is not “bank less”. It is “bank less when there is a map to take”</strong> —
+            which is exactly what D5's property-scaled roster buys, and why D6 leaves the banking branch
+            alone. The one case that argues the other way — banking for a decisive unit because there is a
+            knockout available <em>now</em> — is a capability the planner does not have and this plan does
+            not build; it is recorded in R2 and §6.
+          </p>
+        </div>
+      </div>
+
+      <!-- Observation 2 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <h3 class="font-bold text-lg">Observation 2 — its capture units converge, so half the board is never anyone's goal</h3>
+          <p class="text-sm">
+            All ten properties the computer captured lie between x=1 and x=15 on a 22-wide board.
+            It never sent a unit to <strong>(18,14) — a factory sixteen tiles down its own side of the
+            ridge</strong>, on the same lateral road as its headquarters. The player took it on days
+            12–13 and built out of it on days 14, 15, 16 and 20.
+          </p>
+          <div class="gc-board my-1">seats 2 and 3 closed → their corners are neutral ground
+
+  x=  0 . . . . . . . . . . . . . . . . 18  19  21
+  y=1     [1]HQ [1]B  · · · · · · · · · [ ]B [ ]Q     ← player took both, d7–d14
+  y=14    [4]HQ [4]B  · · · · · · · · · [ ]B [ ]Q     ← player took both, d12–d15
+                                          ↑
+                    computer's own half — it never sent a unit past x=15</div>
+          <h4 class="font-bold text-sm mt-1"><span class="gc-gap">Cause.</span> The capture goal is nearest-only, per unit, with nothing claiming a target.</h4>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">_advance_goal</span> (<span class="gc-file">ai_unit_action_planner.gd:468–478</span>)
+              collects every unowned property and returns
+              <code>_nearest(unit.cell, capturable)</code> — plain Manhattan distance
+              (<span class="gc-file">:530</span>).</li>
+            <li>Every capture-capable unit runs that independently and <strong>nothing marks a property
+              as already someone's</strong>. Three infantry standing near each other pick the same tile
+              and walk it together.</li>
+            <li>There is nowhere for a claim to live today, and that is by design:
+              <span class="gc-file">AIPlanningContext.begin</span> ends with <code>goals.clear()</code>
+              (<span class="gc-file">ai_planning_context.gd:61</span>) — the goal cache is one command
+              deep, and the threat map is the <em>one</em> fact deliberately allowed to survive between
+              decisions.</li>
+            <li>The consequence compounds with distance: on a board dense in properties there is always
+              a nearer tile than the far corner, so the far corner is never chosen by anybody, ever,
+              at any point in the match.</li>
+          </ul>
+          <p class="text-sm opacity-80">
+            The analyser sees the near half of this as six <code>missed_capture</code> findings —
+            a unit that could have started a capture and walked past. It cannot see the far half at all,
+            because a property nobody ever approached produces no finding.
+          </p>
+        </div>
+      </div>
+
+      <!-- Observation 3 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <h3 class="font-bold text-lg">Observation 3 — a factory is priced as a field</h3>
+          <p class="text-sm">
+            The two corners the player took were not cities. They were <strong>two headquarters and two
+            factories</strong> belonging to the closed seats — under the open-seats decision D1 a closed
+            seat's ground opens to neutral, so it is there to be taken by whoever wants it. The player
+            gained two extra production lines out of them and used both.
+          </p>
+          <h4 class="font-bold text-sm mt-1"><span class="gc-gap">Cause.</span> Nothing in <span class="gc-file">ai/</span> knows a property builds anything.</h4>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">_consider_captures</span> (<span class="gc-file">:193</span>) scores
+              <code>capture_score</code>, times <code>hq_capture_multiplier</code> for an HQ, plus the
+              progress bonus. <strong>A base, an airport and a port score exactly as a plains city.</strong></li>
+            <li><span class="gc-file">TerrainType.builds</span> is read by <span class="gc-file">BuildCommand</span>,
+              the build menu and the production planner's facility scan — and by nothing on the capture
+              path. The authority for “this ground makes units” exists and the capture score has never asked it.</li>
+            <li>The goal distance does not ask either, so a factory can never outbid a nearer city even
+              in principle.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- The collapse -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <h3 class="font-bold text-lg">What those three add up to</h3>
+          <p class="text-sm">Units acting per turn, from the recording — the shape of an army that was never bought:</p>
+          <div class="overflow-x-auto">
+            <table class="table table-sm gc-tight">
+              <thead><tr><th>day</th><th>11</th><th>13</th><th>15</th><th>17</th><th>19</th><th>20</th></tr></thead>
+              <tbody>
+                <tr><td class="font-bold">player</td><td>5</td><td>8</td><td>11</td><td>11</td><td>14</td><td>13</td></tr>
+                <tr><td class="font-bold">computer</td><td>6</td><td>5</td><td>4</td><td>4</td><td>3</td><td>2</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm">
+            The computer built eight more units across days 13–20 and still shrank: it was replacing
+            losses back to a roster of three capturers plus whatever the priority list bought, out of an
+            income that never grew. From day 16 it is three units inside its own corner. That is not a
+            side declining to take the map. It is a side that has nothing left to take it with.
+          </p>
+          <h4 class="font-bold text-sm mt-2">The one sentence</h4>
+          <p class="text-sm">
+            <strong>The planner buys and moves for the fight in front of it, and has no model of the map
+            as an economy.</strong> Every property judgement it owns is either a constant that happens to
+            equal the starting roster, a nearest-neighbour walk, or a flat price — so the side that
+            simply keeps taking ground wins on income long before the fighting resolves anything.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 2. BOUNDARY ============================ -->
+  <section id="boundary">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">02</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">The boundary with the balance retune — read this before writing code</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          This plan is the third to touch <span class="gc-file">ai/</span> in a fortnight. The other two
+          drew their boundaries in writing and this one inherits both.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-2">
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">What this plan owns</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>Planner <em>capabilities</em> about property and production: how many capture units an
+              army wants, which property a unit walks to, and what a property is worth when it is taken.</li>
+            <li>New <code>@export</code>s on <span class="gc-file">AIProfile</span>, each written into every
+              tier at its inert value.</li>
+            <li>A measured band per dial, handed to BL2 in <span class="gc-file">docs/difficulty_check.md</span>.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">What it does not own</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>Any shipped number in <span class="gc-file">data/ai/</span>.</strong> Those are BL2's,
+              by the AI Judgement plan's D2, and this plan repeats that boundary rather than reopening it.</li>
+            <li>The difficulty ladder itself. Difficulty may only change which <span class="gc-file">AIProfile</span>
+              the planner weighs moves with — <em>the AI never cheats at any tier</em>, and nothing here
+              gives it income, vision, damage or luck it did not earn.</li>
+            <li>Anything under <span class="gc-file">core/</span>. See D7.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mt-5">
+      <div class="card-body gap-2">
+        <h3 class="font-bold text-lg">Why now, and the honest cost</h3>
+        <p class="text-sm">
+          The DF4 ladder gate <strong>fails knowingly</strong>: 68.3% Normal-over-Easy and 53.3%
+          Difficult-over-Normal against a required 70%, measured 2026-08-01 at 15 seeds with the
+          Judgement dials live. Its remedy is named — BL2 must close the gap
+          <em>by making Difficult better rather than Normal worse</em> — and BL2's problem is that it
+          has run out of numbers that make Difficult better. These are three capabilities that could,
+          and none of them is available as a weight today.
+        </p>
+        <p class="text-sm">
+          The cost is stated rather than hidden. <strong>These capabilities apply to every tier</strong>,
+          so switching them on for Difficult alone is a tier split — and §4c of
+          <span class="gc-file">docs/difficulty_check.md</span> records four tier splits tried at 15 seeds
+          and four failures, because the gate measures the <em>difference</em> and improving the middle
+          rung closes it from the other side. This plan therefore ships the capabilities inert and hands
+          BL2 the bands; it does not promise the gate. R5 carries that risk in full.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 3. DECISIONS ============================ -->
+  <section id="decisions">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">03</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Decisions</h2>
+        <p class="mt-1 max-w-3xl opacity-80">Locked unless a later plan supersedes them in writing.</p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D1 — Every capability ships inert, and inert skips the code</h3>
+          <p class="text-sm">
+            The same contract as the AI Judgement plan's D1 and the difficulty plan's S1–S3. Each dial
+            ships at the value that reproduces today's planner — <code>0.0</code> for an additive or a
+            rate, <code>1.0</code> for a multiplier, <code>0</code> for a count — and at that value the
+            new code is <em>not executed</em>, not merely neutral. A per-capability suite builds an
+            explicitly zeroed profile and proves the branch is skipped.
+          </p>
+          <p class="text-sm">
+            <strong>The merge bar for every milestone is a fixed-seed byte-diff of both balance reports,
+            with no accepted departure</strong> — <code>make commander-balance</code> and
+            <code>make difficulty-check</code>. <span class="gc-file">reports/</span> is gitignored, so
+            generate both sides. And
+            <span class="gc-file">test_capability_defaults_plan_exactly_like_the_shipped_profile</span>
+            (<span class="gc-file">tests/unit/test_ai_smarts.gd:480</span>) keeps passing unchanged: an
+            install with no profile file plays the same game, which means
+            <span class="gc-file">ai/ai_profile.gd</span>'s class defaults and
+            <span class="gc-file">data/ai/default.tres</span> move together or not at all.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D2 — This plan owns capabilities; BL2 owns the tier numbers</h3>
+          <p class="text-sm">
+            No AE milestone edits a shipped value in <span class="gc-file">data/ai/</span>, and AE4's
+            deliverable is a probe band in <span class="gc-file">docs/difficulty_check.md</span>, never a
+            tier value. Inherited verbatim from the AI Judgement plan's D2, for the same reason: two plans
+            editing the same numbers means neither can be measured.
+          </p>
+          <p class="text-sm opacity-80">
+            One consequence worth naming. The Judgement plan's D1 was superseded on 2026-08-01 when its
+            dials went live ahead of BL2. That is allowed to happen here too — but it is <em>BL2's</em>
+            decision to make, recorded there, not a milestone of this plan quietly taking it.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D3 — A capture goal is claimed by derivation, never by stored state</h3>
+          <p class="text-sm">
+            A property is not this unit's goal when <code>capture_claim_depth</code> or more
+            <em>other</em> capture-capable friendlies are strictly closer to it. That is computed from the
+            board at the moment the goal is asked for — pure, integer, RNG-free, and a function of nothing
+            but the current state. The nearest unit still takes the nearest property; the second one is
+            pushed to the next.
+          </p>
+          <p class="text-sm">
+            <strong>The rejected alternative is a claims registry that survives the turn.</strong>
+            <span class="gc-file">AIPlanningContext.begin</span> clears <code>goals</code> on every command
+            by design, and the threat map is the one fact deliberately allowed to persist — it earns that
+            by being expensive and by carrying an invalidation signature. A second cross-decision cache is
+            exactly the cross-turn state the AI Judgement plan's D5 rejected a formation manager for, and
+            the reasoning is unchanged: the planner has nowhere to keep it, and anything it did keep would
+            have to be invalidated against a board that moves after every single command.
+          </p>
+          <p class="text-sm">
+            Ties break by <strong>scan order</strong>, which is the repo's standing determinism rule — a
+            claim that swapped between two equidistant units on successive replans would leave both walking
+            and neither arriving. R6 is the pin.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D4 — A property is priced by what it produces, in the currency captures are already in</h3>
+          <p class="text-sm">
+            <code>capture_score</code> stays the unit of account. A production property multiplies it by
+            <code>production_capture_multiplier</code>, asked of <strong><span class="gc-file">TerrainType.builds</span>
+            being non-empty</strong> — never a terrain id checked in three places, which is the same rule
+            that already governs <span class="gc-file">BuildCommand</span>, the build menu and the AI's own
+            facility scan. An HQ keeps <code>hq_capture_multiplier</code>, asked as it is today.
+          </p>
+          <p class="text-sm">
+            <strong>One judgement, two readings.</strong> The same multiplier feeds the goal-side detour
+            through <code>capture_goal_value_tiles</code>, so “worth taking” and “worth walking to” cannot
+            disagree — the shape AI Judgement's D3 established when it priced denial off the capture
+            arithmetic read backwards. A unit that walks to a factory because it is valuable must then
+            score it as valuable when it arrives, or it turns around.
+          </p>
+          <p class="text-sm opacity-80">
+            The two are in different units — value and tiles — because the two paths are.
+            <span class="gc-file">_consider_captures</span> competes in value against
+            <span class="gc-file">_attack_score</span>; <span class="gc-file">_advance_value</span>
+            counts in tiles. That is the same split <code>threat_aversion</code> and
+            <code>advance_threat_tiles</code> already live on, and for the same reason.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D5 — The capture roster scales with the unowned board, floored at today's number</h3>
+          <p class="text-sm">
+            <code>capture_unit_target</code> becomes the <em>floor</em> rather than the answer, and stays
+            at 3 in every tier, so an install with the new rate at zero is byte-identical. The target is
+            <code>max(capture_unit_target, ceil(capture_units_per_property × unowned))</code>, where
+            <em>unowned</em> counts property cells this team's side does not hold — through
+            <span class="gc-file">GameState.allied</span>, so an ally's ground is not a target, exactly as
+            <span class="gc-file">_advance_goal</span> already reads it.
+          </p>
+          <p class="text-sm">
+            <strong>It counts what is left to take, not the size of the board, and that is what makes it
+            self-damping.</strong> The target falls as the map is taken: an army that has captured
+            everything wants no more infantry and the priority list resumes on its own. A flat count
+            scaled to board area would keep buying infantry after the race was over, which is R1 with no
+            brake on it.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D6 — Banking becomes board-dependent, and it happens without touching the banking rule</h3>
+          <p class="text-sm">
+            The opening hoard looks like a banking bug and is not one.
+            <span class="gc-file">_worth_waiting_for</span> already refuses to bank whenever something
+            urgent is wanted (<code>best_rank &lt; wants.first_priority_rank()</code>), and infantry are
+            urgent whenever the roster is short. <strong>D5 makes the roster short on day 1 of a
+            property-rich board, and the existing guard then fires by itself</strong> — no new branch, no
+            new dial, and no second opinion about when to spend.
+          </p>
+          <p class="text-sm">
+            The consequence is the point of this decision, not a side effect:
+            <strong>the same code then banks on a small board and spends on a big one.</strong> A property
+            count is the board asking whether there is a race on, and routing the answer through the
+            roster target means the AI reads it without anything in
+            <span class="gc-file">ai/</span> having an opinion about map size. Twenty neutral properties
+            makes infantry urgent and the Md Tank waits; four makes the target unreachable-by-choice,
+            the tier stays empty, and the Md Tank is bought exactly as it is today.
+          </p>
+          <p class="text-sm opacity-80">
+            The <em>other</em> reason to bank — a decisive unit bought because a knockout is available
+            this turn — is a judgement about the fight rather than the board, and the planner has no way
+            to form it. It is not built here. R2 carries what its absence costs once D5 is live.
+          </p>
+          <p class="text-sm">
+            <code>save_up_turns</code> is explicitly left alone. Its own comment records the measurement
+            behind it — first-side bias of +5.6 pp at no banking, +14.9 at two turns, +20.2 at three — and
+            banking is what lets the AI reach the expensive half of the roster at all. Re-tuning it to
+            treat a symptom would trade first-move fairness for something D5 gets for free.
+          </p>
+          <p class="text-sm opacity-80">
+            If AE4 measures idle factory turns <em>surviving</em> AE1–AE3, that is a new observation and
+            earns its own milestone. It does not earn one in advance. Section 6 carries it as the one
+            named conditional follow-up.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D7 — Nothing under <span class="gc-file">core/</span> is touched, and no new telemetry</h3>
+          <p class="text-sm">
+            Every read this plan needs goes through an authority that already exists:
+            <span class="gc-file">MapData.property_cells</span>,
+            <span class="gc-file">GameState.properties_of</span>,
+            <span class="gc-file">GameState.allied</span>,
+            <span class="gc-file">GameState.home_hq</span>,
+            <span class="gc-file">TerrainType.builds</span>,
+            <span class="gc-file">UnitPricing.cost_for</span>. No rule changes, no signal is added, and
+            the balance simulator gains no hook — the balance plan's D2 holds: the telemetry observes,
+            it never instruments the sim.
+          </p>
+          <p class="text-sm opacity-80">
+            The evidence this plan is built on required no instrumentation either. The recorder observes
+            at the two brokers that already existed, and the analyser asks the rules rather than the
+            planner — which is why a finding about day 4 of one match is still readable after the
+            planner has moved.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 4. MILESTONES ============================ -->
+  <section id="milestones">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">04</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Milestones</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Four, each independently mergeable, each ending with <code>make verify</code> green and both
+          balance reports byte-identical. Four new <code>@export</code>s in total, and one existing one
+          re-read as a floor.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AE1 — Buy enough infantry to race <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+          <p class="text-sm opacity-80">
+            Answers observation 1 — and, by D6, the opening hoard along with it. One dial:
+            <code>capture_units_per_property</code>, default <code>0.0</code>. <strong>First, because it is
+            the cheapest change and the one the evidence points at hardest.</strong>
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>The dial on <span class="gc-file">AIProfile</span>, written into all three tiers at zero.</li>
+            <li>The target computed in <span class="gc-file">AIProductionPlanner.plan</span> and passed to
+              <span class="gc-file">BuildWants.from_facts</span>, which already <em>takes it as a
+              parameter</em> — the value object's factory deliberately accepts no callback, and this
+              change keeps it that way.</li>
+            <li>The unowned count from <span class="gc-file">context.state</span> through D5's reading.
+              <span class="gc-file">AIPlanningContext</span> gains nothing: this is one scan in the
+              production planner, not a per-decision fact the unit planner shares.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — a fixture on a property-rich board where the
+            starting roster of three leaves the target unmet, proving the day-1 build is infantry and not
+            a bank; the same fixture at <code>0.0</code> proving it still banks; and a fixture proving the
+            target <em>falls</em> as properties are captured, which is D5's self-damping claim on a board.</p>
+          <p class="text-sm"><strong>And the mirror of that, which is the milestone's real bar</strong> —
+            a property-<em>poor</em> board at the <em>same</em> non-zero rate, proving the AI still banks
+            and still fields its Md Tank. D6's board-dependence is a claim about two boards and only one
+            of them is the bug; a rate that buys the property race by deleting the expensive half of the
+            roster everywhere has failed. R2 is what that fixture is guarding.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the new tests fail before
+            the change and pass after.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AE2 — Spread the capture goals <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">
+            Answers observation 2. One dial: <code>capture_claim_depth</code>, default <code>0</code>
+            (off). <code>1</code> is classic claiming — the nearest unit takes it; higher values let that
+            many units converge on one contested property.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>The claim filter inside the capture clause of <span class="gc-file">_advance_goal</span>
+              (<span class="gc-file">:468–478</span>), per D3 — derived, never stored, ties by scan order.</li>
+            <li>At depth <code>0</code> the filter is not built and the clause is the shipped
+              <code>_nearest</code> call, unchanged.</li>
+            <li>Explicitly <em>not</em> a new fill, a new path or a new geometry: it filters the candidate
+              list the existing walk already collects, and <span class="gc-file">MovementResolver</span>
+              is untouched.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — three infantry and three properties in a line:
+            at depth <code>1</code> each takes a different one, at <code>0</code> all three converge as
+            today. A determinism fixture with two exactly-equidistant units, asserting the same assignment
+            across repeated planning. And <span class="gc-file">test_replay_fidelity.gd</span> unchanged
+            and green, which is the standing pin on scan order.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the convergence fixture
+            reverses at depth 1.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AE3 — Price what a property produces <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">
+            Answers observation 3. Two dials, one judgement per D4:
+            <code>production_capture_multiplier</code> (default <code>1.0</code>, the action score) and
+            <code>capture_goal_value_tiles</code> (default <code>0.0</code>, the goal-side detour).
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>The multiplier applied in <span class="gc-file">_consider_captures</span>
+              (<span class="gc-file">:206–211</span>) beside the HQ multiplier, on the same line of
+              arithmetic, so the two compose rather than compete — a captured enemy headquarters is
+              already a production property and should read as both.</li>
+            <li>The goal-side reading converts the same multiplier into tiles of allowed detour inside
+              the capture clause, composing with AE2's claim filter rather than replacing it.</li>
+            <li>Both ask <span class="gc-file">TerrainType.builds</span>, once, in one helper. No terrain
+              id appears anywhere in <span class="gc-file">ai/</span> as a result of this milestone.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — a factory and a city equidistant from one
+            infantry: it takes the city at the inert values and the factory above them. A factory one tile
+            further than a city, proving the detour dial is what moves it and that the two readings agree.
+            And the inert pin at <code>1.0</code>/<code>0.0</code>.</p>
+          <p class="text-sm"><strong>Exit</strong> — both reports byte-identical; the factory fixture
+            reverses.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AE4 — Characterise the dials, hand BL2 the bands <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">
+            Adds no code, by design — the AI Judgement plan's AJ4 is the precedent and the reason: a
+            measurement belongs on the milestone that changes nothing, or every review round invalidates
+            the number taken before it.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>At 15 seeds minimum</strong>, not 16 matches. §4b of
+              <span class="gc-file">docs/difficulty_check.md</span> was measured at n=16 and §4c
+              re-measured it at 15 seeds and found the direction <em>consistently opposite</em> on the
+              largest effect it had reported. Treat anything smaller as a hint and label it one.</li>
+            <li>The three axes probed <strong>together, not alone</strong>: AE1's rate against AE2's depth
+              is the pairing that matters, since more infantry with no spreading is a bigger clump and
+              spreading with no infantry is a thinner line. §4c's cohesion result is the standing warning —
+              its two axes had to be probed together or the conclusion inverted.</li>
+            <li>Reported as a band per dial, plus the property-race counters the balance report already
+              carries (<code>blue_props</code> / <code>red_props</code> in <code>matches.csv</code>), which
+              is the outcome this plan is actually aiming at — the win rate is downstream of it.</li>
+            <li>The turn-time table re-measured. §4's is stale by its own admission: it predates the
+              Judgement dials going live, and Normal now runs the cohesion term on every advance, so no
+              current reading of the shipped tiers exists.</li>
+            <li>Two negative results re-checked against the new board state, because both were argued to
+              have failed for want of the conditions this plan creates:
+              <code>focus_fire_bonus</code> (refuted three times) and <code>withdraw_weight</code>
+              (negative at every value, and blamed on the refuge's price).</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Exit</strong> — a new section in
+            <span class="gc-file">docs/difficulty_check.md</span> carrying the bands, the n, and the
+            explicit statement of what was <em>not</em> measured. No tier value changes.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 5. RISKS ============================ -->
+  <section id="risks">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">05</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Risk register</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Ordered by what they would cost if ignored. Every mitigation names where it lands.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R1 — The infantry tide <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">
+            The capture roster is an <em>urgent</em> tier: it outranks the entire priority list until it is
+            met. Set the rate too high on Heartland (48 cities) and the AI buys infantry and nothing else
+            while a Md Tank walks through them. This is the single most likely way to make the AI worse.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> D5's self-damping — the target counts what is
+            <em>left</em> to take, so it falls as the map fills and releases the priority list on its own.
+            The floor stays at today's 3. AE4 probes the rate from below and reports the value at which
+            the roster stops answering the enemy's, using the balance report's existing per-side unit
+            counts.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R2 — The finisher is never bought <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">
+            R1's failure mode read from the other end, and the more insidious of the two. The capture
+            roster is urgent, so while it is unmet <em>nothing else can be bought at all</em> — and D5
+            makes it unmet for longer on exactly the big, property-rich boards where the match runs long
+            enough for a Md Tank to matter. A rate set to win the property race can quietly delete the
+            expensive half of the roster from every board worth playing, and the symptom is the opposite
+            of the one this plan started from: an AI with plenty of ground, plenty of income, and nothing
+            that can break a defended line.
+          </p>
+          <p class="text-sm">
+            The exception the planner cannot see makes it worse. Banking three turns for a decisive unit
+            is the right call <strong>when there is a knockout available</strong> — an enemy army it can
+            break, or a headquarters within reach of the thing it is saving for. Nothing in
+            <span class="gc-file">ai/</span> can form that judgement: production reads the roster and the
+            board, never the state of the fight, and <code>hq_capture_multiplier</code> prices taking a
+            headquarters only once a unit is already standing beside it.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> AE1's property-poor fixture is the direct guard,
+            and AE4 reports Md Tanks built per match per board size as a first-class result rather than a
+            footnote — if the rate that wins the property race is the rate that ends heavy production,
+            that is the plan failing and it should be visible in the same table. The knockout capability
+            itself is §6's second named follow-up, deliberately deferred: it is a model of the fight's
+            future, which is the AI Judgement plan's territory rather than this one's, and building it
+            speculatively before AE4 says whether R2 bites is scope creep with no measurement behind it.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R3 — Spreading is thinning <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">
+            AE2 sends capture units to ground they may not be able to hold, one at a time, into fire.
+            This is AI Judgement's R1 from the opposite side — that plan's cohesion term exists to stop
+            the army arriving piecemeal, and this one deliberately scatters part of it.
+          </p>
+          <p class="text-sm">
+            The two do not collide by accident today, and it is worth knowing why: AJ3's D5 exempts every
+            errand from the cohesion penalty, capture goals included, because the column's pull would
+            otherwise cancel the errand outright. <strong>So spreading is untaxed by construction — which
+            means nothing currently limits it either.</strong>
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> <code>capture_claim_depth</code> is an integer
+            with a meaning, not a switch: depth 2 lets pairs travel. AE4 probes depth against
+            <code>cohesion_tiles</code> as a pair. And R3 inherits the honest limit AJ4 recorded on R1 —
+            both sides in an AI-vs-AI sweep are the same planner, so <strong>the instrument is
+            structurally blind to whether a thin line is punished</strong>. This one needs a human
+            playtest, and saying so is not a deferral of the risk but its accurate location.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R4 — Three plans, one planner, one fortnight <span class="badge badge-error badge-sm align-middle">high</span></h3>
+          <p class="text-sm">
+            The doctrine hooks shipped 2026-07-31, the Judgement dials went live 2026-08-01, and this plan
+            opens 2026-08-02. Every band in <span class="gc-file">docs/difficulty_check.md</span> was
+            measured on a planner that has since moved, and AJ3 has already recorded what that costs: a
+            measurement taken inside a milestone whose code was still changing had to be moved out of it
+            entirely.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> AE4 adds no code, which is the whole point of it
+            being a milestone. Nothing measured before AE3 merges is quoted as current. And the
+            byte-diff bar at every step means the planner this plan measures is the planner it shipped.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R5 — The ladder does not close <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">
+            These capabilities help every tier that switches them on. If BL2 gives them to Normal as well —
+            and §4c's reasoning says it should, because withholding basic competence to protect a spread
+            is a worse game — Difficult's margin over Normal may not move at all. Four tier splits have
+            already been tried and all four failed.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> This plan does not promise the gate and D2 keeps
+            it out of the tier files. What it promises is a better opponent at whatever tier is switched
+            on, which is measurable on its own terms through the property-race counters rather than the
+            ladder. If the gate stays failed, it stays failed <em>knowingly</em>, which is the state
+            §4c already put it in.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R6 — Determinism and scan order <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">
+            AE2's claim is the first thing in the planner whose answer for one unit depends on where the
+            <em>other</em> units are standing. A tie broken inconsistently makes two units swap goals on
+            successive replans and neither arrives; a tie broken by anything but scan order breaks
+            same-seed reproducibility, which is the property saves, replays and the whole balance lab
+            rest on.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> Strict comparison and scan-order ties, the rule
+            the planners already keep. <span class="gc-file">test_replay_fidelity.gd</span> — a seeded
+            headless match, recorded and re-issued, reproducing every checkpoint — is the merge bar, and
+            an oscillation fixture in AE2 is the direct pin. The replay analyser's own
+            <code>oscillation</code> detector is the field check: if AE2 makes units walk in circles, a
+            recorded match will say so by name.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R7 — Cost <span class="badge badge-warning badge-sm align-middle">medium</span></h3>
+          <p class="text-sm">
+            AE2's derivation is O(capture units × properties) per goal, per command. On Heartland with a
+            dozen infantry and 48 properties that is real work, on the path the planner runs most often.
+            AJ4 already measured a live threat-map dial roughly doubling Normal's per-turn planning time
+            (33 → 63 ms), so this planner is not fast.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> The candidate list is already collected by the
+            shipped clause; the filter reuses it rather than re-scanning the map. At depth <code>0</code>
+            nothing is built at all. AE4 re-measures the turn clock on the shipped tiers, which is
+            overdue independently of this plan.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R8 — Tier inheritance <span class="badge badge-success badge-sm align-middle">low</span></h3>
+          <p class="text-sm">
+            A profile <span class="gc-file">.tres</span> that omits a new <code>@export</code> inherits the
+            class default, so a class default and <span class="gc-file">data/ai/default.tres</span> that
+            disagree make an install with no profile file play a different game.
+          </p>
+          <p class="text-sm"><strong>Mitigation.</strong> Every dial written into all three tier files at
+            its inert value in the same commit that adds it, and
+            <span class="gc-file">test_capability_defaults_plan_exactly_like_the_shipped_profile</span>
+            as the pin — the same discipline AJ followed when its class defaults moved with the shipped
+            profile.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 6. OUT OF SCOPE ============================ -->
+  <section id="scope">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">06</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Deliberately out of scope</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Scope creep is this repo's named top risk, and this plan touches the file three other plans
+          have edited in the last fortnight.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">Not built here</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>Any change to <code>save_up_turns</code> or the banking branch.</strong> D6 — the
+              roster floor reaches it, and the dial carries a measurement that would be traded away.</li>
+            <li><strong>Any tier value.</strong> D2, BL2's.</li>
+            <li><strong>Transports and ferries.</strong> The planner cannot plan a load-move-unload across
+              turns; that is naval R1 and it stays open. It is also why the ferry-only prizes on Atoll and
+              Confluence are ground the AI is expected to leave alone — a property it cannot reach is not
+              a goal this plan can give it.</li>
+            <li><strong>An income model.</strong> <code>INCOME_PER_PROPERTY</code> is flat, so a city is a
+              city; the only property distinction worth pricing is what it <em>builds</em>, which is D4.</li>
+            <li><strong>A defensive reading of any of this</strong> — denying an enemy a factory the way
+              AJ1 denies a capture. AJ1's R3 is the reason: three dials already price one threat map, and
+              a fourth reading of the same board is how a plan counts the same doctrine twice.</li>
+            <li><strong>New telemetry, and any board edit.</strong> D7.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">Two conditional follow-ups, both about banking</h3>
+          <p class="text-sm">
+            <strong>1 · A banking guard that sees an idle factory.</strong> Earned only if AE4 measures
+            idle factory turns surviving AE1–AE3 — that is, on a board where the roster target is already
+            met and the front is contested anyway. If it is earned, the shape is a floor in
+            <span class="gc-file">_worth_waiting_for</span>, not a new heuristic and not a retune of
+            <code>save_up_turns</code>. Written down rather than built because the evidence points at the
+            roster, and one observation should buy one fix.
+          </p>
+          <p class="text-sm">
+            <strong>2 · Banking because there is a knockout available.</strong> The exception that argues
+            for hoarding even on a property-rich board: save for the decisive unit when the fight is
+            nearly won and one more Md Tank ends it. This is the honest counterweight to D6 and it is
+            <em>not</em> a production change — production would only be reading an answer someone else
+            computed. Forming it means modelling what the board looks like two turns out, which is
+            squarely the AI Judgement plan's territory (“what the enemy will <em>do next turn</em>”), and
+            that plan closed with its own withdrawal dial still measuring negative. Building a knockout
+            detector on top of that, speculatively, before AE4 says whether R2 bites, would be the second
+            unmeasured model of the future in a planner that has not yet paid for the first.
+          </p>
+          <p class="text-sm opacity-80">
+            If AE1 closes the hoard and R2 does not bite, neither of these is ever needed and the plan
+            will say so.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mt-5">
+      <div class="card-body gap-2">
+        <h3 class="font-bold">Where this plan is recorded</h3>
+        <p class="text-sm">
+          On merge of AE1 this plan joins the “Designs of record” index in
+          <span class="gc-file">CLAUDE.md</span>, between the AI Judgement plan and the balance retune,
+          with its decisions summarised and every supersession recorded there rather than edited into
+          this file. <span class="gc-file">.lavish/</span> is gitignored — the plan needs
+          <code>git add -f</code> or it stays untracked.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="px-6 py-8 md:px-12 border-t-2 border-base-300 text-sm opacity-70">
+    <p>
+      Grid Commanders · AI Economy plan · proposed 2026-08-02 · evidence:
+      <span class="gc-file">user://replays/2026-08-02T16-58-22.jsonl</span> and
+      <span class="gc-file">reports/replay/2026-08-02T16-58-22/</span>.
+      Scoped against <span class="gc-file">ai-judgement-plan.html</span> (capabilities) and
+      <span class="gc-file">balance-retune-plan.html</span> (numbers).
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
