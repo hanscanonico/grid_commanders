@@ -4,7 +4,7 @@ extends GutTest
 ##
 ## This file is the R1 guard. Every general is balance-tested against the chain
 ## in CombatResolver's header, so a reordered multiplier or a second rounding has
-## to fail here before it can quietly re-balance twelve doctrines at once.
+## to fail here before it can quietly re-balance eighteen doctrines at once.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -68,6 +68,8 @@ func test_neutral_hooks_return_the_pre_commander_rules() -> void:
 	assert_eq(co.capture_bonus_pct(state, tank), 0)
 	assert_eq(co.supply_range(state, tank), 1)
 	assert_eq(co.repair_cost_pct(state, tank), 100)
+	assert_eq(co.build_cost_pct(state, 1, tank.type), 100)
+	assert_eq(co.kill_bounty_pct(state, 1, infantry), 0)
 	var plains := terrain_db.by_symbol(".")
 	assert_eq(co.terrain_cost(state, tank, plains, 1), 1, "neutral passes the base cost through")
 
@@ -184,18 +186,19 @@ func test_every_shipped_commander_is_well_formed() -> void:
 		# event; above it a match can end before the meter ever fills. A number
 		# outside this is a balance decision, not a typo, so it has to be made
 		# here as well as in the .tres.
-		assert_between(co.power_cost, 8000, 14000, "%s power cost" % co.id)
+		assert_between(co.power_cost, 9000, 22000, "%s power cost" % co.id)
 
 
-## Twelve generals, three to a faction. Pinned so a half-added general — a
-## script with no .tres, or a .tres with the wrong faction string — shows up as
-## a failure rather than as a gap in the picker nobody notices.
-func test_the_roster_is_four_factions_of_three() -> void:
+## The reviewed 5 / 5 / 4 / 4 roster. Pinned so a half-added general — a script
+## with no .tres, or a .tres with the wrong faction string — fails visibly.
+func test_the_roster_has_the_reviewed_faction_counts() -> void:
 	var counts: Dictionary = {}
 	for co in CommanderDB.load_default().all():
 		if co.id == CommanderType.NEUTRAL_ID:
 			continue
 		counts[co.faction] = int(counts.get(co.faction, 0)) + 1
 	assert_eq(counts.size(), 4, "four factions, got %s" % [counts.keys()])
-	for faction: String in counts:
-		assert_eq(counts[faction], 3, "%s should field three generals" % faction)
+	assert_eq(counts["Meridian Coalition"], 5)
+	assert_eq(counts["Iron Dominion"], 5)
+	assert_eq(counts["Aurora Compact"], 4)
+	assert_eq(counts["Verdant League"], 4)

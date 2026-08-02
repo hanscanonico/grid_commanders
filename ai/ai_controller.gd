@@ -28,10 +28,10 @@ func _init(p_unit_db: UnitDB, p_profile: AIProfile = null) -> void:
 	_production = AIProductionPlanner.new(profile)
 
 
-## The next best command for the current team: Command Power, highest-scored
-## ready-unit action, production, then end of turn.
+## The next best command for the current team: an early Command Power,
+## highest-scored ready-unit action, production, a late Command Power, then end.
 func plan_next_command(state: GameState) -> Command:
-	var power := _plan_power(state)
+	var power := _plan_power(state, CommanderType.Timing.BEFORE_ACTIONS)
 	if power != null:
 		return power
 	_context.begin(state)
@@ -41,17 +41,21 @@ func plan_next_command(state: GameState) -> Command:
 	var build := _production.plan(_context)
 	if build != null:
 		return build
+	power = _plan_power(state, CommanderType.Timing.AFTER_ACTIONS)
+	if power != null:
+		return power
 	return EndTurnCommand.new()
 
 
 ## Fires the Command Power when the meter is full and the commander says the
 ## moment is right. The timing remains doctrine-owned because each commander
 ## asks a different board question.
-func _plan_power(state: GameState) -> Command:
+func _plan_power(state: GameState, timing: CommanderType.Timing) -> Command:
 	var command := PowerCommand.new()
 	if command.validate(state) != "":
 		return null
 	var team := state.current_team
-	if not state.commander_of(team).wants_power(state, team):
+	var commander := state.commander_of(team)
+	if commander.power_timing != timing or not commander.wants_power(state, team):
 		return null
 	return command

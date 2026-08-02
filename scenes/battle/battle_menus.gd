@@ -102,13 +102,14 @@ static func build_actions(
 	for unit_type in unit_db.all():
 		if not terrain.can_build(unit_type.move_class):
 			continue
+		var price := UnitPricing.cost_for(game, team, unit_type)
 		(
 			actions
 			. append(
 				{
 					"id": unit_type.id,
-					"label": "%s  %d" % [unit_type.display_name, unit_type.cost],
-					"disabled": game.funds[team] < unit_type.cost,
+					"label": "%s  %d" % [unit_type.display_name, price],
+					"disabled": game.funds[team] < price,
 					"icon": UnitSprite.texture_for(unit_type, row),
 				}
 			)

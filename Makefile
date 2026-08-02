@@ -26,7 +26,7 @@ test:
 # leaked at exit" and "resources still in use". That is the engine failing to
 # tear down a *script* reference cycle — AttackCommand.validate() referring to
 # its sibling MoveCommand pins the core script graph — and it reproduces in
-# twelve lines with no GUT involved. No gameplay object leaks. Attempted
+# a dozen lines with no GUT involved. No gameplay object leaks. Attempted
 # workarounds (static call, split statements) do not avoid it, so the gate
 # reads exit status and ignores the diagnostics.
 #
@@ -48,7 +48,7 @@ MODES ?=
 smoke:
 	tools/smoke_scenarios.sh $(MODES)
 
-# Offline commander balance: plays AI-vs-AI across every pairing on three
+# Offline commander balance: plays AI-vs-AI across every pairing on five
 # rotationally-symmetric scenarios and writes a per-match CSV + a JSON summary to
 # reports/ (gitignored). The full batch (no args) is a long headless release task,
 # deliberately out of `make verify` and `make test` — docs/commander_balance.md has
@@ -209,7 +209,7 @@ screenshot: import
 menu-screenshot: import
 	$(GODOT_GUI) --path . -- --screenshot=$(CURDIR)/screenshot.png
 
-# The G1 gate: renders a card for all thirteen commander records at once, so a
+# The G1 gate: renders a card for all nineteen commander records at once, so a
 # missing portrait or empty copy field shows up as a crash or a blank card.
 gallery-screenshot: import
 	$(GODOT_GUI) --path . scenes/menu/commander_gallery.tscn -- --screenshot=$(CURDIR)/screenshot.png

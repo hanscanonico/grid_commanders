@@ -73,6 +73,9 @@ func apply(state: GameState) -> void:
 	rider.carrier = null
 	rider.cell = drop_cell
 	rider.acted = true
+	# Stated, not inherited, like the unit a Join exhausts: the transport committed
+	# this action, so the rider's own earlier flag cannot decide a refresh.
+	rider.refreshable = false
 
 
 ## The passenger this drop unloads: the one named when it is genuinely aboard,

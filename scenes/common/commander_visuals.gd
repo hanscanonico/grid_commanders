@@ -204,7 +204,7 @@ static func emblem_for(commander: CommanderType) -> Texture2D:
 ## the file is not there. Each caller owns its own fallback: portraits borrow the
 ## neutral bust, emblems fall to a transparent square. Textures are shared immutable
 ## resources, so caching them across scene loads is safe and keeps the select page
-## from reloading thirteen portraits every time a tab changes.
+## from reloading nineteen portraits every time a tab changes.
 static func _cached(path: String, on_missing: Callable) -> Texture2D:
 	if _texture_cache.has(path):
 		return _texture_cache[path]

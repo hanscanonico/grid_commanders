@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="InesCalder" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/ines_calder.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ines_calder"
+display_name = "Ines Calder"
+faction = "Verdant League"
+doctrine_text = "All units cost 10% less to build and have -10% attack."
+power_name = "Weight of Numbers"
+power_text = "All units gain 25% attack over their ordinary strength this turn."
+power_quotes = Array[String](["Ten cheap answers beat one expensive question.", "Build more. Always more."])
+power_cost = 12000
+power_duration = 0
+unit_cost_pct = 90
+attack_pct = -10
+numbers_attack_pct = 15
+cheap_cost_ceiling = 5000
+cheap_build_bias = -3

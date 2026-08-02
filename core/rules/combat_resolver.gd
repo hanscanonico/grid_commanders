@@ -287,9 +287,28 @@ const CHARGE_PCT_DEALT := 50
 static func bank_losses(state: GameState, victim: Unit, hp_lost: int, dealer_team: int) -> void:
 	if hp_lost <= 0:
 		return
+	if hp_lost >= victim.hp:
+		_transfer_bounty(state, victim, dealer_team)
+	# Base cost is deliberate: purchase discounts change what an army pays, not
+	# what a unit is worth once it is on the board (pricing plan D1).
 	var value := victim.type.cost * hp_lost / 100
 	state.add_charge(victim.team, value * CHARGE_PCT_LOST / 100)
 	state.add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
+
+
+## A kill steals rather than mints: the victim can never pay below zero, and a
+## broke army yields nothing. Called from bank_losses so direct shots, counters
+## and cargo sunk with a transport all pass through the same gate.
+static func _transfer_bounty(state: GameState, victim: Unit, dealer_team: int) -> void:
+	var pct := state.commander_of(dealer_team).kill_bounty_pct(state, dealer_team, victim)
+	if pct <= 0:
+		return
+	var wanted := victim.type.cost * pct / 100
+	var stolen := mini(wanted, int(state.funds.get(victim.team, 0)))
+	if stolen <= 0:
+		return
+	state.funds[victim.team] -= stolen
+	state.funds[dealer_team] += stolen
 
 
 ## Cargo that drowns with its transport banks the same as if each passenger had

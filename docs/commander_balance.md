@@ -15,8 +15,8 @@ replaces the other:
    catches outliers and, because it drives the same `AIController` and `Command`
    objects as play, rule disagreements — a planned command the rules reject, or a
    match that never resolves. It quantifies; it does not judge feel.
-2. **Human test deck (manual).** Twelve informative pairings played with sides
-   swapped — 24 structured sessions — scored on clarity, agency, identity, power
+2. **Human test deck (manual).** Fifteen informative pairings played with sides
+   swapped — 30 structured sessions — scored on clarity, agency, identity, power
    timing, counterplay, and rematch appetite. This decides whether a matchup is
    legible and worth replaying. It cannot be automated and is not in this
    repository; it is run against a candidate build before campaign work resumes.
@@ -28,15 +28,15 @@ replaces the other:
 ## Running the automated matrix
 
 ```sh
-make commander-balance                 # full batch — a release task, ~1,728 matches
+make commander-balance                 # full batch — a release task, 6,480 matches
 make commander-balance BAL="--commanders=alina_ward,cass_orlov --seeds=2"  # focused
 ```
 
 Flags (after `--`): `--commanders=`, `--scenarios=`, `--seeds=`, `--neutral`
 (adds each commander vs No Commander), `--days=`, `--out=`.
 
-- **Full batch:** 12×12 ordered pairs (mirrors included) × 3 scenarios × 4 seeds
-  = **1,728 matches**. Ordered pairs already side-swap every non-mirror matchup.
+- **Full batch:** 18×18 ordered pairs (mirrors included) × 5 scenarios × 4 seeds
+  = **6,480 matches**. Ordered pairs already side-swap every non-mirror matchup.
   It is deliberately out of `make verify`/`make test`.
 - **Focused mode** is the fast iteration loop while tuning one commander.
 - Output: `reports/commander_balance/matches.csv` (one row per match) and
@@ -44,7 +44,7 @@ Flags (after `--`): `--commanders=`, `--scenarios=`, `--seeds=`, `--neutral`
 
 ### The scenarios are fair by construction
 
-All three boards are 180° rotationally symmetric with the teams swapped, and the
+All five boards are 180° rotationally symmetric with the teams swapped, and the
 runner **asserts** that symmetry on startup (`_assert_symmetric`) — a typo that
 broke fairness fails the run rather than biasing it. A first-side bias in the
 results is therefore the doctrines' doing, not the map's. `clash` is open and
@@ -52,12 +52,16 @@ decisive; `ridge` puts more terrain between the lines; `combined` adds an
 airfield, a port and a shared lake, because a doctrine tuned only against tanks
 is tuned against a third of the game — several hooks read a unit's move class or
 domain, and they behave differently when half the army is not on the ground.
+`holdings` gives both sides twelve properties, making price and treasury
+doctrines visible instead of fund-starved; `channel` gives both fleets one shared
+ocean while preserving a land bridge, so naval doctrines fight without asking
+the AI to solve its documented ferry limitation.
 
 A fixture also has to **resolve**. The first version of `combined` separated the
 armies with water: it ground to the day cap in 430 of 432 matches and produced a
 twenty-point first-side bias out of the tiebreak alone. The shipped version puts a
 small lake in the middle instead, so the land armies walk past it and meet on day
-one. Its measured first-side bias is 0.0 pp — the fairest of the three.
+one. Its measured first-side bias was 0.0 pp in that historical three-scenario pass.
 
 ### Timed matches are decided on score
 
@@ -106,11 +110,39 @@ change and its rationale below.
 
 ## Status and results
 
-The runner and its scenarios are in place and verified (symmetry asserted,
-determinism byte-identical, hard invariants clean on focused runs). The **full
-batch and the 24-session human deck are release tasks** to be run against the
-candidate build; their results and any resulting `.tres` tuning are recorded here
-when that pass happens.
+The runner and its five scenarios are verified (symmetry asserted, determinism
+byte-identical, hard invariants clean). The 18-commander full batch was run on the
+candidate build on 2026-08-01; the 30-session human deck remains the manual
+release companion and is not represented as automated evidence here.
+
+The deck's three additions for this roster are deliberately contrastive:
+**Calder vs Vale** (cheap breadth against expensive quality), **Ferrow against a
+cash-poor opponent** (whether plunder and its counterplay read), and **Colt against
+a defensive commander** (whether a late refresh creates agency rather than a
+surprise extra turn). Each is played from both seats like the standing twelve.
+
+### Measured for the six-commander expansion (NC7)
+
+The final candidate ran **6,480 matches** (18×18 ordered pairs × five scenarios
+× four seeds) in about **53 minutes** on the development machine. All 6,480 were
+decisive, with **0 rejected commands and 0 cap stalls**. First-seat bias was
+**+40.8 pp**, still the standing banking/fixture review item described below;
+the expansion did not introduce it and it remains a review flag rather than a
+hard failure.
+
+| New commander | Full matrix | Owning fixture | Review |
+|---|---:|---:|---|
+| Ines Calder | 49.3% | `holdings` 56.9% | Proposed 20% discount measured 73.6% on `holdings`; one exported value moved to 10%, then the full matrix was rerun. |
+| Konrad Vale | 64.2% WARN | `holdings` 53.5% | The economy fixture is the plan's authority; sparse-board aggregate overstates the elite doctrine. No tune. |
+| Perrin Ash | 47.4% | `combined` 52.1% | Domain fixture and aggregate both in the preferred band. |
+| Halden Marr | 46.8% | `channel` 44.4% | Aggregate preferred; domain fixture watch, inside the 40–60 safety band. |
+| Dane Ferrow | 48.5% | `holdings` 52.8% | Economy fixture and aggregate both preferred; signed plunder reconciled every turn. |
+| Iris Colt | 26.4% WARN | `holdings` 47.2% | Written exception: on `holdings` she fired in 100% of games (4.86 powers/match) and landed preferred; sparse fixtures offer few eligible non-attack actions, and the greedy AI underuses a second movement phase. The unit/AI soak proves it fires late and moves twice. Human deck owns the feel judgement. |
+
+The other WARN names are the standing base-roster review set: Cass Orlov low;
+Tomas Reed and Viktor Draeg high; Gideon Holt watch. The exact generated reports
+remain uncommitted under `/private/tmp/nc7-full-final`; this section is the
+committed interpretation.
 
 **The rules under the N4 numbers below have since moved.** The numbers predate
 the charge-meter fix that stopped a team from banking charge while its own power

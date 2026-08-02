@@ -62,6 +62,8 @@ const TIMELINE_COLUMNS: Array[String] = [
 	"tier",
 	"funds_start",
 	"income",
+	"plunder",
+	"plunder_off_turn",
 	"spent",
 	"funds_end",
 	"built",
@@ -98,6 +100,14 @@ class TurnRow:
 	var tier := ""
 	var funds_start := 0
 	var income := 0
+	## Signed funds moved by kill bounties while this side acted: positive for a
+	## kill, negative when its attacker died to a counter.
+	var plunder := 0
+	## The same transfer seen from off the turn: what enemy bounties took from this
+	## side, or its counters took back, between its previous row and this one. It
+	## sits outside the row's own window, so it closes the *cross-row* funds
+	## relation rather than the in-row one.
+	var plunder_off_turn := 0
 	var spent := 0
 	var built: Dictionary = {}  # unit id -> count
 	var built_value := 0
@@ -138,6 +148,10 @@ var _incoming_team := 0
 var _incoming_funds := 0
 var _capture_cell := Vector2i.ZERO
 var _capture_owner_before := 0
+var _funds_before: Dictionary = {}  # team -> funds, as the command in hand found them
+## Bounty transfers a side has not been able to report yet, because it was not the
+## one taking the turn. Handed to its next row and cleared there.
+var _pending_plunder: Dictionary = {}  # team -> signed funds
 
 
 ## `log_commands` off keeps the per-command JSONL out of memory entirely, which
@@ -159,6 +173,7 @@ func begin_match(match_id: String, state: GameState, tiers: Dictionary) -> void:
 	_match_row_start = _rows.size()
 	_match_unattributed_start = _unattributed
 	_live.clear()
+	_pending_plunder.clear()
 	for unit in state.units:
 		_live[unit] = true
 	var team := state.current_team
@@ -168,6 +183,7 @@ func begin_match(match_id: String, state: GameState, tiers: Dictionary) -> void:
 func before_apply(state: GameState, command: Command, planning_usec: int = 0) -> void:
 	if _turn == null:
 		return
+	_funds_before = state.funds.duplicate()
 	_turn.commands += 1
 	_turn.planning_usec += planning_usec
 	if command is CaptureCommand:
@@ -184,6 +200,8 @@ func before_apply(state: GameState, command: Command, planning_usec: int = 0) ->
 
 
 func after_apply(state: GameState, command: Command) -> void:
+	if command is AttackCommand:
+		_record_plunder(state)
 	var removed := _removed_units(state)
 	if command is EndTurnCommand:
 		# The incoming side's tick has now run inside apply(): income, paid
@@ -257,9 +275,10 @@ func unattributed() -> int:
 ## Proves the timeline adds up against the board it describes, for the match that
 ## just ended. Returns "" when it does, otherwise the first discrepancy found.
 ##
-## Two independent closures, because they fail differently: the funds arithmetic
-## catches a spend the recorder missed, and the unit census catches a death it
-## misfiled. `starting` is the per-team unit count the match opened with.
+## Three independent closures, because they fail differently: the in-row funds
+## arithmetic catches a spend the recorder missed, the row-to-row carry catches
+## funds that moved while the side was not on turn, and the unit census catches a
+## death it misfiled. `starting` is the per-team unit count the match opened with.
 ##
 ## Run per match rather than once per batch, so a failure names the match that
 ## broke instead of the batch that contains it.
@@ -271,12 +290,24 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 	var killed: Dictionary = {}
 	var merged: Dictionary = {}
 	var forfeited: Dictionary = {}
+	var previous_end: Dictionary = {}
 	for row in _rows.slice(_match_row_start):
 		var team: int = row["team"]
-		if row["funds_start"] - row["spent"] != row["funds_end"]:
+		var carried := _carry_error(row, previous_end)
+		if carried != "":
+			return carried
+		previous_end[team] = row["funds_end"]
+		if row["funds_start"] + row["plunder"] - row["spent"] != row["funds_end"]:
 			return (
-				"day %d team %d: funds_start %d - spent %d != funds_end %d"
-				% [row["day"], team, row["funds_start"], row["spent"], row["funds_end"]]
+				"day %d team %d: funds_start %d + plunder %d - spent %d != funds_end %d"
+				% [
+					row["day"],
+					team,
+					row["funds_start"],
+					row["plunder"],
+					row["spent"],
+					row["funds_end"],
+				]
 			)
 		built[team] = int(built.get(team, 0)) + _count_of(row["built"])
 		lost[team] = int(lost.get(team, 0)) + _count_of(row["lost"])
@@ -321,6 +352,29 @@ func reconcile(state: GameState, starting: Dictionary) -> String:
 	return ""
 
 
+## What a side leaves on the table has to be what it finds there next turn, once
+## its own tick and any bounty taken from it off-turn are added back. The first
+## row of a side has nothing to carry from, so it is skipped rather than assumed.
+static func _carry_error(row: Dictionary, previous_end: Dictionary) -> String:
+	var team: int = row["team"]
+	if not previous_end.has(team):
+		return ""
+	var expected: int = int(previous_end[team]) + int(row["income"]) + int(row["plunder_off_turn"])
+	if expected == int(row["funds_start"]):
+		return ""
+	return (
+		"day %d team %d: funds_end %d + income %d + plunder_off_turn %d != funds_start %d"
+		% [
+			row["day"],
+			team,
+			previous_end[team],
+			row["income"],
+			row["plunder_off_turn"],
+			row["funds_start"],
+		]
+	)
+
+
 # --- turn bookkeeping --------------------------------------------------------
 
 
@@ -333,6 +387,8 @@ func _open_turn(state: GameState, income: int) -> void:
 	_turn.tier = String(_tiers.get(team, Difficulty.DEFAULT_ID))
 	_turn.income = income
 	_turn.funds_start = int(state.funds.get(team, 0))
+	_turn.plunder_off_turn = int(_pending_plunder.get(team, 0))
+	_pending_plunder[team] = 0
 
 
 ## Freezes the end-of-turn half of the row and files it. Everything read here is
@@ -350,6 +406,8 @@ func _close_turn(state: GameState) -> void:
 		"tier": _turn.tier,
 		"funds_start": _turn.funds_start,
 		"income": _turn.income,
+		"plunder": _turn.plunder,
+		"plunder_off_turn": _turn.plunder_off_turn,
 		"spent": _turn.spent,
 		"funds_end": int(state.funds.get(team, 0)),
 		"built": _tally_text(_turn.built),
@@ -451,9 +509,26 @@ func _explains_removals(command: Command) -> bool:
 func _record_build(build: BuildCommand) -> void:
 	if _turn == null or build.unit_type == null:
 		return
-	_turn.spent += build.unit_type.cost
+	_turn.spent += build.paid_cost
 	_turn.built_value += build.unit_type.cost
 	_tally(_turn.built, build.unit_type.id)
+
+
+## An attack is the only thing that moves funds between armies, so both ends of a
+## bounty are read off one signed delta per side — which keeps the recorder an
+## observer. The acting side's end closes its own row; the victim's end belongs to
+## a row that has not opened yet, so it waits in `_pending_plunder`.
+func _record_plunder(state: GameState) -> void:
+	if _turn == null:
+		return
+	for team: int in state.funds:
+		var delta := int(state.funds[team]) - int(_funds_before.get(team, 0))
+		if delta == 0:
+			continue
+		if team == _turn.team:
+			_turn.plunder += delta
+		else:
+			_pending_plunder[team] = int(_pending_plunder.get(team, 0)) + delta
 
 
 ## A capture that *completed* this turn — ownership actually changed hands.
@@ -520,7 +595,7 @@ func _log_entry(state: GameState, command: Command) -> Dictionary:
 		var build := command as BuildCommand
 		entry["unit"] = String(build.unit_type.id) if build.unit_type != null else ""
 		entry["to"] = _cell(build.cell)
-		entry["cost"] = build.unit_type.cost if build.unit_type != null else 0
+		entry["cost"] = build.paid_cost
 	elif command is PowerCommand:
 		var power := command as PowerCommand
 		entry["commander"] = String(power.commander.id) if power.commander != null else ""

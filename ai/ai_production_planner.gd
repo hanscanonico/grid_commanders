@@ -83,7 +83,7 @@ func plan(context: AIPlanningContext) -> Command:
 		if terrain.builds.is_empty() or state.unit_at(cell) != null:
 			continue
 		facilities.append(terrain)
-		var choice := _pick_build(context.unit_types, terrain, wants, funds)
+		var choice := _pick_build(context, terrain, wants, funds)
 		if choice == null:
 			continue
 		var rank := _build_rank(choice, wants)
@@ -100,12 +100,13 @@ func plan(context: AIPlanningContext) -> Command:
 
 ## The best unit this facility can produce for the money, or null.
 func _pick_build(
-	unit_types: Array[UnitType], terrain: TerrainType, wants: BuildWants, funds: int
+	context: AIPlanningContext, terrain: TerrainType, wants: BuildWants, funds: int
 ) -> UnitType:
 	var best: UnitType = null
 	var best_rank := RANK_NONE
-	for unit_type in unit_types:
-		if not terrain.can_build(unit_type.move_class) or funds < unit_type.cost:
+	for unit_type in context.unit_types:
+		var price := UnitPricing.cost_for(context.state, context.team, unit_type)
+		if not terrain.can_build(unit_type.move_class) or funds < price:
 			continue
 		var rank := _build_rank(unit_type, wants)
 		if rank < best_rank:
@@ -128,7 +129,8 @@ func _worth_waiting_for(
 	var budget := funds + income * profile.save_up_turns
 	for terrain in facilities:
 		for unit_type in context.unit_types:
-			if not terrain.can_build(unit_type.move_class) or unit_type.cost > budget:
+			var price := UnitPricing.cost_for(context.state, context.team, unit_type)
+			if not terrain.can_build(unit_type.move_class) or price > budget:
 				continue
 			if _build_rank(unit_type, wants) < best_rank:
 				return true

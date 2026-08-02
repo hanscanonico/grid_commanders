@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Six New Commanders Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+      --gc-gold: #d8a13a;
+      --gc-meridian: #3276c6;
+      --gc-iron: #b0453a;
+      --gc-aurora: #7a63c4;
+      --gc-verdant: #4f9f4a;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid #e0a441; }
+    .gc-risk-low { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-free { color: var(--gc-grass-dark); font-weight: 700; }
+    .gc-gap { color: var(--gc-red); font-weight: 700; }
+    table.gc-roster td, table.gc-roster th { vertical-align: top; }
+    .gc-co { border-top: 5px solid var(--gc-ink); }
+    .gc-co-meridian { border-top-color: var(--gc-meridian); }
+    .gc-co-iron { border-top-color: var(--gc-iron); }
+    .gc-co-aurora { border-top-color: var(--gc-aurora); }
+    .gc-co-verdant { border-top-color: var(--gc-verdant); }
+    .gc-stat { font: 700 .8rem ui-monospace, monospace; }
+    .gc-quote { font-style: italic; opacity: .8; }
+    dl.gc-dl dt { font-weight: 800; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; opacity: .65; margin-top: .5rem; }
+    dl.gc-dl dd { font-size: .9rem; }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="gc-hero px-6 py-10 md:px-12">
+    <p class="gc-kicker mb-2 opacity-80">Grid Commanders · design of record · shipped</p>
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight">Six New Commanders</h1>
+    <p class="mt-3 max-w-3xl text-base md:text-lg opacity-90">
+      The shipped twelve cover combat, movement, terrain, vision and logistics. They cover
+      <em>nothing</em> else: no general in the roster touches money, and none touches the air and
+      sea domains the naval plan added. This plan takes the roster from twelve to eighteen along
+      three axes — price, domain and plunder — plus one power shape the game has never had, and it
+      is honest about which of the six are free and which three buy new rules seams.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-outline badge-lg text-white border-white/40">Milestones NC1–NC7</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D7</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R8</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">18 commanders · 5 / 5 / 4 / 4</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">3 core seams · 1 AI seam</span>
+    </div>
+  </header>
+
+  <main class="px-6 py-10 md:px-12 space-y-14">
+
+  <!-- ============================ 1. THE SHAPE ============================ -->
+  <section id="shape">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">1</span>
+      <h2 class="text-2xl font-extrabold">Three empty axes, six generals, two new seams</h2>
+    </div>
+    <p class="max-w-4xl mb-4">
+      Read the twelve by what they <em>are about</em> and the gaps are obvious. Ward is adjacency,
+      Orlov is the finisher, Rook is mobility, Holt is logistics, Quill is luck, Voss is the
+      counterattack, Rowan is terrain, Flux is vision, Sol is indirect fire, Wren is concealment,
+      Reed is infantry, Draeg is armour. Twelve doctrines, and every one of them is a statement
+      about <b>a fight that is already happening on the ground</b>. Nobody plays the economy, and
+      the air and sea domains the naval plan shipped have no general at all.
+    </p>
+    <p class="max-w-4xl mb-6">
+      The six below fill those three, and Iris Colt adds the one thing no shipped power does — a
+      Command Power that is not "a hook returns a bigger number". Three of the six need
+      <span class="gc-free">no change to <code>core/</code> whatsoever</span> — they are a subclass
+      and a <code>.tres</code>, because <span class="gc-file">Engagement</span> already hands a hook
+      both units. The other three buy two seams between them, and one of those also touches the
+      planner. That distinction drives the milestone order: the seams land first and alone,
+      provably behaviour-neutral, before any general is hung off them.
+    </p>
+
+    <div class="overflow-x-auto">
+      <table class="table table-sm gc-roster bg-base-100 shadow-sm">
+        <thead>
+          <tr>
+            <th>Commander</th><th>Faction</th><th>Axis</th><th>What it needs</th><th>Milestone</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Ines Calder</b></td><td>Verdant League</td><td>Price — cheap and many</td>
+            <td><span class="gc-gap">New seam:</span> <span class="gc-file">UnitPricing</span> + <span class="gc-file">build_cost_pct</span></td><td>NC2 · NC3</td>
+          </tr>
+          <tr>
+            <td><b>Konrad Vale</b></td><td>Iron Dominion</td><td>Price — few and elite</td>
+            <td>Same seam, sign flipped</td><td>NC2 · NC3</td>
+          </tr>
+          <tr>
+            <td><b>Perrin Ash</b></td><td>Aurora Compact</td><td>Domain — air</td>
+            <td><span class="gc-free">Free.</span> <span class="gc-file">attack_bonus</span> reads <span class="gc-file">Engagement</span>, which carries both units</td><td>NC4</td>
+          </tr>
+          <tr>
+            <td><b>Halden Marr</b></td><td>Meridian Coalition</td><td>Domain — sea and shore</td>
+            <td><span class="gc-free">Free.</span> Same hook plus <span class="gc-file">move_bonus</span> and <span class="gc-file">star_bonus</span></td><td>NC4</td>
+          </tr>
+          <tr>
+            <td><b>Dane Ferrow</b></td><td>Iron Dominion</td><td>Economy — plunder</td>
+            <td><span class="gc-gap">New seam:</span> a bounty inside <span class="gc-file">bank_losses</span></td><td>NC5</td>
+          </tr>
+          <tr>
+            <td><b>Iris Colt</b></td><td>Meridian Coalition</td><td>Tempo — act again</td>
+            <td><span class="gc-gap">New seam:</span> <span class="gc-file">power_timing</span> on the commander + a second ask in <span class="gc-file">AIController</span></td><td>NC6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert-info mt-6 items-start">
+      <div>
+        <h3 class="font-bold">Six leaves the faction grid uneven, on purpose</h3>
+        <p class="text-sm mt-1">
+          The shipped roster is exactly <b>4 factions × 3</b>. This plan drafted eight — two per
+          faction, a clean 4 × 5 — and review cut two of them (the anti-air general and the
+          day-decay general; both are recorded in section 7). What ships is
+          <b>Meridian 5, Iron 5, Aurora 4, Verdant 4</b>.
+        </p>
+        <p class="text-sm mt-1">
+          That is a deliberate acceptance, not an oversight. Faction is flavour —
+          <span class="gc-file">CommanderType.faction</span> is documented as "the rules never read
+          it" — so nothing in the game breaks; the select panel simply shows two shorter columns.
+          <b>The two open slots are Aurora's and Verdant's</b>, and the two ideas parked in section
+          7 (an income general and a comeback general) are exactly the candidates that would fill
+          them and square the grid at 4 × 5 later. The allocation of what does ship is not
+          arbitrary: Iron gets the elite army and the mercenary, Meridian gets the fleet and the
+          coordination power, Aurora gets the air war, Verdant gets the swarm.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 2. DECISIONS ============================ -->
+  <section id="decisions">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">2</span>
+      <h2 class="text-2xl font-extrabold">Decisions</h2>
+    </div>
+    <p class="max-w-4xl mb-5">
+      Seven locks. Each is a thing that can only be decided once, because every general afterwards
+      is built on top of it.
+    </p>
+
+    <div class="space-y-4">
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D1 — Price is a hook. Value is not. They are different numbers that happen to start equal.</h3>
+        <p class="text-sm mt-2">
+          <span class="gc-file">UnitType.cost</span> is read raw in five places today:
+          <span class="gc-file">BuildCommand.validate</span> and
+          <span class="gc-file">.apply</span>, <span class="gc-file">ai_production_planner.gd:108</span>
+          and <span class="gc-file">:131</span>, and <span class="gc-file">battle_menus.gd:110</span>.
+          There is no single authority the way <span class="gc-file">MovementResolver.step_cost</span>
+          is the one reader of terrain cost, so a discount added to any one of them would let the
+          build menu, the AI's budget and the rules disagree about what a tank costs.
+          <b>NC2 adds that authority</b> — one static <span class="gc-file">UnitPricing.cost_for(state, team, unit_type)</span>
+          over a <span class="gc-file">CommanderType.build_cost_pct</span> hook — and all five
+          readers go through it. <b>The hook is a percentage</b>, in the
+          <span class="gc-file">repair_cost_pct</span> tradition already on
+          <span class="gc-file">CommanderType</span>: 100 is the standard price, 90 is Calder, 120
+          is Vale. Integer percentage points like every other hook, so no doctrine can drift a
+          price into a fraction.
+        </p>
+        <p class="text-sm mt-2">
+          But <span class="gc-file">UnitType.cost</span> is <em>also</em> the value currency for two
+          systems that have nothing to do with buying: the Command Power meter
+          (<span class="gc-file">CombatResolver.bank_losses</span> banks
+          <code>cost × hp_lost / 100</code>) and the AI's target scoring
+          (<span class="gc-file">ai_unit_action_planner.gd:96</span>). <b>Those two keep reading the
+          base cost, forever.</b> Routing them through the pricing authority would mean a discount
+          commander silently charges its opponent's meter more slowly and makes its own army read
+          as low-value targets to the planner — two balance changes nobody asked for, hidden inside
+          an economy doctrine. A tank is worth 7 000 to kill no matter what its owner paid.
+        </p>
+        <p class="text-sm mt-2">
+          The authority carries two invariants of its own, in the
+          <span class="gc-file">step_cost</span> tradition: a price never falls below
+          <code>MIN_COST = 500</code>, and a doctrine can never make a unit free. And it rounds
+          <b>down to the nearest 100</b>, once, inside the authority — so a discounted price is a
+          number a player can read off a menu and add up in their head, and every one of the five
+          readers rounds it identically because none of them does the rounding.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D2 — A domain doctrine never reaches outside its domain, so a land-only board makes it exactly the neutral commander.</h3>
+        <p class="text-sm mt-2">
+          Measured over the shipped roster: <b>9 of 24 boards have an airport, 5 of 24 have a
+          port.</b> A general whose upside is domain-gated and whose downside falls on land units
+          is <em>strictly worse than picking nobody</em> on 15 boards, and worse than that, a new
+          player cannot see it coming from the select screen. That is a trap, not a trade-off.
+        </p>
+        <p class="text-sm mt-2">
+          Perrin Ash and Halden Marr therefore carry <b>no malus at all</b>: every clause of both
+          doctrines names air units, ships, landers, or a shore tile. On
+          <span class="gc-file">boot_camp</span> neither general has anything to apply and both
+          play as the neutral commander, bit for bit — which is what NC4's acceptance test asserts.
+          The alternative shape considered and rejected — Ash buffs air and debuffs ships — leaves
+          six boards (airport, no port) where she is pure upside at zero cost anyway, so it bought
+          nothing except a trap on the other fifteen.
+        </p>
+        <p class="text-sm mt-2">
+          The cost of no malus is that where their domain <em>does</em> exist, both are upside-only,
+          and their bonuses are correspondingly small — <b>+10%</b>, the smallest combat numbers in
+          the roster. A commander whose only lever is a bonus has to be tuned by that bonus alone,
+          which is what R6 watches: <span class="gc-file">combined</span> and
+          <span class="gc-file">channel</span> are the only guard rails these two have.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D3 — The bounty is stolen, not minted, and it comes out of the one exchange funnel.</h3>
+        <p class="text-sm mt-2">
+          <span class="gc-file">CombatResolver.bank_losses</span> is already the single place an
+          exchange's value is computed, and it already receives <span class="gc-file">dealer_team</span>.
+          Direct attacks, counterattacks and drowned cargo all route through it. Ferrow's bounty is
+          that same computation spent on funds instead of on the meter: one hook, one call site.
+        </p>
+        <p class="text-sm mt-2">
+          It hooks there <em>because</em> of what that funnel excludes.
+          <span class="gc-file">TurnRules._lost_to_empty_tank</span> deliberately never calls it —
+          "running yourself dry is not an exchange" — so an enemy bomber falling out of the sky
+          pays Ferrow nothing, which is the correct rule and costs nothing to get.
+        </p>
+        <p class="text-sm mt-2">
+          <b>Stolen, not minted.</b> Money that appears from nowhere stacks a compounding economy
+          bonus onto a general who is, by definition, already winning the fight: money buys units,
+          units get kills, kills buy money. Taking it from the victim's treasury is the same number
+          with twice the swing, is self-limiting the moment the loser is broke, gives the losing
+          player a real counter-play (spend down to nothing so there is nothing to take), and reads
+          instantly as predation rather than as a bookkeeping bonus. Both teams are already threaded
+          through <span class="gc-file">bank_losses</span>, so it costs nothing extra to implement.
+          Clamped at the victim's balance; funds never go negative.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D4 — "Play again" is a saved refresh, not a turn.</h3>
+        <p class="text-sm mt-2">
+          An actual extra turn is a change to turn order, and turn order is load-bearing for four
+          other things: <span class="gc-file">EndTurnCommand.apply</span> advances the seat and the
+          day unconditionally, <span class="gc-file">TurnRules.begin_turn</span> runs income,
+          upkeep, resupply and repair, <span class="gc-file">Duration.ROUND</span> powers expire on
+          exactly two lines that both assume one turn per seat, and with three or four seats
+          "again" is ambiguous — insert, or skip the next army? Then saves and replays. It is a new
+          system, and <span class="gc-file">core/commander_type.gd</span> says why that is the wrong
+          shape: <em>"A Command Power is not a separate system; it is 'this hook returns a bigger
+          number while the power runs'."</em>
+        </p>
+        <p class="text-sm mt-2">
+          Iris Colt's Second Wind is <span class="gc-file">on_power_activated</span> setting
+          <code>acted = false</code>. No turn order and no extra income, upkeep, resupply, repair,
+          day or duration tick. <b>It refreshes only units that have already acted this turn and
+          did not attack.</b> That scoping is load-bearing: a fresh build is also marked
+          <code>acted = true</code>, and must never become a buy-and-fire unit.
+        </p>
+        <p class="text-sm mt-2">
+          The proposed shortcut — infer eligibility from movement and add no state — did not
+          survive implementation review. A mid-turn save retained <code>acted</code> but could not
+          tell whether that action attacked, so loading could change which units Second Wind
+          refreshes. The shipped rule is additive and exact: <span class="gc-file">Unit.refreshable</span>
+          is set by a committed non-attack action, cleared by an actual attack and at turn start,
+          and remains false on a build. Save format <b>v8</b> carries it; older saves default false
+          rather than grant an action that cannot be proven. This supersedes the paragraph's
+          original “no new state, no save format change” claim while preserving the decision that
+          Second Wind is a refresh rather than an extra turn.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D5 — When the AI asks for its power is a commander fact, not a difficulty weight.</h3>
+        <p class="text-sm mt-2">
+          Before this plan, <span class="gc-file">AIController.plan_next_command</span> asked for the power
+          <em>first</em>, before any unit acts — the file says so: "Command Powers stay here because
+          they precede every ordinary action." Every existing doctrine wants that, because every
+          existing power is "hooks return bigger numbers for the rest of this turn." A refresh power
+          is the exact inverse: fired before anything has moved, it refreshes twelve already-fresh
+          units and does nothing at all. The AI would burn a full meter for zero value, every turn,
+          forever — the banked-meter failure the doctrine toolkit exists to avoid, in its most
+          embarrassing form.
+        </p>
+        <p class="text-sm mt-2">
+          So <span class="gc-file">CommanderType</span> gains
+          <code>@export var power_timing: Timing</code> —
+          <code>BEFORE_ACTIONS</code> (default) or <code>AFTER_ACTIONS</code> — and
+          <span class="gc-file">plan_next_command</span> asks at the matching point. It is data on
+          the general, like <span class="gc-file">power_duration</span> beside it, <b>not</b> an
+          <span class="gc-file">AIProfile</span> weight: the difficulty plan's lock says a tier may
+          only change which profile the planner weighs moves with, and a general's sense of timing
+          is a match fact, not a difficulty smart. Every shipped commander keeps the default, so
+          <span class="gc-file">make difficulty-check</span> stays byte-stable.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D6 — Behaviour in the subclass, numbers on the <code>.tres</code>, integer percentage points.</h3>
+        <p class="text-sm mt-2">
+          The repo rule, restated because six new generals at once is where it would erode. Every number
+          in section 3 is an <code>@export</code> on the general's resource so the balance matrix
+          can move it without a code change, every hook returns integer percentage points so no
+          doctrine can drift the golden damage values, and no hook touches a Node. Calder's 90 and
+          Vale's 120 are exported numbers on two <code>.tres</code> files sharing one subclass
+          shape; Ferrow's 10% bounty is exported beside them. Nothing in section 3 is a literal in
+          a <code>.gd</code>.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold text-lg">D7 — Two new balance fixtures ship <em>before</em> the generals that need them.</h3>
+        <p class="text-sm mt-2">
+          The three scenarios run tiny economies: <span class="gc-file">clash</span> gives each army
+          3 properties, or 3 000 a turn. A price doctrine measured there is measured where it does
+          almost nothing, while on <span class="gc-file">heartland</span> (60 properties, ~15 000 a
+          turn per army) it compounds all match. A bounty doctrine has the opposite problem: killing
+          a full-HP Tank pays Ferrow 700, which is <b>a quarter of a turn's income</b> on
+          <span class="gc-file">clash</span> and <b>a twentieth</b> on
+          <span class="gc-file">heartland</span> — a five-fold swing in strength that has nothing to
+          do with the number on the card. And no fixture lets a fleet meet a
+          fleet, so Marr would be measured on three boards where two thirds of his doctrine does not
+          exist.
+        </p>
+        <p class="text-sm mt-2">
+          NC1 adds <span class="gc-file">holdings</span> (high property count) and
+          <span class="gc-file">channel</span> (connected water, land armies still meet on day one)
+          to <span class="gc-file">SCENARIO_NAMES</span>. Instruments before subjects.
+        </p>
+      </div></div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 3. THE EIGHT ============================ -->
+  <section id="roster">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">3</span>
+      <h2 class="text-2xl font-extrabold">The six, one by one</h2>
+    </div>
+    <p class="max-w-4xl mb-6">
+      Every number below began as a <b>starting value for the balance matrix to move</b>. The cards
+      now record the shipped figures after NC7's full pass. Power costs are on the original roster's
+      scale (10 000–14 000) except where the text says otherwise and says why.
+    </p>
+
+    <div class="grid gap-5">
+
+      <!-- CALDER -->
+      <div class="card bg-base-100 shadow-sm gc-co gc-co-verdant"><div class="card-body py-5">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h3 class="text-xl font-extrabold">Ines Calder</h3>
+          <span class="badge badge-outline">Verdant League</span>
+          <span class="badge badge-ghost">Price · cheap and many</span>
+        </div>
+        <dl class="gc-dl mt-2">
+          <dt>Doctrine</dt>
+          <dd>Every unit costs <b>10% less</b> to build. All units <b>−10% attack</b>.</dd>
+          <dt>Power — Weight of Numbers · 12 000 · owner's turn</dt>
+          <dd>All units <b>+25% attack</b> this turn. (The hook returns +15 while active; her
+          standing −10 is folded in, so the card can promise a number the player can read off the
+          damage preview.)</dd>
+          <dt>What −10% across the board actually buys her</dt>
+          <dd>Infantry 1 000 → 900, Tank 7 000 → 6 300, Battleship 28 000 → 25 200. The discount
+          reaches every tier — she does not have to swarm, she can simply out-build.
+          That is a wider identity than a foot-only discount, and it is also the harder one to
+          balance, because <b>money compounds and stats do not</b>: her −10% attack is a fixed tax
+          per exchange while the discount grows with every turn of income she survives. Advance
+          Wars' Colin ran −20% / −10% and was strong for exactly this reason. The proposed 20%
+          discount measured 73.6% on <span class="gc-file">holdings</span>; moving that one export
+          to 10% brought the same 18-commander slice to 56.9% and the final full matrix to 49.3%.
+          The attack malus stayed put because it is what makes her fights legible.</dd>
+          <dt>Quotes</dt>
+          <dd class="gc-quote">"Ten cheap answers beat one expensive question." · "Build more. Always more."</dd>
+        </dl>
+      </div></div>
+
+      <!-- VALE -->
+      <div class="card bg-base-100 shadow-sm gc-co gc-co-iron"><div class="card-body py-5">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h3 class="text-xl font-extrabold">Konrad Vale</h3>
+          <span class="badge badge-outline">Iron Dominion</span>
+          <span class="badge badge-ghost">Price · few and elite</span>
+        </div>
+        <dl class="gc-dl mt-2">
+          <dt>Doctrine</dt>
+          <dd>Every unit costs <b>20% more</b> to build. All units <b>+10% attack and +10% defence</b>.</dd>
+          <dt>Power — Overwhelming Force · 14 000 · owner's turn</dt>
+          <dd><b>+25% attack</b> and attacks <b>ignore one terrain defence star</b> this turn.</dd>
+          <dt>Calder's number, flipped — one subclass shape, two resources</dt>
+          <dd>Infantry 1 000 → 1 200, Tank 7 000 → 8 400, Md Tank 16 000 → 19 200. He fields four
+          units where his opponent fields five and wins on the exchange rate: +10/+10 is roughly a
+          fifth more effective HP per unit, so the trade is close to even on paper and decided by
+          who picks the fights. His real weakness is <b>tempo</b> — a 1 200 Infantry means his
+          capture race is a fifth slower from the first turn, which is the counter-play a
+          "+stats, +cost" general usually lacks. Kanbei's historical problem was that his weakness
+          was theoretical; this one shows up every time he wants a city.</dd>
+          <dt>Why the twins share a percentage</dt>
+          <dd>One <span class="gc-file">build_cost_pct</span> hook, two exported numbers, 80 and
+          120. Neither general needs a line of code the other does not, which is the cheapest
+          possible way to open a new axis — and it means the matrix can sweep the pair by moving two
+          integers in two <code>.tres</code> files.</dd>
+          <dt>Quotes</dt>
+          <dd class="gc-quote">"Quality is a budget line. Pay it." · "One of mine is worth three of yours."</dd>
+        </dl>
+      </div></div>
+
+      <!-- ASH -->
+      <div class="card bg-base-100 shadow-sm gc-co gc-co-aurora"><div class="card-body py-5">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h3 class="text-xl font-extrabold">Perrin Ash</h3>
+          <span class="badge badge-outline">Aurora Compact</span>
+          <span class="badge badge-ghost">Domain · air</span>
+        </div>
+        <dl class="gc-dl mt-2">
+          <dt>Doctrine</dt>
+          <dd>Air units <b>+10% attack</b>. No drawback.</dd>
+          <dt>Power — Air Superiority · 9 000 · through the opponent's next turn</dt>
+          <dd>Air units <b>+10% attack</b> until her next turn — <b>+20% in total</b> while it runs.</dd>
+          <dt>The cleanest doctrine in the roster, and the quietest</dt>
+          <dd>Nothing outside the air domain, in either direction (D2), so on the 15 boards with no
+          airport she is bit-identical to the neutral commander. Where there <em>is</em> an airport
+          she is a straight upgrade to an expensive, fragile domain — which is a real effect, since
+          a Bomber costs 22 000 and a Fighter 20 000, and a tenth more damage on a unit that
+          expensive is a tenth more of the most valuable shot on the board.</dd>
+          <dt>The power cost came down with the power</dt>
+          <dd><b>9 000, below the roster's floor of 10 000</b>, because +10% on one domain through
+          one round is the smallest Command Power in the game and pricing it beside Rhea Sol's
+          14 000 Grid Saturation would mean a meter she fills once a match for almost nothing. The
+          ROUND duration stays: air is the domain that has to fly home, so a power that expired at
+          end of turn would be spent on the approach.</dd>
+          <dt>She has no answer general</dt>
+          <dd>The drafted counterpart — an anti-air denial general — was cut in review (section 7).
+          So the air domain now has a general who is for it and none who is against it. That is
+          survivable because the <em>units</em> already answer her (Anti-Air, Missiles, Fighters are
+          in every roster and the AI's build list has an air-answer tier that outranks any doctrine
+          bias), but it is worth knowing that the rock-paper-scissors here is unit-level, not
+          commander-level.</dd>
+          <dt>Quotes</dt>
+          <dd class="gc-quote">"Altitude is the only high ground that moves." · "Down there, everything is a target."</dd>
+        </dl>
+      </div></div>
+
+      <!-- MARR -->
+      <div class="card bg-base-100 shadow-sm gc-co gc-co-meridian"><div class="card-body py-5">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h3 class="text-xl font-extrabold">Halden Marr</h3>
+          <span class="badge badge-outline">Meridian Coalition</span>
+          <span class="badge badge-ghost">Domain · sea and shore</span>
+        </div>
+        <dl class="gc-dl mt-2">
+          <dt>Doctrine</dt>
+          <dd>Ships and landers <b>+10% attack</b> and <b>+1 movement</b>. Any of his units standing
+          on a <b>shoal, reef or port</b> gets <b>+1 defence star</b>. No drawback.</dd>
+          <dt>Power — Make for the Shore · 12 000 · owner's turn</dt>
+          <dd>Ships and landers <b>+2 movement</b>; every unit on a shoal, reef or port
+          <b>+1 further defence star</b> and <b>+10% attack</b> this turn.</dd>
+          <dt>His biggest lever is the movement, not the damage</dt>
+          <dd>+10% attack on a domain is small; <b>+1 movement on every hull is not</b>. A Cruiser
+          at 7 and a Lander at 7 change which shore is reachable this turn and which is not, and
+          that is what a naval doctrine is actually about. Read the card top to bottom and the
+          damage line is flavour on top of a mobility doctrine — which is also why he survives
+          having no drawback: the movement is the thing to tune, and it moves in whole tiles.</dd>
+          <dt>Shore, not deep water — and why that widens him by nine boards</dt>
+          <dd>"Ships hit harder" alone would be dead on 19 of 24 boards. The shore clause reaches
+          any board with a coastline, which is most of the ones with water at all, and it makes his
+          identity legible without a fleet: his infantry hold a beach, his landers arrive faster.
+          It also sidesteps the naval plan's standing <b>R1</b> — the AI cannot plan a ferry and
+          never builds transports — because none of his doctrine depends on a ferry existing.
+          <span class="gc-file">shoal</span>, <span class="gc-file">reef</span> and
+          <span class="gc-file">port</span> are all real terrain resources under
+          <span class="gc-file">data/terrain/</span>; the hook asks
+          <span class="gc-file">TerrainType</span> by id, never by a hardcoded list of map
+          characters.</dd>
+          <dt>Quotes</dt>
+          <dd class="gc-quote">"The coast is a road. Learn to read it." · "Every shore is somebody's front door."</dd>
+        </dl>
+      </div></div>
+
+      <!-- FERROW -->
+      <div class="card bg-base-100 shadow-sm gc-co gc-co-iron"><div class="card-body py-5">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h3 class="text-xl font-extrabold">Dane Ferrow</h3>
+          <span class="badge badge-outline">Iron Dominion</span>
+          <span class="badge badge-ghost">Economy · plunder</span>
+        </div>
+        <dl class="gc-dl mt-2">
+          <dt>Doctrine</dt>
+          <dd>Destroying a unit takes <b>10% of its build cost</b> from its owner's treasury and
+          gives it to yours (clamped at what they have). All units <b>−10% defence</b>.</dd>
+          <dt>Power — Collect · 10 000 · owner's turn</dt>
+          <dd>Bounties this turn take <b>20% in total</b> instead of 10%. Nothing else: no attack
+          bonus, no movement.</dd>
+          <dt>One rate, stated twice</dt>
+          <dd>The doctrine and the power are the same number at two settings — the standing 10% and
+          the fired 20% — so the card is one sentence a player can hold in their head, and the hook
+          is one exported integer with a doubling gate on <span class="gc-file">_is_active</span>.
+          It is priced at <b>10 000</b>, the roster floor, beside Gideon Holt's Open the Depots:
+          both are pure-utility powers that put nothing on the board and change no damage number.
+          The turn it fires is a turn Ferrow goes looking for the most expensive thing he can kill,
+          which is the decision the whole general exists to create.</dd>
+          <dt>Self-limiting by construction</dt>
+          <dd>10% of a 16 000 Md Tank is 1 600 — 3 200 with Collect up; 10% of an Infantry is 100.
+          The bounty rewards
+          killing expensive things, which is already the hard and interesting decision, and pays
+          almost nothing for farming foot units. It pays on counterattacks too — the funnel is
+          shared — which suits a general whose own defence is worse. And because it is
+          <em>stolen</em> (D3), the swing is double the number on the card and it dries up entirely
+          against an opponent who spends their income the turn they get it.</dd>
+          <dt>The AI plays this one better than you would expect</dt>
+          <dd><span class="gc-file">ai_unit_action_planner.gd:96</span> already multiplies an
+          attack's value by <span class="gc-file">profile.kill_bonus</span> when the forecast kills,
+          so the planner already prefers securing the killing blow rather than spreading damage.
+          The bounty amplifies a preference it has. What it cannot do is want kills
+          <em>more</em> than another general does — <span class="gc-file">kill_bonus</span> is an
+          <span class="gc-file">AIProfile</span> weight written per difficulty tier, and the one
+          per-commander planner dial is <span class="gc-file">doctrine_weight</span>. So he will be
+          mildly underplayed by the computer. That is an accepted gap, not a defect: three shipped
+          generals advise the planner nothing at all.</dd>
+          <dt>Quotes</dt>
+          <dd class="gc-quote">"Every wreck is a receipt." · "Your budget, my payroll."</dd>
+        </dl>
+      </div></div>
+
+      <!-- COLT -->
+      <div class="card bg-base-100 shadow-sm gc-co gc-co-meridian"><div class="card-body py-5">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h3 class="text-xl font-extrabold">Iris Colt</h3>
+          <span class="badge badge-outline">Meridian Coalition</span>
+          <span class="badge badge-ghost">Tempo · act again</span>
+        </div>
+        <dl class="gc-dl mt-2">
+          <dt>Doctrine</dt>
+          <dd>All units <b>−10% attack</b> and <b>−10% defence</b>. The standing tax on the
+          strongest power in the game.</dd>
+          <dt>Power — Second Wind · 22 000 · owner's turn · fires AFTER_ACTIONS</dt>
+          <dd>Every unit that has <b>already acted this turn and did not attack</b> may act again.</dd>
+          <dt>Why 22 000 when the roster tops out at 14 000</dt>
+          <dd>The meter fills at 100% of value lost plus 50% of value dealt, so a cost is a
+          statement about how much fighting buys the effect. A second movement phase for an entire
+          army — repositioning out of a threat range, closing a gap, finishing a capture the
+          opponent thought they had a turn to stop — is the largest single swing any power in this
+          game can produce, and it should take most of a match to earn. If the matrix says 22 000 is
+          still cheap, raise it before touching the effect: the effect is the identity.</dd>
+          <dt>Two things the scoping buys</dt>
+          <dd>"Did not attack" makes it a <b>reposition</b> power rather than a double alpha strike,
+          which is both easier to balance and the more interesting decision. And it excludes
+          units bought this turn through the saved <span class="gc-file">Unit.refreshable</span>
+          eligibility (D4), so the game's oldest rule — a new build waits a turn — survives a
+          power and a mid-turn save.</dd>
+          <dt>Quotes</dt>
+          <dd class="gc-quote">"Again. From the top." · "The line moves twice today."</dd>
+        </dl>
+      </div></div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 4. MILESTONES ============================ -->
+  <section id="milestones">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">4</span>
+      <h2 class="text-2xl font-extrabold">Milestones</h2>
+    </div>
+    <p class="max-w-4xl mb-5">
+      Seams first, alone, provably neutral. Then the generals that hang off them. Then the roster
+      close-out. Each milestone is one worktree and one PR, each is independently shippable, and
+      the roster is playable and balanced at the end of every one.
+    </p>
+
+    <div class="overflow-x-auto">
+      <table class="table gc-roster bg-base-100 shadow-sm">
+        <thead>
+          <tr><th class="w-24">Milestone</th><th>Deliverable</th><th class="w-72">Acceptance</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>NC1</b><br><span class="text-xs opacity-70">Instruments</span></td>
+            <td>
+              <b>Two balance fixtures.</b> <span class="gc-file">maps/fixtures/holdings.txt</span> —
+              a high-property board (target ~12 properties per army) so an economy doctrine is
+              measured where economies matter. <span class="gc-file">maps/fixtures/channel.txt</span>
+              — connected water touching both ports so a fleet can meet a fleet, with a land bridge
+              so the ground armies still meet on day one. Both 180° rotationally symmetric; both
+              added to <span class="gc-file">SCENARIO_NAMES</span>.
+            </td>
+            <td>
+              The runner's <span class="gc-file">_assert_symmetric</span> passes on both. Neither
+              board day-caps in more than ~5% of matches (the
+              <span class="gc-file">combined</span> lesson: the first version separated the armies
+              with water and ground to the cap in 430 of 432). Existing three scenarios byte-stable.
+            </td>
+          </tr>
+          <tr>
+            <td><b>NC2</b><br><span class="text-xs opacity-70">Price seam</span></td>
+            <td>
+              <b>The pricing authority, no commander.</b>
+              <span class="gc-file">UnitPricing.cost_for(state, team, unit_type)</span> over a
+              <span class="gc-file">CommanderType.build_cost_pct</span> hook. All five raw readers
+              routed through it. <span class="gc-file">MIN_COST</span> floor and the round-to-100
+              rule, both inside the authority. The meter and the AI's target scoring explicitly
+              <em>not</em> routed (D1), with the reason in a comment at both sites.
+            </td>
+            <td>
+              <span class="gc-file">make commander-balance</span> byte-identical to the pre-change
+              report (neutral pricing is structurally the identity). A unit test that the menu, the
+              AI budget and <span class="gc-file">BuildCommand.validate</span> agree on a discounted
+              price. A test that <span class="gc-file">bank_losses</span> still banks base cost.
+            </td>
+          </tr>
+          <tr>
+            <td><b>NC3</b><br><span class="text-xs opacity-70">Price twins</span></td>
+            <td>
+              <b>Ines Calder and Konrad Vale.</b> Two subclasses, two <code>.tres</code>, two
+              <span class="gc-file">FACES</span> rows, quotes, faction assignment. Their AI advice
+              hooks: Calder biases the build list toward cheap units, Vale away from them.
+            </td>
+            <td>
+              On <span class="gc-file">holdings</span>, Vale landed inside the preferred band at
+              53.5%; Calder's proposed 20% discount landed at 73.6%, then shipped at 10% after the
+              full-opponent re-run brought her to 56.9% (watch, inside the 40–60 safety band).
+              Per-general tests pin the price curve at Infantry and Battleship.
+            </td>
+          </tr>
+          <tr>
+            <td><b>NC4</b><br><span class="text-xs opacity-70">Domain trio</span></td>
+            <td>
+              <b>Perrin Ash and Halden Marr.</b> Two subclasses and two <code>.tres</code> files;
+              no <code>core/</code> change at all, and the cheapest milestone in the plan.
+            </td>
+            <td>
+              A test that each is <em>bit-identical to the neutral commander</em> on a land-only
+              board — that is D2, mechanised. Ash measured on <span class="gc-file">combined</span>;
+              Marr on <span class="gc-file">channel</span>. Neither is measured against the win band
+              on a board where their domain does not exist.
+            </td>
+          </tr>
+          <tr>
+            <td><b>NC5</b><br><span class="text-xs opacity-70">Bounty</span></td>
+            <td>
+              <b>Dane Ferrow.</b> <span class="gc-file">kill_bounty_pct</span> hook, paid inside
+              <span class="gc-file">bank_losses</span>, stolen from the victim's treasury and
+              clamped at their balance. Plus the presentation: the funds swing needs to be visible
+              on the HUD or the doctrine is invisible.
+            </td>
+            <td>
+              A test that a starvation death (<span class="gc-file">_lost_to_empty_tank</span>) pays
+              nothing, and one that a broke victim pays what they have and no more. Replay
+              determinism: same seed, same funds, every turn.
+            </td>
+          </tr>
+          <tr>
+            <td><b>NC6</b><br><span class="text-xs opacity-70">Refresh</span></td>
+            <td>
+              <b>Iris Colt.</b> <span class="gc-file">power_timing</span> enum on
+              <span class="gc-file">CommanderType</span>; the second ask in
+              <span class="gc-file">AIController.plan_next_command</span>; Second Wind in
+              <span class="gc-file">on_power_activated</span>. The only milestone that touches
+              <span class="gc-file">ai/</span>. <span class="gc-file">Unit.refreshable</span> and
+              save v8 preserve exact eligibility across a mid-turn load.
+            </td>
+            <td>
+              <b><span class="gc-file">make difficulty-check</span> byte-stable</b> — it seats no
+              commanders and every shipped general keeps <code>BEFORE_ACTIONS</code>, so the
+              difficulty lock survives. An AI-vs-AI soak proving Colt actually fires the power and
+              actually moves twice; a test that a unit built this turn is never refreshed.
+            </td>
+          </tr>
+          <tr>
+            <td><b>NC7</b><br><span class="text-xs opacity-70">Close-out</span></td>
+            <td>
+              <b>The roster close-out.</b> Portraits for all six
+              (<span class="gc-file">tools/commander_face_svg.gd</span> <code>FACES</code> rows —
+              generated, so no artist is on this critical path), quote coverage, the select panel at
+              5 / 5 / 4 / 4, the full 18 × 18 matrix regenerated, and
+              <span class="gc-file">docs/commander_balance.md</span> rewritten around the new
+              scenario list and the new batch size. The human test deck grows by the pairings this
+              plan creates (Calder vs Vale, Ferrow vs anyone poor, Colt vs a turtle).
+            </td>
+            <td>
+              Every general inside the win band or carrying a written review note saying why the
+              band is the wrong instrument for it. Quote coverage test green at 18. The CLAUDE.md
+              plan index gains this plan and its decisions.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================ 5. MEASUREMENT ============================ -->
+  <section id="measurement">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">5</span>
+      <h2 class="text-2xl font-extrabold">What this does to the balance gate</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold">The matrix is O(N²), and this is a 3.75× bill</h3>
+        <table class="table table-sm mt-2">
+          <tbody>
+            <tr><td>Today</td><td class="gc-stat">12 × 12 × 3 scenarios × 4 seeds = 1 728</td></tr>
+            <tr><td>After NC1 (5 scenarios)</td><td class="gc-stat">12 × 12 × 5 × 4 = 2 880</td></tr>
+            <tr><td>After NC7</td><td class="gc-stat">18 × 18 × 5 × 4 = <b>6 480 matches</b></td></tr>
+          </tbody>
+        </table>
+        <p class="text-sm mt-3">
+          A 3.75× release task. Two thirds of that is the scenario list, not the generals: the two
+          fixtures alone take the current roster from 1 728 to 2 880. That is real, and it is the
+          price of measuring economy and naval doctrines at all — but the
+          runner already has the answer for day-to-day work: <code>--commanders=</code>,
+          <code>--scenarios=</code> and <code>--seeds=</code> focused mode is the iteration loop,
+          and the full batch stays out of <span class="gc-file">make verify</span> and
+          <span class="gc-file">make test</span> where it already is. <b>Measure and record the new
+          wall-clock in NC7</b> rather than discovering it during a release.
+        </p>
+        <p class="text-sm mt-2">
+          If it proves intolerable, the lever is the scenario list, not the pairings: a doctrine
+          that cannot exist on a board (Marr on <span class="gc-file">clash</span>) is 288 matches
+          of measuring nothing, and two of the six generals are in that position on three of the
+          five boards. Per-general scenario subsets would cut the batch by roughly a fifth — but
+          that is a runner change with its own byte-stability bar, and it is out of scope here.
+        </p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm"><div class="card-body py-5">
+        <h3 class="font-bold">The matrix will misread four of these six</h3>
+        <p class="text-sm mt-2">
+          <span class="gc-file">docs/commander_balance.md</span> already warns about exactly this:
+          <em>"The AI is rule-based and can underuse terrain, timing, or a specialised economy
+          effect. A commander outside the preferred win band is a review trigger, not an automatic
+          numeric nerf."</em> This plan adds three specialised economy effects, so that paragraph
+          stops being a caveat and becomes the operating instruction.
+        </p>
+        <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+          <li><b>Calder and Vale</b> will under-read on the small fixtures and are tuned on
+          <span class="gc-file">holdings</span>.</li>
+          <li><b>Ferrow</b> will over-read on the small fixtures, for the same reason inverted, and
+          is tuned on <span class="gc-file">holdings</span> too.</li>
+          <li><b>Colt</b> depends on the planner using a second movement phase well, which is
+          exactly the kind of thing a greedy planner does adequately and a human does brilliantly.
+          Expect the human deck to rate her above her win rate.</li>
+        </ul>
+        <p class="text-sm mt-2">
+          None of these get a numeric nerf off the leaderboard alone. All four get a human deck row.
+          Ash and Marr are the two the matrix reads honestly — provided they are read on
+          <span class="gc-file">combined</span> and <span class="gc-file">channel</span> and nowhere
+          else.
+        </p>
+      </div></div>
+    </div>
+
+    <div class="alert mt-5 items-start bg-base-100">
+      <div>
+        <h3 class="font-bold">The evidence this plan is built on</h3>
+        <p class="text-sm mt-1">
+          Measured on the shipped repository, not assumed: <b>9 of 24 boards carry an airport, 5 of
+          24 carry a port</b> (hence D2). <b>Income is 1 000 per property</b>;
+          <span class="gc-file">clash</span> seats 3 properties per army,
+          <span class="gc-file">heartland</span> about 15 — <b>a five-fold swing</b> in what a
+          bounty or a discount is worth (hence D7). <b>The meter banks 100% of value lost and 50% of
+          value dealt</b>, which is how Colt's 22 000 was sized. <b>Portraits are generated</b> from
+          a <code>FACES</code> table rather than drawn, so six new generals put no artist on the
+          critical path — the per-general cost is a subclass, a <code>.tres</code>, a table row, two
+          quotes and a test.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 6. RISKS ============================ -->
+  <section id="risks">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">6</span>
+      <h2 class="text-2xl font-extrabold">Risk register</h2>
+    </div>
+
+    <div class="grid gap-4">
+      <div class="card bg-base-100 shadow-sm gc-risk-high"><div class="card-body py-4">
+        <h3 class="font-bold">R1 · high — The economy snowball</h3>
+        <p class="text-sm">Money buys units, units get kills, kills buy money. Calder and Ferrow are
+        both on that loop, and Calder's discount is <b>proportional</b>, so unlike an absolute
+        rebate it cheapens the expensive units that end games as much as the cheap ones that start
+        them — 6 300 Tanks and 25 200 Battleships compound faster than 900 Infantry.
+        <b>This is the largest single balance risk in the plan.</b>
+        <b>Mitigation:</b> Ferrow's bounty is stolen rather than minted (D3), so it is
+        self-limiting against a poor opponent and gives the loser real counter-play; both generals
+        are tuned on <span class="gc-file">holdings</span>, the board where the loop is fastest; and
+        the discount rate is one exported integer, so a nerf is a data change and a re-run rather
+        than a redesign. <b>Tripwire:</b> if either exceeds the win band on
+        <span class="gc-file">holdings</span> while sitting inside it everywhere else, that
+        <em>is</em> the snowball — and the lever is the price percentage, not the attack malus.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high"><div class="card-body py-4">
+        <h3 class="font-bold">R2 · high — Second Wind is the strongest effect in the game</h3>
+        <p class="text-sm">A whole army moving twice can end a match outright, and a power that ends
+        matches makes every other decision in the game smaller. <b>Mitigation:</b> the "did not
+        attack" scoping (D4) makes it a reposition rather than a second alpha strike; 22 000 is
+        well above the roster ceiling; the standing −10/−10 taxes every turn she has not fired it.
+        <b>Tripwire:</b> if the human deck reports "the match was decided by Second Wind" more than
+        it reports "Second Wind saved my line", the effect narrows further — refresh foot units
+        only — before the cost moves again.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R3 · medium — A fixture that measures the clock instead of the doctrines</h3>
+        <p class="text-sm">The <span class="gc-file">combined</span> history is the warning: its
+        first version separated the armies with water, day-capped in 430 of 432 matches, and
+        produced a twenty-point first-side bias out of the tiebreak alone.
+        <span class="gc-file">channel</span> is the same trap by construction — it exists to put
+        water in the middle. <b>Mitigation:</b> a land bridge, and the NC1 acceptance bar is a
+        measured day-cap rate, not a visual inspection.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R4 · medium — The pricing seam leaks into value</h3>
+        <p class="text-sm">Five call sites move to the authority and two deliberately do not. The
+        failure is silent: route <span class="gc-file">bank_losses</span> through it by accident and
+        Calder's opponents charge their meters more slowly forever, discovered as "the balance
+        numbers moved and nobody knows why". <b>Mitigation:</b> D1 written into the comment at both
+        non-routed call sites, and an NC2 test that asserts the meter banks base cost while a
+        discount is active.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R5 · medium — Six doctrines is six more chances for a rule seam to split</h3>
+        <p class="text-sm">The standing lesson from the hook layers: a rule that lives in both the
+        resolver and a command's <span class="gc-file">validate()</span> is a rule that unit tests
+        miss and an AI-vs-AI soak catches. Pricing is exactly that shape — it lives in
+        <span class="gc-file">validate</span>, in <span class="gc-file">apply</span>, in the menu and
+        in the planner's budget. <b>Mitigation:</b> one authority (D1) and a soak in NC3, not just
+        unit tests.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium"><div class="card-body py-4">
+        <h3 class="font-bold">R6 · medium — Ash and Marr are upside-only</h3>
+        <p class="text-sm">Review removed both drawbacks (D2), so on a board with an airport or a
+        port each is a free bonus over the neutral commander with nothing paid for it. A commander
+        with no cost cannot be balanced by moving what they give up; the only dial is the bonus
+        itself, which is why both sit at <b>+10%</b> — the smallest combat numbers in the roster.
+        <b>Mitigation:</b> they are measured only on the boards where their domain exists, so a
+        misread cannot hide behind fifteen neutral results. <b>Tripwire:</b> either above the win
+        band on <span class="gc-file">combined</span> or <span class="gc-file">channel</span> means
+        the bonus drops to +5% or acquires a drawback — and if it acquires one, D2 says it must
+        live inside the same domain.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low"><div class="card-body py-4">
+        <h3 class="font-bold">R7 · low — "One city buys one infantry" stops being true</h3>
+        <p class="text-sm">Every price today is a multiple of the 1 000 income, which makes the
+        tutorial boards teach a clean lesson. Calder's Infantry at 900 and Vale's at 1 200 break the
+        correspondence. <b>Accepted:</b> leftover funds simply bank, the menu shows the real price,
+        the authority rounds to 100 so no price is ever an awkward number, and the two price
+        generals are not the ones a first-time player meets — the tutorial board leads with the
+        neutral commander.</p>
+      </div></div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low"><div class="card-body py-4">
+        <h3 class="font-bold">R8 · low — Naval R1 still stands</h3>
+        <p class="text-sm">The AI cannot plan a ferry and never builds transports. Marr is designed
+        around it rather than against it — nothing in his doctrine needs a lander to reach anywhere
+        — and <span class="gc-file">channel</span> satisfies R1 by shape, the way
+        <span class="gc-file">atoll</span> does: one body of water touching both ports.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================ 7. OUT OF SCOPE ============================ -->
+  <section id="out-of-scope">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="gc-section-number">7</span>
+      <h2 class="text-2xl font-extrabold">Deliberately out of scope</h2>
+    </div>
+    <ul class="list-disc pl-6 space-y-2 text-sm max-w-4xl">
+      <li><b>Yuna Sorel, an anti-air denial general</b> (Aurora Compact) — Anti-Air, Missiles and
+      Fighters buffed, the whole doctrine priced in cash through NC2's seam. Drafted as the rock to
+      Perrin Ash's scissors and <b>cut in review</b>. The consequence is recorded on Ash's card: the
+      air domain has a general for it and none against it, so that particular
+      rock-paper-scissors stays unit-level. She would fit Aurora's open slot if the roster ever goes
+      to 4 × 5.</li>
+      <li><b>Bram Osei, a day-decay general</b> (Verdant League) — +30% attack on day 1 falling to
+      nothing by day 11, the whole strategy stated as "win by day 8 or lose". Drafted, free to
+      build (the hook reads <span class="gc-file">GameState.day</span>) and <b>cut in review</b>.
+      With him goes the only doctrine in either roster that plays differently late than early, and
+      the only one the 20-day balance cap would not have been inert for. Verdant's open slot.</li>
+      <li><b>A literal extra turn.</b> Considered and rejected in D4, with the reasons. If it is
+      ever revisited it is a turn-order plan, not a commander plan, and it starts with saves and
+      replays rather than with a doctrine.</li>
+      <li><b>An income commander.</b> "+X per property" needs a seam in
+      <span class="gc-file">TurnRules.begin_turn</span>, and it would sit on the same axis Calder
+      and Ferrow already occupy from two more interesting angles. The seam is cheap; the roster slot
+      is not. A future plan that takes the roster to 4 × 6 can have it.</li>
+      <li><b>A comeback commander</b> whose bonus scales with how far behind they are. Genuinely
+      free to build and a real gap in the roster's emotional range — but it is the doctrine most
+      likely to feel arbitrary in the moment ("why did that hurt so much?") and it needs its own
+      legibility work on the HUD. Named here so it is not lost, and left for the 4 × 6 plan.</li>
+      <li><b>Per-commander <span class="gc-file">AIProfile</span>s.</b> Rejected once already by the
+      doctrine-AI plan: a tier × commander matrix forks every future weight eighteen ways. Ferrow's
+      mild underplay (section 3) is the accepted cost of that decision, not a reason to reopen it.</li>
+      <li><b>New units.</b> Nothing here adds a unit type, a weapon or a damage-chart row. Six
+      doctrines over the existing roster is already the largest single change to the balance surface
+      since the naval domains.</li>
+      <li><b>Campaign integration.</b> Which of the eighteen appear in the Ember Line, and as whom, is
+      the campaign story's decision and not this plan's.</li>
+      <li><b>Telemetry.</b> The balance simulator observes and never instruments (balance plan D2);
+      nothing here adds a hook for it, the bounty included.</li>
+    </ul>
+  </section>
+
+  </main>
+
+  <footer class="px-6 py-6 md:px-12 text-xs opacity-70 border-t border-base-300">
+    Grid Commanders · Six New Commanders plan · drafted 2026-08-01, revised in review the same day
+    (eight drafted, two cut, both price doctrines moved from an absolute rebate to a percentage,
+    both domain doctrines stripped of their drawbacks) · status: <b>shipped</b> — milestones
+    NC1–NC7 complete; D4's save-state shortcut superseded by the v8 eligibility record above.
+    Companion plans: commanders-plan.html (the hook contract and
+    the original twelve), commander-doctrine-ai-plan.html (the advice hooks and the
+    <span class="gc-file">doctrine_weight</span> dial), naval-air-units-plan.html (the domains and
+    standing R1), balance-simulator-plan.html (the instruments section 5 spends),
+    difficulty-modes-plan.html (the no-cheating lock D5 must not break).
+  </footer>
+</div>
+</body>
+</html>

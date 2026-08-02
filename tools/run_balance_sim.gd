@@ -14,7 +14,8 @@ extends SceneTree
 ## Usage (headless; see `make balance-sim`):
 ##   Godot --headless --path . -s res://tools/run_balance_sim.gd -- [flags]
 ##     --map=ironworks           any shipped map, or a balance fixture
-##                               (clash/ridge/combined); default first_steps
+##                               (clash/ridge/combined/holdings/channel);
+##                               default first_steps
 ##     --red=<co>:<tier>         a side spec — commander id or `none`, tier
 ##     --blue=<co>:<tier>        easy/normal/hard. Default none:normal.
 ##     --seeds=10                paired seed count (default 4)

@@ -7,7 +7,7 @@ extends Control
 ## for the match; nothing reaches MatchConfig before that.
 ##
 ## One focused CommanderCard carries the full doctrine and power copy; four
-## faction tabs and three peer portraits let the player browse, and a deliberate
+## faction tabs and a peer portrait per member let the player browse, and a deliberate
 ## "No Commander" stays reachable. Every widget is a focusable Control, so mouse,
 ## keyboard, and controller all drive it through Godot's own focus navigation:
 ## Left/Right across a row, Up/Down between the tab, portrait, and button rows.
@@ -35,7 +35,7 @@ const _INACTIVE := UiTheme.SLATE_800
 const _MUTED := UiTheme.NEUTRAL_LIGHT
 
 var _db: CommanderDB
-## faction key -> Array[CommanderType], the three members in name order.
+## faction key -> Array[CommanderType], the faction's members in name order.
 var _by_faction: Dictionary = {}
 var _faction_keys: Array[StringName] = []
 

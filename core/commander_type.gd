@@ -1,6 +1,6 @@
 # gdlint: ignore=max-public-methods
 # The width is the contract, not an accretion: every public method here is one
-# rule seam twelve doctrine subclasses may override, so "move something out"
+# rule seam eighteen doctrine subclasses may override, so "move something out"
 # would mean a second hook tree beside this one — the split the commander plan's
 # D1 rejects. The repo-wide ratchet stays where it is; this file alone answers
 # for its own count, and a new method still needs to be a new doctrine seam.
@@ -49,6 +49,13 @@ enum Duration {
 	ROUND,
 }
 
+## When the AI may consider firing the power. Most commanders act before their
+## army; refresh doctrines wait until every ordinary action has been spent.
+enum Timing {
+	BEFORE_ACTIONS,
+	AFTER_ACTIONS,
+}
+
 @export var id: StringName = NEUTRAL_ID
 @export var display_name: String = "No Commander"
 ## Which of the four powers this general belongs to. Flavour and UI grouping;
@@ -66,6 +73,7 @@ enum Duration {
 ## commander has no power, which also stops its meter ever filling.
 @export var power_cost: int = 0
 @export var power_duration: Duration = Duration.OWNER_TURN
+@export var power_timing: Timing = Timing.BEFORE_ACTIONS
 
 static var _neutral: CommanderType
 
@@ -200,6 +208,20 @@ func repair_cost_pct(_state: GameState, _unit: Unit) -> int:
 	return 100
 
 
+## What this army pays to build `unit_type`, as a percentage of its base value.
+## UnitPricing applies the floor and rounding; the base value itself remains the
+## currency used by charge, repair, target scoring and balance valuation.
+func build_cost_pct(_state: GameState, _team: int, _unit_type: UnitType) -> int:
+	return 100
+
+
+## Percentage of a destroyed unit's base value transferred from its owner to
+## this commander's army. Zero is the neutral rule; CombatResolver owns the
+## kill gate and the victim-funds clamp.
+func kill_bounty_pct(_state: GameState, _team: int, _victim: Unit) -> int:
+	return 0
+
+
 # --- powers ------------------------------------------------------------------
 
 
@@ -210,9 +232,9 @@ func on_power_activated(_state: GameState, _team: int) -> void:
 	pass
 
 
-## Whether the AI should spend a full meter now. Asked once per planning pass,
-## before any unit acts; the meter being full and the power being legal are
-## already settled by PowerCommand, so this is only the question of timing.
+## Whether the AI should spend a full meter now. Asked at this commander's
+## declared timing; the meter being full and the power being legal are already
+## settled by PowerCommand, so this is only the doctrine's board question.
 ##
 ## The default is the offensive read — "there is a fight to have this turn" —
 ## which is correct for every power whose value lands on the turn it fires: the

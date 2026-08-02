@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="IrisColt" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/iris_colt.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"iris_colt"
+display_name = "Iris Colt"
+faction = "Meridian Coalition"
+doctrine_text = "All units have -10% attack and -10% defence."
+power_name = "Second Wind"
+power_text = "Refresh units that already acted this turn without attacking."
+power_quotes = Array[String](["Again. From the top.", "The line moves twice today."])
+power_cost = 22000
+power_duration = 0
+power_timing = 1
+combat_pct = -10

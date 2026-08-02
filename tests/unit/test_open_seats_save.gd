@@ -66,7 +66,7 @@ func test_a_save_written_before_home_hqs_takes_them_from_its_map() -> void:
 func test_a_current_save_without_home_hqs_is_refused() -> void:
 	var data := SaveCodec.encode(_quartet(), [] as Array[int])
 	data.erase("home_hq")
-	assert_eq(SaveCodec.validate(data), "a version 7 save is missing 'home_hq'")
+	assert_eq(SaveCodec.validate(data), "a version 8 save is missing 'home_hq'")
 
 
 func test_a_home_hq_for_an_army_that_does_not_play_is_refused() -> void:

@@ -46,3 +46,4 @@ func apply(state: GameState) -> void:
 	if ambushed:
 		return  # the move stopped short of the firing cell; the shot is off
 	result = CombatResolver.resolve(state, unit, target)
+	unit.refreshable = false

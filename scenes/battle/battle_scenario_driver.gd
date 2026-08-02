@@ -419,10 +419,7 @@ func _run_dive_demo(mode: String) -> void:
 ## the menu has to go with it: a row chosen afterwards used to run against a
 ## selection that was already cleared and take the scene down with it.
 func _run_power_menu_demo() -> void:
-	var co := _battle.commander_db.by_id(&"alina_ward")
-	_battle.game.set_commander(1, co)
-	_battle.game.commander_state(1).charge = co.power_cost
-	_battle.view.restage_identity()  # meter reads full, and the CO recolours its board
+	_set_red_commander(&"alina_ward", true)
 	_battle.confirm_at(Vector2i(8, 8))  # select the red tank
 	_battle.confirm_at(Vector2i(8, 8))  # stay put -> its action menu
 	await _until_state(Battle.State.MENU)
@@ -876,10 +873,13 @@ func _stand(type: UnitType, team: int, cell: Vector2i) -> Unit:
 
 
 ## Sets Red's commander and, optionally, fills its meter, then refreshes the HUD
-## so the bars read the state under test. Node-free like the rest of the driver:
-## it only writes sim state the presentation then reflects.
+## so the bars read the state under test. Node-free: it writes only sim state.
+## `id` is the scenario's default and yields to a general the launch already seated,
+## so `--co=` reaches the frames that need a power — banner, quote, meter — for any
+## general. Neutral is no seating, so the sweep, which names none, stages as before.
 func _set_red_commander(id: StringName, charged: bool) -> CommanderType:
-	var co := _battle.commander_db.by_id(id)
+	var seated := _battle.game.commander_of(1)
+	var co := seated if seated.has_power() else _battle.commander_db.by_id(id)
 	_battle.game.set_commander(1, co)
 	if charged:
 		_battle.game.commander_state(1).charge = co.power_cost

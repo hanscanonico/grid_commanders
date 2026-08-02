@@ -42,6 +42,7 @@ func apply(state: GameState) -> void:
 	target.fuel = mini(target.type.max_fuel, target.fuel + unit.fuel)
 	target.ammo = mini(target.type.max_ammo, target.ammo + unit.ammo)
 	target.acted = true
+	target.refreshable = false
 	# Plain erase, not remove_unit: nothing died, so no rout check, and the
 	# target's own capture progress on this cell must survive the merge.
 	state.units.erase(unit)
