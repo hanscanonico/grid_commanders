@@ -99,6 +99,25 @@ func test_hoarding_is_money_left_on_an_idle_factory() -> void:
 	assert_string_contains(_first(report, "hoarding").detail, "9000")
 
 
+## The purse is measured against what this side is actually charged. A doctrine
+## that marks production up leaves money on the table that buys nothing, and a
+## detector reading the sticker price would send the reader after a build order
+## that was already doing the only thing it could.
+func test_a_purse_short_of_a_marked_up_price_is_not_hoarding() -> void:
+	var short := _bare_state()
+	short.set_commander(1, commander_db.by_id(&"konrad_vale"))
+	short.funds[1] = 1100
+	short.funds[2] = 0
+	assert_eq(_count(_run(short, [{"c": "end_turn"}]), "hoarding"), 0)
+	var enough := _bare_state()
+	enough.set_commander(1, commander_db.by_id(&"konrad_vale"))
+	enough.funds[1] = 1200
+	enough.funds[2] = 0
+	var report := _run(enough, [{"c": "end_turn"}])
+	assert_eq(_count(report, "hoarding"), 1)
+	assert_string_contains(_first(report, "hoarding").detail, "1200")
+
+
 func test_a_purse_too_small_for_anything_is_not_hoarding() -> void:
 	var state := _bare_state()
 	state.funds[1] = 100

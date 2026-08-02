@@ -314,7 +314,8 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 
 
 ## Money left on an idle factory. Read through the same two facts `BuildCommand`
-## reads — the terrain's move classes and the type's cost — so a property that
+## reads — the terrain's move classes and what this side is actually charged, so
+## a doctrine's price percentage moves the finding with it — and a property that
 ## builds nothing this side can afford is not reported.
 static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 	var purse := int(state.funds.get(team, 0))
@@ -328,8 +329,9 @@ static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 		for type in walk.unit_db.all():
 			if not terrain.can_build(type.move_class):
 				continue
-			if type.cost <= purse and (cheapest < 0 or type.cost < cheapest):
-				cheapest = type.cost
+			var price := UnitPricing.cost_for(state, team, type)
+			if price <= purse and (cheapest < 0 or price < cheapest):
+				cheapest = price
 	if cheapest < 0:
 		return
 	_add(

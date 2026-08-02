@@ -64,6 +64,25 @@ func test_a_new_build_is_never_refreshed() -> void:
 	assert_true(build.built_unit.acted)
 
 
+## The rider boards on the same turn it is set down, which is the case where the
+## flag it carried in was its own. Second Wind must still pass it by: the drop is
+## the transport's action, so eligibility cannot depend on how the rider got aboard.
+func test_a_dropped_rider_is_never_refreshed() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 p 0 0\n1 i 1 0")
+	var carrier := state.units[0]
+	var rider := state.units[1]
+	var board := LoadCommand.new(rider, [Vector2i(1, 0), Vector2i(0, 0)])
+	assert_eq(board.validate(state), "")
+	board.apply(state)
+	assert_true(rider.refreshable, "boarding is the rider's own non-attack action")
+	var drop := DropCommand.new(carrier, [Vector2i(0, 0), Vector2i(1, 0)], Vector2i(2, 0))
+	assert_eq(drop.validate(state), "")
+	drop.apply(state)
+	assert_false(rider.refreshable)
+	_fire(state)
+	assert_true(rider.acted, "a unit somebody else set down stays exhausted")
+
+
 func test_ai_spends_second_wind_late_and_moves_twice() -> void:
 	var state := _state("[terrain]\n............\n[units]\n1 p 0 0\n2 i 11 0")
 	var commander := state.commander_of(1)

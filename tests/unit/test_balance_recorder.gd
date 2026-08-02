@@ -229,6 +229,29 @@ func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
 	assert_eq(recorder.reconcile(state, {1: 1, 2: 1}), "")
 
 
+## A bounty has two ends and the victim is never the side on turn, so its half is
+## carried to the row that opens next. Without it the timeline shows a side
+## starting a turn poorer than it ended the last one, for no recorded reason.
+func test_a_stolen_bounty_is_carried_to_the_victim_s_next_row() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n2 T 1 0\n2 i 3 0")
+	state.set_commander(1, CommanderDB.load_default().by_id(&"dane_ferrow"))
+	state.units[1].hp = 10
+	state.funds[2] = 5000
+	var recorder := _recorder(state)
+	_apply(
+		recorder, state, AttackCommand.new(state.units[0], _path([Vector2i.ZERO]), Vector2i(1, 0))
+	)
+	var thief := _close(recorder, state)
+	var victim := _close(recorder, state)
+	assert_eq(thief["plunder"], 1600)
+	assert_eq(victim["team"], 2)
+	assert_eq(victim["plunder_off_turn"], -1600, "the theft the victim could not report itself")
+	assert_eq(victim["funds_start"], 3400)
+	_close(recorder, state)
+	_close(recorder, state)
+	assert_eq(recorder.reconcile(state, {1: 1, 2: 2}), "")
+
+
 func test_only_a_completed_capture_counts() -> void:
 	# One infantry needs two turns on a city, so the first turn chips and the
 	# second flips it — and only the second is a capture.

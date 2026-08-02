@@ -110,7 +110,7 @@ property lines cross.
 | Column group | Columns | Detail |
 |---|---|---|
 | Key | `match_id · day · team · commander · tier` | Joins to `matches.csv` for map, seed, seats, outcome |
-| Money | `funds_start · income · plunder · spent · funds_end` | See below |
+| Money | `funds_start · income · plunder · plunder_off_turn · spent · funds_end` | See below |
 | Production | `built · built_value` | `infantry x2;tank` and its summed cost |
 | Combat | `killed · lost · killed_value · lost_value` | See attribution below |
 | Board | `merged · forfeited · unit_count · army_value · properties · captures` | End-of-turn strength; `army_value` = Σ cost × HP fraction, because a 2 HP tank isn't a tank |
@@ -138,6 +138,13 @@ the turn**: positive for the bounty earner and negative for the victim. Within
 the turn the only ordinary spend is production, so
 `funds_start + plunder − spent = funds_end` closes exactly, and the run fails if
 it ever doesn't.
+
+A bounty has two ends and only one of them is on turn, so **`plunder_off_turn` is
+the other end**: what enemy bounties took from this side — or what its own
+counter-fire took back — since its previous row. It is a signed number outside the
+row's own window, and it is what keeps the *row-to-row* relation exact:
+`funds_end` (previous row) `+ income + plunder_off_turn = funds_start`, checked
+per match like the equation above.
 
 **`planning_ms` is the one wall-clock column.** Everything else in a timeline row
 is a pure function of (map, seed, side specs) and reproduces byte for byte; this
