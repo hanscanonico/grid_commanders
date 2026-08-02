@@ -17,6 +17,7 @@ EventBus="*res://autoload/event_bus.gd"
 MatchConfig="*res://autoload/match_config.gd"
 Settings="*res://autoload/settings.gd"
 Sfx="*res://autoload/sfx.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [display]
 
@@ -26,6 +27,10 @@ window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gut/plugin.cfg")
 
 [input]
 

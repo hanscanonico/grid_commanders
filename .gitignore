@@ -6,12 +6,9 @@
 # to symlink bin/ across — and `bin/` would not match a symlink named `bin`.
 bin
 
-# Locally installed editor tooling (the Godot AI MCP plugin and its licence).
-# Tracking it would drag along the `_mcp_game_helper` autoload it registers in
-# project.godot, and a checkout without the plugin boots with an autoload whose
-# script is not there. No trailing slash, as for `bin` above and for the same
-# reason: a worktree reaches the plugin by symlinking it across.
-addons/godot_ai
+# The Godot AI MCP plugin's installer drops a second copy of its licence at the
+# repo root; the vendored addon carries its own `addons/godot_ai/LICENSE`, which
+# is the copy we track.
 godot-ai-LICENSE.txt
 
 # macOS
