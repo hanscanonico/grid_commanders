@@ -4,7 +4,7 @@ extends CommanderType
 ## cheaper, every ordinary exchange is softer, and Weight of Numbers cashes the
 ## wider army in for one decisive attacking turn.
 
-@export var unit_cost_pct: int = 80
+@export var unit_cost_pct: int = 90
 @export var attack_pct: int = -10
 ## Total hook value while active. +15 against her ordinary -10 is the +25 swing
 ## the player-facing power promises.

@@ -146,11 +146,7 @@ func _repaint_properties(game: GameState) -> void:
 
 
 func _present_attack(
-	command: AttackCommand,
-	target: Unit,
-	watched: bool,
-	animate_path: bool,
-	bounty_delta: int
+	command: AttackCommand, target: Unit, watched: bool, animate_path: bool, bounty_delta: int
 ) -> void:
 	if command.ambushed:
 		await _settle_move(command, command.unit, watched)

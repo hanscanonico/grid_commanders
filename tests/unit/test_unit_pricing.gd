@@ -54,9 +54,7 @@ func test_build_command_validates_and_charges_the_authoritative_price() -> void:
 
 
 func test_ai_affordability_uses_the_authoritative_price() -> void:
-	var state := _state(
-		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0", 80
-	)
+	var state := _state("[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0", 80)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 5600

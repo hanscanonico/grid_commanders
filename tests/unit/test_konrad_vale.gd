@@ -23,9 +23,7 @@ func _state() -> GameState:
 
 
 func _fight(state: GameState) -> Engagement:
-	return Engagement.create(
-		state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10
-	)
+	return Engagement.create(state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10)
 
 
 func test_surcharge_reaches_both_ends_of_the_roster() -> void:

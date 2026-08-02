@@ -27,6 +27,15 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `commanders-plan.html` — Commanders and Command Powers: milestones C1–C4, locked decisions D1–D4
   (subclassed `CommanderType`, asymmetric charge accrual, C1 scope, Sable Wren's reworked Vanish),
   risk register R1–R6.
+- `new-commanders-plan.html` — six more generals, milestones NC1–NC7, **all shipped**: Ines Calder
+  and Konrad Vale share the one `UnitPricing.cost_for` purchase authority while base cost remains
+  charge/target/value currency; Perrin Ash and Halden Marr are domain-only and exactly neutral on
+  land-only boards; Dane Ferrow's kill bounty is stolen through `CombatResolver.bank_losses`,
+  never minted; Iris Colt's `AFTER_ACTIONS` Second Wind refreshes non-attack actions. The plan's
+  D4 “no new state/save” claim is superseded by the safe rule: `Unit.refreshable` records that
+  eligibility and save v8 carries it, because `acted` alone cannot distinguish an attack from a
+  non-attack after loading. Older saves default it false. The roster is deliberately 5 / 5 / 4 /
+  4, and the full balance gate is 18 × 18 × five scenarios × four seeds.
 - `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
   tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
   income, vision, damage or luck. Its DF4 acceptance gate is currently **failing, knowingly**
@@ -182,7 +191,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   the banked-meter failure the toolkit exists to avoid. Three generals advise nothing on purpose
   (Orlov, Quill, Rowan): forecasts already play them right, and a silent doctrine is the seam
   working, not missing. `core/commander_type.gd` carries the repo's one `max-public-methods`
-  ignore — its width is the hook contract twelve subclasses override, so the split the ratchet
+  ignore — its width is the hook contract eighteen subclasses override, so the split the ratchet
   usually buys would be the mirror hook tree the commanders plan's D1 rejects; the ceiling stays
   21 for every facade-shaped class. D5: `make difficulty-check` stays byte-stable (it seats no
   commanders, and neutral advice is structurally zero); `make commander-balance` moved by design
@@ -380,10 +389,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   names, floored at a duel (`MapData.DEFAULT_TEAMS`) — so contiguity is structural rather than
   breakable, and the many fixtures that name a single team keep playing the duel they always did
   (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
-  The save format is version 7: the roster arrived at 4, the grouping at 5, the fallen at 6 (the
+  The save format is version 8: the roster arrived at 4, the grouping at 5, the fallen at 6 (the
   plan's "save v4 carries `eliminated`" is superseded by that ordering), each army's home HQ at 7 —
   a save below v7 takes its home HQs from the map it names, which is exact because such a save
-  always seated the board's full roster. An older save decodes as
+  always seated the board's full roster — and Second Wind eligibility at 8; a save below v8
+  defaults every unit to ineligible rather than granting an unverifiable extra action. An older save decodes as
   the free-for-all duel it recorded with every army it names still standing, and
   `SaveCodec._teams_error` / `_sides_error` / `_eliminated_error` / `_home_hq_error` refuse a
   roster, grouping, casualty list or home-HQ list no seating could have produced *before* any

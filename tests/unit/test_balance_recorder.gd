@@ -220,9 +220,7 @@ func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
 	state.funds[2] = 5000
 	var recorder := _recorder(state)
 	_apply(
-		recorder,
-		state,
-		AttackCommand.new(state.units[0], _path([Vector2i.ZERO]), Vector2i(1, 0))
+		recorder, state, AttackCommand.new(state.units[0], _path([Vector2i.ZERO]), Vector2i(1, 0))
 	)
 	recorder.end_match(state)
 	var row: Dictionary = recorder.rows()[recorder.rows().size() - 1]

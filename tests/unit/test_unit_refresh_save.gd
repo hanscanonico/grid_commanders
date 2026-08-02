@@ -24,7 +24,9 @@ func test_refreshable_round_trips() -> void:
 	var state := _state()
 	state.units[0].acted = true
 	state.units[0].refreshable = true
-	var loaded := SaveCodec.decode(SaveCodec.encode(state, [] as Array[int]), terrain_db, unit_db, chart)
+	var loaded := SaveCodec.decode(
+		SaveCodec.encode(state, [] as Array[int]), terrain_db, unit_db, chart
+	)
 	assert_not_null(loaded)
 	assert_true(loaded.state.units[0].acted)
 	assert_true(loaded.state.units[0].refreshable)

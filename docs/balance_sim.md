@@ -63,7 +63,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 
 | Flag | Meaning |
 |---|---|
-| `--map=` | Any shipped board, or a balance fixture (`clash`, `ridge`, `combined`) |
+| `--map=` | Any shipped board, or a balance fixture (`clash`, `ridge`, `combined`, `holdings`, `channel`) |
 | `--red=` / `--blue=` | Side specs; default `none:normal` |
 | `--seeds=` | Paired seed count, default 4. Each seed plays **both seats** |
 | `--seed=` | One specific seed instead — replays a single row |
@@ -110,7 +110,7 @@ property lines cross.
 | Column group | Columns | Detail |
 |---|---|---|
 | Key | `match_id · day · team · commander · tier` | Joins to `matches.csv` for map, seed, seats, outcome |
-| Money | `funds_start · income · spent · funds_end` | See below |
+| Money | `funds_start · income · plunder · spent · funds_end` | See below |
 | Production | `built · built_value` | `infantry x2;tank` and its summed cost |
 | Combat | `killed · lost · killed_value · lost_value` | See attribution below |
 | Board | `merged · forfeited · unit_count · army_value · properties · captures` | End-of-turn strength; `army_value` = Σ cost × HP fraction, because a 2 HP tank isn't a tank |
@@ -133,9 +133,11 @@ balancing an equation. An otherwise empty final row is dropped.
 **`income` is the whole start-of-turn tick** — property income less any repairs
 paid on it — because that is what can be observed without re-deriving a rule the
 sim owns. A commander economy hook would therefore show up here as a residual
-rather than hide. Within the turn the only spend is production, so
-`funds_start − spent = funds_end` closes exactly, and the run fails if it ever
-doesn't.
+rather than hide. **`plunder` is the signed funds transfer caused by kills during
+the turn**: positive for the bounty earner and negative for the victim. Within
+the turn the only ordinary spend is production, so
+`funds_start + plunder − spent = funds_end` closes exactly, and the run fails if
+it ever doesn't.
 
 **`planning_ms` is the one wall-clock column.** Everything else in a timeline row
 is a pure function of (map, seed, side specs) and reproduces byte for byte; this

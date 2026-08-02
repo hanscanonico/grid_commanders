@@ -84,7 +84,9 @@ func test_cargo_each_pays_through_the_same_kill_funnel() -> void:
 func test_collect_doubles_the_rate_and_defence_stays_soft() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
 	var co := state.commander_of(1)
-	var fight := Engagement.create(state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10)
+	var fight := Engagement.create(
+		state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10
+	)
 	assert_eq(co.defense_bonus(state, fight), -10)
 	state.add_charge(1, co.power_cost)
 	PowerCommand.new().apply(state)

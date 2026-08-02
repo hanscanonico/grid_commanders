@@ -24,15 +24,13 @@ func _state() -> GameState:
 
 
 func _fight(state: GameState) -> Engagement:
-	return Engagement.create(
-		state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10
-	)
+	return Engagement.create(state.units[0], Vector2i.ZERO, 10, state.units[1], Vector2i(1, 0), 10)
 
 
 func test_discount_reaches_both_ends_of_the_roster() -> void:
 	var state := _state()
-	assert_eq(UnitPricing.cost_for(state, 1, unit_db.by_id(&"infantry")), 800)
-	assert_eq(UnitPricing.cost_for(state, 1, unit_db.by_id(&"battleship")), 22400)
+	assert_eq(UnitPricing.cost_for(state, 1, unit_db.by_id(&"infantry")), 900)
+	assert_eq(UnitPricing.cost_for(state, 1, unit_db.by_id(&"battleship")), 25200)
 
 
 func test_weight_of_numbers_is_a_twenty_five_point_swing() -> void:
