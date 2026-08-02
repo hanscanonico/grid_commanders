@@ -334,7 +334,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   everything wants no more infantry and the priority list resumes with nothing to switch off.
   `AIProductionPlanner._capture_unit_target` is the one place that asks, one scan per build
   decision; `AIPlanningContext` gained nothing, because this is not a per-decision fact the unit
-  planner shares.
+  planner shares. D5's own clause that the floor "stays at 3 in every tier" is superseded by D2,
+  which forbids editing a shipped tier value: **the floor is whatever a tier already ships**, and
+  `easy.tres` has carried 2 since COM-120 pruned its capture play (`docs/difficulty_check.md` H3).
   D6 rides on D5 and is why no banking code moved: **`_worth_waiting_for` already refuses to bank
   whenever something urgent is wanted**, and a short capture roster is urgent — so the same branch
   now banks on a small board and spends on a big one, and a property count is the board asking
