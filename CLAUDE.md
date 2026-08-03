@@ -229,7 +229,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   AJ1's own two decisions: **denial is priced at the price of capture, read backwards** (D3) —
   `_defend_bonus` is built from the same `capture_score` / `capture_progress_bonus` /
   `hq_capture_multiplier` arithmetic `_consider_captures` uses, scaled by `defend_weight`, so at
-  1.0 denying a capture is worth exactly what making one is and the two compete in one `UnitPlan`
+  1.0 denying a capture is worth exactly what making one is and the two compete in one `AIUnitPlan`
   without a conversion; only a **capture-capable** enemy earns it (what a tank parked on our city
   threatens is the threat map's job, and paying twice is the plan's R3), the ground is our
   *side's* through `GameState.allied`, and the HQ multiplier is asked of `GameState.home_hq`,
@@ -248,11 +248,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   `withdraw_weight × cost × damage_avoided / 100` — the currency `_attack_score` is already in, and
   the whole reason this is a third dial rather than a wider `advance_threat_tiles` (that one counts
   in *tiles* and so cannot say "this shot costs me sixteen thousand funds"). The refuge is the
-  reachable cell of least `ThreatMap.incoming_damage`, then ground that repairs us, then the
-  shortest walk — three keys in that order, and **safety outranks repair**, so a workshop inside a
-  firing ring is not a refuge; standing still enters the comparison at cost zero, so a merely-equal
-  cell never pulls a unit off its own square. Three dials now read one `ThreatMap`
-  (`threat_aversion`, `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
+  reachable cell of least `ThreatMap.incoming_damage`, then — since the arena plan's AR6d, see that
+  entry — the cell that costs the unit's own weapon least, then ground that repairs us, then the
+  shortest walk, and **safety outranks both**, so a workshop inside a firing ring is not a refuge;
+  standing still enters the comparison at cost zero, so a merely-equal cell never pulls a unit off
+  its own square. Three dials now read one `ThreatMap` (`threat_aversion`,
+  `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
   times — the plan's R3 — so **tune them together and never alone**.
   AJ3's one decision: **cohesion is a term on the advance path, not a formation manager** (D5).
   `_cohesion_penalty` charges a unit `cohesion_tiles` per tile it is adrift of the nearest unit in
@@ -307,9 +308,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   playtest. R6's wall clock: **a live threat-map dial roughly doubles Normal's per-turn planning
   time** (33 → 63 ms) — that comparison's other two columns are forced configurations rather than
   shipped tiers (Easy and Difficult already build the map). Normal still builds no threat map, so
-  that half stands; but §4's turn-time table was measured before the dials went live and Normal
-  now runs the cohesion term on every advance, so it is no longer a reading of the shipped tiers
-  and nothing since has re-measured them.
+  that half stands; but every turn-time figure in that document predates something — §4's table the
+  dials, both of them the AR1 plan cache — so none of them reads the planner as it stands, and
+  nothing since has re-measured them.
 - `ai-economy-plan.html` — the planner reads the map as an *economy* rather than as the fight in
   front of it: enough infantry to race for the board, capture goals that fan out across it, and a
   price on the ground that builds tanks. Milestones AE1–AE4, **AE1–AE3 shipped**. It is scoped
@@ -904,8 +905,13 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   delegates to exactly two coarse collaborators: `AIUnitActionPlanner` and
   `AIProductionPlanner`. `AIPlanningContext` is the one owner of scan-ordered per-decision facts
   (friendlies, visible enemies, properties, unit types, goals, capture claims and the production
-  roster) and the threat map cache shared across decisions in a turn. Preserve strict comparator
-  order and profile reads when moving AI code; never tune a `.tres` in an extraction.
+  roster) and the threat map cache shared across decisions in a turn. `AIPlanCache` is the planner's
+  own, keeping each ready unit's `AIUnitPlan` between the commands of one turn and dropping what a
+  **board diff** — never the returned `Command` — says could have moved; rescoring every survivor
+  after every command is load-bearing (it is how a wounded target's kill reaches the next attacker),
+  so the cache may drop a plan that still held and may never keep one that did not (arena plan AR1).
+  Preserve strict comparator order and profile reads when moving AI code; never tune a `.tres` in
+  an extraction.
 - **Doctrine hooks take an `Engagement`, not two `Unit`s.** `core/rules/engagement.gd` carries the
   effective values a shot is resolved with: the cell it is *actually* fired from and the HP the
   formula should use — which is what keeps the damage preview and the resolved attack on

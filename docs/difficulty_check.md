@@ -288,8 +288,10 @@ Mean AI planning per turn in that run:
 
 **These numbers predate the Judgement dials and are no longer a reading of the
 shipped tiers**: every tier now runs the cohesion term on every advance, and
-nothing since has re-measured them. Normal still builds no threat map, which is
-the half of §4b's comparison that stands.
+nothing since has re-measured them. AR1's plan cache (COM-154) has since made a
+headless turn several times cheaper again, so no turn-time figure in this
+document — here or in §4b — reads the planner as it stands. Normal still builds
+no threat map, which is the half of §4b's comparison that stands.
 
 These are measurements, not deterministic outputs; the pairing results,
 rejected-command count and cap-stall count are the reproducible gate evidence.
@@ -379,11 +381,13 @@ probe cannot separate them — a unit that survives by withdrawing is a unit tha
 did not trade, and in an AI-vs-AI attrition race not trading is losing; or the
 refuge choice is right but the *price* is wrong, because the dial pays full cost
 × damage-avoided while an attack pays only its own value. **Recommended: leave at
-`0.0`, and do not ship it live on this evidence.** The capability stays in the
-code, which is the standing remedy for a misbehaving smart — `focus_fire_bonus`
-is the precedent, kept at zero for four measurement rounds and re-testable in one
-edit. A human playtest is the missing instrument here: "the AI throws units away"
-is a complaint about how a match *feels*, and the ladder only scores who wins.
+`0.0`, and do not ship it live on this evidence** — evidence these rows can no
+longer give on their own, because they measured the refuge comparator AR6d has
+since changed (§4c). The capability stays in the code, which is the standing
+remedy for a misbehaving smart — `focus_fire_bonus` is the precedent, kept at
+zero for four measurement rounds and re-testable in one edit. A human playtest is
+the missing instrument here: "the AI throws units away" is a complaint about how
+a match *feels*, and the ladder only scores who wins.
 
 ### `cohesion_tiles` × `cohesion_radius` — the largest gain measured here, and not reproduced (see §4c)
 
@@ -588,7 +592,7 @@ cannot return fire, so the attack it offers is priced as pure profit.
 
 **That last row is the dial's ceiling, and no value removes it.** The defence
 bonus is linear and denominated in the same currency as a kill — which is what
-lets the two compete in one `UnitPlan` at all (AJ1 D3) — so a rich enough target
+lets the two compete in one `AIUnitPlan` at all (AJ1 D3) — so a rich enough target
 always outbids a capture, including one that would end the army. Raising the
 weight moves the crossover; it cannot make a match-ending capture
 incommensurable with an ordinary kill. **The structural follow-up is the pricing

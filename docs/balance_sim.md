@@ -314,6 +314,10 @@ Measured on the vendored Godot 4.7.1, headless, on an Apple-silicon laptop:
 | Neutral mirror across all 12 boards, 3 seeds, 15-day cap | 36 | ~20 s |
 | One matchup, 6 seeds, 25-day cap | 12 | ~11 s |
 
+**The table predates AR1's plan cache (COM-154)**, which made a headless match
+several times cheaper without moving a single result — read it as an upper bound
+until a run re-measures it.
+
 Matches are tens to hundreds of milliseconds each; telemetry is reads and
 appends and does not measurably change that — and `planning_ms` lands in every
 row, so if the recorder ever *did* get expensive it would be visible in its own
