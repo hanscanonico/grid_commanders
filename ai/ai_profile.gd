@@ -254,8 +254,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## factory exactly as a plains city, which is the shipped planner.
 ##
 ## Denominated in VALUE, because capture_score is: it multiplies the capture score
-## beside hq_capture_multiplier rather than competing with it, so a captured enemy
-## headquarters reads as both a decapitation and a production line (AI Economy D4).
+## beside hq_capture_multiplier rather than competing with it, so neither dial can
+## shadow the other on ground both would price (AI Economy D4). On shipped terrain
+## they never both apply — a headquarters builds nothing.
 @export var production_capture_multiplier: float = 1.0
 ## How many tiles out of its way a unit will walk for the *whole* of what a
 ## production property is worth above an ordinary one. The detour is this times

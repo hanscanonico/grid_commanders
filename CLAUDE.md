@@ -375,8 +375,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   scored exactly as a plains city — which is how a closed seat's two factories sat unclaimed while
   the player took them and built out of both. `capture_score` stays the unit of account and
   `production_capture_multiplier` multiplies it **beside** `hq_capture_multiplier`, on the same line
-  of arithmetic, so the two compose rather than compete: a captured enemy headquarters reads as a
-  decapitation *and* a production line.
+  of arithmetic, so the two compose rather than compete — neither can shadow the other, whatever a
+  future terrain builds. On this game's data they never both apply: `data/terrain/hq.tres` builds
+  nothing, so a headquarters is priced by `hq_capture_multiplier` alone and a base, a port and an
+  airport are the production properties. **That supersedes the plan's AE3 card**, which asserts "a
+  captured enemy headquarters is already a production property and should read as both" — false
+  against the shipped terrain, and the composition is worth having on its own terms.
   **One judgement, two readings, and they cannot disagree.** The same multiplier feeds the goal side
   through `capture_goal_value_tiles`, which buys
   `capture_goal_value_tiles × (production_capture_multiplier − 1)` tiles of detour — zero at either
