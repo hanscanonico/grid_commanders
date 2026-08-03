@@ -66,6 +66,21 @@ func test_friendly_allows_passage_but_not_stopping() -> void:
 	assert_true(result.has(Vector2i(3, 0)))
 
 
+## A passenger owns no cell of its own, so the ground its transport is standing
+## on is the transport's alone: an enemy rider must not wall the lane, and the
+## cell must still be a place a friendly could stop. The fill asks who stands
+## where once for the whole walk rather than cell by cell, and this is the case
+## where a lookup built from the wrong half of the roster shows up.
+func test_a_carried_unit_is_not_on_the_board() -> void:
+	var state := _state("[terrain]\n.....\n[units]\n1 i 0 0\n2 p 4 0\n2 i 3 0")
+	var rider: Unit = state.units[2]
+	rider.carrier = state.units[1]  # aboard now, and (3, 0) is where it last stood
+	var result := MovementResolver.reachable(state, state.units[0])
+	assert_true(result.has(Vector2i(3, 0)), "the rider's stale cell is nobody's wall")
+	assert_true(result.can_stop_at(Vector2i(3, 0)))
+	assert_false(result.has(Vector2i(4, 0)), "the transport itself is still an enemy wall")
+
+
 func test_mountain_blocks_treads_but_not_boots() -> void:
 	var tank_state := _state("[terrain]\n.M.\n[units]\n1 t 0 0")
 	var tank_range := MovementResolver.reachable(tank_state, tank_state.units[0])

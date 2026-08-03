@@ -32,12 +32,28 @@ static func maximum(state: GameState, unit: Unit) -> int:
 	return unit.type.max_range + state.commander_of(unit.team).range_bonus(state, unit)
 
 
+## The ring this unit shoots in as [minimum, maximum], for a caller about to
+## test many cells against it: the planner weighs every cell it could stand on
+## against every enemy it can see, and both ends of the ring are the same answer
+## for all of them. Asking once is what keeps the doctrine's range bonus from
+## being resolved a few hundred times a unit.
+static func band(state: GameState, unit: Unit) -> Vector2i:
+	return Vector2i(minimum(state, unit), maximum(state, unit))
+
+
+## True when a shot fired from `from` reaches `target`, given a band already
+## asked for. `covers` is this with the band asked for on the spot, so the two
+## cannot disagree about a shot.
+static func reaches(ring: Vector2i, from: Vector2i, target: Vector2i) -> bool:
+	var dist := absi(target.x - from.x) + absi(target.y - from.y)
+	return dist >= ring.x and dist <= ring.y
+
+
 ## True when a shot fired from `from` reaches `target`.
 static func covers(state: GameState, unit: Unit, from: Vector2i, target: Vector2i) -> bool:
 	if unit.type.max_range <= 0:
 		return false
-	var dist := absi(target.x - from.x) + absi(target.y - from.y)
-	return dist >= minimum(state, unit) and dist <= maximum(state, unit)
+	return reaches(band(state, unit), from, target)
 
 
 ## Whether `attacker`'s weapon can touch `target` at all, distance aside: the

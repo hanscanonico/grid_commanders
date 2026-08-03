@@ -4,70 +4,113 @@ extends RefCounted
 ##
 ## Greedy, deterministic, and deliberately coarse: combat, capture, diving,
 ## withdrawal, and fallback movement stay together because they compete for one
-## UnitPlan score. AIController remains the public façade.
-
-
-class UnitPlan:
-	var command: Command
-	var score: float = -INF
-
+## AIUnitPlan score. AIController remains the public façade.
+##
+## One command is returned per call and every survivor is scored again on the
+## next one, which is what lets a wounded target's kill reach the next attacker.
+## AIPlanCache is what stops that costing a full plan per unit per command; it
+## keeps the answers between the commands of a turn and drops the ones the board
+## could have moved under, so the planner still answers exactly what it always
+## did.
 
 var profile: AIProfile
+
+var _cache: AIPlanCache
 
 
 func _init(p_profile: AIProfile) -> void:
 	profile = p_profile
+	_cache = AIPlanCache.new(p_profile)
 
 
 func plan_next(context: AIPlanningContext) -> Command:
+	_cache.sync(context)
 	var best: Command = null
 	var best_score := -INF
 	for unit in context.ready_units:
-		var plan := _best_unit_plan(context, unit)
+		var plan := _plan_for(context, unit)
 		if plan.score > best_score:
 			best_score = plan.score
 			best = plan.command
 	return best
 
 
-func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> UnitPlan:
-	var plan := UnitPlan.new()
-	var reachable := MovementResolver.reachable(context.state, unit)
-	_consider_attacks(context, unit, reachable, plan)
-	_consider_captures(context.state, unit, reachable, plan)
+## This unit's plan, scored from scratch unless the cache still holds a good
+## one. A plan whose actions hold but whose fallback advance moved under it —
+## the column marched, the claims were re-dealt — has that half alone redone, on
+## the fill already in hand.
+func _plan_for(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
+	var kept := _cache.plan_for(unit)
+	if kept == null:
+		var plan := _best_unit_plan(context, unit)
+		_cache.keep(unit, plan)
+		return plan
+	if _cache.advance_is_stale(unit):
+		_plan_advance(context, unit, kept)
+	return kept
+
+
+func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
+	var plan := AIUnitPlan.new()
+	plan.reach = MovementResolver.reachable(context.state, unit)
+	_consider_attacks(context, unit, plan.reach, plan)
+	_consider_captures(context.state, unit, plan.reach, plan)
 	_consider_dive(context, unit, plan)
 	# Last on purpose: every comparison here is strict, so a withdrawal that only
 	# ties with a shot loses to it. Running away has to be strictly better.
-	_consider_withdraw(context, unit, reachable, plan)
+	_consider_withdraw(context, unit, plan.reach, plan)
 	if plan.score < profile.min_useful_score:
-		plan.command = _advance_command(context, unit, reachable)
-		plan.score = profile.advance_score
+		_plan_advance(context, unit, plan)
 	return plan
 
 
+## The fallback, recorded on the plan as one: it is the only half of a plan that
+## reads the board past the unit's own envelope — the goal it walks to, and the
+## column it keeps station with.
+func _plan_advance(context: AIPlanningContext, unit: Unit, plan: AIUnitPlan) -> void:
+	plan.command = _advance_command(context, unit, plan.reach)
+	plan.score = profile.advance_score
+	plan.advances = true
+	plan.keeps_formation = _advance_goal(context, unit).keeps_formation
+
+
 func _consider_attacks(
-	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: UnitPlan
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
 ) -> void:
 	var state := context.state
 	if unit.type.max_range <= 0 or state.damage_chart == null:
 		return
 	var dests: Array[Vector2i] = []
+	var span := 0
 	if AttackRange.is_indirect(unit):
 		dests = [unit.cell]  # indirect units cannot move and fire
 	else:
+		span = MovementResolver.move_budget(state, unit)
 		for cell in reachable.cells():
 			if reachable.can_stop_at(cell):
 				dests.append(cell)
 	# One threat map for the whole sweep. Still resolved on first need rather
 	# than up front, so a unit with nothing in reach builds nothing.
 	var threat: ThreatMap = null
+	# One ring for it too, asked of the same authority `covers` asks: every cell
+	# this unit could stand on is tested against every enemy it can see, and the
+	# doctrine's range bonus is the same answer for all of them.
+	var ring := AttackRange.band(state, unit)
+	# And the enemies out of reach of every one of those cells are dropped once
+	# rather than per cell: a walk of `span` tiles closes at most `span` tiles of
+	# the distance, so anything further off than that plus the ring is a target
+	# this unit could not fire on from anywhere, whichever cell it stopped at.
+	var candidates: Array[Unit] = []
+	for enemy in context.visible_enemies:
+		if _steps(unit.cell, enemy.cell) - span <= ring.y:
+			candidates.append(enemy)
 	for dest in dests:
 		# The walk to a firing cell and the fire it invites depend only on that
 		# cell, so work them out once per destination and only after finding a
 		# legal target there.
 		var dest_penalty := -1.0
-		for enemy in context.visible_enemies:
-			if not AttackRange.covers(state, unit, dest, enemy.cell):
+		for enemy in candidates:
+			if not AttackRange.reaches(ring, dest, enemy.cell):
 				continue
 			if not AttackRange.can_fire(state, unit, enemy):
 				continue
@@ -191,7 +234,7 @@ func _defend_bonus(state: GameState, unit: Unit, enemy: Unit) -> float:
 
 
 func _consider_captures(
-	state: GameState, unit: Unit, reachable: MovementResolver.MoveRange, plan: UnitPlan
+	state: GameState, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
 ) -> void:
 	if not unit.type.can_capture:
 		return
@@ -223,10 +266,10 @@ func _consider_captures(
 ## Deliberately a *candidate* rather than the fallback retreat_hp steers. Retreat
 ## only ever reached a unit with nothing better to do — it lives past the
 ## min_useful_score gate — so a wounded tank holding any half-decent shot took
-## the shot and died. Here survival competes for the same UnitPlan score the shot
+## the shot and died. Here survival competes for the same AIUnitPlan score the shot
 ## does, which is the only place it can win.
 func _consider_withdraw(
-	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: UnitPlan
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
 ) -> void:
 	if profile.withdraw_weight <= 0.0:
 		return
@@ -286,7 +329,7 @@ func _repair_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 
 
 ## A submarine's one decision: whether to be under the water.
-func _consider_dive(context: AIPlanningContext, unit: Unit, plan: UnitPlan) -> void:
+func _consider_dive(context: AIPlanningContext, unit: Unit, plan: AIUnitPlan) -> void:
 	var state := context.state
 	if not unit.type.can_dive or state.damage_chart == null:
 		return
@@ -335,13 +378,16 @@ func _advance_command(
 	# Worked out once for the whole sweep rather than per candidate cell: who this
 	# unit travels with does not depend on where it is thinking of standing.
 	var column := _column_cells(context, unit)
+	# The doctrine is asked about every candidate cell, so it is looked up once
+	# rather than per cell: which commander an army has cannot change mid-sweep.
+	var doctrine := state.commander_of(unit.team)
 	var best_cell := unit.cell
-	var best_value := _advance_value(state, unit, unit.cell, goal, threat, column)
+	var best_value := _advance_value(state, unit, unit.cell, goal, threat, column, doctrine)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var value := _advance_value(state, unit, cell, goal, threat, column)
+		var value := _advance_value(state, unit, cell, goal, threat, column, doctrine)
 		var cost: int = reachable.costs[cell]
 		if value > best_value or (is_equal_approx(value, best_value) and cost < best_cost):
 			best_value = value
@@ -359,7 +405,8 @@ func _advance_value(
 	cell: Vector2i,
 	goal: AIPlanningContext.AdvanceGoal,
 	threat: ThreatMap,
-	column: Array[Vector2i]
+	column: Array[Vector2i],
+	doctrine: CommanderType
 ) -> float:
 	var value := -float(_position_rank(state, unit, cell, goal))
 	if threat != null:
@@ -367,7 +414,7 @@ func _advance_value(
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
 	value -= _cohesion_penalty(cell, goal, column)
 	if profile.doctrine_weight > 0.0:
-		var advice := state.commander_of(unit.team).stand_value(state, unit, cell)
+		var advice := doctrine.stand_value(state, unit, cell)
 		if advice != 0:
 			value += profile.doctrine_weight * float(advice)
 	return value

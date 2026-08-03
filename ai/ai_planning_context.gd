@@ -78,6 +78,14 @@ func threat_map() -> ThreatMap:
 	return _threat_map
 
 
+## Whether the map for the board as it stands has already been built this turn.
+## The build is lazy and its flood fills are taken against the board at the
+## moment of first need, so *when* it happens is part of the answer — which is
+## what anything planning to skip a decision has to know before it does.
+func threat_map_built() -> bool:
+	return _threat_map != null and _threat_key == _threat_signature(state, visible_enemies)
+
+
 ## The enemy units this planner may act on. The AI sees the whole board on
 ## purpose, with exactly one exception: a unit a doctrine has hidden is hidden
 ## from it too. Vision owns that exception; visibility is never re-derived here,

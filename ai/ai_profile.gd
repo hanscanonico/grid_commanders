@@ -177,7 +177,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## worth exactly what making one is (AI Judgement D3). 0 skips it entirely.
 ##
 ## Denominated in VALUE, like _attack_score and like _consider_captures, which is
-## what lets the three compete in one UnitPlan without a conversion — and which
+## what lets the three compete in one AIUnitPlan without a conversion — and which
 ## is also this dial's ceiling: the bonus is linear and priced on the same scale
 ## as a kill, so a rich enough target outbids even a match-ending capture no
 ## matter how high the weight goes (docs/difficulty_check.md §4c).
