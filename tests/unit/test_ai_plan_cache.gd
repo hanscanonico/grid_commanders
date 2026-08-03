@@ -234,13 +234,24 @@ func test_a_live_capture_claim_plays_command_for_command() -> void:
 			_assert_agrees_over_a_match(board[1], profile, "%s at depth %d" % [board[0], depth])
 
 
-## The two tiers that weigh a threat map. Their plans are read off a map built
-## once per turn against the board at the moment of first need, so they are the
-## run that proves the cache never moved that moment.
-func test_the_other_shipped_tiers_play_command_for_command() -> void:
-	for tier: StringName in [&"easy", &"hard"]:
-		var profile: AIProfile = load("res://data/ai/%s.tres" % tier)
-		assert_not_null(profile, "the %s tier must load" % tier)
+## Every profile that weighs a threat map: the two shipped tiers that carry one,
+## and the withdrawal dial no tier carries. Their plans are read off a map built
+## once per turn against the board at the moment of first need, so these are the
+## runs that prove the cache never moved that moment. The withdrawal profile is
+## here for a second reason as well — AR6d gave its refuge a key read off the
+## unit's *advance goal*, which is a fact about the whole board rather than about
+## the ground around the unit, and a threat map is the only thing holding it.
+func test_threat_weighing_profiles_play_command_for_command() -> void:
+	var withdrawing := AIProfile.new()
+	withdrawing.withdraw_weight = 0.5
+	var profiles := {
+		&"easy": load("res://data/ai/easy.tres"),
+		&"hard": load("res://data/ai/hard.tres"),
+		&"withdrawing": withdrawing,
+	}
+	for tier: StringName in profiles:
+		var profile: AIProfile = profiles[tier]
+		assert_not_null(profile, "the %s profile must load" % tier)
 		for board: Array in _boards():
 			_assert_agrees_over_a_match(board[1], profile, "%s on %s" % [board[0], tier])
 
@@ -254,6 +265,19 @@ func test_a_shipped_board_plays_command_for_command() -> void:
 	var map := MapData.load_from_file(SHIPPED_BOARD, terrain_db)
 	assert_not_null(map, "the shipped board must load")
 	_assert_agrees_over(map, AIProfile.load_default(), "ironworks", SHIPPED_SEEDS, SHIPPED_DAYS)
+
+
+## The withdrawal dial, which no shipped tier carries either. AR6d gave the
+## refuge a key read off the unit's *advance goal* — a fact about the whole
+## board rather than the ground around the unit — so the plan a withdrawal is
+## cached as now depends on something no envelope bounds. Every profile that
+## lives this dial also weighs a threat map, which is what makes the cache keep
+## nothing while it is on; this run is what holds that together.
+func test_a_live_withdrawal_plays_command_for_command() -> void:
+	var profile := AIProfile.new()
+	profile.withdraw_weight = 0.5
+	for board: Array in _boards():
+		_assert_agrees_over_a_match(board[1], profile, "%s withdrawing" % board[0])
 
 
 ## Focus fire prices a shot by what every other ready friendly could still add to
@@ -329,13 +353,6 @@ func test_a_friendly_marching_out_of_sight_moves_the_column() -> void:
 	var played := _agreeing_commands(LONG_COLUMN, profile, 3, "long column")
 	assert_string_contains(played[0], "infantry", "the infantry marches first")
 	assert_string_contains(played[1], "tank", "and the tank answers for where it stopped")
-
-
-## Fog makes a unit's own reach a fact about its whole side's sight, so nothing
-## can be kept at all. The same boards, played blind.
-func test_a_fogged_board_plays_command_for_command() -> void:
-	for board: Array in _boards():
-		_agreeing_commands(board[1], AIProfile.load_default(), 8, "fogged %s" % board[0], _fog)
 
 
 ## The cache is not vacuously empty. A milestone that only ever cleared would
@@ -436,13 +453,18 @@ func test_a_submarine_keeps_nothing_when_the_enemy_list_changes() -> void:
 	assert_null(cache.plan_for(sub), "one fewer hunter is one fewer reason to stay under")
 
 
-func test_a_fogged_board_keeps_nothing() -> void:
+## Fog makes a unit's own reach a fact about its whole side's sight — which
+## enemies wall it off moves with every friendly that walks — so nothing can be
+## kept at all. Asked of the cache, then played out on the same three boards.
+func test_a_fogged_board_keeps_nothing_and_plays_command_for_command() -> void:
 	var state := _state(PROBES, _fog)
 	var context := AIPlanningContext.new(unit_db)
 	var probe := state.unit_at(Vector2i(28, 0))
 	var cache := _holding(state, context, probe, AIProfile.load_default())
 	_resync(cache, context, state)
 	assert_null(cache.plan_for(probe), "blind, a unit's own reach is a fact about its whole side")
+	for board: Array in _boards():
+		_agreeing_commands(board[1], AIProfile.load_default(), 8, "fogged %s" % board[0], _fog)
 
 
 func test_live_focus_fire_keeps_nothing() -> void:

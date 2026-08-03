@@ -41,6 +41,46 @@ const LETHAL_WITH_CITY := (
 	+ "[units]\n1 T 7 1\n2 i 7 0\n2 b 15 1"
 )
 
+## The AR6d board, and the bug report's own: artillery (range 2-3) pinned by a
+## tank it cannot fire on and cannot counter. Every cell east of it is equally
+## safe — the tank is walled in by the artillery itself, so the threat map reads
+## zero on all of them — which is why safety cannot separate them and the walk
+## key used to hand it (2, 0), one tile short of standoff.
+const PINNED_GUN := "[terrain]\n......\n[units]\n1 g 1 0\n2 t 0 0"
+
+## Artillery out of range of the enemy it is orienting on and inside a bomber's,
+## with two equally safe answers: one step to (7, 4), which is out of its own
+## firing ring, or two to (7, 3), which is maximum standoff. The transport is
+## there to be the nearest enemy and nothing else — it carries no weapon, so it
+## threatens no cell and every reading here belongs to the bomber.
+const GUN_UNDER_A_BOMBER := (
+	"[terrain]\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "[units]\n1 g 7 5\n2 p 7 0\n2 b 15 5"
+)
+
+## The same shape with a direct unit: our md tank one step from the transport it
+## is orienting on, inside the bomber's ring. Its safe cells sit either side of
+## the walk-versus-target split — (6, 1) is the cheapest and (6, 0) is the one
+## nearest the transport — so a standoff key that leaked past indirect units
+## would move this answer, and nothing else about the board would.
+const TANK_UNDER_A_BOMBER := (
+	"[terrain]\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "[units]\n1 T 7 1\n2 p 7 0\n2 b 15 1"
+)
+
+## The weight the plan reports the defect at, so these read as the bug report.
+const LIVE := 0.05
+
 const OUR_TANK := Vector2i(7, 1)
 
 var terrain_db: TerrainDB
@@ -54,12 +94,12 @@ func before_each() -> void:
 	chart = load("res://data/damage_chart.tres")
 
 
-func _plan(map_text: String, withdraw_weight: float, hp: int) -> Command:
+func _plan(map_text: String, withdraw_weight: float, hp: int, hurt := OUR_TANK) -> Command:
 	var map := MapData.parse(map_text, terrain_db)
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
 	for unit in state.units:
-		if unit.cell == OUR_TANK:
+		if unit.cell == hurt:
 			unit.hp = hp
 	var profile := AIProfile.new()  # Normal's shipped numbers; only withdraw_weight varies
 	profile.withdraw_weight = withdraw_weight
@@ -148,4 +188,45 @@ func test_safety_outranks_repair() -> void:
 		_destination(_plan(exposed_city, 0.5, 30)),
 		Vector2i(3, 1),
 		"a repair property under fire loses to open ground that is actually safe"
+	)
+
+
+# --- AR6d: a refuge that gives up the firing ring is not a refuge --------------
+
+
+## The defect this milestone exists for, on the board the plan reports it from.
+## Every safe cell reads zero incoming, so safety cannot choose between them and
+## the walk key took the first one — leaving the gun one tile inside maximum
+## standoff, where the tank it is backing away from reaches it a turn sooner.
+func test_an_indirect_unit_falls_back_to_maximum_standoff() -> void:
+	assert_eq(
+		_destination(_plan(PINNED_GUN, LIVE, 100, Vector2i(1, 0))),
+		Vector2i(3, 0),
+		"the step back is to the far edge of its own ring, not the near one"
+	)
+
+
+## The same key from its other side, and the ticket's own sentence: the cheapest
+## safe cell here is one step away and out of the gun's ring, which is not a
+## retreat but a unit taking itself out of the match. Two steps buys a cell that
+## is exactly as safe and still has the enemy under fire.
+func test_an_indirect_unit_keeps_its_firing_ring_when_it_steps_back() -> void:
+	assert_eq(
+		_destination(_plan(GUN_UNDER_A_BOMBER, LIVE, 100, Vector2i(7, 5))),
+		Vector2i(7, 3),
+		"a cell it cannot shoot from is not a refuge, however short the walk"
+	)
+
+
+## The guard on the decision above: the weapon key is ranked off a stand-off
+## goal, which is an indirect unit's geometry and no one else's, so a direct
+## unit's refuge is the cheapest safe cell exactly as it was. On this board the
+## two rules disagree — (6, 0) is the safe cell nearest what the tank is
+## orienting on and (6, 1) is the cheapest — so a key that leaked past indirect
+## units would move this answer and only this test would notice.
+func test_a_direct_unit_still_takes_the_cheapest_safe_cell() -> void:
+	assert_eq(
+		_destination(_plan(TANK_UNDER_A_BOMBER, 0.5, 30)),
+		Vector2i(6, 1),
+		"a tank retreats by the shortest walk; nothing about its ring is priced here"
 	)

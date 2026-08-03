@@ -279,19 +279,27 @@ func _consider_withdraw(
 	if staying <= 0:
 		return  # nothing is aiming at us, so there is nothing to buy
 	var refits := _repair_cells(context, unit)
+	# The ground this unit was already orienting on, so the step back is measured
+	# against the same target the step forward would have been.
+	var goal := _advance_goal(context, unit)
 	var best_cell := unit.cell
 	var best_incoming := staying
+	var best_stand := _standoff_rank(state, unit, unit.cell, goal)
 	var best_repairs := refits.has(unit.cell)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
 		var incoming := threat.incoming_damage(state, unit, cell)
+		var stand := _standoff_rank(state, unit, cell, goal)
 		var repairs := refits.has(cell)
 		var cost: int = reachable.costs[cell]
-		if _better_refuge(incoming, repairs, cost, best_incoming, best_repairs, best_cost):
+		if _better_refuge(
+			incoming, stand, repairs, cost, best_incoming, best_stand, best_repairs, best_cost
+		):
 			best_cell = cell
 			best_incoming = incoming
+			best_stand = stand
 			best_repairs = repairs
 			best_cost = cost
 	var avoided := staying - best_incoming
@@ -303,18 +311,63 @@ func _consider_withdraw(
 		plan.command = MoveCommand.new(unit, reachable.path_to(best_cell))
 
 
-## Safety first, then ground that puts the unit back together, then the shortest
-## walk. Three keys in priority order, which is why this is a function rather
-## than a condition inside the loop. Standing still enters the comparison at cost
-## zero, so a cell that is merely as safe never pulls a unit off its own square.
+## Safety first, then the unit's own weapon, then ground that puts it back
+## together, then the shortest walk. Four keys in priority order, which is why
+## this is a function rather than a condition inside the loop: each one is a
+## decision. Standing still enters the comparison at cost zero, so a cell that is
+## merely as safe never pulls a unit off its own square.
+##
+## The weapon sits *under* safety and over repair, and both halves of that are
+## the decision. Over safety it would be a general reluctance to retreat — a unit
+## preferring a cell it can shoot from while it is being shot at is the very
+## behaviour the dial exists to end, and it would leave `withdraw_weight` as
+## useless as the defect that pinned it at zero. Under repair it would be the
+## same defect one step removed: a refuge that puts the unit back together and
+## takes its weapon out of the fight has still removed it from the match, and
+## repair is only ever worth what the shots it buys later are worth. The two
+## rarely meet in any case — a healthy unit has no repair cells at all.
 static func _better_refuge(
-	incoming: int, repairs: bool, cost: int, best_incoming: int, best_repairs: bool, best_cost: int
+	incoming: int,
+	stand: int,
+	repairs: bool,
+	cost: int,
+	best_incoming: int,
+	best_stand: int,
+	best_repairs: bool,
+	best_cost: int
 ) -> bool:
 	if incoming != best_incoming:
 		return incoming < best_incoming
+	if stand != best_stand:
+		return stand < best_stand
 	if repairs != best_repairs:
 		return repairs
 	return cost < best_cost
+
+
+## What standing on `cell` costs this unit's own weapon, as a rank to minimise —
+## and zero for a unit whose usefulness a refuge cannot take away.
+##
+## It is `_position_rank`'s answer on the goal the unit already had, because
+## "where does this unit want to stand relative to that target" has one owner and
+## a withdrawal must not be a second opinion on it: an indirect unit that steps
+## back to a cell its own advance would walk it out of next turn is dithering,
+## not retreating. That rank is what prices the defect this milestone exists for
+## — it is the difference between a cell inside the firing ring and one outside
+## it, *and* between maximum standoff and one tile short of it, which is where
+## the artillery actually stopped.
+##
+## Only a stand-off goal is ranked, so this reaches an indirect unit and nothing
+## else. A direct unit is deliberately untouched: its rank would be plain
+## distance to the enemy, which would pull a retreat back toward the thing it is
+## retreating from — and there is no cell both outside a direct enemy's reach and
+## inside its own one-tile ring anyway, so there is nothing here to save.
+static func _standoff_rank(
+	state: GameState, unit: Unit, cell: Vector2i, goal: AIPlanningContext.AdvanceGoal
+) -> int:
+	if not goal.stand_off:
+		return 0
+	return _position_rank(state, unit, cell, goal)
 
 
 ## Our own properties that would repair this unit, empty while it is unhurt: a
