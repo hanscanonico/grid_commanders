@@ -66,3 +66,5 @@ cohesion_tiles = 1.5
 cohesion_radius = 2
 capture_units_per_property = 0.0
 capture_claim_depth = 0
+production_capture_multiplier = 1.0
+capture_goal_value_tiles = 0.0

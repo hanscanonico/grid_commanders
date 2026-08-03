@@ -137,6 +137,44 @@ const CAPTURING_AND_WOUNDED := (
 ## The middle property of `CAPTURING_AND_WOUNDED`, wounded infantry and all.
 const CAPTURING_CELL := Vector2i(11, 5)
 
+## A city and a base at the far end of two corridors, exactly as far from the one
+## infantry in the trunk. Row-major scan order puts the city first, so blind the
+## tie goes to it — and pricing what the base builds is the only thing that can
+## turn the unit round.
+const CITY_AND_BASE_LEVEL := (
+	"[terrain]\n"
+	+ "...........C\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ "...........B\n"
+	+ "[units]\n1 i 0 2\n"
+)
+
+## The same pair with the base one tile further out than the city, so nothing but
+## the detour dial can reach it.
+const BASE_ONE_TILE_FURTHER := (
+	"[terrain]\n"
+	+ "...........C\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ ".SSSSSSSSSSS\n"
+	+ "...........B\n"
+	+ "[units]\n1 i 0 2\n"
+)
+
+## A city one step away and a base three, both inside one infantry's move. This
+## one is the *arrival*: the goal never enters it, because a property in reach is
+## captured by `_consider_captures` rather than walked to.
+const CITY_NEAR_BASE_FAR := "[terrain]\n.C.B\n[units]\n1 i 0 0\n"
+
+## Enough of a multiplier to be legible in both readings, and enough tiles to buy
+## two of them — one more than BASE_ONE_TILE_FURTHER needs, so the fixture proves
+## the dial rather than a rounding edge.
+const PRODUCTION_WORTH := 1.5
+const DETOUR_TILES := 4.0
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -158,6 +196,28 @@ func _claiming(depth: int) -> AIProfile:
 	var profile := AIProfile.new()
 	profile.capture_claim_depth = depth
 	return profile
+
+
+## One judgement, both its readings — the arrival multiplier and the tiles of
+## detour it buys — so a fixture can never switch on half of it.
+func _pricing(multiplier: float, detour_tiles: float) -> AIProfile:
+	var profile := AIProfile.new()
+	profile.production_capture_multiplier = multiplier
+	profile.capture_goal_value_tiles = detour_tiles
+	return profile
+
+
+## The property the AI actually starts taking this turn, or Vector2i(-1, -1) when
+## it takes none. The arrival reading, where the goal reading cannot reach.
+func _captures(map_text: String, profile: AIProfile) -> Vector2i:
+	var map := MapData.parse(map_text, terrain_db)
+	var state := GameState.create(map, unit_db, chart)
+	assert_not_null(state)
+	var command := AIController.new(unit_db, profile).plan_next_command(state)
+	if command is CaptureCommand:
+		var path := (command as CaptureCommand).path
+		return path[path.size() - 1]
+	return Vector2i(-1, -1)
 
 
 ## Plays one whole turn for team 1 and returns the row each surviving unit ends
@@ -390,3 +450,94 @@ func test_claim_depth_at_zero_walks_exactly_like_the_shipped_profile() -> void:
 		_rows_after_a_day(THREE_CORRIDORS, shipped),
 		"zeroed and shipped should walk the same board the same way"
 	)
+
+
+## The arrival reading. A base and a city both inside one infantry's move, the
+## base two steps further out: blind it takes the city, because nothing in the
+## planner knows one of them builds tanks and the other only pays.
+func test_a_property_that_builds_is_worth_more_to_take() -> void:
+	assert_eq(
+		_captures(CITY_NEAR_BASE_FAR, _pricing(1.0, 0.0)),
+		Vector2i(1, 0),
+		"blind, a base is priced as a plains city and the nearer tile wins"
+	)
+	assert_eq(
+		_captures(CITY_NEAR_BASE_FAR, _pricing(PRODUCTION_WORTH, 0.0)),
+		Vector2i(3, 0),
+		"priced, the production line is worth the two extra steps"
+	)
+
+
+## The goal reading, on a tie. The city and the base are exactly as far away and
+## the city wins the scan-order tie, so this fixture reverses on the dial alone.
+func test_a_property_that_builds_is_worth_walking_to() -> void:
+	assert_eq(
+		_rows_after_a_day(CITY_AND_BASE_LEVEL, _pricing(1.0, 0.0)),
+		[0] as Array[int],
+		"blind, the tie goes to the city because it is scanned first"
+	)
+	assert_eq(
+		_rows_after_a_day(CITY_AND_BASE_LEVEL, _pricing(PRODUCTION_WORTH, DETOUR_TILES)),
+		[4] as Array[int],
+		"priced, the same walk is worth making toward the base instead"
+	)
+
+
+## D4's "one judgement, two readings", checked from the side that could break it:
+## the detour has to be the dial that moves a *further* property, and the unit
+## that walks there has to still want it when it arrives — or it turns around on
+## the doorstep and the two readings are two opinions.
+func test_the_detour_dial_is_what_reaches_a_further_property() -> void:
+	assert_eq(
+		_rows_after_a_day(BASE_ONE_TILE_FURTHER, _pricing(1.0, 0.0)),
+		[0] as Array[int],
+		"blind, the nearer city wins"
+	)
+	assert_eq(
+		_rows_after_a_day(BASE_ONE_TILE_FURTHER, _pricing(PRODUCTION_WORTH, 0.0)),
+		[0] as Array[int],
+		"pricing the arrival alone does not move a goal — that is the detour's job"
+	)
+	assert_eq(
+		_rows_after_a_day(BASE_ONE_TILE_FURTHER, _pricing(PRODUCTION_WORTH, DETOUR_TILES)),
+		[5] as Array[int],
+		"with the detour bought, the base one tile further is the goal"
+	)
+	assert_eq(
+		_captures(CITY_NEAR_BASE_FAR, _pricing(PRODUCTION_WORTH, DETOUR_TILES)),
+		Vector2i(3, 0),
+		"and the unit that walked there still wants it when it arrives"
+	)
+
+
+## The detour composes with AE2's claim rather than replacing it: the assignment
+## prices a property the same way the plain walk does, so a claimed goal cannot
+## disagree with an unclaimed one about which ground is worth more.
+func test_the_detour_prices_a_claimed_goal_the_same_way() -> void:
+	var priced := _pricing(PRODUCTION_WORTH, DETOUR_TILES)
+	priced.capture_claim_depth = 1
+	assert_eq(
+		_rows_after_a_day(BASE_ONE_TILE_FURTHER, priced),
+		[5] as Array[int],
+		"one capturer, claiming on: it still walks to the property worth more"
+	)
+
+
+## D1's inert pin for AE3. At 1.0 and 0.0 neither reading is built and both are
+## the shipped arithmetic, so a zeroed profile plans exactly what the shipped one
+## does on the two boards a live pair demonstrably changes.
+func test_the_production_dials_at_their_inert_values_plan_like_the_shipped_profile() -> void:
+	var shipped := AIProfile.load_default()
+	assert_eq(shipped.production_capture_multiplier, 1.0, "the multiplier ships inert")
+	assert_eq(shipped.capture_goal_value_tiles, 0.0, "the detour ships inert")
+	assert_eq(
+		_captures(CITY_NEAR_BASE_FAR, _pricing(1.0, 0.0)),
+		_captures(CITY_NEAR_BASE_FAR, shipped),
+		"zeroed and shipped should take the same property"
+	)
+	for board in [CITY_AND_BASE_LEVEL, BASE_ONE_TILE_FURTHER]:
+		assert_eq(
+			_rows_after_a_day(board, _pricing(1.0, 0.0)),
+			_rows_after_a_day(board, shipped),
+			"zeroed and shipped should walk the same board the same way"
+		)
