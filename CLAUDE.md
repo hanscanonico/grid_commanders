@@ -216,9 +216,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   rather than ending it — the bonus is linear and priced on the same scale as a kill, so a rich
   enough target (Rockets, which cannot counter) still outbids a match-ending capture at any weight;
   the ceiling is the pricing *shape*, and `docs/difficulty_check.md` §4c is the measured boundary.
-  `withdraw_weight` is the one still at `0.0`, and for a positioning defect rather than the
-  ladder: at 0.05 it stops an artillery short of maximum standoff
-  (`test_indirect_unit_backs_off_into_firing_range`), so the refuge's price wants fixing first.
+  `withdraw_weight` is the one still at `0.0`, and it was a positioning defect rather than the
+  ladder that held it there: at 0.05 it stopped an artillery short of maximum standoff. The AI
+  Arena plan's AR6d fixed the refuge's price (see that entry), so the dial is now waiting on a
+  measurement rather than on a fix.
   What survives untouched is the code property — **`0.0` still skips a capability entirely**,
   proven by the per-capability suites that build explicit zeroed profiles — and the cost is
   recorded rather than hidden: the DF4 ladder now fails knowingly, because that gate measures the
@@ -228,7 +229,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   AJ1's own two decisions: **denial is priced at the price of capture, read backwards** (D3) —
   `_defend_bonus` is built from the same `capture_score` / `capture_progress_bonus` /
   `hq_capture_multiplier` arithmetic `_consider_captures` uses, scaled by `defend_weight`, so at
-  1.0 denying a capture is worth exactly what making one is and the two compete in one `UnitPlan`
+  1.0 denying a capture is worth exactly what making one is and the two compete in one `AIUnitPlan`
   without a conversion; only a **capture-capable** enemy earns it (what a tank parked on our city
   threatens is the threat map's job, and paying twice is the plan's R3), the ground is our
   *side's* through `GameState.allied`, and the HQ multiplier is asked of `GameState.home_hq`,
@@ -247,11 +248,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   `withdraw_weight × cost × damage_avoided / 100` — the currency `_attack_score` is already in, and
   the whole reason this is a third dial rather than a wider `advance_threat_tiles` (that one counts
   in *tiles* and so cannot say "this shot costs me sixteen thousand funds"). The refuge is the
-  reachable cell of least `ThreatMap.incoming_damage`, then ground that repairs us, then the
-  shortest walk — three keys in that order, and **safety outranks repair**, so a workshop inside a
-  firing ring is not a refuge; standing still enters the comparison at cost zero, so a merely-equal
-  cell never pulls a unit off its own square. Three dials now read one `ThreatMap`
-  (`threat_aversion`, `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
+  reachable cell of least `ThreatMap.incoming_damage`, then — since the arena plan's AR6d, see that
+  entry — the cell that costs the unit's own weapon least, then ground that repairs us, then the
+  shortest walk, and **safety outranks both**, so a workshop inside a firing ring is not a refuge;
+  standing still enters the comparison at cost zero, so a merely-equal cell never pulls a unit off
+  its own square. Three dials now read one `ThreatMap` (`threat_aversion`,
+  `advance_threat_tiles`, `withdraw_weight`) and can price one enemy three
   times — the plan's R3 — so **tune them together and never alone**.
   AJ3's one decision: **cohesion is a term on the advance path, not a formation manager** (D5).
   `_cohesion_penalty` charges a unit `cohesion_tiles` per tile it is adrift of the nearest unit in
@@ -306,9 +308,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   playtest. R6's wall clock: **a live threat-map dial roughly doubles Normal's per-turn planning
   time** (33 → 63 ms) — that comparison's other two columns are forced configurations rather than
   shipped tiers (Easy and Difficult already build the map). Normal still builds no threat map, so
-  that half stands; but §4's turn-time table was measured before the dials went live and Normal
-  now runs the cohesion term on every advance, so it is no longer a reading of the shipped tiers
-  and nothing since has re-measured them.
+  that half stands; but every turn-time figure in that document predates something — §4's table the
+  dials, both of them the AR1 plan cache — so none of them reads the planner as it stands, and
+  nothing since has re-measured them.
 - `ai-economy-plan.html` — the planner reads the map as an *economy* rather than as the fight in
   front of it: enough infantry to race for the board, capture goals that fan out across it, and a
   price on the ground that builds tanks. Milestones AE1–AE4, **AE1–AE3 shipped**. It is scoped
@@ -395,6 +397,47 @@ that must survive any change; the full rationale, milestones and risk registers 
   facility scan already read — so **AE3 adds no terrain id to `ai/`**. `_goal_steps` is the one
   place that converts the judgement into tiles, read by both the plain walk (`_worth_walking_to`)
   and AE2's claimed assignment, so a claimed goal and an unclaimed one price the same ground alike.
+- `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
+  AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
+  cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **Only AR1 and AR6d are shipped**
+  — the arena itself is not built, and nothing under `tools/` runs a tournament yet.
+  D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
+  `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
+  the moment the sim can see the measurement the measured game stops being the shipped one (the
+  balance plan's D2, applied to a new instrument). D2: **a performance change is proven
+  byte-identical, never argued** — a fixed-seed byte-diff of `make commander-balance` *and* `make
+  difficulty-check` across the change, no accepted departure, plus a differential test that keeps
+  the two planners agreeing command for command afterwards; a faster planner that plays a
+  different game is a different AI and would silently invalidate the ladder, the Atlas and every
+  number in `docs/commander_balance.md` in one commit. D3: **a candidate is an `AIProfile` and
+  nothing else** — the search space is exactly `ai_profile.gd`'s `@export`s, so anything the arena
+  finds ships as an edit to one `.tres` rather than as a code branch nobody can play. D7: **the
+  opponent is the archive, not the champion** — this game is measurably intransitive (Easy beats
+  Difficult beats Normal beats Easy is in the Atlas), so a ladder that only ever plays the current
+  leader walks a circle and reports progress every lap; every generation scores against a fixed
+  anchor set, a sample of past champions and its own generation, and **progress is the anchor
+  score**. D8: **the arena recommends and a human ships** — no milestone and no `make` target
+  writes a searched number into `data/ai/`, because the arena optimises for winning a headless
+  match against a machine and the product is a game a person plays.
+  **D1's "nothing under `core/` gains a field, hook or branch" carries one recorded waiver**, the
+  user's, taken in AR1 when the cache alone came in under the plan's own speedup floor:
+  `MovementResolver._occupants` (one occupancy index per movement fill, never stored — a
+  longer-lived one would need every writer that moves, kills, builds, loads or unloads a unit to
+  maintain it, and the one that forgot would answer wrong rather than fail) and
+  `AttackRange.band` / `reaches` (a unit's firing ring resolved once per unit instead of once per
+  candidate-cell × enemy pair). Both are pure reads that decide nothing, and **D2's byte bar is
+  what stands in for D1 here** — both reports byte-identical over 6,480 matches, plus
+  `tests/unit/test_ai_plan_cache.gd` asserting command-for-command identity with the cache on and
+  off. Read the `core/` changes as a waived departure, not a rule violation. AR6d is the other
+  shipped card and it departs from its own ticket in the same recorded way: the ticket asks for a
+  boolean "can it still fire" key, which scores maximum standoff and one tile short of it
+  identically and so would not have fixed the reported board — what ships is a **rank**
+  (`_position_rank` against the enemy the unit is orienting on), under safety and over repair,
+  reaching indirect units only. `withdraw_weight` keeps its shipped `0.0` throughout (the
+  difficulty plan's D2 owns tier numbers), so AR6d is inert in every shipped tier.
+  Known and deliberate: the AR1 cache is inert with fog on, so the live game gets no speedup and
+  only the offline tools do.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
@@ -862,8 +905,13 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   delegates to exactly two coarse collaborators: `AIUnitActionPlanner` and
   `AIProductionPlanner`. `AIPlanningContext` is the one owner of scan-ordered per-decision facts
   (friendlies, visible enemies, properties, unit types, goals, capture claims and the production
-  roster) and the threat map cache shared across decisions in a turn. Preserve strict comparator
-  order and profile reads when moving AI code; never tune a `.tres` in an extraction.
+  roster) and the threat map cache shared across decisions in a turn. `AIPlanCache` is the planner's
+  own, keeping each ready unit's `AIUnitPlan` between the commands of one turn and dropping what a
+  **board diff** — never the returned `Command` — says could have moved; rescoring every survivor
+  after every command is load-bearing (it is how a wounded target's kill reaches the next attacker),
+  so the cache may drop a plan that still held and may never keep one that did not (arena plan AR1).
+  Preserve strict comparator order and profile reads when moving AI code; never tune a `.tres` in
+  an extraction.
 - **Doctrine hooks take an `Engagement`, not two `Unit`s.** `core/rules/engagement.gd` carries the
   effective values a shot is resolved with: the cell it is *actually* fired from and the HP the
   formula should use — which is what keeps the damage preview and the resolved attack on

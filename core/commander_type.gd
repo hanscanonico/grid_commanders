@@ -145,8 +145,10 @@ func move_bonus(_state: GameState, _unit: Unit) -> int:
 ## fuel spend in GameState.advance_unit, so a discount never leaves fuel
 ## disagreeing with the path the player was shown.
 ##
-## MovementResolver.step_cost enforces the two invariants a doctrine cannot
-## break: impassable stays impassable, and a step never costs less than 1.
+## MovementResolver.step_cost enforces two of the three invariants a doctrine
+## cannot break: impassable stays impassable, and a step never costs less than 1.
+## The third is this signature's own — no cell is handed over, and none may be
+## reached around for, because the fill memoises one answer per kind of ground.
 func terrain_cost(_state: GameState, _unit: Unit, _terrain: TerrainType, base: int) -> int:
 	return base
 

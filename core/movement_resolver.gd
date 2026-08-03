@@ -74,15 +74,35 @@ static func move_budget(state: GameState, unit: Unit, extra: int = 0) -> int:
 ## doctrine. The sole place terrain cost is read, so the flood fill below and
 ## the fuel spend in GameState.advance_unit cannot disagree.
 ##
-## Two invariants no doctrine may break: IMPASSABLE passes straight through — a
-## doctrine may discount terrain, never open terrain its units cannot cross —
-## and every other result is floored at 1, so a zero-cost step can never stall
-## the flood fill in a loop it keeps finding cheaper.
+## Three invariants no doctrine may break. IMPASSABLE passes straight through — a
+## doctrine may discount terrain, never open terrain its units cannot cross — and
+## every other result is floored at 1, so a zero-cost step can never stall the
+## flood fill in a loop it keeps finding cheaper.
+##
+## And the answer is a function of the unit and the terrain and of nothing else:
+## *which* cell that terrain is on may not change it. `terrain_cost` is handed no
+## cell for exactly this reason, and the fill below memoises one answer per kind
+## of ground per fill — a doctrine that reached around the hook for a cell would
+## get whichever cell it happened to be asked about first.
 static func step_cost(state: GameState, unit: Unit, terrain: TerrainType) -> int:
 	var base := terrain.move_cost(unit.type.move_class)
 	if base == TerrainType.IMPASSABLE:
 		return base
 	return maxi(1, state.commander_of(unit.team).terrain_cost(state, unit, terrain, base))
+
+
+## What `GameState.unit_at` answers, for every cell at once — same rule, same
+## scan order, so a cell two units somehow shared would report the same one
+## either way round. Kept local to the fill and rebuilt on every call: an index
+## living anywhere longer than that would need every writer that moves, kills,
+## builds, loads or unloads a unit to keep it right, and the one that forgot
+## would not fail, it would quietly answer wrong.
+static func _occupants(state: GameState) -> Dictionary:
+	var by_cell: Dictionary = {}
+	for unit in state.units:
+		if unit.carrier == null and not by_cell.has(unit.cell):
+			by_cell[unit.cell] = unit
+	return by_cell
 
 
 ## `extra` is the hypothetical allowance described on move_budget, and is the
@@ -104,6 +124,15 @@ static func reachable(
 	result.stoppable[unit.cell] = true
 	var budget := move_budget(state, unit, extra)
 	var seer := unit.team if sight_team == MOVER_SIGHT else sight_team
+	# Who stands where, worked out once for the whole fill rather than per step:
+	# the fill asks about four cells for every cell it reaches, and asking the
+	# board one cell at a time is a walk of the whole army per question.
+	var occupants := _occupants(state)
+	# And what a step onto each kind of ground costs, worked out the first time the
+	# fill meets that kind: a board is a dozen kinds of ground and a fill asks
+	# about hundreds of cells, and step_cost's third invariant is what lets one
+	# answer serve them all.
+	var step_costs: Dictionary = {}
 	# The sighting team's visible cells decide whether a unit on a cell counts at
 	# all. Computed on first need and reused, so a fill that meets nobody that team
 	# has to look for — and any fill at all with fog off — never pays for it.
@@ -113,9 +142,12 @@ static func reachable(
 	while not frontier.is_empty():
 		# Maps are small; a linear min-scan beats a heap in simplicity.
 		var best := 0
+		var best_cost: int = result.costs[frontier[0]]
 		for i in frontier.size():
-			if result.costs[frontier[i]] < result.costs[frontier[best]]:
+			var cost: int = result.costs[frontier[i]]
+			if cost < best_cost:
 				best = i
+				best_cost = cost
 		var current: Vector2i = frontier[best]
 		frontier.remove_at(best)
 		for dir in DIRECTIONS:
@@ -123,10 +155,13 @@ static func reachable(
 			var terrain := state.map.terrain_at(next)
 			if terrain == null:
 				continue
-			var step := step_cost(state, unit, terrain)
+			var step: int = step_costs.get(terrain, 0)
+			if step == 0:  # 0 is no legal cost, so it means "not asked yet"
+				step = step_cost(state, unit, terrain)
+				step_costs[terrain] = step
 			if step == TerrainType.IMPASSABLE:
 				continue
-			var occupant := state.unit_at(next)
+			var occupant: Unit = occupants.get(next)
 			var unseen := false
 			if occupant != null and not state.allied(occupant.team, seer):
 				if state.fog_enabled and not visible_computed:
@@ -140,10 +175,11 @@ static func reachable(
 			# the trap springs on commit.
 			if occupant != null and not unseen and not state.allied(occupant.team, unit.team):
 				continue
-			var next_cost: int = result.costs[current] + step
+			var next_cost: int = best_cost + step
 			if next_cost > budget:
 				continue
-			if result.costs.has(next) and result.costs[next] <= next_cost:
+			var known: int = result.costs.get(next, -1)
+			if known >= 0 and known <= next_cost:
 				continue
 			result.costs[next] = next_cost
 			result.parents[next] = current

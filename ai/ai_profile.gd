@@ -165,10 +165,11 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # means editing both, in the same commit. Which tier ships which value, and what
 # it cost the difficulty ladder, is docs/difficulty_check.md's to say.
 #
-# withdraw_weight is held at 0 by the code rather than by balance: at 0.05 it
-# stops an artillery short of maximum standoff, which
-# test_indirect_unit_backs_off_into_firing_range catches — a defect in how the
-# refuge is priced rather than a tuning preference.
+# withdraw_weight was held at 0 by the code rather than by balance: at 0.05 it
+# stopped an artillery short of maximum standoff. That was a defect in how the
+# refuge was priced and AR6d fixed it — a refuge is now ranked by the weapon it
+# costs as well as the fire it dodges (tests/unit/test_ai_withdrawal.gd). The
+# dial still ships at 0, but now for want of a measurement rather than a fix.
 
 ## What removing an enemy from ground our own side holds is worth, as a multiple
 ## of what taking that ground would be worth to us. The price list is the capture
@@ -177,7 +178,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## worth exactly what making one is (AI Judgement D3). 0 skips it entirely.
 ##
 ## Denominated in VALUE, like _attack_score and like _consider_captures, which is
-## what lets the three compete in one UnitPlan without a conversion — and which
+## what lets the three compete in one AIUnitPlan without a conversion — and which
 ## is also this dial's ceiling: the bonus is linear and priced on the same scale
 ## as a kill, so a rich enough target outbids even a match-ending capture no
 ## matter how high the weight goes (docs/difficulty_check.md §4c).

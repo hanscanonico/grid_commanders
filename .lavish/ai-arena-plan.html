@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — AI Arena Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-amber: #e0a441;
+      --gc-blue: #3276c6;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem 1rem;
+      padding: .6rem 1.5rem;
+      background: rgba(10,33,55,.97);
+      border-bottom: 2px solid var(--gc-water-dark);
+    }
+    .gc-nav a { color: rgba(255,255,255,.72); font: 600 .8rem ui-monospace, monospace; text-decoration: none; }
+    .gc-nav a:hover, .gc-nav a:focus-visible { color: white; }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid var(--gc-amber); }
+    .gc-risk-low { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-free { color: var(--gc-grass-dark); font-weight: 700; }
+    .gc-gap { color: var(--gc-red); font-weight: 700; }
+    .gc-quote {
+      border-left: 5px solid var(--gc-water);
+      background: color-mix(in srgb, var(--gc-water) 8%, transparent);
+      font-style: italic;
+    }
+    table.gc-tight td, table.gc-tight th { vertical-align: top; }
+    /* The global overflow-wrap:anywhere breaks narrow columns mid-word, and the
+       second column of the shelf tables is nothing but long code identifiers. */
+    table.gc-tight td:first-child, table.gc-tight th:first-child { min-width: 10rem; overflow-wrap: break-word; }
+    table.gc-shelf td:nth-child(2), table.gc-shelf th:nth-child(2) { min-width: 15rem; overflow-wrap: break-word; }
+    .gc-num { font: 800 1.6rem/1.1 ui-monospace, monospace; }
+    .gc-stat {
+      border: 2px solid var(--gc-ink);
+      border-radius: .4rem;
+      background: white;
+      padding: .75rem .85rem;
+      box-shadow: 3px 3px 0 color-mix(in srgb, var(--gc-ink) 18%, transparent);
+    }
+    .gc-chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: .4rem; }
+    .gc-chain-step {
+      flex: 1 1 8rem;
+      padding: .6rem .7rem;
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      background: white;
+      font-size: .82rem;
+      line-height: 1.35;
+    }
+    .gc-chain-step.is-ours { background: color-mix(in srgb, var(--gc-grass) 26%, white); }
+    .gc-chain-step.is-theirs { background: color-mix(in srgb, var(--gc-road) 45%, white); }
+    .gc-chain-step b { display: block; font: 800 .78rem ui-monospace, monospace; letter-spacing: .04em; }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="gc-hero px-6 py-10 md:px-12">
+    <p class="gc-kicker mb-2 opacity-80">Grid Commanders · design of record · proposed · AR1–AR7 · 2026-08-02 · rev. 2026-08-03 (AE1–AE3)</p>
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight">The AI Arena</h1>
+    <p class="mt-3 max-w-3xl text-base md:text-lg opacity-90">
+      Build the best computer opponent this planner can carry, by making it play itself thousands of
+      times and keeping what wins. Three things stand between here and there, and only one of them is
+      the tournament: a match is <strong>too slow</strong>, the harness <strong>cannot seat an
+      arbitrary candidate</strong>, and — the finding that reorders this whole plan — the planner is
+      <strong>missing the parameters worth searching</strong>. The dials it has are largely a choice
+      between two kinds of bad play, which is why the shipped ladder is
+      <em>inverted</em> over a horizon that resolves.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-outline badge-lg text-white border-white/40">Milestones AR1–AR7</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D9</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R8</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">core/ untouched</span>
+      <span class="badge badge-lg bg-white/90 text-slate-900 border-white">No commanders · neutral doctrine throughout</span>
+    </div>
+  </header>
+
+  <nav class="gc-nav">
+    <a href="#today">1 · Where it stands</a>
+    <a href="#boundary">2 · Boundaries</a>
+    <a href="#decisions">3 · Decisions</a>
+    <a href="#milestones">4 · Milestones</a>
+    <a href="#params">5 · The parameter shelf</a>
+    <a href="#risks">6 · Risks</a>
+    <a href="#scope">7 · Out of scope</a>
+  </nav>
+
+  <main class="px-6 py-10 md:px-12 space-y-14">
+
+  <!-- ============================ 1. WHERE IT STANDS ============================ -->
+  <section id="today">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">01</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Where it stands, measured</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Every number below was taken on 2026-08-02 in this worktree, or is quoted from a committed
+          document. Nothing here is an estimate.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="font-bold text-lg mb-3">1a — What a match costs</h3>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-5">
+      <div class="gc-stat">
+        <p class="gc-num">2.2 s</p>
+        <p class="text-sm mt-1">per match, <code>ironworks</code>, no CO, Normal v Normal, <strong>20-day cap</strong> — the horizon <code>difficulty-check</code> uses.</p>
+      </div>
+      <div class="gc-stat">
+        <p class="gc-num">5.1 s</p>
+        <p class="text-sm mt-1">per match on the same board played <strong>to a natural end</strong>. A 120-day cap costs the same as a 60-day one: every seed routed by day 41.</p>
+      </div>
+      <div class="gc-stat">
+        <p class="gc-num">~8 ms</p>
+        <p class="text-sm mt-1">per planned command. A match is 563–731 commands over 33–41 days. This is the number the arena lives or dies by.</p>
+      </div>
+      <div class="gc-stat">
+        <p class="gc-num">~54 s</p>
+        <p class="text-sm mt-1">core-seconds per match across the Grand Atlas — 20,280 matches, <strong>304.7 core-hours</strong>, 250-day cap, heavy boards included.</p>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mb-6">
+      <div class="card-body gap-2">
+        <h3 class="font-bold"><span class="gc-gap">The cost is superlinear in army size, and it is one line of code.</span></h3>
+        <p class="text-sm">
+          <span class="gc-file">AIController.plan_next_command</span> returns <em>one</em> command.
+          <span class="gc-file">AIUnitActionPlanner.plan_next</span> gets there by scoring
+          <strong>every</strong> ready unit — each one a fresh
+          <span class="gc-file">MovementResolver.reachable</span> flood fill plus a sweep over
+          reachable cells × visible enemies — then throwing all but the winner away. The scene and the
+          harness then call it again, and it rescores every survivor from scratch.
+        </p>
+        <p class="text-sm">
+          With <em>N</em> units acting, that is <em>N</em> + (<em>N</em>−1) + … + 1 full plans per turn
+          where <em>N</em> plus a handful of deltas would do. At the 16–19 units these matches end with,
+          it is roughly <strong>130–190 flood fills per turn</strong> to issue 16–19 commands. The
+          committed turn-time reading in <span class="gc-file">docs/difficulty_check.md</span> (33 ms
+          Normal, 63 ms with a live threat dial) is the same cost seen from the scene side.
+        </p>
+        <p class="text-sm">
+          It is not wasted by accident — re-planning after every command is <em>load-bearing</em>, and
+          <span class="gc-file">data/ai/hard.tres</span> says so in its own comment: it is why a wounded
+          target's kill is visible to the next attacker without a focus-fire dial. So the fix cannot be
+          "plan the whole turn at once". It has to be a cache that is <em>exactly</em> equivalent. AR1.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="font-bold text-lg mb-3">1b — What the harness cannot do</h3>
+    <div class="card bg-base-100 shadow-sm mb-6">
+      <div class="card-body gap-2">
+        <p class="text-sm">
+          <span class="gc-file">BalanceSideSpec</span> is <code>&lt;commander&gt;:&lt;tier&gt;</code>, and
+          it validates both halves against the databases on purpose. A side can therefore be exactly one
+          of <strong>three</strong> parameter vectors — <span class="gc-file">easy.tres</span>,
+          <span class="gc-file">default.tres</span>, <span class="gc-file">hard.tres</span>. There is no
+          grammar anywhere for "play <em>this</em> vector", which is the entire input a tournament needs.
+        </p>
+        <p class="text-sm">
+          What <em>is</em> already right, and must not be rebuilt: <span class="gc-file">BalanceMatchEngine</span>
+          is the one match loop (balance plan D1), it demands an independent
+          <span class="gc-file">AIController</span> per side, it plays paired seeds from both seats, and
+          it is Node-free so GUT drives it. The arena is a third preset over it, not a second engine.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="font-bold text-lg mb-3">1c — What the planner cannot express at any dial setting</h3>
+    <p class="text-sm max-w-3xl mb-3 opacity-80">
+      This is the finding that reorders the plan. A search over the shipped dials is a search over a
+      policy with these holes in it, and the holes are wider than the dials.
+    </p>
+    <div class="overflow-x-auto mb-4">
+      <table class="table table-sm table-zebra gc-tight">
+        <thead>
+          <tr><th>Gap</th><th>Evidence in the tree</th><th>Why it bounds the search</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Positioning is blind to cover</strong></td>
+            <td><span class="gc-file">_advance_value</span> is <code>−distance − threat − cohesion + doctrine</code>. Grepping <span class="gc-file">ai/</span> for defence stars returns <em>one comment</em> and no code.</td>
+            <td>Terrain defence reaches the planner only through <span class="gc-file">forecast_at</span> inside <span class="gc-file">ThreatMap</span> — which Normal never builds (<code>threat_aversion 0.0</code>) and Difficult weights at 0.1. The default AI parks a tank on plains beside empty woods and cannot notice. <span class="gc-file">Sable Wren</span>'s <code>stand_value</code> proves the seam exists and is unused by the neutral planner.</td>
+          </tr>
+          <tr>
+            <td><strong>Four commands are never issued</strong></td>
+            <td><code>JoinCommand</code>, <code>SupplyCommand</code>, <code>LoadCommand</code>, <code>DropCommand</code>: zero references in <span class="gc-file">ai/</span>.</td>
+            <td>Two 4-HP infantry stay two 4-HP infantry forever. The APC is unbuildable dead weight. Ferrying is the standing naval R1 and is why most four-seat boards carry no water.</td>
+          </tr>
+          <tr>
+            <td><strong>Value ignores condition</strong></td>
+            <td><span class="gc-file">_attack_score</span>, <span class="gc-file">_threat_penalty</span> and <span class="gc-file">_consider_withdraw</span> all price a unit at <code>type.cost</code>.</td>
+            <td>A 10-HP Md Tank is priced like a fresh one, as target and as asset. Every risk-and-reward dial is being asked to compensate for a valuation that is wrong by up to 90%.</td>
+          </tr>
+          <tr>
+            <td><strong>Retreat is priced by damage alone</strong></td>
+            <td><span class="gc-file">_better_refuge</span>: safety, then repair, then walk length. <code>withdraw_weight</code> is pinned at <code>0.0</code> <em>by a defect</em>, not by balance — at 0.05 it walks artillery out of its own firing ring (<span class="gc-file">test_indirect_unit_backs_off_into_firing_range</span>).</td>
+            <td>One of nineteen dials is switched off because the behaviour behind it is mispriced. A search cannot fix that; it will simply rediscover 0.</td>
+          </tr>
+          <tr>
+            <td><strong>Greedy, single-unit, no ordering</strong></td>
+            <td><span class="gc-file">plan_next</span> takes the globally best single action. <code>focus_fire_bonus</code> is the only nod to coordination and has measured negative <strong>three times</strong>, most recently with cohesion live.</td>
+            <td>No blocking a choke, no "this unit goes first so that one can pass", no trading a shot to open a lane. Structural, and the largest of the gaps.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body gap-2">
+        <h3 class="font-bold"><span class="gc-gap">And the ceiling is already documented.</span></h3>
+        <p class="text-sm">
+          The Grand Atlas — 20,280 matches at a 250-day cap — found the tier ladder
+          <strong>inverted</strong>: Easy &gt; Difficult &gt; Normal, with Normal taking only 15.6% from
+          Easy. Easy is the timid profile: <code>kill_bonus 1.0</code>,
+          <code>counter_weight 1.0</code>, the highest threat aversion of the three, no md tank. It wins
+          the long game by <em>declining</em> the fights the other two take.
+        </p>
+        <p class="text-sm">
+          Read that as a statement about the parameter space, because that is what it is: the shipped
+          dials mostly trade one class of bad play for another, and the difference between the extremes
+          of the space is worth less than the difference between playing and not playing. An optimiser
+          turned loose on those nineteen numbers will find a good local optimum <em>of a weak policy</em>.
+          That is worth having — it is AR5 — but it is not the deliverable, and pretending otherwise is
+          how this plan would waste 300 core-hours. The deliverable is AR6.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 2. BOUNDARIES ============================ -->
+  <section id="boundary">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">02</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Boundaries with the plans already standing</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Five documents already own territory here. This plan takes none of it — and one of them,
+          shipped the day after this was drafted, took a milestone back.
+        </p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table table-sm gc-tight">
+        <thead><tr><th>Plan</th><th>Owns</th><th>This plan therefore</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="gc-file">balance-simulator-plan</span></td>
+            <td>D1: <span class="gc-file">match_engine.gd</span> is the one match loop; the two shipped gates are byte-stable presets over it. D2: the telemetry observes, it never instruments the sim.</td>
+            <td>Adds a <em>third</em> preset and no second loop. Nothing under <span class="gc-file">core/</span> gains a hook for the arena — D1 below restates this as a merge bar.</td>
+          </tr>
+          <tr>
+            <td><span class="gc-file">difficulty-modes-plan</span></td>
+            <td>The AI never cheats at any tier; difficulty is a choice of <span class="gc-file">AIProfile</span> and nothing else. The DF4 gate, currently failing knowingly.</td>
+            <td>Changes no tier <span class="gc-file">.tres</span> except to write new fields in at their inert default. Whether a champion's numbers ever become a tier is a human decision under D8, taken with the ladder in view.</td>
+          </tr>
+          <tr>
+            <td><span class="gc-file">ai-judgement-plan</span></td>
+            <td>The four Judgement dials and their measured bands (§4b/§4c). D2: capabilities there, numbers in BL2.</td>
+            <td>Inherits its shape exactly — <strong>every new capability ships inert and inert skips the code</strong> — and inherits its warnings: R3's three-dials-over-one-threat-map, and that <code>focus_fire_bonus</code> is refuted rather than untested.</td>
+          </tr>
+          <tr>
+            <td><span class="gc-file">balance-retune-plan</span> (BL2)</td>
+            <td>Normal's and Difficult's shipped numbers, and righting the ladder on a horizon that resolves.</td>
+            <td>Hands BL2 a faster instrument and a wider shelf of dials to tune. It does not tune them <em>for</em> BL2, and it does not touch the ladder gate.</td>
+          </tr>
+          <tr>
+            <td><span class="gc-file">ai-economy-plan</span> (AE1–AE3, shipped 2026-08-02)</td>
+            <td>The map read as an economy: how many capturers a board wants, how they spread across it, and what ground that <em>builds</em> is worth. Four dials, all inert on every tier.</td>
+            <td><strong>Absorbs this plan's original AR6e</strong> and supplies §5a's fifth search block. Two consequences that are not bookkeeping: its
+              <span class="gc-file">_assign_capture_claims</span> is a <em>cross-unit</em> assignment, which is why AR1 carries a claim exception its envelope bound cannot express; and its out-of-scope list <em>rejects</em> the defensive mirror this plan expected, on AJ1 R3's grounds. Read it before touching a capture dial.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================ 3. DECISIONS ============================ -->
+  <section id="decisions">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">03</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Decisions</h2>
+        <p class="mt-1 max-w-3xl opacity-80">Locked unless a later plan supersedes them in writing.</p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D1 — The arena is an instrument; the game never learns it exists</h3>
+          <p class="text-sm">
+            Nothing under <span class="gc-file">core/</span> gains a field, a hook or a branch for this
+            plan. Nothing under <span class="gc-file">ai/</span> gains an "arena mode": a candidate is an
+            <span class="gc-file">AIProfile</span> and the planner cannot tell whether it is being
+            measured or played. The tournament driver lives in <span class="gc-file">tools/</span> and
+            reads <span class="gc-file">BalanceMatchEngine.Outcome</span>, which already carries every
+            fact fitness needs.
+          </p>
+          <p class="text-sm">
+            This is balance plan D2 applied to a new instrument, and it exists for the same reason: the
+            moment the sim can see the measurement, the measured game stops being the shipped one.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D2 — A performance change is proven byte-identical, never argued</h3>
+          <p class="text-sm">
+            AR1 makes the planner faster without making it different, and the only acceptable evidence is
+            the bar this repo already uses: a fixed-seed byte-diff of <code>make commander-balance</code>
+            <em>and</em> <code>make difficulty-check</code> across the change, both reports identical, no
+            accepted departure. A faster planner that plays a different game is a <em>different AI</em>
+            and has to be measured as one — which would silently invalidate the difficulty ladder, the
+            Atlas, and every commander number in <span class="gc-file">docs/commander_balance.md</span>
+            in one commit.
+          </p>
+          <p class="text-sm">
+            The byte-diff is necessary and not sufficient, because both gates seat commanders and short
+            horizons. AR1 adds a differential test as well: the cached and uncached planners run the same
+            seeded matches command for command and must agree on every one. That test stays in the suite
+            afterwards, which is what keeps the cache honest as new dials are added to it.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D3 — A candidate is an <span class="gc-file">AIProfile</span> and nothing else</h3>
+          <p class="text-sm">
+            The search space is exactly the exported fields of <span class="gc-file">ai_profile.gd</span>.
+            No arena-only code paths, no feature flags the driver can toggle, no "experimental planner"
+            fork. A capability the search is allowed to explore is an <code>@export</code> that ships at
+            its inert default and is written into all three tier files in the same commit — which
+            <span class="gc-file">test_every_tier_explicitly_writes_every_profile_field</span> already
+            enforces, and which is the whole reason that test exists.
+          </p>
+          <p class="text-sm">
+            The consequence is the useful part: <strong>anything the arena discovers is shippable by
+            editing one <span class="gc-file">.tres</span></strong>. A champion that needed a code branch
+            would be a research result nobody can play.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D4 — Fitness is a margin, not a win</h3>
+          <p class="text-sm">
+            Twenty-odd continuous dials scored by a boolean outcome is a step function: almost every
+            mutation changes nothing measurable, and the search spends its compute on noise. Fitness is
+            therefore a graded score per match, built <em>only</em> from fields
+            <span class="gc-file">Outcome</span> already carries — the winner, the day it ended, and the
+            property / surviving-unit / army-value margins the tiebreak already reads.
+          </p>
+          <p class="text-sm">
+            A decisive win outranks any scored one, so the ordering the game cares about is never
+            inverted by the gradient underneath it; within each class the margin ranks, and an earlier
+            decisive win outranks a later one. The exact weights are AR4's deliverable and live in
+            <span class="gc-file">docs/ai_arena.md</span> with the reasoning, because a fitness function
+            nobody can read is a leaderboard nobody can trust.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D5 — Both seatings, always; and nobody plays themselves</h3>
+          <p class="text-sm">
+            Measured today: a mirror on <code>clash</code> gave the first seat <strong>+100 pp</strong>.
+            <span class="gc-file">run_balance_sim</span> already plays non-mirror pairings from both
+            seats on paired seeds, so both sides meet identical luck; the arena inherits that and
+            <em>counts both</em>, so the seat cancels rather than being reported.
+          </p>
+          <p class="text-sm">
+            And a pairing of two identical vectors is skipped, not played: its outcome is the seat
+            talking, and feeding that into a leaderboard credits whichever twin drew seat one. The
+            existing mirror single-seating shortcut is a <em>bias measurement</em> and stays what it is —
+            it must never become the arena's scoring path.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D6 — The horizon is the one that resolves</h3>
+          <p class="text-sm">
+            <span class="gc-file">docs/difficulty_check.md</span> at a 20-day cap and the Grand Atlas at
+            250 disagree about which tier is stronger, and the document itself concedes the point: a
+            20-day reading "measured who was ahead early". Measured today on <code>ironworks</code>,
+            every seed routs by day 41 and a 120-day cap costs the same wall clock as a 60-day one — so
+            on land boards the resolving horizon is nearly free.
+          </p>
+          <p class="text-sm">
+            The arena's default cap is therefore <strong>100 days</strong>, and an unresolved match is
+            recorded as <em>unresolved</em> — never folded into fitness by the score tiebreak. Two
+            candidates that cannot beat each other have told us that, and scoring the stalemate on
+            property count rewards whichever one hoards better. <code>command_cap</code> stalls stay what
+            they already are in this toolchain: a hard invariant failure of the run, not a draw.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D7 — The opponent is the archive, not the champion</h3>
+          <p class="text-sm">
+            The obvious loop — promote the winner, make everyone fight it — is the one that cycles. This
+            game is visibly intransitive already: Easy beats Difficult beats Normal beats Easy is a
+            measured fact in the Atlas, not a hypothesis. A ladder that only ever plays the current
+            leader will happily walk a circle and report progress every lap.
+          </p>
+          <p class="text-sm">
+            So every generation is scored against three things: a <strong>fixed anchor set</strong> (the
+            three shipped tiers, unchanged for the life of the run, which is the only measurement
+            comparable across generations), a <strong>sample of the archive</strong> of past champions,
+            and its own generation. Progress is the anchor score. Everything else is selection pressure.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D8 — The arena recommends; a human ships</h3>
+          <p class="text-sm">
+            No milestone here writes a searched number into <span class="gc-file">data/ai/*.tres</span>
+            automatically, and no <code>make</code> target does either. This is the rule the Atlas already
+            set for its own leaderboard — <em>review trigger, never auto-nerf</em> — and it holds harder
+            here, because the arena optimises for winning a headless match against a machine, and the
+            product is a game a person plays. AR7 is a written recommendation with the evidence attached;
+            the edit that follows is a normal reviewed change under BL2's ownership of tier numbers.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D9 — The build list is a permutation and gets its own search</h3>
+          <p class="text-sm">
+            <code>build_priority</code> is an ordered <code>Array[StringName]</code>, not a float, and the
+            three tiers differ in it more than in anything else they carry. Mutating it means swaps and
+            insertions over a discrete space, with membership itself in play — Easy fields no md tank at
+            all, and that is a real strategic choice rather than a weight.
+          </p>
+          <p class="text-sm">
+            It is therefore searched in a separate block from the continuous dials, alternating with them
+            rather than jointly: a permutation move and a Gaussian step do not belong in the same
+            proposal distribution, and mixing them makes every result unattributable. Same for
+            <code>air_answer_ids</code>, on the same grounds.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 4. MILESTONES ============================ -->
+  <section id="milestones">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">04</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Milestones</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Seven, each independently mergeable, each ending with <code>make verify</code> green. AR1–AR2
+          buy the compute, AR3–AR4 build the instrument, AR5 calibrates it, AR6 is the actual work, AR7
+          is the verdict.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR1 — Make a match cheap <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+          <p class="text-sm opacity-80">Removes the <em>N</em>² re-plan. No behaviour change, and the merge bar is that claim.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><strong>The cache.</strong> <span class="gc-file">AIUnitActionPlanner</span> keeps each
+              ready unit's <span class="gc-file">UnitPlan</span> between commands of the same turn, in
+              scan order, and rescores only the units whose plan <em>could</em> have changed.</li>
+            <li><strong>The invalidation, which is the whole milestone.</strong> A unit's plan is a
+              function of its own reach and of what stands inside reach-plus-range. So after a command,
+              rescore any unit whose <code>move_budget + max_range + 1</code> Manhattan envelope contains
+              a cell the command touched — the mover's origin and destination, the target cell, a captured
+              cell, a built cell — and any unit whose candidate set included a unit that died. That bound
+              is a deliberate <em>over</em>-approximation: it may rescore a unit whose plan did not
+              change, and it can never skip one whose plan did. Cheap to state, cheap to check, and exact
+              in the direction that matters.</li>
+            <li><strong>The claim exception, and the envelope is not sufficient without it.</strong>
+              AE2 added <span class="gc-file">_assign_capture_claims</span>, which settles a claim for
+              <em>every</em> capturer at once as a global nearest-pair assignment the first time any one
+              of them asks. That makes a capturer's goal a function of where every <em>other</em> capturer
+              is — which an envelope centred on the unit itself cannot see, so a capturer walking clean
+              across the map changes a second capturer's claim without ever entering its envelope. So the
+              cache carries one cross-unit rule: <strong>any command that moves, removes, or is issued by
+              a capture-capable unit invalidates every capture-capable unit's cached plan.</strong>
+              Capturers are a small fraction of an army, so it costs little.
+              <em>Today it is latent rather than live</em> — <code>capture_claim_depth</code> ships at 0
+              on all three tiers and the claim returns early — which is precisely the danger: the byte-diff
+              bar would pass without the rule, and AR5 is what turns the dial on. A cache that is exact
+              only while a dial is zero is the silent divergence R3 describes, so the differential suite
+              must include a run with the dial live.</li>
+            <li>The threat map cache in <span class="gc-file">AIPlanningContext</span> is untouched and
+              keeps its own signature key. Two caches, two invalidations, no shared state — and now one
+              cross-unit rule belonging to neither.</li>
+            <li><strong>Everything else in the turn stays as it is.</strong> Production is planned once
+              per command and is cheap; the acted unit leaves <code>ready_units</code> by the existing
+              path.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — a differential suite (D2) running the cached
+            and uncached planners over N seeded matches on three boards, asserting command-for-command
+            identity, <em>including one run with <code>capture_claim_depth</code> above zero</em>, since
+            no shipped tier reaches that path; plus targeted fixtures for each invalidation trigger, each
+            of which fails if that trigger is dropped — one of them moving a capturer <em>outside</em>
+            another capturer's envelope and proving the second one is recomputed.</p>
+          <p class="text-sm"><strong>Exit</strong> — both committed reports byte-identical; the
+            differential suite green; and a recorded before/after wall clock on
+            <code>ironworks --seeds=4 --days=120</code>, whose 21.4 s reading was taken at
+            <span class="gc-file">b1893f6</span> and should be re-taken on current main before any
+            speedup is quoted — AE1–AE3 ship inert, so the path should be identical, but "should" is not
+            a measurement. <em>Target ≥ 2.5×; below 1.5× the milestone is reconsidered rather than
+            merged</em>, since the cache costs real complexity in the planner and has to earn it.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR2 — Make the machine busy <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">Eight cores, one of them working. Nothing in <span class="gc-file">core/</span>, <span class="gc-file">ai/</span> or the engine changes.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>A worker-pool driver in <span class="gc-file">tools/</span>, modelled on the Atlas's
+              <span class="gc-file">grand_sweep_driver.py</span> and <strong>resumable the same way</strong>
+              — a shard whose output file exists is skipped, so a killed run costs the shard in flight and
+              nothing else. That property was worth more than any other during the Atlas and is
+              non-negotiable here.</li>
+            <li>Sharding is by <em>pairing × seed</em>, one process per shard batch, because that is the
+              unit of work that shares an engine boot (~0.6 s, amortised over a batch) and produces an
+              independently readable result.</li>
+            <li><strong>One spike, timeboxed:</strong> in-process threading over
+              <span class="gc-file">WorkerThreadPool</span>. The sim is pure <code>RefCounted</code> over
+              read-only <span class="gc-file">UnitDB</span> / <span class="gc-file">DamageChart</span> /
+              <span class="gc-file">TerrainDB</span>, so N matches in N threads is plausible and would
+              erase the boot cost entirely. It is a <em>spike</em>: if determinism per match does not hold
+              bit for bit against the single-threaded run, it is abandoned without argument and the
+              process pool ships. Threads are an optimisation; reproducibility is the product.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Exit</strong> — a documented throughput figure in
+            matches/minute on this machine, and a resumed run proven to skip completed shards. On the
+            measurements above, AR1 × AR2 should put a 100-day <code>ironworks</code> match under 1 s of
+            wall clock each at 6 workers.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR3 — Seat an arbitrary candidate <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">The missing input. A new preset over the one match loop, per balance D1.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">tools/run_ai_arena.gd</span>, a sibling of
+              <span class="gc-file">run_balance_sim.gd</span>, taking a profile per side:
+              <code>--red-profile=&lt;path.tres&gt;</code> and
+              <code>--blue-profile=</code>, plus <code>--pairings=&lt;file.json&gt;</code> so one process
+              plays a whole shard.</li>
+            <li><strong><span class="gc-file">BalanceSideSpec</span> is not touched.</strong> Its grammar
+              is shared with watch mode, and its own docstring says why a spec parsed two ways eventually
+              disagrees. A profile path is a <em>different</em> flag, not a third field in that spec.</li>
+            <li>Output is JSON per shard — one record per match carrying the
+              <span class="gc-file">Outcome</span> fields D4's fitness reads, and nothing else. No CSV, no
+              timeline, no <code>commands.jsonl</code>: at arena volume the telemetry is the dominant
+              write cost and answers a question nobody is asking. A <em>single</em> interesting pairing
+              can always be re-run through <code>make balance-sim</code> with the full instruments on,
+              which is the point of them being one engine.</li>
+            <li>Neutral commanders throughout (<code>doctrine_weight</code> is then inert), which is a
+              scope choice and is recorded as R8.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Tests</strong> — GUT over the flag grammar and the profile
+            loader on the same terms the launch layer is already tested on; a fixed-seed shard proven
+            byte-identical to the same matches played through <code>run_balance_sim</code>, which is what
+            keeps the two presets one engine rather than two.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR4 — Decide what "better" means <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">The scoring, the pools, and the anchors. Mostly a document; the code is a scorer.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>D4's graded match score, written down with its weights and its reasoning in
+              <span class="gc-file">docs/ai_arena.md</span>.</li>
+            <li><strong>A training pool and a held-out validation pool</strong>, split by <em>map and
+              seed</em> and fixed for the life of a run. Every reported result carries both numbers. A
+              champion that leads on training and not on validation has overfitted the pool, which is R1
+              and is the failure this instrument is most likely to have.</li>
+            <li>The fixed anchor set: <code>easy</code>, <code>default</code>, <code>hard</code> — never
+              re-tuned mid-run, because they are the only measurement comparable across generations
+              (D7).</li>
+            <li>A boards list chosen for <em>resolution</em>, not variety: land boards that rout inside
+              the cap, with the naval ones excluded while R1 of the naval plan stands (a fleet that
+              cannot ferry cannot conclude, and <code>the_straits</code> at Easy is 100% command-cap
+              stalls in the Atlas — that is a known instrument failure and must not be fed to a fitness
+              function).</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Exit</strong> — <span class="gc-file">docs/ai_arena.md</span>
+            committed, and a scored run of the three shipped tiers against each other that reproduces the
+            Atlas's inverted-ladder finding at the arena's own cap. <em>That reproduction is the
+            calibration of the fitness function itself</em>: an arena that ranks the tiers in the box-art
+            order is measuring the wrong horizon and is wrong before it has searched anything.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR5 — Calibrate on the dials that exist <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">The first real search. Its purpose is to test the instrument, not to ship a profile.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>Search the nineteen live dials only — no new capabilities — with the build list frozen, so
+              the continuous block is measured alone (D9).</li>
+            <li><strong>The acceptance criterion is a known answer.</strong> The search must find
+              something at least as strong as the best shipped tier under its own fitness, and its
+              champion's dials must be <em>legible</em>: high threat aversion and low kill bonus, if the
+              Atlas is right about timidity winning long games. A champion nobody can explain, or one
+              that cannot beat <code>easy.tres</code>, means the fitness function or the pools are wrong
+              and AR4 reopens.</li>
+            <li>Then the same search with the build list unfrozen, in the alternating block of D9, to size
+              what the permutation is worth on its own.</li>
+            <li><strong>No <span class="gc-file">data/</span> edit.</strong> The output is a report and an
+              archive of profiles under <code>reports/</code>.</li>
+          </ul>
+          <p class="text-sm mt-2"><strong>Exit</strong> — a written result including the compute spent,
+            the training/validation gap, and an explicit statement of how much the nineteen dials were
+            worth end to end. <em>That number is the argument for AR6</em>, and if it turns out to be
+            large this plan was wrong about the ceiling and should say so in writing.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR6 — Widen the shelf <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">The actual work. Each term is one <code>@export</code>, inert at its default, written into all three tiers, with the search re-run after it.</p>
+          <p class="text-sm">
+            Each sub-milestone is separately mergeable and separately reverted, and carries the AI
+            Judgement merge bar unchanged: <strong>both committed reports byte-identical</strong>, because
+            an inert default must be genuinely inert. §5 lists the shelf with the reasoning; the order
+            below is by measured gap over cost.
+          </p>
+          <ol class="list-decimal list-inside space-y-1 text-sm">
+            <li><strong>AR6a — Cover.</strong> A defence-stars term in <span class="gc-file">_advance_value</span>
+              and in the attack destination penalty. The single clearest hole in §1c, and the cheapest to
+              close: the number is already on <span class="gc-file">TerrainType</span> and
+              <span class="gc-file">CombatResolver</span> already reads it.</li>
+            <li><strong>AR6b — Condition.</strong> Value a unit at <code>cost × hp/100</code> wherever it
+              is currently valued at <code>cost</code>, behind a dial that interpolates between the two so
+              zero is today's behaviour exactly.</li>
+            <li><strong>AR6c — Join.</strong> <code>JoinCommand</code> as a scored candidate in
+              <span class="gc-file">_best_unit_plan</span>, beside dive and withdraw — the precedent D4 of
+              the Judgement plan already set for a non-attack action that may outbid a shot.</li>
+            <li><strong>AR6d — Refuge pricing.</strong> <span class="badge badge-success badge-sm align-middle">shipped</span> Fix what pins <code>withdraw_weight</code> at zero:
+              a refuge that gives up the unit's own firing ring is not a refuge. Adds a term to
+              <span class="gc-file">_better_refuge</span>; the existing failing test is the acceptance
+              criterion, and this one is worth doing even if the arena is never built.</li>
+          </ol>
+          <p class="text-sm mt-2 gc-quote px-4 py-2"><strong>AR6e is gone, and was right to go.</strong> This
+            plan originally carried a fifth term — price a property by what it produces — which the
+            <span class="gc-file">ai-economy-plan</span>'s <strong>AE3 shipped on 2026-08-02</strong>, in
+            two dials rather than one (<code>production_capture_multiplier</code> in value,
+            <code>capture_goal_value_tiles</code> in tiles) for the same reason
+            <code>threat_aversion</code> and <code>advance_threat_tiles</code> are two fields. Its
+            defensive half — pricing the factory we <em>hold</em> the same way — is explicitly out of
+            scope there, because AJ1's R3 already says three dials price one board and a fourth reading
+            counts the same doctrine twice. Both new dials ship inert, so they arrive here as search
+            dimensions rather than as behaviour, and they live in §5a's economy block.</p>
+          <p class="text-sm mt-2"><strong>The gate on each:</strong> a re-run search including the new
+            term must beat the previous champion <em>on the validation pool</em>. A term that does not is
+            kept in the tree at zero, exactly as <code>focus_fire_bonus</code> is — zeroing a smart that
+            did not pay is the established remedy here, and it keeps the next search one edit away from
+            re-testing it.</p>
+          <p class="text-sm"><strong>Deliberately not in AR6:</strong> transports and ferrying (naval R1
+            is a cross-turn planning problem, not a dial), and any form of coordinated multi-unit ordering.
+            Both are named in §7 with why.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">AR7 — The verdict <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <p class="text-sm opacity-80">No search. A report and a recommendation, per D8.</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>The champion against all three shipped tiers, on the validation pool, at the resolving
+              horizon, both seatings, with the compute cost stated.</li>
+            <li><strong>A read of what it does at a table.</strong> The champion plays a watched match
+              (<code>make balance-watch</code>) and a human describes its play in prose. An opponent that
+              wins by declining every fight for 90 days is a worse game than the one it replaced, and no
+              fitness number will say so — this is the check that catches it, and it is the one step of
+              this plan that cannot be automated.</li>
+            <li>A recommendation per tier: what to change, what it buys, and what it costs the DF4 ladder,
+              handed to BL2 which owns those numbers.</li>
+            <li>Whether the arena becomes a standing instrument (a <code>make</code> target and a docs
+              page) or a one-off study, decided on what AR5 and AR6 actually returned.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 5. THE PARAMETER SHELF ============================ -->
+  <section id="params">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">05</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">The parameter shelf</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          What the search may move today, and what AR6 would add. The right-hand column is the part that
+          matters: a dial with no reasoning behind it is a dimension that costs compute and returns noise.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="font-bold text-lg mb-2">5a — Live today (19 continuous, 2 permutations, 4 inert)</h3>
+    <div class="overflow-x-auto mb-6">
+      <table class="table table-sm table-zebra gc-tight gc-shelf">
+        <thead><tr><th>Block</th><th>Fields</th><th>Note for the search</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Combat judgement</strong></td>
+            <td><code>kill_bonus</code>, <code>counter_weight</code>, <code>min_useful_score</code></td>
+            <td>The axis the tiers differ most on, and the axis the Atlas says is <em>backwards</em>: the timid settings win long games.</td>
+          </tr>
+          <tr>
+            <td><strong>Economy &amp; ground</strong></td>
+            <td><code>capture_score</code>, <code>capture_progress_bonus</code>, <code>hq_capture_multiplier</code>, <code>step_cost_penalty</code>, <code>advance_score</code></td>
+            <td>Four of these are also the price list <code>defend_weight</code> reads backwards — moving one moves attack <em>and</em> defence. Never tune singly.</td>
+          </tr>
+          <tr>
+            <td><strong>Threat (one map, three readers)</strong></td>
+            <td><code>threat_aversion</code>, <code>advance_threat_tiles</code>, <code>withdraw_weight</code></td>
+            <td>Judgement R3: three dials over one <span class="gc-file">ThreatMap</span> can price one enemy three times. Search as a block. <code>withdraw_weight</code> is defective until AR6d.</td>
+          </tr>
+          <tr>
+            <td><strong>Formation &amp; retreat</strong></td>
+            <td><code>cohesion_tiles</code>, <code>cohesion_radius</code>, <code>retreat_hp</code></td>
+            <td>The first two were probed together and never apart, and tight beat loose by the largest margin measured in the Judgement plan. Move as a pair.</td>
+          </tr>
+          <tr>
+            <td><strong>Production</strong></td>
+            <td><code>capture_unit_target</code>, <code>duplicate_priority_cost</code>, <code>save_up_turns</code>, <code>air_answer_target</code>, <code>build_reactivity</code></td>
+            <td><code>save_up_turns</code> has a measured fairness cost: banking hands the first mover a timing edge (+5.6 pp at 0, +14.9 at 2, +20.2 at 3). The search will happily buy that edge — D5's both-seatings scoring is what stops it counting.</td>
+          </tr>
+          <tr>
+            <td><strong>Permutations (D9)</strong></td>
+            <td><code>build_priority</code>, <code>air_answer_ids</code></td>
+            <td>Discrete, membership in play, searched in their own block.</td>
+          </tr>
+          <tr>
+            <td><strong>The map as an economy</strong><br><span class="text-xs opacity-70">new — AE1–AE3</span></td>
+            <td><code>capture_units_per_property</code>, <code>capture_claim_depth</code>, <code>production_capture_multiplier</code>, <code>capture_goal_value_tiles</code></td>
+            <td>All four ship <strong>inert on every tier</strong>, so this block is the only unexplored ground in the shelf — and three of its couplings cross other blocks, none optionally.
+              <code>capture_units_per_property</code> raises the <code>capture_unit_target</code> <em>floor</em> rather than replacing it, so it cannot be searched apart from Production.
+              <code>capture_claim_depth</code> must be probed against <code>cohesion_tiles</code> and never alone — AE2's own instruction, because spreading is untaxed by cohesion and claim depth is then the only thing limiting how thin a capture line gets.
+              And the AE3 pair multiplies out to zero at either dial's inert value, so moving one alone is inert half the time.
+              Read every result on a property-rich <em>and</em> a property-poor board: the first dial reaches the banking rule without touching it (AE3's D6), so a single board measures the map rather than the dial.</td>
+          </tr>
+          <tr>
+            <td><strong>Inert here</strong></td>
+            <td><code>doctrine_weight</code>, <code>focus_fire_bonus</code>, <code>dive_score</code>, <code>refuel_margin_turns</code></td>
+            <td>No commanders means <code>doctrine_weight</code> does nothing. <code>focus_fire_bonus</code> is refuted three times and starts at 0. The last two only matter on boards this plan excludes.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="font-bold text-lg mb-2">5b — The shelf AR6 adds</h3>
+    <div class="overflow-x-auto">
+      <table class="table table-sm table-zebra gc-tight gc-shelf">
+        <thead><tr><th>Term</th><th>Where it goes</th><th>Why it is worth a dimension</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Cover value</strong> (AR6a)</td>
+            <td><span class="gc-file">_advance_value</span>, and the destination penalty in <span class="gc-file">_consider_attacks</span></td>
+            <td>The planner has <em>no</em> term for terrain defence. This is the first thing a human player learns and the AI cannot see it. Data already exists on <span class="gc-file">TerrainType</span>.</td>
+          </tr>
+          <tr>
+            <td><strong>Condition weighting</strong> (AR6b)</td>
+            <td><span class="gc-file">_attack_score</span>, <span class="gc-file">_threat_penalty</span>, <span class="gc-file">_consider_withdraw</span></td>
+            <td>Everything is priced at full cost regardless of HP. Every risk dial is currently compensating for a valuation off by up to 90%.</td>
+          </tr>
+          <tr>
+            <td><strong>Join</strong> (AR6c)</td>
+            <td>A candidate in <span class="gc-file">_best_unit_plan</span></td>
+            <td>The command exists, the rules exist, the AI has never once issued it. Two half-dead infantry are strictly worse than one healthy one, and the AI accumulates them all match.</td>
+          </tr>
+          <tr>
+            <td><strong>Refuge quality</strong> (AR6d) <span class="badge badge-success badge-sm align-middle">shipped</span></td>
+            <td><span class="gc-file">_better_refuge</span></td>
+            <td>Unpinned a dial that was zero for a defect. Standalone value even with no arena.</td>
+          </tr>
+          <tr>
+            <td><strong>Property class value</strong> <span class="badge badge-sm badge-neutral align-middle">shipped elsewhere</span></td>
+            <td><span class="gc-file">_consider_captures</span>, by <span class="gc-file">ai-economy-plan</span> AE3</td>
+            <td>Was AR6e. Shipped 2026-08-02 as <code>production_capture_multiplier</code> (value) + <code>capture_goal_value_tiles</code> (tiles). The mirror into <span class="gc-file">_defend_bonus</span> that this plan expected is <em>deliberately absent</em> — AE3's out-of-scope list rejects it on AJ1 R3 grounds. Do not re-file it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================ 6. RISKS ============================ -->
+  <section id="risks">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">06</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Risks</h2>
+        <p class="mt-1 max-w-3xl opacity-80">Ranked by how likely they are to make the result <em>wrong</em> rather than late.</p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R1 — Overfitting the pool <span class="badge badge-error badge-sm">high</span></h3>
+          <p class="text-sm">
+            The sim is deterministic per seed, so a candidate can be tuned to <em>specific games</em>
+            rather than to play. With a few hundred training matches and twenty dimensions this is not a
+            risk, it is the default outcome.
+            <strong>Mitigation:</strong> the held-out validation pool of AR4, split by map <em>and</em>
+            seed, with both numbers on every reported result and the gap between them treated as the
+            headline diagnostic rather than a footnote.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R2 — The optimiser finds an exploit, not a strategy <span class="badge badge-error badge-sm">high</span></h3>
+          <p class="text-sm">
+            Fitness maximisers find the cheapest path to the number. The known exploitable seams here:
+            stalling past the cap while ahead on the tiebreak; the first-seat timing edge that
+            <code>save_up_turns</code> buys; and a board whose stalemate the fitness reads as a narrow
+            win.
+            <strong>Mitigation:</strong> D6 refuses to score unresolved matches at all, D5 counts both
+            seatings so a seat-dependent edge nets to zero, and cap stalls stay a hard invariant failure
+            of the run. Each of the three is already an instrument the toolchain has.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R3 — AR1's cache is subtly inexact <span class="badge badge-error badge-sm">high</span></h3>
+          <p class="text-sm">
+            A missed invalidation is a <em>different AI</em> that still passes most tests, and it would
+            invalidate the ladder, the Atlas and the commander numbers without announcing itself.
+            <strong>Mitigation:</strong> D2's byte-diff of both committed reports, plus a differential
+            suite that stays in the tree afterwards, plus the over-approximating envelope bound which
+            fails toward doing extra work rather than skipping it. If the envelope cannot be stated
+            simply, the milestone is wrong and should be dropped in favour of AR2's parallelism alone.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R4 — A stronger opponent is a worse game <span class="badge badge-warning badge-sm">medium</span></h3>
+          <p class="text-sm">
+            The Atlas already shows what winning looks like in this sim: the <em>timid</em> profile wins
+            long games. An arena champion may well be a turtle that refuses engagements for ninety days
+            and wins on properties. That is a correct answer to the fitness function and a bad opponent
+            for a person.
+            <strong>Mitigation:</strong> AR7's watched match and written read, D8's human-ships rule, and
+            the fact that difficulty tiers are a product decision BL2 owns. Worth stating plainly: this
+            plan can produce a result that should not ship, and that is a success of the process.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R5 — Dimensionality outruns compute <span class="badge badge-warning badge-sm">medium</span></h3>
+          <p class="text-sm">
+            Fifteen dials become twenty with AR6, and the sample cost per evaluation is high because a
+            single match is a noisy read of a matchup.
+            <strong>Mitigation:</strong> block-wise search (the four blocks of §5a, plus D9's permutation
+            block), never a single joint optimisation; add an AR6 term only when the previous one has been
+            measured; and the compute budget stated per milestone up front. The Atlas's 305 core-hours is
+            the reference for what "too much" looks like — it is a verdict instrument, and an iteration
+            loop that costs the same is not an iteration loop.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R6 — Intransitivity reported as progress <span class="badge badge-warning badge-sm">medium</span></h3>
+          <p class="text-sm">
+            Measured, not hypothetical: Easy &gt; Difficult &gt; Normal &gt; Easy in the Atlas.
+            <strong>Mitigation:</strong> D7 — progress is the score against the <em>fixed</em> anchor set,
+            and the archive is sampled as an opponent so a champion that only beats its immediate
+            predecessor is caught by an ancestor.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R7 — The permutation block dominates <span class="badge badge-success badge-sm">low</span></h3>
+          <p class="text-sm">
+            <code>build_priority</code> may turn out to be worth more than all nineteen floats — the tiers
+            differ in it most, and "what you build" plausibly beats "how you weigh a trade" in a game
+            decided by army composition. Not a problem, but it would change what the plan is <em>for</em>.
+            <strong>Mitigation:</strong> AR5 measures the two blocks separately and in that order,
+            specifically so the answer is attributable.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">R8 — Commander-free training may not transfer <span class="badge badge-success badge-sm">low</span></h3>
+          <p class="text-sm">
+            Training with neutral doctrine keeps the space clean (<code>doctrine_weight</code> inert, no
+            18 × 18 matrix), but the shipped game is played with commanders whose passives change the
+            forecasts the planner scores through.
+            <strong>Mitigation:</strong> AR7 spot-checks the champion under two or three commanders on
+            both sides before recommending anything. If it does not transfer, that is a finding worth
+            having and the arena grows a commander axis in a follow-up — not mid-run.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 7. OUT OF SCOPE ============================ -->
+  <section id="scope">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">07</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Out of scope, and why</h2>
+        <p class="mt-1 max-w-3xl opacity-80">Named so a later plan can pick them up on purpose rather than by drift.</p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table table-sm gc-tight">
+        <thead><tr><th>Not doing</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Search, lookahead, or a learned evaluator</strong></td>
+            <td>The whole toolchain rests on the planner being cheap, deterministic and RNG-free — that is what makes replays verify, the Atlas reproducible and the ladder measurable. A minimax or a neural evaluator is a different project with a different set of guarantees, and it should be proposed as one rather than arrived at through this plan.</td>
+          </tr>
+          <tr>
+            <td><strong>Transports and ferrying</strong></td>
+            <td>Naval R1. The planner cannot plan load-move-unload across turns, and no dial reaches that: it needs cross-turn intent, which <span class="gc-file">AIPlanningContext</span> deliberately has nowhere to keep (rebuilt every command; only the threat map survives, on purpose). Real work, its own plan.</td>
+          </tr>
+          <tr>
+            <td><strong>Multi-unit coordination and turn ordering</strong></td>
+            <td>The largest gap in §1c and genuinely structural: it changes <span class="gc-file">plan_next</span> from "best single action" to a joint decision, which is where determinism and scan-order tie-breaking get hard. Deliberately left after AR6 so the cheap wins are banked first and there is a fast instrument to measure it with.</td>
+          </tr>
+          <tr>
+            <td><strong>Commander doctrine tuning</strong></td>
+            <td>Owned by <span class="gc-file">commander-doctrine-ai-plan</span> and measured by <code>make commander-balance</code>. Neutral throughout here (R8).</td>
+          </tr>
+          <tr>
+            <td><strong>Shipping a tier</strong></td>
+            <td>D8. The arena recommends; BL2 owns tier numbers and the ladder they are measured by.</td>
+          </tr>
+          <tr>
+            <td><strong>Naval and four-seat boards in the pool</strong></td>
+            <td>Naval R1 makes some of them unable to conclude (<code>the_straits</code> at Easy is 100% command-cap stalls). A board the instrument cannot resolve is not a fitness signal. Land duels only, for this plan.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mt-6">
+      <div class="card-body gap-2">
+        <h3 class="font-bold">If only two milestones are ever built</h3>
+        <p class="text-sm">
+          <strong>AR1 and AR6d.</strong> The first makes every existing instrument in this repo — the
+          ladder, the commander matrix, the Atlas, the scene's own turn pause — cheaper by the same
+          factor, and it is provably behaviour-neutral. The second fixes a dial that is switched off
+          because of a bug rather than a measurement. Both are worth doing whether or not a single
+          tournament is ever run.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="px-6 py-8 md:px-12 border-t-2 border-base-300 text-sm opacity-70">
+    <p><strong>Grid Commanders — The AI Arena.</strong> Design of record, proposed 2026-08-02. All
+    measurements in §1 taken on this machine (8 cores, 4P+4E) against
+    <span class="gc-file">bin/Godot.app</span> 4.7.1, or quoted from
+    <span class="gc-file">docs/difficulty_check.md</span> and the Grand Balance Atlas.</p>
+    <p class="mt-2">Supersedes nothing; <span class="gc-file">ai-economy-plan</span> AE3 supersedes this plan's
+    original AR6e. Bounded by <span class="gc-file">balance-simulator-plan</span> D1/D2,
+    <span class="gc-file">ai-economy-plan</span> D3/D4/D6,
+    <span class="gc-file">difficulty-modes-plan</span> D2, <span class="gc-file">ai-judgement-plan</span> D1/D2,
+    and the naval plan's standing R1.</p>
+  </footer>
+
+</div>
+</body>
+</html>
