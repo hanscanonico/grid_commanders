@@ -216,9 +216,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   rather than ending it — the bonus is linear and priced on the same scale as a kill, so a rich
   enough target (Rockets, which cannot counter) still outbids a match-ending capture at any weight;
   the ceiling is the pricing *shape*, and `docs/difficulty_check.md` §4c is the measured boundary.
-  `withdraw_weight` is the one still at `0.0`, and for a positioning defect rather than the
-  ladder: at 0.05 it stops an artillery short of maximum standoff
-  (`test_indirect_unit_backs_off_into_firing_range`), so the refuge's price wants fixing first.
+  `withdraw_weight` is the one still at `0.0`, and it was a positioning defect rather than the
+  ladder that held it there: at 0.05 it stopped an artillery short of maximum standoff. The AI
+  Arena plan's AR6d fixed the refuge's price (see that entry), so the dial is now waiting on a
+  measurement rather than on a fix.
   What survives untouched is the code property — **`0.0` still skips a capability entirely**,
   proven by the per-capability suites that build explicit zeroed profiles — and the cost is
   recorded rather than hidden: the DF4 ladder now fails knowingly, because that gate measures the
@@ -395,6 +396,47 @@ that must survive any change; the full rationale, milestones and risk registers 
   facility scan already read — so **AE3 adds no terrain id to `ai/`**. `_goal_steps` is the one
   place that converts the judgement into tiles, read by both the plain walk (`_worth_walking_to`)
   and AE2's claimed assignment, so a claimed goal and an unclaimed one price the same ground alike.
+- `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
+  AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
+  cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **Only AR1 and AR6d are shipped**
+  — the arena itself is not built, and nothing under `tools/` runs a tournament yet.
+  D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
+  `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
+  the moment the sim can see the measurement the measured game stops being the shipped one (the
+  balance plan's D2, applied to a new instrument). D2: **a performance change is proven
+  byte-identical, never argued** — a fixed-seed byte-diff of `make commander-balance` *and* `make
+  difficulty-check` across the change, no accepted departure, plus a differential test that keeps
+  the two planners agreeing command for command afterwards; a faster planner that plays a
+  different game is a different AI and would silently invalidate the ladder, the Atlas and every
+  number in `docs/commander_balance.md` in one commit. D3: **a candidate is an `AIProfile` and
+  nothing else** — the search space is exactly `ai_profile.gd`'s `@export`s, so anything the arena
+  finds ships as an edit to one `.tres` rather than as a code branch nobody can play. D7: **the
+  opponent is the archive, not the champion** — this game is measurably intransitive (Easy beats
+  Difficult beats Normal beats Easy is in the Atlas), so a ladder that only ever plays the current
+  leader walks a circle and reports progress every lap; every generation scores against a fixed
+  anchor set, a sample of past champions and its own generation, and **progress is the anchor
+  score**. D8: **the arena recommends and a human ships** — no milestone and no `make` target
+  writes a searched number into `data/ai/`, because the arena optimises for winning a headless
+  match against a machine and the product is a game a person plays.
+  **D1's "nothing under `core/` gains a field, hook or branch" carries one recorded waiver**, the
+  user's, taken in AR1 when the cache alone came in under the plan's own speedup floor:
+  `MovementResolver._occupants` (one occupancy index per movement fill, never stored — a
+  longer-lived one would need every writer that moves, kills, builds, loads or unloads a unit to
+  maintain it, and the one that forgot would answer wrong rather than fail) and
+  `AttackRange.band` / `reaches` (a unit's firing ring resolved once per unit instead of once per
+  candidate-cell × enemy pair). Both are pure reads that decide nothing, and **D2's byte bar is
+  what stands in for D1 here** — both reports byte-identical over 6,480 matches, plus
+  `tests/unit/test_ai_plan_cache.gd` asserting command-for-command identity with the cache on and
+  off. Read the `core/` changes as a waived departure, not a rule violation. AR6d is the other
+  shipped card and it departs from its own ticket in the same recorded way: the ticket asks for a
+  boolean "can it still fire" key, which scores maximum standoff and one tile short of it
+  identically and so would not have fixed the reported board — what ships is a **rank**
+  (`_position_rank` against the enemy the unit is orienting on), under safety and over repair,
+  reaching indirect units only. `withdraw_weight` keeps its shipped `0.0` throughout (the
+  difficulty plan's D2 owns tier numbers), so AR6d is inert in every shipped tier.
+  Known and deliberate: the AR1 cache is inert with fog on, so the live game gets no speedup and
+  only the offline tools do.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

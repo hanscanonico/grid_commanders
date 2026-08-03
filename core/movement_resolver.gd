@@ -74,10 +74,16 @@ static func move_budget(state: GameState, unit: Unit, extra: int = 0) -> int:
 ## doctrine. The sole place terrain cost is read, so the flood fill below and
 ## the fuel spend in GameState.advance_unit cannot disagree.
 ##
-## Two invariants no doctrine may break: IMPASSABLE passes straight through — a
-## doctrine may discount terrain, never open terrain its units cannot cross —
-## and every other result is floored at 1, so a zero-cost step can never stall
-## the flood fill in a loop it keeps finding cheaper.
+## Three invariants no doctrine may break. IMPASSABLE passes straight through — a
+## doctrine may discount terrain, never open terrain its units cannot cross — and
+## every other result is floored at 1, so a zero-cost step can never stall the
+## flood fill in a loop it keeps finding cheaper.
+##
+## And the answer is a function of the unit and the terrain and of nothing else:
+## *which* cell that terrain is on may not change it. `terrain_cost` is handed no
+## cell for exactly this reason, and the fill below memoises one answer per kind
+## of ground per fill — a doctrine that reached around the hook for a cell would
+## get whichever cell it happened to be asked about first.
 static func step_cost(state: GameState, unit: Unit, terrain: TerrainType) -> int:
 	var base := terrain.move_cost(unit.type.move_class)
 	if base == TerrainType.IMPASSABLE:
@@ -123,9 +129,9 @@ static func reachable(
 	# board one cell at a time is a walk of the whole army per question.
 	var occupants := _occupants(state)
 	# And what a step onto each kind of ground costs, worked out the first time the
-	# fill meets that kind. `step_cost` is a function of the unit and the terrain
-	# and of nothing else — no doctrine reads the cell — while a board is a dozen
-	# kinds of ground and a fill asks about hundreds of cells.
+	# fill meets that kind: a board is a dozen kinds of ground and a fill asks
+	# about hundreds of cells, and step_cost's third invariant is what lets one
+	# answer serve them all.
 	var step_costs: Dictionary = {}
 	# The sighting team's visible cells decide whether a unit on a cell counts at
 	# all. Computed on first need and reused, so a fill that meets nobody that team

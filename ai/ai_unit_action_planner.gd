@@ -279,19 +279,21 @@ func _consider_withdraw(
 	if staying <= 0:
 		return  # nothing is aiming at us, so there is nothing to buy
 	var refits := _repair_cells(context, unit)
-	# The ground this unit was already orienting on, so the step back is measured
-	# against the same target the step forward would have been.
-	var goal := _advance_goal(context, unit)
+	# The enemy this unit is orienting on, and its own ring, both asked for once
+	# for the whole sweep — see _standoff_rank for why the goal is asked for here
+	# rather than taken off the unit's advance.
+	var goal := _enemy_goal(context, unit)
+	var ring := AttackRange.band(state, unit)
 	var best_cell := unit.cell
 	var best_incoming := staying
-	var best_stand := _standoff_rank(state, unit, unit.cell, goal)
+	var best_stand := _standoff_rank(unit.cell, goal, ring)
 	var best_repairs := refits.has(unit.cell)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
 		var incoming := threat.incoming_damage(state, unit, cell)
-		var stand := _standoff_rank(state, unit, cell, goal)
+		var stand := _standoff_rank(cell, goal, ring)
 		var repairs := refits.has(cell)
 		var cost: int = reachable.costs[cell]
 		if _better_refuge(
@@ -348,26 +350,34 @@ static func _better_refuge(
 ## What standing on `cell` costs this unit's own weapon, as a rank to minimise —
 ## and zero for a unit whose usefulness a refuge cannot take away.
 ##
-## It is `_position_rank`'s answer on the goal the unit already had, because
-## "where does this unit want to stand relative to that target" has one owner and
-## a withdrawal must not be a second opinion on it: an indirect unit that steps
-## back to a cell its own advance would walk it out of next turn is dithering,
-## not retreating. That rank is what prices the defect this milestone exists for
-## — it is the difference between a cell inside the firing ring and one outside
-## it, *and* between maximum standoff and one tile short of it, which is where
-## the artillery actually stopped.
+## It is `_position_rank`'s answer, because "where does this unit want to stand
+## relative to what it shoots" has one owner and a withdrawal must not be a second
+## opinion on it: an indirect unit that steps back to a cell its own advance would
+## walk it out of next turn is dithering, not retreating. That rank is what prices
+## the defect this milestone exists for — it is the difference between a cell
+## inside the firing ring and one outside it, *and* between maximum standoff and
+## one tile short of it, which is where the artillery actually stopped.
+##
+## The goal is the advance on the enemy, asked for directly rather than taken off
+## whatever `_advance_goal` currently answers, because that is an errand as often
+## as it is the enemy: a wounded gun's goal is the workshop that repairs it, and
+## ranking standoff against *that* would have the gun holding two tiles off its
+## own repair shop — while leaving every unit an errand had claimed ranked at
+## zero, which is the whole case a refuge exists for.
 ##
 ## Only a stand-off goal is ranked, so this reaches an indirect unit and nothing
 ## else. A direct unit is deliberately untouched: its rank would be plain
 ## distance to the enemy, which would pull a retreat back toward the thing it is
 ## retreating from — and there is no cell both outside a direct enemy's reach and
-## inside its own one-tile ring anyway, so there is nothing here to save.
+## inside its own one-tile ring anyway, so there is nothing here to save. A unit
+## that can see nobody is ranked at zero for the same reason: there is nothing to
+## stand off from.
 static func _standoff_rank(
-	state: GameState, unit: Unit, cell: Vector2i, goal: AIPlanningContext.AdvanceGoal
+	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i
 ) -> int:
-	if not goal.stand_off:
+	if goal == null or not goal.stand_off:
 		return 0
-	return _position_rank(state, unit, cell, goal)
+	return _position_rank(cell, goal, ring)
 
 
 ## Our own properties that would repair this unit, empty while it is unhurt: a
@@ -434,13 +444,16 @@ func _advance_command(
 	# The doctrine is asked about every candidate cell, so it is looked up once
 	# rather than per cell: which commander an army has cannot change mid-sweep.
 	var doctrine := state.commander_of(unit.team)
+	# And so is the ring the stand-off rank is measured in, for the same reason:
+	# both its ends are one answer for every cell this unit could stop on.
+	var ring := AttackRange.band(state, unit)
 	var best_cell := unit.cell
-	var best_value := _advance_value(state, unit, unit.cell, goal, threat, column, doctrine)
+	var best_value := _advance_value(state, unit, unit.cell, goal, ring, threat, column, doctrine)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var value := _advance_value(state, unit, cell, goal, threat, column, doctrine)
+		var value := _advance_value(state, unit, cell, goal, ring, threat, column, doctrine)
 		var cost: int = reachable.costs[cell]
 		if value > best_value or (is_equal_approx(value, best_value) and cost < best_cost):
 			best_value = value
@@ -457,11 +470,12 @@ func _advance_value(
 	unit: Unit,
 	cell: Vector2i,
 	goal: AIPlanningContext.AdvanceGoal,
+	ring: Vector2i,
 	threat: ThreatMap,
 	column: Array[Vector2i],
 	doctrine: CommanderType
 ) -> float:
-	var value := -float(_position_rank(state, unit, cell, goal))
+	var value := -float(_position_rank(cell, goal, ring))
 	if threat != null:
 		var incoming := threat.incoming_damage(state, unit, cell)
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
@@ -522,21 +536,21 @@ static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
 
 
 ## Direct units close on the goal. Indirect units stop inside their firing ring,
-## ideally at maximum standoff.
+## ideally at maximum standoff. `ring` is `AttackRange.band`'s answer, handed in
+## rather than asked for here because every caller weighs many cells against one
+## unit's ring and the doctrine's range bonus is the same answer for all of them.
 static func _position_rank(
-	state: GameState, unit: Unit, cell: Vector2i, goal: AIPlanningContext.AdvanceGoal
+	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i
 ) -> int:
 	var dist := absi(goal.cell.x - cell.x) + absi(goal.cell.y - cell.y)
 	if not goal.stand_off:
 		return dist
-	var low := AttackRange.minimum(state, unit)
-	var high := AttackRange.maximum(state, unit)
-	var out_of_ring := high - low + 1
-	if dist > high:
-		return out_of_ring + dist - high
-	if dist < low:
-		return out_of_ring + low - dist
-	return high - dist
+	var out_of_ring := ring.y - ring.x + 1
+	if dist > ring.y:
+		return out_of_ring + dist - ring.y
+	if dist < ring.x:
+		return out_of_ring + ring.x - dist
+	return ring.y - dist
 
 
 ## Fuel-critical units seek refit, damaged units seek repair, a besieged home HQ
@@ -551,8 +565,6 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 	if errand != null:
 		context.goals[unit] = errand
 		return errand
-	var goal := AIPlanningContext.AdvanceGoal.new()
-	goal.cell = unit.cell
 	if unit.type.can_capture:
 		var capturable: Array[Vector2i] = []
 		for cell in state.map.property_cells():
@@ -561,17 +573,32 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 			if not state.allied(state.owner_at(cell), unit.team):
 				capturable.append(cell)
 		if not capturable.is_empty():
-			goal.cell = _claimed_property(context, unit, capturable)
-			context.goals[unit] = goal
-			return goal
+			var capture := AIPlanningContext.AdvanceGoal.new()
+			capture.cell = _claimed_property(context, unit, capturable)
+			context.goals[unit] = capture
+			return capture
+	var goal := _enemy_goal(context, unit)
+	if goal == null:
+		goal = AIPlanningContext.AdvanceGoal.new()
+		goal.cell = unit.cell
+	context.goals[unit] = goal
+	return goal
+
+
+## The advance on the enemy: the nearest one this unit can see, stood off from
+## when the unit shoots over distance, and null when it can see nobody. The one
+## answer to what a unit is orienting on, so the step forward and the step back
+## are measured against the same thing rather than against two readings of it.
+func _enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	var enemy_cells: Array[Vector2i] = []
 	for other in context.visible_enemies:
 		enemy_cells.append(other.cell)
-	if not enemy_cells.is_empty():
-		goal.cell = _nearest(unit.cell, enemy_cells)
-		goal.stand_off = AttackRange.is_indirect(unit)
-		goal.keeps_formation = true
-	context.goals[unit] = goal
+	if enemy_cells.is_empty():
+		return null
+	var goal := AIPlanningContext.AdvanceGoal.new()
+	goal.cell = _nearest(unit.cell, enemy_cells)
+	goal.stand_off = AttackRange.is_indirect(unit)
+	goal.keeps_formation = true
 	return goal
 
 

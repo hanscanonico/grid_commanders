@@ -651,13 +651,16 @@ in each), so this is not a strict refutation, but the direction is consistently
 opposite and the honest reading is that a 16-match row could not support the
 confidence §4b placed in it. Treat §4b as hypotheses, not findings.
 
-**`withdraw_weight` ships at 0, and for a better reason than the ladder.** At
-0.05 it makes an artillery stop short of maximum standoff —
-`test_indirect_unit_backs_off_into_firing_range` catches it — so the unit ends
-its move inside more firing rings while gaining nothing. That is a positioning
-defect in how the refuge is priced, not a matter of taste, and it wants fixing
-before the dial is worth turning on. It is also the dial that most directly
-answers the "the AI throws units away" report, so this is the open thread.
+**`withdraw_weight` shipped at 0 for a positioning defect, and that defect is
+fixed.** At 0.05 it used to make an artillery stop short of maximum standoff, so
+the unit ended its move inside more firing rings while gaining nothing — a defect
+in how the refuge was priced, not a matter of taste. AR6d (COM-162) priced it:
+the refuge comparator now ranks the weapon the walk costs, under safety and over
+repair, and `tests/unit/test_ai_withdrawal.gd` pins both halves of that ordering
+as well as the errand case that used to slip past it. The dial is still 0, but
+nothing in the code holds it there any more — what it now wants is the
+measurement §4b never took at a useful width, and it remains the dial that most
+directly answers the "the AI throws units away" report.
 
 ## 5. Where this leaves the feature
 

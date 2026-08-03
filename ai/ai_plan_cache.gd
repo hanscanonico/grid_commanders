@@ -59,10 +59,7 @@ func sync(context: AIPlanningContext) -> void:
 
 ## The plan still good for `unit`, or null when it has to be scored afresh.
 func plan_for(unit: Unit) -> AIUnitPlan:
-	if not _plans.has(unit):
-		return null
-	var plan: AIUnitPlan = _plans[unit]
-	return plan
+	return _plans.get(unit)
 
 
 ## Whether a kept plan's fallback advance moved under it while its actions held.

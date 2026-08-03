@@ -65,6 +65,23 @@ const GUN_UNDER_A_BOMBER := (
 	+ "[units]\n1 g 7 5\n2 p 7 0\n2 b 15 5"
 )
 
+## The bomber board again, with one of our cities in the far corner and the gun
+## hurt enough to want it. The workshop is a dozen tiles off and unreachable, so
+## it changes nothing about the refuge itself — what it changes is the errand the
+## gun is on, which is what the rank used to be taken from.
+const WOUNDED_GUN_WITH_A_WORKSHOP := (
+	"[terrain]\n"
+	+ "C...............\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "................\n"
+	+ "[owners]\n1 0 0\n"
+	+ "[units]\n1 g 7 5\n2 p 7 0\n2 b 15 5"
+)
+
 ## The same shape with a direct unit: our md tank one step from the transport it
 ## is orienting on, inside the bomber's ring. Its safe cells sit either side of
 ## the walk-versus-target split — (6, 1) is the cheapest and (6, 0) is the one
@@ -215,6 +232,21 @@ func test_an_indirect_unit_keeps_its_firing_ring_when_it_steps_back() -> void:
 		_destination(_plan(GUN_UNDER_A_BOMBER, LIVE, 100, Vector2i(7, 5))),
 		Vector2i(7, 3),
 		"a cell it cannot shoot from is not a refuge, however short the walk"
+	)
+
+
+## The case the wounded half of the roster is actually in, and why the rank is
+## taken against the enemy rather than off whatever goal the unit is walking to:
+## below retreat_hp with a property that services it, the gun's goal is the
+## workshop, and a workshop is not something to stand off from. Ranked off the
+## goal, this board reads no stand-off at all and drops straight back to the
+## three keys the milestone exists to fix — the cheapest safe cell, one step out
+## of the gun's own firing ring.
+func test_a_wounded_indirect_unit_falls_back_to_standoff_and_not_to_its_errand() -> void:
+	assert_eq(
+		_destination(_plan(WOUNDED_GUN_WITH_A_WORKSHOP, LIVE, 40, Vector2i(7, 5))),
+		Vector2i(7, 3),
+		"the errand it is on says nothing about where its weapon wants to stand"
 	)
 
 
