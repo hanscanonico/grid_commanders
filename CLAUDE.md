@@ -311,7 +311,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and nothing since has re-measured them.
 - `ai-economy-plan.html` — the planner reads the map as an *economy* rather than as the fight in
   front of it: enough infantry to race for the board, capture goals that fan out across it, and a
-  price on the ground that builds tanks. Milestones AE1–AE4, **AE1 and AE2 shipped**. It is scoped
+  price on the ground that builds tanks. Milestones AE1–AE4, **AE1–AE3 shipped**. It is scoped
   against `ai-judgement-plan.html` (capabilities) and the balance retune (numbers) and inherits both
   boundaries verbatim. D1: **every dial ships inert and inert skips the code** — the merge bar for
   every milestone is a fixed-seed byte-diff of *both* balance reports, `make commander-balance` and
@@ -370,6 +370,26 @@ that must survive any change; the full rationale, milestones and risk registers 
   than `capture_claim_depth` places — falls back to the nearest property, so claiming can never
   send a capturer at the enemy instead. `MovementResolver` is untouched: this filters the candidate
   list the shipped walk already collects and is no new fill, path or geometry.
+  AE3's decision is D4: **a property is priced by what it produces, in the currency captures are
+  already in.** Nothing in `ai/` knew a property builds anything, so a base, an airport and a port
+  scored exactly as a plains city — which is how a closed seat's two factories sat unclaimed while
+  the player took them and built out of both. `capture_score` stays the unit of account and
+  `production_capture_multiplier` multiplies it **beside** `hq_capture_multiplier`, on the same line
+  of arithmetic, so the two compose rather than compete: a captured enemy headquarters reads as a
+  decapitation *and* a production line.
+  **One judgement, two readings, and they cannot disagree.** The same multiplier feeds the goal side
+  through `capture_goal_value_tiles`, which buys
+  `capture_goal_value_tiles × (production_capture_multiplier − 1)` tiles of detour — zero at either
+  dial's inert value, so the sign of the two readings is one number's sign. They are denominated
+  differently because the two paths are: `_consider_captures` competes in **value** against
+  `_attack_score`, a goal is chosen in **tiles**, and that is the same split `threat_aversion` and
+  `advance_threat_tiles` already live on. A unit that walks to a factory because it is valuable must
+  still want it when it arrives, or it turns round on the doorstep.
+  `AIUnitActionPlanner._produces` is the one place that answers "does this ground build", and it
+  asks `TerrainType.builds` — the field `BuildCommand`, the build menu and the production planner's
+  facility scan already read — so **AE3 adds no terrain id to `ai/`**. `_goal_steps` is the one
+  place that converts the judgement into tiles, read by both the plain walk (`_worth_walking_to`)
+  and AE2's claimed assignment, so a claimed goal and an unclaimed one price the same ground alike.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

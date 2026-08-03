@@ -206,6 +206,8 @@ func _consider_captures(
 		var score := profile.capture_score
 		if terrain.id == &"hq":
 			score *= profile.hq_capture_multiplier
+		if _produces(terrain):
+			score *= profile.production_capture_multiplier
 		var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
 		var step_cost: int = reachable.costs[cell]
 		score += (GameState.CAPTURE_POINTS - points) * profile.capture_progress_bonus
@@ -524,12 +526,51 @@ func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.A
 ## instead.
 func _claimed_property(context: AIPlanningContext, unit: Unit, cells: Array[Vector2i]) -> Vector2i:
 	if profile.capture_claim_depth <= 0:
-		return _nearest(unit.cell, cells)
+		return _worth_walking_to(context.state, unit.cell, cells)
 	if not context.capture_claims.has(unit):
 		_assign_capture_claims(context, unit, cells)
 	if context.capture_claims.has(unit):
 		return context.capture_claims[unit]
-	return _nearest(unit.cell, cells)
+	return _worth_walking_to(context.state, unit.cell, cells)
+
+
+## Whether this ground makes units, asked of the one authority for it:
+## `TerrainType.builds`, the same field `BuildCommand`, the build menu and the
+## production planner's facility scan read. So a base, a port and an airport are
+## production and a city is not, and no terrain id is spelled out here to say so.
+static func _produces(terrain: TerrainType) -> bool:
+	return not terrain.builds.is_empty()
+
+
+## The property to head for: the nearest one, less however many tiles a
+## production property is worth going out of the way for (AI Economy D4).
+##
+## The detour is the same judgement `_consider_captures` prices the arrival with,
+## converted into the currency a goal is chosen in — so "worth taking" and "worth
+## walking to" cannot disagree, and a unit does not walk to a factory only to turn
+## around when it gets there. Zero at either dial's inert value, and there the
+## whole reading is the shipped `_nearest` call.
+func _worth_walking_to(state: GameState, from: Vector2i, cells: Array[Vector2i]) -> Vector2i:
+	if profile.capture_goal_value_tiles <= 0.0:
+		return _nearest(from, cells)
+	var best := cells[0]
+	var best_reach := _goal_steps(state, from, best)
+	for cell in cells:
+		var reach := _goal_steps(state, from, cell)
+		if reach < best_reach:
+			best_reach = reach
+			best = cell
+	return best
+
+
+## How far `cell` counts as, for choosing a goal: the walk, less the detour what
+## it produces is worth. One function, so the plain walk and the claimed
+## assignment price a property identically.
+func _goal_steps(state: GameState, from: Vector2i, cell: Vector2i) -> float:
+	var reach := float(_steps(from, cell))
+	if profile.capture_goal_value_tiles <= 0.0 or not _produces(state.map.terrain_at(cell)):
+		return reach
+	return reach - profile.capture_goal_value_tiles * (profile.production_capture_multiplier - 1.0)
 
 
 ## Settles the whole assignment at once and writes every seeker's answer into the
@@ -552,7 +593,7 @@ func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array
 	var bids: Array = []
 	for u in seekers.size():
 		for c in cells.size():
-			bids.append([_steps(seekers[u].cell, cells[c]), u, c])
+			bids.append([_goal_steps(context.state, seekers[u].cell, cells[c]), u, c])
 	bids.sort_custom(_by_distance_then_scan_order)
 	var held: Dictionary = {}
 	var placed: Dictionary = {}
@@ -565,7 +606,11 @@ func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array
 		held[c] = int(held.get(c, 0)) + 1
 	for u in seekers.size():
 		var seeker := seekers[u]
-		var claim := cells[placed[u]] if placed.has(u) else _nearest(seeker.cell, cells)
+		var claim := (
+			cells[placed[u]]
+			if placed.has(u)
+			else _worth_walking_to(context.state, seeker.cell, cells)
+		)
 		context.capture_claims[seeker] = claim
 
 

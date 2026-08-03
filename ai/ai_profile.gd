@@ -247,6 +247,28 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## number is the only thing limiting how thin a line the capture units form. Probe
 ## it against cohesion_tiles as a pair, never alone — see docs/difficulty_check.md.
 @export var capture_claim_depth: int = 0
+## What taking ground that *builds* is worth, as a multiple of taking ground that
+## only pays. Asked of `TerrainType.builds` being non-empty — the same authority
+## BuildCommand, the build menu and the production planner's facility scan read —
+## so a base, a port and an airport are production and a city is not. 1.0 prices a
+## factory exactly as a plains city, which is the shipped planner.
+##
+## Denominated in VALUE, because capture_score is: it multiplies the capture score
+## beside hq_capture_multiplier rather than competing with it, so a captured enemy
+## headquarters reads as both a decapitation and a production line (AI Economy D4).
+@export var production_capture_multiplier: float = 1.0
+## How many tiles out of its way a unit will walk for the *whole* of what a
+## production property is worth above an ordinary one. The detour is this times
+## `production_capture_multiplier - 1`, so it is zero at either dial's inert
+## value and the two readings can never disagree about the sign.
+##
+## Denominated in TILES, because the goal path is: `_consider_captures` competes
+## in value against `_attack_score`, while a goal is chosen by how far away it is.
+## That is the same split threat_aversion and advance_threat_tiles already live
+## on, and it is why one judgement needs two fields. A unit that walks to a
+## factory because it is valuable must then score it as valuable when it arrives,
+## or it turns around on the doorstep.
+@export var capture_goal_value_tiles: float = 0.0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps
