@@ -521,9 +521,9 @@ func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.A
 ## exactly equidistant from one property have to be separated by something: a tie
 ## broken any other way lets them swap goals between replans so both walk and
 ## neither arrives. A unit left unplaced — the board holds more capturers than
-## `capture_claim_depth` places — walks to the nearest property, which is the
-## shipped answer and is why claiming can never send a capturer at the enemy
-## instead.
+## `capture_claim_depth` places — walks to the same priced goal an unclaimed
+## capturer walks to (`_worth_walking_to`), which is why claiming can never send
+## a capturer at the enemy instead.
 func _claimed_property(context: AIPlanningContext, unit: Unit, cells: Array[Vector2i]) -> Vector2i:
 	if profile.capture_claim_depth <= 0:
 		return _worth_walking_to(context.state, unit.cell, cells)
@@ -548,8 +548,8 @@ static func _produces(terrain: TerrainType) -> bool:
 ## The detour is the same judgement `_consider_captures` prices the arrival with,
 ## converted into the currency a goal is chosen in — so "worth taking" and "worth
 ## walking to" cannot disagree, and a unit does not walk to a factory only to turn
-## around when it gets there. Zero at either dial's inert value, and there the
-## whole reading is the shipped `_nearest` call.
+## around when it gets there. Zero at either dial's inert value, and at
+## `capture_goal_value_tiles` 0 the whole reading is the shipped `_nearest` call.
 func _worth_walking_to(state: GameState, from: Vector2i, cells: Array[Vector2i]) -> Vector2i:
 	if profile.capture_goal_value_tiles <= 0.0:
 		return _nearest(from, cells)

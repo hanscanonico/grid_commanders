@@ -367,9 +367,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   settled by scan order** over the whole (distance, unit, property) triple, so the sort needs no
   stability and replans off one board always agree; R6's pin is `test_replay_fidelity.gd` plus the
   reversed-pair fixture in `tests/unit/test_ai_economy.gd`. A unit left unplaced — more capturers
-  than `capture_claim_depth` places — falls back to the nearest property, so claiming can never
-  send a capturer at the enemy instead. `MovementResolver` is untouched: this filters the candidate
-  list the shipped walk already collects and is no new fill, path or geometry.
+  than `capture_claim_depth` places — falls back to the same priced walk an unclaimed capturer
+  takes (`_worth_walking_to`, AE3 below), so claiming can never send a capturer at the enemy
+  instead. `MovementResolver` is untouched: this filters the candidate list the shipped walk
+  already collects and is no new fill, path or geometry.
   AE3's decision is D4: **a property is priced by what it produces, in the currency captures are
   already in.** Nothing in `ai/` knew a property builds anything, so a base, an airport and a port
   scored exactly as a plains city — which is how a closed seat's two factories sat unclaimed while

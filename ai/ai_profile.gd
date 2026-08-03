@@ -231,7 +231,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## one banks, out of the same branch.
 @export var capture_units_per_property: float = 0.0
 ## How many capture units may claim one property as their goal. 0 turns claiming
-## off and leaves the shipped nearest-property walk untouched; 1 is classic
+## off and leaves the plain goal walk untouched; 1 is classic
 ## claiming, the nearest unit takes it and the next one is pushed to the next
 ## property; higher values let that many units travel to one contested property
 ## together.
