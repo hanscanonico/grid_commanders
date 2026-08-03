@@ -539,7 +539,7 @@
 
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body gap-2">
-          <h3 class="font-bold text-lg">AR1 — Make a match cheap <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <h3 class="font-bold text-lg">AR1 — Make a match cheap <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
           <p class="text-sm opacity-80">Removes the <em>N</em>² re-plan. No behaviour change, and the merge bar is that claim.</p>
           <ul class="list-disc list-inside space-y-1 text-sm">
             <li><strong>The cache.</strong> <span class="gc-file">AIUnitActionPlanner</span> keeps each
@@ -721,7 +721,7 @@
             <li><strong>AR6c — Join.</strong> <code>JoinCommand</code> as a scored candidate in
               <span class="gc-file">_best_unit_plan</span>, beside dive and withdraw — the precedent D4 of
               the Judgement plan already set for a non-attack action that may outbid a shot.</li>
-            <li><strong>AR6d — Refuge pricing.</strong> Fix what pins <code>withdraw_weight</code> at zero:
+            <li><strong>AR6d — Refuge pricing.</strong> <span class="badge badge-success badge-sm align-middle">shipped</span> Fix what pins <code>withdraw_weight</code> at zero:
               a refuge that gives up the unit's own firing ring is not a refuge. Adds a term to
               <span class="gc-file">_better_refuge</span>; the existing failing test is the acceptance
               criterion, and this one is worth doing even if the arena is never built.</li>
@@ -857,9 +857,9 @@
             <td>The command exists, the rules exist, the AI has never once issued it. Two half-dead infantry are strictly worse than one healthy one, and the AI accumulates them all match.</td>
           </tr>
           <tr>
-            <td><strong>Refuge quality</strong> (AR6d)</td>
+            <td><strong>Refuge quality</strong> (AR6d) <span class="badge badge-success badge-sm align-middle">shipped</span></td>
             <td><span class="gc-file">_better_refuge</span></td>
-            <td>Unpins a dial that is currently zero for a defect. Standalone value even with no arena.</td>
+            <td>Unpinned a dial that was zero for a defect. Standalone value even with no arena.</td>
           </tr>
           <tr>
             <td><strong>Property class value</strong> <span class="badge badge-sm badge-neutral align-middle">shipped elsewhere</span></td>
