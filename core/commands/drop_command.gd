@@ -16,6 +16,11 @@ var drop_cell: Vector2i
 ## single-slot transport always drops; a Lander holds two, and either might be the
 ## one that can stand where the other cannot, so the caller names it explicitly.
 var passenger: Unit
+## Set by apply() when the transport arrived but the drop cell turned out
+## occupied — a hidden enemy standing on it, or the transport's own arrival
+## filling it. The passenger stays aboard, and the move itself completed, so this
+## is a blockage rather than the `ambushed` trap.
+var drop_blocked: bool = false
 
 
 func _init(
@@ -65,10 +70,10 @@ func validate(state: GameState) -> String:
 func apply(state: GameState) -> void:
 	var rider := _rider(state.cargo_of(unit))
 	ambushed = state.advance_unit(unit, path)
-	# The move can stop short of where the drop was planned, or the drop cell can
-	# turn out to hold a hidden enemy: either way the passenger stays aboard.
-	if ambushed or state.unit_at(drop_cell) != null:
-		ambushed = true
+	if ambushed:
+		return
+	if state.unit_at(drop_cell) != null:
+		drop_blocked = true
 		return
 	rider.carrier = null
 	rider.cell = drop_cell
