@@ -333,7 +333,8 @@ func _frame_banner() -> void:
 		_hud.banner_sub = ""
 	else:
 		_hud.banner_text = "OCCUPYING"
-		_hud.banner_sub = "%d/20 LEFT" % maxi(_result.points_after, 0)
+		var left := maxi(_result.points_after, 0)
+		_hud.banner_sub = "%d/%d LEFT" % [left, GameState.CAPTURE_POINTS]
 	if _play.t < _beats.banner.x or _play.t >= _beats.banner.y:
 		_hud.banner_p = 0.0
 

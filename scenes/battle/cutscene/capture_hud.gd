@@ -14,12 +14,14 @@ const INK := Color(0.078, 0.090, 0.102)
 const GOLD := Color(0.969, 0.788, 0.282)
 const HP_LOW := Color(0.863, 0.282, 0.235)
 const SLATE_800 := Color(0.161, 0.184, 0.212, 0.9)
-## The points meter's twenty ticks — a full property.
-const METER_TOTAL := 20
+## The points meter's ticks — a full property, and the sim's own number rather
+## than a copy of it: the meter and the terrain panel drain the same threshold.
+const METER_TOTAL := GameState.CAPTURE_POINTS
 
 # --- pose, written every frame by CaptureCutscene -----------------------------
 
-## The meter's current reading, 0-20, and how far it has faded in (with the plates).
+## The meter's current reading, 0-METER_TOTAL, and how far it has faded in (with
+## the plates).
 var points_shown := METER_TOTAL
 var meter_p := 0.0
 ## Floating point chips: one value and one 0 -> 1 progress per hop. Drawn as a
@@ -55,8 +57,8 @@ func _draw() -> void:
 	_draw_banner()
 
 
-## Top-right: a big N/20 numeral over twenty ticks, draining as points fall. The
-## numeral turns red at zero, the moment the property is taken.
+## Top-right: a big N/METER_TOTAL numeral over one tick per point, draining as
+## points fall. The numeral turns red at zero, the moment the property is taken.
 func _draw_meter() -> void:
 	if meter_p <= 0.0:
 		return
@@ -76,7 +78,11 @@ func _draw_meter() -> void:
 	var num_tint := HP_LOW if shown <= 0 else GOLD
 	_stroked(font, Vector2(right - 26.0 - big_w, top + 34.0), big, 30, Color(num_tint, meter_p))
 	_stroked(
-		font, Vector2(right - 22.0, top + 34.0), "/20", 14, Color(1.0, 1.0, 1.0, 0.6 * meter_p)
+		font,
+		Vector2(right - 22.0, top + 34.0),
+		"/%d" % METER_TOTAL,
+		14,
+		Color(1.0, 1.0, 1.0, 0.6 * meter_p)
 	)
 	var pip_w := 5.0
 	var gap := 1.0
