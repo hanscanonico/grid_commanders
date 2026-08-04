@@ -322,6 +322,26 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## one. Move the two together and never one alone (arena plan R5) — a search that
 ## fits kill_bonus first will fit it to a valuation this dial then changes.
 @export var condition_weight: float = 0.0
+## What merging two damaged units of a kind is worth, as a multiple of the price
+## of the HP that survives the merge. 0 skips it entirely.
+##
+## Denominated in VALUE, because a join is a candidate in the same AIUnitPlan an
+## attack, a capture, a dive and a withdrawal compete for, and that competition
+## is in funds (AI Judgement D4). The quantity it multiplies is the HP that
+## actually lands: JoinCommand caps the merge at 100 and refunds nothing, so the
+## overflow is destroyed, and it is charged back at face value — a loss the file
+## can already price needs no dial of its own, while what concentration is worth
+## is a judgement and needs exactly this one.
+##
+## A multiple rather than a flat score like dive_score, because consolidating
+## thirty points of md tank is worth ten times consolidating thirty points of
+## infantry, and a constant cannot say so.
+##
+## Expect a tuned value well below 1.0. At 1.0 the carried HP is priced as though
+## the merge were free, and it is not: a join spends the mover's turn *and* the
+## target's, and leaves one exhausted unit where two ready ones stood. That price
+## is deliberately not a second dial — it is the reason this one is small.
+@export var join_weight: float = 0.0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps

@@ -56,6 +56,7 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
 	_consider_attacks(context, unit, plan.reach, plan)
 	_consider_captures(context.state, unit, plan.reach, plan)
 	_consider_dive(context, unit, plan)
+	_consider_join(context, unit, plan.reach, plan)
 	# Last on purpose: every comparison here is strict, so a withdrawal that only
 	# ties with a shot loses to it. Running away has to be strictly better.
 	_consider_withdraw(context, unit, plan.reach, plan)
@@ -316,6 +317,58 @@ func _consider_captures(
 		if score > plan.score:
 			plan.score = score
 			plan.command = CaptureCommand.new(unit, reachable.path_to(cell))
+
+
+## Whether folding this unit into a damaged one of its own kind beats everything
+## else it could do this turn.
+##
+## A scored candidate rather than a rule, and weighed after the attacks and the
+## captures so that a merge which merely ties with a shot loses to it — the dive
+## is the precedent for a non-attack action that may outbid one (AI Judgement
+## D4), and this is placed ahead of the withdrawal for the same reason the
+## withdrawal is last: it must be strictly better than running away, not equal.
+##
+## What a join is legal at all is JoinCommand's to say, and it is asked rather
+## than re-listed here: same type, same team, a target that is damaged, unspent
+## and carrying nothing. What this weighs is only which of the legal ones is
+## worth doing.
+func _consider_join(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+) -> void:
+	if profile.join_weight <= 0.0:
+		return
+	var state := context.state
+	for other in context.friendly_units:
+		if other == unit or other.carrier != null or other.type != unit.type:
+			continue
+		if not reachable.has(other.cell):
+			continue
+		var command := JoinCommand.new(unit, reachable.path_to(other.cell))
+		if command.validate(state) != "":
+			continue
+		var score := _join_score(unit, other, reachable.costs[other.cell])
+		if score > plan.score:
+			plan.score = score
+			plan.command = command
+
+
+## What merging `unit` into `other` is worth: the HP that lands, at the premium
+## `join_weight` puts on having it all on one unit, less the HP the cap destroys
+## and the walk it takes to get there.
+##
+## The two halves are weighed differently on purpose. What overflows the merge is
+## gone — JoinCommand caps at 100 and refunds nothing — so it is a plain loss and
+## is charged at the same rate every other point of HP in this file is, needing
+## no dial to say so. What concentration is worth is the judgement, and it is the
+## only part the dial answers for.
+func _join_score(unit: Unit, other: Unit, step_cost: int) -> float:
+	var carried := mini(100 - other.hp, unit.hp)
+	var price := _unit_value(unit)
+	return (
+		profile.join_weight * price * carried / 100.0
+		- price * (unit.hp - carried) / 100.0
+		- profile.step_cost_penalty * step_cost
+	)
 
 
 ## Whether stepping out of what the enemy can reach beats everything else this
