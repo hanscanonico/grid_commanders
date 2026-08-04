@@ -11,19 +11,20 @@ own unit tests (`tests/unit/test_balance_engine.gd`,
 `tests/unit/test_balance_recorder.gd`) are in the suite. Generated reports are
 not committed — they live under `reports/`, which is gitignored.
 
-## The three instruments
+## The instruments
 
 | Tool | Question it answers |
 |---|---|
 | `make commander-balance` | Is the commander roster balanced against itself? (`docs/commander_balance.md`) |
 | `make difficulty-check` | Do the tiers actually order Easy < Normal < Difficult? (`docs/difficulty_check.md`) |
 | **`make balance-sim`** | **Everything in between, plus *why*.** |
+| `make ai-arena` | Which of two arbitrary `AIProfile`s plays better? ([below](#seating-an-arbitrary-candidate-arena-plan-ar3)) |
 
-All three now run the same match loop — `tools/balance/match_engine.gd` — so a
-number one reports means the same thing in the other two. The two above are
-**presets** over it and keep their own CLIs, because two committed documents cite
-their exact flags. The extraction's merge bar was a fixed-seed byte-diff of both
-their reports before and after; see [Extraction](#the-extraction-plan-d1).
+All four run the same match loop — `tools/balance/match_engine.gd` — so a number
+one reports means the same thing in the others. Each is a **preset** over it and
+keeps its own CLI, because two committed documents cite their exact flags. The
+extraction's merge bar was a fixed-seed byte-diff of both their reports before
+and after; see [Extraction](#the-extraction-plan-d1).
 
 ## Running it
 
@@ -74,7 +75,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 | `--commander=` | The doctrine both sides carry, for `--sweep=tiers` |
 | `--no-commands` | Skip `commands.jsonl`; a large sweep's is big |
 | `--replays` | Also write a watchable recording per match, into `replays/` |
-| `--out=` | Output directory, default `reports/balance_sim/<run-name>` |
+| `--out=` | Output directory under `reports/`, default `reports/balance_sim/<run-name>` |
 
 **One axis per run** (plan D5). Commanders × tiers × maps × seeds is a six-figure
 matrix nobody reads; a run pins everything except one swept axis, so every batch
@@ -320,10 +321,11 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | Flag | Meaning |
 |---|---|
 | `--maps=` | Comma list of boards |
-| `--pairings=` | Comma list of `<red spec>/<blue spec>` — the Lab's own side grammar, passed through untouched |
+| `--pairings=` | Comma list of `<red side>/<blue side>` — the preset's own side grammar, passed through untouched (`--preset=arena` pairs on `::`, since a side is a path and paths carry `/`) |
+| `--preset=` | Which driver plays the shards: `lab` (default) or `arena` |
 | `--seeds=` | Paired seeds per pairing (default 4, the Lab's) |
 | `--batch=` | Seeds per shard (default 4) |
-| `--days=` | Day cap; omitted, the Lab's own default stands |
+| `--days=` | Day cap; omitted, the driver's own default stands |
 | `--workers=` | Processes at a time (default `min(6, cores)` — 6 is the measured peak below) |
 | `--out=` | Run directory, **relative to `reports/`**, default `reports/balance_pool/<spec>` |
 | `--timeout=` | Seconds per shard, default 3600 |
@@ -331,18 +333,27 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | `--self-check` | Run the `--out` and resume-key rules over their cases and stop |
 
 **Everything a run writes lands under `reports/`, and a path that would leave it
-is refused before a match is played.** `--out=x/y` means `reports/x/y`; a leading
-`reports/` is accepted rather than doubled, so both spellings work; an absolute
-path or one that climbs out with `..` is an error at startup. That is a
-containment rule and not a tidiness one: `BalanceReportWriter.prepare_dir`
-resolves the Lab's own `--out` against the *project* root, and Godot's
-`path_join` re-roots an absolute path under it, so `--out=/tmp/x` has the Lab
-writing `<repo>/tmp/x` while the driver reads `/tmp/x` — every shard reported
-failed with its results on disk the whole time, and resume, which is keyed on
-finding a shard's `summary.json`, replaying all of them forever. Refusing the
-path is what makes that unreachable. `--self-check` exercises those rules and the
-resume key's, and `tools/check_scripts.sh` runs it, so `make check` and
-`make verify` gate them even though `make test` reaches GDScript only.
+is refused before a match is played.** That rule is every instrument's, not just
+the pool's: `--out=x/y` means `reports/x/y`; a leading `reports/` is accepted
+rather than doubled, so both spellings work; a `res://`-spelled path is the same
+directory said the other way; and an absolute path or one that climbs out with
+`..` is an error at startup. That is a containment rule and not a tidiness one:
+Godot's `path_join` concatenates rather than resolves, so each of those spellings
+has the tool writing inside the repo under a name nobody reads while reporting
+the path it was handed — `--out=/tmp/x` writes `<repo>/tmp/x` while the driver
+reads `/tmp/x`, every shard reported failed with its results on disk the whole
+time, and resume, which is keyed on finding a shard's `summary.json`, replaying
+all of them forever. Refusing the path is what makes that unreachable.
+
+There is one policy in two places, because the driver has to refuse a path
+*before* it launches a preset and the preset is what actually writes:
+`resolve_out` in `tools/balance_pool.py`, and `BalanceReportWriter.resolve_out`,
+which every `--out=` in `tools/` — the Lab, the commander matrix, the difficulty
+ladder, the arena and both reports — is resolved through, for the write *and*
+for the line it prints. The two share one case table: `--self-check` runs it
+(and `tools/check_scripts.sh` runs that, so `make check` and `make verify` gate
+it), and `tests/unit/test_report_writer.gd` runs the same shapes against the
+GDScript half.
 
 **A shard is one pairing on one board over a contiguous slice of the seed
 range** — the smallest unit of work that amortises the engine boot (~0.9 s
@@ -351,11 +362,12 @@ own `matches.csv` and `summary.json` under `shards/`. The run directory also
 holds `progress.log`, `status.txt` (poll a live run with `cat`) and `pool.json`,
 which records the throughput and the load average it was measured under.
 
-**Resumable, and that is the point.** A shard whose `summary.json` exists is
-skipped, so a killed sweep costs the shard in flight and nothing else — rerun the
-same command to pick it up, and Ctrl-C ends the engines in flight rather than
-waiting them out. The Lab writes a shard's artifacts in one go at the end, so a
-shard is on disk either complete or not at all; the marker cannot be half true.
+**Resumable, and that is the point.** A shard whose marker artifact exists is
+skipped — `summary.json` for the Lab, `matches.json` for the arena — so a killed
+sweep costs the shard in flight and nothing else; rerun the same command to pick
+it up, and Ctrl-C ends the engines in flight rather than waiting them out. Both
+drivers write their artifacts in one go at the end, so a shard is on disk either
+complete or not at all; the marker cannot be half true.
 The run directory is derived from the spec like the Lab's is, so it is also the
 resume key: the same sweep asked for twice finds its own work. **A shard is keyed
 on the arguments it was played with**, digest and all, so the same directory
@@ -448,6 +460,119 @@ being shipped:
 
 Threads were an optimisation, and this one does not pay for the risk surface it
 carries. The process pool ships alone.
+
+## Seating an arbitrary candidate (arena plan AR3)
+
+A Lab side is `<commander>:<tier>`, and both halves are checked against the
+databases on purpose — so a side can be exactly **three** parameter vectors:
+`easy.tres`, `default.tres`, `hard.tres`. A tournament's whole input is "play
+*this* vector", and there was no grammar for it anywhere.
+
+`make ai-arena` — `tools/run_ai_arena.gd` — is that grammar, as a **third preset
+over the one match loop**: same `BalanceMatchEngine`, same seeds, same both-seats
+pairing. `BalanceSideSpec` is untouched; a profile path is a different flag, not
+a third field in a spec whose grammar watch mode shares.
+
+```sh
+make ai-arena ARENA="--map=scrimmage \
+  --red-profile=data/ai/default.tres --blue-profile=reports/ai_arena/gen1/c7.tres --seeds=8"
+
+# or a whole shard in one process
+make ai-arena ARENA="--pairings=reports/ai_arena/gen1/shard0.json"
+```
+
+| Flag | Meaning |
+|---|---|
+| `--red-profile=` / `--blue-profile=` | The candidate in each seat: a path to an `AIProfile` `.tres`, project-relative or `res://`-spelled |
+| `--pairings=` | A shard file — every pairing in it, played by one process |
+| `--map=` | Board for pairings that name none (default `scrimmage`) |
+| `--seeds=` | Paired seeds per pairing, both seats each (default 4) |
+| `--seed-offset=` | Skip the first N seeds of the range, so a pool can split a pairing |
+| `--days=` | Day cap, default **100** — the horizon that resolves (plan D6) |
+| `--out=` | Output directory under `reports/` (default `reports/ai_arena/<spec>`) |
+
+A shard file is those flags, once per pairing. Nearest setting wins: a pairing's
+own, then the file's, then the command line's — and a key it does not recognise
+is refused rather than ignored, because `offset` for `seed_offset` would replay
+the front of the seed range and the shard would look healthy.
+
+```json
+{"map": "scrimmage", "seeds": 4, "days": 100, "pairings": [
+  {"red": "data/ai/default.tres", "blue": "reports/ai_arena/gen1/c7.tres"},
+  {"map": "clash", "red": "data/ai/hard.tres", "blue": "reports/ai_arena/gen1/c7.tres"}]}
+```
+
+**Commanders are neutral throughout**, so `doctrine_weight` is inert and a
+candidate is measured as a planner rather than as a general. That is a scope
+choice, and the plan records it as R8.
+
+### What it writes
+
+One artifact: `matches.json`, an array of one record per match.
+
+```json
+{"match_id": "clash#default_vs_hard#s1136", "map": "clash", "seed": 1136, "seat": 0,
+ "red": "data/ai/default.tres", "blue": "data/ai/hard.tres",
+ "winner": 2, "termination": "rout", "day_ended": 13, "commands": 127,
+ "rejected": 0, "cap_stall": false, "turn_cap_hits": 0,
+ "red_units": 0, "blue_units": 6, "red_props": 0, "blue_props": 3,
+ "red_funds": 28400, "blue_funds": 7000, "red_army_value": 0, "blue_army_value": 27590}
+```
+
+Which fields, and why exactly these: the plan's D4 builds fitness from the winner,
+the day it ended and the property / surviving-unit / army-value margins, and D6
+needs to know a scored result from a decided one — `termination` says which, so
+nothing downstream has to re-derive it. `rejected`, `cap_stall` and
+`turn_cap_hits` are the hard invariants: a match where the AI and the rules
+disagreed is not a result, and a run that produced one exits 1.
+
+**No CSV, no timeline, no `commands.jsonl`.** At arena volume the telemetry is
+the dominant write cost and answers a question nobody is asking; a single
+interesting pairing is re-run through `make balance-sim` with every instrument
+on, which is what the two being one engine buys.
+
+### The merge bar
+
+**The arena plays the Lab's matches.** Both presets read one schedule —
+`tools/balance/match_schedule.gd`, which owns the seed range and which seatings a
+matchup plays — so the check is that the two agree match for match. Measured on
+`clash` and `ridge`, three pairings each (`normal` vs `hard`, `easy` vs `normal`,
+and a mirror), 3 seeds, 30-day cap: **30 arena records against 30 Lab rows, keyed
+on (board, seed, seat, red profile, blue profile), identical in all 15 fields
+both emit** — winner, termination, day, commands, rejected, cap-stall, turn-cap
+hits and the four per-side margins. The mirror pairing plays 3 matches in each,
+not 6: one seating, from the same authority.
+
+The two files are shaped differently on purpose — the arena emits fewer columns —
+so the bar is that comparison rather than a `diff`. It is worth re-running after
+any change to the schedule, the engine or either driver:
+
+```sh
+make balance-sim SIM="--map=clash --red=none:normal --blue=none:hard --seeds=3 --days=30 \
+  --no-commands --out=reports/bar/lab"
+make ai-arena ARENA="--map=clash --red-profile=data/ai/default.tres \
+  --blue-profile=data/ai/hard.tres --seeds=3 --days=30 --out=reports/bar/arena"
+# then compare reports/bar/arena/matches.json against reports/bar/lab/matches.csv
+# on (map, seed, seat), field for field
+```
+
+### A matrix of candidates
+
+`make balance-pool POOL="--preset=arena …"` plays one, on several cores and
+resumably. Sides are paths, so its pairings separator is `::`:
+
+```sh
+make balance-pool POOL="--preset=arena --maps=scrimmage \
+  --pairings=data/ai/default.tres::reports/ai_arena/gen1/c7.tres --seeds=32 --days=100"
+```
+
+Everything else about the pool is unchanged, because none of it was
+format-specific: the shard plan, the digest resume key, `status.txt`,
+`progress.log` and `pool.json` are the same code either way. What the preset
+selects is the driver, the flags a shard is handed, the marker resume reads and
+how the shards are merged — JSON records for the arena, where the Lab merges CSV
+rows. The merged `matches.json` is what a single arena process of the same spec
+writes, record for record.
 
 ## Runtime
 

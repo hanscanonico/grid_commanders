@@ -12,12 +12,48 @@ extends RefCounted
 ##
 ## Node-free, like the rest of the harness.
 
+## Where every instrument's artifacts live, and the whole of what `resolve_out`
+## contains a run to.
+const REPORTS_ROOT := "reports"
 
-## Absolutizes an out-directory given relative to the project root, creating it.
+
+## The one answer to where a run may write, given whatever a caller typed: a
+## project-relative directory under `reports/`, or "" when the request leaves it.
+## The write and the "wrote X" line both read this, so no tool can name a path it
+## did not write to.
+##
+## `ProjectSettings.globalize_path("res://").path_join(out_dir)` re-roots rather
+## than resolves, and three spellings have now reached it: a leading `/`, a
+## `res://` prefix, and a `..` that climbs out. Each lands the artifact inside
+## the repo under a name nobody reads, while the tool reports the path it was
+## given — and a pool resume keyed on finding a marker then replays every shard
+## forever. `tools/balance_pool.py`'s `resolve_out` is the same policy said in
+## Python, because that driver has to refuse a path before it launches a preset
+## rather than after; the two share the case table their checks are pinned by.
+static func resolve_out(out_dir: String) -> String:
+	var relative := out_dir.trim_prefix("res://")
+	if relative.begins_with("/"):
+		return ""
+	var path := relative.simplify_path()
+	if not _under_reports(path):
+		path = REPORTS_ROOT.path_join(path).simplify_path()
+	return path if _under_reports(path) else ""
+
+
+## Absolutizes a run's out-directory, creating it. Returns "" when `resolve_out`
+## refuses the path, and nothing is written.
 static func prepare_dir(out_dir: String) -> String:
-	var dir := ProjectSettings.globalize_path("res://").path_join(out_dir)
+	var relative := resolve_out(out_dir)
+	if relative == "":
+		push_error("balance: a run writes under %s/ (got '%s')" % [REPORTS_ROOT, out_dir])
+		return ""
+	var dir := ProjectSettings.globalize_path("res://").path_join(relative)
 	DirAccess.make_dir_recursive_absolute(dir)
 	return dir
+
+
+static func _under_reports(path: String) -> bool:
+	return path == REPORTS_ROOT or path.begins_with(REPORTS_ROOT + "/")
 
 
 static func write_csv(path: String, rows: Array[Dictionary], columns: Array[String]) -> void:
@@ -49,6 +85,9 @@ static func write_text(path: String, text: String) -> void:
 
 
 static func _store(path: String, text: String) -> void:
+	if not path.is_absolute_path():
+		push_error("balance: no resolved output directory for '%s'" % path)
+		return
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("balance: cannot write %s" % path)

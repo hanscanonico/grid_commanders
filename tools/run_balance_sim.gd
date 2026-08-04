@@ -53,7 +53,6 @@ extends SceneTree
 ## from the determinism test for exactly that reason.
 
 const DEFAULT_SEEDS := 4
-const SEED_BASE := 1000
 const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 const DEFAULT_OUT_ROOT := "reports/balance_sim"
 const DEFAULT_MAP := "first_steps"
@@ -211,6 +210,12 @@ func _parse_args() -> bool:
 		else:
 			push_error("balance-sim: unknown flag '%s'" % arg)
 			return false
+	if _out_dir != "":
+		var resolved := BalanceReportWriter.resolve_out(_out_dir)
+		if resolved == "":
+			push_error("balance-sim: --out is a directory under reports/ (got '%s')" % _out_dir)
+			return false
+		_out_dir = resolved
 	if _sweep != "" and _sweep not in ["commanders", "maps", "tiers"]:
 		push_error("balance-sim: --sweep must be commanders, maps or tiers (got '%s')" % _sweep)
 		return false
@@ -303,37 +308,28 @@ func _build_jobs() -> Array[Job]:
 
 
 ## Every seed of one matchup, played from **both seats** so a first-move edge
-## cancels out of the win rate and is reported separately as bias.
-##
-## Two identical specs are the exception: swapping the seats of a mirror replays
-## the identical match, seed and all, so it is played once. That is not a lost
-## measurement — with both sides the same, the red win rate *is* the seat's
-## worth, which is exactly what a mirror sweep is for.
+## cancels out of the win rate and is reported separately as bias. Which seeds
+## those are, and which of them a mirror skips, is BalanceMatchSchedule's — the
+## one authority every preset over this engine shares.
 func _pair(
 	value: String, map_name: String, red: BalanceSideSpec, blue: BalanceSideSpec
 ) -> Array[Job]:
 	var jobs: Array[Job] = []
 	var mirror := red.text() == blue.text()
-	for s in 1 if _pinned_seed >= 0 else _seed_count:
-		# Paired seeds: both seatings of a matchup meet on identical luck, and the
-		# seed varies by board so two maps in one sweep are not correlated. The
-		# offset walks the same range further along, so the shards of a split run
-		# play exactly the seeds the whole run would have.
-		var index := _seed_offset + s
-		var seed_val := (
-			_pinned_seed if _pinned_seed >= 0 else SEED_BASE + index + hash(map_name) % 1000
-		)
-		for seat in 1 if mirror else 2:
-			var job := Job.new()
-			job.value = value
-			job.map_name = map_name
-			job.seed_val = seed_val
-			job.seat = seat
-			job.mirror = mirror
-			job.red = red if seat == 0 else blue
-			job.blue = blue if seat == 0 else red
-			job.subject_side = "red" if seat == 0 else "blue"
-			jobs.append(job)
+	var slots: Array = BalanceMatchSchedule.slots(
+		map_name, _seed_count, _seed_offset, mirror, _pinned_seed
+	)
+	for slot: BalanceMatchSchedule.Slot in slots:
+		var job := Job.new()
+		job.value = value
+		job.map_name = map_name
+		job.seed_val = slot.seed_val
+		job.seat = slot.seat
+		job.mirror = mirror
+		job.red = red if slot.seat == 0 else blue
+		job.blue = blue if slot.seat == 0 else red
+		job.subject_side = "red" if slot.seat == 0 else "blue"
+		jobs.append(job)
 	return jobs
 
 
@@ -427,18 +423,11 @@ func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
 		"blue_props": state.properties_of(2).size(),
 		"red_funds": int(state.funds.get(1, 0)),
 		"blue_funds": int(state.funds.get(2, 0)),
-		"red_army_value": _army_value(state, 1),
-		"blue_army_value": _army_value(state, 2),
+		"red_army_value": BalanceMatchEngine.army_value(state, 1),
+		"blue_army_value": BalanceMatchEngine.army_value(state, 2),
 		"red_powers": outcome.powers[1],
 		"blue_powers": outcome.powers[2],
 	}
-
-
-static func _army_value(state: GameState, team: int) -> int:
-	var total := 0
-	for unit in state.units_of(team):
-		total += unit.type.cost * unit.hp / 100
-	return total
 
 
 ## A board where the naval domain is actually in play — one that can *build* a
