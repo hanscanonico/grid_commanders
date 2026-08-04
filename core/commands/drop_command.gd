@@ -33,9 +33,12 @@ func _init(
 
 
 func validate(state: GameState) -> String:
-	var move_error := MoveCommand.new(unit, path).validate(state)
-	if move_error != "":
-		return move_error
+	# The transport's own sight, for the whole check: the move's path and, below,
+	# whether anything it can see is standing on the drop cell.
+	var visible := Vision.visible_cells_if_fogged(state, unit.team)
+	var moving := MoveCommand.move_error(state, unit, path, visible)
+	if moving != "":
+		return moving
 	var cargo := state.cargo_of(unit)
 	if cargo.is_empty():
 		return "nothing to drop"
@@ -56,9 +59,6 @@ func validate(state: GameState) -> String:
 		# The transport's own vacated cell is fine, and a hidden enemy is left to
 		# foil the drop on apply rather than refused, which would reveal it; a
 		# friendly or a visible enemy still blocks.
-		var visible: Dictionary = (
-			Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
-		)
 		if (
 			state.allied(occupant.team, unit.team)
 			or Vision.can_see_unit(state, unit.team, occupant, visible)

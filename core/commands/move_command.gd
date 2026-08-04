@@ -16,6 +16,10 @@ func _init(p_unit: Unit, p_path: Array[Vector2i]) -> void:
 ## destination-occupancy rule, which each movement-type command (Move, Load,
 ## Join) defines for itself. Returns "" when legal.
 ##
+## `visible` is the mover's own sight (Vision.visible_cells_if_fogged), handed in
+## rather than computed here: it is a whole-board flood, and every caller either
+## asks a second occupancy question of its own or is about to.
+##
 ## Step cost and the movement budget both come from MovementResolver, never from
 ## the terrain or the unit type directly. That is not a stylistic preference:
 ## the flood fill is what produced the path being checked here, so anything this
@@ -23,7 +27,7 @@ func _init(p_unit: Unit, p_path: Array[Vector2i]) -> void:
 ## makes the two disagree — the range overlay offers a cell and the command then
 ## refuses it.
 static func validate_path_steps(
-	state: GameState, unit_moving: Unit, unit_path: Array[Vector2i]
+	state: GameState, unit_moving: Unit, unit_path: Array[Vector2i], visible: Dictionary
 ) -> String:
 	if state.winner != 0:
 		return "the match is over"
@@ -35,12 +39,6 @@ static func validate_path_steps(
 		return "unit has already acted"
 	if unit_path.is_empty() or unit_path[0] != unit_moving.cell:
 		return "path must start at the unit's cell"
-	# Only enemies the mover can see block the path here. A hidden one is left to
-	# spring the ambush on apply; refusing the command would betray its position,
-	# turning validation into a free fog probe (see GameState.advance_unit).
-	var visible: Dictionary = (
-		Vision.visible_cells(state, unit_moving.team) if state.fog_enabled else {}
-	)
 	var cost := 0
 	for i in range(1, unit_path.size()):
 		if (unit_path[i] - unit_path[i - 1]).length_squared() != 1:
@@ -52,6 +50,9 @@ static func validate_path_steps(
 		if step == TerrainType.IMPASSABLE:
 			return "path crosses impassable terrain"
 		var occupant := state.unit_at(unit_path[i])
+		# Only enemies the mover can see block the path. A hidden one is left to
+		# spring the ambush on apply; refusing the command would betray its
+		# position, turning validation into a free fog probe (GameState.advance_unit).
 		if (
 			occupant != null
 			and not state.allied(occupant.team, unit_moving.team)
@@ -68,17 +69,28 @@ static func validate_path_steps(
 	return ""
 
 
-func validate(state: GameState) -> String:
-	var steps := MoveCommand.validate_path_steps(state, unit, path)
+## Everything `validate` asks, over sight the caller already holds — the seam a
+## move-and-then command reaches the move rules through when it has its own use
+## for that sight (Drop's landing cell, which paid for a second flood while it
+## computed its own) or is validated often enough to mind the MoveCommand it would
+## otherwise build and throw away (every attack the planner scores).
+static func move_error(
+	state: GameState, unit_moving: Unit, unit_path: Array[Vector2i], visible: Dictionary
+) -> String:
+	var steps := validate_path_steps(state, unit_moving, unit_path, visible)
 	if steps != "":
 		return steps
 	# Where a move may end is the flood fill's rule, asked rather than repeated
 	# here: allies are walked through and never stopped on, a hidden enemy is left
 	# to spring the ambush on apply rather than refused, which would reveal it, and
 	# a visible enemy never reaches here — validate_path_steps caught it.
-	if not MovementResolver.can_stop(state, unit, path[path.size() - 1]):
+	if not MovementResolver.can_stop(state, unit_moving, unit_path[unit_path.size() - 1], visible):
 		return "destination is occupied"
 	return ""
+
+
+func validate(state: GameState) -> String:
+	return move_error(state, unit, path, Vision.visible_cells_if_fogged(state, unit.team))
 
 
 func apply(state: GameState) -> void:

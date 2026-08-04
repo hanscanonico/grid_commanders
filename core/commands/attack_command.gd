@@ -17,9 +17,10 @@ func _init(p_unit: Unit, p_path: Array[Vector2i], p_target_cell: Vector2i) -> vo
 
 
 func validate(state: GameState) -> String:
-	var move_error := MoveCommand.new(unit, path).validate(state)
-	if move_error != "":
-		return move_error
+	var visible := Vision.visible_cells_if_fogged(state, unit.team)
+	var moving := MoveCommand.move_error(state, unit, path, visible)
+	if moving != "":
+		return moving
 	if unit.type.max_range <= 0:
 		return "unit is unarmed"
 	if AttackRange.is_indirect(unit) and path.size() > 1:

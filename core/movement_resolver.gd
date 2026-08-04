@@ -91,10 +91,12 @@ static func step_cost(state: GameState, unit: Unit, terrain: TerrainType) -> int
 	return maxi(1, state.commander_of(unit.team).terrain_cost(state, unit, terrain, base))
 
 
-## May `unit` end its move on `cell`? The fill below and `MoveCommand.validate`
+## May `unit` end its move on `cell`? The fill below and `MoveCommand.move_error`
 ## both ask, so the overlay can never offer a cell the command then refuses.
-static func can_stop(state: GameState, unit: Unit, cell: Vector2i) -> bool:
-	var visible: Dictionary = Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
+## `visible` is the mover's own sight, handed in for the reason the fill holds one
+## for its whole walk: it is a whole-board flood, and the validation that asks this
+## has just walked the path with the same answer.
+static func can_stop(state: GameState, unit: Unit, cell: Vector2i, visible: Dictionary) -> bool:
 	return _can_stop_on(state, unit, state.unit_at(cell), unit.team, visible)
 
 

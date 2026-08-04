@@ -49,6 +49,19 @@ static func visible_cells(state: GameState, team: int) -> Dictionary:
 	return cells
 
 
+## The set a `can_see_unit` check is made against: this side's visible cells under
+## fog, and the empty set without it, where `can_see_unit` answers before ever
+## looking inside. (`visible_cells` fills the whole board with fog off, which is
+## true and useless to a caller asking about one unit.)
+##
+## Named here because it is a whole-board flood and every rule that asks was
+## spelling it for itself — a validation that walks a path and then checks its
+## destination was paying for two identical ones. Ask once per check and hand the
+## answer down.
+static func visible_cells_if_fogged(state: GameState, team: int) -> Dictionary:
+	return visible_cells(state, team) if state.fog_enabled else {}
+
+
 ## Whether `viewer_team` can see `unit` at all — the question to ask before
 ## drawing or targeting an enemy, in place of looking its cell up directly.
 ##
