@@ -4,26 +4,9 @@ extends GutTest
 ## them they cover the last three things wave 2 added: the luck-range hooks, a
 ## power that reaches across the table, and HP-threshold targeting.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
-
 
 func _state(map_text: String, commander: StringName) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if commander != &"":
-		state.set_commander(1, commander_db.by_id(commander))
-	return state
+	return Fixture.state(map_text, {} if commander == &"" else {1: commander})
 
 
 func _fire_power(state: GameState) -> void:
@@ -206,3 +189,27 @@ func test_her_power_widens_what_counts_as_damaged() -> void:
 	assert_eq(state.commander_of(1).attack_bonus(state, fight), 0, "passive needs 5 HP or less")
 	_fire_power(state)
 	assert_eq(state.commander_of(1).attack_bonus(state, fight), 30)
+
+
+## The other half of No Escape: the two chasers on `no_escape_ids` get a tile to
+## run the wounded down with, and nobody else does. Read through
+## MovementResolver.move_budget, which is the one caller of the hook.
+func test_her_power_hurries_the_two_units_that_do_the_chasing() -> void:
+	var state := _state("[terrain]\n...\n[units]\n1 r 0 0\n1 i 1 0\n1 t 2 0", &"cass_orlov")
+	var recon := state.units[0]
+	var infantry := state.units[1]
+	var tank := state.units[2]
+	for unit in state.units:
+		assert_eq(
+			MovementResolver.move_budget(state, unit),
+			unit.type.move_points,
+			"%s walks its own distance while the meter is banking" % unit.type.id
+		)
+	_fire_power(state)
+	assert_eq(MovementResolver.move_budget(state, recon), recon.type.move_points + 1)
+	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points + 1)
+	assert_eq(
+		MovementResolver.move_budget(state, infantry),
+		infantry.type.move_points,
+		"the infantry is not on the list and gains nothing"
+	)

@@ -19,7 +19,10 @@ const TUTORIAL_MAP_PATH := "res://maps/boot_camp.txt"
 ## Boards that exist to be measured on rather than played: the balance fixtures.
 ## Deliberately a subdirectory, because `paths()` below scans only the top level
 ## — so a fixture is reachable by name from the offline tools and the battle
-## scene, and still absent from the menu, the map lint and the per-map AI soak.
+## scene, and still absent from the menu and the per-map AI soak. It is *not*
+## absent from the map lint: the balance verdicts are measured on these boards,
+## so an unplayable one is worse here than on the shelf (COM-106). See
+## `fixture_paths()`.
 const FIXTURES_DIR := "res://maps/fixtures"
 
 
@@ -39,6 +42,26 @@ static func paths() -> Array[String]:
 		if not map_file.ends_with(".txt"):
 			continue
 		result.append(MAPS_DIR.path_join(map_file))
+	return result
+
+
+## Every fixture board, alphabetically — the same discovery `paths()` does, one
+## directory down. One function rather than a DirAccess loop per caller, for the
+## reason the class exists: the name resolver and the map lint have to be reading
+## the same set of files.
+static func fixture_paths() -> Array[String]:
+	var result: Array[String] = []
+	var dir := DirAccess.open(FIXTURES_DIR)
+	if dir == null:
+		push_error("MapCatalog: cannot open %s" % FIXTURES_DIR)
+		return result
+	var files := dir.get_files()
+	files.sort()
+	for file in files:
+		var map_file := file.trim_suffix(".remap")
+		if not map_file.ends_with(".txt"):
+			continue
+		result.append(FIXTURES_DIR.path_join(map_file))
 	return result
 
 
@@ -94,17 +117,8 @@ static func resolve(name: String) -> String:
 ## tool prints when a `--map=` flag names something that does not exist.
 static func resolvable_names() -> Array[String]:
 	var names: Array[String] = []
-	for path in paths():
+	for path in paths() + fixture_paths():
 		names.append(path.get_file().trim_suffix(".txt"))
-	var dir := DirAccess.open(FIXTURES_DIR)
-	if dir == null:
-		return names
-	var files := dir.get_files()
-	files.sort()
-	for file in files:
-		var map_file := file.trim_suffix(".remap")
-		if map_file.ends_with(".txt"):
-			names.append(map_file.trim_suffix(".txt"))
 	return names
 
 

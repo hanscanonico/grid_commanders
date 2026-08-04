@@ -5,27 +5,12 @@ extends GutTest
 const TANK_COST := 7000
 const INFANTRY_COST := 1000
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+## Both sides need a power for the meter to exist at all.
+const SEATED := {1: &"alina_ward", 2: &"viktor_draeg"}
 
 
 func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	# Both sides need a power for the meter to exist at all.
-	state.set_commander(1, commander_db.by_id(&"alina_ward"))
-	state.set_commander(2, commander_db.by_id(&"viktor_draeg"))
-	return state
+	return Fixture.state(map_text, SEATED)
 
 
 ## The plan's worked example: halving a 7 000 Tank is 3 500 points to the side

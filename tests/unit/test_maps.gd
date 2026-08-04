@@ -1,7 +1,15 @@
 extends GutTest
-## Playability lint over every map in maps/ — including maps added after this
-## file was written, since it discovers the roster through MapCatalog instead of
-## listing it.
+## Playability lint over every board under maps/ — the shipped roster and the
+## fixtures both, including boards added after this file was written, since it
+## discovers them through MapCatalog instead of listing them.
+##
+## The fixtures are linted for the reason they exist: every balance verdict in
+## docs/commander_balance.md is measured on one, so a fixture that is quietly
+## unplayable does not fail a test, it moves a number nobody can then attribute.
+## docs/commander_balance.md still recounts the cap-stall incident — 430 matches
+## of 432 stalled, from one bad fixture — which is the class of defect these
+## lints were written to catch statically, and they were catching it for every
+## board except the ones the verdicts came off (COM-106).
 ##
 ## MapData.parse and GameState.create already reject *malformed* maps: ragged
 ## rows, unknown terrain or unit symbols, owners on non-property cells,
@@ -61,13 +69,14 @@ var unit_db: UnitDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
 
 
 func test_every_map_parses_and_builds_a_game_state() -> void:
-	var paths := MapCatalog.paths()
-	assert_gt(paths.size(), 0, "maps/ should ship at least one map")
+	var paths := _board_paths()
+	assert_gt(MapCatalog.paths().size(), 0, "maps/ should ship at least one map")
+	assert_gt(MapCatalog.fixture_paths().size(), 0, "maps/fixtures/ should hold at least one board")
 	for path in paths:
 		var map := MapData.load_from_file(path, terrain_db)
 		assert_not_null(map, "%s should parse" % path)
@@ -120,8 +129,28 @@ func test_every_map_gives_each_team_a_base() -> void:
 ## is the one attribution no amount of playtesting recovers from. Nothing else
 ## catches it: a board that hands one side a spare city parses, loads and plays
 ## perfectly, and is quietly unfair every time.
-func test_every_map_deals_each_team_the_same_properties() -> void:
+##
+## The army each seat opens with is the same question asked of the other half of
+## the board, and priced in funds for the same reason MapParity counts properties
+## by kind — four Infantry are not a Md Tank. `# symmetric` catches both at once,
+## but only on a board that carries the tag, and it is a 180-degree instrument no
+## three- or four-seat board can carry, so this is what holds the rest level.
+func test_every_map_deals_each_team_the_same_holdings() -> void:
 	for map in _maps():
+		var lead_team: int = map.teams()[0]
+		var lead_cost := _starting_army_cost(map, lead_team)
+		for team in map.teams():
+			assert_eq(
+				_starting_army_cost(map, team),
+				lead_cost,
+				(
+					(
+						"%s: team %d opens with %d funds of army to team %d's %d — a seat "
+						% [_name(map), team, _starting_army_cost(map, team), lead_team, lead_cost]
+					)
+					+ "handed more materiel is an edge no playtest attributes right"
+				)
+			)
 		assert_eq(
 			MapParity.error(map),
 			"",
@@ -352,7 +381,11 @@ func test_the_shoal_lint_does_not_mistake_an_offshore_beach_for_a_bridge() -> vo
 
 
 func test_every_map_describes_itself_for_the_menu() -> void:
-	for map in _maps():
+	for path in MapCatalog.paths():
+		var map := MapData.load_from_file(path, terrain_db)
+		assert_not_null(map, "%s should parse" % path)
+		if map == null:
+			continue
 		assert_ne(
 			map.description,
 			"",
@@ -460,9 +493,16 @@ func _step_failure(step: String) -> String:
 # --- helpers -----------------------------------------------------------------
 
 
+## Every board the playability lints run on: the shipped roster and the fixtures.
+## The menu-facing checks ask MapCatalog.paths() directly, because a fixture is
+## deliberately not on the menu and owes it nothing.
+func _board_paths() -> Array[String]:
+	return MapCatalog.paths() + MapCatalog.fixture_paths()
+
+
 func _maps() -> Array[MapData]:
 	var maps: Array[MapData] = []
-	for path in MapCatalog.paths():
+	for path in _board_paths():
 		var map := MapData.load_from_file(path, terrain_db)
 		if map != null:
 			maps.append(map)
@@ -484,6 +524,19 @@ func _cells_of_terrain(map: MapData, terrain_id: StringName) -> Array[Vector2i]:
 			if map.terrain_at(cell).id == terrain_id:
 				cells.append(cell)
 	return cells
+
+
+## What `team` opens the match holding, in funds. Priced off UnitType.cost, the
+## same number every purchase and every AI valuation is denominated in.
+func _starting_army_cost(map: MapData, team: int) -> int:
+	var total := 0
+	for entry: Dictionary in map.starting_units:
+		if int(entry.team) != team:
+			continue
+		var type := unit_db.by_symbol(entry.symbol)
+		if type != null:
+			total += type.cost
+	return total
 
 
 ## Every cell `move_class` can reach from `start`, `start` included.
