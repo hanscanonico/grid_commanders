@@ -345,7 +345,7 @@ static func _counter_shot(
 		return null  # unarmed and indirect units never counter
 	if defender.dived:
 		return null  # a submarine that is hiding does not give itself away
-	var dist := absi(attacker_cell.x - defender_cell.x) + absi(attacker_cell.y - defender_cell.y)
+	var dist := Grid.manhattan(attacker_cell, defender_cell)
 	if dist != 1:
 		return null  # an indirect attacker fires from beyond counter reach
 	# The same authority the opening shot went through, which is what gives the

@@ -103,7 +103,7 @@ static func _has_neighbour_from(state: GameState, cell: Vector2i, team: int) -> 
 		for other in state.units_of(member):
 			if other.carrier != null:
 				continue
-			if absi(other.cell.x - cell.x) + absi(other.cell.y - cell.y) == 1:
+			if Grid.manhattan(other.cell, cell) == 1:
 				return true
 	return false
 

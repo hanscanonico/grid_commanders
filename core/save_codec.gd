@@ -625,7 +625,7 @@ static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -
 	for entry: Dictionary in data["home_hq"] as Array:
 		var team := int(entry["team"])
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
-		if map.terrain_at(cell).id != GameState.HQ_TERRAIN:
+		if not map.terrain_at(cell).is_headquarters:
 			return "team %d's home HQ at %s is not an HQ" % [team, cell]
 		if not expected.has(team):
 			return "the save homes team %d at %s, but its board homes it nowhere" % [team, cell]

@@ -61,6 +61,21 @@ func test_properties_flagged() -> void:
 	assert_false(db.by_id(&"plains").is_property)
 
 
+## `GameState.home_hqs`, the save's home-HQ check and the AI's capture multiplier
+## all read this flag instead of naming the id, so an HQ that lost it would leave
+## every seat homeless without anything else failing. A terrain that carries it
+## has to be capturable, or the seat it homes could never change hands.
+func test_headquarters_flagged() -> void:
+	assert_true(db.by_id(&"hq").is_headquarters, "the HQ is an army's seat of command")
+	assert_false(db.by_id(&"city").is_headquarters)
+	assert_false(db.by_id(&"base").is_headquarters)
+	for terrain in db.all():
+		if terrain.is_headquarters:
+			assert_true(
+				terrain.is_property, "%s is a headquarters, so it must capture" % terrain.id
+			)
+
+
 func test_defense_stars() -> void:
 	assert_eq(db.by_id(&"road").defense_stars, 0)
 	assert_eq(db.by_id(&"plains").defense_stars, 1)

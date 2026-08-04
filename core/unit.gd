@@ -54,9 +54,21 @@ func displayed_hp() -> int:
 ## which is what stops the interface flagging a unit the planner is happy with,
 ## or the reverse.
 func running_dry(margin_turns: int = 1) -> bool:
+	return _running_dry(upkeep(), margin_turns)
+
+
+## The same question about a boat that is still on the surface: would going under
+## leave it running dry? Diving costs several times the surface rate, so a
+## submarine weighing the hatch has to ask about the tank it will be paying from
+## rather than the one it is paying from now.
+func running_dry_if_dived(margin_turns: int = 1) -> bool:
+	return _running_dry(type.dived_fuel_upkeep, margin_turns)
+
+
+func _running_dry(burn: int, margin_turns: int) -> bool:
 	if not type.lost_when_dry() or margin_turns <= 0:
 		return false
-	return fuel <= (upkeep() + type.move_points) * margin_turns
+	return fuel <= (burn + type.move_points) * margin_turns
 
 
 ## Fuel this unit burns at the start of its turn. Staying under costs a submarine

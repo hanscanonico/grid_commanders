@@ -24,6 +24,14 @@ const LANDER := &"lander"  # transports that also beach on shoals
 @export var move_costs: Dictionary = {}
 ## Capturable property (city, base, HQ, airport, port).
 @export var is_property: bool = false
+## An army's seat of command. Asked by everything that has to recognise one —
+## which cell homes a seat, whether a save's home stands on one, what the AI pays
+## to take one — so the id is spelled in the data and nowhere else.
+##
+## Being one is not being somebody's: whether taking this ground fells an army is
+## `GameState.home_hq`'s answer, since a vacant seat's HQ and one a survivor
+## conquered are both this terrain and neither fells anybody.
+@export var is_headquarters: bool = false
 ## Move classes this terrain produces units of: a base builds what drives, a
 ## port what floats, an airport what flies. Empty means it builds nothing, which
 ## is every terrain that is not a factory of some kind.

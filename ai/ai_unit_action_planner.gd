@@ -101,7 +101,7 @@ func _consider_attacks(
 	# this unit could not fire on from anywhere, whichever cell it stopped at.
 	var candidates: Array[Unit] = []
 	for enemy in context.visible_enemies:
-		if _steps(unit.cell, enemy.cell) - span <= ring.y:
+		if Grid.manhattan(unit.cell, enemy.cell) - span <= ring.y:
 			candidates.append(enemy)
 	for dest in dests:
 		# The walk to a firing cell and the fire it invites depend only on that
@@ -258,7 +258,7 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 			continue
 		if not AttackRange.can_fire(state, friendly, enemy):
 			continue  # no chart entry, no loaded weapon, or the target is dived
-		if _steps(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
+		if Grid.manhattan(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
 			continue
 		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
 		if forecast.can_attack:
@@ -311,7 +311,7 @@ func _consider_captures(
 		if not terrain.is_property or state.allied(state.owner_at(cell), unit.team):
 			continue
 		var score := profile.capture_score
-		if terrain.id == &"hq":
+		if terrain.is_headquarters:
 			score *= profile.hq_capture_multiplier
 		if _produces(terrain):
 			score *= profile.production_capture_multiplier
@@ -539,11 +539,10 @@ func _consider_dive(
 	if unit.dived:
 		wants = not threatened or unit.running_dry(profile.refuel_margin_turns)
 	else:
-		var dive_burn := unit.type.dived_fuel_upkeep + unit.type.move_points
 		wants = (
 			threatened
 			and not _threatened_by(context, unit, true)
-			and unit.fuel > dive_burn * profile.refuel_margin_turns
+			and not unit.running_dry_if_dived(profile.refuel_margin_turns)
 		)
 	if not wants or profile.dive_score <= plan.score:
 		return
@@ -566,7 +565,7 @@ func _threatened_by(context: AIPlanningContext, unit: Unit, submerged: bool) -> 
 	for enemy in context.visible_enemies:
 		if not AttackRange.can_engage_dived(state, enemy, unit, submerged):
 			continue
-		if _steps(enemy.cell, unit.cell) <= AttackRange.strike_reach(state, enemy):
+		if Grid.manhattan(enemy.cell, unit.cell) <= AttackRange.strike_reach(state, enemy):
 			return true
 	return false
 
@@ -721,9 +720,9 @@ func _column_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 
 
 static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
-	var best := absi(cells[0].x - from.x) + absi(cells[0].y - from.y)
+	var best := Grid.manhattan(cells[0], from)
 	for cell in cells:
-		best = mini(best, absi(cell.x - from.x) + absi(cell.y - from.y))
+		best = mini(best, Grid.manhattan(cell, from))
 	return best
 
 
@@ -734,7 +733,7 @@ static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
 static func _position_rank(
 	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i
 ) -> int:
-	var dist := absi(goal.cell.x - cell.x) + absi(goal.cell.y - cell.y)
+	var dist := Grid.manhattan(goal.cell, cell)
 	if not goal.stand_off:
 		return dist
 	var out_of_ring := ring.y - ring.x + 1
@@ -886,7 +885,7 @@ func _worth_walking_to(state: GameState, from: Vector2i, cells: Array[Vector2i])
 ## it produces is worth. One function, so the plain walk and the claimed
 ## assignment price a property identically.
 func _goal_steps(state: GameState, from: Vector2i, cell: Vector2i) -> float:
-	var reach := float(_steps(from, cell))
+	var reach := float(Grid.manhattan(from, cell))
 	if profile.capture_goal_value_tiles <= 0.0 or not _produces(state.map.terrain_at(cell)):
 		return reach
 	return reach - profile.capture_goal_value_tiles * (profile.production_capture_multiplier - 1.0)
@@ -986,17 +985,10 @@ func _servicing_properties(context: AIPlanningContext, unit: Unit) -> Array[Vect
 
 static func _nearest(from: Vector2i, cells: Array[Vector2i]) -> Vector2i:
 	var best := cells[0]
-	var best_dist := _steps(from, best)
+	var best_dist := Grid.manhattan(from, best)
 	for cell in cells:
-		var dist := _steps(from, cell)
+		var dist := Grid.manhattan(from, cell)
 		if dist < best_dist:
 			best_dist = dist
 			best = cell
 	return best
-
-
-## Manhattan tiles between two cells — the goal-side measure of "how far", used
-## by the nearest-goal walk and by the claim that filters its candidates, so the
-## two cannot disagree about which unit is closer.
-static func _steps(from: Vector2i, to: Vector2i) -> int:
-	return absi(to.x - from.x) + absi(to.y - from.y)

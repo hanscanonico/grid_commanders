@@ -378,7 +378,7 @@ func _can_strike(
 				continue
 			if Vision.is_hidden_from(state, team, target):
 				continue
-			if absi(target.cell.x - unit.cell.x) + absi(target.cell.y - unit.cell.y) <= reach:
+			if Grid.manhattan(target.cell, unit.cell) <= reach:
 				return true
 	return false
 

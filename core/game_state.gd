@@ -11,10 +11,6 @@ extends RefCounted
 const TEAMS: Array[int] = MapData.PLAYER_TEAMS
 const CAPTURE_POINTS := 20
 const INCOME_PER_PROPERTY := 1000
-## The terrain a seat is beheaded through. Named once here because two rules read
-## it — which HQ is a team's home, and whether taking one ends that team — and a
-## third spelling of the id is a third place to get it wrong.
-const HQ_TERRAIN := &"hq"
 ## The smallest roster a seating may leave. Below it there is no match: one army
 ## has already won and none has nobody to play. See `create`.
 const MIN_SEATS := 2
@@ -265,7 +261,7 @@ static func home_hqs(map: MapData, roster: Array[int]) -> Dictionary:
 	var homes: Dictionary = {}
 	for cell in cells:
 		var team: int = owners[cell]
-		if not homes.has(team) and roster.has(team) and map.terrain_at(cell).id == HQ_TERRAIN:
+		if not homes.has(team) and roster.has(team) and map.terrain_at(cell).is_headquarters:
 			homes[team] = cell
 	return homes
 

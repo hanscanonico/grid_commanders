@@ -162,8 +162,7 @@ func _worth_waiting_for(
 ) -> bool:
 	if best_rank < wants.first_priority_rank() or profile.save_up_turns <= 0:
 		return false
-	var income := context.owned_properties.size() * GameState.INCOME_PER_PROPERTY
-	var budget := funds + income * profile.save_up_turns
+	var budget := funds + TurnRules.income_for(context.state, context.team) * profile.save_up_turns
 	for terrain in facilities:
 		for unit_type in context.unit_types:
 			var price := UnitPricing.cost_for(context.state, context.team, unit_type)

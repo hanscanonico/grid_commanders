@@ -71,6 +71,6 @@ func _enemy_can_reach(state: GameState, team: int, cell: Vector2i) -> bool:
 		var reach := AttackRange.maximum(state, enemy)
 		if not AttackRange.is_indirect(enemy):
 			reach += MovementResolver.move_budget(state, enemy)
-		if absi(enemy.cell.x - cell.x) + absi(enemy.cell.y - cell.y) <= reach:
+		if Grid.manhattan(enemy.cell, cell) <= reach:
 			return true
 	return false

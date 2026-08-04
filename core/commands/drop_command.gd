@@ -45,7 +45,7 @@ func validate(state: GameState) -> String:
 	var dest: Vector2i = path[path.size() - 1]
 	if not unit.type.can_unload_from(state.map.terrain_at(dest).id):
 		return "cannot unload here"
-	var dist := absi(drop_cell.x - dest.x) + absi(drop_cell.y - dest.y)
+	var dist := Grid.manhattan(drop_cell, dest)
 	if dist != 1:
 		return "drop cell must be adjacent"
 	var terrain := state.map.terrain_at(drop_cell)

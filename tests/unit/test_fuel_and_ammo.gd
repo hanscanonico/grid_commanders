@@ -161,3 +161,20 @@ func test_supply_command_needs_someone_in_reach() -> void:
 	var state := _state("[terrain]\n...\n[units]\n1 p 0 0")
 	var command := SupplyCommand.new(state.units[0], _path([Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "no one in reach to supply")
+
+
+## An APC carries supplies for the army, not for itself: it refits on a property
+## like anything else. What keeps it out of its own reach is being itself rather
+## than standing at distance zero, so both ends of the one rule refuse it — the
+## turn's automatic top-up and the mid-turn action alike.
+func test_an_apc_never_supplies_itself() -> void:
+	var state := _state("[terrain]\n...\n[units]\n1 p 0 0")
+	var apc := state.units[0]
+	apc.fuel = 5
+	assert_false(TurnRules.in_supply_reach(state, apc, apc.cell, apc))
+	EndTurnCommand.new().apply(state)
+	EndTurnCommand.new().apply(state)  # back to red, so its turn has started again
+	assert_eq(apc.fuel, 5, "the turn's top-up passes its own supplier over")
+	assert_eq(
+		SupplyCommand.new(apc, _path([Vector2i(0, 0)])).validate(state), "no one in reach to supply"
+	)

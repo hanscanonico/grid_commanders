@@ -4,9 +4,8 @@ extends Command
 ## reach. Friendlies in reach are also refilled automatically at turn start;
 ## this action is for mid-turn top-ups.
 ##
-## "In reach" is one tile for most commanders and two for Gideon Holt, so the
-## radius comes from the hook rather than from a hardcoded adjacency check —
-## here and in TurnRules, the only two places supply is worked out.
+## Who is in reach is `TurnRules.in_supply_reach`, the one place supply is worked
+## out: the turn's automatic top-up runs the same rule from the other end.
 
 var unit: Unit
 var path: Array[Vector2i]
@@ -40,11 +39,7 @@ func apply(state: GameState) -> void:
 ## decide whether to offer the Supply action at all.
 func friendlies_in_reach(state: GameState, from: Vector2i) -> Array[Unit]:
 	var result: Array[Unit] = []
-	var radius := state.commander_of(unit.team).supply_range(state, unit)
 	for other in state.units_of(unit.team):
-		if other == unit or other.carrier != null:
-			continue  # passengers are refilled by their transport at begin_turn (TurnRules), not beside it
-		var dist := absi(other.cell.x - from.x) + absi(other.cell.y - from.y)
-		if dist >= 1 and dist <= radius:
+		if TurnRules.in_supply_reach(state, unit, from, other):
 			result.append(other)
 	return result

@@ -45,7 +45,7 @@ static func band(state: GameState, unit: Unit) -> Vector2i:
 ## asked for. `covers` is this with the band asked for on the spot, so the two
 ## cannot disagree about a shot.
 static func reaches(ring: Vector2i, from: Vector2i, target: Vector2i) -> bool:
-	var dist := absi(target.x - from.x) + absi(target.y - from.y)
+	var dist := Grid.manhattan(target, from)
 	return dist >= ring.x and dist <= ring.y
 
 

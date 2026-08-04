@@ -224,7 +224,7 @@ func _drop_inside(state: GameState, cells: Array[Vector2i]) -> void:
 		if unit.type.can_resupply:
 			envelope += state.commander_of(unit.team).supply_range(state, unit)
 		for cell in cells:
-			if absi(cell.x - unit.cell.x) + absi(cell.y - unit.cell.y) <= envelope:
+			if Grid.manhattan(cell, unit.cell) <= envelope:
 				_plans.erase(unit)
 				break
 
