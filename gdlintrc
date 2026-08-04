@@ -267,4 +267,11 @@ max-public-methods: 21
 # buy a deletion elsewhere — R left both legends it was named in, since a key that does
 # the same thing in every board context is a lens like T rather than a legend entry.
 # COM-94's cut-in split is still the one that is due in the scenario driver.
+#
+# This setting is one number for the whole project — gdlint has no per-path
+# override — so it only ever tracks the *longest* file, and everyone shorter
+# gets that file's slack for free. COM-81: scenes/battle/battle.gd had been
+# living in it, so the ledger above was a ratchet the file it was written for no
+# longer felt. The per-file budgets in tools/check_scripts.sh are the tight half,
+# and they run in `make check`; this stays the repo-wide outer bound.
 max-file-lines: 1428

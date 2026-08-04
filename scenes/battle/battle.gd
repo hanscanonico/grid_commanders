@@ -265,13 +265,11 @@ func _ready() -> void:
 	overlays = _build_overlays()
 	overlays.setup()
 	animator = _build_animator()
-	# Dev-only capture flows. The driver is held for the whole scene: `run` awaits,
-	# and a RefCounted nobody references is freed mid-scenario. Asked this early
-	# because whether this run exists to be photographed also decides whether it
-	# records itself — a sweep must not leave a recording per scenario in the
-	# player's slots.
-	var driver := BattleScenarioDriver.new(self)
-	_capturing = driver.requested()
+	# Dev-only capture flows. Asked this early because whether this run exists to
+	# be photographed also decides whether it records itself — a sweep must not
+	# leave a recording per scenario in the player's slots. The question is the
+	# command line's, so it is asked without building anything.
+	_capturing = BattleScenarioDriver.requested()
 	_command_pipeline = BattleCommandPipeline.new(self, _open_recording())
 	_outcome = _build_outcome()
 	_outcome.configure(request.watching, request.days_cap)
@@ -288,6 +286,9 @@ func _ready() -> void:
 	set_cursor_cell(Vector2i.ZERO)
 	animator.capturing = _capturing
 	if _capturing:
+		# Held for the whole scene: `run` awaits, and a RefCounted nobody
+		# references is freed mid-scenario.
+		_scenario_driver = BattleScenarioDriver.new(self)
 		# A capture pins its own pace and ignores the device preference: a frame
 		# must not depend on which machine took it, or on how fast whoever ran
 		# `make smoke` likes to watch their tanks move.
@@ -296,7 +297,7 @@ func _ready() -> void:
 		# *this* machine's player has already learned to capture would otherwise
 		# decide whether a card sits over the board in every other scenario's
 		# frame. Every capture but the strip's own hides it (COM-12).
-		Settings.pin_hints(not driver.wants_mission_strip())
+		Settings.pin_hints(not _scenario_driver.wants_mission_strip())
 	animator.start_cursor_pulse()
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	camera.position = cursor.position
@@ -308,7 +309,6 @@ func _ready() -> void:
 		# Captures show where the view settles, which is the position UI is
 		# already anchored to anyway (see BattleView.screen_pos_for_cell).
 		camera.position_smoothing_enabled = false
-		_scenario_driver = driver
 		_scenario_driver.run()
 
 

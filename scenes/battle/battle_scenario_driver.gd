@@ -19,6 +19,8 @@ extends RefCounted
 ## photographs itself reads it from the one place it is spelled.
 const SELECT_ARG := "--select"
 const DEMO_ARG := "--demo"
+## What `--select` reads as when it names no cell.
+const NO_CELL := Vector2i(-1, -1)
 
 ## Demos fix the seed so a capture of the same scenario is the same frame.
 const DEMO_SEED := 2026
@@ -158,7 +160,7 @@ const PREVIEW_FOG_TO := Vector2i(10, 8)
 
 var _battle: Battle
 var _shot_path := ""
-var _select_cell := Vector2i(-1, -1)
+var _select_cell := NO_CELL
 var _demo := ""
 ## Raised by any mid-scenario check that fails. `run` reads it before it writes
 ## anything: a capture saved after a failed check would take the exit code down
@@ -171,9 +173,7 @@ func _init(battle: Battle) -> void:
 	_battle = battle
 	_shot_path = ScreenshotUtil.requested()
 	var args := CmdArgs.user()
-	var parts := CmdArgs.value(args, SELECT_ARG).split(",")
-	if parts.size() == 2:
-		_select_cell = Vector2i(int(parts[0]), int(parts[1]))
+	_select_cell = _selected_cell(args)
 	_demo = CmdArgs.value(args, DEMO_ARG)
 	# A smoke batch (--demos=, COM-117) supersedes both — see BattleCaptureBatch.
 	if BattleCaptureBatch.adopt(battle):
@@ -181,10 +181,23 @@ func _init(battle: Battle) -> void:
 		_shot_path = BattleCaptureBatch.shot_path()
 
 
-## True when the command line asked for any scripted flow at all. Battle skips
-## building a driver otherwise, so an ordinary match never pays for one.
-func requested() -> bool:
-	return _shot_path != "" or _select_cell.x >= 0 or _demo != ""
+## The cell `--select` names, or NO_CELL when it names none.
+static func _selected_cell(args: PackedStringArray) -> Vector2i:
+	var parts := CmdArgs.value(args, SELECT_ARG).split(",")
+	if parts.size() != 2:
+		return NO_CELL
+	return Vector2i(int(parts[0]), int(parts[1]))
+
+
+## True when the command line asked for any scripted flow at all — a screenshot,
+## a demo, a selection preview, or a whole smoke batch. Static because Battle
+## asks it *instead of* building a driver, so an ordinary match never pays for
+## one; a batch is a capture whatever else it carries.
+static func requested() -> bool:
+	if ScreenshotUtil.requested() != "" or BattleCaptureBatch.requested() != "":
+		return true
+	var args := CmdArgs.user()
+	return CmdArgs.value(args, DEMO_ARG) != "" or _selected_cell(args).x >= 0
 
 
 ## Whether this run is one of the two that exist to photograph the first-match
@@ -196,8 +209,6 @@ func wants_mission_strip() -> bool:
 
 
 func run() -> void:
-	if not requested():
-		return
 	# Demos and captures drive the board, so neither the handoff panel nor the
 	# day-1 banner may sit on top, except the flow whose subject is that banner.
 	_battle.leave_handoff()

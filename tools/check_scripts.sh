@@ -19,6 +19,21 @@ set -uo pipefail
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 
+# Per-file line budgets, tighter than gdlintrc's repo-wide max-file-lines.
+#
+# gdlint takes one ceiling for the whole project, so the longest file sets
+# everybody's — and the longest files are the dev-only scenario driver and the
+# menu. That left scenes/battle/battle.gd, the production file the ratchet was
+# raised for in the first place, free to grow into their slack without tripping
+# anything. A file listed here is held to its own length instead.
+#
+# Same rule as the gdlintrc ledger: the number is the file's current length, so
+# adding to it means moving something out first, and it comes down whenever the
+# file sheds a responsibility. Say in the commit which it was.
+FILE_BUDGETS="
+scenes/battle/battle.gd 1358
+"
+
 if [[ ! -x "$GODOT" ]]; then
 	echo "check: Godot binary not found at $GODOT" >&2
 	echo "check: see README.md for engine setup, or pass GODOT=<path>" >&2
@@ -84,10 +99,21 @@ done < <(
 	fi
 )
 
-# The live battle has one mutation seam. Keep this in the full-project audit,
-# not a subset check: a new apply or validate anywhere under scenes/battle is
-# exactly the cross-file drift this invariant exists to catch.
+# Repository invariants. Kept in the full-project audit rather than a subset
+# check: each is cross-file drift, so a run over the files somebody just edited
+# is exactly the run that cannot see it.
 if (($# == 0)); then
+	while read -r path budget; do
+		[[ -z "$path" ]] && continue
+		lines="$(wc -l <"$path" | tr -d ' ')"
+		if ((lines > budget)); then
+			echo "check: $path is $lines lines, over its $budget-line budget" >&2
+			failed=$((failed + 1))
+		fi
+	done <<<"$FILE_BUDGETS"
+
+	# The live battle has one mutation seam: a new apply or validate anywhere
+	# under scenes/battle is what this catches.
 	live_applies="$(grep -rn --include='*.gd' -E '\.apply\([^)]*game[^)]*\)' scenes/battle || true)"
 	apply_count="$(printf '%s\n' "$live_applies" | sed '/^$/d' | wc -l | tr -d ' ')"
 	if [[ "$apply_count" != 1 || "$live_applies" != scenes/battle/battle_command_pipeline.gd:* ]]; then
