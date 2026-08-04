@@ -12,8 +12,9 @@ extends SceneTree
 ##                                 first input's own directory)
 ##
 ## Exits 1 when the run cannot be read as a leaderboard — a pairing played from
-## one seat only, or a match the AI and the rules disagreed about. Both are
-## reported rather than quietly averaged away.
+## one seat only, a candidate that never played a pool the others did, or a match
+## the AI and the rules disagreed about. Each is reported rather than quietly
+## averaged away.
 
 const RECORD_FILE := "matches.json"
 const LEADERBOARD_FILE := "leaderboard.json"

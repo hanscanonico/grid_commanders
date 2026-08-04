@@ -9,7 +9,7 @@ extends SceneTree
 ##   Godot --headless --path . -s res://tools/run_arena_plan.gd -- --pool=training
 ##   --maps=… --pairings=… --seeds=12 --seed-offset=0 --days=100
 ##
-## `make arena-anchors POOL=training` is that line handed to `tools/balance_pool.py`
+## `make arena-anchors ARENA_POOL=training` is that line handed to `tools/balance_pool.py`
 ## and then to the report. The engine prints a banner of its own first, so a
 ## caller keeps the line that starts with `--`.
 

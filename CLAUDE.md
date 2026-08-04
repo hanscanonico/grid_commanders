@@ -452,11 +452,13 @@ that must survive any change; the full rationale, milestones and risk registers 
   the merge bar hold and what it is: a merged `matches.csv` byte-identical to the same spec played
   as one Lab run (`timeline.csv` too, bar `planning_ms`, the wall-clock column the determinism test
   already excludes), interrupted-and-resumed runs included. Two consequences of that bar are
-  durable. A run may only write **under `reports/`** and the driver refuses anything else at
-  startup, because `BalanceReportWriter.prepare_dir` resolves the Lab's `--out` against the
-  *project* root and Godot's `path_join` re-roots an absolute path under it — so an outside path
-  has the Lab writing inside the repo where the driver never looks, and resume, keyed on a shard's
-  `summary.json`, replays every shard forever while calling each one failed. And **never sort
+  durable. A run may only write **under `reports/`**, one policy in two places because the driver
+  has to refuse a path before it launches a preset and the preset is what writes:
+  `resolve_out` in `tools/balance_pool.py`, and `BalanceReportWriter.resolve_out`, which every
+  `--out=` in `tools/` goes through for the write *and* for the line it prints. Godot's `path_join`
+  re-roots rather than resolves, so an outside path had the Lab writing inside the repo where the
+  driver never looks, and resume, keyed on a shard's `summary.json`, replayed every shard forever
+  while calling each one failed. And **never sort
   `StringName`s when the order is observable**: they compare by interned pointer, so
   `BalanceMatchRecorder._tally_text` was ordering the timeline's `built`/`killed`/`lost` cells by
   whatever the process's heap said rather than alphabetically as its own comment promised; it sorts
@@ -508,7 +510,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   train-many-validate-few is what AR5's search produces.
   D6/D7: the horizon is 100 days, `command_cap` is a hard invariant failure of the run, and the
   pools are split by **board and seed** with the three shipped tiers as never-retuned anchors.
-  `ArenaPools.pool_args()` is the one statement of a pool — `make arena-anchors POOL=` reads the
+  `ArenaPools.pool_args()` is the one statement of a pool — `make arena-anchors ARENA_POOL=` reads the
   play command out of it and `pool_of()` reads finished matches back against the same split, so a
   leaderboard can never be scored against a split nothing played.
   **AR4's acceptance check failed, and the failure is the finding**: the arena at 100 days ranks
