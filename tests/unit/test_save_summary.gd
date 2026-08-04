@@ -1,6 +1,6 @@
 extends GutTest
 ## Naming a saved match without rebuilding it: SaveCodec's Summary and describe,
-## and the SaveGame.peek that reads them off disk.
+## and the SaveGame.status that reads them off disk.
 ##
 ## Its own file rather than a section of the codec's, because the subject is one
 ## feature spread over both halves of the save layer — the pure read and the
@@ -75,33 +75,48 @@ func test_summary_label_is_describe() -> void:
 # --- reading it off disk ------------------------------------------------------
 
 
-func test_peek_names_the_saved_match() -> void:
+func test_status_names_the_saved_match() -> void:
 	assert_true(SaveGame.save(_first_steps_state(4), [2] as Array[int], TEST_PATH))
-	var summary := SaveGame.peek(TEST_PATH)
-	assert_not_null(summary)
-	assert_eq(summary.day, 4)
-	assert_eq(summary.map_path, FIRST_STEPS)
-	assert_eq(summary.label(), "Day 4 · First Steps")
+	var slot := SaveGame.status(TEST_PATH)
+	assert_eq(slot.state, SaveGame.Slot.State.READABLE)
+	assert_eq(slot.reason, "", "nothing is wrong with it, so there is nothing to say")
+	assert_eq(slot.summary.day, 4)
+	assert_eq(slot.summary.map_path, FIRST_STEPS)
+	assert_eq(slot.summary.label(), "Day 4 · First Steps")
 
 
 ## The menu asks this on every boot and having saved nothing is the ordinary
 ## answer, so unlike load_game it stays quiet about it.
-func test_peek_returns_null_without_a_save() -> void:
+func test_status_reports_no_save_as_absent() -> void:
 	assert_false(SaveGame.has_save(TEST_PATH))
-	assert_null(SaveGame.peek(TEST_PATH))
+	var slot := SaveGame.status(TEST_PATH)
+	assert_eq(slot.state, SaveGame.Slot.State.ABSENT)
+	assert_null(slot.summary)
+	assert_eq(slot.reason, "")
 
 
-func test_peek_returns_null_for_a_file_that_is_not_a_save() -> void:
+func test_status_reports_a_file_that_is_not_a_save_as_unreadable() -> void:
 	var file := FileAccess.open(TEST_PATH, FileAccess.WRITE)
 	file.store_string("this is not json")
 	file.close()
-	assert_null(SaveGame.peek(TEST_PATH))
+	var slot := SaveGame.status(TEST_PATH)
+	assert_eq(slot.state, SaveGame.Slot.State.UNREADABLE)
+	assert_string_contains(slot.reason, "is not a valid save")
 
 
-func test_peek_returns_null_for_a_malformed_save() -> void:
+## The whole point of the three states: a save the codec refuses is the player's
+## news, and reporting it as absent tells them they never had one.
+func test_status_reports_a_malformed_save_as_unreadable_in_the_codecs_words() -> void:
 	assert_true(SaveGame.save(_first_steps_state(), [] as Array[int], TEST_PATH))
 	var text := FileAccess.get_file_as_string(TEST_PATH)
 	var file := FileAccess.open(TEST_PATH, FileAccess.WRITE)
 	file.store_string(text.replace('"fuel"', '"petrol"'))
 	file.close()
-	assert_null(SaveGame.peek(TEST_PATH), "a save Continue could not load must not be named")
+	var slot := SaveGame.status(TEST_PATH)
+	assert_eq(
+		slot.state, SaveGame.Slot.State.UNREADABLE, "not ABSENT: there is a save, it is damaged"
+	)
+	assert_null(slot.summary, "and a save Continue could not load must not be named")
+	assert_eq(
+		slot.reason, "unit entry is missing 'fuel'", "SaveCodec's own words, not a paraphrase"
+	)

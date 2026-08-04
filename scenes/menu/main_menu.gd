@@ -83,6 +83,14 @@ var _pending_ai_teams: Array[int] = []
 ## The roster in dropdown order, parsed once at load so the tooltips and header
 ## quote real numbers off the board rather than a hand-kept table.
 var _maps: Array[MapData] = []
+## Kept from parsing those boards, because a Continue press reads a saved match's
+## own board through it.
+var _terrain_db: TerrainDB
+## Why the last Continue press could not open the save, or "" while none has
+## failed. A save the caption could name may still be one `decode` refuses, and
+## the press is the only place that is found out, so the refusal is kept for the
+## caption refresh to read back.
+var _continue_refusal := ""
 ## The difficulty tiers in menu order, gentlest first, and the one in hand.
 var _difficulties: Array[Difficulty] = []
 var _difficulty_index := 0
@@ -107,7 +115,8 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 
-	_maps = MapCatalog.ordered(TerrainDB.load_default())
+	_terrain_db = TerrainDB.load_default()
+	_maps = MapCatalog.ordered(_terrain_db)
 	_difficulties = DifficultyDB.load_default().all()
 	_speed_tiers = GameSpeed.ordered()
 	_build(shot_path == "")
@@ -1193,26 +1202,30 @@ func _on_replay_cancelled() -> void:
 
 ## Names the saved match under the Continue button, so the menu alone answers
 ## "is this the match I meant?" — the whole point of labelling the slot. The day
-## and board are read off the save envelope's own keys (SaveGame.peek); nothing is
-## rebuilt, and the save format is untouched.
+## and board are read off the save envelope's own keys (SaveGame.status); nothing
+## is rebuilt, and the save format is untouched.
 ##
-## Continue now follows the summary rather than the file's mere existence. That is
-## strictly narrower: `decode` refuses everything `summarize` refuses, so a save
-## we cannot name is one Continue could only have failed on.
+## Three captions, because the slot has three answers: a player told "no saved
+## match" about a save the disk truncated is told they never had one (COM-121).
+## A damaged save disables Continue like an empty slot does, and says why in the
+## codec's own words rather than in the codec's log.
 func _refresh_continue() -> void:
-	var summary := (
-		_capture_driver.posed_slot(_maps) if _capture_driver.poses_slot() else SaveGame.peek()
+	var slot := (
+		_capture_driver.posed_slot(_maps) if _capture_driver.poses_slot() else SaveGame.status()
 	)
-	_continue_button.disabled = summary == null
-	if summary == null:
-		_continue_caption.text = "NO SAVED MATCH"
-		# The dim NEUTRAL_DARK of PRESS START: it explains a disabled button, so it
-		# must not read as loudly as a match waiting to be resumed.
-		_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
-		_continue_tip.set_copy("Nothing saved yet", "Save in battle from the map menu")
+	if slot.state == SaveGame.Slot.State.ABSENT:
+		_refuse_continue("NO SAVED MATCH", "Nothing saved yet", "Save in battle from the map menu")
 		return
-	var label := summary.label()
-	_continue_caption.text = label.to_upper()
+	# The codec's words when the slot itself will not read, the press's when the save
+	# was nameable and would not open.
+	var refusal := (
+		slot.reason if slot.state == SaveGame.Slot.State.UNREADABLE else _continue_refusal
+	)
+	if refusal != "":
+		_refuse_continue("SAVED MATCH UNREADABLE", "That save cannot be opened", refusal)
+		return
+	_continue_button.disabled = false
+	_continue_caption.text = slot.summary.label().to_upper()
 	# The tagline's tone, which is what a micro-label needs to carry a fact rather
 	# than a hint on the dark backdrop — NEUTRAL_DARK is barely legible out here.
 	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
@@ -1220,8 +1233,31 @@ func _refresh_continue() -> void:
 	_continue_tip.set_copy("Resume the saved match", "Its own board and commanders apply")
 
 
+## Continue with nothing to offer: the dim NEUTRAL_DARK of PRESS START, because it
+## explains a disabled button and must not read as loudly as a match waiting to be
+## resumed.
+func _refuse_continue(caption: String, tip: String, detail: String) -> void:
+	_continue_button.disabled = true
+	_continue_caption.text = caption
+	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
+	_continue_tip.set_copy(tip, detail)
+
+
+## The saved match applies its own map, commanders and AI sides — and is opened
+## here, on the press, rather than on every boot: naming a save opens no board, so
+## one the caption named can still be one `decode` refuses. Staging that anyway
+## boots the battle scene onto the fresh match the request also states, on
+## whatever board the picker is showing, with nothing said (COM-121).
 func _continue() -> void:
-	# The saved match applies its own map, commanders and AI sides.
+	var chart: DamageChart = load(BattleSetup.DAMAGE_CHART_PATH)
+	var loaded := SaveGame.load_game(
+		_terrain_db, UnitDB.load_default(), chart, SaveGame.SAVE_PATH, CommanderDB.load_default()
+	)
+	if loaded == null:
+		# Which of the two it is the log says; a player can act on either.
+		_continue_refusal = "Its board may have changed, or the file is damaged"
+		_refresh_continue()
+		return
 	_start([] as Array[int], true, {})
 
 

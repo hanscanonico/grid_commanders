@@ -120,13 +120,13 @@ func posed_replays() -> Array[ReplayFile.Summary]:
 	return posed
 
 
-## The slot the current mode poses: a resumable match on `menu_with_save`, and
-## null — an empty slot — on `menu_no_save`, whatever the running machine has
-## saved. The match named is on the roster's longest-named board, so the posed
-## caption is the widest the shipped maps can actually produce.
-func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
+## The slot the current mode poses: a resumable match on `menu_with_save`, and an
+## empty slot on `menu_no_save`, whatever the running machine has saved. The match
+## named is on the roster's longest-named board, so the posed caption is the widest
+## the shipped maps can actually produce.
+func posed_slot(maps: Array[MapData]) -> SaveGame.Slot:
 	if _demo != DEMO_WITH_SAVE:
-		return null
+		return SaveGame.Slot.absent()
 	var summary := SaveCodec.Summary.new()
 	summary.day = POSED_SAVE_DAY
 	var width := 0
@@ -135,7 +135,7 @@ func posed_slot(maps: Array[MapData]) -> SaveCodec.Summary:
 		if length > width:
 			width = length
 			summary.map_path = map.source_path
-	return summary
+	return SaveGame.Slot.readable(summary)
 
 
 ## Saves one frame and ends the run — a quit, or the batch's hand-off to the

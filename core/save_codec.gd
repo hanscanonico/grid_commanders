@@ -284,9 +284,10 @@ static func decode(
 ) -> LoadedMatch:
 	var error := validate(data)
 	if error != "":
-		# Reaches a log, not a player: the menu gates Continue on `summarize`, which
-		# asks this same `validate` through the deliberately silent `SaveGame.peek`,
-		# so a save refused here reads as no save at all on the way in.
+		# Still a log rather than a player, but no longer the only place it is said:
+		# the menu gates Continue on `SaveGame.status`, which asks this same `validate`
+		# and hands the reason back, so a save refused here is offered as damaged
+		# rather than as no save at all (COM-121).
 		push_error("SaveCodec: %s" % error)
 		return null
 	var map := MapData.load_from_file(String(data["map_path"]), terrain_db)
@@ -417,8 +418,10 @@ static func _decode_commanders(
 ## The implication runs one way only. Naming a save deliberately loads no map, so
 ## a summary is not a promise `decode` will accept: it goes on to ask
 ## `board_error` of the loaded board, and a save that describes an impossible one
-## is named on the menu and then refused — the same fallback a save whose map has
-## since gone missing has always taken.
+## — or names a board that has since gone missing — is named on the menu and then
+## refused. Both callers of that refusal are refusals rather than fallbacks: the
+## menu opens the save on the press and stages nothing when it will not open, and
+## `BattleSetup` returns no match at all (COM-121).
 static func summarize(data: Dictionary) -> Summary:
 	if validate(data) != "":
 		return null

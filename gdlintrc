@@ -227,6 +227,16 @@ max-public-methods: 21
 # the four-line dispatch arm that reaches it. COM-94's cut-in split is still the one
 # that is due. The driver sits at exactly 1359.
 #
+# 1359 -> 1391 and the ceiling is main_menu.gd's again, for COM-121: Continue gated
+# on a deliberately silent peek, so a save the codec refuses reached the player as
+# "NO SAVED MATCH" — told they never had one. The slot has three answers now rather
+# than two, which is the third caption and the refusal branch that picks it, and the
+# press opens the save before anything is staged, which is that load and what it
+# lands on. Nothing came out with it, and the split that would have paid for it is
+# the Continue slot itself — the button, its caption, its tip and the three states —
+# which is exactly what this change is inside of, so doing both would leave neither
+# half reviewable. COM-94's cut-in split is still the one that is due on the
+# scenario driver. main_menu.gd sits at exactly 1391.
 # 1359 -> 1412 for MC4's aimed Command Power, and the ceiling is battle.gd's again
 # for the first time since 918: the two files moved in the same change and
 # battle.gd is now the longer. It gained the game's first interaction that aims a

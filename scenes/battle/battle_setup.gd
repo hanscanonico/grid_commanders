@@ -43,8 +43,15 @@ class BuiltMatch:
 ## and the reason these two failures stopped being `assert()`s: asserts are
 ## stripped from an exported release build, so a bad `--map=` used to leave a
 ## null map for the scene to dereference on its first touch instead of saying so.
+##
+## `save_path` is the slot a resume reads, defaulted like every reader in
+## `SaveGame` so a test names its own rather than the player's.
 static func build(
-	request: MatchRequest, terrain_db: TerrainDB, unit_db: UnitDB, commander_db: CommanderDB
+	request: MatchRequest,
+	terrain_db: TerrainDB,
+	unit_db: UnitDB,
+	commander_db: CommanderDB,
+	save_path: String = SaveGame.SAVE_PATH
 ) -> BuiltMatch:
 	var result := BuiltMatch.new()
 	var chart: DamageChart = load(DAMAGE_CHART_PATH)
@@ -53,18 +60,23 @@ static func build(
 	result.difficulty = difficulty_db.by_id(request.difficulty)
 	if request.replay_requested:
 		return _build_replay(request, terrain_db, unit_db, chart, commander_db, difficulty_db)
-	if request.resume and SaveGame.has_save():
-		var loaded := SaveGame.load_game(
-			terrain_db, unit_db, chart, SaveGame.SAVE_PATH, commander_db
-		)
-		if loaded != null:
-			# A resumed save brings its own map, sides, commanders and tier;
-			# nothing the menu last chose applies to it.
-			result.game = loaded.state
-			result.ai_teams = loaded.ai_teams
-			result.difficulty = difficulty_db.by_id(loaded.difficulty)
-			result.map = result.game.map
-			return result
+	# A slot that holds nothing is not a resume that failed: the request states a
+	# board too, and playing it is what a launch that found an empty slot has always
+	# done. A save that is *there* and will not load is the other case, and falling
+	# through to that same fresh match is how the player who asked for Day 12 got day
+	# one on whatever board the menu was showing, with nothing said (COM-121).
+	if request.resume and SaveGame.has_save(save_path):
+		var loaded := SaveGame.load_game(terrain_db, unit_db, chart, save_path, commander_db)
+		if loaded == null:
+			push_error("battle: the saved match cannot be read; there is no match to play")
+			return null
+		# A resumed save brings its own map, sides, commanders and tier;
+		# nothing the menu last chose applies to it.
+		result.game = loaded.state
+		result.ai_teams = loaded.ai_teams
+		result.difficulty = difficulty_db.by_id(loaded.difficulty)
+		result.map = result.game.map
+		return result
 	var map_path := request.map_path
 	result.map = MapData.load_from_file(map_path, terrain_db)
 	if result.map == null and map_path != MatchRequest.DEFAULT_MAP_PATH:
