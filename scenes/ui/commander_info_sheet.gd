@@ -133,7 +133,7 @@ func _build() -> void:
 
 	_close_button = Button.new()
 	_close_button.text = "Close"
-	_close_button.add_theme_font_size_override("font_size", 11)
+	UiTheme.apply_button(_close_button, UiTheme.ButtonVariant.SECONDARY)
 	_close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_close_button.pressed.connect(_emit_close)
 	rows.add_child(_close_button)

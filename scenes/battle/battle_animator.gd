@@ -51,8 +51,7 @@ var node: Node
 var view: BattleView
 var perspective: BattlePerspective
 var cursor: Sprite2D
-var turn_banner: PanelContainer
-var banner_label: Label
+var turn_banner: TurnBanner
 var power_banner: CommanderPowerBanner
 ## The full-screen battle cut-in. Every resolved attack goes through it when the
 ## player has it on and both sides are visible; see `animate_combat`.
@@ -322,7 +321,7 @@ func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 func _set_banner(text: String) -> void:
 	if _banner_tween != null and _banner_tween.is_valid():
 		_banner_tween.kill()
-	banner_label.text = text
+	turn_banner.announce(text)
 	turn_banner.show()
 	turn_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 

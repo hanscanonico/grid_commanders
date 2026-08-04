@@ -70,7 +70,8 @@ const EMBLEM_PX := 64
 ## every surface lands on its own fractional scale (a 31px HUD chip, a 96px card
 ## band, a 104px banner, a 22px emblem badge off a 64px source). Nearest at those
 ## ratios drops whole rows and frays the ink outlines the style rests on.
-## battle.tscn's VictoryPortrait carries the same value as `texture_filter = 2`.
+## Every surface that draws a bust asks for this by name rather than setting a
+## filter of its own, so none of them can drift from the others.
 const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR
 
 ## The neutral commander has no faction; it renders in this iron-grey so "No

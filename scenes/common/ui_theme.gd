@@ -98,6 +98,11 @@ const PIP_GAP := 1
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
 const SIZE_BUTTON := 10
+## The one announcement size: the beat that stops the board (the day banner) and
+## the lockup that ends it. Between the wordmark and a panel title, because both
+## are read across the room rather than at reading distance — and one token, so
+## the two surfaces that speak to the whole table cannot drift apart.
+const SIZE_BANNER := 18
 const SIZE_BODY := 8
 const SIZE_SEGMENT := 7
 ## A tooltip's label line. The handoff sets it at --text-sm, which the div-2 rule

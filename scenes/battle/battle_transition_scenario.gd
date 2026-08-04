@@ -76,14 +76,14 @@ func _run_outcome_mash_guard() -> String:
 	var focused := _battle.get_viewport().gui_get_focus_owner()
 	if focused != null and _battle.victory_screen.is_ancestor_of(focused):
 		return "outcome appeared with '%s' already focused" % focused.name
-	if _battle.rematch_button.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+	if _battle.victory_screen.rematch_button.mouse_filter != Control.MOUSE_FILTER_IGNORE:
 		return "outcome buttons accepted pointer input during the mash guard"
 
 	var scene := _battle.get_tree().current_scene
 	# A button's pressed signal is the last seam before rematch. Even if a
 	# buffered click focused it first, the guarded callback must release it.
-	_battle.rematch_button.grab_focus()
-	_battle.rematch_button.pressed.emit()
+	_battle.victory_screen.rematch_button.grab_focus()
+	_battle.victory_screen.rematch_button.pressed.emit()
 	await _press_key(KEY_ENTER)
 	await _battle.get_tree().process_frame
 	if _battle.get_tree().current_scene != scene:
@@ -93,7 +93,7 @@ func _run_outcome_mash_guard() -> String:
 		return "buffered outcome press focused '%s' during the guard" % focused.name
 
 	await _battle.get_tree().create_timer(OUTCOME_GUARD_SECONDS).timeout
-	if _battle.rematch_button.mouse_filter != Control.MOUSE_FILTER_STOP:
+	if _battle.victory_screen.rematch_button.mouse_filter != Control.MOUSE_FILTER_STOP:
 		return "outcome buttons stayed pointer-locked after the mash guard"
 	await _press_key(KEY_ENTER)
 	await _battle.get_tree().process_frame

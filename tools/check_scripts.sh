@@ -31,7 +31,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # adding to it means moving something out first, and it comes down whenever the
 # file sheds a responsibility. Say in the commit which it was.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1357
+scenes/battle/battle.gd 1341
 "
 
 if [[ ! -x "$GODOT" ]]; then

@@ -173,7 +173,10 @@ func _build_commander(row: HBoxContainer) -> void:
 	_fire_button = Button.new()
 	_fire_button.text = "FIRE"
 	_fire_button.focus_mode = Control.FOCUS_NONE
-	_fire_button.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	# Cream rather than the side's own fill, for the reason the faction chip above
+	# takes the -light value: this bar is slate, and Iron's hue sits close enough to
+	# it that a tinted button disappears into the chrome it stands on.
+	UiTheme.apply_button(_fire_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_MICRO)
 	_fire_button.pressed.connect(fire_pressed.emit)
 	meter_row.add_child(_fire_button)
 
