@@ -14,11 +14,6 @@ extends PanelContainer
 ## passive — not `power_name`, which belongs beside the meter it charges
 ## (SPEC "Content — read it from COMMANDERS").
 
-const _CHIP := 7  # the faction colour square, handoff 14px
-const _PAD := 7
-const _GAP := 7
-const _RULE_H := UiTheme.HUD_TOP_H - 10
-
 var _day_label: Label
 var _chip: Panel
 var _faction_label: Label
@@ -44,18 +39,18 @@ func _build() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", _GAP)
+	row.add_theme_constant_override("separation", UiTheme.HUD_GAP)
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	add_child(row)
 
-	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 	row.add_child(UiTheme.hud_label("DAY", UiTheme.SIZE_MICRO, UiTheme.INK_3))
 	_day_label = UiTheme.hud_label("1", UiTheme.SIZE_BUTTON, UiTheme.WHITE, true)
 	row.add_child(_day_label)
-	row.add_child(UiTheme.hud_divider(_RULE_H))
+	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 
 	_chip = Panel.new()
-	_chip.custom_minimum_size = Vector2(_CHIP, _CHIP)
+	_chip.custom_minimum_size = Vector2(UiTheme.HUD_CHIP, UiTheme.HUD_CHIP)
 	_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_chip)
 
@@ -72,7 +67,7 @@ func _build() -> void:
 	row.add_child(UiTheme.hud_label("FUNDS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
 	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)
 	row.add_child(_funds_label)
-	row.add_child(UiTheme.hud_divider(_RULE_H))
+	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The threat lens, stated as a chip rather than a legend entry: it is a way of
 	# looking at the board rather than a key that does something in one interaction,
 	# so it has to say both that T exists *and* whether the lens is currently up —
@@ -86,7 +81,7 @@ func _build() -> void:
 	# and where can anything shoot me.
 	_range_label = UiTheme.hud_label(ControlHints.RANGE_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	row.add_child(_range_label)
-	row.add_child(UiTheme.hud_divider(_RULE_H))
+	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that
 	# was true but was also the only control the game ever named out loud (COM-12).
@@ -97,7 +92,7 @@ func _build() -> void:
 		ControlHints.legend_for(ControlHints.IDLE), UiTheme.SIZE_MICRO, UiTheme.INK_3
 	)
 	row.add_child(_keys_label)
-	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 
 
 ## One update per turn change. `side_theme` and `faction` come from the side's

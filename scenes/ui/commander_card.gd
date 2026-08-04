@@ -120,7 +120,7 @@ func _build() -> void:
 	_name_label.add_theme_font_override("font", UiTheme.display(true))
 	_name_label.add_theme_font_size_override("font_size", _NAME_SIZE)
 	_name_band = PanelContainer.new()
-	_name_band.add_child(_pad(_name_label, 6, 2))
+	_name_band.add_child(UiKit.pad(_name_label, 6, 2))
 	rows.add_child(_name_band)
 
 	# --- rules copy on paper ---
@@ -144,7 +144,7 @@ func _build() -> void:
 	power_rows.add_theme_constant_override("separation", 1)
 	_power_box.add_child(power_rows)
 
-	var power_head := _pad(null, 5, 3)
+	var power_head := UiKit.pad(null, 5, 3)
 	var head_row := HBoxContainer.new()
 	head_row.add_theme_constant_override("separation", 6)
 	var head_label := _micro("COMMAND POWER", _MICRO_INK)
@@ -160,10 +160,10 @@ func _build() -> void:
 	_power_name_label = Label.new()
 	_power_name_label.add_theme_font_override("font", UiTheme.display(true))
 	_power_name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
-	power_rows.add_child(_pad(_power_name_label, 6, 0))
+	power_rows.add_child(UiKit.pad(_power_name_label, 6, 0))
 
 	_power_text_label = _body(UiTheme.INK)
-	power_rows.add_child(_pad(_power_text_label, 6, 3))
+	power_rows.add_child(UiKit.pad(_power_text_label, 6, 3))
 
 	_built = true
 
@@ -247,23 +247,11 @@ func _micro(text: String, color: Color) -> Label:
 	return label
 
 
-## Wraps `child` (may be null) in a MarginContainer with even h/v padding.
-func _pad(child: Control, h: int, v: int) -> MarginContainer:
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", h)
-	margin.add_theme_constant_override("margin_right", h)
-	margin.add_theme_constant_override("margin_top", v)
-	margin.add_theme_constant_override("margin_bottom", v)
-	if child != null:
-		margin.add_child(child)
-	return margin
-
-
 func _paper_panel(child: Control, h: int, v: int) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.PAPER))
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_child(_pad(child, h, v))
+	panel.add_child(UiKit.pad(child, h, v))
 	return panel
 
 

@@ -26,19 +26,6 @@ extends PanelContainer
 signal fire_pressed
 
 const MAX_DEFENSE_STARS := 4
-const TERRAIN_ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
-## Terrain atlas cell size; mirrors BattleView.TERRAIN_PX rather than coupling
-## the bar to the battle scene for one constant.
-const TERRAIN_PX := 64
-const _PORTRAIT := 31  # handoff 62px
-const _UNIT_ICON := 32  # handoff 64px
-const _TILE_ICON := 20  # handoff 40px
-const _METER := Vector2(66, 6)  # handoff 132x12
-## Floor width of the commander block; it grows past this to fit a long power name.
-const _CO_MIN_W := 105
-const _PAD := 6
-const _GAP := 7
-const _RULE_H := UiTheme.HUD_BOTTOM_H - 18
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
 	TerrainType.BOOT: "Boot",
@@ -101,11 +88,11 @@ func _build() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", _GAP)
+	row.add_theme_constant_override("separation", UiTheme.HUD_GAP)
 	add_child(row)
-	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 	_build_commander(row)
-	row.add_child(UiTheme.hud_divider(_RULE_H))
+	row.add_child(UiTheme.hud_divider(UiTheme.HUD_BOTTOM_RULE_H))
 	# The unit block is the row's one expanding child, so the free width of the bar
 	# lands on the order line rather than sitting empty to its right. It is also
 	# what keeps the terrain chip pinned to the right edge whether or not there is
@@ -114,14 +101,14 @@ func _build() -> void:
 	# and the chip would slide left.
 	_build_unit(row)
 	_build_terrain(row)
-	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 
 	_built = true
 
 
 func _build_commander(row: HBoxContainer) -> void:
 	_portrait_field = Panel.new()
-	_portrait_field.custom_minimum_size = Vector2(_PORTRAIT, _PORTRAIT)
+	_portrait_field.custom_minimum_size = Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT)
 	_portrait_field.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_portrait_field.clip_contents = true
 	row.add_child(_portrait_field)
@@ -135,11 +122,7 @@ func _build_commander(row: HBoxContainer) -> void:
 
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 3)
-	# A floor, not a width: the block sizes to whichever of its two rows is wider,
-	# so every shipped power_name renders whole (they run to "Armoured
-	# Breakthrough"). The floor only bites on a commander-less side, where it keeps
-	# the empty left third from collapsing to the portrait.
-	block.custom_minimum_size = Vector2(_CO_MIN_W, 0)
+	block.custom_minimum_size = Vector2(UiTheme.HUD_CO_MIN_W, 0)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
 	_co_block = block
@@ -157,7 +140,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	meter_row.add_theme_constant_override("separation", 4)
 	block.add_child(meter_row)
 	_meter_frame = Panel.new()
-	_meter_frame.custom_minimum_size = _METER
+	_meter_frame.custom_minimum_size = UiTheme.HUD_METER
 	_meter_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_meter_frame.add_theme_stylebox_override("panel", _trough_box())
 	meter_row.add_child(_meter_frame)
@@ -183,13 +166,13 @@ func _build_commander(row: HBoxContainer) -> void:
 
 func _build_unit(row: HBoxContainer) -> void:
 	var block := HBoxContainer.new()
-	block.add_theme_constant_override("separation", _GAP)
+	block.add_theme_constant_override("separation", UiTheme.HUD_GAP)
 	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(block)
 	_unit_block = block
 
 	_unit_icon = TextureRect.new()
-	_unit_icon.custom_minimum_size = Vector2(_UNIT_ICON, _UNIT_ICON)
+	_unit_icon.custom_minimum_size = Vector2(UiTheme.HUD_UNIT_ICON, UiTheme.HUD_UNIT_ICON)
 	_unit_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_unit_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_unit_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -232,7 +215,7 @@ func _build_terrain(row: HBoxContainer) -> void:
 	_terrain_block = block
 
 	_terrain_icon = TextureRect.new()
-	_terrain_icon.custom_minimum_size = Vector2(_TILE_ICON, _TILE_ICON)
+	_terrain_icon.custom_minimum_size = Vector2(UiTheme.HUD_TILE_ICON, UiTheme.HUD_TILE_ICON)
 	_terrain_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_terrain_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_terrain_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -285,7 +268,7 @@ func show_commander(
 
 	var ratio := 1.0 if co_state.power_active or co_state.is_ready() else co_state.charge_ratio()
 	_meter_fill.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	_meter_fill.size = Vector2(_METER.x * ratio, _METER.y)
+	_meter_fill.size = Vector2(UiTheme.HUD_METER.x * ratio, UiTheme.HUD_METER.y)
 	_meter_fill.position = Vector2.ZERO
 	# Amber is the charge colour in this design system; the active state takes the
 	# capture green so a running power reads differently from a full one.
@@ -414,12 +397,15 @@ func _stars(count: int) -> String:
 
 
 ## The same artwork the board draws: one cell of the terrain atlas, in the
-## owner's resolved faction row (rows 1+ exist only when team_tinted).
+## owner's resolved faction row (rows 1+ exist only when team_tinted). The atlas
+## and its cell size are asked of BattleView, which owns them, rather than
+## mirrored here — a mirror is how a bar comes to draw a cell the board has moved.
 func _terrain_texture(terrain: TerrainType, owner_team: int) -> AtlasTexture:
 	var atlas := AtlasTexture.new()
-	atlas.atlas = load(TERRAIN_ATLAS_PATH)
+	atlas.atlas = load(BattleView.ATLAS_PATH)
 	var row: int = identity.atlas_row(owner_team) if terrain.team_tinted else 0
-	atlas.region = Rect2(terrain.atlas_col * TERRAIN_PX, row * TERRAIN_PX, TERRAIN_PX, TERRAIN_PX)
+	var px := BattleView.TERRAIN_PX
+	atlas.region = Rect2(terrain.atlas_col * px, row * px, px, px)
 	return atlas
 
 

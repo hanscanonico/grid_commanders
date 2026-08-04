@@ -109,9 +109,15 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `tile-info-panel-plan.html` + `.lavish/hud/SPEC.md` — the tile info panel and the docked HUD
   (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code; `show_tile()` is the bottom
   bar's). Presentation-only; the fog/doctrine gate stays in `battle_view.gd`'s `refresh_panel`,
-  which nulls units the viewer cannot see before the panel gets them. Bar heights, colour tokens
-  and the shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in `UiTheme` — the bar
-  scripts hardcode no colour and no size. `BattleView._apply_board_offset` is the **only writer**
+  which nulls units the viewer cannot see before the panel gets them. Every metric — bar heights,
+  the pad and gap, the chip, the rule heights, the portrait, the two icons and the charge meter —
+  plus the colour tokens and the shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in
+  `UiTheme`: the bar scripts hardcode no colour and no size, which COM-98 made true of the size half
+  as well. The bars' one metric disagreement resolved with it — `_PAD` was declared 7 on the top bar
+  and 6 on the bottom, and the 6 had never reached a pixel, because `hud_spacer` floors a negative
+  width at zero and each bar is inset by its own gap; one `HUD_PAD` of 7 is what both had always
+  drawn. The terrain chip asks `BattleView` for the atlas and its cell size rather than mirroring
+  them. `BattleView._apply_board_offset` is the **only writer**
   of `camera.offset` (the combat shake composes through `BattleView.shake_offset`), and both bars
   swallow the pointer (`MOUSE_FILTER_STOP`) so events can't fall through to cells rendered behind
   them.

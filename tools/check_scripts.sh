@@ -22,16 +22,19 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # Per-file line budgets, tighter than gdlintrc's repo-wide max-file-lines.
 #
 # gdlint takes one ceiling for the whole project, so the longest file sets
-# everybody's — and the longest files are the dev-only scenario driver and the
-# menu. That left scenes/battle/battle.gd, the production file the ratchet was
-# raised for in the first place, free to grow into their slack without tripping
-# anything. A file listed here is held to its own length instead.
+# everybody's — and the longest is the dev-only scenario driver. That left
+# scenes/battle/battle.gd, the production file the ratchet was raised for in the
+# first place, free to grow into its slack without tripping anything. A file
+# listed here is held to its own length instead. scenes/menu/main_menu.gd joined
+# it when COM-97 moved the widget kit out to UiKit: it stopped being the ceiling
+# and would otherwise have inherited the driver's 271 lines of slack.
 #
 # Same rule as the gdlintrc ledger: the number is the file's current length, so
 # adding to it means moving something out first, and it comes down whenever the
 # file sheds a responsibility. Say in the commit which it was.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1341
+scenes/menu/main_menu.gd 1112
 "
 
 if [[ ! -x "$GODOT" ]]; then

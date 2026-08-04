@@ -268,6 +268,18 @@ max-public-methods: 21
 # the same thing in every board context is a lens like T rather than a legend entry.
 # COM-94's cut-in split is still the one that is due in the scenario driver.
 #
+# 1391 -> 1382 and the ceiling is the scenario driver's again, because COM-97
+# paid COM-121's debt: the menu's widget kit — the padded box, the micro-label,
+# the divider, the action button, the segmented control, the toggle row and the
+# identity chip — was a UiTheme extension living in a screen, so it moved out to
+# scenes/ui/ui_kit.gd, where the select page and the commander card reach the same
+# `pad` they each used to keep their own copy of. The `--co-select` scan went with
+# it, to MenuCaptureDriver, which was already parsing the same command line in the
+# same `_ready`. main_menu.gd ends at 1112 and now carries a per-file budget in
+# tools/check_scripts.sh instead, so it cannot grow back into the driver's slack.
+# The map picker and the parallax backdrop are still the menu's and are still a
+# split that is due; that half is COM-38's, on its own trigger.
+#
 # This setting is one number for the whole project — gdlint has no per-path
 # override — so it only ever tracks the *longest* file, and everyone shorter
 # gets that file's slack for free. COM-81: scenes/battle/battle.gd had been

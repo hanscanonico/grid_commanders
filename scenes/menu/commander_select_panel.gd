@@ -274,7 +274,7 @@ func _build_right_column() -> VBoxContainer:
 	_summary_label = _small_label(UiTheme.SIZE_BODY)
 	_summary_label.add_theme_color_override("font_color", _MUTED)
 	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary.add_child(_pad(_summary_label, 8, 6))
+	summary.add_child(UiKit.pad(_summary_label, 8, 6))
 	col.add_child(summary)
 
 	var actions := HBoxContainer.new()
@@ -399,7 +399,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var name_wrap := PanelContainer.new()
 	name_wrap.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
-	name_wrap.add_child(_pad(name_label, 2, 1))
+	name_wrap.add_child(UiKit.pad(name_label, 2, 1))
 	content.add_child(name_wrap)
 	UiTheme.make_decoration(content)
 
@@ -584,7 +584,7 @@ func _build_chips() -> void:
 	for _i in _picks.size():
 		var chip := PanelContainer.new()
 		var label := _small_label(UiTheme.SIZE_BODY)
-		chip.add_child(_pad(label, 7, 3))
+		chip.add_child(UiKit.pad(label, 7, 3))
 		_chip_bar.add_child(chip)
 		_chips.append(chip)
 		_chip_labels.append(label)
@@ -633,16 +633,6 @@ func _small_label(size: int) -> Label:
 	label.add_theme_font_override("font", UiTheme.display())
 	label.add_theme_font_size_override("font_size", size)
 	return label
-
-
-func _pad(child: Control, h: int, v: int) -> MarginContainer:
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", h)
-	margin.add_theme_constant_override("margin_right", h)
-	margin.add_theme_constant_override("margin_top", v)
-	margin.add_theme_constant_override("margin_bottom", v)
-	margin.add_child(child)
-	return margin
 
 
 func _hard(border: Color, width: int) -> StyleBoxFlat:

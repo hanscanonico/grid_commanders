@@ -106,11 +106,12 @@ func _ready() -> void:
 	# (COM-118) carries no --screenshot= of its own.
 	var shot_path := _capture_driver.shot_path()
 	if shot_path != "":
-		# The battle scene's rule, and for the same reason: a capture must not
-		# show — or depend on — the preference of the machine that took it. Here
-		# the pin's only observable effect is the Speed segment's highlight and the
-		# blinking PRESS START, which is pinned solid below.
-		Settings.pin(GameSpeed.DEFAULT_ID)
+		# The battle scene's rule, and for the same reason: a capture must not show
+		# — or depend on — the preference of the machine that took it. The menu's
+		# tier is its own (see GameSpeed.MENU_CAPTURE_ID); the pin's only observable
+		# effect here is the Speed segment's highlight and the blinking PRESS START,
+		# which is pinned solid below.
+		Settings.pin(GameSpeed.MENU_CAPTURE_ID)
 	if _capture_driver.rejected():
 		get_tree().quit(1)
 		return
@@ -160,13 +161,6 @@ func _ready() -> void:
 	# in each grouping, which is the frame a two-army board cannot show.
 	await _pose_seats(CmdArgs.user())
 
-	# Dev captures of the selection page: `--co-select` opens it on seat 1,
-	# `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
-	# `--co-select=<commander_id>` browses to one named general — the roster's copy is
-	# not all one length, so a capture that only ever photographs the first card
-	# proves nothing about the longest. The seat form matters for the same reason on
-	# the other axis: the chip bar is widest at the *last* seat, where every chip
-	# carries its full form. An ordinary capture (no such flag) photographs the menu.
 	# The replays page photographs a posed list over a hidden menu, exactly as the
 	# selection page below does, so it hands in its own chrome for the same reason:
 	# the menu's geometry is not what that picture claims.
@@ -175,19 +169,21 @@ func _ready() -> void:
 		await _capture_driver.capture(shot_path, _replay_panel.chrome)
 		return
 
-	var select_mode := CmdArgs.value(CmdArgs.user(), "--co-select", "red")
-	if select_mode != "":
+	# Dev captures of the selection page — which seat it walks to and which general
+	# it browses to are the driver's reading of `--co-select`, like every other
+	# capture flag; what that means on screen is this menu's own flow.
+	if _capture_driver.poses_selection():
 		_open_select([2] as Array[int])
-		if select_mode == "blue":
-			_select_panel.debug_advance_to_seat(2)
-		elif select_mode.is_valid_int():
-			_select_panel.debug_advance_to_seat(int(select_mode))
-		elif select_mode != "red":
-			_select_panel.debug_preview(StringName(select_mode))
+		var seat := _capture_driver.selection_seat()
+		if seat > 0:
+			_select_panel.debug_advance_to_seat(seat)
+		var browsed := _capture_driver.selection_commander()
+		if browsed != &"":
+			_select_panel.debug_preview(browsed)
 	if shot_path != "":
 		# The select page measures itself against its own chrome, not the menu's: it
 		# is the picture being taken, and the menu behind it is hidden.
-		var chrome := _chrome if select_mode == "" else _select_panel.chrome
+		var chrome := _select_panel.chrome if _capture_driver.poses_selection() else _chrome
 		await _capture_driver.capture(shot_path, chrome)
 
 
@@ -407,13 +403,13 @@ func _build_setup_panel() -> Control:
 	# --- body ---
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 5)
-	col.add_child(_pad(body, 8, 7))
+	col.add_child(UiKit.pad(body, 8, 7))
 
 	body.add_child(_build_map_picker())
-	body.add_child(_rule())
+	body.add_child(UiKit.rule())
 	body.add_child(_build_seats_row())
 	body.add_child(_build_choices_row())
-	body.add_child(_rule())
+	body.add_child(UiKit.rule())
 	body.add_child(_build_toggles_row())
 	return panel
 
@@ -427,7 +423,7 @@ func _build_setup_panel() -> Control:
 func _build_map_picker() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	col.add_child(_micro_label("Map"))
+	col.add_child(UiKit.micro_label("Map"))
 
 	_map_scroll = ScrollContainer.new()
 	# 126 before the seat strip took its lines of the panel's fixed height. The
@@ -449,7 +445,7 @@ func _build_map_picker() -> Control:
 		push_error("main menu: no maps found in %s" % MapCatalog.MAPS_DIR)
 	for i in _maps.size():
 		grid.add_child(_make_map_cell(i, _maps[i]))
-	_map_caption = _setup_help("")
+	_map_caption = UiKit.help_label("")
 	_map_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_map_caption.max_lines_visible = MAP_CAPTION_LINES
 	_map_caption.add_theme_constant_override("line_spacing", 1)
@@ -513,7 +509,9 @@ func _build_seats_row() -> Control:
 	# No section label: each row already says which seat it is, and the panel's
 	# height budget is real (see `_chrome`).
 	_seat_strip = SeatStrip.new()
-	_seat_strip.configure(UiTheme.menu_identity().theme(1).color, _style_segment, _micro_label)
+	_seat_strip.configure(
+		UiTheme.menu_identity().theme(1).color, UiKit.style_segment, UiKit.micro_label
+	)
 	col.add_child(_seat_strip)
 	# No help line: the grouping buttons name themselves, each segment carries the
 	# sentence as a tip, and the panel's height is fixed — a line spent here is a
@@ -535,19 +533,21 @@ func _build_choices_row() -> Control:
 			diff_selected = i
 	_difficulty_index = diff_selected
 	var meridian := UiTheme.menu_identity().theme(1)
-	var difficulty := _build_segment(
+	# Kept shorter than the line it replaced: a help line's own text is its minimum
+	# width, so a longer sentence here widens the whole centred column past the
+	# 640px frame — which `_chrome` refuses to photograph.
+	var diff_detail := "Every CPU seat · judgement; never cheats"
+	var difficulty := UiKit.segment(
 		"Difficulty",
 		diff_labels,
 		diff_selected,
 		meridian.color,
 		"How well the computer plays, at every CPU seat at the table",
-		# Kept shorter than the line it replaced: a help line's own text is its
-		# minimum width, so a longer sentence here widens the whole centred column
-		# past the 640px frame — which `_chrome` refuses to photograph.
-		"Every CPU seat · judgement; never cheats",
+		diff_detail,
 		_on_difficulty_selected,
 		_difficulty_buttons
 	)
+	difficulty.add_child(_option_help(diff_detail))
 	difficulty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(difficulty)
 
@@ -557,15 +557,17 @@ func _build_choices_row() -> Control:
 		speed_labels.append(_speed_tiers[i].display_name)
 		if _speed_tiers[i].id == Settings.speed.id:
 			speed_selected = i
-	var speed := _build_segment(
+	var speed_detail := "Pacing only · outcomes never change"
+	var speed := UiKit.segment(
 		"Speed",
 		speed_labels,
 		speed_selected,
 		meridian.color,
 		"How fast moves and battles play out",
-		"Pacing only · outcomes never change",
+		speed_detail,
 		_on_speed_selected
 	)
+	speed.add_child(_option_help(speed_detail))
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(speed)
 	return row
@@ -576,7 +578,7 @@ func _build_toggles_row() -> Control:
 	row.add_theme_constant_override("separation", 10)
 	var fog_col := VBoxContainer.new()
 	fog_col.add_theme_constant_override("separation", 2)
-	var fog := _build_toggle(
+	var fog := UiKit.toggle(
 		"Fog of war",
 		_fog_on,
 		"Hide the board beyond your units' sight",
@@ -589,7 +591,7 @@ func _build_toggles_row() -> Control:
 	row.add_child(fog_col)
 	var anim_col := VBoxContainer.new()
 	anim_col.add_theme_constant_override("separation", 2)
-	var anim := _build_toggle(
+	var anim := UiKit.toggle(
 		"Battle animations",
 		Settings.battle_animations,
 		"Play the full-screen cut-in when an attack resolves",
@@ -611,16 +613,16 @@ func _build_action_stack(animate: bool) -> Control:
 	var identity := UiTheme.menu_identity()
 	# One action where there were two modes: who is playing is the seat strip's to
 	# say now, so this button only has to mean "with these seats" (plan D6).
-	_start_button = _action_button(
+	_start_button = UiKit.action_button(
 		"Start", "MATCH", UiTheme.ButtonVariant.PRIMARY, identity.theme(1)
 	)
 	col.add_child(_start_button)
-	_seat_refusal = _micro_label("")
+	_seat_refusal = UiKit.micro_label("")
 	_seat_refusal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_seat_refusal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_seat_refusal)
 
-	_continue_button = _action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
+	_continue_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
 	col.add_child(_continue_button)
 	# What Continue resumes, on its own line rather than as the button's inline
 	# suffix: "DAY 12 · THE STRAITS" is longer than the 122px action stack can set
@@ -630,7 +632,7 @@ func _build_action_stack(animate: bool) -> Control:
 	# that can be disabled, and a disabled control is exactly where a tip is the
 	# only affordance left — so the explanation hangs off the caption beneath it,
 	# which stays hoverable either way. `_refresh_continue` sets the words.
-	_continue_caption = _micro_label("")
+	_continue_caption = UiKit.micro_label("")
 	_continue_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_continue_caption.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_continue_tip = Tooltip.attach(_continue_caption, "", "", Tooltip.Side.BOTTOM)
@@ -640,10 +642,10 @@ func _build_action_stack(animate: bool) -> Control:
 
 	# Below Continue, above Quit: it is the third thing you can do with a match, and
 	# the only surface that tells a player their matches are being recorded at all.
-	_replay_button = _action_button("Replays", "", UiTheme.ButtonVariant.SECONDARY, null)
+	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.SECONDARY, null)
 	col.add_child(_replay_button)
 
-	_quit_button = _action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
+	_quit_button = UiKit.action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_quit_button)
 
 	var spacer := Control.new()
@@ -669,200 +671,6 @@ func _build_action_stack(animate: bool) -> Control:
 	return col
 
 
-# --- widget builders ---------------------------------------------------------
-
-
-## A faction-tinted or cream action button with an optional Silkscreen suffix
-## ("VS AI", "HOT-SEAT") set a size down and dimmed, per the handoff.
-func _action_button(
-	text: String,
-	suffix: String,
-	variant: UiTheme.ButtonVariant,
-	theme: CommanderVisuals.FactionTheme
-) -> Button:
-	var button := Button.new()
-	button.text = text if suffix.is_empty() else "%s  %s" % [text, suffix]
-	UiTheme.apply_button(button, variant, theme, UiTheme.SIZE_BUTTON)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0, 20)
-	return button
-
-
-## A segmented control: a Silkscreen micro-label over a bordered row of toggle
-## buttons, the active one carrying the faction fill. Labels come straight from
-## the authority that owns them (GameSpeed / DifficultyDB), never typed in, so the
-## control can never disagree with the tiers it drives (plan section 2).
-##
-## The group's explanation hangs off the micro-label, not off the column or the
-## segments: reaching for "Quick" is not asking what Speed means.
-func _build_segment(
-	micro: String,
-	labels: PackedStringArray,
-	selected: int,
-	accent: Color,
-	tip: String,
-	tip_detail: String,
-	on_select: Callable,
-	button_sink: Array[Button] = []
-) -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	var group_tip := _tip_label(col, micro, tip, tip_detail)
-
-	var frame := PanelContainer.new()
-	var frame_box := UiTheme.flat(UiTheme.PAPER)
-	frame_box.border_color = UiTheme.HARD_BORDER
-	frame_box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(frame_box)
-	frame.add_theme_stylebox_override("panel", frame_box)
-	col.add_child(frame)
-
-	var seg_row := HBoxContainer.new()
-	seg_row.add_theme_constant_override("separation", 0)
-	frame.add_child(seg_row)
-
-	var buttons: Array[Button] = []
-	for i in labels.size():
-		var seg := Button.new()
-		seg.text = labels[i]
-		seg.toggle_mode = true
-		seg.clip_text = true
-		seg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		seg.custom_minimum_size = Vector2(0, 18)
-		seg.add_theme_font_override("font", UiTheme.display())
-		seg.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
-		group_tip.follow_focus(seg)  # focus lands here, never on the micro-label
-		seg_row.add_child(seg)
-		buttons.append(seg)
-		button_sink.append(seg)
-
-	var restyle := func(index: int) -> void:
-		for i in buttons.size():
-			_style_segment(buttons[i], i == index, i > 0, accent)
-	restyle.call(selected)
-	for i in labels.size():
-		buttons[i].pressed.connect(
-			func() -> void:
-				restyle.call(i)
-				on_select.call(i)
-		)
-	col.add_child(_option_help(tip_detail))
-	return col
-
-
-func _style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> void:
-	var normal := UiTheme.segment_box(active, accent)
-	if divided:
-		normal.border_color = UiTheme.HARD_BORDER
-		normal.border_width_left = UiTheme.BORDER
-	seg.add_theme_stylebox_override("normal", normal)
-	seg.add_theme_stylebox_override("hover", normal)
-	seg.add_theme_stylebox_override("pressed", normal)
-	seg.add_theme_stylebox_override("focus", UiTheme.focus_box())
-	# Dimmed rather than blanked: a disabled group still has a tier in hand, and a
-	# player must be able to read which one before the mode that greyed it out.
-	# The fill loses its saturation, so the words take the ink the pale segments
-	# already wear rather than the white that only reads against a full accent.
-	var disabled := UiTheme.segment_box(active, accent.lerp(UiTheme.PAPER, 0.55))
-	if divided:
-		disabled.border_color = UiTheme.HARD_BORDER
-		disabled.border_width_left = UiTheme.BORDER
-	seg.add_theme_stylebox_override("disabled", disabled)
-	var fg := UiTheme.WHITE if active else UiTheme.INK
-	seg.add_theme_color_override("font_color", fg)
-	seg.add_theme_color_override("font_hover_color", fg)
-	seg.add_theme_color_override("font_pressed_color", fg)
-	seg.add_theme_color_override("font_focus_color", fg)
-	seg.add_theme_color_override(
-		"font_disabled_color", UiTheme.INK if active else UiTheme.NEUTRAL_DARK
-	)
-
-
-## A toggle row: a ✓-box (capture green on, grey off), a label, and a Silkscreen
-## ON/OFF status. The whole row is one focusable button (handoff Toggle), so mouse,
-## keyboard and controller all flip it — and, like a segmented group, its
-## explanation hangs off the words rather than off the whole row.
-func _build_toggle(
-	text: String, is_on: bool, tip: String, tip_detail: String, on_change: Callable
-) -> Button:
-	var button := Button.new()
-	button.toggle_mode = true
-	button.button_pressed = is_on
-	button.custom_minimum_size = Vector2(0, 16)
-	var ghost := UiTheme.flat(Color(0, 0, 0, 0))
-	button.add_theme_stylebox_override("normal", ghost)
-	button.add_theme_stylebox_override("hover", ghost)
-	button.add_theme_stylebox_override("pressed", ghost)
-	button.add_theme_stylebox_override("focus", UiTheme.focus_box())
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 5)
-	row.set_anchors_preset(Control.PRESET_FULL_RECT)
-	button.add_child(row)
-
-	var check := Panel.new()
-	check.custom_minimum_size = Vector2(12, 12)
-	var mark := Label.new()
-	mark.text = "✓"
-	mark.add_theme_font_override("font", UiTheme.stat(true))
-	mark.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	mark.add_theme_color_override("font_color", UiTheme.SLATE_900)
-	mark.set_anchors_preset(Control.PRESET_FULL_RECT)
-	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	check.add_child(mark)
-	row.add_child(check)
-
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
-	label.add_theme_color_override("font_color", UiTheme.INK)
-	# Shrunk to its own string, so the underlined words and the hover target are
-	# the same rect; the spacer below keeps ON/OFF hard right where FILL had it.
-	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(label)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(spacer)
-
-	var status := Label.new()
-	status.add_theme_font_override("font", UiTheme.stat())
-	status.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(status)
-	UiTheme.make_decoration(row)
-	# After the decoration pass, never before: that pass silences the whole subtree
-	# and a silenced label emits no `mouse_entered` (see UiTheme.make_decoration),
-	# so the words are the one piece of dress reopened to the pointer. The row is
-	# the one focusable control here, so that is where the tip's focus half goes.
-	Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM).follow_focus(button)
-
-	var repaint := func(on: bool) -> void:
-		_paint_check(check, mark, on)
-		status.text = "ON" if on else "OFF"
-		status.add_theme_color_override("font_color", UiTheme.CAPTURE if on else UiTheme.NEUTRAL)
-	repaint.call(is_on)
-	button.toggled.connect(
-		func(pressed: bool) -> void:
-			repaint.call(pressed)
-			on_change.call(pressed)
-	)
-	return button
-
-
-func _paint_check(check: Panel, mark: Label, on: bool) -> void:
-	var box := UiTheme.flat(UiTheme.CAPTURE if on else UiTheme.PAPER_2)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(box)
-	check.add_theme_stylebox_override("panel", box)
-	mark.visible = on
-
-
 ## Re-deals the footer chips for a board that seats `count` armies. Every seat
 ## gets its colour and its P-number, so the strip above and the chips below name
 ## the same table.
@@ -877,86 +685,17 @@ func _refresh_chips(seats: Array[int]) -> void:
 		child.queue_free()
 	var identity := UiTheme.menu_identity_of(seats)
 	for seat in seats:
-		_chips.add_child(_identity_chip(identity, seat, "P%d" % seat))
-
-
-## A faction identity chip — a coloured dot and the seat's faction name, the
-## classic meridian/aurora identities a commander-less match plays as. Speaks
-## faction, never "Red"/"Blue" (faction-identity D5): the words are the theme's,
-## the hue is CommanderVisuals', resolved through the default identity (plan D4).
-func _identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
-	var theme := identity.theme(team)
-	var chip := PanelContainer.new()
-	var box := UiTheme.flat(UiTheme.PAPER)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
-	box.content_margin_left = 4
-	box.content_margin_right = 4
-	box.content_margin_top = 1
-	box.content_margin_bottom = 1
-	UiTheme.hard_shadow(box)
-	chip.add_theme_stylebox_override("panel", box)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	var dot := Panel.new()
-	dot.custom_minimum_size = Vector2(6, 6)
-	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var dot_box := UiTheme.flat(theme.color)
-	dot_box.border_color = UiTheme.HARD_BORDER
-	dot_box.set_border_width_all(1)
-	dot.add_theme_stylebox_override("panel", dot_box)
-	row.add_child(dot)
-
-	var label := Label.new()
-	label.text = "%s · %s" % [String(theme.key).capitalize(), role]
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	label.add_theme_color_override("font_color", UiTheme.INK)
-	row.add_child(label)
-	chip.add_child(row)
-	return chip
+		_chips.add_child(UiKit.identity_chip(identity, seat, "P%d" % seat))
 
 
 # --- small helpers -----------------------------------------------------------
-
-
-## A micro-label carrying its group's explanation, added to `into` in place: shrunk
-## to its own string so the dotted underline, the hover target and the words are one
-## rect, and opening downward so the tip lands inside the Match Setup panel rather
-## than over the board behind it (handoff integration note 3). The tip comes back so
-## the caller can mirror its focus half onto the group's own focusable control.
-func _tip_label(into: Container, text: String, tip: String, tip_detail: String) -> Tooltip:
-	var label := _micro_label(text)
-	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	into.add_child(label)
-	return Tooltip.attach(label, tip, tip_detail, Tooltip.Side.BOTTOM)
-
-
-func _micro_label(text: String) -> Label:
-	var label := Label.new()
-	label.text = text.to_upper()
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
-	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	return label
-
-
-## Always-visible setup copy. Tooltips can elaborate on these lines, but the
-## choice can be made without hover, a mouse, or prior knowledge.
-func _setup_help(text: String) -> Label:
-	var label := _micro_label(text)
-	label.add_theme_color_override("font_color", UiTheme.NEUTRAL)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return label
 
 
 ## One option's help line, registered so the capture gate measures every one of
 ## them and refuses an empty one. The map caption is not one of these: its words
 ## follow the selection, so it answers to its own reserved budget instead.
 func _option_help(text: String) -> Label:
-	var label := _setup_help(text)
+	var label := UiKit.help_label(text)
 	_setup_help_labels.append(label)
 	return label
 
@@ -971,24 +710,6 @@ func _reserve_map_caption() -> void:
 	_map_caption.text = "X\n".repeat(MAP_CAPTION_LINES - 1) + "X"
 	_map_caption.custom_minimum_size = Vector2(0, _map_caption.get_combined_minimum_size().y)
 	_map_caption.text = words
-
-
-## A thin ink divider between the panel's rows (handoff --border-soft).
-func _rule() -> Control:
-	var rule := ColorRect.new()
-	rule.color = Color(UiTheme.INK.r, UiTheme.INK.g, UiTheme.INK.b, 0.45)
-	rule.custom_minimum_size = Vector2(0, UiTheme.BORDER)
-	return rule
-
-
-func _pad(child: Control, h: int, v: int) -> MarginContainer:
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", h)
-	margin.add_theme_constant_override("margin_right", h)
-	margin.add_theme_constant_override("margin_top", v)
-	margin.add_theme_constant_override("margin_bottom", v)
-	margin.add_child(child)
-	return margin
 
 
 func _start_blink() -> void:

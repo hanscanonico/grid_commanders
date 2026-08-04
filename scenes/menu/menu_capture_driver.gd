@@ -39,6 +39,16 @@ const DEMO_NO_SAVE := "menu_no_save"
 const DEMO_SETUP_CONTEXT := "menu_setup_context"
 const DEMO_REPLAYS := "menu_replays"
 const DEMO_MODES: Array[String] = [DEMO_WITH_SAVE, DEMO_NO_SAVE, DEMO_SETUP_CONTEXT, DEMO_REPLAYS]
+## Dev captures of the selection page. Bare, it opens the page on seat 1;
+## `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
+## `--co-select=<commander_id>` browses to one named general — the roster's copy is
+## not all one length, so a capture that only ever photographs the first card
+## proves nothing about the longest. The seat form matters for the same reason on
+## the other axis: the chip bar is widest at the *last* seat, where every chip
+## carries its full form.
+const CO_SELECT_ARG := "--co-select"
+const CO_SELECT_FIRST_SEAT := "red"
+const CO_SELECT_SECOND_SEAT := "blue"
 ## The day `menu_with_save` poses. Three digits because days are uncapped and the
 ## caption is set at micro size in the 122px action column — a capture that only
 ## ever photographs "DAY 4" proves nothing about a long campaign. The board it
@@ -56,12 +66,14 @@ const POSED_REPLAY_LABELS: Array[String] = [
 var _menu: Control
 var _demo := ""
 var _shot_path := ""
+var _co_select := ""
 
 
 func _init(menu: Control) -> void:
 	_menu = menu
 	_shot_path = ScreenshotUtil.requested()
 	_demo = CmdArgs.value(CmdArgs.user(), DEMO_ARG)
+	_co_select = CmdArgs.value(CmdArgs.user(), CO_SELECT_ARG, CO_SELECT_FIRST_SEAT)
 	# A smoke batch (--demos=, COM-118) supersedes both — the menu pair runs
 	# inside the one-boot sweep, reached by a scene change.
 	if BattleCaptureBatch.adopt(menu):
@@ -99,6 +111,28 @@ func poses_setup_context() -> bool:
 
 func poses_replays() -> bool:
 	return _demo == DEMO_REPLAYS
+
+
+## True when `--co-select` asked for the selection page. An ordinary capture (no
+## such flag) photographs the menu itself.
+func poses_selection() -> bool:
+	return _co_select != ""
+
+
+## Which seat a selection capture walks to, or 0 to stay on the one it opens on.
+func selection_seat() -> int:
+	if _co_select == CO_SELECT_SECOND_SEAT:
+		return 2
+	return int(_co_select) if _co_select.is_valid_int() else 0
+
+
+## Which general a selection capture browses to, or "" to leave the walk alone —
+## anything that is not a seat is read as a commander id, which `debug_preview`
+## refuses out loud if it names none.
+func selection_commander() -> StringName:
+	if selection_seat() > 0 or _co_select == CO_SELECT_FIRST_SEAT:
+		return &""
+	return StringName(_co_select)
 
 
 ## The recording list `menu_replays` poses, for the reason `posed_slot` poses a
