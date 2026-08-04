@@ -93,6 +93,18 @@ failure always names a scenario (the batch's own log is kept and reported when t
 `SMOKE_ISOLATE=1 make smoke` skips batching altogether and runs the one-process-per-scenario path,
 which is the way to bisect a scenario suspected of leaning on a batched neighbour's leftover state.
 
+What the sweep asserts of a capture is that it exists and clears a 2 KB floor — the real checks
+are the ones each scenario carries above (a measured layout, the cut-in's atlas rows, a flow that
+must reach its state). It never compared a byte. The frames *are* byte-stable, and
+`SMOKE_HASHES=<file> make smoke` is how a change is held to that: with no such file it records one
+hash per scenario, with one it compares and fails naming every frame that moved. Record before the
+change, compare after — the shape `make determinism` uses, minus the committed side. A manifest is
+deliberately not committed: unlike that golden's arithmetic, a frame is this machine's renderer and
+glyph rasteriser, and the process-wide font atlas shifts glyph edges with the queue's composition,
+so the same scenario writes different bytes under `MODES="cutin"` than in the full sweep. The
+manifest names the queue it was recorded from and the comparison refuses to cross it, so a narrowed
+run asks for a new manifest instead of crying wolf.
+
 The one window is still activated as it opens and again on each scene change, so a sweep briefly
 takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of
 guessing: it wraps any command, samples the frontmost app for its whole lifetime, and prints the
@@ -845,7 +857,13 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   `tools/arena/`, the recording reader under `tools/replay/`, and
   the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
   way for exactly this reason.
-- `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT).
+- `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT), with one local
+  patch: `summary.gd` no longer prints the end-of-run version banner, which claimed on every
+  `make test` that this GUT "may not be compatible with Godot 4.7.1" over 1098 passing tests
+  (9.6.1's own `versions.json` stops at 4.6.999, and no config or CLI switch turns the banner
+  off). It reads no network — the detector only fetches for the editor plugin and for
+  `-gcheck_update`. The patch site names the ticket; re-apply or drop it on the next upgrade,
+  and record any further local edit here.
 
 ## Assets
 

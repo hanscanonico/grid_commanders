@@ -705,8 +705,14 @@ that must survive any change; the full rationale, milestones and risk registers 
   directly and comes up focused; only tty-less launches get the restore watcher. D1: the sweep's
   captures staying byte-identical is the merge bar for any change here — it is what keeps the two
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
-  honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
-  net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
+  honest as the roster moves. That bar is a command rather than a procedure since COM-110:
+  `SMOKE_HASHES=<file> make smoke` records a manifest of what every scenario hashed to, or compares
+  this run against one and names each frame that moved. It is **recorded, never committed** — a
+  frame is the machine's renderer and glyph rasteriser, and the same font atlas that shifts those
+  two scenarios means one queue's bytes are not another's, so a manifest answers only for the queue
+  it names and the comparison refuses to cross it. D6: fewer windows beats faster restores — the
+  wrapper is the safety net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep
+  exists.
 - `four-players-plan.html` — up to four armies, milestones FP1–FP6, **all shipped**: FP1 (the
   roster becomes data), FP2 (hostility gets one authority), FP3 (an army can fall, a side can win),
   FP4 (four liveries on one board), FP5 (seats and sides at the table) and FP6 (the boards, and the
