@@ -204,7 +204,11 @@ func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
 ## S3. Orders combat units by how well they answer the enemy's cost-weighted
 ## roster, blended with the static build-priority order.
 func _reactive_order(context: AIPlanningContext) -> Dictionary:
-	if profile.build_reactivity <= 0.0 or context.enemy_roster.is_empty():
+	if (
+		profile.build_reactivity <= 0.0
+		or context.enemy_roster.is_empty()
+		or context.state.damage_chart == null
+	):
 		return {}
 	var candidates: Array[UnitType] = []
 	var effectiveness: Dictionary = {}

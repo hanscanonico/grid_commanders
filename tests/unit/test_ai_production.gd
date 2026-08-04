@@ -232,3 +232,23 @@ func test_builds_tank_with_funds_and_enough_capture_units() -> void:
 	var command := ai.plan_next_command(state)
 	assert_true(command is BuildCommand)
 	assert_eq((command as BuildCommand).unit_type.id, &"tank")
+
+
+## The reactive order prices candidates off the damage chart, and only the
+## Difficult tier turns it on. A chart-less state is ordinary in tools and tests,
+## so the planner has to survive one at every tier, as its attack and dive
+## siblings already do.
+func test_a_chart_less_state_plans_at_the_reactive_tier() -> void:
+	var map := MapData.parse(
+		"[terrain]\nB....\n.....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n2 t 4 1", terrain_db
+	)
+	var state := GameState.create(map, unit_db, null)
+	assert_null(state.damage_chart, "the board under test has no damage chart")
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 99999
+	var profile: AIProfile = load("res://data/ai/hard.tres")
+	assert_gt(profile.build_reactivity, 0.0, "the tier under test must be the reactive one")
+	var planner := AIController.new(unit_db, profile)
+	var command := planner.plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
