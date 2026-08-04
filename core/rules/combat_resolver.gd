@@ -20,7 +20,7 @@ extends RefCounted
 ## bit-for-bit as it did before commanders existed.
 ##
 ## `cover` is the defender's terrain stars, except that a unit in the air is not
-## standing on the tile under it and gets none — see _cover_stars. Ground and sea
+## standing on the tile under it and gets none — see cover_stars. Ground and sea
 ## units read the terrain exactly as they always did.
 ##
 ## Damage% subtracts internal HP (0-100) directly. Luck comes from the
@@ -382,17 +382,21 @@ static func _hp_after(hp: int, damage: int) -> int:
 	return ceili(maxi(0, hp - damage) / 10.0)
 
 
-## The terrain cover the defender actually gets. A unit in the air is over the
-## tile rather than on it, so mountains and woods do nothing for it — the one
-## place the formula asks what a defender *is* instead of only where it stands.
+## The terrain cover `unit` actually gets standing on `cell`. A unit in the air is
+## over the tile rather than on it, so mountains and woods do nothing for it — the
+## one place the formula asks what a defender *is* instead of only where it stands.
+##
+## Public because the AI planner prices ground defensively and must price the
+## ground this formula gives, not a second reading of it: one answer to what
+## cover a unit gets on a cell, asked here by both.
 ##
 ## Deliberately only the terrain half: a commander's star_bonus is still added on
 ## top by the caller, so a doctrine that hardens its army hardens its planes with
 ## it. What the ground gives is the part a plane is not entitled to.
-static func _cover_stars(state: GameState, fight: Engagement) -> int:
-	if fight.defender.type.domain == UnitType.AIR:
+static func cover_stars(state: GameState, unit: Unit, cell: Vector2i) -> int:
+	if unit.type.domain == UnitType.AIR:
 		return 0
-	return state.map.terrain_at(fight.defender_cell).defense_stars
+	return state.map.terrain_at(cell).defense_stars
 
 
 static func _damage_pct(state: GameState, fight: Engagement, base_damage: int) -> int:
@@ -400,7 +404,7 @@ static func _damage_pct(state: GameState, fight: Engagement, base_damage: int) -
 	var def_co := state.commander_of(fight.defender.team)
 	var stars := clampi(
 		(
-			_cover_stars(state, fight)
+			cover_stars(state, fight.defender, fight.defender_cell)
 			+ def_co.star_bonus(state, fight)
 			- att_co.star_pierce(state, fight)
 		),

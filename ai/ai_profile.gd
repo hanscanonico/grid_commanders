@@ -18,6 +18,8 @@ extends Resource
 const DEFAULT_PATH := "res://data/ai/default.tres"
 
 ## Multiplier on an attack's value when the shot would finish the target off.
+## The other correction to the valuation condition_weight prices, so the two
+## overlap and are searched together — see that field.
 @export var kill_bonus: float = 1.6
 ## How heavily the expected counter-attack discounts an attack's value. Below
 ## 1.0 because the AI is willing to trade.
@@ -271,6 +273,82 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## factory because it is valuable must then score it as valuable when it arrives,
 ## or it turns around on the doorstep.
 @export var capture_goal_value_tiles: float = 0.0
+
+# --- The arena's shelf --------------------------------------------------------
+#
+# The AI Arena plan's shelf (AR6): the things the planner could not express at
+# any setting of the dials above. Same contract as the three blocks before it —
+# 0 skips the code, and the defaults here track data/ai/default.tres.
+#
+# This block ships unmeasured on purpose. What would price it is a search over
+# the whole shelf (AR5), which is not built, so no tier carries a value yet:
+# focus_fire_bonus is the precedent for a capability that sits in the tree at 0
+# until something measures it, one edit away from being tried.
+
+## How many tiles of walking a unit will give up for one defence star of the
+## ground it stops on. 0 skips it entirely.
+##
+## Denominated in TILES on both paths that read it, which is what keeps it one
+## dial where threat_aversion and advance_threat_tiles had to be two: the advance
+## path counts in tiles already, and on the attack path a tile costs
+## step_cost_penalty, so the cover is spent out of the walk at the planner's own
+## price of a tile rather than through a second field. One number and one
+## sentence — how much further this unit will go to fight from that wood.
+##
+## The scale to keep in view is a mountain's four stars against a road's none:
+## much above 1.0 the cover outweighs four tiles of advance, which parks an army
+## on the high ground and leaves it there.
+@export var cover_tiles: float = 0.0
+## How much of a unit's price is its condition: 0 values every unit at its
+## roster cost however little of it is left, 1 values it at cost x hp/100, and
+## the values between interpolate. 0 skips it entirely.
+##
+## Defined on 0 to 1 and on nothing else, which is why it is the one dial here
+## that declares its range rather than only documenting it: past 1 the
+## interpolation extrapolates and prices a wounded unit below nothing, which
+## inverts every valuation in the planner. A search that samples wider is held to
+## the range by _unit_value, so the worst it gets is the strongest defined
+## setting rather than a suicidal planner.
+##
+## Denominated as a FRACTION of the price rather than in the price's own units,
+## because it is the shape of the valuation rather than a number added to it —
+## which is what lets one dial answer for a unit as a target and as an asset at
+## once. Whose unit it is is priced elsewhere and already: counter_weight
+## discounts our own losses against their damage, and threat_aversion and
+## withdraw_weight price our own skin.
+##
+## Deliberately an interpolation and not a switch. What 1.0 prices is what is
+## left of the unit at the board's own rate — TurnRules._repair sells the missing
+## HP back at `cost * heal / 100`, so the surviving half and the repair bill add
+## up to the roster price exactly — and that is a floor rather than the whole
+## answer: the unit is also on the board *now*, holding the tile it holds, and
+## repair costs turns as well as money.
+##
+## kill_bonus is the other correction to this same valuation: it pays extra for
+## finishing a target precisely because a nearly-dead one was priced like a fresh
+## one. Move the two together and never one alone (arena plan R5) — a search that
+## fits kill_bonus first will fit it to a valuation this dial then changes.
+@export_range(0.0, 1.0) var condition_weight: float = 0.0
+## What merging two damaged units of a kind is worth, as a multiple of the price
+## of the HP that survives the merge. 0 skips it entirely.
+##
+## Denominated in VALUE, because a join is a candidate in the same AIUnitPlan an
+## attack, a capture, a dive and a withdrawal compete for, and that competition
+## is in funds (AI Judgement D4). The quantity it multiplies is the HP that
+## actually lands: JoinCommand caps the merge at 100 and refunds nothing, so the
+## overflow is destroyed, and it is charged back at face value — a loss the file
+## can already price needs no dial of its own, while what concentration is worth
+## is a judgement and needs exactly this one.
+##
+## A multiple rather than a flat score like dive_score, because consolidating
+## thirty points of md tank is worth ten times consolidating thirty points of
+## infantry, and a constant cannot say so.
+##
+## Expect a tuned value well below 1.0. At 1.0 the carried HP is priced as though
+## the merge were free, and it is not: a join spends the mover's turn *and* the
+## target's, and leaves one exhausted unit where two ready ones stood. That price
+## is deliberately not a second dial — it is the reason this one is small.
+@export var join_weight: float = 0.0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps

@@ -134,7 +134,7 @@
       <span class="badge badge-outline badge-lg text-white border-white/40">Milestones AR1–AR7</span>
       <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D9</span>
       <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R8</span>
-      <span class="badge badge-outline badge-lg text-white border-white/40">core/ untouched</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">core/ untouched, bar recorded pure reads</span>
       <span class="badge badge-lg bg-white/90 text-slate-900 border-white">No commanders · neutral doctrine throughout</span>
     </div>
   </header>
@@ -702,7 +702,7 @@
 
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body gap-2">
-          <h3 class="font-bold text-lg">AR6 — Widen the shelf <span class="badge badge-ghost badge-sm align-middle">proposed</span></h3>
+          <h3 class="font-bold text-lg">AR6 — Widen the shelf <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
           <p class="text-sm opacity-80">The actual work. Each term is one <code>@export</code>, inert at its default, written into all three tiers, with the search re-run after it.</p>
           <p class="text-sm">
             Each sub-milestone is separately mergeable and separately reverted, and carries the AI
@@ -710,17 +710,41 @@
             an inert default must be genuinely inert. §5 lists the shelf with the reasoning; the order
             below is by measured gap over cost.
           </p>
+          <p class="text-sm gc-quote px-4 py-2"><strong>All four terms are in the tree, each at
+            <code>0.0</code> on all three tiers — and none has been through the gate below</strong>, which
+            is AR5's search and is not built. The shelf ships <em>unmeasured</em> on purpose:
+            <code>focus_fire_bonus</code> is the precedent for a capability that waits at zero until
+            something measures it, one edit away from being tried.</p>
           <ol class="list-decimal list-inside space-y-1 text-sm">
-            <li><strong>AR6a — Cover.</strong> A defence-stars term in <span class="gc-file">_advance_value</span>
+            <li><strong>AR6a — Cover.</strong> <span class="badge badge-success badge-sm align-middle">shipped</span> A defence-stars term in <span class="gc-file">_advance_value</span>
               and in the attack destination penalty. The single clearest hole in §1c, and the cheapest to
               close: the number is already on <span class="gc-file">TerrainType</span> and
-              <span class="gc-file">CombatResolver</span> already reads it.</li>
-            <li><strong>AR6b — Condition.</strong> Value a unit at <code>cost × hp/100</code> wherever it
+              <span class="gc-file">CombatResolver</span> already reads it. Shipped 2026-08-04 (COM-159)
+              as <code>cover_tiles</code>, counted in <em>tiles</em> on both paths — the attack path
+              converts through <code>step_cost_penalty</code>, so one dial says the same thing to the
+              advance and to the shot. The double-pricing answer is <strong>per cell</strong>: a cell the
+              counter or the threat map already prices scores no stars, because those numbers are
+              <span class="gc-file">CombatResolver</span>'s through the same terrain and stars on top
+              would price one wood twice (Judgement R3). <code>_cover_stars</code> became
+              <code>CombatResolver.cover_stars</code> so the planner asks the damage formula what cover a
+              cell gives instead of reading <code>defense_stars</code> itself — the air rule with it.</li>
+            <li><strong>AR6b — Condition.</strong> <span class="badge badge-success badge-sm align-middle">shipped</span> Value a unit at <code>cost × hp/100</code> wherever it
               is currently valued at <code>cost</code>, behind a dial that interpolates between the two so
-              zero is today's behaviour exactly.</li>
-            <li><strong>AR6c — Join.</strong> <code>JoinCommand</code> as a scored candidate in
+              zero is today's behaviour exactly. Shipped 2026-08-04 (COM-160) as
+              <code>condition_weight</code> over <em>five</em> sites, not the three this plan named —
+              <span class="gc-file">_focus_bonus</span> values the same enemy
+              <span class="gc-file">_attack_score</span> does, and leaving it would have given one unit
+              two prices inside one score. <span class="gc-file">_unit_value</span> is now the file's only
+              unit valuation. Defined on 0–1 and clamped there in code as well as in the export: past 1
+              the interpolation prices a wounded unit below nothing and inverts every reader's sign.</li>
+            <li><strong>AR6c — Join.</strong> <span class="badge badge-success badge-sm align-middle">shipped</span> <code>JoinCommand</code> as a scored candidate in
               <span class="gc-file">_best_unit_plan</span>, beside dive and withdraw — the precedent D4 of
-              the Judgement plan already set for a non-attack action that may outbid a shot.</li>
+              the Judgement plan already set for a non-attack action that may outbid a shot. Shipped
+              2026-08-04 (COM-161) as <code>join_weight</code>, denominated in <em>value</em> as a
+              multiple of the HP that survives the merge, because that is the currency the candidates
+              compete in. The overflow the cap destroys is charged <em>separately from the dial</em>, at
+              face value: a loss the file can already price needs no dial, and without the split a high
+              weight pours fresh units into wounded ones.</li>
             <li><strong>AR6d — Refuge pricing.</strong> <span class="badge badge-success badge-sm align-middle">shipped</span> Fix what pins <code>withdraw_weight</code> at zero:
               a refuge that gives up the unit's own firing ring is not a refuge. Adds a term to
               <span class="gc-file">_better_refuge</span>; the existing failing test is the acceptance
@@ -837,24 +861,31 @@
     </div>
 
     <h3 class="font-bold text-lg mb-2">5b — The shelf AR6 adds</h3>
+    <p class="text-sm max-w-3xl mb-3 opacity-80">
+      All of it is added, as of 2026-08-04: three new dials — <code>cover_tiles</code>,
+      <code>condition_weight</code>, <code>join_weight</code> — at <code>0.0</code> on every tier, plus
+      AR6d's refuge rank, which no shipped tier reaches while <code>withdraw_weight</code> is zero. So
+      they are search dimensions exactly like §5a's economy block, and <strong>none of them is
+      behaviour</strong> until AR5 prices one.
+    </p>
     <div class="overflow-x-auto">
       <table class="table table-sm table-zebra gc-tight gc-shelf">
         <thead><tr><th>Term</th><th>Where it goes</th><th>Why it is worth a dimension</th></tr></thead>
         <tbody>
           <tr>
-            <td><strong>Cover value</strong> (AR6a)</td>
+            <td><strong>Cover value</strong> (AR6a) <span class="badge badge-success badge-sm align-middle">shipped</span></td>
             <td><span class="gc-file">_advance_value</span>, and the destination penalty in <span class="gc-file">_consider_attacks</span></td>
-            <td>The planner has <em>no</em> term for terrain defence. This is the first thing a human player learns and the AI cannot see it. Data already exists on <span class="gc-file">TerrainType</span>.</td>
+            <td>The planner had <em>no</em> term for terrain defence — the first thing a human player learns. Shipped as <code>cover_tiles</code>, in tiles on both paths. Couples to the threat dials by construction rather than by taste: the stars speak only where no forecast has already priced the fire arriving on that cell, so turning a threat dial on takes cover out of exactly those cells.</td>
           </tr>
           <tr>
-            <td><strong>Condition weighting</strong> (AR6b)</td>
-            <td><span class="gc-file">_attack_score</span>, <span class="gc-file">_threat_penalty</span>, <span class="gc-file">_consider_withdraw</span></td>
-            <td>Everything is priced at full cost regardless of HP. Every risk dial is currently compensating for a valuation off by up to 90%.</td>
+            <td><strong>Condition weighting</strong> (AR6b) <span class="badge badge-success badge-sm align-middle">shipped</span></td>
+            <td><span class="gc-file">_unit_value</span>, the one valuation <span class="gc-file">_attack_score</span>, <span class="gc-file">_focus_bonus</span>, <span class="gc-file">_threat_penalty</span>, <span class="gc-file">_consider_withdraw</span> and <span class="gc-file">_join_score</span> all read</td>
+            <td>Everything was priced at full cost regardless of HP, and every risk dial was compensating for a valuation off by up to 90%. Shipped as <code>condition_weight</code>, defined and clamped on 0–1. Search it with <code>kill_bonus</code> and never alone: that bonus is the other correction to this same valuation, so a search that fits it first fits it to a valuation this dial then changes.</td>
           </tr>
           <tr>
-            <td><strong>Join</strong> (AR6c)</td>
+            <td><strong>Join</strong> (AR6c) <span class="badge badge-success badge-sm align-middle">shipped</span></td>
             <td>A candidate in <span class="gc-file">_best_unit_plan</span></td>
-            <td>The command exists, the rules exist, the AI has never once issued it. Two half-dead infantry are strictly worse than one healthy one, and the AI accumulates them all match.</td>
+            <td>The command existed, the rules existed, <span class="gc-file">ai/</span> held not one reference. Shipped as <code>join_weight</code>. The premise here that <em>two half-dead infantry are strictly worse than one healthy one</em> did not survive the work: damage and capture both scale linearly with HP, so the pair deals the same and can chip two properties. A merge is a positional trade that also spends two units' turns — which is why it is a weighted candidate rather than a rule, and why the tuned value is expected well below 1.0.</td>
           </tr>
           <tr>
             <td><strong>Refuge quality</strong> (AR6d) <span class="badge badge-success badge-sm align-middle">shipped</span></td>

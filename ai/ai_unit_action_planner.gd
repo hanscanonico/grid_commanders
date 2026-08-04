@@ -56,6 +56,7 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
 	_consider_attacks(context, unit, plan.reach, plan)
 	_consider_captures(context.state, unit, plan.reach, plan)
 	_consider_dive(context, unit, plan)
+	_consider_join(context, unit, plan.reach, plan)
 	# Last on purpose: every comparison here is strict, so a withdrawal that only
 	# ties with a shot loses to it. Running away has to be strictly better.
 	_consider_withdraw(context, unit, plan.reach, plan)
@@ -109,6 +110,7 @@ func _consider_attacks(
 		# cell, so work them out once per destination and only after finding a
 		# legal target there.
 		var dest_penalty := -1.0
+		var incoming := 0
 		for enemy in candidates:
 			if not AttackRange.reaches(ring, dest, enemy.cell):
 				continue
@@ -117,16 +119,21 @@ func _consider_attacks(
 			if dest_penalty < 0.0:
 				if threat == null and profile.threat_aversion > 0.0:
 					threat = context.threat_map()
+				if threat != null:
+					incoming = threat.incoming_damage(state, unit, dest)
 				var step_cost: int = reachable.costs[dest]
 				dest_penalty = (
-					profile.step_cost_penalty * step_cost
-					+ _threat_penalty(state, unit, dest, threat)
+					profile.step_cost_penalty * step_cost + _threat_penalty(unit, incoming)
 				)
 			var forecast := CombatResolver.forecast(state, unit, dest, enemy)
+			# The cover is the one term here that belongs to the shot rather than to
+			# the destination: the counter it invites is fire this cell has already
+			# been priced against, and that counter is this enemy's.
 			var score: float = (
 				_attack_score(unit, enemy, forecast)
 				+ _focus_bonus(context, unit, enemy, forecast)
 				+ _defend_bonus(state, unit, enemy)
+				+ _cover_score(state, unit, dest, incoming + forecast.counter_damage)
 				- dest_penalty
 			)
 			if score > plan.score:
@@ -140,25 +147,87 @@ func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -
 	if not forecast.can_attack:
 		return -INF
 	var damage := mini(forecast.attack_damage, enemy.hp)
-	var value := float(enemy.type.cost) * damage / 100.0
+	var value := _unit_value(enemy) * damage / 100.0
 	if forecast.attack_damage >= enemy.hp:
 		value *= profile.kill_bonus
 	var risk := 0.0
 	if forecast.counter_damage > 0:
 		var counter := mini(forecast.counter_damage, unit.hp)
-		risk = float(unit.type.cost) * counter / 100.0 * profile.counter_weight
+		risk = _unit_value(unit) * counter / 100.0 * profile.counter_weight
 		if forecast.counter_damage >= unit.hp:
 			risk *= 2.0
 	return value - risk
 
 
-## What firing from `cell` costs `unit` in expected incoming damage next turn,
-## in the same cost-scaled currency an attack's value uses.
-func _threat_penalty(state: GameState, unit: Unit, cell: Vector2i, threat: ThreatMap) -> float:
-	if threat == null:
+## What `unit` is worth as a thing to have, in funds. The one valuation in this
+## file: what a shot is worth taking, what the counter costs, what a threatened
+## cell risks and what stepping out of one saves are each this number times the
+## HP that changes hands.
+##
+## `condition_weight` interpolates it toward what is left of the unit over its
+## defined range of 0 to 1, and that far end is the board's own rate rather than
+## a guess:
+## TurnRules._repair sells the missing HP back at `cost * heal / 100`, so a 30-HP
+## md tank is three tenths of an md tank and the other seven tenths are a bill.
+## What the interpolation buys is the part no funds figure holds — the unit is on
+## the board *now*, holding the tile it holds, and repair costs turns as well as
+## money.
+##
+## Whose unit it is is deliberately not asked. A wounded unit is worth less to
+## kill and less to lose by the same arithmetic, and the appetite for that trade
+## already has its own dials in counter_weight, threat_aversion and
+## withdraw_weight.
+##
+## The interpolation factor is clamped rather than trusted: past 1.0 it
+## extrapolates past what is left of the unit and turns the price NEGATIVE, and
+## every reader of this number — the shot's value, the counter's risk, the
+## threatened cell, the withdrawal — then has its sign inverted and the planner
+## seeks the death it was pricing against. A weight the range does not define is
+## a bug in whatever set it, and this is the floor under it, not the report of
+## it: the export declares the range where the value enters.
+func _unit_value(unit: Unit) -> float:
+	if profile.condition_weight <= 0.0:
+		return float(unit.type.cost)
+	var condition := clampf(profile.condition_weight, 0.0, 1.0)
+	return float(unit.type.cost) * lerpf(1.0, float(unit.hp) / 100.0, condition)
+
+
+## What firing from a cell costs `unit` in expected incoming damage next turn, in
+## the same cost-scaled currency an attack's value uses. `incoming` is the threat
+## map's reading of that cell, and zero wherever no dial built a map.
+func _threat_penalty(unit: Unit, incoming: int) -> float:
+	return profile.threat_aversion * _unit_value(unit) * incoming / 100.0
+
+
+## What the ground under `cell` is worth to `unit` defensively, in the tiles of
+## advance _advance_value counts in — and nothing at all where a forecast has
+## already priced the fire arriving there.
+##
+## `priced_fire` is that fire: the counter the shot invites, the threat map's
+## reading of the cell, or the two together. Every one of those numbers is
+## CombatResolver's, resolved *through this same terrain*, so wherever there is
+## any of it the cover is already in the score — in value, against the actual
+## weapons aimed at this actual unit, which is the better of the two readings.
+## Stars on top would price one wood twice, which is AI Judgement's R3 in a new
+## place. Where there is none nothing else speaks for the ground: on Normal that
+## is every cell, since no dial there builds a threat map at all.
+##
+## What cover a unit gets on a cell is asked of CombatResolver rather than read
+## off the terrain here, so the planner cannot price ground the damage formula
+## does not. That is where the air rule lives — a plane is over the tile rather
+## than on it and keeps none of it — and it is answered once, there.
+func _cover_tiles(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int) -> float:
+	if profile.cover_tiles <= 0.0 or priced_fire > 0:
 		return 0.0
-	var incoming := threat.incoming_damage(state, unit, cell)
-	return profile.threat_aversion * float(unit.type.cost) * incoming / 100.0
+	return profile.cover_tiles * float(CombatResolver.cover_stars(state, unit, cell))
+
+
+## The same worth in what the attack path scores in. A tile of walking costs
+## `step_cost_penalty` there, so the conversion is the planner's own price of a
+## tile rather than a second dial — and "one tile further for a star" means the
+## same thing on both paths.
+func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int) -> float:
+	return profile.step_cost_penalty * _cover_tiles(state, unit, cell, priced_fire)
 
 
 ## How much more attractive `enemy` is because other ready friendlies could
@@ -174,7 +243,7 @@ func _focus_bonus(
 	var follow_up := mini(remaining, _follow_up_damage(context, unit, enemy))
 	if follow_up <= 0:
 		return 0.0
-	var value := float(enemy.type.cost) * mini(forecast.attack_damage, enemy.hp) / 100.0
+	var value := _unit_value(enemy) * mini(forecast.attack_damage, enemy.hp) / 100.0
 	return profile.focus_fire_bonus * value * float(follow_up) / float(remaining)
 
 
@@ -260,6 +329,58 @@ func _consider_captures(
 			plan.command = CaptureCommand.new(unit, reachable.path_to(cell))
 
 
+## Whether folding this unit into a damaged one of its own kind beats everything
+## else it could do this turn.
+##
+## A scored candidate rather than a rule, and weighed after the attacks and the
+## captures so that a merge which merely ties with a shot loses to it — the dive
+## is the precedent for a non-attack action that may outbid one (AI Judgement
+## D4), and this is placed ahead of the withdrawal for the same reason the
+## withdrawal is last: it must be strictly better than running away, not equal.
+##
+## What a join is legal at all is JoinCommand's to say, and it is asked rather
+## than re-listed here: same type, same team, a target that is damaged, unspent
+## and carrying nothing. What this weighs is only which of the legal ones is
+## worth doing.
+func _consider_join(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+) -> void:
+	if profile.join_weight <= 0.0:
+		return
+	var state := context.state
+	for other in context.friendly_units:
+		if other == unit or other.carrier != null or other.type != unit.type:
+			continue
+		if not reachable.has(other.cell):
+			continue
+		var command := JoinCommand.new(unit, reachable.path_to(other.cell))
+		if command.validate(state) != "":
+			continue
+		var score := _join_score(unit, other, reachable.costs[other.cell])
+		if score > plan.score:
+			plan.score = score
+			plan.command = command
+
+
+## What merging `unit` into `other` is worth: the HP that lands, at the premium
+## `join_weight` puts on having it all on one unit, less the HP the cap destroys
+## and the walk it takes to get there.
+##
+## The two halves are weighed differently on purpose. What overflows the merge is
+## gone — JoinCommand caps at 100 and refunds nothing — so it is a plain loss and
+## is charged at the same rate every other point of HP in this file is, needing
+## no dial to say so. What concentration is worth is the judgement, and it is the
+## only part the dial answers for.
+func _join_score(unit: Unit, other: Unit, step_cost: int) -> float:
+	var carried := mini(100 - other.hp, unit.hp)
+	var price := _unit_value(unit)
+	return (
+		profile.join_weight * price * carried / 100.0
+		- price * (unit.hp - carried) / 100.0
+		- profile.step_cost_penalty * step_cost
+	)
+
+
 ## Whether stepping out of what the enemy can reach beats everything else this
 ## unit could do this turn.
 ##
@@ -307,7 +428,7 @@ func _consider_withdraw(
 	var avoided := staying - best_incoming
 	if avoided <= 0:
 		return  # nowhere we can reach is safer than standing still
-	var score := profile.withdraw_weight * float(unit.type.cost) * float(avoided) / 100.0
+	var score := profile.withdraw_weight * _unit_value(unit) * float(avoided) / 100.0
 	if score > plan.score:
 		plan.score = score
 		plan.command = MoveCommand.new(unit, reachable.path_to(best_cell))
@@ -463,8 +584,8 @@ func _advance_command(
 
 
 ## Higher is better: closeness to the goal less what standing there invites and
-## what running ahead of the column costs, plus whatever the commander's doctrine
-## thinks of the ground itself.
+## what running ahead of the column costs, plus what the ground itself is worth —
+## its cover, and whatever the commander's doctrine thinks of it.
 func _advance_value(
 	state: GameState,
 	unit: Unit,
@@ -476,9 +597,11 @@ func _advance_value(
 	doctrine: CommanderType
 ) -> float:
 	var value := -float(_position_rank(cell, goal, ring))
+	var incoming := 0
 	if threat != null:
-		var incoming := threat.incoming_damage(state, unit, cell)
+		incoming = threat.incoming_damage(state, unit, cell)
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
+	value += _cover_tiles(state, unit, cell, incoming)
 	value -= _cohesion_penalty(cell, goal, column)
 	if profile.doctrine_weight > 0.0:
 		var advice := doctrine.stand_value(state, unit, cell)

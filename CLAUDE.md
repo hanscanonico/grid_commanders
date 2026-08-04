@@ -400,10 +400,11 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
   cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
-  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR4 and AR6d are
-  shipped** — the harness seats any candidate and the ruler exists; nothing searches yet, so
-  `tools/` still runs no tournament. **`docs/ai_arena.md` is the committed record of what
-  "better" means** and is the document to read before any arena claim.
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR4 and all of AR6 are
+  shipped** — the harness seats any candidate, the ruler exists and the shelf is in the tree; nothing
+  searches yet, so `tools/` still runs no tournament and **every AR6 dial ships unmeasured**.
+  **`docs/ai_arena.md` is the committed record of what "better" means** and is the document to read
+  before any arena claim.
   D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
   `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
   the moment the sim can see the measurement the measured game stops being the shipped one (the
@@ -429,15 +430,58 @@ that must survive any change; the full rationale, milestones and risk registers 
   maintain it, and the one that forgot would answer wrong rather than fail) and
   `AttackRange.band` / `reaches` (a unit's firing ring resolved once per unit instead of once per
   candidate-cell × enemy pair). Both are pure reads that decide nothing, and **D2's byte bar is
-  what stands in for D1 here** — both reports byte-identical over 6,480 matches, plus
-  `tests/unit/test_ai_plan_cache.gd` asserting command-for-command identity with the cache on and
-  off. Read the `core/` changes as a waived departure, not a rule violation. AR6d is the other
-  shipped card and it departs from its own ticket in the same recorded way: the ticket asks for a
+  what stands in for D1 here** — both reports byte-identical over 6,480 matches, plus the cache
+  differential asserting command-for-command identity with the cache on and off, which is two files:
+  `tests/unit/test_ai_plan_cache.gd` (one fixture per invalidation rule) and
+  `tests/unit/test_ai_plan_cache_diff.gd` (whole seeded matches), both driving
+  `tests/helpers/plan_cache_diff.gd` and neither keeping a copy of it. **A milestone that adds a dial
+  to the planner adds a run** to the second, because a cache that is exact only while a dial is zero
+  is the silent divergence they exist to refuse. Read the `core/` changes as a waived departure, not
+  a rule violation. AR6a is the plan's only other `core/` touch and is not a second waiver: a
+  private static became `CombatResolver.cover_stars`, no field, hook or branch, so the planner asks
+  the damage formula what cover a cell gives rather than reading `defense_stars` itself.
+  AR6d departs from its own ticket in the same recorded way: the ticket asks for a
   boolean "can it still fire" key, which scores maximum standoff and one tile short of it
   identically and so would not have fixed the reported board — what ships is a **rank**
   (`_position_rank` against the enemy the unit is orienting on), under safety and over repair,
   reaching indirect units only. `withdraw_weight` keeps its shipped `0.0` throughout (the
   difficulty plan's D2 owns tier numbers), so AR6d is inert in every shipped tier.
+  AR6a–AR6c are the rest of that shelf, three dials on `AIProfile` — `cover_tiles`,
+  `condition_weight`, `join_weight` — on the AI Judgement D1 contract they inherit whole: **`0.0` on
+  every tier, and `0.0` skips the code** rather than evaluating to zero, so the merge bar is both
+  balance reports byte-identical and it held. They ship **unmeasured on purpose** — what would price
+  them is AR5, which is not built, and `focus_fire_bonus` is the precedent for a capability kept in
+  the tree at zero until something measures it.
+  AR6a: **the double-pricing answer is per cell, not per tier.** A cell is priced by the forecast
+  wherever a forecast has fire for it — `priced_fire` is that fire, the counter this shot invites,
+  the threat map's reading, or both — and the stars speak only where none does, because every one of
+  those numbers is `CombatResolver`'s resolved through the same terrain, so stars on top would price
+  one wood twice (Judgement R3 in a new place). It counts in **tiles** on both paths, the attack path
+  converting through `step_cost_penalty`, so one dial says the same thing to the advance and to the
+  shot where `threat_aversion` / `advance_threat_tiles` needed two. Nothing in `ai/` reads
+  `defense_stars`: what cover a unit gets on a cell is `CombatResolver.cover_stars`' answer, air rule
+  included.
+  AR6b: **`_unit_value` is the file's only unit valuation.** Five sites priced a unit at `type.cost`
+  — the shot's value, the counter's risk, the focus bonus, the threatened cell and the withdrawal —
+  and `condition_weight` interpolates every one of them toward `cost × hp/100`, that far end being
+  the board's own rate rather than a guess (`TurnRules._repair` sells the missing HP back at
+  `cost * heal / 100`). Deliberately **one** dial for a unit as a target and as an asset: it answers
+  what a unit is worth, while appetite for the trade already has `counter_weight`, `threat_aversion`
+  and `withdraw_weight`. Defined on 0–1 and clamped in `_unit_value` as well as by `@export_range`,
+  because past 1 it prices a wounded unit below nothing and inverts the sign of every reader. Move it
+  with `kill_bonus`, never alone — that bonus is the other correction to the same valuation. The
+  roster's own prices stay untouched: production and `UnitPricing` price a unit not yet owned, and
+  `_defend_bonus` / `_consider_captures` price ground.
+  AR6c: **a join is a scored candidate, in value, on the HP that survives the merge.**
+  `_consider_join` sits beside `_consider_dive` and ahead of `_consider_withdraw` and every
+  comparison is strict, so a merge that merely ties with a shot loses to it (Judgement D4); what is
+  legal is asked of `JoinCommand.validate` rather than re-listed. The quantity is the carried HP
+  because apply caps at 100 and refunds nothing, and the overflow is charged **separately from the
+  dial**, at face value — destroyed HP is a funds fact the file can already price, while what
+  concentration is worth is the judgement, and without the split a high weight pours fresh units into
+  wounded ones. A merge is a positional trade rather than a free win (two 4-HP infantry deal what one
+  8-HP does and can chip two properties) and it spends two units' turns, which is why it is weighted
+  rather than ruled.
   Known and deliberate: the AR1 cache is inert with fog on, so the live game gets no speedup and
   only the offline tools do.
   AR2 is the pool that plays those matches on more than one core, and its shape is three rules.
