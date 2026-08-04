@@ -1,95 +1,14 @@
 extends GutTest
-## AR1's merge bar: the planner that keeps its plans between commands answers
-## exactly what the planner that scores every unit from scratch answers.
+## AR1's merge bar, one rule at a time: each fixture below is a board where one
+## invalidation rule is the only thing standing between the planner that keeps
+## its plans and the planner that scores every unit afresh.
 ##
-## A missed invalidation is not a crash. It is a *different AI* that passes every
-## other test in this suite and quietly re-prices the difficulty ladder, the
-## Atlas and every commander number in one commit — the AI Arena plan's R3. So
-## this file stays in the tree afterwards, and a milestone that adds a dial to
-## the planner adds a run to it.
-##
-## Two instruments. The differential suite plays whole seeded matches through the
-## one match engine with both planners and compares the command logs — the broad
-## net, over three boards and the profiles that reach the paths no shipped tier
-## does. Then one fixture per invalidation rule, each a board where that rule is
-## the only thing standing between the two answers.
+## The other instrument is its sibling `test_ai_plan_cache_diff.gd`, which plays
+## whole seeded matches and is where a milestone that adds a dial adds its run.
+## Both drive the same machinery from `tests/helpers/plan_cache_diff.gd`; what
+## lives here is the claims and the boards that make them visible.
 
-
-## The planner as it stood before the cache: every ready unit scored afresh on
-## every call. A new AIUnitActionPlanner starts with an empty cache, so building
-## one per command is exactly that — and everything else the controller carries,
-## the planning context and its threat map above all, stays where it was.
-class UncachedController:
-	extends AIController
-
-	func plan_next_command(state: GameState) -> Command:
-		_unit_actions = AIUnitActionPlanner.new(profile)
-		return super(state)
-
-
-## Mirrored armies with a base each and room to fight, from test_balance_engine:
-## long enough to build, trade and capture, small enough to play many times.
-const SKIRMISH := """
-[terrain]
-QB......
-........
-..F..F..
-........
-......BQ
-[owners]
-1 0 0
-1 1 0
-2 7 4
-2 6 4
-[units]
-1 i 1 1
-1 t 2 1
-2 i 6 3
-2 t 5 3
-"""
-
-## Property-dense, so capture goals, claims and ground changing hands are what
-## the match is mostly about.
-const PROPERTY_RACE := """
-[terrain]
-QCCCCCCQ
-.C....C.
-..C..C..
-.C....C.
-[owners]
-1 0 0
-2 7 0
-[units]
-1 i 0 1
-1 i 1 2
-1 m 0 3
-2 i 7 1
-2 i 6 2
-2 m 7 3
-"""
-
-## Two shores, a port each and open water between them: aircraft, hulls and a
-## submarine's dive decision, which the two land boards never reach.
-const NARROW_SEA := """
-[terrain]
-QP.SS.PQ
-.B.SS.B.
-..SSSS..
-[owners]
-1 0 0
-1 1 0
-1 1 1
-2 7 0
-2 6 0
-2 6 1
-[units]
-1 i 1 2
-1 s 3 0
-1 h 0 1
-2 i 6 2
-2 s 4 0
-2 h 7 1
-"""
+const PlanCacheDiff := preload("res://tests/helpers/plan_cache_diff.gd")
 
 ## A tank parked on the one neutral city with an infantry beside it, and an enemy
 ## too far off for either to reach. The tank advances first and steps off the
@@ -189,117 +108,17 @@ const LONG_COLUMN := """
 2 i 45 0
 """
 
-## The one shipped board the suite plays, and how long for: far enough in that
-## both sides have built an army and closed on each other.
-const SHIPPED_BOARD := "res://maps/ironworks.txt"
-const SHIPPED_SEEDS: Array[int] = [1000, 7]
-const SHIPPED_DAYS := 18
-
-## The seeds every differential run plays. Three is enough for the boards to
-## diverge in different places; the suite is a gate, not a measurement.
-const SEEDS: Array[int] = [7, 4242, 90210]
-
-## Short enough to keep the suite quick, long enough that both sides build,
-## capture, trade and fire a power.
-const DAYS := 12
-
+var diff: PlanCacheDiff
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-# --- the differential suite ----------------------------------------------------
-
-
-func test_the_shipped_profile_plays_every_board_command_for_command() -> void:
-	for board: Array in _boards():
-		_assert_agrees_over_a_match(board[1], AIProfile.load_default(), board[0])
-
-
-## The claim path no shipped tier reaches: `capture_claim_depth` is 0 everywhere,
-## and it is the one dial that makes a capturer's goal a function of where every
-## *other* capturer stands. AR5 turns it on, and a cache that is exact only while
-## a dial is zero is exactly the silent divergence this file exists to refuse.
-func test_a_live_capture_claim_plays_command_for_command() -> void:
-	for depth in [1, 2]:
-		var profile := AIProfile.new()
-		profile.capture_claim_depth = depth
-		for board: Array in _boards():
-			_assert_agrees_over_a_match(board[1], profile, "%s at depth %d" % [board[0], depth])
-
-
-## Every profile that weighs a threat map: the two shipped tiers that carry one,
-## and the withdrawal dial no tier carries. Their plans are read off a map built
-## once per turn against the board at the moment of first need, so these are the
-## runs that prove the cache never moved that moment. The withdrawal profile is
-## here for a second reason as well — AR6d gave its refuge a key read off the
-## unit's *advance goal*, which is a fact about the whole board rather than about
-## the ground around the unit, and a threat map is the only thing holding it.
-func test_threat_weighing_profiles_play_command_for_command() -> void:
-	var withdrawing := AIProfile.new()
-	withdrawing.withdraw_weight = 0.5
-	var profiles := {
-		&"easy": load("res://data/ai/easy.tres"),
-		&"hard": load("res://data/ai/hard.tres"),
-		&"withdrawing": withdrawing,
-	}
-	for tier: StringName in profiles:
-		var profile: AIProfile = profiles[tier]
-		assert_not_null(profile, "the %s profile must load" % tier)
-		for board: Array in _boards():
-			_assert_agrees_over_a_match(board[1], profile, "%s on %s" % [board[0], tier])
-
-
-## A shipped board, at the width the Balance Lab plays on. The three fixtures
-## above are small enough to keep the suite quick and they all agreed while the
-## diff was still dropping half its invalidations on the floor: an army only
-## marches into everybody else's envelope when there is a board wide enough to
-## march across, and armies only reach that size some days in.
-func test_a_shipped_board_plays_command_for_command() -> void:
-	var map := MapData.load_from_file(SHIPPED_BOARD, terrain_db)
-	assert_not_null(map, "the shipped board must load")
-	_assert_agrees_over(map, AIProfile.load_default(), "ironworks", SHIPPED_SEEDS, SHIPPED_DAYS)
-
-
-## The withdrawal dial, which no shipped tier carries either. AR6d gave the
-## refuge a key read off the unit's *advance goal* — a fact about the whole
-## board rather than the ground around the unit — so the plan a withdrawal is
-## cached as now depends on something no envelope bounds. Every profile that
-## lives this dial also weighs a threat map, which is what makes the cache keep
-## nothing while it is on; this run is what holds that together.
-func test_a_live_withdrawal_plays_command_for_command() -> void:
-	var profile := AIProfile.new()
-	profile.withdraw_weight = 0.5
-	for board: Array in _boards():
-		_assert_agrees_over_a_match(board[1], profile, "%s withdrawing" % board[0])
-
-
-## Focus fire prices a shot by what every other ready friendly could still add to
-## the same target, which no envelope around one unit bounds.
-func test_live_focus_fire_plays_command_for_command() -> void:
-	var profile := AIProfile.new()
-	profile.focus_fire_bonus = 1.0
-	_assert_agrees_over_a_match(SKIRMISH, profile, "focus fire")
-
-
-## Commanders seated, so the meter moves under the planner all match: charge is
-## banked on every exchange, powers fire mid-turn, and Sable Wren prices ground
-## off the meter itself.
-func test_commanders_play_command_for_command() -> void:
-	var db := CommanderDB.load_default()
-	for pairing: Array in [[&"sable_wren", &"gideon_holt"], [&"iris_colt", &"mara_voss"]]:
-		var seated := {1: db.by_id(pairing[0]), 2: db.by_id(pairing[1])}
-		assert_not_null(seated[1], "commander %s must load" % pairing[0])
-		assert_not_null(seated[2], "commander %s must load" % pairing[1])
-		_assert_agrees_over_a_match(
-			SKIRMISH, AIProfile.load_default(), "%s vs %s" % pairing, seated
-		)
+	diff = PlanCacheDiff.new()
+	terrain_db = diff.terrain_db
+	unit_db = diff.unit_db
+	chart = diff.chart
 
 
 # --- one fixture per invalidation rule -----------------------------------------
@@ -356,7 +175,8 @@ func test_a_friendly_marching_out_of_sight_moves_the_column() -> void:
 
 
 ## The cache is not vacuously empty. A milestone that only ever cleared would
-## pass every differential above and buy nothing, so this asks the cache itself:
+## pass every run in the sibling file and buy nothing, so this asks the cache
+## itself:
 ## a plan survives a command at the other end of the board, and does not survive
 ## one inside its envelope.
 func test_a_plan_survives_a_distant_command_and_not_a_near_one() -> void:
@@ -463,7 +283,7 @@ func test_a_fogged_board_keeps_nothing_and_plays_command_for_command() -> void:
 	var cache := _holding(state, context, probe, AIProfile.load_default())
 	_resync(cache, context, state)
 	assert_null(cache.plan_for(probe), "blind, a unit's own reach is a fact about its whole side")
-	for board: Array in _boards():
+	for board: Array in PlanCacheDiff.boards():
 		_agreeing_commands(board[1], AIProfile.load_default(), 8, "fogged %s" % board[0], _fog)
 
 
@@ -500,9 +320,21 @@ func test_a_threat_weighing_profile_keeps_nothing_until_its_map_exists() -> void
 # --- helpers -------------------------------------------------------------------
 
 
-## The three boards every differential run plays, as [name, board] pairs.
-static func _boards() -> Array[Array]:
-	return [["skirmish", SKIRMISH], ["property race", PROPERTY_RACE], ["narrow sea", NARROW_SEA]]
+## The commands both planners issued on `board`. The assertion is here rather
+## than in the harness, and it carries the fixture's own name, so a board that
+## diverges says which one and on which command.
+func _agreeing_commands(
+	board: String, profile: AIProfile, count: int, hint: String, prepare := Callable()
+) -> Array[String]:
+	var played := diff.steps(board, profile, count, prepare)
+	assert_eq(played.divergence, "", hint)
+	return played.commands
+
+
+func _state(board: String, prepare := Callable()) -> GameState:
+	var built := diff.state(board, prepare)
+	assert_not_null(built, "the fixture board must build a match")
+	return built
 
 
 ## A cache holding one plan for `unit`, ready for the board to move under it.
@@ -535,128 +367,3 @@ func _wound_the_tank(state: GameState) -> void:
 
 func _fog(state: GameState) -> void:
 	state.fog_enabled = true
-
-
-func _controller(cached: bool, profile: AIProfile) -> AIController:
-	if cached:
-		return AIController.new(unit_db, profile)
-	return UncachedController.new(unit_db, profile)
-
-
-## One seeded match, played through the one match engine, as the log of every
-## command it issued.
-func _play(
-	map: MapData,
-	seed_val: int,
-	profile: AIProfile,
-	cached: bool,
-	commanders: Dictionary,
-	days: int = DAYS
-) -> Array[Dictionary]:
-	var setup := BalanceMatchEngine.Setup.new()
-	setup.map = map
-	setup.unit_db = unit_db
-	setup.chart = chart
-	setup.seed_val = seed_val
-	setup.days_cap = days
-	setup.commanders = commanders
-	setup.planners = {1: _controller(cached, profile), 2: _controller(cached, profile)}
-	var recorder := BalanceMatchRecorder.new()
-	BalanceMatchEngine.play(setup, recorder)
-	return recorder.command_log()
-
-
-func _assert_agrees_over_a_match(
-	board: String, profile: AIProfile, hint: String, commanders: Dictionary = {}
-) -> void:
-	_assert_agrees_over(MapData.parse(board, terrain_db), profile, hint, SEEDS, DAYS, commanders)
-
-
-func _assert_agrees_over(
-	map: MapData,
-	profile: AIProfile,
-	hint: String,
-	seeds: Array[int],
-	days: int,
-	commanders: Dictionary = {}
-) -> void:
-	for seed_val in seeds:
-		var uncached := _play(map, seed_val, profile, false, commanders, days)
-		var cached := _play(map, seed_val, profile, true, commanders, days)
-		assert_gt(
-			uncached.size(),
-			10,
-			"%s seed %d: the fixture should play a real match" % [hint, seed_val]
-		)
-		assert_eq(
-			_first_divergence(cached, uncached),
-			"",
-			"%s, seed %d: the cache must not change a command" % [hint, seed_val]
-		)
-
-
-## The first command the two logs disagree on, or "" when they are identical.
-## Reported rather than asserted whole, because a match is hundreds of commands
-## and only the first divergence says anything about the rule that went missing.
-static func _first_divergence(cached: Array, uncached: Array) -> String:
-	for i in mini(cached.size(), uncached.size()):
-		if cached[i] != uncached[i]:
-			return "command %d: cached %s, uncached %s" % [i, cached[i], uncached[i]]
-	if cached.size() != uncached.size():
-		return "command counts differ: cached %d, uncached %d" % [cached.size(), uncached.size()]
-	return ""
-
-
-## Plays `steps` commands of one turn twice on two copies of one board — once
-## through a controller that lives across the turn, once through a fresh one for
-## every command — and returns what they both did. Asserts on the way, so a
-## fixture that diverges names the command it diverged on.
-func _agreeing_commands(
-	board: String, profile: AIProfile, steps: int, hint: String, prepare := Callable()
-) -> Array[String]:
-	var kept := _state(board, prepare)
-	var fresh := _state(board, prepare)
-	var controller := AIController.new(unit_db, profile)
-	var played: Array[String] = []
-	for step in steps:
-		var with_cache := controller.plan_next_command(kept)
-		var without := UncachedController.new(unit_db, profile).plan_next_command(fresh)
-		var described := _describe(with_cache)
-		assert_eq(described, _describe(without), "%s: command %d" % [hint, step])
-		if described != _describe(without):
-			return played
-		played.append(described)
-		if with_cache is EndTurnCommand:
-			return played
-		with_cache.apply(kept)
-		without.apply(fresh)
-	return played
-
-
-func _state(board: String, prepare: Callable) -> GameState:
-	var state := GameState.create(MapData.parse(board, terrain_db), unit_db, chart)
-	assert_not_null(state)
-	state.rng.seed = 1234
-	if prepare.is_valid():
-		prepare.call(state)
-	return state
-
-
-## A command as the two planners have to agree on it: what it is, who does it,
-## and every cell it names.
-static func _describe(command: Command) -> String:
-	if command == null:
-		return "<none>"
-	var parts: Array[String] = [str(command.get_script().get_global_name())]
-	for key: String in ["unit", "unit_type", "path", "target_cell", "cell", "drop_cell", "diving"]:
-		var value: Variant = command.get(key)
-		if value == null:
-			continue
-		if value is Unit:
-			var mover: Unit = value
-			parts.append("%s@%s" % [mover.type.id, mover.cell])
-		elif value is UnitType:
-			parts.append(str((value as UnitType).id))
-		else:
-			parts.append(str(value))
-	return " ".join(parts)
