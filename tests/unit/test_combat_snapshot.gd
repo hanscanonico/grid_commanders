@@ -76,6 +76,50 @@ func test_resolve_snapshots_an_unanswered_volley() -> void:
 	assert_eq(attacker.displayed_hp(), 5, "nothing shot back, so the attacker is untouched")
 
 
+## The other end of the same record. The cut-in ticks HP *down* to it, so both
+## ends have to come off the result: reading the finish off the live unit worked
+## only for as long as every caller handed over a result the board had already
+## applied.
+func test_resolve_snapshots_the_hp_both_sides_came_out_with() -> void:
+	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 m 1 0")
+	state.rng.seed = 11
+	var attacker := state.units[0]
+	var defender := state.units[1]
+	var result := CombatResolver.resolve(state, attacker, defender)
+	assert_true(result.countered, "this pairing shoots back")
+	assert_eq(result.defender_hp_after, defender.displayed_hp())
+	assert_eq(result.attacker_hp_after, attacker.displayed_hp())
+	assert_lt(result.defender_hp_after, result.defender_hp_before)
+	assert_lt(result.attacker_hp_after, result.attacker_hp_before)
+
+
+## A killed unit leaves the state, and an unanswered volley leaves the attacker
+## untouched: the two ends of the range the after-snapshot has to cover.
+func test_resolve_snapshots_a_kill_and_an_unanswered_volley() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	state.rng.seed = 7
+	var defender := state.units[1]
+	defender.hp = 10  # any hit kills
+	var result := CombatResolver.resolve(state, state.units[0], defender)
+	assert_true(result.defender_died)
+	assert_eq(result.defender_hp_after, 0)
+	assert_eq(result.attacker_hp_after, result.attacker_hp_before, "nothing shot back")
+
+
+## Whether the shot was lobbed is the rules' answer, recorded at the moment they
+## gave it. The cut-in arcs an indirect round higher, and asking AttackRange again
+## at replay time is the second opinion the plan's D1 forbids.
+func test_resolve_snapshots_whether_the_opening_shot_was_lobbed() -> void:
+	var flat := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	flat.rng.seed = 3
+	assert_false(CombatResolver.resolve(flat, flat.units[0], flat.units[1]).attacker_indirect)
+	var lobbed := _state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	lobbed.rng.seed = 3
+	var result := CombatResolver.resolve(lobbed, lobbed.units[0], lobbed.units[1])
+	assert_true(result.attacker_indirect)
+	assert_false(result.countered, "and an indirect shot is never answered, so never lobbed back")
+
+
 ## The weapon pair is replay data just like HP. Tank chooses its MG against a
 ## Mech, while the surviving stocked Mech independently chooses its bazooka.
 func test_resolve_snapshots_each_sides_independent_weapon_slot() -> void:

@@ -70,22 +70,30 @@ class CombatResult:
 	var counter_damage := 0
 	var defender_died := false
 	var attacker_died := false
-	## Displayed HP (1-10) each side went into the exchange with, snapshotted by
-	## `resolve` before a point of it is spent.
+	## Displayed HP (1-10) each side went into the exchange with and came out of it
+	## holding, snapshotted by `resolve` as it spends each point.
 	##
 	## These snapshots exist for the presentation layer. By the time the battle
-	## cut-in is handed a result the command has already applied, so both units
-	## hold their *post*-combat HP and the animation has nothing to count down
-	## from. Recorded here rather than re-derived there, because the cut-in must
-	## replay the exchange and never recompute it — a second opinion on combat is
-	## exactly the bug class this repo already paid for once with movement.
-	## Nothing in core/ or ai/ reads these.
+	## cut-in is handed a result the command has already applied, so the units
+	## themselves can only say where the exchange ended and never where it began.
+	## Both ends are recorded here rather than half-read off the board there,
+	## because the cut-in must replay the exchange and never recompute it — a
+	## second opinion on combat is exactly the bug class this repo already paid for
+	## once with movement. Nothing in core/ or ai/ reads these.
 	var attacker_hp_before := 0
 	var defender_hp_before := 0
+	var attacker_hp_after := 0
+	var defender_hp_after := 0
 	## Weapon slots selected by the rules, snapshotted for that cut-in to replay.
 	## An empty counter slot means the defender never fired.
 	var attacker_weapon_slot: StringName
 	var counter_weapon_slot: StringName
+	## Whether the opening shot was lobbed, which is how the cut-in tells an
+	## artillery apart from the tank it shares a signature with. AttackRange is
+	## still the one authority on who is indirect; this is its answer, taken at the
+	## moment the shot was resolved. The counter needs none: only a max_range of 1
+	## ever answers, so a returning volley is never a lob.
+	var attacker_indirect := false
 
 
 ## Luck-free prediction for the damage preview. `attacker_cell` is the planned
@@ -226,7 +234,12 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	# from the exchange it describes.
 	result.attacker_hp_before = fight.attacker_hp
 	result.defender_hp_before = fight.defender_hp
+	# The exchange has not spent anything yet, so each side comes out where it went
+	# in until a shot below says otherwise.
+	result.attacker_hp_after = fight.attacker_hp
+	result.defender_hp_after = fight.defender_hp
 	result.attacker_weapon_slot = selected.slot
+	result.attacker_indirect = AttackRange.is_indirect(attacker)
 	var base := _damage_pct(state, fight, selected.base_damage)
 	if selected.consumes_primary_ammo:
 		attacker.ammo = maxi(0, attacker.ammo - 1)
@@ -235,6 +248,7 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	# took off, not for the overkill the roll happened to produce.
 	bank_losses(state, defender, mini(result.attack_damage, defender.hp), attacker.team)
 	defender.hp = maxi(0, defender.hp - result.attack_damage)
+	result.defender_hp_after = defender.displayed_hp()
 	if defender.hp == 0:
 		result.defender_died = true
 		_bank_cargo_losses(state, defender, attacker.team)
@@ -260,6 +274,7 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	result.counter_damage = counter_base + _luck(state, counter)
 	bank_losses(state, attacker, mini(result.counter_damage, attacker.hp), defender.team)
 	attacker.hp = maxi(0, attacker.hp - result.counter_damage)
+	result.attacker_hp_after = attacker.displayed_hp()
 	if attacker.hp == 0:
 		result.attacker_died = true
 		_bank_cargo_losses(state, attacker, defender.team)
