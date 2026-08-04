@@ -48,7 +48,21 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## build, so one list covers bases and airports without an entry per facility.
 ##
 ## Transports are deliberately absent: the planner cannot plan a load-move-unload
-## across turns, and a fleet of empty carriers is worse than none.
+## across turns, and a fleet of empty carriers is worse than none. The APC is not
+## an exception to that — the planner still cannot ferry — so the one it wants as
+## a *supplier* is asked for by supply_unit_target instead, above this list, the
+## way the air answer is.
+##
+## The recon is absent on purpose, and the absence is the mechanism: a doctrine
+## that wants scouts pulls one onto this list's tail with a negative build_bias
+## (commander-doctrine-ai D1), which is the whole of how Orin Flux and Cassian
+## Rook field one and nobody else does. Listing it would hand every commander the
+## buy and take the two of them their signature.
+##
+## New entries join the tail rather than sorting into the middle. A doctrine's
+## build_bias counts in places on this list, so every one of them is calibrated
+## against where the units already sit; inserting above an entry silently weakens
+## every bias aimed at it.
 @export var build_priority: Array[StringName] = [
 	&"md_tank",
 	&"bomber",
@@ -61,6 +75,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 	&"missiles",
 	&"artillery",
 	&"mech",
+	&"rockets",
 ]
 ## The floor under the capture roster: infantry are bought until the team has at
 ## least this many capture-capable units, however little there is left to take.
@@ -73,6 +88,16 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## How many units that can shoot at aircraft the team wants while the enemy has
 ## any. Counted from the damage chart, not from this list.
 @export var air_answer_target: int = 2
+## How many supply units the team wants. Asked ahead of build_priority for the
+## same reason the air answer is: nothing on that list refills anything, so an
+## army that never buys one runs its artillery and its aircraft dry with no
+## recourse. Counted from the roster's own can_resupply flag, not from a list of
+## ids, and only wanted at all while supply_weight is on — a truck the planner
+## would never drive is the empty carrier build_priority keeps out.
+##
+## One, on every tier: the planner has no route to a second. It cannot ferry, so
+## a spare APC is a unit that follows the army doing nothing.
+@export var supply_unit_target: int = 1
 ## How many places down the build priority each copy already fielded pushes a
 ## unit. Without it the list has exactly one winner and the AI buys that unit and
 ## nothing else — the strongest thing a base makes, forever, while the port and

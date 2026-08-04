@@ -19,6 +19,16 @@ const WOUNDED_PAIR := "[terrain]\n..........\n[units]\n1 t 0 0\n1 t 2 0\n2 t 9 0
 ## The same board with an APC beside a tank that has fired itself dry.
 const DRY_TANK := "[terrain]\n..........\n[units]\n1 p 0 0\n1 t 1 0\n2 t 9 0"
 
+## A base, a capture roster already at its floor, and an armoured column big
+## enough that duplicate_priority_cost has pushed the list's one entry past its
+## own tail. What production buys here says what it wants.
+const FUNDED_BASE := (
+	"[terrain]\nB....\n.....\n[owners]\n1 0 0"
+	+ "\n[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n1 t 4 0\n1 t 0 1\n1 t 1 1\n1 t 2 1\n1 t 3 1"
+)
+## The same board with the truck already bought.
+const FUNDED_BASE_WITH_APC := FUNDED_BASE + "\n1 p 4 1"
+
 const LIVE := 0.25
 
 var terrain_db: TerrainDB
@@ -189,3 +199,47 @@ func test_a_part_spent_land_tank_is_not_worth_supplying() -> void:
 	state.units_of(1)[1].fuel = 4  # ammo untouched: fuel alone is on the ballot
 	var command := _plan(state, profile)
 	assert_false(command is SupplyCommand, "a land unit low on fuel is parked, not stranded")
+
+
+# --- buying the truck ---------------------------------------------------------
+
+
+## What the whole supply dial rests on: the APC is the roster's one can_resupply
+## unit and build_priority is deliberately transport-free, so without a want of
+## its own the army can never buy the thing that refills it.
+##
+## The want sits one place under the list's tail, so it is what an army buys once
+## duplicates have pushed the listed units past it — not an opening move. These
+## stub the list down to one entry so that arithmetic is the test's own and not
+## hostage to a later retune of the shipped order.
+func _buys_with_five_tanks(map_text: String, supply_weight: float) -> StringName:
+	var profile := _profile()
+	profile.supply_weight = supply_weight
+	profile.build_priority = [&"tank"] as Array[StringName]
+	var state := _state(map_text)
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 7000  # a tank, an APC or a mech; nothing costlier
+	var command := _plan(state, profile)
+	assert_true(command is BuildCommand, "expected a build, got %s" % _describe(command))
+	if not (command is BuildCommand):
+		return &""
+	assert_eq(command.validate(state), "")
+	return (command as BuildCommand).unit_type.id
+
+
+func test_an_army_with_no_supply_unit_eventually_buys_one() -> void:
+	assert_eq(_buys_with_five_tanks(FUNDED_BASE, LIVE), &"apc")
+
+
+## And exactly one: a second truck has nothing to do, because the planner cannot
+## ferry. The want clears the moment one is on the board, which is why it is a
+## want and not a place on the list — a place would buy another eventually.
+func test_an_army_that_already_has_a_truck_buys_something_else() -> void:
+	assert_ne(_buys_with_five_tanks(FUNDED_BASE_WITH_APC, LIVE), &"apc")
+
+
+## A truck the planner would never drive is the empty carrier the build list
+## keeps off the board, so the want is gated on the dial that drives it.
+func test_supply_at_zero_never_buys_a_truck() -> void:
+	assert_ne(_buys_with_five_tanks(FUNDED_BASE, 0.0), &"apc")

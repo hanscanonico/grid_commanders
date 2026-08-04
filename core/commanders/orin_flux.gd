@@ -16,7 +16,11 @@ extends CommanderType
 ## Build-list places his scouts are pulled up — the smallest bias on the
 ## roster, honestly: the AI's targeting is omniscient-except-hidden, so extra
 ## sight buys its fog-limited *pathing* something and its aim nothing.
-@export var scout_build_bias: int = -2
+##
+## Counted from the end of build_priority, because a recon is on no tier's list.
+## So it is the list's *length* this is calibrated against, and it moved by one
+## when rockets joined: -2 became a recon he banks past rather than buys.
+@export var scout_build_bias: int = -3
 
 
 func vision_bonus(_state: GameState, unit: Unit) -> int:

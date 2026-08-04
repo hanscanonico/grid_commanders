@@ -35,7 +35,9 @@
 ; The build list preserves Difficult's land-priority prefix, then appends
 ; Normal's non-transport air and sea combat units in their existing order.
 ; Airports and ports therefore stay live before contact, with no land unit added
-; to the prefix and no transport the AI cannot use.
+; to the prefix and no transport the AI cannot use. Rockets join at the very end,
+; below everything, on every tier — see easy.tres for why the tail is where a new
+; entry goes, and build_priority's own comment for why the recon is on no list.
 ;
 ; supply_weight is the tier's housekeeping, and above Normal's on the same
 ; reasoning as kill_bonus: at 0.35 a full rack outbids a plain city, so the
@@ -51,10 +53,11 @@ step_cost_penalty = 4.0
 retreat_hp = 45
 min_useful_score = 40.0
 advance_score = 1.0
-build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter"])
+build_priority = Array[StringName]([&"md_tank", &"tank", &"artillery", &"mech", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"b_copter", &"rockets"])
 capture_unit_target = 3
 air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
 air_answer_target = 2
+supply_unit_target = 1
 duplicate_priority_cost = 3
 save_up_turns = 2
 dive_score = 200.0
