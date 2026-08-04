@@ -18,6 +18,8 @@ extends Resource
 const DEFAULT_PATH := "res://data/ai/default.tres"
 
 ## Multiplier on an attack's value when the shot would finish the target off.
+## The other correction to the valuation condition_weight prices, so the two
+## overlap and are searched together — see that field.
 @export var kill_bonus: float = 1.6
 ## How heavily the expected counter-attack discounts an attack's value. Below
 ## 1.0 because the AI is willing to trade.
@@ -272,7 +274,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## or it turns around on the doorstep.
 @export var capture_goal_value_tiles: float = 0.0
 
-# --- Positioning capabilities -------------------------------------------------
+# --- The arena's shelf --------------------------------------------------------
 #
 # The AI Arena plan's shelf (AR6): the things the planner could not express at
 # any setting of the dials above. Same contract as the three blocks before it —
@@ -297,6 +299,29 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## much above 1.0 the cover outweighs four tiles of advance, which parks an army
 ## on the high ground and leaves it there.
 @export var cover_tiles: float = 0.0
+## How much of a unit's price is its condition: 0 values every unit at its
+## roster cost however little of it is left, 1 values it at cost x hp/100, and
+## the values between interpolate. 0 skips it entirely.
+##
+## Denominated as a FRACTION of the price rather than in the price's own units,
+## because it is the shape of the valuation rather than a number added to it —
+## which is what lets one dial answer for a unit as a target and as an asset at
+## once. Whose unit it is is priced elsewhere and already: counter_weight
+## discounts our own losses against their damage, and threat_aversion and
+## withdraw_weight price our own skin.
+##
+## Deliberately an interpolation and not a switch. What 1.0 prices is what is
+## left of the unit at the board's own rate — TurnRules._repair sells the missing
+## HP back at `cost * heal / 100`, so the surviving half and the repair bill add
+## up to the roster price exactly — and that is a floor rather than the whole
+## answer: the unit is also on the board *now*, holding the tile it holds, and
+## repair costs turns as well as money.
+##
+## kill_bonus is the other correction to this same valuation: it pays extra for
+## finishing a target precisely because a nearly-dead one was priced like a fresh
+## one. Move the two together and never one alone (arena plan R5) — a search that
+## fits kill_bonus first will fit it to a valuation this dial then changes.
+@export var condition_weight: float = 0.0
 
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps

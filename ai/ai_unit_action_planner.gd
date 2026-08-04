@@ -146,23 +146,46 @@ func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -
 	if not forecast.can_attack:
 		return -INF
 	var damage := mini(forecast.attack_damage, enemy.hp)
-	var value := float(enemy.type.cost) * damage / 100.0
+	var value := _unit_value(enemy) * damage / 100.0
 	if forecast.attack_damage >= enemy.hp:
 		value *= profile.kill_bonus
 	var risk := 0.0
 	if forecast.counter_damage > 0:
 		var counter := mini(forecast.counter_damage, unit.hp)
-		risk = float(unit.type.cost) * counter / 100.0 * profile.counter_weight
+		risk = _unit_value(unit) * counter / 100.0 * profile.counter_weight
 		if forecast.counter_damage >= unit.hp:
 			risk *= 2.0
 	return value - risk
+
+
+## What `unit` is worth as a thing to have, in funds. The one valuation in this
+## file: what a shot is worth taking, what the counter costs, what a threatened
+## cell risks and what stepping out of one saves are each this number times the
+## HP that changes hands.
+##
+## `condition_weight` interpolates it toward what is left of the unit, and that
+## end of the interpolation is the board's own rate rather than a guess:
+## TurnRules._repair sells the missing HP back at `cost * heal / 100`, so a 30-HP
+## md tank is three tenths of an md tank and the other seven tenths are a bill.
+## What the interpolation buys is the part no funds figure holds — the unit is on
+## the board *now*, holding the tile it holds, and repair costs turns as well as
+## money.
+##
+## Whose unit it is is deliberately not asked. A wounded unit is worth less to
+## kill and less to lose by the same arithmetic, and the appetite for that trade
+## already has its own dials in counter_weight, threat_aversion and
+## withdraw_weight.
+func _unit_value(unit: Unit) -> float:
+	if profile.condition_weight <= 0.0:
+		return float(unit.type.cost)
+	return float(unit.type.cost) * lerpf(1.0, float(unit.hp) / 100.0, profile.condition_weight)
 
 
 ## What firing from a cell costs `unit` in expected incoming damage next turn, in
 ## the same cost-scaled currency an attack's value uses. `incoming` is the threat
 ## map's reading of that cell, and zero wherever no dial built a map.
 func _threat_penalty(unit: Unit, incoming: int) -> float:
-	return profile.threat_aversion * float(unit.type.cost) * incoming / 100.0
+	return profile.threat_aversion * _unit_value(unit) * incoming / 100.0
 
 
 ## What the ground under `cell` is worth to `unit` defensively, in the tiles of
@@ -209,7 +232,7 @@ func _focus_bonus(
 	var follow_up := mini(remaining, _follow_up_damage(context, unit, enemy))
 	if follow_up <= 0:
 		return 0.0
-	var value := float(enemy.type.cost) * mini(forecast.attack_damage, enemy.hp) / 100.0
+	var value := _unit_value(enemy) * mini(forecast.attack_damage, enemy.hp) / 100.0
 	return profile.focus_fire_bonus * value * float(follow_up) / float(remaining)
 
 
@@ -342,7 +365,7 @@ func _consider_withdraw(
 	var avoided := staying - best_incoming
 	if avoided <= 0:
 		return  # nowhere we can reach is safer than standing still
-	var score := profile.withdraw_weight * float(unit.type.cost) * float(avoided) / 100.0
+	var score := profile.withdraw_weight * _unit_value(unit) * float(avoided) / 100.0
 	if score > plan.score:
 		plan.score = score
 		plan.command = MoveCommand.new(unit, reachable.path_to(best_cell))
