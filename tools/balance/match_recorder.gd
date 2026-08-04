@@ -425,7 +425,7 @@ func _close_turn(state: GameState) -> void:
 		"merged": _turn.merged,
 		"forfeited": _turn.forfeited,
 		"unit_count": state.units_of(team).size(),
-		"army_value": _army_value(state, team),
+		"army_value": BalanceHarness.army_value(state, team),
 		"properties": state.properties_of(team).size(),
 		"captures": _turn.captures,
 		"power_charge": _charge_pct(state, team),
@@ -435,15 +435,6 @@ func _close_turn(state: GameState) -> void:
 	}
 	_rows.append(row)
 	_turn = null
-
-
-## Σ cost x HP fraction — the honest number, since a 2 HP tank is not a tank.
-## Integer throughout, like every other value in the sim, so a rerun matches.
-func _army_value(state: GameState, team: int) -> int:
-	var total := 0
-	for unit in state.units_of(team):
-		total += unit.type.cost * unit.hp / 100
-	return total
 
 
 func _charge_pct(state: GameState, team: int) -> int:
@@ -488,6 +479,11 @@ func _attribute(removed: Array[Unit], command: Command) -> void:
 		if command is CaptureCommand:
 			_turn.forfeited += 1  # swept off with its HQ; nothing shot it
 			continue
+		# A kill is credited at what the unit cost to field, not at what was left
+		# of it: destroying a 2 HP tank denies the enemy the whole tank. So
+		# killed_value and lost_value are one measure and `army_value` — the same
+		# roster prorated by HP — is another. The exchange ratio is kills over
+		# losses and never a reading against a side's standing army value.
 		if unit.team == _turn.team:
 			_tally(_turn.lost, unit.type.id)
 			_turn.lost_value += unit.type.cost

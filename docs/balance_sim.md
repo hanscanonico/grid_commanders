@@ -69,7 +69,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 | `--map=` | Any shipped board, or a balance fixture (`clash`, `ridge`, `combined`, `holdings`, `channel`) |
 | `--red=` / `--blue=` | Side specs; default `none:normal` |
 | `--seeds=` | Paired seed count, default 4. Each seed plays **both seats** |
-| `--seed=` | One specific seed instead — replays a single row |
+| `--seed=` | One specific seed instead. It pins the seed and nothing else, so both seats are still played; `make balance-watch` on the same flags reproduces the `seat 0` row of the two, the one seating `--red` as red |
 | `--seed-offset=` | Start `--seeds=` counting N seeds into the range — how a shard of a parallel run asks for its slice of it |
 | `--days=` | Day cap before a match is scored on points, default 20 |
 | `--sweep=` | `commanders`, `maps` or `tiers` — one free axis per run |
@@ -116,7 +116,7 @@ property lines cross.
 | Key | `match_id · day · team · commander · tier` | Joins to `matches.csv` for map, seed, seats, outcome |
 | Money | `funds_start · income · plunder · plunder_off_turn · spent · funds_end` | See below |
 | Production | `built · built_value` | `infantry x2;tank` and its summed cost |
-| Combat | `killed · lost · killed_value · lost_value` | See attribution below |
+| Combat | `killed · lost · killed_value · lost_value` | See attribution below. Both values are **what the units cost to field**, whatever was left of them: destroying a 2 HP tank denies the enemy the whole tank. That is deliberately not the measure `army_value` is in, so read the exchange ratio (kills over losses, one measure) and never against a side's standing army value |
 | Board | `merged · forfeited · unit_count · army_value · properties · captures` | End-of-turn strength; `army_value` = Σ cost × HP fraction, because a 2 HP tank isn't a tank |
 | Powers | `power_charge · power_fired` | Meter percentage at turn end; whether the power went off |
 | Cost | `commands · planning_ms` | Commands issued and AI planning time |
@@ -200,8 +200,20 @@ committed thresholds:
 |---|---|---|
 | Side-normalized win rate per swept value | **45–55%** | preferred |
 | Same | **40–60%** | warning — investigate before merge |
-| First-seat bias (games with a winner) | **≤ 5 pp** | map/seed fairness |
+| First-seat bias (all decisive games, mirrors counted) | **≤ 5 pp** | map/seed fairness |
 | Rejected AI commands, cap stalls | **0** | **hard** — the run exits 1 |
+
+Every one of those thresholds has one definition, in `BalanceRunSummary`, and all
+three instruments read it from there.
+
+**The bias row is the one number the two tools mean differently, so each prints
+its definition in the label.** The Lab counts mirrors: a mirror sweep is a run
+whose every row is one, and with both sides identical every red win above half is
+the seat talking — excluding them would leave `--sweep=maps` with nothing to
+report. `make commander-balance` excludes them, because its bias figure is read
+as a caveat on the commander win rates beside it and those come from the
+non-mirror games (`docs/commander_balance.md`'s own threshold row says so). The
+two figures are therefore not interchangeable; quote the label with the number.
 
 Only the hard invariants fail the run. Out-of-band win rates are review triggers,
 per the standing rule: **do not balance to the AI leaderboard alone.**
@@ -269,6 +281,15 @@ both reports before and after:
 |---|---|---|
 | `make commander-balance BAL="--commanders=alina_ward,cass_orlov,gideon_holt --seeds=2"` | identical | identical |
 | `make difficulty-check DIFF="--seeds=2 --days=12"` | identical | identical |
+
+The same bar, and the same two rows, cleared again when the rest of the shared
+pipeline followed the loop out of the runners: `tools/balance/harness.gd`
+(`BalanceHarness`) holds the databases and the board cache — both runners carried
+a copy of each — and `BalanceRunSummary` holds every
+threshold and the difficulty ladder's own gate arithmetic, which was living in a
+`SceneTree` runner where no test could reach it. Both gates' `matches.csv` and
+`summary.json` came out byte-identical, and `make determinism` reproduced its
+golden untouched.
 
 That second row used to read *identical bar `turn_ms`*: mean planning wall-clock
 was written into the difficulty gate's `summary.json`, which made this bar

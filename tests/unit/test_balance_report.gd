@@ -100,15 +100,35 @@ func test_values_are_rendered_the_way_the_committed_reports_carry_them() -> void
 	assert_eq(cells[6], "none-normal vs none-normal")
 
 
-## Nothing quotes and nothing escapes: the writer's own header says so, and the
-## reason it is safe is upstream — the tally fields that could hold a separator
-## are semicolon-joined at the source. So a comma in a value really does become
-## a column break, and that is pinned rather than left to be discovered by a
-## spreadsheet. A writer that started quoting would move every committed byte.
-func test_a_separator_in_a_value_is_written_through_rather_than_quoted() -> void:
+## A value holding a separator, a quote or a newline is quoted the way every
+## spreadsheet reads back (RFC 4180), with its own quotes doubled — where it used
+## to be written through, so one comma turned a row into two columns and one
+## newline into two rows. Nothing the reports write today reaches this (the tally
+## fields that could hold a separator are semicolon-joined at the source), which
+## is why the change moves no committed byte; it is what keeps that true the day
+## a column starts carrying prose.
+func test_a_separator_in_a_value_is_quoted_rather_than_written_through() -> void:
 	var rows: Array[Dictionary] = [{"a": "x,y", "b": 'say "no"', "c": "one\ntwo"}]
 	BalanceReportWriter.write_csv(_path("m.csv"), rows, ["a", "b", "c"])
-	assert_eq(_written("m.csv"), 'a,b,c\nx,y,say "no",one\ntwo\n')
+	assert_eq(_written("m.csv"), 'a,b,c\n"x,y","say ""no""","one\ntwo"\n')
+
+
+## And a value that holds none of them is written bare: quoting everything would
+## be just as readable to a spreadsheet and would move every committed byte of
+## both gates' reports, which is the bar this file exists to hold.
+func test_an_ordinary_value_is_not_quoted() -> void:
+	var rows: Array[Dictionary] = [{"a": "none-normal vs none-normal", "b": 50.0}]
+	BalanceReportWriter.write_csv(_path("m.csv"), rows, ["a", "b"])
+	assert_eq(_written("m.csv"), "a,b\nnone-normal vs none-normal,50.0\n")
+
+
+## A row missing a column the report asked for is a hole in one cell, named in
+## the log — not the end of a batch that has been playing matches for an hour.
+func test_a_missing_column_is_an_empty_cell_and_a_reported_one() -> void:
+	var rows: Array[Dictionary] = [{"a": 1}, {"a": 2, "b": 3}]
+	BalanceReportWriter.write_csv(_path("m.csv"), rows, ["a", "b"])
+	assert_eq(_written("m.csv"), "a,b\n1,\n2,3\n")
+	assert_push_error_count(1, "the missing column is named once, for the row that lacks it")
 
 
 ## One compact object per line, and an empty log is an empty file rather than a
@@ -156,6 +176,20 @@ func test_the_page_is_self_contained() -> void:
 	assert_false(page.contains("https://"), "nothing fetched")
 
 
+## The two tables on the page count different things, and each column is headed
+## with the one it holds: the win-rate table's is `resolved` — endings that
+## happened on the board — and the per-board bias table's is `decisive`, every
+## game with a winner, day-cap ones included. The bias header used to read
+## "resolved" over a cell holding the other number, which is one word meaning two
+## things on one page.
+func test_the_two_count_columns_are_named_for_what_they_hold() -> void:
+	var page := BalanceReportHtml.render(_two_board_summary(), [] as Array[Dictionary])
+	assert_string_contains(page, "<h2>Win rate, side-normalized</h2>")
+	assert_string_contains(page, '<th class="num">resolved</th>')
+	assert_string_contains(page, "<h2>First-seat bias per board</h2>")
+	assert_string_contains(page, '<th class="num">decisive</th>')
+
+
 ## The em dash is the missing denominator, printed the same way on the page and
 ## in the console summary — a number there would read as a measurement.
 func test_an_exchange_ratio_with_no_denominator_prints_as_a_dash() -> void:
@@ -167,24 +201,36 @@ func test_an_exchange_ratio_with_no_denominator_prints_as_a_dash() -> void:
 ## One swept value's summary, built through BalanceRunSummary so the page is
 ## rendered from the shape the runner really hands it.
 func _summary_of(label: String) -> Dictionary:
-	var matches: Array[Dictionary] = [
-		{
-			"match_id": "m1",
-			"sweep_axis": "matchup",
-			"sweep_value": label,
-			"map": label,
-			"mirror": 0,
-			"naval": 0,
-			"subject_side": "red",
-			"subject_won": 1,
-			"winner": 1,
-			"termination": "rout",
-			"day_ended": 10,
-			"rejected": 0,
-			"cap_stall": 0,
-		}
-	]
-	var summary := BalanceRunSummary.build(
-		{"label": label, "seeds": 1, "days_cap": 30}, matches, [] as Array[Dictionary]
+	return BalanceRunSummary.build(
+		{"label": label, "seeds": 1, "days_cap": 30},
+		[_match(label, label)] as Array[Dictionary],
+		[] as Array[Dictionary]
 	)
-	return summary
+
+
+## The same, over two boards — which is what the per-board bias table needs to be
+## drawn at all.
+func _two_board_summary() -> Dictionary:
+	return BalanceRunSummary.build(
+		{"label": "two boards", "seeds": 1, "days_cap": 30},
+		[_match("mirror sweep", "clash"), _match("mirror sweep", "ridge")] as Array[Dictionary],
+		[] as Array[Dictionary]
+	)
+
+
+func _match(label: String, map_name: String) -> Dictionary:
+	return {
+		"match_id": "%s#%s" % [label, map_name],
+		"sweep_axis": "matchup",
+		"sweep_value": label,
+		"map": map_name,
+		"mirror": 0,
+		"naval": 0,
+		"subject_side": "red",
+		"subject_won": 1,
+		"winner": 1,
+		"termination": "rout",
+		"day_ended": 10,
+		"rejected": 0,
+		"cap_stall": 0,
+	}

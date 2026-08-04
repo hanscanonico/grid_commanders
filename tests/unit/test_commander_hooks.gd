@@ -174,6 +174,21 @@ func test_db_always_answers_with_a_commander() -> void:
 	)
 
 
+## "No commander" is a legal seat and a legal pick, but it is the absence of a
+## doctrine rather than one of them — so a roster measurement is over the
+## playable ones, and this is the single answer to which those are.
+func test_the_playable_roster_is_everyone_but_neutral() -> void:
+	var db := CommanderDB.load_default()
+	assert_false(db.is_playable(CommanderType.NEUTRAL_ID), "no commander is not a commander")
+	assert_false(
+		db.is_playable(&"a_general_who_was_cut"), "and neither is a name nobody answers to"
+	)
+	assert_true(db.is_playable(&"alina_ward"))
+	assert_eq(db.playable().size(), db.all().size() - 1, "exactly one seat's worth of nobody")
+	for co in db.playable():
+		assert_ne(co.id, CommanderType.NEUTRAL_ID)
+
+
 func test_every_shipped_commander_is_well_formed() -> void:
 	var db := CommanderDB.load_default()
 	for co in db.all():

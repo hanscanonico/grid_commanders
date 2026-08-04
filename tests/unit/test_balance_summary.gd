@@ -1,11 +1,14 @@
 extends GutTest
-## The verdicts a Balance Lab run reports: which band a win rate falls in, how
-## much the first seat is worth, and how much of either to believe.
+## The verdicts a balance run reports: which band a win rate falls in, how much
+## the first seat is worth, how much of either to believe — and whether the
+## difficulty ladder passed.
 ##
 ## Worth pinning because these are quoted as findings — docs/commander_balance.md
 ## and docs/difficulty_check.md read a WARN, a bias figure and a confidence note
 ## as the run's answer — while every one of them is a threshold comparison that
-## can be off by one boundary and still look plausible on the page.
+## can be off by one boundary and still look plausible on the page. The ladder's
+## gate is the one that fails a build, and it used to live in a SceneTree runner
+## where nothing could drive it at all.
 ##
 ## Node-free (a RefCounted under tools/balance/), so the boundaries are driven
 ## directly rather than inferred from a sweep.
@@ -231,3 +234,163 @@ func test_swept_values_are_listed_worst_first() -> void:
 	assert_eq(values.size(), 2)
 	assert_eq(values[0]["value"], "weak")
 	assert_eq(values[1]["value"], "strong")
+
+
+## And by name within a tie, because the sort is not a stable one: a short sweep
+## is mostly ties (0/50/100%), so without the second key adding one swept value
+## reshuffles rows of a table somebody has already read.
+func test_values_on_the_same_rate_are_ordered_by_name() -> void:
+	var rows: Array[Dictionary] = []
+	for value in ["pear", "apple", "cherry"]:
+		for row in _decisive(1, 1):
+			rows.append(_row(row, {"match_id": value + row["match_id"], "sweep_value": value}))
+	var values: Array = _summary_of(rows)["values"]
+	assert_eq(
+		[values[0]["value"], values[1]["value"], values[2]["value"]], ["apple", "cherry", "pear"]
+	)
+
+
+# --- first-seat bias: the same word, two measurements -------------------------
+
+
+## `n` mirror rows the first seat won and `losses` it lost — the pairing a
+## commander matrix plays as its control and a Lab mirror sweep plays as its
+## whole question.
+func _mirrors(wins: int, losses: int) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for row in _decisive(wins, losses):
+		rows.append(_row(row, {"match_id": "m" + row["match_id"], "mirror": 1}))
+	return rows
+
+
+## The two tools mean different things by "bias", so the caller says which — and
+## both spell their answer out in the label they print it under. Excluding is the
+## commander matrix's reading (its win rates come from the non-mirror games);
+## counting them is the Lab's (a mirror sweep has nothing else to measure).
+func test_the_seat_bias_counts_mirrors_only_when_the_caller_asks() -> void:
+	var rows := _decisive(3, 3)
+	rows.append_array(_mirrors(4, 0))
+
+	var matrix := BalanceRunSummary.bias(rows, true)
+	assert_eq(matrix["decisive"], 6, "the mirrors are out of the denominator")
+	assert_almost_eq(float(matrix["bias_pp"]), 0.0, 0.001)
+	assert_true(matrix["ok"])
+
+	var lab := BalanceRunSummary.bias(rows, false)
+	assert_eq(lab["decisive"], 10)
+	assert_almost_eq(float(lab["bias_pp"]), 40.0, 0.001, "7 red to 3 blue")
+	assert_false(lab["ok"])
+
+
+## And the Lab's own summary is built on the counting one: a run of nothing but
+## mirrors must still report a bias, since that is the number it was run for.
+func test_a_mirror_only_run_still_reports_its_bias() -> void:
+	var bias: Dictionary = _summary_of(_mirrors(9, 1))["bias"]["overall"]
+	assert_eq(bias["decisive"], 10)
+	assert_almost_eq(float(bias["bias_pp"]), 80.0, 0.001)
+
+
+# --- the difficulty ladder's gate (difficulty plan DF4) -----------------------
+
+## One tier-versus-tier row, the shape the ladder writes to its matches.csv.
+const LADDER := {
+	"map": "scrimmage",
+	"seed": 1000,
+	"low_tier": "normal",
+	"high_tier": "hard",
+	"high_side": "red",
+	"winner": 1,
+	"high_won": 1,
+	"termination": "rout",
+	"day_ended": 10,
+	"commands": 40,
+	"rejected": 0,
+	"cap_stall": 0,
+}
+
+const LADDER_MAPS: Array[String] = ["scrimmage", "ironworks"]
+const LADDER_PAIRINGS: Array = [["normal", "hard"]]
+
+
+## `wins` matches the higher tier took and `losses` it dropped, all on one board.
+func _ladder(map_name: String, wins: int, losses: int) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for i in wins:
+		rows.append(_row(LADDER, {"map": map_name, "high_won": 1}))
+	for i in losses:
+		rows.append(_row(LADDER, {"map": map_name, "high_won": 0}))
+	return rows
+
+
+## The gate is inclusive: exactly 70% passes. It is the number a whole feature's
+## "smarter, not cheating" claim is answered with, and it decides a build.
+func test_the_ladder_gate_is_inclusive_at_exactly_the_gate() -> void:
+	assert_eq(BalanceRunSummary.DIFFICULTY_GATE_PCT, 70.0)
+	assert_false(BalanceRunSummary.gate_ok(69.9))
+	assert_true(BalanceRunSummary.gate_ok(70.0))
+	assert_true(BalanceRunSummary.gate_ok(70.1))
+
+	var short_of_it := BalanceRunSummary.difficulty(
+		_ladder("scrimmage", 13, 7), LADDER_PAIRINGS, LADDER_MAPS
+	)
+	assert_almost_eq(float(short_of_it["pairings"][0]["win_rate"]), 65.0, 0.001)
+	assert_false(short_of_it["passed"])
+
+	var exactly_it := BalanceRunSummary.difficulty(
+		_ladder("scrimmage", 14, 6), LADDER_PAIRINGS, LADDER_MAPS
+	)
+	assert_almost_eq(float(exactly_it["pairings"][0]["win_rate"]), 70.0, 0.001)
+	assert_true(exactly_it["passed"])
+
+
+## Overall and per board, because the gate asks whether the extra thinking pays
+## with room to manoeuvre as well as without — and a pairing can clear the gate
+## overall on one board's strength alone, which is a reading the ladder's two
+## committed documents make.
+func test_the_ladder_reports_each_pairing_on_each_board() -> void:
+	var rows := _ladder("scrimmage", 2, 8)
+	rows.append_array(_ladder("ironworks", 10, 0))
+	var pairing: Dictionary = (
+		BalanceRunSummary.difficulty(rows, LADDER_PAIRINGS, LADDER_MAPS)["pairings"][0]
+	)
+	assert_eq(pairing["played"], 20)
+	assert_almost_eq(float(pairing["win_rate"]), 60.0, 0.001)
+	var maps: Array = pairing["maps"]
+	assert_eq([maps[0]["map"], maps[1]["map"]], ["scrimmage", "ironworks"], "the run's own order")
+	assert_almost_eq(float(maps[0]["win_rate"]), 20.0, 0.001)
+	assert_almost_eq(float(maps[1]["win_rate"]), 100.0, 0.001)
+
+
+## A pairing nobody played is not a pass. Its rate divides by a floored
+## denominator, so it comes out 0% rather than undefined — and 0% fails, which is
+## the safe direction for a gate whose rows went missing.
+func test_a_pairing_that_played_nothing_does_not_pass() -> void:
+	var empty := BalanceRunSummary.difficulty([] as Array[Dictionary], LADDER_PAIRINGS, LADDER_MAPS)
+	assert_eq(empty["matches"], 0)
+	assert_eq(empty["pairings"][0]["played"], 0)
+	assert_almost_eq(float(empty["pairings"][0]["win_rate"]), 0.0, 0.001)
+	assert_false(empty["passed"])
+
+
+## Every gate clear and the run still fails: a rejected command means the planner
+## and the rules disagree, a cap stall means a match that would not resolve.
+## Both are bugs, and they fail the ladder as they fail the commander matrix.
+func test_a_rejected_command_or_a_stall_fails_the_ladder_whatever_the_rate() -> void:
+	var clean := BalanceRunSummary.difficulty(
+		_ladder("scrimmage", 10, 0), LADDER_PAIRINGS, LADDER_MAPS
+	)
+	assert_true(clean["passed"])
+	assert_true(clean["pairings"][0]["gate_ok"])
+
+	var rows := _ladder("scrimmage", 10, 0)
+	rows[0] = _row(rows[0], {"rejected": 1})
+	var rejected := BalanceRunSummary.difficulty(rows, LADDER_PAIRINGS, LADDER_MAPS)
+	assert_eq(rejected["total_rejected"], 1)
+	assert_true(rejected["pairings"][0]["gate_ok"], "the ladder itself was cleared")
+	assert_false(rejected["passed"], "and the run still fails")
+
+	var stalled_rows := _ladder("scrimmage", 10, 0)
+	stalled_rows[0] = _row(stalled_rows[0], {"cap_stall": 1})
+	var stalled := BalanceRunSummary.difficulty(stalled_rows, LADDER_PAIRINGS, LADDER_MAPS)
+	assert_eq(stalled["total_cap_stalls"], 1)
+	assert_false(stalled["passed"])

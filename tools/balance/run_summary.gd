@@ -1,17 +1,26 @@
 class_name BalanceRunSummary
 extends RefCounted
-## Turns a Balance Lab run's raw rows into the judgement in summary.json: which
-## swept value looks unbalanced, how much the first seat is worth on each board,
-## and how much of either number to believe.
+## Turns a balance run's raw rows into the judgement it publishes: which swept
+## value looks unbalanced, how much the first seat is worth on each board, how
+## much of either number to believe — and, for the difficulty ladder, whether the
+## run passed.
 ##
 ## It computes **nothing the CSVs do not already say** — every figure here is an
 ## aggregate of matches.csv and timeline.csv, which is what lets the HTML report
 ## be checked against the raw files by hand.
 ##
+## Every threshold the three instruments are read against lives here, once. They
+## used to be written twice — the same bands and the same band-flag ladder in
+## this file and in tools/run_commander_balance.gd, maintained independently
+## while two committed documents rested on them. A runner extends SceneTree and
+## so cannot be driven by GUT; the arithmetic that decides a committed gate
+## belongs on this side of that line.
+##
 ## Node-free, so GUT can drive it.
 
-## The standing bands, identical to docs/commander_balance.md's, so a Balance Lab
-## number is read against the same thresholds the committed record uses.
+## The standing bands, identical to docs/commander_balance.md's, so every
+## instrument's numbers are read against the same thresholds the committed
+## record uses.
 const BAND_PREFERRED := Vector2(45.0, 55.0)
 const BAND_WARNING := Vector2(40.0, 60.0)
 const MAX_SIDE_BIAS_PP := 5.0
@@ -22,11 +31,21 @@ const MAX_SIDE_BIAS_PP := 5.0
 ## can turn over on noise and score the known-weaker side. Plan R2.
 const MIN_RESOLVED_PCT := 50.0
 
+## The difficulty ladder's acceptance gate (difficulty plan DF4): the higher tier
+## takes at least this share of its pairing. With identical economies, vision and
+## dice at every tier that win rate *is* the whole "smarter, not cheating" claim,
+## so missing it means tuning the tier .tres — never loosening this number.
+const DIFFICULTY_GATE_PCT := 70.0
+
 
 static func build(
 	config: Dictionary, matches: Array[Dictionary], timeline: Array[Dictionary]
 ) -> Dictionary:
 	var totals := _totals(matches)
+	# Mirrors counted, which is the Lab's reading of bias and not the commander
+	# matrix's: a mirror sweep is a run whose every row is one, and its whole
+	# answer is this number. See bias().
+	var seat := bias(matches, false)
 	var summary := {
 		"run": config,
 		"totals": totals,
@@ -40,7 +59,7 @@ static func build(
 		"values": _values(matches, timeline),
 		"bias":
 		{
-			"overall": _bias_of(matches),
+			"overall": seat,
 			"per_map": _bias_per_map(matches),
 		},
 	}
@@ -91,8 +110,15 @@ static func _values(matches: Array[Dictionary], timeline: Array[Dictionary]) -> 
 	var result: Array = []
 	for value in order:
 		result.append(_value_entry(value, buckets[value], timeline))
+	# Worst first, then by name. The second key is not decoration: sort_custom is
+	# not a stable sort, so on win rate alone a table full of ties — which a short
+	# sweep is, at 0/50/100% — orders by wherever the sort happened to leave it,
+	# and adding one swept value reshuffles rows that did not move.
 	result.sort_custom(
-		func(a: Dictionary, b: Dictionary) -> bool: return a["win_rate"] < b["win_rate"]
+		func(a: Dictionary, b: Dictionary) -> bool:
+			if a["win_rate"] != b["win_rate"]:
+				return a["win_rate"] < b["win_rate"]
+			return a["value"] < b["value"]
 	)
 	return result
 
@@ -186,7 +212,9 @@ static func _economy(subjects: Dictionary, timeline: Array[Dictionary]) -> Dicti
 		# Value destroyed per 1 000 funds spent. Spending nothing is 0 rather
 		# than a division by zero.
 		"killed_per_1000_spent": 1000.0 * float(destroyed) / maxf(1.0, float(spent)),
-		# Destroyed over lost. -1 when nothing was lost at all: the ratio is
+		# Destroyed over lost, both at what the units cost to field — the measure
+		# the recorder credits a kill in, and *not* the HP-prorated one
+		# `army_value` is in. -1 when nothing was lost at all: the ratio is
 		# undefined there, and reporting a huge number instead would read as a
 		# measurement rather than a missing denominator.
 		"exchange_ratio": -1.0 if lost == 0 else float(destroyed) / float(lost),
@@ -204,14 +232,29 @@ static func band_flag(rate: float) -> String:
 # --- first-seat bias ---------------------------------------------------------
 
 
-## Bias measured on decisive games only, and never on a mirror pairing's own
-## win rate — a mirror is 50% by construction. What a mirror *does* measure is
-## precisely this: with both sides identical, every red win above half is the
-## seat talking.
-static func _bias_of(rows: Array) -> Dictionary:
+## What the first seat is worth: its share of the decisive games, in percentage
+## points either side of an even split, and whether that clears the ±5 pp
+## threshold. A draw has no seat to credit and stays out of the denominator.
+##
+## `exclude_mirrors` is the one thing the two instruments answer differently, so
+## both name it and both print it in their label:
+##
+##  * The **commander matrix** excludes them. Its bias figure is a caveat on the
+##    commander win rates printed beside it, and those come from the non-mirror
+##    games — docs/commander_balance.md's threshold row says so, and its
+##    committed measurements were taken that way.
+##  * The **Balance Lab** counts them. A mirror is the purest reading there is —
+##    both sides identical, so every red win above half is the seat talking — and
+##    excluding them would leave `--sweep=maps --red=none --blue=none`, the
+##    map-fairness instrument, with nothing at all to report.
+##
+## A row says which it is in `mirror`, the same column matches.csv carries.
+static func bias(rows: Array, exclude_mirrors: bool) -> Dictionary:
 	var red := 0
 	var blue := 0
 	for row: Dictionary in rows:
+		if exclude_mirrors and bool(row["mirror"]):
+			continue
 		var winner := int(row["winner"])
 		if winner == 1:
 			red += 1
@@ -242,12 +285,102 @@ static func _bias_per_map(matches: Array[Dictionary]) -> Array:
 		naval[map] = bool(row["naval"])
 	var result: Array = []
 	for map in order:
-		var entry := _bias_of(buckets[map])
+		var entry := bias(buckets[map], false)
 		entry["map"] = map
 		entry["matches"] = buckets[map].size()
 		entry["naval_bounded"] = bool(naval[map])
 		result.append(entry)
 	return result
+
+
+# --- the difficulty ladder (difficulty plan DF4) ------------------------------
+
+
+## Whether one pairing's win rate clears the ladder's gate. Inclusive: exactly
+## the gate passes.
+static func gate_ok(rate: float) -> bool:
+	return rate >= DIFFICULTY_GATE_PCT
+
+
+## The judgement `make difficulty-check` publishes: how much of its pairing each
+## higher tier took, overall and per board, and whether the run passed.
+##
+## `pairings` (low, high) and `maps` are the run's own spec — which tiers were
+## put against each other and on which committed boards is the runner's choice,
+## not this file's. Everything else is arithmetic over the rows the runner is
+## about to write to matches.csv, so the summary and the CSV can never disagree.
+##
+## A rejected command or a cap stall fails the run on top of the gate, exactly as
+## it does for the commander matrix: either one means the planner and the rules
+## disagree, or a match that will not resolve.
+static func difficulty(rows: Array[Dictionary], pairings: Array, maps: Array[String]) -> Dictionary:
+	var total_rejected := 0
+	var total_cap_stalls := 0
+	for row in rows:
+		total_rejected += int(row["rejected"])
+		total_cap_stalls += int(row["cap_stall"])
+
+	var entries: Array = []
+	var gates_ok := true
+	for pair: Array in pairings:
+		var entry := _pairing_entry(rows, String(pair[0]), String(pair[1]), maps)
+		gates_ok = gates_ok and bool(entry["gate_ok"])
+		entries.append(entry)
+
+	return {
+		"matches": rows.size(),
+		"gate_pct": DIFFICULTY_GATE_PCT,
+		"total_rejected": total_rejected,
+		"total_cap_stalls": total_cap_stalls,
+		"pairings": entries,
+		"passed": gates_ok and total_rejected == 0 and total_cap_stalls == 0,
+	}
+
+
+## One adjacent-tier pairing: the higher tier's win rate over every seat and seed
+## of it, and the same rate on each board on its own — the small board answers
+## whether the extra thinking pays without room to manoeuvre, the large one
+## whether it pays with.
+static func _pairing_entry(
+	rows: Array[Dictionary], low: String, high: String, maps: Array[String]
+) -> Dictionary:
+	var per_map: Dictionary = {}
+	for name in maps:
+		per_map[name] = {"wins": 0, "played": 0}
+	var wins := 0
+	var played := 0
+	for row in rows:
+		if row["low_tier"] != low or row["high_tier"] != high:
+			continue
+		played += 1
+		wins += int(row["high_won"])
+		var bucket: Dictionary = per_map[row["map"]]
+		bucket["played"] += 1
+		bucket["wins"] += int(row["high_won"])
+	var rate := 100.0 * float(wins) / maxf(1.0, float(played))
+	var board_rows: Array = []
+	for name in maps:
+		var bucket: Dictionary = per_map[name]
+		(
+			board_rows
+			. append(
+				{
+					"map": name,
+					"played": bucket["played"],
+					"wins": bucket["wins"],
+					"win_rate": 100.0 * float(bucket["wins"]) / maxf(1.0, float(bucket["played"])),
+				}
+			)
+		)
+	return {
+		"low": low,
+		"high": high,
+		"played": played,
+		"wins": wins,
+		"win_rate": rate,
+		"gate_ok": gate_ok(rate),
+		"maps": board_rows,
+	}
 
 
 # --- reading rules -----------------------------------------------------------

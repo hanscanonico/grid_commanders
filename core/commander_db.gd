@@ -49,6 +49,23 @@ func has(id: StringName) -> bool:
 	return _by_id.has(id)
 
 
+## A commander a side can be measured *as*. "No commander" is a legal seat and a
+## legal pick, but it is the absence of a doctrine rather than one of them, so a
+## roster measurement is over these — ask here rather than spelling the neutral
+## exclusion out at each site.
+func is_playable(id: StringName) -> bool:
+	return has(id) and id != CommanderType.NEUTRAL_ID
+
+
+## Every playable commander, in `all()`'s order.
+func playable() -> Array[CommanderType]:
+	var result: Array[CommanderType] = []
+	for commander in all():
+		if is_playable(commander.id):
+			result.append(commander)
+	return result
+
+
 ## Every commander, neutral first and the rest grouped by faction then name —
 ## the order the CO picker shows them in.
 func all() -> Array[CommanderType]:
