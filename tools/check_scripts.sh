@@ -183,6 +183,16 @@ if (($# == 0)); then
 		printf '%s\n' "$pool_check" >&2
 		failed=$((failed + 1))
 	fi
+
+	# Same for the arena search driver, whose pure half is the search itself —
+	# the lattice a proposal snaps to, the compass around an incumbent, and the
+	# step that contracts. The space it searches is GDScript and the suite holds
+	# that; this is the arithmetic laid over it.
+	if ! search_check="$(tools/arena_search.py --self-check 2>&1)"; then
+		echo "check: tools/arena_search.py --self-check failed" >&2
+		printf '%s\n' "$search_check" >&2
+		failed=$((failed + 1))
+	fi
 fi
 
 if ((failed > 0)); then
