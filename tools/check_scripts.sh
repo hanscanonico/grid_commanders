@@ -40,6 +40,44 @@ if [[ ! -x "$GODOT" ]]; then
 	exit 1
 fi
 
+# Every project script, in a stable order. .claude/worktrees holds whole nested
+# checkouts of this same repo; without excluding it every project file gets
+# checked twice, once at a path Godot cannot resolve res:// imports for.
+project_scripts() {
+	find . -name '*.gd' \
+		-not -path './.godot/*' \
+		-not -path './addons/*' \
+		-not -path './bin/*' \
+		-not -path './.claude/*' |
+		sort
+}
+
+# A `class_name` is a global identifier only because
+# .godot/global_script_class_cache.cfg says so, and only an `--import` pass
+# writes that file. A cache that predates a class — a fresh worktree, a deleted
+# .godot, a branch switch — makes every file typing against it fail with
+# "Identifier ... not declared in the current scope", which reads exactly like
+# broken code: deleting the cache here fails 244 of 260 files (COM-112). So the
+# names are compared before a single file is parsed, and `check` stays the
+# read-only audit it claims to be — it names the command that fixes this rather
+# than importing behind the caller's back.
+CLASS_CACHE=".godot/global_script_class_cache.cfg"
+
+declared_classes="$(project_scripts | xargs grep -hE '^class_name [A-Za-z_]' | awk '{print $2}' | sort -u)"
+if [[ -f "$CLASS_CACHE" ]]; then
+	cached_classes="$(sed -n 's/^"class": &"\([^"]*\)".*/\1/p' "$CLASS_CACHE" | sort -u)"
+else
+	cached_classes=""
+fi
+uncached="$(comm -23 <(printf '%s\n' "$declared_classes") <(printf '%s\n' "$cached_classes"))"
+if [[ -n "$uncached" ]]; then
+	missing="$(printf '%s\n' "$uncached" | wc -l | tr -d ' ')"
+	first="$(printf '%s\n' "$uncached" | head -1)"
+	echo "check: stale class cache — $missing class_name(s) the engine has not registered, e.g. $first" >&2
+	echo "check: run 'make import' ($GODOT --headless --path . --import) and try again" >&2
+	exit 1
+fi
+
 # Autoload singletons are global identifiers at runtime, but --check-only never
 # instantiates them, so every use reads as "Identifier not found". Build an
 # ignore pattern from the names project.godot actually registers — a typo'd
@@ -87,15 +125,7 @@ done < <(
 	if (($#)); then
 		printf '%s\n' "$@"
 	else
-		# .claude/worktrees holds whole nested checkouts of this same repo;
-		# without excluding it every project file gets checked twice, once at a
-		# path Godot cannot resolve res:// imports for.
-		find . -name '*.gd' \
-			-not -path './.godot/*' \
-			-not -path './addons/*' \
-			-not -path './bin/*' \
-			-not -path './.claude/*' |
-			sort
+		project_scripts
 	fi
 )
 
