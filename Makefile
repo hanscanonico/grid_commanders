@@ -123,21 +123,23 @@ arena-report:
 	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- $(ARGS)
 
 # The calibration, end to end: play one fixed pool of the anchor round-robin
-# across the cores and score it. `POOL=training` or `POOL=validation`; the
-# boards, seeds and pairings are ArenaPools' and are read out of it rather than
-# spelled here, so the command that plays a pool cannot drift from the split the
-# report reads matches back against. The engine prints a banner before the
-# argument line, which is what the grep is for.
-POOL ?= training
+# across the cores and score it. `ARENA_POOL=training` or `ARENA_POOL=validation`
+# — its own knob rather than `POOL`, which balance-pool already defines as the
+# empty flag list; the two share no default. The boards, seeds and pairings are
+# ArenaPools' and are read out of it rather than spelled here, so the command
+# that plays a pool cannot drift from the split the report reads matches back
+# against. The engine prints a banner before the argument line, which is what
+# the grep is for.
+ARENA_POOL ?= training
 WORKERS ?= 6
 arena-anchors:
 	@plan=$$($(GODOT) --headless --path . -s res://tools/run_arena_plan.gd -- \
-		--pool=$(POOL) | grep '^--maps=') ; \
-	echo "arena: $(POOL) pool -> $$plan" ; \
+		--pool=$(ARENA_POOL) | grep '^--maps=') && \
+	echo "arena: $(ARENA_POOL) pool -> $$plan" && \
 	GODOT="$(GODOT)" tools/balance_pool.py --preset=arena $$plan \
-		--batch=4 --workers=$(WORKERS) --out=ai_arena/anchors_$(POOL) ; \
+		--batch=4 --workers=$(WORKERS) --out=ai_arena/anchors_$(ARENA_POOL) && \
 	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- \
-		--matches=reports/ai_arena/anchors_$(POOL)
+		--matches=reports/ai_arena/anchors_$(ARENA_POOL)
 
 # Watch a match from a report play out in the real game window, both sides AI.
 # Same spec grammar and the same seed, so a suspicious row in matches.csv

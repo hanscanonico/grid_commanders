@@ -14,8 +14,13 @@ extends RefCounted
 
 
 ## Absolutizes an out-directory given relative to the project root, creating it.
+## A `res://`-spelled path is the same directory said the other way, so it is
+## normalised rather than joined: `path_join` concatenates, and a caller that
+## reads its input through `res://` and writes it raw would land the artifact in
+## a literal `res:` directory at the project root while believing it wrote where
+## it was told.
 static func prepare_dir(out_dir: String) -> String:
-	var dir := ProjectSettings.globalize_path("res://").path_join(out_dir)
+	var dir := ProjectSettings.globalize_path("res://").path_join(out_dir.trim_prefix("res://"))
 	DirAccess.make_dir_recursive_absolute(dir)
 	return dir
 

@@ -50,7 +50,7 @@ make balance-sim          # the Balance Lab: any board, any commanders, any tier
 make balance-pool         # the same engine, sharded across processes: resumable, several cores
 make ai-arena             # play two arbitrary AIProfiles against each other -> one JSON record a match
 make arena-report         # score an arena run -> a leaderboard (docs/ai_arena.md)
-make arena-anchors POOL=training   # play one fixed pool of the three shipped tiers, and score it
+make arena-anchors ARENA_POOL=training   # play one fixed pool of the three shipped tiers, and score it
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table

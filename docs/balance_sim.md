@@ -465,7 +465,7 @@ pairing. `BalanceSideSpec` is untouched; a profile path is a different flag, not
 a third field in a spec whose grammar watch mode shares.
 
 ```sh
-make ai-arena ARENA="--map=ironworks \
+make ai-arena ARENA="--map=scrimmage \
   --red-profile=data/ai/default.tres --blue-profile=reports/ai_arena/gen1/c7.tres --seeds=8"
 
 # or a whole shard in one process
@@ -476,7 +476,7 @@ make ai-arena ARENA="--pairings=reports/ai_arena/gen1/shard0.json"
 |---|---|
 | `--red-profile=` / `--blue-profile=` | The candidate in each seat: a path to an `AIProfile` `.tres`, project-relative or `res://`-spelled |
 | `--pairings=` | A shard file — every pairing in it, played by one process |
-| `--map=` | Board for pairings that name none (default `ironworks`) |
+| `--map=` | Board for pairings that name none (default `scrimmage`) |
 | `--seeds=` | Paired seeds per pairing, both seats each (default 4) |
 | `--seed-offset=` | Skip the first N seeds of the range, so a pool can split a pairing |
 | `--days=` | Day cap, default **100** — the horizon that resolves (plan D6) |
@@ -488,7 +488,7 @@ is refused rather than ignored, because `offset` for `seed_offset` would replay
 the front of the seed range and the shard would look healthy.
 
 ```json
-{"map": "ironworks", "seeds": 4, "days": 100, "pairings": [
+{"map": "scrimmage", "seeds": 4, "days": 100, "pairings": [
   {"red": "data/ai/default.tres", "blue": "reports/ai_arena/gen1/c7.tres"},
   {"map": "clash", "red": "data/ai/hard.tres", "blue": "reports/ai_arena/gen1/c7.tres"}]}
 ```
@@ -553,7 +553,7 @@ make ai-arena ARENA="--map=clash --red-profile=data/ai/default.tres \
 resumably. Sides are paths, so its pairings separator is `::`:
 
 ```sh
-make balance-pool POOL="--preset=arena --maps=ironworks \
+make balance-pool POOL="--preset=arena --maps=scrimmage \
   --pairings=data/ai/default.tres::reports/ai_arena/gen1/c7.tres --seeds=32 --days=100"
 ```
 

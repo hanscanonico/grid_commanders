@@ -14,8 +14,11 @@ extends RefCounted
 ## them. Node-free and argument-taking, so the grammar is checked without a
 ## process to launch.
 
-## The board every measurement in the arena plan's §1a was taken on.
-const DEFAULT_MAP := "ironworks"
+## The pools' first board: a duel that resolves inside `DEFAULT_DAYS` on every
+## seed measured. A bare invocation may not land on `ironworks`, the one board
+## `ArenaPools` measured *out* for reaching `BalanceMatchEngine.COMMAND_CAP` at
+## this horizon — a run that fails its own invariant is not a default.
+const DEFAULT_MAP := "scrimmage"
 const DEFAULT_SEEDS := 4
 ## The horizon that resolves (plan D6). A 20-day cap measures who was ahead
 ## early, and the two committed readings of the tier ladder disagree because of

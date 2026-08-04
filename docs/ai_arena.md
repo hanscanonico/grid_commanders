@@ -23,7 +23,7 @@ measurement, the measured game stops being the shipped one.
 |---|---|
 | `make ai-arena` | Plays candidates: profiles in, one JSON record per match out |
 | `make arena-report` | Scores records: a leaderboard out. Plays nothing |
-| `make arena-anchors POOL=training` | Both, over one fixed pool of the anchor round-robin |
+| `make arena-anchors ARENA_POOL=training` | Both, over one fixed pool of the anchor round-robin |
 
 They are separate on purpose. A finished run can be re-scored after the fitness
 function moves without replaying a match, and the thing that plays matches has
@@ -31,11 +31,11 @@ no opinion about what winning is worth.
 
 ```sh
 # one pairing, by hand
-make ai-arena ARENA="--map=ironworks --red-profile=data/ai/default.tres \
+make ai-arena ARENA="--map=scrimmage --red-profile=data/ai/default.tres \
   --blue-profile=reports/ai_arena/gen1/c7.tres --seeds=8"
 
 # a whole pool, across the cores, then scored
-make arena-anchors POOL=training WORKERS=6
+make arena-anchors ARENA_POOL=training WORKERS=6
 ```
 
 `docs/balance_sim.md` carries the harness itself — the flags, the shard file,

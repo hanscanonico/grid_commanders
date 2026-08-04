@@ -17,7 +17,7 @@ extends SceneTree
 ##                                reports/ beside the run that wrote it.
 ##     --pairings=<file.json>     play a whole shard instead: every pairing the
 ##                                file names, which is one process's unit of work
-##     --map=ironworks            board for pairings that name none
+##     --map=scrimmage            board for pairings that name none
 ##     --seeds=4                  paired seeds per pairing, both seats each
 ##     --seed-offset=8            skip the first N seeds of that range, so a pool
 ##                                can split one pairing across processes without
@@ -28,7 +28,7 @@ extends SceneTree
 ##
 ## A shard file is the flags, once per pairing:
 ##
-##   {"map": "ironworks", "seeds": 4, "days": 100, "pairings": [
+##   {"map": "scrimmage", "seeds": 4, "days": 100, "pairings": [
 ##     {"red": "data/ai/default.tres", "blue": "reports/arena/gen1/c7.tres"},
 ##     {"red": "data/ai/hard.tres",    "blue": "reports/arena/gen1/c7.tres"}]}
 ##
