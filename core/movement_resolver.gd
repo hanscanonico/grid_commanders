@@ -91,6 +91,29 @@ static func step_cost(state: GameState, unit: Unit, terrain: TerrainType) -> int
 	return maxi(1, state.commander_of(unit.team).terrain_cost(state, unit, terrain, base))
 
 
+## May `unit` end its move on `cell`? The fill below and `MoveCommand.validate`
+## both ask, so the overlay can never offer a cell the command then refuses.
+static func can_stop(state: GameState, unit: Unit, cell: Vector2i) -> bool:
+	var visible: Dictionary = Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
+	return _can_stop_on(state, unit, state.unit_at(cell), unit.team, visible)
+
+
+## The rule itself, over the occupancy and the sight the caller already has: the
+## fill asks it once per cell and holds one `visible` for the whole walk.
+##
+## A unit the sighting team cannot see is planned through as if the cell were
+## empty and looks like a place to stop, because nobody planning the move has a
+## way to know to avoid it — the trap springs on commit. Anyone that team can see
+## is stopped on by nobody, its own side included: Vision.can_see_unit always
+## sees an ally. Staying put is always legal.
+static func _can_stop_on(
+	state: GameState, unit: Unit, occupant: Unit, seer: int, visible: Dictionary
+) -> bool:
+	if occupant == null or occupant == unit:
+		return true
+	return not Vision.can_see_unit(state, seer, occupant, visible)
+
+
 ## What `GameState.unit_at` answers, for every cell at once — same rule, same
 ## scan order, so a cell two units somehow shared would report the same one
 ## either way round. Kept local to the fill and rebuilt on every call: an index
@@ -134,8 +157,8 @@ static func reachable(
 	# answer serve them all.
 	var step_costs: Dictionary = {}
 	# The sighting team's visible cells decide whether a unit on a cell counts at
-	# all. Computed on first need and reused, so a fill that meets nobody that team
-	# has to look for — and any fill at all with fog off — never pays for it.
+	# all. Computed on first need and reused, so a fill that meets nobody — and any
+	# fill at all with fog off — never pays for it.
 	var visible: Dictionary = {}
 	var visible_computed := false
 	var frontier: Array[Vector2i] = [unit.cell]
@@ -162,19 +185,16 @@ static func reachable(
 			if step == TerrainType.IMPASSABLE:
 				continue
 			var occupant: Unit = occupants.get(next)
-			var unseen := false
-			if occupant != null and not state.allied(occupant.team, seer):
+			var stoppable := true
+			if occupant != null:
 				if state.fog_enabled and not visible_computed:
 					visible = Vision.visible_cells(state, seer)
 					visible_computed = true
-				unseen = not Vision.can_see_unit(state, seer, occupant, visible)
-			# A seen enemy is a wall; anyone on the mover's own side — its own units
-			# and its allies alike — is passed but not stopped on. A unit the sighting
-			# team cannot see is planned through as if empty, and looks like a place to
-			# stop, because nobody planning this move has a way to know to avoid it —
-			# the trap springs on commit.
-			if occupant != null and not unseen and not state.allied(occupant.team, unit.team):
-				continue
+				stoppable = _can_stop_on(state, unit, occupant, seer, visible)
+				# A seen enemy is a wall; anyone on the mover's own side — its own units
+				# and its allies alike — is passed through but never stopped on.
+				if not stoppable and not state.allied(occupant.team, unit.team):
+					continue
 			var next_cost: int = best_cost + step
 			if next_cost > budget:
 				continue
@@ -183,6 +203,6 @@ static func reachable(
 				continue
 			result.costs[next] = next_cost
 			result.parents[next] = current
-			result.stoppable[next] = occupant == null or unseen
+			result.stoppable[next] = stoppable
 			frontier.append(next)
 	return result

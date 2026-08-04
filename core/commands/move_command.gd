@@ -72,21 +72,12 @@ func validate(state: GameState) -> String:
 	var steps := MoveCommand.validate_path_steps(state, unit, path)
 	if steps != "":
 		return steps
-	var dest: Vector2i = path[path.size() - 1]
-	var dest_occupant := state.unit_at(dest)
-	if dest_occupant != null and dest_occupant != unit:
-		# Anyone on this unit's own side (always seen) blocks: allies are walked
-		# through, never stopped on, exactly like your own units. A hidden enemy is
-		# left to spring the ambush on apply rather than refused, which would reveal
-		# it. A visible enemy never reaches here — validate_path_steps caught it.
-		var visible: Dictionary = (
-			Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
-		)
-		if (
-			state.allied(dest_occupant.team, unit.team)
-			or Vision.can_see_unit(state, unit.team, dest_occupant, visible)
-		):
-			return "destination is occupied"
+	# Where a move may end is the flood fill's rule, asked rather than repeated
+	# here: allies are walked through and never stopped on, a hidden enemy is left
+	# to spring the ambush on apply rather than refused, which would reveal it, and
+	# a visible enemy never reaches here — validate_path_steps caught it.
+	if not MovementResolver.can_stop(state, unit, path[path.size() - 1]):
+		return "destination is occupied"
 	return ""
 
 
