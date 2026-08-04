@@ -36,8 +36,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   eligibility and save v8 carries it, because `acted` alone cannot distinguish an attack from a
   non-attack after loading. Older saves default it false. The roster is deliberately 5 / 5 / 4 /
   4, and the full balance gate is 18 × 18 × five scenarios × four seeds — both as that plan closed
-  them; `more-commanders-plan.html`'s MC1 has since seated Sera Lark with the Aurora Compact, so
-  they now read 5 / 5 / 5 / 4 over 19 × 19.
+  them; `more-commanders-plan.html` has since seated Sera Lark with the Aurora Compact (MC1) and
+  Iona Vance with the Meridian Coalition (MC2), so they now read 6 / 5 / 5 / 4 over 20 × 20.
 - `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
   tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
   income, vision, damage or luck. Its DF4 acceptance gate is currently **failing, knowingly**
@@ -193,7 +193,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   the banked-meter failure the toolkit exists to avoid. Three generals advise nothing on purpose
   (Orlov, Quill, Rowan): forecasts already play them right, and a silent doctrine is the seam
   working, not missing. `core/commander_type.gd` carries the repo's one `max-public-methods`
-  ignore — its width is the hook contract nineteen subclasses override, so the split the ratchet
+  ignore — its width is the hook contract twenty subclasses override, so the split the ratchet
   usually buys would be the mirror hook tree the commanders plan's D1 rejects; the ceiling stays
   21 for every facade-shaped class. D5: `make difficulty-check` stays byte-stable (it seats no
   commanders, and neutral advice is structurally zero); `make commander-balance` moved by design

@@ -43,7 +43,7 @@ make portraits       # regenerate the commander portraits + faction emblems
 make import          # (re)import assets headless
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
-make gallery-screenshot   # render all twenty commander cards (the G1 gate)
+make gallery-screenshot   # render all twenty-one commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
@@ -562,7 +562,7 @@ Each side may field a general whose *doctrine* bends the rules for their whole a
 defence, movement, vision, supply, capture, what a unit costs to build and what a kill is worth in
 funds — and who charges toward one **Command Power** that bends them further for a turn.
 
-Nineteen ship, spread across four factions (five each to the Meridian Coalition, the Iron
+Twenty ship, spread across four factions (six to the Meridian Coalition, five each to the Iron
 Dominion and the Aurora Compact, four to the Verdant League). `data/commanders/` is the
 roster: one `.tres` per general, carrying their doctrine line, power name and description, and
 every balance number. Read it — or the selection page's card, which binds the same fields —

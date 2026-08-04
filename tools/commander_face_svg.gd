@@ -322,6 +322,20 @@ const FACES := {
 		"bg": &"wedge",
 		"prop": &"baton",
 	},
+	&"iona_vance":
+	{
+		"skin": &"tan",
+		"hair": &"brown",
+		"style": &"bob",
+		"brow": &"soft",
+		"eyes": &"f",
+		"mouth": &"stern",
+		"facial": &"none",
+		"acc": &"none",
+		"pose": [0.0, 1.16, false],
+		"bg": &"bars",
+		"prop": &"baton",
+	},
 }
 
 var _accent: String

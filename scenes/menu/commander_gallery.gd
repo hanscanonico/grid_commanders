@@ -1,8 +1,8 @@
 extends Control
 ## Dev-only component gallery: renders a CommanderCard for every record the
-## CommanderDB holds — the neutral commander plus all nineteen generals — so the
+## CommanderDB holds — the neutral commander plus all twenty generals — so the
 ## G1 card foundation can be eyeballed and, more importantly, so building all
-## twenty at once proves no id is missing its art or its copy. If any card
+## twenty-one at once proves no id is missing its art or its copy. If any card
 ## failed to construct, the scene would crash before it could be captured, which
 ## is what turns the screenshot into a real gate.
 ##

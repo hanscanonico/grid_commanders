@@ -1,6 +1,6 @@
 # gdlint: ignore=max-public-methods
 # The width is the contract, not an accretion: every public method here is one
-# rule seam nineteen doctrine subclasses may override, so "move something out"
+# rule seam twenty doctrine subclasses may override, so "move something out"
 # would mean a second hook tree beside this one — the split the commander plan's
 # D1 rejects. The repo-wide ratchet stays where it is; this file alone answers
 # for its own count, and a new method still needs to be a new doctrine seam.
