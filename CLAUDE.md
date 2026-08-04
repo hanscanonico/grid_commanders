@@ -400,8 +400,9 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
   cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
-  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **Only AR1, AR2 and AR6d are
-  shipped** — the arena itself is not built, and nothing under `tools/` runs a tournament yet.
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1, AR2, AR3 and AR6d are
+  shipped** — the harness can now seat any candidate, but no milestone scores one yet, so nothing
+  under `tools/` runs a tournament.
   D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
   `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
   the moment the sim can see the measurement the measured game stops being the shipped one (the
@@ -463,6 +464,25 @@ that must survive any change; the full rationale, milestones and risk registers 
   bought 1.1× against the process pool's 3.0×, so it earns nothing and ships nothing.
   `docs/balance_sim.md` carries the measured scaling curve (peak at 6 workers on a 4+4-core M1;
   8 regresses) and is where a throughput claim about this machine belongs.
+  AR3 is the grammar for "play *this* vector", and it is a **third preset over the one match
+  loop**: `tools/run_ai_arena.gd` with `--red-profile=`/`--blue-profile=` naming an `AIProfile`
+  file, `--pairings=<file.json>` so one process plays a whole shard, and `matches.json` — one
+  record per match carrying the `Outcome` facts D4's fitness reads and nothing else, because at
+  arena volume the telemetry is the dominant write cost and a pairing worth a closer look is re-run
+  through `make balance-sim` with every instrument on. **`BalanceSideSpec` is untouched**: its
+  grammar is watch mode's too, so a profile path is a different flag rather than a third field in
+  it. Commanders are neutral throughout, which makes `doctrine_weight` inert (R8).
+  Two things had to become single authorities for the presets to stay one engine, and both are the
+  merge bar reading backwards: `BalanceMatchSchedule` owns which seeds a matchup plays and which
+  seatings (including that a mirror is played once), and `BalanceMatchEngine.army_value` owns the
+  margin both drivers report — the Lab now asks for both instead of deriving them, and its own
+  output is byte-identical across that extraction. The bar itself is that the arena and the Lab
+  play the *same matches*: 30 records against 30 rows over two boards and three pairings,
+  identical in all 15 fields both emit (`docs/balance_sim.md`, "Seating an arbitrary candidate").
+  The pool learned the preset rather than a second driver — `--preset=arena` selects the script,
+  the shard's flags, the marker resume reads (`matches.json`) and a JSON merge sibling; the shard
+  plan, the digest resume key and every Lab shard name are unchanged, and the arena's pair
+  separator is `::` because a side is a path and paths carry the `/` the Lab pairs on.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

@@ -217,6 +217,16 @@ static func tiebreak(state: GameState) -> int:
 	return 0
 
 
+## What a side's surviving army is worth: each unit's price, scaled by the health
+## it has left. A margin every preset over this loop reports, so it is priced
+## here rather than once per driver.
+static func army_value(state: GameState, team: int) -> int:
+	var total := 0
+	for unit in state.units_of(team):
+		total += unit.type.cost * unit.hp / 100
+	return total
+
+
 static func swap_team(team: int) -> int:
 	if team == 1:
 		return 2

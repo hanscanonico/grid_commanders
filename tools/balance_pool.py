@@ -1,37 +1,48 @@
 #!/usr/bin/env python3
-"""Balance pool — the Lab's matrix played on several cores at once.
+"""Balance pool — the offline matrix played on several cores at once.
 
 One headless Godot process per shard, `--workers` of them at a time, and
-**resumable**: a shard whose `summary.json` is already on disk is skipped, so a
+**resumable**: a shard whose marker artifact is already on disk is skipped, so a
 killed run costs the shard in flight and nothing else. That property is the
 reason this exists in the shape it does — a sweep that has to start over is a
 sweep nobody dares interrupt.
 
 A shard is one pairing on one board over a contiguous slice of the seed range
-(`--batch` seeds, handed to the Lab as `--seeds=` plus `--seed-offset=`). That
+(`--batch` seeds, handed to the driver as `--seeds=` plus `--seed-offset=`). That
 is the smallest unit of work that both amortises the engine boot (~0.9 s against
-~1.6 s a match) and is independently readable: it writes its own `matches.csv`
-and `summary.json` under `shards/`. Its directory is named for the arguments it
-was played with, digest and all, so a shard is reused only for the run it
-answers — see `Shard`.
+~1.6 s a match) and is independently readable: it writes its own artifacts under
+`shards/`. Its directory is named for the arguments it was played with, digest
+and all, so a shard is reused only for the run it answers — see `Shard`.
 
-**The Lab plays every match; this only decides who plays what, and when.** The
-merged `matches.csv` is what a single `make balance-sim` run of the same spec
+**The engine plays every match; this only decides who plays what, and when.**
+The merged `matches.csv` is what a single `make balance-sim` run of the same spec
 writes, row for row and byte for byte — that diff is the merge bar for any
 change to the sharding here. Nothing is aggregated: a merged summary would be a
 second opinion about numbers `BalanceRunSummary` already owns.
+
+Two presets sit over the one match loop and this drives either (`--preset=`):
+`lab` is `run_balance_sim.gd`, whose side is `<commander>:<tier>` and whose
+shards merge as CSV; `arena` is `run_ai_arena.gd`, whose side is a path to an
+`AIProfile` and whose shards merge as JSON. Everything else — the shard plan,
+the digest resume key, resume, status, `pool.json` — is the same code for both.
 
 Usage:
   tools/balance_pool.py --maps=ironworks --pairings=none:normal/none:hard \\
       --seeds=32 --batch=4 --days=100 --workers=4
 
+  tools/balance_pool.py --preset=arena --maps=ironworks \\
+      --pairings=data/ai/default.tres::reports/ai_arena/gen1/c7.tres --seeds=32
+
 Flags:
   --maps=a,b            shipped boards or Lab fixtures (required)
-  --pairings=r/b,r/b    `<red spec>/<blue spec>`, the Lab's own side grammar,
-                        passed through untouched (required)
+  --pairings=r/b,r/b    `<red side>/<blue side>` in the preset's own side
+                        grammar, passed through untouched (required). The arena
+                        pairs on `::` rather than `/`, because a side there is a
+                        path and paths carry the `/`.
+  --preset=lab|arena    which driver plays the shards (default lab)
   --seeds=N             paired seeds per pairing (default 4, the Lab's)
   --batch=N             seeds per shard (default 4)
-  --days=N              day cap; omitted, the Lab's own default stands
+  --days=N              day cap; omitted, the driver's own default stands
   --workers=N           processes at a time (default min(6, cores) — 6 is the
                         measured peak; the curve is in docs/balance_sim.md)
   --out=DIR             run directory, **relative to reports/** and refused if
@@ -44,8 +55,8 @@ Flags:
 
 Poll a live run with `cat <out>/status.txt`; `<out>/progress.log` is the record
 and `<out>/pool.json` the throughput reading. Exit status is 1 if any shard
-failed to write a summary — a shard that wrote one and still exited 1 is the
-Lab reporting a cap-stall finding, not a failed run.
+failed to write its marker — a shard that wrote one and still exited 1 is the
+driver reporting a cap-stall finding, not a failed run.
 
 Everything a run writes lands under `reports/`, and the driver refuses at
 startup to be pointed anywhere else. See `resolve_out`: the Lab resolves its own
@@ -81,42 +92,138 @@ DEFAULT_OUT_ROOT = os.path.join(REPORTS_ROOT, "balance_pool")
 DEFAULT_WORKERS = max(1, min(6, os.cpu_count() or 4))
 
 
+def lab_args(map_name, red, blue, offset, count, days):
+    """The Balance Lab's flags for one shard. A side is `<commander>:<tier>`."""
+    args = [
+        "--map=%s" % map_name,
+        "--red=%s" % red,
+        "--blue=%s" % blue,
+        "--seeds=%d" % count,
+        "--seed-offset=%d" % offset,
+        "--no-commands",
+    ]
+    if days:
+        args.append("--days=%d" % days)
+    return args
+
+
+def arena_args(map_name, red, blue, offset, count, days):
+    """The AI Arena's flags for one shard. A side is a path to an AIProfile, and
+    the arena writes no telemetry, so there is no `--no-commands` to switch off."""
+    args = [
+        "--map=%s" % map_name,
+        "--red-profile=%s" % red,
+        "--blue-profile=%s" % blue,
+        "--seeds=%d" % count,
+        "--seed-offset=%d" % offset,
+    ]
+    if days:
+        args.append("--days=%d" % days)
+    return args
+
+
+def _slug(spec):
+    return spec.replace(":", "-") or "default"
+
+
+def _profile_slug(path):
+    """A candidate is a path, so a shard is named for the file's stem: a slug
+    with a separator in it would nest the shard's own directory somewhere resume
+    never looks again."""
+    return os.path.splitext(os.path.basename(path))[0] or "profile"
+
+
+def merge_csv(dest, sources):
+    """Concatenates the shards' rows in plan order, one header."""
+    rows = 0
+    with open(dest, "w") as merged:
+        for index, source in enumerate(sources):
+            with open(source) as f:
+                header = f.readline()
+                if index == 0:
+                    merged.write(header)
+                for line in f:
+                    merged.write(line)
+                    rows += 1
+    return rows
+
+
+def merge_json(dest, sources):
+    """The same concatenation for a driver whose shard is one JSON array: the
+    records are read and re-emitted as one list, in the same plan order."""
+    records = []
+    for source in sources:
+        with open(source) as f:
+            records.extend(json.load(f))
+    with open(dest, "w") as merged:
+        json.dump(records, merged, indent="\t", sort_keys=True)
+    return len(records)
+
+
+def count_csv_rows(path):
+    with open(path) as f:
+        return max(0, sum(1 for _ in f) - 1)
+
+
+def count_json_records(path):
+    with open(path) as f:
+        return len(json.load(f))
+
+
+# Which driver plays a shard, what it is handed, and what it leaves behind. The
+# marker is what resume reads, so it has to be an artifact its driver writes in
+# one go at the end — both of these do, which is what keeps a shard on disk
+# either complete or absent rather than half true.
+PRESETS = {
+    "lab": {
+        "script": "res://tools/run_balance_sim.gd",
+        "args": lab_args,
+        "slug": _slug,
+        "pair_sep": "/",
+        "marker": "summary.json",
+        "artifacts": [("matches.csv", merge_csv), ("timeline.csv", merge_csv)],
+        "count": count_csv_rows,
+    },
+    "arena": {
+        "script": "res://tools/run_ai_arena.gd",
+        "args": arena_args,
+        "slug": _profile_slug,
+        # A side is a path, and paths carry the `/` the Lab pairs on.
+        "pair_sep": "::",
+        "marker": "matches.json",
+        "artifacts": [("matches.json", merge_json)],
+        "count": count_json_records,
+    },
+}
+
+
 class Shard:
     """One pairing on one board over a slice of the seed range — and its own
     resume key.
 
-    That key is the Lab argument list itself, digested into the shard's
+    That key is the driver's argument list itself, digested into the shard's
     directory name, so a shard on disk is reused only if it was played with the
     arguments this run would hand it. Naming the spec dimensions by hand is what
     a resume key must never do: the day cap was already missing from one, which
     replayed a 20-day sweep's shards as a 100-day answer, and the next flag added
-    to `args` would have fallen off the same list. A digest cannot forget one.
+    to `args` would have fallen off the same list. A digest cannot forget one —
+    and because the flags differ per preset, it separates the two presets' shards
+    for free.
     """
 
-    def __init__(self, map_name, red, blue, offset, count, days):
+    def __init__(self, preset, map_name, red, blue, offset, count, days):
+        self.preset = PRESETS[preset]
         self.map_name = map_name
         self.red = red
         self.blue = blue
         self.offset = offset
         self.count = count
-        self.args = [
-            "--map=%s" % map_name,
-            "--red=%s" % red,
-            "--blue=%s" % blue,
-            "--seeds=%d" % count,
-            "--seed-offset=%d" % offset,
-            "--no-commands",
-        ]
-        if days:
-            self.args.append("--days=%d" % days)
+        self.args = self.preset["args"](map_name, red, blue, offset, count, days)
+        slug = self.preset["slug"]
         digest = hashlib.sha1(" ".join(self.args).encode()).hexdigest()[:8]
         self.name = "%s__%s__vs__%s__s%d+%d__%s" % (
-            map_name, _slug(red), _slug(blue), offset, count, digest
+            map_name, slug(red), slug(blue), offset, count, digest
         )
-
-
-def _slug(spec):
-    return spec.replace(":", "-") or "default"
 
 
 def resolve_out(out):
@@ -152,6 +259,7 @@ def parse_args(argv):
     p = argparse.ArgumentParser(add_help=True, description=__doc__)
     p.add_argument("--maps", required=True)
     p.add_argument("--pairings", required=True)
+    p.add_argument("--preset", default="lab", choices=sorted(PRESETS))
     p.add_argument("--seeds", type=int, default=4)
     p.add_argument("--batch", type=int, default=4)
     p.add_argument("--days", type=int, default=0)
@@ -164,11 +272,14 @@ def parse_args(argv):
     if not maps:
         p.error("--maps is a comma list of boards, got '%s'" % args.maps)
     args.maps = maps
+    separator = PRESETS[args.preset]["pair_sep"]
     pairings = []
     for text in args.pairings.split(","):
-        red, sep, blue = text.strip().partition("/")
+        red, sep, blue = text.strip().partition(separator)
         if not sep:
-            p.error("a pairing is <red spec>/<blue spec>, got '%s'" % text)
+            p.error(
+                "a %s pairing is <red>%s<blue>, got '%s'" % (args.preset, separator, text)
+            )
         pairings.append((red.strip(), blue.strip()))
     args.pairings = pairings
     for name, value in (("seeds", args.seeds), ("batch", args.batch), ("workers", args.workers)):
@@ -183,9 +294,12 @@ def parse_args(argv):
 def run_name(args):
     """Derived from the spec, never a clock — the Lab's rule, and here it is also
     the resume key: rerunning a sweep finds its own directory and skips what it
-    already played."""
-    parts = ["-".join(args.maps)]
-    parts += ["%s_vs_%s" % (_slug(r), _slug(b)) for r, b in args.pairings]
+    already played. The preset joins it only when it is not the default one, so
+    every directory a Lab sweep already wrote keeps its name."""
+    slug = PRESETS[args.preset]["slug"]
+    parts = [] if args.preset == "lab" else [args.preset]
+    parts.append("-".join(args.maps))
+    parts += ["%s_vs_%s" % (slug(r), slug(b)) for r, b in args.pairings]
     parts.append("s%d_b%d" % (args.seeds, args.batch))
     if args.days:
         parts.append("d%d" % args.days)
@@ -194,13 +308,14 @@ def run_name(args):
 
 def build_shards(args):
     """Map by map, pairing by pairing, seed slice by seed slice — the order the
-    Lab itself would play them in, which is what makes the merge a concatenation."""
+    driver itself would play them in, which is what makes the merge a
+    concatenation."""
     shards = []
     for map_name in args.maps:
         for red, blue in args.pairings:
             for offset in range(0, args.seeds, args.batch):
                 count = min(args.batch, args.seeds - offset)
-                shards.append(Shard(map_name, red, blue, offset, count, args.days))
+                shards.append(Shard(args.preset, map_name, red, blue, offset, count, args.days))
     return shards
 
 
@@ -208,9 +323,9 @@ def shard_dir(out, shard):
     return os.path.join(out, "shards", shard.name)
 
 
-def match_rows(path):
-    with open(path) as f:
-        return max(0, sum(1 for _ in f) - 1)
+def marker_path(out, shard):
+    """What resume reads: the artifact its driver writes last and in one go."""
+    return os.path.join(ROOT, shard_dir(out, shard), shard.preset["marker"])
 
 
 class Children:
@@ -259,11 +374,11 @@ CHILDREN = Children()
 
 def run_shard(shard, args):
     out_rel = shard_dir(args.out, shard)
-    summary = os.path.join(ROOT, out_rel, "summary.json")
-    if os.path.exists(summary):
+    marker = marker_path(args.out, shard)
+    if os.path.exists(marker):
         return ("skip", shard, 0.0, 0, 0)
     cmd = [
-        GODOT, "--headless", "--path", ".", "-s", "res://tools/run_balance_sim.gd", "--",
+        GODOT, "--headless", "--path", ".", "-s", shard.preset["script"], "--",
         *shard.args, "--out=%s" % out_rel,
     ]
     started = time.time()
@@ -282,32 +397,28 @@ def run_shard(shard, args):
     elapsed = time.time() - started
     if CHILDREN.stopping():
         return ("cancel", shard, elapsed, rc, 0)
-    if not os.path.exists(summary):
+    if not os.path.exists(marker):
         failures = os.path.join(ROOT, args.out, "failures")
         os.makedirs(failures, exist_ok=True)
         with open(os.path.join(failures, shard.name + ".log"), "w") as f:
             f.write("rc=%d elapsed=%.1fs\ncmd=%s\n\n" % (rc, elapsed, " ".join(cmd)))
             f.write(stdout[-4000:] + "\n--- stderr ---\n" + stderr[-4000:])
         return ("FAIL", shard, elapsed, rc, 0)
-    played = match_rows(os.path.join(ROOT, out_rel, "matches.csv"))
+    primary = shard.preset["artifacts"][0][0]
+    played = shard.preset["count"](os.path.join(ROOT, out_rel, primary))
     return ("done", shard, elapsed, rc, played)
 
 
-def merge(out, shards, name):
-    """Concatenates the shards' rows in plan order, one header. A shard that is
-    missing means the run is incomplete and the caller does not get here."""
-    dest = os.path.join(ROOT, out, name)
-    rows = 0
-    with open(dest, "w") as merged:
-        for index, shard in enumerate(shards):
-            with open(os.path.join(ROOT, shard_dir(out, shard), name)) as f:
-                header = f.readline()
-                if index == 0:
-                    merged.write(header)
-                for line in f:
-                    merged.write(line)
-                    rows += 1
-    return rows
+def merge(out, shards, name, merger):
+    """Concatenates the shards' records in plan order. A shard that is missing
+    means the run is incomplete and the caller does not get here."""
+    sources = [os.path.join(ROOT, shard_dir(out, shard), name) for shard in shards]
+    return merger(os.path.join(ROOT, out, name), sources)
+
+
+## The arena's sides in the resume-key cases: two paths, which is the shape the
+## key has to survive — a candidate is a file, not a `<commander>:<tier>` spec.
+AR_SIDES = ("data/ai/default.tres", "reports/arena/gen1/c7.tres")
 
 
 def self_check():
@@ -332,13 +443,24 @@ def self_check():
         print("%-4s --out=%-22s -> %s" % (
             "ok" if ok else "FAIL", out, error or path))
 
-    def key(days):
-        return Shard("ironworks", "none:normal", "none:hard", 0, 4, days).name
+    def key(days, preset="lab", red=None, blue=None):
+        sides = {"lab": ("none:normal", "none:hard"), "arena": AR_SIDES}[preset]
+        return Shard(preset, "ironworks", red or sides[0], blue or sides[1], 0, 4, days).name
 
     for label, ok in (
         ("same spec, same key", key(20) == key(20)),
         ("different day cap, different key", key(20) != key(100)),
-        ("lab default day cap, different key", key(0) != key(100)),
+        ("driver default day cap, different key", key(0) != key(100)),
+        ("a preset's shards are its own", key(100) != key(100, "arena")),
+        (
+            "a candidate's path slugs to a bare name",
+            os.sep not in key(100, "arena"),
+        ),
+        (
+            "two candidates of the same name stay apart",
+            key(100, "arena", red="reports/g1/c1.tres")
+            != key(100, "arena", red="reports/g2/c1.tres"),
+        ),
     ):
         failures += 0 if ok else 1
         print("%-4s resume key: %s" % ("ok" if ok else "FAIL", label))
@@ -413,15 +535,21 @@ def main(argv):
         log.write("=== pool end: %d FAILED ===\n" % counts["FAIL"])
         print("balance-pool: %d shard(s) failed; see %s/failures" % (counts["FAIL"], args.out))
         return 1
-    matches = merge(args.out, shards, "matches.csv")
-    merge(args.out, shards, "timeline.csv")
+    preset = PRESETS[args.preset]
+    matches = 0
+    for index, (name, merger) in enumerate(preset["artifacts"]):
+        rows = merge(args.out, shards, name, merger)
+        if index == 0:
+            matches = rows
+    separator = preset["pair_sep"]
     reading = {
         "spec": {
+            "preset": args.preset,
             "maps": args.maps,
-            "pairings": ["%s/%s" % (r, b) for r, b in args.pairings],
+            "pairings": [separator.join((r, b)) for r, b in args.pairings],
             "seeds": args.seeds,
             "batch": args.batch,
-            "days": args.days or "(lab default)",
+            "days": args.days or "(driver default)",
         },
         "workers": args.workers,
         "shards": len(shards),

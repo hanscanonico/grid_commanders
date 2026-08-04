@@ -95,9 +95,25 @@ balance-sim:
 # Not a gate; it is how a long sweep is played:
 #   make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seeds=32"
 # docs/balance_sim.md has the flags, the merge bar and the measured scaling curve.
+# The pool drives either preset over that engine: `--preset=arena` plays the
+# shards with tools/run_ai_arena.gd instead, whose sides are profile paths and
+# whose shards merge as JSON.
 POOL ?=
 balance-pool:
 	GODOT="$(GODOT)" tools/balance_pool.py $(POOL)
+
+# The AI Arena's match driver (arena plan AR3): the same one match loop as the
+# Lab, given the one input the Lab's <commander>:<tier> grammar cannot state —
+# "play *this* AIProfile". Writes one JSON record per match and nothing else, so
+# a tournament's telemetry cost is a record rather than a timeline; a pairing
+# worth a closer look is re-run through `make balance-sim` with the full
+# instruments on. An instrument, not a gate:
+#   make ai-arena ARENA="--red-profile=data/ai/default.tres --blue-profile=data/ai/hard.tres --seeds=8"
+#   make ai-arena ARENA="--pairings=reports/ai_arena/gen1/shard0.json"
+# A whole matrix goes through the pool: make balance-pool POOL="--preset=arena …"
+ARENA ?=
+ai-arena:
+	$(GODOT) --headless --path . -s res://tools/run_ai_arena.gd -- $(ARENA)
 
 # Watch a match from a report play out in the real game window, both sides AI.
 # Same spec grammar and the same seed, so a suspicious row in matches.csv
@@ -229,4 +245,4 @@ gallery-screenshot: import
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-pool balance-watch replay replay-report
+	balance-sim balance-pool ai-arena balance-watch replay replay-report
