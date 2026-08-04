@@ -548,13 +548,22 @@ static func _tally(into: Dictionary, id: StringName) -> void:
 ## `infantry x2;tank` — ids alphabetical so a rerun writes the same cell, counts
 ## suffixed only above one, and semicolons throughout so the field never needs
 ## CSV quoting.
+##
+## Sorted as `String`, never as `StringName`: a `StringName` compares by its
+## interned pointer, so sorting the keys directly orders them by where the engine
+## happened to allocate them, which is per-process. That reads as alphabetical
+## most runs and silently is not — two identical runs wrote `infantry;anti_air`
+## and `anti_air;infantry`, which is the rerun-writes-the-same-cell promise above
+## failing exactly when a sharded sweep merges many processes into one timeline.
 static func _tally_text(tally: Dictionary) -> String:
-	var ids: Array = tally.keys()
+	var ids: Array[String] = []
+	for id: StringName in tally:
+		ids.append(String(id))
 	ids.sort()
 	var parts: Array[String] = []
-	for id: StringName in ids:
-		var count: int = tally[id]
-		parts.append(String(id) if count == 1 else "%s x%d" % [id, count])
+	for id in ids:
+		var count: int = tally[StringName(id)]
+		parts.append(id if count == 1 else "%s x%d" % [id, count])
 	return ";".join(parts)
 
 

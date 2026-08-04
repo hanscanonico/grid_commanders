@@ -213,6 +213,20 @@ func test_repeated_builds_of_one_type_are_tallied_with_a_count() -> void:
 	assert_eq(row["built_value"], infantry_type.cost * 2)
 
 
+## The cell has to read the same in every process a sweep is played across, and a
+## sharded run merges many of them into one timeline. Sorting the tally's
+## `StringName` keys directly orders them by interned pointer instead — per
+## process, and alphabetical only by luck.
+func test_a_mixed_tally_is_alphabetical_rather_than_the_order_it_was_built_in() -> void:
+	var state := _state("[terrain]\nB.B.\n[owners]\n1 0 0\n1 2 0\n[units]\n1 i 1 0")
+	state.funds[1] = 20000
+	var recorder := _recorder(state)
+	_apply(recorder, state, BuildCommand.new(1, unit_db.by_symbol("t"), Vector2i(0, 0)))
+	_apply(recorder, state, BuildCommand.new(1, unit_db.by_symbol("i"), Vector2i(2, 0)))
+	var row := _close(recorder, state)
+	assert_eq(row["built"], "infantry;tank", "the tank was built first and still sorts second")
+
+
 func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
 	state.set_commander(1, CommanderDB.load_default().by_id(&"dane_ferrow"))

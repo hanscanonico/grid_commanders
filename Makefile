@@ -88,6 +88,17 @@ SIM ?=
 balance-sim:
 	$(GODOT) --headless --path . -s res://tools/run_balance_sim.gd -- $(SIM)
 
+# The same Lab, sharded across processes: one headless engine per shard, several
+# at a time, and resumable — a shard whose summary.json exists is skipped, so a
+# killed sweep costs the shard in flight and nothing else. The merged matches.csv
+# is what the same spec written as one `balance-sim` run produces, byte for byte.
+# Not a gate; it is how a long sweep is played:
+#   make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seeds=32"
+# docs/balance_sim.md has the flags, the merge bar and the measured scaling curve.
+POOL ?=
+balance-pool:
+	GODOT="$(GODOT)" tools/balance_pool.py $(POOL)
+
 # Watch a match from a report play out in the real game window, both sides AI.
 # Same spec grammar and the same seed, so a suspicious row in matches.csv
 # becomes the exact battle it describes:
@@ -218,4 +229,4 @@ gallery-screenshot: import
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-watch replay replay-report
+	balance-sim balance-pool balance-watch replay replay-report

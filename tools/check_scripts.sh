@@ -108,6 +108,15 @@ if (($# == 0)); then
 		printf '%s\n' "$live_validates" >&2
 		failed=$((failed + 1))
 	fi
+
+	# The balance pool is Python, so `make test` never reaches it. Its two pure
+	# decisions — where a run may write, and what a resumed shard is keyed on —
+	# are pinned by its own self-check, which needs no engine.
+	if ! pool_check="$(tools/balance_pool.py --self-check 2>&1)"; then
+		echo "check: tools/balance_pool.py --self-check failed" >&2
+		printf '%s\n' "$pool_check" >&2
+		failed=$((failed + 1))
+	fi
 fi
 
 if ((failed > 0)); then

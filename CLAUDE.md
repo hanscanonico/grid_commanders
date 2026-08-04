@@ -400,8 +400,8 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
   cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
-  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **Only AR1 and AR6d are shipped**
-  — the arena itself is not built, and nothing under `tools/` runs a tournament yet.
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **Only AR1, AR2 and AR6d are
+  shipped** — the arena itself is not built, and nothing under `tools/` runs a tournament yet.
   D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
   `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
   the moment the sim can see the measurement the measured game stops being the shipped one (the
@@ -438,6 +438,31 @@ that must survive any change; the full rationale, milestones and risk registers 
   difficulty plan's D2 owns tier numbers), so AR6d is inert in every shipped tier.
   Known and deliberate: the AR1 cache is inert with fog on, so the live game gets no speedup and
   only the offline tools do.
+  AR2 is the pool that plays those matches on more than one core, and its shape is three rules.
+  **`tools/balance_pool.py` decides who plays what and when; the Lab plays every match** — the
+  driver launches `run_balance_sim.gd` processes and concatenates their rows, adds no loop (balance
+  D1) and aggregates nothing, because a merged summary would be a second opinion about numbers
+  `BalanceRunSummary` owns. **A shard is one pairing on one board over a slice of the seed range,
+  and a shard whose `summary.json` exists is skipped** — the Atlas's resume rule, which holds
+  because the Lab writes a shard's artifacts in one go at the end, so the marker is never half
+  true. **The seed formula stays the Lab's**: `--seed-offset=` is the one flag added, so a shard
+  asks for its slice of the range instead of deriving seeds a second time — which is what makes
+  the merge bar hold and what it is: a merged `matches.csv` byte-identical to the same spec played
+  as one Lab run (`timeline.csv` too, bar `planning_ms`, the wall-clock column the determinism test
+  already excludes), interrupted-and-resumed runs included. Two consequences of that bar are
+  durable. A run may only write **under `reports/`** and the driver refuses anything else at
+  startup, because `BalanceReportWriter.prepare_dir` resolves the Lab's `--out` against the
+  *project* root and Godot's `path_join` re-roots an absolute path under it — so an outside path
+  has the Lab writing inside the repo where the driver never looks, and resume, keyed on a shard's
+  `summary.json`, replays every shard forever while calling each one failed. And **never sort
+  `StringName`s when the order is observable**: they compare by interned pointer, so
+  `BalanceMatchRecorder._tally_text` was ordering the timeline's `built`/`killed`/`lost` cells by
+  whatever the process's heap said rather than alphabetically as its own comment promised; it sorts
+  as `String` now, which is what makes a timeline merged from many processes reproducible. The plan's threading spike was built
+  and **abandoned**: per-match determinism held bit for bit across eight threads, but eight threads
+  bought 1.1× against the process pool's 3.0×, so it earns nothing and ships nothing.
+  `docs/balance_sim.md` carries the measured scaling curve (peak at 6 workers on a 4+4-core M1;
+  8 regresses) and is where a throughput claim about this machine belongs.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

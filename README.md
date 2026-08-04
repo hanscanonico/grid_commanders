@@ -15,7 +15,8 @@ mkdir -p bin && curl -sL -o /tmp/godot.zip \
 ```
 
 `make lint` and `make format` additionally need [gdtoolkit](https://github.com/Scony/godot-gdscript-toolkit)
-(`pipx install "gdtoolkit==4.*"`). Everything else runs off the vendored engine alone.
+(`pipx install "gdtoolkit==4.*"`). `make check` and `make balance-pool` need `python3` (stdlib
+only, no packages). Everything else runs off the vendored engine alone.
 
 Working in a `git worktree`? `bin/` is gitignored, so a new worktree has no engine and every
 target fails with "Godot binary not found". Symlink the one you already have:
@@ -29,7 +30,7 @@ make hotseat         # skip the menu: straight into a two-player hot-seat match 
 make verify          # the merge gate: check + lint + format-check + test, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
-make check           # audit every .gd file: parse/types + architecture seams
+make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
 make tiles           # rebuild the art: ground tiles, PixVoxel + vendored unit sprites, audit, import
@@ -46,6 +47,7 @@ make gallery-screenshot   # render all nineteen commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
+make balance-pool         # the same Lab, sharded across processes: resumable, several cores
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table

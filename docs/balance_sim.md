@@ -67,6 +67,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 | `--red=` / `--blue=` | Side specs; default `none:normal` |
 | `--seeds=` | Paired seed count, default 4. Each seed plays **both seats** |
 | `--seed=` | One specific seed instead — replays a single row |
+| `--seed-offset=` | Start `--seeds=` counting N seeds into the range — how a shard of a parallel run asks for its slice of it |
 | `--days=` | Day cap before a match is scored on points, default 20 |
 | `--sweep=` | `commanders`, `maps` or `tiers` — one free axis per run |
 | `--tier=` | The tier both sides play at, for `--sweep=commanders` |
@@ -303,6 +304,150 @@ corroboration of the standing base-game bias debt, which
 Note the confidence column: at a 25-day cap most of these games still ended on
 the day-cap tiebreak, so the *ordering* between adjacent rows is soft even where
 the extremes are not.
+
+## Playing a sweep in parallel (arena plan AR2)
+
+`make balance-pool` — `tools/balance_pool.py` — plays one matrix as several
+headless Lab processes at once. It is Python because the matrix expansion, the
+per-shard timeout, the deterministic merge and the JSON run record are all a few
+lines of stdlib and none of them are pleasant in shell; the Grand Atlas's driver,
+which this is modelled on, made the same call. It needs nothing but `python3`.
+
+```sh
+make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seeds=32 --days=100"
+```
+
+| Flag | Meaning |
+|---|---|
+| `--maps=` | Comma list of boards |
+| `--pairings=` | Comma list of `<red spec>/<blue spec>` — the Lab's own side grammar, passed through untouched |
+| `--seeds=` | Paired seeds per pairing (default 4, the Lab's) |
+| `--batch=` | Seeds per shard (default 4) |
+| `--days=` | Day cap; omitted, the Lab's own default stands |
+| `--workers=` | Processes at a time (default `min(6, cores)` — 6 is the measured peak below) |
+| `--out=` | Run directory, **relative to `reports/`**, default `reports/balance_pool/<spec>` |
+| `--timeout=` | Seconds per shard, default 3600 |
+| `--dry-run` | Resolve the spec, print the shard plan, and stop |
+| `--self-check` | Run the `--out` and resume-key rules over their cases and stop |
+
+**Everything a run writes lands under `reports/`, and a path that would leave it
+is refused before a match is played.** `--out=x/y` means `reports/x/y`; a leading
+`reports/` is accepted rather than doubled, so both spellings work; an absolute
+path or one that climbs out with `..` is an error at startup. That is a
+containment rule and not a tidiness one: `BalanceReportWriter.prepare_dir`
+resolves the Lab's own `--out` against the *project* root, and Godot's
+`path_join` re-roots an absolute path under it, so `--out=/tmp/x` has the Lab
+writing `<repo>/tmp/x` while the driver reads `/tmp/x` — every shard reported
+failed with its results on disk the whole time, and resume, which is keyed on
+finding a shard's `summary.json`, replaying all of them forever. Refusing the
+path is what makes that unreachable. `--self-check` exercises those rules and the
+resume key's, and `tools/check_scripts.sh` runs it, so `make check` and
+`make verify` gate them even though `make test` reaches GDScript only.
+
+**A shard is one pairing on one board over a contiguous slice of the seed
+range** — the smallest unit of work that amortises the engine boot (~0.9 s
+against ~2 s a match) and is still independently readable, since it writes its
+own `matches.csv` and `summary.json` under `shards/`. The run directory also
+holds `progress.log`, `status.txt` (poll a live run with `cat`) and `pool.json`,
+which records the throughput and the load average it was measured under.
+
+**Resumable, and that is the point.** A shard whose `summary.json` exists is
+skipped, so a killed sweep costs the shard in flight and nothing else — rerun the
+same command to pick it up, and Ctrl-C ends the engines in flight rather than
+waiting them out. The Lab writes a shard's artifacts in one go at the end, so a
+shard is on disk either complete or not at all; the marker cannot be half true.
+The run directory is derived from the spec like the Lab's is, so it is also the
+resume key: the same sweep asked for twice finds its own work. **A shard is keyed
+on the arguments it was played with**, digest and all, so the same directory
+asked for a different sweep — `--out=mine --days=20`, then `--out=mine
+--days=100` — replays rather than handing back the answer to the other question.
+
+The driver **aggregates nothing**. It expands the matrix, runs processes and
+concatenates their rows in plan order, because a merged summary would be a second
+opinion about numbers `BalanceRunSummary` already owns — the per-shard
+`summary.json` files stay readable, and a pairing worth a closer look is re-run
+through `make balance-sim` with the full instruments on — shards are played
+`--no-commands`, so a sweep leaves no `commands.jsonl` behind.
+
+### The merge bar
+
+**A sharded run is the single-threaded run, row for row.** Measured on
+`ironworks`, `none:normal` vs `none:hard`, 8 seeds, 100-day cap — one Lab run
+against four shards of two seeds at four workers:
+
+| Artifact | Result |
+|---|---|
+| `matches.csv` | byte-identical (`41c23a74…`) |
+| `timeline.csv` | identical bar `planning_ms`, the wall-clock column the determinism test already excludes |
+
+The same diff holds for a run that was killed halfway and resumed, which is the
+proof that a resumed sweep is not a differently-played one.
+
+**The bar earned itself on the way in.** It first failed on the timeline's
+`built` / `killed` / `lost` cells — same units, same counts, different order —
+and two *identical* pool runs then disagreed with each other the same way, which
+ruled out the sharding. The cause was in the recorder:
+`BalanceMatchRecorder._tally_text` sorted the tally's `StringName` keys, and a
+`StringName` compares by its interned pointer rather than by its text, so the
+cells were ordered by wherever the engine happened to allocate the ids — per
+process, and alphabetical only by luck, which is exactly the promise that
+function's own comment makes. It now sorts as `String`. Nothing reads those cells
+but a human and `_count_of`, which counts rather than orders, so `matches.csv`
+and `summary.json` cannot move — but the reports of the two committed gates carry
+a `timeline.csv` whose mixed-unit cells will now read alphabetically, and
+reproducibly, where before they read whatever that process's heap said.
+
+### What it buys, measured
+
+48 matches (`ironworks`, neutral mirror at Normal, 100-day cap, 16 shards of 3
+seeds), the same workload at every worker count, run twice — once ascending, once
+descending — because a machine's thermal and load state moves under you and two
+readings hours apart are not comparable:
+
+| Workers | Pass 1 (asc) | Pass 2 (desc) | Mean | Speedup | Load at start (p1 / p2) |
+|---|---|---|---|---|---|
+| 1 | 26.1 | 26.1 | **26.1** | 1.00× | 4.5 / 7.5 |
+| 2 | 40.9 | 41.5 | **41.2** | 1.58× | 4.9 / 10.6 |
+| 3 | 56.2 | 54.2 | **55.2** | 2.12× | 6.1 / 11.8 |
+| 4 | 63.3 | 60.8 | **62.1** | 2.38× | 7.1 / 13.4 |
+| 6 | 79.7 | 78.8 | **79.3** | 3.04× | 10.4 / 14.7 |
+| 8 | 72.8 | 75.5 | **74.2** | 2.84× | 11.2 / 16.9 |
+
+Matches per minute, on an Apple M1 with **4 performance and 4 efficiency cores**
+and a **4.3 baseline load average with nothing of ours running**. The two passes
+agree inside 4% at every worker count despite the load drifting from 4.5 to 16.9
+across the hour, so the curve is the machine's and not the moment's.
+
+**It peaks at 6 and regresses at 8.** Four workers is not the ceiling — the
+efficiency cores are worth a further 28% — but eight is past it: the pool then
+competes with the machine's own standing load for the same cores, and the
+scheduler spreads each engine thinner than it fills a core. "Eight cores, one
+busy" was the premise; "six workers, three times the throughput" is the
+measurement.
+
+Per match at the peak: **0.76 s of wall clock for a 100-day `ironworks` match**,
+against 2.0–2.3 s single-threaded. The single-threaded figure is worth stating
+carefully, because it is seed-dependent: the first four seeds of this board
+average 1.6 s a match and the first 48 average 2.0 s, so a four-seed sample reads
+20% cheap.
+
+### The thread spike, abandoned
+
+The plan's timeboxed alternative was N matches in N threads over
+`WorkerThreadPool` inside one engine. It was built and measured, and it is not
+being shipped:
+
+- **Reproducibility held.** Eight matches played sequentially and then in eight
+  threads produced identical digests — winner, day, command and rejection counts,
+  the final RNG state, and every surviving unit's cell, HP, ammo and fuel. Zero
+  mismatches.
+- **The throughput did not.** 16.2 s sequential against 14.5 s threaded: **1.1×**
+  for eight threads, roughly 1.7 cores busy. GDScript does not run eight
+  independent interpreters, and the process pool's 3.0× is not close to being in
+  reach.
+
+Threads were an optimisation, and this one does not pay for the risk surface it
+carries. The process pool ships alone.
 
 ## Runtime
 
