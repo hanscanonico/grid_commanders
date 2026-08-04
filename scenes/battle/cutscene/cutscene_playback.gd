@@ -85,7 +85,7 @@ func build(layer: CanvasLayer, on_layout: Callable) -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
 	_dim = ColorRect.new()
-	_dim.color = Color(0.078, 0.086, 0.118, 0.0)
+	_dim.color = Color(CutscenePalette.DIM, 0.0)
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_dim)
 	band = Control.new()
@@ -105,7 +105,7 @@ func build_bars() -> void:
 
 func _new_bar() -> ColorRect:
 	var bar := ColorRect.new()
-	bar.color = Color(0.055, 0.063, 0.078)
+	bar.color = CutscenePalette.BAR
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(bar)
 	return bar

@@ -10,10 +10,6 @@ extends Control
 ## the meter's drop by construction (the director splits the sim's committed
 ## delta), so a press mid-mash lands on the same number the terrain panel reports.
 
-const INK := Color(0.078, 0.090, 0.102)
-const GOLD := Color(0.969, 0.788, 0.282)
-const HP_LOW := Color(0.863, 0.282, 0.235)
-const SLATE_800 := Color(0.161, 0.184, 0.212, 0.9)
 ## The points meter's ticks — a full property, and the sim's own number rather
 ## than a copy of it: the meter and the terrain panel drain the same threshold.
 const METER_TOTAL := GameState.CAPTURE_POINTS
@@ -75,7 +71,7 @@ func _draw_meter() -> void:
 	)
 	var big := "%d" % shown
 	var big_w := font.get_string_size(big, HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
-	var num_tint := HP_LOW if shown <= 0 else GOLD
+	var num_tint := UiTheme.DANGER if shown <= 0 else CutscenePalette.GOLD
 	_stroked(font, Vector2(right - 26.0 - big_w, top + 34.0), big, 30, Color(num_tint, meter_p))
 	_stroked(
 		font,
@@ -86,11 +82,11 @@ func _draw_meter() -> void:
 	)
 	var pip_w := 5.0
 	var gap := 1.0
+	var lit := Color(CutscenePalette.GOLD, meter_p)
+	var spent := Color(1.0, 1.0, 1.0, 0.15 * meter_p)
 	for i in METER_TOTAL:
 		var x := right - (pip_w + gap) * (METER_TOTAL - i)
-		var lit := i < shown
-		var tint := Color(GOLD, meter_p) if lit else Color(1.0, 1.0, 1.0, 0.15 * meter_p)
-		draw_rect(Rect2(x, top + 42.0, pip_w, 9.0), tint)
+		draw_rect(Rect2(x, top + 42.0, pip_w, 9.0), lit if i < shown else spent)
 
 
 func _draw_chips() -> void:
@@ -103,7 +99,8 @@ func _draw_chips() -> void:
 		var alpha := CutsceneFx.ramp(p, [0.0, 0.15, 0.75, 1.0], [0.0, 1.0, 1.0, 0.0])
 		var text := "-%d" % chip_values[i]
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
-		_stroked(font, chip_at + Vector2(-w * 0.5, rise), text, 26, Color(GOLD, alpha))
+		var tint := Color(CutscenePalette.GOLD, alpha)
+		_stroked(font, chip_at + Vector2(-w * 0.5, rise), text, 26, tint)
 
 
 ## Bits of confetti thrown up when the property flips, in the capturer's accent
@@ -115,7 +112,7 @@ func _draw_specks() -> void:
 		var ang := -PI * 0.5 + (i - 3.5) * 0.32
 		var reach := lerpf(10.0, 130.0 + (i % 3) * 30.0, specks_p)
 		var at := specks_at + Vector2(cos(ang), sin(ang)) * reach
-		var tint := specks_accent if i % 2 == 0 else GOLD
+		var tint := specks_accent if i % 2 == 0 else CutscenePalette.GOLD
 		draw_set_transform(at, specks_p * 4.2 + i * 0.7, Vector2.ONE)
 		draw_rect(Rect2(-5.0, -5.0, 10.0, 10.0), Color(tint, 1.0 - specks_p))
 		draw_set_transform(Vector2.ZERO)
@@ -129,7 +126,7 @@ func _draw_banner() -> void:
 	var center := Vector2(size.x * 0.5, size.y * 0.36)
 	draw_set_transform(center, 0.0, Vector2(scale, scale))
 	var size_main := 40 if banner_complete else 30
-	var tint := GOLD if banner_complete else Color(1.0, 1.0, 1.0)
+	var tint := CutscenePalette.GOLD if banner_complete else Color(1.0, 1.0, 1.0)
 	var main_w := font.get_string_size(banner_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size_main).x
 	_stroked(font, Vector2(-main_w * 0.5, 0.0), banner_text, size_main, tint)
 	if banner_sub != "":
@@ -141,7 +138,6 @@ func _draw_banner() -> void:
 ## Outlined text. Everything the overlay prints sits over moving art, so nothing
 ## is drawn without a stroke around it — the same rule CutsceneFx follows.
 func _stroked(font: Font, at: Vector2, text: String, font_size: int, tint: Color) -> void:
-	draw_string_outline(
-		font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, Color(INK, tint.a)
-	)
+	var ink := Color(CutscenePalette.STROKE, tint.a)
+	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, ink)
 	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, tint)

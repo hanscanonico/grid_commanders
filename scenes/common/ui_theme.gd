@@ -49,6 +49,12 @@ const INK_3 := Color(0.54118, 0.56471, 0.60000)  # #8a9099 faint text — HUD la
 ## meter, an ammo bar and a defense star is this one token, and the HUD handoff
 ## calls it out as the bug that left the commander meter unstyled.
 const AMMO := Color(0.87843, 0.66275, 0.18039)
+## #f4be32. The commander select page's own accent for "locked" — its focus
+## rings and the tick on a confirmed seat — kept through the alignment pass
+## because gold there means chosen, which no faction fill may say (plan D6). A
+## lighter gold than AMMO and deliberately a second token rather than a second
+## copy: it was an unnamed literal in two files before COM-89.
+const SELECT_GOLD := Color(0.95686, 0.74510, 0.19608)
 const DANGER := Color(0.84706, 0.29020, 0.23529)  # #d84a3c critical HP
 ## The signature hard drop shadow: ink, 90% opaque, zero blur. rgba(35,39,43,.9).
 const SHADOW_INK := Color(0.13725, 0.15294, 0.16863, 0.9)
@@ -283,6 +289,15 @@ static func hp_color(hp: int) -> Color:
 	if hp > 3:
 		return AMMO
 	return DANGER
+
+
+## The wash a full-screen page or sheet lays over whatever it covers, at the
+## opacity that page asks for — near-solid for a page that replaces the screen, a
+## dim for one that only holds it. The backdrop slate, and only ever that: three
+## surfaces mixed three darks between them, one of them a value defined nowhere
+## else (COM-90). How opaque stays the page's own call.
+static func veil(alpha: float) -> Color:
+	return Color(SLATE_900, alpha)
 
 
 ## A panel's title band — the header bar that spans the top of a Panel. Ink by

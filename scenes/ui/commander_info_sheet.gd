@@ -82,7 +82,7 @@ func _build() -> void:
 	# and stack a second veil over the first, so what the screen actually showed was
 	# the pair (~0.999). With the duplicate build gone, 0.97 alone let the board ghost
 	# through. This keeps the authored "veil over the board" reading without the bleed.
-	bg.color = Color(0.086, 0.106, 0.118, 0.995)
+	bg.color = UiTheme.veil(0.995)
 	# set_anchors_preset alone rewrites the offsets to preserve the rect a control
 	# already has, so it only bites a node that is *already* parented to a sized
 	# parent — the sheet's own call above, added to a full-size battle scene. bg and

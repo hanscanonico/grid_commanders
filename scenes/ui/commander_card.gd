@@ -24,6 +24,11 @@ const MIN_WIDTH := 158
 ## taller, and height is the dimension this screen has none of.
 const READING_WIDTH := 250
 
+## De-emphasised copy on paper: the signature line, and the micro-label over each
+## block under it. Card-local because the design system has no token for it — the
+## shell's faint text (UiTheme.INK_3) is mixed for slate and washes out on cream.
+const _MICRO_INK := Color(0.408, 0.443, 0.471)
+
 const _NAME_SIZE := 13
 const _MICRO_SIZE := 8
 const _BODY_SIZE := 9
@@ -119,7 +124,7 @@ func _build() -> void:
 	# the select screen introduces the character the battle then delivers.
 	_quote_label = Label.new()
 	_quote_label.add_theme_font_size_override("font_size", _BODY_SIZE)
-	_quote_label.add_theme_color_override("font_color", Color(0.408, 0.443, 0.471))
+	_quote_label.add_theme_color_override("font_color", _MICRO_INK)
 	_quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy.add_child(_quote_label)
 
@@ -135,15 +140,15 @@ func _build() -> void:
 	var power_head := _pad(null, 5, 3)
 	var head_row := HBoxContainer.new()
 	head_row.add_theme_constant_override("separation", 6)
-	var head_label := _mono("COMMAND POWER", _MICRO_SIZE, Color(0.949, 0.957, 0.961))
+	var head_label := _mono("COMMAND POWER", _MICRO_SIZE, _MICRO_INK)
 	head_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_power_cost_label = _mono("", _MICRO_SIZE, Color(0.957, 0.745, 0.196))
+	_power_cost_label = _mono("", _MICRO_SIZE, UiTheme.AMMO)
 	head_row.add_child(head_label)
 	head_row.add_child(_power_cost_label)
 	power_head.add_child(head_row)  # power_head is a MarginContainer
 	power_rows.add_child(power_head)
 
-	_power_name_label = _mono("", _POWER_NAME_SIZE, Color(0.667, 0.224, 0.184))
+	_power_name_label = _mono("", _POWER_NAME_SIZE, CommanderVisuals.PAPER_INK)
 	power_rows.add_child(_pad(_power_name_label, 6, 0))
 
 	_power_text_label = Label.new()
@@ -169,6 +174,9 @@ func _apply() -> void:
 	_name_label.text = _commander.display_name
 	_name_label.add_theme_color_override("font_color", theme.ink)
 	_name_band.add_theme_stylebox_override("panel", _flat_box(theme.color_dark))
+	# The power's name wears its own general's faction, like the band above it —
+	# it was a hand-copy of meridian's dark on every card, whoever was on it.
+	_power_name_label.add_theme_color_override("font_color", theme.color_dark)
 
 	_quote_label.visible = not _commander.power_quotes.is_empty()
 	if _quote_label.visible:
@@ -203,7 +211,7 @@ func _labelled_block(parent: Node, micro: String) -> Label:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 	parent.add_child(block)
-	block.add_child(_mono(micro, _MICRO_SIZE, Color(0.408, 0.443, 0.471)))
+	block.add_child(_mono(micro, _MICRO_SIZE, _MICRO_INK))
 	var body := Label.new()
 	body.add_theme_font_size_override("font_size", _BODY_SIZE)
 	body.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)

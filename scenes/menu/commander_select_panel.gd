@@ -26,11 +26,11 @@ const DUEL_SEATS := 2
 
 const _TITLE_SIZE := 15
 const _MINI_H := 82
-## The selection accent, kept through the alignment pass (menu-revamp D6): gold is
-## this page's own signal for "locked", distinct from the faction fills.
-const GOLD := Color(0.957, 0.745, 0.196)
 ## The private slate/muted palette swaps for the shared UiTheme tokens it already
 ## sat a shade from, so the select page and the menu speak one grey (plan MN3).
+## The selection gold moved the same way and for the same reason (COM-89): it is
+## still this page's own signal for "locked", now stated once, in UiTheme.
+const _GOLD := UiTheme.SELECT_GOLD
 const _INACTIVE := UiTheme.SLATE_800
 const _MUTED := UiTheme.NEUTRAL_LIGHT
 
@@ -171,7 +171,7 @@ func _build() -> void:
 	# by the viewport — the ground COM-31's missing Confirm button grew from.
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color(UiTheme.SLATE_900.r, UiTheme.SLATE_900.g, UiTheme.SLATE_900.b, 0.985)
+	bg.color = UiTheme.veil(0.985)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
@@ -269,10 +269,10 @@ func _build_right_column() -> VBoxContainer:
 	col.add_child(mini_row)
 
 	var summary := PanelContainer.new()
-	summary.add_theme_stylebox_override("panel", _flat(Color(0.145, 0.165, 0.180)))
+	summary.add_theme_stylebox_override("panel", _flat(_INACTIVE))
 	summary.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_summary_label = _small_label(10)
-	_summary_label.add_theme_color_override("font_color", Color(0.741, 0.765, 0.780))
+	_summary_label.add_theme_color_override("font_color", _MUTED)
 	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.add_child(_pad(_summary_label, 8, 6))
 	col.add_child(summary)
@@ -371,8 +371,8 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	button.clip_contents = true
 	button.add_theme_stylebox_override("normal", _hard(theme.color_dark, 2))
 	button.add_theme_stylebox_override("hover", _hard(theme.color, 2))
-	button.add_theme_stylebox_override("focus", _hard(GOLD, 2))
-	button.add_theme_stylebox_override("pressed", _hard(GOLD, 2))
+	button.add_theme_stylebox_override("focus", _hard(_GOLD, 2))
+	button.add_theme_stylebox_override("pressed", _hard(_GOLD, 2))
 	row.add_child(button)
 
 	var content := VBoxContainer.new()
@@ -404,7 +404,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	UiTheme.make_decoration(content)
 
 	var mark := ColorRect.new()
-	mark.color = GOLD
+	mark.color = _GOLD
 	mark.anchor_left = 1.0
 	mark.anchor_right = 1.0
 	mark.offset_left = -13.0
@@ -618,11 +618,9 @@ func _style_tab(tab: Button, active: bool) -> void:
 	var theme := CommanderVisuals.theme_for_key(_faction_keys[_tab_buttons.find(tab)])
 	tab.add_theme_stylebox_override("normal", _hard(theme.color if active else _INACTIVE, 2))
 	tab.add_theme_stylebox_override("hover", _hard(theme.color_light if active else theme.color, 2))
-	tab.add_theme_stylebox_override("focus", _hard(GOLD, 2))
+	tab.add_theme_stylebox_override("focus", _hard(_GOLD, 2))
 	tab.add_theme_stylebox_override("pressed", _hard(theme.color, 2))
-	tab.add_theme_color_override(
-		"font_color", Color.WHITE if active else Color(0.753, 0.776, 0.792)
-	)
+	tab.add_theme_color_override("font_color", Color.WHITE if active else _MUTED)
 
 
 # --- style helpers -----------------------------------------------------------
