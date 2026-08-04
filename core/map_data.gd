@@ -67,7 +67,7 @@ var source_path := ""
 ## Raw starting-unit entries: {team: int, symbol: String, cell: Vector2i}.
 var starting_units: Array[Dictionary] = []
 var _terrain: Array[TerrainType] = []  # row-major, width * height entries
-var _owners: Dictionary = {}  # Vector2i -> int (team); missing key = neutral
+var _owners: Dictionary[Vector2i, int] = {}  # missing key = neutral
 var _property_cells: Array[Vector2i] = []  # cached by property_cells()
 var _property_cells_built := false
 ## The seats this board deals, built by `_build_roster` when `parse` finishes.
@@ -136,7 +136,7 @@ func owner_at(cell: Vector2i) -> int:
 
 ## Copy of the starting ownership for GameState; runtime capture never
 ## mutates the map itself.
-func initial_owners() -> Dictionary:
+func initial_owners() -> Dictionary[Vector2i, int]:
 	return _owners.duplicate()
 
 

@@ -1284,8 +1284,8 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 
 ## What a capture measures itself against: the whole centered stack, plus every
 ## primary action by name. See MenuCaptureDriver._fits for why it is both.
-func _chrome() -> Dictionary:
-	var chrome := {
+func _chrome() -> Dictionary[String, Control]:
+	var chrome: Dictionary[String, Control] = {
 		"the menu column": _column,
 		"selected map facts": _map_caption,
 		"Start": _start_button,

@@ -28,9 +28,9 @@ const MOVER_SIGHT := -1
 
 class MoveRange:
 	var origin: Vector2i
-	var costs: Dictionary = {}  # Vector2i -> int movement spent to enter
-	var parents: Dictionary = {}  # Vector2i -> Vector2i previous cell
-	var stoppable: Dictionary = {}  # Vector2i -> bool may end movement here
+	var costs: Dictionary[Vector2i, int] = {}  # movement spent to enter
+	var parents: Dictionary[Vector2i, Vector2i] = {}  # previous cell on the cheapest path
+	var stoppable: Dictionary[Vector2i, bool] = {}  # may end movement here
 
 	func has(cell: Vector2i) -> bool:
 		return costs.has(cell)
@@ -122,8 +122,8 @@ static func _can_stop_on(
 ## living anywhere longer than that would need every writer that moves, kills,
 ## builds, loads or unloads a unit to keep it right, and the one that forgot
 ## would not fail, it would quietly answer wrong.
-static func _occupants(state: GameState) -> Dictionary:
-	var by_cell: Dictionary = {}
+static func _occupants(state: GameState) -> Dictionary[Vector2i, Unit]:
+	var by_cell: Dictionary[Vector2i, Unit] = {}
 	for unit in state.units:
 		if unit.carrier == null and not by_cell.has(unit.cell):
 			by_cell[unit.cell] = unit
@@ -157,7 +157,7 @@ static func reachable(
 	# fill meets that kind: a board is a dozen kinds of ground and a fill asks
 	# about hundreds of cells, and step_cost's third invariant is what lets one
 	# answer serve them all.
-	var step_costs: Dictionary = {}
+	var step_costs: Dictionary[TerrainType, int] = {}
 	# The sighting team's visible cells decide whether a unit on a cell counts at
 	# all. Computed on first need and reused, so a fill that meets nobody — and any
 	# fill at all with fog off — never pays for it.

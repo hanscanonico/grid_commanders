@@ -859,8 +859,8 @@ static func _encode_eliminated(state: GameState) -> Array:
 ##
 ## Floors on anything it cannot read, like its siblings; `_eliminated_error`
 ## reports a list that is wrong rather than leaving it to be inferred here.
-static func _decode_eliminated(data: Dictionary) -> Dictionary:
-	var fallen: Dictionary = {}
+static func _decode_eliminated(data: Dictionary) -> Dictionary[int, bool]:
+	var fallen: Dictionary[int, bool] = {}
 	if _claimed_version(data) < int(KEY_RULES["eliminated"]["since"]):
 		return fallen
 	var saved: Variant = data.get("eliminated")
@@ -903,13 +903,15 @@ static func _encode_home_hq(state: GameState) -> Array:
 ## Floors on anything it cannot read, like its siblings, and to the same map-derived
 ## answer; `_home_hq_error` reports a list that is wrong rather than leaving it to
 ## be papered over here.
-static func _decode_home_hq(data: Dictionary, map: MapData, roster: Array[int]) -> Dictionary:
+static func _decode_home_hq(
+	data: Dictionary, map: MapData, roster: Array[int]
+) -> Dictionary[int, Vector2i]:
 	if _claimed_version(data) < int(KEY_RULES["home_hq"]["since"]):
 		return GameState.home_hqs(map, roster)
 	var saved: Variant = data.get("home_hq")
 	if not (saved is Array):
 		return GameState.home_hqs(map, roster)
-	var homes: Dictionary = {}
+	var homes: Dictionary[int, Vector2i] = {}
 	for entry: Variant in saved as Array:
 		if not (entry is Dictionary):
 			return GameState.home_hqs(map, roster)

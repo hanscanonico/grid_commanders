@@ -19,9 +19,9 @@ const LANDER := &"lander"  # transports that also beach on shoals
 ## Single character representing this terrain in .txt map files.
 @export var symbol: String
 @export_range(0, 4) var defense_stars: int = 0
-## Movement cost per movement class (StringName -> int).
-## A missing key means the terrain is impassable for that class.
-@export var move_costs: Dictionary = {}
+## Movement cost per movement class. A missing key means the terrain is
+## impassable for that class.
+@export var move_costs: Dictionary[StringName, int] = {}
 ## Capturable property (city, base, HQ, airport, port).
 @export var is_property: bool = false
 ## An army's seat of command. Asked by everything that has to recognise one —

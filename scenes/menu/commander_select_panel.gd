@@ -148,8 +148,8 @@ func debug_preview(id: StringName) -> void:
 ## off the right edge is exactly what a frame check is for — and this page had
 ## none, which is how a top bar that grew from a fixed pair of chips to one per
 ## seat shipped without anyone walking it at four.
-func chrome() -> Dictionary:
-	var named := {
+func chrome() -> Dictionary[String, Control]:
+	var named: Dictionary[String, Control] = {
 		"the select page title": _title,
 		"No Commander": _no_co_button,
 		"Back": _back_button,
@@ -331,8 +331,8 @@ func _focus_faction(index: int) -> void:
 	_grab_first_mini()
 
 
-func _members() -> Array:
-	return _by_faction.get(_faction_keys[_faction_index], [])
+func _members() -> Array[CommanderType]:
+	return _by_faction.get(_faction_keys[_faction_index], [] as Array[CommanderType])
 
 
 ## Deferred: freshly-created buttons are not in the focus system until the frame

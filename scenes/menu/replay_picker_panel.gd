@@ -52,8 +52,8 @@ func begin(summaries: Array[ReplayFile.Summary]) -> void:
 ## The first row only, not every one: past a full slate the list scrolls, so a
 ## gate demanding that all ten sit inside the frame would be measuring the wrong
 ## promise. What it proves is that the page laid out and the list rendered.
-func chrome() -> Dictionary:
-	var named := {"the replays title": _title, "Back": _back_button}
+func chrome() -> Dictionary[String, Control]:
+	var named: Dictionary[String, Control] = {"the replays title": _title, "Back": _back_button}
 	if _row_buttons.is_empty():
 		named["the empty note"] = _empty
 	else:

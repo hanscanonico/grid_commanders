@@ -27,8 +27,8 @@ const PROPERTY_VISION := 2
 ## by the callers — so `BattlePerspective`, the overlays and the AI's fog-limited
 ## pathing all inherit shared sight without any of them knowing it happened. In a
 ## free-for-all the side is the army alone and this is the loop it always was.
-static func visible_cells(state: GameState, team: int) -> Dictionary:
-	var cells: Dictionary = {}
+static func visible_cells(state: GameState, team: int) -> Dictionary[Vector2i, bool]:
+	var cells: Dictionary[Vector2i, bool] = {}
 	if not state.fog_enabled:
 		for y in state.map.height:
 			for x in state.map.width:
@@ -58,8 +58,10 @@ static func visible_cells(state: GameState, team: int) -> Dictionary:
 ## spelling it for itself — a validation that walks a path and then checks its
 ## destination was paying for two identical ones. Ask once per check and hand the
 ## answer down.
-static func visible_cells_if_fogged(state: GameState, team: int) -> Dictionary:
-	return visible_cells(state, team) if state.fog_enabled else {}
+static func visible_cells_if_fogged(state: GameState, team: int) -> Dictionary[Vector2i, bool]:
+	if not state.fog_enabled:
+		return {}
+	return visible_cells(state, team)
 
 
 ## Whether `viewer_team` can see `unit` at all — the question to ask before

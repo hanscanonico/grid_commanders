@@ -164,9 +164,9 @@ static func theme_for(commander: CommanderType) -> FactionTheme:
 
 ## Every faction theme except neutral, in the plan's tab order. The selection
 ## page groups the roster under these.
-static func faction_themes() -> Array:
+static func faction_themes() -> Array[FactionTheme]:
 	_build_themes()
-	var ordered: Array = []
+	var ordered: Array[FactionTheme] = []
 	for key: StringName in [&"meridian", &"iron", &"aurora", &"verdant"]:
 		ordered.append(_themes[key])
 	return ordered
