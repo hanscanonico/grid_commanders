@@ -7,7 +7,7 @@ var unit: Unit
 var path: Array[Vector2i]
 var target_cell: Vector2i
 ## Populated by apply() so the presentation layer can animate the outcome.
-var result: CombatResolver.CombatResult
+var result: CombatSnapshot.CombatResult
 
 
 func _init(p_unit: Unit, p_path: Array[Vector2i], p_target_cell: Vector2i) -> void:

@@ -197,6 +197,8 @@ func _standings_text() -> String:
 func _report_watched_result() -> void:
 	print("watch: team %d wins on day %d" % [_result_winner, _battle.game.day])
 	await _battle.get_tree().create_timer(1.5).timeout  # let the lockup land on screen
+	if not is_instance_valid(_battle):
+		return  # the lockup was left for a rematch or the menu; that run is not ours to end
 	_battle.get_tree().quit()
 
 

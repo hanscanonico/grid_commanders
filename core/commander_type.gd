@@ -75,15 +75,18 @@ enum Timing {
 @export var power_duration: Duration = Duration.OWNER_TURN
 @export var power_timing: Timing = Timing.BEFORE_ACTIONS
 
-static var _neutral: CommanderType
-
 
 ## The commander a side plays without one: every hook at its default, no power,
-## and a meter that never fills. Shared, because it holds no per-match state.
+## and a meter that never fills.
+##
+## A fresh one each call rather than a shared instance. This is a Resource with a
+## dozen writable exports, so one shared instance is a process-wide global that any
+## stray write reaches — and the balance harness plays thousands of matches in a
+## single process, where a poisoned neutral would move every match after it. The
+## cost is one allocation per commander-less side per match, because
+## `GameState.commander_state` caches the `CommanderState` this is wrapped in.
 static func neutral() -> CommanderType:
-	if _neutral == null:
-		_neutral = CommanderType.new()
-	return _neutral
+	return CommanderType.new()
 
 
 func has_power() -> bool:

@@ -137,10 +137,6 @@ func _update_labels() -> void:
 ## became: with nothing persistent left over the map, the only thing a menu has to
 ## stay clear of is the chrome, and that geometry is a constant.
 func _place() -> void:
-	# Size is only valid one frame after the buttons were added.
-	await get_tree().process_frame
-	if not visible:
-		return
 	# A PanelContainer grows to fit its rows and never shrinks back on its own, so
 	# a short menu opened where a tall one just was keeps the tall one's panel
 	# standing behind it — the two-row abandon confirmation under the seven-row map

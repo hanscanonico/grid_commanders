@@ -141,7 +141,7 @@ func _consider_attacks(
 
 ## Expected damage value (target cost x damage fraction, kill-boosted) minus
 ## discounted counter risk against our own cost.
-func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -> float:
+func _attack_score(unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast) -> float:
 	if not forecast.can_attack:
 		return -INF
 	var damage := mini(forecast.attack_damage, enemy.hp)
@@ -231,7 +231,7 @@ func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int
 ## How much more attractive `enemy` is because other ready friendlies could
 ## still pile onto it this turn. Zero when focus fire is off or this shot kills.
 func _focus_bonus(
-	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast
+	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast
 ) -> float:
 	if profile.focus_fire_bonus <= 0.0:
 		return 0.0

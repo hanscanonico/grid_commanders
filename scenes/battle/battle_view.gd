@@ -502,7 +502,7 @@ func _range_band_of(unit: Unit) -> Vector2i:
 ## chance and made the player convert mid-fight. Every number here was handed
 ## over by the forecast — this method formats and never computes, which is the
 ## cut-in's "replays, never decides" rule applied to text.
-func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) -> void:
+func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) -> void:
 	damage_preview.visible = forecast != null and forecast.can_attack
 	if not damage_preview.visible:
 		return

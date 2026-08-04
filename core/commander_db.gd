@@ -39,7 +39,10 @@ func register(commander: CommanderType) -> void:
 ## Never null: an unknown id falls back to the neutral commander, so a save that
 ## names a general who has since been removed still loads and plays.
 func by_id(id: StringName) -> CommanderType:
-	return _by_id.get(id, CommanderType.neutral())
+	# The fallback is built only when it is needed: a default argument is evaluated
+	# on every call, and `neutral()` now hands back a fresh commander each time.
+	var found: CommanderType = _by_id.get(id)
+	return found if found != null else CommanderType.neutral()
 
 
 func has(id: StringName) -> bool:

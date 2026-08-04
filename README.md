@@ -465,7 +465,7 @@ mouse, keyboard, or controller throughout.
   still shows what it took off. Every bound is the luck range the attack will roll inside — the
   attacker's answers for the opening roll too, since a lucky shot weakens or removes the counter —
   so a span of one is the roll and a single number is a certainty; the numbers come off
-  `CombatResolver.Forecast`, which the panel formats and never recomputes
+  `CombatSnapshot.Forecast`, which the panel formats and never recomputes
 - Confirming onto a reachable cell held by one of *your* units offers **Load** (board a transport
   with room) or **Join** (merge into a damaged unit of the same type, adding up HP, fuel, and
   ammo). Cancel snaps the mover back, as with any uncommitted move

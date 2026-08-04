@@ -243,7 +243,7 @@ func _draw_round(lag: float, index: int) -> void:
 			at.y -= sin(lag * PI) * volley_arc
 			at.y += (index % 3 - 1) * 3.0
 			_draw_shell(at, toward, tint)
-		_:
+		BattleStyle.TRACER:
 			at.y += _rung(index)
 			_draw_tracer_dash(at, toward, tint)
 

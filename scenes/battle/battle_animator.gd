@@ -114,7 +114,7 @@ func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 ## Under Instant that on-map flash, fade and shake all fall away but the sounds
 ## stay: an attack the player triggered has to register even when there is
 ## nothing to see.
-func animate_combat(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	if result == null:
 		await show_ambush(attacker)
 		return

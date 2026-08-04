@@ -83,8 +83,6 @@ var _hud: CaptureHud
 
 var _beats := Beats.new()
 var _result: CaptureCommand.CaptureResult
-var _unit: Unit
-var _cell := Vector2i.ZERO
 ## The point chips each mash knocks off, largest first, summing to the meter's
 ## drop. Computed once in `_pose`.
 var _chips := PackedInt32Array()
@@ -170,8 +168,6 @@ func _finish() -> void:
 ## Poses the stage and hud and works out the beat windows this capture has.
 func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
 	_result = result
-	_unit = unit
-	_cell = cell
 	var terrain := view.map.terrain_at(cell)
 	_play.accent = _accent_of(unit.team)
 	# The two faction rows the flip crosses between, both SideIdentity's answer —

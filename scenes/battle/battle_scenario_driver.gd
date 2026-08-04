@@ -796,7 +796,7 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 ## A run that never finishes hangs the scenario and the smoke sweep reports the
 ## timeout; one that finishes twice, or not at all, or leaves the camera zoomed,
 ## quits non-zero here.
-func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func _spam_skip(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	var cutscene := _battle.animator.cutscene
 	var camera := _battle.camera
 	var tree := _battle.get_tree()
@@ -1174,7 +1174,6 @@ func _stage_power_map_menu() -> void:
 	_set_red_commander(&"mara_voss", true)
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	_check_map_menu_readable()
 
 
@@ -1201,12 +1200,10 @@ func _check_map_menu_readable() -> void:
 func _stage_leave_routes() -> void:
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	_check_rows("map menu", BattleMenus.map_actions(_battle.game), [&"save_and_quit", &"quit"])
 	_check_in_band("map menu", _battle.action_menu)
 	var map_menu_h := _battle.action_menu.get_global_rect().size.y
 	_battle.action_menu.choose(&"quit")
-	await _settle_menu()
 	var rows := BattleMenus.abandon_confirm_actions()
 	_check_rows("abandon confirmation", rows, [&"cancel", &"abandon"])
 	if not rows.is_empty() and rows[0].id != &"cancel":
@@ -1241,14 +1238,12 @@ func _stage_menu_after_build_menu() -> void:
 	_battle.set_cursor_cell(Vector2i(3, 2))  # red base
 	_battle.confirm_at(Vector2i(3, 2))  # the tallest and widest menu in the game
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	var build_menu := _battle.action_menu.get_global_rect().size
 	_battle.action_menu.choose(&"cancel")
 	await _until_state(Battle.State.IDLE)
 	_battle.confirm_at(Vector2i(4, 3))  # select the red infantry
 	_battle.confirm_at(Vector2i(4, 3))  # stay put -> Wait / Cancel, the shortest menu
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	_check_in_band("unit menu", _battle.action_menu)
 	var shown := _battle.action_menu.rows.get_child_count()
 	if shown != 2:
@@ -1267,10 +1262,11 @@ func _stage_menu_after_build_menu() -> void:
 		)
 
 
-## An open menu only knows its size, and so its clamped position, a frame after its
-## rows were added — see ActionMenu._place, which awaits one itself.
-func _settle_menu() -> void:
-	await _battle.get_tree().process_frame
+## A control built in code measures and places itself a frame after its children
+## were added: the seat strip centres itself, the info sheet's grid sizes its
+## columns. The action menu is not one of them — ActionMenu.open sizes and clamps
+## the panel before it returns.
+func _settle_layout() -> void:
 	await _battle.get_tree().process_frame
 
 
@@ -1313,7 +1309,7 @@ func _stage_mission_strip(mode: String) -> void:
 	if mode == MISSION_STRIP_RETIRED:
 		expected = &"capture"
 		await _walk_first_turn()
-	await _settle_menu()  # the strip measures and centres itself a frame late
+	await _settle_layout()  # the strip measures and centres itself a frame late
 	if not strip.visible:
 		_fail("the mission strip is down with %s still to teach" % expected)
 		return
@@ -1364,7 +1360,7 @@ func _stage_commander_info() -> void:
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"commanders")
 	await _until_state(Battle.State.INFO)
-	await _settle_menu()  # the grid sizes its columns a frame after the sheet opens
+	await _settle_layout()  # the grid sizes its columns a frame after the sheet opens
 	var flaw := _battle.commander_info_sheet.layout_error(_battle.game.teams.size())
 	if flaw != "":
 		_fail(flaw)

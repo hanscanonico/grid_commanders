@@ -30,7 +30,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `new-commanders-plan.html` — six more generals, milestones NC1–NC7, **all shipped**: Ines Calder
   and Konrad Vale share the one `UnitPricing.cost_for` purchase authority while base cost remains
   charge/target/value currency; Perrin Ash and Halden Marr are domain-only and exactly neutral on
-  land-only boards; Dane Ferrow's kill bounty is stolen through `CombatResolver.bank_losses`,
+  land-only boards; Dane Ferrow's kill bounty is stolen through `ChargeLedger.bank_losses`,
   never minted; Iris Colt's `AFTER_ACTIONS` Second Wind refreshes non-attack actions. The plan's
   D4 “no new state/save” claim is superseded by the safe rule: `Unit.refreshable` records that
   eligibility and save v8 carries it, because `acted` alone cannot distinguish an attack from a

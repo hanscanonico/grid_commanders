@@ -6,7 +6,7 @@ extends CanvasLayer
 ## comes back, and the map returns.
 ##
 ## It replays; it never decides (plan D1). Every number below comes off the
-## CombatResolver.CombatResult it is handed — the HP each side went in and came
+## CombatSnapshot.CombatResult it is handed — the HP each side went in and came
 ## out with, the weapon each fired, whether the opening shot was lobbed — and the
 ## units themselves are read only for what they *are*: type, team, cell. Nothing
 ## here touches the damage chart, the RNG, or a rule.
@@ -108,10 +108,10 @@ var _def: CutsceneSide
 var _fx: CutsceneFx
 
 var _beats := Beats.new()
-var _result: CombatResolver.CombatResult
+var _result: CombatSnapshot.CombatResult
 ## The two weapon signatures this exchange fires with. Read from data, never
 ## decided here — see BattleStyle.
-var _styles := BattleStyleDB.new()
+var _styles: BattleStyleDB
 var _atk_style: BattleStyle
 var _def_style: BattleStyle
 
@@ -131,7 +131,7 @@ func _ready() -> void:
 ##
 ## The animator punches the board in on its way here; the cut-in eases that flinch
 ## back out over the closing wipe, through the view (see CutscenePlayback).
-func play(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func play(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	_pose(result, attacker, defender)
 	_play.begin(_beats.total, view)
 	_play.layout()
@@ -149,7 +149,7 @@ func play(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -
 ##
 ## Dev-only. The scenario driver is the one caller; play never poses.
 func pose_at(
-	result: CombatResolver.CombatResult, attacker: Unit, defender: Unit, at: float
+	result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit, at: float
 ) -> void:
 	_pose(result, attacker, defender)
 	# A still never punched the board; `pose` keeps `_apply` off its zoom.
@@ -206,7 +206,7 @@ func _finish() -> void:
 
 
 ## Poses both halves and works out the beat windows this exchange has.
-func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	_result = result
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
@@ -311,7 +311,7 @@ func _terrain_at(cell: Vector2i) -> TerrainType:
 ## longer to get there than a burst of tracer — and `tail` trims the closing hold
 ## and wipe, which is the only part the pacing is allowed to take.
 static func _plan(
-	result: CombatResolver.CombatResult, atk_travel: float, def_travel: float, tail: float
+	result: CombatSnapshot.CombatResult, atk_travel: float, def_travel: float, tail: float
 ) -> Beats:
 	var beats := Beats.new()
 	beats.atk_ready = Vector2(WIPE_IN, WIPE_IN + ANTICIPATION)

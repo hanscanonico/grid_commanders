@@ -53,6 +53,14 @@ func register(style: BattleStyle) -> void:
 	if _by_id.has(style.id):
 		push_error("BattleStyleDB: duplicate style id '%s'" % style.id)
 		return
+	if not BattleStyle.PROJECTILES.has(style.projectile):
+		push_error(
+			(
+				"BattleStyleDB: style '%s' fires '%s', which is not a projectile kind %s"
+				% [style.id, style.projectile, BattleStyle.PROJECTILES]
+			)
+		)
+		return
 	_by_id[style.id] = style
 
 
