@@ -13,6 +13,18 @@ BATTLE := scenes/battle/battle.tscn
 # Revised_PixVoxel_Wargame_1.7z — see assets/LICENSES.md for the source.
 PIXVOXEL ?= assets/sprites/pixvoxel_src
 
+# The two things a gate can be missing. tools/check_scripts.sh and
+# tools/check_determinism.sh already say this for themselves; a target that
+# runs the tool directly says it here, so a fresh machine reads the setup line
+# instead of a bare "No such file or directory".
+require-godot = @test -x "$(GODOT)" || command -v "$(GODOT)" >/dev/null || { \
+	echo "$@: Godot binary not found at $(GODOT)" >&2; \
+	echo "$@: see README.md for engine setup, or pass GODOT=<path>" >&2; \
+	exit 1; }
+require-gdtoolkit = @command -v $(1) >/dev/null || { \
+	echo "$@: $(1) not found — pipx install \"gdtoolkit==4.*\"" >&2; \
+	exit 1; }
+
 run: import
 	$(GODOT_GUI) --path .
 
@@ -20,6 +32,7 @@ hotseat: import
 	$(GODOT_GUI) --path . $(BATTLE) -- --hotseat
 
 test:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://addons/gut/gut_cmdln.gd
 
 # The merge gate, in one command. Order is cheapest-feedback-first: parsing
@@ -179,7 +192,10 @@ replay-report:
 # Every .gd file that is actually ours: skips the engine cache, vendored addons,
 # the engine binary, and .claude/worktrees, which holds whole nested checkouts of
 # this same repo and would otherwise be linted as if it were project source.
-SOURCES := $(shell find . -name '*.gd' \
+#
+# Deferred, so only the three gdtoolkit targets below pay for the walk — `:=`
+# ran it on every invocation, `make run` included.
+SOURCES = $(shell find . -name '*.gd' \
 	-not -path './.godot/*' -not -path './addons/*' -not -path './bin/*' \
 	-not -path './.claude/*')
 
@@ -199,14 +215,17 @@ determinism:
 
 # Style and smells. Rule overrides live in gdlintrc.
 lint:
+	$(call require-gdtoolkit,gdlint)
 	gdlint $(SOURCES)
 
 # Reformat in place; `make format-check` only reports. Both need gdtoolkit:
 #   pipx install "gdtoolkit==4.*"
 format:
+	$(call require-gdtoolkit,gdformat)
 	gdformat $(SOURCES)
 
 format-check:
+	$(call require-gdtoolkit,gdformat)
 	gdformat --check $(SOURCES)
 
 # generate_tiles.gd draws only the ground; it leaves every property column —
@@ -218,8 +237,14 @@ format-check:
 # has to fail while the tree is clean.
 # `import` runs last because Godot caches image imports by size: without it a
 # rebuild that changes the atlas dimensions renders a blank map.
-# .NOTPARALLEL keeps that order under `make -j` — the two atlas steps write the
-# same file, so running them concurrently produces a torn terrain_atlas.png.
+# .NOTPARALLEL keeps that order under `make -j`, and it is file-scope on
+# purpose. The two atlas steps write the same terrain_atlas.png, so run
+# concurrently they tear it — and `verify`'s four gates are a sequence rather
+# than a set: they share one .godot/ across every engine boot, and their order
+# is the cheapest feedback first, so racing them would trade a one-second parse
+# failure for the suite's ninety. Scoping it (`.NOTPARALLEL: ground sprites`)
+# would be inert here anyway — prerequisites are honoured by GNU make 4.4 and
+# up, and macOS ships 3.81, which serialises the whole file regardless.
 .NOTPARALLEL:
 
 tiles: sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders import
