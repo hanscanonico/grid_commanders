@@ -303,6 +303,13 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## roster cost however little of it is left, 1 values it at cost x hp/100, and
 ## the values between interpolate. 0 skips it entirely.
 ##
+## Defined on 0 to 1 and on nothing else, which is why it is the one dial here
+## that declares its range rather than only documenting it: past 1 the
+## interpolation extrapolates and prices a wounded unit below nothing, which
+## inverts every valuation in the planner. A search that samples wider is held to
+## the range by _unit_value, so the worst it gets is the strongest defined
+## setting rather than a suicidal planner.
+##
 ## Denominated as a FRACTION of the price rather than in the price's own units,
 ## because it is the shape of the valuation rather than a number added to it —
 ## which is what lets one dial answer for a unit as a target and as an asset at
@@ -321,7 +328,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## finishing a target precisely because a nearly-dead one was priced like a fresh
 ## one. Move the two together and never one alone (arena plan R5) — a search that
 ## fits kill_bonus first will fit it to a valuation this dial then changes.
-@export var condition_weight: float = 0.0
+@export_range(0.0, 1.0) var condition_weight: float = 0.0
 ## What merging two damaged units of a kind is worth, as a multiple of the price
 ## of the HP that survives the merge. 0 skips it entirely.
 ##

@@ -25,9 +25,16 @@ const TRANSPORT_BESIDE_A_MOUNTAIN := "[terrain]\n=M==\n====\n[units]\n1 i 0 1\n2
 ## opinion about all of them, so the stars have nothing left to say.
 const WOOD_UNDER_A_TANK := "[terrain]\n==F=====\n[units]\n1 i 0 0\n2 t 6 0"
 
+## The same road and wood under a copter instead of an infantry: six tiles of
+## reach with the only cover on the board one tile short of the last of them, and
+## the enemy far beyond both.
+const WOOD_UNDER_A_COPTER := "[terrain]\n=====F=====\n[units]\n1 h 0 0\n2 i 10 0"
+
 const WOOD := Vector2i(2, 0)
 const OPEN_ROAD := Vector2i(3, 0)
 const MOUNTAIN := Vector2i(1, 0)
+const AIR_WOOD := Vector2i(5, 0)
+const AIR_OPEN_ROAD := Vector2i(6, 0)
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -137,3 +144,25 @@ func test_cover_stands_down_where_the_threat_map_has_already_priced_the_ground()
 		without_cover,
 		"every cell in reach is under fire, so cover must not move the turn one tile"
 	)
+
+
+## A plane is over the tile rather than on it and keeps none of what is under it.
+## That is CombatResolver's rule and this planner asks it for the answer rather
+## than keeping a copy, so the two can never come to disagree about what a wood is
+## worth — the price the AI pays for ground is the discount the damage formula
+## gives for standing on it, or it is buying something that does not exist.
+func test_ground_under_a_plane_is_never_bought() -> void:
+	assert_eq(
+		_destination(_plan(WOOD_UNDER_A_COPTER, _profile(0.0))),
+		AIR_OPEN_ROAD,
+		"blind, the copter spends its whole move and ends past the wood"
+	)
+	for weight in [1.0, 10.0]:
+		assert_eq(
+			_destination(_plan(WOOD_UNDER_A_COPTER, _profile(weight))),
+			AIR_OPEN_ROAD,
+			(
+				"at %s tiles a star the wood at %s outbids the whole board for anything on the ground"
+				% [weight, AIR_WOOD]
+			)
+		)

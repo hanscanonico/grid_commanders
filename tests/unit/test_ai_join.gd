@@ -72,7 +72,11 @@ func _play_a_turn(map_text: String, profile: AIProfile, wounds: Dictionary) -> D
 	var ai := AIController.new(unit_db, profile)
 	for _step in range(8):
 		var command := ai.plan_next_command(state)
-		if command is EndTurnCommand or command.validate(state) != "":
+		if command is EndTurnCommand:
+			break
+		var refusal := command.validate(state)
+		if refusal != "":
+			fail_test("the planner handed the pipeline %s, refused: %s" % [command, refusal])
 			break
 		command.apply(state)
 	var left: Dictionary = {}

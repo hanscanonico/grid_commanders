@@ -164,8 +164,9 @@ func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -
 ## cell risks and what stepping out of one saves are each this number times the
 ## HP that changes hands.
 ##
-## `condition_weight` interpolates it toward what is left of the unit, and that
-## end of the interpolation is the board's own rate rather than a guess:
+## `condition_weight` interpolates it toward what is left of the unit over its
+## defined range of 0 to 1, and that far end is the board's own rate rather than
+## a guess:
 ## TurnRules._repair sells the missing HP back at `cost * heal / 100`, so a 30-HP
 ## md tank is three tenths of an md tank and the other seven tenths are a bill.
 ## What the interpolation buys is the part no funds figure holds — the unit is on
@@ -176,10 +177,19 @@ func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -
 ## kill and less to lose by the same arithmetic, and the appetite for that trade
 ## already has its own dials in counter_weight, threat_aversion and
 ## withdraw_weight.
+##
+## The interpolation factor is clamped rather than trusted: past 1.0 it
+## extrapolates past what is left of the unit and turns the price NEGATIVE, and
+## every reader of this number — the shot's value, the counter's risk, the
+## threatened cell, the withdrawal — then has its sign inverted and the planner
+## seeks the death it was pricing against. A weight the range does not define is
+## a bug in whatever set it, and this is the floor under it, not the report of
+## it: the export declares the range where the value enters.
 func _unit_value(unit: Unit) -> float:
 	if profile.condition_weight <= 0.0:
 		return float(unit.type.cost)
-	return float(unit.type.cost) * lerpf(1.0, float(unit.hp) / 100.0, profile.condition_weight)
+	var condition := clampf(profile.condition_weight, 0.0, 1.0)
+	return float(unit.type.cost) * lerpf(1.0, float(unit.hp) / 100.0, condition)
 
 
 ## What firing from a cell costs `unit` in expected incoming damage next turn, in
@@ -202,14 +212,14 @@ func _threat_penalty(unit: Unit, incoming: int) -> float:
 ## place. Where there is none nothing else speaks for the ground: on Normal that
 ## is every cell, since no dial there builds a threat map at all.
 ##
-## Air units are worth nothing here whatever they stand over. The ground under a
-## plane is not cover it keeps — UnitType's domain note says so and
-## CombatResolver is where the rule lives — so paying for it would buy a discount
-## the damage formula does not give.
+## What cover a unit gets on a cell is asked of CombatResolver rather than read
+## off the terrain here, so the planner cannot price ground the damage formula
+## does not. That is where the air rule lives — a plane is over the tile rather
+## than on it and keeps none of it — and it is answered once, there.
 func _cover_tiles(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int) -> float:
-	if profile.cover_tiles <= 0.0 or priced_fire > 0 or unit.type.domain == UnitType.AIR:
+	if profile.cover_tiles <= 0.0 or priced_fire > 0:
 		return 0.0
-	return profile.cover_tiles * float(state.map.terrain_at(cell).defense_stars)
+	return profile.cover_tiles * float(CombatResolver.cover_stars(state, unit, cell))
 
 
 ## The same worth in what the attack path scores in. A tile of walking costs

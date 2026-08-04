@@ -42,6 +42,11 @@ const NOWHERE_ELSE_TO_SHOOT_FROM := (
 ## nothing is threatened here but the shot itself.
 const A_COUNTER_THAT_KILLS_US := "[terrain]\n...\n[units]\n1 i 0 0\n2 m 1 0"
 
+## The wounded md tank with nothing else on the ballot, so what the planner does
+## is decided entirely by what that one target is priced at. A price below zero
+## turns the kill into something to avoid.
+const ONE_WOUNDED_TARGET := "[terrain]\n.....\n[units]\n1 g 2 0\n2 T 0 0"
+
 const OUR_INFANTRY := Vector2i(0, 0)
 const WOUNDED_TANK := Vector2i(0, 0)
 const HEALTHY_INFANTRY := Vector2i(4, 0)
@@ -177,3 +182,25 @@ func test_a_wounded_unit_prices_the_counter_by_what_is_left_of_it() -> void:
 		Vector2i(1, 0),
 		"priced by what is left, the trade is worth taking"
 	)
+
+
+## The dial is defined on 0 to 1 and the arena searches exactly these exports, so
+## a candidate sampled wider must get a strong planner rather than an inverted
+## one: past 1.0 the interpolation extrapolates and prices a wounded unit below
+## nothing, and every reader of that price — the shot, the counter, the ring, the
+## withdrawal — changes sign with it, leaving a planner that pays to leave a
+## target alive and to stand in fire. Out of range reads as the strongest defined
+## setting instead.
+func test_a_weight_past_the_range_never_prices_a_unit_below_nothing() -> void:
+	var wounds := {WOUNDED_TANK: 10}
+	assert_eq(
+		_target(_plan(ONE_WOUNDED_TARGET, _profile(1.0), wounds)),
+		WOUNDED_TANK,
+		"a tenth of an md tank is worth 1 600 and is still the shot worth taking"
+	)
+	for weight in [1.5, 2.0, 10.0]:
+		assert_eq(
+			_target(_plan(ONE_WOUNDED_TARGET, _profile(weight), wounds)),
+			WOUNDED_TANK,
+			"at weight %s the kill must still be worth something, not owed something" % weight
+		)
