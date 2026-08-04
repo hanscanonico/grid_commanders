@@ -95,15 +95,33 @@ func test_a_shard_file_names_its_own_profiles() -> void:
 
 
 func test_a_run_is_named_for_its_spec() -> void:
-	var request := _parse(
-		["--map=clash", "--red-profile=data/ai/default.tres", "--blue-profile=reports/c7.tres"]
-	)
-	assert_eq(request.run_name(), "clash_default_vs_c7_s4_d100")
-	assert_eq(request.artifact_dir(), "reports/ai_arena/clash_default_vs_c7_s4_d100")
+	var flags := [
+		"--map=clash", "--red-profile=data/ai/default.tres", "--blue-profile=reports/c7.tres"
+	]
+	var request := _parse(flags)
+	assert_eq(request.run_name(), "clash_default_vs_c7_s4_d100_%s" % request.digest())
+	assert_eq(request.artifact_dir(), "reports/ai_arena/%s" % request.run_name())
 	assert_eq(
-		_parse(["--pairings=reports/arena/gen1/shard4.json"]).run_name(),
-		"shard4",
-		"a shard is named by the file it was handed"
+		request.run_name(),
+		_parse(flags).run_name(),
+		"the same question rerun overwrites its own directory"
+	)
+	var sharded := _parse(["--pairings=reports/arena/gen1/shard4.json"])
+	assert_string_contains(sharded.run_name(), "shard4")
+
+
+func test_two_candidates_sharing_a_filename_are_named_apart() -> void:
+	# A candidate is a path and its slug is only the filename, so the generation
+	# layout a search writes collides on every readable part of the name — and a
+	# second run without --out= would overwrite the first run's records.
+	var first := _parse(["--red-profile=a.tres", "--blue-profile=reports/g1/c1.tres"])
+	var second := _parse(["--red-profile=a.tres", "--blue-profile=reports/g2/c1.tres"])
+	assert_ne(first.run_name(), second.run_name(), "different candidates, different directory")
+	assert_ne(first.artifact_dir(), second.artifact_dir())
+	assert_ne(
+		_parse(["--pairings=reports/arena/g1/shard4.json"]).run_name(),
+		_parse(["--pairings=reports/arena/g2/shard4.json"]).run_name(),
+		"and a shard file is named the same way"
 	)
 
 

@@ -222,6 +222,22 @@ back. `ArenaPools.pool_of()` recovers a match's pool from the board and seed it
 was played with, so a leaderboard can never be scored against a split nothing
 played.
 
+### A pool a candidate never played is not a score
+
+The table is ordered on the held-out pool first, because a candidate that leads
+where it was selected and not where it was not has overfitted. That reading only
+works if every candidate has a held-out number: a pool one of them never met is
+the *absence* of a measurement, not a bad one, and reading it as a mean of zero
+sorts the untested candidate above one that was tested and lost — the exact
+inversion the ordering exists to catch. Train many, validate few is precisely
+what a generational search produces, so this is reachable the moment AR5 lands.
+
+`ArenaLeaderboard` therefore keeps the two facts apart. Only a pool **every**
+candidate played orders anything (`ranked_on` in `leaderboard.json` says which
+did), the gaps are listed in `uncovered`, and a run holding any of them is
+reported as unreadable by the same `problem()` that refuses a one-seat pairing.
+Refusing to rank such a run is the answer, not an ordering nobody can trust.
+
 ## The calibration: what the arena says about the shipped tiers
 
 The instrument's own acceptance check is that a scored run of the three shipped

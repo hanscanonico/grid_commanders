@@ -80,7 +80,13 @@ func _records() -> Array:
 		if json.parse(FileAccess.get_file_as_string(path)) != OK or not (json.data is Array):
 			push_error("arena-report: '%s' is not a list of match records" % path)
 			return []
-		records.append_array(json.data)
+		var listed: Array = json.data
+		for entry: Variant in listed:
+			var problem := ArenaLeaderboard.record_error(entry)
+			if problem != "":
+				push_error("arena-report: '%s': %s" % [path, problem])
+				return []
+		records.append_array(listed)
 	return records
 
 

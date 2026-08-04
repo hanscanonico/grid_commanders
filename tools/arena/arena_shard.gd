@@ -112,10 +112,14 @@ func board(map_name: String) -> MapData:
 ## Matches whose hard invariants did not hold: a rejected command, or a match
 ## that would not resolve. Neither is a result — it is the AI and the rules
 ## disagreeing — so a run that produced any of them reports as failed.
+##
+## What counts as one is `ArenaFitness`'s to say, asked here rather than
+## restated: a second reading of it would let the run's exit code and the
+## leaderboard's `invalid` count drift apart.
 static func flawed(records: Array[Dictionary]) -> int:
 	var count := 0
 	for record in records:
-		if int(record["rejected"]) > 0 or bool(record["cap_stall"]):
+		if ArenaFitness.result_of(record) == ArenaFitness.Result.INVALID:
 			count += 1
 	return count
 

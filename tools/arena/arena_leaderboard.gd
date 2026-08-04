@@ -16,6 +16,26 @@ extends RefCounted
 ##
 ## Node-free, so GUT tallies records without a process.
 
+## The pools an ordering may read, held-out first (R1).
+const RANKING_POOLS: Array[String] = [
+	ArenaPools.VALIDATION, ArenaPools.TRAINING, ArenaPools.OFF_POOL
+]
+
+## Every field a record has to carry to be read: fitness asks the first five, the
+## pool split and the pairing check the rest.
+const RECORD_KEYS: Array[String] = [
+	"rejected",
+	"cap_stall",
+	"termination",
+	"day_ended",
+	"winner",
+	"map",
+	"seed",
+	"seat",
+	"red",
+	"blue",
+]
+
 ## Rows in report order, best first.
 var rows: Array[Row] = []
 ## Matches whose hard invariants did not hold — a rejected command, or a match
@@ -24,6 +44,10 @@ var invalid := 0
 ## Pairings seen from one seat only, as readable keys. Any at all and the run is
 ## not reportable.
 var unpaired: Array[String] = []
+## Pools a candidate never played while another candidate did, as readable keys.
+## "Never measured here" and "measured badly here" are different facts, and a run
+## holding both cannot be read as one table.
+var uncovered: Array[String] = []
 
 
 ## What one candidate did in one pool.
@@ -58,6 +82,11 @@ class Row:
 			pools[pool] = Tally.new()
 		var found: Tally = pools[pool]
 		return found
+
+	## Whether this candidate has a measurement in this pool at all. Asked before
+	## `mean`, which has no honest answer without one.
+	func measured(pool: String) -> bool:
+		return matches(pool) > 0
 
 	func mean(pool: String) -> float:
 		return pools[pool].mean() if pools.has(pool) else 0.0
@@ -101,7 +130,21 @@ static func build(records: Array) -> ArenaLeaderboard:
 			board.unpaired.append(pairing)
 	board.unpaired.sort()
 	board.rows = _ordered(by_candidate.values())
+	board.uncovered = _uncovered(board.rows)
 	return board
+
+
+## Empty when `entry` can be read as a match record; otherwise why it cannot. The
+## record file is a caller-named path, so a truncated or hand-edited one is
+## refused by name here rather than faulting inside the scorer.
+static func record_error(entry: Variant) -> String:
+	if not (entry is Dictionary):
+		return "a match record is an object, got %s" % type_string(typeof(entry))
+	var record: Dictionary = entry
+	for key: String in RECORD_KEYS:
+		if not record.has(key):
+			return "a match record is missing '%s'" % key
+	return ""
 
 
 ## Empty when the run can be read as a leaderboard; otherwise why it cannot.
@@ -110,6 +153,11 @@ func problem() -> String:
 		return (
 			"%d pairing(s) were played from one seat only, so the seat has not cancelled: %s"
 			% [unpaired.size(), ", ".join(unpaired.slice(0, 3))]
+		)
+	if not uncovered.is_empty():
+		return (
+			"%d candidate(s) never played a pool the others did, so the table cannot be ordered: %s"
+			% [uncovered.size(), ", ".join(uncovered.slice(0, 3))]
 		)
 	if invalid > 0:
 		return "%d match(es) rejected a command or would not resolve" % invalid
@@ -130,6 +178,8 @@ func to_dict() -> Dictionary:
 		},
 		"invalid": invalid,
 		"unpaired": unpaired,
+		"uncovered": uncovered,
+		"ranked_on": _comparable_pools(rows),
 		"candidates": listed,
 	}
 
@@ -147,18 +197,52 @@ static func _count(tally: Tally, record: Dictionary, team: int) -> void:
 
 ## Best first: the held-out number leads, because a candidate that leads on the
 ## pool it was selected on and not on the one it was not has overfitted (R1).
+##
+## Only a pool **every** candidate played orders anything. An unplayed pool is
+## the absence of a measurement rather than a bad one, and standing a mean of
+## zero in for it sorts a candidate that never met the held-out boards above one
+## that met them and lost — the exact inversion this ordering exists to catch.
+## Such a run is refused outright by `problem()`; keeping the pool out of the
+## comparison is what stops the rows printed beside that refusal from lying.
 static func _ordered(found: Array) -> Array[Row]:
 	var listed: Array[Row] = []
 	for row: Row in found:
 		listed.append(row)
+	var ranked := _comparable_pools(listed)
 	listed.sort_custom(
 		func(a: Row, b: Row) -> bool:
-			for pool: String in [ArenaPools.VALIDATION, ArenaPools.TRAINING, ArenaPools.OFF_POOL]:
+			for pool: String in ranked:
 				if not is_equal_approx(a.mean(pool), b.mean(pool)):
 					return a.mean(pool) > b.mean(pool)
 			return a.candidate < b.candidate
 	)
 	return listed
+
+
+## The pools every row has a measurement in, in ranking order. Fixed for the
+## whole table rather than decided per comparison, so the ordering stays total.
+static func _comparable_pools(listed: Array[Row]) -> Array[String]:
+	var ranked: Array[String] = []
+	if listed.is_empty():
+		return ranked
+	for pool: String in RANKING_POOLS:
+		if listed.all(func(row: Row) -> bool: return row.measured(pool)):
+			ranked.append(pool)
+	return ranked
+
+
+## Every candidate/pool cell a run left empty while another candidate filled it.
+## A pool nobody played is not a gap — it is a run that did not play it.
+static func _uncovered(listed: Array[Row]) -> Array[String]:
+	var missing: Array[String] = []
+	for pool: String in RANKING_POOLS:
+		if not listed.any(func(row: Row) -> bool: return row.measured(pool)):
+			continue
+		for row: Row in listed:
+			if not row.measured(pool):
+				missing.append("%s in %s" % [row.candidate, pool])
+	missing.sort()
+	return missing
 
 
 ## One pairing on one board at one seed, however it was seated: the two seats of

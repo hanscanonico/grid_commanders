@@ -500,6 +500,12 @@ that must survive any change; the full rationale, milestones and risk registers 
   `ArenaLeaderboard` refuses to *read* any pairing it did not see from both seats — so a mirror
   stays runnable as a deliberate calibration and unreadable as a leaderboard, which is what the
   Lab's one-seating mirror shortcut (a bias measurement) must never become.
+  It refuses a second reading for the same reason: **a pool a candidate never played is the
+  absence of a measurement, never a score of zero.** Only a pool *every* candidate played orders
+  anything (`ranked_on`), the gaps are named (`uncovered`), and a run holding any is unreadable —
+  because reading an unplayed pool as neutral sorts an untested candidate above one that was
+  tested and lost, which is the exact inversion the held-out ordering exists to catch, and
+  train-many-validate-few is what AR5's search produces.
   D6/D7: the horizon is 100 days, `command_cap` is a hard invariant failure of the run, and the
   pools are split by **board and seed** with the three shipped tiers as never-retuned anchors.
   `ArenaPools.pool_args()` is the one statement of a pool — `make arena-anchors POOL=` reads the

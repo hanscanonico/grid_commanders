@@ -12,6 +12,9 @@ const BLUE := "data/ai/hard.tres"
 ## A training board and its first seed, so a record lands in a pool without the
 ## test restating the split.
 const BOARD := "scrimmage"
+## Its held-out counterpart, and a candidate that only ever meets one of them.
+const HELD_OUT := "timberline"
+const THIRD := "reports/ai_arena/gen1/c7.tres"
 
 
 func _seed_at(index: int) -> int:
@@ -34,6 +37,28 @@ func _record(
 		"rejected": 0,
 		"cap_stall": false,
 	}
+
+
+## One matchup on one board at one seed, played from both seats, with `red`
+## winning each time — the shape a pairing has to have to be reported at all.
+func _both_seats(map_name: String, red: String, blue: String, index: int) -> Array:
+	var played: Array = []
+	for seat in 2:
+		var swapped := seat == 1
+		var record := {
+			"map": map_name,
+			"seed": BalanceMatchSchedule.seed_at(map_name, index),
+			"seat": seat,
+			"red": blue if swapped else red,
+			"blue": red if swapped else blue,
+			"winner": ArenaFitness.BLUE_TEAM if swapped else ArenaFitness.RED_TEAM,
+			"termination": "rout",
+			"day_ended": 10,
+			"rejected": 0,
+			"cap_stall": false,
+		}
+		played.append(record)
+	return played
 
 
 # --- the score -------------------------------------------------------------------
@@ -142,6 +167,50 @@ func test_an_invalid_match_is_counted_and_never_scored() -> void:
 	assert_string_contains(board.problem(), "would not resolve")
 	for row: ArenaLeaderboard.Row in board.rows:
 		assert_eq(row.matches(ArenaPools.TRAINING), 1, "only the sound match was tallied")
+
+
+func test_a_pool_a_candidate_never_played_is_not_a_score_of_zero() -> void:
+	# Train many, validate few is the shape a generational search produces, and
+	# an unplayed pool scored as neutral sorts a candidate that never met the
+	# held-out boards above one that met them and lost — the inversion the
+	# held-out reading exists to catch. So the pool leaves the ordering and the
+	# gap is reported.
+	var records: Array = []
+	records.append_array(_both_seats(BOARD, RED, BLUE, 0))
+	records.append_array(_both_seats(HELD_OUT, RED, THIRD, ArenaPools.VALIDATION_OFFSET))
+	var board := ArenaLeaderboard.build(records)
+	assert_true(board.unpaired.is_empty(), "every pairing was played from both seats")
+	assert_eq(
+		board.uncovered,
+		["%s in %s" % [BLUE, ArenaPools.VALIDATION], "%s in %s" % [THIRD, ArenaPools.TRAINING]]
+	)
+	assert_string_contains(board.problem(), "never played a pool")
+	var ranked: Array = board.to_dict()["ranked_on"]
+	assert_true(ranked.is_empty(), "so no pool ordered the table")
+
+
+func test_a_pool_every_candidate_played_orders_the_table() -> void:
+	var records: Array = []
+	for index in 2:
+		records.append_array(_both_seats(BOARD, RED, BLUE, index))
+		records.append_array(_both_seats(HELD_OUT, RED, BLUE, ArenaPools.VALIDATION_OFFSET + index))
+	var board := ArenaLeaderboard.build(records)
+	assert_true(board.uncovered.is_empty())
+	assert_eq(board.problem(), "")
+	assert_eq(board.rows[0].candidate, RED, "won every match on both pools")
+	var ranked: Array = board.to_dict()["ranked_on"]
+	assert_eq(ranked, [ArenaPools.VALIDATION, ArenaPools.TRAINING])
+
+
+func test_a_record_that_cannot_be_scored_is_named_rather_than_read() -> void:
+	# `--matches=` names an arbitrary path, so a truncated or hand-edited file is
+	# refused by what it is missing instead of faulting inside the scorer.
+	assert_eq(ArenaLeaderboard.record_error(_record(1, "rout", 10)), "")
+	assert_string_contains(ArenaLeaderboard.record_error("not a record"), "is an object")
+	for key: String in ArenaLeaderboard.RECORD_KEYS:
+		var short := _record(1, "rout", 10)
+		short.erase(key)
+		assert_string_contains(ArenaLeaderboard.record_error(short), key)
 
 
 func test_the_stronger_candidate_leads_the_table() -> void:

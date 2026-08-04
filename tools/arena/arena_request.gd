@@ -124,14 +124,33 @@ func pairings(text: String) -> Array[Pairing]:
 ## the Lab's rule, so rerunning a shard overwrites its own directory and two runs
 ## of one question are diffable.
 func run_name() -> String:
+	var parts: Array[String] = []
 	if pairings_path != "":
-		return pairings_path.get_file().trim_suffix(".json")
-	var parts: Array[String] = [map_name, slug(red_path), "vs", slug(blue_path)]
-	parts.append("s%d" % seeds)
-	if seed_offset > 0:
-		parts.append("o%d" % seed_offset)
-	parts.append("d%d" % days)
+		parts.append(pairings_path.get_file().trim_suffix(".json"))
+	else:
+		parts.append_array([map_name, slug(red_path), "vs", slug(blue_path)])
+		parts.append("s%d" % seeds)
+		if seed_offset > 0:
+			parts.append("o%d" % seed_offset)
+		parts.append("d%d" % days)
+	parts.append(digest())
 	return "_".join(parts)
+
+
+## The whole spec, digested — what a name spelled out of readable parts leaves
+## out. A candidate is a path and its slug is only the filename, so the
+## generation layout a search writes (`g1/c1.tres`, `g2/c1.tres`) names one
+## directory between the two and the second run overwrites the first's records;
+## a shard file is named the same way. `balance_pool.py` keys its shards on a
+## digest of the arguments for exactly this reason, and naming the dimensions by
+## hand is what such a key must never do — this one covers every field the
+## request carries and cannot forget the next.
+func digest() -> String:
+	var spec := (
+		"%s|%s|%s|%s|%d|%d|%d"
+		% [pairings_path, map_name, red_path, blue_path, seeds, seed_offset, days]
+	)
+	return spec.sha1_text().substr(0, 8)
 
 
 func artifact_dir() -> String:

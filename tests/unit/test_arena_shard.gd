@@ -139,7 +139,13 @@ func test_a_pairing_nobody_can_play_stops_the_shard() -> void:
 
 
 func test_a_flawed_match_is_counted_rather_than_scored() -> void:
-	var clean: Array[Dictionary] = [{"rejected": 0, "cap_stall": false}]
-	assert_eq(ArenaShard.flawed(clean), 0)
-	assert_eq(ArenaShard.flawed([{"rejected": 1, "cap_stall": false}] as Array[Dictionary]), 1)
-	assert_eq(ArenaShard.flawed([{"rejected": 0, "cap_stall": true}] as Array[Dictionary]), 1)
+	# What counts as one is `ArenaFitness`'s to say, so the run's exit code and
+	# the leaderboard's `invalid` count cannot drift apart.
+	assert_eq(ArenaShard.flawed([_outcome("rout", 0, false)] as Array[Dictionary]), 0)
+	assert_eq(ArenaShard.flawed([_outcome("day_cap", 0, false)] as Array[Dictionary]), 0)
+	assert_eq(ArenaShard.flawed([_outcome("rout", 1, false)] as Array[Dictionary]), 1)
+	assert_eq(ArenaShard.flawed([_outcome("command_cap", 0, true)] as Array[Dictionary]), 1)
+
+
+func _outcome(termination: String, rejected: int, cap_stall: bool) -> Dictionary:
+	return {"termination": termination, "rejected": rejected, "cap_stall": cap_stall}
