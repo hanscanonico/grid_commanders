@@ -87,9 +87,8 @@ const SKY_TOP := Color(0.290, 0.486, 0.667)
 const SKY_HORIZON := Color(0.749, 0.902, 0.949)
 const STAR_ON := Color(0.969, 0.788, 0.282)
 const STAR_OFF := Color(1.0, 1.0, 1.0, 0.22)
-const HP_FULL := Color(0.376, 0.769, 0.329)
-const HP_MID := Color(0.910, 0.722, 0.227)
-const HP_LOW := Color(0.863, 0.282, 0.235)
+## The unlit pip. The banded fill beside it is UiTheme.hp_color's, never a copy —
+## see _draw_pips.
 const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
 const PLATE_TEXT := Color(1.0, 1.0, 1.0, 0.88)
 ## What a knocked-out figure burns down to on its way off the field.
@@ -687,12 +686,13 @@ func _draw_weapon_chip(font: Font, plate: Rect2, from_edge: float) -> void:
 
 ## Ten pips, banded by health and depleting toward the seam, so both bars run
 ## out in the same direction and the two sides read as one gauge.
+##
+## The band comes from UiTheme, the one owner of that rule, and `hp_shown` is the
+## displayed 0-10 it expects — the same number the bar's pips are set from. A
+## private copy is what let the board and the cut-in call the same unit hurt in
+## two different colours.
 func _draw_pips(plate: Rect2) -> void:
-	var band := HP_FULL
-	if hp_shown <= 3:
-		band = HP_LOW
-	elif hp_shown <= 6:
-		band = HP_MID
+	var band := UiTheme.hp_color(hp_shown)
 	# Anchored to the seam and running outward, so both bars deplete toward the
 	# middle of the frame and the two read as one gauge.
 	var seam := _outward_px(size.x - SEAM_MARGIN)
