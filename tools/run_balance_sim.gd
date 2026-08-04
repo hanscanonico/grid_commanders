@@ -19,6 +19,10 @@ extends SceneTree
 ##     --red=<co>:<tier>         a side spec — commander id or `none`, tier
 ##     --blue=<co>:<tier>        easy/normal/hard. Default none:normal.
 ##     --seeds=10                paired seed count (default 4)
+##     --seed-offset=8           skip the first N seeds of that range, so a
+##                               driver can split one matchup's seeds across
+##                               processes without deriving the seeds itself
+##                               (tools/balance_pool.py)
 ##     --days=20                 day cap before the match is scored on points
 ##     --sweep=commanders        one free axis per run (plan D5):
 ##     --sweep=maps                commanders — every commander vs --blue at --tier
@@ -105,6 +109,9 @@ var _sweep := ""
 var _sweep_tier := Difficulty.DEFAULT_ID
 var _sweep_commander := CommanderType.NEUTRAL_ID
 var _seed_count := DEFAULT_SEEDS
+## Where in the seed range `--seeds=` starts counting. 0 unless a shard of a
+## parallel run asked for a later slice of it.
+var _seed_offset := 0
 ## -1 unless `--seed=` pinned one, in which case the run is that single seed —
 ## the same one a watch-mode launch replays.
 var _pinned_seed := -1
@@ -191,6 +198,8 @@ func _parse_args() -> bool:
 			# Watch mode's spelling, accepted here too: a suspicious row's flags
 			# copied verbatim off the CSV replay that one match headlessly.
 			_pinned_seed = maxi(0, int(arg.get_slice("=", 1)))
+		elif arg.begins_with("--seed-offset="):
+			_seed_offset = maxi(0, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--days="):
 			_days_cap = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--out="):
@@ -210,6 +219,9 @@ func _parse_args() -> bool:
 		return false
 	if not commander_db.has(_sweep_commander):
 		push_error("balance-sim: unknown commander '%s'" % _sweep_commander)
+		return false
+	if _pinned_seed >= 0 and _seed_offset > 0:
+		push_error("balance-sim: --seed= pins one seed; --seed-offset= slices a range")
 		return false
 	if _sweep != "maps" and _map_of(_map_name) == null:
 		return false
@@ -304,8 +316,13 @@ func _pair(
 	var mirror := red.text() == blue.text()
 	for s in 1 if _pinned_seed >= 0 else _seed_count:
 		# Paired seeds: both seatings of a matchup meet on identical luck, and the
-		# seed varies by board so two maps in one sweep are not correlated.
-		var seed_val := _pinned_seed if _pinned_seed >= 0 else SEED_BASE + s + hash(map_name) % 1000
+		# seed varies by board so two maps in one sweep are not correlated. The
+		# offset walks the same range further along, so the shards of a split run
+		# play exactly the seeds the whole run would have.
+		var index := _seed_offset + s
+		var seed_val := (
+			_pinned_seed if _pinned_seed >= 0 else SEED_BASE + index + hash(map_name) % 1000
+		)
 		for seat in 1 if mirror else 2:
 			var job := Job.new()
 			job.value = value
@@ -457,6 +474,7 @@ func _config() -> Dictionary:
 		"blue": _blue_text,
 		"seeds": _seeds_played(),
 		"seed": _pinned_seed,
+		"seed_offset": _seed_offset,
 		"days_cap": _days_cap,
 		"command_log": _log_commands,
 	}
@@ -503,6 +521,8 @@ func _run_name() -> String:
 		parts.append("seed%d" % _pinned_seed)
 	else:
 		parts.append("s%d" % _seed_count)
+		if _seed_offset > 0:
+			parts.append("o%d" % _seed_offset)
 	parts.append("d%d" % _days_cap)
 	return "_".join(parts).replace(":", "-").replace(" ", "").replace("(", "").replace(")", "")
 
