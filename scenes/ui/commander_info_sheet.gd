@@ -127,7 +127,7 @@ func _build() -> void:
 	charge_help.text = "Command Power charges as your armies take and deal damage."
 	charge_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	charge_help.add_theme_font_override("font", UiTheme.display())
-	charge_help.add_theme_font_size_override("font_size", 8)
+	charge_help.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	charge_help.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	rows.add_child(charge_help)
 
@@ -156,21 +156,19 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(column)
 
+	# The design system's title band, tinted to the side — the same recipe the
+	# menu's "MATCH SETUP" header wears. Dressed with the card under it, or the
+	# faction name would be the one line on this sheet still set in the OS font.
 	var side := identity.theme(team)
 	var header := PanelContainer.new()
-	var box := StyleBoxFlat.new()
-	box.bg_color = side.color
-	header.add_theme_stylebox_override("panel", box)
+	header.add_theme_stylebox_override("panel", UiTheme.header_box(side.color))
 	var label := Label.new()
 	label.text = identity.display_name(team).to_upper()
+	label.add_theme_font_override("font", UiTheme.display(true))
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_TITLE)
 	label.add_theme_color_override("font_color", side.ink)
-	label.add_theme_font_size_override("font_size", 10)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_top", 2)
-	margin.add_theme_constant_override("margin_bottom", 2)
-	margin.add_child(label)
-	header.add_child(margin)
+	header.add_child(label)
 	column.add_child(header)
 
 	# Same bounded frame the select page gives its card: the card's height is

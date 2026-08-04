@@ -7,9 +7,17 @@ extends PanelContainer
 ## Every value it shows is bound straight from the sim-side CommanderType
 ## (display_name, faction, doctrine_text, power_quotes, power_name, power_text,
 ## power_cost, power_duration); nothing is duplicated here, so the card can
-## never drift from the numbers the rules actually use. All styling — the faction field colour,
+## never drift from the numbers the rules actually use. All faction art — the field colour,
 ## the emblem, the portrait — comes from CommanderVisuals, the one authority on
 ## it. The card itself is pure presentation and never touches core/.
+##
+## It is dressed in the design system like every other surface (menu-revamp plan
+## D1): Pixelify for the name and the rules copy, Silkscreen for the micro-labels
+## and the cost, sizes and slates from UiTheme and every fill through UiTheme.flat
+## — bar the two constants below, which say why they are the card's own. The card
+## is also the in-battle info sheet and the select page's focus, so this is the one
+## dress three screens wear, which is why it was deferred to a follow-up of its own
+## rather than changed alongside the page it sits on.
 ##
 ## Built in code rather than a .tscn: the layout is regular and data-driven, and
 ## the repo would rather not hand-maintain scene-graph plumbing for it.
@@ -17,11 +25,11 @@ extends PanelContainer
 ## The hard floor: narrower than this and the doctrine copy shreds into two-word
 ## lines. The card claims it unless the caller has already asked for more.
 const MIN_WIDTH := 158
-## The width every line of shipped copy needs to stop wrapping further: measured
-## across the whole roster, the tallest card is 289px at this width or any wider,
-## and no page on a 640x360 screen can spare more than that. Callers with the room
-## ask for it by name rather than guessing a number — narrower is legible but
-## taller, and height is the dimension this screen has none of.
+## The width every line of shipped copy needs to stop wrapping further, measured
+## across the whole roster — and no page on a 640x360 screen can spare more than
+## that. Callers with the room ask for it by name rather than guessing a number —
+## narrower is legible but taller, and height is the dimension this screen has
+## none of.
 const READING_WIDTH := 250
 
 ## De-emphasised copy on paper: the signature line, and the micro-label over each
@@ -29,10 +37,11 @@ const READING_WIDTH := 250
 ## shell's faint text (UiTheme.INK_3) is mixed for slate and washes out on cream.
 const _MICRO_INK := Color(0.408, 0.443, 0.471)
 
-const _NAME_SIZE := 13
-const _MICRO_SIZE := 8
-const _BODY_SIZE := 9
-const _POWER_NAME_SIZE := 11
+## The one size this card states for itself: its headline. Every other line is a
+## UiTheme token, but the shell has no size between a button's 10 and a banner's
+## 18, and a name band is neither — it is the card's face, read before the rules
+## under it. Named here like the two full-screen pages name their own titles.
+const _NAME_SIZE := 12
 ## The portrait band, public because a surface that frames this card checks its
 ## own layout against it — a card showing less than its face is showing nothing.
 const PORTRAIT_H := 96
@@ -69,7 +78,7 @@ func bind(commander: CommanderType) -> void:
 
 func _build() -> void:
 	custom_minimum_size.x = maxf(custom_minimum_size.x, MIN_WIDTH)
-	add_theme_stylebox_override("panel", _hard_box(CommanderVisuals.HARD_BORDER, 3))
+	add_theme_stylebox_override("panel", _hard_box(UiTheme.HARD_BORDER, 3))
 
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 0)
@@ -108,6 +117,7 @@ func _build() -> void:
 	# A PanelContainer, so its stylebox paints the faction-dark band behind the
 	# name (a MarginContainer draws no background).
 	_name_label = Label.new()
+	_name_label.add_theme_font_override("font", UiTheme.display(true))
 	_name_label.add_theme_font_size_override("font_size", _NAME_SIZE)
 	_name_band = PanelContainer.new()
 	_name_band.add_child(_pad(_name_label, 6, 2))
@@ -122,16 +132,13 @@ func _build() -> void:
 	# The general's signature line — power_quotes[0], the same words the
 	# activation banner opens with on a first firing (power-quotes plan PQ2), so
 	# the select screen introduces the character the battle then delivers.
-	_quote_label = Label.new()
-	_quote_label.add_theme_font_size_override("font_size", _BODY_SIZE)
-	_quote_label.add_theme_color_override("font_color", _MICRO_INK)
-	_quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_quote_label = _body(_MICRO_INK)
 	copy.add_child(_quote_label)
 
 	_doctrine_label = _labelled_block(copy, "DOCTRINE")
 
 	_power_box = PanelContainer.new()
-	_power_box.add_theme_stylebox_override("panel", _hard_box(Color(0.196, 0.227, 0.251), 2))
+	_power_box.add_theme_stylebox_override("panel", _hard_box(UiTheme.SLATE_700, 2))
 	copy.add_child(_power_box)
 	var power_rows := VBoxContainer.new()
 	power_rows.add_theme_constant_override("separation", 1)
@@ -140,21 +147,22 @@ func _build() -> void:
 	var power_head := _pad(null, 5, 3)
 	var head_row := HBoxContainer.new()
 	head_row.add_theme_constant_override("separation", 6)
-	var head_label := _mono("COMMAND POWER", _MICRO_SIZE, _MICRO_INK)
+	var head_label := _micro("COMMAND POWER", _MICRO_INK)
 	head_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_power_cost_label = _mono("", _MICRO_SIZE, UiTheme.AMMO)
+	_power_cost_label = _micro("", UiTheme.AMMO)
 	head_row.add_child(head_label)
 	head_row.add_child(_power_cost_label)
 	power_head.add_child(head_row)  # power_head is a MarginContainer
 	power_rows.add_child(power_head)
 
-	_power_name_label = _mono("", _POWER_NAME_SIZE, CommanderVisuals.PAPER_INK)
+	# The power's own name, set like a button label rather than as body copy: it is
+	# the one line in the block a player looks for.
+	_power_name_label = Label.new()
+	_power_name_label.add_theme_font_override("font", UiTheme.display(true))
+	_power_name_label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
 	power_rows.add_child(_pad(_power_name_label, 6, 0))
 
-	_power_text_label = Label.new()
-	_power_text_label.add_theme_font_size_override("font_size", _BODY_SIZE)
-	_power_text_label.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)
-	_power_text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_power_text_label = _body(UiTheme.INK)
 	power_rows.add_child(_pad(_power_text_label, 6, 3))
 
 	_built = true
@@ -162,7 +170,7 @@ func _build() -> void:
 
 func _apply() -> void:
 	var theme := CommanderVisuals.theme_for(_commander)
-	_field.add_theme_stylebox_override("panel", _flat_box(theme.color))
+	_field.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
 	_portrait.texture = CommanderVisuals.portrait_for(_commander)
 	if theme.key == CommanderVisuals.NEUTRAL_KEY:
 		_emblem.texture = null
@@ -173,7 +181,7 @@ func _apply() -> void:
 
 	_name_label.text = _commander.display_name
 	_name_label.add_theme_color_override("font_color", theme.ink)
-	_name_band.add_theme_stylebox_override("panel", _flat_box(theme.color_dark))
+	_name_band.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
 	# The power's name wears its own general's faction, like the band above it —
 	# it was a hand-copy of meridian's dark on every card, whoever was on it.
 	_power_name_label.add_theme_color_override("font_color", theme.color_dark)
@@ -211,19 +219,30 @@ func _labelled_block(parent: Node, micro: String) -> Label:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 	parent.add_child(block)
-	block.add_child(_mono(micro, _MICRO_SIZE, _MICRO_INK))
-	var body := Label.new()
-	body.add_theme_font_size_override("font_size", _BODY_SIZE)
-	body.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	block.add_child(_micro(micro, _MICRO_INK))
+	var body := _body(UiTheme.INK)
 	block.add_child(body)
 	return body
 
 
-func _mono(text: String, size: int, color: Color) -> Label:
+## One wrapping line of rules copy: Pixelify at the shell's body size, which is
+## also its floor — a step down loses the face's space advance.
+func _body(color: Color) -> Label:
+	var label := Label.new()
+	label.add_theme_font_override("font", UiTheme.display())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
+	label.add_theme_color_override("font_color", color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return label
+
+
+## A block's caption or the cost beside it — Silkscreen, the face the whole game
+## sets its labels and numerals in.
+func _micro(text: String, color: Color) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_font_override("font", UiTheme.stat())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
 	label.add_theme_color_override("font_color", color)
 	return label
 
@@ -242,21 +261,14 @@ func _pad(child: Control, h: int, v: int) -> MarginContainer:
 
 func _paper_panel(child: Control, h: int, v: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _flat_box(CommanderVisuals.PAPER))
+	panel.add_theme_stylebox_override("panel", UiTheme.flat(UiTheme.PAPER))
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(_pad(child, h, v))
 	return panel
 
 
-func _flat_box(color: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	return box
-
-
 func _hard_box(border: Color, width: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = CommanderVisuals.PAPER
+	var box := UiTheme.flat(UiTheme.PAPER)
 	box.border_color = border
 	box.set_border_width_all(width)
 	return box

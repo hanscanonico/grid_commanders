@@ -216,7 +216,7 @@ func _build() -> void:
 	# the design system's stat face, and it brings the second font onto the page.
 	var footer := Label.new()
 	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", 8)
+	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	footer.text = "ARROWS / TAB  BROWSE      ENTER  CONFIRM      ESC  BACK      MOUSE OK"
 	main.add_child(footer)
@@ -254,7 +254,7 @@ func _build_right_column() -> VBoxContainer:
 		var tab := Button.new()
 		tab.text = String(theme.key).capitalize()
 		tab.add_theme_font_override("font", UiTheme.display())
-		tab.add_theme_font_size_override("font_size", 10)
+		tab.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.focus_entered.connect(_set_faction.bind(i))
 		tab.pressed.connect(_focus_faction.bind(i))
@@ -269,9 +269,9 @@ func _build_right_column() -> VBoxContainer:
 	col.add_child(mini_row)
 
 	var summary := PanelContainer.new()
-	summary.add_theme_stylebox_override("panel", _flat(_INACTIVE))
+	summary.add_theme_stylebox_override("panel", UiTheme.flat(_INACTIVE))
 	summary.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_summary_label = _small_label(10)
+	_summary_label = _small_label(UiTheme.SIZE_BODY)
 	_summary_label.add_theme_color_override("font_color", _MUTED)
 	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.add_child(_pad(_summary_label, 8, 6))
@@ -306,7 +306,7 @@ func _build_right_column() -> VBoxContainer:
 func _action_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, 10)
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY)
 	return button
 
 
@@ -381,7 +381,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	button.add_child(content)
 
 	var stage := Panel.new()
-	stage.add_theme_stylebox_override("panel", _flat(theme.color))
+	stage.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stage.clip_contents = true
 	content.add_child(stage)
@@ -393,12 +393,12 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	stage.add_child(portrait)
 
-	var name_label := _small_label(8)
+	var name_label := _small_label(UiTheme.SIZE_BODY)
 	name_label.text = commander.display_name
 	name_label.add_theme_color_override("font_color", theme.ink)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var name_wrap := PanelContainer.new()
-	name_wrap.add_theme_stylebox_override("panel", _flat(theme.color_dark))
+	name_wrap.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
 	name_wrap.add_child(_pad(name_label, 2, 1))
 	content.add_child(name_wrap)
 	UiTheme.make_decoration(content)
@@ -583,7 +583,7 @@ func _build_chips() -> void:
 	_chip_labels.clear()
 	for _i in _picks.size():
 		var chip := PanelContainer.new()
-		var label := _small_label(9)
+		var label := _small_label(UiTheme.SIZE_BODY)
 		chip.add_child(_pad(label, 7, 3))
 		_chip_bar.add_child(chip)
 		_chips.append(chip)
@@ -595,7 +595,9 @@ func _build_chips() -> void:
 func _paint_chip(
 	chip: PanelContainer, label: Label, text: String, theme: CommanderVisuals.FactionTheme
 ) -> void:
-	chip.add_theme_stylebox_override("panel", _flat(theme.color if theme != null else _INACTIVE))
+	chip.add_theme_stylebox_override(
+		"panel", UiTheme.flat(theme.color if theme != null else _INACTIVE)
+	)
 	label.add_theme_color_override("font_color", theme.ink if theme != null else _MUTED)
 	label.text = text
 
@@ -643,15 +645,8 @@ func _pad(child: Control, h: int, v: int) -> MarginContainer:
 	return margin
 
 
-func _flat(color: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	return box
-
-
 func _hard(border: Color, width: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = _INACTIVE
+	var box := UiTheme.flat(_INACTIVE)
 	box.border_color = border
 	box.set_border_width_all(width)
 	box.content_margin_left = 4

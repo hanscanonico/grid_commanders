@@ -646,9 +646,17 @@ that must survive any change; the full rationale, milestones and risk registers 
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
   cream/ink) so there is exactly one value per colour. Map thumbnails
   (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
-  a miniature can never be a second opinion. The shared `CommanderCard` keeps its dress until a
-  named follow-up (it is also the in-battle info sheet, so restyling it moves commander selection
-  too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
+  a miniature can never be a second opinion. The shared `CommanderCard`'s deferred dress is that
+  named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
+  and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
+  and because the card is also the in-battle info sheet, that one edit re-dressed commander
+  select, the sheet and the gallery together, which is why it was one pass. What stays card-local
+  is one size and one colour, each named and each with its reason on the constant: `_NAME_SIZE`,
+  the card's headline, because the shell has no size between a button's and a banner's; and
+  `_MICRO_INK`, faint ink on *cream*, where the shell's `INK_3` is mixed for slate. The select
+  page's own `_TITLE_SIZE` stays page-local for the same reason, and the replays page states the
+  same value — a page title is not a shell token. Fonts (Pixelify Sans, Silkscreen) are vendored,
+  OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
   end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input
