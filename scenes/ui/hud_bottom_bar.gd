@@ -21,6 +21,10 @@ extends PanelContainer
 ## UnitSprite.texture_for and CommanderVisuals.portrait_for — so faction tint and
 ## the exhausted grey are never a second opinion held here.
 
+## The charged shortcut was pressed. The bar owns the button and says what
+## happened to it; what a press means is Battle's, through BattleView.
+signal fire_pressed
+
 const MAX_DEFENSE_STARS := 4
 const TERRAIN_ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
 ## Terrain atlas cell size; mirrors BattleView.TERRAIN_PX rather than coupling
@@ -54,11 +58,11 @@ var identity: SideIdentity
 ## presentation key that only says how one looks.
 var chart: DamageChart
 
-## Wired by Battle to _fire_command_power, and kept on the bar so the fire control
-## sits with the readiness it reflects — the same contract the floating chip had.
-var fire_button: Button
-
 var _built := false
+## The charged shortcut, kept on the bar so the fire control sits with the
+## readiness it reflects — the same contract the floating chip had. A press
+## leaves here as `fire_pressed`; nobody outside the bar reaches the Button.
+var _fire_button: Button
 var _portrait_field: Panel
 var _portrait: TextureRect
 var _co_name: Label
@@ -166,11 +170,12 @@ func _build_commander(row: HBoxContainer) -> void:
 
 	_charge_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	meter_row.add_child(_charge_label)
-	fire_button = Button.new()
-	fire_button.text = "FIRE"
-	fire_button.focus_mode = Control.FOCUS_NONE
-	fire_button.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	meter_row.add_child(fire_button)
+	_fire_button = Button.new()
+	_fire_button.text = "FIRE"
+	_fire_button.focus_mode = Control.FOCUS_NONE
+	_fire_button.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	_fire_button.pressed.connect(fire_pressed.emit)
+	meter_row.add_child(_fire_button)
 
 
 func _build_unit(row: HBoxContainer) -> void:
@@ -272,7 +277,7 @@ func show_commander(
 	_meter_frame.visible = powered
 	_charge_label.visible = powered
 	if not powered:
-		fire_button.visible = false
+		_fire_button.visible = false
 		return
 
 	var ratio := 1.0 if co_state.power_active or co_state.is_ready() else co_state.charge_ratio()
@@ -295,8 +300,8 @@ func show_commander(
 	else:
 		_charge_label.text = "%d / %d" % [co_state.charge, commander.power_cost]
 		_charge_label.add_theme_color_override("font_color", UiTheme.INK_3)
-	fire_button.visible = co_state.is_ready() and not is_ai
-	fire_button.disabled = not co_state.is_ready() or is_ai
+	_fire_button.visible = co_state.is_ready() and not is_ai
+	_fire_button.disabled = not co_state.is_ready() or is_ai
 
 
 # --- the unit and terrain thirds ----------------------------------------------

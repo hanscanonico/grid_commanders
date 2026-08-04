@@ -97,8 +97,8 @@ var speed := 1.0
 var tail_scale := 1.0
 
 ## The clock, the letterbox and the single exit, shared with CaptureCutscene. It
-## also owns the board camera: the cut-in eases it from the entry flinch's zoom
-## back to rest over the closing wipe, so the board is already at rest on the
+## also owns the board's return to rest: the cut-in eases the entry flinch's zoom
+## back out over the closing wipe, so the board is already at rest on the
 ## frame it is uncovered — no snap when `play` returns, and a skip lands the zoom
 ## home exactly as it lands every other value, because it too is a pure function
 ## of the clock.
@@ -129,18 +129,11 @@ func _ready() -> void:
 ## Plays one already-resolved exchange and returns when the map is back.
 ## Awaitable: both call sites hold the interaction flow on it.
 ##
-## The animator hands over the punched-in camera and the zoom to return it to;
-## the cut-in eases it home over the closing wipe (see CutscenePlayback). Left
-## null — as the scenario driver leaves it — the camera is untouched.
-func play(
-	result: CombatResolver.CombatResult,
-	attacker: Unit,
-	defender: Unit,
-	camera: Camera2D = null,
-	resting_zoom := Vector2.ONE
-) -> void:
+## The animator punches the board in on its way here; the cut-in eases that flinch
+## back out over the closing wipe, through the view (see CutscenePlayback).
+func play(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
 	_pose(result, attacker, defender)
-	_play.begin(_beats.total, camera, resting_zoom)
+	_play.begin(_beats.total, view)
 	_play.layout()
 	_apply()
 	_play.root.show()
@@ -159,7 +152,7 @@ func pose_at(
 	result: CombatResolver.CombatResult, attacker: Unit, defender: Unit, at: float
 ) -> void:
 	_pose(result, attacker, defender)
-	# A still never punched the camera; `pose` keeps `_apply` off it.
+	# A still never punched the board; `pose` keeps `_apply` off its zoom.
 	_play.pose(_beats.total, at)
 	_play.layout()
 	_apply()

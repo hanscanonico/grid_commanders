@@ -164,7 +164,7 @@ func _run_power_range_readout() -> String:
 func _expect_printed_range(unit: Unit, when: String) -> String:
 	var band := AttackRange.band(_battle.game, unit)
 	var wanted := "RNG %d-%d" % [band.x, band.y]
-	var line := _battle.view.hud_bottom.unit_order_line()
+	var line := _battle.view.unit_order_line()
 	if wanted in line:
 		return ""
 	return "the bar reads '%s' %s; AttackRange says %s" % [line, when, wanted]
@@ -174,7 +174,7 @@ func _run_end_turn_ready_units() -> String:
 	# Hot-seat makes the no-ready path stop at the handoff instead of immediately
 	# letting the AI race through the next side before the scenario can inspect it.
 	_battle.ai_teams.clear()
-	_battle.view.ai_teams = _battle.ai_teams
+	_battle.view.set_ai_teams(_battle.ai_teams)
 	var starting_team := _battle.game.current_team
 
 	var error := await _run_guard_safe_answers(starting_team)

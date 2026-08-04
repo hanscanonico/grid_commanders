@@ -443,7 +443,7 @@ func _run_power_menu_demo() -> void:
 	_battle.confirm_at(Vector2i(8, 8))  # select the red tank
 	_battle.confirm_at(Vector2i(8, 8))  # stay put -> its action menu
 	await _until_state(Battle.State.MENU)
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.IDLE)
 	# Waited out rather than asserted, in the same spirit as _until_state: a menu
 	# that never closes hangs the scenario and the smoke run reports the timeout.
@@ -499,7 +499,7 @@ func _stage_capture_power_race() -> void:
 		await tree.process_frame
 	if _battle.state == Battle.State.MENU:
 		_fail("capture holds its cut-in in State.MENU — the HUD Fire button reaches a command")
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.IDLE)
 	if _battle.game.commander_state(1).power_active:
 		_fail("a Command Power fired during the capture cut-in")
@@ -753,8 +753,8 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 		var finishes := [0]
 		var tally := func() -> void: finishes[0] += 1
 		cutscene.finished.connect(tally)
-		camera.zoom = resting * BattleAnimator.PUNCH_ZOOM
-		cutscene.play(result, unit, cell, camera, resting)  # deliberately not awaited
+		_punch_board()
+		cutscene.play(result, unit, cell)  # deliberately not awaited
 		for frame in delay:
 			await tree.process_frame
 		for spam in 3:
@@ -775,7 +775,7 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 				)
 			)
 			return
-	camera.zoom = resting
+	_battle.view.punch_zoom = 1.0
 	print(
 		(
 			"capture_cutin_skip: %d skips, each resolved exactly once and camera home"
@@ -808,11 +808,11 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 		# exit that fires twice — would be the one it could not see.
 		var tally := func() -> void: finishes[0] += 1
 		cutscene.finished.connect(tally)
-		# Hand it the punched-in camera the animator would, so the skip has a zoom
-		# to land: the cut-in now owns easing it back to `resting` off its own
-		# clock, and a skip must pin it there like every other value it drives.
-		camera.zoom = resting * BattleAnimator.PUNCH_ZOOM
-		cutscene.play(result, attacker, defender, camera, resting)  # deliberately not awaited
+		# Punch the board the way the animator would, so the skip has a flinch to
+		# land: the cut-in owns easing it back out off its own clock, and a skip
+		# must pin it home like every other value it drives.
+		_punch_board()
+		cutscene.play(result, attacker, defender)  # deliberately not awaited
 		for frame in delay:
 			await tree.process_frame
 		# Spammed, not pressed once: a second skip after the exit has run must be
@@ -833,8 +833,24 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 				)
 			)
 			return
-	camera.zoom = resting
+	_battle.view.punch_zoom = 1.0
 	print("cutin_skip: %d skips, each resolved exactly once and camera home" % SKIP_FRAMES.size())
+
+
+## The entry flinch, staged the way BattleAnimator stages it — and checked while it
+## is held. The board is docked in the band between the two HUD bars by a camera
+## offset in *world* units, so the same screen inset is a different offset at each
+## zoom level: a punch written straight to the camera keeps the resting level's
+## inset and drops the board out of the band for as long as the flinch lasts
+## (COM-84). Measured in the screen pixels that must not move, so the check does
+## not restate the view's arithmetic.
+func _punch_board() -> void:
+	var camera := _battle.camera
+	var docked := camera.offset.y * camera.zoom.y
+	_battle.view.punch_zoom = BattleAnimator.PUNCH_ZOOM
+	var punched := camera.offset.y * camera.zoom.y
+	if not is_equal_approx(punched, docked):
+		_fail("the zoom punch slid the board %.1fpx out of the band" % (punched - docked))
 
 
 ## Puts one unit of each named type onto the first pair of cells the board has
@@ -1107,7 +1123,7 @@ func _stage_mirror_power() -> void:
 	_battle.game.commander_state(2).charge = co.power_cost
 	_battle.game.current_team = 2
 	_battle.ai_teams.clear()  # Battle owns the list; hand the emptied one over again
-	_battle.view.ai_teams = _battle.ai_teams
+	_battle.view.set_ai_teams(_battle.ai_teams)
 	_battle.view.restage_identity()
 	await _settle_hud()
 
@@ -1117,7 +1133,7 @@ func _stage_mirror_power() -> void:
 ## capturing (see BattleAnimator.show_power_banner), so the frame is the banner.
 func _stage_power_banner() -> void:
 	_set_red_commander(&"cass_orlov", true)
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.IDLE)
 
 

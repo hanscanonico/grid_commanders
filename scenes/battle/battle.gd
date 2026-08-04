@@ -276,7 +276,7 @@ func _ready() -> void:
 	action_menu.action_chosen.connect(_on_menu_action)
 	end_turn_guard.review_requested.connect(_review_ready_units)
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
-	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
+	view.fire_pressed.connect(_fire_command_power)
 	rematch_button.pressed.connect(_request_rematch)
 	menu_button.pressed.connect(_request_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
@@ -491,7 +491,7 @@ func _build_view() -> BattleView:
 	built.map = map
 	built.game = game
 	built.perspective = perspective
-	built.ai_teams = ai_teams
+	built.set_ai_teams(ai_teams)
 	built.identity = SideIdentity.for_game(game)  # the side resolver; Battle reads view.identity
 	return built
 
@@ -516,7 +516,6 @@ func _build_animator() -> BattleAnimator:
 	built.node = self
 	built.view = view
 	built.perspective = perspective
-	built.camera = camera
 	built.cursor = cursor
 	built.turn_banner = %TurnBanner
 	built.banner_label = %BannerLabel

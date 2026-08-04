@@ -100,18 +100,12 @@ func _ready() -> void:
 
 
 ## Plays one already-applied capture and returns when the map is back. Awaitable:
-## both call sites hold the interaction flow on it. The animator hands over the
-## punched-in camera and the zoom to return it to; left null (as the scenario
-## driver leaves it) the camera is untouched.
-func play(
-	result: CaptureCommand.CaptureResult,
-	unit: Unit,
-	cell: Vector2i,
-	camera: Camera2D = null,
-	resting_zoom := Vector2.ONE
-) -> void:
+## both call sites hold the interaction flow on it. The animator punches the board
+## in on its way here; the cut-in eases that flinch back out over the closing wipe,
+## through the view (see CutscenePlayback).
+func play(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
 	_pose(result, unit, cell)
-	_play.begin(_beats.total, camera, resting_zoom)
+	_play.begin(_beats.total, view)
 	_play.layout()
 	_apply()
 	_play.root.show()
