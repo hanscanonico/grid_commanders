@@ -595,9 +595,10 @@ func _run_difficulty_check() -> void:
 					if done % 10 == 0:
 						print("difficulty: %d / %d matches" % [done, total])
 
-	var summary := _summarise_difficulty(rows, timing)
-	_write_difficulty_reports(rows, summary)
-	_print_difficulty_summary(summary)
+	var summary := _summarise_difficulty(rows)
+	var turn_times := _turn_times(timing)
+	_write_difficulty_reports(rows, summary, turn_times)
+	_print_difficulty_summary(summary, turn_times)
 	quit(0 if summary["passed"] else 1)
 
 
@@ -652,7 +653,9 @@ func _play_tiers(
 ## Folds one match's planning wall-clock into the per-tier totals, a turn counted
 ## each time one ends. The only number here that is not reproducible run to run,
 ## so it is reported and never gated on — it answers R3: does the extra thinking
-## cost a perceptible pause?
+## cost a perceptible pause? It leaves this runner through timing.json, never
+## summary.json: the two reports are the ones byte-diffed across a change (plan
+## D1), and a clock inside one of them made that bar unmeetable as stated.
 func _record_time(
 	timing: Dictionary, tiers: Dictionary, outcome: BalanceMatchEngine.Outcome
 ) -> void:
@@ -664,7 +667,7 @@ func _record_time(
 		timing[key]["turns"] += int(outcome.planning_turns.get(team, 0))
 
 
-func _summarise_difficulty(rows: Array[Dictionary], timing: Dictionary) -> Dictionary:
+func _summarise_difficulty(rows: Array[Dictionary]) -> Dictionary:
 	var total_rejected := 0
 	var total_cap_stalls := 0
 	for row in rows:
@@ -721,7 +724,6 @@ func _summarise_difficulty(rows: Array[Dictionary], timing: Dictionary) -> Dicti
 		"total_rejected": total_rejected,
 		"total_cap_stalls": total_cap_stalls,
 		"pairings": pairings,
-		"turn_ms": _turn_times(timing),
 		"passed": gates_ok and total_rejected == 0 and total_cap_stalls == 0,
 	}
 
@@ -743,14 +745,17 @@ func _turn_times(timing: Dictionary) -> Array:
 	return result
 
 
-func _write_difficulty_reports(rows: Array[Dictionary], summary: Dictionary) -> void:
+func _write_difficulty_reports(
+	rows: Array[Dictionary], summary: Dictionary, turn_times: Array
+) -> void:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir)
 	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, DIFFICULTY_CSV_COLUMNS)
 	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
-	print("difficulty: wrote matches.csv and summary.json to %s" % _out_dir)
+	BalanceReportWriter.write_json(dir.path_join("timing.json"), {"turn_ms": turn_times})
+	print("difficulty: wrote matches.csv, summary.json and timing.json to %s" % _out_dir)
 
 
-func _print_difficulty_summary(summary: Dictionary) -> void:
+func _print_difficulty_summary(summary: Dictionary, turn_times: Array) -> void:
 	print("\n=== difficulty ladder ===")
 	print(
 		(
@@ -785,7 +790,7 @@ func _print_difficulty_summary(summary: Dictionary) -> void:
 				)
 			)
 	print("mean AI planning per turn:")
-	for entry: Dictionary in summary["turn_ms"]:
+	for entry: Dictionary in turn_times:
 		print("  %-7s %7.1f ms over %d turns" % [entry["tier"], entry["mean_ms"], entry["turns"]])
 	_warn_turn_caps()
 	if summary["passed"]:

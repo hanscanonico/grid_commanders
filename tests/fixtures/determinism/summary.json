@@ -1,0 +1,88 @@
+{
+	"bands": {
+		"max_side_bias_pp": 5.0,
+		"min_resolved_pct": 50.0,
+		"preferred": [
+			45.0,
+			55.0
+		],
+		"warning": [
+			40.0,
+			60.0
+		]
+	},
+	"bias": {
+		"overall": {
+			"bias_pp": 100.0,
+			"decisive": 1,
+			"ok": false,
+			"red_win_pct": 100.0
+		},
+		"per_map": [
+			{
+				"bias_pp": 100.0,
+				"decisive": 1,
+				"map": "clash",
+				"matches": 1,
+				"naval_bounded": false,
+				"ok": false,
+				"red_win_pct": 100.0
+			}
+		]
+	},
+	"notes": [
+		"Every matchup here is a mirror, so the win-rate column is the *first seat's* rate, not a balance reading. The answer this run is after is the bias table: with both sides identical, every point above 50% is the seat talking.",
+		"Low confidence — under 50% of games resolved on the board (rout or HQ), so the rest were settled by the day-cap tiebreak, which can turn over on noise: none-normal vs none-normal. Probe with a longer --days= before believing the ordering.",
+		"First-seat bias +100.0 pp exceeds the +-5 pp threshold. On a mirror run that *is* the finding — there is nothing else for it to be."
+	],
+	"run": {
+		"axis": "matchup",
+		"blue": "none:normal",
+		"command_log": false,
+		"days_cap": 20,
+		"label": "none:normal vs none:normal on clash",
+		"map": "clash",
+		"red": "none:normal",
+		"seed": 1000,
+		"seeds": 1
+	},
+	"totals": {
+		"decisive": 1,
+		"draws": 0,
+		"invariants_clean": true,
+		"matches": 1,
+		"total_cap_stalls": 0,
+		"total_rejected": 0
+	},
+	"values": [
+		{
+			"confidence": "low",
+			"draws": 0,
+			"economy": {
+				"built_value": 52000,
+				"captures": 1,
+				"exchange_ratio": 1.175,
+				"killed_per_1000_spent": 903.846153846154,
+				"killed_value": 47000,
+				"lost_value": 40000,
+				"spent": 52000,
+				"turns": 20
+			},
+			"flag": "mirror",
+			"matches": 1,
+			"mean_day_ended": 21.0,
+			"mirror": true,
+			"naval_bounded": false,
+			"resolved_pct": 0.0,
+			"termination": {
+				"command_cap": 0,
+				"day_cap": 1,
+				"hq": 0,
+				"rout": 0
+			},
+			"value": "none-normal vs none-normal",
+			"win_rate": 100.0,
+			"wins": 1
+		}
+	]
+}

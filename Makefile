@@ -1,4 +1,7 @@
-GODOT := bin/Godot.app/Contents/MacOS/Godot
+# The vendored macOS engine (README's setup step) is the default, not the rule:
+# CI fetches the Linux build of the same version and points GODOT at it, the way
+# tools/check_scripts.sh and tools/smoke_scenarios.sh already allow.
+GODOT ?= bin/Godot.app/Contents/MacOS/Godot
 # Windowed launches go through a wrapper that hands window focus straight back
 # when the launch came from a script or an agent (no tty); from an interactive
 # terminal it execs $(GODOT) directly. See tools/godot_gui.sh for why the
@@ -185,6 +188,15 @@ SOURCES := $(shell find . -name '*.gd' \
 check:
 	tools/check_scripts.sh
 
+# The determinism gate (balance plan D1): one pinned Balance Lab match, byte-
+# diffed against the golden report under tests/fixtures/determinism/. About a
+# second, so unlike its two full-size siblings it runs on every change and in CI.
+# A deliberate rules, data or planner change is supposed to move it:
+#   make determinism REFRESH=1   rewrite the golden after reading the diff
+REFRESH ?=
+determinism:
+	tools/check_determinism.sh $(if $(REFRESH),--refresh)
+
 # Style and smells. Rule overrides live in gdlintrc.
 lint:
 	gdlint $(SOURCES)
@@ -267,7 +279,7 @@ menu-screenshot: import
 gallery-screenshot: import
 	$(GODOT_GUI) --path . scenes/menu/commander_gallery.tscn -- --screenshot=$(CURDIR)/screenshot.png
 
-.PHONY: run hotseat test verify smoke check lint format format-check tiles \
+.PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \

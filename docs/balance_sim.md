@@ -9,7 +9,9 @@ It is an **instrument, not a gate**. Like `make commander-balance` and
 `make difficulty-check` it stays out of `make verify` and `make test`; only its
 own unit tests (`tests/unit/test_balance_engine.gd`,
 `tests/unit/test_balance_recorder.gd`) are in the suite. Generated reports are
-not committed — they live under `reports/`, which is gitignored.
+not committed — they live under `reports/`, which is gitignored. The one gate
+over this code is `make determinism`, and it measures reproducibility rather than
+balance: [the committed side of the merge bar](#the-committed-side-of-it-make-determinism).
 
 ## The instruments
 
@@ -151,7 +153,13 @@ per match like the equation above.
 **`planning_ms` is the one wall-clock column.** Everything else in a timeline row
 is a pure function of (map, seed, side specs) and reproduces byte for byte; this
 one measures how long the planner thought and cannot. The determinism test
-compares rows with it excluded.
+compares rows with it excluded, and `make determinism` keeps the file out of its
+golden for the same reason.
+
+The tally cells — `built`, `killed`, `lost` — are alphabetical, and are sorted as
+Strings to be so: sorting them as `StringName`s orders by intern position, which
+is the order the ids were first mentioned by a loading script. That was a real
+flap in `timeline.csv` (`recon;mech`), not a hypothetical one.
 
 ### Kill and loss attribution (plan D3)
 
@@ -260,10 +268,34 @@ both reports before and after:
 | Gate | `matches.csv` | `summary.json` |
 |---|---|---|
 | `make commander-balance BAL="--commanders=alina_ward,cass_orlov,gideon_holt --seeds=2"` | identical | identical |
-| `make difficulty-check DIFF="--seeds=2 --days=12"` | identical | identical bar `turn_ms` |
+| `make difficulty-check DIFF="--seeds=2 --days=12"` | identical | identical |
 
-`turn_ms` is mean planning wall-clock and was never reproducible run to run —
-that is why `docs/difficulty_check.md` already reports it and never gates on it.
+That second row used to read *identical bar `turn_ms`*: mean planning wall-clock
+was written into the difficulty gate's `summary.json`, which made this bar
+unmeetable exactly where it was being claimed. It is written to `timing.json`
+beside the two reports now, and printed to stdout as it always was, so both
+diffed artifacts are byte-stable and `docs/difficulty_check.md` reads its timings
+where it always did.
+
+### The committed side of it: `make determinism`
+
+The bar above was also a *procedure*: `reports/` is gitignored, so there was
+nothing committed to diff against and it ran when somebody remembered.
+`make determinism` is that missing side — one pinned match (`clash`, seed 1000,
+20 days, `--no-commands`, about a second) whose `matches.csv` and `summary.json`
+are committed under `tests/fixtures/determinism/` and byte-diffed on every run.
+It is cheap enough to sit in CI beside the four `make verify` gates, and
+`tools/check_determinism.sh` owns the pinned flags.
+
+A rules, data or planner change is *supposed* to move it. The diff it prints is
+what that change did to one whole match — read it, then accept it with
+`make determinism REFRESH=1` and say in the commit which change moved it. The
+full-size presets stay the release tools they are; this is the tripwire under
+them.
+
+`timeline.csv` and `report.html` are deliberately out of the golden: both carry
+`planning_ms` (below). Their numbers still reach the diff, aggregated into
+`summary.json`.
 
 The balance fixtures live in `maps/fixtures/` rather than in that file, so the
 Lab can name one with `--map=` and the battle scene can boot one for watch mode.

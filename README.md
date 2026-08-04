@@ -31,6 +31,7 @@ make verify          # the merge gate: check + lint + format-check + test, in on
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
+make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
 make tiles           # rebuild the art: ground tiles, PixVoxel + vendored unit sprites, audit, import
@@ -62,6 +63,18 @@ leaked at exit` and `resources still in use` — that is the engine failing to t
 reference cycle (`AttackCommand.validate()` referring to its sibling `MoveCommand` pins the core
 script graph), reproducible in twelve lines with no GUT involved. No gameplay object leaks, so the
 gate reads exit status and ignores it.
+
+It is also run for you: `.github/workflows/verify.yml` fetches the pinned engine and plays the same
+four targets, in the same order, on every pull request and every push to `main`. `make smoke` is not
+in it — it renders, so it needs a display and stays a local gate. Every target reads `GODOT`, so a
+machine with the engine somewhere else runs the gate with `make verify GODOT=/path/to/godot`.
+
+`make determinism` runs beside those four in CI, and asks about reproducibility rather than style:
+it replays one pinned AI-vs-AI match — one board, one seed, about a second — and byte-diffs its
+report against the golden committed under `tests/fixtures/determinism/`. That is the balance plan's
+fixed-seed merge bar with a committed side to diff against at last. A rules, data or planner change
+is *supposed* to move it: the diff it prints is what that change did to a whole match, and
+`make determinism REFRESH=1` is how you accept it. `docs/balance_sim.md` has the rest.
 
 `make smoke` covers what unit tests deliberately do not: GUT is limited to the Node-free layers
 (see Architecture below), so the battle scene — and, for the `menu_` modes below, the main menu — is
