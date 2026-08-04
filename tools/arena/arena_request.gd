@@ -159,6 +159,14 @@ func _check() -> void:
 		error = "--pairings= names its own profiles; drop --red-profile/--blue-profile"
 	elif pairings_path == "" and (red_path == "" or blue_path == ""):
 		error = "a side is a profile: --red-profile=<path.tres> --blue-profile=<path.tres>"
+	elif out_dir != "":
+		var resolved := BalanceReportWriter.resolve_out(out_dir)
+		if resolved == "":
+			error = (
+				"--out is a directory under %s/ (got '%s')"
+				% [BalanceReportWriter.REPORTS_ROOT, out_dir]
+			)
+		out_dir = resolved
 
 
 func _read_pairings(shard: Dictionary) -> Array[Pairing]:

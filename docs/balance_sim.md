@@ -75,7 +75,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 | `--commander=` | The doctrine both sides carry, for `--sweep=tiers` |
 | `--no-commands` | Skip `commands.jsonl`; a large sweep's is big |
 | `--replays` | Also write a watchable recording per match, into `replays/` |
-| `--out=` | Output directory, default `reports/balance_sim/<run-name>` |
+| `--out=` | Output directory under `reports/`, default `reports/balance_sim/<run-name>` |
 
 **One axis per run** (plan D5). Commanders × tiers × maps × seeds is a six-figure
 matrix nobody reads; a run pins everything except one swept axis, so every batch
@@ -333,18 +333,27 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | `--self-check` | Run the `--out` and resume-key rules over their cases and stop |
 
 **Everything a run writes lands under `reports/`, and a path that would leave it
-is refused before a match is played.** `--out=x/y` means `reports/x/y`; a leading
-`reports/` is accepted rather than doubled, so both spellings work; an absolute
-path or one that climbs out with `..` is an error at startup. That is a
-containment rule and not a tidiness one: `BalanceReportWriter.prepare_dir`
-resolves the Lab's own `--out` against the *project* root, and Godot's
-`path_join` re-roots an absolute path under it, so `--out=/tmp/x` has the Lab
-writing `<repo>/tmp/x` while the driver reads `/tmp/x` — every shard reported
-failed with its results on disk the whole time, and resume, which is keyed on
-finding a shard's `summary.json`, replaying all of them forever. Refusing the
-path is what makes that unreachable. `--self-check` exercises those rules and the
-resume key's, and `tools/check_scripts.sh` runs it, so `make check` and
-`make verify` gate them even though `make test` reaches GDScript only.
+is refused before a match is played.** That rule is every instrument's, not just
+the pool's: `--out=x/y` means `reports/x/y`; a leading `reports/` is accepted
+rather than doubled, so both spellings work; a `res://`-spelled path is the same
+directory said the other way; and an absolute path or one that climbs out with
+`..` is an error at startup. That is a containment rule and not a tidiness one:
+Godot's `path_join` concatenates rather than resolves, so each of those spellings
+has the tool writing inside the repo under a name nobody reads while reporting
+the path it was handed — `--out=/tmp/x` writes `<repo>/tmp/x` while the driver
+reads `/tmp/x`, every shard reported failed with its results on disk the whole
+time, and resume, which is keyed on finding a shard's `summary.json`, replaying
+all of them forever. Refusing the path is what makes that unreachable.
+
+There is one policy in two places, because the driver has to refuse a path
+*before* it launches a preset and the preset is what actually writes:
+`resolve_out` in `tools/balance_pool.py`, and `BalanceReportWriter.resolve_out`,
+which every `--out=` in `tools/` — the Lab, the commander matrix, the difficulty
+ladder, the arena and both reports — is resolved through, for the write *and*
+for the line it prints. The two share one case table: `--self-check` runs it
+(and `tools/check_scripts.sh` runs that, so `make check` and `make verify` gate
+it), and `tests/unit/test_report_writer.gd` runs the same shapes against the
+GDScript half.
 
 **A shard is one pairing on one board over a contiguous slice of the seed
 range** — the smallest unit of work that amortises the engine boot (~0.9 s
@@ -480,7 +489,7 @@ make ai-arena ARENA="--pairings=reports/ai_arena/gen1/shard0.json"
 | `--seeds=` | Paired seeds per pairing, both seats each (default 4) |
 | `--seed-offset=` | Skip the first N seeds of the range, so a pool can split a pairing |
 | `--days=` | Day cap, default **100** — the horizon that resolves (plan D6) |
-| `--out=` | Output directory (default `reports/ai_arena/<spec>`) |
+| `--out=` | Output directory under `reports/` (default `reports/ai_arena/<spec>`) |
 
 A shard file is those flags, once per pairing. Nearest setting wins: a pairing's
 own, then the file's, then the command line's — and a key it does not recognise

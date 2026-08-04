@@ -210,6 +210,12 @@ func _parse_args() -> bool:
 		else:
 			push_error("balance-sim: unknown flag '%s'" % arg)
 			return false
+	if _out_dir != "":
+		var resolved := BalanceReportWriter.resolve_out(_out_dir)
+		if resolved == "":
+			push_error("balance-sim: --out is a directory under reports/ (got '%s')" % _out_dir)
+			return false
+		_out_dir = resolved
 	if _sweep != "" and _sweep not in ["commanders", "maps", "tiers"]:
 		push_error("balance-sim: --sweep must be commanders, maps or tiers (got '%s')" % _sweep)
 		return false

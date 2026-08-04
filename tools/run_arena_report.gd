@@ -53,9 +53,17 @@ func _parse_args() -> bool:
 	if _inputs.is_empty():
 		push_error("arena-report: --matches=<matches.json or a directory> names what to score")
 		return false
-	if _out_dir != "" and ArenaRequest.project_path(_out_dir) == "":
-		push_error("arena-report: --out must stay inside the project (got '%s')" % _out_dir)
-		return false
+	if _out_dir != "":
+		var resolved := BalanceReportWriter.resolve_out(_out_dir)
+		if resolved == "":
+			push_error(
+				(
+					"arena-report: --out is a directory under %s/ (got '%s')"
+					% [BalanceReportWriter.REPORTS_ROOT, _out_dir]
+				)
+			)
+			return false
+		_out_dir = resolved
 	return true
 
 
@@ -139,11 +147,13 @@ func _print(board: ArenaLeaderboard, played: int) -> void:
 
 
 ## Beside the records it scored, unless told otherwise: a leaderboard belongs
-## with the run it reads. Both spellings go through `project_path`, the same
-## normalisation the records are read through, so where it writes and where it
-## read cannot disagree about a `res://`-spelled input.
+## with the run it reads. Both spellings answer to `BalanceReportWriter`, so the
+## line it prints is the path it wrote.
 func _write(board: ArenaLeaderboard) -> void:
-	var out := ArenaRequest.project_path(_out_dir) if _out_dir != "" else _records_dir()
+	var out := _out_dir if _out_dir != "" else BalanceReportWriter.resolve_out(_records_dir())
+	if out == "":
+		push_error("arena-report: records outside reports/ have no leaderboard to sit beside")
+		return
 	var dir := BalanceReportWriter.prepare_dir(out)
 	BalanceReportWriter.write_json(dir.path_join(LEADERBOARD_FILE), board.to_dict())
 	print("\narena-report: wrote %s/%s" % [out, LEADERBOARD_FILE])

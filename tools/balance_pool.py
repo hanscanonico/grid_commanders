@@ -238,16 +238,25 @@ def resolve_out(out):
     documented example are spelled. Anything that leaves `reports/`, including an
     absolute path, is an error the caller reports before a match is played.
 
-    The rule is not tidiness. `BalanceReportWriter.prepare_dir` resolves the
-    Lab's own `--out` against the *project* root, and Godot's `path_join`
-    re-roots an absolute path under it — so `--out=/tmp/x` writes to `<repo>/tmp/x`
-    while this driver reads `/tmp/x`. Resume is keyed on finding a shard's
-    `summary.json`, so it would then find none, ever: every shard of every run
-    replayed forever and reported failed, with the results on disk the whole time.
-    Containing the path is what makes that unreachable instead of documented.
+    The rule is not tidiness. Godot's `path_join` concatenates rather than
+    resolves, so a leading `/`, a `res://` prefix or a `..` that climbs out each
+    lands the artifact inside the repo under a name nobody reads — `--out=/tmp/x`
+    writes to `<repo>/tmp/x` while this driver reads `/tmp/x`. Resume is keyed on
+    finding a shard's `summary.json`, so it would then find none, ever: every
+    shard of every run replayed forever and reported failed, with the results on
+    disk the whole time. Containing the path is what makes that unreachable
+    instead of documented.
+
+    `BalanceReportWriter.resolve_out` is this same policy said in GDScript, where
+    the write actually happens; it is stated twice because this driver has to
+    refuse a path *before* it launches a preset. The two share the case table
+    below, which `--self-check` and `tests/unit/test_report_writer.gd` pin.
     """
     refusal = "--out is relative to %s/ and may not leave it (got '%s')" % (REPORTS_ROOT, out)
     if os.path.isabs(out):
+        return "", refusal
+    out = out[len("res://"):] if out.startswith("res://") else out
+    if out.startswith("/"):
         return "", refusal
     parts = os.path.normpath(out).split(os.sep)
     if parts[0] != REPORTS_ROOT:
@@ -429,21 +438,28 @@ def merge(out, shards, name, merger):
 ## key has to survive — a candidate is a file, not a `<commander>:<tier>` spec.
 AR_SIDES = ("data/ai/default.tres", "reports/arena/gen1/c7.tres")
 
+## Every shape `resolve_out` has had to refuse or contain, and the plain relative
+## path that must keep working. `tests/unit/test_report_writer.gd` runs this same
+## table against the GDScript half, so the two cannot drift apart quietly.
+OUT_CASES = [
+    ("reports/balance_pool/run", "reports/balance_pool/run"),
+    ("verify_equiv", "reports/verify_equiv"),
+    ("./nested/run", "reports/nested/run"),
+    ("reports", "reports"),
+    ("res://reports/ai_arena/run", "reports/ai_arena/run"),
+    ("/tmp/pooltest", ""),
+    ("res:///tmp/pooltest", ""),
+    ("../escape", ""),
+    ("reports/../../escape", ""),
+]
+
 
 def self_check():
     """The out-directory and resume-key rules, over the cases that made them.
     Run by `tools/check_scripts.sh`, and so by `make check` and `make verify`,
     which otherwise reach GDScript only — these are the two decisions in here
     that are pure and worth pinning, and an ungated check is one that rots."""
-    cases = [
-        ("reports/balance_pool/run", "reports/balance_pool/run"),
-        ("verify_equiv", "reports/verify_equiv"),
-        ("./nested/run", "reports/nested/run"),
-        ("reports", "reports"),
-        ("/tmp/pooltest", ""),
-        ("../escape", ""),
-        ("reports/../../escape", ""),
-    ]
+    cases = OUT_CASES
     failures = 0
     for out, expected in cases:
         path, error = resolve_out(out)

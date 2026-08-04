@@ -158,7 +158,9 @@ var _turn_cap_hits := 0
 
 func _init() -> void:
 	_load_dbs()
-	_parse_args()
+	if not _parse_args():
+		quit(2)
+		return
 	if _difficulty_check:
 		_run_difficulty_check()
 		return
@@ -187,7 +189,7 @@ func _load_dbs() -> void:
 	difficulty_db = DifficultyDB.load_default()
 
 
-func _parse_args() -> void:
+func _parse_args() -> bool:
 	_commander_ids = _all_commander_ids()
 	_scenario_names = SCENARIO_NAMES.duplicate()
 	for arg in OS.get_cmdline_user_args():
@@ -207,6 +209,12 @@ func _parse_args() -> void:
 			_difficulty_check = true
 	if _out_dir == "":
 		_out_dir = "reports/difficulty_check" if _difficulty_check else "reports/commander_balance"
+	var resolved := BalanceReportWriter.resolve_out(_out_dir)
+	if resolved == "":
+		push_error("balance: --out is a directory under reports/ (got '%s')" % _out_dir)
+		return false
+	_out_dir = resolved
+	return true
 
 
 func _all_commander_ids() -> Array[StringName]:
