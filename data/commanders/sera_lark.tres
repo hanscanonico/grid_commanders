@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SeraLark" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/sera_lark.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"sera_lark"
+display_name = "Sera Lark"
+faction = "Aurora Compact"
+doctrine_text = "Every unit gains +1 movement."
+power_name = "Forced March"
+power_text = "Every unit gains a further +1 movement this turn."
+power_quotes = Array[String](["The map is smaller than they think.", "Don't hold the road. Use it.", "We are already past where they are looking."])
+power_cost = 10000
+power_duration = 0
+road_move_bonus = 1
+march_move_bonus = 1

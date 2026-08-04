@@ -83,7 +83,11 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # never on top of a tile, so there is no cursor dodge left to prove.)
 # power_mapmenu is the keyboard half of the same gate: the map menu's first row is
 # the Command Power, so that menu has to open inside the board band, and the
-# scenario measures the live rect against it rather than trusting the frame. The
+# scenario measures the live rect against it rather than trusting the frame.
+# power_targeting is the first aimed power (MC4), stopped mid-aim over Red's own
+# corner, and it measures too: the painted square is read back off the overlay and
+# compared with what the strike would actually clear, since a preview showing nine
+# tiles over a power that clears sixteen photographs just as well. The
 # activation card, both-sides info sheet, and victory lockup are each still proved
 # to render at native 640x360.
 #
@@ -259,7 +263,7 @@ DEFAULT_MODES=(
 	mission_strip mission_strip_retired
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
-	power_mapmenu power_banner commander_info commander_victory side_victory
+	power_mapmenu power_banner power_targeting commander_info commander_victory side_victory
 	mixed_seat_handoff+fog
 	cutin cutin_ko cutin_skip cutin_iron_commander cutin_scenery:mech:mech
 	cutin:bomber:tank cutin:sub:cruiser cutin:cruiser:sub cutin:artillery:mech

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RadekMorn" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/radek_morn.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"radek_morn"
+display_name = "Radek Morn"
+faction = "Iron Dominion"
+doctrine_text = "Every unit gains +5% attack and +5% defence."
+power_name = "Hammerfall"
+power_text = "He names a cell: every unit in the 3x3 around it is destroyed, his own included. Buildings are untouched."
+power_quotes = Array[String](["Nothing stands where I put my hand.", "Aim well. There is no second hammer.", "The map is simpler afterwards."])
+power_cost = 24000
+power_duration = 0
+hammer_attack_pct = 5
+hammer_defense_pct = 5
+hammer_radius = 1
+hammer_want_value = 5000

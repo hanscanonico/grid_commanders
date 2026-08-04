@@ -4,7 +4,7 @@ extends GutTest
 ##
 ## This file is the R1 guard. Every general is balance-tested against the chain
 ## in CombatResolver's header, so a reordered multiplier or a second rounding has
-## to fail here before it can quietly re-balance eighteen doctrines at once.
+## to fail here before it can quietly re-balance twenty-two doctrines at once.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -185,11 +185,12 @@ func test_every_shipped_commander_is_well_formed() -> void:
 		# The plan's band. Below it a power fires most turns and stops being an
 		# event; above it a match can end before the meter ever fills. A number
 		# outside this is a balance decision, not a typo, so it has to be made
-		# here as well as in the .tres.
-		assert_between(co.power_cost, 9000, 22000, "%s power cost" % co.id)
+		# here as well as in the .tres. The ceiling is Hammerfall's, and it is the
+		# only power that takes units off the board (more-commanders D4).
+		assert_between(co.power_cost, 9000, 24000, "%s power cost" % co.id)
 
 
-## The reviewed 5 / 5 / 4 / 4 roster. Pinned so a half-added general — a script
+## The reviewed 6 / 6 / 5 / 5 roster. Pinned so a half-added general — a script
 ## with no .tres, or a .tres with the wrong faction string — fails visibly.
 func test_the_roster_has_the_reviewed_faction_counts() -> void:
 	var counts: Dictionary = {}
@@ -198,7 +199,7 @@ func test_the_roster_has_the_reviewed_faction_counts() -> void:
 			continue
 		counts[co.faction] = int(counts.get(co.faction, 0)) + 1
 	assert_eq(counts.size(), 4, "four factions, got %s" % [counts.keys()])
-	assert_eq(counts["Meridian Coalition"], 5)
-	assert_eq(counts["Iron Dominion"], 5)
-	assert_eq(counts["Aurora Compact"], 4)
-	assert_eq(counts["Verdant League"], 4)
+	assert_eq(counts["Meridian Coalition"], 6)
+	assert_eq(counts["Iron Dominion"], 6)
+	assert_eq(counts["Aurora Compact"], 5)
+	assert_eq(counts["Verdant League"], 5)

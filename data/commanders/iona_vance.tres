@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="IonaVance" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/iona_vance.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"iona_vance"
+display_name = "Iona Vance"
+faction = "Meridian Coalition"
+doctrine_text = "Every unit gains +3% attack and +3% defence."
+power_name = "Tip the Scales"
+power_text = "Her units heal 1 HP and every enemy unit loses 1. Nothing dies."
+power_quotes = Array[String](["I don't need an edge. I need it everywhere.", "A pip to us, a pip from them. That is the war.", "Nothing dramatic — only the scales, tipping."])
+power_cost = 17000
+power_duration = 0
+steady_attack_pct = 3
+steady_defense_pct = 3
+scales_heal_hp = 10
+scales_harm_hp = 10
+scales_floor_hp = 10

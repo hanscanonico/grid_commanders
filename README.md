@@ -43,7 +43,7 @@ make portraits       # regenerate the commander portraits + faction emblems
 make import          # (re)import assets headless
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
-make gallery-screenshot   # render all nineteen commander cards (the G1 gate)
+make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
@@ -562,8 +562,8 @@ Each side may field a general whose *doctrine* bends the rules for their whole a
 defence, movement, vision, supply, capture, what a unit costs to build and what a kill is worth in
 funds — and who charges toward one **Command Power** that bends them further for a turn.
 
-Eighteen ship, spread across four factions (five each to the Meridian Coalition and the Iron
-Dominion, four each to the Aurora Compact and the Verdant League). `data/commanders/` is the
+Twenty-two ship, spread across four factions (six each to the Meridian Coalition and the Iron
+Dominion, five each to the Aurora Compact and the Verdant League). `data/commanders/` is the
 roster: one `.tres` per general, carrying their doctrine line, power name and description, and
 every balance number. Read it — or the selection page's card, which binds the same fields —
 rather than a list here, so the numbers have one home.
@@ -585,7 +585,9 @@ the damage — halving a 7 000 Tank is worth 3 500 points. The side that *loses*
 of it; the side that dealt it banks half, so winning the field does not run away with the meter
 as well. The meter is capped at what that general's power costs, so it never holds a second
 power's worth. And a side whose power is *running* banks nothing, dealt or lost, until it comes
-down — every power is re-earned from empty, not refilled by the fighting it enables.
+down — every power is re-earned from empty, not refilled by the fighting it enables. Charge comes
+from fighting and from nothing else: a unit taken off the board outside a fight — one standing in
+Hammerfall's square, or an aircraft that starves its own tank — pays neither meter.
 
 **Firing.** When the meter fills, a **FIRE** button appears beside it in the HUD bar — for the
 mouse, and only the mouse: it deliberately never takes keyboard focus, so a press is never swallowed
@@ -596,6 +598,14 @@ the same command.
 Firing spends the whole cost and raises the power immediately. Most powers last until you end that
 turn; a few — Hold the Line, Vanish, Signal Jam — exist to bother the opponent and so survive their
 turn, ending as yours begins.
+
+A power that names a cell — Hammerfall is the one — asks *where* before it spends anything. Every
+route into it enters an **aim** instead: whatever move was in hand is put back, the square the
+strike would clear is painted under the cursor as you walk it, and the legend reads
+`ENTER · STRIKE   ESC · BACK`. Cancel costs nothing, and confirming is what spends the meter —
+whether or not anything was standing in the square. Any cell of the board is a legal aim, fog or no
+fog, and the square is drawn over the ground rather than over units: what fog costs you is knowing
+what was standing there.
 
 The AI charges and fires powers too, on its own commander's judgement of the right moment. Its
 meter is shown while it plays, reading `READY · AI` where yours offers the shortcut: no Fire button

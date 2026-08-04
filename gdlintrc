@@ -226,4 +226,21 @@ max-public-methods: 21
 # the way BattleVictoryScenario and BattleFeedbackScenario do; what stayed here is
 # the four-line dispatch arm that reaches it. COM-94's cut-in split is still the one
 # that is due. The driver sits at exactly 1359.
-max-file-lines: 1359
+#
+# 1359 -> 1412 for MC4's aimed Command Power, and the ceiling is battle.gd's again
+# for the first time since 918: the two files moved in the same change and
+# battle.gd is now the longer. It gained the game's first interaction that aims a
+# *power* rather than a unit — the POWER_TARGETING state and its legend row, the
+# arm in confirm_at, the cancel that lands on rest_state(), and four small
+# functions: entering the aim (which puts back the sprite of whatever move the HUD
+# button was pressed over, since a power abandons it), repainting the square under
+# the cursor, firing at the named cell, and the apply-and-settle half both aimed
+# and unaimed firings now share. Nothing came out because nothing there is loose:
+# the flow is Battle's by the same rule every other targeting state is, the
+# footprint is the doctrine's single authority and the paint is the overlays'
+# already. The driver's 38 are the `power_targeting` scenario — the staged board,
+# the aim walked onto Red's own corner, and the check that reads the painted cells
+# back off the layer and compares them with what the strike would clear, since a
+# preview showing nine tiles over a power that clears sixteen photographs just as
+# well. COM-94's cut-in split is still the one that is due there.
+max-file-lines: 1412

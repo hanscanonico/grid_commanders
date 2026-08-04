@@ -126,12 +126,26 @@ func test_an_unnamed_passenger_stays_unnamed() -> void:
 	)
 
 
-func test_the_bare_commands_name_nothing_but_themselves() -> void:
+func test_end_turn_names_nothing_but_itself() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
 	assert_eq(ReplayCodec.encode_command(state, EndTurnCommand.new()), {"c": "end_turn"})
-	assert_eq(ReplayCodec.encode_command(state, PowerCommand.new()), {"c": "power"})
 	assert_true(_round_trip(state, EndTurnCommand.new()) is EndTurnCommand)
-	assert_true(_round_trip(state, PowerCommand.new()) is PowerCommand)
+
+
+## Which side fires is the board's answer; *where* it was aimed is nobody's but
+## the line's, so a power carries its target and nothing else. An unaimed power
+## records the origin, which is what its command carried and what every commander
+## but Radek Morn ignores.
+func test_a_power_names_the_cell_it_was_aimed_at() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var aimed := PowerCommand.new()
+	aimed.target = Vector2i(1, 0)
+	assert_eq(ReplayCodec.encode_command(state, aimed), {"c": "power", "target": [1, 0]})
+	assert_eq((_round_trip(state, aimed) as PowerCommand).target, Vector2i(1, 0))
+	assert_eq(
+		ReplayCodec.encode_command(state, PowerCommand.new()), {"c": "power", "target": [0, 0]}
+	)
+	assert_eq((_round_trip(state, PowerCommand.new()) as PowerCommand).target, Vector2i.ZERO)
 
 
 func test_every_movement_command_round_trips() -> void:
@@ -212,5 +226,5 @@ func test_a_header_that_is_not_one_says_which_part_is_missing() -> void:
 ## disposable, so the line under it is the whole migration policy — an older
 ## format is refused, out loud, rather than read.
 func test_an_older_format_is_refused_rather_than_read() -> void:
-	assert_eq(ReplayCodec.FORMAT, 1)
-	assert_string_contains(ReplayCodec.header_error({"replay": 0, "opening": {}}), "format 0")
+	assert_eq(ReplayCodec.FORMAT, 2)
+	assert_string_contains(ReplayCodec.header_error({"replay": 1, "opening": {}}), "format 1")

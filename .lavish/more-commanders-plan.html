@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — More Commanders Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-amber: #e0a441;
+      --gc-blue: #3276c6;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem 1rem;
+      padding: .6rem 1.5rem;
+      background: rgba(10,33,55,.97);
+      border-bottom: 2px solid var(--gc-water-dark);
+    }
+    .gc-nav a { color: rgba(255,255,255,.72); font: 600 .8rem ui-monospace, monospace; text-decoration: none; }
+    .gc-nav a:hover, .gc-nav a:focus-visible { color: white; }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid var(--gc-amber); }
+    .gc-risk-low { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-free { color: var(--gc-grass-dark); font-weight: 700; }
+    .gc-gap { color: var(--gc-red); font-weight: 700; }
+    .gc-quote {
+      border-left: 5px solid var(--gc-water);
+      background: color-mix(in srgb, var(--gc-water) 8%, transparent);
+      font-style: italic;
+    }
+    table.gc-tight td, table.gc-tight th { vertical-align: top; }
+    .gc-board {
+      font: 700 .72rem/1.05 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre;
+      overflow-x: auto;
+      background: color-mix(in srgb, var(--gc-water) 10%, white);
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      padding: .7rem .8rem;
+    }
+    .gc-stat {
+      border: 2px solid var(--gc-ink);
+      border-radius: .35rem;
+      background: white;
+      padding: .7rem .8rem;
+      box-shadow: 3px 3px 0 color-mix(in srgb, var(--gc-ink) 18%, transparent);
+    }
+    .gc-stat b { display: block; font: 800 1.5rem/1.1 ui-monospace, monospace; }
+    .gc-stat span { font-size: .78rem; opacity: .78; }
+    .gc-co {
+      border: 2px solid var(--gc-ink);
+      border-radius: .4rem;
+      background: white;
+      box-shadow: 4px 4px 0 color-mix(in srgb, var(--gc-ink) 18%, transparent);
+    }
+    .gc-co header { border-bottom: 2px solid var(--gc-ink); padding: .7rem .9rem; }
+    .gc-co-meridian header { background: color-mix(in srgb, var(--gc-blue) 22%, white); }
+    .gc-co-iron header { background: color-mix(in srgb, var(--gc-red) 22%, white); }
+    .gc-co-aurora header { background: color-mix(in srgb, var(--gc-amber) 26%, white); }
+    .gc-co-verdant header { background: color-mix(in srgb, var(--gc-grass) 30%, white); }
+    .gc-seam-yes { color: var(--gc-grass-dark); font-weight: 800; }
+    .gc-seam-no { color: var(--gc-red); font-weight: 800; }
+  </style>
+</head>
+<body>
+<div class="gc-shell">
+
+  <!-- ============================ HERO ============================ -->
+  <header class="gc-hero px-6 py-10 md:px-12">
+    <p class="gc-kicker mb-2 opacity-80">Grid Commanders · design of record · proposed · MC1–MC5 · 2026-08-04</p>
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight">More Commanders — four generals, one new seam</h1>
+    <p class="mt-3 max-w-3xl text-base md:text-lg opacity-90">
+      Eighteen generals ship today and every one of them is a <em>specialist</em>: armour, artillery,
+      infantry, the coast, the air, the fog, the treasury. Nobody on the roster is simply
+      <strong>faster</strong>, nobody is simply <strong>steadier</strong>, and nothing on the board has
+      ever been destroyed by anything other than a shot. This plan adds four generals who fill exactly
+      those gaps — and the last of them brings the first <strong>aimed</strong> Command Power in the
+      game, a power the player points at a square of ground.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <span class="badge badge-outline badge-lg text-white border-white/40">Milestones MC1–MC5</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Decisions D1–D8</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Risks R1–R8</span>
+      <span class="badge badge-outline badge-lg text-white border-white/40">Roster 18 → 22 · 6/6/5/5</span>
+      <span class="badge badge-lg bg-white/90 text-slate-900 border-white">Three of four need no new hook</span>
+    </div>
+  </header>
+
+  <nav class="gc-nav">
+    <a href="#table">1 · The four</a>
+    <a href="#seams">2 · What the seams already give</a>
+    <a href="#decisions">3 · Decisions</a>
+    <a href="#milestones">4 · Milestones</a>
+    <a href="#numbers">5 · The numbers</a>
+    <a href="#risks">6 · Risks</a>
+    <a href="#scope">7 · Out of scope</a>
+  </nav>
+
+  <main class="px-6 py-10 md:px-12 space-y-14">
+
+  <!-- ============================ 1. THE FOUR ============================ -->
+  <section id="table">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">01</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">The four generals</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          One per faction, which takes the roster from 5/5/4/4 to <strong>6/6/5/5</strong> and keeps the
+          picker's four columns even. Two of them are deliberately the simplest generals in the game —
+          the roster has no easy pick left in it — and two of them are the most violent.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-2">
+
+      <!-- Sera Lark -->
+      <article class="gc-co gc-co-aurora">
+        <header>
+          <p class="gc-kicker opacity-70">Aurora Compact</p>
+          <h3 class="text-xl font-black">Sera Lark <span class="font-normal opacity-60 text-base">— the open road</span></h3>
+        </header>
+        <div class="p-4 space-y-3 text-sm">
+          <p><strong>Doctrine.</strong> Every unit she fields has <strong>+1 movement</strong>. Infantry,
+            tanks, ships, aircraft — everything, always. That is the whole of it: no combat modifier, no
+            terrain rule, no economy, and <em>no downside anywhere</em>.</p>
+          <p><strong>Forced March</strong> <span class="opacity-60">· 10 000 · owner's turn</span><br>
+            +1 movement again, so her army moves at <strong>+2</strong> for a turn.</p>
+          <p class="opacity-80">She is the roster's one-line general and the first one a new player can
+            hold in their head. Nia Rowan is what happens when the terrain rule is the doctrine; Lark is
+            what happens when there is no rule at all, only distance. Her power is deliberately the
+            smallest on the roster — the passive is what you picked her for.</p>
+          <p class="text-xs opacity-70">Hooks: <code>move_bonus</code>, <code>wants_power</code>. Nothing else.</p>
+        </div>
+      </article>
+
+      <!-- Iona Vance -->
+      <article class="gc-co gc-co-meridian">
+        <header>
+          <p class="gc-kicker opacity-70">Meridian Coalition</p>
+          <h3 class="text-xl font-black">Iona Vance <span class="font-normal opacity-60 text-base">— the even hand</span></h3>
+        </header>
+        <div class="p-4 space-y-3 text-sm">
+          <p><strong>Doctrine.</strong> Every unit is <strong>+3% attack and +3% defence</strong>. Every
+            unit, every domain, every fight. Nothing is specialised and nothing is paid for.</p>
+          <p><strong>Tip the Scales</strong> <span class="opacity-60">· 17 000 · one-shot</span><br>
+            Her army gains <strong>one pip of health</strong>. Every hostile army loses <strong>one</strong>.
+            <strong>Nothing dies:</strong> a unit already on its last pip keeps it.</p>
+          <p class="opacity-80">A pip is small and the swing is the entire board at once: on a full line
+            of eight that is eight pips gained and eight taken, in one command, before a shot is fired.
+            She never takes a unit off the board — she makes every exchange for the rest of the turn one
+            she wins, which is the even hand doing at scale what her passive does per shot.</p>
+          <p class="text-xs opacity-70">Hooks: <code>attack_bonus</code>, <code>defense_bonus</code>,
+            <code>on_power_activated</code>, <code>wants_power</code>.</p>
+        </div>
+      </article>
+
+      <!-- Ivar Thorne -->
+      <article class="gc-co gc-co-verdant">
+        <header>
+          <p class="gc-kicker opacity-70">Verdant League</p>
+          <h3 class="text-xl font-black">Ivar Thorne <span class="font-normal opacity-60 text-base">— wounded and dangerous</span></h3>
+        </header>
+        <div class="p-4 space-y-3 text-sm">
+          <p><strong>Doctrine.</strong> His units gain <strong>+8% attack for every pip of health they
+            are missing</strong> — <em>on top of the health scaling every unit in the game already has</em>.
+            That second half is the whole design and the card says it rather than burying it: a unit at
+            5 of 10 pips already deals <strong>half</strong> its damage, so Thorne's +40% there does not
+            make it strong — it makes it <strong>0.70 instead of 0.50</strong>. He never profits from being
+            hurt. He profits from <em>not going home</em>. (The full table is in §5.)</p>
+          <p><strong>Cut Both Ways</strong> <span class="opacity-60">· 18 000 · one-shot</span><br>
+            <strong>Every unit on the board</strong> loses two pips — his, his ally's, every enemy's.
+            <strong>Nothing dies:</strong> a unit on two pips or less is left standing on <strong>one</strong>.</p>
+          <p class="opacity-80">Cass Orlov is paid to finish <em>their</em> wounded; Thorne is paid to
+            keep fighting with <em>his</em>. It is the only power in the game a player fires knowing it
+            will hurt their own army, and that is the point of him: everyone else's line is worth less
+            after it, and his is worth more.</p>
+          <p class="text-xs opacity-70">Hooks: <code>attack_bonus</code>, <code>on_power_activated</code>,
+            <code>wants_power</code>.</p>
+        </div>
+      </article>
+
+      <!-- Radek Morn -->
+      <article class="gc-co gc-co-iron">
+        <header>
+          <p class="gc-kicker opacity-70">Iron Dominion</p>
+          <h3 class="text-xl font-black">Radek Morn <span class="font-normal opacity-60 text-base">— the hammer</span></h3>
+        </header>
+        <div class="p-4 space-y-3 text-sm">
+          <p><strong>Doctrine.</strong> Every unit is <strong>+5% attack and +5% defence</strong>. The same
+            shape as Vance's and simply larger — he is what she is, turned up.</p>
+          <p><strong>Hammerfall</strong> <span class="opacity-60">· 24 000 · aimed · one-shot</span><br>
+            The player <strong>names a cell</strong>. The 3×3 around it is annihilated: every unit standing
+            in it is destroyed outright — full health or not, his or theirs, land, sea or air, cargo with
+            its transport.</p>
+          <p class="opacity-80">The most expensive power in the game by 2 000, and it should be: nine tiles
+            of board, cleared, with no roll and no counter. It is also the only power in the game that can
+            <em>fail</em> — aim it a tile off and it lands on empty ground, and the meter is gone.</p>
+          <p class="text-xs opacity-70">Hooks: <code>attack_bonus</code>, <code>on_power_activated</code>,
+            <code>wants_power</code>, plus the three new ones D2 adds.</p>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mt-6">
+      <div class="card-body gap-3">
+        <h3 class="font-bold text-lg">What Hammerfall looks like</h3>
+        <div class="gc-board">        aim point (5,4) — the player's cursor
+                     ↓
+   x=  3   4   5   6   7
+ y=3   .  [X] [X] [X]  .        [X] destroyed, whoever owns it
+ y=4   .  [X] [*] [X]  .        [*] the named cell
+ y=5   .  [X] [X] [X]  .
+ y=6   .   .   .   .   .        nine tiles, Chebyshev radius 1
+
+ a transport in the square goes down with everything it carries
+ an army that loses its last unit here falls, through the rout path that already exists
+ neither meter moves — a death outside a fight banks no charge (D4)
+ units only: an HQ, factory or city in the square is untouched and keeps its owner</div>
+        <p class="text-sm opacity-80">
+          The footprint is <strong>Chebyshev radius 1</strong> — the eight neighbours and the centre — and
+          it is clipped to the board at the edges, so aiming into a corner is a legal shot that simply
+          catches fewer tiles. That clipping is the one thing that makes a corner aim a real decision.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 2. SEAMS ============================ -->
+  <section id="seams">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">02</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">What the seams already give us</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          The commanders plan's D1 — a general is a subclass in <span class="gc-file">core/commanders/</span>
+          with its numbers <code>@export</code> on a <span class="gc-file">.tres</span> — has held for
+          eighteen generals. It holds for three of these four with <strong>no change to any shared file
+          at all</strong>. Writing that down first is what keeps the fourth one's cost visible.
+        </p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table table-zebra gc-tight">
+        <thead>
+          <tr>
+            <th>General</th>
+            <th>Needs</th>
+            <th>Exists today?</th>
+            <th>Where</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          <tr>
+            <td><strong>Sera Lark</strong></td>
+            <td>Movement points added to every unit, and again while the power runs</td>
+            <td class="gc-seam-yes">Yes</td>
+            <td><code>CommanderType.move_bonus</code> — Alina Ward, Nia Rowan, Cass Orlov and Halden Marr all use it. <code>MovementResolver.move_budget</code> is the one reader.</td>
+          </tr>
+          <tr>
+            <td><strong>Iona Vance</strong></td>
+            <td>A flat attack and defence bonus; a one-shot health swing across the board</td>
+            <td class="gc-seam-yes">Yes</td>
+            <td><code>attack_bonus</code> / <code>defense_bonus</code>, and <code>on_power_activated</code> — Gideon Holt already heals his army in it and Orin Flux already reaches across the table in it.</td>
+          </tr>
+          <tr>
+            <td><strong>Ivar Thorne</strong></td>
+            <td>An attack bonus that reads the attacker's own health; a one-shot swing</td>
+            <td class="gc-seam-yes">Yes</td>
+            <td><code>Engagement.attacker_hp</code> is already the effective displayed HP the formula uses — Cass Orlov reads the <em>defender's</em> half of the same object.</td>
+          </tr>
+          <tr>
+            <td><strong>Radek Morn</strong></td>
+            <td>A power the player <strong>aims at a cell</strong></td>
+            <td class="gc-seam-no">No</td>
+            <td><code>PowerCommand</code> carries no target, the replay line for a power names nothing, <code>AIController</code> has no cell to choose, and <span class="gc-file">battle.gd</span> has no targeting state for a power. This is D2 and it is the whole of the new machinery.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mt-5">
+      <div class="card-body gap-2">
+        <h3 class="font-bold">And one thing that exists that nobody expects to</h3>
+        <p class="text-sm">
+          <strong>One</strong> of these four powers destroys units without a shot — Hammerfall, and only
+          Hammerfall; the two health powers are both floored at a pip. And the rules already
+          know how to do it. <code>GameState.remove_unit</code> takes the unit's cargo down with it and
+          calls <code>_check_rout</code>, so an army that loses its last unit to a meteor falls exactly as
+          one that loses it to a tank. And no charge moves, because
+          <em>every charge the economy ever banks comes out of three calls inside
+          <code>CombatResolver</code></em> — <code>TurnRules._lost_to_empty_tank</code> already relies on
+          that when a plane runs its tank dry. So D4 below is a <strong>restatement, not new code</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 3. DECISIONS ============================ -->
+  <section id="decisions">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">03</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Locked decisions</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          What the milestones may not re-litigate. Each names the alternative it rejects, because a
+          decision with no rejected alternative is a description.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+
+      <!-- D1 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D1 — A general is still a subclass and a <span class="gc-file">.tres</span>, and three of these four prove it</h3>
+          <p class="text-sm">
+            Behaviour in a typed class under <span class="gc-file">core/commanders/</span>, every number
+            <code>@export</code> on <span class="gc-file">data/commanders/</span>. Lark, Vance and Thorne
+            are written entirely against hooks that shipped with the commanders plan, and
+            <strong>MC1–MC3 touch no shared file</strong> — no new hook on <code>CommanderType</code>, no
+            resolver change, no <span class="gc-file">ai/</span> change, no save or replay change.
+          </p>
+          <p class="text-sm">
+            <em>Rejected:</em> widening a hook to make a doctrine read more naturally. The hook tree is
+            eighteen — soon twenty-two — overrides wide, and every widening is paid for twenty-two times.
+            The one new capability this plan adds is D2's, and it is new because there is genuinely no way
+            to point at a square of ground today.
+          </p>
+        </div>
+      </div>
+
+      <!-- D2 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D2 — A power may name a target cell, and <code>PowerCommand</code> is where it is named</h3>
+          <p class="text-sm">
+            One field — <code>PowerCommand.target: Vector2i</code> — and three hooks on
+            <code>CommanderType</code>:
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><code>aims_power() -&gt; bool</code> — false for every general but Morn. It is what the
+              battle scene asks before entering a targeting state, and what the command validates against.</li>
+            <li><code>power_blast_cells(state, team, target) -&gt; Array[Vector2i]</code> — the footprint,
+              clipped to the board. Empty by default.</li>
+            <li><code>power_target(state, team) -&gt; Vector2i</code> — the computer's own aim, asked only
+              by <code>AIController</code>. See D5.</li>
+          </ul>
+          <p class="text-sm">
+            <code>on_power_activated</code> gains a defaulted <code>target</code> parameter rather than
+            growing a sibling hook: an aimed power and an unaimed one are the same concept — <em>what fires
+            the instant the meter is spent</em> — and two hooks for one concept is the seam drifting. The
+            two existing overrides (Orin Flux, Gideon Holt) take the parameter and ignore it.
+          </p>
+          <p class="text-sm">
+            <em>Rejected:</em> a separate <code>AimedPowerCommand</code>. A power is deliberately just
+            another command — that is what puts it in the log, the save, the replay and the AI with no
+            special case anywhere — and a second class would need a second case in every one of those
+            five places.
+          </p>
+        </div>
+      </div>
+
+      <!-- D3 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D3 — The blast is one function, and the preview is that same function</h3>
+          <p class="text-sm">
+            <code>power_blast_cells</code> is the single authority for which tiles a meteor takes.
+            <strong>The overlay paints exactly what it returns, the AI scores exactly what it returns,
+            and <code>on_power_activated</code> destroys exactly what it returns.</strong> Nothing anywhere
+            spells "3×3" a second time.
+          </p>
+          <p class="text-sm">
+            This is the range-preview plan's D1 applied to a power: the fire ring is the single authority's
+            geometry, never a second opinion. The bug that rule exists to prevent is precisely the one
+            available here — a preview that shows nine tiles and a power that clears sixteen.
+          </p>
+          <p class="text-sm">
+            <strong>Any cell on the board is a legal aim point</strong>, fog or no fog. The sim stays
+            permissive and fog is enforced in presentation, so the player may drop a meteor into the dark
+            and hope; what fog costs them is knowing what was there. <code>validate</code> refuses a target
+            off the board and nothing else.
+          </p>
+        </div>
+      </div>
+
+      <!-- D4 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D4 — Only Hammerfall kills outside a fight; it banks no charge, and it can end a match</h3>
+          <p class="text-sm">
+            <strong>The two health powers are floored at one pip and take nothing off the board.</strong>
+            That floor is the rule, not a softening of one: a power that removes units is a different kind
+            of thing from a power that moves numbers, and exactly one general on this roster gets to be
+            that kind of thing. It keeps the meteor singular, and it keeps two of the three new powers out
+            of elimination, rout and charge banking entirely.
+          </p>
+          <p class="text-sm">
+            Hammerfall alone kills, through
+            <code>GameState.remove_unit</code>. That path banks nothing — charge is minted in three calls
+            inside <code>CombatResolver</code> and nowhere else — so <strong>neither the victim's meter nor
+            the firer's moves</strong>. The rule already exists for a plane that starves: running yourself
+            dry is not an exchange, and paying the other side charge for it would make starving your own air
+            force a tactic. Being nuked is the same shape.
+          </p>
+          <p class="text-sm">
+            The consequence is stated rather than hidden: <strong>a match can now end without a shot.</strong>
+            An army whose last unit is in the blast falls through <code>_check_rout</code>, the path that
+            already fells one whose last unit is shot. Nothing new is needed for that, but two readers have
+            to be checked rather than assumed — <code>BalanceMatchEngine.termination</code>, which is
+            <em>told</em> how a match ended and must not read a power rout as an HQ capture, and the
+            fallen-army banner, which the pipeline reports on <code>BattleCommandReceipt.fallen</code>.
+          </p>
+          <p class="text-sm">
+            <em>Rejected:</em> banking charge to the victim "in compensation". A meteor that clears five
+            units would hand the opponent a nearly-full meter, so the answer to the most expensive power in
+            the game would be their power — which turns a decisive moment into a trade.
+          </p>
+        </div>
+      </div>
+
+      <!-- D5 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D5 — The computer aims through the doctrine, never through the planner</h3>
+          <p class="text-sm">
+            <code>power_target</code> lives on Morn's subclass beside <code>wants_power</code>, and they are
+            <strong>measured with the same function</strong>: <code>_best_blast(state, team)</code> returns
+            the cell whose blast is worth the most, in funds, counting hostile units destroyed <em>minus his
+            own and his ally's</em>. <code>wants_power</code> is "that number clears
+            <code>hammer_want_value</code>"; <code>power_target</code> is "that cell". They cannot disagree,
+            which is the failure worth designing out: a commander that wants to fire and then aims somewhere
+            it did not want.
+          </p>
+          <p class="text-sm">
+            It obeys the doctrine-AI plan's D4 verbatim: it reads only what the planner already reads
+            (enemies through <code>Vision.is_hidden_from</code>), it is pure, integer and RNG-free, it never
+            reads the damage chart — a kill is a kill, there is nothing to forecast — and it is
+            <strong>scan-ordered</strong> over cells so a replan on one board always agrees with itself.
+            <span class="gc-file">ai/</span> gains one line: <code>_plan_power</code> setting
+            <code>command.target</code> when the commander aims.
+          </p>
+          <p class="text-sm">
+            <em>Rejected:</em> scoring the blast in <code>AIUnitActionPlanner</code>. The planner scores
+            moves for units; a meteor is not a unit, has no movement and belongs to no seat on the board.
+          </p>
+        </div>
+      </div>
+
+      <!-- D6 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D6 — A power heals its own army and harms every hostile one — and leaves the ally alone on both counts</h3>
+          <p class="text-sm">
+            Vance's two halves take different questions to different authorities, and the split is the
+            four-players plan's D2 read straight off: <strong>allies share sight and purpose, never
+            infrastructure.</strong>
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li>The heal is <code>state.units_of(team)</code> — <em>his own army</em>. Health is
+              infrastructure: repair, resupply and paid repair all stay <code>owner == unit.team</code>,
+              and an ally's workshop does not mend your tanks.</li>
+            <li>The harm is every unit where <code>not state.allied(unit.team, team)</code> — <em>every
+              hostile army</em>, exactly as Orin Flux's jam reaches them, so on a four-seat board it lands
+              on three opponents at once.</li>
+          </ul>
+          <p class="text-sm">
+            Thorne is the deliberate exception and the exception is the doctrine: <strong>Cut Both Ways
+            reaches literally every unit on the board</strong>, allies included, because "everyone pays" is
+            what the power is — non-lethally, floored at one pip, which is what lets it be that
+            indiscriminate. Hammerfall likewise takes whatever is standing in the square, and is not
+            floored at all.
+          </p>
+        </div>
+      </div>
+
+      <!-- D7 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D7 — Thorne reads the <code>Engagement</code>, never the <code>Unit</code></h3>
+          <p class="text-sm">
+            His bonus is computed from <code>fight.attacker_hp</code> — the effective displayed HP the
+            formula is actually using — and never from <code>fight.attacker.hp</code>. The two differ in the
+            case that matters most: a forecast's <strong>counter</strong> is priced at the defender's
+            projected post-attack health, so reading the live unit would make the damage preview promise a
+            counter-attack the resolver then fires at a different number.
+          </p>
+          <p class="text-sm">
+            That is the whole reason <code>Engagement</code> carries effective values instead of two Units,
+            and Thorne is the first doctrine to read the attacker's half of it.
+          </p>
+        </div>
+      </div>
+
+      <!-- D8 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold text-lg">D8 — Lark's and Vance's passives are unpaid on purpose, and the retune lever is the number</h3>
+          <p class="text-sm">
+            Every strong passive on the roster is paid for somewhere: Draeg's armour costs him his infantry,
+            Rhea Sol's guns are soft, Mara Voss is bad at starting fights, Tomas Reed's vehicles are weak.
+            <strong>Lark's +1 movement and Vance's +3/+3 cost nothing anywhere</strong> — and neither does
+            Morn's +5/+5 — and that is what
+            they are for — the roster has no general a new player can pick without also picking a weakness.
+            Perrin Ash is the precedent: a doctrine with no downside, priced by being narrow instead.
+          </p>
+          <p class="text-sm">
+            So they are the two most likely to land outside the win band, and when they do
+            <strong>the lever is the number on the <span class="gc-file">.tres</span></strong> — 5 becomes 4,
+            or Forced March gets dearer. <em>Rejected:</em> bolting on a penalty to bring them into line.
+            A penalty would make them the specialists they exist not to be, and there are eighteen
+            specialists already.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 4. MILESTONES ============================ -->
+  <section id="milestones">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">04</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Milestones</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Ordered cheapest-first, which is also least-risky-first: three generals ship against seams that
+          already exist before anything shared is touched. Every milestone ends with a playable general and
+          a green <code>make verify</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+
+      <!-- MC1 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-lg badge-neutral">MC1</span>
+            <h3 class="font-bold text-lg">Sera Lark — the roster grows to nineteen</h3>
+            <span class="badge badge-outline">no shared file touched</span>
+          </div>
+          <p class="text-sm">
+            The smallest general it is possible to write, shipped first precisely because it proves the seam
+            needs nothing. <code>move_bonus</code> returns her passive plus her power's, and
+            <code>wants_power</code> follows Nia Rowan's shape — the offensive read <em>or</em> a property her
+            infantry can reach with the march's own movement, because a movement power measured only in
+            fights banks its meter all match on an empty map.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">core/commanders/sera_lark.gd</span> + <span class="gc-file">data/commanders/sera_lark.tres</span></li>
+            <li>Portrait via <code>make portraits</code>; three power quotes under the 60-character cap</li>
+            <li><span class="gc-file">tests/unit/test_sera_lark.gd</span>: the budget moves for every domain, the power stacks to +2, fuel is spent for the steps actually taken</li>
+          </ul>
+          <p class="text-sm"><strong>Gate.</strong> <code>make verify</code> green;
+            <code>make commander-balance BAL="--commanders=sera_lark,..."</code> focused run reads sane.</p>
+        </div>
+      </div>
+
+      <!-- MC2 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-lg badge-neutral">MC2</span>
+            <h3 class="font-bold text-lg">Iona Vance — the board-wide swing</h3>
+            <span class="badge badge-outline">no shared file touched</span>
+          </div>
+          <p class="text-sm">
+            The first power that reaches every unit at once, and the first to take two different questions
+            to two different authorities: the heal asks <code>units_of(team)</code> and the harm asks
+            <code>state.allied</code>, which is D6. Both halves are <strong>clamped rather than
+            unbounded</strong> — full health at the top, one pip at the bottom — so nothing enters or leaves
+            the board and <code>remove_unit</code> is never called.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><code>wants_power</code>: the pips the swing would actually move — an army already at full
+              health and an opponent already at one pip are both worth nothing. Enemies read through
+              <code>Vision.is_hidden_from</code>, like every other doctrine gate</li>
+            <li><span class="gc-file">tests/unit/test_iona_vance.gd</span>: the pip swing on both sides; the
+              cap at full health; <strong>a hostile unit on one pip still standing on one pip</strong>; an
+              ally untouched by both halves; and a four-army board where the harm lands on all three
+              opponents (R5)</li>
+          </ul>
+          <p class="text-sm"><strong>Gate.</strong> <code>make verify</code> green; a headless four-army soak
+            in which Vance fires at least once and the match resolves.</p>
+        </div>
+      </div>
+
+      <!-- MC3 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-lg badge-neutral">MC3</span>
+            <h3 class="font-bold text-lg">Ivar Thorne — the wounded doctrine</h3>
+            <span class="badge badge-outline">reuses MC2's rules</span>
+          </div>
+          <p class="text-sm">
+            <code>attack_bonus</code> off <code>fight.attacker_hp</code> per D7, and Cut Both Ways as a
+            board-wide, <strong>non-lethal</strong> version of MC2's swing — the same clamp, two pips deep,
+            and reaching allies as well as enemies (D6).
+            That floor is what makes his <code>wants_power</code> the simplest of the four: there are no
+            losses to weigh, so it asks only whether the two sides are in contact and whether there is an
+            enemy army out there worth bleeding. A gate any more clever than that would bank the meter all
+            match, which is the failure the whole toolkit exists to avoid.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <li><span class="gc-file">tests/unit/test_ivar_thorne.gd</span>: the per-pip bonus at 10, 5 and 1
+              pips; <strong>the forecast and the resolved shot agreeing</strong>, counter included (D7); the
+              power reaching his own army, his ally's and every enemy's; and <strong>a unit on one pip still
+              standing on one pip afterwards</strong>, which is the floor's whole bar</li>
+          </ul>
+          <p class="text-sm"><strong>Gate.</strong> <code>make verify</code> green; the damage preview and
+            the resolved exchange identical for a wounded attacker, which is the D7 bar.</p>
+        </div>
+      </div>
+
+      <!-- MC4 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-lg badge-error text-white">MC4</span>
+            <h3 class="font-bold text-lg">Radek Morn — and the first aimed power</h3>
+            <span class="badge badge-outline">the machinery</span>
+          </div>
+          <p class="text-sm">
+            The machinery and its one user ship together, because targeting with nobody to target is code
+            no one can play. This is also <strong>the only milestone that removes a unit without a
+            shot</strong>, so it owns D4 outright and the two implementation rules that come with it:
+            <strong>collect the doomed, then remove them</strong> — <code>state.units</code> is being
+            iterated and <code>remove_unit</code> mutates it — and <strong>nothing is banked to either
+            meter</strong>. Five layers move, and no more than five:
+          </p>
+          <div class="overflow-x-auto">
+            <table class="table table-sm gc-tight">
+              <tbody class="text-sm">
+                <tr><td class="font-bold w-40">core/</td><td><code>PowerCommand.target</code>; <code>validate</code> refuses an off-board aim; <code>on_power_activated</code> gains the defaulted parameter; three hooks on <code>CommanderType</code> (D2)</td></tr>
+                <tr><td class="font-bold">replay</td><td><code>REQUIRED_KEYS["power"] = ["target"]</code> and <code>FORMAT</code> 1 → 2. Older replays are refused, which is the replay plan's D3 — a replay is disposable, so a stale one is deleted rather than migrated</td></tr>
+                <tr><td class="font-bold">ai/</td><td>one line in <code>_plan_power</code>: set the target from <code>power_target</code> when the commander aims (D5)</td></tr>
+                <tr><td class="font-bold">scenes/</td><td>a power-targeting state in <span class="gc-file">battle.gd</span>; the 3×3 preview painted by <code>BattleOverlays</code> (field-overlays D3 — anything laid <em>over</em> the board is the overlays'); cursor movement through <code>DirectionalInput</code>, confirm/cancel through the existing convention, cancel landing on <code>rest_state()</code></td></tr>
+                <tr><td class="font-bold">save/</td><td><strong>nothing.</strong> The blast is one-shot and <code>power_active</code> is already saved</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="list-disc list-inside space-y-1 text-sm mt-1">
+            <li><span class="gc-file">tests/unit/test_radek_morn.gd</span>: the footprint clipped at a corner;
+              cargo dying with its transport; an ally's unit dying too; <strong>no charge banked on either
+              side</strong>; an army losing its last unit in the blast falling through
+              <code>_check_rout</code>; and the computer's aim being the highest-value net square, matching
+              its own <code>wants_power</code></li>
+            <li>Check <code>BalanceMatchEngine.termination</code> reads a power rout correctly rather than as
+              an HQ capture (D4, R4)</li>
+            <li><span class="gc-file">tests/unit/test_replay_fidelity.gd</span> extended: a recorded match
+              containing an aimed power replays to an identical final board — the merge bar for the format bump</li>
+            <li>A <code>power_targeting</code> smoke scenario capturing the preview</li>
+          </ul>
+          <p class="text-sm"><strong>Gate.</strong> <code>make verify</code> green; replay fidelity with an
+            aimed power; <code>make smoke</code> green with the new frame; every other power's line still
+            decodes and applies unchanged.</p>
+        </div>
+      </div>
+
+      <!-- MC5 -->
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-lg badge-neutral">MC5</span>
+            <h3 class="font-bold text-lg">The balance gate at twenty-two</h3>
+            <span class="badge badge-outline">adds no code</span>
+          </div>
+          <p class="text-sm">
+            The full matrix: <strong>22 × 22 ordered pairs × 5 scenarios × 4 seeds = 9 680 matches</strong>,
+            up from 6 480 — a release task, not a merge gate, and deliberately out of
+            <code>make verify</code>. The committed artifacts are the tuned
+            <span class="gc-file">.tres</span> files and <span class="gc-file">docs/commander_balance.md</span>,
+            never the generated report.
+          </p>
+          <p class="text-sm">
+            The only numbers this milestone may move are the four new generals' own. It may not touch
+            <span class="gc-file">data/ai/</span> — that is the balance retune's BL2, and the difficulty
+            ladder is already failing knowingly against it.
+          </p>
+          <p class="text-sm"><strong>Gate.</strong> All four inside the preferred win band, or a written
+            reason in <span class="gc-file">docs/commander_balance.md</span> why a flagged one ships anyway —
+            the AI is rule-based and a commander outside the band is a review trigger, not an automatic nerf.
+            Plus the human test deck note for Hammerfall specifically, which no matrix can judge: whether
+            aiming it is a decision or a formality.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 5. NUMBERS ============================ -->
+  <section id="numbers">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">05</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">The numbers, and the arithmetic behind two of them</h2>
+        <p class="mt-1 max-w-3xl opacity-80">
+          Starting values, all <code>@export</code>. They are opening bids for MC5 to move, not results.
+        </p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto mb-6">
+      <table class="table table-zebra gc-tight">
+        <thead>
+          <tr><th>General</th><th>Passive</th><th>Power</th><th>Cost</th><th>Where it sits</th></tr>
+        </thead>
+        <tbody class="text-sm">
+          <tr>
+            <td><strong>Sera Lark</strong><br><span class="opacity-60">Aurora</span></td>
+            <td><code>road_move_bonus = 1</code></td>
+            <td>Forced March · <code>march_move_bonus = 1</code></td>
+            <td>10 000</td>
+            <td>Cheap, like Perrin Ash's 9 000 — the power is a tempo nudge, the passive is the pick</td>
+          </tr>
+          <tr>
+            <td><strong>Iona Vance</strong><br><span class="opacity-60">Meridian</span></td>
+            <td><code>steady_attack_pct = 3</code><br><code>steady_defense_pct = 3</code></td>
+            <td>Tip the Scales · <code>scales_heal_hp = 10</code>, <code>scales_harm_hp = 10</code>, <code>scales_floor_hp = 10</code></td>
+            <td>17 000</td>
+            <td>Long. Above every wave-1 general, below Iris Colt's 22 000</td>
+          </tr>
+          <tr>
+            <td><strong>Ivar Thorne</strong><br><span class="opacity-60">Verdant</span></td>
+            <td><code>wounded_attack_pct_per_pip = 8</code></td>
+            <td>Cut Both Ways · <code>cut_harm_hp = 20</code>, <code>cut_floor_hp = 10</code></td>
+            <td>18 000</td>
+            <td>Long, and dearer than Vance for twice the swing — even though it never kills</td>
+          </tr>
+          <tr>
+            <td><strong>Radek Morn</strong><br><span class="opacity-60">Iron</span></td>
+            <td><code>hammer_attack_pct = 5</code><br><code>hammer_defense_pct = 5</code></td>
+            <td>Hammerfall · <code>hammer_radius = 1</code></td>
+            <td>24 000</td>
+            <td>The most expensive in the game. Charge banks at 100% of value lost and 50% of value dealt, so this is roughly one firing in a long match</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm mb-6 gc-risk-low">
+      <div class="card-body gap-2">
+        <h3 class="font-bold">The two flat doctrines are the same shape, one turned up</h3>
+        <p class="text-sm">
+          Vance and Morn deliberately read on one scale, so the ordering the brief asked for is visible in
+          the numbers rather than asserted in the prose. Both terms count: the defence half is worth as
+          much per point as the attack half, because the formula's <code>(200 - def) / 100</code> shape
+          makes +3 defence a x0.97 on damage taken exactly as +3 attack is a x1.03 on damage dealt.
+        </p>
+        <div class="gc-board">Vance   deals x1.03   takes x0.97   → ~6 points of swing per exchange
+Morn    deals x1.05   takes x0.95   → ~10 points of swing per exchange</div>
+        <p class="text-sm">
+          So Morn's army is worth roughly <strong>two-thirds again</strong> what Vance's is in a straight
+          exchange, before either power is counted — and then his power is the most expensive in the game
+          and hers is a pip. That is the whole of what separates them, which is the point: two generals
+          with no specialism at all, one of whom is simply better at fighting and pays for it in how long
+          his meter takes.
+        </p>
+        <p class="text-sm opacity-80">
+          Neither number is load-bearing on anything but feel, so both are MC5's to move — and moving one
+          without the other is what would put them back out of order.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-2">
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">Why Thorne's bonus is +8% per pip and not +25%</h3>
+          <p class="text-sm">
+            The damage formula already multiplies by <code>attacker_displayed_hp / 10</code>, so a wounded
+            unit hits <em>weaker</em> before any doctrine applies. Thorne does not reverse that — he softens it.
+          </p>
+          <div class="gc-board">HP    plain unit      Thorne at +8%/pip
+ 10     1.00            1.00   x1.00
+  7     0.70            0.70 x 1.24 = 0.87
+  5     0.50            0.50 x 1.40 = 0.70
+  2     0.20            0.20 x 1.64 = 0.33
+  1     0.10            0.10 x 1.72 = 0.17</div>
+          <p class="text-sm">
+            So a half-dead unit of his does 70% of a full one's damage instead of 50%. He never profits from
+            being hurt in absolute terms — <strong>he profits from not going home</strong>, which is the
+            doctrine in one line: everyone else rotates a wounded tank back to a workshop, and his stays in
+            the line and is still worth something there.
+          </p>
+          <p class="text-sm">
+            The number to <em>not</em> reach for is the one that cancels the scaling. Making a 5-pip unit hit
+            like a full one takes <strong>+100% at 5 pips — twenty points per pip</strong>, and at that
+            setting the column above flattens to 1.00 everywhere: health stops meaning anything for his
+            army, and deliberately shooting your own tanks becomes the optimal opening. +8% keeps the
+            curve sloping the right way and only makes it shallower, which is the difference between a
+            doctrine and a broken rule.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-2">
+          <h3 class="font-bold">And why Cut Both Ways is still worth firing</h3>
+          <p class="text-sm">
+            Two pips off his own army costs him output — but at +8% per pip it also buys him +16%, so a
+            full-health unit of his ends the exchange at <code>0.8 × 1.16 = 0.93</code> of its damage while
+            <strong>every enemy unit is flatly at 0.8</strong>. He gives up 7% and takes 20%.
+          </p>
+          <p class="text-sm">
+            And because it <strong>never kills</strong>, that is the entire transaction — there is no
+            downside case where he hands the opponent a unit. What he is buying is a board where every
+            enemy is permanently weaker and every unit of his is permanently <em>better than it looks</em>,
+            which is why it is dearer than Vance's despite taking nothing off the board. It is the power
+            you fire when you are winning the attrition and want it decided.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 6. RISKS ============================ -->
+  <section id="risks">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">06</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Risk register</h2>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R1 — Hammerfall lands in the same build as the AI's cohesion term</h3>
+          <p class="text-sm">
+            The AI Judgement plan's AJ3 shipped <code>cohesion_tiles</code> live on every tier, and its own
+            measurement found <strong>tight beat loose</strong> — the computer now advances in a column on
+            purpose. This plan ships the one power that deletes a column. AJ3's R1 (the clump being artillery
+            and Command Power bait) was explicitly left <em>unobserved rather than refuted</em>, because both
+            sides were the same planner and neither punished concentration. <strong>Morn is the instrument
+            that punishes it.</strong>
+            <br><em>Watch:</em> Morn's rows in the MC5 matrix, and the funds destroyed per firing. The lever
+            if it is too good is Morn's <span class="gc-file">.tres</span>, not the AI dials — those belong to BL2.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-high">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R2 — Lark's +1 movement is the strongest unpaid passive on the roster</h3>
+          <p class="text-sm">
+            It touches every unit, every domain and every turn of the match, and D8 forbids paying for it with
+            a penalty. Movement also compounds with the things this repo has already measured as decisive —
+            the property race, capture claims, reaching a workshop.
+            <br><em>Watch:</em> her win rate and, in the Balance Lab, her property count rather than her army
+            value. If she has to come down, the honest lever is Forced March getting dearer or the power
+            being removed entirely — a general whose only trick is the passive does not need a second one.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R3 — The gate grows by half</h3>
+          <p class="text-sm">
+            6 480 → 9 680 matches, roughly +49% wall clock on a run that is already a release task. Focused
+            runs (<code>BAL="--commanders=..."</code>) are the iteration loop for MC1–MC4 and the full matrix
+            is MC5's alone.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R4 — Hammerfall can end a match, and two readers have to be told</h3>
+          <p class="text-sm">
+            Covered by D4 and by <code>_check_rout</code>, but <code>BalanceMatchEngine.termination</code> is
+            <em>told</em> how a match ended rather than inferring it, and the fallen-army banner rides on
+            <code>BattleCommandReceipt.fallen</code>. Both are checked in MC4 rather than assumed, because a
+            power rout misread as an HQ capture silently corrupts every balance report afterwards. The risk
+            shrank when the two health powers were floored — it is now one power on one milestone rather
+            than three across three.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R5 — Board-wide powers scale with the number of hostile armies</h3>
+          <p class="text-sm">
+            Vance's harm and Thorne's bleed reach every hostile army, so on a four-seat board they are worth
+            up to three times what they are in a duel, while their charge cost is the same. Orin Flux's
+            Signal Jam already has this shape and the roster lives with it. Neither is lethal, which is what
+            keeps this a scaling problem rather than a snowball.
+            <br><em>Watch:</em> the alliance soak, not the matrix — the matrix is duels.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-medium">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R6 — Thorne makes every forecast vary with the attacker's health</h3>
+          <p class="text-sm">
+            The bonus is an integer read on an object the resolver already builds, so it costs nothing to
+            evaluate. What is untested is the planner: <code>_attack_score</code> and the retreat threshold
+            were tuned against doctrines where a wounded unit is strictly worse, and Thorne's is not. A
+            planner that keeps sending wounded units in is <em>correct</em> for him and looks like a bug.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R7 — The picker and the info sheet grow to 22</h3>
+          <p class="text-sm">
+            The gallery is a fixed 4-column grid, so 22 cards is six rows rather than a layout change, and the
+            select panel walks <code>CommanderDB.all()</code> unbounded. But the <code>commander_info</code>
+            and gallery smoke frames both move, and <code>CommanderInfoSheet.layout_error</code> exists
+            precisely because a collapsed sheet still writes a healthy PNG.
+          </p>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-sm gc-risk-low">
+        <div class="card-body gap-1 py-4">
+          <h3 class="font-bold">R8 — Aimed powers are a new interaction with no convention yet</h3>
+          <p class="text-sm">
+            Confirm, cancel, and what the cursor does are all already decided for <em>attack</em> targeting;
+            MC4 reuses that vocabulary rather than inventing one. The open question no test answers is whether
+            a player who has never seen it understands that the meter is spent whether or not the square had
+            anything in it — a first-contact question for the UX recovery plan's register, not for the matrix.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ 7. SCOPE ============================ -->
+  <section id="scope">
+    <div class="flex items-start gap-3 mb-5">
+      <span class="gc-section-number">07</span>
+      <div>
+        <h2 class="text-2xl font-extrabold">Out of scope</h2>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <ul class="list-disc list-inside space-y-2 text-sm">
+          <li><strong>Any value in <span class="gc-file">data/ai/</span>.</strong> The difficulty ladder is
+            failing knowingly and closing it is the balance retune's BL2. This plan inherits that boundary
+            from the AI Judgement and AI Economy plans verbatim: it owns four commanders' numbers and nothing else.</li>
+          <li><strong>A second aimed power.</strong> D2's machinery is general, but one user is what proves it;
+            a second doctrine wanting a different footprint is the moment to find out whether
+            <code>power_blast_cells</code> is the right shape.</li>
+          <li><strong>New unit types, terrain or boards.</strong> Every one of these four plays on the shipped roster.</li>
+          <li><strong>A campaign appearance.</strong> The Ember Line treatment is closed and casting is its own decision.</li>
+          <li><strong>Retuning the eighteen.</strong> MC5 may move only the four new <span class="gc-file">.tres</span>
+            files. If a new general exposes an old one as mispriced, that is a finding for the next balance
+            pass, recorded in <span class="gc-file">docs/commander_balance.md</span> and not fixed here.</li>
+          <li><strong>Battle cut-in art for the powers.</strong> Hammerfall gets the existing activation banner
+            and the ordinary destruction path. A meteor animation is a presentation slice of its own, and the
+            battle-animations plan's D1 — the cut-in replays a snapshot and computes nothing — is what it
+            would be built against.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="px-6 py-8 md:px-12 border-t-2 border-base-300 text-sm opacity-70">
+    <p><strong>Grid Commanders — More Commanders.</strong> Design of record. Milestones MC1–MC5, decisions
+      D1–D8, risks R1–R8. Scoped against <span class="gc-file">commanders-plan.html</span> (the hook contract),
+      <span class="gc-file">new-commanders-plan.html</span> (the last four generals and the balance gate) and
+      <span class="gc-file">replay-plan.html</span> (the command log MC4 bumps).</p>
+  </footer>
+
+</div>
+</body>
+</html>

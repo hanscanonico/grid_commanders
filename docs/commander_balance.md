@@ -28,15 +28,15 @@ replaces the other:
 ## Running the automated matrix
 
 ```sh
-make commander-balance                 # full batch — a release task, 6,480 matches
+make commander-balance                 # full batch — a release task, 9,680 matches
 make commander-balance BAL="--commanders=alina_ward,cass_orlov --seeds=2"  # focused
 ```
 
 Flags (after `--`): `--commanders=`, `--scenarios=`, `--seeds=`, `--neutral`
 (adds each commander vs No Commander), `--days=`, `--out=`.
 
-- **Full batch:** 18×18 ordered pairs (mirrors included) × 5 scenarios × 4 seeds
-  = **6,480 matches**. Ordered pairs already side-swap every non-mirror matchup.
+- **Full batch:** 22×22 ordered pairs (mirrors included) × 5 scenarios × 4 seeds
+  = **9,680 matches**. Ordered pairs already side-swap every non-mirror matchup.
   It is deliberately out of `make verify`/`make test`.
 - **Focused mode** is the fast iteration loop while tuning one commander.
 - Output: `reports/commander_balance/matches.csv` (one row per match) and
@@ -111,15 +111,76 @@ change and its rationale below.
 ## Status and results
 
 The runner and its five scenarios are verified (symmetry asserted, determinism
-byte-identical, hard invariants clean). The 18-commander full batch was run on the
-candidate build on 2026-08-01; the 30-session human deck remains the manual
-release companion and is not represented as automated evidence here.
+byte-identical, hard invariants clean). The full batch was last run at
+twenty-two commanders on 2026-08-04 — results under *Measured for the
+four-commander expansion (MC5)* below; the 30-session human deck remains the
+manual release companion and is not represented as automated evidence here.
 
 The deck's three additions for this roster are deliberately contrastive:
 **Calder vs Vale** (cheap breadth against expensive quality), **Ferrow against a
 cash-poor opponent** (whether plunder and its counterplay read), and **Colt against
 a defensive commander** (whether a late refresh creates agency rather than a
 surprise extra turn). Each is played from both seats like the standing twelve.
+
+### Measured for the four-commander expansion (MC5)
+
+The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
+scenarios × four seeds) in **59 minutes** on the development machine — R3's
+predicted +49% wall clock, measured. All 9,680 were decisive, with **0 rejected
+commands and 0 cap stalls**. First-seat bias was **+33.1 pp**, the standing
+banking item described in the N4 section below rather than anything this
+expansion introduced.
+
+**All four new generals measured above the preferred band, and all four ship at
+the numbers they were designed with.** That is the written exception this
+document's own acceptance rule asks for, and the reason is one sentence: the
+tuning ladder above puts always-on modifiers last and behind human confirmation,
+every one of these four is passive-dominated, and the pass that lowers them is a
+deliberate balance decision rather than a milestone's tidy-up. The measurement
+below is what that pass should start from. **No `.tres` number moved in MC5.**
+
+| New commander | Full matrix | Worst board | Powers/match | Opponent units left |
+|---|---:|---|---:|---:|
+| Radek Morn | **89.4% WARN** | `holdings` **100.0%** | 1.77 | **0.72** |
+| Iona Vance | **77.8% WARN** | `combined` 94.6% | 3.70 | 1.71 |
+| Sera Lark | **65.3% WARN** | `ridge` 83.9% | 5.56 | 2.90 |
+| Ivar Thorne | 59.7% watch | `clash` 75.6% | 3.86 | 3.42 |
+
+The field average is 4.14 units left standing, and the shipped eighteen top out
+at Viktor Draeg 58.9% and Gideon Holt 55.7% — so this is not a weak field being
+measured, it is four strong doctrines. Head to head, Morn beats the other three
+85–90%.
+
+**The passive is the term to move, not the power.** Morn fires 1.77 times a match
+at 24,000 — the dearest meter in the game, firing least of anyone here — and
+still wins 89.4%, which puts most of his edge on the flat +5%/+5% rather than on
+Hammerfall. Vance's +3%/+3% alone carries her to 77.8%. The two are one ladder
+(D8) and move together or not at all; Morn's `power_cost` is already at the band
+ceiling, so cost is not a lever that is left for him.
+
+**R1 is confirmed rather than predicted.** AJ3 shipped `cohesion_tiles` live and
+left its own R1 — the column being Command Power bait — *unobserved*, because
+both sides were the same planner and neither punished concentration. Morn is the
+instrument, and he reads 100.0% on `holdings` and leaves his opponent 0.72 units
+against a field of 4.14. A 3×3 that lands on an advancing column is worth more
+than the meter that bought it.
+
+**R2 is confirmed too, and it shows where the risk said it would.** Lark holds
+5.28 properties a match against a field of 4.47 while leaving more enemy units
+standing than anyone else here (2.90) — that is the property race, not the fight,
+which is exactly what movement compounds with. The lever named for her, if the
+tuning pass wants one, is Forced March getting dearer or going entirely: a
+general whose trick is the passive does not need a second one.
+
+**Owed, and no matrix can settle it:** the human deck's Hammerfall question —
+whether aiming it is a decision or a formality. The matrix says only that the
+computer's aim is worth firing; whether a player experiences the square as a
+choice is the deck's to answer, along with R8 (does a first-time player
+understand the meter is spent whether or not the square held anything).
+
+The standing WARN names among the existing eighteen are unchanged and were not
+touched, per MC5's own scope: Iris Colt low (the written exception below), Konrad
+Vale high, and the review set around them.
 
 ### Measured for the six-commander expansion (NC7)
 
@@ -251,6 +312,14 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-04 — the four new generals ship un-tuned, on purpose** (more-commanders
+  plan, MC5). The 9,680-match batch measured Radek Morn 89.4%, Iona Vance 77.8%,
+  Sera Lark 65.3% and Ivar Thorne 59.7%; **no `.tres` number moved**. All four are
+  passive-dominated, the ladder above puts always-on modifiers last and behind
+  human confirmation, and that confirmation placed the tuning in a later balance
+  pass rather than in this milestone. Evidence and the levers left for that pass
+  are in the MC5 section above. This is a known departure, recorded rather than
+  hidden: the roster currently has a commander winning nine matches in ten.
 - **2026-08-02 — Cass Orlov loses her −10 % defence.** The standing low outlier,
   named in every measurement since wave 2, tuned by deleting the penalty half of
   her doctrine: `defense_pct` and the `defense_bonus` override are gone, so her

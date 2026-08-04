@@ -1,6 +1,6 @@
 # gdlint: ignore=max-public-methods
 # The width is the contract, not an accretion: every public method here is one
-# rule seam eighteen doctrine subclasses may override, so "move something out"
+# rule seam twenty-two doctrine subclasses may override, so "move something out"
 # would mean a second hook tree beside this one — the split the commander plan's
 # D1 rejects. The repo-wide ratchet stays where it is; this file alone answers
 # for its own count, and a new method still needs to be a new doctrine seam.
@@ -228,10 +228,40 @@ func kill_bounty_pct(_state: GameState, _team: int, _victim: Unit) -> int:
 
 
 ## One-shot effects fired the instant the power activates: refills, heals, the
-## enemy debuffs Signal Jam applies. Anything that lasts for the duration of the
-## power belongs in the hooks above, gated on _is_active(), not here.
-func on_power_activated(_state: GameState, _team: int) -> void:
+## enemy debuffs Signal Jam applies, the square a meteor lands on. Anything that
+## lasts for the duration of the power belongs in the hooks above, gated on
+## _is_active(), not here.
+##
+## `target` is the cell an aimed power was pointed at and is meaningless to every
+## power that fires at the board, which is why it is defaulted rather than split
+## off into a sibling hook: aimed or not, this is the one concept "what fires the
+## instant the meter is spent", and two hooks for one concept is the seam
+## drifting (plan D2).
+func on_power_activated(_state: GameState, _team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	pass
+
+
+## True when this power is pointed at a cell rather than fired at the board. What
+## the battle scene asks before entering its aiming state, and the whole of what
+## decides whether `PowerCommand.target` means anything.
+func aims_power() -> bool:
+	return false
+
+
+## The tiles an aimed power lands on, clipped to the board — the single authority
+## for the footprint (plan D3). The overlay paints exactly what this returns, the
+## computer scores exactly what it returns, and `on_power_activated` destroys
+## exactly what it returns, so a preview showing nine tiles and a power clearing
+## sixteen has nowhere to come from.
+func power_blast_cells(_state: GameState, _team: int, _target: Vector2i) -> Array[Vector2i]:
+	return []
+
+
+## Where the computer aims. Asked only by AIController, and only of a commander
+## that aims; measured with the same function `wants_power` is, so a doctrine can
+## never want to fire and then aim somewhere it did not want (plan D5).
+func power_target(_state: GameState, _team: int) -> Vector2i:
+	return Vector2i.ZERO
 
 
 ## Whether the AI should spend a full meter now. Asked at this commander's

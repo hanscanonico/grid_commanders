@@ -33,7 +33,7 @@ func repair_cost_pct(_state: GameState, _unit: Unit) -> int:
 
 ## Purely one-shot: the depots open, everything fills up, and nothing lingers
 ## afterwards — so there is no hook of his to gate on _is_active().
-func on_power_activated(state: GameState, team: int) -> void:
+func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	for unit in state.units_of(team):
 		unit.resupply()
 		unit.hp = mini(100, unit.hp + depot_heal_hp)

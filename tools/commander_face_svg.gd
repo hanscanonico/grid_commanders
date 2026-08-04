@@ -308,6 +308,62 @@ const FACES := {
 		"bg": &"halftone",
 		"prop": &"sabre",
 	},
+	&"sera_lark":
+	{
+		"skin": &"dark",
+		"hair": &"darkbrown",
+		"style": &"ponytail",
+		"brow": &"raised",
+		"eyes": &"f",
+		"mouth": &"grin",
+		"facial": &"none",
+		"acc": &"bandana",
+		"pose": [5.0, 1.2, true],
+		"bg": &"wedge",
+		"prop": &"baton",
+	},
+	&"iona_vance":
+	{
+		"skin": &"tan",
+		"hair": &"brown",
+		"style": &"bob",
+		"brow": &"soft",
+		"eyes": &"f",
+		"mouth": &"stern",
+		"facial": &"none",
+		"acc": &"none",
+		"pose": [0.0, 1.16, false],
+		"bg": &"bars",
+		"prop": &"baton",
+	},
+	&"ivar_thorne":
+	{
+		"skin": &"light",
+		"hair": &"darkbrown",
+		"style": &"long",
+		"brow": &"angled",
+		"eyes": &"narrow",
+		"mouth": &"snarl",
+		"facial": &"beard",
+		"acc": &"scar",
+		"pose": [-5.0, 1.26, true],
+		"bg": &"burst",
+		"prop": &"sabre",
+	},
+	&"radek_morn":
+	{
+		"skin": &"medium",
+		"hair": &"darkbrown",
+		"style": &"bald",
+		"brow": &"angled",
+		"eyes": &"m",
+		"mouth": &"stern",
+		"facial": &"beard",
+		"acc": &"none",
+		"pose": [2.0, 1.28, false],
+		"bg": &"halftone",
+		"prop": &"medal",
+	},
 }
 
 var _accent: String

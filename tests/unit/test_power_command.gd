@@ -131,7 +131,7 @@ class HealingCommander:
 
 	var heals := 0
 
-	func on_power_activated(state: GameState, team: int) -> void:
+	func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 		heals += 1
 		for unit in state.units_of(team):
 			unit.hp = mini(100, unit.hp + 10)

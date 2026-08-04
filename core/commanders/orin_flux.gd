@@ -34,7 +34,7 @@ func enemy_vision_bonus(state: GameState, team: int, _unit: Unit) -> int:
 ## own army: asked of the allegiance authority, which is what keeps the power's
 ## two halves agreeing about who the enemy is — the ongoing debuff already asks it
 ## through Vision's sight loop and enemy_vision_bonus.
-func on_power_activated(state: GameState, team: int) -> void:
+func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	for unit in state.units:
 		if state.allied(unit.team, team):
 			continue
