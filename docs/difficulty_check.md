@@ -120,10 +120,15 @@ longer exists.
   its damage buying a withdrawal. Tune them together and never one at a time
   (the AI Judgement plan's R3).
 - **S2 `focus_fire_bonus` — focus fire.** Boosts a target other ready friendlies
-  could still add damage to. Ships at `0.0`: the superseded probes in §6 found
-  the bias harmful in both shapes tried and §4b's re-test with cohesion live
-  found it negative again, while replanning after every command already exposes
-  a wounded target's finishing shot to the next attacker.
+  could still add damage to. **Un-shipped: `0.0` on all three tiers**, so
+  `_focus_bonus` and `_follow_up_damage` never run in a played match — they
+  execute only under the tests that build a profile carrying the dial. Read the
+  code as a capability the ladder can re-test in one edit, never as behaviour
+  anyone has met. It is off because the superseded probes in §6 found the bias
+  harmful in both shapes tried and §4b's re-test with cohesion live found it
+  negative again, while replanning after every command already exposes a wounded
+  target's finishing shot to the next attacker. `data/ai/hard.tres` carries the
+  same note at the dial itself.
 - **S3 `build_reactivity` — counter-building.** Re-ranks each affordable combat
   unit by its damage-chart effectiveness against the enemy's actual cost-weighted
   roster, blended over the static `build_priority` list. With no enemy in sight

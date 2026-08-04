@@ -6,6 +6,8 @@ extends GutTest
 ## in CombatResolver's header, so a reordered multiplier or a second rounding has
 ## to fail here before it can quietly re-balance twenty-two doctrines at once.
 
+const COMMANDER_DIR := "res://data/commanders"
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -188,6 +190,46 @@ func test_every_shipped_commander_is_well_formed() -> void:
 		# here as well as in the .tres. The ceiling is Hammerfall's, and it is the
 		# only power that takes units off the board (more-commanders D4).
 		assert_between(co.power_cost, 9000, 24000, "%s power cost" % co.id)
+
+
+## Every general's own numbers are written on its .tres. A balance pass reads
+## data/, so a number that lives only as a script default is one nobody tuning
+## the roster will ever find — the sibling of test_ai_profile.gd's rule that
+## every tier writes every profile field, for the same reason.
+##
+## Scoped to what each subclass declares: the card fields CommanderType exports
+## are the base's own, and some are meant to take its default — power_timing is
+## BEFORE_ACTIONS for every general but one.
+func test_every_commander_writes_its_own_doctrine_numbers() -> void:
+	var shared := _stored_fields(CommanderType.new())
+	var files := DirAccess.get_files_at(COMMANDER_DIR)
+	files.sort()
+	var checked := 0
+	for file_name in files:
+		if file_name.get_extension() != "tres":
+			continue
+		var path := "%s/%s" % [COMMANDER_DIR, file_name]
+		var commander: CommanderType = load(path)
+		var source: String = FileAccess.get_file_as_string(path)
+		for field in _stored_fields(commander):
+			if field in shared:
+				continue
+			checked += 1
+			assert_true(
+				source.contains("\n%s =" % field), "%s must explicitly write %s" % [path, field]
+			)
+	assert_gt(checked, 10, "the roster should carry its doctrine numbers as exports")
+
+
+## The fields a .tres can actually store: an @export carries STORAGE, a plain
+## script var does not, and demanding one of those in data would be unfixable.
+static func _stored_fields(resource: Resource) -> Array[String]:
+	var fields: Array[String] = []
+	for property in resource.get_property_list():
+		var usage := int(property.usage)
+		if (usage & PROPERTY_USAGE_SCRIPT_VARIABLE) and (usage & PROPERTY_USAGE_STORAGE):
+			fields.append(property.name)
+	return fields
 
 
 ## The reviewed 6 / 6 / 5 / 5 roster. Pinned so a half-added general — a script
