@@ -42,6 +42,8 @@ class BuildWants:
 		var capture_units := 0
 		var supply_units := 0
 		for unit in friendly_units:
+			if unit.carrier != null:
+				continue  # a passenger takes no ground, refills nobody and is never bought against
 			var id := unit.type.id
 			wants.owned[id] = int(wants.owned.get(id, 0)) + 1
 			if unit.type.can_capture:
@@ -302,7 +304,7 @@ func _outgunned_in_the_air(context: AIPlanningContext) -> bool:
 		return false
 	var answers := 0
 	for unit in context.friendly_units:
-		if _can_hit_any(state, unit, flying):
+		if unit.carrier == null and _can_hit_any(state, unit, flying):
 			answers += 1
 	return answers < profile.air_answer_target
 
