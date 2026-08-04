@@ -324,7 +324,7 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | `--seeds=` | Paired seeds per pairing (default 4, the Lab's) |
 | `--batch=` | Seeds per shard (default 4) |
 | `--days=` | Day cap; omitted, the Lab's own default stands |
-| `--workers=` | Processes at a time (default 6, the measured peak below) |
+| `--workers=` | Processes at a time (default `min(6, cores)` — 6 is the measured peak below) |
 | `--out=` | Run directory, **relative to `reports/`**, default `reports/balance_pool/<spec>` |
 | `--timeout=` | Seconds per shard, default 3600 |
 | `--dry-run` | Resolve the spec, print the shard plan, and stop |
@@ -366,7 +366,8 @@ The driver **aggregates nothing**. It expands the matrix, runs processes and
 concatenates their rows in plan order, because a merged summary would be a second
 opinion about numbers `BalanceRunSummary` already owns — the per-shard
 `summary.json` files stay readable, and a pairing worth a closer look is re-run
-through `make balance-sim` with the full instruments on.
+through `make balance-sim` with the full instruments on — shards are played
+`--no-commands`, so a sweep leaves no `commands.jsonl` behind.
 
 ### The merge bar
 

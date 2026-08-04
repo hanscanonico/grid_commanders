@@ -32,8 +32,8 @@ Flags:
   --seeds=N             paired seeds per pairing (default 4, the Lab's)
   --batch=N             seeds per shard (default 4)
   --days=N              day cap; omitted, the Lab's own default stands
-  --workers=N           processes at a time (default 6 — the measured peak; the
-                        curve it comes from is in docs/balance_sim.md)
+  --workers=N           processes at a time (default min(6, cores) — 6 is the
+                        measured peak; the curve is in docs/balance_sim.md)
   --out=DIR             run directory, **relative to reports/** and refused if
                         it leaves it (default reports/balance_pool/<spec>; a
                         leading `reports/` is accepted, so both spellings work)
