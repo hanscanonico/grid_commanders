@@ -41,6 +41,9 @@ Flags:
                         path and paths carry the `/`.
   --preset=lab|arena    which driver plays the shards (default lab)
   --seeds=N             paired seeds per pairing (default 4, the Lab's)
+  --seed-offset=N       where in each board's seed range the run starts
+                        (default 0) — a held-out pool is the same boards' later
+                        seeds, and this is how a run asks for them
   --batch=N             seeds per shard (default 4)
   --days=N              day cap; omitted, the driver's own default stands
   --workers=N           processes at a time (default min(6, cores) — 6 is the
@@ -261,6 +264,7 @@ def parse_args(argv):
     p.add_argument("--pairings", required=True)
     p.add_argument("--preset", default="lab", choices=sorted(PRESETS))
     p.add_argument("--seeds", type=int, default=4)
+    p.add_argument("--seed-offset", dest="seed_offset", type=int, default=0)
     p.add_argument("--batch", type=int, default=4)
     p.add_argument("--days", type=int, default=0)
     p.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
@@ -285,6 +289,8 @@ def parse_args(argv):
     for name, value in (("seeds", args.seeds), ("batch", args.batch), ("workers", args.workers)):
         if value < 1:
             p.error("--%s must be at least 1" % name)
+    if args.seed_offset < 0:
+        p.error("--seed-offset cannot be negative")
     args.out, error = resolve_out(args.out or os.path.join(DEFAULT_OUT_ROOT, run_name(args)))
     if error:
         p.error(error)
@@ -301,6 +307,8 @@ def run_name(args):
     parts.append("-".join(args.maps))
     parts += ["%s_vs_%s" % (slug(r), slug(b)) for r, b in args.pairings]
     parts.append("s%d_b%d" % (args.seeds, args.batch))
+    if args.seed_offset:
+        parts.append("o%d" % args.seed_offset)
     if args.days:
         parts.append("d%d" % args.days)
     return "_".join(parts)
@@ -313,8 +321,9 @@ def build_shards(args):
     shards = []
     for map_name in args.maps:
         for red, blue in args.pairings:
-            for offset in range(0, args.seeds, args.batch):
-                count = min(args.batch, args.seeds - offset)
+            for taken in range(0, args.seeds, args.batch):
+                count = min(args.batch, args.seeds - taken)
+                offset = args.seed_offset + taken
                 shards.append(Shard(args.preset, map_name, red, blue, offset, count, args.days))
     return shards
 
@@ -443,14 +452,15 @@ def self_check():
         print("%-4s --out=%-22s -> %s" % (
             "ok" if ok else "FAIL", out, error or path))
 
-    def key(days, preset="lab", red=None, blue=None):
+    def key(days, preset="lab", red=None, blue=None, offset=0):
         sides = {"lab": ("none:normal", "none:hard"), "arena": AR_SIDES}[preset]
-        return Shard(preset, "ironworks", red or sides[0], blue or sides[1], 0, 4, days).name
+        return Shard(preset, "ironworks", red or sides[0], blue or sides[1], offset, 4, days).name
 
     for label, ok in (
         ("same spec, same key", key(20) == key(20)),
         ("different day cap, different key", key(20) != key(100)),
         ("driver default day cap, different key", key(0) != key(100)),
+        ("a held-out slice of the range, different key", key(100) != key(100, offset=12)),
         ("a preset's shards are its own", key(100) != key(100, "arena")),
         (
             "a candidate's path slugs to a bare name",
@@ -548,6 +558,7 @@ def main(argv):
             "maps": args.maps,
             "pairings": [separator.join((r, b)) for r, b in args.pairings],
             "seeds": args.seeds,
+            "seed_offset": args.seed_offset,
             "batch": args.batch,
             "days": args.days or "(driver default)",
         },

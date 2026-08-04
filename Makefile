@@ -115,6 +115,30 @@ ARENA ?=
 ai-arena:
 	$(GODOT) --headless --path . -s res://tools/run_ai_arena.gd -- $(ARENA)
 
+# Score a finished arena run: one row per candidate, in each pool (arena plan
+# AR4). Reads records and plays nothing, so re-scoring a run after the fitness
+# function moves costs no matches. docs/ai_arena.md is the function it applies.
+#   make arena-report ARGS="--matches=reports/ai_arena/anchors_training"
+arena-report:
+	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- $(ARGS)
+
+# The calibration, end to end: play one fixed pool of the anchor round-robin
+# across the cores and score it. `POOL=training` or `POOL=validation`; the
+# boards, seeds and pairings are ArenaPools' and are read out of it rather than
+# spelled here, so the command that plays a pool cannot drift from the split the
+# report reads matches back against. The engine prints a banner before the
+# argument line, which is what the grep is for.
+POOL ?= training
+WORKERS ?= 6
+arena-anchors:
+	@plan=$$($(GODOT) --headless --path . -s res://tools/run_arena_plan.gd -- \
+		--pool=$(POOL) | grep '^--maps=') ; \
+	echo "arena: $(POOL) pool -> $$plan" ; \
+	GODOT="$(GODOT)" tools/balance_pool.py --preset=arena $$plan \
+		--batch=4 --workers=$(WORKERS) --out=ai_arena/anchors_$(POOL) ; \
+	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- \
+		--matches=reports/ai_arena/anchors_$(POOL)
+
 # Watch a match from a report play out in the real game window, both sides AI.
 # Same spec grammar and the same seed, so a suspicious row in matches.csv
 # becomes the exact battle it describes:
@@ -245,4 +269,5 @@ gallery-screenshot: import
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-pool ai-arena balance-watch replay replay-report
+	balance-sim balance-pool ai-arena arena-report arena-anchors \
+	balance-watch replay replay-report

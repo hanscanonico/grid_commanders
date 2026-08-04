@@ -49,6 +49,8 @@ make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a relea
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-pool         # the same engine, sharded across processes: resumable, several cores
 make ai-arena             # play two arbitrary AIProfiles against each other -> one JSON record a match
+make arena-report         # score an arena run -> a leaderboard (docs/ai_arena.md)
+make arena-anchors POOL=training   # play one fixed pool of the three shipped tiers, and score it
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
@@ -797,12 +799,15 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
   Assets below); and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
-  (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`) and the
-  Balance Lab (`docs/balance_sim.md`) alike; the recording reader under `tools/replay/` (Replays
+  (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`), the
+  Balance Lab (`docs/balance_sim.md`) and the AI Arena under `tools/arena/`
+  (`docs/ai_arena.md` — seating an arbitrary candidate, and what "better" means) alike; the
+  recording reader under `tools/replay/` (Replays
   above); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
-  offline balance harness under `tools/balance/`, the recording reader under `tools/replay/`, and
+  offline balance harness under `tools/balance/`, the arena's scorer and pools under
+  `tools/arena/`, the recording reader under `tools/replay/`, and
   the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
   way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT).

@@ -400,9 +400,10 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
   cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
-  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1, AR2, AR3 and AR6d are
-  shipped** — the harness can now seat any candidate, but no milestone scores one yet, so nothing
-  under `tools/` runs a tournament.
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR4 and AR6d are
+  shipped** — the harness seats any candidate and the ruler exists; nothing searches yet, so
+  `tools/` still runs no tournament. **`docs/ai_arena.md` is the committed record of what
+  "better" means** and is the document to read before any arena claim.
   D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
   `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
   the moment the sim can see the measurement the measured game stops being the shipped one (the
@@ -483,6 +484,36 @@ that must survive any change; the full rationale, milestones and risk registers 
   the shard's flags, the marker resume reads (`matches.json`) and a JSON merge sibling; the shard
   plan, the digest resume key and every Lab shard name are unchanged, and the arena's pair
   separator is `::` because a side is a path and paths carry the `/` the Lab pairs on.
+  AR4 is the ruler laid over those records, and it plays nothing: `ArenaFitness` scores one match,
+  `ArenaLeaderboard` tallies, `ArenaPools` says who plays where, and `tools/run_arena_report.gd`
+  reads records a driver already wrote — so a finished run is re-scored after the function moves
+  without replaying a match. D4: **a match is scored, not counted**, in three ordered classes a
+  gradient can never cross — a decisive win is `1.0 + 0.5 × (100 − day)/100`, an unresolved match
+  is `0.0` to both sides, a loss is the winner's exact negative. That zero-sum shape is what makes
+  D5's "count both seatings" *cancel* the seat rather than report it: two identical vectors played
+  from both seats score exactly level, measured at +37.5 pp of first-seat edge on `scrimmage`.
+  The property/unit/army-value margins D4 names are **deliberately absent and the reason is
+  measured**: elimination clears the loser's board (four-players D3), so in all 569 decisive anchor
+  matches the loser held 0 units, 0 properties and 0 value — the margins are a constant on the
+  class where they are allowed, and D6 forbids them on the one class where they vary.
+  D5's two halves live apart on purpose: `ArenaPools.pairings` never *emits* a self-pairing, while
+  `ArenaLeaderboard` refuses to *read* any pairing it did not see from both seats — so a mirror
+  stays runnable as a deliberate calibration and unreadable as a leaderboard, which is what the
+  Lab's one-seating mirror shortcut (a bias measurement) must never become.
+  D6/D7: the horizon is 100 days, `command_cap` is a hard invariant failure of the run, and the
+  pools are split by **board and seed** with the three shipped tiers as never-retuned anchors.
+  `ArenaPools.pool_args()` is the one statement of a pool — `make arena-anchors POOL=` reads the
+  play command out of it and `pool_of()` reads finished matches back against the same split, so a
+  leaderboard can never be scored against a split nothing played.
+  **AR4's acceptance check failed, and the failure is the finding**: the arena at 100 days ranks
+  the tiers Difficult > Normal > Easy on the training pool, the held-out pool and all nine boards
+  measured — not the Atlas's inverted Easy > Difficult > Normal. It is not the scorer (raw win
+  rate and a gradient-free score give the same order), it *is* board-dependent (Easy beats Normal
+  on 3 of 9 boards, and swapping one board of four flipped a whole pool), and the Atlas predates
+  the Judgement and Economy dials the shipped planner now carries. Nothing was tuned toward the
+  wanted answer. `ironworks` is out of the pools for a measured reason worth knowing:
+  it is the only board that reaches `BalanceMatchEngine.COMMAND_CAP` at a 100-day horizon (once in
+  72), which is a cap sized for 20-day gates rather than a board to distrust.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
@@ -862,9 +893,9 @@ res://
 │              # ai_profile.gd owns every weight; NO Node references
 ├─ maps/        # map scenes / map resources
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
-├─ tools/       # offline scripts: balance harness (tools/balance/), replay analyser
-│              # (tools/replay/), art & sfx pipeline
-├─ docs/        # balance_sim.md, commander_balance.md, difficulty_check.md
+├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
+│              # (tools/arena/), replay analyser (tools/replay/), art & sfx pipeline
+├─ docs/        # balance_sim.md, commander_balance.md, difficulty_check.md, ai_arena.md
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)
 ```
 
@@ -890,7 +921,8 @@ Follow the official Godot GDScript style guide. Key points:
 
 - Tests use **GUT** (Godot Unit Test) and live in `tests/`, mirroring `core/` and `ai/`.
 - **Test the Node-free layers only** — `core/`, plus `ai/`, the offline balance harness in
-  `tools/balance/` and the replay analyser in `tools/replay/`, all of which are Node-free for
+  `tools/balance/`, the arena's grammar, scorer and pools in `tools/arena/`, and the replay
+  analyser in `tools/replay/`, all of which are Node-free for
   exactly this reason. That's where the rules
   live and where bugs hurt. Presentation is verified by playing the scene, not by unit tests.
   The narrow exception is the launch layer that was deliberately made Node-free and
