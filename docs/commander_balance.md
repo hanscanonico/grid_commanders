@@ -28,15 +28,15 @@ replaces the other:
 ## Running the automated matrix
 
 ```sh
-make commander-balance                 # full batch — a release task, 6,480 matches
+make commander-balance                 # full batch — a release task, 7,220 matches
 make commander-balance BAL="--commanders=alina_ward,cass_orlov --seeds=2"  # focused
 ```
 
 Flags (after `--`): `--commanders=`, `--scenarios=`, `--seeds=`, `--neutral`
 (adds each commander vs No Commander), `--days=`, `--out=`.
 
-- **Full batch:** 18×18 ordered pairs (mirrors included) × 5 scenarios × 4 seeds
-  = **6,480 matches**. Ordered pairs already side-swap every non-mirror matchup.
+- **Full batch:** 19×19 ordered pairs (mirrors included) × 5 scenarios × 4 seeds
+  = **7,220 matches**. Ordered pairs already side-swap every non-mirror matchup.
   It is deliberately out of `make verify`/`make test`.
 - **Focused mode** is the fast iteration loop while tuning one commander.
 - Output: `reports/commander_balance/matches.csv` (one row per match) and

@@ -308,6 +308,20 @@ const FACES := {
 		"bg": &"halftone",
 		"prop": &"sabre",
 	},
+	&"sera_lark":
+	{
+		"skin": &"dark",
+		"hair": &"darkbrown",
+		"style": &"ponytail",
+		"brow": &"raised",
+		"eyes": &"f",
+		"mouth": &"grin",
+		"facial": &"none",
+		"acc": &"bandana",
+		"pose": [5.0, 1.2, true],
+		"bg": &"wedge",
+		"prop": &"baton",
+	},
 }
 
 var _accent: String
