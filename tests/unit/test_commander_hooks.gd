@@ -4,7 +4,7 @@ extends GutTest
 ##
 ## This file is the R1 guard. Every general is balance-tested against the chain
 ## in CombatResolver's header, so a reordered multiplier or a second rounding has
-## to fail here before it can quietly re-balance twenty doctrines at once.
+## to fail here before it can quietly re-balance twenty-one doctrines at once.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -189,7 +189,7 @@ func test_every_shipped_commander_is_well_formed() -> void:
 		assert_between(co.power_cost, 9000, 22000, "%s power cost" % co.id)
 
 
-## The reviewed 6 / 5 / 5 / 4 roster. Pinned so a half-added general — a script
+## The reviewed 6 / 5 / 5 / 5 roster. Pinned so a half-added general — a script
 ## with no .tres, or a .tres with the wrong faction string — fails visibly.
 func test_the_roster_has_the_reviewed_faction_counts() -> void:
 	var counts: Dictionary = {}
@@ -201,4 +201,4 @@ func test_the_roster_has_the_reviewed_faction_counts() -> void:
 	assert_eq(counts["Meridian Coalition"], 6)
 	assert_eq(counts["Iron Dominion"], 5)
 	assert_eq(counts["Aurora Compact"], 5)
-	assert_eq(counts["Verdant League"], 4)
+	assert_eq(counts["Verdant League"], 5)

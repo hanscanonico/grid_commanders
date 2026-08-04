@@ -262,7 +262,7 @@ screenshot: import
 menu-screenshot: import
 	$(GODOT_GUI) --path . -- --screenshot=$(CURDIR)/screenshot.png
 
-# The G1 gate: renders a card for all twenty-one commander records at once, so a
+# The G1 gate: renders a card for all twenty-two commander records at once, so a
 # missing portrait or empty copy field shows up as a crash or a blank card.
 gallery-screenshot: import
 	$(GODOT_GUI) --path . scenes/menu/commander_gallery.tscn -- --screenshot=$(CURDIR)/screenshot.png

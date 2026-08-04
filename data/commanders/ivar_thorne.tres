@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="IvarThorne" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/commanders/ivar_thorne.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ivar_thorne"
+display_name = "Ivar Thorne"
+faction = "Verdant League"
+doctrine_text = "Every unit gains +8% attack for each pip of health it is missing."
+power_name = "Cut Both Ways"
+power_text = "Every unit on the board loses 2 HP, his own and his ally's included. Nothing dies: two pips or less is left on one."
+power_quotes = Array[String](["Hurt is not finished. Hurt is paying attention.", "We all bleed. Only mine are worth more for it.", "Nobody goes home. Not theirs, not mine."])
+power_cost = 18000
+power_duration = 0
+wounded_attack_pct_per_pip = 8
+cut_harm_hp = 20
+cut_floor_hp = 10

@@ -336,6 +336,20 @@ const FACES := {
 		"bg": &"bars",
 		"prop": &"baton",
 	},
+	&"ivar_thorne":
+	{
+		"skin": &"light",
+		"hair": &"darkbrown",
+		"style": &"long",
+		"brow": &"angled",
+		"eyes": &"narrow",
+		"mouth": &"snarl",
+		"facial": &"beard",
+		"acc": &"scar",
+		"pose": [-5.0, 1.26, true],
+		"bg": &"burst",
+		"prop": &"sabre",
+	},
 }
 
 var _accent: String
