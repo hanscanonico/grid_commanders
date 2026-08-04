@@ -111,9 +111,10 @@ change and its rationale below.
 ## Status and results
 
 The runner and its five scenarios are verified (symmetry asserted, determinism
-byte-identical, hard invariants clean). The 18-commander full batch was run on the
-candidate build on 2026-08-01; the 30-session human deck remains the manual
-release companion and is not represented as automated evidence here.
+byte-identical, hard invariants clean). The full batch was last run at
+twenty-two commanders on 2026-08-04 — results under *Measured for the
+four-commander expansion (MC5)* below; the 30-session human deck remains the
+manual release companion and is not represented as automated evidence here.
 
 The deck's three additions for this roster are deliberately contrastive:
 **Calder vs Vale** (cheap breadth against expensive quality), **Ferrow against a

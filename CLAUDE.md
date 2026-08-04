@@ -221,7 +221,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   the banked-meter failure the toolkit exists to avoid. Three generals advise nothing on purpose
   (Orlov, Quill, Rowan): forecasts already play them right, and a silent doctrine is the seam
   working, not missing. `core/commander_type.gd` carries the repo's one `max-public-methods`
-  ignore — its width is the hook contract twenty-one subclasses override, so the split the ratchet
+  ignore — its width is the hook contract twenty-two subclasses override, so the split the ratchet
   usually buys would be the mirror hook tree the commanders plan's D1 rejects; the ceiling stays
   21 for every facade-shaped class. D5: `make difficulty-check` stays byte-stable (it seats no
   commanders, and neutral advice is structurally zero); `make commander-balance` moved by design
