@@ -12,9 +12,9 @@ extends RefCounted
 ## That gating is the point rather than a convenience. A menu that worked out
 ## for itself whether a Load were legal would be a second opinion on the rules,
 ## and the day it disagreed with the command the player would be offered an
-## action that is then refused. So each row asks the authority: Load and Join ask
-## their commands, Supply asks SupplyCommand who is in reach, and production asks
-## the terrain what it builds — exactly what BuildCommand checks.
+## action that is then refused. So each row asks the authority: Capture, Load and
+## Join ask their commands, Supply asks SupplyCommand who is in reach, and
+## production asks the terrain what it builds — exactly what BuildCommand checks.
 ##
 ## No scene tree and no sprite here, like the rest of the layers Battle delegates
 ## to. The one autoload it reads is Settings, for the speed row's label, and that
@@ -42,9 +42,7 @@ static func unit_actions(
 	var actions: Array[Dictionary] = []
 	if can_fire:
 		actions.append({"id": &"fire", "label": "Fire"})
-	var terrain := game.map.terrain_at(dest)
-	var takeable := not game.allied(game.owner_at(dest), unit.team)
-	if unit.type.can_capture and terrain.is_property and takeable:
+	if CaptureCommand.new(unit, path).validate(game) == "":
 		actions.append({"id": &"capture", "label": "Capture"})
 	for i in drop_options.size():
 		# One passenger drops under a plain "Drop"; a Lander's two are named apart.
