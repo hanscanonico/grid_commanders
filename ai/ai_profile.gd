@@ -272,6 +272,32 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## or it turns around on the doorstep.
 @export var capture_goal_value_tiles: float = 0.0
 
+# --- Positioning capabilities -------------------------------------------------
+#
+# The AI Arena plan's shelf (AR6): the things the planner could not express at
+# any setting of the dials above. Same contract as the three blocks before it —
+# 0 skips the code, and the defaults here track data/ai/default.tres.
+#
+# This block ships unmeasured on purpose. What would price it is a search over
+# the whole shelf (AR5), which is not built, so no tier carries a value yet:
+# focus_fire_bonus is the precedent for a capability that sits in the tree at 0
+# until something measures it, one edit away from being tried.
+
+## How many tiles of walking a unit will give up for one defence star of the
+## ground it stops on. 0 skips it entirely.
+##
+## Denominated in TILES on both paths that read it, which is what keeps it one
+## dial where threat_aversion and advance_threat_tiles had to be two: the advance
+## path counts in tiles already, and on the attack path a tile costs
+## step_cost_penalty, so the cover is spent out of the walk at the planner's own
+## price of a tile rather than through a second field. One number and one
+## sentence — how much further this unit will go to fight from that wood.
+##
+## The scale to keep in view is a mountain's four stars against a road's none:
+## much above 1.0 the cover outweighs four tiles of advance, which parks an army
+## on the high ground and leaves it there.
+@export var cover_tiles: float = 0.0
+
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps
 ## a missing or broken file from taking the AI out entirely — it plays with the

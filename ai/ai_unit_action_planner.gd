@@ -109,6 +109,7 @@ func _consider_attacks(
 		# cell, so work them out once per destination and only after finding a
 		# legal target there.
 		var dest_penalty := -1.0
+		var incoming := 0
 		for enemy in candidates:
 			if not AttackRange.reaches(ring, dest, enemy.cell):
 				continue
@@ -117,16 +118,21 @@ func _consider_attacks(
 			if dest_penalty < 0.0:
 				if threat == null and profile.threat_aversion > 0.0:
 					threat = context.threat_map()
+				if threat != null:
+					incoming = threat.incoming_damage(state, unit, dest)
 				var step_cost: int = reachable.costs[dest]
 				dest_penalty = (
-					profile.step_cost_penalty * step_cost
-					+ _threat_penalty(state, unit, dest, threat)
+					profile.step_cost_penalty * step_cost + _threat_penalty(unit, incoming)
 				)
 			var forecast := CombatResolver.forecast(state, unit, dest, enemy)
+			# The cover is the one term here that belongs to the shot rather than to
+			# the destination: the counter it invites is fire this cell has already
+			# been priced against, and that counter is this enemy's.
 			var score: float = (
 				_attack_score(unit, enemy, forecast)
 				+ _focus_bonus(context, unit, enemy, forecast)
 				+ _defend_bonus(state, unit, enemy)
+				+ _cover_score(state, unit, dest, incoming + forecast.counter_damage)
 				- dest_penalty
 			)
 			if score > plan.score:
@@ -152,13 +158,42 @@ func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -
 	return value - risk
 
 
-## What firing from `cell` costs `unit` in expected incoming damage next turn,
-## in the same cost-scaled currency an attack's value uses.
-func _threat_penalty(state: GameState, unit: Unit, cell: Vector2i, threat: ThreatMap) -> float:
-	if threat == null:
-		return 0.0
-	var incoming := threat.incoming_damage(state, unit, cell)
+## What firing from a cell costs `unit` in expected incoming damage next turn, in
+## the same cost-scaled currency an attack's value uses. `incoming` is the threat
+## map's reading of that cell, and zero wherever no dial built a map.
+func _threat_penalty(unit: Unit, incoming: int) -> float:
 	return profile.threat_aversion * float(unit.type.cost) * incoming / 100.0
+
+
+## What the ground under `cell` is worth to `unit` defensively, in the tiles of
+## advance _advance_value counts in — and nothing at all where a forecast has
+## already priced the fire arriving there.
+##
+## `priced_fire` is that fire: the counter the shot invites, the threat map's
+## reading of the cell, or the two together. Every one of those numbers is
+## CombatResolver's, resolved *through this same terrain*, so wherever there is
+## any of it the cover is already in the score — in value, against the actual
+## weapons aimed at this actual unit, which is the better of the two readings.
+## Stars on top would price one wood twice, which is AI Judgement's R3 in a new
+## place. Where there is none nothing else speaks for the ground: on Normal that
+## is every cell, since no dial there builds a threat map at all.
+##
+## Air units are worth nothing here whatever they stand over. The ground under a
+## plane is not cover it keeps — UnitType's domain note says so and
+## CombatResolver is where the rule lives — so paying for it would buy a discount
+## the damage formula does not give.
+func _cover_tiles(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int) -> float:
+	if profile.cover_tiles <= 0.0 or priced_fire > 0 or unit.type.domain == UnitType.AIR:
+		return 0.0
+	return profile.cover_tiles * float(state.map.terrain_at(cell).defense_stars)
+
+
+## The same worth in what the attack path scores in. A tile of walking costs
+## `step_cost_penalty` there, so the conversion is the planner's own price of a
+## tile rather than a second dial — and "one tile further for a star" means the
+## same thing on both paths.
+func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int) -> float:
+	return profile.step_cost_penalty * _cover_tiles(state, unit, cell, priced_fire)
 
 
 ## How much more attractive `enemy` is because other ready friendlies could
@@ -463,8 +498,8 @@ func _advance_command(
 
 
 ## Higher is better: closeness to the goal less what standing there invites and
-## what running ahead of the column costs, plus whatever the commander's doctrine
-## thinks of the ground itself.
+## what running ahead of the column costs, plus what the ground itself is worth —
+## its cover, and whatever the commander's doctrine thinks of it.
 func _advance_value(
 	state: GameState,
 	unit: Unit,
@@ -476,9 +511,11 @@ func _advance_value(
 	doctrine: CommanderType
 ) -> float:
 	var value := -float(_position_rank(cell, goal, ring))
+	var incoming := 0
 	if threat != null:
-		var incoming := threat.incoming_damage(state, unit, cell)
+		incoming = threat.incoming_damage(state, unit, cell)
 		value -= profile.advance_threat_tiles * incoming / float(maxi(unit.hp, 1))
+	value += _cover_tiles(state, unit, cell, incoming)
 	value -= _cohesion_penalty(cell, goal, column)
 	if profile.doctrine_weight > 0.0:
 		var advice := doctrine.stand_value(state, unit, cell)
