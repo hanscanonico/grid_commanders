@@ -328,7 +328,7 @@ make balance-pool POOL="--maps=ironworks --pairings=none:normal/none:hard --seed
 | `--out=` | Run directory, **relative to `reports/`**, default `reports/balance_pool/<spec>` |
 | `--timeout=` | Seconds per shard, default 3600 |
 | `--dry-run` | Resolve the spec, print the shard plan, and stop |
-| `--self-check` | Run the `--out` rules over their cases and stop |
+| `--self-check` | Run the `--out` and resume-key rules over their cases and stop |
 
 **Everything a run writes lands under `reports/`, and a path that would leave it
 is refused before a match is played.** `--out=x/y` means `reports/x/y`; a leading
@@ -340,8 +340,9 @@ resolves the Lab's own `--out` against the *project* root, and Godot's
 writing `<repo>/tmp/x` while the driver reads `/tmp/x` — every shard reported
 failed with its results on disk the whole time, and resume, which is keyed on
 finding a shard's `summary.json`, replaying all of them forever. Refusing the
-path is what makes that unreachable. `--self-check` exercises those rules, since
-`make verify` reaches GDScript only.
+path is what makes that unreachable. `--self-check` exercises those rules and the
+resume key's, and `tools/check_scripts.sh` runs it, so `make check` and
+`make verify` gate them even though `make test` reaches GDScript only.
 
 **A shard is one pairing on one board over a contiguous slice of the seed
 range** — the smallest unit of work that amortises the engine boot (~0.9 s
@@ -352,10 +353,14 @@ which records the throughput and the load average it was measured under.
 
 **Resumable, and that is the point.** A shard whose `summary.json` exists is
 skipped, so a killed sweep costs the shard in flight and nothing else — rerun the
-same command to pick it up. The Lab writes a shard's artifacts in one go at the
-end, so a shard is on disk either complete or not at all; the marker cannot be
-half true. The run directory is derived from the spec like the Lab's is, so it is
-also the resume key: the same sweep asked for twice finds its own work.
+same command to pick it up, and Ctrl-C ends the engines in flight rather than
+waiting them out. The Lab writes a shard's artifacts in one go at the end, so a
+shard is on disk either complete or not at all; the marker cannot be half true.
+The run directory is derived from the spec like the Lab's is, so it is also the
+resume key: the same sweep asked for twice finds its own work. **A shard is keyed
+on the arguments it was played with**, digest and all, so the same directory
+asked for a different sweep — `--out=mine --days=20`, then `--out=mine
+--days=100` — replays rather than handing back the answer to the other question.
 
 The driver **aggregates nothing**. It expands the matrix, runs processes and
 concatenates their rows in plan order, because a merged summary would be a second

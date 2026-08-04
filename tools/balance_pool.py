@@ -11,7 +11,9 @@ A shard is one pairing on one board over a contiguous slice of the seed range
 (`--batch` seeds, handed to the Lab as `--seeds=` plus `--seed-offset=`). That
 is the smallest unit of work that both amortises the engine boot (~0.9 s against
 ~1.6 s a match) and is independently readable: it writes its own `matches.csv`
-and `summary.json` under `shards/`.
+and `summary.json` under `shards/`. Its directory is named for the arguments it
+was played with, digest and all, so a shard is reused only for the run it
+answers — see `Shard`.
 
 **The Lab plays every match; this only decides who plays what, and when.** The
 merged `matches.csv` is what a single `make balance-sim` run of the same spec
@@ -37,7 +39,8 @@ Flags:
                         leading `reports/` is accepted, so both spellings work)
   --timeout=SEC         per shard, default 3600
   --dry-run             resolve the spec, print the shard plan, and stop
-  --self-check          run the out-directory rules over their cases and stop
+  --self-check          run the out-directory and resume-key rules over their
+                        cases and stop (gated by `make check`)
 
 Poll a live run with `cat <out>/status.txt`; `<out>/progress.log` is the record
 and `<out>/pool.json` the throughput reading. Exit status is 1 if any shard
@@ -54,15 +57,22 @@ while calling each one failed.
 Nice the whole pool if you want the machine back: `nice -n 10 tools/balance_pool.py …`
 """
 import argparse
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GODOT = os.environ.get("GODOT", os.path.join(ROOT, "bin/Godot.app/Contents/MacOS/Godot"))
+# Resolved against the project root, because every child is launched with
+# cwd=ROOT — a relative GODOT= must mean the same engine to the pre-flight check
+# as it does to the shards, whatever directory the driver was invoked from.
+GODOT = os.path.join(
+    ROOT, os.path.expanduser(os.environ.get("GODOT", "bin/Godot.app/Contents/MacOS/Godot"))
+)
 REPORTS_ROOT = "reports"
 DEFAULT_OUT_ROOT = os.path.join(REPORTS_ROOT, "balance_pool")
 # Six is where throughput peaked on the 4-performance-core M1 this was measured
@@ -72,28 +82,37 @@ DEFAULT_WORKERS = max(1, min(6, os.cpu_count() or 4))
 
 
 class Shard:
-    def __init__(self, map_name, red, blue, offset, count):
+    """One pairing on one board over a slice of the seed range — and its own
+    resume key.
+
+    That key is the Lab argument list itself, digested into the shard's
+    directory name, so a shard on disk is reused only if it was played with the
+    arguments this run would hand it. Naming the spec dimensions by hand is what
+    a resume key must never do: the day cap was already missing from one, which
+    replayed a 20-day sweep's shards as a 100-day answer, and the next flag added
+    to `args` would have fallen off the same list. A digest cannot forget one.
+    """
+
+    def __init__(self, map_name, red, blue, offset, count, days):
         self.map_name = map_name
         self.red = red
         self.blue = blue
         self.offset = offset
         self.count = count
-        self.name = "%s__%s__vs__%s__s%d+%d" % (
-            map_name, _slug(red), _slug(blue), offset, count
-        )
-
-    def args(self, days):
-        args = [
-            "--map=%s" % self.map_name,
-            "--red=%s" % self.red,
-            "--blue=%s" % self.blue,
-            "--seeds=%d" % self.count,
-            "--seed-offset=%d" % self.offset,
+        self.args = [
+            "--map=%s" % map_name,
+            "--red=%s" % red,
+            "--blue=%s" % blue,
+            "--seeds=%d" % count,
+            "--seed-offset=%d" % offset,
             "--no-commands",
         ]
         if days:
-            args.append("--days=%d" % days)
-        return args
+            self.args.append("--days=%d" % days)
+        digest = hashlib.sha1(" ".join(self.args).encode()).hexdigest()[:8]
+        self.name = "%s__%s__vs__%s__s%d+%d__%s" % (
+            map_name, _slug(red), _slug(blue), offset, count, digest
+        )
 
 
 def _slug(spec):
@@ -141,7 +160,10 @@ def parse_args(argv):
     p.add_argument("--timeout", type=int, default=3600)
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args(argv)
-    args.maps = [m.strip() for m in args.maps.split(",") if m.strip()]
+    maps = [m.strip() for m in args.maps.split(",") if m.strip()]
+    if not maps:
+        p.error("--maps is a comma list of boards, got '%s'" % args.maps)
+    args.maps = maps
     pairings = []
     for text in args.pairings.split(","):
         red, sep, blue = text.strip().partition("/")
@@ -178,7 +200,7 @@ def build_shards(args):
         for red, blue in args.pairings:
             for offset in range(0, args.seeds, args.batch):
                 count = min(args.batch, args.seeds - offset)
-                shards.append(Shard(map_name, red, blue, offset, count))
+                shards.append(Shard(map_name, red, blue, offset, count, args.days))
     return shards
 
 
@@ -191,6 +213,50 @@ def match_rows(path):
         return max(0, sum(1 for _ in f) - 1)
 
 
+class Children:
+    """The engines this run has in flight, so an interrupt can end them.
+
+    Worker threads are not daemons and `concurrent.futures` joins them at exit,
+    so a driver that only cancels its futures waits out every running shard —
+    up to `--timeout` — before the process dies. It survives interactively
+    because the terminal signals the whole process group; launched from a script
+    or a runner, nothing else would reach the children.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._live = set()
+        self._stopping = False
+
+    def start(self, cmd):
+        with self._lock:
+            if self._stopping:
+                return None
+            proc = subprocess.Popen(
+                cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            self._live.add(proc)
+        return proc
+
+    def finished(self, proc):
+        with self._lock:
+            self._live.discard(proc)
+
+    def stopping(self):
+        with self._lock:
+            return self._stopping
+
+    def stop(self):
+        with self._lock:
+            self._stopping = True
+            live = list(self._live)
+        for proc in live:
+            proc.terminate()
+
+
+CHILDREN = Children()
+
+
 def run_shard(shard, args):
     out_rel = shard_dir(args.out, shard)
     summary = os.path.join(ROOT, out_rel, "summary.json")
@@ -198,25 +264,30 @@ def run_shard(shard, args):
         return ("skip", shard, 0.0, 0, 0)
     cmd = [
         GODOT, "--headless", "--path", ".", "-s", "res://tools/run_balance_sim.gd", "--",
-        *shard.args(args.days), "--out=%s" % out_rel,
+        *shard.args, "--out=%s" % out_rel,
     ]
     started = time.time()
-    proc = None
+    proc = CHILDREN.start(cmd)
+    if proc is None:
+        return ("cancel", shard, 0.0, 0, 0)
     try:
-        proc = subprocess.run(
-            cmd, cwd=ROOT, capture_output=True, text=True, timeout=args.timeout
-        )
+        stdout, stderr = proc.communicate(timeout=args.timeout)
         rc = proc.returncode
     except subprocess.TimeoutExpired:
+        proc.kill()
+        stdout, stderr = proc.communicate()
         rc = -9
+    finally:
+        CHILDREN.finished(proc)
     elapsed = time.time() - started
+    if CHILDREN.stopping():
+        return ("cancel", shard, elapsed, rc, 0)
     if not os.path.exists(summary):
         failures = os.path.join(ROOT, args.out, "failures")
         os.makedirs(failures, exist_ok=True)
         with open(os.path.join(failures, shard.name + ".log"), "w") as f:
             f.write("rc=%d elapsed=%.1fs\ncmd=%s\n\n" % (rc, elapsed, " ".join(cmd)))
-            if proc is not None:
-                f.write(proc.stdout[-4000:] + "\n--- stderr ---\n" + proc.stderr[-4000:])
+            f.write(stdout[-4000:] + "\n--- stderr ---\n" + stderr[-4000:])
         return ("FAIL", shard, elapsed, rc, 0)
     played = match_rows(os.path.join(ROOT, out_rel, "matches.csv"))
     return ("done", shard, elapsed, rc, played)
@@ -240,9 +311,10 @@ def merge(out, shards, name):
 
 
 def self_check():
-    """The out-directory rules, over the cases that made them. Run it with
-    `--self-check`: `make verify` reaches GDScript only, so this is where the
-    one decision in here that is pure and worth pinning gets exercised."""
+    """The out-directory and resume-key rules, over the cases that made them.
+    Run by `tools/check_scripts.sh`, and so by `make check` and `make verify`,
+    which otherwise reach GDScript only — these are the two decisions in here
+    that are pure and worth pinning, and an ungated check is one that rots."""
     cases = [
         ("reports/balance_pool/run", "reports/balance_pool/run"),
         ("verify_equiv", "reports/verify_equiv"),
@@ -259,6 +331,18 @@ def self_check():
         failures += 0 if ok else 1
         print("%-4s --out=%-22s -> %s" % (
             "ok" if ok else "FAIL", out, error or path))
+
+    def key(days):
+        return Shard("ironworks", "none:normal", "none:hard", 0, 4, days).name
+
+    for label, ok in (
+        ("same spec, same key", key(20) == key(20)),
+        ("different day cap, different key", key(20) != key(100)),
+        ("lab default day cap, different key", key(0) != key(100)),
+    ):
+        failures += 0 if ok else 1
+        print("%-4s resume key: %s" % ("ok" if ok else "FAIL", label))
+
     print("self-check: %d case(s) failed" % failures if failures else "self-check: all cases pass")
     return 1 if failures else 0
 
@@ -271,7 +355,7 @@ def main(argv):
     matches_hint = sum(s.count for s in shards)
     if args.dry_run:
         for shard in shards:
-            print("%-60s %s" % (shard.name, " ".join(shard.args(args.days))))
+            print("%-70s %s" % (shard.name, " ".join(shard.args)))
         print("%d shards, %d seeds, %d workers, writing to %s"
               % (len(shards), matches_hint, args.workers, args.out))
         return 0
@@ -287,7 +371,7 @@ def main(argv):
     status_path = os.path.join(out_abs, "status.txt")
     started = time.time()
     loads = [os.getloadavg()[0]]
-    counts = {"done": 0, "skip": 0, "FAIL": 0}
+    counts = {"done": 0, "skip": 0, "FAIL": 0, "cancel": 0}
     played = 0
     log.write("=== pool start: %d shards, %d workers, load %.2f ===\n" % (
         len(shards), args.workers, loads[0]))
@@ -312,11 +396,12 @@ def main(argv):
             counts[state] += 1
             played += rows
             loads.append(os.getloadavg()[0])
-            if state != "skip":
+            if state not in ("skip", "cancel"):
                 log.write("%s %s %.1fs rc=%d %d matches\n" % (state, shard.name, elapsed, rc, rows))
             write_status()
     except KeyboardInterrupt:
         pool.shutdown(wait=False, cancel_futures=True)
+        CHILDREN.stop()
         log.write("=== pool interrupted: %d done, %d skipped, %d failed ===\n"
                   % (counts["done"], counts["skip"], counts["FAIL"]))
         print("balance-pool: interrupted; rerun the same command to resume", file=sys.stderr)

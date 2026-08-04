@@ -97,7 +97,7 @@ balance-sim:
 # docs/balance_sim.md has the flags, the merge bar and the measured scaling curve.
 POOL ?=
 balance-pool:
-	tools/balance_pool.py $(POOL)
+	GODOT="$(GODOT)" tools/balance_pool.py $(POOL)
 
 # Watch a match from a report play out in the real game window, both sides AI.
 # Same spec grammar and the same seed, so a suspicious row in matches.csv
