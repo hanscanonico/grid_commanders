@@ -305,6 +305,11 @@ func show_commander(
 ## Single entry point per hovered tile; `unit` is null on an empty or fogged
 ## tile, and that is what blanks the right two thirds. `carrying` names the cargo
 ## when the unit is a loaded transport.
+##
+## `range_band` is the ring the unit really fires in — AttackRange's answer,
+## resolved by BattleView, never the pair printed on the unit type. A doctrine may
+## widen it (Rhea Sol's Grid Saturation), and a bar reading the type would print a
+## range the fire ring and AttackCommand both disagree with.
 func show_tile(
 	terrain: TerrainType,
 	owner_team: int,
@@ -312,15 +317,27 @@ func show_tile(
 	capture_left: int = -1,
 	unit: Unit = null,
 	carrying: String = "",
-	allegiance: String = ""
+	allegiance: String = "",
+	range_band: Vector2i = Vector2i.ZERO
 ) -> void:
 	if not _built:
 		return
-	_show_unit(unit, carrying, active_team, allegiance)
+	_show_unit(unit, carrying, active_team, allegiance, range_band)
 	_show_terrain(terrain, owner_team, capture_left)
 
 
-func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: String) -> void:
+## The order line as it currently reads, for the scenario that checks what the
+## bar is showing rather than what it was handed — the same read-back seam
+## CutsceneSide.drawn_unit_row is. Empty while no unit is under the cursor.
+func unit_order_line() -> String:
+	if not _built or not _unit_data.visible:
+		return ""
+	return _unit_sub.text
+
+
+func _show_unit(
+	unit: Unit, carrying: String, active_team: int, allegiance: String, range_band: Vector2i
+) -> void:
 	# The block itself stays in the row — it is the expanding child holding the
 	# terrain chip against the right edge — so an empty tile blanks its contents
 	# rather than hiding the block.
@@ -334,7 +351,7 @@ func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: Stri
 	var waited := unit.acted and unit.team == active_team
 	_unit_icon.modulate = UnitSprite.ACTED_TINT if waited else Color.WHITE
 	_unit_name.text = unit.type.display_name
-	_unit_sub.text = _order_line(unit, carrying, waited, allegiance)
+	_unit_sub.text = _order_line(unit, carrying, waited, allegiance, range_band)
 	_pips.set_hp(unit.displayed_hp())
 	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
 	_ammo_label.visible = unit.type.max_ammo > 0
@@ -348,7 +365,9 @@ func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: Stri
 ## state the player is about to act on. The class is the tile-cost vocabulary the
 ## terrain speaks, so naming it here is what lets the bar drop the move-cost row
 ## the old panel carried.
-func _order_line(unit: Unit, carrying: String, waited: bool, allegiance: String) -> String:
+func _order_line(
+	unit: Unit, carrying: String, waited: bool, allegiance: String, range_band: Vector2i
+) -> String:
 	var parts := PackedStringArray()
 	# Whose it is, before what it is: with four armies on the board a colour alone
 	# stopped answering "can I shoot that?", and the answer is the viewer's rather
@@ -356,8 +375,8 @@ func _order_line(unit: Unit, carrying: String, waited: bool, allegiance: String)
 	if allegiance != "":
 		parts.append(allegiance.to_upper())
 	parts.append(String(CLASS_LABELS.get(unit.type.move_class, "")).to_upper())
-	if unit.type.min_range > 1:
-		parts.append("RNG %d-%d" % [unit.type.min_range, unit.type.max_range])
+	if range_band.x > 1:
+		parts.append("RNG %d-%d" % [range_band.x, range_band.y])
 	if unit.dived:
 		parts.append("DIVED")
 	if unit.running_dry():

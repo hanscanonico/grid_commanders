@@ -431,7 +431,8 @@ func refresh_panel(cell: Vector2i) -> void:
 		capture_left,
 		hovered,
 		carrying,
-		_allegiance_of(hovered)
+		_allegiance_of(hovered),
+		_range_band_of(hovered)
 	)
 
 
@@ -447,6 +448,15 @@ func _allegiance_of(unit: Unit) -> String:
 	if unit.team == viewer:
 		return ""
 	return "Ally" if game.allied(unit.team, viewer) else "Enemy"
+
+
+## The ring the bar prints as "RNG a-b". Asked of AttackRange, the one authority
+## on how far a unit shoots, so the readout follows a doctrine that moves it —
+## Rhea Sol's Grid Saturation — exactly as the fire overlay and AttackCommand do.
+func _range_band_of(unit: Unit) -> Vector2i:
+	if unit == null:
+		return Vector2i.ZERO
+	return AttackRange.band(game, unit)
 
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing

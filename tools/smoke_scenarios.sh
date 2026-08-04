@@ -179,6 +179,14 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # BattleFeedbackScenario rather than in the driver, which is why the driver's line
 # ceiling moved by the dispatch arm and not by the scenarios.
 #
+# power_range_readout is COM-80's, and it sits beside the preview for the reason
+# they share: both are what the game tells a player about reach. The bar printed
+# the unit type's own min/max, so under Rhea Sol's Grid Saturation — +1 tile on
+# her indirects — it read 2-3 while the fire ring and AttackCommand played 2-4.
+# The scenario reads the bar's order line back against AttackRange before and
+# during the power, because two wrong numbers photograph as well as two right
+# ones.
+#
 # field_overlays is the one frame that has to hold three overlays at once: a
 # capture chip counting down, the arrowed route to the cell under the cursor, and
 # the threat lens shading everywhere the other side can shoot. Each reads fine
@@ -261,6 +269,7 @@ DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
 	rejected_confirm enemy_range_preview end_turn_ready_units field_overlays
+	power_range_readout
 	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn ai_pause
 	mission_strip mission_strip_retired

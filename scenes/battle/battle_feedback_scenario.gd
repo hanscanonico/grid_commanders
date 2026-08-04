@@ -20,6 +20,8 @@ func run(mode: String) -> String:
 			return await _run_enemy_range_preview()
 		"end_turn_ready_units":
 			return await _run_end_turn_ready_units()
+		"power_range_readout":
+			return _run_power_range_readout()
 	return "unknown feedback scenario: %s" % mode
 
 
@@ -131,6 +133,41 @@ func _expect_ring_follows_cursor(cell: Vector2i, expected: Array[Vector2i]) -> S
 	if painted != expected:
 		return "R re-aimed onto a ring that is not the cursor's unit's"
 	return ""
+
+
+## The other half of what the game tells a player about reach: the bar's printed
+## ring, under a doctrine that moves it. Rhea Sol's Grid Saturation pushes her
+## indirects one tile out, so a bar reading the unit type prints a range the fire
+## ring and AttackCommand both play differently. Checked rather than photographed
+## — a wrong pair of numbers renders exactly as well as the right one.
+func _run_power_range_readout() -> String:
+	var cell := Vector2i(4, 4)  # the red artillery on the default board
+	var gun := _battle.game.unit_at(cell)
+	if gun == null or not AttackRange.is_indirect(gun):
+		return "no indirect unit at %s to read a range off" % cell
+	_battle.set_cursor_cell(cell)
+	var error := _expect_printed_range(gun, "with no power running")
+	if error != "":
+		return error
+
+	var plain := AttackRange.maximum(_battle.game, gun)
+	_battle.game.set_commander(1, _battle.commander_db.by_id(&"rhea_sol"))
+	_battle.game.commander_state(1).power_active = true
+	_battle.view.restage_identity()
+	_battle.refresh_panel()
+	if AttackRange.maximum(_battle.game, gun) <= plain:
+		return "Grid Saturation left the gun's range at %d, so there is nothing to read" % plain
+	return _expect_printed_range(gun, "with Grid Saturation running")
+
+
+## The bar has to print the ring AttackRange answers with, doctrine included.
+func _expect_printed_range(unit: Unit, when: String) -> String:
+	var band := AttackRange.band(_battle.game, unit)
+	var wanted := "RNG %d-%d" % [band.x, band.y]
+	var line := _battle.view.hud_bottom.unit_order_line()
+	if wanted in line:
+		return ""
+	return "the bar reads '%s' %s; AttackRange says %s" % [line, when, wanted]
 
 
 func _run_end_turn_ready_units() -> String:

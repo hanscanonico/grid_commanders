@@ -323,7 +323,7 @@ func _run_demo(mode: String) -> void:
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
-		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units":
+		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units", "power_range_readout":
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
