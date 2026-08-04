@@ -82,15 +82,12 @@ func _consider_attacks(
 	var state := context.state
 	if unit.type.max_range <= 0 or state.damage_chart == null:
 		return
-	var dests: Array[Vector2i] = []
+	# Where this unit could shoot from is AttackRange's rule — indirect units cannot
+	# move and fire — asked over the fill the plan already holds rather than run again.
+	var dests := AttackRange.firing_cells_in(unit, reachable)
 	var span := 0
-	if AttackRange.is_indirect(unit):
-		dests = [unit.cell]  # indirect units cannot move and fire
-	else:
+	if not AttackRange.is_indirect(unit):
 		span = MovementResolver.move_budget(state, unit)
-		for cell in reachable.cells():
-			if reachable.can_stop_at(cell):
-				dests.append(cell)
 	# One threat map for the whole sweep. Still resolved on first need rather
 	# than up front, so a unit with nothing in reach builds nothing.
 	var threat: ThreatMap = null
@@ -249,8 +246,8 @@ func _focus_bonus(
 
 
 ## Summed forecast damage other ready friendlies could deal `enemy` this turn.
-## Reach is the same Manhattan over-estimate commander powers use; forecasts are
-## luck-free and draw no RNG.
+## Reach is AttackRange's one Manhattan over-estimate, the same one the commander
+## powers weigh with; forecasts are luck-free and draw no RNG.
 func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) -> int:
 	var state := context.state
 	var total := 0
@@ -261,10 +258,7 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 			continue
 		if not AttackRange.can_fire(state, friendly, enemy):
 			continue  # no chart entry, no loaded weapon, or the target is dived
-		var reach := AttackRange.maximum(state, friendly)
-		if not AttackRange.is_indirect(friendly):
-			reach += MovementResolver.move_budget(state, friendly)
-		if absi(friendly.cell.x - enemy.cell.x) + absi(friendly.cell.y - enemy.cell.y) > reach:
+		if _steps(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
 			continue
 		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
 		if forecast.can_attack:
@@ -558,17 +552,21 @@ func _consider_dive(
 	plan.command = DiveCommand.new(unit, reachable.path_to(refuge), not unit.dived)
 
 
-## Whether an enemy that could damage `unit` can plausibly reach it next turn.
+## Whether an enemy that could damage `unit` can plausibly reach it next turn,
+## with `unit` at the depth named — which is the question a boat weighing the dive
+## asks twice, once for each side of the hatch.
+##
+## Both halves are the authorities': who may shoot what is AttackRange.can_engage
+## dived and surfaced alike, and how far an enemy reaches is AttackRange's one
+## over-estimate. Spelled out here, it read the movement off the type — blind to a
+## doctrine's move bonus and to a dry tank — and credited an indirect enemy with a
+## move and a shot it cannot take in the same turn.
 func _threatened_by(context: AIPlanningContext, unit: Unit, submerged: bool) -> bool:
 	var state := context.state
 	for enemy in context.visible_enemies:
-		if submerged and not enemy.type.can_hit_submerged:
+		if not AttackRange.can_engage_dived(state, enemy, unit, submerged):
 			continue
-		if not state.damage_chart.can_attack(enemy.type.id, unit.type.id):
-			continue
-		var reach := enemy.type.move_points + AttackRange.maximum(state, enemy)
-		var dist := absi(enemy.cell.x - unit.cell.x) + absi(enemy.cell.y - unit.cell.y)
-		if dist <= reach:
+		if _steps(enemy.cell, unit.cell) <= AttackRange.strike_reach(state, enemy):
 			return true
 	return false
 

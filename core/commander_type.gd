@@ -356,9 +356,8 @@ func _can_strike_an_opponent(state: GameState, team: int, ready_only: bool) -> b
 ## right question about the side whose turn it is and the wrong one about the
 ## side waiting to reply.
 ##
-## Reach is Manhattan distance against movement plus firing range, ignoring
-## terrain cost. It over-estimates deliberately: the failure worth avoiding is a
-## commander sitting on a full meter all match.
+## Reach is AttackRange.strike_reach, which over-estimates deliberately: the
+## failure worth avoiding is a commander sitting on a full meter all match.
 ##
 ## Anything hidden from `team` — the commander doing the asking — is skipped on
 ## both sides of the question, so no doctrine plans around a unit its own side
@@ -373,9 +372,7 @@ func _can_strike(
 			continue
 		if Vision.is_hidden_from(state, team, unit):
 			continue
-		var reach := AttackRange.maximum(state, unit)
-		if not AttackRange.is_indirect(unit):
-			reach += MovementResolver.move_budget(state, unit)
+		var reach := AttackRange.strike_reach(state, unit)
 		for target in state.units:
 			if not state.allied(target.team, defender_team) or target.carrier != null:
 				continue
