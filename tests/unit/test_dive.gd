@@ -258,6 +258,51 @@ func test_an_older_save_loads_with_every_boat_on_the_surface() -> void:
 	assert_false(loaded.state.units[0].dived)
 
 
+# --- the planner ----------------------------------------------------------------
+#
+# Two channels of water either side of a spit of land, with a battleship in the
+# far one. Its guns reach across the spit and the submarine cannot row round it,
+# so the boat has a dive to make and no shot to weigh against it.
+
+## A pocket wide enough to leave the battleship's ring: the sub sits at the far
+## edge of it, and one step west is out of the guns.
+const OPEN_CHANNEL := "[terrain]\nSSSSSSSS.SSSSSS\n[units]\n1 s 6 0\n2 B 12 0"
+
+## The same board with the pocket cut down to the two cells the guns already
+## cover, so there is nowhere safer to go.
+const CLOSED_POCKET := "[terrain]\n......SS.SSSSSS\n[units]\n1 s 6 0\n2 B 12 0"
+
+
+## A dive is a whole turn, so the boat spends the movement half of it: it goes
+## under somewhere the guns above cannot reach, not where it happened to be
+## standing when it decided to.
+func test_a_threatened_sub_dives_where_it_is_safer() -> void:
+	var state := _state(OPEN_CHANNEL)
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
+	if not (command is DiveCommand):
+		return
+	assert_eq(command.validate(state), "")
+	assert_true((command as DiveCommand).submerge)
+	assert_eq(
+		(command as DiveCommand).path,
+		_path([Vector2i(6, 0), Vector2i(5, 0)]),
+		"one step west is out of the battleship's ring"
+	)
+
+
+## And where nothing it can reach is safer, it goes under where it stands: the
+## boat's own cell is in the comparison at no cost, so it holds every tie.
+func test_a_sub_with_nowhere_safer_dives_in_place() -> void:
+	var state := _state(CLOSED_POCKET)
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
+	if not (command is DiveCommand):
+		return
+	assert_eq(command.validate(state), "")
+	assert_eq((command as DiveCommand).path, _path([Vector2i(6, 0)]))
+
+
 # --- the whole thing at once ---------------------------------------------------
 
 

@@ -55,7 +55,7 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
 	plan.reach = MovementResolver.reachable(context.state, unit)
 	_consider_attacks(context, unit, plan.reach, plan)
 	_consider_captures(context.state, unit, plan.reach, plan)
-	_consider_dive(context, unit, plan)
+	_consider_dive(context, unit, plan.reach, plan)
 	_consider_join(context, unit, plan.reach, plan)
 	_consider_supply(context.state, unit, plan.reach, plan)
 	# Last on purpose: every comparison here is strict, so a withdrawal that only
@@ -400,6 +400,28 @@ func _consider_withdraw(
 	var staying := threat.incoming_damage(state, unit, unit.cell)
 	if staying <= 0:
 		return  # nothing is aiming at us, so there is nothing to buy
+	var refuge := _best_refuge(context, unit, reachable)
+	var avoided := staying - threat.incoming_damage(state, unit, refuge)
+	if avoided <= 0:
+		return  # nowhere we can reach is safer than standing still
+	var score := profile.withdraw_weight * _unit_value(unit) * float(avoided) / 100.0
+	if score > plan.score:
+		plan.score = score
+		plan.command = MoveCommand.new(unit, reachable.path_to(refuge))
+
+
+## Where this unit would rather be standing, by `_better_refuge`'s keys over
+## everywhere it can stop. Its own cell is in the comparison at no cost, so a cell
+## that is merely as good never pulls it off its square.
+##
+## One answer for the two things that step out of trouble, the withdrawal and the
+## dive: where it is safer is one question, and a second walk over the same threat
+## map would be a second opinion on it.
+func _best_refuge(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange
+) -> Vector2i:
+	var state := context.state
+	var threat := context.threat_map()
 	var refits := _repair_cells(context, unit)
 	# The enemy this unit is orienting on, and its own ring, both asked for once
 	# for the whole sweep — see _standoff_rank for why the goal is asked for here
@@ -407,7 +429,7 @@ func _consider_withdraw(
 	var goal := _enemy_goal(context, unit)
 	var ring := AttackRange.band(state, unit)
 	var best_cell := unit.cell
-	var best_incoming := staying
+	var best_incoming := threat.incoming_damage(state, unit, unit.cell)
 	var best_stand := _standoff_rank(unit.cell, goal, ring)
 	var best_repairs := refits.has(unit.cell)
 	var best_cost := 0
@@ -426,20 +448,14 @@ func _consider_withdraw(
 			best_stand = stand
 			best_repairs = repairs
 			best_cost = cost
-	var avoided := staying - best_incoming
-	if avoided <= 0:
-		return  # nowhere we can reach is safer than standing still
-	var score := profile.withdraw_weight * _unit_value(unit) * float(avoided) / 100.0
-	if score > plan.score:
-		plan.score = score
-		plan.command = MoveCommand.new(unit, reachable.path_to(best_cell))
+	return best_cell
 
 
 ## Safety first, then the unit's own weapon, then ground that puts it back
 ## together, then the shortest walk. Four keys in priority order, which is why
 ## this is a function rather than a condition inside the loop: each one is a
-## decision. Standing still enters the comparison at cost zero, so a cell that is
-## merely as safe never pulls a unit off its own square.
+## decision, and every comparison is strict, which is what lets `_best_refuge`
+## hold its incumbent through a tie.
 ##
 ## The weapon sits *under* safety and over repair, and both halves of that are
 ## the decision. Over safety it would be a general reluctance to retreat — a unit
@@ -513,8 +529,14 @@ func _repair_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 	return _servicing_properties(context, unit)
 
 
-## A submarine's one decision: whether to be under the water.
-func _consider_dive(context: AIPlanningContext, unit: Unit, plan: AIUnitPlan) -> void:
+## A submarine's two decisions: whether to be under the water, and where to be it.
+##
+## Diving is a whole turn, so the boat spends the movement half of it too, at the
+## refuge the withdrawal already picks. Its own cell holds every tie there, so a
+## boat with nowhere safer goes under exactly where it stood.
+func _consider_dive(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+) -> void:
 	var state := context.state
 	if not unit.type.can_dive or state.damage_chart == null:
 		return
@@ -532,7 +554,8 @@ func _consider_dive(context: AIPlanningContext, unit: Unit, plan: AIUnitPlan) ->
 	if not wants or profile.dive_score <= plan.score:
 		return
 	plan.score = profile.dive_score
-	plan.command = DiveCommand.new(unit, [unit.cell] as Array[Vector2i], not unit.dived)
+	var refuge := _best_refuge(context, unit, reachable)
+	plan.command = DiveCommand.new(unit, reachable.path_to(refuge), not unit.dived)
 
 
 ## Whether an enemy that could damage `unit` can plausibly reach it next turn.

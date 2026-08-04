@@ -119,6 +119,14 @@ func _may_keep(context: AIPlanningContext) -> bool:
 ## each of them gates its own read in AIUnitActionPlanner, and a fourth one added
 ## there has to be added here too or the cache would keep plans made before the
 ## map existed.
+##
+## `dive_score` reads the map too and is deliberately not a fourth. It is live in
+## every profile, so listing it here would keep nothing on any board — including
+## every board with no submarine on it — for a read only a submarine makes; and
+## its read is the last branch of a plan whose earlier branches decide whether it
+## is reached, so a re-score the cache skipped would have taken the same branch
+## and the moment the map is built cannot move. The narrow sea in
+## tests/unit/test_ai_plan_cache.gd is what holds that.
 func _weighs_threat() -> bool:
 	return (
 		profile.threat_aversion > 0.0
