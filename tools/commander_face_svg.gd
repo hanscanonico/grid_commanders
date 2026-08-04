@@ -350,6 +350,20 @@ const FACES := {
 		"bg": &"burst",
 		"prop": &"sabre",
 	},
+	&"radek_morn":
+	{
+		"skin": &"medium",
+		"hair": &"darkbrown",
+		"style": &"bald",
+		"brow": &"angled",
+		"eyes": &"m",
+		"mouth": &"stern",
+		"facial": &"beard",
+		"acc": &"none",
+		"pose": [2.0, 1.28, false],
+		"bg": &"halftone",
+		"prop": &"medal",
+	},
 }
 
 var _accent: String

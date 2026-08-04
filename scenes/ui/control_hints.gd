@@ -39,6 +39,7 @@ const PREVIEW := &"preview"
 const MENU := &"menu"
 const TARGETING := &"targeting"
 const DROP_TARGETING := &"drop_targeting"
+const POWER_TARGETING := &"power_targeting"
 const ANIMATING := &"animating"
 const AI_TURN := &"ai_turn"
 const REPLAY := &"replay"
@@ -59,6 +60,10 @@ const LEGENDS: Dictionary = {
 	MENU: "UP/DOWN · PICK   ENTER · OK   ESC · BACK",
 	TARGETING: "ENTER · FIRE   ESC · BACK",
 	DROP_TARGETING: "ENTER · DROP   ESC · BACK",
+	# An aimed Command Power. Its own word rather than the attack's FIRE, because
+	# the meter is spent on the square whether or not anything was standing in it
+	# — and nothing about a unit's shot has ever cost the player anything to miss.
+	POWER_TARGETING: "ENTER · STRIKE   ESC · BACK",
 	ANIMATING: "ANY KEY · SKIP",
 	# The computer's turn is not a dead end: the one key that works in it is the
 	# one that takes the board back, so the legend names it rather than only

@@ -115,6 +115,13 @@ const CAPTURE_CUT_IN_SUFFIXES: Array[String] = [
 	PARTIAL_SUFFIX + FACTION_SUFFIX,
 ]
 
+## Where `power_targeting` aims Hammerfall: the middle of Red's own opening
+## corner, so the square holds his HQ, his base, a neutral city and four of his
+## units at once. Aimed at his own army on purpose — the power takes whatever is
+## standing in it, and a frame full of the *player's* pieces says that where one
+## full of the opponent's would only look like an attack.
+const HAMMERFALL_AIM := Vector2i(3, 3)
+
 ## `capture_power` walks COM-50's race — a Command Power fired from the HUD while
 ## the capture cut-in is playing. The city the default board's `capture` demo takes
 ## and the infantry that takes it, named here because the race checks the sim
@@ -350,6 +357,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_power_map_menu()  # the keyboard route to the power, unobscured
 		"power_banner":
 			await _stage_power_banner()  # fire it -> the activation card holds
+		"power_targeting":
+			await _stage_power_targeting()  # the aimed power, mid-aim
 		MISSION_STRIP_MODE, MISSION_STRIP_RETIRED:
 			await _stage_mission_strip(mode)
 		"commander_info":
@@ -1099,6 +1108,35 @@ func _stage_power_banner() -> void:
 	_set_red_commander(&"cass_orlov", true)
 	_battle.view.hud_bottom.fire_button.pressed.emit()
 	await _until_state(Battle.State.IDLE)
+
+
+## The first aimed Command Power (MC4), stopped mid-aim: Radek Morn's meter
+## filled, the HUD's Fire button pressed, and the aim walked onto Red's own corner
+## — an HQ, a base, a city and four of his units under one square, which is what
+## makes the frame say that Hammerfall takes whatever is standing there and leaves
+## the buildings alone.
+##
+## Checked as well as photographed, like power_mapmenu: the preview is supposed to
+## be the doctrine's own footprint and nothing else, so the painted cells are read
+## back off the layer and compared with what the power would actually clear. A
+## preview that has stopped agreeing with the strike photographs perfectly well.
+func _stage_power_targeting() -> void:
+	_set_red_commander(&"radek_morn", true)
+	_battle.view.hud_bottom.fire_button.pressed.emit()
+	await _until_state(Battle.State.POWER_TARGETING)
+	_battle.set_cursor_cell(HAMMERFALL_AIM)
+	await _battle.get_tree().create_timer(0.2).timeout
+	_check_blast_preview()
+
+
+func _check_blast_preview() -> void:
+	var game := _battle.game
+	var doomed := game.commander_of(1).power_blast_cells(game, 1, HAMMERFALL_AIM)
+	var painted := _battle.overlays.attack_layer.get_used_cells()
+	painted.sort()
+	doomed.sort()
+	if painted != doomed:
+		_fail("the blast preview paints %s, the strike takes %s" % [painted, doomed])
 
 
 ## The keyboard route the ready meter advertises alongside F: Enter on empty

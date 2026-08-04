@@ -37,8 +37,35 @@ that must survive any change; the full rationale, milestones and risk registers 
   non-attack after loading. Older saves default it false. The roster is deliberately 5 / 5 / 4 /
   4, and the full balance gate is 18 × 18 × five scenarios × four seeds — both as that plan closed
   them; `more-commanders-plan.html` has since seated Sera Lark with the Aurora Compact (MC1),
-  Iona Vance with the Meridian Coalition (MC2) and Ivar Thorne with the Verdant League (MC3), so
-  they now read 6 / 5 / 5 / 5 over 21 × 21.
+  Iona Vance with the Meridian Coalition (MC2), Ivar Thorne with the Verdant League (MC3) and
+  Radek Morn with the Iron Dominion (MC4), so they now read 6 / 6 / 5 / 5 over 22 × 22.
+- `more-commanders-plan.html` — four more generals, MC1–MC5. Three of them (Lark, Vance, Thorne)
+  touch no shared file at all, which is the commanders plan's D1 holding; the fourth is the whole
+  cost of the plan and the one entry worth reading before touching a power. D2: **a power may name
+  a cell, and `PowerCommand.target` is where it is named** — three hooks on `CommanderType`
+  (`aims_power`, `power_blast_cells`, `power_target`) and `on_power_activated` growing a
+  **defaulted** `target` rather than a sibling hook, because aimed and unaimed are one concept.
+  The rejected alternative is an `AimedPowerCommand`: a power is deliberately just another command,
+  which is what puts it in the log, the save, the replay and the AI with no special case, and a
+  second class needs a second case in all five. D3: **`power_blast_cells` is the single authority
+  for the footprint** — the overlay paints exactly what it returns, the AI scores exactly what it
+  returns and `on_power_activated` destroys exactly what it returns, so nothing anywhere spells the
+  shape a second time (the range-preview plan's D1, applied to a power). **Any cell on the board is
+  a legal aim, fog or no fog**: `PowerCommand.validate` refuses an off-board target and nothing
+  else, and the preview is deliberately unfogged — what fog costs the player is knowing what was
+  standing there. D4: **Hammerfall is the only thing in the game that removes a unit without a
+  shot**, through `GameState.remove_unit`, so a match can now end without one; the doomed are
+  collected before any is removed (`state.units` is being read and `remove_unit` mutates it) and
+  **nothing is banked to either meter**, charge being minted in three calls inside `CombatResolver`
+  and nowhere else — banking it to the victim would make the answer to the most expensive power in
+  the game their own power. Units only: a headquarters, factory or city in the square keeps its
+  owner. D5: **the computer aims through the doctrine, never through the planner** —
+  `RadekMorn._best_blast` answers both `wants_power` and `power_target`, so it cannot want to fire
+  and then aim somewhere it did not want; `ai/` gained one branch in `_plan_power` and nothing else.
+  The replay line for a power carries its target and `ReplayCodec.FORMAT` is **2**; older
+  recordings are refused outright, which is the replay plan's D3. The save format did not move —
+  the strike is one-shot and `power_active` was already saved. `docs/commander_balance.md` and the
+  roster counts above are MC5's to close.
 - `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
   tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
   income, vision, damage or luck. Its DF4 acceptance gate is currently **failing, knowingly**

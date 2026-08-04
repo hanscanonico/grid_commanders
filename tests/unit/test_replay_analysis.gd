@@ -175,7 +175,7 @@ func test_a_power_that_goes_off_resets_the_count() -> void:
 	var db := CommanderDB.load_default()
 	state.set_commander(1, db.by_id(&"alina_ward"))
 	state.commander_state(1).charge = state.commander_state(1).type.power_cost
-	var entries: Array = [{"c": "power"}, {"c": "end_turn"}]
+	var entries: Array = [{"c": "power", "target": [0, 0]}, {"c": "end_turn"}]
 	entries.append_array(_idle_rounds(2))
 	assert_eq(_count(_run(state, entries), "banked_power"), 0)
 

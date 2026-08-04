@@ -17,16 +17,24 @@ const BOARD := "res://maps/first_steps.txt"
 ## Long enough to build, trade, capture and fire a power; short enough to run a
 ## few times in a suite.
 const DAYS := 8
+## The aimed-power run's own cap. Hammerfall is the dearest meter in the game at
+## 24,000, so it needs a longer match than the plain fidelity run to reach a
+## firing at all — and it has to be the shipped commander at the shipped price,
+## because playback rebuilds him from `CommanderDB` and a doctored copy would be
+## re-issued against a meter it never filled.
+const AIMED_DAYS := 12
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
+var commander_db: CommanderDB
 
 
 func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+	commander_db = CommanderDB.load_default()
 
 
 func _setup(seed_val: int, recorder: ReplayRecorder) -> BalanceMatchEngine.Setup:
@@ -40,6 +48,37 @@ func _setup(seed_val: int, recorder: ReplayRecorder) -> BalanceMatchEngine.Setup
 	setup.planners = {1: AIController.new(unit_db), 2: AIController.new(unit_db)}
 	setup.replay = recorder
 	return setup
+
+
+## Walks a recording back through the sim, checkpoint by checkpoint, and returns
+## the board it lands on. Null when a line refused to rebuild or to apply — each
+## of which fails here rather than silently shortening the walk.
+func _re_issue(replay: ReplayCodec.Replay, expected_commands: int) -> GameState:
+	var player := ReplayPlayer.new(replay, unit_db)
+	# The commander registry is handed over exactly as BattleSetup and the analyser
+	# hand it over: without it every seat decodes neutral, and a doctrine's match
+	# would be re-issued against rules nobody played it under.
+	var loaded := player.opening(terrain_db, chart, commander_db)
+	assert_not_null(loaded, "the opening envelope must rebuild")
+	if loaded == null:
+		return null
+	var state := loaded.state
+	assert_eq(player.length(), expected_commands, "every applied command is one line")
+	while not player.finished():
+		var command := player.next_command(state)
+		assert_not_null(command, "line %d must rebuild" % player.played())
+		if command == null:
+			return null
+		assert_eq(
+			command.validate(state),
+			"",
+			"line %d (%s) must still be legal" % [player.played(), ReplayCodec.name_of(command)]
+		)
+		command.apply(state)
+		assert_eq(
+			player.drift(state), "", "line %d must land on the recorded board" % player.played()
+		)
+	return state
 
 
 ## The recorded lines as a replay, having been through JSON and back — which is
@@ -66,27 +105,10 @@ func test_a_recorded_match_re_issues_to_the_same_board() -> void:
 	var outcome := BalanceMatchEngine.play(_setup(4242, recorder))
 	assert_gt(outcome.commands, 30, "the fixture match has to actually play out")
 
-	var player := ReplayPlayer.new(_replay_of(recorder.lines()), unit_db)
-	var loaded := player.opening(terrain_db, chart)
-	assert_not_null(loaded, "the opening envelope must rebuild")
-	var state := loaded.state
-	assert_eq(player.length(), outcome.commands, "every applied command is one line")
-
-	while not player.finished():
-		var command := player.next_command(state)
-		assert_not_null(command, "line %d must rebuild" % player.played())
-		if command == null:
-			return
-		assert_eq(
-			command.validate(state),
-			"",
-			"line %d (%s) must still be legal" % [player.played(), ReplayCodec.name_of(command)]
-		)
-		command.apply(state)
-		assert_eq(
-			player.drift(state), "", "line %d must land on the recorded board" % player.played()
-		)
-
+	var state := _re_issue(_replay_of(recorder.lines()), outcome.commands)
+	assert_not_null(state)
+	if state == null:
+		return
 	assert_eq(
 		ReplayCodec.checkpoint(state),
 		ReplayCodec.checkpoint(outcome.state),
@@ -94,6 +116,40 @@ func test_a_recorded_match_re_issues_to_the_same_board() -> void:
 	)
 	assert_eq(state.winner, outcome.state.winner)
 	assert_eq(state.day, outcome.state.day)
+	assert_eq(state.units.size(), outcome.state.units.size())
+
+
+## The merge bar for format 2 (more-commanders MC4). A power that names a cell is
+## the one command whose meaning is not recoverable from the board it was applied
+## to, so a log that dropped the target would replay as a strike on the origin —
+## which on this board is water, lands on nothing, and would still reach the end
+## of the recording. The digest is what refuses it, and the assertion below is
+## what proves an aimed line was in the log at all.
+func test_a_recorded_aimed_power_re_issues_to_the_same_board() -> void:
+	var recorder := ReplayRecorder.new()
+	var setup := _setup(4242, recorder)
+	setup.days_cap = AIMED_DAYS
+	setup.commanders = {1: commander_db.by_id(&"radek_morn"), 2: commander_db.by_id(&"tomas_reed")}
+	var outcome := BalanceMatchEngine.play(setup)
+
+	var aimed := 0
+	for line in recorder.lines():
+		if (
+			String(line.get("c", "")) == "power"
+			and ReplayCodec.decode_cell(line["target"]) != Vector2i.ZERO
+		):
+			aimed += 1
+	assert_gt(aimed, 0, "Hammerfall never went off, so this proves nothing about its line")
+
+	var state := _re_issue(_replay_of(recorder.lines()), outcome.commands)
+	assert_not_null(state)
+	if state == null:
+		return
+	assert_eq(
+		ReplayCodec.checkpoint(state),
+		ReplayCodec.checkpoint(outcome.state),
+		"the replayed board must be the played one, square of ground included"
+	)
 	assert_eq(state.units.size(), outcome.state.units.size())
 
 

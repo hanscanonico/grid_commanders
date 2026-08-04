@@ -24,8 +24,10 @@ const THREAT_STRIPE := 4
 
 ## Reachable cells, in blue.
 var move_layer: TileMapLayer
-## Cells that can be fired into: the R fire ring, and the pickable targets while
-## an attack is being aimed. Solid, with the atlas's bright one-pixel border.
+## Cells that can be fired into: the R fire ring, the pickable targets while an
+## attack is being aimed, and the square under an aimed Command Power. Solid, with
+## the atlas's bright one-pixel border. The three never share the board — a power
+## is aimed with no unit selected — which is what lets one layer say all three.
 var attack_layer: TileMapLayer
 ## The threat lens. Its own layer rather than a second use of `attack_layer`,
 ## because that one is already two things at once and a lens sharing it would
@@ -50,7 +52,7 @@ func paint_move(cells: Array[Vector2i]) -> void:
 	_paint(move_layer, cells)
 
 
-## Highlights the cells a unit may fire at.
+## Highlights the cells a unit — or an aimed Command Power — may fire at.
 func paint_attack(cells: Array[Vector2i]) -> void:
 	_paint(attack_layer, cells)
 

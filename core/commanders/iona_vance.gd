@@ -33,7 +33,7 @@ func defense_bonus(_state: GameState, _fight: Engagement) -> int:
 ## infrastructure, so the heal stops at her own army — an ally's workshop does
 ## not mend her tanks — while the harm is hostile and stops at the side boundary,
 ## exactly as Signal Jam does, so a four-seat board is three opponents at once.
-func on_power_activated(state: GameState, team: int) -> void:
+func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	for unit in state.units_of(team):
 		unit.hp += _heal_hp(unit)
 	for unit in state.units:

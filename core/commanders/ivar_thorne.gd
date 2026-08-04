@@ -36,7 +36,7 @@ func attack_bonus(_state: GameState, fight: Engagement) -> int:
 ## Everybody pays. His army, his ally's and every hostile one alike — the
 ## deliberate exception to the ally rule (D6), and what being indiscriminate
 ## costs is what the floor buys back: nothing leaves the board.
-func on_power_activated(state: GameState, _team: int) -> void:
+func on_power_activated(state: GameState, _team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	for unit in state.units:
 		unit.hp -= _cut_hp(unit)
 

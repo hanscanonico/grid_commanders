@@ -30,6 +30,7 @@ enum State {
 	MENU,
 	TARGETING,
 	DROP_TARGETING,
+	POWER_TARGETING,
 	VICTORY,
 	AI_TURN,
 	PAUSED,
@@ -49,6 +50,7 @@ const STATE_CONTEXT: Dictionary = {
 	State.MENU: ControlHints.MENU,
 	State.TARGETING: ControlHints.TARGETING,
 	State.DROP_TARGETING: ControlHints.DROP_TARGETING,
+	State.POWER_TARGETING: ControlHints.POWER_TARGETING,
 	State.VICTORY: ControlHints.VICTORY,
 	State.AI_TURN: ControlHints.AI_TURN,
 	State.PAUSED: ControlHints.PAUSED,
@@ -669,6 +671,8 @@ func confirm_at(cell: Vector2i) -> void:
 		State.DROP_TARGETING:
 			if _drop_option != null and cell in _drop_option.cells:
 				_execute_drop(cell)
+		State.POWER_TARGETING:
+			_fire_aimed_power(cell)
 		State.AI_TURN:
 			_reject("CPU turn.", cell)
 
@@ -702,6 +706,11 @@ func _cancel() -> void:
 		_drop_options = []
 		_drop_option = null
 		_on_move_animation_done()  # back to the unit menu
+	elif state == State.POWER_TARGETING:
+		# Nothing to back out *to*: aiming already abandoned whatever the HUD
+		# button was pressed over, and the meter has not been spent.
+		overlays.paint_attack([])
+		state = rest_state()
 
 
 func _select(unit: Unit) -> void:
@@ -991,23 +1000,66 @@ func _commit_end_turn() -> void:
 ## mid-move — and the command is the authority on that. *Who is at the keyboard*
 ## is the one thing it cannot answer, so the refusal the bar makes by hiding the
 ## button from a computer commander is made here, once, for all three.
+##
+## A power that names a cell asks *where* before it spends anything, so its
+## legality is settled on a fresh command up front rather than by the receipt: a
+## player sent off to aim a meter they have not filled would be refused only after
+## picking the square.
 func _fire_command_power() -> void:
-	var command := PowerCommand.new()
 	if game.current_team in ai_teams or state not in [State.IDLE, State.MENU]:
 		return
+	var aimed := game.commander_of(game.current_team).aims_power()
+	if aimed and PowerCommand.new().validate(game) != "":
+		return
 	# A power may be fired from the HUD while a unit menu is open. Close that
-	# interactive layer before the activation card owns the screen.
+	# interactive layer before the activation card — or the aim — owns the screen.
 	action_menu.close()
+	if aimed:
+		_enter_power_targeting()
+		return
+	await _fire_power(PowerCommand.new())
+
+
+## Applies a Command Power and settles the board around it. A power can change
+## movement, vision and HP at once, so the whole board is redrawn, and the
+## selection — plus any menu the HUD button fired over, whose rows would otherwise
+## act on it — belongs to rules that no longer apply.
+func _fire_power(command: PowerCommand) -> void:
 	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
 		state = State.IDLE
 		return
-	# A power can change movement, vision and HP at once, so the whole board is
-	# redrawn, and the selection — plus any menu the HUD button fired over, whose
-	# rows would otherwise act on it — belongs to rules that no longer apply.
 	_clear_selection(false)
 	await conclude_command(receipt)
+
+
+## Aims a Command Power at a square of ground (plan D2). The power abandons
+## whatever move the HUD button was pressed over exactly as firing an unaimed one
+## does — and it does so now rather than after the strike, so cancelling the aim
+## lands on a board with nothing half-moved on it.
+func _enter_power_targeting() -> void:
+	if selected != null:
+		view.refresh_sprite(selected)  # the previewed move is off; put the sprite back
+	_clear_selection()
+	state = State.POWER_TARGETING
+	_paint_blast(cursor_cell)
+
+
+## Repaints the square under the aim. Asked of the doctrine every time (plan D3):
+## the overlay shows exactly what the strike will take, because it is the same
+## function that takes it. Unfogged on purpose — every cell of the board is a legal
+## aim, and what fog costs the player is knowing what was standing there.
+func _paint_blast(cell: Vector2i) -> void:
+	var team := game.current_team
+	overlays.paint_attack(game.commander_of(team).power_blast_cells(game, team, cell))
+
+
+func _fire_aimed_power(cell: Vector2i) -> void:
+	var command := PowerCommand.new()
+	command.target = cell
+	overlays.paint_attack([])
+	await _fire_power(command)
 
 
 ## Locks input and shows the already-decided winner. Public because the AI turn
@@ -1352,6 +1404,8 @@ func set_cursor_cell(cell: Vector2i) -> void:
 		overlays.trace_path(planned_path)
 	elif state == State.TARGETING:
 		_update_damage_preview()
+	elif state == State.POWER_TARGETING:
+		_paint_blast(cell)
 
 
 func refresh_panel() -> void:

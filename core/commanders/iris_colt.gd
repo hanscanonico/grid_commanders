@@ -15,7 +15,7 @@ func defense_bonus(_state: GameState, _fight: Engagement) -> int:
 	return combat_pct
 
 
-func on_power_activated(state: GameState, team: int) -> void:
+func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	for unit in state.units_of(team):
 		if unit.carrier == null and unit.acted and unit.refreshable:
 			unit.acted = false

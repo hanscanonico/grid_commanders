@@ -30,7 +30,7 @@ extends RefCounted
 ## The line format, not the save format. Bumped when a line's shape changes; a
 ## replay is disposable (plan D3), so there is no upgrade path to owe and older
 ## formats are refused rather than read.
-const FORMAT := 1
+const FORMAT := 2
 
 ## `DropCommand` with no passenger named — "the first loaded", which is what
 ## `DropCommand._rider` does with a null and what every single-slot transport
@@ -49,9 +49,11 @@ const HEADER_KEY_RULES := {
 ## here, so a line missing its path is refused out loud instead of decoding into a
 ## command about the cell at the origin.
 ##
-## `power` and `end_turn` name nothing because they are nothing but themselves:
-## which side fires and which side hands over is the board's answer, already in
-## the state the line is applied to.
+## `end_turn` names nothing because it is nothing but itself: which side hands
+## over is the board's answer, already in the state the line is applied to. So is
+## which side fires a power — but *where* it is aimed is the player's answer and
+## nothing on the board records it, so every power line carries a target, meaning
+## the cell for the one power that is aimed and nothing for the rest.
 const REQUIRED_KEYS := {
 	"move": ["path"],
 	"attack": ["path", "target"],
@@ -62,7 +64,7 @@ const REQUIRED_KEYS := {
 	"dive": ["path", "submerge"],
 	"drop": ["path", "drop"],
 	"build": ["cell", "unit"],
-	"power": [],
+	"power": ["target"],
 	"end_turn": [],
 }
 
@@ -129,6 +131,9 @@ static func header_error(line: Dictionary) -> String:
 ## itself.
 static func encode_command(state: GameState, command: Command) -> Dictionary:
 	var entry := {"c": name_of(command)}
+	if command is PowerCommand:
+		entry["target"] = encode_cell((command as PowerCommand).target)
+		return entry
 	if command is BuildCommand:
 		var build := command as BuildCommand
 		entry["cell"] = encode_cell(build.cell)
@@ -171,7 +176,9 @@ static func command_from(state: GameState, unit_db: UnitDB, entry: Dictionary) -
 	if kind == "end_turn":
 		return EndTurnCommand.new()
 	if kind == "power":
-		return PowerCommand.new()
+		var power := PowerCommand.new()
+		power.target = decode_cell(entry["target"])
+		return power
 	if kind == "build":
 		var type := unit_db.by_id(StringName(String(entry["unit"])))
 		if type == null:

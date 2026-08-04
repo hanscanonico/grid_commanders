@@ -10,6 +10,12 @@ extends Command
 ## The power comes down again in one of two places, never here:
 ## EndTurnCommand for an OWNER_TURN power, TurnRules.begin_turn for a ROUND one.
 
+## The cell an aimed power is pointed at (plan D2) — Hammerfall's square of
+## ground, and nothing at all to the powers that fire at the board, which is every
+## other one. Set by whoever issues the command: the player through the battle
+## scene's aiming state, the computer through `CommanderType.power_target`.
+var target: Vector2i = Vector2i.ZERO
+
 ## Populated by apply() so the presentation layer can name what just went off.
 var team: int = 0
 var commander: CommanderType
@@ -25,6 +31,11 @@ func validate(state: GameState) -> String:
 		return "a Command Power is already active"
 	if co_state.charge < co_state.type.power_cost:
 		return "the Command Power is not charged"
+	# The only thing an aim can get wrong. Every cell of the board is legal, fog or
+	# no fog (plan D3): the sim stays permissive and fog is the presentation's to
+	# enforce, so a player may drop a meteor into the dark and hope.
+	if not state.map.in_bounds(target):
+		return "that target is off the board"
 	return ""
 
 
@@ -37,4 +48,4 @@ func apply(state: GameState) -> void:
 	# rule the economy quietly depends on.
 	co_state.charge = maxi(0, co_state.charge - co_state.type.power_cost)
 	co_state.power_active = true
-	co_state.type.on_power_activated(state, team)
+	co_state.type.on_power_activated(state, team, target)
