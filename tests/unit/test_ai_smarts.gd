@@ -507,6 +507,10 @@ func _describe(command: Command) -> String:
 		return "attack %s from %s" % [attack.target_cell, attack.path]
 	if command is CaptureCommand:
 		return "capture %s" % [(command as CaptureCommand).path]
+	if command is JoinCommand:
+		return "join %s" % [(command as JoinCommand).path]
+	if command is SupplyCommand:
+		return "supply %s" % [(command as SupplyCommand).path]
 	if command is MoveCommand:
 		return "move %s" % [(command as MoveCommand).path]
 	if command is BuildCommand:

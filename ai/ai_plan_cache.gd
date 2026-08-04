@@ -204,11 +204,17 @@ func _note_change(unit: Unit, context: AIPlanningContext, moved: bool) -> bool:
 ## doctrine reads for company — so a Manhattan envelope of that width around the
 ## unit covers all of it. Deliberately an over-approximation: it may drop a plan
 ## that had not changed, and it can never keep one that had.
+##
+## A supply unit's ring is wider than its weapon's, and it is the commander's
+## rather than one tile: Gideon Holt refills two cells out, which a supply plan
+## is priced on and which the +1 above would not cover.
 func _drop_inside(state: GameState, cells: Array[Vector2i]) -> void:
 	for unit: Unit in _plans.keys():
 		var envelope := (
 			MovementResolver.move_budget(state, unit) + AttackRange.maximum(state, unit) + 1
 		)
+		if unit.type.can_resupply:
+			envelope += state.commander_of(unit.team).supply_range(state, unit)
 		for cell in cells:
 			if absi(cell.x - unit.cell.x) + absi(cell.y - unit.cell.y) <= envelope:
 				_plans.erase(unit)

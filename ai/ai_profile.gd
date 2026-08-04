@@ -274,6 +274,30 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## or it turns around on the doorstep.
 @export var capture_goal_value_tiles: float = 0.0
 
+# --- Logistics capabilities ---------------------------------------------------
+#
+# Resupply, one of the two things the rules have always offered that the planner
+# never asked for. Same contract as the blocks above — 0 skips the capability's
+# code entirely, and the default here tracks data/ai/default.tres. Unlike those
+# blocks it ships live on every tier: an inert dial here is a command type nobody
+# can reach, which is the defect it exists to end. A tier scales it to its own
+# character rather than switching it off. (Merging is the other, and it is the
+# arena shelf's join_weight below.)
+#
+# Load and Drop stay unreachable on purpose: the planner cannot plan a ferry
+# (naval plan R1), so a transport it could fill is a transport it would strand.
+
+## What refilling the friendlies an APC can reach is worth, as a fraction of each
+## one's cost times the shortfall in the pool it is emptiest in. 0 skips it.
+##
+## Denominated in VALUE — the currency _attack_score and _consider_captures are
+## already in, so a top-up competes with a shot and a capture in one AIUnitPlan
+## without a conversion — and capped per unit at that unit's whole cost, since a
+## refill can never be worth more than the thing it refills. Only what the AI can
+## *field* limits how often this fires: build_priority names no transport, so it
+## reaches an APC a board deals.
+@export var supply_weight: float = 0.25
+
 # --- The arena's shelf --------------------------------------------------------
 #
 # The AI Arena plan's shelf (AR6): the things the planner could not express at

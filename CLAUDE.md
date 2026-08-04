@@ -617,6 +617,23 @@ that must survive any change; the full rationale, milestones and risk registers 
   wanted answer. `ironworks` is out of the pools for a measured reason worth knowing:
   it is the only board that reaches `BalanceMatchEngine.COMMAND_CAP` at a 100-day horizon (once in
   72), which is a cap sized for 20-day gates rather than a board to distrust.
+- **AI logistics** (no plan artifact; COM-65, and this entry is its record) — the planner issues
+  `SupplyCommand`, which the rules had always offered and it had never asked for. It is a scored
+  candidate in `_best_unit_plan` beside `_consider_dive` and the arena shelf's `_consider_join`,
+  priced in VALUE like every other candidate there, and it carries one `AIProfile` dial. Three
+  decisions:
+  **`supply_weight` ships live on every tier**, unlike the Judgement, Economy and arena-shelf
+  blocks — an inert dial here is a command type nobody can reach, which is the whole defect — while
+  `0.0` still skips the capability's code entirely, pinned by `tests/unit/test_ai_logistics.gd`.
+  **Supply asks `SupplyCommand.friendlies_in_reach` who a top-up would reach** rather than
+  re-deriving adjacency, since the radius is the commander's (Gideon Holt's is two) — which is also
+  why `AIPlanCache._drop_inside` widens a supply unit's envelope by that radius. What is worth
+  refilling is graded ammo plus the yes-or-no `Unit.running_dry` already answers, so a land unit's
+  half-empty tank is worth nothing here, exactly as it is to the refit errand.
+  **Merging is not this entry's**, though COM-65 shipped a rival for it: the arena plan's AR6c
+  `_consider_join` is the one in the tree, so a merge is priced by `join_weight` on the shelf's
+  contract — `0.0` on every tier until something measures it — rather than live like supply.
+  **Load and Drop stay out**, on the naval plan's standing R1: the planner cannot plan a ferry.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,

@@ -3,8 +3,8 @@ extends RefCounted
 ## Chooses the highest-scored action from the current team's ready units.
 ##
 ## Greedy, deterministic, and deliberately coarse: combat, capture, diving,
-## withdrawal, and fallback movement stay together because they compete for one
-## AIUnitPlan score. AIController remains the public façade.
+## merging, resupply, withdrawal, and fallback movement stay together because
+## they compete for one AIUnitPlan score. AIController remains the public façade.
 ##
 ## One command is returned per call and every survivor is scored again on the
 ## next one, which is what lets a wounded target's kill reach the next attacker.
@@ -57,6 +57,7 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
 	_consider_captures(context.state, unit, plan.reach, plan)
 	_consider_dive(context, unit, plan)
 	_consider_join(context, unit, plan.reach, plan)
+	_consider_supply(context.state, unit, plan.reach, plan)
 	# Last on purpose: every comparison here is strict, so a withdrawal that only
 	# ties with a shot loses to it. Running away has to be strictly better.
 	_consider_withdraw(context, unit, plan.reach, plan)
@@ -547,6 +548,53 @@ func _threatened_by(context: AIPlanningContext, unit: Unit, submerged: bool) -> 
 		if dist <= reach:
 			return true
 	return false
+
+
+## Whether standing where it can refill the army beats moving this unit on. Only
+## a unit that carries supplies gets past the guard, which on shipped data is the
+## APC and nothing else.
+func _consider_supply(
+	state: GameState, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+) -> void:
+	if profile.supply_weight <= 0.0 or not unit.type.can_resupply:
+		return
+	for cell in reachable.cells():
+		if not reachable.can_stop_at(cell):
+			continue
+		var command := SupplyCommand.new(unit, reachable.path_to(cell))
+		# Who a top-up would reach is SupplyCommand's own answer, and it is asked
+		# rather than re-derived because the radius is the commander's: Gideon Holt
+		# supplies two tiles out, and adjacency spelled here would miss the second.
+		var value := _supply_value(command.friendlies_in_reach(state, cell))
+		if value <= 0.0:
+			continue
+		var score := (
+			profile.supply_weight * value - profile.step_cost_penalty * float(reachable.costs[cell])
+		)
+		if score > plan.score:
+			plan.score = score
+			plan.command = command
+
+
+## What refilling these friendlies is worth: each one's cost against the pool it
+## is emptiest in, so a top-up is never worth more than the unit it tops up.
+##
+## Ammo is graded — half a rack is half of what that unit can put out — while
+## fuel is the yes-or-no `running_dry` already answers, the one authority for a
+## tank low enough to matter. That leaves a land unit's half-empty tank worth
+## nothing here, which is right twice over: an empty tank parks it rather than
+## killing it, and anyone still standing beside the APC next turn is refilled by
+## the turn-start tick anyway.
+func _supply_value(friendlies: Array[Unit]) -> float:
+	var value := 0.0
+	for friendly in friendlies:
+		var short := 0.0
+		if friendly.type.max_ammo > 0:
+			short = float(friendly.type.max_ammo - friendly.ammo) / float(friendly.type.max_ammo)
+		if friendly.running_dry(profile.refuel_margin_turns):
+			short = 1.0
+		value += float(friendly.type.cost) * short
+	return value
 
 
 ## Fallback when no attack or capture is worthwhile: take the best position

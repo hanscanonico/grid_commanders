@@ -20,6 +20,10 @@
 ; their existing order, so an owned airport or port stays useful. It adds no land
 ; unit — the land prefix above is Easy's alone — and no transport, which the
 ; planner cannot use.
+;
+; supply_weight is the same bad judgement rather than a missing capability: well
+; under Normal's, so an APC leaves a half-empty rack until it is nearly bare.
+; Keeping the front stocked is a patient habit, and patience is what Easy lacks.
 [resource]
 script = ExtResource("1")
 kill_bonus = 1.0
@@ -52,6 +56,7 @@ capture_units_per_property = 0.0
 capture_claim_depth = 0
 production_capture_multiplier = 1.0
 capture_goal_value_tiles = 0.0
+supply_weight = 0.1
 cover_tiles = 0.0
 condition_weight = 0.0
 join_weight = 0.0
