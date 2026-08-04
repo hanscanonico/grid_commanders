@@ -146,6 +146,10 @@ var _match_unattributed_start := 0
 ## Captured in before_apply because after the apply the answers are gone.
 var _incoming_team := 0
 var _incoming_funds := 0
+## The turn the command in hand belongs to. An EndTurnCommand opens the incoming
+## side's row inside after_apply, so the log has to be told which side acted.
+var _acting_day := 0
+var _acting_team := 0
 var _capture_cell := Vector2i.ZERO
 var _capture_owner_before := 0
 var _funds_before: Dictionary = {}  # team -> funds, as the command in hand found them
@@ -181,6 +185,8 @@ func begin_match(match_id: String, state: GameState, tiers: Dictionary) -> void:
 
 
 func before_apply(state: GameState, command: Command, planning_usec: int = 0) -> void:
+	_acting_day = _turn.day if _turn != null else state.day
+	_acting_team = _turn.team if _turn != null else state.current_team
 	if _turn == null:
 		return
 	_funds_before = state.funds.duplicate()
@@ -585,8 +591,8 @@ func _log_entry(state: GameState, command: Command) -> Dictionary:
 	var entry := {
 		"match_id": _match_id,
 		"seq": _seq,
-		"day": _turn.day if _turn != null else state.day,
-		"team": _turn.team if _turn != null else state.current_team,
+		"day": _acting_day,
+		"team": _acting_team,
 		"type": _command_name(command),
 	}
 	if command is AttackCommand:
