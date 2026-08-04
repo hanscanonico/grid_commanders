@@ -5,11 +5,17 @@ what the measurement currently says. This is the committed record of the
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
-**Standing verdict: the gate FAILS, knowingly.** Measured 2026-08-01 at 15
-seeds with the AI Judgement dials live: Normal takes **68.3%** from Easy and
-Difficult **53.3%** from Normal, against a required 70%. Zero rejected commands
+**Standing verdict: the gate FAILS, knowingly.** Measured 2026-08-04 at 15
+seeds (§4d): Normal takes **70.0%** from Easy — which meets the bar — and
+Difficult **55.0%** from Normal, against a required 70%. Zero rejected commands
 and zero cap stalls, so the planner and the rules still agree — what is gone is
 the *gap* between tiers, not the correctness of any of them.
+
+§4c's 68.3% / 53.3% is superseded and should not be quoted: it was taken before
+the AI Arena and AI Economy slices, and a control re-run at this branch's merge
+base already read 70.0% / 50.0% without any of AU2's work. The failing leg is now
+one rather than two, and it fails on `scrimmage` — the map that actually resolves
+on the board — at 36.7%.
 
 This was accepted rather than tuned away, and the reasoning is short. The
 capabilities that closed the gap — noticing an enemy taking your ground, and
@@ -670,6 +676,53 @@ as well as the errand case that used to slip past it. The dial is still 0, but
 nothing in the code holds it there any more — what it now wants is the
 measurement §4b never took at a useful width, and it remains the dial that most
 directly answers the "the AI throws units away" report.
+
+## 4d. The audit's AU2 slice, and a control that moved under it (2026-08-04)
+
+The codebase audit's AU2 slice gave the planner capabilities it had never had —
+Join and Supply as scored candidates, a supply truck it can actually buy, rockets
+on every tier's build list, cargo out of the production counts, and a submarine
+that repositions while diving. All of that is judgement and production, so it
+stays inside §1's never-cheats rule; none of it touches income, vision, damage or
+luck.
+
+**The control was re-measured rather than read off §4c, and that turned out to
+matter.** §4c's 68.3% / 53.3% no longer describes `main`: the AI Arena and AI
+Economy slices merged after it. Run on the same machine at this branch's own
+merge base, the control reads:
+
+| Pairing | Control (branch point) | After AU2 | Gate |
+|---|---|---|---|
+| Normal over Easy | 70.0% (42/60) | 70.0% (42/60) | pass, unchanged |
+| Difficult over Normal | 50.0% (30/60) | **55.0%** (33/60) | FAIL, both |
+
+So the first leg's recovery to 70% is **not AU2's** — it had already happened.
+Quote these numbers, not §4c's, as the state of the ladder before BL2.
+
+**Where the five points actually are, and why they are worth less than they
+look.** Per map, the Difficult pairing moves only on `ironworks` — 63.3% → 73.3%
+— while `scrimmage` is 36.7% before and after. Normal-over-Easy is identical map
+for map. And `ironworks` still resolves **0 of 30** on the board in both runs, at
+both pairings, exactly as §4 recorded: every one of those matches is scored by
+the day-cap tiebreak. So what AU2 demonstrably buys is a better tiebreak position
+— more properties, units and funds standing at day 21 on the naval-air board —
+and **not** a single extra fight won. On the one map that resolves, nothing
+moved.
+
+That is a real improvement and a narrow one. It is also the shape §5 already
+names: `ironworks` under a 20-day cap flatters whoever accumulates, so a slice
+that lets the AI buy and keep more is exactly the kind of change this instrument
+over-reads. The next honest step for this leg is still a board that can resolve.
+
+**What it costs.** Mean planning time per turn rose on every tier — Easy
+51.6 → 60.4 ms, Difficult 35.4 → 43.1 ms, Normal 15.3 → 19.9 ms — from the dive's
+threat-map build and the two new per-unit candidate scans. (These also supersede
+§4's turn-time table outright, which predates the AR1 plan cache: Normal is now
+the *fastest* tier, not the slowest, and R6's "a live threat-map dial roughly
+doubles Normal's per-turn time" is no longer a reading of the shipped tiers.)
+
+Zero rejected commands and zero cap stalls in both runs, so the planner and the
+rules still agree across every new command type.
 
 ## 5. Where this leaves the feature
 
