@@ -339,9 +339,11 @@ preference, on by default),
 then press **Start**, which opens the **commander selection page**; **Continue** skips selection and
 resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
 under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
-is the match you meant; when there is nothing readable to resume it reads `NO SAVED MATCH` and the
-button is greyed out (disabled, not hidden). **Replays** opens the recordings page (see Replays
-below), and **Quit** exits.
+is the match you meant. With nothing to resume the line reads `NO SAVED MATCH`; with a save this
+build cannot open — a truncated file, a damaged one, or a board that has moved since — it reads
+`SAVED MATCH UNREADABLE` and says why underneath, because being told you never had a save is the
+wrong thing to hear about one you did. Either way the button is greyed out (disabled, not hidden).
+**Replays** opens the recordings page (see Replays below), and **Quit** exits.
 
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
@@ -812,6 +814,12 @@ tier it was played at.
   will give up tiles of progress rather than end its move in a kill zone. It also **counter-builds**
   against your actual roster instead of a fixed shopping list, defends its ground harder than
   Normal, and keeps a tighter column.
+
+Every tier now runs a **supply economy**: it buys an APC and drives it up to top its units back up,
+which is how its artillery and its aircraft stop running dry with no recourse. How patiently is the
+tier's own weight — highest on Difficult, well below Normal's on Easy, which lets a rack go nearly
+bare first. Rockets are on every tier's build list too. Transports are still only ever suppliers:
+the computer cannot plan a ferry, so it never buys one to carry anything.
 
 Each tier is a `.tres` under `data/difficulty/` pointing at a profile in `data/ai/`, so retuning
 one is a data edit. What separates the tiers is judgement and never a handicap — but how far apart

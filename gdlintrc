@@ -42,13 +42,21 @@ max-returns: 12
 # down when the widest class does — and lowering it to BattleView's new count would
 # fail three files that have not changed.
 #
+# 21 -> 22 for the same reason max-file-lines went to 918, to 940 and to 1420:
+# merging landed two independent additions in one class at once. The audit gave
+# BattleView `set_ai_teams` and `unit_order_line` — the scenario driver was
+# reaching across the class boundary for both — while R's rest-state fire ring
+# gave it `refresh_range_lens` on main, the sibling of `refresh_threat_lens` that
+# lights the top bar's new chip. Neither side is loose and neither is the other's
+# to trim. Adding to BattleView still means moving something out first.
+#
 # core/commander_type.gd carries the one per-file ignore: it is the doctrine
 # hook contract, so its public count is the roster of rule seams twelve
 # subclasses override, and splitting it would mean the mirror hook tree the
 # commander plan's D1 rejects. It crossed the ceiling at 23 when the AI-advice
 # hooks landed (stand_value, build_bias, retreat_hp_delta). The ceiling itself
 # does not move, so every facade-shaped class is still held to 21.
-max-public-methods: 21
+max-public-methods: 22
 
 # Ratchet, not a target: scenes/battle/battle.gd is the longest file and is
 # being split a responsibility at a time. Set at its current length so the file
@@ -237,7 +245,19 @@ max-public-methods: 21
 # which is exactly what this change is inside of, so doing both would leave neither
 # half reviewable. COM-94's cut-in split is still the one that is due on the
 # scenario driver. main_menu.gd sits at exactly 1391.
-# 1359 -> 1412 for MC4's aimed Command Power, and the ceiling is battle.gd's again
+# 1391 -> 1382 and the ceiling is the scenario driver's again, because COM-97
+# paid COM-121's debt: the menu's widget kit — the padded box, the micro-label,
+# the divider, the action button, the segmented control, the toggle row and the
+# identity chip — was a UiTheme extension living in a screen, so it moved out to
+# scenes/ui/ui_kit.gd, where the select page and the commander card reach the same
+# `pad` they each used to keep their own copy of. The `--co-select` scan went with
+# it, to MenuCaptureDriver, which was already parsing the same command line in the
+# same `_ready`. main_menu.gd ends at 1112 and now carries a per-file budget in
+# tools/check_scripts.sh instead, so it cannot grow back into the driver's slack.
+# The map picker and the parallax backdrop are still the menu's and are still a
+# split that is due; that half is COM-38's, on its own trigger.
+#
+# 1382 -> 1412 for MC4's aimed Command Power, and the ceiling is battle.gd's again
 # for the first time since 918: the two files moved in the same change and
 # battle.gd is now the longer. It gained the game's first interaction that aims a
 # *power* rather than a unit — the POWER_TARGETING state and its legend row, the
@@ -254,31 +274,15 @@ max-public-methods: 21
 # preview showing nine tiles over a power that clears sixteen photographs just as
 # well. COM-94's cut-in split is still the one that is due there.
 #
-# 1412 -> 1428, battle.gd's again, for R answering from rest. The fire ring used to
-# need a unit already in hand — selected, or previewed by a confirm — so reading what
-# an enemy or an already-acted unit threatens cost two presses, and the one press a
-# player reaches for did nothing. Eleven of the sixteen are code: the arm that reads
-# the cursor's unit through `_enter_preview`, so R inherits the click's sight gate
-# rather than opening a second way to ask the board what is standing in the fog, and
-# the setter behind `_range_shown` that lights the top bar's new chip — half a dozen
-# sites clear that flag and a chip only some of them told would advertise a ring that
-# is not on the board. Nothing came out because nothing there is loose: the two lenses
-# read `selected`, `_previewed` and the state, which are the flow's own. The raise does
-# buy a deletion elsewhere — R left both legends it was named in, since a key that does
-# the same thing in every board context is a lens like T rather than a legend entry.
-# COM-94's cut-in split is still the one that is due in the scenario driver.
-#
-# 1391 -> 1382 and the ceiling is the scenario driver's again, because COM-97
-# paid COM-121's debt: the menu's widget kit — the padded box, the micro-label,
-# the divider, the action button, the segmented control, the toggle row and the
-# identity chip — was a UiTheme extension living in a screen, so it moved out to
-# scenes/ui/ui_kit.gd, where the select page and the commander card reach the same
-# `pad` they each used to keep their own copy of. The `--co-select` scan went with
-# it, to MenuCaptureDriver, which was already parsing the same command line in the
-# same `_ready`. main_menu.gd ends at 1112 and now carries a per-file budget in
-# tools/check_scripts.sh instead, so it cannot grow back into the driver's slack.
-# The map picker and the parallax backdrop are still the menu's and are still a
-# split that is due; that half is COM-38's, on its own trigger.
+# 1412 -> 1420 and the ceiling is the scenario driver's again, for the same reason
+# it went to 918 and to 940: merging landed two independent additions in one file
+# at once. The audit's own scenarios took the driver to 1382 on one side, MC4's
+# `power_targeting` added 38 lines to it on the other, and 1420 is where the two
+# meet — neither side is loose and neither is the other's to trim. battle.gd, the
+# ceiling on main, comes out of the merge at 1411 — MC4's aimed power took it to
+# 1395 and R answering from rest to 1411 — and no longer binds; it carries a
+# per-file budget in tools/check_scripts.sh instead. COM-94's cut-in split is
+# still the one that is due, and it is still not a merge's job.
 #
 # This setting is one number for the whole project — gdlint has no per-path
 # override — so it only ever tracks the *longest* file, and everyone shorter
@@ -286,4 +290,4 @@ max-public-methods: 21
 # living in it, so the ledger above was a ratchet the file it was written for no
 # longer felt. The per-file budgets in tools/check_scripts.sh are the tight half,
 # and they run in `make check`; this stays the repo-wide outer bound.
-max-file-lines: 1428
+max-file-lines: 1420

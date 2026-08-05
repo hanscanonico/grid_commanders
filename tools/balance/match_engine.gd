@@ -227,6 +227,10 @@ static func tiebreak(state: GameState) -> int:
 ## What a side's surviving army is worth: each unit's price, scaled by the health
 ## it has left. A margin every preset over this loop reports, so it is priced
 ## here rather than once per driver.
+##
+## Deliberately *not* the measure `killed_value` is in: a kill is credited at
+## what the unit cost to field, because destroying a 2 HP tank denies the enemy
+## the whole tank. Read them apart.
 static func army_value(state: GameState, team: int) -> int:
 	var total := 0
 	for unit in state.units_of(team):

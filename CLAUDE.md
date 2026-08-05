@@ -56,7 +56,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   standing there. D4: **Hammerfall is the only thing in the game that removes a unit without a
   shot**, through `GameState.remove_unit`, so a match can now end without one; the doomed are
   collected before any is removed (`state.units` is being read and `remove_unit` mutates it) and
-  **nothing is banked to either meter**, charge being minted in three calls inside `CombatResolver`
+  **nothing is banked to either meter**, charge being minted inside `ChargeLedger.bank_losses`
   and nowhere else — banking it to the victim would make the answer to the most expensive power in
   the game their own power. Units only: a headquarters, factory or city in the square keeps its
   owner. D5: **the computer aims through the doctrine, never through the planner** —
@@ -643,6 +643,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   why `AIPlanCache._drop_inside` widens a supply unit's envelope by that radius. What is worth
   refilling is graded ammo plus the yes-or-no `Unit.running_dry` already answers, so a land unit's
   half-empty tank is worth nothing here, exactly as it is to the refit errand.
+  **The truck is asked for above `build_priority`**, the way the air answer is: nothing on that
+  list refills anything, so `supply_unit_target` is what puts one in the roster, and it is 1 on
+  every tier because the planner has no route to a second.
   **Merging is not this entry's**, though COM-65 shipped a rival for it: the arena plan's AR6c
   `_consider_join` is the one in the tree, so a merge is priced by `join_weight` on the shelf's
   contract — `0.0` on every tier until something measures it — rather than live like supply.
@@ -650,7 +653,15 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
-  cream/ink) so there is exactly one value per colour. Map thumbnails
+  cream/ink) so there is exactly one value per colour. `scenes/ui/ui_kit.gd` (`UiKit`) is its
+  sibling and the split is what each answers: `UiTheme` owns the *recipe* — a colour, a size, a
+  stylebox — and `UiKit` owns the *widget* built from it (the padded box, the micro-label, the
+  divider, the action button, the segmented control, the toggle row, the identity chip), so a
+  screen assembles rather than draws. Two files because the kit depends on `Tooltip` and because
+  `UiTheme` sits at the repo's public-method ceiling; a widget a screen keeps its own copy of is
+  the drift D1 exists to prevent, which `pad` had already done in three files. The cut-in's shared
+  colour vocabulary is `scenes/battle/cutscene/cutscene_palette.gd` (`CutscenePalette`), declared
+  once, after a `SLATE_800` there held a different value from `UiTheme.SLATE_800`. Map thumbnails
   (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
   a miniature can never be a second opinion. The shared `CommanderCard`'s deferred dress is that
   named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
@@ -1187,7 +1198,9 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   or no). Nobody asks a unit whether it has ammo: `Unit.ammo` is the primary pool alone, and only
   the selector knows a dry primary can still fall back to an infinite secondary.
   `core/movement_resolver.gd` owns the
-  movement budget and per-step terrain cost, **including inside `MoveCommand.validate`**. Both
+  movement budget, the per-step terrain cost and **where a move may end** (`can_stop`) — all three
+  **including inside `MoveCommand.validate`**, which reaches them through `MoveCommand.move_error`,
+  the seam a move-and-then command uses when it already holds the mover's sight. Both
   exist because independent second opinions were real bugs here: a fourth opinion on movement made
   the range overlay offer cells the command then refused, and asking the damage chart directly was
   the whole answer only until a submarine could be under the water. Countering is the one
@@ -1196,7 +1209,10 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   inside this transport at all** (transport, cargo class, capacity, no second level of nesting,
   same team), asked by `LoadCommand.validate` before a board and by `SaveCodec` per wired carrier
   link — while the codec kept its own opinion, a hand-edited save could seat a battleship in an
-  infantry.
+  infantry. `core/grid.gd` (`Grid.manhattan`) is the smallest of them and the one every layer
+  touches: this board measures distance four-directionally everywhere — movement, every firing
+  ring, sight, supply reach, the planner's goals — so ask it rather than spelling the arithmetic
+  again.
 - **Movement domains are data, not code.** A move class is a key in each terrain's `move_costs`
   (`air` on every terrain, `ship`/`lander` on the water) — aircraft and hulls needed no
   `MovementResolver` change. What a property builds and refits is `TerrainType.builds` /

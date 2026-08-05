@@ -425,7 +425,7 @@ func _close_turn(state: GameState) -> void:
 		"merged": _turn.merged,
 		"forfeited": _turn.forfeited,
 		"unit_count": state.units_of(team).size(),
-		"army_value": BalanceHarness.army_value(state, team),
+		"army_value": BalanceMatchEngine.army_value(state, team),
 		"properties": state.properties_of(team).size(),
 		"captures": _turn.captures,
 		"power_charge": _charge_pct(state, team),
