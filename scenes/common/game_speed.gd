@@ -19,15 +19,24 @@ extends RefCounted
 ## shipped with, which is the complaint this setting exists to fix. Quick is that
 ## original feel, one dropdown away.
 const DEFAULT_ID := &"normal"
-## Captures and scripted scenario runs pin this tier instead of reading the
-## device preference: a screenshot must not depend on which machine took it.
+## Captures and scripted scenario runs *of the board* pin this tier instead of
+## reading the device preference: a screenshot must not depend on which machine
+## took it.
 ##
 ## Instant, because a still frame has nothing to photograph in an animation and
 ## every second one runs for is a second `make smoke` spends waiting. Scenarios
 ## advance on the scene's own state machine rather than a frame count, which is
 ## what makes that safe — see BattleScenarioDriver._until_state. An explicit
 ## `--speed=` still wins, so a tier stays inspectable through a capture.
+##
+## The menu is the one exception, and it has its own name below rather than an
+## unexplained second answer at the call site.
 const CAPTURE_ID := &"instant"
+## What a *menu* capture pins, same rule and a different tier. The menu has no
+## animation to skip, and it draws the speed setting: the Speed row highlights
+## whichever tier is in hand, so pinning Instant would photograph a preference no
+## fresh install has. The tier a fresh install plays at is the honest frame.
+const MENU_CAPTURE_ID := DEFAULT_ID
 
 ## The durations the game shipped with, before any tier scaled them. Quick is
 ## these values exactly — which is what makes it "today's game, bit for bit".

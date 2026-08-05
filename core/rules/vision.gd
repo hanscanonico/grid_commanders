@@ -27,8 +27,8 @@ const PROPERTY_VISION := 2
 ## by the callers — so `BattlePerspective`, the overlays and the AI's fog-limited
 ## pathing all inherit shared sight without any of them knowing it happened. In a
 ## free-for-all the side is the army alone and this is the loop it always was.
-static func visible_cells(state: GameState, team: int) -> Dictionary:
-	var cells: Dictionary = {}
+static func visible_cells(state: GameState, team: int) -> Dictionary[Vector2i, bool]:
+	var cells: Dictionary[Vector2i, bool] = {}
 	if not state.fog_enabled:
 		for y in state.map.height:
 			for x in state.map.width:
@@ -47,6 +47,21 @@ static func visible_cells(state: GameState, team: int) -> Dictionary:
 		for cell in state.properties_of(member):
 			_reveal_around(state, cells, cell, PROPERTY_VISION, false)
 	return cells
+
+
+## The set a `can_see_unit` check is made against: this side's visible cells under
+## fog, and the empty set without it, where `can_see_unit` answers before ever
+## looking inside. (`visible_cells` fills the whole board with fog off, which is
+## true and useless to a caller asking about one unit.)
+##
+## Named here because it is a whole-board flood and every rule that asks was
+## spelling it for itself — a validation that walks a path and then checks its
+## destination was paying for two identical ones. Ask once per check and hand the
+## answer down.
+static func visible_cells_if_fogged(state: GameState, team: int) -> Dictionary[Vector2i, bool]:
+	if not state.fog_enabled:
+		return {}
+	return visible_cells(state, team)
 
 
 ## Whether `viewer_team` can see `unit` at all — the question to ask before
@@ -103,7 +118,7 @@ static func _has_neighbour_from(state: GameState, cell: Vector2i, team: int) -> 
 		for other in state.units_of(member):
 			if other.carrier != null:
 				continue
-			if absi(other.cell.x - cell.x) + absi(other.cell.y - cell.y) == 1:
+			if Grid.manhattan(other.cell, cell) == 1:
 				return true
 	return false
 

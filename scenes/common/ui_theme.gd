@@ -49,6 +49,12 @@ const INK_3 := Color(0.54118, 0.56471, 0.60000)  # #8a9099 faint text — HUD la
 ## meter, an ammo bar and a defense star is this one token, and the HUD handoff
 ## calls it out as the bug that left the commander meter unstyled.
 const AMMO := Color(0.87843, 0.66275, 0.18039)
+## #f4be32. The commander select page's own accent for "locked" — its focus
+## rings and the tick on a confirmed seat — kept through the alignment pass
+## because gold there means chosen, which no faction fill may say (plan D6). A
+## lighter gold than AMMO and deliberately a second token rather than a second
+## copy: it was an unnamed literal in two files before COM-89.
+const SELECT_GOLD := Color(0.95686, 0.74510, 0.19608)
 const DANGER := Color(0.84706, 0.29020, 0.23529)  # #d84a3c critical HP
 ## The signature hard drop shadow: ink, 90% opaque, zero blur. rgba(35,39,43,.9).
 const SHADOW_INK := Color(0.13725, 0.15294, 0.16863, 0.9)
@@ -88,10 +94,39 @@ const HUD_RULE_W := 2
 ## One HP cell of the ten-pip strip (handoff 6x14).
 const PIP := Vector2(3, 7)
 const PIP_GAP := 1
+## The inset at each end of a bar's row, and the separation between the groups
+## inside it. One pad for both bars: they were declared 7 and 6, but the 6 never
+## reached a pixel — `hud_spacer` floors a negative width at zero, so each bar was
+## always inset by its own gap, which is 7 in both (COM-98).
+const HUD_PAD := 7
+const HUD_GAP := 7
+## The faction colour square on the top bar (handoff 14px).
+const HUD_CHIP := 7
+## A group divider's height, per bar: each keeps the inset it wants from its own
+## fixed height, which is why there are two and not one.
+const HUD_TOP_RULE_H := HUD_TOP_H - 10
+const HUD_BOTTOM_RULE_H := HUD_BOTTOM_H - 18
+## The bottom bar's three pictures: the commander's portrait field (handoff 62px),
+## the unit icon (64) and the terrain chip's tile (40).
+const HUD_PORTRAIT := 31
+const HUD_UNIT_ICON := 32
+const HUD_TILE_ICON := 20
+## The charge meter's trough (handoff 132x12), and the floor width of the
+## commander block around it — a floor, not a width: the block sizes to whichever
+## of its two rows is wider, so every shipped power_name renders whole (they run
+## to "Armoured Breakthrough"). The floor only bites on a commander-less side,
+## where it keeps the empty left third from collapsing to the portrait.
+const HUD_METER := Vector2(66, 6)
+const HUD_CO_MIN_W := 105
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
 const SIZE_BUTTON := 10
+## The one announcement size: the beat that stops the board (the day banner) and
+## the lockup that ends it. Between the wordmark and a panel title, because both
+## are read across the room rather than at reading distance — and one token, so
+## the two surfaces that speak to the whole table cannot drift apart.
+const SIZE_BANNER := 18
 const SIZE_BODY := 8
 const SIZE_SEGMENT := 7
 ## A tooltip's label line. The handoff sets it at --text-sm, which the div-2 rule
@@ -108,6 +143,9 @@ static var _display: FontFile
 static var _stat: FontFile
 static var _stat_bold: FontFile
 static var _display_bold: FontVariation
+## Roster (as written by `str`) -> the identity that roster resolves to. See
+## `menu_identity_of`, which is the only reader and writer.
+static var _identity_by_roster: Dictionary[String, SideIdentity] = {}
 
 # --- fonts -------------------------------------------------------------------
 
@@ -175,11 +213,23 @@ static func menu_identity(seats: int = 2) -> SideIdentity:
 ## are resolved over the seats that *play*, which is what the battle will do with
 ## the very same roster (`GameState.teams`). Asking about the whole board instead
 ## would preview a closed seat's livery beside armies that are not wearing it.
+##
+## Resolved once per roster and kept, because SideIdentity's own contract is
+## "resolved once per match" and the menu was asking for one twice per map cell on
+## every repaint of the picker. Safe to share: every pick here is null, so the
+## answer is a pure function of the seat list and cannot go stale, and each
+## identity is read-only to every caller — the themes inside it are already
+## CommanderVisuals' shared instances, handed out the same way.
 static func menu_identity_of(seats: Array[int]) -> SideIdentity:
+	var roster := str(seats)
+	if _identity_by_roster.has(roster):
+		return _identity_by_roster[roster]
 	var picks: Dictionary = {}
 	for seat in seats:
 		picks[seat] = null
-	return SideIdentity.resolve(picks)
+	var identity := SideIdentity.resolve(picks)
+	_identity_by_roster[roster] = identity
+	return identity
 
 
 # --- stylebox factories ------------------------------------------------------
@@ -283,6 +333,15 @@ static func hp_color(hp: int) -> Color:
 	if hp > 3:
 		return AMMO
 	return DANGER
+
+
+## The wash a full-screen page or sheet lays over whatever it covers, at the
+## opacity that page asks for — near-solid for a page that replaces the screen, a
+## dim for one that only holds it. The backdrop slate, and only ever that: three
+## surfaces mixed three darks between them, one of them a value defined nowhere
+## else (COM-90). How opaque stays the page's own call.
+static func veil(alpha: float) -> Color:
+	return Color(SLATE_900, alpha)
 
 
 ## A panel's title band — the header bar that spans the top of a Panel. Ink by

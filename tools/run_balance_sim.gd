@@ -19,6 +19,8 @@ extends SceneTree
 ##     --red=<co>:<tier>         a side spec — commander id or `none`, tier
 ##     --blue=<co>:<tier>        easy/normal/hard. Default none:normal.
 ##     --seeds=10                paired seed count (default 4)
+##     --seed=1003               one pinned seed instead, both seats played —
+##                               `make balance-watch` replays the seat-0 row
 ##     --seed-offset=8           skip the first N seeds of that range, so a
 ##                               driver can split one matchup's seeds across
 ##                               processes without deriving the seeds itself
@@ -52,8 +54,6 @@ extends SceneTree
 ## the clock. `planning_ms` in the timeline is the one exception and is excluded
 ## from the determinism test for exactly that reason.
 
-const DEFAULT_SEEDS := 4
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 const DEFAULT_OUT_ROOT := "reports/balance_sim"
 const DEFAULT_MAP := "first_steps"
 
@@ -95,11 +95,7 @@ const MATCH_COLUMNS: Array[String] = [
 	"blue_powers",
 ]
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-var difficulty_db: DifficultyDB
+var _harness: BalanceHarness
 
 var _map_name := DEFAULT_MAP
 var _red_text := BalanceSideSpec.DEFAULT_TEXT
@@ -107,7 +103,7 @@ var _blue_text := BalanceSideSpec.DEFAULT_TEXT
 var _sweep := ""
 var _sweep_tier := Difficulty.DEFAULT_ID
 var _sweep_commander := CommanderType.NEUTRAL_ID
-var _seed_count := DEFAULT_SEEDS
+var _seed_count := BalanceHarness.DEFAULT_SEEDS
 ## Where in the seed range `--seeds=` starts counting. 0 unless a shard of a
 ## parallel run asked for a later slice of it.
 var _seed_offset := 0
@@ -121,8 +117,6 @@ var _write_replays := false
 ## Where this run's artifacts go, resolved once at startup rather than at write
 ## time: the replays are opened while the matches are being played.
 var _artifact_dir := ""
-
-var _maps: Dictionary = {}  # name -> MapData, loaded once and shared
 
 
 ## One match to play: which board, which seat holds which spec, and what swept
@@ -141,7 +135,7 @@ class Job:
 
 
 func _init() -> void:
-	_load_dbs()
+	_harness = BalanceHarness.load_default()
 	if not _parse_args():
 		quit(2)
 		return
@@ -158,20 +152,12 @@ func _init() -> void:
 		return
 	var summary := BalanceRunSummary.build(_config(), matches, recorder.rows())
 	_write(matches, recorder, summary)
-	_print_summary(summary)
+	_print_summary(summary, matches)
 	var totals: Dictionary = summary["totals"]
 	quit(0 if totals["invariants_clean"] else 1)
 
 
 # --- setup -------------------------------------------------------------------
-
-
-func _load_dbs() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load(DAMAGE_CHART_PATH)
-	commander_db = CommanderDB.load_default()
-	difficulty_db = DifficultyDB.load_default()
 
 
 ## Returns false on any bad flag rather than quietly playing something else: a
@@ -195,7 +181,9 @@ func _parse_args() -> bool:
 			_seed_count = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--seed="):
 			# Watch mode's spelling, accepted here too: a suspicious row's flags
-			# copied verbatim off the CSV replay that one match headlessly.
+			# copied verbatim off the CSV replay that seed headlessly. It pins the
+			# seed and nothing else, so both seatings are still played and watch
+			# mode — which seats --red as red — reproduces the seat-0 row of the two.
 			_pinned_seed = maxi(0, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--seed-offset="):
 			_seed_offset = maxi(0, int(arg.get_slice("=", 1)))
@@ -219,48 +207,26 @@ func _parse_args() -> bool:
 	if _sweep != "" and _sweep not in ["commanders", "maps", "tiers"]:
 		push_error("balance-sim: --sweep must be commanders, maps or tiers (got '%s')" % _sweep)
 		return false
-	if not difficulty_db.has(_sweep_tier):
+	if not _harness.difficulty_db.has(_sweep_tier):
 		push_error("balance-sim: unknown tier '%s'" % _sweep_tier)
 		return false
-	if not commander_db.has(_sweep_commander):
+	if not _harness.commander_db.has(_sweep_commander):
 		push_error("balance-sim: unknown commander '%s'" % _sweep_commander)
 		return false
 	if _pinned_seed >= 0 and _seed_offset > 0:
 		push_error("balance-sim: --seed= pins one seed; --seed-offset= slices a range")
 		return false
-	if _sweep != "maps" and _map_of(_map_name) == null:
+	if _sweep != "maps" and _harness.map_of(_map_name) == null:
 		return false
 	return _spec(_red_text) != null and _spec(_blue_text) != null
 
 
 func _spec(text: String) -> BalanceSideSpec:
-	var spec := BalanceSideSpec.parse(text, commander_db, difficulty_db)
+	var spec := BalanceSideSpec.parse(text, _harness.commander_db, _harness.difficulty_db)
 	if spec.error != "":
 		push_error("balance-sim: %s" % spec.error)
 		return null
 	return spec
-
-
-## A board by name, read once and shared across every match played on it. Safe to
-## share: GameState.create copies the ownership it needs and never writes back.
-func _map_of(name: String) -> MapData:
-	if _maps.has(name):
-		var cached: MapData = _maps[name]
-		return cached
-	var path := MapCatalog.resolve(name)
-	if path == "":
-		push_error(
-			(
-				"balance-sim: unknown map '%s'. Known: %s"
-				% [name, ", ".join(MapCatalog.resolvable_names())]
-			)
-		)
-		return null
-	var map := MapData.load_from_file(path, terrain_db)
-	if map == null:
-		return null
-	_maps[name] = map
-	return map
 
 
 # --- the run ------------------------------------------------------------------
@@ -276,8 +242,11 @@ func _build_jobs() -> Array[Job]:
 	match _sweep:
 		"commanders":
 			# Every commander against the pinned opponent, both at --tier: a
-			# power-level reading of the roster on one board.
-			for co in commander_db.all():
+			# power-level reading of the roster on one board. `all()` rather than
+			# `playable()`, unlike the commander matrix: here the neutral row is
+			# the baseline the doctrines are read against, not a control among
+			# the subjects.
+			for co in _harness.commander_db.all():
 				var subject := BalanceSideSpec.new()
 				subject.commander = co.id
 				subject.tier = _sweep_tier
@@ -288,7 +257,7 @@ func _build_jobs() -> Array[Job]:
 		"maps":
 			for path in MapCatalog.paths():
 				var name := path.get_file().trim_suffix(".txt")
-				if _map_of(name) == null:
+				if _harness.map_of(name) == null:
 					continue
 				jobs.append_array(_pair(name, name, red, blue))
 		"tiers":
@@ -354,19 +323,21 @@ func _run(jobs: Array[Job], recorder: BalanceMatchRecorder) -> Array[Dictionary]
 
 
 func _play(job: Job, recorder: BalanceMatchRecorder) -> Dictionary:
-	var map := _map_of(job.map_name)
+	var map := _harness.map_of(job.map_name)
+	var unit_db := _harness.unit_db
+	var difficulty_db := _harness.difficulty_db
 	var setup := BalanceMatchEngine.Setup.new()
 	setup.map = map
 	setup.unit_db = unit_db
-	setup.chart = chart
+	setup.chart = _harness.chart
 	setup.seed_val = job.seed_val
 	setup.days_cap = _days_cap
 	setup.match_id = (
 		"%s#%s_vs_%s#s%d" % [job.map_name, job.red.slug(), job.blue.slug(), job.seed_val]
 	)
 	setup.commanders = {
-		1: commander_db.by_id(job.red.commander),
-		2: commander_db.by_id(job.blue.commander),
+		1: _harness.commander_db.by_id(job.red.commander),
+		2: _harness.commander_db.by_id(job.blue.commander),
 	}
 	setup.tiers = {1: job.red.tier, 2: job.blue.tier}
 	# One planner per side, each with its own profile and its own per-turn threat
@@ -559,7 +530,7 @@ func _write(
 	print("balance-sim: open %s/report.html to read it" % out)
 
 
-func _print_summary(summary: Dictionary) -> void:
+func _print_summary(summary: Dictionary, matches: Array[Dictionary]) -> void:
 	var totals: Dictionary = summary["totals"]
 	var bias: Dictionary = summary["bias"]["overall"]
 	print("\n=== balance lab: %s ===" % summary["run"]["label"])
@@ -575,9 +546,11 @@ func _print_summary(summary: Dictionary) -> void:
 			]
 		)
 	)
+	# The definition is in the label because the commander matrix prints a line
+	# that reads almost the same and excludes mirrors — see BalanceRunSummary.bias.
 	print(
 		(
-			"first-seat bias %+.1f pp (%s, threshold +-%.0f)"
+			"first-seat bias (all decisive games, mirrors counted) %+.1f pp (%s, threshold +-%.0f)"
 			% [
 				bias["bias_pp"],
 				"ok" if bias["ok"] else "REVIEW",
@@ -623,7 +596,31 @@ func _print_summary(summary: Dictionary) -> void:
 			)
 	for note: String in summary["notes"]:
 		print("note: %s" % note)
+	_warn_turn_caps(matches)
 	if totals["invariants_clean"]:
 		print("hard invariants clean (0 rejected, 0 cap stalls). Band flags are review triggers.")
 	else:
 		print("FAIL: rejected commands or cap stalls — the AI and the rules disagree.")
+
+
+## Says out loud when the shared engine had to cut a turn short — the warning the
+## commander matrix has always printed and this runner never did, though it plays
+## the same loop and writes the count into every row of matches.csv. A cut turn
+## resolves differently from the same flags let run, so a silent report reads as
+## agreement with one that was not cut.
+func _warn_turn_caps(matches: Array[Dictionary]) -> void:
+	var hits := 0
+	for row in matches:
+		hits += int(row["turn_cap_hits"])
+	if hits == 0:
+		return
+	print(
+		(
+			(
+				"WARNING: %d turn(s) hit the %d-command per-turn cap and were force-ended. "
+				% [hits, BalanceMatchEngine.MAX_COMMANDS_PER_TURN]
+			)
+			+ "Those matches did not resolve the way an uncut run's would."
+		)
+	)
+	push_warning("balance-sim: %d turn(s) hit the per-turn command cap" % hits)

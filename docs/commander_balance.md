@@ -312,6 +312,24 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-05 — two build biases re-pegged to a list that grew, and Gideon
+  Holt's depot numbers move into data** (codebase audit, AU2). Rockets joined
+  every tier's `build_priority` at the tail, and a doctrine's `build_bias`
+  counts in *places* on that list, counted from its end for a unit the list
+  never names — so lengthening it by one weakened every such pull by one.
+  `cassian_rook` `light_build_bias` −3 → **−4** and `orin_flux`
+  `scout_build_bias` −2 → **−3** give the two scout doctrines back the place
+  they were calibrated at; neither is a strength change, and at −2 Flux had
+  stopped buying the recon that names him. Separately, `gideon_holt` gains
+  `depot_want_hp`, `depot_want_fuel_pct` and `depot_want_units` at the values
+  his subclass already used — they were code defaults alone on the roster, so a
+  balance pass reading `data/commanders/` would never have seen them. No
+  behaviour moved with them.
+
+  **The MC5 standings above now predate the planner**, the same way the CA4 ones
+  do: this slice moved `data/ai/default.tres` (supply and the rockets) and the
+  planner itself, and the determinism golden moved with it. Re-run the matrix
+  before quoting any of those numbers.
 - **2026-08-04 — the four new generals ship un-tuned, on purpose** (more-commanders
   plan, MC5). The 9,680-match batch measured Radek Morn 89.4%, Iona Vance 77.8%,
   Sera Lark 65.3% and Ivar Thorne 59.7%; **no `.tres` number moved**. All four are

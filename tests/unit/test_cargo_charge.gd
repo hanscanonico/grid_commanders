@@ -7,31 +7,16 @@ const TANK_COST := 7000
 const INFANTRY_COST := 1000
 const APC_COST := 5000
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+## Both sides need a power for the meter to exist at all.
+const SEATED := {1: &"alina_ward", 2: &"viktor_draeg"}
 
 
 func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	# Both sides need a power for the meter to exist at all.
-	state.set_commander(1, commander_db.by_id(&"alina_ward"))
-	state.set_commander(2, commander_db.by_id(&"viktor_draeg"))
-	return state
+	return Fixture.state(map_text, SEATED)
 
 
 func _board(state: GameState, id: StringName, team: int, carrier: Unit) -> Unit:
-	var unit := Unit.create(unit_db.by_id(id), team, carrier.cell)
+	var unit := Unit.create(Fixture.unit_db().by_id(id), team, carrier.cell)
 	unit.carrier = carrier
 	state.units.append(unit)
 	return unit
@@ -101,7 +86,7 @@ func test_cargo_banking_recurses_through_nested_transports() -> void:
 	var outer := state.units[1]
 	outer.hp = 10
 	var inner := _board(state, &"apc", 2, outer)
-	var passenger := Unit.create(unit_db.by_id(&"infantry"), 2, outer.cell)
+	var passenger := Unit.create(Fixture.unit_db().by_id(&"infantry"), 2, outer.cell)
 	passenger.carrier = inner
 	state.units.append(passenger)
 	assert_eq(state.cargo_of(inner), [passenger] as Array[Unit], "the nesting is set up")

@@ -146,6 +146,10 @@ var _match_unattributed_start := 0
 ## Captured in before_apply because after the apply the answers are gone.
 var _incoming_team := 0
 var _incoming_funds := 0
+## The turn the command in hand belongs to. An EndTurnCommand opens the incoming
+## side's row inside after_apply, so the log has to be told which side acted.
+var _acting_day := 0
+var _acting_team := 0
 var _capture_cell := Vector2i.ZERO
 var _capture_owner_before := 0
 var _funds_before: Dictionary = {}  # team -> funds, as the command in hand found them
@@ -181,6 +185,8 @@ func begin_match(match_id: String, state: GameState, tiers: Dictionary) -> void:
 
 
 func before_apply(state: GameState, command: Command, planning_usec: int = 0) -> void:
+	_acting_day = _turn.day if _turn != null else state.day
+	_acting_team = _turn.team if _turn != null else state.current_team
 	if _turn == null:
 		return
 	_funds_before = state.funds.duplicate()
@@ -419,7 +425,7 @@ func _close_turn(state: GameState) -> void:
 		"merged": _turn.merged,
 		"forfeited": _turn.forfeited,
 		"unit_count": state.units_of(team).size(),
-		"army_value": _army_value(state, team),
+		"army_value": BalanceMatchEngine.army_value(state, team),
 		"properties": state.properties_of(team).size(),
 		"captures": _turn.captures,
 		"power_charge": _charge_pct(state, team),
@@ -429,15 +435,6 @@ func _close_turn(state: GameState) -> void:
 	}
 	_rows.append(row)
 	_turn = null
-
-
-## Σ cost x HP fraction — the honest number, since a 2 HP tank is not a tank.
-## Integer throughout, like every other value in the sim, so a rerun matches.
-func _army_value(state: GameState, team: int) -> int:
-	var total := 0
-	for unit in state.units_of(team):
-		total += unit.type.cost * unit.hp / 100
-	return total
 
 
 func _charge_pct(state: GameState, team: int) -> int:
@@ -482,6 +479,11 @@ func _attribute(removed: Array[Unit], command: Command) -> void:
 		if command is CaptureCommand:
 			_turn.forfeited += 1  # swept off with its HQ; nothing shot it
 			continue
+		# A kill is credited at what the unit cost to field, not at what was left
+		# of it: destroying a 2 HP tank denies the enemy the whole tank. So
+		# killed_value and lost_value are one measure and `army_value` — the same
+		# roster prorated by HP — is another. The exchange ratio is kills over
+		# losses and never a reading against a side's standing army value.
 		if unit.team == _turn.team:
 			_tally(_turn.lost, unit.type.id)
 			_turn.lost_value += unit.type.cost
@@ -585,8 +587,8 @@ func _log_entry(state: GameState, command: Command) -> Dictionary:
 	var entry := {
 		"match_id": _match_id,
 		"seq": _seq,
-		"day": _turn.day if _turn != null else state.day,
-		"team": _turn.team if _turn != null else state.current_team,
+		"day": _acting_day,
+		"team": _acting_team,
 		"type": _command_name(command),
 	}
 	if command is AttackCommand:

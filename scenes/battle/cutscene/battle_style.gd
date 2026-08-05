@@ -23,6 +23,11 @@ const FLAK := &"flak"  # rounds that burst in the air short of the target
 const ROCKET := &"rocket"  # a dart dragging a column of its own smoke
 const BOMB := &"bomb"  # dropped from above, accelerating into the ground
 const TORPEDO := &"torpedo"  # a wake running flat under the waterline
+## The whole vocabulary, in one list, because CutsceneFx draws by matching on it:
+## a kind spelled here and nowhere there draws nothing, and one spelled in a
+## `.tres` and not here used to fall through to tracer with nothing said.
+## `BattleStyleDB.register` is what holds a style to it.
+const PROJECTILES: Array[StringName] = [NONE, TRACER, SHELL, FLAK, ROCKET, BOMB, TORPEDO]
 
 @export var id: StringName
 @export var projectile: StringName = NONE

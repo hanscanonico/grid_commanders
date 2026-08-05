@@ -12,21 +12,16 @@ extends RefCounted
 ## at the same points it used to call the private methods these were.
 ##
 ## Holds the scene like BattleAiRunner (it sets Battle.state and needs get_tree()),
-## and is handed the victory screen's own nodes at build time like BattleAnimator's
-## banner nodes — this reporter draws on them and nothing else does.
+## and is handed the victory lockup at build time like BattleAnimator's banner —
+## this reporter words it and arms it, and nothing else does. How it is dressed is
+## the lockup's own (VictoryLockup), the way the banner's dress is the banner's.
 
 ## Buffered cut-in presses die here before either outcome action can own them.
 ## Fixed rather than tier-scaled: this is an input safety window, not theatre.
 const INPUT_GUARD_MS := 500
 
 var _battle: Battle
-var victory_screen: PanelContainer
-var victory_portrait: TextureRect
-var victory_faction_label: Label
-var victory_label: Label
-var victory_sub_label: Label
-var rematch_button: Button
-var menu_button: Button
+var victory_screen: VictoryLockup
 
 ## True for a `make balance-watch` run: both sides are the computer's and the
 ## match came from a Balance Lab spec. Makes the scene announce its result and
@@ -83,21 +78,18 @@ func enter_victory() -> void:
 		_result_winner = _battle.game.winner
 	_battle.animator.hide_banner()
 	Sfx.play(&"fanfare")
-	victory_label.text = _result_text()
 	# A playback has no match to play again: the button restarts the recording, and
 	# the word on it has to be the one that names what pressing it does.
-	rematch_button.text = "Restart" if _battle.replay_path != "" else "Rematch"
-	var standings := _standings_text()
-	victory_sub_label.text = "Day %d" % _battle.game.day
-	if standings != "":
-		victory_sub_label.text += "  ·  %s" % standings
+	victory_screen.announce(
+		_result_text(), _day_text(), "Restart" if _battle.replay_path != "" else "Rematch"
+	)
 	_bind_victory_commander()
 	victory_screen.show()
 	victory_screen.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_action_armed = false
 	_input_guard_until_ms = Time.get_ticks_msec() + INPUT_GUARD_MS
-	rematch_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	menu_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	victory_screen.rematch_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	victory_screen.menu_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_release_mouse_guard()
 	var focused := victory_screen.get_viewport().gui_get_focus_owner()
 	if focused != null:
@@ -110,8 +102,8 @@ func _release_mouse_guard() -> void:
 	await _battle.get_tree().create_timer(float(INPUT_GUARD_MS) / 1000.0).timeout
 	if _battle.state != Battle.State.VICTORY:
 		return
-	rematch_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	victory_screen.rematch_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	victory_screen.menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
 
 
 ## Claims transition presses before Battle's board flow sees them. During the
@@ -124,7 +116,7 @@ func consume_input(event: InputEvent) -> bool:
 		return true
 	if not _action_armed:
 		_action_armed = true
-		rematch_button.grab_focus()
+		victory_screen.rematch_button.grab_focus()
 		return true
 	return false
 
@@ -170,7 +162,15 @@ func _result_text() -> String:
 	return "%s win!" % " & ".join(names)
 
 
-## Who fell, in the order they fell — the standings line under the lockup. Read
+## The line under the lockup: the day it took, and on a longer match who fell on
+## the way.
+func _day_text() -> String:
+	var standings := _standings_text()
+	var day := "Day %d" % _battle.game.day
+	return day if standings == "" else "%s  ·  %s" % [day, standings]
+
+
+## Who fell, in the order they fell — the standings half of the line above. Read
 ## straight off `eliminated`, whose keys are in insertion order, so this is the
 ## order of the match rather than of the seating.
 ##
@@ -197,24 +197,16 @@ func _standings_text() -> String:
 func _report_watched_result() -> void:
 	print("watch: team %d wins on day %d" % [_result_winner, _battle.game.day])
 	await _battle.get_tree().create_timer(1.5).timeout  # let the lockup land on screen
+	if not is_instance_valid(_battle):
+		return  # the lockup was left for a rematch or the menu; that run is not ours to end
 	_battle.get_tree().quit()
 
 
-## Fronts the victory screen with the winning commander's portrait and faction. A
-## side that played without one renders gracefully: the portrait and faction line
-## simply hide, leaving the plain "<team> wins!" lockup — as does a draw, which
-## has no winner to front at all.
+## Fronts the victory screen with the winning commander. A draw has no winner to
+## front at all; the lockup takes null for it and for a side that played without a
+## general, and renders the plain "<team> wins!" card in both cases.
 func _bind_victory_commander() -> void:
 	if _result_winner == 0:
-		victory_portrait.visible = false
-		victory_faction_label.visible = false
+		victory_screen.front_with(null)
 		return
-	var winner := _battle.game.commander_of(_result_winner)
-	var has_co := winner.id != CommanderType.NEUTRAL_ID
-	victory_portrait.visible = has_co
-	victory_faction_label.visible = has_co
-	if has_co:
-		victory_portrait.texture = CommanderVisuals.portrait_for(winner)
-		var theme := CommanderVisuals.theme_for(winner)
-		victory_faction_label.text = "%s · %s" % [winner.display_name, theme.display]
-		victory_faction_label.add_theme_color_override("font_color", theme.color_light)
+	victory_screen.front_with(_battle.game.commander_of(_result_winner))

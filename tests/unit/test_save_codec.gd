@@ -3,20 +3,10 @@ extends GutTest
 ## or edits a plain dictionary, which is the point of splitting the codec out
 ## of SaveGame — malformed-save handling is testable without a filesystem.
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
-
-func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
 
 func _first_steps_state() -> GameState:
-	var map := MapData.load_from_file("res://maps/first_steps.txt", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
+	var map := MapData.load_from_file("res://maps/first_steps.txt", Fixture.terrain_db())
+	var state := GameState.create(map, Fixture.unit_db(), Fixture.chart())
 	state.map_path = "res://maps/first_steps.txt"
 	return state
 
@@ -26,7 +16,7 @@ func _encoded() -> Dictionary:
 
 
 func _decode(data: Dictionary) -> SaveCodec.LoadedMatch:
-	return SaveCodec.decode(data, terrain_db, unit_db, chart)
+	return SaveCodec.decode(data, Fixture.terrain_db(), Fixture.unit_db(), Fixture.chart())
 
 
 # --- round trip ---------------------------------------------------------------
@@ -127,7 +117,7 @@ func test_a_version_this_codec_cannot_read_is_rejected() -> void:
 
 
 func test_commanders_survive_the_round_trip() -> void:
-	var commander_db := CommanderDB.load_default()
+	var commander_db := Fixture.commander_db()
 	var state := _first_steps_state()
 	state.set_commander(1, commander_db.by_id(&"alina_ward"))
 	state.set_commander(2, commander_db.by_id(&"viktor_draeg"))
@@ -135,7 +125,9 @@ func test_commanders_survive_the_round_trip() -> void:
 	state.commander_state(1).power_active = true
 
 	var data := SaveCodec.encode(state, [] as Array[int])
-	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart, commander_db)
+	var loaded := SaveCodec.decode(
+		data, Fixture.terrain_db(), Fixture.unit_db(), Fixture.chart(), commander_db
+	)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.commander_of(1).id, &"alina_ward")
 	assert_eq(loaded.state.commander_of(2).id, &"viktor_draeg")
@@ -170,10 +162,12 @@ func test_a_commander_who_no_longer_exists_falls_back_to_neutral() -> void:
 
 
 func test_a_hand_edited_meter_is_still_capped() -> void:
-	var commander_db := CommanderDB.load_default()
+	var commander_db := Fixture.commander_db()
 	var data := _encoded()
 	data["commanders"]["1"] = {"id": "alina_ward", "charge": 999999, "active": false}
-	var loaded := SaveCodec.decode(data, terrain_db, unit_db, chart, commander_db)
+	var loaded := SaveCodec.decode(
+		data, Fixture.terrain_db(), Fixture.unit_db(), Fixture.chart(), commander_db
+	)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.commander_state(1).charge, loaded.state.commander_of(1).power_cost)
 
@@ -194,6 +188,26 @@ func test_missing_funds_for_a_team_is_rejected() -> void:
 	var data := _encoded()
 	(data["funds"] as Dictionary).erase("2")
 	assert_string_contains(SaveCodec.validate(data), "funds")
+
+
+## The envelope pass stops at each key's own value, so a Dictionary that is
+## hollow and a list of things that are not entries both get past it — which is
+## what the per-value rules below it are for, and none of these three had ever
+## been reached. Each edit is a shape a hand-edited save really takes: a purse
+## spelled as a word, a capture with no points on it, and an owner that is not a
+## record at all.
+func test_a_value_inside_a_well_shaped_key_is_still_checked() -> void:
+	var data := _encoded()
+	(data["funds"] as Dictionary)["2"] = "broke"
+	assert_eq(SaveCodec.validate(data), "the save's funds for team 2 are malformed")
+
+	data = _encoded()
+	(data["capture_progress"] as Array).append({"x": 0, "y": 0})
+	assert_eq(SaveCodec.validate(data), "capture progress entry is missing 'points'")
+
+	data = _encoded()
+	(data["owners"] as Array)[0] = "1 0 0"
+	assert_eq(SaveCodec.validate(data), "owner entry is malformed")
 
 
 # --- carrier relationships ----------------------------------------------------

@@ -16,7 +16,8 @@ func _init(p_unit: Unit, p_path: Array[Vector2i]) -> void:
 
 
 func validate(state: GameState) -> String:
-	var steps := MoveCommand.validate_path_steps(state, unit, path)
+	var visible := Vision.visible_cells_if_fogged(state, unit.team)
+	var steps := MoveCommand.validate_path_steps(state, unit, path, visible)
 	if steps != "":
 		return steps
 	var transport := state.unit_at(path[path.size() - 1])

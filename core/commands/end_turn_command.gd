@@ -11,7 +11,11 @@ func validate(state: GameState) -> String:
 
 
 func apply(state: GameState) -> void:
-	_expire_power(state, state.current_team)
+	# An OWNER_TURN Command Power lasts exactly the turn it was fired on, so it
+	# comes down as that turn ends. A ROUND power survives this and expires at its
+	# owner's next turn start instead — the other call to the same rule, in
+	# TurnRules.begin_turn.
+	TurnRules.expire_power(state, state.current_team, CommanderType.Duration.OWNER_TURN)
 	var next := state.next_team()
 	# The day turns when the hand rolls back past the last seat, measured on the
 	# board's full roster rather than on whoever is left. Asking whether the hand
@@ -22,13 +26,3 @@ func apply(state: GameState) -> void:
 		state.day += 1
 	state.current_team = next
 	TurnRules.begin_turn(state)
-
-
-## An OWNER_TURN Command Power lasts exactly the turn it was fired on, so it
-## comes down as that turn ends. A ROUND power deliberately survives this and
-## expires at its owner's next turn start instead — see TurnRules.begin_turn.
-## Those two lines are the only places a power is ever taken down.
-static func _expire_power(state: GameState, team: int) -> void:
-	var co_state := state.commander_state(team)
-	if co_state.power_active and co_state.type.power_duration == CommanderType.Duration.OWNER_TURN:
-		co_state.power_active = false

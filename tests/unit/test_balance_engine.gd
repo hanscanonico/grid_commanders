@@ -119,6 +119,24 @@ func test_the_timeline_replays_byte_for_byte() -> void:
 	assert_eq(first.command_log(), second.command_log(), "and so is the command log")
 
 
+## The engine can only seed the match RNG *after* GameState.create, because
+## create is what builds the state — and it runs the opening side's day-1 tick
+## inside itself. That ordering is exact only while create draws nothing: a draw
+## taken there comes off the constructor's random stream, so it would differ run
+## to run and no seed could pin it. Combat is the sim's one consumer today, and
+## this is what says so out loud rather than leaving it to be rediscovered by a
+## golden that stopped reproducing.
+func test_building_a_board_draws_nothing_from_the_match_rng() -> void:
+	var state := GameState.create(MapData.parse(BOARD, terrain_db), unit_db, chart)
+	var untouched := RandomNumberGenerator.new()
+	untouched.seed = state.rng.seed
+	assert_eq(
+		state.rng.state,
+		untouched.state,
+		"create() must leave the RNG where a fresh one on the same seed sits"
+	)
+
+
 func test_a_different_seed_is_a_different_match() -> void:
 	# Not a guarantee about *which* differs — only that the seed reaches the sim
 	# at all, which is what a stuck or ignored seed would break.

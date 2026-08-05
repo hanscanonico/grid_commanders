@@ -101,6 +101,7 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		await _present_move(command, mover, watched_move)
 		if drop_passenger != null:
 			_battle.view.refresh_sprite(drop_passenger)
+		_present_blocked_drop(command as DropCommand, watched_move)
 	elif mover != null:
 		await _present_move(command, mover, watched_move)
 
@@ -189,6 +190,20 @@ func _present_build(command: BuildCommand) -> void:
 	_battle.action_feedback.mark_built(command.built_unit)
 	_battle.view.spawn_sprite_for(command.built_unit)
 	EventBus.unit_built.emit(command.built_unit)
+
+
+## The transport arrived and the passenger stayed aboard, because the drop cell
+## turned out occupied. That is not the ambush cue `_settle_move` plays — nothing
+## was cut short — so it gets the ordinary rejected-action reason instead, under
+## the same visibility gate every other on-board caption obeys.
+func _present_blocked_drop(command: DropCommand, watched: bool) -> void:
+	if not command.drop_blocked:
+		return
+	if not (watched or _battle.perspective.can_see_cell(command.drop_cell)):
+		return
+	_battle.action_feedback.show_reason(
+		"Drop blocked", _battle.view.screen_pos_for_cell(command.drop_cell)
+	)
 
 
 func _present_move(command: Command, unit: Unit, watched: bool) -> void:

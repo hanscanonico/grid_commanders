@@ -12,7 +12,7 @@ extends RefCounted
 ## started — see `shake` below.
 ##
 ## Composed rather than inherited, which is what keeps the directors free to be
-## what they are: they hold one of these, hand it their total and their camera,
+## what they are: they hold one of these, hand it their total and their board,
 ## and ask it for the clock. It owns no beat and paints nothing inside the band.
 ##
 ## **The two guarantees it exists to keep identical for every cut-in:**
@@ -63,9 +63,10 @@ var _top_bar: ColorRect
 var _bottom_bar: ColorRect
 var _top_edge: ColorRect
 var _bottom_edge: ColorRect
-var _camera: Camera2D
-var _resting_zoom := Vector2.ONE
-var _punched_zoom := Vector2.ONE
+## The board the entry flinch punched, and how far in. Null for a posed still,
+## which never punched anything and must leave the board's zoom alone.
+var _board: BattleView
+var _punch_from := 1.0
 ## Cue name -> true once its sound has played, so a beat crossed twice by a frame
 ## boundary is heard once.
 var _cues: Dictionary = {}
@@ -84,7 +85,7 @@ func build(layer: CanvasLayer, on_layout: Callable) -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
 	_dim = ColorRect.new()
-	_dim.color = Color(0.078, 0.086, 0.118, 0.0)
+	_dim.color = Color(CutscenePalette.DIM, 0.0)
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_dim)
 	band = Control.new()
@@ -104,7 +105,7 @@ func build_bars() -> void:
 
 func _new_bar() -> ColorRect:
 	var bar := ColorRect.new()
-	bar.color = Color(0.055, 0.063, 0.078)
+	bar.color = CutscenePalette.BAR
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(bar)
 	return bar
@@ -131,13 +132,12 @@ func layout() -> void:
 # --- the clock ----------------------------------------------------------------
 
 
-## Starts a playthrough. The camera is the punched-in one the animator handed
-## over; left null — as a posed still leaves it — the board's zoom is untouched.
-func begin(total_in: float, camera: Camera2D, resting_zoom: Vector2) -> void:
+## Starts a playthrough over the board the animator has just punched into, whose
+## flinch this then eases back out.
+func begin(total_in: float, board: BattleView) -> void:
 	total = total_in
-	_camera = camera
-	_resting_zoom = resting_zoom
-	_punched_zoom = camera.zoom if camera != null else resting_zoom
+	_board = board
+	_punch_from = board.punch_zoom
 	t = 0.0
 	playing = true
 	skipping = false
@@ -148,7 +148,7 @@ func begin(total_in: float, camera: Camera2D, resting_zoom: Vector2) -> void:
 ## clock runs and no sound plays, which is what makes a posed frame byte-stable.
 func pose(total_in: float, at: float) -> void:
 	total = total_in
-	_camera = null
+	_board = null
 	t = clampf(at, 0.0, total)
 
 
@@ -197,7 +197,7 @@ func end() -> void:
 
 
 ## Everything the shell itself draws, as a pure function of the clock: the dim
-## behind the band, the board camera easing home, and the letterbox with its
+## behind the band, the board's flinch easing out, and the letterbox with its
 ## faction line. `present` is the director's own wipe curve — the shell does not
 ## decide when a cut-in is on screen, only what it looks like while it is.
 func frame(present: float, wipe_out: Vector2) -> void:
@@ -219,15 +219,17 @@ func frame(present: float, wipe_out: Vector2) -> void:
 	_bottom_edge.size = Vector2(view_size.x, ACCENT_PX)
 
 
-## Eases the board camera from its entry punch back to rest over the closing
-## wipe, in lockstep with `present` falling to zero — so the map is already at its
-## resting zoom on the frame the wipe uncovers it, and a skip (which pins the
-## reveal at 1) lands the zoom exactly at rest with everything else.
+## Eases the board's entry punch back out over the closing wipe, in lockstep with
+## `present` falling to zero — so the map is already at its resting zoom on the
+## frame the wipe uncovers it, and a skip (which pins the reveal at 1) lands the
+## zoom exactly at rest with everything else. The view composes the punch with the
+## player's level and re-docks the board, which is why this asks it rather than the
+## camera (see BattleView._apply_zoom).
 func _restore_zoom(wipe_out: Vector2) -> void:
-	if _camera == null:
+	if _board == null:
 		return
 	var reveal := window(wipe_out)
-	_camera.zoom = _resting_zoom if reveal >= 1.0 else _punched_zoom.lerp(_resting_zoom, reveal)
+	_board.punch_zoom = 1.0 if reveal >= 1.0 else lerpf(_punch_from, 1.0, reveal)
 
 
 ## The band's push and shake, the one piece of shell framing a director still

@@ -109,7 +109,7 @@ func _build() -> void:
 
 	var veil := ColorRect.new()
 	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	veil.color = Color(UiTheme.SLATE_900, 0.82)
+	veil.color = UiTheme.veil(0.82)
 	veil.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(veil)
 

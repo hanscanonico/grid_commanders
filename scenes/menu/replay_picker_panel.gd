@@ -52,8 +52,8 @@ func begin(summaries: Array[ReplayFile.Summary]) -> void:
 ## The first row only, not every one: past a full slate the list scrolls, so a
 ## gate demanding that all ten sit inside the frame would be measuring the wrong
 ## promise. What it proves is that the page laid out and the list rendered.
-func chrome() -> Dictionary:
-	var named := {"the replays title": _title, "Back": _back_button}
+func chrome() -> Dictionary[String, Control]:
+	var named: Dictionary[String, Control] = {"the replays title": _title, "Back": _back_button}
 	if _row_buttons.is_empty():
 		named["the empty note"] = _empty
 	else:
@@ -78,7 +78,7 @@ func _build() -> void:
 	# `set_anchors_preset` alone would preserve it.
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color(UiTheme.SLATE_900.r, UiTheme.SLATE_900.g, UiTheme.SLATE_900.b, 0.985)
+	bg.color = UiTheme.veil(0.985)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 

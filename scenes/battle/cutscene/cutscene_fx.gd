@@ -21,7 +21,8 @@ extends Control
 ## reads the overlay's vocabulary, never the reverse.
 const KO_TAG := "K.O."
 
-const INK := Color(0.078, 0.090, 0.102)
+## Fire, not gold: a muzzle flash and a blast core run hotter than the band's
+## CutscenePalette.GOLD, which is the colour the plates and the meter are set in.
 const FLASH_GOLD := Color(0.988, 0.847, 0.353)
 const KO_RED := Color(0.902, 0.302, 0.243)
 ## A rocket's three body colours and how far it pitches off level, in radians.
@@ -80,6 +81,8 @@ const SMOKE_SIZE := 8.0
 const SMOKE_FAN := 0.5
 const SMOKE_LIFT := 13.0
 const SMOKE_TINT := Color(0.47, 0.49, 0.53)
+## What is left standing over a wreck: dirtier than the exhaust above.
+const WRECK_SMOKE := Color(0.35, 0.34, 0.36)
 ## How many spokes each fireball is torn into. The kill blast fills the frame and
 ## can carry the detail; an impact burst a third of its size cannot, and reads as a
 ## circle again once the teeth get that fine.
@@ -243,7 +246,7 @@ func _draw_round(lag: float, index: int) -> void:
 			at.y -= sin(lag * PI) * volley_arc
 			at.y += (index % 3 - 1) * 3.0
 			_draw_shell(at, toward, tint)
-		_:
+		BattleStyle.TRACER:
 			at.y += _rung(index)
 			_draw_tracer_dash(at, toward, tint)
 
@@ -254,7 +257,7 @@ func _draw_round(lag: float, index: int) -> void:
 func _draw_tracer_dash(at: Vector2, toward: float, tint: Color) -> void:
 	var length := 9.0
 	var body := Rect2(at.x - (length if toward < 0.0 else 0.0), at.y - 1.5, length, 3.0)
-	draw_rect(body.grow(1.0), Color(INK, tint.a * 0.8))
+	draw_rect(body.grow(1.0), Color(CutscenePalette.STROKE, tint.a * 0.8))
 	draw_rect(body, tint)
 
 
@@ -271,7 +274,7 @@ func _draw_shell(at: Vector2, toward: float, tint: Color) -> void:
 			Rect2(back.x - (length if toward < 0.0 else 0.0), back.y - 1.0, length, 2.0),
 			Color(tint, tint.a * (0.5 - trail * 0.18))
 		)
-	draw_circle(at, 6.0, Color(INK, tint.a))
+	draw_circle(at, 6.0, Color(CutscenePalette.STROKE, tint.a))
 	draw_circle(at, 4.5, Color(SHELL_BODY, tint.a))
 	draw_circle(at + Vector2(-toward * 1.2, -1.4), 2.0, Color(tint, tint.a * 0.8))
 
@@ -281,7 +284,7 @@ func _draw_shell(at: Vector2, toward: float, tint: Color) -> void:
 func _draw_flak(at: Vector2, lag: float, tint: Color) -> void:
 	var puff := ramp(lag, [0.0, 0.55, 1.0], [1.5, 9.0, 13.0])
 	var fade := ramp(lag, [0.0, 0.5, 1.0], [1.0, 0.8, 0.0])
-	draw_circle(at, puff + 1.5, Color(INK, tint.a * fade * 0.7))
+	draw_circle(at, puff + 1.5, Color(CutscenePalette.STROKE, tint.a * fade * 0.7))
 	draw_circle(at, puff, Color(tint, tint.a * fade))
 	draw_circle(at, puff * 0.45, Color(1.0, 1.0, 1.0, tint.a * fade))
 
@@ -315,7 +318,7 @@ func _draw_rocket_body(alpha: float) -> void:
 	draw_circle(Vector2(-6.5, 0.0), 2.2, Color(ROCKET_FLAME, alpha * 0.9))
 	draw_circle(Vector2(-5.0, 0.0), 3.2, Color(FLASH_GOLD, alpha))
 	draw_circle(Vector2(-4.0, 0.0), 1.6, Color(1.0, 1.0, 1.0, alpha))
-	draw_rect(Rect2(-4.0, -1.5, 8.0, 3.0), Color(INK, alpha))
+	draw_rect(Rect2(-4.0, -1.5, 8.0, 3.0), Color(CutscenePalette.STROKE, alpha))
 	draw_rect(Rect2(-3.5, -1.0, 7.0, 2.0), Color(ROCKET_HULL, alpha))
 	draw_rect(Rect2(-3.5, 0.2, 7.0, 0.8), Color(ROCKET_HULL.darkened(0.3), alpha))
 	draw_colored_polygon(
@@ -336,9 +339,9 @@ func _arced(lag: float) -> Vector2:
 ## A bomb: small, dark, and falling — the only round in the game whose shape
 ## reads vertically, because it is the only one that arrives from above.
 func _draw_bomb(at: Vector2, tint: Color) -> void:
-	draw_circle(at, 4.5, Color(INK, tint.a))
+	draw_circle(at, 4.5, Color(CutscenePalette.STROKE, tint.a))
 	draw_circle(at + Vector2(0.0, -1.0), 3.0, tint)
-	draw_rect(Rect2(at.x - 1.5, at.y + 3.0, 3.0, 5.0), Color(INK, tint.a * 0.8))
+	draw_rect(Rect2(at.x - 1.5, at.y + 3.0, 3.0, 5.0), Color(CutscenePalette.STROKE, tint.a * 0.8))
 
 
 ## A torpedo, run flat under the waterline: the head is barely visible and the
@@ -352,7 +355,7 @@ func _draw_torpedo(at: Vector2, toward: float, tint: Color) -> void:
 			Rect2(back.x - 5.0, back.y - 1.5 + trail * 0.5, 10.0, 3.0 - trail * 0.4),
 			Color(1.0, 1.0, 1.0, foam * tint.a)
 		)
-	draw_circle(depth, 4.0, Color(INK, tint.a * 0.75))
+	draw_circle(depth, 4.0, Color(CutscenePalette.STROKE, tint.a * 0.75))
 	draw_circle(depth, 2.5, tint)
 
 
@@ -532,7 +535,7 @@ func _draw_smoke() -> void:
 	for i in 4:
 		var lift := ramp(blast_p, [0.35, 1.0], [0.0, 34.0 + i * 9.0])
 		var at := blast_at + Vector2((i - 1.5) * 15.0, -lift)
-		draw_circle(at, 13.0 + i * 2.5, Color(0.35, 0.34, 0.36, alpha))
+		draw_circle(at, 13.0 + i * 2.5, Color(WRECK_SMOKE, alpha))
 
 
 ## The damage that landed, rising and fading over the side it landed on. Scaled
@@ -572,9 +575,8 @@ func _draw_vs() -> void:
 ## Outlined text. Everything the overlay prints sits over moving art, so nothing
 ## is ever drawn without a stroke around it.
 func _stroked(font: Font, at: Vector2, text: String, font_size: int, tint: Color) -> void:
-	draw_string_outline(
-		font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, Color(INK, tint.a)
-	)
+	var ink := Color(CutscenePalette.STROKE, tint.a)
+	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, ink)
 	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, tint)
 
 

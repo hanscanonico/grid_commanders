@@ -71,13 +71,7 @@ const DIR_ACTIONS: Dictionary = {
 @onready var cursor: Sprite2D = $Cursor
 @onready var camera: Camera2D = $Camera2D
 @onready var action_menu: ActionMenu = %ActionMenu
-@onready var victory_screen: PanelContainer = %VictoryScreen
-@onready var victory_portrait: TextureRect = %VictoryPortrait
-@onready var victory_faction_label: Label = %VictoryFactionLabel
-@onready var victory_label: Label = %VictoryLabel
-@onready var victory_sub_label: Label = %VictorySubLabel
-@onready var rematch_button: Button = %RematchButton
-@onready var menu_button: Button = %MenuButton
+@onready var victory_screen: VictoryLockup = %VictoryScreen
 @onready var handoff_screen: Panel = %HandoffScreen
 @onready var handoff_label: Label = %HandoffLabel
 @onready var handoff_button: Button = %HandoffButton
@@ -265,22 +259,20 @@ func _ready() -> void:
 	overlays = _build_overlays()
 	overlays.setup()
 	animator = _build_animator()
-	# Dev-only capture flows. The driver is held for the whole scene: `run` awaits,
-	# and a RefCounted nobody references is freed mid-scenario. Asked this early
-	# because whether this run exists to be photographed also decides whether it
-	# records itself — a sweep must not leave a recording per scenario in the
-	# player's slots.
-	var driver := BattleScenarioDriver.new(self)
-	_capturing = driver.requested()
+	# Dev-only capture flows. Asked this early because whether this run exists to
+	# be photographed also decides whether it records itself — a sweep must not
+	# leave a recording per scenario in the player's slots. The question is the
+	# command line's, so it is asked without building anything.
+	_capturing = BattleScenarioDriver.requested()
 	_command_pipeline = BattleCommandPipeline.new(self, _open_recording())
 	_outcome = _build_outcome()
 	_outcome.configure(request.watching, request.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
 	end_turn_guard.review_requested.connect(_review_ready_units)
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
-	view.hud_bottom.fire_button.pressed.connect(_fire_command_power)
-	rematch_button.pressed.connect(_request_rematch)
-	menu_button.pressed.connect(_request_main_menu)
+	view.fire_pressed.connect(_fire_command_power)
+	victory_screen.rematch_button.pressed.connect(_request_rematch)
+	victory_screen.menu_button.pressed.connect(_request_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view)
@@ -288,6 +280,9 @@ func _ready() -> void:
 	set_cursor_cell(Vector2i.ZERO)
 	animator.capturing = _capturing
 	if _capturing:
+		# Held for the whole scene: `run` awaits, and a RefCounted nobody
+		# references is freed mid-scenario.
+		_scenario_driver = BattleScenarioDriver.new(self)
 		# A capture pins its own pace and ignores the device preference: a frame
 		# must not depend on which machine took it, or on how fast whoever ran
 		# `make smoke` likes to watch their tanks move.
@@ -296,7 +291,7 @@ func _ready() -> void:
 		# *this* machine's player has already learned to capture would otherwise
 		# decide whether a card sits over the board in every other scenario's
 		# frame. Every capture but the strip's own hides it (COM-12).
-		Settings.pin_hints(not driver.wants_mission_strip())
+		Settings.pin_hints(not _scenario_driver.wants_mission_strip())
 	animator.start_cursor_pulse()
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	camera.position = cursor.position
@@ -308,7 +303,6 @@ func _ready() -> void:
 		# Captures show where the view settles, which is the position UI is
 		# already anchored to anyway (see BattleView.screen_pos_for_cell).
 		camera.position_smoothing_enabled = false
-		_scenario_driver = driver
 		_scenario_driver.run()
 
 
@@ -482,16 +476,13 @@ func _build_view() -> BattleView:
 	built.camera = camera
 	built.hud_bottom = %HudBottom
 	built.damage_preview = %DamagePreview
-	built.atk_label = %AtkLabel
-	built.counter_label = %CounterLabel
-	built.outcome_label = %OutcomeLabel
 	built.hud_top = %HudTop
 	built.mission_strip = %MissionStrip
 	built.db = db
 	built.map = map
 	built.game = game
 	built.perspective = perspective
-	built.ai_teams = ai_teams
+	built.set_ai_teams(ai_teams)
 	built.identity = SideIdentity.for_game(game)  # the side resolver; Battle reads view.identity
 	return built
 
@@ -516,10 +507,8 @@ func _build_animator() -> BattleAnimator:
 	built.node = self
 	built.view = view
 	built.perspective = perspective
-	built.camera = camera
 	built.cursor = cursor
 	built.turn_banner = %TurnBanner
-	built.banner_label = %BannerLabel
 	built.power_banner = %CommanderBanner
 	built.cutscene = %Cutscene
 	built.cutscene.view = view
@@ -530,16 +519,10 @@ func _build_animator() -> BattleAnimator:
 
 ## Same assignment-not-constructor shape as _build_view/_build_animator, plus the
 ## scene itself: the reporter sets Battle.state and needs get_tree(), so it holds
-## the node the way BattleAiRunner does, and is handed the victory screen's nodes.
+## the node the way BattleAiRunner does, and is handed the victory lockup.
 func _build_outcome() -> BattleOutcome:
 	var built := BattleOutcome.new(self)
 	built.victory_screen = victory_screen
-	built.victory_portrait = victory_portrait
-	built.victory_faction_label = victory_faction_label
-	built.victory_label = victory_label
-	built.victory_sub_label = victory_sub_label
-	built.rematch_button = rematch_button
-	built.menu_button = menu_button
 	return built
 
 
@@ -1085,12 +1068,12 @@ func enter_victory() -> void:
 
 
 func _request_rematch() -> void:
-	if _outcome.accepts_action(rematch_button):
+	if _outcome.accepts_action(victory_screen.rematch_button):
 		_exit.rematch()
 
 
 func _request_main_menu() -> void:
-	if _outcome.accepts_action(menu_button):
+	if _outcome.accepts_action(victory_screen.menu_button):
 		_exit.to_main_menu()
 
 

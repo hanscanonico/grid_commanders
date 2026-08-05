@@ -83,8 +83,6 @@ var _hud: CaptureHud
 
 var _beats := Beats.new()
 var _result: CaptureCommand.CaptureResult
-var _unit: Unit
-var _cell := Vector2i.ZERO
 ## The point chips each mash knocks off, largest first, summing to the meter's
 ## drop. Computed once in `_pose`.
 var _chips := PackedInt32Array()
@@ -100,18 +98,12 @@ func _ready() -> void:
 
 
 ## Plays one already-applied capture and returns when the map is back. Awaitable:
-## both call sites hold the interaction flow on it. The animator hands over the
-## punched-in camera and the zoom to return it to; left null (as the scenario
-## driver leaves it) the camera is untouched.
-func play(
-	result: CaptureCommand.CaptureResult,
-	unit: Unit,
-	cell: Vector2i,
-	camera: Camera2D = null,
-	resting_zoom := Vector2.ONE
-) -> void:
+## both call sites hold the interaction flow on it. The animator punches the board
+## in on its way here; the cut-in eases that flinch back out over the closing wipe,
+## through the view (see CutscenePlayback).
+func play(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
 	_pose(result, unit, cell)
-	_play.begin(_beats.total, camera, resting_zoom)
+	_play.begin(_beats.total, view)
 	_play.layout()
 	_apply()
 	_play.root.show()
@@ -176,8 +168,6 @@ func _finish() -> void:
 ## Poses the stage and hud and works out the beat windows this capture has.
 func _pose(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vector2i) -> void:
 	_result = result
-	_unit = unit
-	_cell = cell
 	var terrain := view.map.terrain_at(cell)
 	_play.accent = _accent_of(unit.team)
 	# The two faction rows the flip crosses between, both SideIdentity's answer —
@@ -333,7 +323,8 @@ func _frame_banner() -> void:
 		_hud.banner_sub = ""
 	else:
 		_hud.banner_text = "OCCUPYING"
-		_hud.banner_sub = "%d/20 LEFT" % maxi(_result.points_after, 0)
+		var left := maxi(_result.points_after, 0)
+		_hud.banner_sub = "%d/%d LEFT" % [left, GameState.CAPTURE_POINTS]
 	if _play.t < _beats.banner.x or _play.t >= _beats.banner.y:
 		_hud.banner_p = 0.0
 

@@ -40,7 +40,6 @@ const MARCH_TO := 0.24
 
 const GRASS := Color(0.471, 0.784, 0.314)
 const GRASS_DARK := Color(0.353, 0.651, 0.235)
-const GOLD := Color(0.969, 0.788, 0.282)
 const DUST := Color(0.941, 0.925, 0.886)
 const MAX_STARS := 4
 const STAR_STEP := 11.0
@@ -136,8 +135,8 @@ func _draw_sky(arena: Rect2) -> void:
 	for i in bands:
 		var top := arena.position.y + (horizon - arena.position.y) * float(i) / bands
 		var bottom := arena.position.y + (horizon - arena.position.y) * float(i + 1) / bands
-		var shade := CutsceneSide.SKY_TOP.lerp(
-			CutsceneSide.SKY_HORIZON, float(i) / float(bands - 1)
+		var shade := CutscenePalette.SKY_TOP.lerp(
+			CutscenePalette.SKY_HORIZON, float(i) / float(bands - 1)
 		)
 		draw_rect(Rect2(0.0, top, size.x, bottom - top + 1.0), shade)
 	_draw_cloud(Vector2(size.x * 0.22, arena.position.y + arena.size.y * 0.16), 1.0)
@@ -190,7 +189,7 @@ func _draw_property(arena: Rect2) -> void:
 	var h := PROP_PX * (1.0 - squash)
 	# Contact shadow, on the ground whatever the building is doing above it.
 	draw_set_transform(base + Vector2(0.0, -3.0), 0.0, Vector2(1.0, 0.3))
-	draw_circle(Vector2.ZERO, PROP_PX * 0.5, Color(0.08, 0.10, 0.13, 0.34))
+	draw_circle(Vector2.ZERO, PROP_PX * 0.5, Color(CutscenePalette.GROUND_SHADOW, 0.34))
 	draw_set_transform(Vector2.ZERO)
 	var atlas := _terrain_atlas()
 	var row := row_after if flipped else row_before
@@ -240,7 +239,7 @@ func _squad_anchor(arena: Rect2) -> Vector2:
 
 func _draw_shadow(ground: Vector2, strength: float) -> void:
 	draw_set_transform(ground + Vector2(0.0, -2.0), 0.0, Vector2(1.0, 0.3))
-	draw_circle(Vector2.ZERO, 20.0, Color(0.078, 0.102, 0.133, 0.3 * strength))
+	draw_circle(Vector2.ZERO, 20.0, Color(CutscenePalette.GROUND_SHADOW, 0.3 * strength))
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -253,7 +252,7 @@ func _draw_figure(feet: Vector2) -> void:
 		_squad_art,
 		Rect2(box.position + Vector2(2.0, 3.0), box.size),
 		false,
-		Color(0.137, 0.153, 0.169, 0.4)
+		Color(CutscenePalette.FIGURE_SHADOW, 0.4)
 	)
 	draw_texture_rect(_squad_art, box, false, Color.WHITE)
 	draw_set_transform(Vector2.ZERO)
@@ -282,12 +281,12 @@ func _draw_plates() -> void:
 	var slide := -40.0 * (1.0 - plate_p)
 	draw_set_transform(Vector2(slide, 0.0))
 	var top := Rect2(0.0, 0.0, size.x, PLATE_TOP_H)
-	draw_rect(top, Color(CutsceneSide.SLATE_800, plate_p))
-	draw_rect(Rect2(0.0, PLATE_TOP_H - 2.0, size.x, 2.0), Color(CutsceneSide.INK, plate_p))
+	draw_rect(top, Color(CutscenePalette.PLATE, plate_p))
+	draw_rect(Rect2(0.0, PLATE_TOP_H - 2.0, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
 	_draw_name_row(top)
 	var bottom := Rect2(0.0, size.y - PLATE_BOT_H, size.x, PLATE_BOT_H)
-	draw_rect(bottom, Color(CutsceneSide.SLATE_800, plate_p))
-	draw_rect(Rect2(0.0, bottom.position.y, size.x, 2.0), Color(CutsceneSide.INK, plate_p))
+	draw_rect(bottom, Color(CutscenePalette.PLATE, plate_p))
+	draw_rect(Rect2(0.0, bottom.position.y, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
 	_draw_terrain_row(bottom)
 	draw_set_transform(Vector2.ZERO)
 
@@ -313,7 +312,7 @@ func _draw_name_row(plate: Rect2) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		10,
-		Color(GOLD, plate_p)
+		Color(CutscenePalette.GOLD, plate_p)
 	)
 
 
@@ -327,13 +326,13 @@ func _draw_terrain_row(plate: Rect2) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		9,
-		Color(CutsceneSide.PLATE_TEXT, CutsceneSide.PLATE_TEXT.a * plate_p)
+		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * plate_p)
 	)
 	var width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
 	var stars := mini(terrain.defense_stars, MAX_STARS)
 	for i in MAX_STARS:
 		var center := Vector2(20.0 + width + 14.0 + STAR_STEP * i, plate.position.y + 10.0)
-		var tint := CutsceneSide.STAR_ON if i < stars else CutsceneSide.STAR_OFF
+		var tint := CutscenePalette.GOLD if i < stars else CutscenePalette.STAR_OFF
 		draw_colored_polygon(_star_points(center, 4.5), Color(tint, tint.a * plate_p))
 
 

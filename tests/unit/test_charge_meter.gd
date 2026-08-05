@@ -5,34 +5,19 @@ extends GutTest
 const TANK_COST := 7000
 const INFANTRY_COST := 1000
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-var commander_db: CommanderDB
-
-
-func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+## Both sides need a power for the meter to exist at all.
+const SEATED := {1: &"alina_ward", 2: &"viktor_draeg"}
 
 
 func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	# Both sides need a power for the meter to exist at all.
-	state.set_commander(1, commander_db.by_id(&"alina_ward"))
-	state.set_commander(2, commander_db.by_id(&"viktor_draeg"))
-	return state
+	return Fixture.state(map_text, SEATED)
 
 
 ## The plan's worked example: halving a 7 000 Tank is 3 500 points to the side
 ## that lost it, half that to the side that dealt it.
 func test_value_weighted_charge_splits_asymmetrically() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
-	CombatResolver.bank_losses(state, state.units[0], 50, 2)
+	ChargeLedger.bank_losses(state, state.units[0], 50, 2)
 	assert_eq(state.commander_state(1).charge, TANK_COST * 50 / 100, "the loser banks all of it")
 	assert_eq(state.commander_state(2).charge, TANK_COST * 50 / 100 / 2, "the dealer banks half")
 
@@ -40,7 +25,7 @@ func test_value_weighted_charge_splits_asymmetrically() -> void:
 func test_charge_is_capped_at_the_power_cost() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
 	for i in 20:
-		CombatResolver.bank_losses(state, state.units[0], 100, 2)
+		ChargeLedger.bank_losses(state, state.units[0], 100, 2)
 	var co_state := state.commander_state(1)
 	assert_eq(co_state.charge, co_state.type.power_cost, "an idle meter never banks a second power")
 	assert_true(co_state.is_ready())
@@ -51,7 +36,7 @@ func test_charge_is_capped_at_the_power_cost() -> void:
 ## dead against a power costing eleven times that.
 func test_sacrificing_infantry_barely_moves_the_meter() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0")
-	CombatResolver.bank_losses(state, state.units[0], 100, 2)
+	ChargeLedger.bank_losses(state, state.units[0], 100, 2)
 	assert_eq(state.commander_state(1).charge, INFANTRY_COST)
 	assert_false(state.commander_state(1).is_ready())
 
@@ -59,7 +44,7 @@ func test_sacrificing_infantry_barely_moves_the_meter() -> void:
 func test_a_commander_with_no_power_banks_nothing() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
 	state.set_commander(1, CommanderType.neutral())
-	CombatResolver.bank_losses(state, state.units[0], 100, 2)
+	ChargeLedger.bank_losses(state, state.units[0], 100, 2)
 	assert_eq(state.commander_state(1).charge, 0)
 	assert_eq(state.commander_state(1).charge_ratio(), 0.0, "a meter with no power never fills")
 	assert_false(state.commander_state(1).is_ready())
@@ -103,8 +88,8 @@ func test_a_running_power_banks_nothing_for_its_owner() -> void:
 	assert_true(alina.power_active)
 
 	# The kind of exchange the power exists to win, resolved while it is up.
-	CombatResolver.bank_losses(state, state.units[0], 100, 2)  # team 1 loses a whole tank
-	CombatResolver.bank_losses(state, state.units[1], 100, 1)  # team 1 destroys one in reply
+	ChargeLedger.bank_losses(state, state.units[0], 100, 2)  # team 1 loses a whole tank
+	ChargeLedger.bank_losses(state, state.units[1], 100, 1)  # team 1 destroys one in reply
 	assert_eq(alina.charge, 0, "a running power banks nothing, dealt or lost")
 
 	# The opponent's meter is a separate economy and fills as usual.
@@ -118,7 +103,7 @@ func test_the_meter_must_be_re_earned_after_a_power() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
 	state.add_charge(1, state.commander_state(1).type.power_cost)
 	PowerCommand.new().apply(state)
-	CombatResolver.bank_losses(state, state.units[0], 100, 2)  # combat during the active turn
+	ChargeLedger.bank_losses(state, state.units[0], 100, 2)  # combat during the active turn
 
 	EndTurnCommand.new().apply(state)  # the OWNER_TURN power expires here
 	var alina := state.commander_state(1)

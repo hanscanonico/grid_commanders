@@ -1,0 +1,87 @@
+# The merge gate, run for us instead of remembered: the same four targets
+# `make verify` chains, in the same cheapest-first order.
+#
+# `make smoke` is deliberately absent — it renders, so it needs a display and
+# stays a local gate (see the Makefile's own note on it).
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A second push to a branch supersedes the first: the gate only ever answers for
+# the tip.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The version the repo pins; README's engine setup fetches the macOS build of
+  # the same tag.
+  GODOT_VERSION: 4.7.1-stable
+  # Every Makefile target reads this; the vendored macOS app is only the default.
+  GODOT: bin/godot
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # gdlint and gdformat, the `lint` and `format-check` steps.
+      - name: Install gdtoolkit
+        run: pip install "gdtoolkit==4.*"
+
+      # The engine links against these even with --headless.
+      - name: Install engine runtime libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgl1 libx11-6 libxcursor1 libxinerama1 libxi6 libxrandr2
+
+      - name: Fetch Godot ${{ env.GODOT_VERSION }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -sSfL -o /tmp/godot.zip "$url"
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          mkdir -p bin
+          mv "/tmp/godot/Godot_v${GODOT_VERSION}_linux.x86_64" "$GODOT"
+          chmod +x "$GODOT"
+          "$GODOT" --headless --version
+
+      # Keyed on what an import actually depends on, so a run that only edits
+      # code reuses the cache and one that touches an asset rebuilds it.
+      - name: Cache imported assets
+        uses: actions/cache@v4
+        with:
+          path: .godot
+          key: godot-${{ env.GODOT_VERSION }}-import-${{ hashFiles('assets/**', 'data/**', '**/*.import', 'project.godot') }}
+
+      # First, and on a cache hit as well: a stale class cache surfaces as
+      # phantom parse errors in the very next step (COM-112).
+      - name: Import assets
+        run: make import
+
+      - name: check
+        run: make check
+
+      - name: lint
+        run: make lint
+
+      - name: format-check
+        run: make format-check
+
+      - name: test
+        run: make test
+
+      # Not one of the four, and about a second: the pinned Balance Lab match
+      # against its committed golden (balance plan D1's merge bar).
+      - name: determinism
+        run: make determinism

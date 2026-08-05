@@ -216,5 +216,11 @@ func log_end_run(gut=_gut):
 
 	_log_what_was_run(gut)
 	log_the_final_line(totals, gut)
-	log_version_update(gut)
+	# GRID COMMANDERS LOCAL PATCH (COM-108): log_version_update(gut) is not
+	# called. This release's own versions.json stops at Godot 4.6.999, so every
+	# `make test` on 4.7.1 signed off 1098 passing tests with "This version of
+	# GUT may not be compatible with Godot 4.7.1". Nothing in GUT's config or CLI
+	# switches that banner off. The detector itself is untouched and unreachable
+	# from a test run; `-gcheck_update` still asks, on demand. Re-apply or drop
+	# this on the next GUT upgrade — see README.md, Architecture.
 	lgr.log("")

@@ -209,6 +209,20 @@ func test_secondary_chart_matches_the_locked_machine_gun_table() -> void:
 	assert_eq(chart.secondary_chart, EXPECTED_SECONDARIES)
 
 
+## A cell authored as a float was read straight into an `int`, so 55.9 became 55
+## for every match played on that chart and nothing said so. The read refuses it
+## now — the matchup reads as one this weapon cannot damage, which is the same
+## answer in the preview, in the resolve and to the AI. Pushes an error of its
+## own; the log line is the point.
+func test_a_fractional_cell_is_refused_rather_than_truncated() -> void:
+	var typo := DamageChart.new()
+	typo.chart = {&"tank": {&"mech": 55.9}}
+	assert_eq(typo.base_damage(&"tank", &"mech"), -1, "truncated to 55 before")
+	assert_false(typo.can_attack(&"tank", &"mech"))
+	assert_null(typo.select_shot(&"tank", &"mech", 9, 9))
+	assert_push_error_count(3, "one per read, each naming the cell")
+
+
 func test_selector_owns_preference_fallback_and_ammo_spend() -> void:
 	var preferred := chart.select_shot(&"tank", &"mech", 9, 9)
 	assert_eq(preferred.slot, DamageChart.SECONDARY)

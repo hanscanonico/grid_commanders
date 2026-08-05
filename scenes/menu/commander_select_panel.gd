@@ -26,11 +26,11 @@ const DUEL_SEATS := 2
 
 const _TITLE_SIZE := 15
 const _MINI_H := 82
-## The selection accent, kept through the alignment pass (menu-revamp D6): gold is
-## this page's own signal for "locked", distinct from the faction fills.
-const GOLD := Color(0.957, 0.745, 0.196)
 ## The private slate/muted palette swaps for the shared UiTheme tokens it already
 ## sat a shade from, so the select page and the menu speak one grey (plan MN3).
+## The selection gold moved the same way and for the same reason (COM-89): it is
+## still this page's own signal for "locked", now stated once, in UiTheme.
+const _GOLD := UiTheme.SELECT_GOLD
 const _INACTIVE := UiTheme.SLATE_800
 const _MUTED := UiTheme.NEUTRAL_LIGHT
 
@@ -148,8 +148,8 @@ func debug_preview(id: StringName) -> void:
 ## off the right edge is exactly what a frame check is for — and this page had
 ## none, which is how a top bar that grew from a fixed pair of chips to one per
 ## seat shipped without anyone walking it at four.
-func chrome() -> Dictionary:
-	var named := {
+func chrome() -> Dictionary[String, Control]:
+	var named: Dictionary[String, Control] = {
 		"the select page title": _title,
 		"No Commander": _no_co_button,
 		"Back": _back_button,
@@ -171,7 +171,7 @@ func _build() -> void:
 	# by the viewport — the ground COM-31's missing Confirm button grew from.
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color(UiTheme.SLATE_900.r, UiTheme.SLATE_900.g, UiTheme.SLATE_900.b, 0.985)
+	bg.color = UiTheme.veil(0.985)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
@@ -216,7 +216,7 @@ func _build() -> void:
 	# the design system's stat face, and it brings the second font onto the page.
 	var footer := Label.new()
 	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", 8)
+	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	footer.text = "ARROWS / TAB  BROWSE      ENTER  CONFIRM      ESC  BACK      MOUSE OK"
 	main.add_child(footer)
@@ -254,7 +254,7 @@ func _build_right_column() -> VBoxContainer:
 		var tab := Button.new()
 		tab.text = String(theme.key).capitalize()
 		tab.add_theme_font_override("font", UiTheme.display())
-		tab.add_theme_font_size_override("font_size", 10)
+		tab.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.focus_entered.connect(_set_faction.bind(i))
 		tab.pressed.connect(_focus_faction.bind(i))
@@ -269,12 +269,12 @@ func _build_right_column() -> VBoxContainer:
 	col.add_child(mini_row)
 
 	var summary := PanelContainer.new()
-	summary.add_theme_stylebox_override("panel", _flat(Color(0.145, 0.165, 0.180)))
+	summary.add_theme_stylebox_override("panel", UiTheme.flat(_INACTIVE))
 	summary.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_summary_label = _small_label(10)
-	_summary_label.add_theme_color_override("font_color", Color(0.741, 0.765, 0.780))
+	_summary_label = _small_label(UiTheme.SIZE_BODY)
+	_summary_label.add_theme_color_override("font_color", _MUTED)
 	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary.add_child(_pad(_summary_label, 8, 6))
+	summary.add_child(UiKit.pad(_summary_label, 8, 6))
 	col.add_child(summary)
 
 	var actions := HBoxContainer.new()
@@ -306,7 +306,7 @@ func _build_right_column() -> VBoxContainer:
 func _action_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, 10)
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY)
 	return button
 
 
@@ -331,8 +331,8 @@ func _focus_faction(index: int) -> void:
 	_grab_first_mini()
 
 
-func _members() -> Array:
-	return _by_faction.get(_faction_keys[_faction_index], [])
+func _members() -> Array[CommanderType]:
+	return _by_faction.get(_faction_keys[_faction_index], [] as Array[CommanderType])
 
 
 ## Deferred: freshly-created buttons are not in the focus system until the frame
@@ -371,8 +371,8 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	button.clip_contents = true
 	button.add_theme_stylebox_override("normal", _hard(theme.color_dark, 2))
 	button.add_theme_stylebox_override("hover", _hard(theme.color, 2))
-	button.add_theme_stylebox_override("focus", _hard(GOLD, 2))
-	button.add_theme_stylebox_override("pressed", _hard(GOLD, 2))
+	button.add_theme_stylebox_override("focus", _hard(_GOLD, 2))
+	button.add_theme_stylebox_override("pressed", _hard(_GOLD, 2))
 	row.add_child(button)
 
 	var content := VBoxContainer.new()
@@ -381,7 +381,7 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	button.add_child(content)
 
 	var stage := Panel.new()
-	stage.add_theme_stylebox_override("panel", _flat(theme.color))
+	stage.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stage.clip_contents = true
 	content.add_child(stage)
@@ -393,18 +393,18 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
 	stage.add_child(portrait)
 
-	var name_label := _small_label(8)
+	var name_label := _small_label(UiTheme.SIZE_BODY)
 	name_label.text = commander.display_name
 	name_label.add_theme_color_override("font_color", theme.ink)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var name_wrap := PanelContainer.new()
-	name_wrap.add_theme_stylebox_override("panel", _flat(theme.color_dark))
-	name_wrap.add_child(_pad(name_label, 2, 1))
+	name_wrap.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_dark))
+	name_wrap.add_child(UiKit.pad(name_label, 2, 1))
 	content.add_child(name_wrap)
 	UiTheme.make_decoration(content)
 
 	var mark := ColorRect.new()
-	mark.color = GOLD
+	mark.color = _GOLD
 	mark.anchor_left = 1.0
 	mark.anchor_right = 1.0
 	mark.offset_left = -13.0
@@ -583,8 +583,8 @@ func _build_chips() -> void:
 	_chip_labels.clear()
 	for _i in _picks.size():
 		var chip := PanelContainer.new()
-		var label := _small_label(9)
-		chip.add_child(_pad(label, 7, 3))
+		var label := _small_label(UiTheme.SIZE_BODY)
+		chip.add_child(UiKit.pad(label, 7, 3))
 		_chip_bar.add_child(chip)
 		_chips.append(chip)
 		_chip_labels.append(label)
@@ -595,7 +595,9 @@ func _build_chips() -> void:
 func _paint_chip(
 	chip: PanelContainer, label: Label, text: String, theme: CommanderVisuals.FactionTheme
 ) -> void:
-	chip.add_theme_stylebox_override("panel", _flat(theme.color if theme != null else _INACTIVE))
+	chip.add_theme_stylebox_override(
+		"panel", UiTheme.flat(theme.color if theme != null else _INACTIVE)
+	)
 	label.add_theme_color_override("font_color", theme.ink if theme != null else _MUTED)
 	label.text = text
 
@@ -618,11 +620,9 @@ func _style_tab(tab: Button, active: bool) -> void:
 	var theme := CommanderVisuals.theme_for_key(_faction_keys[_tab_buttons.find(tab)])
 	tab.add_theme_stylebox_override("normal", _hard(theme.color if active else _INACTIVE, 2))
 	tab.add_theme_stylebox_override("hover", _hard(theme.color_light if active else theme.color, 2))
-	tab.add_theme_stylebox_override("focus", _hard(GOLD, 2))
+	tab.add_theme_stylebox_override("focus", _hard(_GOLD, 2))
 	tab.add_theme_stylebox_override("pressed", _hard(theme.color, 2))
-	tab.add_theme_color_override(
-		"font_color", Color.WHITE if active else Color(0.753, 0.776, 0.792)
-	)
+	tab.add_theme_color_override("font_color", Color.WHITE if active else _MUTED)
 
 
 # --- style helpers -----------------------------------------------------------
@@ -635,25 +635,8 @@ func _small_label(size: int) -> Label:
 	return label
 
 
-func _pad(child: Control, h: int, v: int) -> MarginContainer:
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", h)
-	margin.add_theme_constant_override("margin_right", h)
-	margin.add_theme_constant_override("margin_top", v)
-	margin.add_theme_constant_override("margin_bottom", v)
-	margin.add_child(child)
-	return margin
-
-
-func _flat(color: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	return box
-
-
 func _hard(border: Color, width: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = _INACTIVE
+	var box := UiTheme.flat(_INACTIVE)
 	box.border_color = border
 	box.set_border_width_all(width)
 	box.content_margin_left = 4

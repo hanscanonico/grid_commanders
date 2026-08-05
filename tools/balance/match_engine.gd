@@ -99,11 +99,18 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 	if state == null:
 		outcome.termination = "invalid_map"
 		return outcome
+	# Seeded the moment the board exists, and no earlier is possible: create()
+	# builds the state and runs the day-1 tick inside it. That is exact only
+	# because combat luck is the sim's one draw (CombatResolver) and the tick
+	# fights nobody, so create() consumes nothing from a stream that is still the
+	# constructor's random one. It is a property rather than an accident, so
+	# test_balance_engine.gd pins it: anything under core/ that starts drawing
+	# during create() makes this ordering a determinism bug.
+	state.rng.seed = setup.seed_val
 	# Nothing in the loop reads this and no report column carries it. It is set
 	# because a recording of this match has to say which board to rebuild, and the
 	# state is where every other consumer of that answer looks — see BattleSetup.
 	state.map_path = setup.map.source_path
-	state.rng.seed = setup.seed_val
 	outcome.state = state
 	for team in state.teams:
 		outcome.powers[team] = 0
@@ -220,6 +227,10 @@ static func tiebreak(state: GameState) -> int:
 ## What a side's surviving army is worth: each unit's price, scaled by the health
 ## it has left. A margin every preset over this loop reports, so it is priced
 ## here rather than once per driver.
+##
+## Deliberately *not* the measure `killed_value` is in: a kill is credited at
+## what the unit cost to field, because destroying a 2 HP tank denies the enemy
+## the whole tank. Read them apart.
 static func army_value(state: GameState, team: int) -> int:
 	var total := 0
 	for unit in state.units_of(team):

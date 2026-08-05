@@ -75,15 +75,18 @@ enum Timing {
 @export var power_duration: Duration = Duration.OWNER_TURN
 @export var power_timing: Timing = Timing.BEFORE_ACTIONS
 
-static var _neutral: CommanderType
-
 
 ## The commander a side plays without one: every hook at its default, no power,
-## and a meter that never fills. Shared, because it holds no per-match state.
+## and a meter that never fills.
+##
+## A fresh one each call rather than a shared instance. This is a Resource with a
+## dozen writable exports, so one shared instance is a process-wide global that any
+## stray write reaches — and the balance harness plays thousands of matches in a
+## single process, where a poisoned neutral would move every match after it. The
+## cost is one allocation per commander-less side per match, because
+## `GameState.commander_state` caches the `CommanderState` this is wrapped in.
 static func neutral() -> CommanderType:
-	if _neutral == null:
-		_neutral = CommanderType.new()
-	return _neutral
+	return CommanderType.new()
 
 
 func has_power() -> bool:
@@ -356,9 +359,8 @@ func _can_strike_an_opponent(state: GameState, team: int, ready_only: bool) -> b
 ## right question about the side whose turn it is and the wrong one about the
 ## side waiting to reply.
 ##
-## Reach is Manhattan distance against movement plus firing range, ignoring
-## terrain cost. It over-estimates deliberately: the failure worth avoiding is a
-## commander sitting on a full meter all match.
+## Reach is AttackRange.strike_reach, which over-estimates deliberately: the
+## failure worth avoiding is a commander sitting on a full meter all match.
 ##
 ## Anything hidden from `team` — the commander doing the asking — is skipped on
 ## both sides of the question, so no doctrine plans around a unit its own side
@@ -373,15 +375,13 @@ func _can_strike(
 			continue
 		if Vision.is_hidden_from(state, team, unit):
 			continue
-		var reach := AttackRange.maximum(state, unit)
-		if not AttackRange.is_indirect(unit):
-			reach += MovementResolver.move_budget(state, unit)
+		var reach := AttackRange.strike_reach(state, unit)
 		for target in state.units:
 			if not state.allied(target.team, defender_team) or target.carrier != null:
 				continue
 			if Vision.is_hidden_from(state, team, target):
 				continue
-			if absi(target.cell.x - unit.cell.x) + absi(target.cell.y - unit.cell.y) <= reach:
+			if Grid.manhattan(target.cell, unit.cell) <= reach:
 				return true
 	return false
 

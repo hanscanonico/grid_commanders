@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scenes/battle/battle.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/ui/hud_bottom_bar.gd" id="2"]
@@ -14,6 +14,9 @@
 [ext_resource type="Script" path="res://scenes/ui/end_turn_guard.gd" id="12"]
 [ext_resource type="Script" path="res://scenes/battle/path_arrow.gd" id="13"]
 [ext_resource type="Script" path="res://scenes/battle/capture_pips.gd" id="14"]
+[ext_resource type="Script" path="res://scenes/ui/damage_preview.gd" id="15"]
+[ext_resource type="Script" path="res://scenes/ui/turn_banner.gd" id="16"]
+[ext_resource type="Script" path="res://scenes/ui/victory_lockup.gd" id="17"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
@@ -114,35 +117,7 @@ unique_name_in_owner = true
 visible = false
 offset_right = 96.0
 offset_bottom = 40.0
-
-[node name="PreviewMargin" type="MarginContainer" parent="UI/DamagePreview"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 4
-
-[node name="PreviewRows" type="VBoxContainer" parent="UI/DamagePreview/PreviewMargin"]
-layout_mode = 2
-
-[node name="AtkLabel" type="Label" parent="UI/DamagePreview/PreviewMargin/PreviewRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Deal 5–6 HP"
-
-[node name="CounterLabel" type="Label" parent="UI/DamagePreview/PreviewMargin/PreviewRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Take 2–3 HP"
-
-[node name="OutcomeLabel" type="Label" parent="UI/DamagePreview/PreviewMargin/PreviewRows"]
-unique_name_in_owner = true
-modulate = Color(1, 1, 1, 0.7)
-layout_mode = 2
-theme_override_font_sizes/font_size = 9
-text = "Target 10 → 4–5 HP · 55% · luck included"
+script = ExtResource("15")
 
 [node name="TurnBanner" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
@@ -154,19 +129,7 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="BannerMargin" type="MarginContainer" parent="UI/TurnBanner"]
-layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 10
-
-[node name="BannerLabel" type="Label" parent="UI/TurnBanner/BannerMargin"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Day 1 - First Army"
+script = ExtResource("16")
 
 [node name="CommanderBanner" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
@@ -190,61 +153,7 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="VictoryMargin" type="MarginContainer" parent="UI/VictoryScreen"]
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 14
-
-[node name="VictoryRows" type="VBoxContainer" parent="UI/VictoryScreen/VictoryMargin"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="VictoryPortrait" type="TextureRect" parent="UI/VictoryScreen/VictoryMargin/VictoryRows"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(76, 76)
-texture_filter = 2
-layout_mode = 2
-size_flags_horizontal = 4
-expand_mode = 1
-stretch_mode = 6
-
-[node name="VictoryFactionLabel" type="Label" parent="UI/VictoryScreen/VictoryMargin/VictoryRows"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-horizontal_alignment = 1
-text = "Meridian Coalition"
-
-[node name="VictoryLabel" type="Label" parent="UI/VictoryScreen/VictoryMargin/VictoryRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-horizontal_alignment = 1
-text = "First Army wins!"
-
-[node name="VictorySubLabel" type="Label" parent="UI/VictoryScreen/VictoryMargin/VictoryRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-horizontal_alignment = 1
-text = "Day 1"
-
-[node name="RematchButton" type="Button" parent="UI/VictoryScreen/VictoryMargin/VictoryRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "Rematch"
-
-[node name="MenuButton" type="Button" parent="UI/VictoryScreen/VictoryMargin/VictoryRows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "Main Menu"
+script = ExtResource("17")
 
 [node name="HandoffScreen" type="Panel" parent="UI"]
 unique_name_in_owner = true
