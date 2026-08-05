@@ -904,7 +904,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
 - `asymmetric-board-plan.html` — Bulwark, the board that is not fair on purpose: one entrenched
-  army holding a rampart against three allies, milestones AB1–AB4, **AB1 shipped**. It is the
+  army holding a rampart against three allies, milestones AB1–AB4, **AB1–AB2 shipped**. It is the
   named exception to four-players D5 ("3v1 is deliberately asymmetric — a challenge grouping,
   compensated by commander pick and tier, never by the board"), which stays the rule for every
   other board: **a board may compensate a grouping when it is authored for that grouping and
@@ -938,6 +938,14 @@ that must survive any change; the full rationale, milestones and risk registers 
   seat 4 is the lone army, so `SeatStrip`'s shipped 3v1 preset fits without a line of UI. D6: the
   lone army's edge is **interior lines** (a lateral road behind the rampart), never a bigger pile,
   which is the failure mode a retune is most likely to drift back into. D7: land only (naval R1).
+  `maps/bulwark.txt` is the board, AB2: 49×32 and twice the largest that shipped before it, an
+  exact **left–right mirror about column 24** (not the half turn `# symmetric` checks, and **nothing
+  lints that mirror** — keep it if you edit the board), seats 1/2/3 on the north edge holding 12
+  properties each and seat 4 on the south holding 30 against their 36. Its rampart is three rows of
+  mountain wall to wall at y 16–18 with four two-cell passes, and the rule that makes the board a
+  battle rather than a siege was **read out of the terrain data rather than designed in**:
+  `data/terrain/mountain.tres` moves `foot`, `boot` and `air` only, so armour must come through 8
+  cells of frontage across 49 while infantry crosses anywhere at 2 a step.
   R4: `BalanceMatchEngine` plays two sides, so the board is invisible to `make commander-balance`
   and `make difficulty-check` — both reports staying byte-identical is the merge bar, and the
   fairness number comes from AB3's GUT soak and nowhere else.
