@@ -144,14 +144,17 @@ func test_legends_are_ascii_only() -> void:
 			)
 
 
-## The threat chip stands beside the legend rather than inside it, so it is held
-## to the same two rules by hand: it shares the bar's width with a legend that
-## may already be running at MAX_CHARS, and it is printed in the same Silkscreen.
-func test_the_threat_chip_fits_beside_the_legend() -> void:
-	assert_lt(ControlHints.THREAT_CHIP.length(), ControlHints.MAX_CHARS / 3)
+## The lens chips stand beside the legend rather than inside it, so they are held
+## to the same two rules by hand: each shares the bar's width with a legend that
+## may already be running at MAX_CHARS, and each is printed in the same Silkscreen.
+func test_the_lens_chips_fit_beside_the_legend() -> void:
+	for chip in [ControlHints.THREAT_CHIP, ControlHints.RANGE_CHIP]:
+		assert_lt(chip.length(), ControlHints.MAX_CHARS / 3, "chip too wide: %s" % chip)
 
 
-func test_the_threat_chip_is_ascii_only() -> void:
-	for i in ControlHints.THREAT_CHIP.length():
-		var code := ControlHints.THREAT_CHIP.unicode_at(i)
-		assert_true(code < 128 or code == 0x00B7, "non-ASCII in the threat chip")
+func test_the_lens_chips_are_ascii_only() -> void:
+	for chip in [ControlHints.THREAT_CHIP, ControlHints.RANGE_CHIP]:
+		for i in chip.length():
+			assert_true(
+				chip.unicode_at(i) < 128 or chip.unicode_at(i) == 0x00B7, "non-ASCII: %s" % chip
+			)

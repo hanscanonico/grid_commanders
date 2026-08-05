@@ -84,6 +84,52 @@ func _run_enemy_range_preview() -> String:
 	await _press(&"show_range")
 	if _battle.overlays.attack_layer.get_used_cells().is_empty():
 		return "R painted no enemy fire ring"
+	return await _run_range_from_rest()
+
+
+## The same reading asked for with one key from rest, which is what R is for. Both
+## units a confirm can only preview are walked — an enemy, and one of ours that has
+## already acted — because those are the two the ring used to cost two presses; then
+## the cursor walks back onto the enemy with a ring already up, where R must re-aim
+## rather than put the infantry's down. The last ring is left standing: this mode's
+## frame is the feature, and a board cleared back to rest photographs nothing.
+func _run_range_from_rest() -> String:
+	await _press(&"cancel")
+	if _battle.state != Battle.State.IDLE:
+		return "cancel did not dismiss the enemy preview"
+	if not _battle.overlays.attack_layer.get_used_cells().is_empty():
+		return "dismissing the preview left the fire ring on the board"
+	var error := await _expect_ring_from_rest(Vector2i(9, 8), "the enemy")
+	if error != "":
+		return error
+	var enemy_ring := _battle.overlays.attack_layer.get_used_cells()
+	await _press(&"cancel")
+
+	var infantry := _battle.game.unit_at(Vector2i(4, 3))
+	infantry.acted = true
+	error = await _expect_ring_from_rest(infantry.cell, "an already-acted unit of ours")
+	infantry.acted = false
+	if error != "":
+		return error
+	return await _expect_ring_follows_cursor(Vector2i(9, 8), enemy_ring)
+
+
+func _expect_ring_from_rest(cell: Vector2i, whose: String) -> String:
+	_battle.set_cursor_cell(cell)
+	await _press(&"show_range")
+	if _battle.overlays.attack_layer.get_used_cells().is_empty():
+		return "R from rest painted no fire ring for %s" % whose
+	return ""
+
+
+func _expect_ring_follows_cursor(cell: Vector2i, expected: Array[Vector2i]) -> String:
+	_battle.set_cursor_cell(cell)
+	await _press(&"show_range")
+	var painted := _battle.overlays.attack_layer.get_used_cells()
+	if painted.is_empty():
+		return "R put the last unit's ring down instead of re-aiming at the cursor's"
+	if painted != expected:
+		return "R re-aimed onto a ring that is not the cursor's unit's"
 	return ""
 
 

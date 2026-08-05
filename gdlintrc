@@ -243,4 +243,18 @@ max-public-methods: 21
 # back off the layer and compares them with what the strike would clear, since a
 # preview showing nine tiles over a power that clears sixteen photographs just as
 # well. COM-94's cut-in split is still the one that is due there.
-max-file-lines: 1412
+#
+# 1412 -> 1428, battle.gd's again, for R answering from rest. The fire ring used to
+# need a unit already in hand — selected, or previewed by a confirm — so reading what
+# an enemy or an already-acted unit threatens cost two presses, and the one press a
+# player reaches for did nothing. Eleven of the sixteen are code: the arm that reads
+# the cursor's unit through `_enter_preview`, so R inherits the click's sight gate
+# rather than opening a second way to ask the board what is standing in the fog, and
+# the setter behind `_range_shown` that lights the top bar's new chip — half a dozen
+# sites clear that flag and a chip only some of them told would advertise a ring that
+# is not on the board. Nothing came out because nothing there is loose: the two lenses
+# read `selected`, `_previewed` and the state, which are the flow's own. The raise does
+# buy a deletion elsewhere — R left both legends it was named in, since a key that does
+# the same thing in every board context is a lens like T rather than a legend entry.
+# COM-94's cut-in split is still the one that is due in the scenario driver.
+max-file-lines: 1428

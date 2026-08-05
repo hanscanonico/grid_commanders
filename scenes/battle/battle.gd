@@ -139,7 +139,13 @@ var planned_path: Array[Vector2i] = []
 ## meaning of "a unit I am commanding" and no command can act on a previewed one.
 var _previewed: Unit
 ## Whether R's red fire ring is painted; every exit from a range state clears it.
-var _range_shown := false
+## Setter-backed for the same reason `state` is: half a dozen sites clear it, and a
+## chip that only some of them told would advertise a ring that is not on the board.
+var _range_shown := false:
+	set(value):
+		_range_shown = value
+		if view != null:  # nothing to tell during _ready, before the view exists
+			view.refresh_range_lens(value)
 ## Whether T's threat lens is up. Unlike the fire ring it belongs to no unit and
 ## no selection, so nothing clears it but the player: it is a way of looking at
 ## the board, and one that switched itself off whenever a unit was picked up would
@@ -768,15 +774,25 @@ func _clear_preview() -> void:
 	state = State.IDLE
 
 
-## R toggles the red fire ring for whatever unit's move range is on screen. A
-## momentary lens; it issues nothing. Public for the same reason `confirm_at` and
-## `set_cursor_cell` are: the scenario driver walks the flows a player's input
-## reaches, and this is one of them. Painted through the perspective rather than off
-## AttackRange directly, because the ring is whole for a unit of the viewer's own side
-## and their best reading of another side's — a split by whose unit it is, not by which
-## state we are in, and the perspective's to make rather than this call site's.
+## R toggles the red fire ring for the unit the cursor is on. A momentary lens; it
+## issues nothing. Public for the same reason `confirm_at` and `set_cursor_cell` are:
+## the scenario driver walks the flows a player's input reaches, and this is one of
+## them. Painted through the perspective rather than off AttackRange directly, because
+## the ring is whole for a unit of the viewer's own side and their best reading of
+## another side's — a split by whose unit it is, not by which state we are in.
+##
+## The cursor names the subject, through the preview and so through the same sight gate
+## a click goes through: reading what an enemy or an already-acted unit threatens costs
+## one key, and walking onto a second unit re-aims R rather than putting the first one's
+## ring down. A unit in hand is the exception — there the cursor is planning a move.
 func toggle_range() -> void:
-	# The unit whose range is up: the selected one, or a previewed one.
+	if state == State.IDLE or state == State.PREVIEW:
+		var under := perspective.visible_unit_at(cursor_cell)
+		if under != null and (under != _previewed or state == State.IDLE):
+			_enter_preview(under)
+		elif state == State.IDLE:
+			return  # nothing under the cursor to ask about
+	# The unit whose range is up: the selected one, or the one the cursor named.
 	var unit: Unit = selected if state == State.UNIT_SELECTED else _previewed
 	if unit == null:  # not in a range state
 		return

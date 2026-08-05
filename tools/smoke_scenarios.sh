@@ -172,7 +172,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # the chip's words back after each one, because all four used to be silent no-ops
 # and silence photographs exactly like a reason. The second is the regression gate
 # the same finding owes the already-shipped range preview: clicking an enemy must
-# still paint its reach and R its fire ring. Both flows live in
+# still paint its reach and R its fire ring — and then, since R answers from rest
+# too, the same ring must come up on one key for both units a confirm can only
+# preview (an enemy, and one of ours that has already acted) and re-aim rather
+# than switch off when the cursor walks onto another. Both flows live in
 # BattleFeedbackScenario rather than in the driver, which is why the driver's line
 # ceiling moved by the dispatch arm and not by the scenarios.
 #
