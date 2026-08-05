@@ -171,6 +171,17 @@ An unresolved match is recorded as unresolved and scored 0.0 (above). A
 invariant failure of the run**, never a draw — `make arena-report` exits 1 and
 says so.
 
+That rule is unchanged. Its trigger is. The first search campaign failed
+every one of its seven blocks on a stall, and none of the twelve stalled matches
+was broken: replayed with the cap lifted, **all twelve ran to the day cap**, at
+3 052 to 5 226 commands, each a 60-to-87-unit army mopping up a last survivor.
+The old flat 3 000 was sized when this toolchain played 20-day matches, and at a
+100-day horizon it truncated the longest honest games. It is now derived —
+`BalanceMatchEngine.command_ceiling`, the per-turn cap times every turn the day
+cap allows — so a stall means the day stopped advancing, which is the only thing
+the day cap cannot already catch. **Never score a broken match** was right; what
+was miscalibrated was the detector, so the rule stands and the trigger moved.
+
 ## The pools and the anchors
 
 All of this lives in `tools/arena/arena_pools.gd` and is **fixed for the life of
@@ -208,13 +219,16 @@ Excluded, and why:
 - **`forge`** and **`steelworks`**: both resolve (forge measured clean over 72
   matches), and both are held in reserve — `forge` asks the build-first question
   `arsenal` already asks, `steelworks` is the largest and slowest of the ten.
-- **`ironworks`**, and this one was measured *out*. It is the only board of the
-  ten that reaches `BalanceMatchEngine.COMMAND_CAP` (3 000): once in 72 matches,
-  at day 91, on a board holding 55 units against 3. Nothing was failing to
-  resolve — a command cap sized for 20-day gates is simply short of a 100-day
-  horizon on the roster's biggest economy — but a stalled match fails the run,
-  and a pool that fails its own run is not a pool. **Read that as a cap to
-  revisit, not a board to distrust**; the arena wants its economy board back.
+- **`ironworks`**, and this one was measured *out*. It was the only board of the
+  ten to reach the match-level command cap, then a flat 3 000: once in 72
+  matches, at day 91, on a board holding 55 units against 3. Nothing was failing
+  to resolve — a cap sized for 20-day gates is simply short of a 100-day horizon
+  on the roster's biggest economy — but a stalled match fails the run, and a pool
+  that fails its own run is not a pool. **That was read as a cap to revisit
+  rather than a board to distrust, and the cap has since been revisited**
+  (`command_ceiling`), so the reason is discharged; re-admitting the board is a
+  measurement nobody has taken, and it belongs to a run that has not started,
+  since the split is fixed for the life of one.
 
 ### How a pool is played
 
@@ -503,12 +517,11 @@ and what it costs.
 
 ## Known limits
 
-- **The command cap and the horizon are in tension on big boards.**
-  `BalanceMatchEngine.COMMAND_CAP` is 3 000, sized when the toolchain played
-  20-day matches; a 100-day match on `ironworks` can want more. That cost the
-  pool its economy board, and AR5 will want it back. Raising it is a change to
-  the shared match loop and belongs in a ticket that can re-run both committed
-  balance reports.
+- **The longest matches here are enormous, and that is the game rather than a
+  fault.** The worst measured is 5 226 commands over 100 days — an 87-unit army
+  hunting one survivor across `arsenal`. `command_ceiling` now leaves room for
+  it, but a pool of such matches is slow, and a fitness function that pays for
+  speed (above) is the only thing pushing against it.
 - **A match seats exactly two candidates**, so every three- and four-army board
   in the roster is out of reach of the arena as it stands.
 - **The margins are unused** for the reason measured above, so a decisive win is

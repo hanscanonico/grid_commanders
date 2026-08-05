@@ -330,3 +330,43 @@ func test_a_short_day_cap_stops_the_match_there() -> void:
 	var outcome := BalanceMatchEngine.play(_setup(5, 3))
 	assert_eq(outcome.termination, "day_cap")
 	assert_lt(outcome.day_ended, 6, "the cap should bind well before the fixture resolves")
+
+
+## The match-level net is the per-turn cap times the turns the day cap allows, so
+## it moves with the run's horizon and the board's roster — the two things a
+## preset changes, and the two the flat 3 000 it replaced could not see.
+func test_the_command_ceiling_is_the_turn_cap_over_every_turn_the_day_cap_allows() -> void:
+	var per_turn := BalanceMatchEngine.MAX_COMMANDS_PER_TURN + 1
+	assert_eq(BalanceMatchEngine.command_ceiling(20, 2), per_turn * 2 * 21)
+	assert_gt(
+		BalanceMatchEngine.command_ceiling(100, 2),
+		BalanceMatchEngine.command_ceiling(20, 2),
+		"a longer horizon earns a higher ceiling"
+	)
+	assert_gt(
+		BalanceMatchEngine.command_ceiling(20, 4),
+		BalanceMatchEngine.command_ceiling(20, 2),
+		"four armies take four turns a day"
+	)
+
+
+## The measurement the shape exists for. Twelve of the arena campaign's 23 682
+## matches hit the old flat 3 000; replayed with room, every one ran to the day
+## cap instead, the longest at 5 226 commands — a 76-unit army mopping up on
+## `arsenal`. A ceiling that cannot clear that number truncates honest play and
+## fails the run for it, which is what this pins.
+func test_the_ceiling_clears_the_longest_match_the_arena_has_measured() -> void:
+	assert_gt(BalanceMatchEngine.command_ceiling(ArenaPools.DAYS, 2), 5226)
+
+
+## 0 means "derive", which is what every preset wants; an override is for a tool
+## measuring the cap itself, and it still binds.
+func test_a_match_derives_its_own_ceiling_unless_one_is_forced_on_it() -> void:
+	var outcome := BalanceMatchEngine.play(_setup(5, 3))
+	assert_false(outcome.cap_stall, "a three-day match is nowhere near its own ceiling")
+	var forced := _setup(5, 3)
+	forced.command_cap = 5
+	var cut := BalanceMatchEngine.play(forced)
+	assert_true(cut.cap_stall, "an override binds")
+	assert_eq(cut.commands, 5)
+	assert_eq(cut.termination, "command_cap")
