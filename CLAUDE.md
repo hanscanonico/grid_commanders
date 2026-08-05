@@ -903,14 +903,20 @@ that must survive any change; the full rationale, milestones and risk registers 
   the seat-by-seat kind-for-kind check verbatim (which is every shipped board), and a tagged board
   gets two checks instead: allied seats identical **kind for kind**, and no side out-owning the sum
   of its opponents by **plain total count** — a ceiling rather than a judgement, because a lint
-  cannot say whether 30-against-36 is fair. The rejected alternatives are an `# asymmetric` opt-out
-  that skips the lint outright and a filename exemption list inside the test. R5 is the guard that
-  keeps the tag from becoming that opt-out anyway and is enforced, not just written down: **a
-  tagged board whose seats already open level fails**, as does a tag that reads as a free-for-all —
-  if the opening is fair seat by seat the tag is unnecessary and belongs deleted. D4: seat 4 is the
-  lone army, so `SeatStrip`'s shipped 3v1 preset fits without a line of UI. D6: the lone army's edge
-  is **interior lines** (a lateral road behind the rampart), never a bigger pile, which is the
-  failure mode a retune is most likely to drift back into. D7: land only (naval R1).
+  cannot say whether 30-against-36 is fair. **AB1 settled that ceiling as one-directional**: a side
+  is held to it only while it fields no more armies than its opponents combined, because a side with
+  more armies is expected to hold more ground and the defect D3 names is one army out-owning three,
+  never three out-owning one. Read symmetrically it collapses into "both sides hold exactly equal
+  totals" on any two-sided grouping and rejects the plan's own 36-to-30 Bulwark tally. The price is
+  paid on an equally seated grouping — in a 2v2 neither side out-seats the other, so neither is
+  exempt and the ceiling there *is* equal totals. The rejected alternatives are an `# asymmetric`
+  opt-out that skips the lint outright and a filename exemption list inside the test. R5 is the
+  guard that keeps the tag from becoming that opt-out anyway and is enforced, not just written
+  down: **a tagged board whose seats already open level fails**, as does a tag that reads as a
+  free-for-all — if the opening is fair seat by seat the tag is unnecessary and belongs deleted. D4:
+  seat 4 is the lone army, so `SeatStrip`'s shipped 3v1 preset fits without a line of UI. D6: the
+  lone army's edge is **interior lines** (a lateral road behind the rampart), never a bigger pile,
+  which is the failure mode a retune is most likely to drift back into. D7: land only (naval R1).
   R4: `BalanceMatchEngine` plays two sides, so the board is invisible to `make commander-balance`
   and `make difficulty-check` — both reports staying byte-identical is the merge bar, and the
   fairness number comes from AB3's GUT soak and nowhere else.
