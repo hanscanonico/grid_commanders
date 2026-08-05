@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — The Asymmetric Board: Bulwark</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > *,
+    :where([style*="display: grid"], [style*="display:grid"], [style*="display: flex"], [style*="display:flex"]) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label) { overflow-wrap: anywhere; }
+    :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-grass-dark: #5d9f3e;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+      --gc-iron: #6d6f7e;
+      --gc-verdant: #4e9a5c;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,.03) 25%, transparent 25%);
+      background-size: 32px 32px, 32px 32px, 64px 64px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-section-number {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid currentColor;
+      border-radius: .35rem;
+      font: 800 .85rem ui-monospace, monospace;
+      box-shadow: 3px 3px 0 color-mix(in srgb, currentColor 22%, transparent);
+      flex: none;
+    }
+    .gc-file { font: 700 .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .88em; }
+    .gc-risk-high { border-left: 5px solid var(--gc-red); }
+    .gc-risk-medium { border-left: 5px solid #d58a24; }
+    .gc-risk-good { border-left: 5px solid var(--gc-grass-dark); }
+    .gc-locked { border-color: var(--gc-grass-dark); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gc-grass-dark) 30%, transparent); }
+    .gc-checks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-checks li::before { content: "✓"; color: var(--gc-grass-dark); font-weight: 900; }
+    .gc-crosses li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .5rem; align-items: start; }
+    .gc-crosses li::before { content: "✗"; color: var(--gc-red); font-weight: 900; }
+    .gc-mode {
+      border: 2px solid var(--gc-water-dark);
+      border-radius: .6rem;
+      overflow: hidden;
+      background: white;
+    }
+    .gc-mode header { color: white; padding: .65rem .9rem; font-weight: 900; display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+    .gc-mode .body { padding: .8rem .9rem; font-size: .9rem; }
+    table.gc-nums td, table.gc-nums th { font-size: .85rem; }
+    table.gc-nums td:first-child { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: .8rem; }
+    .gc-flow {
+      display: grid;
+      gap: .35rem;
+      font: 600 .82rem/1.45 ui-monospace, Menlo, monospace;
+      background: #10263a;
+      color: #dbe9f6;
+      border-radius: .6rem;
+      padding: .9rem 1rem;
+    }
+    .gc-flow .dim { opacity: .55; }
+    .gc-flow .hot { color: #ffd27a; }
+    .gc-board {
+      display: grid;
+      grid-template-columns: repeat(7, 1.35rem);
+      grid-auto-rows: 1.35rem;
+      gap: 2px;
+      background: var(--gc-water-dark);
+      padding: 4px;
+      border-radius: .45rem;
+      width: max-content;
+    }
+    .gc-board.grand {
+      grid-template-columns: repeat(9, 1.05rem);
+      grid-auto-rows: 1.05rem;
+    }
+    .gc-board.small {
+      grid-template-columns: repeat(5, 1.35rem);
+    }
+    .gc-board span { border-radius: 2px; background: var(--gc-grass); }
+    .gc-board .w { background: var(--gc-water); }
+    .gc-board .r { background: var(--gc-red); }
+    .gc-board .b { background: var(--gc-blue); }
+    .gc-board .i { background: var(--gc-iron); }
+    .gc-board .v { background: var(--gc-verdant); }
+    .gc-board .n { background: #cfc8b8; }
+    .gc-board .f { background: var(--gc-grass-dark); }
+    .gc-seat {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      border: 2px solid var(--gc-water-dark);
+      border-radius: .45rem;
+      background: white;
+      padding: .3rem .6rem;
+      font: 700 .8rem ui-monospace, Menlo, monospace;
+    }
+    .gc-seat.closed { opacity: .45; border-style: dashed; background: repeating-linear-gradient(45deg, #fff 0 6px, #eee 6px 12px); }
+
+    .bw-wrap { overflow-x: auto; padding: .5rem 0; }
+    .bw-board {
+      display: grid;
+      grid-template-columns: repeat(49, 15px);
+      grid-auto-rows: 15px;
+      gap: 1px;
+      background: #26415c;
+      padding: 5px;
+      border-radius: .45rem;
+      width: max-content;
+      font: 700 9px/15px ui-monospace, Menlo, monospace;
+    }
+    .bw-board i { display: block; text-align: center; font-style: normal; color: rgba(255,255,255,.92); }
+    .bw-board .pl { background: #86c95a; }
+    .bw-board .wd { background: #4a7d33; }
+    .bw-board .mt { background: #9a8f74; }
+    .bw-board .rd { background: #d8c49a; }
+    .bw-board .pr { box-shadow: inset 0 0 0 1px rgba(0,0,0,.35); }
+    .bw-board .n  { background: #cfc8b8; color: #3b3a33; }
+    .bw-board .t1 { background: var(--gc-red); }
+    .bw-board .t2 { background: var(--gc-blue); }
+    .bw-board .t3 { background: var(--gc-iron); }
+    .bw-board .t4 { background: var(--gc-verdant); }
+    .bw-board .u  { box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px rgba(0,0,0,.4); color: #10263a; }
+    .bw-board .u1 { background: color-mix(in srgb, var(--gc-red) 85%, white); }
+    .bw-board .u2 { background: color-mix(in srgb, var(--gc-blue) 85%, white); }
+    .bw-board .u3 { background: color-mix(in srgb, var(--gc-iron) 85%, white); }
+    .bw-board .u4 { background: color-mix(in srgb, var(--gc-verdant) 70%, white); }
+    .bw-key { display: flex; flex-wrap: wrap; gap: .45rem 1rem; font: 600 .75rem ui-monospace, Menlo, monospace; }
+    .bw-key span { display: inline-flex; align-items: center; gap: .3rem; }
+    .bw-key b { width: 13px; height: 13px; border-radius: 2px; display: inline-block; }
+    pre.bw-src { font: 600 10px/1.35 ui-monospace, Menlo, monospace; background: #10263a; color: #dbe9f6;
+                 padding: .8rem; border-radius: .5rem; overflow-x: auto; max-height: 22rem; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="gc-shell">
+
+    <!-- HERO -->
+    <header class="gc-hero px-6 py-10 md:px-12">
+      <p class="gc-kicker opacity-80">Grid Commanders · Content + one lint capability · Proposal · builds on Four Armies + Four-Player Maps</p>
+      <h1 class="text-3xl md:text-4xl font-black mt-2">Bulwark — the board that is not fair, on purpose</h1>
+      <p class="mt-3 max-w-3xl opacity-90">
+        Every shipped board deals its seats the same opening, and a lint enforces it. This one
+        does not. <strong>Bulwark</strong> is 49&times;32 — twice the largest board that
+        ships — and it seats one <strong>entrenched army holding the midline</strong> against
+        <strong>three allies massed on the far edge</strong>. The lone army opens with a dug-in
+        garrison, twice anyone's production, and a rampart across the middle of the map with four
+        passes through it. The three open with nothing but their corners and each other.
+      </p>
+      <p class="mt-3 max-w-3xl opacity-90">
+        The board is the easy half. The hard half is that
+        <code>tests/unit/test_maps.gd::test_every_map_deals_each_team_the_same_properties</code>
+        asserts, over every board in <code>maps/</code>, that no seat opens on more income or more
+        production than another — <strong>Bulwark fails it by construction</strong>. So the first
+        milestone is not the map. It is teaching that lint to check <em>sides</em> instead of
+        <em>seats</em>, without switching it off.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="gc-seat"><span class="badge badge-xs" style="background:var(--gc-red); border:0;"></span> Seat 1 · flank</span>
+        <span class="gc-seat"><span class="badge badge-xs" style="background:var(--gc-blue); border:0;"></span> Seat 2 · centre</span>
+        <span class="gc-seat"><span class="badge badge-xs" style="background:var(--gc-iron); border:0;"></span> Seat 3 · flank</span>
+        <span class="gc-seat" style="border-width:3px"><span class="badge badge-xs" style="background:var(--gc-verdant); border:0;"></span> Seat 4 · <strong>the bulwark</strong></span>
+      </div>
+      <p class="mt-4 text-sm opacity-75 max-w-3xl">
+        4 milestones · AB1–AB4 &nbsp;·&nbsp; engine changes: one header tag on <code>MapData</code>, read only by a test
+      </p>
+    </header>
+
+    <!-- 1 -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">1</span>
+        <h2 class="text-2xl font-black">Where this stands — what already exists, and the one thing that blocks it</h2>
+      </div>
+      <p class="max-w-3xl mb-4">
+        3v1 is already a shipped capability. <code>GameState.allied</code> is the one hostility
+        authority, <code>--sides=1+2+3v4</code> is its grammar, and the seat strip ships a
+        <strong>3v1</strong> preset. What has never existed is a <em>board authored for it</em>:
+        the preset is offered on every four-seat map, and on all of them the lone army fights three
+        equal rivals from an equal corner. Four Armies D5 says so in as many words — <em>"3v1 is
+        deliberately asymmetric — a challenge grouping, compensated by commander pick and tier,
+        never by the board."</em> This plan is that clause's supersession, and it is the whole
+        reason the plan exists rather than being another map ticket.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="card bg-base-100 border p-4">
+          <h3 class="font-black">What ships already and is untouched</h3>
+          <ul class="gc-checks text-sm mt-2">
+            <li><strong>The grouping</strong> — <code>sides</code> on the state, <code>GameState.allied</code>,
+            <code>--sides=1+2+3v4</code>, shared sight across a side. No code here.</li>
+            <li><strong>The 3v1 preset</strong> — <code>SeatStrip.PRESETS</code> already writes
+            <code>sides: [0,0,0,1]</code>, <code>seats: [HUMAN, CPU, CPU, CPU]</code>. Bulwark authors seat 4 as
+            the lone army <em>so that preset fits it byte for byte</em> (D4).</li>
+            <li><strong>Discovery</strong> — a board is a <code>.txt</code> under <code>maps/</code>;
+            <code>MapCatalog</code> feeds the menu, the lint and every soak from one scan.</li>
+            <li><strong>Size</strong> — the camera derives its limits and minimum zoom from
+            <code>map.size()</code>; <code>test_map_soak.gd</code> scales its command cap by area.
+            49&times;32 needs no plumbing.</li>
+          </ul>
+        </div>
+        <div class="card bg-base-100 border p-4 gc-risk-high">
+          <h3 class="font-black">The one thing that blocks it</h3>
+          <p class="text-sm mt-2">
+            <code>test_every_map_deals_each_team_the_same_properties</code> sweeps every board in
+            <code>maps/</code> and asserts every seat opens on identical holdings, counted by kind.
+            Its own comment says why it is load-bearing:
+          </p>
+          <blockquote class="text-sm mt-2 pl-3 border-l-4" style="border-color:var(--gc-red)">
+            "two seats that open on different holdings are playing two different matches — and the
+            difference reads back as <em>that commander is stronger</em> rather than <em>that seat
+            is</em>, which is the one attribution no amount of playtesting recovers from."
+          </blockquote>
+          <p class="text-sm mt-2">
+            That reasoning is correct and Bulwark does not refute it. It refutes its <em>scope</em>:
+            the unit of fairness on a board authored for a grouping is the <strong>side</strong>,
+            not the seat. AB1 moves the lint to that unit. It does not weaken it.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--color-base-200) 60%, white)">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">2</span>
+        <h2 class="text-2xl font-black">The board — Bulwark, 49&times;32</h2>
+      </div>
+      <p class="max-w-3xl mb-3">
+        1,568 cells — <strong>twice the largest board that ships</strong> (Confluence, 32&times;24).
+        The width is <strong>odd on purpose</strong>: 49 gives an exact left&ndash;right mirror about
+        column 24, so seats 1 and 3 are true reflections and seat 2, like the bulwark's HQ, sits on
+        the axis. An even width cannot centre a single building.
+      </p>
+      <p class="max-w-3xl mb-4">
+        The lone army's HQ is on the south edge, but <strong>its front line is the middle of the
+        map</strong> — it opens already holding the ground the alliance has to take.
+      </p>
+
+      <div class="bw-wrap mb-3">
+<div class="bw-board"><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t1">B</i><i class="pl"></i><i class="pl"></i><i class="pr t1">Q</i><i class="pl"></i><i class="pl"></i><i class="pr t1">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t2">B</i><i class="pl"></i><i class="pl"></i><i class="pr t2">Q</i><i class="pl"></i><i class="pl"></i><i class="pr t2">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t3">B</i><i class="pl"></i><i class="pl"></i><i class="pr t3">Q</i><i class="pl"></i><i class="pl"></i><i class="pr t3">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pl"></i><i class="pl u u1">r</i><i class="pr t1">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pl"></i><i class="pl u u2">r</i><i class="pr t2">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pl"></i><i class="pl u u3">r</i><i class="pr t3">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pl u u1">i</i><i class="pl"></i><i class="pr t1">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pl u u2">i</i><i class="pl"></i><i class="pr t2">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pl u u3">i</i><i class="pl"></i><i class="pr t3">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u1">i</i><i class="rd"></i><i class="pl u u1">i</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u2">i</i><i class="rd"></i><i class="pl u u2">i</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u3">i</i><i class="rd"></i><i class="pl u u3">i</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pr n">B</i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="mt"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="mt"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="mt"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr n">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="rd"></i><i class="rd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="wd"></i><i class="wd"></i><i class="rd"></i><i class="rd"></i><i class="wd"></i><i class="wd"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="wd"></i><i class="rd"></i><i class="rd"></i><i class="wd"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="wd"></i><i class="rd"></i><i class="rd"></i><i class="wd"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="wd"></i><i class="wd"></i><i class="rd"></i><i class="rd"></i><i class="wd"></i><i class="wd"></i><i class="mt"></i><i class="wd"></i><i class="mt"></i><i class="mt"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u4">T</i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl u u4">i</i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u4">t</i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="rd u u4">a</i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl u u4">t</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl u u4">i</i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl u u4">T</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u4">g</i><i class="pl u u4">m</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u4">g</i><i class="pl u u4">m</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u4">m</i><i class="pl u u4">g</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl u u4">m</i><i class="pl u u4">g</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="rd u u4">a</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="rd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="wd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="rd"></i><i class="rd"></i><i class="pr t4">C</i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="pr t4">C</i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="pr t4">C</i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="rd"></i><i class="pr t4">C</i><i class="rd"></i><i class="rd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="rd"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">Q</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">B</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">A</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pr t4">C</i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i><i class="pl"></i></div>
+      </div>
+      <div class="bw-key mb-6">
+        <span><b style="background:#86c95a"></b> plains</span>
+        <span><b style="background:#4a7d33"></b> woods</span>
+        <span><b style="background:#9a8f74"></b> mountain</span>
+        <span><b style="background:#d8c49a"></b> road</span>
+        <span><b style="background:#cfc8b8"></b> neutral property</span>
+        <span><b style="background:var(--gc-red)"></b> seat 1</span>
+        <span><b style="background:var(--gc-blue)"></b> seat 2</span>
+        <span><b style="background:var(--gc-iron)"></b> seat 3</span>
+        <span><b style="background:var(--gc-verdant)"></b> seat 4 · the bulwark</span>
+        <span><b style="background:#fff;box-shadow:inset 0 0 0 2px #10263a"></b> starting unit</span>
+        <span>Q&nbsp;HQ &nbsp; B&nbsp;base &nbsp; A&nbsp;airport &nbsp; C&nbsp;city</span>
+      </div>
+
+      <div class="card bg-base-100 border-2 p-4 mb-6 gc-risk-good">
+        <h3 class="font-black mb-1">The rampart is a wall for vehicles and a hill for infantry — and that is the whole board</h3>
+        <p class="text-sm">
+          <code>data/terrain/mountain.tres</code> lists <code>foot</code>, <code>boot</code> and
+          <code>air</code> and nothing else. So the three-row mountain ridge at y&nbsp;16–18 is
+          <strong>absolutely impassable to tyres and treads</strong> — including around the board
+          edges, which are mountain too — while <strong>infantry and mech climb it anywhere</strong>
+          at 2 movement a step. That was not designed in; it was read out of the terrain data, and
+          it is what makes the board a battle rather than a siege of four doorways:
+        </p>
+        <ul class="gc-checks text-sm mt-2">
+          <li>The alliance's <strong>armour</strong> must come through the four two-cell passes at
+          x&nbsp;7–8, 19–20, 28–29, 40–41 — 8 cells of frontage across 49.</li>
+          <li>The alliance's <strong>infantry</strong> can cross the ridge on a 49-cell front, three
+          turns of climbing, and arrive anywhere. The bulwark cannot garrison all of it.</li>
+          <li>So the alliance's real opening is <em>not</em> "break a pass". It is: take no man's
+          land with foot, walk foot over the ridge to pin the garrison, and bring armour through a
+          pass the garrison has left.</li>
+        </ul>
+      </div>
+
+      <div class="gc-flow mb-5">
+        <div><span class="dim">y 0–4 &nbsp;</span> <span class="hot">THREE HOMES</span> &nbsp; seat 1 @ x8 &nbsp;·&nbsp; seat 2 @ x24 &nbsp;·&nbsp; seat 3 @ x40 &nbsp;&nbsp;<span class="dim">HQ + 2 bases + airport + 8 cities each</span></div>
+        <div><span class="dim">y 5 &nbsp;&nbsp;&nbsp;</span> allied lateral road, x 4..44 &nbsp;<span class="dim">— how an ally reinforces the lane next door</span></div>
+        <div><span class="dim">y 7–15 </span> <span class="hot">NO MAN'S LAND</span> &nbsp; <strong>30 neutral cities, 5 neutral bases, 2 neutral airports</strong>, woods and peaks</div>
+        <div><span class="dim">y 16–18</span> <span class="hot">THE RAMPART</span> &nbsp; three rows of mountain, wall to wall, <strong>four two-cell passes</strong></div>
+        <div><span class="dim">y 19 &nbsp;&nbsp;</span> <span class="hot">interior road</span> &nbsp; the bulwark's lateral, one row behind the wall (D6)</div>
+        <div><span class="dim">y 20–26</span> forward holdings &nbsp; 3 bases, airport, 8 cities &nbsp;<span class="dim">— the garrison sits here, covering the pass mouths</span></div>
+        <div><span class="dim">y 27–31</span> <span class="hot">THE BULWARK</span> &nbsp; HQ @ x24, 4 bases, airport, 12 cities, rear lateral at y 27</div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-5">
+        <div class="gc-mode">
+          <header style="background:var(--gc-verdant)">Seat 4 · the bulwark <span>30 properties · 16 units</span></header>
+          <div class="body">
+            <table class="table table-xs gc-nums">
+              <tr><td>HQ</td><td>1</td><td class="text-xs opacity-70">south edge, x24</td></tr>
+              <tr><td>base</td><td><strong>7</strong></td><td class="text-xs opacity-70">4 home, 3 forward — more than all three rivals combined</td></tr>
+              <tr><td>airport</td><td>2</td><td class="text-xs opacity-70">one home, one forward</td></tr>
+              <tr><td>city</td><td>20</td><td class="text-xs opacity-70">12 home, 8 forward</td></tr>
+              <tr><td>units</td><td><strong>16</strong></td><td class="text-xs opacity-70">2 md tank, 2 tank, 4 artillery, 2 AA, 4 mech, 2 infantry</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="gc-mode">
+          <header style="background:var(--gc-water-dark)">Seats 1+2+3 · the alliance <span>36 properties · 12 units</span></header>
+          <div class="body">
+            <table class="table table-xs gc-nums">
+              <tr><td>HQ</td><td>1 each · 3</td><td class="text-xs opacity-70">north edge</td></tr>
+              <tr><td>base</td><td>2 each · 6</td><td class="text-xs opacity-70"></td></tr>
+              <tr><td>airport</td><td>1 each · 3</td><td class="text-xs opacity-70">the side that out-produces in the air</td></tr>
+              <tr><td>city</td><td>8 each · 24</td><td class="text-xs opacity-70"></td></tr>
+              <tr><td>units</td><td>4 each · 12</td><td class="text-xs opacity-70">3 infantry + 1 recon, identical per seat</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 border p-4 max-w-4xl mb-5">
+        <h3 class="font-black mb-1">Read the tally the right way round</h3>
+        <p class="text-sm">
+          The alliance <strong>out-owns the bulwark 36 to 30</strong> at kick-off and out-produces it
+          in the air 3 airports to 2. It also gets <strong>three turns a day to the bulwark's
+          one</strong>. On every number on this page the lone army is <em>behind</em>.
+        </p>
+        <p class="text-sm mt-2">
+          What it has instead is <strong>concentration and position</strong>. Its 7 bases beat all
+          three rivals' 6 combined, so one army replaces losses at three armies' rate. It opens with
+          16 units to their 12 — and theirs are three separate armies of four. It stands on the
+          middle of the board behind a wall no vehicle crosses, on a road that answers any of the
+          four passes faster than the alliance can shift around the outside (D6).
+        </p>
+        <p class="text-sm mt-2">
+          The alliance's win condition is <strong>no man's land</strong>: 30 neutral cities, 5
+          neutral bases and 2 neutral airports, more than doubling its economy if it takes them
+          fast — and those 5 bases are how the alliance answers the bulwark's production without
+          building a single thing on the far side of the ridge. The bulwark's win condition is to
+          come through a pass and stop that before it compounds. Neither opening decides the match,
+          which is the entire point of authoring the asymmetry instead of leaving the preset to
+          produce it.
+        </p>
+      </div>
+
+      <details class="card bg-base-100 border p-4 max-w-4xl">
+        <summary class="font-black cursor-pointer text-sm">The authored board, as it will land in <code>maps/bulwark.txt</code></summary>
+        <p class="text-sm mt-2 mb-2 opacity-75">
+          Generated and checked against the repo's lints before this plan was written: exact mirror
+          about column 24, every HQ foot-reachable, a tread route to the bulwark's HQ through the
+          passes, no unit starting on a property, no owner off a property, and D3's per-side parity
+          and ceiling both satisfied (12 = 12 = 12 within the alliance; 30 &lt; 36 across).
+        </p>
+        <pre class="bw-src">[terrain]
+....C.C...C.C.......C.C...C.C.......C.C...C.C....
+.....B..Q..B.........B..Q..B.........B..Q..B.....
+....C...A...C.......C...A...C.......C...A...C....
+......C...C...........C...C...........C...C......
+........=...............=...............=........
+....=========================================....
+.................................................
+......C.......C.........C.........C.......C......
+..F.......F.........F.......F.........F.......F..
+..C.......C.......C...........C.......C.......C..
+......F.....A.........F.B.F.........A.....F......
+....C...F.......C...F.......F...C.......F...C....
+C...B...M...........C...M...C...........M...B...C
+......C...F...C...F.....C.....F...C...F...C......
+..C.........F...F...B.......B...F...F.........C..
+......F...C.......C...F...F...C.......C...F......
+MMFMMFM==MMFMMFMMFM==MMFMFMM==MFMMFMMFMM==MFMMFMM
+MMMMMMM==MMMMMMMMMM==MMMMMMM==MMMMMMMMMM==MMMMMMM
+FMMFMFF==FFMFMMMMFF==FFMMMFF==FFMMMMFMFF==FFMFMMF
+....=========================================....
+..F.......F...F.......F.=.F.......F...F.......F..
+............C...........C...........C............
+......B.........F...F...=...F...F.........B......
+..................C.....=.....C..................
+....C...................A...................C....
+..........F...F.........B.........F...F..........
+........................C........................
+......==C=======C===============C=======C==......
+..C.........B...........=...........B.........C..
+......C.............B...Q...B.............C......
+..............C.........A.........C..............
+..........C...........................C..........
+[owners]
+1 4 0
+1 6 0
+1 10 0
+1 12 0
+1 5 1
+1 8 1
+1 11 1
+1 4 2
+1 8 2
+1 12 2
+1 6 3
+1 10 3
+2 20 0
+2 22 0
+2 26 0
+2 28 0
+2 21 1
+2 24 1
+2 27 1
+2 20 2
+2 24 2
+2 28 2
+2 22 3
+2 26 3
+3 36 0
+3 38 0
+3 42 0
+3 44 0
+3 37 1
+3 40 1
+3 43 1
+3 36 2
+3 40 2
+3 44 2
+3 38 3
+3 42 3
+4 12 21
+4 24 21
+4 36 21
+4 6 22
+4 42 22
+4 18 23
+4 30 23
+4 4 24
+4 24 24
+4 44 24
+4 24 25
+4 24 26
+4 8 27
+4 16 27
+4 32 27
+4 40 27
+4 2 28
+4 12 28
+4 36 28
+4 46 28
+4 6 29
+4 20 29
+4 24 29
+4 28 29
+4 42 29
+4 14 30
+4 24 30
+4 34 30
+4 10 31
+4 38 31
+[units]
+1 r 7 2
+1 i 8 3
+1 i 7 4
+1 i 9 4
+2 r 23 2
+2 i 24 3
+2 i 23 4
+2 i 25 4
+3 r 39 2
+3 i 40 3
+3 i 39 4
+3 i 41 4
+4 T 8 20
+4 i 12 20
+4 t 20 20
+4 a 24 20
+4 t 28 20
+4 i 36 20
+4 T 40 20
+4 g 7 21
+4 m 8 21
+4 g 19 21
+4 m 20 21
+4 m 28 21
+4 g 29 21
+4 m 40 21
+4 g 41 21
+4 a 24 22
+</pre>
+      </details>
+    </section>
+
+    <!-- 3 -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">3</span>
+        <h2 class="text-2xl font-black">Decisions — locked</h2>
+      </div>
+      <div class="grid gap-4">
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D1 · The handicap is board state and nothing else</h3>
+          <p class="text-sm mt-1">
+            Nothing under <code>core/</code>, <code>ai/</code> or <code>scenes/</code> learns this
+            board is special. There is no handicap multiplier, no starting-funds field, no
+            per-seat difficulty, no "boss" flag. The lone army's advantage is entirely
+            <code>[owners]</code>, <code>[units]</code> and terrain — the three things a map file
+            already says. <strong>Rejected:</strong> a starting-funds or income-multiplier field on
+            the map, which would put a second opinion about the economy between the board and
+            <code>GameState.create</code> and would apply to every board that ever set it.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D2 · <code>#&nbsp;grouping&nbsp;1+2+3v4</code> is a claim the lint checks, never an instruction the match follows</h3>
+          <p class="text-sm mt-1">
+            Read in <code>MapData._read_comment</code> beside <code>SYMMETRIC_TAG</code>, exposed as
+            <code>MapData.grouping</code>, and its <strong>only</strong> reader is
+            <code>tests/unit/test_maps.gd</code>. Not the menu, not <code>MatchRequest</code>, not a
+            preselected preset. Four-Player Maps D5 rejects map-file metadata for seatings —
+            <em>"no recommended-pairs syntax: the convention lives in the boards' header comments and
+            in the preset"</em> — and a tag the menu obeys is exactly the thing it rejects. What this
+            tag is instead is the <code>#&nbsp;symmetric</code> precedent, unchanged: a fairness claim
+            a board makes about itself that a test verifies. A board that carries it and plays FFA
+            plays FFA; the tag has no runtime.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D3 · Parity moves from the seat to the side. It is not switched off</h3>
+          <p class="text-sm mt-1">
+            On a board declaring a grouping, <code>test_every_map_deals_each_team_the_same_properties</code>
+            checks two things instead of one:
+          </p>
+          <ul class="gc-checks text-sm mt-2">
+            <li><strong>Within a side, seats stay identical kind for kind.</strong> Seats 1, 2 and 3
+            must open on the same holdings as each other. This is the defect that actually happens —
+            one allied seat authored a city short — and it is exactly the check the shipped lint
+            already performs, applied at the right scope.</li>
+            <li><strong>Across sides, no side may out-own the sum of its opponents.</strong> A
+            ceiling rather than a judgement: a lint cannot say whether 30-against-36 is fair, but it
+            can say that a side opening with more property than everyone else combined is a board
+            defect wearing a design label.</li>
+          </ul>
+          <p class="text-sm mt-2">
+            That ceiling already earned its place: the first tally drafted for this board gave the
+            bulwark more property than its three rivals held between them, and the ceiling is what
+            caught it. The fix was the design fix — the lone army is behind on paper and ahead on
+            ground — not a looser number.
+          </p>
+          <p class="text-sm mt-2">
+            <strong>Rejected:</strong> an <code>#&nbsp;asymmetric</code> opt-out tag that skips the
+            lint (the board then has no economy check at all), and a filename exemption list inside
+            the test (the drift <code>MapCatalog</code> exists to prevent).
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D4 · Seat 4 is the lone army, so the shipped 3v1 preset fits without a line of UI</h3>
+          <p class="text-sm mt-1">
+            <code>SeatStrip.PRESETS</code> already writes <code>sides: [0,0,0,1]</code>,
+            <code>seats: [HUMAN, CPU, CPU, CPU]</code> — seats 1+2+3 against seat 4, human on seat 1.
+            Bulwark is authored to that, so opening the board and pressing <strong>3v1</strong> is
+            the match this plan describes. Playing the bulwark yourself is flipping seat 4 to Human
+            in the strip. <strong>Rejected:</strong> a second "Last Stand" preset — a preset is a
+            table row that exists on every board, and one whose meaning only lands on this one is a
+            menu that lies on twenty-three others.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D5 · The three allied seats are roles, not clones — and the board says so</h3>
+          <p class="text-sm mt-1">
+            A rectangle has no three-fold symmetry, so the alliance cannot be laid out
+            interchangeably. Under the left&ndash;right mirror, seats 1 and 3 are exact reflections
+            and seat 2 is the centre: <strong>2 faces the bulwark's HQ down the middle, 1 and 3
+            flank</strong>. They open on identical holdings (D3 checks it) and on deliberately
+            different ground. That is a feature in a 3v1 — picking a seat picks a role — but it has
+            one consequence that must be written in the header rather than discovered:
+            <strong>a free-for-all on this board is not fair among the three.</strong> It stays
+            legal, because nothing forbids a grouping; the header names the grouping the board is
+            for.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D6 · The lone army's edge is interior lines, not a bigger pile</h3>
+          <p class="text-sm mt-1">
+            The lateral road at y 16–17 sits <em>behind</em> the rampart, so the bulwark shifts
+            reserves between the four passes on road cost while the alliance shifts around the
+            outside on plains. That is the mechanic that makes one-against-three a match rather than
+            a grind, it needs no code (<code>MovementResolver</code> already reads road cost), and
+            the AI gets it for free. Stated as a decision because the alternative — buying the
+            asymmetry purely with more units and more bases — is what produces an unfair board
+            instead of an asymmetric one, and it is the failure mode this design is most likely to
+            drift back into under a retune (AB4).
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border-2 gc-locked p-4">
+          <h3 class="font-black">D7 · Land only</h3>
+          <p class="text-sm mt-1">
+            Naval plan R1: the AI cannot plan a ferry. Every army has to be able to march on every
+            other in any grouping this board offers, including the free-for-all. No water at all —
+            which also keeps the port, shoal and delivery lints trivially green and keeps the
+            board's identity in one idea instead of two.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--color-base-200) 60%, white)">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">4</span>
+        <h2 class="text-2xl font-black">Milestones — the guardrail lands before the board</h2>
+      </div>
+      <p class="max-w-3xl mb-5 text-sm">
+        Same order the More Maps plan used and for the same reason: the lint ships first, so the
+        board is born validated rather than validated in arrears.
+      </p>
+
+      <div class="grid gap-4">
+        <div class="card bg-base-100 border p-4">
+          <div class="flex items-baseline justify-between gap-3 flex-wrap">
+            <h3 class="font-black">AB1 · The lint learns sides <span class="badge badge-success badge-sm align-middle">shipped</span></h3>
+            <span class="badge badge-outline">size S · no new board</span>
+          </div>
+          <p class="text-sm mt-2">
+            <code>MapData.grouping</code> parsed from <code>#&nbsp;grouping&nbsp;1+2+3v4</code>
+            (D2), and <code>test_every_map_deals_each_team_the_same_properties</code> split into the
+            two checks of D3. Ships with the house's can-it-fail counter-tests, matching
+            <code>test_the_shared_water_lint_can_tell_two_seas_apart</code>: a grouped fixture with
+            one allied seat a city short must fail, and a grouped fixture whose declared lone side
+            out-owns the rest combined must fail.
+          </p>
+          <p class="text-sm mt-2 opacity-80">
+            <strong>Gate:</strong> <code>make verify</code> green; every shipped board still linted
+            seat-by-seat, because none carries the tag yet — so this milestone changes no existing
+            board's verdict.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex items-baseline justify-between gap-3 flex-wrap">
+            <h3 class="font-black">AB2 · Bulwark</h3>
+            <span class="badge badge-outline">size M</span>
+          </div>
+          <p class="text-sm mt-2">
+            <code>maps/bulwark.txt</code>, 49&times;32, §2's board verbatim, D5's header. Every existing lint
+            green on arrival: one owned HQ per army, a base per army, HQs reachable on foot, no unit
+            starting on a property, a menu description. Plus AB1's two new ones.
+          </p>
+          <p class="text-sm mt-2 opacity-80">
+            <strong>Gate:</strong> <code>make verify</code> green including
+            <code>test_map_soak.gd</code> (which now plays the largest board in the roster).
+            <code>make commander-balance</code> and <code>make difficulty-check</code>
+            <strong>byte-identical</strong> — adding a <code>.txt</code> touches no fixed board list,
+            and any movement means something read the roster that should not have.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex items-baseline justify-between gap-3 flex-wrap">
+            <h3 class="font-black">AB3 · Proof of play, and the measurement</h3>
+            <span class="badge badge-outline">size M</span>
+          </div>
+          <p class="text-sm mt-2">
+            Bulwark joins <code>tests/unit/test_alliance_soak.gd</code> <strong>in its own grouping
+            first</strong>, the treatment Marchlands gets as the board that exists for a pairing —
+            then in the free-for-all, because that grouping is reachable and must not crash even
+            though it is not fair. On top of that, the fairness instrument the Four Armies plan
+            already names for boards no symmetry tag can hold: <strong>the win spread over N
+            seeds</strong>, AI on all four seats, neutral commanders, recorded in
+            <code>docs/</code>.
+          </p>
+          <p class="text-sm mt-2 opacity-80">
+            <strong>Gate:</strong> no rejected command, no stall, both groupings; the win spread
+            written down <em>whatever it says</em>. AB3 measures and does not tune — same split as
+            the Judgement plan's AJ4.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4">
+          <div class="flex items-baseline justify-between gap-3 flex-wrap">
+            <h3 class="font-black">AB4 · The retune, from AB3's number</h3>
+            <span class="badge badge-outline">size S</span>
+          </div>
+          <p class="text-sm mt-2">
+            Read AB3's spread and move the board — the garrison's size, the neutral belt's depth,
+            the rampart's passes — until neither side is a foregone conclusion. <strong>The board is
+            the only dial.</strong> No <code>AIProfile</code> weight, no tier value, no
+            <code>data/</code> edit: those are owned by the balance retune and the difficulty plan,
+            and a board that needs the planner changed to be playable is a board that is wrong.
+          </p>
+          <p class="text-sm mt-2 opacity-80">
+            <strong>Gate:</strong> the retune and its before/after spread recorded; both balance
+            reports still byte-identical.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="px-6 py-8 md:px-12">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">5</span>
+        <h2 class="text-2xl font-black">Risks</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+
+        <div class="card bg-base-100 border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">R1 · Tempo, not income, is the alliance's real advantage</h3>
+          <p class="text-sm mt-1">
+            Three armies act three times a day to the bulwark's once. Every property tally on this
+            page understates that, and no lint can see it. <strong>Do not assert the balance —
+            measure it (AB3).</strong> If the alliance runs away with it, the dial is the garrison
+            and the belt, not the tally.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4 gc-risk-high">
+          <h3 class="font-black text-sm">R2 · The AI has no "hold the line" mode</h3>
+          <p class="text-sm mt-1">
+            <code>_advance_goal</code> pushes forward; a bulwark that marches out of its rampart on
+            day two throws the board's premise away. The only things pulling the other way are
+            AJ1's <code>defend_weight</code> and <code>_besieged_home_hqs</code>, and neither was
+            priced for this. Mitigation is AB3's soak; if it walks out, the answer is <em>the
+            board</em> — a deeper rampart, fewer passes — never new planner code. Precedent: Four
+            Armies looked at <code>hq_capture_multiplier</code> after elimination changed what it
+            bought, and left it alone.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R3 · Suite wall clock</h3>
+          <p class="text-sm mt-1">
+            <code>test_map_soak.gd</code> plays every board for 10 days at a cap of
+            <code>w&times;h&times;4</code> — 6,272 commands here, the largest in the roster by far — and
+            <code>test_alliance_soak.gd</code> adds more, twice, on a board with 21 armies' worth of
+            production. Watch <code>make test</code>'s runtime at AB2 and AB3. The dial if it bites
+            is the seed count in AB3's measurement, not the board's size.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R4 · The balance instruments cannot measure this board</h3>
+          <p class="text-sm mt-1">
+            <code>BalanceMatchEngine</code> plays two sides. <code>make commander-balance</code> and
+            <code>make difficulty-check</code> must <strong>not</strong> be pointed at Bulwark, and
+            both reports staying byte-identical is AB2's and AB4's merge bar precisely because this
+            board is invisible to them. The fairness number comes from AB3's GUT soak and nowhere
+            else.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4 gc-risk-medium">
+          <h3 class="font-black text-sm">R5 · The tag must not become a general opt-out</h3>
+          <p class="text-sm mt-1">
+            <code>#&nbsp;grouping</code> is one board's declaration, not a way for the twenty-fourth
+            map to duck the parity lint. Guard, cheap and self-limiting: a board carrying the tag
+            whose sides open <em>equal</em> fails — if the opening is fair seat by seat, the tag is
+            unnecessary and belongs deleted.
+          </p>
+        </div>
+
+        <div class="card bg-base-100 border p-4 gc-risk-good">
+          <h3 class="font-black text-sm">R6 · A board this size has never been played here</h3>
+          <p class="text-sm mt-1">
+            49&times;32 is 1,568 cells against Confluence's 768 — this board is <em>twice</em>
+            the biggest thing the engine has been asked to play, and it carries 66 owned properties
+            and 28 starting units on top. The pipeline is size-agnostic by design (the More Maps
+            plan measured that), and <code>ironworks</code> — the one board reaching the arena's
+            command cap — does it at 24&times;16, so the dominant risk is <em>economy density</em>
+            rather than area. But Bulwark is large <em>and</em> dense: 101 properties all told. This
+            is now the plan's most likely source of an unpleasant surprise, and AB2's gate is a
+            measured <code>make test</code> runtime, not a green tick.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="px-6 py-8 md:px-12" style="background:color-mix(in srgb, var(--color-base-200) 60%, white)">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="gc-section-number">6</span>
+        <h2 class="text-2xl font-black">What this supersedes, in one place</h2>
+      </div>
+      <div class="grid gap-3 max-w-4xl">
+        <div class="card bg-base-100 border p-4">
+          <p class="text-sm">
+            <strong>Four Armies D5</strong> — <em>"3v1 is deliberately asymmetric — a challenge
+            grouping, compensated by commander pick and tier, never by the board."</em> True of every
+            board that shipped before this one, and it stays the rule for all of them. Bulwark is the
+            named exception: <strong>a board may compensate a grouping when it is authored for that
+            grouping and declares it.</strong>
+          </p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <p class="text-sm">
+            <strong>Four-Player Maps D5</strong> — <em>"boards are authored full and reduced fairness
+            is a convention, not a parser feature."</em> Unchanged and deliberately respected: the
+            <code>#&nbsp;grouping</code> tag is not a parser feature in the sense D5 forbids, because
+            nothing at runtime reads it (D2). It is a lint claim, the
+            <code>#&nbsp;symmetric</code> shape.
+          </p>
+        </div>
+        <div class="card bg-base-100 border p-4">
+          <p class="text-sm">
+            <strong>The map lint's per-seat parity</strong> — its reasoning survives verbatim; its
+            <em>scope</em> becomes the side on a board that declares one (D3). Every board without the
+            tag is checked exactly as it is today.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="px-6 py-6 md:px-12 text-xs opacity-60">
+      Grid Commanders · Bulwark / asymmetric-board plan · proposal, nothing built
+    </footer>
+  </div>
+</body>
+</html>

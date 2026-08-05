@@ -19,7 +19,13 @@ extends GutTest
 ## - Seats opening on different buildings open on different income and different
 ##   production. The `# symmetric` tag catches that on a duel, but it is a
 ##   180-degree instrument no three- or four-seat board can carry, so the
-##   per-seat property count is the lint that holds those level.
+##   per-seat property count is the lint that holds those level — until a board
+##   declares `# grouping`, at which point parity moves from the seat to the
+##   side (asymmetric-board plan D3): allied seats still have to match kind for
+##   kind, and no side may open on more property, summed, than everyone else
+##   combined. The tag is a claim the lint checks, never an instruction a match
+##   follows (D2), and it is guarded against becoming a general opt-out: a
+##   tagged board whose sides were already going to open level fails too (R5).
 ## - HQs walled off from each other put every army's HQ beyond the others' reach,
 ##   so no army can ever be felled by capture, which quietly reduces the match to
 ##   rout-only.
@@ -35,11 +41,20 @@ extends GutTest
 ##
 ## Every failure names the map it failed on. "The roster is broken" is not an
 ## actionable failure message.
+##
+## The `# grouping` counter-tests live in the sibling test_map_grouping.gd
+## rather than here: this file already sits at the gdlintrc
+## max-public-methods ceiling, the same reason test_sides_flag.gd split from
+## test_match_request.gd. Both suites share the check itself,
+## tests/helpers/map_parity.gd, so there is one authority for what "level"
+## means either way.
 
 const HQ := &"hq"
 const BASE := &"base"
 const PORT := &"port"
 const SHOAL := &"shoal"
+
+const MapParity := preload("res://tests/helpers/map_parity.gd")
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -105,38 +120,16 @@ func test_every_map_gives_each_team_a_base() -> void:
 ## is the one attribution no amount of playtesting recovers from. Nothing else
 ## catches it: a board that hands one side a spare city parses, loads and plays
 ## perfectly, and is quietly unfair every time.
-##
-## Counted by kind, because a base is not a city: equal totals with one seat
-## holding the only airfield is the same defect wearing a fair number.
 func test_every_map_deals_each_team_the_same_properties() -> void:
 	for map in _maps():
-		var by_team := _owned_properties_by_team(map)
-		var lead: Dictionary = by_team[map.teams()[0]]
-		var kinds := {}
-		for team: int in by_team:
-			for id: StringName in by_team[team]:
-				kinds[id] = true
-		for id: StringName in kinds:
-			for team in map.teams():
-				var counts: Dictionary = by_team[team]
-				assert_eq(
-					int(counts.get(id, 0)),
-					int(lead.get(id, 0)),
-					(
-						(
-							"%s: team %d opens on %d %s to team %d's %d — a seat with more "
-							% [
-								_name(map),
-								team,
-								int(counts.get(id, 0)),
-								id,
-								map.teams()[0],
-								int(lead.get(id, 0)),
-							]
-						)
-						+ "income or more production is an edge no playtest attributes right"
-					)
-				)
+		assert_eq(
+			MapParity.error(map),
+			"",
+			(
+				"%s: a seat (or, on a `# grouping` board, a side) with more income " % _name(map)
+				+ "or more production is an edge no playtest attributes right"
+			)
+		)
 
 
 func test_every_map_keeps_its_hqs_reachable_on_foot() -> void:
@@ -491,23 +484,6 @@ func _cells_of_terrain(map: MapData, terrain_id: StringName) -> Array[Vector2i]:
 			if map.terrain_at(cell).id == terrain_id:
 				cells.append(cell)
 	return cells
-
-
-## What each seat opens holding, `team -> {terrain id -> count}`, with an entry
-## for every seat the board deals — an army that starts on nothing still has to
-## be compared against the one that started on something.
-func _owned_properties_by_team(map: MapData) -> Dictionary:
-	var by_team := {}
-	for team in map.teams():
-		by_team[team] = {}
-	for cell in map.property_cells():
-		var team := map.owner_at(cell)
-		if team == MapData.NEUTRAL:
-			continue
-		var counts: Dictionary = by_team[team]
-		var id := map.terrain_at(cell).id
-		counts[id] = int(counts.get(id, 0)) + 1
-	return by_team
 
 
 ## Every cell `move_class` can reach from `start`, `start` included.

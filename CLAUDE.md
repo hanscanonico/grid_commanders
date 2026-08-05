@@ -882,6 +882,38 @@ that must survive any change; the full rationale, milestones and risk registers 
   **opposite seats (1&3, 2&4) make the fair duel**, which the Duel preset encodes and a
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
+- `asymmetric-board-plan.html` — Bulwark, the board that is not fair on purpose: one entrenched
+  army holding a rampart against three allies, milestones AB1–AB4, **AB1 shipped**. It is the
+  named exception to four-players D5 ("3v1 is deliberately asymmetric — a challenge grouping,
+  compensated by commander pick and tier, never by the board"), which stays the rule for every
+  other board: **a board may compensate a grouping when it is authored for that grouping and
+  declares it.** D1: **the handicap is board state and nothing else** — no handicap multiplier, no
+  starting-funds field, no per-seat difficulty, no boss flag; the lone army's advantage is entirely
+  `[owners]`, `[units]` and terrain. D2: **`# grouping 1+2+3v4` is a claim the lint checks, never
+  an instruction the match follows** — read in `MapData._read_comment` beside `SYMMETRIC_TAG` and
+  exposed as `MapData.grouping`, which is the **raw declared text and nothing more**: `core/`
+  interprets none of it, the tag has no runtime, and a board carrying it plays whatever grouping the
+  launch says. Its only reader is `tests/helpers/map_parity.gd`, driven by `tests/unit/test_maps.gd`
+  and `tests/unit/test_map_grouping.gd`, and it turns the string into sides through
+  **`MatchRequest.parse_sides_flag`** — the shipped authority for that grammar — rather than
+  re-reading `1+2+3v4` a second time in `core/`, which is also why the tag is a String: `core/` may
+  not reach `scenes/`. Four-player-maps D5 is respected rather than superseded, the tag not being a
+  parser feature in the sense it forbids. D3: **parity moves from the seat to the side and is not
+  switched off** — `MapParity.error` is the one answer to what "level" means, untagged boards get
+  the seat-by-seat kind-for-kind check verbatim (which is every shipped board), and a tagged board
+  gets two checks instead: allied seats identical **kind for kind**, and no side out-owning the sum
+  of its opponents by **plain total count** — a ceiling rather than a judgement, because a lint
+  cannot say whether 30-against-36 is fair. The rejected alternatives are an `# asymmetric` opt-out
+  that skips the lint outright and a filename exemption list inside the test. R5 is the guard that
+  keeps the tag from becoming that opt-out anyway and is enforced, not just written down: **a
+  tagged board whose seats already open level fails**, as does a tag that reads as a free-for-all —
+  if the opening is fair seat by seat the tag is unnecessary and belongs deleted. D4: seat 4 is the
+  lone army, so `SeatStrip`'s shipped 3v1 preset fits without a line of UI. D6: the lone army's edge
+  is **interior lines** (a lateral road behind the rampart), never a bigger pile, which is the
+  failure mode a retune is most likely to drift back into. D7: land only (naval R1).
+  R4: `BalanceMatchEngine` plays two sides, so the board is invisible to `make commander-balance`
+  and `make difficulty-check` — both reports staying byte-identical is the merge bar, and the
+  fairness number comes from AB3's GUT soak and nowhere else.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
   offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command
