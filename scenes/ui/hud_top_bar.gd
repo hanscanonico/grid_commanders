@@ -25,6 +25,7 @@ var _faction_label: Label
 var _doctrine_label: Label
 var _funds_label: Label
 var _threat_label: Label
+var _range_label: Label
 var _keys_label: Label
 
 
@@ -79,6 +80,12 @@ func _build() -> void:
 	# is still ControlHints'.
 	_threat_label = UiTheme.hud_label(ControlHints.THREAT_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	row.add_child(_threat_label)
+	# The fire ring, the same way: R answers for whatever the cursor is on in every
+	# board context, so it is a lens rather than a legend entry. Beside T, and lit the
+	# same way, because the two are one pair of questions — where can this unit shoot,
+	# and where can anything shoot me.
+	_range_label = UiTheme.hud_label(ControlHints.RANGE_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	row.add_child(_range_label)
 	row.add_child(UiTheme.hud_divider(_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that
@@ -116,10 +123,17 @@ func show_turn(
 ## changes, so the chip reads as the same control in both states rather than as
 ## two different ones, and the bar's layout cannot shift when it is toggled.
 func show_threat_lens(on: bool) -> void:
-	if _threat_label != null:
-		_threat_label.add_theme_color_override(
-			"font_color", UiTheme.DANGER if on else UiTheme.INK_3
-		)
+	_light(_threat_label, on)
+
+
+## The fire ring's chip, lit on the same terms as the threat lens's above.
+func show_range_lens(on: bool) -> void:
+	_light(_range_label, on)
+
+
+func _light(chip: Label, on: bool) -> void:
+	if chip != null:
+		chip.add_theme_color_override("font_color", UiTheme.DANGER if on else UiTheme.INK_3)
 
 
 ## Swaps the key legend for the interaction the player is now in. Called on every

@@ -33,6 +33,14 @@ const MAX_CHARS := 40
 ## eventually names a binding the InputMap no longer has.
 const THREAT_CHIP := "T · THREAT"
 
+## The fire ring's chip, on the same terms and for the same reason. R used to be a
+## legend entry in the two contexts that had a unit in hand, and now answers for
+## whatever the cursor is on in every board context including rest — where the
+## legend has no room for it. A key that does the same thing everywhere is a way of
+## looking at the board, so it is stated once beside T rather than three times in a
+## rotation that would still be missing it somewhere.
+const RANGE_CHIP := "R · RANGE"
+
 const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"
 const PREVIEW := &"preview"
@@ -55,8 +63,8 @@ const END_TURN_GUARD := &"end_turn_guard"
 ## sits in long enough to want them.
 const LEGENDS: Dictionary = {
 	IDLE: "ENTER · SELECT   ESC · MENU   +/- · ZOOM",
-	UNIT_SELECTED: "ENTER · MOVE   R · RANGE   ESC · BACK",
-	PREVIEW: "R · RANGE   ESC · BACK",
+	UNIT_SELECTED: "ENTER · MOVE   ESC · BACK",
+	PREVIEW: "ESC · BACK",
 	MENU: "UP/DOWN · PICK   ENTER · OK   ESC · BACK",
 	TARGETING: "ENTER · FIRE   ESC · BACK",
 	DROP_TARGETING: "ENTER · DROP   ESC · BACK",

@@ -84,6 +84,36 @@ func _run_enemy_range_preview() -> String:
 	await _press(&"show_range")
 	if _battle.overlays.attack_layer.get_used_cells().is_empty():
 		return "R painted no enemy fire ring"
+	return await _run_range_from_rest()
+
+
+## The same reading asked for with one key from rest, which is what R is for. Both
+## units a confirm can only preview are walked — an enemy, and one of ours that has
+## already acted — because those are the two the ring used to cost two presses.
+func _run_range_from_rest() -> String:
+	await _press(&"cancel")
+	if _battle.state != Battle.State.IDLE:
+		return "cancel did not dismiss the enemy preview"
+	if not _battle.overlays.attack_layer.get_used_cells().is_empty():
+		return "dismissing the preview left the fire ring on the board"
+	var error := await _expect_ring_from_rest(Vector2i(9, 8), "the enemy")
+	if error != "":
+		return error
+
+	var infantry := _battle.game.unit_at(Vector2i(4, 3))
+	infantry.acted = true
+	error = await _expect_ring_from_rest(infantry.cell, "an already-acted unit of ours")
+	infantry.acted = false
+	return error
+
+
+func _expect_ring_from_rest(cell: Vector2i, whose: String) -> String:
+	_battle.set_cursor_cell(cell)
+	await _press(&"show_range")
+	var painted := not _battle.overlays.attack_layer.get_used_cells().is_empty()
+	await _press(&"cancel")
+	if not painted:
+		return "R from rest painted no fire ring for %s" % whose
 	return ""
 
 

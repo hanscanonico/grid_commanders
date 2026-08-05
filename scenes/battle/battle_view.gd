@@ -378,6 +378,12 @@ func refresh_threat_lens(on: bool) -> void:
 	hud_top.show_threat_lens(on)
 
 
+## The same for R's fire ring. Battle calls it from its `_range_shown` setter, so
+## every site that clears the ring lights the chip down with it.
+func refresh_range_lens(on: bool) -> void:
+	hud_top.show_range_lens(on)
+
+
 ## Prints the keys that do something in the interaction the player is now in.
 ## Battle calls it from its `state` setter, so the legend cannot fall out of step
 ## with the flow the way a per-call-site refresh eventually would.
