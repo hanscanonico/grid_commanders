@@ -1149,7 +1149,7 @@ func _stage_power_banner() -> void:
 ## preview that has stopped agreeing with the strike photographs perfectly well.
 func _stage_power_targeting() -> void:
 	_set_red_commander(&"radek_morn", true)
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.POWER_TARGETING)
 	_battle.set_cursor_cell(HAMMERFALL_AIM)
 	await _battle.get_tree().create_timer(0.2).timeout

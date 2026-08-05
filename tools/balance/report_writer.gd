@@ -120,6 +120,7 @@ static func _store(path: String, text: String) -> void:
 		push_error("balance: cannot write %s" % path)
 		return
 	file.store_string(text)
+	file.flush()
 	var error := file.get_error()
 	file.close()
 	if error != OK:
