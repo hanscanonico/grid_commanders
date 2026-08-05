@@ -188,10 +188,18 @@ that must survive any change; the full rationale, milestones and risk registers 
   of ours that has already acted — is one press away. Routing it through the preview rather than
   painting from IDLE is the whole of the decision: `R` then inherits the click's `can_see_unit`
   gate (it can no more probe fog than a click can), the ring cannot outlive its subject, and `ESC`
-  keeps meaning what it meant. Because `R` now does the same thing in every board context, it is
-  stated **once as a chip beside `T`'s** (`ControlHints.RANGE_CHIP`, lit while the ring is up) and
-  is gone from the two legends that named it — `IDLE`'s was already at `MAX_CHARS` and could never
-  have carried it. `Battle._range_shown` is setter-backed for that chip, the same shape as
+  keeps meaning what it meant. **The cursor names the subject in both rest states, not just IDLE**:
+  from a preview `R` already put up, a cursor that has walked onto a *different* visible unit
+  re-enters the preview on that one rather than toggling the last one's ring off — otherwise
+  scanning a second unit costs `ESC` and then `R`, which is the two presses this whole entry exists
+  to retire, and the ring outlives its subject exactly as the preview route promises it cannot. A
+  cursor still on the same unit keeps the momentary-lens toggle, and a unit in hand
+  (`UNIT_SELECTED`) is untouched: there the cursor is planning a move, not scanning, so `R` stays
+  that unit's ring and a plain toggle. Because `R` now does the same thing in every board
+  context, it is stated **once as a chip beside `T`'s** (`ControlHints.RANGE_CHIP`, lit while
+  the ring is up) and is gone from the two legends that named it — `IDLE`'s was already at
+  `MAX_CHARS` and could never have carried it. `Battle._range_shown` is setter-backed for that
+  chip, the same shape as
   `Battle.state`'s: half a dozen sites clear the ring, and a chip only some of them told would
   advertise one that is not on the board. Nothing under `core/` moved; `scenes/battle/`'s
   `enemy_range_preview` smoke scenario is the gate, walking both units from rest.

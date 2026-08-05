@@ -422,13 +422,20 @@ mouse, keyboard, or controller throughout.
   MENU`), with the cursor free to walk the board and read tiles; confirm hands the turn back and
   the computer picks up where it stopped. In a match where every seat is a computer's this is the
   only way to a menu at all — and so the only way out short of quitting the application
-- `R`, while any unit's movement range is on screen — selected or previewed — toggles a red
-  overlay of the cells that unit could bring under fire this turn: a direct unit firing from
-  anywhere it could stop, an indirect only from where it stands, since it cannot move and shoot.
-  The same split as the blue: on one of your own units that is every such cell, whatever the fog;
-  on another side's it is the same reading as the blue beneath it, drawn from what you have
-  scouted. It shows what the weapon *reaches* — a unit with no shot left still shows its ring, one
-  resupply from meaning it — and it paints over the blue until pressed again
+- `R` toggles a red overlay of the cells the unit under the cursor could bring under fire this
+  turn: a direct unit firing from anywhere it could stop, an indirect only from where it stands,
+  since it cannot move and shoot. It answers from rest, on whatever unit you are hovering — an
+  enemy's, or one of yours that has already spent its day — so reading what something threatens
+  costs one key rather than a click and then `R`, and its blue movement reach comes up with it,
+  exactly as clicking the unit would give you. It follows the cursor: walk onto a second unit and
+  press `R` again and you get *that* unit's ring, while a second press with the cursor still on
+  the same unit puts the ring down. A unit you have picked up is the exception — there `R` is that
+  unit's ring and a plain toggle, since the cursor is planning its move. The top bar's `R · RANGE`
+  chip says which it is, dim while no ring is up and red while one is. It can no more see through
+  fog than a click can, and the same split as the blue applies: on one of your own units the ring
+  is every such cell, whatever the fog; on another side's it is the same reading as the blue
+  beneath it, drawn from what you have scouted. It shows what the weapon *reaches* — a unit with
+  no shot left still shows its ring, one resupply from meaning it — and it paints over the blue
 - `T` raises and lowers the **threat lens**: red stripes over every cell a side hostile to you
   could bring under fire, all of them at once. It is `R`'s sibling and its opposite in scope —
   `R` asks what *this* unit reaches, the lens asks where it is unsafe to stand. It issues nothing
@@ -524,10 +531,11 @@ mouse, keyboard, or controller throughout.
   counter and the badge on the tile being taken, the movement arrow, the attack forecast, the
   action menu, the first-match mission strip — are ever drawn
   over terrain. The **top bar** carries the day, the side in hand as a faction colour chip and
-  name, that commander's doctrine, the funds, a `T · THREAT` chip — dim while the threat lens is
-  down, red while it is up — and a one-line **key legend** that swaps with the
-  interaction — `ENTER · SELECT   ESC · MENU   +/- · ZOOM` at rest, `ENTER · FIRE   ESC · BACK`
-  while targeting, and so on. The **bottom bar** carries, left to right: the commander's
+  name, that commander's doctrine, the funds, a `T · THREAT` chip and an `R · RANGE` chip — each
+  dim while its lens is down, red while it is up — and a one-line **key legend** that swaps with
+  the interaction — `ENTER · SELECT   ESC · MENU   +/- · ZOOM` at rest,
+  `ENTER · FIRE   ESC · BACK` while targeting, and so on. The **bottom bar** carries, left to
+  right: the commander's
   portrait, name, power name, and — for a side playing a power — the charge meter with its
   `charge / cost` readout, which reads `READY · F` when it is full and `ACTIVE` while it runs,
   plus a **FIRE** button (see Commanders below); then the unit on the hovered tile, if any — its

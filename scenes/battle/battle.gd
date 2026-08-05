@@ -779,20 +779,20 @@ func _clear_preview() -> void:
 ## the scenario driver walks the flows a player's input reaches, and this is one of
 ## them. Painted through the perspective rather than off AttackRange directly, because
 ## the ring is whole for a unit of the viewer's own side and their best reading of
-## another side's — a split by whose unit it is, not by which state we are in, and the
-## perspective's to make rather than this call site's.
+## another side's — a split by whose unit it is, not by which state we are in.
 ##
-## From rest it reads the cursor's unit through the preview, so asking what something
-## threatens costs one key rather than a confirm and then R — and it answers for every
-## unit a click may inspect: an enemy's, and one of ours that has already acted. The
-## same sight gate a click goes through, so R can no more probe fog than a click can.
+## The cursor names the subject, through the preview and so through the same sight gate
+## a click goes through: reading what an enemy or an already-acted unit threatens costs
+## one key, and walking onto a second unit re-aims R rather than putting the first one's
+## ring down. A unit in hand is the exception — there the cursor is planning a move.
 func toggle_range() -> void:
-	if state == State.IDLE:
+	if state == State.IDLE or state == State.PREVIEW:
 		var under := perspective.visible_unit_at(cursor_cell)
-		if under == null:
-			return
-		_enter_preview(under)
-	# The unit whose range is up: the selected one, or a previewed one.
+		if under != null and (under != _previewed or state == State.IDLE):
+			_enter_preview(under)
+		elif state == State.IDLE:
+			return  # nothing under the cursor to ask about
+	# The unit whose range is up: the selected one, or the one the cursor named.
 	var unit: Unit = selected if state == State.UNIT_SELECTED else _previewed
 	if unit == null:  # not in a range state
 		return
