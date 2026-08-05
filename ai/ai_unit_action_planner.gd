@@ -578,22 +578,32 @@ func _consider_supply(
 ) -> void:
 	if profile.supply_weight <= 0.0 or not unit.type.can_resupply:
 		return
+	# Who a top-up would reach is SupplyCommand's own answer, and it is asked
+	# rather than re-derived because the radius is the commander's: Gideon Holt
+	# supplies two tiles out, and adjacency spelled here would miss the second. It
+	# takes the cell it is asked about, so one command answers for every cell.
+	var standing: Array[Vector2i] = [unit.cell]
+	var probe := SupplyCommand.new(unit, standing)
+	var best_score := plan.score
+	var best_cell := unit.cell
+	var found := false
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var command := SupplyCommand.new(unit, reachable.path_to(cell))
-		# Who a top-up would reach is SupplyCommand's own answer, and it is asked
-		# rather than re-derived because the radius is the commander's: Gideon Holt
-		# supplies two tiles out, and adjacency spelled here would miss the second.
-		var value := _supply_value(command.friendlies_in_reach(state, cell))
+		var value := _supply_value(probe.friendlies_in_reach(state, cell))
 		if value <= 0.0:
 			continue
 		var score := (
 			profile.supply_weight * value - profile.step_cost_penalty * float(reachable.costs[cell])
 		)
-		if score > plan.score:
-			plan.score = score
-			plan.command = command
+		if score > best_score:
+			best_score = score
+			best_cell = cell
+			found = true
+	if not found:
+		return
+	plan.score = best_score
+	plan.command = SupplyCommand.new(unit, reachable.path_to(best_cell))
 
 
 ## What refilling these friendlies is worth: each one's cost against the pool it

@@ -159,8 +159,8 @@ static func reachable(
 	# answer serve them all.
 	var step_costs: Dictionary[TerrainType, int] = {}
 	# The sighting team's visible cells decide whether a unit on a cell counts at
-	# all. Computed on first need and reused, so a fill that meets nobody — and any
-	# fill at all with fog off — never pays for it.
+	# all. Computed on first need and reused, so a fill that meets nobody that team
+	# has to look for — and any fill at all with fog off — never pays for it.
 	var visible: Dictionary = {}
 	var visible_computed := false
 	var frontier: Array[Vector2i] = [unit.cell]
@@ -189,7 +189,8 @@ static func reachable(
 			var occupant: Unit = occupants.get(next)
 			var stoppable := true
 			if occupant != null:
-				if state.fog_enabled and not visible_computed:
+				var may_be_unseen := not state.allied(occupant.team, seer)
+				if state.fog_enabled and may_be_unseen and not visible_computed:
 					visible = Vision.visible_cells(state, seer)
 					visible_computed = true
 				stoppable = _can_stop_on(state, unit, occupant, seer, visible)
