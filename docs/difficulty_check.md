@@ -9,7 +9,9 @@ CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 seeds (§4d): Normal takes **70.0%** from Easy — which meets the bar — and
 Difficult **55.0%** from Normal, against a required 70%. Zero rejected commands
 and zero cap stalls, so the planner and the rules still agree — what is gone is
-the *gap* between tiers, not the correctness of any of them.
+the *gap* between tiers, not the correctness of any of them. Those two figures
+were taken before this branch merged `origin/main` and have not been re-read
+since — see §4d's staleness note for what moved under them.
 
 §4c's 68.3% / 53.3% is superseded and should not be quoted: it was taken before
 the AI Arena and AI Economy slices, and a control re-run at this branch's merge
@@ -678,6 +680,26 @@ measurement §4b never took at a useful width, and it remains the dial that most
 directly answers the "the AI throws units away" report.
 
 ## 4d. The audit's AU2 slice, and a control that moved under it (2026-08-04)
+
+> **Stale as a description of the shipped tree (noted 2026-08-05).** Both runs
+> below were measured on 2026-08-04, at 15 seeds and 120 matches each, on this
+> branch *before* it merged `origin/main` — the control on a frozen worktree
+> pinned at the merge base, precisely so the attribution would be honest. Both
+> are real; neither describes the tree as shipped. What changed under them: the
+> merge took main's `_consider_join` over this branch's, so `join_weight` ships
+> **inert at 0.0** where the measured tree had it live, and main brought
+> `cover_tiles`, `condition_weight` and an HP-scaled unit valuation into the
+> same planner. The proof that the merged planner plays differently is not an
+> assertion — it is the determinism golden moving on the first post-merge run,
+> where the pinned match routs on day 14 instead of reaching the cap. The
+> **reasoning** below survives and still stands: AU2's five points are entirely
+> on `ironworks`, a board that resolved 0 of 30 on the board in both runs, so
+> they are a day-cap tiebreak reading and not a fight won; and §4c's 68.3% /
+> 53.3% is superseded regardless, because the re-run control alone disproves
+> it. What does **not** survive is the two win-rate figures as a description of
+> the shipped tree. The next honest reading is a post-merge
+> `make difficulty-check DIFF="--seeds=15"` (§3), which sits in no gate —
+> not `make verify`, not CI — so it will not happen by itself.
 
 The codebase audit's AU2 slice gave the planner capabilities it had never had —
 Join and Supply as scored candidates, a supply truck it can actually buy, rockets
