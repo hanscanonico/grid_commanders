@@ -50,6 +50,36 @@ func test_the_grouped_parity_lint_can_tell_a_lopsided_side_apart() -> void:
 	)
 
 
+## The ceiling is one-directional: it holds a side only while that side fields
+## no more armies than the rest of the board does. Bulwark's own tally is the
+## case — three allies on 36 properties against one army's 30 — and it passes
+## because three armies holding more ground than one is what a 3v1 board is,
+## while the same board with the lone army over its three rivals still fails.
+func test_a_side_with_more_armies_may_out_own_the_lone_one() -> void:
+	var bulwark := _fixture({1: 12, 2: 12, 3: 12, 4: 30}, "1+2+3v4")
+	assert_eq(
+		MapParity.error(bulwark),
+		"",
+		"the alliance's 36 against the bulwark's 30 is three armies out-owning one, not the defect"
+	)
+	var over_the_ceiling := _fixture({1: 12, 2: 12, 3: 12, 4: 37}, "1+2+3v4")
+	assert_ne(
+		MapParity.error(over_the_ceiling),
+		"",
+		"the bulwark holding more than its three rivals between them is the defect"
+	)
+
+
+## A grouping that allies every seat the board deals sets nobody against
+## anybody, so it claims as little as a free-for-all does and fails for its own
+## stated reason rather than through the across-side ceiling.
+func test_a_grouping_that_opposes_nobody_fails() -> void:
+	var all_allied := _fixture({1: 2, 2: 2, 3: 2, 4: 6}, "1+2+3+4")
+	var reported := MapParity.error(all_allied)
+	assert_ne(reported, "", "a grouping that sets nobody against anybody claims nothing")
+	assert_string_contains(reported, "opposes nobody")
+
+
 ## R5's guard: the tag is not a general opt-out from the parity lint. A board
 ## whose seats were already going to open level bought nothing by declaring a
 ## grouping, so it fails here rather than pass for the wrong reason.
@@ -65,13 +95,14 @@ func test_a_grouping_tag_fails_when_it_was_never_needed() -> void:
 ## `MatchRequest.parse_sides_flag` reads a spelled-out free-for-all as the empty
 ## grouping — the same thing an absent tag already means — so a board that
 ## carries `# grouping` and says nothing with it is a claim that means nothing.
+## The fixture is deliberately uneven: with every seat on its own side nothing
+## else in the lint fails it, so the error can only come from the branch this
+## test names.
 func test_a_grouping_that_reads_as_a_free_for_all_fails() -> void:
-	var spelled_out := _fixture({1: 2, 2: 2, 3: 2, 4: 2}, "1v2v3v4")
-	assert_ne(
-		MapParity.error(spelled_out),
-		"",
-		"the tag names no real grouping, and claiming one that isn't there is a defect"
-	)
+	var spelled_out := _fixture({1: 2, 2: 2, 3: 2, 4: 6}, "1v2v3v4")
+	var reported := MapParity.error(spelled_out)
+	assert_ne(reported, "", "the tag names no real grouping, and claiming one is a defect")
+	assert_string_contains(reported, "names no sides")
 
 
 ## One row of cities, as many per team as `counts` says, each owned by that

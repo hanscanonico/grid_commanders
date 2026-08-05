@@ -18,20 +18,35 @@
 ## 30-against-36 but can cap a side from out-owning everyone else combined —
 ## may exceed the sum of all the others'.
 ##
-## Two ways the tag itself is the defect rather than the board, and both fail
-## here instead of skipping the lint (D3's rejected opt-out, R5's guard): a
-## grouping that reads as a free-for-all claims nothing, and a grouping whose
-## seats were already going to pass the untagged check bought nothing.
+## That ceiling holds a side only while it fields no more armies than its
+## opponents do between them: a side with more armies is expected to hold more
+## ground, so the defect D3 names is one army out-owning three, never three
+## out-owning one. On an equally seated grouping — a 2v2 — neither side
+## out-seats the other, so both stay capped and the ceiling there amounts to
+## requiring equal side totals. That is deliberate, and no shipped board
+## declares a grouping at all.
+##
+## Three ways the tag itself is the defect rather than the board, and all of
+## them fail here instead of skipping the lint (D3's rejected opt-out, R5's
+## guard): a grouping that names no sides claims nothing, one that allies every
+## seat the board deals opposes nobody, and one whose seats were already going
+## to pass the untagged check bought nothing.
 static func error(map: MapData) -> String:
 	var by_team := _owned_properties_by_team(map)
 	var seat_error := _seat_error(map, by_team)
 	if map.grouping.is_empty():
 		return seat_error
 	var grouped := MatchRequest.parse_sides_flag(map.grouping)
+	# `parse_sides_flag` answers the empty grouping to a tag it could not read
+	# and to one spelling out a free-for-all alike, and reports the unreadable
+	# one itself, so this names both rather than picking one of them.
 	if grouped.is_empty():
 		return (
-			"%s: `# grouping %s` reads as a free-for-all — state a real grouping or delete the tag"
-			% [_name(map), map.grouping]
+			(
+				"%s: `# grouping %s` names no sides — a tag that is not a grouping, or one "
+				% [_name(map), map.grouping]
+			)
+			+ "spelling out a free-for-all, claims nothing; state a grouping or delete the tag"
 		)
 	if seat_error == "":
 		return (
@@ -92,8 +107,10 @@ static func _seat_error(map: MapData, by_team: Dictionary) -> String:
 	return ""
 
 
-## D3's two side-scoped checks, run once a grouping has already cleared R5's
-## guard. Grouped by the board's own seat order, so the first seat named on
+## D3's side-scoped checks, run once a grouping has already cleared R5's
+## guard, plus the guard that the grouping opposes anybody at all — a tag
+## every seat stands on has no side to compare against and is the tag's own
+## defect. Grouped by the board's own seat order, so the first seat named on
 ## each side is always its comparison lead and a failure is deterministic
 ## without a sort. A seat the grouping never names stands alone (the same
 ## reading `GameState.allied` gives it), keyed off its own team id and offset
@@ -105,6 +122,14 @@ static func _side_error(map: MapData, by_team: Dictionary, grouped: Dictionary) 
 		if not sides.has(side):
 			sides[side] = []
 		sides[side].append(team)
+	if sides.size() < 2:
+		return (
+			(
+				"%s: `# grouping %s` allies all %d seats the board deals — a grouping that "
+				% [_name(map), map.grouping, map.teams().size()]
+			)
+			+ "opposes nobody claims nothing"
+		)
 	for side: int in sides:
 		var seats: Array = sides[side]
 		var lead_team: int = seats[0]
@@ -141,7 +166,13 @@ static func _side_error(map: MapData, by_team: Dictionary, grouped: Dictionary) 
 				total += int(counts[id])
 		totals[side] = total
 		grand_total += total
+	var seated := map.teams().size()
 	for side: int in totals:
+		# A side fielding more armies than every other side put together is
+		# expected to hold more ground, so the ceiling is not its to clear.
+		var my_seats: int = sides[side].size()
+		if my_seats > seated - my_seats:
+			continue
 		var mine: int = totals[side]
 		var rest: int = grand_total - mine
 		if mine > rest:
@@ -150,7 +181,7 @@ static func _side_error(map: MapData, by_team: Dictionary, grouped: Dictionary) 
 					"%s: seats %s open on %d properties combined to the rest of the board's "
 					% [_name(map), _seat_list(sides[side]), mine]
 				)
-				+ "%d — a side can't out-own everyone else" % rest
+				+ "%d — a side with no more armies can't out-own everyone else" % rest
 			)
 	return ""
 
