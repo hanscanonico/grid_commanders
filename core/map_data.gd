@@ -7,6 +7,8 @@ extends RefCounted
 ## Map text format (see maps/*.txt):
 ##   # <one-line description>   -- the first comment line; shown in the menu
 ##   # symmetric               -- optional tag; asserts 180-degree symmetry
+##   # grouping 1+2+3v4        -- optional tag; a parity claim
+##                                 tests/unit/test_maps.gd checks (see `grouping`)
 ##   # any other comment
 ##   [terrain]
 ##   <one row of terrain symbols per line, all rows the same width>
@@ -20,9 +22,9 @@ extends RefCounted
 ## their properties, and the first move of the match is a build (maps/forge.txt).
 ## Unit symbols are validated later by GameState.create, which has the UnitDB.
 ## The playability invariants no parser can express — the ones about HQs, bases,
-## reachability, the symmetry the tag above claims, and the water a port or a
-## shoal needs — are asserted over every shipped map by tests/unit/test_maps.gd,
-## which names each one and the failure it prevents.
+## reachability, the symmetry or grouping a tag above claims, and the water a
+## port or a shoal needs — are asserted over every shipped map by
+## tests/unit/test_maps.gd, which names each one and the failure it prevents.
 ##
 ## The board is also the roster authority (four-players plan D1): how many armies
 ## a match seats is read off the teams its [owners] and [units] name, never from a
@@ -31,6 +33,13 @@ extends RefCounted
 const NEUTRAL := 0
 ## Comment line that opts a map into the mirror check in tests/unit/test_maps.gd.
 const SYMMETRIC_TAG := "symmetric"
+## Comment prefix declaring how this board's seats claim to group into sides,
+## e.g. `# grouping 1+2+3v4` — the same grammar `--sides=` reads
+## (MatchRequest.parse_sides_flag). A claim tests/unit/test_maps.gd checks,
+## never an instruction a match follows (asymmetric-board plan D2): nothing
+## outside that test reads `grouping`, and a board carrying it still plays a
+## free-for-all unless a launch says otherwise.
+const GROUPING_TAG := "grouping"
 
 ## Every team a board may seat, in seat order — the legal maximum a roster is a
 ## prefix of. The one bound on the question, re-exported as `GameState.TEAMS`
@@ -48,6 +57,11 @@ var height := 0
 var description := ""
 ## Set by the `# symmetric` tag: this map claims 180-degree rotational symmetry.
 var symmetric := false
+## Set by `# grouping <spec>`: this map claims its seats stand in the given
+## sides. Raw text, e.g. "1+2+3v4" — MapData interprets none of it; only
+## tests/unit/test_maps.gd reads it, through MatchRequest.parse_sides_flag.
+## Empty when the tag is absent.
+var grouping := ""
 ## Where this map was read from; empty for maps parsed straight from a string.
 var source_path := ""
 ## Raw starting-unit entries: {team: int, symbol: String, cell: Vector2i}.
@@ -161,11 +175,14 @@ func mirrored(cell: Vector2i) -> Vector2i:
 	return Vector2i(width - 1 - cell.x, height - 1 - cell.y)
 
 
-## Comments carry two pieces of data: the `# symmetric` tag, and the first
-## comment line, which by convention is the map's one-line description.
+## Comments carry three pieces of data: the `# symmetric` and `# grouping`
+## tags, and the first comment line, which by convention is the map's
+## one-line description.
 func _read_comment(comment: String) -> void:
 	if comment == SYMMETRIC_TAG:
 		symmetric = true
+	elif comment.begins_with(GROUPING_TAG + " "):
+		grouping = comment.trim_prefix(GROUPING_TAG + " ").strip_edges()
 	elif description.is_empty():
 		description = comment
 
