@@ -858,7 +858,7 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`), the
   Balance Lab (`docs/balance_sim.md`) and the AI Arena under `tools/arena/`
   (`docs/ai_arena.md` — seating an arbitrary candidate, what "better" means, and the block search
-  laid over both) alike; the
+  laid over both; `docs/ai_arena_results.md` for what the first campaign found) alike; the
   recording reader under `tools/replay/` (Replays
   above); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.

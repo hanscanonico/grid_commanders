@@ -7,6 +7,11 @@ means) and **AR5**'s harness (searching a block of dials): what a match is worth
 who plays whom, on which boards, what the instrument says about the three tiers
 the game ships with, and how a search over it is driven.
 
+**`docs/ai_arena_results.md` is what it found.** This document is the instrument
+and stays true as long as the instrument does; that one is a dated measurement —
+the first search campaign, 93,744 matches on 2026-08-05 — and a later campaign
+replaces it rather than editing around it.
+
 Like every other offline instrument here it is **not a gate**: it stays out of
 `make verify` and `make test`, and only its own unit tests
 (`tests/unit/test_arena_fitness.gd`, `tests/unit/test_arena_pools.gd`,
@@ -518,18 +523,19 @@ and what it costs.
 ## Known limits
 
 - **The longest matches here are enormous, and that is the game rather than a
-  fault.** The worst measured is 5 226 commands over 100 days — an 87-unit army
-  hunting one survivor across `arsenal`. `command_ceiling` now leaves room for
-  it, but a pool of such matches is slow, and a fitness function that pays for
-  speed (above) is the only thing pushing against it.
+  fault.** The worst measured is 8 907 commands over 100 days — a 184-unit army
+  hunting one survivor across `arsenal`. `command_ceiling` leaves room for it,
+  but a pool of such matches is slow, and a fitness function that pays for speed
+  (above) is the only thing pushing against it.
 - **A match seats exactly two candidates**, so every three- and four-army board
   in the roster is out of reach of the arena as it stands.
 - **The margins are unused** for the reason measured above, so a decisive win is
   graded by speed alone.
-- **The harness is built and the campaign is not run.** Every number in the
-  search section above is a budget or a rehearsal; nothing here has yet searched
-  a block at a width worth reading. AR5's finding — what the dials are worth end
-  to end, and the training/validation gap — is still owed.
+- **The campaign has been run once, and its limits are its own document's.**
+  `docs/ai_arena_results.md` carries what the dials were worth end to end and
+  what that number is not evidence of. The sharpest limit belongs here too: the
+  held-out pool holds out **boards and seeds, never opponents**, so a candidate
+  is reported against the same three anchors it was selected against.
 - **The two permutations are not searchable here.** `build_priority` and
   `air_answer_ids` are ordered arrays, and a permutation move and a step along an
   axis do not belong in one proposal distribution (D9). They need a block of
