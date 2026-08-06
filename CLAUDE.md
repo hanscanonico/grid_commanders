@@ -89,7 +89,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   telemetry observes, it never instruments the sim** — nothing under `core/` or `ai/` gained a
   hook for it. D1: `tools/balance/match_engine.gd` is the one match loop; `make commander-balance`
   and `make difficulty-check` are byte-stable presets over it, and the merge bar for touching it
-  is a fixed-seed byte-diff of both reports. `docs/balance_sim.md` is how to run and read it.
+  is a fixed-seed byte-diff of both reports. Its one exception is a board that engine structurally
+  cannot play — it plays two sides — and the asymmetric-board entry below owns it
+  (`tools/run_bulwark_measure.gd`, which reuses only the generic `command_ceiling`).
+  `docs/balance_sim.md` is how to run and read it.
 - `game-speed-plan.html` — the game-speed setting GS1–GS3. D1: a device preference in
   `user://settings.cfg`, never the `MatchRequest` a launch is staged as and never a save. Standing
   invariant: **nothing under `core/` or `ai/` may import `GameSpeed` or read `Settings`** — pacing
@@ -1147,7 +1150,8 @@ res://
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
 │              # (tools/arena/), replay analyser (tools/replay/), art & sfx pipeline
-├─ docs/        # balance_sim.md, commander_balance.md, difficulty_check.md, ai_arena.md
+├─ docs/        # the offline instruments' committed records (the Balance Lab, the
+│              # commander matrix, the difficulty ladder, the arena, Bulwark's spread)
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)
 ```
 
