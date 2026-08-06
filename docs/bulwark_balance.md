@@ -155,3 +155,104 @@ rather than doing anything differently early on.
   spread under the board's own `1+2+3v4` grouping is the number AB4 reads;
   nothing here changes the board, the garrison, the neutral belt or the
   passes.
+
+## AB4 — the retune, and why the board did not move
+
+**AB4's finding is a measurement rather than an edit: no board change tried
+beat leaving the board alone, and the board's own number is better than AB3
+could see.** `maps/bulwark.txt` is byte-identical to the one AB2 authored.
+
+### The hypothesis, and its refutation
+
+The alliance's real edge is tempo (plan R1) — three armies act three times a
+day to the bulwark's once — and §2 names the belt as "the alliance's win
+condition". The belt also sits entirely on the alliance's own side of the wall
+(y 7–15, north of the rampart at y 16–18), so three armies can walk into it
+from their doorstep while the bulwark has to cross the wall first. That made a
+poorer belt the obvious first dial, and fewer passes the obvious second.
+
+**Both were measured and both are wrong, one of them catastrophically.** Four
+board-only changes, each at the same width AB3 used
+(`--seeds=20 --days=100 --grouping=alliance`), no unit or base added to any
+seat and nothing outside `maps/bulwark.txt` touched:
+
+| # | Change | Alliance | Bulwark | Undecided |
+|---|---|---|---|---|
+| — | the board as authored (4 passes, belt as shipped) | 73.7% (14/19) | 26.3% (5/19) | 1/20 |
+| 1 | Belt shallower: the two outermost belt rows (y 7, 9) cleared of their 11 neutral cities | 85.0% (17/20) | 15.0% (3/20) | 0/20 |
+| 2 | Passes fewer: the outer pair (x 7–8 / 40–41) closed to solid mountain, 4 → 2 | 100% (20/20) | 0% (0/20) | 0/20 |
+| 3 | Passes more: a second mirrored pair (x 13–14 / 34–35) opened, 4 → 6 | 70.0% (14/20) | 30.0% (6/20) | 0/20 |
+| 4 | #3 plus a richer belt: belt row y 8's six woods turned to cities, 30 → 36 neutral | 100% (20/20) | 0% (0/20) | 0/20 |
+
+### Why #3 was not shipped
+
+#3 reads as an improvement and is not one. **The alliance won 14 of 20 on both
+the authored board and #3** — the percentage moved only because the seed that
+was undecided at the horizon resolved. So the sample was widened to settle it:
+seeds 21–40, both boards, same horizon.
+
+| Board | seeds 1–20 | seeds 21–40 | n=40 total | Alliance share |
+|---|---|---|---|---|
+| as authored, 4 passes | 14 / 5 (1 undecided) | 11 / 9 | 25 / 14, 1 undecided | **64.1%** |
+| #3, 6 passes | 14 / 6 | 11 / 9 | 25 / 15 | **62.5%** |
+
+The two boards are **identical on the twenty fresh seeds** — 11 alliance, 9
+bulwark, both — and the whole n=40 gap is that same one undecided match. A
+second pass pair does nothing measurable, and shipping it would have widened
+the rampart's frontage from 8 cells to 12, changing a number the board's own
+header, the plan's §2 and `CLAUDE.md` all state, in exchange for nothing.
+
+### What the widened sample says about the board
+
+**AB3's 73.7% was itself narrow-sample noise.** The same unchanged board reads
+**64.1% alliance / 35.9% bulwark over 40 seeds**, and the first twenty happened
+to run alliance-heavy. That is not parity, and the alliance is genuinely the
+favourite — but it is not a foregone conclusion in either direction, which is
+the bar AB4 was reading for, and it is close enough to the band that a board
+edit justified by the n=20 figure would have been an edit justified by noise.
+
+### The guardrails this leaves behind
+
+- **The belt is not a dial that helps the bulwark, in either direction.**
+  Poorer (#1) lost the bulwark 11 points; richer (#4, on top of #3) took it to
+  zero. R1 names "the garrison and the belt" as the dial if the alliance runs
+  away with it; the belt half of that does not hold up here, and the reason is
+  the hypothesis's own premise — the belt is the alliance's to spend whatever
+  its size.
+- **Closing passes is the worst thing that can be done to this board**, and it
+  runs exactly opposite to the "fewer doorways favour the defender" instinct.
+  #2 was catastrophic and fast, matches ending day 22–45 instead of 32–101:
+  the garrison's own tanks and artillery need the passes to sortie north and
+  contest ground as much as the alliance's armour needs them to push south,
+  while infantry ignores passes entirely and crosses on a 49-cell front. The
+  rampart's four passes are load-bearing at four — **do not narrow them.**
+- **D6 held.** No unit and no base was added to any seat at any point, which is
+  the drift D6 names AB4 as most likely to fall into.
+
+### What a next attempt should try
+
+The garrison's own size or placement is the one untried lever, and it is D6's
+discouraged one — but it now has measured evidence behind reconsidering it
+rather than an assumption, because both preferred dials underperformed. Past
+that the question stops being a number and becomes a design one: whether one
+dug-in army needs a materially different mechanic from "the same units, with
+less of everything else around them" to hold three attackers at parity.
+
+**Free-for-all:** AB3's figures stand unaltered, because the board does —
+seat 4 takes 89.5%, seat 3 10.5%, seats 1 and 2 none. Nothing was re-measured
+here and nothing needed to be. D5 already says a free-for-all on this board is
+not fair among the three, and this milestone did not chase it. (#3 was measured
+at 85.0% before it was rejected on the 3v1 evidence above.)
+
+### Reading it honestly
+
+- **n=40 is a better direction than n=20 and still not a magnitude.** The
+  convention is `docs/difficulty_check.md` §4b's. What widening the sample
+  bought was not precision but a negative result strong enough to act on: two
+  boards that differ by nothing across twenty fresh seeds.
+- **Zero rejected commands, zero cap-stalls and zero turn-cap hits across
+  every match measured in this milestone**, on every candidate board — the
+  hard invariants never moved.
+- **The retune's deliverable is this section.** The board is the only dial AB4
+  was allowed, it was pulled four ways, and the honest result is that none of
+  them beat leaving it alone.

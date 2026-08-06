@@ -986,7 +986,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
 - `asymmetric-board-plan.html` — Bulwark, the board that is not fair on purpose: one entrenched
-  army holding a rampart against three allies, milestones AB1–AB4, **AB1–AB3 shipped**. It is the
+  army holding a rampart against three allies, milestones AB1–AB4, **all shipped**. It is the
   named exception to four-players D5 ("3v1 is deliberately asymmetric — a challenge grouping,
   compensated by commander pick and tier, never by the board"), which stays the rule for every
   other board: **a board may compensate a grouping when it is authored for that grouping and
@@ -1055,6 +1055,25 @@ that must survive any change; the full rationale, milestones and risk registers 
   free-for-all the bulwark takes 89.5% — which is the design working, one concentrated army against
   three separate ones, and not the grouping the board is authored for. AB3 measures and does not
   tune, the same split as the Judgement plan's AJ4.
+  **AB4 is the retune, and its finding is that the board did not need one** — `maps/bulwark.txt` is
+  byte-identical to the one AB2 authored, and the milestone's deliverable is `docs/bulwark_balance.md`'s
+  AB4 section. Four board-only candidates were measured and every one of them lost to leaving the
+  board alone, which also cost AB3's headline its authority: **the unchanged board reads 64.1%
+  alliance over 40 seeds**, not the 73.7% the first twenty said, so an edit justified by that figure
+  would have been an edit justified by noise. The candidate that looked best (a second mirrored pass
+  pair, 4 → 6) is **indistinguishable from the shipped board** — 11–9 to the alliance on both over
+  twenty fresh seeds, the whole n=40 gap being one previously-undecided match — and shipping it would
+  have widened the rampart's frontage from the 8 cells the header, the plan's §2 and this entry all
+  state, for nothing. Two guardrails come out of the losers and are worth more than the retune was:
+  **the belt is not a dial that helps the bulwark in either direction** (poorer cost it 11 points,
+  richer took it to zero), which refutes R1's own "the dial is the garrison and the belt"; and
+  **closing passes is the worst thing that can be done to this board** — halving them gave the
+  alliance 20 of 20, because the garrison needs the passes to sortie as much as the alliance needs
+  them to push, while infantry ignores them and crosses on a 49-cell front. **Do not narrow the four
+  passes.** D6 held throughout: no unit and no base was added to any seat, which is the drift D6
+  names AB4 as most likely to fall into, and the one untried lever — the garrison's size or
+  placement — is D6's discouraged one, now with measured evidence behind reconsidering it rather
+  than an assumption.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
   offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command
