@@ -825,11 +825,14 @@ that must survive any change; the full rationale, milestones and risk registers 
   instead, which its header explains — added by COM-132, the open-seats plan's OS3) and
   `maps/windrose.txt` (COM-130's four-seat air board: 17×17 under an exact quarter turn about its
   centre cell, an airfield per seat plus a contested neutral one on the centre, and the one
-  shipped board whose armies start holding cities — air frames are expensive and the soak had to
-  show aircraft actually built), `maps/causeway.txt` (30×22, four island homes bridged to a neutral
-  mid-sea chain — added after this plan by COM-134) and `maps/confluence.txt` (32×24, two bases, an
-  airport and a port to a seat, four tidal arms running into one central sea, and a harbour island
-  of neutral docks nothing walks to — added after this plan by COM-135) are the shipped
+  board whose armies started holding cities until Bulwark — air frames are expensive and the soak
+  had to show aircraft actually built), `maps/causeway.txt` (30×22, four island homes bridged to a
+  neutral mid-sea chain — added after this plan by COM-134), `maps/confluence.txt` (32×24, two
+  bases, an airport and a port to a seat, four tidal arms running into one central sea, and a
+  harbour island of neutral docks nothing walks to — added after this plan by COM-135) and
+  `maps/bulwark.txt` (49×32, the 3v1 board that is unfair on purpose — the
+  `asymmetric-board-plan.html` entry below owns its facts, and it is the named exception to this
+  entry's kind-for-kind parity and to D5) are the shipped
   boards that seat more than a duel; Compass was pulled forward into FP5 because without one the
   seat strip is UI no
   player can reach. **Every army has to be able to march on every other** — the AI cannot plan a
