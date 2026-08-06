@@ -47,6 +47,7 @@ make menu-screenshot # the same, for the main menu
 make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
+make bulwark-measure      # Bulwark's win spread over N seeds -> reports/ (docs/bulwark_balance.md)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-pool         # the same engine, sharded across processes: resumable, several cores
 make ai-arena             # play two arbitrary AIProfiles against each other -> one JSON record a match
@@ -864,7 +865,9 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   (`docs/ai_arena.md` — seating an arbitrary candidate, what "better" means, and the block search
   laid over both; `docs/ai_arena_results.md` for what the first campaign found) alike; the
   recording reader under `tools/replay/` (Replays
-  above); plus `tools/focus_timeline.sh`, the focus-theft
+  above); `tools/run_bulwark_measure.gd`, the Bulwark board's own fairness measurement
+  (`docs/bulwark_balance.md`) — a four-army board `BalanceMatchEngine` cannot play, so it runs the
+  match loop itself; plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, the arena's scorer and pools under
