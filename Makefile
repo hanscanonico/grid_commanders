@@ -91,6 +91,18 @@ difficulty-check:
 	$(GODOT) --headless --path . -s res://tools/run_commander_balance.gd -- \
 		--difficulty-check $(DIFF)
 
+# The Bulwark fairness measurement (asymmetric-board plan AB3): the win spread
+# over N seeds, AI on all four seats, neutral commanders. BalanceMatchEngine
+# plays two sides and this board plays four, so it is its own runner rather
+# than a third preset over that engine — see tools/run_bulwark_measure.gd.
+# A measurement, not a gate: out of `make verify` and `make test`, and it tunes
+# nothing — docs/bulwark_balance.md is the committed record, never the
+# generated report. Narrow it for iteration, e.g.:
+#   make bulwark-measure BULWARK="--seeds=4 --days=40"
+BULWARK ?=
+bulwark-measure:
+	$(GODOT) --headless --path . -s res://tools/run_bulwark_measure.gd -- $(BULWARK)
+
 # The Balance Lab: the general instrument the two presets above are special
 # cases of. Any shipped map, any commander at any tier per side, N seeded
 # matches with both seats swapped, and a turn-by-turn timeline of how each one

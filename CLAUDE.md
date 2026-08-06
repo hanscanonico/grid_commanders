@@ -983,7 +983,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
 - `asymmetric-board-plan.html` — Bulwark, the board that is not fair on purpose: one entrenched
-  army holding a rampart against three allies, milestones AB1–AB4, **AB1–AB2 shipped**. It is the
+  army holding a rampart against three allies, milestones AB1–AB4, **AB1–AB3 shipped**. It is the
   named exception to four-players D5 ("3v1 is deliberately asymmetric — a challenge grouping,
   compensated by commander pick and tier, never by the board"), which stays the rule for every
   other board: **a board may compensate a grouping when it is authored for that grouping and
@@ -1037,7 +1037,21 @@ that must survive any change; the full rationale, milestones and risk registers 
   way the field-overlays entry records frame movement.
   R4: `BalanceMatchEngine` plays two sides, so the board is invisible to `make commander-balance`
   and `make difficulty-check` — both reports staying byte-identical is the merge bar, and the
-  fairness number comes from AB3's GUT soak and nowhere else.
+  fairness number comes from AB3's own instruments and nowhere else. Those are two, and the split
+  is R3's: `tests/unit/test_alliance_soak.gd` soaks Bulwark **in its own grouping first** and then
+  the free-for-all — the Marchlands treatment, one seeded match each, and a *legality* check (no
+  rejected command, no stall) rather than a fairness one — while **`tools/run_bulwark_measure.gd`
+  (`make bulwark-measure`) is the win spread**, many seeds at a 100-day horizon, and it lives in
+  `tools/` because R3 says the dial when the suite's wall clock bites is the measurement's seed
+  count, never the board. It plays `_soak`'s own loop rather than a preset over the balance engine,
+  writes through `BalanceReportWriter.resolve_out` like every other tool, seats **no commander** (the
+  soak seats doctrines on purpose; this measures the board), and states `sides` directly — never off
+  the tag, which stays the lint's alone (D2). **`docs/bulwark_balance.md` is the committed record**
+  and the number AB4 reads: at n=20, a direction rather than a magnitude, the alliance takes 73.7%
+  of decided matches under the board's own 3v1 and the bulwark 26.3%, while in the reachable
+  free-for-all the bulwark takes 89.5% — which is the design working, one concentrated army against
+  three separate ones, and not the grouping the board is authored for. AB3 measures and does not
+  tune, the same split as the Judgement plan's AJ4.
 - `replay-plan.html` — re-watching a finished match, and reading the computer's mistakes out of
   one: milestones RP1 (the format and the recorder), RP2 (playback), RP3 (the menu), RP4 (the
   offline analyser), **all shipped**. D1: **a replay is an opening envelope and a command

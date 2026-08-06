@@ -31,6 +31,13 @@ extends GutTest
 ## board where an alliance bug would show up as terrain — a pair advancing into
 ## the lane its ally holds — so it is soaked in its own pairing first.
 ##
+## Bulwark (asymmetric-board plan AB3) gets the same treatment for a sharper
+## reason: it is the first board authored *unfair* on purpose — three armies
+## against one, not two against two — so its own `1+2+3v4` grouping is played
+## first and the free-for-all second, purely to prove the latter is reachable
+## from the seat strip and does not crash, exactly as the board's own header
+## says it is not a fair fight among the three.
+##
 ## Each army is seated with a doctrine, and with a meter full enough to weigh
 ## firing it, on purpose. Without one every commander hook stays at its neutral
 ## default, so a grouping only ever reaches the commands — and the reads a
@@ -59,6 +66,10 @@ const WINDROSE := "res://maps/windrose.txt"
 ## the land planner and not the sea one would go unnoticed. Here the armies share
 ## sight across water, target across it, and buy from a dock as well as a base.
 const ATOLL := "res://maps/atoll.txt"
+## The one board authored for a 3v1 rather than dealt it by the preset: seat 4
+## is a dug-in army twice anyone's production, seats 1-3 are equal allies with
+## nothing but their corners. See maps/bulwark.txt's header for the tally.
+const BULWARK := "res://maps/bulwark.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -135,6 +146,13 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	_soak("confluence free-for-all", {}, 655, CONFLUENCE)
 	_soak("confluence 2v2", {1: 0, 3: 0, 2: 1, 4: 1}, 656, CONFLUENCE)
 	_soak("confluence 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 657, CONFLUENCE)
+	# Bulwark's own grouping first, the Marchlands treatment: this is the pairing
+	# the board is authored for. The free-for-all follows only to prove it does
+	# not crash — the board's own header says it is not a fair fight among the
+	# three, and this soak is not where that gets adjudicated (AB3 measures it
+	# separately, in tools/run_bulwark_measure.gd).
+	_soak("bulwark 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 660, BULWARK)
+	_soak("bulwark free-for-all", {}, 661, BULWARK)
 
 
 ## Pinwheel, over the seatings its own layout promises: the four-army groupings,
