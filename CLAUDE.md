@@ -38,7 +38,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   4, and the full balance gate is 18 × 18 × five scenarios × four seeds — both as that plan closed
   them; `more-commanders-plan.html` has since seated Sera Lark with the Aurora Compact (MC1),
   Iona Vance with the Meridian Coalition (MC2), Ivar Thorne with the Verdant League (MC3) and
-  Radek Morn with the Iron Dominion (MC4), so they now read 6 / 6 / 5 / 5 over 22 × 22.
+  Radek Morn with the Iron Dominion (MC4), so they now read 6 / 6 / 5 / 5 over 22 × 22. Iona
+  Vance and Mara Voss have since swapped factions — Vance is Iron Dominion, Voss is Meridian
+  Coalition; faction is presentation-only, so the counts and every doctrine number are unmoved.
 - `more-commanders-plan.html` — four more generals, MC1–MC5. Three of them (Lark, Vance, Thorne)
   touch no shared file at all, which is the commanders plan's D1 holding; the fourth is the whole
   cost of the plan and the one entry worth reading before touching a power. D2: **a power may name
@@ -1093,7 +1095,7 @@ that must survive any change; the full rationale, milestones and risk registers 
    **pure GDScript classes with no `Node` dependency**. Scenes only render state and animate
    changes. This keeps rules unit-testable and lets the AI simulate moves cheaply.
    - **Nothing in `core/` may reference a `Node`, a scene, `get_node`, `SceneTree`, or anything
-     under `scenes/`.** If you reach for a Node inside `core/`, you're in the wrong layer.
+	 under `scenes/`.** If you reach for a Node inside `core/`, you're in the wrong layer.
 2. **Data-driven via Resources.** Unit stats, terrain properties, and the damage chart are
    `.tres` `Resource` files under `data/`, not constants in code. Balancing = editing data;
    adding a unit = adding a file. The damage chart is one resource holding two attacker × defender

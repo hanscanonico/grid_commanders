@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"iona_vance"
 display_name = "Iona Vance"
-faction = "Meridian Coalition"
+faction = "Iron Dominion"
 doctrine_text = "Every unit gains +3% attack and +3% defence."
 power_name = "Tip the Scales"
 power_text = "Her units heal 1 HP and every enemy unit loses 1. Nothing dies."

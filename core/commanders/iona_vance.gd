@@ -1,6 +1,6 @@
 class_name IonaVance
 extends CommanderType
-## Meridian Coalition. The even hand: every unit she fields hits a little harder
+## Iron Dominion. The even hand: every unit she fields hits a little harder
 ## and is a little harder to hurt, in every domain and every exchange, and
 ## nothing anywhere is paid for it.
 ##
