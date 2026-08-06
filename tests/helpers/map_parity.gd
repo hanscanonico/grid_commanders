@@ -10,9 +10,9 @@
 
 ## What "level" means for a board's property, split by whether it declares
 ## `# grouping`. Untagged, every seat has to match every other kind for kind —
-## the check this lint has always run, and every shipped board's verdict is
-## exactly that check, because none of them carries the tag. A board that does
-## declare one is checked side by side instead: within a side, seats still
+## the check this lint has always run, and the verdict every shipped board but
+## one still gets: `maps/bulwark.txt` is the one that carries the tag. A board
+## that does declare one is checked side by side instead: within a side, seats still
 ## have to match kind for kind; across sides, no side's total owned-property
 ## count — a plain sum, not counted by kind, because a lint cannot judge
 ## 30-against-36 but can cap a side from out-owning everyone else combined —
@@ -23,8 +23,8 @@
 ## ground, so the defect D3 names is one army out-owning three, never three
 ## out-owning one. On an equally seated grouping — a 2v2 — neither side
 ## out-seats the other, so both stay capped and the ceiling there amounts to
-## requiring equal side totals. That is deliberate, and no shipped board
-## declares a grouping at all.
+## requiring equal side totals. That is deliberate; the one shipped board that
+## declares a grouping, `maps/bulwark.txt`, is the unequally seated kind.
 ##
 ## Three ways the tag itself is the defect rather than the board, and all of
 ## them fail here instead of skipping the lint (D3's rejected opt-out, R5's

@@ -901,11 +901,14 @@ that must survive any change; the full rationale, milestones and risk registers 
   instead, which its header explains — added by COM-132, the open-seats plan's OS3) and
   `maps/windrose.txt` (COM-130's four-seat air board: 17×17 under an exact quarter turn about its
   centre cell, an airfield per seat plus a contested neutral one on the centre, and the one
-  shipped board whose armies start holding cities — air frames are expensive and the soak had to
-  show aircraft actually built), `maps/causeway.txt` (30×22, four island homes bridged to a neutral
-  mid-sea chain — added after this plan by COM-134) and `maps/confluence.txt` (32×24, two bases, an
-  airport and a port to a seat, four tidal arms running into one central sea, and a harbour island
-  of neutral docks nothing walks to — added after this plan by COM-135) are the shipped
+  board whose armies started holding cities until Bulwark — air frames are expensive and the soak
+  had to show aircraft actually built), `maps/causeway.txt` (30×22, four island homes bridged to a
+  neutral mid-sea chain — added after this plan by COM-134), `maps/confluence.txt` (32×24, two
+  bases, an airport and a port to a seat, four tidal arms running into one central sea, and a
+  harbour island of neutral docks nothing walks to — added after this plan by COM-135) and
+  `maps/bulwark.txt` (49×32, the 3v1 board that is unfair on purpose — the
+  `asymmetric-board-plan.html` entry below owns its facts, and it is the named exception to this
+  entry's kind-for-kind parity and to D5) are the shipped
   boards that seat more than a duel; Compass was pulled forward into FP5 because without one the
   seat strip is UI no
   player can reach. **Every army has to be able to march on every other** — the AI cannot plan a
@@ -980,7 +983,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   90°-rotational layout makes true by construction. No map-file metadata for seatings, no
   recommended-pairs syntax: the convention lives in the boards' header comments and in the preset.
 - `asymmetric-board-plan.html` — Bulwark, the board that is not fair on purpose: one entrenched
-  army holding a rampart against three allies, milestones AB1–AB4, **AB1 shipped**. It is the
+  army holding a rampart against three allies, milestones AB1–AB4, **AB1–AB2 shipped**. It is the
   named exception to four-players D5 ("3v1 is deliberately asymmetric — a challenge grouping,
   compensated by commander pick and tier, never by the board"), which stays the rule for every
   other board: **a board may compensate a grouping when it is authored for that grouping and
@@ -1014,6 +1017,24 @@ that must survive any change; the full rationale, milestones and risk registers 
   seat 4 is the lone army, so `SeatStrip`'s shipped 3v1 preset fits without a line of UI. D6: the
   lone army's edge is **interior lines** (a lateral road behind the rampart), never a bigger pile,
   which is the failure mode a retune is most likely to drift back into. D7: land only (naval R1).
+  `maps/bulwark.txt` is the board, AB2: 49×32 and twice the largest that shipped before it. Its
+  **terrain and property ownership mirror exactly about column 24** (not the half turn
+  `# symmetric` checks, and **nothing lints that mirror** — keep it if you edit the board), while
+  each seat's four starting units are laid out **seat-identically** — translations by 16, not
+  reflections — because seat-identical armies are what open the three allies on the same match, and
+  seat 2's could not be self-mirrored anyway: a centred recon would stand on its own airport at
+  (24,2), and no unit may start on a property. Seats 1/2/3 on the north edge hold 12
+  properties each and seat 4 on the south holds 30 against their 36. Its rampart is three rows at
+  y 16–18 whose middle row 17 is mountain wall to wall except four two-cell passes — rows 16 and 18
+  mix woods a vehicle can enter, so row 17 is the wall — and the rule that makes the board a
+  battle rather than a siege was **read out of the terrain data rather than designed in**:
+  `data/terrain/mountain.tres` moves `foot`, `boot` and `air` only, so armour must come through 8
+  cells of frontage across 49 while infantry (`foot`, 2 a step) and mech (`boot`, 1 a step) climb
+  anywhere on a 49-cell front.
+  As the largest board in `MapCatalog.ordered()`, Bulwark is now what `main_menu.gd`'s
+  `_paint_backdrop` bakes, so the menu's animated backdrop moved from Confluence to Bulwark and its
+  drift period grew accordingly — nothing gates on it (no committed golden PNGs), recorded here the
+  way the field-overlays entry records frame movement.
   R4: `BalanceMatchEngine` plays two sides, so the board is invisible to `make commander-balance`
   and `make difficulty-check` — both reports staying byte-identical is the merge bar, and the
   fairness number comes from AB3's GUT soak and nowhere else.

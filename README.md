@@ -212,15 +212,16 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-three maps ship. The main menu leads with the teaching board and lists the rest smallest
+Twenty-four maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`,
 `timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`, `windrose`, `crossfire`,
 `first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
-`causeway`, `confluence` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
+`causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
 board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
 count and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
-`foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands`, `heartland`, `atoll`, `causeway` and
-`confluence` seat **four armies**, and so offer the one-tap table presets in the seat strip.
+`foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands`, `heartland`, `atoll`, `causeway`,
+`confluence` and `bulwark` seat **four armies**, and so offer the one-tap table presets in the seat
+strip.
 `foursquare` is the smallest, 12×12 and the quickest full free-for-all in the roster: a seat in each
 corner in reading order — 1 NW, 2 NE, 3 SE, 4 SW — laid out under a quarter turn rather than the
 half turn `# symmetric` checks, so the two opposite pairs make a fair duel and every seat's nearest
@@ -252,8 +253,11 @@ quarter turn, which is what makes every seat's shore, dock and first city the sa
 `heartland` at 28×20 opens the grand tier: a lattice of 48 neutral cities, **two bases** to each
 seat's one HQ, roads down the diagonals to a central crossroads, and woods for cover rather than a
 chokepoint anywhere — the economy scales with the area, so a board this size still escalates.
-`causeway` at 30×22 and `confluence` at 32×24 finish it, and `confluence` is the **largest board in
-the game**. `causeway` is four island homes joined to a neutral mid-sea chain by bridges: the land is
+`causeway` at 30×22 and `confluence` at 32×24 continue it, and `bulwark` at 49×32 — 1568 cells to
+`confluence`'s 768 — is the **largest board in the game**: the one board authored *for* a grouping
+and deliberately not fair seat by seat, three allied seats on the north edge against a lone army dug
+in behind a mountain rampart, its `# grouping 1+2+3v4` header tag the claim the parity lint checks.
+`causeway` is four island homes joined to a neutral mid-sea chain by bridges: the land is
 a tree with no loop in it, which is what lets every army march on every other *and* leaves the water
 one body every port opens onto. `confluence` is the only four-army board where **every seat fields
 all three domains** — two bases, an airport and a port apiece, four rivers running into one central
@@ -276,8 +280,8 @@ gained a port and a landing beach per side, `ironworks` and `crossfire` an airfi
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
 because the five things it teaches are the land game's. `foursquare`, `compass`, `pinwheel`,
-`trident`, `marchlands`, `windrose` and `heartland` carry no water either: the computer cannot
-plan a ferry, so a board it may have to fight
+`trident`, `marchlands`, `windrose`, `heartland` and `bulwark` carry no water either: the computer
+cannot plan a ferry, so a board it may have to fight
 across in any grouping has to let every army reach every other on foot — which on `windrose` leaves
 the air as the one domain that ignores the board's walls. `atoll` is how a four-army
 board carries a sea anyway — its land is one closed ring, so every army can still walk to every

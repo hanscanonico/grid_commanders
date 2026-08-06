@@ -8,10 +8,11 @@ extends GutTest
 ## tests/helpers/map_parity.gd, so there is one authority for what "level"
 ## means whether or not a board is tagged.
 ##
-## The property-parity lint passes on every shipped map because none of them
-## carries `# grouping` yet, which is only reassuring if the grouped path can
-## fail at all — these fixtures check the mechanism against boards built to
-## break it, the way test_maps.gd's own test_the_shared_water_lint_can_tell_two_seas_apart does.
+## The grouped path is live on one shipped map — `maps/bulwark.txt` declares
+## `1+2+3v4` — while every other shipped board still gets the untagged check.
+## Its pass is only reassuring if the grouped path can fail at all — these
+## fixtures check the mechanism against boards built to break it, the way
+## test_maps.gd's own test_the_shared_water_lint_can_tell_two_seas_apart does.
 
 const MapParity := preload("res://tests/helpers/map_parity.gd")
 

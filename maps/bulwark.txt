@@ -1,0 +1,174 @@
+# One dug-in army holds a rampart across the middle against three on the far edge.
+# grouping 1+2+3v4
+# The tag above is the board's own claim, checked by the parity lint and read
+# by nothing else: the alliance against the lone army. Seats 1, 2 and 3 open on
+# identical holdings, 12 properties each, which D3's grouped lint checks kind
+# for kind. Seat 4 opens on 30 — behind the alliance's 36, and ahead of any one
+# of them — so the tally says the lone army is losing on paper. What it has
+# instead is concentration and position: 7 bases to their 6 combined, and the
+# middle of the board.
+# A free-for-all is legal here — nothing forbids a grouping — but it is not
+# fair among the three: the terrain and the property ownership mirror exactly
+# about column 24, while each seat's four starting units are laid out
+# seat-identically — each army is the previous seat's translated by 16, not
+# its reflection — and seat 2 sits on the axis facing the bulwark's HQ down the
+# middle, so picking a seat picks a role, not a clone. Seat-identical armies
+# are what open the three allies on the same match, and seat 2's could not be
+# self-mirrored anyway: a centred recon would stand on its own airport at
+# (24,2), and no unit may start on a property. The width is odd on purpose:
+# an even one cannot centre a single building, and both seat 2's HQ and the
+# bulwark's stand on the axis.
+# No `# symmetric` tag: that lint is a 180-degree *duel* instrument, and this
+# board's terrain and ownership close under a left-right mirror instead.
+# Nothing checks that mirror — the grouped parity lint counts property, not
+# geometry — so keep it if you edit the board.
+# `data/terrain/mountain.tres` moves only `foot`, `boot` and `air` — of the
+# three rampart rows at y 16-18, row 17 is mountain wall to wall except the
+# passes and is what stops tires and treads; rows 16 and 18 mix woods a
+# vehicle can enter, so the middle row is the wall. Infantry and mech climb
+# where no vehicle can, anywhere along the wall's 49 cells: mech (`boot` at 1
+# a step, 2 move) climbs 2 rows a turn and clears the three in two turns,
+# infantry (`foot` at 2 a step, 3 move) climbs 1 row a turn and takes three —
+# though through a pass, where road costs 1 for both, infantry crosses all
+# three rows in one turn and a mech still takes two. The alliance's armour has
+# to come through the four passes at x 7-8, 19-20, 28-29, 40-41 — 8 cells of
+# frontage across 49 — while its infantry can cross on a 49-cell front the
+# garrison cannot hope to hold everywhere at once. The bulwark's own
+# answer is interior lines: its lateral road at y 19 sits one row behind the
+# wall, so it shifts reserves between passes on road cost while the alliance
+# shifts around the outside on plains — the mechanic that makes one army
+# against three a match instead of a grind, and the dial a retune (AB4) should
+# turn rather than simply piling on more units or more bases.
+# Land only, like the other multi-army boards: the AI cannot plan a ferry, so
+# every army has to be able to march on every other in any grouping this board
+# offers, including the free-for-all.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ  A airport
+[terrain]
+....C.C...C.C.......C.C...C.C.......C.C...C.C....
+.....B..Q..B.........B..Q..B.........B..Q..B.....
+....C...A...C.......C...A...C.......C...A...C....
+......C...C...........C...C...........C...C......
+........=...............=...............=........
+....=========================================....
+.................................................
+......C.......C.........C.........C.......C......
+..F.......F.........F.......F.........F.......F..
+..C.......C.......C...........C.......C.......C..
+......F.....A.........F.B.F.........A.....F......
+....C...F.......C...F.......F...C.......F...C....
+C...B...M...........C...M...C...........M...B...C
+......C...F...C...F.....C.....F...C...F...C......
+..C.........F...F...B.......B...F...F.........C..
+......F...C.......C...F...F...C.......C...F......
+MMFMMFM==MMFMMFMMFM==MMFMFMM==MFMMFMMFMM==MFMMFMM
+MMMMMMM==MMMMMMMMMM==MMMMMMM==MMMMMMMMMM==MMMMMMM
+FMMFMFF==FFMFMMMMFF==FFMMMFF==FFMMMMFMFF==FFMFMMF
+....=========================================....
+..F.......F...F.......F.=.F.......F...F.......F..
+............C...........C...........C............
+......B.........F...F...=...F...F.........B......
+..................C.....=.....C..................
+....C...................A...................C....
+..........F...F.........B.........F...F..........
+........................C........................
+......==C=======C===============C=======C==......
+..C.........B...........=...........B.........C..
+......C.............B...Q...B.............C......
+..............C.........A.........C..............
+..........C...........................C..........
+[owners]
+1 4 0
+1 6 0
+1 10 0
+1 12 0
+1 5 1
+1 8 1
+1 11 1
+1 4 2
+1 8 2
+1 12 2
+1 6 3
+1 10 3
+2 20 0
+2 22 0
+2 26 0
+2 28 0
+2 21 1
+2 24 1
+2 27 1
+2 20 2
+2 24 2
+2 28 2
+2 22 3
+2 26 3
+3 36 0
+3 38 0
+3 42 0
+3 44 0
+3 37 1
+3 40 1
+3 43 1
+3 36 2
+3 40 2
+3 44 2
+3 38 3
+3 42 3
+4 12 21
+4 24 21
+4 36 21
+4 6 22
+4 42 22
+4 18 23
+4 30 23
+4 4 24
+4 24 24
+4 44 24
+4 24 25
+4 24 26
+4 8 27
+4 16 27
+4 32 27
+4 40 27
+4 2 28
+4 12 28
+4 36 28
+4 46 28
+4 6 29
+4 20 29
+4 24 29
+4 28 29
+4 42 29
+4 14 30
+4 24 30
+4 34 30
+4 10 31
+4 38 31
+[units]
+1 r 7 2
+1 i 8 3
+1 i 7 4
+1 i 9 4
+2 r 23 2
+2 i 24 3
+2 i 23 4
+2 i 25 4
+3 r 39 2
+3 i 40 3
+3 i 39 4
+3 i 41 4
+4 T 8 20
+4 i 12 20
+4 t 20 20
+4 a 24 20
+4 t 28 20
+4 i 36 20
+4 T 40 20
+4 g 7 21
+4 m 8 21
+4 g 19 21
+4 m 20 21
+4 m 28 21
+4 g 29 21
+4 m 40 21
+4 g 41 21
+4 a 24 22
