@@ -34,6 +34,14 @@ matching the seat strip's own offer:
   warns is "not fair among the three": seat 2 faces the bulwark's HQ down the
   middle, 1 and 3 flank.
 
+**Fog is off for every seed**, and that is a condition of the number rather
+than an omission. The soak beside this instrument alternates fog by seed on
+purpose, to walk the shared-sight path; this one holds it off so every seed
+measures the same board under the same information — fog moves AI pathing (a
+committed path is walked with the mover's own visibility) and switches off the
+AR1 plan cache, so a sample that alternated it would be two measurements
+reported as one. Read the spread as the clear-weather board.
+
 Measured at **20 seeds (1–20), 100-day horizon**, both groupings:
 
 ```sh
@@ -109,6 +117,21 @@ rather than doing anything differently early on.
   commands and 0 cap-stalls across all 40 matches means the rules and all four
   planners never once disagreed, and no match looped — that is the half of
   AB3's gate with no honest "it depends."
+- **Turn-cap hits are recorded and deliberately left out of the verdict.** A
+  turn that proposes more than `BalanceMatchEngine.MAX_COMMANDS_PER_TURN`
+  commands is force-ended where it stands, which truncates that army's play; on
+  the roster's largest board a run of them would bias the spread while the two
+  zero-tolerance numbers above still read clean. The runner counts them per
+  match (`turn_cap_hits` in `matches.csv`, `total_turn_cap_hits` in
+  `summary.json`) and prints them beside the rejected and cap-stall totals, but
+  excludes them from the broken/clean verdict — the same call
+  `BalanceMatchEngine` makes, because the planner that overstayed did nothing
+  illegal. The counts for the run above are in its own
+  `reports/bulwark/*/summary.json`; `reports/` is gitignored, so a reader
+  wanting them regenerates the run from the commands in *Method*. Anything but
+  zero there means these percentages were measured on turns that were cut
+  short, and the spread should be re-read at that width before AB4 moves the
+  board on it.
 - **Both groupings left exactly one of 20 seeds undecided (5.0%)** at the
   100-day horizon — not a stall (nothing tripped the command ceiling), a match
   still running when the clock was called. Both are down to a straight fight

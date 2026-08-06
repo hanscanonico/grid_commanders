@@ -334,5 +334,5 @@ gallery-screenshot: import
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-pool ai-arena arena-report arena-anchors arena-search \
+	balance-sim balance-pool bulwark-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report

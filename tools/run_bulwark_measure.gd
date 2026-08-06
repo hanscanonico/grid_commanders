@@ -95,18 +95,24 @@ func _init() -> void:
 	quit(1 if broken else 0)
 
 
+## Returns false on any bad flag rather than quietly playing something else, the
+## same policy `tools/run_balance_sim.gd` states: a mistyped `--seeds=` would
+## otherwise spend half an hour measuring a sample width nobody asked for.
 func _parse_args() -> bool:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seeds="):
 			_seed_count = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--seed-offset="):
-			_seed_offset = int(arg.get_slice("=", 1))
+			_seed_offset = maxi(0, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--days="):
 			_days_cap = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
 		elif arg.begins_with("--out="):
 			_out_dir = arg.get_slice("=", 1)
+		else:
+			push_error("bulwark: unknown flag '%s'" % arg)
+			return false
 	if not (_grouping in ["alliance", "ffa", "both"]):
 		push_error("bulwark: --grouping is alliance, ffa or both (got '%s')" % _grouping)
 		return false
@@ -126,7 +132,14 @@ func _run(label: String, slug: String, sides: Dictionary) -> bool:
 	print("bulwark: %s — %d seeds, %d-day horizon" % [label, _seed_count, _days_cap])
 	var rows: Array[Dictionary] = []
 	for i in _seed_count:
-		rows.append(_play(label, sides, _seed_offset + i + 1))
+		var seed_val := _seed_offset + i + 1
+		var row := _play(label, sides, seed_val)
+		if row.is_empty():
+			push_error(
+				"bulwark: %s seed %d could not be seated on %s" % [label, seed_val, MAP_PATH]
+			)
+			return true
+		rows.append(row)
 	var summary := _summarise(label, sides, rows)
 	_write(slug, rows, summary)
 	_print(summary)
@@ -134,12 +147,18 @@ func _run(label: String, slug: String, sides: Dictionary) -> bool:
 
 
 ## One match, fresh state and one `AIController` per army. Mirrors
-## `test_alliance_soak.gd::_soak`'s loop exactly, with two differences: no
+## `test_alliance_soak.gd::_soak`'s loop exactly, with three differences: no
 ## commander is ever seated (neutral throughout, measuring the board rather
-## than a doctrine), and the day horizon is a measurement's rather than a
-## legality check's ten.
+## than a doctrine); the day horizon is a measurement's rather than a legality
+## check's ten; and fog stays off for every seed, where the soak alternates it
+## by seed to walk the shared-sight path — fog moves AI pathing (a committed
+## path is walked with the mover's own visibility) and switches off the AR1
+## plan cache, so alternating it would measure two boards and report one
+## number. Returns an empty row when the board cannot be seated at all.
 func _play(label: String, sides: Dictionary, seed_val: int) -> Dictionary:
 	var state := GameState.create(_map, _unit_db, _chart)
+	if state == null:
+		return {}
 	state.sides = sides
 	state.rng.seed = seed_val
 	var planners: Dictionary = {}
