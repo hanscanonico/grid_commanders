@@ -41,3 +41,11 @@ reports/*
 # tracked and stay that way: ignoring a path git already tracks changes nothing.
 # A new plan worth keeping is promoted with `git add -f .lavish/<name>.html`.
 .lavish/
+
+# Promo capture scratch: the rendered clips, frames and cut videos a promo pass
+# leaves behind are generated media, never a source artifact. `.promo/*` rather
+# than `.promo/`: git will not look inside an excluded directory, so the
+# generator below could not be re-included.
+.promo/*
+# The generator that renders all of it is source, and is kept.
+!.promo/make_promo.sh

@@ -1,8 +1,8 @@
 class_name MaraVoss
 extends CommanderType
-## Iron Dominion. A defensive doctrine in an aggressive faction: her direct
-## units punish being attacked and are mediocre at starting fights, so she wants
-## the opponent to come to her. Hold the Line is the only ROUND power on the
+## Meridian Coalition. A defensive doctrine: her direct units punish being
+## attacked and are mediocre at starting fights, so she wants the opponent to
+## come to her. Hold the Line is the only ROUND power on the
 ## roster — it has to survive her own end of turn to cover the turn it exists to
 ## defend against.
 ##
