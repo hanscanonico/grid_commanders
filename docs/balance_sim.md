@@ -271,6 +271,37 @@ One alignment detail rides along: the scene's per-turn command cap and the
 harness's now come from one constant (`BalanceMatchEngine.MAX_COMMANDS_PER_TURN`),
 so neither can cut a game the other would let run.
 
+### How a match is bounded
+
+Three nets, and they answer different questions:
+
+| Net | What it bounds | Reaching it means |
+|---|---|---|
+| `--days=` (`Setup.days_cap`) | how long a match runs | a normal unfinished match, scored on `tiebreak` |
+| `MAX_COMMANDS_PER_TURN` (300) | one side's turn | a turn that overstayed; the turn is force-ended and counted in `turn_cap_hits` |
+| `command_ceiling(days, teams)` | the whole match | **the day stopped advancing** — a loop, and a hard failure of the run |
+
+The third is **derived, not chosen**: `(MAX_COMMANDS_PER_TURN + 1) × teams ×
+(days + 1)` is the most commands the other two can between them allow, so it
+cannot truncate legitimate play at any horizon or roster, and a match that
+exceeds it has broken the invariant that a turn ends and a day advances.
+
+It replaced a flat 3 000, and the correction is measured. Over the 23 682
+matches of the first AI Arena search campaign (2026-08-05, 100-day horizon) the
+median match spent 400 commands and p99.9 spent 2 400 — but twelve reached 3 000,
+and **replayed with the cap lifted every one of the twelve ran to the day cap
+instead**, at 3 052 to 5 226 commands, each a 60-to-87-unit army mopping up a
+last survivor on a property-rich board. Zero rejected commands anywhere. The cap
+was not detecting a runaway; it was truncating the longest honest games and
+failing the run for it. A second constant picked off that distribution would be
+the same mistake with a bigger number, since the ceiling moves with the board's
+economy and the run's horizon.
+
+Both committed gates report **0 cap stalls** and never approached the old bound
+(the longest 20-day match measured spends about 300 commands), so the change is
+inert there by construction — and that was proved, not argued: `matches.csv` from
+`make difficulty-check DIFF="--seeds=15"` is byte-identical across it.
+
 ## The extraction (plan D1)
 
 `tools/run_commander_balance.gd` kept its CLI and both committed gates; the

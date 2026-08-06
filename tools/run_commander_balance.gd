@@ -46,7 +46,6 @@ extends SceneTree
 ## `docs/commander_balance.md` and `docs/difficulty_check.md` cite these exact
 ## flags, and the merge bar for touching it is a fixed-seed byte-diff of both
 ## reports before and after.
-const COMMAND_CAP := BalanceMatchEngine.COMMAND_CAP
 const DEFAULT_DAYS := BalanceMatchEngine.DEFAULT_DAYS
 
 ## --- difficulty check (plan DF4) ---------------------------------------------
@@ -331,7 +330,6 @@ func _play(scenario: String, red: StringName, blue: StringName, seed_val: int) -
 	setup.chart = _harness.chart
 	setup.seed_val = seed_val
 	setup.days_cap = _days_cap
-	setup.command_cap = COMMAND_CAP
 	setup.commanders = {
 		1: _harness.commander_db.by_id(red),
 		2: _harness.commander_db.by_id(blue),
@@ -591,7 +589,6 @@ func _play_tiers(
 	setup.chart = _harness.chart
 	setup.seed_val = seed_val
 	setup.days_cap = _days_cap
-	setup.command_cap = COMMAND_CAP
 	setup.tiers = tiers
 	setup.planners = {
 		1: AIController.new(unit_db, difficulty_db.by_id(red_tier).profile()),

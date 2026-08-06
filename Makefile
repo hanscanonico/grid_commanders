@@ -157,6 +157,20 @@ arena-anchors:
 	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- \
 		--matches=reports/ai_arena/anchors_$(ARENA_POOL)
 
+# Search a block of planner dials against the fixed anchors (arena plan AR5).
+# The loop over the three instruments above — propose a vector, play it through
+# the pool, score it through the report — and nothing else: it edits no data/
+# file, and every candidate it writes stays under reports/ so a champion can be
+# re-run and explained afterwards. Blocks, never one joint optimisation (R5);
+# `tools/arena/arena_blocks.gd` is which dials are in which and why.
+# State the cost before spending it:
+#   make arena-search SEARCH="--block=all --dry-run"
+#   make arena-search SEARCH="--block=combat --train-seeds=6"
+# Rerun the same command to resume one; docs/ai_arena.md has the algorithm.
+SEARCH ?=
+arena-search:
+	GODOT="$(GODOT)" tools/arena_search.py $(SEARCH)
+
 # Watch a match from a report play out in the real game window, both sides AI.
 # Same spec grammar and the same seed, so a suspicious row in matches.csv
 # becomes the exact battle it describes:
@@ -308,5 +322,5 @@ gallery-screenshot: import
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-pool ai-arena arena-report arena-anchors \
+	balance-sim balance-pool ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report

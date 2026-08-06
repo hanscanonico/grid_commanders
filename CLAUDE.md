@@ -282,8 +282,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   the ceiling is the pricing *shape*, and `docs/difficulty_check.md` §4c is the measured boundary.
   `withdraw_weight` is the one still at `0.0`, and it was a positioning defect rather than the
   ladder that held it there: at 0.05 it stopped an artillery short of maximum standoff. The AI
-  Arena plan's AR6d fixed the refuge's price (see that entry), so the dial is now waiting on a
-  measurement rather than on a fix.
+  Arena plan's AR6d fixed the refuge's price (see that entry), and the arena's first search
+  campaign then took the measurement the dial was waiting on: searched properly for the first
+  time, it ended back at 0.0 (`docs/ai_arena_results.md`) — at zero for a reason after all, one
+  edit from a re-try.
   What survives untouched is the code property — **`0.0` still skips a capability entirely**,
   proven by the per-capability suites that build explicit zeroed profiles — and the cost is
   recorded rather than hidden: the DF4 ladder now fails knowingly, because that gate measures the
@@ -464,11 +466,13 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
   cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
-  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR4 and all of AR6 are
-  shipped** — the harness seats any candidate, the ruler exists and the shelf is in the tree; nothing
-  searches yet, so `tools/` still runs no tournament and **every AR6 dial ships unmeasured**.
-  **`docs/ai_arena.md` is the committed record of what "better" means** and is the document to read
-  before any arena claim.
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR6 are shipped** — the
+  harness seats any candidate, the ruler exists, the shelf is in the tree and `make arena-search`
+  is the search loop laid over them; only AR7's human verdict remains.
+  **`docs/ai_arena.md` is the committed record of what "better" means and how the search is
+  driven** and is the document to read before any arena claim; **`docs/ai_arena_results.md` is
+  what the first campaign found** (93,744 matches, 2026-08-05) — a dated measurement a later
+  campaign supersedes wholesale rather than edits.
   D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
   `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
   the moment the sim can see the measurement the measured game stops being the shipped one (the
@@ -513,9 +517,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   AR6a–AR6c are the rest of that shelf, three dials on `AIProfile` — `cover_tiles`,
   `condition_weight`, `join_weight` — on the AI Judgement D1 contract they inherit whole: **`0.0` on
   every tier, and `0.0` skips the code** rather than evaluating to zero, so the merge bar is both
-  balance reports byte-identical and it held. They ship **unmeasured on purpose** — what would price
-  them is AR5, which is not built, and `focus_fire_bonus` is the precedent for a capability kept in
-  the tree at zero until something measures it.
+  balance reports byte-identical and it held. They shipped **unmeasured on purpose** until AR5's
+  first campaign priced the shelf: `cover_tiles` and `condition_weight` earned places in its
+  champion, while `join_weight` — like `withdraw_weight` — measured worthless and stayed at zero
+  (`docs/ai_arena_results.md`), standing where `focus_fire_bonus` stands: implemented, tested,
+  shipped at zero, one edit from a re-try.
   AR6a: **the double-pricing answer is per cell, not per tier.** A cell is priced by the forecast
   wherever a forecast has fire for it — `priced_fire` is that fire, the counter this shot invites,
   the threat map's reading, or both — and the stars speak only where none does, because every one of
@@ -628,8 +634,22 @@ that must survive any change; the full rationale, milestones and risk registers 
   on 3 of 9 boards, and swapping one board of four flipped a whole pool), and the Atlas predates
   the Judgement and Economy dials the shipped planner now carries. Nothing was tuned toward the
   wanted answer. `ironworks` is out of the pools for a measured reason worth knowing:
-  it is the only board that reaches `BalanceMatchEngine.COMMAND_CAP` at a 100-day horizon (once in
-  72), which is a cap sized for 20-day gates rather than a board to distrust.
+  it was the only board to reach the match-level command cap at a 100-day horizon (once in 72) —
+  a cap then sized for 20-day gates rather than a board to distrust, since corrected (AR5 below),
+  so re-admitting it is a measurement no campaign has yet taken.
+  AR5 is the search laid over all of it, and its verdict is `docs/ai_arena_results.md`.
+  `make arena-search` (`tools/arena_search.py`) proposes on a snapped lattice, plays through the
+  pool and scores through the report — **blocks of dials, never one joint optimisation** (R5), and
+  `tools/arena/arena_blocks.gd` is the space, GDScript beside `ArenaPools` so a block cannot name
+  a dial `AIProfile` does not carry: that coverage rule is what caught `defend_weight`, live at
+  2.0, sitting in no block. The campaign's one engine change is the match-level cap:
+  the flat `COMMAND_CAP` of 3 000 became `BalanceMatchEngine.command_ceiling(days_cap, teams)`,
+  an exact upper bound on legitimate play rather than an estimate of it, after all twelve
+  first-campaign stalls replayed clean to the day cap — reaching it now means **the day stopped
+  advancing**, never that a match was big, so AR4's hard-invariant rule stands with its trigger
+  fixed, and both committed balance reports are byte-identical across the change (balance plan
+  D1). D8 held: no `data/` file moved, every champion lives under gitignored `reports/`, and AR7
+  is where one gets read at a table.
 - **AI logistics** (no plan artifact; COM-65, and this entry is its record) — the planner issues
   `SupplyCommand`, which the rules had always offered and it had never asked for. It is a scored
   candidate in `_best_unit_plan` beside `_consider_dive` and the arena shelf's `_consider_join`,
@@ -648,7 +668,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   every tier because the planner has no route to a second.
   **Merging is not this entry's**, though COM-65 shipped a rival for it: the arena plan's AR6c
   `_consider_join` is the one in the tree, so a merge is priced by `join_weight` on the shelf's
-  contract — `0.0` on every tier until something measures it — rather than live like supply.
+  contract — `0.0` on every tier, and measured worthless by the arena's first search campaign —
+  rather than live like supply.
   **Load and Drop stay out**, on the naval plan's standing R1: the planner cannot plan a ferry.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),

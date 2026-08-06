@@ -52,6 +52,7 @@ make balance-pool         # the same engine, sharded across processes: resumable
 make ai-arena             # play two arbitrary AIProfiles against each other -> one JSON record a match
 make arena-report         # score an arena run -> a leaderboard (docs/ai_arena.md)
 make arena-anchors ARENA_POOL=training   # play one fixed pool of the three shipped tiers, and score it
+make arena-search SEARCH="--block=all --dry-run"   # search a block of planner dials (state the budget first)
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
@@ -856,7 +857,8 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`), the
   Balance Lab (`docs/balance_sim.md`) and the AI Arena under `tools/arena/`
-  (`docs/ai_arena.md` — seating an arbitrary candidate, and what "better" means) alike; the
+  (`docs/ai_arena.md` — seating an arbitrary candidate, what "better" means, and the block search
+  laid over both; `docs/ai_arena_results.md` for what the first campaign found) alike; the
   recording reader under `tools/replay/` (Replays
   above); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
