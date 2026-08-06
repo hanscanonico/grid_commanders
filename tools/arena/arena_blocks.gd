@@ -197,6 +197,16 @@ const EXCLUDED := {
 		+ " true when AR4 seated jet_stream: it is live on one training board of four and"
 		+ " one validation board of three, which is too little of a pool to read a dial on."
 	),
+	&"supply_weight":
+	(
+		"landed with COM-65 after the first campaign was measured, so no search has touched"
+		+ " it — live on every tier, and the first thing a second campaign should cover."
+	),
+	&"supply_unit_target":
+	(
+		"landed with COM-65 beside supply_weight and is equally unsearched — it moves with"
+		+ " the weight it only matters under, in the same second campaign."
+	),
 }
 
 ## Asked for a field's type and existence rather than declared beside the range,

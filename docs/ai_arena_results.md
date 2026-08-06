@@ -18,6 +18,10 @@ campaign supersedes this file rather than editing around it.
 > would mean it was wrong about the ceiling (AR5's exit clause). The answer is
 > large. What it is *not* is proof that the policy's ceiling is high — see
 > [What the number is not evidence of](#what-the-number-is-not-evidence-of).
+> The shelf it searched is the shelf as it stood on 2026-08-05: COM-65's
+> `supply_weight` and `supply_unit_target` have since landed live on every tier
+> and no search has touched them — the composed vector carries the shipped
+> values for both, and they are the first thing a second campaign should cover.
 > **No `data/` file was edited** (D8); every profile named here is under
 > `reports/`, and AR7 is where a champion gets read at a table.
 

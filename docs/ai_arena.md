@@ -400,20 +400,25 @@ merge carries is priced by `_unit_value`, and a join only ever happens to damage
 units, so at `condition_weight` 0 the dial is being fitted against a valuation
 that calls a 10-HP tank a whole one.
 
-**Two corrections to the shelf as the plan states it.** The plan's §5a counts
-nineteen live dials and lists the four AE economy ones separately; with AR6's
-three that is **26 searchable weights, not 22** — and the twenty-sixth is
-`defend_weight`, which appears in no §5a row at all while shipping live at 2.0 on
-Normal and 2.5 on Difficult. It sits in `economy`, whose price list it reads
-backwards (Judgement D3), which is also why that block cannot be narrower.
+**Two corrections to the shelf as the plan states it.** The count is the code's,
+not the plan's: `ArenaBlocks.DIALS` carries **27 searchable weights**, where the
+plan's §5a arithmetic — nineteen dials plus the four AE economy ones plus AR6's
+three — was already short of its own shelf, which is how a smaller number first
+got written here. The dial no §5a row names at all is `defend_weight`, which
+ships live at 2.0 on Normal and 2.5 on Difficult. It sits in `economy`, whose
+price list it reads backwards (Judgement D3), which is also why that block
+cannot be narrower.
 `refuel_margin_turns` stays excluded but its stated reason does not survive AR4:
 "only matters on boards this plan excludes" was true when the plan was written
 and stopped being true when the training pool took `jet_stream`. It is live on
 one training board of four and one validation board of three, which is too little
 of a pool to read a dial on — so it is excluded for want of boards, not for want
 of relevance. `tests/unit/test_arena_blocks.gd` holds every live weight to being
-in a block or on the exclusion list with a reason; that check is what found
-`defend_weight`.
+in a block or on the exclusion list with a reason, and it has now paid twice:
+it found `defend_weight` when the shelf was built, and it caught COM-65's
+`supply_weight` / `supply_unit_target` when they landed after the first campaign
+was measured — both sit on the exclusion ledger as unsearched, the first thing a
+second campaign should cover.
 
 ### The algorithm, and what it costs
 

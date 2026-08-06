@@ -29,10 +29,11 @@ func test_every_dial_belongs_to_a_block() -> void:
 
 
 func test_every_live_weight_is_searched_or_excluded_with_a_reason() -> void:
-	# The check that catches a dial nobody listed. It found one: defend_weight is
-	# in neither the plan's §5a table nor the ticket's, and is live at 2.0 on
-	# Normal and 2.5 on Difficult — it sits in the economy block, whose price list
-	# it reads backwards.
+	# The check that catches a dial nobody listed, and it has now paid twice. It
+	# found defend_weight — in neither the plan's §5a table nor the ticket's, and
+	# live at 2.0 on Normal and 2.5 on Difficult — and then COM-65's supply_weight
+	# / supply_unit_target, which landed after the first campaign was measured and
+	# went to the exclusion ledger as unsearched.
 	for property: Dictionary in AIProfile.new().get_property_list():
 		if not (int(property["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE):
 			continue

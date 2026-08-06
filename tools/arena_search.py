@@ -385,6 +385,8 @@ def search_block(search, block, dials):
     args = search.args
     block_dir = os.path.join(search.out, block["name"])
     state = load_state(search, block, dials, block_dir)
+    if state["waves"] and "stopped" in state["waves"][-1]:
+        return finish_block(search, block, dials, state, block_dir)
     incumbent = state["incumbent"]
     steps = state["steps"]
     contractions = state["contractions"]
@@ -570,15 +572,24 @@ def training_means(state):
 
 
 def spec_digest(search, block, dials):
-    """What a resumed run has to agree with before it continues one: the base, the
-    block's dials and their lattices, and the pools it was measured on. A search
-    resumed under a different spec would be two searches in one record."""
+    """What a resumed run has to agree with before it continues one: the base —
+    its path and its bytes, so a retuned base cannot silently reuse a stale
+    search — the block's dials and their lattices, and the pools it was measured
+    on. A search resumed under a different spec would be two searches in one
+    record."""
+    with open(os.path.join(ROOT, search.plan["base"]), "rb") as f:
+        base_bytes = hashlib.sha1(f.read()).hexdigest()
     spec = {
         "base": search.plan["base"],
+        "base_sha1": base_bytes,
         "block": block["name"],
         "dials": [(d.field, d.low, d.high, d.step, d.min_step) for d in dials],
         "seeds": [search.args.train_seeds, search.args.val_seeds],
         "anchors": search.plan["anchors"],
+        "pools": {
+            name: [pool["boards"], pool["seed_offset"]]
+            for name, pool in search.plan["pools"].items()
+        },
     }
     return hashlib.sha1(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:12]
 
