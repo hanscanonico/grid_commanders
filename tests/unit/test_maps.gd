@@ -135,22 +135,32 @@ func test_every_map_gives_each_team_a_base() -> void:
 ## by kind — four Infantry are not a Md Tank. `# symmetric` catches both at once,
 ## but only on a board that carries the tag, and it is a 180-degree instrument no
 ## three- or four-seat board can carry, so this is what holds the rest level.
+## Like MapParity, it holds a `# grouping` board level within each side only:
+## the cross-side handicap is board state and the board's declared point
+## (asymmetric-board D1), and MapParity is what keeps the tag itself honest.
 func test_every_map_deals_each_team_the_same_holdings() -> void:
 	for map in _maps():
-		var lead_team: int = map.teams()[0]
-		var lead_cost := _starting_army_cost(map, lead_team)
-		for team in map.teams():
-			assert_eq(
-				_starting_army_cost(map, team),
-				lead_cost,
-				(
+		for seats: Array in _allied_seat_groups(map):
+			var lead_team: int = seats[0]
+			var lead_cost := _starting_army_cost(map, lead_team)
+			for team: int in seats:
+				assert_eq(
+					_starting_army_cost(map, team),
+					lead_cost,
 					(
-						"%s: team %d opens with %d funds of army to team %d's %d — a seat "
-						% [_name(map), team, _starting_army_cost(map, team), lead_team, lead_cost]
+						(
+							"%s: team %d opens with %d funds of army to team %d's %d — a seat "
+							% [
+								_name(map),
+								team,
+								_starting_army_cost(map, team),
+								lead_team,
+								lead_cost,
+							]
+						)
+						+ "handed more materiel is an edge no playtest attributes right"
 					)
-					+ "handed more materiel is an edge no playtest attributes right"
 				)
-			)
 		assert_eq(
 			MapParity.error(map),
 			"",
@@ -528,6 +538,25 @@ func _cells_of_terrain(map: MapData, terrain_id: StringName) -> Array[Vector2i]:
 
 ## What `team` opens the match holding, in funds. Priced off UnitType.cost, the
 ## same number every purchase and every AI valuation is denominated in.
+## The seat groups whose opening holdings have to match: every seat together on
+## an untagged board, each declared side on a `# grouping` one — a seat the tag
+## never names stands alone, the same reading `GameState.allied` gives it. An
+## unreadable tag falls back to the untagged groups; MapParity reports it.
+func _allied_seat_groups(map: MapData) -> Array:
+	if map.grouping.is_empty():
+		return [map.teams()]
+	var grouped := MatchRequest.parse_sides_flag(map.grouping)
+	if grouped.is_empty():
+		return [map.teams()]
+	var by_side := {}
+	for team in map.teams():
+		var side: int = int(grouped.get(team, -team))
+		if not by_side.has(side):
+			by_side[side] = []
+		by_side[side].append(team)
+	return by_side.values()
+
+
 func _starting_army_cost(map: MapData, team: int) -> int:
 	var total := 0
 	for entry: Dictionary in map.starting_units:
