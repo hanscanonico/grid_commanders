@@ -7,8 +7,7 @@ extends RefCounted
 ## the three write the same shapes — and, for the two committed gates, the same
 ## bytes they always did. The CSV format is deliberately the plainest thing that
 ## a spreadsheet opens: comma-separated, one header line, LF endings, trailing
-## newline. Nothing here quotes, because nothing written through it contains a
-## comma; the tally fields that could are semicolon-separated at the source.
+## newline.
 ##
 ## Node-free, like the rest of the harness.
 
@@ -56,14 +55,39 @@ static func _under_reports(path: String) -> bool:
 	return path == REPORTS_ROOT or path.begins_with(REPORTS_ROOT + "/")
 
 
+## One header line then one line per row, in the requested column order — the
+## row's own key order is never consulted, so a runner may build a row however is
+## convenient and still write the committed shape.
+##
+## A column a row does not carry is written empty and reported: a batch is an
+## hour of matches, and dropping the whole run over one missing key loses every
+## match that was fine.
 static func write_csv(path: String, rows: Array[Dictionary], columns: Array[String]) -> void:
 	var lines: Array[String] = [",".join(columns)]
 	for row in rows:
 		var cells: Array[String] = []
 		for column in columns:
-			cells.append(str(row[column]))
+			if not row.has(column):
+				push_error("balance: no '%s' in a row of %s" % [column, path.get_file()])
+				cells.append("")
+				continue
+			cells.append(_cell(str(row[column])))
 		lines.append(",".join(cells))
 	_store(path, "\n".join(lines) + "\n")
+
+
+## A cell, quoted the way every spreadsheet reads back (RFC 4180): wrapped in
+## double quotes when it holds a separator, a quote or a newline, with its own
+## quotes doubled. Nothing the reports write today needs it — the tally fields
+## that could hold a separator are semicolon-joined at the source — so this moves
+## no committed byte; it is here so that the day one does, the file stays the
+## table it claims to be instead of silently growing a column.
+static func _cell(value: String) -> String:
+	if not (
+		value.contains(",") or value.contains('"') or value.contains("\n") or value.contains("\r")
+	):
+		return value
+	return '"%s"' % value.replace('"', '""')
 
 
 static func write_json(path: String, data: Variant) -> void:
@@ -84,6 +108,9 @@ static func write_text(path: String, text: String) -> void:
 	_store(path, text)
 
 
+## Writes a whole artifact, and says so when it could not. Both halves are
+## reported: a run whose disk filled halfway through a sweep must not hand back a
+## truncated report that reads like a finished one.
 static func _store(path: String, text: String) -> void:
 	if not path.is_absolute_path():
 		push_error("balance: no resolved output directory for '%s'" % path)
@@ -93,3 +120,8 @@ static func _store(path: String, text: String) -> void:
 		push_error("balance: cannot write %s" % path)
 		return
 	file.store_string(text)
+	file.flush()
+	var error := file.get_error()
+	file.close()
+	if error != OK:
+		push_error("balance: %s was not written whole (error %d)" % [path, error])

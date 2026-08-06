@@ -1,35 +1,11 @@
 extends GutTest
 
-var terrain_db: TerrainDB
-var unit_db: UnitDB
-var chart: DamageChart
-
-
-func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
-
 
 func test_load_boards_the_transport() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 i 0 0\n1 p 1 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 i 0 0\n1 p 1 0")
 	var infantry := state.units[0]
 	var apc := state.units[1]
-	var command := LoadCommand.new(infantry, _path([Vector2i(0, 0), Vector2i(1, 0)]))
+	var command := LoadCommand.new(infantry, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]))
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_eq(infantry.carrier, apc)
@@ -40,47 +16,51 @@ func test_load_boards_the_transport() -> void:
 
 
 func test_load_rejects_vehicles_and_full_or_enemy_transports() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n1 p 1 0\n1 i 2 0\n2 p 3 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 t 0 0\n1 p 1 0\n1 i 2 0\n2 p 3 0")
 	var tank := state.units[0]
 	var apc := state.units[1]
 	var infantry := state.units[2]
 	assert_eq(
-		LoadCommand.new(tank, _path([Vector2i(0, 0), Vector2i(1, 0)])).validate(state),
+		LoadCommand.new(tank, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).validate(state),
 		"unit cannot be transported"
 	)
 	infantry.carrier = apc
 	infantry.cell = apc.cell
-	var second := Unit.create(unit_db.by_id(&"infantry"), 1, Vector2i(2, 0))
+	var second := Unit.create(Fixture.unit_db().by_id(&"infantry"), 1, Vector2i(2, 0))
 	state.units.append(second)
 	assert_eq(
-		LoadCommand.new(second, _path([Vector2i(2, 0), Vector2i(1, 0)])).validate(state),
+		LoadCommand.new(second, Fixture.path([Vector2i(2, 0), Vector2i(1, 0)])).validate(state),
 		"transport is full"
 	)
 	assert_eq(
-		LoadCommand.new(second, _path([Vector2i(2, 0), Vector2i(3, 0)])).validate(state),
+		LoadCommand.new(second, Fixture.path([Vector2i(2, 0), Vector2i(3, 0)])).validate(state),
 		"path is blocked by an enemy",
 		"enemy transports cannot even be entered"
 	)
 
 
 func test_cargo_rides_with_the_transport() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n1 p 1 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0\n1 p 1 0")
 	var infantry := state.units[0]
 	var apc := state.units[1]
-	LoadCommand.new(infantry, _path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
+	LoadCommand.new(infantry, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
 	apc.acted = false
-	MoveCommand.new(apc, _path([Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])).apply(state)
+	MoveCommand.new(apc, Fixture.path([Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])).apply(
+		state
+	)
 	assert_eq(infantry.cell, Vector2i(3, 0))
 	assert_eq(infantry.carrier, apc)
 
 
 func test_drop_unloads_exhausted_passenger() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n1 p 1 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0\n1 p 1 0")
 	var infantry := state.units[0]
 	var apc := state.units[1]
-	LoadCommand.new(infantry, _path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
+	LoadCommand.new(infantry, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
 	apc.acted = false
-	var command := DropCommand.new(apc, _path([Vector2i(1, 0), Vector2i(2, 0)]), Vector2i(3, 0))
+	var command := DropCommand.new(
+		apc, Fixture.path([Vector2i(1, 0), Vector2i(2, 0)]), Vector2i(3, 0)
+	)
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_null(infantry.carrier)
@@ -90,31 +70,31 @@ func test_drop_unloads_exhausted_passenger() -> void:
 
 
 func test_drop_rejections() -> void:
-	var state := _state("[terrain]\n..S.\n[units]\n1 p 1 0\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..S.\n[units]\n1 p 1 0\n1 i 0 0")
 	var apc := state.units[0]
 	var infantry := state.units[1]
 	assert_eq(
-		DropCommand.new(apc, _path([Vector2i(1, 0)]), Vector2i(0, 0)).validate(state),
+		DropCommand.new(apc, Fixture.path([Vector2i(1, 0)]), Vector2i(0, 0)).validate(state),
 		"nothing to drop"
 	)
 	infantry.carrier = apc
 	infantry.cell = apc.cell
 	assert_eq(
-		DropCommand.new(apc, _path([Vector2i(1, 0)]), Vector2i(2, 0)).validate(state),
+		DropCommand.new(apc, Fixture.path([Vector2i(1, 0)]), Vector2i(2, 0)).validate(state),
 		"cargo cannot stand there",
 		"sea is no place for infantry"
 	)
 	assert_eq(
-		DropCommand.new(apc, _path([Vector2i(1, 0)]), Vector2i(3, 0)).validate(state),
+		DropCommand.new(apc, Fixture.path([Vector2i(1, 0)]), Vector2i(3, 0)).validate(state),
 		"drop cell must be adjacent"
 	)
 
 
 func test_transport_death_takes_cargo_and_counts_for_rout() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 p 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 p 1 0")
 	state.rng.seed = 4
 	var apc := state.units[1]
-	var passenger := Unit.create(unit_db.by_id(&"infantry"), 2, apc.cell)
+	var passenger := Unit.create(Fixture.unit_db().by_id(&"infantry"), 2, apc.cell)
 	passenger.carrier = apc
 	state.units.append(passenger)
 	apc.hp = 10  # any hit kills
@@ -124,48 +104,13 @@ func test_transport_death_takes_cargo_and_counts_for_rout() -> void:
 	assert_eq(state.winner, 1, "the drowned passenger was Blue's last unit")
 
 
-func test_join_merges_and_removes_the_mover() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n1 t 2 0")
-	var mover := state.units[0]
-	var target := state.units[1]
-	mover.hp = 40
-	mover.ammo = 5
-	target.hp = 50
-	target.ammo = 6
-	var command := JoinCommand.new(mover, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]))
-	assert_eq(command.validate(state), "")
-	command.apply(state)
-	assert_false(state.units.has(mover))
-	assert_eq(target.hp, 90)
-	assert_eq(target.ammo, 9, "ammo caps at the type maximum")
-	assert_true(target.acted)
-	assert_eq(state.winner, 0, "a merge is not a death")
-
-
-func test_join_rejections() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n1 t 1 0\n1 r 2 0\n2 t 3 0")
-	var mover := state.units[0]
-	assert_eq(
-		JoinCommand.new(mover, _path([Vector2i(0, 0), Vector2i(1, 0)])).validate(state),
-		"target is at full strength"
-	)
-	state.units[2].hp = 50
-	assert_ne(
-		JoinCommand.new(mover, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])).validate(
-			state
-		),
-		"",
-		"different unit types cannot join"
-	)
-
-
 func test_ai_ignores_carried_units() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 p 0 0\n1 i 1 0\n2 t 2 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 p 0 0\n1 i 1 0\n2 t 2 0")
 	var infantry := state.units[1]
 	infantry.carrier = state.units[0]
 	infantry.cell = state.units[0].cell
 	state.units[0].acted = true
-	var ai := AIController.new(unit_db)
+	var ai := AIController.new(Fixture.unit_db())
 	var command := ai.plan_next_command(state)
 	assert_true(command is EndTurnCommand, "a carried unit must not be planned for")
 
@@ -178,23 +123,23 @@ func test_ai_ignores_carried_units() -> void:
 
 
 func test_t_copter_carries_infantry() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 H 0 0\n1 i 1 0")
-	var command := LoadCommand.new(state.units[1], _path([Vector2i(1, 0), Vector2i(0, 0)]))
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 H 0 0\n1 i 1 0")
+	var command := LoadCommand.new(state.units[1], Fixture.path([Vector2i(1, 0), Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_eq(state.units[1].carrier, state.units[0])
 
 
 func test_t_copter_will_not_lift_a_tank() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 H 0 0\n1 t 1 0")
-	var command := LoadCommand.new(state.units[1], _path([Vector2i(1, 0), Vector2i(0, 0)]))
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 H 0 0\n1 t 1 0")
+	var command := LoadCommand.new(state.units[1], Fixture.path([Vector2i(1, 0), Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "unit cannot be transported")
 
 
 ## An armed aircraft is not a transport whatever else it can do.
 func test_a_gunship_carries_nothing() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 h 0 0\n1 i 1 0")
-	var command := LoadCommand.new(state.units[1], _path([Vector2i(1, 0), Vector2i(0, 0)]))
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 h 0 0\n1 i 1 0")
+	var command := LoadCommand.new(state.units[1], Fixture.path([Vector2i(1, 0), Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "unit is not a transport")
 
 
@@ -208,42 +153,42 @@ func test_a_lander_carries_vehicles() -> void:
 	# The lander lies at the beach and the tank walks aboard. It has to be that
 	# way round: a tank cannot step onto open water, so a lander in the channel
 	# can pick up nothing — which is what makes shoals worth putting on a map.
-	var state := _state("[terrain]\n._\nSS\n[units]\n1 l 1 0\n1 t 0 0")
-	var command := LoadCommand.new(state.units[1], _path([Vector2i(0, 0), Vector2i(1, 0)]))
+	var state := Fixture.state("[terrain]\n._\nSS\n[units]\n1 l 1 0\n1 t 0 0")
+	var command := LoadCommand.new(state.units[1], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]))
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_eq(state.units[1].carrier, state.units[0])
 
 
 func test_a_lander_in_open_water_cannot_be_boarded() -> void:
-	var state := _state("[terrain]\n.S\nSS\n[units]\n1 l 1 0\n1 t 0 0")
-	var command := LoadCommand.new(state.units[1], _path([Vector2i(0, 0), Vector2i(1, 0)]))
+	var state := Fixture.state("[terrain]\n.S\nSS\n[units]\n1 l 1 0\n1 t 0 0")
+	var command := LoadCommand.new(state.units[1], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]))
 	assert_eq(command.validate(state), "path crosses impassable terrain")
 
 
 func test_a_lander_carries_two() -> void:
-	var state := _state("[terrain]\n._.\nSSS\n[units]\n1 l 1 0\n1 t 0 0\n1 i 2 0")
-	LoadCommand.new(state.units[1], _path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
-	var second := LoadCommand.new(state.units[2], _path([Vector2i(2, 0), Vector2i(1, 0)]))
+	var state := Fixture.state("[terrain]\n._.\nSSS\n[units]\n1 l 1 0\n1 t 0 0\n1 i 2 0")
+	LoadCommand.new(state.units[1], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
+	var second := LoadCommand.new(state.units[2], Fixture.path([Vector2i(2, 0), Vector2i(1, 0)]))
 	assert_eq(second.validate(state), "", "a lander holds two")
 	second.apply(state)
 	assert_eq(state.cargo_of(state.units[0]).size(), 2)
 
 
 func test_a_full_lander_takes_no_more() -> void:
-	var state := _state("[terrain]\n._.\n...\n[units]\n1 l 1 0\n1 t 0 0\n1 i 2 0\n1 m 1 1")
-	LoadCommand.new(state.units[1], _path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
-	LoadCommand.new(state.units[2], _path([Vector2i(2, 0), Vector2i(1, 0)])).apply(state)
-	var third := LoadCommand.new(state.units[3], _path([Vector2i(1, 1), Vector2i(1, 0)]))
+	var state := Fixture.state("[terrain]\n._.\n...\n[units]\n1 l 1 0\n1 t 0 0\n1 i 2 0\n1 m 1 1")
+	LoadCommand.new(state.units[1], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
+	LoadCommand.new(state.units[2], Fixture.path([Vector2i(2, 0), Vector2i(1, 0)])).apply(state)
+	var third := LoadCommand.new(state.units[3], Fixture.path([Vector2i(1, 1), Vector2i(1, 0)]))
 	assert_eq(third.validate(state), "transport is full")
 
 
 ## A landing craft beaches on a shoal or ties up at a port. Anywhere else the
 ## cargo would be going over the side into open water.
 func test_a_lander_unloads_from_a_shoal() -> void:
-	var state := _state("[terrain]\n_.\nSS\n[units]\n1 l 0 0\n1 t 1 0")
-	LoadCommand.new(state.units[1], _path([Vector2i(1, 0), Vector2i(0, 0)])).apply(state)
-	var drop := DropCommand.new(state.units[0], _path([Vector2i(0, 0)]), Vector2i(1, 0))
+	var state := Fixture.state("[terrain]\n_.\nSS\n[units]\n1 l 0 0\n1 t 1 0")
+	LoadCommand.new(state.units[1], Fixture.path([Vector2i(1, 0), Vector2i(0, 0)])).apply(state)
+	var drop := DropCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
 	assert_eq(drop.validate(state), "")
 	drop.apply(state)
 	assert_eq(state.unit_at(Vector2i(1, 0)).type.id, &"tank")
@@ -251,13 +196,15 @@ func test_a_lander_unloads_from_a_shoal() -> void:
 
 
 func test_a_lander_cannot_unload_in_open_water() -> void:
-	var state := _state("[terrain]\n_S.\nSSS\n[units]\n1 l 0 0\n1 t 2 0")
-	LoadCommand.new(state.units[1], _path([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)])).apply(
-		state
+	var state := Fixture.state("[terrain]\n_S.\nSSS\n[units]\n1 l 0 0\n1 t 2 0")
+	(
+		LoadCommand
+		. new(state.units[1], Fixture.path([Vector2i(2, 0), Vector2i(1, 0), Vector2i(0, 0)]))
+		. apply(state)
 	)
 	state.units[0].acted = false
 	var drop := DropCommand.new(
-		state.units[0], _path([Vector2i(0, 0), Vector2i(1, 0)]), Vector2i(2, 0)
+		state.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]), Vector2i(2, 0)
 	)
 	assert_eq(drop.validate(state), "cannot unload here")
 
@@ -265,8 +212,8 @@ func test_a_lander_cannot_unload_in_open_water() -> void:
 ## The rule is the transport's own, so the two that shipped before it are
 ## untouched: an APC still drops wherever its passenger can stand.
 func test_an_apc_still_unloads_anywhere() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 p 1 0\n1 i 0 0")
-	LoadCommand.new(state.units[1], _path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 p 1 0\n1 i 0 0")
+	LoadCommand.new(state.units[1], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).apply(state)
 	state.units[0].acted = false
-	var drop := DropCommand.new(state.units[0], _path([Vector2i(1, 0)]), Vector2i(2, 0))
+	var drop := DropCommand.new(state.units[0], Fixture.path([Vector2i(1, 0)]), Vector2i(2, 0))
 	assert_eq(drop.validate(state), "")

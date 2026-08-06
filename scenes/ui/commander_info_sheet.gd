@@ -82,7 +82,7 @@ func _build() -> void:
 	# and stack a second veil over the first, so what the screen actually showed was
 	# the pair (~0.999). With the duplicate build gone, 0.97 alone let the board ghost
 	# through. This keeps the authored "veil over the board" reading without the bleed.
-	bg.color = Color(0.086, 0.106, 0.118, 0.995)
+	bg.color = UiTheme.veil(0.995)
 	# set_anchors_preset alone rewrites the offsets to preserve the rect a control
 	# already has, so it only bites a node that is *already* parented to a sized
 	# parent — the sheet's own call above, added to a full-size battle scene. bg and
@@ -127,13 +127,13 @@ func _build() -> void:
 	charge_help.text = "Command Power charges as your armies take and deal damage."
 	charge_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	charge_help.add_theme_font_override("font", UiTheme.display())
-	charge_help.add_theme_font_size_override("font_size", 8)
+	charge_help.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	charge_help.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	rows.add_child(charge_help)
 
 	_close_button = Button.new()
 	_close_button.text = "Close"
-	_close_button.add_theme_font_size_override("font_size", 11)
+	UiTheme.apply_button(_close_button, UiTheme.ButtonVariant.SECONDARY)
 	_close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_close_button.pressed.connect(_emit_close)
 	rows.add_child(_close_button)
@@ -156,21 +156,19 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(column)
 
+	# The design system's title band, tinted to the side — the same recipe the
+	# menu's "MATCH SETUP" header wears. Dressed with the card under it, or the
+	# faction name would be the one line on this sheet still set in the OS font.
 	var side := identity.theme(team)
 	var header := PanelContainer.new()
-	var box := StyleBoxFlat.new()
-	box.bg_color = side.color
-	header.add_theme_stylebox_override("panel", box)
+	header.add_theme_stylebox_override("panel", UiTheme.header_box(side.color))
 	var label := Label.new()
 	label.text = identity.display_name(team).to_upper()
+	label.add_theme_font_override("font", UiTheme.display(true))
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_TITLE)
 	label.add_theme_color_override("font_color", side.ink)
-	label.add_theme_font_size_override("font_size", 10)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_top", 2)
-	margin.add_theme_constant_override("margin_bottom", 2)
-	margin.add_child(label)
-	header.add_child(margin)
+	header.add_child(label)
 	column.add_child(header)
 
 	# Same bounded frame the select page gives its card: the card's height is

@@ -50,10 +50,8 @@ const PUNCH_SECONDS := 0.11
 var node: Node
 var view: BattleView
 var perspective: BattlePerspective
-var camera: Camera2D
 var cursor: Sprite2D
-var turn_banner: PanelContainer
-var banner_label: Label
+var turn_banner: TurnBanner
 var power_banner: CommanderPowerBanner
 ## The full-screen battle cut-in. Every resolved attack goes through it when the
 ## player has it on and both sides are visible; see `animate_combat`.
@@ -115,7 +113,7 @@ func animate_path(sprite: UnitSprite, path: Array[Vector2i]) -> void:
 ## Under Instant that on-map flash, fade and shake all fall away but the sounds
 ## stay: an attack the player triggered has to register even when there is
 ## nothing to see.
-func animate_combat(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	if result == null:
 		await show_ambush(attacker)
 		return
@@ -124,10 +122,9 @@ func animate_combat(result: CombatResolver.CombatResult, attacker: Unit, defende
 	view.refresh_sprite(attacker)  # snap to the committed destination
 	if _cut_in_applies(attacker, defender):
 		_pace_cut_in()
-		var resting := camera.zoom
-		await _punch_camera()
-		await cutscene.play(result, attacker, defender, camera, resting)
-		camera.zoom = resting  # safety net: the cut-in already eased it home on the wipe
+		await _punch_board()
+		await cutscene.play(result, attacker, defender)
+		view.punch_zoom = 1.0  # safety net: the cut-in already eased it out on the wipe
 		_last_cut_in_ms = Time.get_ticks_msec()
 		_sync_aftermath()
 		return
@@ -212,14 +209,19 @@ func _pace_cut_in() -> void:
 
 ## A short zoom onto the cell about to be struck, so the board flinches before
 ## the frame is taken away from it. Awaited, then left punched in: the cut-in
-## covers the map for its whole run and, handed the camera and this resting zoom,
-## eases it home over the closing wipe so the board is already at rest the moment
-## it is uncovered — see CutscenePlayback._restore_zoom.
-func _punch_camera() -> void:
+## covers the map for its whole run and eases the punch back out over the closing
+## wipe, so the board is already at rest the moment it is uncovered — see
+## CutscenePlayback._restore_zoom.
+##
+## Asked of `BattleView.punch_zoom`, never written to the camera, for the same
+## reason `shake_camera` goes through `shake_offset`: the view derives the board's
+## docking inset and the camera limits from the zoom, and a punch it never hears
+## about leaves both at the resting level for as long as the flinch lasts.
+func _punch_board() -> void:
 	var tween := node.create_tween()
 	(
 		tween
-		. tween_property(camera, "zoom", camera.zoom * PUNCH_ZOOM, PUNCH_SECONDS)
+		. tween_property(view, "punch_zoom", PUNCH_ZOOM, PUNCH_SECONDS)
 		. set_trans(Tween.TRANS_CUBIC)
 		. set_ease(Tween.EASE_OUT)
 	)
@@ -257,10 +259,9 @@ func animate_capture(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vec
 		return
 	if _capture_cut_in_applies(unit):
 		_pace_cut_in()
-		var resting := camera.zoom
-		await _punch_camera()
-		await capture_cutscene.play(result, unit, cell, camera, resting)
-		camera.zoom = resting  # safety net: the cut-in already eased it home on the wipe
+		await _punch_board()
+		await capture_cutscene.play(result, unit, cell)
+		view.punch_zoom = 1.0  # safety net: the cut-in already eased it out on the wipe
 		_last_cut_in_ms = Time.get_ticks_msec()
 		return
 	if perspective.can_see_unit(unit):
@@ -320,7 +321,7 @@ func animate_join(command: Command, mover: Unit, survivor: Unit) -> void:
 func _set_banner(text: String) -> void:
 	if _banner_tween != null and _banner_tween.is_valid():
 		_banner_tween.kill()
-	banner_label.text = text
+	turn_banner.announce(text)
 	turn_banner.show()
 	turn_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 

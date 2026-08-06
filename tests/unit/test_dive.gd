@@ -258,6 +258,108 @@ func test_an_older_save_loads_with_every_boat_on_the_surface() -> void:
 	assert_false(loaded.state.units[0].dived)
 
 
+# --- the planner ----------------------------------------------------------------
+#
+# Two channels of water either side of a spit of land, with a battleship in the
+# far one. Its guns reach across the spit and the submarine cannot row round it,
+# so the boat has a dive to make and no shot to weigh against it.
+
+## A pocket wide enough to leave the battleship's ring: the sub sits at the far
+## edge of it, and one step west is out of the guns.
+const OPEN_CHANNEL := "[terrain]\nSSSSSSSS.SSSSSS\n[units]\n1 s 6 0\n2 B 12 0"
+
+## The same board with the pocket cut down to the two cells the guns already
+## cover, so there is nowhere safer to go.
+const CLOSED_POCKET := "[terrain]\n......SS.SSSSSS\n[units]\n1 s 6 0\n2 B 12 0"
+
+
+## A dive is a whole turn, so the boat spends the movement half of it: it goes
+## under somewhere the guns above cannot reach, not where it happened to be
+## standing when it decided to.
+func test_a_threatened_sub_dives_where_it_is_safer() -> void:
+	var state := _state(OPEN_CHANNEL)
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
+	if not (command is DiveCommand):
+		return
+	assert_eq(command.validate(state), "")
+	assert_true((command as DiveCommand).submerge)
+	assert_eq(
+		(command as DiveCommand).path,
+		_path([Vector2i(6, 0), Vector2i(5, 0)]),
+		"one step west is out of the battleship's ring"
+	)
+
+
+## And where nothing it can reach is safer, it goes under where it stands: the
+## boat's own cell is in the comparison at no cost, so it holds every tie.
+func test_a_sub_with_nowhere_safer_dives_in_place() -> void:
+	var state := _state(CLOSED_POCKET)
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
+	if not (command is DiveCommand):
+		return
+	assert_eq(command.validate(state), "")
+	assert_eq((command as DiveCommand).path, _path([Vector2i(6, 0)]))
+
+
+# --- what counts as a threat ----------------------------------------------------
+#
+# How far an enemy reaches is MovementResolver's and AttackRange's answer, and the
+# dive is the one decision that used to guess it: type movement plus gun, for
+# everybody. Each of these three is a board where the guess and the authorities
+# disagree.
+
+## A sea lane with a coast road beside it. The tank is eight tiles off the boat:
+## six of movement and a one-tile gun leave it two cells short, and Cass Orlov's
+## No Escape buys exactly the one that closes the gap.
+const COAST_ROAD := "[terrain]\nSSSSSSSS\n........\n[units]\n1 s 0 0\n2 t 7 1"
+
+
+## A commander's move bonus is part of how far the enemy reaches, so it is part of
+## what the boat is deciding about. Read off the type instead, the doctrine is
+## invisible and the sub sits on the surface waiting for a tank it never saw coming.
+func test_a_sub_dives_from_a_threat_a_move_bonus_creates() -> void:
+	var state := _state(COAST_ROAD)
+	state.set_commander(2, CommanderDB.load_default().by_id(&"cass_orlov"))
+	assert_false(
+		AIController.new(unit_db).plan_next_command(state) is DiveCommand,
+		"without the power the tank stops a cell short of the shore"
+	)
+	state.commander_state(2).power_active = true
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
+	if not (command is DiveCommand):
+		return
+	assert_eq(command.validate(state), "")
+	assert_true((command as DiveCommand).submerge)
+
+
+## And the same authority from the other side: an empty tank is a shorter reach,
+## so a grounded bomber is not worth burning the dive rate over.
+func test_a_sub_ignores_a_bomber_with_no_fuel_to_reach_it() -> void:
+	var state := _state("[terrain]\nSSSSSS\n[units]\n1 s 0 0\n2 b 5 0")
+	var bomber := state.units[1]
+	bomber.fuel = 2
+	assert_gt(bomber.type.move_points, 4, "the type alone would cross this board")
+	assert_false(
+		AIController.new(unit_db).plan_next_command(state) is DiveCommand,
+		"two points of fuel is two tiles, whatever the airframe is rated for"
+	)
+
+
+## An indirect unit cannot move and fire in the same turn, so eight tiles off a
+## battleship is not a threat next turn: it has to spend one closing, and the boat
+## goes under then. Adding its movement to its gun is a turn of dived upkeep spent
+## on a shot nobody could have taken.
+func test_a_sub_ignores_a_battleship_that_must_close_first() -> void:
+	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 B 8 0")
+	assert_false(
+		AIController.new(unit_db).plan_next_command(state) is DiveCommand,
+		"the guns reach six; the boat has a turn in hand"
+	)
+
+
 # --- the whole thing at once ---------------------------------------------------
 
 
@@ -269,9 +371,19 @@ func test_an_older_save_loads_with_every_boat_on_the_surface() -> void:
 ## here and only the fighting is emergent. The assertion that matters is the first
 ## one: a command the planner proposed and the rules then refused means two layers
 ## disagree, which is exactly how a half-applied targeting or vision rule shows up.
+##
+## Each fleet flies a bomber because on open water a battleship alone never gives
+## the boat a dive to make: the guns reach six tiles and the submarine's own move
+## and torpedo reach six, so anything that can shell it is something it can shoot
+## instead — and a shot outscores the dive by design. The aircraft is the threat it
+## has no answer to and cannot be followed under by, which is what a submarine is
+## for.
 func test_a_staged_fleet_action_dives_and_stays_legal() -> void:
 	var state := _state(
-		"[terrain]\nSSSSSSSSSSSSSS\nSSSSSSSSSSSSSS\n[units]\n1 s 0 0\n1 B 0 1\n2 s 13 0\n2 B 13 1"
+		(
+			"[terrain]\nSSSSSSSSSSSSSS\nSSSSSSSSSSSSSS\n[units]\n"
+			+ "1 s 0 0\n1 B 0 1\n1 b 1 1\n2 s 13 0\n2 B 13 1\n2 b 12 1"
+		)
 	)
 	state.rng.seed = 77
 	var ai := AIController.new(unit_db)
@@ -297,7 +409,7 @@ func test_a_staged_fleet_action_dives_and_stays_legal() -> void:
 		dives,
 		0,
 		(
-			"two submarines spent twelve days under a battleship's guns and neither "
-			+ "went under. The dive is either never scored or never legal."
+			"two submarines spent twelve days under an aircraft they cannot shoot "
+			+ "and neither went under. The dive is either never scored or never legal."
 		)
 	)

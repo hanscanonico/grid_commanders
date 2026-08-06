@@ -40,13 +40,19 @@ extends Control
 ## handles — every tip centres on its trigger and the tail follows. `disabled` and
 ## `defaultOpen` serve specimens and coach marks, neither of which this game has.
 
-## Where the slab sits relative to its trigger. A side is a request, not a
+## Which side of its trigger the slab opens on. A side is a request, not a
 ## promise: `_resolved_side` flips it when the slab would leave the viewport.
+##
+## Above or below, and deliberately nothing else: every tip in the game opens
+## downward into the panel it belongs to (the callers all pass BOTTOM), and a
+## left/right pair bought two more arms in four places for a placement nobody
+## asks for. A slab is 110px wide on a 640px canvas — it goes beside a control
+## far less comfortably than it goes under one.
 ##
 ## Spelled `Tooltip.Side` wherever it is written as a *type* — in a script that
 ## registers a global class, a bare `Side` annotation resolves to a different
 ## type than the values it is compared with, and the file will not parse.
-enum Side { TOP, BOTTOM, LEFT, RIGHT }
+enum Side { TOP, BOTTOM }
 
 ## Canvas pixels, so every metric is half the handoff's and doubles on screen
 ## (UiTheme's div-2 rule). The slab never sizes to its text: a long string wraps
@@ -57,26 +63,19 @@ const GAP := 5  # handoff 10 — trigger edge to slab
 const MARGIN := 4  # handoff 8 — the viewport edge a clamped slab keeps off
 const PAD_H := 5  # handoff 10
 const PAD_V := 4  # handoff 8
-## The notch. Its own edges are BORDER, not the slab's PANEL_BORDER: on a
-## triangle this small a 2px inset swallows the slate core whole, and the notch
-## reads as a solid ink arrowhead instead of an opening in the slab.
-const TAIL_W := 10
-const TAIL_H := 5
-const TAIL_BORDER := UiTheme.BORDER
 
 ## The overlay every tip is mounted on. A CanvasLayer above the scene so a slab is
 ## never clipped by the panel, scroll container or map cell it belongs to, and
-## never laid out by them either. The layer also carries the one `_FocusSource`
+## never laid out by them either. The layer also carries the one `FocusSource`
 ## every tip reads to tell a Tab from a click.
 const LAYER_NAME := "TooltipLayer"
-const SOURCE_NAME := "TooltipFocusSource"
 
 var _trigger: Control
 var _side := Side.TOP
 var _slab: PanelContainer
 var _label: Label
 var _detail: Label
-var _tail: _Tail
+var _tail: NotchTail
 var _timer: Timer
 ## Set on hover/focus and cleared on leave/blur, so the frame the slab spends
 ## being measured cannot resurrect a tip the pointer has already left.
@@ -114,7 +113,7 @@ static func attach(trigger: Control, label: String, detail := "", side := Side.T
 	var text_trigger := trigger as Label
 	if text_trigger != null:
 		text_trigger.mouse_default_cursor_shape = Control.CURSOR_HELP
-		text_trigger.add_child(_Underline.new())
+		text_trigger.add_child(DottedUnderline.new())
 
 	trigger.mouse_entered.connect(tip._request)
 	trigger.mouse_exited.connect(tip.close)
@@ -196,7 +195,7 @@ func _build() -> void:
 	_detail = _line(UiTheme.stat(), UiTheme.SIZE_MICRO, UiTheme.NEUTRAL_LIGHT)
 	column.add_child(_detail)
 
-	_tail = _Tail.new()
+	_tail = NotchTail.new()
 	add_child(_tail)
 
 	_timer = Timer.new()
@@ -237,10 +236,7 @@ func _mount() -> void:
 		layer.name = LAYER_NAME
 		layer.layer = 1
 		root.add_child(layer)
-	if layer.get_node_or_null(NodePath(SOURCE_NAME)) == null:
-		var source := _FocusSource.new()
-		source.name = SOURCE_NAME
-		layer.add_child(source)
+	FocusSource.ensure(layer)
 	layer.add_child(self)
 
 
@@ -257,7 +253,7 @@ func _request() -> void:
 ## `follow_focus`'s half of the door, open only to the keyboard and the pad. The
 ## pointer keeps its own way in — the trigger's `mouse_entered`, ungated.
 func _request_focused() -> void:
-	if not _FocusSource.by_keyboard:
+	if not FocusSource.by_keyboard:
 		return
 	_request()
 
@@ -331,207 +327,32 @@ func _visible_trigger_rect() -> Rect2:
 func _place(rect: Rect2) -> void:
 	var view := get_viewport_rect().size
 	var side := _resolved_side(rect, view)
-	var pos := Vector2.ZERO
-	match side:
-		Side.TOP:
-			pos = Vector2(rect.get_center().x - size.x * 0.5, rect.position.y - GAP - size.y)
-		Side.BOTTOM:
-			pos = Vector2(rect.get_center().x - size.x * 0.5, rect.end.y + GAP)
-		Side.LEFT:
-			pos = Vector2(rect.position.x - GAP - size.x, rect.get_center().y - size.y * 0.5)
-		Side.RIGHT:
-			pos = Vector2(rect.end.x + GAP, rect.get_center().y - size.y * 0.5)
+	var below := side == Side.BOTTOM
+	var top := rect.end.y + GAP if below else rect.position.y - GAP - size.y
+	var pos := Vector2(rect.get_center().x - size.x * 0.5, top)
 	# Both axes, not just the one the side does not choose: `_resolved_side` returns
 	# the requested side unchanged when *neither* side has room, and copy that comes
 	# from a map file can grow the slab taller than any code here decided.
 	pos.x = clampf(pos.x, MARGIN, maxf(MARGIN, view.x - MARGIN - size.x))
 	pos.y = clampf(pos.y, MARGIN, maxf(MARGIN, view.y - MARGIN - size.y))
 	position = pos.round()
-	_tail.place(side, rect.get_center() - position, size)
+	_tail.place(below, rect.get_center() - position, size)
 
 
 ## The requested side, unless the slab would run off the viewport there and the
 ## opposite side has room. A 640x360 canvas is small enough that the bottom row of
 ## a panel has nowhere below it to open into.
 func _resolved_side(rect: Rect2, view: Vector2) -> Tooltip.Side:
-	match _side:
-		Side.TOP:
-			if _short(rect.position.y) and not _short(view.y - rect.end.y):
-				return Side.BOTTOM
-		Side.BOTTOM:
-			if _short(view.y - rect.end.y) and not _short(rect.position.y):
-				return Side.TOP
-		Side.LEFT:
-			if _short(rect.position.x) and not _short(view.x - rect.end.x):
-				return Side.RIGHT
-		Side.RIGHT:
-			if _short(view.x - rect.end.x) and not _short(rect.position.x):
-				return Side.LEFT
+	var above := rect.position.y
+	var below := view.y - rect.end.y
+	if _side == Side.TOP and _short(above) and not _short(below):
+		return Side.BOTTOM
+	if _side == Side.BOTTOM and _short(below) and not _short(above):
+		return Side.TOP
 	return _side
 
 
 ## Is `room` — the gap between one trigger edge and the viewport — too small for
 ## the slab, its gap and its margin?
 func _short(room: float) -> bool:
-	var span := size.y if _side == Side.TOP or _side == Side.BOTTOM else size.x
-	return room < span + GAP + MARGIN
-
-
-# --- how focus arrived --------------------------------------------------------
-
-
-## How the player last spoke to the game. `focus_entered` never says whether focus
-## arrived by Tab or by click, and Godot grabs focus for any focusable control the
-## pointer presses, so this one flag is what lets `follow_focus` answer the question
-## the signal cannot — the same distinction a browser draws with `:focus-visible`.
-##
-## One node beside the tips on the overlay layer, not a hook on each of them: the
-## deciding event is the press *before* a tip would open, so the tracker has to be
-## listening whether or not any tip is currently visible. `_input` runs ahead of the
-## viewport's GUI pass, so the flag is already right by the time focus moves.
-##
-## The state is static because there is exactly one player: every tip asks the same
-## question about the same last event.
-class _FocusSource:
-	extends Node
-
-	static var by_keyboard := false
-
-	func _init() -> void:
-		set_process_input(true)
-
-	func _input(event: InputEvent) -> void:
-		if event is InputEventMouseButton or event is InputEventMouseMotion:
-			by_keyboard = false
-		elif (
-			event is InputEventKey
-			or event is InputEventJoypadButton
-			or event is InputEventJoypadMotion
-		):
-			by_keyboard = true
-
-
-# --- the notch and the dotted underline ---------------------------------------
-
-
-## The notched tail: an ink triangle with a slate core whose base runs past the
-## slab's border, so the notch opens into the slab rather than sitting on it.
-## Drawn rather than rotated — a rotated Control resamples, and this UI is
-## pixel-crisp everywhere else.
-class _Tail:
-	extends Control
-
-	var _side := Side.BOTTOM
-
-	func _init() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	## Puts the notch on the slab edge that faces the trigger, centred on
-	## `anchor` (the trigger's centre, in the slab's own coordinates) but never
-	## so far along the edge that it leaves the slab's border behind.
-	func place(side: Tooltip.Side, anchor: Vector2, slab: Vector2) -> void:
-		_side = side
-		var thick := float(UiTheme.PANEL_BORDER)  # the slab's border, its no-go strip
-		match side:
-			Side.TOP:
-				size = Vector2(TAIL_W, TAIL_H)
-				position = Vector2(_along(anchor.x, slab.x, TAIL_W, thick), slab.y)
-			Side.BOTTOM:
-				size = Vector2(TAIL_W, TAIL_H)
-				position = Vector2(_along(anchor.x, slab.x, TAIL_W, thick), -TAIL_H)
-			Side.LEFT:
-				size = Vector2(TAIL_H, TAIL_W)
-				position = Vector2(slab.x, _along(anchor.y, slab.y, TAIL_W, thick))
-			Side.RIGHT:
-				size = Vector2(TAIL_H, TAIL_W)
-				position = Vector2(-TAIL_H, _along(anchor.y, slab.y, TAIL_W, thick))
-		position = position.round()
-		queue_redraw()
-
-	func _along(anchor: float, span: float, tail: float, thick: float) -> float:
-		return clampf(
-			anchor - tail * 0.5, thick + 1.0, maxf(thick + 1.0, span - tail - thick - 1.0)
-		)
-
-	func _draw() -> void:
-		var thick := float(TAIL_BORDER)
-		var outer := PackedVector2Array(
-			[Vector2(0, TAIL_H), Vector2(TAIL_W * 0.5, 0), Vector2(TAIL_W, TAIL_H)]
-		)
-		# The core's base runs past the slab's own border, so the notch opens into
-		# the slab's fill rather than sitting on top of its outline.
-		var inner := _inset(outer, thick)
-		inner[0].y = TAIL_H + UiTheme.PANEL_BORDER
-		inner[2].y = TAIL_H + UiTheme.PANEL_BORDER
-		draw_colored_polygon(_orient(outer), UiTheme.HARD_BORDER)
-		draw_colored_polygon(_orient(inner), UiTheme.SLATE_800)
-
-	## The triangle drawn apex-up, mapped onto the side the notch actually sits
-	## on — a flip or an axis swap, so the geometry is written once.
-	func _orient(points: PackedVector2Array) -> PackedVector2Array:
-		var out := PackedVector2Array()
-		for point in points:
-			match _side:
-				Side.TOP:
-					out.append(Vector2(point.x, TAIL_H - point.y))
-				Side.BOTTOM:
-					out.append(point)
-				Side.LEFT:
-					out.append(Vector2(TAIL_H - point.y, point.x))
-				Side.RIGHT:
-					out.append(Vector2(point.y, point.x))
-		return out
-
-	## Every edge of a triangle pulled `thick` pixels inward: the triangle scaled
-	## about its incentre, whose distance to all three edges is the inradius.
-	func _inset(tri: PackedVector2Array, thick: float) -> PackedVector2Array:
-		var a := tri[1].distance_to(tri[2])
-		var b := tri[2].distance_to(tri[0])
-		var c := tri[0].distance_to(tri[1])
-		var perimeter := a + b + c
-		var incentre := (tri[0] * a + tri[1] * b + tri[2] * c) / perimeter
-		var radius := absf((tri[1] - tri[0]).cross(tri[2] - tri[0])) / perimeter
-		var shrink := maxf((radius - thick) / radius, 0.0) if radius > 0.0 else 0.0
-		var out := PackedVector2Array()
-		for point in tri:
-			out.append(incentre + (point - incentre) * shrink)
-		return out
-
-
-## The dotted rule under a label that carries a tip — the one hint that hovering
-## it will explain something. Drawn under the *text*, not the control, so a label
-## wider than its string is still underlined only where the words are.
-class _Underline:
-	extends Control
-
-	func _init() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	func _ready() -> void:
-		var label := get_parent() as Label
-		if label != null:
-			label.resized.connect(queue_redraw)
-
-	## Drawn off the *parent's* rect rather than this node's own. A Label is not a
-	## container, so a child added to one keeps whatever size it had when it
-	## entered the tree — here, none — and an anchored rule would land above the
-	## words instead of under them.
-	func _draw() -> void:
-		var label := get_parent() as Label
-		if label == null or label.text.is_empty():
-			return
-		var rect := label.size
-		var font := label.get_theme_font(&"font")
-		var font_size := label.get_theme_font_size(&"font_size")
-		var span := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		var start := 0.0
-		if label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER:
-			start = roundf((rect.x - span) * 0.5)
-		elif label.horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT:
-			start = rect.x - span
-		var color := label.get_theme_color(&"font_color")
-		var y := rect.y - 1.0
-		var x := maxf(start, 0.0)
-		while x < start + span:
-			draw_rect(Rect2(x, y, 1, 1), color)
-			x += 2.0
+	return room < size.y + GAP + MARGIN

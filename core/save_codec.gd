@@ -284,9 +284,10 @@ static func decode(
 ) -> LoadedMatch:
 	var error := validate(data)
 	if error != "":
-		# Reaches a log, not a player: the menu gates Continue on `summarize`, which
-		# asks this same `validate` through the deliberately silent `SaveGame.peek`,
-		# so a save refused here reads as no save at all on the way in.
+		# Still a log rather than a player, but no longer the only place it is said:
+		# the menu gates Continue on `SaveGame.status`, which asks this same `validate`
+		# and hands the reason back, so a save refused here is offered as damaged
+		# rather than as no save at all (COM-121).
 		push_error("SaveCodec: %s" % error)
 		return null
 	var map := MapData.load_from_file(String(data["map_path"]), terrain_db)
@@ -417,8 +418,10 @@ static func _decode_commanders(
 ## The implication runs one way only. Naming a save deliberately loads no map, so
 ## a summary is not a promise `decode` will accept: it goes on to ask
 ## `board_error` of the loaded board, and a save that describes an impossible one
-## is named on the menu and then refused — the same fallback a save whose map has
-## since gone missing has always taken.
+## — or names a board that has since gone missing — is named on the menu and then
+## refused. Both callers of that refusal are refusals rather than fallbacks: the
+## menu opens the save on the press and stages nothing when it will not open, and
+## `BattleSetup` returns no match at all (COM-121).
 static func summarize(data: Dictionary) -> Summary:
 	if validate(data) != "":
 		return null
@@ -622,7 +625,7 @@ static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -
 	for entry: Dictionary in data["home_hq"] as Array:
 		var team := int(entry["team"])
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
-		if map.terrain_at(cell).id != GameState.HQ_TERRAIN:
+		if not map.terrain_at(cell).is_headquarters:
 			return "team %d's home HQ at %s is not an HQ" % [team, cell]
 		if not expected.has(team):
 			return "the save homes team %d at %s, but its board homes it nowhere" % [team, cell]
@@ -856,8 +859,8 @@ static func _encode_eliminated(state: GameState) -> Array:
 ##
 ## Floors on anything it cannot read, like its siblings; `_eliminated_error`
 ## reports a list that is wrong rather than leaving it to be inferred here.
-static func _decode_eliminated(data: Dictionary) -> Dictionary:
-	var fallen: Dictionary = {}
+static func _decode_eliminated(data: Dictionary) -> Dictionary[int, bool]:
+	var fallen: Dictionary[int, bool] = {}
 	if _claimed_version(data) < int(KEY_RULES["eliminated"]["since"]):
 		return fallen
 	var saved: Variant = data.get("eliminated")
@@ -900,13 +903,15 @@ static func _encode_home_hq(state: GameState) -> Array:
 ## Floors on anything it cannot read, like its siblings, and to the same map-derived
 ## answer; `_home_hq_error` reports a list that is wrong rather than leaving it to
 ## be papered over here.
-static func _decode_home_hq(data: Dictionary, map: MapData, roster: Array[int]) -> Dictionary:
+static func _decode_home_hq(
+	data: Dictionary, map: MapData, roster: Array[int]
+) -> Dictionary[int, Vector2i]:
 	if _claimed_version(data) < int(KEY_RULES["home_hq"]["since"]):
 		return GameState.home_hqs(map, roster)
 	var saved: Variant = data.get("home_hq")
 	if not (saved is Array):
 		return GameState.home_hqs(map, roster)
-	var homes: Dictionary = {}
+	var homes: Dictionary[int, Vector2i] = {}
 	for entry: Variant in saved as Array:
 		if not (entry is Dictionary):
 			return GameState.home_hqs(map, roster)

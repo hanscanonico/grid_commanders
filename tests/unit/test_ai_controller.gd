@@ -177,9 +177,10 @@ func test_full_turn_on_real_map_terminates_legally() -> void:
 
 
 func test_a_sub_dives_from_something_it_cannot_answer() -> void:
-	# Eight tiles off: inside a battleship's reach (move plus a six-tile gun),
-	# outside the sub's own move-and-fire. A boat that could shoot would.
-	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 B 8 0")
+	# Eight tiles off: inside a bomber's reach, since it fires where it lands and
+	# it lands seven tiles out. The boat has no weapon that answers an aircraft at
+	# all, so hiding is the whole of what it can do about one.
+	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
 	assert_true((command as DiveCommand).submerge)
@@ -205,7 +206,7 @@ func test_a_sub_surfaces_once_the_threat_is_gone() -> void:
 ## Going under on the last of the tank would only mean surfacing again next turn
 ## for exactly that reason, and diving again the turn after. It stays up instead.
 func test_a_sub_low_on_fuel_stays_up() -> void:
-	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 B 8 0")
+	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0")
 	var sub := state.units[0]
 	sub.fuel = sub.type.dived_fuel_upkeep + sub.type.move_points
 	var command := ai.plan_next_command(state)
@@ -216,7 +217,7 @@ func test_a_sub_low_on_fuel_stays_up() -> void:
 ## asks of it is guarded — deciding whether to dive is a threat question, and a
 ## state that resolves no combat has no threats to weigh.
 func test_planning_without_a_damage_chart_asks_the_chart_nothing() -> void:
-	var map := MapData.parse("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 B 8 0", terrain_db)
+	var map := MapData.parse("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0", terrain_db)
 	var state := GameState.create(map, unit_db)
 	assert_not_null(state)
 	var command := ai.plan_next_command(state)

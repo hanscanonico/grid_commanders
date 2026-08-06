@@ -19,6 +19,8 @@ extends RefCounted
 ## photographs itself reads it from the one place it is spelled.
 const SELECT_ARG := "--select"
 const DEMO_ARG := "--demo"
+## What `--select` reads as when it names no cell.
+const NO_CELL := Vector2i(-1, -1)
 
 ## Demos fix the seed so a capture of the same scenario is the same frame.
 const DEMO_SEED := 2026
@@ -158,7 +160,7 @@ const PREVIEW_FOG_TO := Vector2i(10, 8)
 
 var _battle: Battle
 var _shot_path := ""
-var _select_cell := Vector2i(-1, -1)
+var _select_cell := NO_CELL
 var _demo := ""
 ## Raised by any mid-scenario check that fails. `run` reads it before it writes
 ## anything: a capture saved after a failed check would take the exit code down
@@ -171,9 +173,7 @@ func _init(battle: Battle) -> void:
 	_battle = battle
 	_shot_path = ScreenshotUtil.requested()
 	var args := CmdArgs.user()
-	var parts := CmdArgs.value(args, SELECT_ARG).split(",")
-	if parts.size() == 2:
-		_select_cell = Vector2i(int(parts[0]), int(parts[1]))
+	_select_cell = _selected_cell(args)
 	_demo = CmdArgs.value(args, DEMO_ARG)
 	# A smoke batch (--demos=, COM-117) supersedes both — see BattleCaptureBatch.
 	if BattleCaptureBatch.adopt(battle):
@@ -181,10 +181,23 @@ func _init(battle: Battle) -> void:
 		_shot_path = BattleCaptureBatch.shot_path()
 
 
-## True when the command line asked for any scripted flow at all. Battle skips
-## building a driver otherwise, so an ordinary match never pays for one.
-func requested() -> bool:
-	return _shot_path != "" or _select_cell.x >= 0 or _demo != ""
+## The cell `--select` names, or NO_CELL when it names none.
+static func _selected_cell(args: PackedStringArray) -> Vector2i:
+	var parts := CmdArgs.value(args, SELECT_ARG).split(",")
+	if parts.size() != 2:
+		return NO_CELL
+	return Vector2i(int(parts[0]), int(parts[1]))
+
+
+## True when the command line asked for any scripted flow at all — a screenshot,
+## a demo, a selection preview, or a whole smoke batch. Static because Battle
+## asks it *instead of* building a driver, so an ordinary match never pays for
+## one; a batch is a capture whatever else it carries.
+static func requested() -> bool:
+	if ScreenshotUtil.requested() != "" or BattleCaptureBatch.requested() != "":
+		return true
+	var args := CmdArgs.user()
+	return CmdArgs.value(args, DEMO_ARG) != "" or _selected_cell(args).x >= 0
 
 
 ## Whether this run is one of the two that exist to photograph the first-match
@@ -196,8 +209,6 @@ func wants_mission_strip() -> bool:
 
 
 func run() -> void:
-	if not requested():
-		return
 	# Demos and captures drive the board, so neither the handoff panel nor the
 	# day-1 banner may sit on top, except the flow whose subject is that banner.
 	_battle.leave_handoff()
@@ -323,7 +334,7 @@ func _run_demo(mode: String) -> void:
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
-		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units":
+		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units", "power_range_readout":
 			var error := await BattleFeedbackScenario.new(_battle).run(mode)
 			if error != "":
 				_fail(error)
@@ -432,7 +443,7 @@ func _run_power_menu_demo() -> void:
 	_battle.confirm_at(Vector2i(8, 8))  # select the red tank
 	_battle.confirm_at(Vector2i(8, 8))  # stay put -> its action menu
 	await _until_state(Battle.State.MENU)
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.IDLE)
 	# Waited out rather than asserted, in the same spirit as _until_state: a menu
 	# that never closes hangs the scenario and the smoke run reports the timeout.
@@ -488,7 +499,7 @@ func _stage_capture_power_race() -> void:
 		await tree.process_frame
 	if _battle.state == Battle.State.MENU:
 		_fail("capture holds its cut-in in State.MENU — the HUD Fire button reaches a command")
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.IDLE)
 	if _battle.game.commander_state(1).power_active:
 		_fail("a Command Power fired during the capture cut-in")
@@ -742,8 +753,8 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 		var finishes := [0]
 		var tally := func() -> void: finishes[0] += 1
 		cutscene.finished.connect(tally)
-		camera.zoom = resting * BattleAnimator.PUNCH_ZOOM
-		cutscene.play(result, unit, cell, camera, resting)  # deliberately not awaited
+		_punch_board()
+		cutscene.play(result, unit, cell)  # deliberately not awaited
 		for frame in delay:
 			await tree.process_frame
 		for spam in 3:
@@ -764,7 +775,7 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 				)
 			)
 			return
-	camera.zoom = resting
+	_battle.view.punch_zoom = 1.0
 	print(
 		(
 			"capture_cutin_skip: %d skips, each resolved exactly once and camera home"
@@ -785,7 +796,7 @@ func _spam_capture_skip(result: CaptureCommand.CaptureResult, unit: Unit, cell: 
 ## A run that never finishes hangs the scenario and the smoke sweep reports the
 ## timeout; one that finishes twice, or not at all, or leaves the camera zoomed,
 ## quits non-zero here.
-func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func _spam_skip(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	var cutscene := _battle.animator.cutscene
 	var camera := _battle.camera
 	var tree := _battle.get_tree()
@@ -797,11 +808,11 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 		# exit that fires twice — would be the one it could not see.
 		var tally := func() -> void: finishes[0] += 1
 		cutscene.finished.connect(tally)
-		# Hand it the punched-in camera the animator would, so the skip has a zoom
-		# to land: the cut-in now owns easing it back to `resting` off its own
-		# clock, and a skip must pin it there like every other value it drives.
-		camera.zoom = resting * BattleAnimator.PUNCH_ZOOM
-		cutscene.play(result, attacker, defender, camera, resting)  # deliberately not awaited
+		# Punch the board the way the animator would, so the skip has a flinch to
+		# land: the cut-in owns easing it back out off its own clock, and a skip
+		# must pin it home like every other value it drives.
+		_punch_board()
+		cutscene.play(result, attacker, defender)  # deliberately not awaited
 		for frame in delay:
 			await tree.process_frame
 		# Spammed, not pressed once: a second skip after the exit has run must be
@@ -822,8 +833,24 @@ func _spam_skip(result: CombatResolver.CombatResult, attacker: Unit, defender: U
 				)
 			)
 			return
-	camera.zoom = resting
+	_battle.view.punch_zoom = 1.0
 	print("cutin_skip: %d skips, each resolved exactly once and camera home" % SKIP_FRAMES.size())
+
+
+## The entry flinch, staged the way BattleAnimator stages it — and checked while it
+## is held. The board is docked in the band between the two HUD bars by a camera
+## offset in *world* units, so the same screen inset is a different offset at each
+## zoom level: a punch written straight to the camera keeps the resting level's
+## inset and drops the board out of the band for as long as the flinch lasts
+## (COM-84). Measured in the screen pixels that must not move, so the check does
+## not restate the view's arithmetic.
+func _punch_board() -> void:
+	var camera := _battle.camera
+	var docked := camera.offset.y * camera.zoom.y
+	_battle.view.punch_zoom = BattleAnimator.PUNCH_ZOOM
+	var punched := camera.offset.y * camera.zoom.y
+	if not is_equal_approx(punched, docked):
+		_fail("the zoom punch slid the board %.1fpx out of the band" % (punched - docked))
 
 
 ## Puts one unit of each named type onto the first pair of cells the board has
@@ -1096,7 +1123,7 @@ func _stage_mirror_power() -> void:
 	_battle.game.commander_state(2).charge = co.power_cost
 	_battle.game.current_team = 2
 	_battle.ai_teams.clear()  # Battle owns the list; hand the emptied one over again
-	_battle.view.ai_teams = _battle.ai_teams
+	_battle.view.set_ai_teams(_battle.ai_teams)
 	_battle.view.restage_identity()
 	await _settle_hud()
 
@@ -1106,7 +1133,7 @@ func _stage_mirror_power() -> void:
 ## capturing (see BattleAnimator.show_power_banner), so the frame is the banner.
 func _stage_power_banner() -> void:
 	_set_red_commander(&"cass_orlov", true)
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.IDLE)
 
 
@@ -1122,7 +1149,7 @@ func _stage_power_banner() -> void:
 ## preview that has stopped agreeing with the strike photographs perfectly well.
 func _stage_power_targeting() -> void:
 	_set_red_commander(&"radek_morn", true)
-	_battle.view.hud_bottom.fire_button.pressed.emit()
+	_battle.view.fire_pressed.emit()
 	await _until_state(Battle.State.POWER_TARGETING)
 	_battle.set_cursor_cell(HAMMERFALL_AIM)
 	await _battle.get_tree().create_timer(0.2).timeout
@@ -1147,7 +1174,6 @@ func _stage_power_map_menu() -> void:
 	_set_red_commander(&"mara_voss", true)
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	_check_map_menu_readable()
 
 
@@ -1174,12 +1200,10 @@ func _check_map_menu_readable() -> void:
 func _stage_leave_routes() -> void:
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	_check_rows("map menu", BattleMenus.map_actions(_battle.game), [&"save_and_quit", &"quit"])
 	_check_in_band("map menu", _battle.action_menu)
 	var map_menu_h := _battle.action_menu.get_global_rect().size.y
 	_battle.action_menu.choose(&"quit")
-	await _settle_menu()
 	var rows := BattleMenus.abandon_confirm_actions()
 	_check_rows("abandon confirmation", rows, [&"cancel", &"abandon"])
 	if not rows.is_empty() and rows[0].id != &"cancel":
@@ -1214,14 +1238,12 @@ func _stage_menu_after_build_menu() -> void:
 	_battle.set_cursor_cell(Vector2i(3, 2))  # red base
 	_battle.confirm_at(Vector2i(3, 2))  # the tallest and widest menu in the game
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	var build_menu := _battle.action_menu.get_global_rect().size
 	_battle.action_menu.choose(&"cancel")
 	await _until_state(Battle.State.IDLE)
 	_battle.confirm_at(Vector2i(4, 3))  # select the red infantry
 	_battle.confirm_at(Vector2i(4, 3))  # stay put -> Wait / Cancel, the shortest menu
 	await _until_state(Battle.State.MENU)
-	await _settle_menu()
 	_check_in_band("unit menu", _battle.action_menu)
 	var shown := _battle.action_menu.rows.get_child_count()
 	if shown != 2:
@@ -1240,10 +1262,11 @@ func _stage_menu_after_build_menu() -> void:
 		)
 
 
-## An open menu only knows its size, and so its clamped position, a frame after its
-## rows were added — see ActionMenu._place, which awaits one itself.
-func _settle_menu() -> void:
-	await _battle.get_tree().process_frame
+## A control built in code measures and places itself a frame after its children
+## were added: the seat strip centres itself, the info sheet's grid sizes its
+## columns. The action menu is not one of them — ActionMenu.open sizes and clamps
+## the panel before it returns.
+func _settle_layout() -> void:
 	await _battle.get_tree().process_frame
 
 
@@ -1286,7 +1309,7 @@ func _stage_mission_strip(mode: String) -> void:
 	if mode == MISSION_STRIP_RETIRED:
 		expected = &"capture"
 		await _walk_first_turn()
-	await _settle_menu()  # the strip measures and centres itself a frame late
+	await _settle_layout()  # the strip measures and centres itself a frame late
 	if not strip.visible:
 		_fail("the mission strip is down with %s still to teach" % expected)
 		return
@@ -1337,7 +1360,7 @@ func _stage_commander_info() -> void:
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"commanders")
 	await _until_state(Battle.State.INFO)
-	await _settle_menu()  # the grid sizes its columns a frame after the sheet opens
+	await _settle_layout()  # the grid sizes its columns a frame after the sheet opens
 	var flaw := _battle.commander_info_sheet.layout_error(_battle.game.teams.size())
 	if flaw != "":
 		_fail(flaw)

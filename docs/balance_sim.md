@@ -9,7 +9,9 @@ It is an **instrument, not a gate**. Like `make commander-balance` and
 `make difficulty-check` it stays out of `make verify` and `make test`; only its
 own unit tests (`tests/unit/test_balance_engine.gd`,
 `tests/unit/test_balance_recorder.gd`) are in the suite. Generated reports are
-not committed — they live under `reports/`, which is gitignored.
+not committed — they live under `reports/`, which is gitignored. The one gate
+over this code is `make determinism`, and it measures reproducibility rather than
+balance: [the committed side of the merge bar](#the-committed-side-of-it-make-determinism).
 
 ## The instruments
 
@@ -67,7 +69,7 @@ difficulty plan's D2/D3 lock. Mixing tier and commander per side is new
 | `--map=` | Any shipped board, or a balance fixture (`clash`, `ridge`, `combined`, `holdings`, `channel`) |
 | `--red=` / `--blue=` | Side specs; default `none:normal` |
 | `--seeds=` | Paired seed count, default 4. Each seed plays **both seats** |
-| `--seed=` | One specific seed instead — replays a single row |
+| `--seed=` | One specific seed instead. It pins the seed and nothing else, so both seats are still played; `make balance-watch` on the same flags reproduces the `seat 0` row of the two, the one seating `--red` as red |
 | `--seed-offset=` | Start `--seeds=` counting N seeds into the range — how a shard of a parallel run asks for its slice of it |
 | `--days=` | Day cap before a match is scored on points, default 20 |
 | `--sweep=` | `commanders`, `maps` or `tiers` — one free axis per run |
@@ -114,7 +116,7 @@ property lines cross.
 | Key | `match_id · day · team · commander · tier` | Joins to `matches.csv` for map, seed, seats, outcome |
 | Money | `funds_start · income · plunder · plunder_off_turn · spent · funds_end` | See below |
 | Production | `built · built_value` | `infantry x2;tank` and its summed cost |
-| Combat | `killed · lost · killed_value · lost_value` | See attribution below |
+| Combat | `killed · lost · killed_value · lost_value` | See attribution below. Both values are **what the units cost to field**, whatever was left of them: destroying a 2 HP tank denies the enemy the whole tank. That is deliberately not the measure `army_value` is in, so read the exchange ratio (kills over losses, one measure) and never against a side's standing army value |
 | Board | `merged · forfeited · unit_count · army_value · properties · captures` | End-of-turn strength; `army_value` = Σ cost × HP fraction, because a 2 HP tank isn't a tank |
 | Powers | `power_charge · power_fired` | Meter percentage at turn end; whether the power went off |
 | Cost | `commands · planning_ms` | Commands issued and AI planning time |
@@ -151,7 +153,13 @@ per match like the equation above.
 **`planning_ms` is the one wall-clock column.** Everything else in a timeline row
 is a pure function of (map, seed, side specs) and reproduces byte for byte; this
 one measures how long the planner thought and cannot. The determinism test
-compares rows with it excluded.
+compares rows with it excluded, and `make determinism` keeps the file out of its
+golden for the same reason.
+
+The tally cells — `built`, `killed`, `lost` — are alphabetical, and are sorted as
+Strings to be so: sorting them as `StringName`s orders by intern position, which
+is the order the ids were first mentioned by a loading script. That was a real
+flap in `timeline.csv` (`recon;mech`), not a hypothetical one.
 
 ### Kill and loss attribution (plan D3)
 
@@ -192,8 +200,20 @@ committed thresholds:
 |---|---|---|
 | Side-normalized win rate per swept value | **45–55%** | preferred |
 | Same | **40–60%** | warning — investigate before merge |
-| First-seat bias (games with a winner) | **≤ 5 pp** | map/seed fairness |
+| First-seat bias (all decisive games, mirrors counted) | **≤ 5 pp** | map/seed fairness |
 | Rejected AI commands, cap stalls | **0** | **hard** — the run exits 1 |
+
+Every one of those thresholds has one definition, in `BalanceRunSummary`, and all
+three instruments read it from there.
+
+**The bias row is the one number the two tools mean differently, so each prints
+its definition in the label.** The Lab counts mirrors: a mirror sweep is a run
+whose every row is one, and with both sides identical every red win above half is
+the seat talking — excluding them would leave `--sweep=maps` with nothing to
+report. `make commander-balance` excludes them, because its bias figure is read
+as a caveat on the commander win rates beside it and those come from the
+non-mirror games (`docs/commander_balance.md`'s own threshold row says so). The
+two figures are therefore not interchangeable; quote the label with the number.
 
 Only the hard invariants fail the run. Out-of-band win rates are review triggers,
 per the standing rule: **do not balance to the AI leaderboard alone.**
@@ -251,6 +271,37 @@ One alignment detail rides along: the scene's per-turn command cap and the
 harness's now come from one constant (`BalanceMatchEngine.MAX_COMMANDS_PER_TURN`),
 so neither can cut a game the other would let run.
 
+### How a match is bounded
+
+Three nets, and they answer different questions:
+
+| Net | What it bounds | Reaching it means |
+|---|---|---|
+| `--days=` (`Setup.days_cap`) | how long a match runs | a normal unfinished match, scored on `tiebreak` |
+| `MAX_COMMANDS_PER_TURN` (300) | one side's turn | a turn that overstayed; the turn is force-ended and counted in `turn_cap_hits` |
+| `command_ceiling(days, teams)` | the whole match | **the day stopped advancing** — a loop, and a hard failure of the run |
+
+The third is **derived, not chosen**: `(MAX_COMMANDS_PER_TURN + 1) × teams ×
+(days + 1)` is the most commands the other two can between them allow, so it
+cannot truncate legitimate play at any horizon or roster, and a match that
+exceeds it has broken the invariant that a turn ends and a day advances.
+
+It replaced a flat 3 000, and the correction is measured. Over the 23 682
+matches of the first AI Arena search campaign (2026-08-05, 100-day horizon) the
+median match spent 400 commands and p99.9 spent 2 400 — but twelve reached 3 000,
+and **replayed with the cap lifted every one of the twelve ran to the day cap
+instead**, at 3 052 to 5 226 commands, each a 60-to-87-unit army mopping up a
+last survivor on a property-rich board. Zero rejected commands anywhere. The cap
+was not detecting a runaway; it was truncating the longest honest games and
+failing the run for it. A second constant picked off that distribution would be
+the same mistake with a bigger number, since the ceiling moves with the board's
+economy and the run's horizon.
+
+Both committed gates report **0 cap stalls** and never approached the old bound
+(the longest 20-day match measured spends about 300 commands), so the change is
+inert there by construction — and that was proved, not argued: `matches.csv` from
+`make difficulty-check DIFF="--seeds=15"` is byte-identical across it.
+
 ## The extraction (plan D1)
 
 `tools/run_commander_balance.gd` kept its CLI and both committed gates; the
@@ -260,10 +311,43 @@ both reports before and after:
 | Gate | `matches.csv` | `summary.json` |
 |---|---|---|
 | `make commander-balance BAL="--commanders=alina_ward,cass_orlov,gideon_holt --seeds=2"` | identical | identical |
-| `make difficulty-check DIFF="--seeds=2 --days=12"` | identical | identical bar `turn_ms` |
+| `make difficulty-check DIFF="--seeds=2 --days=12"` | identical | identical |
 
-`turn_ms` is mean planning wall-clock and was never reproducible run to run —
-that is why `docs/difficulty_check.md` already reports it and never gates on it.
+The same bar, and the same two rows, cleared again when the rest of the shared
+pipeline followed the loop out of the runners: `tools/balance/harness.gd`
+(`BalanceHarness`) holds the databases and the board cache — both runners carried
+a copy of each — and `BalanceRunSummary` holds every
+threshold and the difficulty ladder's own gate arithmetic, which was living in a
+`SceneTree` runner where no test could reach it. Both gates' `matches.csv` and
+`summary.json` came out byte-identical, and `make determinism` reproduced its
+golden untouched.
+
+That second row used to read *identical bar `turn_ms`*: mean planning wall-clock
+was written into the difficulty gate's `summary.json`, which made this bar
+unmeetable exactly where it was being claimed. It is written to `timing.json`
+beside the two reports now, and printed to stdout as it always was, so both
+diffed artifacts are byte-stable and `docs/difficulty_check.md` reads its timings
+where it always did.
+
+### The committed side of it: `make determinism`
+
+The bar above was also a *procedure*: `reports/` is gitignored, so there was
+nothing committed to diff against and it ran when somebody remembered.
+`make determinism` is that missing side — one pinned match (`clash`, seed 1000,
+20 days, `--no-commands`, about a second) whose `matches.csv` and `summary.json`
+are committed under `tests/fixtures/determinism/` and byte-diffed on every run.
+It is cheap enough to sit in CI beside the four `make verify` gates, and
+`tools/check_determinism.sh` owns the pinned flags.
+
+A rules, data or planner change is *supposed* to move it. The diff it prints is
+what that change did to one whole match — read it, then accept it with
+`make determinism REFRESH=1` and say in the commit which change moved it. The
+full-size presets stay the release tools they are; this is the tripwire under
+them.
+
+`timeline.csv` and `report.html` are deliberately out of the golden: both carry
+`planning_ms` (below). Their numbers still reach the diff, aggregated into
+`summary.json`.
 
 The balance fixtures live in `maps/fixtures/` rather than in that file, so the
 Lab can name one with `--map=` and the battle scene can boot one for watch mode.

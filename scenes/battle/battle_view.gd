@@ -20,6 +20,11 @@ extends RefCounted
 ## Battle assigns the node fields and then calls `setup`; the view is
 ## constructed with no arguments so it never holds a reference to Battle.
 
+## The bottom bar's charged shortcut was pressed, relayed so Battle wires itself
+## to the board's facade rather than into the bar's widget tree — the bars are
+## rebuilt in code and a caller three fields deep breaks silently (COM-85).
+signal fire_pressed
+
 const TILE := 16
 ## Terrain atlas cells are 4x the world grid so the PixVoxel property buildings
 ## keep their detail; TerrainLayer is scaled down to compensate.
@@ -40,13 +45,9 @@ var camera: Camera2D
 ## The docked bar below the board: the commander in hand, the unit under the
 ## cursor, the tile it stands on. Replaces the floating chip and corner panel.
 var hud_bottom: HudBottomBar
-var damage_preview: PanelContainer
-var atk_label: Label
-var counter_label: Label
-## The forecast's third line: the target's HP before and after, the luck-free
-## attack percentage as secondary detail, and the note that luck can move where
-## inside the span it lands.
-var outcome_label: Label
+## The attack forecast that floats beside the previewed cell. It owns its own
+## lines; the view only decides whether it shows and where it lands.
+var damage_preview: DamagePreview
 ## The docked bar above the board: day, side, doctrine, funds, key legend.
 var hud_top: HudTopBar
 ## The first-match teaching strip. Transient by design — it retires itself for
@@ -64,6 +65,18 @@ var shake_offset := Vector2.ZERO:
 		if camera != null:
 			_apply_board_offset()
 
+## The transient flinch the cut-in's entry lays over the player's zoom level, as a
+## multiple of it — 1.0 at rest. Set, tweened and eased back out through here
+## rather than written to the camera, for the same reason `shake_offset` is: the
+## docking inset and the camera limits are both derived from the zoom, so a punch
+## the view never hears about leaves them behind at the resting level and slides
+## the board out of the band. See `_apply_zoom`, which composes both.
+var punch_zoom := 1.0:
+	set(value):
+		punch_zoom = value
+		if camera != null:
+			_apply_zoom()
+
 var db: TerrainDB
 var map: MapData
 var game: GameState
@@ -75,11 +88,14 @@ var perspective: BattlePerspective
 ## the board draws comes from here; the sim keeps its team ints. Battle builds it
 ## and assigns it, like everything else the view draws with.
 var identity: SideIdentity
-## Teams the computer plays. The view only needs them to know whose controls it
-## must not offer; Battle owns the list and hands it over, as with everything.
-var ai_teams: Array[int] = []
 
 var _sprites: Dictionary = {}  # Unit -> UnitSprite
+## Teams the computer plays, from `set_ai_teams`. The view only needs them to know
+## whose controls it must not offer; Battle owns the list.
+var _ai_teams: Array[int] = []
+## The zoom level the player is playing at. BattleZoom owns it and its clamp; this
+## is the last level it set, kept so a punch can ride over it.
+var _resting_zoom := 1.0
 
 
 ## Builds the tile sets from data and paints the opening board. Call once, after
@@ -87,6 +103,7 @@ var _sprites: Dictionary = {}  # Unit -> UnitSprite
 func setup() -> void:
 	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
 	hud_bottom.chart = game.damage_chart  # and asks the rules which weapons a unit owns
+	hud_bottom.fire_pressed.connect(fire_pressed.emit)
 	# Whose actions the teaching strip may learn from — the computer plays through
 	# the same events and must not retire a hint on the player's behalf — and
 	# whether this board teaches at all, which is MapCatalog's answer (COM-122).
@@ -366,11 +383,25 @@ func refresh_hud() -> void:
 	# charged AI still fills the meter, but the click would be refused. The theme is
 	# the side's resolved one rather than the commander's own, so a mirror match
 	# wears the same borrowed colour here that its army wears on the board.
-	hud_bottom.show_commander(game.commander_state(team), team in ai_teams, identity.theme(team))
+	hud_bottom.show_commander(game.commander_state(team), team in _ai_teams, identity.theme(team))
 	# The strip reads its own progress out of the device preference, so this only
 	# has to say "something changed" — and a turn boundary is when a step most
 	# often did (COM-12).
 	mission_strip.refresh()
+
+
+## Which seats the computer plays, from Battle, which owns the list. The view
+## holds the list it is handed rather than a copy, so a seating Battle edits in
+## place is the seating the bars read.
+func set_ai_teams(teams: Array[int]) -> void:
+	_ai_teams = teams
+
+
+## What the bottom bar is currently printing about the unit under the cursor.
+## Read back by the scenario driver's checks; the bar's own answer, so a readout
+## that drifts from the rules is caught where it is shown.
+func unit_order_line() -> String:
+	return hud_bottom.unit_order_line()
 
 
 ## Lights the top bar's threat chip to match the lens on the board.
@@ -397,7 +428,7 @@ func refresh_keys(context: StringName) -> void:
 func _human_teams() -> Array[int]:
 	var out: Array[int] = []
 	for team in game.teams:
-		if team not in ai_teams:
+		if team not in _ai_teams:
 			out.append(team)
 	return out
 
@@ -431,7 +462,8 @@ func refresh_panel(cell: Vector2i) -> void:
 		capture_left,
 		hovered,
 		carrying,
-		_allegiance_of(hovered)
+		_allegiance_of(hovered),
+		_range_band_of(hovered)
 	)
 
 
@@ -449,51 +481,25 @@ func _allegiance_of(unit: Unit) -> String:
 	return "Ally" if game.allied(unit.team, viewer) else "Enemy"
 
 
+## The ring the bar prints as "RNG a-b". Asked of AttackRange, the one authority
+## on how far a unit shoots, so the readout follows a doctrine that moves it —
+## Rhea Sol's Grid Saturation — exactly as the fire overlay and AttackCommand do.
+func _range_band_of(unit: Unit) -> Vector2i:
+	if unit == null:
+		return Vector2i.ZERO
+	return AttackRange.band(game, unit)
+
+
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing
-## worth previewing under the cursor — hides the panel.
-##
-## It speaks HP out of 10, the unit every other HP display in the game speaks
-## (UX recovery plan D4): the percentages it used to print read like a hit
-## chance and made the player convert mid-fight. Every number here was handed
-## over by the forecast — this method formats and never computes, which is the
-## cut-in's "replays, never decides" rule applied to text.
-func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) -> void:
+## worth previewing under the cursor — hides the panel. What the lines say is the
+## panel's own; where they land is this view's, which owns the board's geometry.
+func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) -> void:
 	damage_preview.visible = forecast != null and forecast.can_attack
 	if not damage_preview.visible:
 		return
-	atk_label.text = (
-		"Deal %s HP"
-		% _hp_span(
-			forecast.defender_hp_before - forecast.defender_hp_after_max,
-			forecast.defender_hp_before - forecast.defender_hp_after_min
-		)
-	)
-	counter_label.text = (
-		(
-			"Take %s HP"
-			% _hp_span(
-				forecast.attacker_hp_before - forecast.attacker_hp_after_max,
-				forecast.attacker_hp_before - forecast.attacker_hp_after_min
-			)
-		)
-		if forecast.counter_damage >= 0
-		else "No counter"
-	)
-	# The target's own before/after, so the player reads the outcome without
-	# subtracting, and the one line that admits the roll exists at all. The
-	# luck-free attack percentage rides along dimmed, demoted to the secondary
-	# detail plan D4 allows it to be: a chip attack worth less than a displayed
-	# HP reads "Deal 0 HP" up top, and this is where it says it landed anyway.
-	outcome_label.text = (
-		"Target %d → %s HP · %d%% · luck included"
-		% [
-			forecast.defender_hp_before,
-			_hp_span(forecast.defender_hp_after_min, forecast.defender_hp_after_max),
-			forecast.attack_damage
-		]
-	)
+	damage_preview.show_forecast(forecast)
 	# Measured rather than guessed: the panel is as wide and as tall as its own
-	# lines, and those now vary with the numbers in them. It sits up and to the
+	# lines, and those vary with the numbers in them. It sits up and to the
 	# right of the tile, and flips to its left rather than run off the screen.
 	var panel := damage_preview.get_combined_minimum_size()
 	var pos := screen_pos_for_cell(cell) + Vector2(4.0, 6.0 - panel.y)
@@ -503,12 +509,6 @@ func update_damage_preview(forecast: CombatResolver.Forecast, cell: Vector2i) ->
 	# but the bars are opaque: clamped into the board band it can never slide
 	# under one and lose the numbers it exists to show.
 	damage_preview.position = pos.max(Vector2(4, UiTheme.HUD_TOP_H + 4))
-
-
-## "5" for a certain outcome, "5–6" for one luck can move. Both bounds are the
-## forecast's; this only chooses how to say them.
-func _hp_span(low: int, high: int) -> String:
-	return str(low) if low == high else "%d–%d" % [low, high]
 
 
 # --- cursor and camera geometry ----------------------------------------------
@@ -528,8 +528,21 @@ func _cursor_cell() -> Vector2i:
 	return Vector2i((cursor.position / float(TILE)).floor())
 
 
+## The level the player is playing at, from BattleZoom, which owns it and clamps
+## it against `min_zoom`.
 func set_zoom(zoom: float) -> void:
-	camera.zoom = Vector2(zoom, zoom)
+	_resting_zoom = zoom
+	_apply_zoom()
+
+
+## **`camera.zoom` has one writer, and this is it.** The player's level and the
+## combat flinch over it are two different things that both want that property, and
+## both the docking offset and the camera limits are worked out *from* it — so a
+## punch written straight to the camera keeps the resting level's world inset and
+## its wider limits, and the board sits out of the band until the next zoom key.
+## The level and the punch are composed here, like the docking shift and the shake.
+func _apply_zoom() -> void:
+	camera.zoom = Vector2.ONE * _resting_zoom * punch_zoom
 	_apply_board_offset()
 	_apply_camera_limits()
 

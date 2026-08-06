@@ -30,7 +30,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `new-commanders-plan.html` — six more generals, milestones NC1–NC7, **all shipped**: Ines Calder
   and Konrad Vale share the one `UnitPricing.cost_for` purchase authority while base cost remains
   charge/target/value currency; Perrin Ash and Halden Marr are domain-only and exactly neutral on
-  land-only boards; Dane Ferrow's kill bounty is stolen through `CombatResolver.bank_losses`,
+  land-only boards; Dane Ferrow's kill bounty is stolen through `ChargeLedger.bank_losses`,
   never minted; Iris Colt's `AFTER_ACTIONS` Second Wind refreshes non-attack actions. The plan's
   D4 “no new state/save” claim is superseded by the safe rule: `Unit.refreshable` records that
   eligibility and save v8 carries it, because `acted` alone cannot distinguish an attack from a
@@ -56,7 +56,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   standing there. D4: **Hammerfall is the only thing in the game that removes a unit without a
   shot**, through `GameState.remove_unit`, so a match can now end without one; the doomed are
   collected before any is removed (`state.units` is being read and `remove_unit` mutates it) and
-  **nothing is banked to either meter**, charge being minted in three calls inside `CombatResolver`
+  **nothing is banked to either meter**, charge being minted inside `ChargeLedger.bank_losses`
   and nowhere else — banking it to the victim would make the answer to the most expensive power in
   the game their own power. Units only: a headquarters, factory or city in the square keeps its
   owner. D5: **the computer aims through the doctrine, never through the planner** —
@@ -109,17 +109,30 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `tile-info-panel-plan.html` + `.lavish/hud/SPEC.md` — the tile info panel and the docked HUD
   (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code; `show_tile()` is the bottom
   bar's). Presentation-only; the fog/doctrine gate stays in `battle_view.gd`'s `refresh_panel`,
-  which nulls units the viewer cannot see before the panel gets them. Bar heights, colour tokens
-  and the shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in `UiTheme` — the bar
-  scripts hardcode no colour and no size. `BattleView._apply_board_offset` is the **only writer**
+  which nulls units the viewer cannot see before the panel gets them. Every metric — bar heights,
+  the pad and gap, the chip, the rule heights, the portrait, the two icons and the charge meter —
+  plus the colour tokens and the shared builders (`hud_divider`, `hud_spacer`, `hud_label`) live in
+  `UiTheme`: the bar scripts hardcode no colour and no size, which COM-98 made true of the size half
+  as well. The bars' one metric disagreement resolved with it — `_PAD` was declared 7 on the top bar
+  and 6 on the bottom, and the 6 had never reached a pixel, because `hud_spacer` floors a negative
+  width at zero and each bar is inset by its own gap; one `HUD_PAD` of 7 is what both had always
+  drawn. The terrain chip asks `BattleView` for the atlas and its cell size rather than mirroring
+  them. `BattleView._apply_board_offset` is the **only writer**
   of `camera.offset` (the combat shake composes through `BattleView.shake_offset`), and both bars
   swallow the pointer (`MOUSE_FILTER_STOP`) so events can't fall through to cells rendered behind
   them.
 - `battle-animations-plan.html` — the combat cut-in BA1–BA4, all shipped. D1: **the cut-in replays
-  a snapshot, it computes nothing** — `core/` gained only `CombatResult.attacker_hp_before` /
-  `defender_hp_before` and, with secondary weapons, the two weapon slots the rules selected
-  (`attacker_weapon_slot` / `counter_weapon_slot`), which the cut-in maps to a style through
-  `BattleStyleDb.for_weapon` and never re-decides. D5: how a weapon looks is a `BattleStyle`
+  a snapshot, it computes nothing** — `core/` gained only snapshot fields on `CombatResult`,
+  and the whole list is: `attacker_hp_before` / `defender_hp_before`, their
+  `_after` siblings, the two weapon slots the rules selected (`attacker_weapon_slot` /
+  `counter_weapon_slot`, with secondary weapons), which the cut-in maps to a style through
+  `BattleStyleDb.for_weapon` and never re-decides, and `attacker_indirect`. The last three
+  arrived by COM-83, which is the rule read the other way: the cut-in was reading "HP after"
+  off the *live* unit and asking `AttackRange.is_indirect` at replay time, so it was
+  recomputing two things the exchange already knew. `AttackRange` is still the one authority
+  on who is indirect — `attacker_indirect` is its answer, taken when the shot resolved. The
+  counter needs no such flag, because `_counter_shot` refuses any `max_range != 1` and a
+  returning volley therefore can never be a lob. D5: how a weapon looks is a `BattleStyle`
   under `data/battle_anim/`, `UnitType.battle_style` / `secondary_battle_style` are presentation keys
   like `atlas_col`, and no gameplay number may ever appear in a style.
   D2 ("board art, blown up; nothing redrawn") holds for the ground plane and the figures, and has
@@ -269,8 +282,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   the ceiling is the pricing *shape*, and `docs/difficulty_check.md` §4c is the measured boundary.
   `withdraw_weight` is the one still at `0.0`, and it was a positioning defect rather than the
   ladder that held it there: at 0.05 it stopped an artillery short of maximum standoff. The AI
-  Arena plan's AR6d fixed the refuge's price (see that entry), so the dial is now waiting on a
-  measurement rather than on a fix.
+  Arena plan's AR6d fixed the refuge's price (see that entry), and the arena's first search
+  campaign then took the measurement the dial was waiting on: searched properly for the first
+  time, it ended back at 0.0 (`docs/ai_arena_results.md`) — at zero for a reason after all, one
+  edit from a re-try.
   What survives untouched is the code property — **`0.0` still skips a capability entirely**,
   proven by the per-capability suites that build explicit zeroed profiles — and the cost is
   recorded rather than hidden: the DF4 ladder now fails knowingly, because that gate measures the
@@ -451,11 +466,13 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `ai-arena-plan.html` — the self-play arena: thousands of headless matches between candidate
   AIs, so a planner weight is *measured* rather than argued. Milestones AR1–AR7 (AR1 make a match
   cheap, AR2 make the machine busy, AR3 seat an arbitrary candidate, AR4 decide what "better"
-  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR4 and all of AR6 are
-  shipped** — the harness seats any candidate, the ruler exists and the shelf is in the tree; nothing
-  searches yet, so `tools/` still runs no tournament and **every AR6 dial ships unmeasured**.
-  **`docs/ai_arena.md` is the committed record of what "better" means** and is the document to read
-  before any arena claim.
+  means, AR5 calibrate, AR6 widen the shelf, AR7 the verdict). **AR1–AR6 are shipped** — the
+  harness seats any candidate, the ruler exists, the shelf is in the tree and `make arena-search`
+  is the search loop laid over them; only AR7's human verdict remains.
+  **`docs/ai_arena.md` is the committed record of what "better" means and how the search is
+  driven** and is the document to read before any arena claim; **`docs/ai_arena_results.md` is
+  what the first campaign found** (93,744 matches, 2026-08-05) — a dated measurement a later
+  campaign supersedes wholesale rather than edits.
   D1: **the arena is an instrument and the game never learns it exists** — the driver lives in
   `tools/` and reads `BalanceMatchEngine.Outcome`; nothing in `ai/` gains an "arena mode", because
   the moment the sim can see the measurement the measured game stops being the shipped one (the
@@ -500,9 +517,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   AR6a–AR6c are the rest of that shelf, three dials on `AIProfile` — `cover_tiles`,
   `condition_weight`, `join_weight` — on the AI Judgement D1 contract they inherit whole: **`0.0` on
   every tier, and `0.0` skips the code** rather than evaluating to zero, so the merge bar is both
-  balance reports byte-identical and it held. They ship **unmeasured on purpose** — what would price
-  them is AR5, which is not built, and `focus_fire_bonus` is the precedent for a capability kept in
-  the tree at zero until something measures it.
+  balance reports byte-identical and it held. They shipped **unmeasured on purpose** until AR5's
+  first campaign priced the shelf: `cover_tiles` and `condition_weight` earned places in its
+  champion, while `join_weight` — like `withdraw_weight` — measured worthless and stayed at zero
+  (`docs/ai_arena_results.md`), standing where `focus_fire_bonus` stands: implemented, tested,
+  shipped at zero, one edit from a re-try.
   AR6a: **the double-pricing answer is per cell, not per tier.** A cell is priced by the forecast
   wherever a forecast has fire for it — `priced_fire` is that fire, the counter this shot invites,
   the threat map's reading, or both — and the stars speak only where none does, because every one of
@@ -615,16 +634,67 @@ that must survive any change; the full rationale, milestones and risk registers 
   on 3 of 9 boards, and swapping one board of four flipped a whole pool), and the Atlas predates
   the Judgement and Economy dials the shipped planner now carries. Nothing was tuned toward the
   wanted answer. `ironworks` is out of the pools for a measured reason worth knowing:
-  it is the only board that reaches `BalanceMatchEngine.COMMAND_CAP` at a 100-day horizon (once in
-  72), which is a cap sized for 20-day gates rather than a board to distrust.
+  it was the only board to reach the match-level command cap at a 100-day horizon (once in 72) —
+  a cap then sized for 20-day gates rather than a board to distrust, since corrected (AR5 below),
+  so re-admitting it is a measurement no campaign has yet taken.
+  AR5 is the search laid over all of it, and its verdict is `docs/ai_arena_results.md`.
+  `make arena-search` (`tools/arena_search.py`) proposes on a snapped lattice, plays through the
+  pool and scores through the report — **blocks of dials, never one joint optimisation** (R5), and
+  `tools/arena/arena_blocks.gd` is the space, GDScript beside `ArenaPools` so a block cannot name
+  a dial `AIProfile` does not carry: that coverage rule is what caught `defend_weight`, live at
+  2.0, sitting in no block. The campaign's one engine change is the match-level cap:
+  the flat `COMMAND_CAP` of 3 000 became `BalanceMatchEngine.command_ceiling(days_cap, teams)`,
+  an exact upper bound on legitimate play rather than an estimate of it, after all twelve
+  first-campaign stalls replayed clean to the day cap — reaching it now means **the day stopped
+  advancing**, never that a match was big, so AR4's hard-invariant rule stands with its trigger
+  fixed, and both committed balance reports are byte-identical across the change (balance plan
+  D1). D8 held: no `data/` file moved, every champion lives under gitignored `reports/`, and AR7
+  is where one gets read at a table.
+- **AI logistics** (no plan artifact; COM-65, and this entry is its record) — the planner issues
+  `SupplyCommand`, which the rules had always offered and it had never asked for. It is a scored
+  candidate in `_best_unit_plan` beside `_consider_dive` and the arena shelf's `_consider_join`,
+  priced in VALUE like every other candidate there, and it carries one `AIProfile` dial. Three
+  decisions:
+  **`supply_weight` ships live on every tier**, unlike the Judgement, Economy and arena-shelf
+  blocks — an inert dial here is a command type nobody can reach, which is the whole defect — while
+  `0.0` still skips the capability's code entirely, pinned by `tests/unit/test_ai_logistics.gd`.
+  **Supply asks `SupplyCommand.friendlies_in_reach` who a top-up would reach** rather than
+  re-deriving adjacency, since the radius is the commander's (Gideon Holt's is two) — which is also
+  why `AIPlanCache._drop_inside` widens a supply unit's envelope by that radius. What is worth
+  refilling is graded ammo plus the yes-or-no `Unit.running_dry` already answers, so a land unit's
+  half-empty tank is worth nothing here, exactly as it is to the refit errand.
+  **The truck is asked for above `build_priority`**, the way the air answer is: nothing on that
+  list refills anything, so `supply_unit_target` is what puts one in the roster, and it is 1 on
+  every tier because the planner has no route to a second.
+  **Merging is not this entry's**, though COM-65 shipped a rival for it: the arena plan's AR6c
+  `_consider_join` is the one in the tree, so a merge is priced by `join_weight` on the shelf's
+  contract — `0.0` on every tier, and measured worthless by the arena's first search campaign —
+  rather than live like supply.
+  **Load and Drop stay out**, on the naval plan's standing R1: the planner cannot plan a ferry.
 - `menu-revamp-plan.html` — main-menu and commander-select redress MN1–MN3, shipped. D1:
   **design-system tokens live in one code authority, `scenes/common/ui_theme.gd` (`UiTheme`),
   never a `.tres` Theme** — it re-exports colours that already have an authority (faction hues,
-  cream/ink) so there is exactly one value per colour. Map thumbnails
+  cream/ink) so there is exactly one value per colour. `scenes/ui/ui_kit.gd` (`UiKit`) is its
+  sibling and the split is what each answers: `UiTheme` owns the *recipe* — a colour, a size, a
+  stylebox — and `UiKit` owns the *widget* built from it (the padded box, the micro-label, the
+  divider, the action button, the segmented control, the toggle row, the identity chip), so a
+  screen assembles rather than draws. Two files because the kit depends on `Tooltip` and because
+  `UiTheme` sits at the repo's public-method ceiling; a widget a screen keeps its own copy of is
+  the drift D1 exists to prevent, which `pad` had already done in three files. The cut-in's shared
+  colour vocabulary is `scenes/battle/cutscene/cutscene_palette.gd` (`CutscenePalette`), declared
+  once, after a `SLATE_800` there held a different value from `UiTheme.SLATE_800`. Map thumbnails
   (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
-  a miniature can never be a second opinion. The shared `CommanderCard` keeps its dress until a
-  named follow-up (it is also the in-battle info sheet, so restyling it moves commander selection
-  too). Fonts (Pixelify Sans, Silkscreen) are vendored, OFL, recorded in `assets/LICENSES.md`.
+  a miniature can never be a second opinion. The shared `CommanderCard`'s deferred dress is that
+  named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
+  and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
+  and because the card is also the in-battle info sheet, that one edit re-dressed commander
+  select, the sheet and the gallery together, which is why it was one pass. What stays card-local
+  is one size and one colour, each named and each with its reason on the constant: `_NAME_SIZE`,
+  the card's headline, because the shell has no size between a button's and a banner's; and
+  `_MICRO_INK`, faint ink on *cream*, where the shell's `INK_3` is mixed for slate. The select
+  page's own `_TITLE_SIZE` stays page-local for the same reason, and the replays page states the
+  same value — a page title is not a shell token. Fonts (Pixelify Sans, Silkscreen) are vendored,
+  OFL, recorded in `assets/LICENSES.md`.
 - `ux-recovery-plan.html` — first-contact and new-player registers U-01–U-26; the onboarding
   slice (COM-12), the rejected-confirm feedback (COM-13, `scenes/ui/action_feedback.gd`), the
   end-turn ready-unit guard (COM-14/U-10, `scenes/ui/end_turn_guard.gd`), the transition-input
@@ -681,8 +751,14 @@ that must survive any change; the full rationale, milestones and risk registers 
   directly and comes up focused; only tty-less launches get the restore watcher. D1: the sweep's
   captures staying byte-identical is the merge bar for any change here — it is what keeps the two
   text-heavy scenarios a batch runs first (the process-wide font atlas shifts them otherwise)
-  honest as the roster moves. D6: fewer windows beats faster restores — the wrapper is the safety
-  net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep exists.
+  honest as the roster moves. That bar is a command rather than a procedure since COM-110:
+  `SMOKE_HASHES=<file> make smoke` records a manifest of what every scenario hashed to, or compares
+  this run against one and names each frame that moved. It is **recorded, never committed** — a
+  frame is the machine's renderer and glyph rasteriser, and the same font atlas that shifts those
+  two scenarios means one queue's bytes are not another's, so a manifest answers only for the queue
+  it names and the comparison refuses to cross it. D6: fewer windows beats faster restores — the
+  wrapper is the safety net, batching is the fix. Nothing under `core/` or `ai/` learns the sweep
+  exists.
 - `four-players-plan.html` — up to four armies, milestones FP1–FP6, **all shipped**: FP1 (the
   roster becomes data), FP2 (hostility gets one authority), FP3 (an army can fall, a side can win),
   FP4 (four liveries on one board), FP5 (seats and sides at the table) and FP6 (the boards, and the
@@ -1164,7 +1240,9 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   or no). Nobody asks a unit whether it has ammo: `Unit.ammo` is the primary pool alone, and only
   the selector knows a dry primary can still fall back to an infinite secondary.
   `core/movement_resolver.gd` owns the
-  movement budget and per-step terrain cost, **including inside `MoveCommand.validate`**. Both
+  movement budget, the per-step terrain cost and **where a move may end** (`can_stop`) — all three
+  **including inside `MoveCommand.validate`**, which reaches them through `MoveCommand.move_error`,
+  the seam a move-and-then command uses when it already holds the mover's sight. Both
   exist because independent second opinions were real bugs here: a fourth opinion on movement made
   the range overlay offer cells the command then refused, and asking the damage chart directly was
   the whole answer only until a submarine could be under the water. Countering is the one
@@ -1173,7 +1251,10 @@ Prefer the running game (or a GUT test) over reasoning alone when verifying a ch
   inside this transport at all** (transport, cargo class, capacity, no second level of nesting,
   same team), asked by `LoadCommand.validate` before a board and by `SaveCodec` per wired carrier
   link — while the codec kept its own opinion, a hand-edited save could seat a battleship in an
-  infantry.
+  infantry. `core/grid.gd` (`Grid.manhattan`) is the smallest of them and the one every layer
+  touches: this board measures distance four-directionally everywhere — movement, every firing
+  ring, sight, supply reach, the planner's goals — so ask it rather than spelling the arithmetic
+  again.
 - **Movement domains are data, not code.** A move class is a key in each terrain's `move_costs`
   (`air` on every terrain, `ship`/`lander` on the water) — aircraft and hulls needed no
   `MovementResolver` change. What a property builds and refits is `TerrainType.builds` /

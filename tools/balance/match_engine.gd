@@ -16,10 +16,6 @@ extends RefCounted
 ##
 ## Node-free, like core/ and ai/, so GUT drives it directly.
 
-## Match-level safety net: a match that cannot resolve is a bug, and this stops
-## the batch rather than the batch stopping the machine. Reaching it is a hard
-## failure of a run, never a draw.
-const COMMAND_CAP := 3000
 ## Per-turn safety net, and the one number the harness and the battle scene must
 ## agree on (plan D7). The scene has always force-ended a turn that ran this long
 ## so a planner bug could not hang the window; the harness applies the identical
@@ -27,6 +23,31 @@ const COMMAND_CAP := 3000
 ## run. BattleAiRunner reads it from here for that reason — one owner, no drift.
 const MAX_COMMANDS_PER_TURN := 300
 const DEFAULT_DAYS := 20
+
+
+## The match-level safety net: the most commands a match can legitimately spend,
+## which is the per-turn cap times every turn the day cap allows. Reaching it
+## therefore means **the day stopped advancing** — a loop — and never that the
+## match was merely big. Telling those two apart is the whole point of the shape.
+##
+## It replaced a flat 3 000, and the correction is measured rather than argued.
+## That number was sized when this toolchain played 20-day matches; over the
+## 23 682 matches of the first arena search campaign (2026-08-05, 100-day
+## horizon) the median match spent 400 commands and p99.9 spent 2 400, but twelve
+## reached 3 000 — and replayed with the cap lifted, **every one of the twelve ran
+## to the day cap instead**, at 3 052 to 5 226 commands, each a 60-to-87-unit army
+## mopping up a last survivor on a property-rich board. Nothing was looping; the
+## cap was truncating the longest honest games and failing the run for it.
+##
+## A second constant picked off that distribution would be the same mistake with a
+## bigger number, because the ceiling moves with the board's economy and the run's
+## horizon — the two things a preset changes. This one moves with them: a turn
+## spends at most MAX_COMMANDS_PER_TURN commands plus the end-turn that closes it,
+## and the day cap allows `teams x days` turns. `tests/unit/test_map_soak.gd`
+## derives its own cap from board area for the same reason one number would not
+## fit every board.
+static func command_ceiling(days_cap: int, teams: int) -> int:
+	return (MAX_COMMANDS_PER_TURN + 1) * teams * (days_cap + 1)
 
 
 ## Everything one match needs. Built by the caller so each side's profile stays
@@ -39,7 +60,11 @@ class Setup:
 	var chart: DamageChart
 	var seed_val := 0
 	var days_cap := DEFAULT_DAYS
-	var command_cap := COMMAND_CAP
+	## 0 derives the match-level net from `days_cap` and the roster that plays —
+	## see `command_ceiling`, which is the answer every preset wants. Setting it is
+	## a promise that this match may be cut short, so it belongs to a tool that is
+	## measuring the cap itself and to nothing else.
+	var command_cap := 0
 	## team -> CommanderType. A team with no entry plays neutral.
 	var commanders: Dictionary = {}
 	## team -> AIController. Both teams must have one.
@@ -99,11 +124,18 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 	if state == null:
 		outcome.termination = "invalid_map"
 		return outcome
+	# Seeded the moment the board exists, and no earlier is possible: create()
+	# builds the state and runs the day-1 tick inside it. That is exact only
+	# because combat luck is the sim's one draw (CombatResolver) and the tick
+	# fights nobody, so create() consumes nothing from a stream that is still the
+	# constructor's random one. It is a property rather than an accident, so
+	# test_balance_engine.gd pins it: anything under core/ that starts drawing
+	# during create() makes this ordering a determinism bug.
+	state.rng.seed = setup.seed_val
 	# Nothing in the loop reads this and no report column carries it. It is set
 	# because a recording of this match has to say which board to rebuild, and the
 	# state is where every other consumer of that answer looks — see BattleSetup.
 	state.map_path = setup.map.source_path
-	state.rng.seed = setup.seed_val
 	outcome.state = state
 	for team in state.teams:
 		outcome.powers[team] = 0
@@ -118,10 +150,13 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 		# played at are the CSV's to say.
 		setup.replay.begin(state, state.teams, Difficulty.DEFAULT_ID, _match_id(setup))
 
+	# Asked of the roster that is actually playing (four-players D1), so a reduced
+	# or a four-army match gets the ceiling its own turn order earns.
+	var cap := setup.command_cap
+	if cap <= 0:
+		cap = command_ceiling(setup.days_cap, state.teams.size())
 	var commands_this_turn := 0
-	while (
-		state.winner == 0 and state.day <= setup.days_cap and outcome.commands < setup.command_cap
-	):
+	while state.winner == 0 and state.day <= setup.days_cap and outcome.commands < cap:
 		var team := state.current_team
 		var co_state := state.commander_state(team)
 		if outcome.first_ready[team] < 0 and co_state.is_ready():
@@ -164,7 +199,7 @@ static func play(setup: Setup, recorder: BalanceMatchRecorder = null) -> Outcome
 
 	if recorder != null:
 		recorder.end_match(state)
-	outcome.cap_stall = outcome.commands >= setup.command_cap
+	outcome.cap_stall = outcome.commands >= cap
 	outcome.day_ended = state.day
 	outcome.winner = state.winner
 	# A rule-based AI rarely races to an HQ, so most matches reach the day cap
@@ -187,7 +222,8 @@ static func _has_independent_planners(setup: Setup) -> bool:
 
 ## rout (the loser lost its last unit), hq (the loser's HQ was taken), day_cap
 ## (reached the day limit; the row's winner was decided on score), or command_cap
-## (a match that would not resolve — a bug, and a hard failure of the run).
+## (the day stopped advancing — a bug, and a hard failure of the run; see
+## `command_ceiling` for why it can no longer mean "a big match").
 ##
 ## `hq_captured` is observed by the match loop rather than read back off the
 ## board, because since elimination (four-players plan D3) an HQ capture takes its
@@ -220,6 +256,10 @@ static func tiebreak(state: GameState) -> int:
 ## What a side's surviving army is worth: each unit's price, scaled by the health
 ## it has left. A margin every preset over this loop reports, so it is priced
 ## here rather than once per driver.
+##
+## Deliberately *not* the measure `killed_value` is in: a kill is credited at
+## what the unit cost to field, because destroying a 2 HP tank denies the enemy
+## the whole tank. Read them apart.
 static func army_value(state: GameState, team: int) -> int:
 	var total := 0
 	for unit in state.units_of(team):

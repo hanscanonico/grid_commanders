@@ -11,10 +11,6 @@ extends RefCounted
 const TEAMS: Array[int] = MapData.PLAYER_TEAMS
 const CAPTURE_POINTS := 20
 const INCOME_PER_PROPERTY := 1000
-## The terrain a seat is beheaded through. Named once here because two rules read
-## it — which HQ is a team's home, and whether taking one ends that team — and a
-## third spelling of the id is a third place to get it wrong.
-const HQ_TERRAIN := &"hq"
 ## The smallest roster a seating may leave. Below it there is no match: one army
 ## has already won and none has nobody to play. See `create`.
 const MIN_SEATS := 2
@@ -43,13 +39,13 @@ var rng := RandomNumberGenerator.new()
 
 var current_team: int = 1
 var day: int = 1
-var funds: Dictionary = {}  # team -> int
-## Runtime property ownership (Vector2i -> team). Starts from the map's
-## [owners] section; capture changes it here, never in MapData.
-var property_owners: Dictionary = {}
-## In-progress captures: property cell -> capture points remaining.
-## Cleared when the capturing unit leaves the cell or dies.
-var capture_progress: Dictionary = {}
+var funds: Dictionary[int, int] = {}
+## Runtime property ownership. Starts from the map's [owners] section; capture
+## changes it here, never in MapData.
+var property_owners: Dictionary[Vector2i, int] = {}
+## Capture points still owed on each property being taken. Cleared when the
+## capturing unit leaves the cell or dies.
+var capture_progress: Dictionary[Vector2i, int] = {}
 ## 0 while the match runs; once decided, the winning **side's lead army** — its
 ## lowest seat. Kept scalar on purpose (four-players plan D3): every command's
 ## `winner != 0` gate, the Balance Lab's outcome and watch mode's diffable
@@ -63,7 +59,7 @@ var winner: int = 0
 ## Modelled rather than inferred from an empty unit list, because the two are not
 ## the same question: an army with no units on day one has not fallen, and an army
 ## whose HQ was taken still had units the moment before.
-var eliminated: Dictionary = {}
+var eliminated: Dictionary[int, bool] = {}
 ## team -> the cell its HQ **started** on. Recorded by `create` for every seat the
 ## match fills, and by the codec for every match it loads; nothing else writes it,
 ## because where an army began is not something a turn can change.
@@ -78,12 +74,12 @@ var eliminated: Dictionary = {}
 ## A team with no entry — a hand-built fixture, a board that deals it no HQ —
 ## cannot be eliminated by capture at all, which is the honest answer when nothing
 ## ever recorded a home to lose.
-var home_hq: Dictionary = {}
+var home_hq: Dictionary[int, Vector2i] = {}
 ## Fog of war (a match option; see Vision for the rules).
 var fog_enabled := false
-## team -> CommanderState. A team with no entry plays the neutral commander,
-## which is created on demand — see commander_state().
-var commanders: Dictionary = {}
+## A team with no entry plays the neutral commander, which is created on demand
+## — see commander_state().
+var commanders: Dictionary[int, CommanderState] = {}
 ## res:// path of the map this match runs on; kept for save files.
 var map_path := ""
 
@@ -192,7 +188,7 @@ static func create(
 ## (`SaveCodec._is_seatable`), and two authorities answering "is this a legal seating"
 ## differently is how the two drift apart.
 static func _repeated_seat(seats: Array[int]) -> int:
-	var seen: Dictionary = {}
+	var seen: Dictionary[int, bool] = {}
 	for team in seats:
 		if seen.has(team):
 			return team
@@ -236,7 +232,7 @@ static func _filled_seats(roster: Array[int], seats: Array[int]) -> Array[int]:
 ## The board's starting ownership with the vacant seats' ground opened up. A
 ## property nobody at the table owns is neutral rather than absent from the board:
 ## it is the prize a reduced match is played over.
-static func _owners_of(map: MapData, roster: Array[int]) -> Dictionary:
+static func _owners_of(map: MapData, roster: Array[int]) -> Dictionary[Vector2i, int]:
 	var owners := map.initial_owners()
 	for cell: Vector2i in owners.keys():
 		if not roster.has(owners[cell]):
@@ -256,16 +252,16 @@ static func _owners_of(map: MapData, roster: Array[int]) -> Dictionary:
 ##
 ## Cells are walked in sorted order so a board that hands one seat two HQs still
 ## names the same home every time it is loaded.
-static func home_hqs(map: MapData, roster: Array[int]) -> Dictionary:
+static func home_hqs(map: MapData, roster: Array[int]) -> Dictionary[int, Vector2i]:
 	var owners := map.initial_owners()
 	var cells: Array[Vector2i] = []
 	for cell: Vector2i in owners:
 		cells.append(cell)
 	cells.sort()
-	var homes: Dictionary = {}
+	var homes: Dictionary[int, Vector2i] = {}
 	for cell in cells:
 		var team: int = owners[cell]
-		if not homes.has(team) and roster.has(team) and map.terrain_at(cell).id == HQ_TERRAIN:
+		if not homes.has(team) and roster.has(team) and map.terrain_at(cell).is_headquarters:
 			homes[team] = cell
 	return homes
 

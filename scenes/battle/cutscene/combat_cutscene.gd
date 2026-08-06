@@ -5,11 +5,11 @@ extends CanvasLayer
 ## posed over its own terrain — the volley crosses, HP ticks down, the counter
 ## comes back, and the map returns.
 ##
-## It replays; it never decides (plan D1). Every beat below is driven by a field
-## of the CombatResolver.CombatResult it is handed, including the two HP
-## snapshots that exist for exactly this — by the time the cut-in runs, the
-## command has applied and both units hold post-combat HP. Nothing here touches
-## the damage chart, the RNG, or a rule.
+## It replays; it never decides (plan D1). Every number below comes off the
+## CombatSnapshot.CombatResult it is handed — the HP each side went in and came
+## out with, the weapon each fired, whether the opening shot was lobbed — and the
+## units themselves are read only for what they *are*: type, team, cell. Nothing
+## here touches the damage chart, the RNG, or a rule.
 ##
 ## One clock, one exit — both `CutscenePlayback`'s, held rather than repeated.
 ## Every visual below is a pure function of `_play.t`, so skipping is the clock
@@ -52,9 +52,9 @@ const SLIDE_PX := 60.0
 const SHAKE_FREQ := Vector2(91.0, 77.0)
 ## How much higher an indirect weapon lobs its round than the same style fired
 ## flat. Artillery, Rockets and Missiles all share a style with something that
-## shoots straight, and the arc is what tells them apart at a glance — so it is
-## asked of AttackRange, the single authority on who is indirect, rather than
-## re-derived from min_range here.
+## shoots straight, and the arc is what tells them apart at a glance — so which
+## shot it was is `CombatResult.attacker_indirect`, AttackRange's answer taken
+## when the shot resolved, rather than a question asked again here.
 ##
 ## Held well under a doubling because the styles' own arcs are no longer flat: a
 ## rocket lobs high on its own now, and multiplying that again put a rocket battery's
@@ -97,8 +97,8 @@ var speed := 1.0
 var tail_scale := 1.0
 
 ## The clock, the letterbox and the single exit, shared with CaptureCutscene. It
-## also owns the board camera: the cut-in eases it from the entry flinch's zoom
-## back to rest over the closing wipe, so the board is already at rest on the
+## also owns the board's return to rest: the cut-in eases the entry flinch's zoom
+## back out over the closing wipe, so the board is already at rest on the
 ## frame it is uncovered — no snap when `play` returns, and a skip lands the zoom
 ## home exactly as it lands every other value, because it too is a pure function
 ## of the clock.
@@ -108,12 +108,10 @@ var _def: CutsceneSide
 var _fx: CutsceneFx
 
 var _beats := Beats.new()
-var _result: CombatResolver.CombatResult
-var _atk_hp_after := 0
-var _def_hp_after := 0
+var _result: CombatSnapshot.CombatResult
 ## The two weapon signatures this exchange fires with. Read from data, never
 ## decided here — see BattleStyle.
-var _styles := BattleStyleDB.new()
+var _styles: BattleStyleDB
 var _atk_style: BattleStyle
 var _def_style: BattleStyle
 
@@ -131,18 +129,11 @@ func _ready() -> void:
 ## Plays one already-resolved exchange and returns when the map is back.
 ## Awaitable: both call sites hold the interaction flow on it.
 ##
-## The animator hands over the punched-in camera and the zoom to return it to;
-## the cut-in eases it home over the closing wipe (see CutscenePlayback). Left
-## null — as the scenario driver leaves it — the camera is untouched.
-func play(
-	result: CombatResolver.CombatResult,
-	attacker: Unit,
-	defender: Unit,
-	camera: Camera2D = null,
-	resting_zoom := Vector2.ONE
-) -> void:
+## The animator punches the board in on its way here; the cut-in eases that flinch
+## back out over the closing wipe, through the view (see CutscenePlayback).
+func play(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	_pose(result, attacker, defender)
-	_play.begin(_beats.total, camera, resting_zoom)
+	_play.begin(_beats.total, view)
 	_play.layout()
 	_apply()
 	_play.root.show()
@@ -158,10 +149,10 @@ func play(
 ##
 ## Dev-only. The scenario driver is the one caller; play never poses.
 func pose_at(
-	result: CombatResolver.CombatResult, attacker: Unit, defender: Unit, at: float
+	result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit, at: float
 ) -> void:
 	_pose(result, attacker, defender)
-	# A still never punched the camera; `pose` keeps `_apply` off it.
+	# A still never punched the board; `pose` keeps `_apply` off its zoom.
 	_play.pose(_beats.total, at)
 	_play.layout()
 	_apply()
@@ -215,10 +206,8 @@ func _finish() -> void:
 
 
 ## Poses both halves and works out the beat windows this exchange has.
-func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) -> void:
+func _pose(result: CombatSnapshot.CombatResult, attacker: Unit, defender: Unit) -> void:
 	_result = result
-	_atk_hp_after = attacker.displayed_hp()
-	_def_hp_after = defender.displayed_hp()
 	_atk_style = _styles.for_weapon(attacker.type, result.attacker_weapon_slot)
 	_def_style = _styles.for_weapon(defender.type, result.counter_weapon_slot)
 	_play.accent = _accent_of(attacker.team)
@@ -249,8 +238,8 @@ func _pose(result: CombatResolver.CombatResult, attacker: Unit, defender: Unit) 
 	_def.weapon_label = String(_def_style.label) if result.countered else ""
 	_atk.hp_shown = result.attacker_hp_before
 	_def.hp_shown = result.defender_hp_before
-	_squads(_atk, result.attacker_hp_before, _atk_hp_after, result.attacker_died)
-	_squads(_def, result.defender_hp_before, _def_hp_after, result.defender_died)
+	_squads(_atk, result.attacker_hp_before, result.attacker_hp_after, result.attacker_died)
+	_squads(_def, result.defender_hp_before, result.defender_hp_after, result.defender_died)
 	_beats = _plan(
 		result,
 		TRAVEL * _atk_style.travel_scale,
@@ -322,7 +311,7 @@ func _terrain_at(cell: Vector2i) -> TerrainType:
 ## longer to get there than a burst of tracer — and `tail` trims the closing hold
 ## and wipe, which is the only part the pacing is allowed to take.
 static func _plan(
-	result: CombatResolver.CombatResult, atk_travel: float, def_travel: float, tail: float
+	result: CombatSnapshot.CombatResult, atk_travel: float, def_travel: float, tail: float
 ) -> Beats:
 	var beats := Beats.new()
 	beats.atk_ready = Vector2(WIPE_IN, WIPE_IN + ANTICIPATION)
@@ -373,7 +362,7 @@ func _apply() -> void:
 	_atk.plate_p = plates
 	_atk.lunge = _lunge(atk_ready, _atk_style.recoil)
 	_atk.flash = maxf(0.0, 1.0 - atk_hit / 0.3) if atk_hit > 0.0 else 0.0
-	_atk.hp_shown = _tick(_result.attacker_hp_before, _atk_hp_after, atk_hit)
+	_atk.hp_shown = _tick(_result.attacker_hp_before, _result.attacker_hp_after, atk_hit)
 	_atk.fall_p = _play.window(_topple(_beats.atk_impact))
 	_atk.squad_alpha = 1.0 - atk_gone
 	_atk.queue_redraw()
@@ -382,7 +371,7 @@ func _apply() -> void:
 	_def.plate_p = plates
 	_def.lunge = _lunge(ctr_ready, _def_style.recoil)
 	_def.flash = maxf(0.0, 1.0 - def_hit / 0.3) if def_hit > 0.0 else 0.0
-	_def.hp_shown = _tick(_result.defender_hp_before, _def_hp_after, def_hit)
+	_def.hp_shown = _tick(_result.defender_hp_before, _result.defender_hp_after, def_hit)
 	_def.fall_p = _play.window(_topple(_beats.def_impact))
 	_def.squad_alpha = 1.0 - def_gone
 	_def.queue_redraw()
@@ -418,9 +407,11 @@ func _frame_fx(present: float) -> void:
 	_fx.volley_p = 0.0
 	_fx.volley_style = null
 	if outgoing > 0.0 and outgoing < 1.0:
-		_aim(_atk, _def, outgoing, _atk_style)
+		_aim(_atk, _def, outgoing, _atk_style, _result.attacker_indirect)
 	elif returning > 0.0 and returning < 1.0:
-		_aim(_def, _atk, returning, _def_style)
+		# A counter is fired at adjacency by rule, so it is never a lob — which is
+		# why the result snapshots the opening shot's stance and no other.
+		_aim(_def, _atk, returning, _def_style, false)
 	_fx.muzzles = PackedVector2Array()
 	_fx.muzzle_radius = 0.0
 	_fx.muzzle_kind = BattleStyle.NONE
@@ -437,11 +428,11 @@ func _frame_fx(present: float) -> void:
 		else (_atk.position + _atk.center_point())
 	)
 	_fx.vs_alpha = present * (1.0 - clampf(_play.t / maxf(_beats.atk_fire, 0.01), 0.0, 1.0))
-	_fx.def_amount = _result.defender_hp_before - _def_hp_after
+	_fx.def_amount = _result.defender_hp_before - _result.defender_hp_after
 	_fx.def_tag = CutsceneFx.KO_TAG if _result.defender_died else ""
 	_fx.def_p = _play.window(_callout(_beats.def_impact, _beats.def_death))
 	_fx.def_at = _head_of(_def)
-	_fx.atk_amount = _result.attacker_hp_before - _atk_hp_after
+	_fx.atk_amount = _result.attacker_hp_before - _result.attacker_hp_after
 	_fx.atk_tag = CutsceneFx.KO_TAG if _result.attacker_died else ""
 	_fx.atk_p = _play.window(_callout(_beats.atk_impact, _beats.atk_death))
 	_fx.atk_at = _head_of(_atk)
@@ -452,7 +443,9 @@ func _frame_fx(present: float) -> void:
 ## Points the volley from the front rank of one squad at the middle of the
 ## other's, so a burst converges on what it is shooting at rather than at one
 ## figure of it.
-func _aim(from: CutsceneSide, at: CutsceneSide, progress: float, style: BattleStyle) -> void:
+func _aim(
+	from: CutsceneSide, at: CutsceneSide, progress: float, style: BattleStyle, lobbed: bool
+) -> void:
 	var barrels := from.muzzle_points()
 	var origin := (
 		from.position + barrels[barrels.size() - 1]
@@ -462,7 +455,7 @@ func _aim(from: CutsceneSide, at: CutsceneSide, progress: float, style: BattleSt
 	_fx.volley_p = progress
 	_fx.volley_style = style
 	_fx.volley_figures = maxi(barrels.size(), 1)
-	_fx.volley_arc = style.arc * (INDIRECT_LOB if AttackRange.is_indirect(from.unit) else 1.0)
+	_fx.volley_arc = style.arc * (INDIRECT_LOB if lobbed else 1.0)
 	_fx.volley_from = origin
 	_fx.volley_to = at.position + at.center_point()
 

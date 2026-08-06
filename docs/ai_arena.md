@@ -2,28 +2,37 @@
 
 Thousands of headless matches between candidate AIs, so that a planner weight is
 **measured** rather than argued. This is the committed record of the arena
-plan's **AR3** (seating an arbitrary candidate) and **AR4** (deciding what
-"better" means): what a match is worth, who plays whom, on which boards, and
-what the instrument says about the three tiers the game ships with.
+plan's **AR3** (seating an arbitrary candidate), **AR4** (deciding what "better"
+means) and **AR5**'s harness (searching a block of dials): what a match is worth,
+who plays whom, on which boards, what the instrument says about the three tiers
+the game ships with, and how a search over it is driven.
+
+**`docs/ai_arena_results.md` is what it found.** This document is the instrument
+and stays true as long as the instrument does; that one is a dated measurement —
+the first search campaign, 93,744 matches on 2026-08-05 — and a later campaign
+replaces it rather than editing around it.
 
 Like every other offline instrument here it is **not a gate**: it stays out of
 `make verify` and `make test`, and only its own unit tests
 (`tests/unit/test_arena_fitness.gd`, `tests/unit/test_arena_pools.gd`,
-`tests/unit/test_arena_request.gd`, `tests/unit/test_arena_shard.gd`) are in the
-suite. Generated runs live under `reports/`, which is gitignored.
+`tests/unit/test_arena_request.gd`, `tests/unit/test_arena_shard.gd`,
+`tests/unit/test_arena_blocks.gd`) are in the suite, plus the search driver's own
+`--self-check`, which `make check` runs. Generated runs live under `reports/`,
+which is gitignored.
 
 **Nothing in the game knows the arena exists** (plan D1). The driver lives in
 `tools/`, it reads `BalanceMatchEngine.Outcome`, and nothing under `core/` or
 `ai/` gained a hook, a flag or an "arena mode" — the moment the sim can see the
 measurement, the measured game stops being the shipped one.
 
-## The three commands
+## The four commands
 
 | Command | What it does |
 |---|---|
 | `make ai-arena` | Plays candidates: profiles in, one JSON record per match out |
 | `make arena-report` | Scores records: a leaderboard out. Plays nothing |
 | `make arena-anchors ARENA_POOL=training` | Both, over one fixed pool of the anchor round-robin |
+| `make arena-search` | The loop over the three: propose a vector, play it, keep it or drop it |
 
 They are separate on purpose. A finished run can be re-scored after the fitness
 function moves without replaying a match, and the thing that plays matches has
@@ -167,6 +176,17 @@ An unresolved match is recorded as unresolved and scored 0.0 (above). A
 invariant failure of the run**, never a draw — `make arena-report` exits 1 and
 says so.
 
+That rule is unchanged. Its trigger is. The first search campaign failed
+every one of its seven blocks on a stall, and none of the twelve stalled matches
+was broken: replayed with the cap lifted, **all twelve ran to the day cap**, at
+3 052 to 5 226 commands, each a 60-to-87-unit army mopping up a last survivor.
+The old flat 3 000 was sized when this toolchain played 20-day matches, and at a
+100-day horizon it truncated the longest honest games. It is now derived —
+`BalanceMatchEngine.command_ceiling`, the per-turn cap times every turn the day
+cap allows — so a stall means the day stopped advancing, which is the only thing
+the day cap cannot already catch. **Never score a broken match** was right; what
+was miscalibrated was the detector, so the rule stands and the trigger moved.
+
 ## The pools and the anchors
 
 All of this lives in `tools/arena/arena_pools.gd` and is **fixed for the life of
@@ -204,13 +224,16 @@ Excluded, and why:
 - **`forge`** and **`steelworks`**: both resolve (forge measured clean over 72
   matches), and both are held in reserve — `forge` asks the build-first question
   `arsenal` already asks, `steelworks` is the largest and slowest of the ten.
-- **`ironworks`**, and this one was measured *out*. It is the only board of the
-  ten that reaches `BalanceMatchEngine.COMMAND_CAP` (3 000): once in 72 matches,
-  at day 91, on a board holding 55 units against 3. Nothing was failing to
-  resolve — a command cap sized for 20-day gates is simply short of a 100-day
-  horizon on the roster's biggest economy — but a stalled match fails the run,
-  and a pool that fails its own run is not a pool. **Read that as a cap to
-  revisit, not a board to distrust**; the arena wants its economy board back.
+- **`ironworks`**, and this one was measured *out*. It was the only board of the
+  ten to reach the match-level command cap, then a flat 3 000: once in 72
+  matches, at day 91, on a board holding 55 units against 3. Nothing was failing
+  to resolve — a cap sized for 20-day gates is simply short of a 100-day horizon
+  on the roster's biggest economy — but a stalled match fails the run, and a pool
+  that fails its own run is not a pool. **That was read as a cap to revisit
+  rather than a board to distrust, and the cap has since been revisited**
+  (`command_ceiling`), so the reason is discharged; re-admitting the board is a
+  measurement nobody has taken, and it belongs to a run that has not started,
+  since the split is fixed for the life of one.
 
 ### How a pool is played
 
@@ -313,17 +336,223 @@ long horizon — is the part that did not survive the measurement. The tiers
 themselves are BL2's, not the arena's (plan D8: the arena recommends, a human
 ships).
 
+## The search (AR5's harness)
+
+`make arena-search` is the loop over the three instruments above and nothing
+else: it proposes a vector, writes it as an `AIProfile`, plays it through the
+pool, scores it through the report, and keeps it or drops it. It reimplements no
+fitness, no leaderboard and no match loop, and **it edits nothing under `data/`**
+(plan D8) — every candidate it writes stays under `reports/`.
+
+```sh
+make arena-search SEARCH="--block=all --dry-run"        # the budget, and stop
+make arena-search SEARCH="--block=combat --train-seeds=6"
+```
+
+The harness is `tools/arena_search.py` (the loop, in Python for the same reason
+the pool is: processes, resume-on-disk and JSON are a few lines of stdlib), over
+three GDScript pieces that keep every decision on the engine's side of the fence:
+`tools/arena/arena_blocks.gd` is the search space, `tools/run_arena_blocks.gd`
+prints it — with the pools, the anchors and the base vector — as one JSON object,
+and `tools/run_arena_candidates.gd` writes the profiles. The Python derives none
+of those: a driver that restated a range or a seed range would be a second
+opinion about the search space, and the first thing to drift.
+
+### The blocks
+
+**Blocks, never one joint optimisation** (R5). A run searches one block and holds
+every other dial at the base vector, so a result is attributable to the dials
+that moved.
+
+| Block | Dials | Borrowed |
+|---|---|---|
+| `combat` | `kill_bonus`, `counter_weight`, `min_useful_score`, `condition_weight` | — |
+| `economy` | `capture_score`, `capture_progress_bonus`, `hq_capture_multiplier`, `step_cost_penalty`, `advance_score`, `defend_weight` | — |
+| `threat` | `threat_aversion`, `advance_threat_tiles`, `withdraw_weight`, `cover_tiles` | — |
+| `formation` | `cohesion_tiles`, `cohesion_radius`, `retreat_hp` | — |
+| `production` | `capture_unit_target`, `duplicate_priority_cost`, `save_up_turns`, `air_answer_target`, `build_reactivity` | — |
+| `economy_map` | `capture_units_per_property`, `capture_claim_depth`, `production_capture_multiplier`, `capture_goal_value_tiles` | `capture_unit_target`, `cohesion_tiles` |
+| `join` | `join_weight` | `condition_weight` |
+
+**A coupling is declared, not discovered.** `couples` names dials another block
+owns that this one has to move with its own, and they are searched jointly; the
+split is only what the report reads to say why a dial from elsewhere was on the
+table. The four that are not optional:
+
+- `capture_units_per_property` raises the `capture_unit_target` **floor** rather
+  than replacing it, so it cannot be searched apart from Production.
+- `capture_claim_depth` against `cohesion_tiles`, AE2's own instruction:
+  spreading is untaxed by cohesion, so claim depth is the only thing limiting how
+  thin a capture line gets.
+- `capture_goal_value_tiles` × `production_capture_multiplier` multiplies out to
+  zero at either dial's inert value, so moving one alone is inert half the time —
+  both are in the same block already.
+- `condition_weight` with `kill_bonus`, which both dials' doc comments state: the
+  bonus is the other correction to the same valuation, so a search that fits it
+  first fits it to a price the other then changes.
+
+**Where AR6's three dials went.** `condition_weight` is in `combat` because of
+that last coupling. `cover_tiles` is in `threat` rather than beside it: a cell a
+forecast has already priced scores no stars, so turning a threat dial on takes
+cover out of exactly those cells (plan §5b) — the coupling is to the threat map,
+by construction. `join_weight` gets a block of its own, but not alone: what a
+merge carries is priced by `_unit_value`, and a join only ever happens to damaged
+units, so at `condition_weight` 0 the dial is being fitted against a valuation
+that calls a 10-HP tank a whole one.
+
+**Two corrections to the shelf as the plan states it.** The count is the code's,
+not the plan's: `ArenaBlocks.DIALS` carries **27 searchable weights**, where the
+plan's §5a arithmetic — nineteen dials plus the four AE economy ones plus AR6's
+three — was already short of its own shelf, which is how a smaller number first
+got written here. The dial no §5a row names at all is `defend_weight`, which
+ships live at 2.0 on Normal and 2.5 on Difficult. It sits in `economy`, whose
+price list it reads backwards (Judgement D3), which is also why that block
+cannot be narrower.
+`refuel_margin_turns` stays excluded but its stated reason does not survive AR4:
+"only matters on boards this plan excludes" was true when the plan was written
+and stopped being true when the training pool took `jet_stream`. It is live on
+one training board of four and one validation board of three, which is too little
+of a pool to read a dial on — so it is excluded for want of boards, not for want
+of relevance. `tests/unit/test_arena_blocks.gd` holds every live weight to being
+in a block or on the exclusion list with a reason, and it has now paid twice:
+it found `defend_weight` when the shelf was built, and it caught COM-65's
+`supply_weight` / `supply_unit_target` when they landed after the first campaign
+was measured — both sit on the exclusion ledger as unsearched, the first thing a
+second campaign should cover.
+
+### The algorithm, and what it costs
+
+**A compass (pattern) search over a snapped lattice.** One incumbent; each wave
+proposes it plus one step up and one step down on every dial, all evaluated in
+one pool run; the best training score becomes the next incumbent, and a wave that
+finds nothing halves the step instead. It stops when the step is the dial's own
+precision or the wave budget runs out.
+
+Chosen over anything cleverer for three reasons, in this order:
+
+- **It is explainable.** Every move is one dial, one step, and the wave that
+  bought it is in the record. AR5's acceptance criterion asks for a champion
+  whose dials are legible; a search whose path cannot be read cannot produce one.
+- **It is cheap per improvement.** `2D` probes buy a move, where a coarse grid
+  over five dials at three levels each is 243 evaluations, and each evaluation
+  here is hundreds of matches.
+- **It is robust to a noisy evaluation.** It only ever asks which of a handful of
+  vectors scored best over a few hundred matches — never for a gradient that a
+  mean of noisy matches cannot give.
+
+A candidate costs `boards × seeds × 2 seatings × 3 anchors` matches per pool:
+**288** on the full training pool and **144** on the held-out one. The worst case
+per block is `(1 + 2D) + 2D(W−1)` candidates over `W` waves, which
+`--dry-run` prints before anything is played:
+
+| Block | Dials | Candidates | Matches | Hours at 65/min |
+|---|---|---|---|---|
+| `combat` | 4 | 65 | 19 152 | 4.9 |
+| `economy` | 6 | 97 | 28 368 | 7.3 |
+| `threat` | 4 | 65 | 19 152 | 4.9 |
+| `formation` | 3 | 49 | 14 544 | 3.7 |
+| `production` | 5 | 81 | 23 760 | 6.1 |
+| `economy_map` | 6 | 97 | 28 368 | 7.3 |
+| `join` | 2 | 33 | 9 936 | 2.5 |
+| **all seven** | | **487** | **143 280** | **36.7** |
+
+That is eight waves and the full pool, and it is a worst case in one direction
+only: it assumes every wave improves and none stops early. `--train-seeds=6`
+halves it, and the seed ranges are a **prefix** of each pool's own, so a reduced
+run still lands inside the split `pool_of` reads matches back against.
+
+### What it reports, and what it keeps
+
+**Training and validation, always** (R1). Every wave is played on the training
+pool alone — the held-out pool can never touch a selection — and at the end of a
+block the top `--keep` candidates plus the vector the search started from are
+replayed on the held-out boards and seeds. The gap between the two numbers is the
+headline: a champion that leads where it was selected and not where it was not
+has fitted the pool rather than the game.
+
+Read the two halves of a table differently. A **candidate**'s score is against
+the three fixed anchors, so it means the same thing in every wave and across the
+whole run — that is what a fixed anchor set is for (D7). An **anchor**'s score is
+against whatever candidates shared its table, so it moves as the search does and
+is context rather than a reference.
+
+A block declaring `per_board` is also scored one board at a time off the shards
+the held-out run already played, at no extra match. `economy_map` declares it,
+because `capture_units_per_property` counts what is left to take: on `scrimmage`
+that is 6 properties and on `arsenal` 22, so a single board measures the map
+rather than the dial.
+
+A run leaves behind `report.md` (the readable answer), `<block>/search.json`
+(every wave, every vector, every score), `<block>/summary.json`, per-wave
+`leaderboard.json` and `matches.json`, and `candidates/` — **every profile it
+ever wrote**, named for a digest of the vector it carries, with an `index.json`
+mapping the name back to the block and the numbers. A champion is re-run by
+naming its file.
+
+### Resumable at three levels
+
+The pool already skips a shard whose records are on disk. Above that, a candidate
+is named for a **digest of its vector**, so an incumbent that survives a wave is
+replayed for free — the shard's resume key is the argument list, and the argument
+list holds the same path. Above that again, `<block>/search.json` records every
+finished wave, so an interrupted run re-reads its own decisions rather than
+replaying them, and a block whose held-out run is already played is not replayed
+either. Rerun the same command to pick a search up; a run that names an `--out`
+holding a search of a different spec is refused rather than continued.
+
+Measured on the smoke configuration below: a full rerun of a finished search
+costs **2.8 s and zero matches**.
+
+### The harness, proved small
+
+One block narrowed to two dials, one seed a board, three waves —
+`--block=combat --dials=kill_bonus,condition_weight --train-seeds=1 --val-seeds=1
+--max-waves=3 --keep=2`, six workers, on a machine carrying a load average of 7
+to 19 from other work:
+
+| | |
+|---|---|
+| Matches played | 270 (390 read; the difference is the incumbent, resumed) |
+| Wall clock | 3.9 min |
+| Throughput | 71.2 matches/min at 6 workers |
+| Waves | 3 — moved, moved, contracted |
+| Champion | `kill_bonus` 1.6 → 1.2, `condition_weight` 0.0 → 0.25 |
+| Training / held out | +0.324 / +0.257, gap +0.067 |
+
+**One seed a board is a rehearsal of the machinery and not a measurement**: at 24
+training matches a candidate the standard error swamps the differences the table
+shows, and the champion above is not a finding. What it proves is that the loop
+runs end to end — propose, write, play, score, move, contract, validate, report —
+and what it costs.
+
 ## Known limits
 
-- **The command cap and the horizon are in tension on big boards.**
-  `BalanceMatchEngine.COMMAND_CAP` is 3 000, sized when the toolchain played
-  20-day matches; a 100-day match on `ironworks` can want more. That cost the
-  pool its economy board, and AR5 will want it back. Raising it is a change to
-  the shared match loop and belongs in a ticket that can re-run both committed
-  balance reports.
+- **The longest matches here are enormous, and that is the game rather than a
+  fault.** The worst measured is 8 907 commands over 100 days — a 184-unit army
+  hunting one survivor across `arsenal`. `command_ceiling` leaves room for it,
+  but a pool of such matches is slow, and a fitness function that pays for speed
+  (above) is the only thing pushing against it.
 - **A match seats exactly two candidates**, so every three- and four-army board
   in the roster is out of reach of the arena as it stands.
 - **The margins are unused** for the reason measured above, so a decisive win is
   graded by speed alone.
-- **Nothing here searches yet.** AR5 is the first real search; this milestone
-  ships the ruler, not the thing being measured.
+- **The campaign has been run once, and its limits are its own document's.**
+  `docs/ai_arena_results.md` carries what the dials were worth end to end and
+  what that number is not evidence of. The sharpest limit belongs here too: the
+  held-out pool holds out **boards and seeds, never opponents**, so a candidate
+  is reported against the same three anchors it was selected against.
+- **The two permutations are not searchable here.** `build_priority` and
+  `air_answer_ids` are ordered arrays, and a permutation move and a step along an
+  axis do not belong in one proposal distribution (D9). They need a block of
+  their own and a proposal of their own.
+- **Candidates do not play each other.** The opponent set is the three fixed
+  anchors, which is what makes a score comparable across waves; a generation
+  playing itself is `C²` pairings and D7's third opponent set (a sample of the
+  archive) is not reachable from a search that keeps one incumbent rather than a
+  population. What that costs is stated rather than hidden: this harness cannot
+  see a candidate that beats the anchors and loses to its own predecessors.
+- **A base copied from an anchor plays a known draw.** The base vector is written
+  as a candidate like any other, so when it equals a shipped tier — which it does
+  by default — one of its three pairings is two identical vectors and scores
+  exactly level, both seatings. That is a correct measurement rather than a
+  distortion, and it costs one pairing of compute once per run, cached after.

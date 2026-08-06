@@ -81,23 +81,18 @@ const HOVER_SWING := 4.0
 const HOVER_RATE := 4.4
 const HOVER_PHASE := 1.1
 
-const INK := Color(0.078, 0.090, 0.102)
-const SLATE_800 := Color(0.161, 0.184, 0.212)
-const SKY_TOP := Color(0.290, 0.486, 0.667)
-const SKY_HORIZON := Color(0.749, 0.902, 0.949)
-const STAR_ON := Color(0.969, 0.788, 0.282)
-const STAR_OFF := Color(1.0, 1.0, 1.0, 0.22)
-const HP_FULL := Color(0.376, 0.769, 0.329)
-const HP_MID := Color(0.910, 0.722, 0.227)
-const HP_LOW := Color(0.863, 0.282, 0.235)
+# --- this half's own colours (the shared ones are CutscenePalette's) ----------
+## The unlit pip. The banded fill beside it is UiTheme.hp_color's, never a copy —
+## see _draw_pips.
 const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
-const PLATE_TEXT := Color(1.0, 1.0, 1.0, 0.88)
 ## What a knocked-out figure burns down to on its way off the field.
 const WRECK_TINT := Color(0.22, 0.20, 0.21)
 ## The snowline on a ridge, and a building's two window states.
 const SNOW := Color(0.933, 0.953, 0.965)
-const WINDOW_LIT := Color(0.969, 0.788, 0.282, 0.85)
-const WINDOW_DARK := Color(0.749, 0.902, 0.949, 0.45)
+const WINDOW_LIT := Color(CutscenePalette.GOLD, 0.85)
+const WINDOW_DARK := Color(CutscenePalette.SKY_HORIZON, 0.45)
+## The wash the vignette darkens the arena's edges with, a step per band.
+const VIGNETTE := Color(0.05, 0.06, 0.10)
 
 const PIP_COUNT := 10
 const PIP_SIZE := Vector2(6, 8)
@@ -310,17 +305,19 @@ func _draw_sky(arena: Rect2) -> void:
 	for i in bands:
 		var top := arena.position.y + (horizon - arena.position.y) * float(i) / bands
 		var bottom := arena.position.y + (horizon - arena.position.y) * float(i + 1) / bands
-		var shade := SKY_TOP.lerp(SKY_HORIZON, float(i) / float(bands - 1))
+		var shade := CutscenePalette.SKY_TOP.lerp(
+			CutscenePalette.SKY_HORIZON, float(i) / float(bands - 1)
+		)
 		draw_rect(Rect2(0.0, top, size.x, bottom - top + 1.0), shade)
 	_draw_cloud(Vector2(_outward(0.30), arena.position.y + arena.size.y * 0.17), 1.0)
 	_draw_cloud(Vector2(_outward(0.74), arena.position.y + arena.size.y * 0.07), 0.62)
 	# Distant country, not scenery: the ridge is the ground's own colour washed
 	# most of the way toward the sky, so it sits behind the horizon instead of
 	# competing with the field the fight is on.
-	var far := _ridge_tint.darkened(0.25).lerp(SKY_HORIZON, 0.55)
+	var far := _ridge_tint.darkened(0.25).lerp(CutscenePalette.SKY_HORIZON, 0.55)
 	_draw_hill(horizon, _outward(0.34), 260.0, 26.0, Color(far, 0.85))
 	_draw_hill(horizon, _outward(0.90), 190.0, 19.0, Color(far, 0.85))
-	var near := _ridge_tint.darkened(0.3).lerp(SKY_HORIZON, 0.3)
+	var near := _ridge_tint.darkened(0.3).lerp(CutscenePalette.SKY_HORIZON, 0.3)
 	_draw_hill(horizon, _outward(0.04), 150.0, 13.0, Color(near, 0.9))
 	_draw_hill(horizon, _outward(0.66), 200.0, 16.0, Color(near, 0.9))
 
@@ -414,7 +411,7 @@ func _draw_scenery(arena: Rect2) -> void:
 		var lit := lerpf(0.86, 1.0, clampf((slot.y - _GROUND_TOP) / _GROUND_DEPTH, 0.0, 1.0))
 		var shade := Color(tint.r * lit, tint.g * lit, tint.b * lit, 1.0)
 		draw_set_transform(base + Vector2(0.0, -2.0), 0.0, Vector2(1.0, 0.24))
-		draw_circle(Vector2.ZERO, height * 0.3, Color(0.078, 0.102, 0.133, 0.22))
+		draw_circle(Vector2.ZERO, height * 0.3, Color(CutscenePalette.GROUND_SHADOW, 0.22))
 		draw_set_transform(Vector2.ZERO)
 		match kind:
 			TerrainType.TREES:
@@ -455,7 +452,7 @@ func _outlined_triangle(a: Vector2, b: Vector2, c: Vector2, fill: Color) -> void
 	var grown := PackedVector2Array()
 	for corner in [a, b, c]:
 		grown.append(corner + (corner - middle).normalized() * SCENERY_EDGE)
-	draw_colored_polygon(grown, Color(INK, 0.55))
+	draw_colored_polygon(grown, Color(CutscenePalette.STROKE, 0.55))
 	draw_colored_polygon(PackedVector2Array([a, b, c]), fill)
 
 
@@ -511,20 +508,12 @@ func _draw_building(base: Vector2, height: float, shade: Color) -> void:
 func _draw_vignette(arena: Rect2) -> void:
 	var steps := 10
 	for i in steps:
-		var alpha := 0.030 * (steps - i) / float(steps)
+		var wash := Color(VIGNETTE, 0.030 * (steps - i) / float(steps))
 		var band := 4.0
 		var offset := i * band
-		draw_rect(
-			Rect2(offset, arena.position.y, band, arena.size.y), Color(0.05, 0.06, 0.10, alpha)
-		)
-		draw_rect(
-			Rect2(size.x - offset - band, arena.position.y, band, arena.size.y),
-			Color(0.05, 0.06, 0.10, alpha)
-		)
-		draw_rect(
-			Rect2(0.0, arena.position.y + arena.size.y - offset - band, size.x, band),
-			Color(0.05, 0.06, 0.10, alpha)
-		)
+		draw_rect(Rect2(offset, arena.position.y, band, arena.size.y), wash)
+		draw_rect(Rect2(size.x - offset - band, arena.position.y, band, arena.size.y), wash)
+		draw_rect(Rect2(0.0, arena.position.y + arena.size.y - offset - band, size.x, band), wash)
 
 
 # --- the squad ---------------------------------------------------------------
@@ -572,7 +561,7 @@ func _altitude(slot: int, fall: float) -> float:
 ## ground is a plane, so it lies down on it. A hull gets a pale wake instead: a
 ## dark disc under a ship reads as a hole in the water.
 func _draw_shadow(ground: Vector2, strength: float) -> void:
-	var tint := Color(0.078, 0.102, 0.133, 0.3 * strength * squad_alpha)
+	var tint := Color(CutscenePalette.GROUND_SHADOW, 0.3 * strength * squad_alpha)
 	var reach := 22.0
 	if _floating:
 		tint = Color(1.0, 1.0, 1.0, 0.28 * strength * squad_alpha)
@@ -612,7 +601,7 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
 		tint = tint.lerp(Color(3.4, 3.4, 3.4), flash)
 	var at := feet + Vector2(_inward(-fall * 10.0), lift)
 	draw_set_transform_matrix(Transform2D(spin, flip, 0.0, at))
-	var shadow := Color(0.137, 0.153, 0.169, 0.4 * alpha)
+	var shadow := Color(CutscenePalette.FIGURE_SHADOW, 0.4 * alpha)
 	draw_texture_rect(_art, Rect2(box.position + Vector2(2.0, 3.0), box.size), false, shadow)
 	tint.a = alpha
 	draw_texture_rect(_art, box, false, tint)
@@ -631,13 +620,13 @@ func _draw_plates() -> void:
 	var slide := _inward(-40.0 * (1.0 - plate_p))
 	draw_set_transform(Vector2(slide, 0.0))
 	var top := Rect2(0.0, 0.0, size.x, PLATE_TOP_H)
-	draw_rect(top, Color(SLATE_800, plate_p))
-	draw_rect(Rect2(0.0, PLATE_TOP_H - 2.0, size.x, 2.0), Color(INK, plate_p))
+	draw_rect(top, Color(CutscenePalette.PLATE, plate_p))
+	draw_rect(Rect2(0.0, PLATE_TOP_H - 2.0, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
 	_draw_name_row(top)
 	_draw_pips(top)
 	var bottom := Rect2(0.0, size.y - PLATE_BOT_H, size.x, PLATE_BOT_H)
-	draw_rect(bottom, Color(SLATE_800, plate_p))
-	draw_rect(Rect2(0.0, bottom.position.y, size.x, 2.0), Color(INK, plate_p))
+	draw_rect(bottom, Color(CutscenePalette.PLATE, plate_p))
+	draw_rect(Rect2(0.0, bottom.position.y, size.x, 2.0), Color(CutscenePalette.STROKE, plate_p))
 	_draw_terrain_row(bottom)
 	draw_set_transform(Vector2.ZERO)
 
@@ -672,7 +661,7 @@ func _draw_weapon_chip(font: Font, plate: Rect2, from_edge: float) -> void:
 	var left := _outward_px(from_edge) - (box.x if mirror else 0.0)
 	var top := plate.position.y + (PLATE_TOP_H - box.y) * 0.5 - 1.0
 	var frame := Rect2(left, top, box.x, box.y)
-	draw_rect(frame, Color(INK, 0.35 * plate_p))
+	draw_rect(frame, Color(CutscenePalette.STROKE, 0.35 * plate_p))
 	draw_rect(frame, Color(CHIP_BORDER, CHIP_BORDER.a * plate_p), false, 1.0)
 	draw_string(
 		font,
@@ -687,12 +676,13 @@ func _draw_weapon_chip(font: Font, plate: Rect2, from_edge: float) -> void:
 
 ## Ten pips, banded by health and depleting toward the seam, so both bars run
 ## out in the same direction and the two sides read as one gauge.
+##
+## The band comes from UiTheme, the one owner of that rule, and `hp_shown` is the
+## displayed 0-10 it expects — the same number the bar's pips are set from. A
+## private copy is what let the board and the cut-in call the same unit hurt in
+## two different colours.
 func _draw_pips(plate: Rect2) -> void:
-	var band := HP_FULL
-	if hp_shown <= 3:
-		band = HP_LOW
-	elif hp_shown <= 6:
-		band = HP_MID
+	var band := UiTheme.hp_color(hp_shown)
 	# Anchored to the seam and running outward, so both bars deplete toward the
 	# middle of the frame and the two read as one gauge.
 	var seam := _outward_px(size.x - SEAM_MARGIN)
@@ -717,7 +707,7 @@ func _draw_terrain_row(plate: Rect2) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		9,
-		Color(PLATE_TEXT, PLATE_TEXT.a * plate_p)
+		Color(CutscenePalette.PLATE_TEXT, CutscenePalette.PLATE_TEXT.a * plate_p)
 	)
 	# Beside the name and reading inward, the way the tile panel already writes
 	# "DEF ★☆☆☆" — anchored to the seam instead, the two sides' rows grow toward
@@ -726,7 +716,7 @@ func _draw_terrain_row(plate: Rect2) -> void:
 	var stars := mini(terrain.defense_stars, MAX_STARS)
 	for i in MAX_STARS:
 		var center := Vector2(first + _inward(STAR_STEP * i), plate.position.y + 10.0)
-		var tint := STAR_ON if i < stars else STAR_OFF
+		var tint := CutscenePalette.GOLD if i < stars else CutscenePalette.STAR_OFF
 		draw_colored_polygon(_star_points(center, 4.5), Color(tint, tint.a * plate_p))
 
 

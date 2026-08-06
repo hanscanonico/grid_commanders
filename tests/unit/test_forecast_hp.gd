@@ -1,5 +1,5 @@
 extends GutTest
-## The HP fields on CombatResolver.Forecast that exist for the damage preview and
+## The HP fields on CombatSnapshot.Forecast that exist for the damage preview and
 ## for nothing else (UX recovery plan D4 — forecasts speak HP first).
 ##
 ## The sibling of test_combat_snapshot.gd, and for the same reason: this is not

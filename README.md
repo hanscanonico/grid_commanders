@@ -31,6 +31,7 @@ make verify          # the merge gate: check + lint + format-check + test, in on
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
+make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
 make tiles           # rebuild the art: ground tiles, PixVoxel + vendored unit sprites, audit, import
@@ -51,6 +52,7 @@ make balance-pool         # the same engine, sharded across processes: resumable
 make ai-arena             # play two arbitrary AIProfiles against each other -> one JSON record a match
 make arena-report         # score an arena run -> a leaderboard (docs/ai_arena.md)
 make arena-anchors ARENA_POOL=training   # play one fixed pool of the three shipped tiers, and score it
+make arena-search SEARCH="--block=all --dry-run"   # search a block of planner dials (state the budget first)
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
@@ -62,6 +64,18 @@ leaked at exit` and `resources still in use` — that is the engine failing to t
 reference cycle (`AttackCommand.validate()` referring to its sibling `MoveCommand` pins the core
 script graph), reproducible in twelve lines with no GUT involved. No gameplay object leaks, so the
 gate reads exit status and ignores it.
+
+It is also run for you: `.github/workflows/verify.yml` fetches the pinned engine and plays the same
+four targets, in the same order, on every pull request and every push to `main`. `make smoke` is not
+in it — it renders, so it needs a display and stays a local gate. Every target reads `GODOT`, so a
+machine with the engine somewhere else runs the gate with `make verify GODOT=/path/to/godot`.
+
+`make determinism` runs beside those four in CI, and asks about reproducibility rather than style:
+it replays one pinned AI-vs-AI match — one board, one seed, about a second — and byte-diffs its
+report against the golden committed under `tests/fixtures/determinism/`. That is the balance plan's
+fixed-seed merge bar with a committed side to diff against at last. A rules, data or planner change
+is *supposed* to move it: the diff it prints is what that change did to a whole match, and
+`make determinism REFRESH=1` is how you accept it. `docs/balance_sim.md` has the rest.
 
 `make smoke` covers what unit tests deliberately do not: GUT is limited to the Node-free layers
 (see Architecture below), so the battle scene — and, for the `menu_` modes below, the main menu — is
@@ -79,6 +93,18 @@ unchanged, and a sweep that fails in any way is automatically re-run one process
 failure always names a scenario (the batch's own log is kept and reported when that happens).
 `SMOKE_ISOLATE=1 make smoke` skips batching altogether and runs the one-process-per-scenario path,
 which is the way to bisect a scenario suspected of leaning on a batched neighbour's leftover state.
+
+What the sweep asserts of a capture is that it exists and clears a 2 KB floor — the real checks
+are the ones each scenario carries above (a measured layout, the cut-in's atlas rows, a flow that
+must reach its state). It never compared a byte. The frames *are* byte-stable, and
+`SMOKE_HASHES=<file> make smoke` is how a change is held to that: with no such file it records one
+hash per scenario, with one it compares and fails naming every frame that moved. Record before the
+change, compare after — the shape `make determinism` uses, minus the committed side. A manifest is
+deliberately not committed: unlike that golden's arithmetic, a frame is this machine's renderer and
+glyph rasteriser, and the process-wide font atlas shifts glyph edges with the queue's composition,
+so the same scenario writes different bytes under `MODES="cutin"` than in the full sweep. The
+manifest names the queue it was recorded from and the comparison refuses to cross it, so a narrowed
+run asks for a new manifest instead of crying wolf.
 
 The one window is still activated as it opens and again on each scene change, so a sweep briefly
 takes the front app away from you. `tools/focus_timeline.sh make smoke` measures that instead of
@@ -318,9 +344,11 @@ preference, on by default),
 then press **Start**, which opens the **commander selection page**; **Continue** skips selection and
 resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
 under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
-is the match you meant; when there is nothing readable to resume it reads `NO SAVED MATCH` and the
-button is greyed out (disabled, not hidden). **Replays** opens the recordings page (see Replays
-below), and **Quit** exits.
+is the match you meant. With nothing to resume the line reads `NO SAVED MATCH`; with a save this
+build cannot open — a truncated file, a damaged one, or a board that has moved since — it reads
+`SAVED MATCH UNREADABLE` and says why underneath, because being told you never had a save is the
+wrong thing to hear about one you did. Either way the button is greyed out (disabled, not hidden).
+**Replays** opens the recordings page (see Replays below), and **Quit** exits.
 
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
@@ -469,7 +497,7 @@ mouse, keyboard, or controller throughout.
   still shows what it took off. Every bound is the luck range the attack will roll inside — the
   attacker's answers for the opening roll too, since a lucky shot weakens or removes the counter —
   so a span of one is the roll and a single number is a certainty; the numbers come off
-  `CombatResolver.Forecast`, which the panel formats and never recomputes
+  `CombatSnapshot.Forecast`, which the panel formats and never recomputes
 - Confirming onto a reachable cell held by one of *your* units offers **Load** (board a transport
   with room) or **Join** (merge into a damaged unit of the same type, adding up HP, fuel, and
   ammo). Cancel snaps the mover back, as with any uncommitted move
@@ -792,6 +820,12 @@ tier it was played at.
   against your actual roster instead of a fixed shopping list, defends its ground harder than
   Normal, and keeps a tighter column.
 
+Every tier now runs a **supply economy**: it buys an APC and drives it up to top its units back up,
+which is how its artillery and its aircraft stop running dry with no recourse. How patiently is the
+tier's own weight — highest on Difficult, well below Normal's on Easy, which lets a rack go nearly
+bare first. Rockets are on every tier's build list too. Transports are still only ever suppliers:
+the computer cannot plan a ferry, so it never buys one to carry anything.
+
 Each tier is a `.tres` under `data/difficulty/` pointing at a profile in `data/ai/`, so retuning
 one is a data edit. What separates the tiers is judgement and never a handicap — but how far apart
 they actually measure is its own question, and today the answer is "not far enough": the AI-vs-AI
@@ -827,7 +861,8 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
   (`docs/commander_balance.md`), the difficulty ladder gate (`docs/difficulty_check.md`), the
   Balance Lab (`docs/balance_sim.md`) and the AI Arena under `tools/arena/`
-  (`docs/ai_arena.md` — seating an arbitrary candidate, and what "better" means) alike; the
+  (`docs/ai_arena.md` — seating an arbitrary candidate, what "better" means, and the block search
+  laid over both; `docs/ai_arena_results.md` for what the first campaign found) alike; the
   recording reader under `tools/replay/` (Replays
   above); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
@@ -836,7 +871,13 @@ than tuned away by making Normal worse, and the superseded probes the weights we
   `tools/arena/`, the recording reader under `tools/replay/`, and
   the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
   way for exactly this reason.
-- `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT).
+- `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT), with one local
+  patch: `summary.gd` no longer prints the end-of-run version banner, which claimed on every
+  `make test` that this GUT "may not be compatible with Godot 4.7.1" over 1098 passing tests
+  (9.6.1's own `versions.json` stops at 4.6.999, and no config or CLI switch turns the banner
+  off). It reads no network — the detector only fetches for the editor plugin and for
+  `-gcheck_update`. The patch site names the ticket; re-apply or drop it on the next upgrade,
+  and record any further local edit here.
 
 ## Assets
 

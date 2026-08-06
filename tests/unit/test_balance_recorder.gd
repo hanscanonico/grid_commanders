@@ -367,3 +367,22 @@ func test_reconcile_reports_a_census_that_does_not_close() -> void:
 	var recorder := _recorder(state)
 	_close(recorder, state)
 	assert_ne(recorder.reconcile(state, {1: 99, 2: 0}), "", "a wrong census must be reported")
+
+
+# --- the command log -----------------------------------------------------------
+
+
+func test_end_turn_entry_names_the_side_that_ended_the_turn() -> void:
+	# The turn row opens for the *incoming* side inside after_apply, so an entry
+	# logged after that opening would file the boundary under the side that had
+	# not played yet. Every EndTurn marker must name the side handing over.
+	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 i 1 0")
+	var recorder := _recorder(state)
+	_close(recorder, state)
+	_close(recorder, state)
+	var log := recorder.command_log()
+	assert_eq(log.size(), 2, "one entry per EndTurn")
+	assert_eq(log[0]["team"], 1, "day 1's EndTurn belongs to the side that ended it")
+	assert_eq(log[0]["day"], 1)
+	assert_eq(log[1]["team"], 2, "team 2 hands day 1 over, not day 2")
+	assert_eq(log[1]["day"], 1)

@@ -103,6 +103,50 @@ func test_firing_cells_pins_indirect_to_its_cell() -> void:
 	assert_eq(AttackRange.firing_cells(state, state.units[0]), [Vector2i(3, 0)] as Array[Vector2i])
 
 
+## The planner already holds every ready unit's fill, so it asks over that one
+## rather than making firing_cells run a second. The two entry points are one
+## body and this is what says so — order included, because the planner walks the
+## list picking strictly better scores, so a reordering is a different choice.
+func test_firing_cells_over_a_fill_already_in_hand_matches_the_fill_it_runs() -> void:
+	var open := ".........\n".repeat(9)
+	var state := _state("[terrain]\n%s[units]\n1 i 4 4\n1 g 4 3\n1 i 3 4\n2 t 8 8" % open)
+	for unit in state.units_of(1):
+		assert_eq(
+			AttackRange.firing_cells_in(unit, MovementResolver.reachable(state, unit)),
+			AttackRange.firing_cells(state, unit),
+			"%s: the handed-in fill and the one firing_cells runs are one answer" % unit.type.id
+		)
+
+
+## strike_reach is the scalar sibling of that geometry — how far a unit can bring
+## something under fire in one turn, as one Manhattan number. Three callers weigh
+## a board with it (a doctrine sizing up a Command Power, the planner's focus fire,
+## a submarine deciding whether to go under) and each used to guess it from
+## `type.move_points`, which every case below breaks.
+func test_strike_reach_is_the_budget_and_the_gun() -> void:
+	var open := ".........\n".repeat(9)
+	var state := _state("[terrain]\n%s[units]\n1 i 4 4\n1 g 4 3\n1 p 4 2\n2 t 0 0" % open)
+	var infantry := state.units[0]
+	assert_eq(
+		AttackRange.strike_reach(state, infantry),
+		infantry.type.move_points + 1,
+		"a direct unit walks and then shoots"
+	)
+	assert_eq(
+		AttackRange.strike_reach(state, state.units[1]),
+		state.units[1].type.max_range,
+		"an indirect unit cannot move and fire, so it reaches no further than its gun"
+	)
+	assert_eq(AttackRange.strike_reach(state, state.units[2]), 0, "a transport brings nothing")
+	infantry.fuel = 1
+	assert_eq(AttackRange.strike_reach(state, infantry), 2, "an empty tank is a shorter reach")
+	var tank := state.units[3]
+	state.set_commander(2, CommanderDB.load_default().by_id(&"cass_orlov"))
+	var before := AttackRange.strike_reach(state, tank)
+	state.commander_state(2).power_active = true
+	assert_eq(AttackRange.strike_reach(state, tank), before + 1, "and a move bonus is a longer one")
+
+
 ## A direct unit's ring is its movement fill grown by the weapon, so it inherits
 ## whatever knowledge the fill was planned with — and the same leak. `sight_team`
 ## goes straight down to MovementResolver.reachable so the previewed ring and the

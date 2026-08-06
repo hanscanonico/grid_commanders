@@ -260,12 +260,16 @@ static func _bias(summary: Dictionary) -> String:
 				)
 			)
 		)
+	# The count column is headed "decisive" because that is what the cell holds:
+	# this table's denominator is every game with a winner, day-cap ones included.
+	# "Resolved" is the stricter word — endings that happened on the board — and it
+	# belongs to the win-rate table above, which has a column of its own for it.
 	return (
 		(
 			"<h2>First-seat bias per board</h2>"
 			+ '<div class="wrap"><table><thead><tr><th>board</th><th class="num">bias</th>'
 			+ '<th style="width:40%%">second seat &nbsp;&larr;&nbsp;|&nbsp;&rarr;&nbsp; first seat'
-			+ ' (threshold ±%.0f pp)</th><th class="num">resolved</th><th></th>'
+			+ ' (threshold ±%.0f pp)</th><th class="num">decisive</th><th></th>'
 			+ "</tr></thead><tbody>%s</tbody></table></div>"
 		)
 		% [threshold, "".join(rows)]
@@ -308,12 +312,15 @@ static func _curves(timeline: Array[Dictionary]) -> String:
 
 
 static func _curve(match_id: String, rows: Array) -> String:
-	var series: Dictionary = {1: {"army": [], "funds": []}, 2: {"army": [], "funds": []}}
+	# The armies are whoever the timeline says played, in the order it first
+	# mentions them, rather than the two the Lab's side specs happen to name — a
+	# figure that quietly drops a side is worse than no figure.
+	var series: Dictionary = {}
 	var top := 1.0
 	for row: Dictionary in rows:
 		var team := int(row["team"])
 		if not series.has(team):
-			continue
+			series[team] = {"army": [], "funds": []}
 		var day := int(row["day"])
 		var army := float(row["army_value"])
 		var funds := float(row["funds_end"])
@@ -326,7 +333,7 @@ static func _curve(match_id: String, rows: Array) -> String:
 			days = maxf(days, point.x)
 	var paths: Array[String] = []
 	for team: int in series:
-		var colour := "#ef7a6c" if team == 1 else "#6fa8dc"
+		var colour := _team_colour(team)
 		paths.append(_polyline(series[team]["army"], days, top, colour, ""))
 		paths.append(_polyline(series[team]["funds"], days, top, colour, "2 3"))
 	return (
@@ -339,6 +346,21 @@ static func _curve(match_id: String, rows: Array) -> String:
 		)
 		% [_esc(match_id), "".join(paths), _thousands(int(top)), int(days)]
 	)
+
+
+## The line an army is drawn in. Seats 1 and 2 keep the red and blue the legend
+## and the rest of the page name them in; a third or fourth army — which no Lab
+## run seats today, since a side spec is red or blue — gets a line of its own
+## rather than borrowing one.
+static func _team_colour(team: int) -> String:
+	match team:
+		1:
+			return "#ef7a6c"
+		2:
+			return "#6fa8dc"
+		3:
+			return "#c9a227"
+	return "#7bc47f"
 
 
 ## A day/value series as SVG. The viewBox is 300x110 with the baseline at y=100,

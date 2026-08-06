@@ -31,7 +31,9 @@
 #
 # With no arguments it runs DEFAULT_MODES. Captures land in a temporary
 # directory that is removed on exit unless SMOKE_KEEP is set, in which case the
-# path is printed so the frames can be eyeballed.
+# path is printed so the frames can be eyeballed. SMOKE_HASHES=<file> records a
+# manifest of what those frames hashed to, or compares this run against one —
+# see compare_capture_hashes for why it is recorded rather than committed.
 #
 # Needs a display: these runs render. They are not headless, so this is a local
 # gate, not something to wire into a headless CI job as-is.
@@ -179,6 +181,14 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # BattleFeedbackScenario rather than in the driver, which is why the driver's line
 # ceiling moved by the dispatch arm and not by the scenarios.
 #
+# power_range_readout is COM-80's, and it sits beside the preview for the reason
+# they share: both are what the game tells a player about reach. The bar printed
+# the unit type's own min/max, so under Rhea Sol's Grid Saturation — +1 tile on
+# her indirects — it read 2-3 while the fire ring and AttackCommand played 2-4.
+# The scenario reads the bar's order line back against AttackRange before and
+# during the power, because two wrong numbers photograph as well as two right
+# ones.
+#
 # field_overlays is the one frame that has to hold three overlays at once: a
 # capture chip counting down, the arrowed route to the cell under the cursor, and
 # the threat lens shading everywhere the other side can shoot. Each reads fine
@@ -261,6 +271,7 @@ DEFAULT_MODES=(
 	attack resolve capture build buildmenu endturn
 	load cargo drop transport supply divemenu dive mapmenu leave_confirm after_build_menu
 	rejected_confirm enemy_range_preview end_turn_ready_units field_overlays
+	power_range_readout
 	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn ai_pause
 	mission_strip mission_strip_retired
@@ -504,6 +515,63 @@ run_batched_sweep() {
 	done
 }
 
+# The captures are called byte-stable in three places (focus-steal D1,
+# range-preview D1, the README), and the sweep's own assertion is a size floor:
+# nothing ever compared a byte. SMOKE_HASHES=<file> is that comparison, and it
+# is the shape check_determinism.sh already uses — record the side to diff
+# against, then diff against it:
+#
+#   SMOKE_HASHES=/tmp/before.txt make smoke   # writes the manifest
+#   ...the change...
+#   SMOKE_HASHES=/tmp/before.txt make smoke   # fails on any frame that moved
+#
+# Nothing is committed, deliberately. Unlike the determinism golden — integer
+# and IEEE-754 arithmetic any platform reproduces — a frame is this machine's
+# renderer and glyph rasteriser, and the process-wide font atlas shifts the
+# glyph edges with the queue's composition, so one scenario writes different
+# bytes in `make smoke MODES=cutin` than in the full sweep. A manifest is
+# therefore only read against a run of the same modes, which its first line
+# records and the comparison refuses to cross: a narrowed run is a different
+# picture of the same scene, not a regression.
+capture_manifest() {
+	local m shot
+	echo "# queue: ${modes[*]}"
+	for m in "${modes[@]}"; do
+		shot="$out_dir/${m//:/-}.png"
+		printf '%s  %s\n' "$(shasum -a 256 <"$shot" | cut -d ' ' -f1)" "$m"
+	done
+}
+
+# Non-zero only when a recorded frame moved; silent and successful when
+# SMOKE_HASHES is unset, which is every ordinary run.
+compare_capture_hashes() {
+	local manifest="${SMOKE_HASHES:-}"
+	[[ -z "$manifest" ]] && return 0
+	if [[ ! -f "$manifest" ]]; then
+		capture_manifest >"$manifest"
+		echo "smoke: recorded ${#modes[@]} capture hashes in $manifest"
+		return 0
+	fi
+	if [[ "$(head -1 "$manifest")" != "# queue: ${modes[*]}" ]]; then
+		echo "smoke: $manifest was recorded from a different queue, so its bytes" >&2
+		echo "smoke: answer for a different font atlas — record a new one to compare" >&2
+		return 1
+	fi
+	local m shot want got moved=0
+	for m in "${modes[@]}"; do
+		shot="$out_dir/${m//:/-}.png"
+		want="$(awk -v mode="$m" '$2 == mode {print $1}' "$manifest")"
+		got="$(shasum -a 256 <"$shot" | cut -d ' ' -f1)"
+		if [[ "$want" != "$got" ]]; then
+			echo "smoke: $m moved — recorded ${want:0:12}, now ${got:0:12}" >&2
+			moved=$((moved + 1))
+		fi
+	done
+	((moved == 0)) && echo "smoke: ${#modes[@]} captures byte-identical to $manifest" && return 0
+	echo "smoke: $moved capture(s) moved. If the change is deliberate, record a new manifest." >&2
+	return 1
+}
+
 # Batch rot does not fail the sweep — every scenario passing on its own is a
 # pass — but it must never be silent, so it is named again after the summary.
 report_batch_fallbacks() {
@@ -534,3 +602,4 @@ fi
 
 echo "smoke: ${#modes[@]} scenarios OK"
 report_batch_fallbacks
+compare_capture_hashes || exit 1

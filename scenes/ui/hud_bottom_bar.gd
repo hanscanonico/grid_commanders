@@ -21,20 +21,11 @@ extends PanelContainer
 ## UnitSprite.texture_for and CommanderVisuals.portrait_for — so faction tint and
 ## the exhausted grey are never a second opinion held here.
 
+## The charged shortcut was pressed. The bar owns the button and says what
+## happened to it; what a press means is Battle's, through BattleView.
+signal fire_pressed
+
 const MAX_DEFENSE_STARS := 4
-const TERRAIN_ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
-## Terrain atlas cell size; mirrors BattleView.TERRAIN_PX rather than coupling
-## the bar to the battle scene for one constant.
-const TERRAIN_PX := 64
-const _PORTRAIT := 31  # handoff 62px
-const _UNIT_ICON := 32  # handoff 64px
-const _TILE_ICON := 20  # handoff 40px
-const _METER := Vector2(66, 6)  # handoff 132x12
-## Floor width of the commander block; it grows past this to fit a long power name.
-const _CO_MIN_W := 105
-const _PAD := 6
-const _GAP := 7
-const _RULE_H := UiTheme.HUD_BOTTOM_H - 18
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
 	TerrainType.BOOT: "Boot",
@@ -54,11 +45,11 @@ var identity: SideIdentity
 ## presentation key that only says how one looks.
 var chart: DamageChart
 
-## Wired by Battle to _fire_command_power, and kept on the bar so the fire control
-## sits with the readiness it reflects — the same contract the floating chip had.
-var fire_button: Button
-
 var _built := false
+## The charged shortcut, kept on the bar so the fire control sits with the
+## readiness it reflects — the same contract the floating chip had. A press
+## leaves here as `fire_pressed`; nobody outside the bar reaches the Button.
+var _fire_button: Button
 var _portrait_field: Panel
 var _portrait: TextureRect
 var _co_name: Label
@@ -97,11 +88,11 @@ func _build() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", _GAP)
+	row.add_theme_constant_override("separation", UiTheme.HUD_GAP)
 	add_child(row)
-	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 	_build_commander(row)
-	row.add_child(UiTheme.hud_divider(_RULE_H))
+	row.add_child(UiTheme.hud_divider(UiTheme.HUD_BOTTOM_RULE_H))
 	# The unit block is the row's one expanding child, so the free width of the bar
 	# lands on the order line rather than sitting empty to its right. It is also
 	# what keeps the terrain chip pinned to the right edge whether or not there is
@@ -110,14 +101,14 @@ func _build() -> void:
 	# and the chip would slide left.
 	_build_unit(row)
 	_build_terrain(row)
-	row.add_child(UiTheme.hud_spacer(_PAD - _GAP))
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 
 	_built = true
 
 
 func _build_commander(row: HBoxContainer) -> void:
 	_portrait_field = Panel.new()
-	_portrait_field.custom_minimum_size = Vector2(_PORTRAIT, _PORTRAIT)
+	_portrait_field.custom_minimum_size = Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT)
 	_portrait_field.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_portrait_field.clip_contents = true
 	row.add_child(_portrait_field)
@@ -131,11 +122,7 @@ func _build_commander(row: HBoxContainer) -> void:
 
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 3)
-	# A floor, not a width: the block sizes to whichever of its two rows is wider,
-	# so every shipped power_name renders whole (they run to "Armoured
-	# Breakthrough"). The floor only bites on a commander-less side, where it keeps
-	# the empty left third from collapsing to the portrait.
-	block.custom_minimum_size = Vector2(_CO_MIN_W, 0)
+	block.custom_minimum_size = Vector2(UiTheme.HUD_CO_MIN_W, 0)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
 	_co_block = block
@@ -153,7 +140,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	meter_row.add_theme_constant_override("separation", 4)
 	block.add_child(meter_row)
 	_meter_frame = Panel.new()
-	_meter_frame.custom_minimum_size = _METER
+	_meter_frame.custom_minimum_size = UiTheme.HUD_METER
 	_meter_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_meter_frame.add_theme_stylebox_override("panel", _trough_box())
 	meter_row.add_child(_meter_frame)
@@ -166,22 +153,26 @@ func _build_commander(row: HBoxContainer) -> void:
 
 	_charge_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	meter_row.add_child(_charge_label)
-	fire_button = Button.new()
-	fire_button.text = "FIRE"
-	fire_button.focus_mode = Control.FOCUS_NONE
-	fire_button.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	meter_row.add_child(fire_button)
+	_fire_button = Button.new()
+	_fire_button.text = "FIRE"
+	_fire_button.focus_mode = Control.FOCUS_NONE
+	# Cream rather than the side's own fill, for the reason the faction chip above
+	# takes the -light value: this bar is slate, and Iron's hue sits close enough to
+	# it that a tinted button disappears into the chrome it stands on.
+	UiTheme.apply_button(_fire_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_MICRO)
+	_fire_button.pressed.connect(fire_pressed.emit)
+	meter_row.add_child(_fire_button)
 
 
 func _build_unit(row: HBoxContainer) -> void:
 	var block := HBoxContainer.new()
-	block.add_theme_constant_override("separation", _GAP)
+	block.add_theme_constant_override("separation", UiTheme.HUD_GAP)
 	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(block)
 	_unit_block = block
 
 	_unit_icon = TextureRect.new()
-	_unit_icon.custom_minimum_size = Vector2(_UNIT_ICON, _UNIT_ICON)
+	_unit_icon.custom_minimum_size = Vector2(UiTheme.HUD_UNIT_ICON, UiTheme.HUD_UNIT_ICON)
 	_unit_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_unit_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_unit_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -224,7 +215,7 @@ func _build_terrain(row: HBoxContainer) -> void:
 	_terrain_block = block
 
 	_terrain_icon = TextureRect.new()
-	_terrain_icon.custom_minimum_size = Vector2(_TILE_ICON, _TILE_ICON)
+	_terrain_icon.custom_minimum_size = Vector2(UiTheme.HUD_TILE_ICON, UiTheme.HUD_TILE_ICON)
 	_terrain_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_terrain_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_terrain_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -272,12 +263,12 @@ func show_commander(
 	_meter_frame.visible = powered
 	_charge_label.visible = powered
 	if not powered:
-		fire_button.visible = false
+		_fire_button.visible = false
 		return
 
 	var ratio := 1.0 if co_state.power_active or co_state.is_ready() else co_state.charge_ratio()
 	_meter_fill.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	_meter_fill.size = Vector2(_METER.x * ratio, _METER.y)
+	_meter_fill.size = Vector2(UiTheme.HUD_METER.x * ratio, UiTheme.HUD_METER.y)
 	_meter_fill.position = Vector2.ZERO
 	# Amber is the charge colour in this design system; the active state takes the
 	# capture green so a running power reads differently from a full one.
@@ -295,8 +286,8 @@ func show_commander(
 	else:
 		_charge_label.text = "%d / %d" % [co_state.charge, commander.power_cost]
 		_charge_label.add_theme_color_override("font_color", UiTheme.INK_3)
-	fire_button.visible = co_state.is_ready() and not is_ai
-	fire_button.disabled = not co_state.is_ready() or is_ai
+	_fire_button.visible = co_state.is_ready() and not is_ai
+	_fire_button.disabled = not co_state.is_ready() or is_ai
 
 
 # --- the unit and terrain thirds ----------------------------------------------
@@ -305,6 +296,11 @@ func show_commander(
 ## Single entry point per hovered tile; `unit` is null on an empty or fogged
 ## tile, and that is what blanks the right two thirds. `carrying` names the cargo
 ## when the unit is a loaded transport.
+##
+## `range_band` is the ring the unit really fires in — AttackRange's answer,
+## resolved by BattleView, never the pair printed on the unit type. A doctrine may
+## widen it (Rhea Sol's Grid Saturation), and a bar reading the type would print a
+## range the fire ring and AttackCommand both disagree with.
 func show_tile(
 	terrain: TerrainType,
 	owner_team: int,
@@ -312,15 +308,27 @@ func show_tile(
 	capture_left: int = -1,
 	unit: Unit = null,
 	carrying: String = "",
-	allegiance: String = ""
+	allegiance: String = "",
+	range_band: Vector2i = Vector2i.ZERO
 ) -> void:
 	if not _built:
 		return
-	_show_unit(unit, carrying, active_team, allegiance)
+	_show_unit(unit, carrying, active_team, allegiance, range_band)
 	_show_terrain(terrain, owner_team, capture_left)
 
 
-func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: String) -> void:
+## The order line as it currently reads, for the scenario that checks what the
+## bar is showing rather than what it was handed — the same read-back seam
+## CutsceneSide.drawn_unit_row is. Empty while no unit is under the cursor.
+func unit_order_line() -> String:
+	if not _built or not _unit_data.visible:
+		return ""
+	return _unit_sub.text
+
+
+func _show_unit(
+	unit: Unit, carrying: String, active_team: int, allegiance: String, range_band: Vector2i
+) -> void:
 	# The block itself stays in the row — it is the expanding child holding the
 	# terrain chip against the right edge — so an empty tile blanks its contents
 	# rather than hiding the block.
@@ -334,7 +342,7 @@ func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: Stri
 	var waited := unit.acted and unit.team == active_team
 	_unit_icon.modulate = UnitSprite.ACTED_TINT if waited else Color.WHITE
 	_unit_name.text = unit.type.display_name
-	_unit_sub.text = _order_line(unit, carrying, waited, allegiance)
+	_unit_sub.text = _order_line(unit, carrying, waited, allegiance, range_band)
 	_pips.set_hp(unit.displayed_hp())
 	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
 	_ammo_label.visible = unit.type.max_ammo > 0
@@ -348,7 +356,9 @@ func _show_unit(unit: Unit, carrying: String, active_team: int, allegiance: Stri
 ## state the player is about to act on. The class is the tile-cost vocabulary the
 ## terrain speaks, so naming it here is what lets the bar drop the move-cost row
 ## the old panel carried.
-func _order_line(unit: Unit, carrying: String, waited: bool, allegiance: String) -> String:
+func _order_line(
+	unit: Unit, carrying: String, waited: bool, allegiance: String, range_band: Vector2i
+) -> String:
 	var parts := PackedStringArray()
 	# Whose it is, before what it is: with four armies on the board a colour alone
 	# stopped answering "can I shoot that?", and the answer is the viewer's rather
@@ -356,8 +366,8 @@ func _order_line(unit: Unit, carrying: String, waited: bool, allegiance: String)
 	if allegiance != "":
 		parts.append(allegiance.to_upper())
 	parts.append(String(CLASS_LABELS.get(unit.type.move_class, "")).to_upper())
-	if unit.type.min_range > 1:
-		parts.append("RNG %d-%d" % [unit.type.min_range, unit.type.max_range])
+	if range_band.x > 1:
+		parts.append("RNG %d-%d" % [range_band.x, range_band.y])
 	if unit.dived:
 		parts.append("DIVED")
 	if unit.running_dry():
@@ -387,12 +397,15 @@ func _stars(count: int) -> String:
 
 
 ## The same artwork the board draws: one cell of the terrain atlas, in the
-## owner's resolved faction row (rows 1+ exist only when team_tinted).
+## owner's resolved faction row (rows 1+ exist only when team_tinted). The atlas
+## and its cell size are asked of BattleView, which owns them, rather than
+## mirrored here — a mirror is how a bar comes to draw a cell the board has moved.
 func _terrain_texture(terrain: TerrainType, owner_team: int) -> AtlasTexture:
 	var atlas := AtlasTexture.new()
-	atlas.atlas = load(TERRAIN_ATLAS_PATH)
+	atlas.atlas = load(BattleView.ATLAS_PATH)
 	var row: int = identity.atlas_row(owner_team) if terrain.team_tinted else 0
-	atlas.region = Rect2(terrain.atlas_col * TERRAIN_PX, row * TERRAIN_PX, TERRAIN_PX, TERRAIN_PX)
+	var px := BattleView.TERRAIN_PX
+	atlas.region = Rect2(terrain.atlas_col * px, row * px, px, px)
 	return atlas
 
 

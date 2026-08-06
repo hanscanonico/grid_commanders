@@ -14,7 +14,7 @@ const _COLUMNS := 4
 
 func _ready() -> void:
 	var bg := ColorRect.new()
-	bg.color = Color(0.133, 0.153, 0.169)
+	bg.color = UiTheme.SLATE_900
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 

@@ -14,8 +14,10 @@ extends CommanderType
 @export var redeploy_move_bonus: int = 2
 ## Negative on purpose: a repositioning turn, not an attacking one.
 @export var redeploy_attack_pct: int = -20
-## Build-list places his fast units are pulled up.
-@export var light_build_bias: int = -3
+## Build-list places his fast units are pulled up. Counted from the end of
+## build_priority for the recon, which is on no tier's list, so it moved with the
+## list's length when rockets joined — see Orin Flux's scout_build_bias.
+@export var light_build_bias: int = -4
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:

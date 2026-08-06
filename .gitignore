@@ -11,6 +11,11 @@ bin
 # is the copy we track.
 godot-ai-LICENSE.txt
 
+# Python bytecode. arena_search.py refuses to write its own
+# (sys.dont_write_bytecode), but that guards only its runs — any other
+# interpreter importing the file (a linter, an editor, a test) drops one.
+__pycache__/
+
 # macOS
 .DS_Store
 

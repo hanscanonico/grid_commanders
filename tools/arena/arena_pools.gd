@@ -72,14 +72,18 @@ const VALIDATION_OFFSET := TRAINING_SEEDS
 ## the build-first question `arsenal` already asks (measured clean: 72 of 72
 ## decisive); `steelworks` is the slowest of the ten and the largest.
 ##
-## `ironworks` is the one that was measured *out*: it is the only board of the
-## ten that reaches `BalanceMatchEngine.COMMAND_CAP`, once in 72 matches, on a
-## day-91 board holding 55 units against 3. Nothing was failing to resolve — a
+## `ironworks` is the one that was measured *out*: it was the only board of the
+## ten to reach the match-level command cap, once in 72 matches, on a day-91
+## board holding 55 units against 3. Nothing was failing to resolve — a
 ## 3 000-command net sized for 20-day gates is simply short of a 100-day horizon
 ## on the roster's biggest economy — but a stalled match is a hard invariant
 ## failure of the run (D6), and a pool that fails its own run is not a pool.
-## Read that as a cap to revisit rather than a board to distrust; the arena
-## wants this board back.
+##
+## **That cap has since been revisited** (`BalanceMatchEngine.command_ceiling`),
+## so the reason this board sits here is discharged and re-admitting it is a
+## measurement waiting to be taken rather than a rule waiting to be changed.
+## Doing it is a pool change: the split is fixed for the life of a run, so it
+## belongs to a run nobody has started.
 const RESERVE_BOARDS: Array[String] = ["forge", "steelworks", "ironworks"]
 
 

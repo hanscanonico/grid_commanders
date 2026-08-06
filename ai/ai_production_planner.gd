@@ -9,6 +9,9 @@ extends RefCounted
 ## Spacing between the tiers production ranks candidates in. Wide enough that
 ## no tier's own ordering can reach into the next.
 const TIER_STRIDE := 1000
+## "The army is missing something it cannot do without." Ordered within itself:
+## the capture roster first, then the one truck that keeps the rest firing.
+const RANK_SHORTFALL := TIER_STRIDE
 ## "Never buy this" — above every tier, so it loses every comparison.
 const RANK_NONE := TIER_STRIDE * 100
 
@@ -18,6 +21,7 @@ const RANK_NONE := TIER_STRIDE * 100
 class BuildWants:
 	var outgunned_in_the_air: bool = false
 	var short_of_capture_units: bool = false
+	var short_of_supply: bool = false
 	## Unit id -> number the team already fields.
 	var owned: Dictionary = {}
 	## Unit id -> place in S3's standing tier, best first.
@@ -29,18 +33,25 @@ class BuildWants:
 		friendly_units: Array[Unit],
 		p_outgunned_in_the_air: bool,
 		capture_unit_target: int,
+		supply_unit_target: int,
 		p_reactive_order: Dictionary,
 		p_doctrine_bias: Dictionary
 	) -> BuildWants:
 		var wants := BuildWants.new()
 		wants.outgunned_in_the_air = p_outgunned_in_the_air
 		var capture_units := 0
+		var supply_units := 0
 		for unit in friendly_units:
+			if unit.carrier != null:
+				continue  # a passenger takes no ground, refills nobody and is never bought against
 			var id := unit.type.id
 			wants.owned[id] = int(wants.owned.get(id, 0)) + 1
 			if unit.type.can_capture:
 				capture_units += 1
+			if unit.type.can_resupply:
+				supply_units += 1
 		wants.short_of_capture_units = capture_units < capture_unit_target
+		wants.short_of_supply = supply_units < supply_unit_target
 		wants.reactive_order = p_reactive_order
 		wants.doctrine_bias = p_doctrine_bias
 		return wants
@@ -71,6 +82,7 @@ func plan(context: AIPlanningContext) -> Command:
 		context.friendly_units,
 		_outgunned_in_the_air(context),
 		_capture_unit_target(context),
+		_supply_unit_target(),
 		_reactive_order(context),
 		_doctrine_bias(context)
 	)
@@ -116,6 +128,13 @@ func _capture_unit_target(context: AIPlanningContext) -> int:
 	return maxi(profile.capture_unit_target, wanted)
 
 
+## How many supply units the team wants, which is none at all while the planner
+## would not drive one: an APC bought by an army that never issues a Supply is
+## the empty carrier build_priority exists to keep off the board.
+func _supply_unit_target() -> int:
+	return profile.supply_unit_target if profile.supply_weight > 0.0 else 0
+
+
 ## The best unit this facility can produce for the money, or null.
 func _pick_build(
 	context: AIPlanningContext, terrain: TerrainType, wants: BuildWants, funds: int
@@ -143,8 +162,7 @@ func _worth_waiting_for(
 ) -> bool:
 	if best_rank < wants.first_priority_rank() or profile.save_up_turns <= 0:
 		return false
-	var income := context.owned_properties.size() * GameState.INCOME_PER_PROPERTY
-	var budget := funds + income * profile.save_up_turns
+	var budget := funds + TurnRules.income_for(context.state, context.team) * profile.save_up_turns
 	for terrain in facilities:
 		for unit_type in context.unit_types:
 			var price := UnitPricing.cost_for(context.state, context.team, unit_type)
@@ -168,7 +186,7 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 		if answer >= 0:
 			return answer
 	if unit_type.can_capture and wants.short_of_capture_units:
-		return TIER_STRIDE
+		return RANK_SHORTFALL
 	var duplicates := wants.count_of(unit_type.id) * profile.duplicate_priority_cost
 	var bias := wants.bias_of(unit_type.id)
 	if wants.reactive_order.has(unit_type.id):
@@ -177,6 +195,15 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 	var priority := profile.build_priority.find(unit_type.id)
 	if priority >= 0:
 		return TIER_STRIDE * 2 + maxi(0, priority + duplicates + bias)
+	if unit_type.can_resupply and wants.short_of_supply:
+		# One place below the list's last entry, so every listed unit the money
+		# reaches outranks the truck and it is bought once duplicates have pushed
+		# them past it — an army worth supplying rather than an opening move. The
+		# want clears the moment one is on the board, which is what stops a
+		# second: the planner cannot ferry, so a spare would follow it doing
+		# nothing. That is why this is a want and not a place on the list, where
+		# duplicate_priority_cost would eventually buy another.
+		return TIER_STRIDE * 2 + profile.build_priority.size() + maxi(0, bias)
 	if bias < 0 and unit_type.max_range > 0:
 		# A doctrine may pull a combat unit the list omits onto its tail — never
 		# a transport, which stays without a rank to move.
@@ -204,7 +231,11 @@ func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
 ## S3. Orders combat units by how well they answer the enemy's cost-weighted
 ## roster, blended with the static build-priority order.
 func _reactive_order(context: AIPlanningContext) -> Dictionary:
-	if profile.build_reactivity <= 0.0 or context.enemy_roster.is_empty():
+	if (
+		profile.build_reactivity <= 0.0
+		or context.enemy_roster.is_empty()
+		or context.state.damage_chart == null
+	):
 		return {}
 	var candidates: Array[UnitType] = []
 	var effectiveness: Dictionary = {}
@@ -272,7 +303,7 @@ func _outgunned_in_the_air(context: AIPlanningContext) -> bool:
 		return false
 	var answers := 0
 	for unit in context.friendly_units:
-		if _can_hit_any(state, unit, flying):
+		if unit.carrier == null and _can_hit_any(state, unit, flying):
 			answers += 1
 	return answers < profile.air_answer_target
 

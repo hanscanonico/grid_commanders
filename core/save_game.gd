@@ -8,7 +8,7 @@ extends RefCounted
 ## about files and JSON text, so a disk error and a malformed save are separate
 ## failures with separate messages.
 ##
-## The public surface is small and stays that way: `save`, `load_game`, `peek`,
+## The public surface is small and stays that way: `save`, `load_game`, `status`,
 ## `has_save`, `SAVE_PATH`, and `VERSION` are what callers use — plus `TEMP_SUFFIX`
 ## and `BACKUP_SUFFIX`, which are public only so a test can name the siblings a save
 ## stages beside a slot rather than spelling them a second time. Which on-disk
@@ -33,6 +33,39 @@ const SAVE_CODEC_SCRIPT := preload("res://core/save_codec.gd")
 const VERSION := SAVE_CODEC_SCRIPT.VERSION
 const TEMP_SUFFIX := ".tmp"
 const BACKUP_SUFFIX := ".bak"
+
+
+## What a slot holds, as far as naming it goes: nothing, a save nothing here can
+## read — with the words of whoever refused it — or the summary that names it.
+##
+## Three states rather than a summary that may be null, because "you have no saved
+## match" and "your saved match is damaged" are opposite things to be told and a
+## null says both. A save this file writes and the disk then truncates used to
+## reach the player as the first of those.
+class Slot:
+	enum State { ABSENT, UNREADABLE, READABLE }
+
+	var state := State.ABSENT
+	## Why the save cannot be read: this file's words for a storage failure,
+	## SaveCodec's for a malformed save. Empty unless UNREADABLE.
+	var reason := ""
+	## Null unless READABLE.
+	var summary: SAVE_CODEC_SCRIPT.Summary = null
+
+	static func absent() -> Slot:
+		return Slot.new()
+
+	static func unreadable(why: String) -> Slot:
+		var slot := Slot.new()
+		slot.state = State.UNREADABLE
+		slot.reason = why
+		return slot
+
+	static func readable(named: SAVE_CODEC_SCRIPT.Summary) -> Slot:
+		var slot := Slot.new()
+		slot.state = State.READABLE
+		slot.summary = named
+		return slot
 
 
 static func has_save(path: String = SAVE_PATH) -> bool:
@@ -60,23 +93,31 @@ static func _slot_path(path: String) -> String:
 
 
 ## Which board and day the save holds, without rebuilding the match — what the
-## menu needs to name what Continue resumes. Null when there is no save, or it is
-## not one the codec reads.
+## menu needs to name what Continue resumes — or why it cannot be named.
 ##
 ## Silent where `load_game` pushes errors: asking whether a slot is worth naming
 ## is a query the menu makes on every boot, and having nothing saved is the
-## ordinary answer, not a failure.
-static func peek(path: String = SAVE_PATH) -> SAVE_CODEC_SCRIPT.Summary:
+## ordinary answer, not a failure. A damaged one is not a failure of the query
+## either — it is news, so it is handed back as words rather than pushed at a log
+## no player reads.
+##
+## READABLE is not a promise `load_game` will accept: naming a save loads no board,
+## so a save describing one that has since moved is named here and refused there
+## (see SaveCodec.summarize). Whoever offers the slot has to be ready for that.
+static func status(path: String = SAVE_PATH) -> Slot:
 	var slot := _slot_path(path)
 	if slot.is_empty():
-		return null
+		return Slot.absent()
 	var text := FileAccess.get_file_as_string(slot)
 	if text.is_empty():
-		return null
+		return Slot.unreadable("%s is empty or cannot be read" % slot)
 	var json := JSON.new()
 	if json.parse(text) != OK or not json.data is Dictionary:
-		return null
-	return SAVE_CODEC_SCRIPT.summarize(json.data)
+		return Slot.unreadable("%s is not a valid save" % slot)
+	var reason := SAVE_CODEC_SCRIPT.validate(json.data)
+	if reason != "":
+		return Slot.unreadable(reason)
+	return Slot.readable(SAVE_CODEC_SCRIPT.summarize(json.data))
 
 
 ## `difficulty` trails `path` so every existing caller keeps working; a save

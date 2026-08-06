@@ -171,3 +171,31 @@ func test_an_unknown_style_falls_back_to_unarmed_rather_than_null() -> void:
 	assert_not_null(style)
 	assert_false(style.fires())
 	assert_eq(style.muzzle, 0.0)
+
+
+## Every shipped style names a projectile the cut-in can actually draw. The
+## vocabulary is a match in CutsceneFx, so a typo used to fall through to the
+## tracer arm and dress an artillery shell as machine-gun fire — a change nobody
+## made, in a frame that photographs perfectly well.
+func test_every_shipped_style_names_a_projectile_the_cut_in_draws() -> void:
+	assert_gt(styles.size(), 0, "no styles loaded, so this would pass vacuously")
+	for id: StringName in styles.ids():
+		var style := styles.by_id(id)
+		assert_has(
+			BattleStyle.PROJECTILES,
+			style.projectile,
+			"style '%s' fires '%s'" % [id, style.projectile]
+		)
+
+
+## And a typo'd one is refused out loud rather than registered: an unregistered
+## style stages unarmed, which is the DB's standing answer to a style it cannot
+## honour.
+func test_a_style_with_an_unknown_projectile_is_refused() -> void:
+	var typo := BattleStyle.new()
+	typo.id = &"typo"
+	typo.projectile = &"trcaer"
+	var db := BattleStyleDB.new()
+	db.register(typo)
+	assert_push_error("is not a projectile kind")
+	assert_false(db.has(&"typo"), "a style the cut-in cannot draw is not on the shelf")

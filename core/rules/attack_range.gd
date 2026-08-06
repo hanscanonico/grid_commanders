@@ -45,7 +45,7 @@ static func band(state: GameState, unit: Unit) -> Vector2i:
 ## asked for. `covers` is this with the band asked for on the spot, so the two
 ## cannot disagree about a shot.
 static func reaches(ring: Vector2i, from: Vector2i, target: Vector2i) -> bool:
-	var dist := absi(target.x - from.x) + absi(target.y - from.y)
+	var dist := Grid.manhattan(target, from)
 	return dist >= ring.x and dist <= ring.y
 
 
@@ -65,11 +65,19 @@ static func covers(state: GameState, unit: Unit, from: Vector2i, target: Vector2
 ## rule has to hold in the command that validates the shot, the planner that picks
 ## it and the overlay that offers it, so all three ask this.
 static func can_engage(state: GameState, attacker: Unit, target: Unit) -> bool:
+	return can_engage_dived(state, attacker, target, target.dived)
+
+
+## The same answer with the target's depth named rather than read off it, for the
+## one caller weighing a depth the target is not at yet: a submarine decides
+## whether to dive by asking what would still be able to shoot it once it was
+## under. One body, so the hypothetical and the live shot cannot come apart.
+static func can_engage_dived(state: GameState, attacker: Unit, target: Unit, dived: bool) -> bool:
 	if state.damage_chart == null:
 		return false
 	if not state.damage_chart.can_attack(attacker.type.id, target.type.id):
 		return false
-	return not target.dived or attacker.type.can_hit_submerged
+	return not dived or attacker.type.can_hit_submerged
 
 
 ## The weapon `attacker` would fire at `target` right now, or null when none is
@@ -116,6 +124,26 @@ static func is_indirect_type(type: UnitType) -> bool:
 	return type.min_range > 1
 
 
+## How far this unit could bring something under fire in one turn: its gun, plus
+## the ground it can cross first — and an indirect unit cannot move and fire, so
+## that one reaches only as far as the gun.
+##
+## Manhattan distance against MovementResolver's budget, so it deliberately
+## over-estimates: it ignores what the ground costs and who is standing on it. It
+## is the cheap screen a caller takes before the real work — the doctrines
+## weighing a Command Power, the planner's focus fire, and a submarine deciding
+## whether to go under — and each of the three used to guess it from
+## `type.move_points`, which is blind to a commander's move bonus and to an empty
+## tank alike.
+static func strike_reach(state: GameState, unit: Unit) -> int:
+	var reach := maximum(state, unit)
+	if reach <= 0:
+		return 0  # unarmed: it brings nothing under fire, however far it walks
+	if is_indirect(unit):
+		return reach
+	return reach + MovementResolver.move_budget(state, unit)
+
+
 ## The cells `unit` could fire *from* this turn. An indirect unit cannot move and
 ## fire, so it shoots only from where it stands; a direct unit may fire from any
 ## cell it can stop on, its current one included.
@@ -133,9 +161,24 @@ static func firing_cells(
 	state: GameState, unit: Unit, sight_team: int = MovementResolver.MOVER_SIGHT
 ) -> Array[Vector2i]:
 	if is_indirect(unit):
+		return [unit.cell]  # no fill is needed, so none is run
+	return firing_cells_in(unit, MovementResolver.reachable(state, unit, 0, sight_team))
+
+
+## The same answer over a fill the caller already has, for the planner: it holds
+## every ready unit's reach on its plan already, and letting firing_cells run its
+## own would be a second flood fill per unit per command.
+##
+## It takes no `sight_team`, because the fill it is handed *is* that decision —
+## there is no parameter here to disagree with the one `reachable` was called
+## with. Which is also why the two entry points are one body: the rule that an
+## indirect unit fires only from where it stands has to be the same rule the range
+## overlay paints, or the planner is exactly the second opinion this file exists
+## to retire.
+static func firing_cells_in(unit: Unit, reach: MovementResolver.MoveRange) -> Array[Vector2i]:
+	if is_indirect(unit):
 		return [unit.cell]
 	var cells: Array[Vector2i] = []
-	var reach := MovementResolver.reachable(state, unit, 0, sight_team)
 	for cell in reach.cells():
 		if reach.can_stop_at(cell):
 			cells.append(cell)

@@ -16,6 +16,7 @@ move_costs = {
 &"treads": 1
 }
 is_property = true
+is_headquarters = true
 builds = Array[StringName]([])
 services = Array[StringName]([&"land"])
 atlas_col = 7

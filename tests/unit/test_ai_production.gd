@@ -55,6 +55,14 @@ func _state(map_text: String) -> GameState:
 	return state
 
 
+## Puts a unit aboard `carrier`, the way a save or a hot-seat handover leaves one.
+func _board(state: GameState, id: StringName, carrier: Unit) -> Unit:
+	var unit := Unit.create(unit_db.by_id(id), carrier.team, carrier.cell)
+	unit.carrier = carrier
+	state.units.append(unit)
+	return unit
+
+
 func _assert_every_tier_builds(map_text: String, expected_domain: StringName) -> void:
 	var difficulty_db := DifficultyDB.load_default()
 	for tier in difficulty_db.all():
@@ -232,3 +240,65 @@ func test_builds_tank_with_funds_and_enough_capture_units() -> void:
 	var command := ai.plan_next_command(state)
 	assert_true(command is BuildCommand)
 	assert_eq((command as BuildCommand).unit_type.id, &"tank")
+
+
+## A passenger is not a soldier the army can send anywhere: the planner never
+## offers a carried unit a command, and per naval R1 it will never unload one
+## either. Counting one toward the capture roster suppresses infantry buys for
+## the rest of the match.
+func test_a_carried_infantry_does_not_fill_the_capture_roster() -> void:
+	var state := _state("[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 p 3 0")
+	_board(state, &"infantry", state.units[2])
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 7000
+	var command := ai.plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq(
+		(command as BuildCommand).unit_type.id,
+		&"infantry",
+		"two infantry are afoot; the third is aboard the APC and cannot take ground"
+	)
+
+
+## Same rule on the air answer: a passenger shoots at nothing, so it cannot be
+## one of the units that cover the sky. The three infantry fill the capture
+## roster, so the only shortfall left on the board is the air one.
+func test_a_carried_unit_is_not_an_air_answer() -> void:
+	var state := _state(
+		(
+			"[terrain]\nB....\nSSSSS\n[owners]\n1 0 0\n"
+			+ "[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n1 a 4 0\n1 l 1 1\n2 b 3 1"
+		)
+	)
+	_board(state, &"anti_air", state.units[4])
+	for unit in state.units_of(1):
+		unit.acted = true
+	state.funds[1] = 99999
+	var command := ai.plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	var bought: UnitType = (command as BuildCommand).unit_type
+	assert_true(
+		chart.can_attack(bought.id, &"bomber"),
+		"one gun covers the sky, not two; the second is aboard the lander (bought a %s)" % bought.id
+	)
+
+
+## The reactive order prices candidates off the damage chart, and only the
+## Difficult tier turns it on. A chart-less state is ordinary in tools and tests,
+## so the planner has to survive one at every tier, as its attack and dive
+## siblings already do.
+func test_a_chart_less_state_plans_at_the_reactive_tier() -> void:
+	var map := MapData.parse(
+		"[terrain]\nB....\n.....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n2 t 4 1", terrain_db
+	)
+	var state := GameState.create(map, unit_db, null)
+	assert_null(state.damage_chart, "the board under test has no damage chart")
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 99999
+	var profile: AIProfile = load("res://data/ai/hard.tres")
+	assert_gt(profile.build_reactivity, 0.0, "the tier under test must be the reactive one")
+	var planner := AIController.new(unit_db, profile)
+	var command := planner.plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)

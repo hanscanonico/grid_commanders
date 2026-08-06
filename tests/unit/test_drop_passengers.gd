@@ -67,3 +67,46 @@ func test_drop_judges_each_passenger_not_just_the_first() -> void:
 	assert_true(infantry.acted)
 	assert_eq(state.unit_at(Vector2i(1, 1)), infantry)
 	assert_eq(state.cargo_of(lander), [tank] as Array[Unit], "the tank stays aboard")
+
+
+## A drop can fail two ways, and they are different events. `Command.ambushed`
+## means a hidden enemy on the *path* cut the move short; a drop cell that turns
+## out occupied stops nothing — the transport arrived, the passenger simply has
+## nowhere to step. Reporting the second as the first plays the trap cue for a
+## plain blockage.
+func test_a_blocked_drop_is_not_an_ambush() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 p 0 0\n2 i 2 0")
+	state.fog_enabled = true
+	var apc := state.units[0]
+	var rider := Unit.create(unit_db.by_id(&"infantry"), 1, apc.cell)
+	rider.carrier = apc
+	state.units.append(rider)
+	# The enemy sits on the drop cell, not on the path, and team 1 cannot see it.
+	var command := DropCommand.new(apc, _path([Vector2i(0, 0), Vector2i(1, 0)]), Vector2i(2, 0))
+	assert_eq(
+		command.validate(state), "", "a hidden occupant must not be refused — that reveals it"
+	)
+	command.apply(state)
+	assert_false(command.ambushed, "nothing sprang a trap: the transport reached its cell")
+	assert_true(command.drop_blocked, "the drop cell was occupied")
+	assert_eq(apc.cell, Vector2i(1, 0), "the move ran its full length")
+	assert_eq(state.cargo_of(apc), [rider] as Array[Unit], "the passenger stays aboard")
+
+
+func test_a_drop_whose_move_is_ambushed_still_reports_the_trap() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 p 0 0\n2 i 2 0")
+	state.fog_enabled = true
+	var apc := state.units[0]
+	var rider := Unit.create(unit_db.by_id(&"infantry"), 1, apc.cell)
+	rider.carrier = apc
+	state.units.append(rider)
+	# This time the hidden enemy is *on* the path, and the drop cell is clear.
+	var command := DropCommand.new(
+		apc, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Vector2i(2, 1)
+	)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_true(command.ambushed, "the move was cut short at the hidden enemy")
+	assert_false(command.drop_blocked, "and that is the trap, not a blocked cell")
+	assert_eq(apc.cell, Vector2i(1, 0), "stopped on the last free cell before it")
+	assert_eq(state.cargo_of(apc), [rider] as Array[Unit], "the passenger stays aboard")

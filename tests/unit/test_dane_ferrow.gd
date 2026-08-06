@@ -44,9 +44,9 @@ func test_bounty_clamps_to_the_victim_s_treasury_and_needs_a_kill() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
 	var victim := state.units[1]
 	state.funds[2] = 400
-	CombatResolver.bank_losses(state, victim, 50, 1)
+	ChargeLedger.bank_losses(state, victim, 50, 1)
 	assert_eq(state.funds[1], 0, "nonlethal damage pays nothing")
-	CombatResolver.bank_losses(state, victim, victim.hp, 1)
+	ChargeLedger.bank_losses(state, victim, victim.hp, 1)
 	assert_eq(state.funds[1], 400, "a bounty cannot take money that is not there")
 	assert_eq(state.funds[2], 0)
 
@@ -92,7 +92,7 @@ func test_collect_doubles_the_rate_and_defence_stays_soft() -> void:
 	PowerCommand.new().apply(state)
 	assert_eq(co.kill_bounty_pct(state, 1, state.units[1]), 20)
 	state.funds[2] = 5000
-	CombatResolver.bank_losses(state, state.units[1], state.units[1].hp, 1)
+	ChargeLedger.bank_losses(state, state.units[1], state.units[1].hp, 1)
 	assert_eq(state.funds[1], 3200)
 
 

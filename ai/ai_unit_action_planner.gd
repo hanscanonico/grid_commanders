@@ -3,8 +3,8 @@ extends RefCounted
 ## Chooses the highest-scored action from the current team's ready units.
 ##
 ## Greedy, deterministic, and deliberately coarse: combat, capture, diving,
-## withdrawal, and fallback movement stay together because they compete for one
-## AIUnitPlan score. AIController remains the public façade.
+## merging, resupply, withdrawal, and fallback movement stay together because
+## they compete for one AIUnitPlan score. AIController remains the public façade.
 ##
 ## One command is returned per call and every survivor is scored again on the
 ## next one, which is what lets a wounded target's kill reach the next attacker.
@@ -55,8 +55,9 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
 	plan.reach = MovementResolver.reachable(context.state, unit)
 	_consider_attacks(context, unit, plan.reach, plan)
 	_consider_captures(context.state, unit, plan.reach, plan)
-	_consider_dive(context, unit, plan)
+	_consider_dive(context, unit, plan.reach, plan)
 	_consider_join(context, unit, plan.reach, plan)
+	_consider_supply(context.state, unit, plan.reach, plan)
 	# Last on purpose: every comparison here is strict, so a withdrawal that only
 	# ties with a shot loses to it. Running away has to be strictly better.
 	_consider_withdraw(context, unit, plan.reach, plan)
@@ -81,15 +82,12 @@ func _consider_attacks(
 	var state := context.state
 	if unit.type.max_range <= 0 or state.damage_chart == null:
 		return
-	var dests: Array[Vector2i] = []
+	# Where this unit could shoot from is AttackRange's rule — indirect units cannot
+	# move and fire — asked over the fill the plan already holds rather than run again.
+	var dests := AttackRange.firing_cells_in(unit, reachable)
 	var span := 0
-	if AttackRange.is_indirect(unit):
-		dests = [unit.cell]  # indirect units cannot move and fire
-	else:
+	if not AttackRange.is_indirect(unit):
 		span = MovementResolver.move_budget(state, unit)
-		for cell in reachable.cells():
-			if reachable.can_stop_at(cell):
-				dests.append(cell)
 	# One threat map for the whole sweep. Still resolved on first need rather
 	# than up front, so a unit with nothing in reach builds nothing.
 	var threat: ThreatMap = null
@@ -103,7 +101,7 @@ func _consider_attacks(
 	# this unit could not fire on from anywhere, whichever cell it stopped at.
 	var candidates: Array[Unit] = []
 	for enemy in context.visible_enemies:
-		if _steps(unit.cell, enemy.cell) - span <= ring.y:
+		if Grid.manhattan(unit.cell, enemy.cell) - span <= ring.y:
 			candidates.append(enemy)
 	for dest in dests:
 		# The walk to a firing cell and the fire it invites depend only on that
@@ -143,7 +141,7 @@ func _consider_attacks(
 
 ## Expected damage value (target cost x damage fraction, kill-boosted) minus
 ## discounted counter risk against our own cost.
-func _attack_score(unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast) -> float:
+func _attack_score(unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast) -> float:
 	if not forecast.can_attack:
 		return -INF
 	var damage := mini(forecast.attack_damage, enemy.hp)
@@ -233,7 +231,7 @@ func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int
 ## How much more attractive `enemy` is because other ready friendlies could
 ## still pile onto it this turn. Zero when focus fire is off or this shot kills.
 func _focus_bonus(
-	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatResolver.Forecast
+	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast
 ) -> float:
 	if profile.focus_fire_bonus <= 0.0:
 		return 0.0
@@ -248,8 +246,8 @@ func _focus_bonus(
 
 
 ## Summed forecast damage other ready friendlies could deal `enemy` this turn.
-## Reach is the same Manhattan over-estimate commander powers use; forecasts are
-## luck-free and draw no RNG.
+## Reach is AttackRange's one Manhattan over-estimate, the same one the commander
+## powers weigh with; forecasts are luck-free and draw no RNG.
 func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) -> int:
 	var state := context.state
 	var total := 0
@@ -260,10 +258,7 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 			continue
 		if not AttackRange.can_fire(state, friendly, enemy):
 			continue  # no chart entry, no loaded weapon, or the target is dived
-		var reach := AttackRange.maximum(state, friendly)
-		if not AttackRange.is_indirect(friendly):
-			reach += MovementResolver.move_budget(state, friendly)
-		if absi(friendly.cell.x - enemy.cell.x) + absi(friendly.cell.y - enemy.cell.y) > reach:
+		if Grid.manhattan(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
 			continue
 		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
 		if forecast.can_attack:
@@ -316,7 +311,7 @@ func _consider_captures(
 		if not terrain.is_property or state.allied(state.owner_at(cell), unit.team):
 			continue
 		var score := profile.capture_score
-		if terrain.id == &"hq":
+		if terrain.is_headquarters:
 			score *= profile.hq_capture_multiplier
 		if _produces(terrain):
 			score *= profile.production_capture_multiplier
@@ -399,6 +394,28 @@ func _consider_withdraw(
 	var staying := threat.incoming_damage(state, unit, unit.cell)
 	if staying <= 0:
 		return  # nothing is aiming at us, so there is nothing to buy
+	var refuge := _best_refuge(context, unit, reachable)
+	var avoided := staying - threat.incoming_damage(state, unit, refuge)
+	if avoided <= 0:
+		return  # nowhere we can reach is safer than standing still
+	var score := profile.withdraw_weight * _unit_value(unit) * float(avoided) / 100.0
+	if score > plan.score:
+		plan.score = score
+		plan.command = MoveCommand.new(unit, reachable.path_to(refuge))
+
+
+## Where this unit would rather be standing, by `_better_refuge`'s keys over
+## everywhere it can stop. Its own cell is in the comparison at no cost, so a cell
+## that is merely as good never pulls it off its square.
+##
+## One answer for the two things that step out of trouble, the withdrawal and the
+## dive: where it is safer is one question, and a second walk over the same threat
+## map would be a second opinion on it.
+func _best_refuge(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange
+) -> Vector2i:
+	var state := context.state
+	var threat := context.threat_map()
 	var refits := _repair_cells(context, unit)
 	# The enemy this unit is orienting on, and its own ring, both asked for once
 	# for the whole sweep — see _standoff_rank for why the goal is asked for here
@@ -406,7 +423,7 @@ func _consider_withdraw(
 	var goal := _enemy_goal(context, unit)
 	var ring := AttackRange.band(state, unit)
 	var best_cell := unit.cell
-	var best_incoming := staying
+	var best_incoming := threat.incoming_damage(state, unit, unit.cell)
 	var best_stand := _standoff_rank(unit.cell, goal, ring)
 	var best_repairs := refits.has(unit.cell)
 	var best_cost := 0
@@ -425,20 +442,14 @@ func _consider_withdraw(
 			best_stand = stand
 			best_repairs = repairs
 			best_cost = cost
-	var avoided := staying - best_incoming
-	if avoided <= 0:
-		return  # nowhere we can reach is safer than standing still
-	var score := profile.withdraw_weight * _unit_value(unit) * float(avoided) / 100.0
-	if score > plan.score:
-		plan.score = score
-		plan.command = MoveCommand.new(unit, reachable.path_to(best_cell))
+	return best_cell
 
 
 ## Safety first, then the unit's own weapon, then ground that puts it back
 ## together, then the shortest walk. Four keys in priority order, which is why
 ## this is a function rather than a condition inside the loop: each one is a
-## decision. Standing still enters the comparison at cost zero, so a cell that is
-## merely as safe never pulls a unit off its own square.
+## decision, and every comparison is strict, which is what lets `_best_refuge`
+## hold its incumbent through a tie.
 ##
 ## The weapon sits *under* safety and over repair, and both halves of that are
 ## the decision. Over safety it would be a general reluctance to retreat — a unit
@@ -512,8 +523,14 @@ func _repair_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 	return _servicing_properties(context, unit)
 
 
-## A submarine's one decision: whether to be under the water.
-func _consider_dive(context: AIPlanningContext, unit: Unit, plan: AIUnitPlan) -> void:
+## A submarine's two decisions: whether to be under the water, and where to be it.
+##
+## Diving is a whole turn, so the boat spends the movement half of it too, at the
+## refuge the withdrawal already picks. Its own cell holds every tie there, so a
+## boat with nowhere safer goes under exactly where it stood.
+func _consider_dive(
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+) -> void:
 	var state := context.state
 	if not unit.type.can_dive or state.damage_chart == null:
 		return
@@ -522,31 +539,92 @@ func _consider_dive(context: AIPlanningContext, unit: Unit, plan: AIUnitPlan) ->
 	if unit.dived:
 		wants = not threatened or unit.running_dry(profile.refuel_margin_turns)
 	else:
-		var dive_burn := unit.type.dived_fuel_upkeep + unit.type.move_points
 		wants = (
 			threatened
 			and not _threatened_by(context, unit, true)
-			and unit.fuel > dive_burn * profile.refuel_margin_turns
+			and not unit.running_dry_if_dived(profile.refuel_margin_turns)
 		)
 	if not wants or profile.dive_score <= plan.score:
 		return
 	plan.score = profile.dive_score
-	plan.command = DiveCommand.new(unit, [unit.cell] as Array[Vector2i], not unit.dived)
+	var refuge := _best_refuge(context, unit, reachable)
+	plan.command = DiveCommand.new(unit, reachable.path_to(refuge), not unit.dived)
 
 
-## Whether an enemy that could damage `unit` can plausibly reach it next turn.
+## Whether an enemy that could damage `unit` can plausibly reach it next turn,
+## with `unit` at the depth named — which is the question a boat weighing the dive
+## asks twice, once for each side of the hatch.
+##
+## Both halves are the authorities': who may shoot what is AttackRange.can_engage
+## dived and surfaced alike, and how far an enemy reaches is AttackRange's one
+## over-estimate. Spelled out here, it read the movement off the type — blind to a
+## doctrine's move bonus and to a dry tank — and credited an indirect enemy with a
+## move and a shot it cannot take in the same turn.
 func _threatened_by(context: AIPlanningContext, unit: Unit, submerged: bool) -> bool:
 	var state := context.state
 	for enemy in context.visible_enemies:
-		if submerged and not enemy.type.can_hit_submerged:
+		if not AttackRange.can_engage_dived(state, enemy, unit, submerged):
 			continue
-		if not state.damage_chart.can_attack(enemy.type.id, unit.type.id):
-			continue
-		var reach := enemy.type.move_points + AttackRange.maximum(state, enemy)
-		var dist := absi(enemy.cell.x - unit.cell.x) + absi(enemy.cell.y - unit.cell.y)
-		if dist <= reach:
+		if Grid.manhattan(enemy.cell, unit.cell) <= AttackRange.strike_reach(state, enemy):
 			return true
 	return false
+
+
+## Whether standing where it can refill the army beats moving this unit on. Only
+## a unit that carries supplies gets past the guard, which on shipped data is the
+## APC and nothing else.
+func _consider_supply(
+	state: GameState, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+) -> void:
+	if profile.supply_weight <= 0.0 or not unit.type.can_resupply:
+		return
+	# Who a top-up would reach is SupplyCommand's own answer, and it is asked
+	# rather than re-derived because the radius is the commander's: Gideon Holt
+	# supplies two tiles out, and adjacency spelled here would miss the second. It
+	# takes the cell it is asked about, so one command answers for every cell.
+	var standing: Array[Vector2i] = [unit.cell]
+	var probe := SupplyCommand.new(unit, standing)
+	var best_score := plan.score
+	var best_cell := unit.cell
+	var found := false
+	for cell in reachable.cells():
+		if not reachable.can_stop_at(cell):
+			continue
+		var value := _supply_value(probe.friendlies_in_reach(state, cell))
+		if value <= 0.0:
+			continue
+		var score := (
+			profile.supply_weight * value - profile.step_cost_penalty * float(reachable.costs[cell])
+		)
+		if score > best_score:
+			best_score = score
+			best_cell = cell
+			found = true
+	if not found:
+		return
+	plan.score = best_score
+	plan.command = SupplyCommand.new(unit, reachable.path_to(best_cell))
+
+
+## What refilling these friendlies is worth: each one's cost against the pool it
+## is emptiest in, so a top-up is never worth more than the unit it tops up.
+##
+## Ammo is graded — half a rack is half of what that unit can put out — while
+## fuel is the yes-or-no `running_dry` already answers, the one authority for a
+## tank low enough to matter. That leaves a land unit's half-empty tank worth
+## nothing here, which is right twice over: an empty tank parks it rather than
+## killing it, and anyone still standing beside the APC next turn is refilled by
+## the turn-start tick anyway.
+func _supply_value(friendlies: Array[Unit]) -> float:
+	var value := 0.0
+	for friendly in friendlies:
+		var short := 0.0
+		if friendly.type.max_ammo > 0:
+			short = float(friendly.type.max_ammo - friendly.ammo) / float(friendly.type.max_ammo)
+		if friendly.running_dry(profile.refuel_margin_turns):
+			short = 1.0
+		value += float(friendly.type.cost) * short
+	return value
 
 
 ## Fallback when no attack or capture is worthwhile: take the best position
@@ -652,9 +730,9 @@ func _column_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 
 
 static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
-	var best := absi(cells[0].x - from.x) + absi(cells[0].y - from.y)
+	var best := Grid.manhattan(cells[0], from)
 	for cell in cells:
-		best = mini(best, absi(cell.x - from.x) + absi(cell.y - from.y))
+		best = mini(best, Grid.manhattan(cell, from))
 	return best
 
 
@@ -665,7 +743,7 @@ static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
 static func _position_rank(
 	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i
 ) -> int:
-	var dist := absi(goal.cell.x - cell.x) + absi(goal.cell.y - cell.y)
+	var dist := Grid.manhattan(goal.cell, cell)
 	if not goal.stand_off:
 		return dist
 	var out_of_ring := ring.y - ring.x + 1
@@ -817,7 +895,7 @@ func _worth_walking_to(state: GameState, from: Vector2i, cells: Array[Vector2i])
 ## it produces is worth. One function, so the plain walk and the claimed
 ## assignment price a property identically.
 func _goal_steps(state: GameState, from: Vector2i, cell: Vector2i) -> float:
-	var reach := float(_steps(from, cell))
+	var reach := float(Grid.manhattan(from, cell))
 	if profile.capture_goal_value_tiles <= 0.0 or not _produces(state.map.terrain_at(cell)):
 		return reach
 	return reach - profile.capture_goal_value_tiles * (profile.production_capture_multiplier - 1.0)
@@ -917,17 +995,10 @@ func _servicing_properties(context: AIPlanningContext, unit: Unit) -> Array[Vect
 
 static func _nearest(from: Vector2i, cells: Array[Vector2i]) -> Vector2i:
 	var best := cells[0]
-	var best_dist := _steps(from, best)
+	var best_dist := Grid.manhattan(from, best)
 	for cell in cells:
-		var dist := _steps(from, cell)
+		var dist := Grid.manhattan(from, cell)
 		if dist < best_dist:
 			best_dist = dist
 			best = cell
 	return best
-
-
-## Manhattan tiles between two cells — the goal-side measure of "how far", used
-## by the nearest-goal walk and by the claim that filters its candidates, so the
-## two cannot disagree about which unit is closer.
-static func _steps(from: Vector2i, to: Vector2i) -> int:
-	return absi(to.x - from.x) + absi(to.y - from.y)

@@ -3,6 +3,11 @@ extends PanelContainer
 ## Minimal AW-style action menu (M2: Wait / Cancel; Fire etc. arrive in M3).
 ## The battle scene opens it with a list of actions; it emits the chosen id.
 ## Keyboard or pad: cursor up/down + confirm/cancel. Mouse: click a row.
+##
+## Dressed as slate chrome, like the two docked bars it opens between: the rows
+## are ghost buttons on a dark panel, and the armed one takes the design system's
+## cream — a fill rather than a brightening, so which row confirm would take is
+## legible over any terrain the menu happens to be standing on.
 
 signal action_chosen(action: StringName)
 
@@ -28,6 +33,10 @@ var _index := 0
 var _dirs := DirectionalInput.new()
 
 
+func _ready() -> void:
+	add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
+
+
 ## actions: [{id: StringName, label: String, disabled?: bool, icon?: Texture2D}, ...]
 ## At least one entry must be enabled (menus always include Cancel).
 ## `icon` draws to the left of the label; rows that omit it in an illustrated
@@ -44,7 +53,6 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		var button := Button.new()
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.focus_mode = Control.FOCUS_NONE
-		button.add_theme_font_size_override("font_size", 10)
 		button.add_theme_constant_override("icon_max_width", ICON_PX)
 		button.icon = entry.get("icon", spacer)
 		var id: StringName = entry.id
@@ -124,10 +132,16 @@ func _step_index(delta: int) -> void:
 			return
 
 
+## The armed row, marked twice: the two-character cursor the whole flow is written
+## around, and the cream fill that carries it. Both are rewritten on every step
+## rather than tracked, so the row that was armed cannot keep the dress.
 func _update_labels() -> void:
 	for i in rows.get_child_count():
 		var button := rows.get_child(i) as Button
 		button.text = ("> " if i == _index else "  ") + _labels[i]
+		UiTheme.apply_button(
+			button, UiTheme.ButtonVariant.SECONDARY if i == _index else UiTheme.ButtonVariant.GHOST
+		)
 
 
 ## Settles the menu inside the *board band* — the strip the two docked HUD bars
@@ -137,10 +151,6 @@ func _update_labels() -> void:
 ## became: with nothing persistent left over the map, the only thing a menu has to
 ## stay clear of is the chrome, and that geometry is a constant.
 func _place() -> void:
-	# Size is only valid one frame after the buttons were added.
-	await get_tree().process_frame
-	if not visible:
-		return
 	# A PanelContainer grows to fit its rows and never shrinks back on its own, so
 	# a short menu opened where a tall one just was keeps the tall one's panel
 	# standing behind it — the two-row abandon confirmation under the seven-row map

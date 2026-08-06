@@ -86,7 +86,9 @@ func _build() -> void:
 	_quote.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)
 	_quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy.add_child(_quote)
-	_power_name = _mono(_POWER_NAME_SIZE, Color(0.667, 0.224, 0.184))
+	# Neutral until `bind` puts the firing general's own faction on it, like the
+	# panel border above — never a hand-copy of one faction's dark.
+	_power_name = _mono(_POWER_NAME_SIZE, CommanderVisuals.theme_for(null).color_dark)
 	copy.add_child(_power_name)
 	_power_text = Label.new()
 	_power_text.custom_minimum_size = Vector2(300, 0)

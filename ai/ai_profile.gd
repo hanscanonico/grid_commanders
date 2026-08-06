@@ -48,7 +48,21 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## build, so one list covers bases and airports without an entry per facility.
 ##
 ## Transports are deliberately absent: the planner cannot plan a load-move-unload
-## across turns, and a fleet of empty carriers is worse than none.
+## across turns, and a fleet of empty carriers is worse than none. The APC is not
+## an exception to that — the planner still cannot ferry — so the one it wants as
+## a *supplier* is asked for by supply_unit_target instead, above this list, the
+## way the air answer is.
+##
+## The recon is absent on purpose, and the absence is the mechanism: a doctrine
+## that wants scouts pulls one onto this list's tail with a negative build_bias
+## (commander-doctrine-ai D1), which is the whole of how Orin Flux and Cassian
+## Rook field one and nobody else does. Listing it would hand every commander the
+## buy and take the two of them their signature.
+##
+## New entries join the tail rather than sorting into the middle. A doctrine's
+## build_bias counts in places on this list, so every one of them is calibrated
+## against where the units already sit; inserting above an entry silently weakens
+## every bias aimed at it.
 @export var build_priority: Array[StringName] = [
 	&"md_tank",
 	&"bomber",
@@ -61,6 +75,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 	&"missiles",
 	&"artillery",
 	&"mech",
+	&"rockets",
 ]
 ## The floor under the capture roster: infantry are bought until the team has at
 ## least this many capture-capable units, however little there is left to take.
@@ -73,6 +88,16 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## How many units that can shoot at aircraft the team wants while the enemy has
 ## any. Counted from the damage chart, not from this list.
 @export var air_answer_target: int = 2
+## How many supply units the team wants. Asked ahead of build_priority for the
+## same reason the air answer is: nothing on that list refills anything, so an
+## army that never buys one runs its artillery and its aircraft dry with no
+## recourse. Counted from the roster's own can_resupply flag, not from a list of
+## ids, and only wanted at all while supply_weight is on — a truck the planner
+## would never drive is the empty carrier build_priority keeps out.
+##
+## One, on every tier: the planner has no route to a second. It cannot ferry, so
+## a spare APC is a unit that follows the army doing nothing.
+@export var supply_unit_target: int = 1
 ## How many places down the build priority each copy already fielded pushes a
 ## unit. Without it the list has exactly one winner and the AI buys that unit and
 ## nothing else — the strongest thing a base makes, forever, while the port and
@@ -273,6 +298,30 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## factory because it is valuable must then score it as valuable when it arrives,
 ## or it turns around on the doorstep.
 @export var capture_goal_value_tiles: float = 0.0
+
+# --- Logistics capabilities ---------------------------------------------------
+#
+# Resupply, one of the two things the rules have always offered that the planner
+# never asked for. Same contract as the blocks above — 0 skips the capability's
+# code entirely, and the default here tracks data/ai/default.tres. Unlike those
+# blocks it ships live on every tier: an inert dial here is a command type nobody
+# can reach, which is the defect it exists to end. A tier scales it to its own
+# character rather than switching it off. (Merging is the other, and it is the
+# arena shelf's join_weight below.)
+#
+# Load and Drop stay unreachable on purpose: the planner cannot plan a ferry
+# (naval plan R1), so a transport it could fill is a transport it would strand.
+
+## What refilling the friendlies an APC can reach is worth, as a fraction of each
+## one's cost times the shortfall in the pool it is emptiest in. 0 skips it.
+##
+## Denominated in VALUE — the currency _attack_score and _consider_captures are
+## already in, so a top-up competes with a shot and a capture in one AIUnitPlan
+## without a conversion — and capped per unit at that unit's whole cost, since a
+## refill can never be worth more than the thing it refills. Only what the AI can
+## *field* limits how often this fires: build_priority names no transport, so it
+## reaches an APC a board deals.
+@export var supply_weight: float = 0.25
 
 # --- The arena's shelf --------------------------------------------------------
 #

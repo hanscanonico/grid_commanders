@@ -33,61 +33,6 @@ extends RefCounted
 const LUCK_MAX := CommanderType.LUCK_MAX
 
 
-class Forecast:
-	var can_attack := false
-	var attack_damage := 0
-	## -1 when no counter is possible (defender dead, indirect, unarmed
-	## against the attacker, or the attacker fires from beyond range 1).
-	var counter_damage := -1
-	## The same exchange in displayed HP (1-10) — the unit every other HP display
-	## in the game speaks, and so the unit the damage preview leads with.
-	##
-	## `_after_min` / `_after_max` bound the HP a side is left standing at across
-	## the luck range `resolve` rolls inside, worst and best case for its owner.
-	## The attacker's span answers for the opening roll as well as the counter's:
-	## a luckier shot leaves the defender a weaker band to shoot back from, and a
-	## lethal one means no counter at all, so the best case is taken from the
-	## luckiest shot and the worst from the unluckiest. The percentages above stay
-	## luck-free, so they are a *floor* under a doctrine with a lucky floor; these
-	## bounds are not.
-	##
-	## Filled by the same pass that fills the percentages, for the same reason
-	## CombatResult snapshots the HP the cut-in counts down from: the preview
-	## replays the resolver's arithmetic and never repeats it. With no counter
-	## the attacker's three numbers are all its current HP. Nothing in core/ or
-	## ai/ reads these.
-	var attacker_hp_before := 0
-	var attacker_hp_after_min := 0
-	var attacker_hp_after_max := 0
-	var defender_hp_before := 0
-	var defender_hp_after_min := 0
-	var defender_hp_after_max := 0
-
-
-class CombatResult:
-	var attack_damage := 0
-	var countered := false
-	var counter_damage := 0
-	var defender_died := false
-	var attacker_died := false
-	## Displayed HP (1-10) each side went into the exchange with, snapshotted by
-	## `resolve` before a point of it is spent.
-	##
-	## These snapshots exist for the presentation layer. By the time the battle
-	## cut-in is handed a result the command has already applied, so both units
-	## hold their *post*-combat HP and the animation has nothing to count down
-	## from. Recorded here rather than re-derived there, because the cut-in must
-	## replay the exchange and never recompute it — a second opinion on combat is
-	## exactly the bug class this repo already paid for once with movement.
-	## Nothing in core/ or ai/ reads these.
-	var attacker_hp_before := 0
-	var defender_hp_before := 0
-	## Weapon slots selected by the rules, snapshotted for that cut-in to replay.
-	## An empty counter slot means the defender never fired.
-	var attacker_weapon_slot: StringName
-	var counter_weapon_slot: StringName
-
-
 ## Luck-free prediction for the damage preview. `attacker_cell` is the planned
 ## firing position (the move is usually not committed yet). The counter uses
 ## the defender's projected post-attack HP, like Advance Wars shows it — the
@@ -95,7 +40,7 @@ class CombatResult:
 ## opening shot's compounded into it.
 static func forecast(
 	state: GameState, attacker: Unit, attacker_cell: Vector2i, defender: Unit
-) -> Forecast:
+) -> CombatSnapshot.Forecast:
 	return forecast_at(state, attacker, attacker_cell, defender, defender.cell)
 
 
@@ -112,8 +57,8 @@ static func forecast_at(
 	attacker_cell: Vector2i,
 	defender: Unit,
 	defender_cell: Vector2i
-) -> Forecast:
-	var result := Forecast.new()
+) -> CombatSnapshot.Forecast:
+	var result := CombatSnapshot.Forecast.new()
 	var selected := _select_shot(state, attacker, defender)
 	if selected == null:
 		return result
@@ -207,8 +152,10 @@ static func _counter_best_case(
 ## Applies the attack (with luck), then the counter-attack if the defender
 ## survives and can reach. Dead units are removed from the state, and both sides
 ## bank Command Power charge for the HP that changed hands.
-static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatResult:
-	var result := CombatResult.new()
+static func resolve(
+	state: GameState, attacker: Unit, defender: Unit
+) -> CombatSnapshot.CombatResult:
+	var result := CombatSnapshot.CombatResult.new()
 	var selected := _select_shot(state, attacker, defender)
 	if selected == null:
 		push_error("CombatResolver: %s cannot attack %s" % [attacker.type.id, defender.type.id])
@@ -226,18 +173,26 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 	# from the exchange it describes.
 	result.attacker_hp_before = fight.attacker_hp
 	result.defender_hp_before = fight.defender_hp
+	# The exchange has not spent anything yet, so each side comes out where it went
+	# in until a shot below says otherwise.
+	result.attacker_hp_after = fight.attacker_hp
+	result.defender_hp_after = fight.defender_hp
 	result.attacker_weapon_slot = selected.slot
+	result.attacker_indirect = AttackRange.is_indirect(attacker)
 	var base := _damage_pct(state, fight, selected.base_damage)
 	if selected.consumes_primary_ammo:
 		attacker.ammo = maxi(0, attacker.ammo - 1)
 	result.attack_damage = base + _luck(state, fight)
 	# Banked before the unit is removed: a kill charges for the HP it actually
-	# took off, not for the overkill the roll happened to produce.
-	bank_losses(state, defender, mini(result.attack_damage, defender.hp), attacker.team)
+	# took off, not for the overkill the roll happened to produce, and the ledger
+	# can still see what a sinking transport is carrying.
+	ChargeLedger.bank_losses(
+		state, defender, mini(result.attack_damage, defender.hp), attacker.team
+	)
 	defender.hp = maxi(0, defender.hp - result.attack_damage)
+	result.defender_hp_after = defender.displayed_hp()
 	if defender.hp == 0:
 		result.defender_died = true
-		_bank_cargo_losses(state, defender, attacker.team)
 		state.remove_unit(defender)
 		return result
 	var selected_counter := _counter_shot(state, defender, defender.cell, attacker, attacker.cell)
@@ -258,71 +213,15 @@ static func resolve(state: GameState, attacker: Unit, defender: Unit) -> CombatR
 		defender.ammo = maxi(0, defender.ammo - 1)
 	result.countered = true
 	result.counter_damage = counter_base + _luck(state, counter)
-	bank_losses(state, attacker, mini(result.counter_damage, attacker.hp), defender.team)
+	ChargeLedger.bank_losses(
+		state, attacker, mini(result.counter_damage, attacker.hp), defender.team
+	)
 	attacker.hp = maxi(0, attacker.hp - result.counter_damage)
+	result.attacker_hp_after = attacker.displayed_hp()
 	if attacker.hp == 0:
 		result.attacker_died = true
-		_bank_cargo_losses(state, attacker, defender.team)
 		state.remove_unit(attacker)
 	return result
-
-
-## Command Power charge, as a percentage of the value destroyed in an exchange:
-## the side that *loses* the HP banks the first, the side that dealt it banks the
-## second. Asymmetric on purpose — the aggressor cannot out-charge the defender on
-## the same trade, so a player winning the field does not run away with the meter
-## as well.
-const CHARGE_PCT_LOST := 100
-const CHARGE_PCT_DEALT := 50
-
-
-## Banks both sides' share of one unit losing `hp_lost` internal HP. Value is the
-## victim's cost prorated by the HP taken off it — halving a 7 000 Tank is 3 500
-## points — and all of it is integer math so replays stay exact.
-##
-## Lives here rather than on `GameState` because it is a rule about an exchange
-## rather than a fact about the board, and this is the only place an exchange
-## happens: every charge the economy ever banks comes out of the three calls
-## below. The state still owns the meter itself (`add_charge` caps it).
-static func bank_losses(state: GameState, victim: Unit, hp_lost: int, dealer_team: int) -> void:
-	if hp_lost <= 0:
-		return
-	if hp_lost >= victim.hp:
-		_transfer_bounty(state, victim, dealer_team)
-	# Base cost is deliberate: purchase discounts change what an army pays, not
-	# what a unit is worth once it is on the board (pricing plan D1).
-	var value := victim.type.cost * hp_lost / 100
-	state.add_charge(victim.team, value * CHARGE_PCT_LOST / 100)
-	state.add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
-
-
-## A kill steals rather than mints: the victim can never pay below zero, and a
-## broke army yields nothing. Called from bank_losses so direct shots, counters
-## and cargo sunk with a transport all pass through the same gate.
-static func _transfer_bounty(state: GameState, victim: Unit, dealer_team: int) -> void:
-	var pct := state.commander_of(dealer_team).kill_bounty_pct(state, dealer_team, victim)
-	if pct <= 0:
-		return
-	var wanted := victim.type.cost * pct / 100
-	var stolen := mini(wanted, int(state.funds.get(victim.team, 0)))
-	if stolen <= 0:
-		return
-	state.funds[victim.team] -= stolen
-	state.funds[dealer_team] += stolen
-
-
-## Cargo that drowns with its transport banks the same as if each passenger had
-## been killed in the open: the value basis is the passenger's remaining HP
-## fraction of its cost, split by the same loser/dealer rates bank_losses gives
-## the transport itself. Recurses because remove_unit's erase does — an old save
-## may nest transports even though the load commands now refuse it. This runs
-## before remove_unit so cargo_of can still see the passengers, and stays here in
-## the resolver where every other charge accrual lives; the fuel-crash death in
-## turn_rules erases cargo without a fight and deliberately banks nothing.
-static func _bank_cargo_losses(state: GameState, transport: Unit, dealer_team: int) -> void:
-	for passenger in state.cargo_of(transport):
-		bank_losses(state, passenger, passenger.hp, dealer_team)
-		_bank_cargo_losses(state, passenger, dealer_team)
 
 
 ## The weapon the defender shoots back with, or null when it does not counter at
@@ -345,7 +244,7 @@ static func _counter_shot(
 		return null  # unarmed and indirect units never counter
 	if defender.dived:
 		return null  # a submarine that is hiding does not give itself away
-	var dist := absi(attacker_cell.x - defender_cell.x) + absi(attacker_cell.y - defender_cell.y)
+	var dist := Grid.manhattan(attacker_cell, defender_cell)
 	if dist != 1:
 		return null  # an indirect attacker fires from beyond counter reach
 	# The same authority the opening shot went through, which is what gives the

@@ -16,6 +16,11 @@ var drop_cell: Vector2i
 ## single-slot transport always drops; a Lander holds two, and either might be the
 ## one that can stand where the other cannot, so the caller names it explicitly.
 var passenger: Unit
+## Set by apply() when the transport arrived but the drop cell turned out
+## occupied — a hidden enemy standing on it, or the transport's own arrival
+## filling it. The passenger stays aboard, and the move itself completed, so this
+## is a blockage rather than the `ambushed` trap.
+var drop_blocked: bool = false
 
 
 func _init(
@@ -28,9 +33,12 @@ func _init(
 
 
 func validate(state: GameState) -> String:
-	var move_error := MoveCommand.new(unit, path).validate(state)
-	if move_error != "":
-		return move_error
+	# The transport's own sight, for the whole check: the move's path and, below,
+	# whether anything it can see is standing on the drop cell.
+	var visible := Vision.visible_cells_if_fogged(state, unit.team)
+	var moving := MoveCommand.move_error(state, unit, path, visible)
+	if moving != "":
+		return moving
 	var cargo := state.cargo_of(unit)
 	if cargo.is_empty():
 		return "nothing to drop"
@@ -40,7 +48,7 @@ func validate(state: GameState) -> String:
 	var dest: Vector2i = path[path.size() - 1]
 	if not unit.type.can_unload_from(state.map.terrain_at(dest).id):
 		return "cannot unload here"
-	var dist := absi(drop_cell.x - dest.x) + absi(drop_cell.y - dest.y)
+	var dist := Grid.manhattan(drop_cell, dest)
 	if dist != 1:
 		return "drop cell must be adjacent"
 	var terrain := state.map.terrain_at(drop_cell)
@@ -51,9 +59,6 @@ func validate(state: GameState) -> String:
 		# The transport's own vacated cell is fine, and a hidden enemy is left to
 		# foil the drop on apply rather than refused, which would reveal it; a
 		# friendly or a visible enemy still blocks.
-		var visible: Dictionary = (
-			Vision.visible_cells(state, unit.team) if state.fog_enabled else {}
-		)
 		if (
 			state.allied(occupant.team, unit.team)
 			or Vision.can_see_unit(state, unit.team, occupant, visible)
@@ -65,10 +70,10 @@ func validate(state: GameState) -> String:
 func apply(state: GameState) -> void:
 	var rider := _rider(state.cargo_of(unit))
 	ambushed = state.advance_unit(unit, path)
-	# The move can stop short of where the drop was planned, or the drop cell can
-	# turn out to hold a hidden enemy: either way the passenger stays aboard.
-	if ambushed or state.unit_at(drop_cell) != null:
-		ambushed = true
+	if ambushed:
+		return
+	if state.unit_at(drop_cell) != null:
+		drop_blocked = true
 		return
 	rider.carrier = null
 	rider.cell = drop_cell

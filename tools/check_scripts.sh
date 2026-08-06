@@ -19,9 +19,72 @@ set -uo pipefail
 
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 
+# Per-file line budgets, tighter than gdlintrc's repo-wide max-file-lines.
+#
+# gdlint takes one ceiling for the whole project, so the longest file sets
+# everybody's — and the longest is the dev-only scenario driver. That left
+# scenes/battle/battle.gd, the production file the ratchet was raised for in the
+# first place, free to grow into its slack without tripping anything. A file
+# listed here is held to its own length instead. scenes/menu/main_menu.gd joined
+# it when COM-97 moved the widget kit out to UiKit: it stopped being the ceiling
+# and would otherwise have inherited the driver's 271 lines of slack.
+#
+# Same rule as the gdlintrc ledger: the number is the file's current length, so
+# adding to it means moving something out first, and it comes down whenever the
+# file sheds a responsibility. Say in the commit which it was.
+#
+# battle.gd 1341 -> 1411 over the merge: MC4's aimed Command Power took it to
+# 1395 on main — the POWER_TARGETING state and the four small functions the aim,
+# the repaint and the firing take — and R answering from rest took it to 1411.
+# Nothing there is loose; every targeting state and every board lens is Battle's
+# by the same rule, so the budget follows the file rather than the file being
+# trimmed to it.
+FILE_BUDGETS="
+scenes/battle/battle.gd 1411
+scenes/menu/main_menu.gd 1112
+"
+
 if [[ ! -x "$GODOT" ]]; then
 	echo "check: Godot binary not found at $GODOT" >&2
 	echo "check: see README.md for engine setup, or pass GODOT=<path>" >&2
+	exit 1
+fi
+
+# Every project script, in a stable order. .claude/worktrees holds whole nested
+# checkouts of this same repo; without excluding it every project file gets
+# checked twice, once at a path Godot cannot resolve res:// imports for.
+project_scripts() {
+	find . -name '*.gd' \
+		-not -path './.godot/*' \
+		-not -path './addons/*' \
+		-not -path './bin/*' \
+		-not -path './.claude/*' |
+		sort
+}
+
+# A `class_name` is a global identifier only because
+# .godot/global_script_class_cache.cfg says so, and only an `--import` pass
+# writes that file. A cache that predates a class — a fresh worktree, a deleted
+# .godot, a branch switch — makes every file typing against it fail with
+# "Identifier ... not declared in the current scope", which reads exactly like
+# broken code: deleting the cache here fails 244 of 260 files (COM-112). So the
+# names are compared before a single file is parsed, and `check` stays the
+# read-only audit it claims to be — it names the command that fixes this rather
+# than importing behind the caller's back.
+CLASS_CACHE=".godot/global_script_class_cache.cfg"
+
+declared_classes="$(project_scripts | xargs grep -hE '^class_name [A-Za-z_]' | awk '{print $2}' | sort -u)"
+if [[ -f "$CLASS_CACHE" ]]; then
+	cached_classes="$(sed -n 's/^"class": &"\([^"]*\)".*/\1/p' "$CLASS_CACHE" | sort -u)"
+else
+	cached_classes=""
+fi
+uncached="$(comm -23 <(printf '%s\n' "$declared_classes") <(printf '%s\n' "$cached_classes"))"
+if [[ -n "$uncached" ]]; then
+	missing="$(printf '%s\n' "$uncached" | wc -l | tr -d ' ')"
+	first="$(printf '%s\n' "$uncached" | head -1)"
+	echo "check: stale class cache — $missing class_name(s) the engine has not registered, e.g. $first" >&2
+	echo "check: run 'make import' ($GODOT --headless --path . --import) and try again" >&2
 	exit 1
 fi
 
@@ -72,22 +135,25 @@ done < <(
 	if (($#)); then
 		printf '%s\n' "$@"
 	else
-		# .claude/worktrees holds whole nested checkouts of this same repo;
-		# without excluding it every project file gets checked twice, once at a
-		# path Godot cannot resolve res:// imports for.
-		find . -name '*.gd' \
-			-not -path './.godot/*' \
-			-not -path './addons/*' \
-			-not -path './bin/*' \
-			-not -path './.claude/*' |
-			sort
+		project_scripts
 	fi
 )
 
-# The live battle has one mutation seam. Keep this in the full-project audit,
-# not a subset check: a new apply or validate anywhere under scenes/battle is
-# exactly the cross-file drift this invariant exists to catch.
+# Repository invariants. Kept in the full-project audit rather than a subset
+# check: each is cross-file drift, so a run over the files somebody just edited
+# is exactly the run that cannot see it.
 if (($# == 0)); then
+	while read -r path budget; do
+		[[ -z "$path" ]] && continue
+		lines="$(wc -l <"$path" | tr -d ' ')"
+		if ((lines > budget)); then
+			echo "check: $path is $lines lines, over its $budget-line budget" >&2
+			failed=$((failed + 1))
+		fi
+	done <<<"$FILE_BUDGETS"
+
+	# The live battle has one mutation seam: a new apply or validate anywhere
+	# under scenes/battle is what this catches.
 	live_applies="$(grep -rn --include='*.gd' -E '\.apply\([^)]*game[^)]*\)' scenes/battle || true)"
 	apply_count="$(printf '%s\n' "$live_applies" | sed '/^$/d' | wc -l | tr -d ' ')"
 	if [[ "$apply_count" != 1 || "$live_applies" != scenes/battle/battle_command_pipeline.gd:* ]]; then
@@ -115,6 +181,16 @@ if (($# == 0)); then
 	if ! pool_check="$(tools/balance_pool.py --self-check 2>&1)"; then
 		echo "check: tools/balance_pool.py --self-check failed" >&2
 		printf '%s\n' "$pool_check" >&2
+		failed=$((failed + 1))
+	fi
+
+	# Same for the arena search driver, whose pure half is the search itself —
+	# the lattice a proposal snaps to, the compass around an incumbent, and the
+	# step that contracts. The space it searches is GDScript and the suite holds
+	# that; this is the arithmetic laid over it.
+	if ! search_check="$(tools/arena_search.py --self-check 2>&1)"; then
+		echo "check: tools/arena_search.py --self-check failed" >&2
+		printf '%s\n' "$search_check" >&2
 		failed=$((failed + 1))
 	fi
 fi
