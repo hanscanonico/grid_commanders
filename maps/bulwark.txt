@@ -37,8 +37,14 @@
 # answer is interior lines: its lateral road at y 19 sits one row behind the
 # wall, so it shifts reserves between passes on road cost while the alliance
 # shifts around the outside on plains — the mechanic that makes one army
-# against three a match instead of a grind, and the dial a retune (AB4) should
-# turn rather than simply piling on more units or more bases.
+# against three a match instead of a grind.
+# AB4 pulled this board four ways and every candidate lost to leaving it alone,
+# which leaves two warnings for whoever edits it next. Do not narrow the four
+# passes: closing one pair handed the alliance 20 of 20, because the garrison
+# needs the passes to sortie north as much as the alliance needs them to push
+# south, while infantry ignores them and crosses on a 49-cell front. And the
+# neutral belt is not a dial that helps the bulwark in either direction —
+# shallower and richer were both measured and both cost it.
 # Land only, like the other multi-army boards: the AI cannot plan a ferry, so
 # every army has to be able to march on every other in any grouping this board
 # offers, including the free-for-all.

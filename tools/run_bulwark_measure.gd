@@ -11,7 +11,8 @@ extends SceneTree
 ## a gate (plan R4: BalanceMatchEngine plays two sides, and this board is four
 ## — so it stays out of `make commander-balance` and `make difficulty-check`,
 ## and out of `make verify` and `make test` alike), and it tunes nothing: AB3
-## measures, AB4 reads the number and moves the board.
+## measured, AB4 read the number, and the four board-only candidates AB4 tried
+## all lost to leaving the board alone, so the board it plays is AB2's.
 ##
 ## The loop is the soak's `_soak`, not a preset over `BalanceMatchEngine`
 ## (which the plan's R4 forbids pointing at this board and whose own

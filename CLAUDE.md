@@ -1055,8 +1055,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   free-for-all the bulwark takes 89.5% — which is the design working, one concentrated army against
   three separate ones, and not the grouping the board is authored for. AB3 measures and does not
   tune, the same split as the Judgement plan's AJ4.
-  **AB4 is the retune, and its finding is that the board did not need one** — `maps/bulwark.txt` is
-  byte-identical to the one AB2 authored, and the milestone's deliverable is `docs/bulwark_balance.md`'s
+  **AB4 is the retune, and its finding is that the board did not need one** — `maps/bulwark.txt`'s
+  terrain, ownership and starting armies are AB2's unchanged, its header alone gaining the two
+  guardrails below, and the milestone's deliverable is `docs/bulwark_balance.md`'s
   AB4 section. Four board-only candidates were measured and every one of them lost to leaving the
   board alone, which also cost AB3's headline its authority: **the unchanged board reads 64.1%
   alliance over 40 seeds**, not the 73.7% the first twenty said, so an edit justified by that figure

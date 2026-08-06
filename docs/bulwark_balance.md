@@ -163,7 +163,9 @@ rather than doing anything differently early on.
 
 **AB4's finding is a measurement rather than an edit: no board change tried
 beat leaving the board alone, and the board's own number is better than AB3
-could see.** `maps/bulwark.txt` is byte-identical to the one AB2 authored.
+could see.** `maps/bulwark.txt`'s terrain, ownership and starting armies are
+the ones AB2 authored, unchanged cell for cell; the only thing that moved is its
+header, which now carries the guardrails below where an editor will meet them.
 
 ### The hypothesis, and its refutation
 
