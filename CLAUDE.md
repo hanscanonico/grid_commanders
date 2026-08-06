@@ -1095,7 +1095,7 @@ that must survive any change; the full rationale, milestones and risk registers 
    **pure GDScript classes with no `Node` dependency**. Scenes only render state and animate
    changes. This keeps rules unit-testable and lets the AI simulate moves cheaply.
    - **Nothing in `core/` may reference a `Node`, a scene, `get_node`, `SceneTree`, or anything
-	 under `scenes/`.** If you reach for a Node inside `core/`, you're in the wrong layer.
+     under `scenes/`.** If you reach for a Node inside `core/`, you're in the wrong layer.
 2. **Data-driven via Resources.** Unit stats, terrain properties, and the damage chart are
    `.tres` `Resource` files under `data/`, not constants in code. Balancing = editing data;
    adding a unit = adding a file. The damage chart is one resource holding two attacker × defender
