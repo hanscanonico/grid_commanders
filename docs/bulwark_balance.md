@@ -17,9 +17,12 @@ change. The instrument is its own runner, `tools/run_bulwark_measure.gd`
 `GameState.create` -> `state.sides` set directly, one `AIController` per army —
 at a seed count and a day horizon meant to read a **direction**, not a
 **gate**. It is not a `make verify` or `make test` instrument, and it tunes
-nothing: this document measures, and AB4 reads it and moves the board.
+nothing: AB3 measured, AB4 read the measurement, and AB4's answer was that no
+board change it tried beat leaving the board alone.
 
-**AB3 measures and does not tune. Nothing below is a recommendation.**
+**AB3 measures and does not tune, and nothing in its sections below is a
+recommendation.** The AB4 section at the end is the one place this document
+recommends anything, and it says which of its lines are guardrails.
 
 ## Method
 
@@ -189,7 +192,15 @@ seat and nothing outside `maps/bulwark.txt` touched:
 #3 reads as an improvement and is not one. **The alliance won 14 of 20 on both
 the authored board and #3** — the percentage moved only because the seed that
 was undecided at the horizon resolved. So the sample was widened to settle it:
-seeds 21–40, both boards, same horizon.
+seeds 21–40, both boards, same horizon, through the runner's own
+`--seed-offset` (seed = offset + i + 1):
+
+```sh
+make bulwark-measure BULWARK="--seeds=20 --seed-offset=20 --days=100 --grouping=alliance"
+```
+
+The candidate board was measured with that same command over a working copy of
+`maps/bulwark.txt`, since the runner loads the board from `res://` by path.
 
 | Board | seeds 1–20 | seeds 21–40 | n=40 total | Alliance share |
 |---|---|---|---|---|
@@ -221,7 +232,8 @@ edit justified by the n=20 figure would have been an edit justified by noise.
   its size.
 - **Closing passes is the worst thing that can be done to this board**, and it
   runs exactly opposite to the "fewer doorways favour the defender" instinct.
-  #2 was catastrophic and fast, matches ending day 22–45 instead of 32–101:
+  #2 was catastrophic and fast, matches ending day 22–45 instead of the 3v1
+  baseline's 36–101:
   the garrison's own tanks and artillery need the passes to sortie north and
   contest ground as much as the alliance's armour needs them to push south,
   while infantry ignores passes entirely and crosses on a 49-cell front. The
@@ -242,7 +254,8 @@ less of everything else around them" to hold three attackers at parity.
 seat 4 takes 89.5%, seat 3 10.5%, seats 1 and 2 none. Nothing was re-measured
 here and nothing needed to be. D5 already says a free-for-all on this board is
 not fair among the three, and this milestone did not chase it. (#3 was measured
-at 85.0% before it was rejected on the 3v1 evidence above.)
+at 85.0% to seat 4 — 17 of 20, against the authored board's 89.5% — before it
+was rejected on the 3v1 evidence above.)
 
 ### Reading it honestly
 
