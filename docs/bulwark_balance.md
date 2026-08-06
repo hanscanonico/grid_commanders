@@ -53,9 +53,10 @@ make bulwark-measure BULWARK="--seeds=20 --days=100 --grouping=ffa"
 
 ### 3v1 — the board's own grouping
 
-0 rejected commands, 0 cap-stalls across all 20 matches — the "no rejected
-command, no stall" half of AB3's gate holds clean. 1 of 20 (5.0%) still running
-at the 100-day horizon, counted **undecided** rather than forced to a score.
+0 rejected commands, 0 cap-stalls and 0 turn-cap hits across all 20 matches —
+the "no rejected command, no stall" half of AB3's gate holds clean. 1 of 20
+(5.0%) still running at the 100-day horizon, counted **undecided** rather than
+forced to a score.
 
 Of the 19 decided matches:
 
@@ -85,8 +86,8 @@ one ally (seat 1) also fell before the other two mopped up.
 
 ### Free-for-all — reachable, not fair
 
-Same 20 seeds, same 100-day horizon. 0 rejected, 0 cap-stalls. 1 of 20 (5.0%)
-undecided.
+Same 20 seeds, same 100-day horizon. 0 rejected, 0 cap-stalls, 0 turn-cap
+hits. 1 of 20 (5.0%) undecided.
 
 Of the 19 decided matches:
 
@@ -117,21 +118,19 @@ rather than doing anything differently early on.
   commands and 0 cap-stalls across all 40 matches means the rules and all four
   planners never once disagreed, and no match looped — that is the half of
   AB3's gate with no honest "it depends."
-- **Turn-cap hits are recorded and deliberately left out of the verdict.** A
-  turn that proposes more than `BalanceMatchEngine.MAX_COMMANDS_PER_TURN`
-  commands is force-ended where it stands, which truncates that army's play; on
-  the roster's largest board a run of them would bias the spread while the two
-  zero-tolerance numbers above still read clean. The runner counts them per
-  match (`turn_cap_hits` in `matches.csv`, `total_turn_cap_hits` in
-  `summary.json`) and prints them beside the rejected and cap-stall totals, but
-  excludes them from the broken/clean verdict — the same call
-  `BalanceMatchEngine` makes, because the planner that overstayed did nothing
-  illegal. The counts for the run above are in its own
-  `reports/bulwark/*/summary.json`; `reports/` is gitignored, so a reader
-  wanting them regenerates the run from the commands in *Method*. Anything but
-  zero there means these percentages were measured on turns that were cut
-  short, and the spread should be re-read at that width before AB4 moves the
-  board on it.
+- **0 turn-cap hits too, and that one is recorded without being part of the
+  verdict.** A turn that proposes more than
+  `BalanceMatchEngine.MAX_COMMANDS_PER_TURN` commands is force-ended where it
+  stands, which truncates that army's play; on the roster's largest board a run
+  of them would bias the spread while the two zero-tolerance numbers above
+  still read clean. Neither grouping had one — `total_turn_cap_hits` is 0 in
+  both summaries — so no percentage above was measured on a turn that was cut
+  short. The runner counts them per match (`turn_cap_hits` in `matches.csv`,
+  `total_turn_cap_hits` in `summary.json`) and prints them beside the rejected
+  and cap-stall totals, but excludes them from the broken/clean verdict — the
+  same call `BalanceMatchEngine` makes, because a planner that overstayed did
+  nothing illegal. Had it been anything but zero, the spread would have needed
+  re-reading at that width before AB4 moved the board on it.
 - **Both groupings left exactly one of 20 seeds undecided (5.0%)** at the
   100-day horizon — not a stall (nothing tripped the command ceiling), a match
   still running when the clock was called. Both are down to a straight fight
