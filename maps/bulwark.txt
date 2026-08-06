@@ -10,8 +10,8 @@
 # A free-for-all is legal here — nothing forbids a grouping — but it is not
 # fair among the three: the terrain and the property ownership mirror exactly
 # about column 24, while each seat's four starting units are laid out
-# seat-identically — seat 3's army is seat 1's translated by 16, not its
-# reflection — and seat 2 sits on the axis facing the bulwark's HQ down the
+# seat-identically — each army is the previous seat's translated by 16, not
+# its reflection — and seat 2 sits on the axis facing the bulwark's HQ down the
 # middle, so picking a seat picks a role, not a clone. Seat-identical armies
 # are what open the three allies on the same match, and seat 2's could not be
 # self-mirrored anyway: a centred recon would stand on its own airport at
@@ -26,11 +26,14 @@
 # three rampart rows at y 16-18, row 17 is mountain wall to wall except the
 # passes and is what stops tires and treads; rows 16 and 18 mix woods a
 # vehicle can enter, so the middle row is the wall. Infantry and mech climb
-# where no vehicle can, mech (`boot`) at 1 movement a step to infantry's
-# (`foot`) 2, so a mech crosses all three rows in a turn. The alliance's
-# armour has to come through the four passes at x 7-8, 19-20, 28-29, 40-41 —
-# 8 cells of frontage across 49 — while its infantry can cross on a 49-cell
-# front the garrison cannot hope to hold everywhere at once. The bulwark's own
+# where no vehicle can, anywhere along the wall's 49 cells: mech (`boot` at 1
+# a step, 2 move) climbs 2 rows a turn and clears the three in two turns,
+# infantry (`foot` at 2 a step, 3 move) climbs 1 row a turn and takes three —
+# though through a pass, where road costs 1 for both, infantry crosses all
+# three rows in one turn and a mech still takes two. The alliance's armour has
+# to come through the four passes at x 7-8, 19-20, 28-29, 40-41 — 8 cells of
+# frontage across 49 — while its infantry can cross on a 49-cell front the
+# garrison cannot hope to hold everywhere at once. The bulwark's own
 # answer is interior lines: its lateral road at y 19 sits one row behind the
 # wall, so it shifts reserves between passes on road cost while the alliance
 # shifts around the outside on plains — the mechanic that makes one army
