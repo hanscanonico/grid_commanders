@@ -24,6 +24,24 @@ extends PanelContainer
 const _QUOTE_SIZE := 16
 const _POWER_NAME_SIZE := 22
 const _POWER_NAME_QUOTED_SIZE := 13
+## The overline above the quote ("GENERAL · COMMAND POWER"): one size past the
+## shell's SIZE_TIP (8), because it reads across a center-screen card rather than
+## at a tooltip's reading distance, and the shell has no token at this size.
+const _EYEBROW_SIZE := 9
+## The power's effect text, one step past the shell's SIZE_BODY (8) for the same
+## reason as the eyebrow above.
+const _POWER_TEXT_SIZE := 11
+## The eyebrow's own shade of de-emphasised ink on the banner's paper field:
+## UiTheme.INK_3 is tuned for slate (HUD labels) and washes out on cream, the
+## same reason CommanderCard keeps its own _MICRO_INK rather than the token.
+const _EYEBROW_INK := Color(0.431, 0.463, 0.482)
+## The wrap width shared by the quote and the effect text, so both autowrap
+## Labels compute a sane min height instead of reporting the pathological "one
+## word per line" height that would balloon the whole banner.
+const _COPY_WIDTH := Vector2(300, 0)
+## The portrait window: taller than it is wide, so a general is shown whole (see
+## `bind`'s note on the framed window) rather than cropped to a card's strip.
+const _PORTRAIT_FIELD := Vector2(104, 108)
 
 var _built := false
 ## Activations announced so far, per team — the rotation index for the next
@@ -54,7 +72,7 @@ func _build() -> void:
 	# A fixed-size portrait field: an explicit height the portrait is fitted into,
 	# and a width the HBox will not stretch (it has no expand flag).
 	_field = Panel.new()
-	_field.custom_minimum_size = Vector2(104, 108)
+	_field.custom_minimum_size = _PORTRAIT_FIELD
 	_field.clip_contents = true
 	row.add_child(_field)
 	_portrait = TextureRect.new()
@@ -75,25 +93,21 @@ func _build() -> void:
 	wrap.add_child(copy)
 	row.add_child(wrap)
 
-	_eyebrow = _mono(9, Color(0.431, 0.463, 0.482))
+	_eyebrow = UiTheme.hud_label("", _EYEBROW_SIZE, _EYEBROW_INK)
 	copy.add_child(_eyebrow)
-	# A fixed wrap width for the two autowrap Labels, so each computes a sane min
-	# height instead of reporting the pathological "one word per line" height
-	# that would balloon the whole banner.
-	_quote = Label.new()
-	_quote.custom_minimum_size = Vector2(300, 0)
-	_quote.add_theme_font_size_override("font_size", _QUOTE_SIZE)
-	_quote.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)
+	_quote = UiTheme.hud_label("", _QUOTE_SIZE, CommanderVisuals.PAPER_INK, true)
+	_quote.custom_minimum_size = _COPY_WIDTH
 	_quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy.add_child(_quote)
 	# Neutral until `bind` puts the firing general's own faction on it, like the
 	# panel border above — never a hand-copy of one faction's dark.
-	_power_name = _mono(_POWER_NAME_SIZE, CommanderVisuals.theme_for(null).color_dark)
+	_power_name = Label.new()
+	_power_name.add_theme_font_override("font", UiTheme.display(true))
+	_power_name.add_theme_font_size_override("font_size", _POWER_NAME_SIZE)
+	_power_name.add_theme_color_override("font_color", CommanderVisuals.theme_for(null).color_dark)
 	copy.add_child(_power_name)
-	_power_text = Label.new()
-	_power_text.custom_minimum_size = Vector2(300, 0)
-	_power_text.add_theme_font_size_override("font_size", 11)
-	_power_text.add_theme_color_override("font_color", CommanderVisuals.PAPER_INK)
+	_power_text = UiTheme.hud_label("", _POWER_TEXT_SIZE, CommanderVisuals.PAPER_INK, true)
+	_power_text.custom_minimum_size = _COPY_WIDTH
 	_power_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy.add_child(_power_text)
 
@@ -107,7 +121,7 @@ func bind(commander: CommanderType, team: int) -> void:
 	add_theme_stylebox_override(
 		"panel", UiTheme.bordered(CommanderVisuals.PAPER, theme.color_dark, 4)
 	)
-	_field.add_theme_stylebox_override("panel", _flat(theme.color))
+	_field.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
 	_portrait.texture = CommanderVisuals.portrait_for(commander)
 	_eyebrow.text = "%s · COMMAND POWER" % commander.display_name.to_upper()
 	var line := _next_quote(commander, team)
@@ -131,16 +145,3 @@ func _next_quote(commander: CommanderType, team: int) -> String:
 	var count: int = _spoken.get(team, 0)
 	_spoken[team] = count + 1
 	return commander.power_quotes[count % commander.power_quotes.size()]
-
-
-func _mono(size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", color)
-	return label
-
-
-func _flat(color: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	return box
