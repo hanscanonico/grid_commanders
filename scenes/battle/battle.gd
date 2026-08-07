@@ -276,6 +276,7 @@ func _ready() -> void:
 	victory_screen.rematch_button.pressed.connect(_request_rematch)
 	victory_screen.menu_button.pressed.connect(_request_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
+	HandoffScreen.dress(%HandoffBackdrop, handoff_label, %HandoffHint, handoff_button)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view)
 	_zoom.setup()
@@ -1248,7 +1249,6 @@ func _enter_handoff() -> void:
 		"%s — press confirm when ready" % view.identity.display_name(game.current_team)
 	)
 	handoff_screen.show()
-	handoff_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	handoff_button.grab_focus()
 
 
