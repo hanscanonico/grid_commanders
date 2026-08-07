@@ -306,12 +306,15 @@ func _consider_captures(
 		if not reachable.can_stop_at(cell):
 			continue
 		var terrain := state.map.terrain_at(cell)
+		var owner := state.owner_at(cell)
 		# Through the allegiance authority, not `== unit.team`: an ally's ground is
 		# already the side's, and `CaptureCommand` turns the attempt down.
-		if not terrain.is_property or state.allied(state.owner_at(cell), unit.team):
+		if not terrain.is_property or state.allied(owner, unit.team):
 			continue
 		var score := profile.capture_score
-		if terrain.is_headquarters:
+		# Asked of the home-HQ authority, never of the terrain id: an HQ a survivor
+		# conquered fells nobody, so taking it is worth a city and no more.
+		if state.home_hq.has(owner) and state.home_hq[owner] == cell:
 			score *= profile.hq_capture_multiplier
 		if _produces(terrain):
 			score *= profile.production_capture_multiplier
