@@ -64,9 +64,15 @@ func test_every_mission_builds_the_match_it_states() -> void:
 				continue
 			var seats: Array[int] = mission.seats.duplicate()
 			var state := GameState.create(map, unit_db, chart, {}, seats)
+			# The usual cause is a starting unit standing on ground its movement
+			# class cannot enter — a tank on a mountain. `create` pushes the cell
+			# and the unit; naming the seating here would point at the wrong line.
 			assert_not_null(
 				state,
-				"%s/%s: the board refuses seating %s" % [campaign.id, mission.id, mission.seats]
+				(
+					"%s/%s: the board would not build — see the pushed GameState error"
+					% [campaign.id, mission.id]
+				)
 			)
 
 

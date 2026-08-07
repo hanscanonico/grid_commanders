@@ -89,7 +89,10 @@ func _check_mission(
 	var seats: Array[int] = mission.seats.duplicate()
 	var state := GameState.create(map, unit_db, chart, {}, seats)
 	if state == null:
-		_fail("%s: the board refuses the seating %s" % [where, mission.seats])
+		# `create` has already pushed the specific reason — a unit standing on
+		# ground its movement class cannot enter is the usual one, and naming the
+		# seating here instead sent an author looking at the wrong line.
+		_fail("%s: the board would not build (see the GameState error above)" % where)
 		return
 	if not mission.briefing.is_empty() and mission.victory.is_empty():
 		_fail("%s: has a briefing but nothing to say when it is won" % where)
