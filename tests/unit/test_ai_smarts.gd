@@ -18,12 +18,14 @@ const ARTILLERY_RING_BOARD := "[terrain]\n..........\n[units]\n1 t 0 0\n2 g 9 0"
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
+var commander_db: CommanderDB
 
 
 func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+	commander_db = CommanderDB.load_default()
 
 
 func _state(map_text: String) -> GameState:
@@ -265,6 +267,42 @@ func test_an_undived_sub_still_takes_the_battleships_forecast() -> void:
 		map.incoming_damage(state, sub, Vector2i(0, 0)),
 		0,
 		"a surfaced sub is a legal battleship target and takes its forecast",
+	)
+
+
+## COM-176: the map's "any in-range origin gives the same number" claim is false
+## against Alina Ward, whose combined_arms_pct reads the firing cell. This tank
+## has two legal firing cells for the same target — its own cell, beside a
+## mixed-class friendly, and a cell it could walk to with no friendly beside it
+## — and CombatResolver.forecast_at genuinely disagrees between them. The map
+## still prices the cell from the enemy's current position (threat_map.gd), so
+## it happens to agree with the mixed origin here; that is the approximation
+## being pinned, not a claim that the map is right in general.
+func test_ward_combined_arms_makes_the_firing_cell_matter_to_the_map() -> void:
+	var state := _state("[terrain]\n......\n......\n[units]\n1 t 3 0\n1 i 3 1\n2 i 4 0")
+	state.rng.seed = 1
+	state.set_commander(1, commander_db.by_id(&"alina_ward"))
+	var tank := state.units[0]
+	var defender := state.units[2]
+	var mixed_origin := tank.cell  # (3,0): the infantry at (3,1) stands beside it
+	var lone_origin := Vector2i(5, 0)  # reachable, and nothing stands beside it
+	assert_true(
+		lone_origin in AttackRange.firing_cells(state, tank),
+		"both cells are legal firing positions for this tank"
+	)
+	var mixed := CombatResolver.forecast_at(state, tank, mixed_origin, defender, defender.cell)
+	var lone := CombatResolver.forecast_at(state, tank, lone_origin, defender, defender.cell)
+	assert_eq(mixed.attack_damage, 74, "combined arms lifts the shot fired beside the infantry")
+	assert_eq(lone.attack_damage, 68, "the neutral number from a firing cell with no neighbour")
+
+	var map := ThreatMap.build(state, [tank])
+	assert_eq(
+		map.incoming_damage(state, defender, defender.cell),
+		mixed.attack_damage,
+		(
+			"the map prices every threat from the enemy's current cell, so it matches"
+			+ " the mixed origin here rather than the (also legal) lone one"
+		)
 	)
 
 

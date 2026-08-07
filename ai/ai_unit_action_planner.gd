@@ -262,6 +262,10 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 			continue  # no chart entry, no loaded weapon, or the target is dived
 		if Grid.manhattan(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
 			continue
+		# Priced from friendly.cell, not the cell the follow-up would actually fire
+		# from — the same enemy.cell approximation ThreatMap.incoming_damage makes,
+		# and exact for every doctrine but Alina Ward's combined_arms_pct. Inert
+		# today (focus_fire_bonus ships at 0.0).
 		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
 		if forecast.can_attack:
 			total += forecast.attack_damage

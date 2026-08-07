@@ -70,10 +70,20 @@ func _mark_ring(state: GameState, enemy: Unit, from: Vector2i, low: int, high: i
 ## Evaluates the shot with the defender *at* `cell`, which is the whole point:
 ## the terrain it would move onto changes how hard it is hit. `forecast_at`
 ## takes that position as an effective value, so scoring a hypothetical move
-## asks a question without ever standing the unit somewhere to ask it. The
-## enemy's firing cell does not affect outgoing damage (only the defender's
-## terrain does), so any in-range origin gives the same number and the stored
-## per-cell list is enough.
+## asks a question without ever standing the unit somewhere to ask it.
+##
+## The price is taken from the enemy's *current* cell (`enemy.cell` below),
+## never from whichever firing position in `_mark_ring` actually reached this
+## cell — the stored per-cell list only says who threatens it, not from where.
+## For every shipped doctrine but one that is exact: only the defender's
+## terrain enters the formula, so any in-range origin gives the same number.
+## Alina Ward is the exception — her combined_arms_pct reads the firing cell
+## (core/commanders/alina_ward.gd) — so against her the map can be off by that
+## bonus in either direction. Accepted: this is a scoring heuristic, never a
+## legality check, and per-origin forecasting would cost a second fill's worth
+## of bookkeeping to correct one commander's percentage points. Pinned by
+## tests/unit/test_ai_smarts.gd's
+## test_ward_combined_arms_makes_the_firing_cell_matter_to_the_map.
 func incoming_damage(state: GameState, defender: Unit, cell: Vector2i) -> int:
 	var enemies: Array = _by_cell.get(cell, [])
 	if enemies.is_empty():
