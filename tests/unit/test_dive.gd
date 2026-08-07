@@ -243,10 +243,12 @@ func test_a_dive_survives_a_save() -> void:
 
 
 ## A save written before the dive existed has no flag to read, and every boat in
-## it was on the surface — which is exactly what the default gives.
+## it was on the surface — which is exactly what the default gives. Built off the
+## real straits board rather than a hand-written stub, for the reason the sibling
+## test above gives: the save is read back against the map it names, so its units
+## have to be ones that board could actually seat.
 func test_an_older_save_loads_with_every_boat_on_the_surface() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 0 0")
-	state.map_path = "res://maps/the_straits.txt"
+	var state := _straits_state()
 	var encoded := SaveCodec.encode(state, [] as Array[int])
 	encoded["version"] = 2
 	for entry: Dictionary in encoded["units"]:
@@ -255,7 +257,7 @@ func test_an_older_save_loads_with_every_boat_on_the_surface() -> void:
 	assert_not_null(loaded, "a version-2 save must still load")
 	if loaded == null:
 		return
-	assert_false(loaded.state.units[0].dived)
+	assert_false(_sub_of(loaded.state, 1).dived)
 
 
 # --- the planner ----------------------------------------------------------------

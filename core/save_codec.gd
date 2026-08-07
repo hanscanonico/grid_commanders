@@ -303,7 +303,7 @@ static func decode(
 		return null  # MapData already reported why
 	# Only askable now: what counts as a legal cell is the board's to say, and the
 	# board is what was just loaded. See `board_error`.
-	error = board_error(data, map)
+	error = board_error(data, map, unit_db)
 	if error != "":
 		push_error("SaveCodec: %s" % error)
 		return null
@@ -546,7 +546,15 @@ static func validate(data: Dictionary) -> String:
 ## comes back as a reason — which is what the signature promises — instead of a
 ## runtime error off a key that was never there. Which version's fields to ask for is
 ## floored rather than trusted for exactly that reason; see the note where it is read.
-static func board_error(data: Dictionary, map: MapData) -> String:
+##
+## `unit_db` is what the two checks below need to answer for a unit that has not been
+## built yet — `GameState.create`'s own two refusals, held to here for the arrangement
+## a save can reach that a starting roster cannot: two units sharing a cell, where
+## `unit_at` returns the first and leaves the second a ghost that never draws, never
+## targets and never blocks in `_occupants`, yet still counts for `_check_rout`; and a
+## unit standing on terrain its move class cannot enter, the same class of board
+## `CombatResolver`'s terrain read cannot reason about (COM-174).
+static func board_error(data: Dictionary, map: MapData, unit_db: UnitDB) -> String:
 	# The asymmetry that makes this necessary: `validate` refuses a version it cannot read
 	# before deriving one rule from it, and this function is documented to answer for a
 	# dictionary `validate` has never seen — so it cannot refuse, and floors instead. The
@@ -579,6 +587,12 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 	for team: Variant in data.get("ai_teams", []) as Array:
 		if not roster.has(int(team)):
 			return "the save gives team %d to the computer, which does not play" % int(team)
+	# Every cell a unit that is actually standing on the board occupies, so the
+	# second check below can ask whether it is the only one there. A rider shares
+	# no cell of its own — `advance_unit` mirrors it onto the carrier's the moment
+	# it boards, and `encode` writes that mirrored cell straight back out — so
+	# both checks below skip any entry still linked to a carrier.
+	var occupied: Dictionary[Vector2i, bool] = {}
 	for entry: Dictionary in data["units"] as Array:
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
 		if not map.in_bounds(cell):
@@ -592,6 +606,17 @@ static func board_error(data: Dictionary, map: MapData) -> String:
 		var team := int(entry["team"])
 		if not roster.has(team):
 			return "unit '%s' belongs to team %d, which does not play" % [entry["type"], team]
+		if int(entry["carrier"]) != NO_CARRIER:
+			continue
+		if occupied.has(cell):
+			return "two units stand on cell %s" % cell
+		occupied[cell] = true
+		var type := unit_db.by_id(StringName(String(entry["type"])))
+		if type != null and not map.terrain_at(cell).is_passable(type.move_class):
+			return (
+				"unit '%s' cannot stand on %s at %s"
+				% [entry["type"], map.terrain_at(cell).id, cell]
+			)
 	var cells_error := _cells_on_board(data["owners"], map, "owned property")
 	if cells_error != "":
 		return cells_error
