@@ -8,8 +8,6 @@ extends RefCounted
 ## `in_supply_reach` and `expire_power` — because each was implemented twice and
 ## the two copies had already started to drift.
 
-const REPAIR_HP := 20  # internal HP (= 2 displayed) per turn on a property
-
 
 ## Every turn is charged the same, day one included. That is what keeps the two
 ## sides even: create() opens the match with this for the first team, and the
@@ -38,7 +36,7 @@ static func begin_turn(state: GameState) -> void:
 ## planner asks this when it weighs banking against buying, so what the AI
 ## expects to be paid is what the turn actually pays it.
 static func income_for(state: GameState, team: int) -> int:
-	return state.properties_of(team).size() * GameState.INCOME_PER_PROPERTY
+	return state.properties_of(team).size() * state.rules_config.income_per_property
 
 
 ## Fuel spent simply by existing, before anything refills it. Zero for ground
@@ -108,7 +106,7 @@ static func _repair(state: GameState, unit: Unit) -> void:
 		return
 	if not _serviced_here(state, unit):
 		return
-	var heal := mini(REPAIR_HP, 100 - unit.hp)
+	var heal := mini(state.rules_config.repair_hp, 100 - unit.hp)
 	var full_price := unit.type.cost * heal / 100
 	var cost := full_price * state.commander_of(unit.team).repair_cost_pct(state, unit) / 100
 	if state.funds[unit.team] < cost:

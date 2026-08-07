@@ -8,13 +8,12 @@ extends RefCounted
 ## through `bank_losses`. The meter itself still belongs to the state
 ## (`GameState.add_charge` caps it) and so does the purse.
 
-## Charge as a percentage of the value destroyed in an exchange: the side that
+## Charge is a percentage of the value destroyed in an exchange
+## (`state.rules_config.charge_pct_lost` / `charge_pct_dealt`): the side that
 ## *loses* the HP banks the first, the side that dealt it banks the second.
 ## Asymmetric on purpose — the aggressor cannot out-charge the defender on the
 ## same trade, so a player winning the field does not run away with the meter as
 ## well.
-const CHARGE_PCT_LOST := 100
-const CHARGE_PCT_DEALT := 50
 
 
 ## Banks both sides' share of one unit losing `hp_lost` internal HP. Value is the
@@ -37,8 +36,8 @@ static func bank_losses(state: GameState, victim: Unit, hp_lost: int, dealer_tea
 	if lethal:
 		_transfer_bounty(state, victim, dealer_team)
 	var value := victim.type.cost * hp_lost / 100
-	state.add_charge(victim.team, value * CHARGE_PCT_LOST / 100)
-	state.add_charge(dealer_team, value * CHARGE_PCT_DEALT / 100)
+	state.add_charge(victim.team, value * state.rules_config.charge_pct_lost / 100)
+	state.add_charge(dealer_team, value * state.rules_config.charge_pct_dealt / 100)
 	if lethal:
 		# Recurses because GameState.remove_unit's erase does — an old save may
 		# nest transports even though the load commands now refuse it.

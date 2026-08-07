@@ -9,7 +9,12 @@ extends RefCounted
 ## that have no match to ask, such as whether a save names a side that could ever
 ## have existed. Re-exported from the board, which is the roster authority.
 const TEAMS: Array[int] = MapData.PLAYER_TEAMS
+## Kept as the constant a few golden-value tests and the capture cut-in read
+## directly; the rules themselves ask `rules_config.capture_points` instead,
+## which defaults to this same number (see RulesConfig).
 const CAPTURE_POINTS := 20
+## Kept for the same reason as CAPTURE_POINTS; the rules ask
+## `rules_config.income_per_property`.
 const INCOME_PER_PROPERTY := 1000
 ## The smallest roster a seating may leave. Below it there is no match: one army
 ## has already won and none has nobody to play. See `create`.
@@ -33,6 +38,13 @@ var teams: Array[int] = MapData.DEFAULT_TEAMS.duplicate()
 var sides: Dictionary = {}
 var units: Array[Unit] = []
 var damage_chart: DamageChart
+## Balance levers a rebuild would otherwise require to sweep — see RulesConfig.
+## Ambient like the terrain and unit databases rather than match state: it is
+## never written by `create`'s callers, never carried by SaveCodec or
+## ReplayCodec, and defaults here to the shipped file, so a state built by
+## hand (a save being decoded, a movement fixture) plays with the same
+## numbers a match started from `create` does.
+var rules_config: RulesConfig = RulesConfig.load_default()
 ## Match RNG (combat luck). Set `rng.seed` explicitly for deterministic
 ## tests and replays; the battle scene randomizes it.
 var rng := RandomNumberGenerator.new()
@@ -86,7 +98,9 @@ var map_path := ""
 
 ## Builds the starting state from a parsed map. Returns null (with a pushed
 ## error) if any starting unit is invalid. The damage chart is optional for
-## states that never resolve combat (e.g. movement-only tests).
+## states that never resolve combat (e.g. movement-only tests). `p_rules_config`
+## is optional too and left null keeps the field's own default (RulesConfig's
+## shipped file) — a caller only ever names one to pin a non-default value.
 ##
 ## `p_commanders` (team -> CommanderType) is assigned *before* the opening
 ## begin_turn, so the first player's day-1 start-of-turn doctrine — a supply
@@ -117,11 +131,14 @@ static func create(
 	unit_db: UnitDB,
 	p_damage_chart: DamageChart = null,
 	p_commanders: Dictionary = {},
-	p_seats: Array[int] = []
+	p_seats: Array[int] = [],
+	p_rules_config: RulesConfig = null
 ) -> GameState:
 	var state := GameState.new()
 	state.map = p_map
 	state.damage_chart = p_damage_chart
+	if p_rules_config != null:
+		state.rules_config = p_rules_config
 	var repeated := _repeated_seat(p_seats)
 	if repeated != 0:
 		push_error("GameState: seats %s name seat %d twice" % [p_seats, repeated])

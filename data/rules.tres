@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="RulesConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/rules_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+capture_points = 20
+income_per_property = 1000
+repair_hp = 20
+property_vision = 2
+charge_pct_lost = 100
+charge_pct_dealt = 50
+min_price = 500
+price_step = 100
+luck_min = 0
+luck_max = 9
+max_stars = 5

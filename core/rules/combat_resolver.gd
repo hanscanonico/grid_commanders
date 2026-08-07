@@ -308,7 +308,7 @@ static func _damage_pct(state: GameState, fight: Engagement, base_damage: int) -
 			- att_co.star_pierce(state, fight)
 		),
 		0,
-		CommanderType.MAX_STARS
+		state.rules_config.max_stars
 	)
 	var att := 100 + att_co.attack_bonus(state, fight)
 	var def := 100 + def_co.defense_bonus(state, fight)

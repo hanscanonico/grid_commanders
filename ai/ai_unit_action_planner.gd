@@ -298,8 +298,8 @@ func _defend_bonus(state: GameState, unit: Unit, enemy: Unit) -> float:
 	# conquered fells nobody, so defending it is worth a city and no more.
 	if state.home_hq.has(owner) and state.home_hq[owner] == cell:
 		score *= profile.hq_capture_multiplier
-	var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
-	score += (GameState.CAPTURE_POINTS - points) * profile.capture_progress_bonus
+	var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
+	score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
 	return profile.defend_weight * score
 
 
@@ -324,9 +324,9 @@ func _consider_captures(
 			score *= profile.hq_capture_multiplier
 		if profile.production_capture_multiplier != 1.0 and _produces(terrain):
 			score *= profile.production_capture_multiplier
-		var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
+		var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
 		var step_cost: int = reachable.costs[cell]
-		score += (GameState.CAPTURE_POINTS - points) * profile.capture_progress_bonus
+		score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
 		score -= profile.step_cost_penalty * step_cost
 		if score > plan.score:
 			plan.score = score

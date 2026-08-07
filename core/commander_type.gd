@@ -29,13 +29,20 @@ extends Resource
 ## `_is_active` and the `_can_*` predicates below are the subclass toolkit rather
 ## than hooks — underscored because nothing outside this hierarchy calls them.
 
-## Inclusive bounds of the standard combat luck roll. They live here rather than
-## on CombatResolver because a doctrine may narrow or shift the range (Lyra
-## Quill), which makes them commander data.
+## Inclusive bounds of the standard combat luck roll, matching
+## `RulesConfig.luck_min` / `luck_max`. They live here too, rather than only on
+## RulesConfig, because a doctrine may narrow or shift the range (Lyra Quill),
+## which makes them commander data as well as balance data: `luck_min` /
+## `luck_max` below are the hooks a doctrine overrides, and the base
+## implementation reads the neutral defaults off `state.rules_config` so a
+## custom config still moves the commander-less roll.
 const LUCK_MIN := 0
 const LUCK_MAX := 9
 
 ## Terrain defence stars cap after star_bonus and star_pierce have applied.
+## Matches `RulesConfig.max_stars`, which is what `CombatResolver` actually
+## reads — no hook overrides a star cap, so this constant has no reader of its
+## own left; it survives as the number `data/rules.tres` must keep matching.
 const MAX_STARS := 5
 
 const NEUTRAL_ID := &"none"
@@ -125,14 +132,18 @@ func star_pierce(_state: GameState, _fight: Engagement) -> int:
 	return 0
 
 
-## Inclusive lower bound of the luck roll. Attacker's commander.
-func luck_min(_state: GameState, _fight: Engagement) -> int:
-	return LUCK_MIN
+## Inclusive lower bound of the luck roll. Attacker's commander. The neutral
+## default is `state.rules_config.luck_min`, not a constant, so a custom
+## config still moves the roll for every doctrine that does not override this
+## hook.
+func luck_min(state: GameState, _fight: Engagement) -> int:
+	return state.rules_config.luck_min
 
 
-## Inclusive upper bound of the luck roll. Attacker's commander.
-func luck_max(_state: GameState, _fight: Engagement) -> int:
-	return LUCK_MAX
+## Inclusive upper bound of the luck roll. Attacker's commander, same rule as
+## luck_min above.
+func luck_max(state: GameState, _fight: Engagement) -> int:
+	return state.rules_config.luck_max
 
 
 # --- movement ----------------------------------------------------------------

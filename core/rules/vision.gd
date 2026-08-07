@@ -9,15 +9,14 @@ extends RefCounted
 ##   (Manhattan distance). Carried units see nothing.
 ## - Concealing terrain (woods, reefs) hides what stands on it: revealed only
 ##   from distance <= 1, regardless of the viewer's range.
-## - Owned properties watch their surroundings out to PROPERTY_VISION.
+## - Owned properties watch their surroundings out to
+##   `state.rules_config.property_vision`.
 ##
 ## Commanders bend all three: a doctrine can lengthen a unit's sight, let it see
 ## into cover at range, jam an enemy's sight shorter, or hide its own units from
 ## a viewer who can otherwise see the cell they stand on. Because of that last
 ## one, seeing a *cell* and seeing the *unit* on it are now separate questions —
 ## see can_see_unit.
-
-const PROPERTY_VISION := 2
 
 
 ## Vector2i -> true for every cell `team` can currently see.
@@ -45,7 +44,7 @@ static func visible_cells(state: GameState, team: int) -> Dictionary[Vector2i, b
 				state, cells, unit.cell, _sight_of(state, unit), co.sees_into_cover(state, unit)
 			)
 		for cell in state.properties_of(member):
-			_reveal_around(state, cells, cell, PROPERTY_VISION, false)
+			_reveal_around(state, cells, cell, state.rules_config.property_vision, false)
 	return cells
 
 
