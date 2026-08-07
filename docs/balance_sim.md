@@ -568,6 +568,7 @@ make ai-arena ARENA="--pairings=reports/ai_arena/gen1/shard0.json"
 | Flag | Meaning |
 |---|---|
 | `--red-profile=` / `--blue-profile=` | The candidate in each seat: a path to an `AIProfile` `.tres`, project-relative or `res://`-spelled |
+| `--red-co=` / `--blue-co=` | Commander seated on a side, by id (default neutral; in a shard file, `red_co` / `blue_co` per pairing) |
 | `--pairings=` | A shard file — every pairing in it, played by one process |
 | `--map=` | Board for pairings that name none (default `scrimmage`) |
 | `--seeds=` | Paired seeds per pairing, both seats each (default 4) |
@@ -601,6 +602,7 @@ One artifact: `matches.json`, an array of one record per match.
 ```json
 {"match_id": "clash#default_vs_hard#s1136", "map": "clash", "seed": 1136, "seat": 0,
  "red": "data/ai/default.tres", "blue": "data/ai/hard.tres",
+ "red_co": "none", "blue_co": "none",
  "winner": 2, "termination": "rout", "day_ended": 13, "commands": 127,
  "rejected": 0, "cap_stall": false, "turn_cap_hits": 0,
  "red_units": 0, "blue_units": 6, "red_props": 0, "blue_props": 3,

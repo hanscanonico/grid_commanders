@@ -131,9 +131,7 @@ func test_a_seated_commander_moves_the_digest() -> void:
 	# must carry the general too, or two labels trimmed to one slug would land
 	# a seated measurement in the commander-free run's directory.
 	var bare := _parse(["--red-profile=a.tres", "--blue-profile=b.tres"])
-	var seated := _parse(
-		["--red-profile=a.tres", "--blue-profile=b.tres", "--blue-co=radek_morn"]
-	)
+	var seated := _parse(["--red-profile=a.tres", "--blue-profile=b.tres", "--blue-co=radek_morn"])
 	assert_ne(bare.digest(), seated.digest())
 	assert_ne(bare.artifact_dir(), seated.artifact_dir(), "two measurements, two directories")
 
