@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="AIProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ai/ai_profile.gd" id="1"]
+
+; Brutal. Not a hand-tuned tier: this is the `everything` vector the AI Arena's
+; first search campaign found, shipped verbatim — sixteen dials moved off Normal
+; by 93,744 headless matches, then composed and re-measured on boards and seeds
+; no search ever saw. docs/ai_arena_results.md is the measurement; every number
+; below is read out of it rather than argued for here, and a later campaign
+; supersedes the whole file rather than editing a line of it.
+;
+; Shipping it is the arena plan's D8 — the arena recommends and a human ships.
+; What the campaign measured: 93.8% of its held-out matches against easy,
+; default and hard, where the shipped Normal vector takes 49.3% of the same.
+; Head to head, held out: 97.9% against Easy, 95.7% against Normal, 91.7%
+; against Difficult.
+;
+; Three boundaries the campaign could not see past, all worth knowing before
+; retuning anything here. It was played commander-free, so doctrine_weight was
+; inert and every commander passive that re-prices a forecast was absent. It was
+; land duels on seven boards, so no naval and no three- or four-seat board is in
+; the number. And it optimises winning a headless match against a machine: the
+; vector fields far bigger armies than Normal — median 15 units alive at the end
+; against the base's 0, with a tail to 115 — while *shortening* matches (median
+; day 22 against 32). Whether that is a better opponent or only a better score is
+; a question a table answers, not this instrument.
+;
+; The production block carries most of the return and is the part to be most
+; careful with: capture_unit_target 0, save_up_turns 0, duplicate_priority_cost 1
+; and build_reactivity 0.6 together read "spend everything, every turn, on
+; whatever counters them", and that is what produces those armies.
+;
+; Two dials the search declined to use stay at zero, exactly as they ship
+; everywhere else: withdraw_weight and join_weight were both searched properly
+; and both measured worthless. focus_fire_bonus is refuted for the third time and
+; stays benched with them.
+;
+; The tier is outside the DF4 ladder gate on purpose — DIFFICULTY_PAIRINGS still
+; steps easy → normal → hard, so both committed balance reports are untouched by
+; this tier's existence and its evidence stays the arena's.
+[resource]
+script = ExtResource("1")
+kill_bonus = 1.2
+counter_weight = 0.4
+capture_score = 900.0
+hq_capture_multiplier = 3.0
+capture_progress_bonus = 75.0
+step_cost_penalty = 0.0
+retreat_hp = 45
+min_useful_score = 40.0
+advance_score = 1.0
+build_priority = Array[StringName]([&"md_tank", &"bomber", &"battleship", &"fighter", &"sub", &"cruiser", &"tank", &"b_copter", &"missiles", &"artillery", &"mech", &"rockets"])
+capture_unit_target = 0
+air_answer_ids = Array[StringName]([&"anti_air", &"missiles", &"fighter", &"cruiser"])
+air_answer_target = 2
+supply_unit_target = 1
+duplicate_priority_cost = 1
+save_up_turns = 0
+dive_score = 200.0
+refuel_margin_turns = 1
+doctrine_weight = 1.0
+threat_aversion = 0.175
+advance_threat_tiles = 0.5
+focus_fire_bonus = 0.0
+build_reactivity = 0.6
+defend_weight = 2.0
+withdraw_weight = 0.0
+cohesion_tiles = 2.125
+cohesion_radius = 1
+capture_units_per_property = 0.0
+capture_claim_depth = 1
+production_capture_multiplier = 2.0
+capture_goal_value_tiles = 0.0
+supply_weight = 0.25
+cover_tiles = 0.125
+condition_weight = 0.25
+join_weight = 0.0

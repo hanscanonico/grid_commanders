@@ -6,8 +6,8 @@ extends Resource
 ## plays the same rules, economy, vision and dice at every tier; only the
 ## opponent's judgement changes.
 ##
-## Data, not behaviour, like the commander and unit resources: the three tiers
-## are .tres files under data/difficulty/, and tuning one is editing its profile.
+## Data, not behaviour, like the commander and unit resources: the tiers are
+## .tres files under data/difficulty/, and tuning one is editing its profile.
 ## A plain Resource with no Node reference, so tests and the headless tools build
 ## it as freely as the rest of the sim.
 
@@ -15,8 +15,9 @@ const DEFAULT_ID := &"normal"
 
 @export var id: StringName = DEFAULT_ID
 @export var display_name: String = "Normal"
-## The AI's judgement at this tier. Easy and Difficult ship their own profile;
-## Normal points at data/ai/default.tres, so Normal is the planner's own defaults.
+## The AI's judgement at this tier. Easy, Difficult and Brutal ship their own
+## profile; Normal points at data/ai/default.tres, so Normal is the planner's
+## own defaults.
 @export var ai_profile: AIProfile
 
 

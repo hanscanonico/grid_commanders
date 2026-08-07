@@ -52,7 +52,7 @@ func test_every_refusal_says_what_it_choked_on() -> void:
 	var cases := {
 		"a:b:c": "expected <commander>:<tier>, got 'a:b:c'",
 		"gideon_holtz": "unknown commander 'gideon_holtz'",
-		":brutal": "unknown difficulty tier 'brutal'",
+		":nightmare": "unknown difficulty tier 'nightmare'",
 	}
 	for text: String in cases:
 		var spec := _parse(text)

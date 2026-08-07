@@ -1,7 +1,7 @@
 # Difficulty tiers and the ladder gate
 
-How the three difficulty tiers are built, how their ordering is measured, and
-what the measurement currently says. This is the committed record of the
+How the ladder's three difficulty tiers are built, how their ordering is
+measured, and what the measurement currently says. This is the committed record of the
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
@@ -60,9 +60,19 @@ wins more games — which is what the gate measures.
 | Easy | `easy` | `data/ai/easy.tres` | Timid: over-weights danger, retreats early, finishes poorly, under-fields capturers, no md tank, loose column, no instinct to defend its own ground |
 | Normal | `normal` | `data/ai/default.tres` | The planner's own defaults: answers an enemy taking its property, advances as a column |
 | Difficult | `hard` | `data/ai/hard.tres` | Threat-aware and counter-building, sharper trade weights, defends harder and keeps a tighter column |
+| Brutal | `brutal` | `data/ai/brutal.tres` | The AI Arena's searched champion, shipped verbatim: sixteen dials off Normal, banks nothing, counter-builds constantly |
 
 Each tier is a `Difficulty` resource in `data/difficulty/` — a label plus one of
 those profiles. Retuning a tier is editing its `.tres`.
+
+**Brutal is outside this gate on purpose.** `DIFFICULTY_PAIRINGS` still steps
+`easy → normal → hard`, so every number in this document is about those three
+and the ladder's reports are untouched by the fourth tier's existence. Its
+evidence is a different instrument's — `docs/ai_arena_results.md`, measured on a
+held-out pool of boards and seeds rather than this gate's two maps — and hanging
+a fourth rung on a ladder that is already failing its margin would make both
+readings harder rather than either one clearer. Adding the `[hard, brutal]`
+pairing is a deliberate future measurement, not an oversight.
 
 ## 2. The three capabilities
 

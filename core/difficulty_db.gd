@@ -9,7 +9,7 @@ const DIFFICULTY_DIR := "res://data/difficulty"
 const DEFAULT_ID := Difficulty.DEFAULT_ID
 ## Menu order, gentlest first. An id not listed sorts last, so a tier added
 ## before this list learns about it is still shown — just at the end.
-const ORDER: Array[StringName] = [&"easy", &"normal", &"hard"]
+const ORDER: Array[StringName] = [&"easy", &"normal", &"hard", &"brutal"]
 
 var _by_id: Dictionary = {}
 

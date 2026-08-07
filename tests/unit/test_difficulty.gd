@@ -1,7 +1,8 @@
 extends GutTest
-## The difficulty tier seam (plan DF1): the three tiers load, Normal is the
-## planner's own defaults, an unknown id still plays, and the wiring is not inert
-## — Easy's profile must provably reach a different command than Normal's.
+## The difficulty tier seam (plan DF1): the tiers load, Normal is the planner's
+## own defaults, an unknown id still plays, and the wiring is not inert — Easy's
+## and Brutal's profiles must each provably reach a different command than
+## Normal's.
 
 ## Our HQ at (0,0) with an enemy infantry standing on it, our tank one tile away,
 ## and a fatter target — an enemy tank — the same distance the other way.
@@ -27,9 +28,9 @@ func _state(map_text: String) -> GameState:
 	return state
 
 
-func test_the_three_tiers_load() -> void:
-	assert_eq(db.size(), 3, "data/difficulty should hold easy, normal and hard")
-	for id: StringName in [&"easy", &"normal", &"hard"]:
+func test_every_tier_loads() -> void:
+	assert_eq(db.size(), 4, "data/difficulty should hold easy, normal, hard and brutal")
+	for id: StringName in [&"easy", &"normal", &"hard", &"brutal"]:
 		assert_true(db.has(id), "missing difficulty tier '%s'" % id)
 		assert_not_null(db.by_id(id).ai_profile, "tier '%s' has no AI profile" % id)
 
@@ -38,7 +39,7 @@ func test_tiers_are_listed_gentlest_first() -> void:
 	var ids: Array[StringName] = []
 	for tier in db.all():
 		ids.append(tier.id)
-	assert_eq(ids, [&"easy", &"normal", &"hard"] as Array[StringName])
+	assert_eq(ids, [&"easy", &"normal", &"hard", &"brutal"] as Array[StringName])
 
 
 func test_difficult_is_the_label_for_the_hard_id() -> void:
@@ -99,6 +100,66 @@ func test_difficult_turns_the_capabilities_on() -> void:
 		0.0001,
 		"focus fire is benched by measurement; switching it back on is a DF4 decision"
 	)
+
+
+## Brutal is a measurement rather than a tuning, so the sixteen dials the arena's
+## first campaign moved off Normal are pinned here by value: an edit to any of
+## them stops being a balance tweak and starts being a claim the campaign did not
+## make. docs/ai_arena_results.md is the vector; a later campaign replaces this
+## list wholesale rather than nudging an entry.
+func test_brutal_is_the_searched_champion_verbatim() -> void:
+	var brutal := db.by_id(&"brutal").profile()
+	var searched := {
+		"kill_bonus": 1.2,
+		"counter_weight": 0.4,
+		"capture_progress_bonus": 75.0,
+		"step_cost_penalty": 0.0,
+		"capture_unit_target": 0,
+		"duplicate_priority_cost": 1,
+		"save_up_turns": 0,
+		"threat_aversion": 0.175,
+		"advance_threat_tiles": 0.5,
+		"build_reactivity": 0.6,
+		"cohesion_tiles": 2.125,
+		"cohesion_radius": 1,
+		"capture_claim_depth": 1,
+		"production_capture_multiplier": 2.0,
+		"cover_tiles": 0.125,
+		"condition_weight": 0.25,
+	}
+	var defaults := AIProfile.new()
+	for field: String in searched:
+		assert_eq(brutal.get(field), searched[field], "brutal.tres: %s" % field)
+		assert_ne(brutal.get(field), defaults.get(field), "%s is not a searched dial" % field)
+
+
+## The three dials the search was allowed to buy and declined stay switched off,
+## the same remedy Difficult's benched focus fire gets: a capability measured
+## worthless is zeroed rather than deleted, so re-trying it is one edit.
+func test_brutal_leaves_the_refused_dials_off() -> void:
+	var brutal := db.by_id(&"brutal").profile()
+	for field: String in ["withdraw_weight", "join_weight", "focus_fire_bonus"]:
+		assert_almost_eq(float(brutal.get(field)), 0.0, 0.0001, "brutal.tres: %s" % field)
+
+
+## Guards against inert wiring the same way Easy's build test does, from the
+## other end of the ladder: Brutal keeps no dedicated capture roster, so where
+## Normal buys its third infantry Brutal spends the same funds on the hammer.
+func test_brutal_reaches_a_different_command_than_normal() -> void:
+	var map_text := "[terrain]\nB...\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0"
+
+	var state := _state(map_text)
+	state.funds[1] = 20000
+	for unit in state.units:
+		unit.acted = true
+	var pick := AIController.new(unit_db, db.by_id(&"brutal").profile()).plan_next_command(state)
+	assert_true(pick is BuildCommand, "expected a build, got %s" % pick)
+	assert_eq(
+		(pick as BuildCommand).unit_type.id,
+		&"md_tank",
+		"Brutal wants no capture roster, so the funds Normal spends on infantry buy armour"
+	)
+	assert_eq(pick.validate(state), "")
 
 
 func _defends_its_hq(tier: StringName) -> bool:

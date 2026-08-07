@@ -75,6 +75,15 @@ that must survive any change; the full rationale, milestones and risk registers 
   is the balance retune's BL2, which must do it by making Difficult better rather than Normal
   worse. Read
   `docs/difficulty_check.md` before touching an AI weight or a tier `.tres`.
+  The plan's three tiers are four as of 2026-08-06: **Brutal** (`brutal`,
+  `data/ai/brutal.tres`) is the AI Arena's searched champion seated verbatim — see the arena
+  plan's entry below, which is where that decision lives. It is deliberately **outside the DF4
+  ladder**: `DIFFICULTY_PAIRINGS` still steps `easy → normal → hard`, so every number in
+  `docs/difficulty_check.md` and both committed balance reports are untouched by its existence,
+  and its evidence is the arena's held-out pool instead. Hanging a fourth rung on a gate that is
+  already failing its margin would make both readings harder rather than either one clearer;
+  adding `[hard, brutal]` is a future measurement, not an oversight. Nothing about D2 bends —
+  a tier is still only an `AIProfile` and a label, which is exactly all Brutal is.
 - `naval-air-units-plan.html` — air and naval domains N1–N4. Standing risk R1: the AI cannot plan
   a ferry, so it never builds transports — a naval map has to let fleets reach each other without
   one. Its one-weapon simplification is superseded: Tank, Md Tank and Mech carry an infinite-ammo
@@ -496,6 +505,17 @@ that must survive any change; the full rationale, milestones and risk registers 
   score**. D8: **the arena recommends and a human ships** — no milestone and no `make` target
   writes a searched number into `data/ai/`, because the arena optimises for winning a headless
   match against a machine and the product is a game a person plays.
+  **D8 has been exercised, and the shipping is what it looks like working.** On 2026-08-06 the
+  campaign's `everything` vector was read at a table and seated verbatim as a fourth difficulty
+  tier, **Brutal** — sixteen dials off Normal, not one of them retuned on the way in, so the tier
+  and `docs/ai_arena_results.md` are the same numbers and
+  `tests/unit/test_difficulty.gd` pins them to each other by value: an edit to one of those
+  sixteen stops being a balance tweak and becomes a claim the campaign did not make. The route in
+  was a person's decision, not a target's — no `make` target writes `data/ai/` and none was
+  taught to. The campaign's own boundaries shipped with it rather than being quietly dropped
+  (commander-free, land duels only, and a vector that fields 100-unit armies to win by day 22),
+  restated in the profile's header where a retuner will meet them. AR7's watched match is still
+  what says whether that is a better opponent or only a better score.
   **D1's "nothing under `core/` gains a field, hook or branch" carries one recorded waiver**, the
   user's, taken in AR1 when the cache alone came in under the plan's own speedup floor:
   `MovementResolver._occupants` (one occupancy index per movement fill, never stored — a

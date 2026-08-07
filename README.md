@@ -798,7 +798,8 @@ a replay cannot diverge, because the decisions are in the file.
 
 ## Difficulty
 
-Pick **Easy**, **Normal** or **Difficult** in the menu, or pass `--difficulty=easy|normal|hard`.
+Pick **Easy**, **Normal**, **Difficult** or **Brutal** in the menu, or pass
+`--difficulty=easy|normal|hard|brutal`.
 It steers exactly one thing: which `AIProfile` the computer plans with. **No tier is handed an
 advantage** — income, dice, the damage formula, and what the AI is allowed to see (the standing
 board-wide sight described under Fog of war) are identical at Easy and at Difficult, so a harder
@@ -820,6 +821,14 @@ tier it was played at.
   will give up tiles of progress rather than end its move in a kill zone. It also **counter-builds**
   against your actual roster instead of a fixed shopping list, defends its ground harder than
   Normal, and keeps a tighter column.
+- **Brutal** — nobody wrote this one. It is the vector the self-play arena found over 93,744
+  headless matches, shipped exactly as measured: sixteen weights off Normal, taking 93.8% of its
+  matches against the other three tiers on boards and seeds the search never saw. It values a kill
+  *less* and notices incoming fire *more* than Difficult does, and it banks nothing — it spends
+  every day's income on whatever counters what you field, which is why it drowns you in units
+  rather than out-fencing you. Two caveats it earns honestly: the search played it commander-free
+  on land duels only, and it optimises winning a headless match rather than being a good afternoon.
+  `docs/ai_arena_results.md` is the measurement.
 
 Every tier now runs a **supply economy**: it buys an APC and drives it up to top its units back up,
 which is how its artillery and its aircraft stop running dry with no recourse. How patiently is the
@@ -834,7 +843,10 @@ ladder `make difficulty-check` plays comes out narrower than the 70% margin this
 itself to, because the capabilities that made Normal competent closed the gap the ladder measures.
 `docs/difficulty_check.md` carries the standing numbers, why that shortfall was accepted rather
 than tuned away by making Normal worse, and the superseded probes the weights were first set from
-— including one capability that measured *negative* and ships switched off.
+— including one capability that measured *negative* and ships switched off. That ladder steps
+Easy → Normal → Difficult and stops there: Brutal is deliberately outside it, because its evidence
+is the arena's held-out pool rather than the ladder's two maps, and adding a rung to a gate that is
+already failing would muddy both readings.
 
 ## Architecture
 
