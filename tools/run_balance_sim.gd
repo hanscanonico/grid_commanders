@@ -151,10 +151,10 @@ func _init() -> void:
 		quit(2)
 		return
 	var summary := BalanceRunSummary.build(_config(), matches, recorder.rows())
-	_write(matches, recorder, summary)
+	var write_ok := _write(matches, recorder, summary)
 	_print_summary(summary, matches)
 	var totals: Dictionary = summary["totals"]
-	quit(0 if totals["invariants_clean"] else 1)
+	quit(0 if write_ok and totals["invariants_clean"] else 1)
 
 
 # --- setup -------------------------------------------------------------------
@@ -497,21 +497,39 @@ func _open_replay(match_id: String) -> ReplayFile:
 	return ReplayFile.open_at(dir.path_join(name + ReplayFile.EXTENSION))
 
 
+## Returns whether every artifact landed. A write failure is reported here and
+## must reach the exit code the caller quits with — a half-written sweep must
+## never print its wrote-N-rows line and then exit 0.
 func _write(
 	matches: Array[Dictionary], recorder: BalanceMatchRecorder, summary: Dictionary
-) -> void:
+) -> bool:
 	var out := _artifact_dir
 	var dir := BalanceReportWriter.prepare_dir(out)
-	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), matches, MATCH_COLUMNS)
-	BalanceReportWriter.write_csv(
-		dir.path_join("timeline.csv"), recorder.rows(), BalanceMatchRecorder.TIMELINE_COLUMNS
+	if dir == "":
+		return false
+	var ok := true
+	ok = BalanceReportWriter.write_csv(dir.path_join("matches.csv"), matches, MATCH_COLUMNS) and ok
+	ok = (
+		BalanceReportWriter.write_csv(
+			dir.path_join("timeline.csv"), recorder.rows(), BalanceMatchRecorder.TIMELINE_COLUMNS
+		)
+		and ok
 	)
-	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
+	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
 	if _log_commands:
-		BalanceReportWriter.write_jsonl(dir.path_join("commands.jsonl"), recorder.command_log())
-	BalanceReportWriter.write_text(
-		dir.path_join("report.html"), BalanceReportHtml.render(summary, recorder.rows())
+		ok = (
+			BalanceReportWriter.write_jsonl(dir.path_join("commands.jsonl"), recorder.command_log())
+			and ok
+		)
+	ok = (
+		BalanceReportWriter.write_text(
+			dir.path_join("report.html"), BalanceReportHtml.render(summary, recorder.rows())
+		)
+		and ok
 	)
+	if not ok:
+		push_error("balance-sim: failed to write the report to %s" % out)
+		return false
 	print(
 		(
 			"balance-sim: wrote %d match rows, %d timeline rows%s to %s"
@@ -528,6 +546,7 @@ func _write(
 		)
 	)
 	print("balance-sim: open %s/report.html to read it" % out)
+	return true
 
 
 func _print_summary(summary: Dictionary, matches: Array[Dictionary]) -> void:

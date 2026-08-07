@@ -80,7 +80,9 @@ func _init() -> void:
 	if shard.error != "":
 		_refuse(shard.error)
 		return
-	_write(request, records)
+	if not _write(request, records):
+		quit(1)
+		return
 	var flawed := ArenaShard.flawed(records)
 	if flawed > 0:
 		push_error("ai-arena: %d match(es) rejected a command or would not resolve" % flawed)
@@ -100,11 +102,16 @@ func _shard_text(request: ArenaRequest) -> String:
 	return FileAccess.get_file_as_string(path)
 
 
-func _write(request: ArenaRequest, records: Array[Dictionary]) -> void:
+func _write(request: ArenaRequest, records: Array[Dictionary]) -> bool:
 	var out := request.artifact_dir()
 	var dir := BalanceReportWriter.prepare_dir(out)
-	BalanceReportWriter.write_json(dir.path_join(RECORD_FILE), records)
+	if dir == "":
+		return false
+	if not BalanceReportWriter.write_json(dir.path_join(RECORD_FILE), records):
+		push_error("ai-arena: failed to write %s/%s" % [out, RECORD_FILE])
+		return false
 	print("ai-arena: wrote %d match records to %s/%s" % [records.size(), out, RECORD_FILE])
+	return true
 
 
 func _refuse(reason: String) -> void:

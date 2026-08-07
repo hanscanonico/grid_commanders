@@ -156,13 +156,14 @@ func _init() -> void:
 			return
 	var rows := _run_all()
 	var summary := _summarise(rows)
-	_write_reports(rows, summary)
+	var write_ok := _write_reports(rows, summary)
 	_print_summary(summary)
 	# Hard invariants only: a rejected command or a cap stall means the AI and the
 	# rules disagree, or a match never resolves — both real bugs. Out-of-band win
-	# rates are review triggers and never fail the run.
+	# rates are review triggers and never fail the run. A write failure is a
+	# third, and it must never be masked by the other two coming back clean.
 	var failed: bool = summary["total_rejected"] > 0 or summary["total_cap_stalls"] > 0
-	quit(1 if failed else 0)
+	quit(1 if failed or not write_ok else 0)
 
 
 # --- setup -------------------------------------------------------------------
@@ -450,11 +451,17 @@ func _credit(per_co: Dictionary, id: String, won: bool) -> void:
 # --- output ------------------------------------------------------------------
 
 
-func _write_reports(rows: Array[Dictionary], summary: Dictionary) -> void:
+func _write_reports(rows: Array[Dictionary], summary: Dictionary) -> bool:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir)
-	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
-	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
+	if dir == "":
+		return false
+	var ok := BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
+	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
+	if not ok:
+		push_error("balance: failed to write matches.csv and summary.json to %s" % _out_dir)
+		return false
 	print("balance: wrote matches.csv and summary.json to %s" % _out_dir)
+	return true
 
 
 ## Says out loud when the shared engine had to cut a turn short. Neither report
@@ -562,9 +569,9 @@ func _run_difficulty_check() -> void:
 
 	var summary := BalanceRunSummary.difficulty(rows, DIFFICULTY_PAIRINGS, DIFFICULTY_MAPS)
 	var turn_times := _turn_times(timing)
-	_write_difficulty_reports(rows, summary, turn_times)
+	var write_ok := _write_difficulty_reports(rows, summary, turn_times)
 	_print_difficulty_summary(summary, turn_times)
-	quit(0 if summary["passed"] else 1)
+	quit(0 if summary["passed"] and write_ok else 1)
 
 
 ## One tier-versus-tier match. `high_is_red` swaps which seat the stronger tier
@@ -652,12 +659,24 @@ func _turn_times(timing: Dictionary) -> Array:
 
 func _write_difficulty_reports(
 	rows: Array[Dictionary], summary: Dictionary, turn_times: Array
-) -> void:
+) -> bool:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir)
-	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, DIFFICULTY_CSV_COLUMNS)
-	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
-	BalanceReportWriter.write_json(dir.path_join("timing.json"), {"turn_ms": turn_times})
+	if dir == "":
+		return false
+	var ok := BalanceReportWriter.write_csv(
+		dir.path_join("matches.csv"), rows, DIFFICULTY_CSV_COLUMNS
+	)
+	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
+	ok = (
+		BalanceReportWriter.write_json(dir.path_join("timing.json"), {"turn_ms": turn_times}) and ok
+	)
+	if not ok:
+		push_error(
+			"difficulty: failed to write matches.csv, summary.json and timing.json to %s" % _out_dir
+		)
+		return false
 	print("difficulty: wrote matches.csv, summary.json and timing.json to %s" % _out_dir)
+	return true
 
 
 func _print_difficulty_summary(summary: Dictionary, turn_times: Array) -> void:

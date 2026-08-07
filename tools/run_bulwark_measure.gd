@@ -142,9 +142,9 @@ func _run(label: String, slug: String, sides: Dictionary) -> bool:
 			return true
 		rows.append(row)
 	var summary := _summarise(label, sides, rows)
-	_write(slug, rows, summary)
+	var write_ok := _write(slug, rows, summary)
 	_print(summary)
-	return summary["total_rejected"] > 0 or summary["total_cap_stalls"] > 0
+	return summary["total_rejected"] > 0 or summary["total_cap_stalls"] > 0 or not write_ok
 
 
 ## One match, fresh state and one `AIController` per army. Mirrors
@@ -270,11 +270,17 @@ func _summarise(label: String, sides: Dictionary, rows: Array[Dictionary]) -> Di
 	}
 
 
-func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> void:
+func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> bool:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir.path_join(slug))
-	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
-	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
+	if dir == "":
+		return false
+	var ok := BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
+	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
+	if not ok:
+		push_error("bulwark: failed to write matches.csv and summary.json to %s" % dir)
+		return false
 	print("bulwark: wrote matches.csv and summary.json to %s" % dir)
+	return true
 
 
 func _print(summary: Dictionary) -> void:

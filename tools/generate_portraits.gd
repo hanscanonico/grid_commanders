@@ -48,13 +48,22 @@ func _init() -> void:
 			quit(1)
 			return
 		var path := "%s/%s.png" % [CommanderVisuals.PORTRAIT_DIR, commander.id]
-		image.save_png(ProjectSettings.globalize_path(path))
+		var err := image.save_png(ProjectSettings.globalize_path(path))
+		if err != OK:
+			push_error("generate_portraits: cannot write %s: %s" % [path, error_string(err)])
+			quit(1)
+			return
 		count += 1
 	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
 		var emblem := _draw_emblem(theme)
-		emblem.save_png(
-			ProjectSettings.globalize_path("%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key])
-		)
+		var emblem_path := "%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key]
+		var emblem_err := emblem.save_png(ProjectSettings.globalize_path(emblem_path))
+		if emblem_err != OK:
+			push_error(
+				"generate_portraits: cannot write %s: %s" % [emblem_path, error_string(emblem_err)]
+			)
+			quit(1)
+			return
 	print("generate_portraits: wrote %d portraits and 4 emblems" % count)
 	quit()
 
