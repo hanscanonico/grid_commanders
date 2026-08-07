@@ -120,13 +120,16 @@ func _may_keep(context: AIPlanningContext) -> bool:
 ## there has to be added here too or the cache would keep plans made before the
 ## map existed.
 ##
-## `dive_score` reads the map too and is deliberately not a fourth. It is live in
-## every profile, so listing it here would keep nothing on any board — including
-## every board with no submarine on it — for a read only a submarine makes; and
-## its read is the last branch of a plan whose earlier branches decide whether it
-## is reached, so a re-score the cache skipped would have taken the same branch
-## and the moment the map is built cannot move. The narrow sea in
-## tests/unit/test_ai_plan_cache.gd is what holds that.
+## `dive_score` is deliberately not a fourth, and now reads the map only where
+## one of these three already warrants it — AIUnitActionPlanner mirrors this
+## same check before it builds one for a dive. It is live in every profile, so
+## listing it here would keep nothing on any board — including every board with
+## no submarine on it — for a read only a submarine makes. Where a dial does
+## warrant the map, the dive's read is the last branch of a plan whose earlier
+## branches decide whether it is reached, so a re-score the cache skipped would
+## have taken the same branch and the moment the map is built cannot move; where
+## none does, the dive reads no map at all and there is nothing here to guard.
+## The narrow sea in tests/unit/test_ai_plan_cache.gd is what holds that.
 func _weighs_threat() -> bool:
 	return (
 		profile.threat_aversion > 0.0

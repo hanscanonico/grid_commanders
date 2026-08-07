@@ -275,12 +275,22 @@ const OPEN_CHANNEL := "[terrain]\nSSSSSSSS.SSSSSS\n[units]\n1 s 6 0\n2 B 12 0"
 const CLOSED_POCKET := "[terrain]\n......SS.SSSSSS\n[units]\n1 s 6 0\n2 B 12 0"
 
 
+## A tier that has bought a threat map, so `_best_refuge` has one to rank the
+## dive's cells by. COM-200's zero-dial pair below plays the same two boards on
+## the tier that has not.
+func _threat_weighing_profile() -> AIProfile:
+	var profile := AIProfile.new()
+	profile.threat_aversion = 0.1
+	return profile
+
+
 ## A dive is a whole turn, so the boat spends the movement half of it: it goes
 ## under somewhere the guns above cannot reach, not where it happened to be
-## standing when it decided to.
+## standing when it decided to. That needs a threat dial live to pay for the map
+## the ranking reads — see the zero-dial pair below for the tier that will not.
 func test_a_threatened_sub_dives_where_it_is_safer() -> void:
 	var state := _state(OPEN_CHANNEL)
-	var command := AIController.new(unit_db).plan_next_command(state)
+	var command := AIController.new(unit_db, _threat_weighing_profile()).plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
 	if not (command is DiveCommand):
 		return
@@ -297,12 +307,48 @@ func test_a_threatened_sub_dives_where_it_is_safer() -> void:
 ## boat's own cell is in the comparison at no cost, so it holds every tie.
 func test_a_sub_with_nowhere_safer_dives_in_place() -> void:
 	var state := _state(CLOSED_POCKET)
-	var command := AIController.new(unit_db).plan_next_command(state)
+	var command := AIController.new(unit_db, _threat_weighing_profile()).plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
 	if not (command is DiveCommand):
 		return
 	assert_eq(command.validate(state), "")
 	assert_eq((command as DiveCommand).path, _path([Vector2i(6, 0)]))
+
+
+# --- COM-200: a zero-dial tier does not pay for the map ------------------------
+#
+# threat_aversion, advance_threat_tiles and withdraw_weight are all 0.0 on Normal
+# (data/ai/default.tres) — the same threatened boat above, played by the tier
+# that has not bought a threat map.
+
+
+## Two things have to hold at once: nothing here builds the map a lone submarine
+## used to turn on for the whole turn, and the dive itself still happens — it
+## just does not buy a safer cell first. With no map to rank cells by, a healthy
+## direct-fire hull has nothing left that prefers one reachable cell over
+## another: `_standoff_rank` only reaches an indirect unit
+## (`AttackRange.is_indirect` is false for a submarine's torpedo), and a healthy
+## hull has no repair cells either, so cost is the only key still live — and
+## staying put is the cheapest cell there is.
+func test_a_zero_dial_tier_dives_in_place_without_building_the_threat_map() -> void:
+	var state := _state(OPEN_CHANNEL)
+	var context := AIPlanningContext.new(unit_db)
+	context.begin(state)
+	var command := AIUnitActionPlanner.new(AIProfile.new()).plan_next(context)
+	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
+	assert_false(
+		context.threat_map_built(),
+		"a lone submarine must not be what turns ThreatMap.build on for the whole turn"
+	)
+	if not (command is DiveCommand):
+		return
+	assert_eq(command.validate(state), "")
+	assert_true((command as DiveCommand).submerge)
+	assert_eq(
+		(command as DiveCommand).path,
+		_path([Vector2i(6, 0)]),
+		"no threat dial is live, so nothing ranks the safer cell over this one"
+	)
 
 
 # --- what counts as a threat ----------------------------------------------------

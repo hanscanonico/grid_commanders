@@ -403,7 +403,7 @@ func _consider_withdraw(
 	var staying := threat.incoming_damage(state, unit, unit.cell)
 	if staying <= 0:
 		return  # nothing is aiming at us, so there is nothing to buy
-	var refuge := _best_refuge(context, unit, reachable)
+	var refuge := _best_refuge(context, unit, reachable, threat)
 	var avoided := staying - threat.incoming_damage(state, unit, refuge)
 	if avoided <= 0:
 		return  # nowhere we can reach is safer than standing still
@@ -419,12 +419,16 @@ func _consider_withdraw(
 ##
 ## One answer for the two things that step out of trouble, the withdrawal and the
 ## dive: where it is safer is one question, and a second walk over the same threat
-## map would be a second opinion on it.
+## map would be a second opinion on it. `threat` is null on a tier with every
+## threat dial at zero — the dive is the one caller that can reach here without
+## one, since `dive_score` is live everywhere (see AIPlanCache._weighs_threat) —
+## and `_incoming` reads a null map as the same non-answer everywhere, which
+## folds the first key out of `_better_refuge` and ranks purely by stand-off,
+## repair and cost.
 func _best_refuge(
-	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, threat: ThreatMap
 ) -> Vector2i:
 	var state := context.state
-	var threat := context.threat_map()
 	var refits := _repair_cells(context, unit)
 	# The enemy this unit is orienting on, and its own ring, both asked for once
 	# for the whole sweep — see _standoff_rank for why the goal is asked for here
@@ -432,14 +436,14 @@ func _best_refuge(
 	var goal := _enemy_goal(context, unit)
 	var ring := AttackRange.band(state, unit)
 	var best_cell := unit.cell
-	var best_incoming := threat.incoming_damage(state, unit, unit.cell)
+	var best_incoming := _incoming(threat, state, unit, unit.cell)
 	var best_stand := _standoff_rank(unit.cell, goal, ring)
 	var best_repairs := refits.has(unit.cell)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var incoming := threat.incoming_damage(state, unit, cell)
+		var incoming := _incoming(threat, state, unit, cell)
 		var stand := _standoff_rank(cell, goal, ring)
 		var repairs := refits.has(cell)
 		var cost: int = reachable.costs[cell]
@@ -452,6 +456,14 @@ func _best_refuge(
 			best_repairs = repairs
 			best_cost = cost
 	return best_cell
+
+
+## `threat`'s reading of `cell`, or every cell held equal when there is no map to
+## ask — the honest answer for a tier that has not paid to build one.
+static func _incoming(threat: ThreatMap, state: GameState, unit: Unit, cell: Vector2i) -> int:
+	if threat == null:
+		return 0
+	return threat.incoming_damage(state, unit, cell)
 
 
 ## Safety first, then the unit's own weapon, then ground that puts it back
@@ -556,8 +568,28 @@ func _consider_dive(
 	if not wants or profile.dive_score <= plan.score:
 		return
 	plan.score = profile.dive_score
-	var refuge := _best_refuge(context, unit, reachable)
+	# dive_score is live on every tier, unlike the three dials that build the
+	# map — so a lone submarine on a threat-blind tier must not be what turns
+	# ThreatMap.build on for the whole turn. Only reach for the real map when
+	# something else already warrants its cost.
+	var threat: ThreatMap = null
+	if _weighs_threat():
+		threat = context.threat_map()
+	var refuge := _best_refuge(context, unit, reachable, threat)
 	plan.command = DiveCommand.new(unit, reachable.path_to(refuge), not unit.dived)
+
+
+## Whether any dial that builds the threat map is live. Mirrors
+## AIPlanCache._weighs_threat rather than calling it: the cache asks the
+## question to decide what a *kept* plan can depend on, this asks it to decide
+## what a *fresh* one may build, and each stays free to add a dial without
+## coupling the other's read to it.
+func _weighs_threat() -> bool:
+	return (
+		profile.threat_aversion > 0.0
+		or profile.advance_threat_tiles > 0.0
+		or profile.withdraw_weight > 0.0
+	)
 
 
 ## Whether an enemy that could damage `unit` can plausibly reach it next turn,
