@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Break the line and take their headquarters."
+cell = Vector2i(19, 2)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The line held past day 8."
+last_day = 8
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the board at once."
+count = 7
+
+[resource]
+script = ExtResource("1")
+id = &"hc15_the_regents_gate"
+title = "The Regent's Gate"
+location = "The gatehouse, capital outskirts"
+map_path = "res://maps/campaign/the_hollow_crown/hc15_the_regents_gate.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"sable_wren",
+2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 5
+briefing = Array[String]([
+"Vance styled herself regent the moment the Directorate fell. The gate is the proof she needs.",
+"Eight days. Every checkpoint this war has closed behind us. This one does not get to.",
+"Take her headquarters. A regent with no gate is not a regent."
+])
+victory = Array[String]([
+"The Regent's Gate is ours. Vance's claim to the title just lost its only proof.",
+"Whatever she calls herself now, it is not regent."
+])
+defeat = "The gate held, and Vance's claim held with it — one gatehouse short of the whole city."

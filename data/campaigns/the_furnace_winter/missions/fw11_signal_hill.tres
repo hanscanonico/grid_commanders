@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Retake depot 1 of the fuel road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Retake depot 2 of the fuel road."
+cell = Vector2i(11, 3)
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("2")
+text = "Retake depot 3 of the fuel road."
+cell = Vector2i(17, 3)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The road stayed closed past day 8."
+last_day = 8
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the road at once."
+count = 7
+
+[resource]
+script = ExtResource("1")
+id = &"fw11_signal_hill"
+title = "Signal Hill"
+location = "The signal relay road"
+map_path = "res://maps/campaign/the_furnace_winter/fw11_signal_hill.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"orin_flux",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 5
+briefing = Array[String]([
+"Ferrow dug in at Signal Hill's three relays, expecting us to besiege one at a time.",
+"Eight days. His raiders are fast — faster than a siege can afford.",
+"Take them together or not at all. A single depot held back funds the other two."
+])
+victory = Array[String]([
+"Signal Hill answers to us on all three relays. Ferrow has nothing left to bounty.",
+"The road is ours, and the raiders who ran it are three depots short of a paycheck."
+])
+defeat = "Signal Hill stayed dark, and Ferrow's raiders kept their bounty and their ground."

@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Retake depot 1 of the fuel road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Retake depot 2 of the fuel road."
+cell = Vector2i(13, 3)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The road stayed closed past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the road at once."
+count = 6
+
+[resource]
+script = ExtResource("1")
+id = &"fw07_pipeline_east"
+title = "Pipeline East"
+location = "The eastern fuel road"
+map_path = "res://maps/campaign/the_furnace_winter/fw07_pipeline_east.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"iris_colt",
+2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 7
+briefing = Array[String]([
+"Two depots stand between us and the eastern fields — both garrisoned, both closed.",
+"There is no convoy here to escort, only the road itself. Take the depots in order.",
+"Ten days. Vance will not leave them undefended for an eleventh."
+])
+victory = Array[String]([
+"Both depots are open, and the eastern road is running fuel again.",
+"Vance's garrisons pulled back to the next junction. We will meet them there."
+])
+defeat = "The road stayed closed, and the eastern fields stayed dark for another season."

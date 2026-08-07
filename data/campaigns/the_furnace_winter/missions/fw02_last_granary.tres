@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the crossroads base. It is the only way this army builds anything."
+cell = Vector2i(6, 4)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "Vale's garrison held the crossroads past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Take the northern relay as well."
+cell = Vector2i(9, 2)
+
+[resource]
+script = ExtResource("1")
+id = &"fw02_last_granary"
+title = "Last Granary"
+location = "Milltown, three miles from the line"
+map_path = "res://maps/campaign/the_furnace_winter/fw02_last_granary.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"gideon_holt",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"The granary town has one base left standing. Ferrow wants it burned rather than held.",
+"We start with an HQ and nothing else — everything from here is taken, not built.",
+"Reach the base before he decides burning it is faster than defending it."
+])
+victory = Array[String]([
+"The base held. Milltown will not go hungry, and neither will our column.",
+"Ferrow's raiders scattered into the treeline. They will be back — richer next time."
+])
+defeat = "The base burned rather than change hands, and Milltown starves through the freeze."

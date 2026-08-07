@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take Vale's forward headquarters."
+cell = Vector2i(19, 11)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("3")
+text = "Hold seven properties by the deadline."
+count = 7
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
+text = "The foundry kept running past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("3")
+text = "Hold every property on the board at once."
+count = 7
+
+[resource]
+script = ExtResource("1")
+id = &"fw18_vales_furnace"
+title = "Vale's Furnace"
+location = "The furnace floor, Iron's industrial heart"
+map_path = "res://maps/campaign/the_furnace_winter/fw18_vales_furnace.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"alina_ward",
+2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"This is the furnace itself, and Vale is not leaving it to an enforcer.",
+"Every depot, every base, every checkpoint this winter answered to keep us out of this room.",
+"Take his headquarters here and the toll he has been collecting all winter stops being collected at all."
+])
+victory = Array[String]([
+"Vale's headquarters is ours, and the furnace floor with it. The toll is over.",
+"The Furnace Winter ends the way every embargo ends — with the gate open and the ledger closed for good."
+])
+defeat = "The furnace kept running for Vale, and the coldest winter in memory goes on being the price of his ledger."

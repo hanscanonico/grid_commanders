@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Retake depot 1 of the fuel road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Retake depot 2 of the fuel road."
+cell = Vector2i(15, 3)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The road stayed closed past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the road at once."
+count = 6
+
+[resource]
+script = ExtResource("1")
+id = &"fw09_coalyard_junction"
+title = "Coalyard Junction"
+location = "The coalyard spur"
+map_path = "res://maps/campaign/the_furnace_winter/fw09_coalyard_junction.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"cassian_rook",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"Ferrow took the coalyard depots personally — there is bounty in denying us fuel.",
+"He is paid per column he breaks. Two depots, nine days, and he does not get paid.",
+"Move as one column, not three. He cannot bounty what he cannot isolate."
+])
+victory = Array[String]([
+"The coalyard is running again, and Ferrow collected nothing for the trouble.",
+"He was paid in nothing. That is the only language he reads."
+])
+defeat = "The coalyard stayed shut, and Ferrow's ledger grew by exactly our losses."

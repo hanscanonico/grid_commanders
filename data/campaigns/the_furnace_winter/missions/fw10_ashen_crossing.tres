@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Retake depot 1 of the fuel road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Retake depot 2 of the fuel road."
+cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("2")
+text = "Retake depot 3 of the fuel road."
+cell = Vector2i(15, 3)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The road stayed closed past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the road at once."
+count = 7
+
+[resource]
+script = ExtResource("1")
+id = &"fw10_ashen_crossing"
+title = "Ashen Crossing"
+location = "The ashen road, three depots"
+map_path = "res://maps/campaign/the_furnace_winter/fw10_ashen_crossing.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"lyra_quill",
+2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"Three depots this time, and Vance has learned to space her garrisons out.",
+"Nine days for three checkpoints is tight. Do not stop to hold ground you have already taken.",
+"The far depot funds the middle one. Take them in order and starve the chain."
+])
+victory = Array[String]([
+"All three depots are open. The ashen road runs east to west again.",
+"Vance's chain is broken at every link. She will not space them the same way twice."
+])
+defeat = "The ashen road stayed a chain of closed gates, and the deadline closed with it."

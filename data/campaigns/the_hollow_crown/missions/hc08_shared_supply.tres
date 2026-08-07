@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the contested relay for the alliance."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("3")
+text = "Keep the marshal's army in the field."
+team = 2
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
+text = "The rivals held the field past day 12."
+last_day = 12
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("5")
+text = "Hold every property the alliance can reach."
+count = 5
+
+[resource]
+script = ExtResource("1")
+id = &"hc08_shared_supply"
+title = "Shared Supply"
+location = "The depot road behind the ridge"
+map_path = "res://maps/campaign/the_hollow_crown/hc08_shared_supply.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3, 4])
+seats = Array[int]([])
+sides = {1: 0, 2: 0, 3: 1, 4: 1}
+commanders = {
+1: &"sera_lark",
+2: &"viktor_draeg",
+3: &"dane_ferrow",
+4: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 8
+briefing = Array[String]([
+"Ferrow and Vance both want the depot road — one for bounty, one for the ledger.",
+"Draeg's column is thinner than he let on. Losing him loses the alliance with it.",
+"Hold the relay and keep the marshal's army in the field. Both, not either."
+])
+victory = Array[String]([
+"The depot road is shared, and Draeg's banner is still standing at the end of it.",
+"Ferrow and Vance pulled back to lick two very different kinds of wound."
+])
+defeat = "Draeg's army broke, and the alliance broke with it before the depot road was ever decided."

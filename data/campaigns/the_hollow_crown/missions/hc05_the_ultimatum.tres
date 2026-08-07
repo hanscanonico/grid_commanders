@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Break the line and take their headquarters."
+cell = Vector2i(19, 2)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The line held past day 8."
+last_day = 8
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the board at once."
+count = 7
+
+[resource]
+script = ExtResource("1")
+id = &"hc05_the_ultimatum"
+title = "The Ultimatum"
+location = "The border crossing, Meridian reach"
+map_path = "res://maps/campaign/the_hollow_crown/hc05_the_ultimatum.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"halden_marr",
+2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 5
+briefing = Array[String]([
+"Morn sent an ultimatum instead of a probe this time — surrender the crossing or he takes it.",
+"Eight days to answer him with force instead of a courier.",
+"Take his headquarters. That is the only answer he will respect."
+])
+victory = Array[String]([
+"Morn's ultimatum answered itself the moment his headquarters fell.",
+"He withdrew east, quieter than he arrived. Something is pulling his attention home."
+])
+defeat = "The ultimatum stood, and the crossing answers to Morn now."

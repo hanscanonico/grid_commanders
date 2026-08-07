@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the contested relay for the alliance."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("3")
+text = "Keep the marshal's army in the field."
+team = 2
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
+text = "The rivals held the field past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("5")
+text = "Hold every property the alliance can reach."
+count = 5
+
+[resource]
+script = ExtResource("1")
+id = &"hc12_the_bargain_kept"
+title = "The Bargain Kept"
+location = "The ridge's last crossing"
+map_path = "res://maps/campaign/the_hollow_crown/hc12_the_bargain_kept.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3, 4])
+seats = Array[int]([])
+sides = {1: 0, 2: 0, 3: 1, 4: 1}
+commanders = {
+1: &"orin_flux",
+2: &"viktor_draeg",
+3: &"radek_morn",
+4: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"Morn and Ferrow together are the worst pairing left on the board — a planner and a raider.",
+"This is the ridge's last crossing. Past it, the road runs straight to the capital.",
+"Hold the relay and keep Draeg's army standing. The bargain was never going to be easy to keep."
+])
+victory = Array[String]([
+"The last crossing is ours, and Draeg's banner is still flying at the end of the ridge.",
+"The bargain held through its hardest test. The road to the capital is open."
+])
+defeat = "The last crossing fell, and the bargain broke with it — the road to the capital stays shut."

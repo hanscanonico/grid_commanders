@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the crossroads base. It is the only way this army builds anything."
+cell = Vector2i(6, 5)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "Vale's garrison held the crossroads past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Take the northern relay as well."
+cell = Vector2i(9, 2)
+
+[resource]
+script = ExtResource("1")
+id = &"fw04_ice_road"
+title = "Ice Road"
+location = "The frozen causeway, north of Kestrel"
+map_path = "res://maps/campaign/the_furnace_winter/fw04_ice_road.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"tomas_reed",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 5
+briefing = Array[String]([
+"The causeway base is frozen solid but still a factory once it is ours.",
+"Ferrow crossed at dawn with three columns and a fourth already inbound.",
+"Every column he breaks funds the next one. We cannot afford to feed him."
+])
+victory = Array[String]([
+"The causeway is open, and the base is building for us instead of paying his raiders.",
+"Ferrow pulled back with less than he came for. That is the only language he reads."
+])
+defeat = "The causeway stayed his, and the toll went on being paid in armour and men."

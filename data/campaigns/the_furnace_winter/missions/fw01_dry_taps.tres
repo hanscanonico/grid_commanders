@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the crossroads base. It is the only way this army builds anything."
+cell = Vector2i(6, 4)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "Vale's garrison held the crossroads past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Take the northern relay as well."
+cell = Vector2i(9, 2)
+
+[resource]
+script = ExtResource("1")
+id = &"fw01_dry_taps"
+title = "Dry Taps"
+location = "The customs road, Meridian frontier"
+map_path = "res://maps/campaign/the_furnace_winter/fw01_dry_taps.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"alina_ward",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"Vale closed the depots at first frost and called it a toll dispute. Our HQ has no factory behind it.",
+"The old crossroads base is still unclaimed. Whoever reaches it first builds first.",
+"Move fast — Ferrow's garrison already outnumbers us."
+])
+victory = Array[String]([
+"The depot is ours, and the first tanks are already rolling off it.",
+"Ferrow's raiders pulled back east. The freeze just got a little less final."
+])
+defeat = "The depot stayed shut, and so did every factory behind our line."

@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take Vale's forward headquarters."
+cell = Vector2i(16, 10)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The foundry kept running past day 12."
+last_day = 12
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the board at once."
+count = 7
+
+[resource]
+script = ExtResource("1")
+id = &"fw14_slag_row"
+title = "Slag Row"
+location = "The slag heaps, foundry district"
+map_path = "res://maps/campaign/the_furnace_winter/fw14_slag_row.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"ivar_thorne",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 8
+briefing = Array[String]([
+"Ferrow's bounty runs hottest here — the slag row funds half his raiding column.",
+"He starts richer, same as Vance did. Vale spends the same doctrine on every enforcer.",
+"Break his headquarters and the bounty stops paying out from this district."
+])
+victory = Array[String]([
+"Slag Row answers to us. Ferrow's bounty book just lost its richest page.",
+"Every raid he ran from here is a raid he cannot run again."
+])
+defeat = "Slag Row stayed his, and the bounty kept paying out of a headquarters we never took."

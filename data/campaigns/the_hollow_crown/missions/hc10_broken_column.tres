@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the contested relay for the alliance."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("3")
+text = "Keep the marshal's army in the field."
+team = 2
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
+text = "The rivals held the field past day 11."
+last_day = 11
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("5")
+text = "Hold every property the alliance can reach."
+count = 5
+
+[resource]
+script = ExtResource("1")
+id = &"hc10_broken_column"
+title = "Broken Column"
+location = "The ridge road, eastern approach"
+map_path = "res://maps/campaign/the_hollow_crown/hc10_broken_column.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3, 4])
+seats = Array[int]([])
+sides = {1: 0, 2: 0, 3: 1, 4: 1}
+commanders = {
+1: &"mara_voss",
+2: &"viktor_draeg",
+3: &"cass_orlov",
+4: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 7
+briefing = Array[String]([
+"Orlov commits by the numbers and Ferrow raids for bounty — a strange pairing, but a dangerous one.",
+"Draeg's column took losses at the last crossing. He cannot afford to take the next fight alone.",
+"Hold the relay and keep his army whole. A broken column is a broken alliance."
+])
+victory = Array[String]([
+"The relay holds, and Draeg's column is bloodied but whole.",
+"Orlov's numbers and Ferrow's bounty both came up short against two armies fighting as one."
+])
+defeat = "Draeg's column broke on the ridge road, and the alliance lost its first marshal."

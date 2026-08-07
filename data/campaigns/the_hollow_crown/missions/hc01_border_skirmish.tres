@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Break the line and take their headquarters."
+cell = Vector2i(15, 2)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The line held past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the board at once."
+count = 6
+
+[resource]
+script = ExtResource("1")
+id = &"hc01_border_skirmish"
+title = "Border Skirmish"
+location = "The Meridian-Iron line, north crossing"
+map_path = "res://maps/campaign/the_hollow_crown/hc01_border_skirmish.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"cassian_rook",
+2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 7
+briefing = Array[String]([
+"Marshal Morn tests the line every spring. This year he brought more than a probing column.",
+"The Directorate still stands, officially. Nobody at this crossing believes it will for long.",
+"Hold the line and push him back east of the crossing."
+])
+victory = Array[String]([
+"Morn's column withdrew in good order, which for him counts as a warning shot answered.",
+"The line holds a while longer. Whatever is happening inside Iron, it has not reached us yet."
+])
+defeat = "Morn's column crossed and dug in, and the spring test just became a permanent fixture."

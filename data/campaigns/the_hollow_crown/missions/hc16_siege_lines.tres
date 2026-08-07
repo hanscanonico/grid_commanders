@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the contested relay for the alliance."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("3")
+text = "Keep the marshal's army in the field."
+team = 2
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
+text = "The rivals held the field past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("5")
+text = "Hold every property the alliance can reach."
+count = 5
+
+[resource]
+script = ExtResource("1")
+id = &"hc16_siege_lines"
+title = "Siege Lines"
+location = "The capital's siege works"
+map_path = "res://maps/campaign/the_hollow_crown/hc16_siege_lines.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3, 4])
+seats = Array[int]([])
+sides = {1: 0, 2: 0, 3: 1, 4: 1}
+commanders = {
+1: &"alina_ward",
+2: &"viktor_draeg",
+3: &"cass_orlov",
+4: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[String]([
+"Orlov and Ferrow dug siege lines around the capital itself, each hoping to starve the other's claim out along with ours.",
+"Draeg's army is what stands between those lines closing. Keep him in the field.",
+"Take the relay and break the siege from the inside."
+])
+victory = Array[String]([
+"The siege lines are broken, and Draeg's banner still flies at the centre of them.",
+"Orlov and Ferrow's siege starved nothing but their own claims."
+])
+defeat = "The siege lines held, and the capital starved under a claim that was never ours to break."

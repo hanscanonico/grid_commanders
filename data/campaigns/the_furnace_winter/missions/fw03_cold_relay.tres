@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the crossroads base. It is the only way this army builds anything."
+cell = Vector2i(7, 4)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "Vale's garrison held the crossroads past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Take the northern relay as well."
+cell = Vector2i(10, 2)
+
+[resource]
+script = ExtResource("1")
+id = &"fw03_cold_relay"
+title = "Cold Relay"
+location = "The relay station, Kestrel Hills"
+map_path = "res://maps/campaign/the_furnace_winter/fw03_cold_relay.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"ines_calder",
+2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 5
+briefing = Array[String]([
+"Vance runs the checkpoints like a ledger — nothing moves without her signature.",
+"The relay base is the only unclaimed production for forty miles. We move on it first.",
+"Her garrison is larger than ours. Speed has to answer for numbers."
+])
+victory = Array[String]([
+"The relay is ours. Vance's ledger just lost its busiest entry.",
+"For the first time this winter, we can build faster than she can reinforce."
+])
+defeat = "Vance's garrison held the relay, and the ledger closed against us."
