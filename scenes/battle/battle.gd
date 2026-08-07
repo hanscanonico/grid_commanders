@@ -1135,6 +1135,9 @@ func _close_commander_info() -> void:
 
 func start_turn() -> void:
 	action_feedback.clear_turn()
+	# An air or sea unit that ran its tank dry is already gone from the sim, so
+	# the sprite table is resynced before set_active_team walks it.
+	view.sync_sprites()
 	view.set_active_team(game.current_team)
 	if _needs_handoff():
 		_enter_handoff()
@@ -1145,14 +1148,11 @@ func start_turn() -> void:
 ## Everything the incoming team is allowed to see, run once the device has
 ## actually changed hands (immediately, outside fogged hot-seat).
 func _begin_turn() -> void:
-	# Units can be lost between turns with no shot fired: an air or sea unit that
-	# ran its tank dry is already gone from the sim by now, so the board is
-	# resynced before it is drawn — and a side wiped out by its own fuel gauge
-	# ends the match here, exactly as one shot to pieces does.
-	view.sync_sprites()
 	refresh_fog()
 	refresh_hud()
 	refresh_panel()
+	# A side wiped out by its own fuel gauge ends the match here, exactly as one
+	# shot to pieces does.
 	if game.winner != 0:
 		enter_victory()
 		return

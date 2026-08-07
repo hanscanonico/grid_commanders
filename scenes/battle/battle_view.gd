@@ -94,7 +94,7 @@ var perspective: BattlePerspective
 ## and assigns it, like everything else the view draws with.
 var identity: SideIdentity
 
-var _sprites: Dictionary = {}  # Unit -> UnitSprite
+var _sprites: Dictionary[Unit, UnitSprite] = {}
 ## Teams the computer plays, from `set_ai_teams`. The view only needs them to know
 ## whose controls it must not offer; Battle owns the list.
 var _ai_teams: Array[int] = []
@@ -282,7 +282,12 @@ func release_sprite(unit: Unit) -> UnitSprite:
 ## `refresh_sprite` last decided about seeing it.
 func set_active_team(team: int) -> void:
 	for unit in game.units:
-		_sprites[unit].set_active_team(team)
+		# The sim can outrun the sprite table between commands, so a unit here may
+		# not have one yet — skip it rather than index blind.
+		var sprite: UnitSprite = _sprites.get(unit)
+		if sprite == null:
+			continue
+		sprite.set_active_team(team)
 
 
 ## Brings every sprite back in step with the sim in one pass, for the changes
