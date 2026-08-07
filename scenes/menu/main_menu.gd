@@ -813,6 +813,19 @@ func _map_cell_name(map: MapData, selected: bool) -> String:
 	return cell_name
 
 
+## The caption `_refresh_map_facts` shows for `map`, factored out so the budget
+## check can measure every board without touching `_selected_map`.
+func _map_caption_text(map: MapData) -> String:
+	var parts := [
+		map.width,
+		map.height,
+		_armies_label(map.player_count()),
+		map.property_cells().size(),
+		map.description,
+	]
+	return ("%d×%d · %s · %d properties · %s" % parts).to_upper()
+
+
 ## Header and persistent caption, read off the board itself so no hand-kept table
 ## can drift from it. Tooltips repeat the facts but are never required to choose.
 func _refresh_map_facts() -> void:
@@ -824,19 +837,7 @@ func _refresh_map_facts() -> void:
 	_map_header.text = (
 		"%s · %d×%d" % [MapCatalog.display_name(map.source_path), map.width, map.height]
 	)
-	_map_caption.text = (
-		(
-			"%d×%d · %s · %d properties · %s"
-			% [
-				map.width,
-				map.height,
-				_armies_label(map.player_count()),
-				map.property_cells().size(),
-				map.description,
-			]
-		)
-		. to_upper()
-	)
+	_map_caption.text = _map_caption_text(map)
 	# How many seats there are is the board's answer (plan D1), so the strip is
 	# re-dealt from the selection rather than from anything the player set.
 	if _seat_strip != null:
@@ -1127,13 +1128,13 @@ func _difficulty_follows_mode() -> bool:
 
 ## No board may cost the panel a line the reserved caption does not have — the
 ## COM-5 class again, where the layout budget quietly depended on the selection.
-## Measured on the live label at its settled width, so it is the real wrap.
+## Measured on the live label's text alone; `_selected_map` and the seat strip
+## it would otherwise re-deal per board (COM-48's capture workaround) stay put.
 func _caption_budget_holds() -> bool:
 	var passed := true
-	var chosen := _selected_map
+	var words := _map_caption.text
 	for i in _maps.size():
-		_selected_map = i
-		_refresh_map_facts()
+		_map_caption.text = _map_caption_text(_maps[i])
 		if _map_caption.get_line_count() > MAP_CAPTION_LINES:
 			push_error(
 				(
@@ -1142,6 +1143,5 @@ func _caption_budget_holds() -> bool:
 				)
 			)
 			passed = false
-	_selected_map = chosen
-	_refresh_map_facts()
+	_map_caption.text = words
 	return passed

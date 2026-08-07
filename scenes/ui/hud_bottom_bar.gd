@@ -57,9 +57,7 @@ var _power_name: Label
 var _meter_fill: Panel
 var _meter_frame: Panel
 var _charge_label: Label
-var _co_block: Control
 
-var _unit_block: Control
 var _unit_data: Control
 var _unit_icon: TextureRect
 var _unit_name: Label
@@ -68,7 +66,6 @@ var _pips: HpPips
 var _fuel_label: Label
 var _ammo_label: Label
 
-var _terrain_block: Control
 var _terrain_icon: TextureRect
 var _terrain_name: Label
 var _terrain_def: Label
@@ -125,7 +122,6 @@ func _build_commander(row: HBoxContainer) -> void:
 	block.custom_minimum_size = Vector2(UiTheme.HUD_CO_MIN_W, 0)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
-	_co_block = block
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 4)
@@ -169,7 +165,6 @@ func _build_unit(row: HBoxContainer) -> void:
 	block.add_theme_constant_override("separation", UiTheme.HUD_GAP)
 	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(block)
-	_unit_block = block
 
 	_unit_icon = TextureRect.new()
 	_unit_icon.custom_minimum_size = Vector2(UiTheme.HUD_UNIT_ICON, UiTheme.HUD_UNIT_ICON)
@@ -212,7 +207,6 @@ func _build_terrain(row: HBoxContainer) -> void:
 	block.add_theme_constant_override("separation", 5)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
-	_terrain_block = block
 
 	_terrain_icon = TextureRect.new()
 	_terrain_icon.custom_minimum_size = Vector2(UiTheme.HUD_TILE_ICON, UiTheme.HUD_TILE_ICON)

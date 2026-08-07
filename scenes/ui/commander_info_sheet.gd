@@ -46,8 +46,8 @@ func open(commanders_by_team: Dictionary, sides: Dictionary = {}) -> void:
 	# classic here too: two Iron doctrines read "IRON DOMINION" over slate and blue.
 	var identity := SideIdentity.resolve(commanders_by_team)
 	for child in _cards.get_children():
-		child.queue_free()
 		_cards.remove_child(child)
+		child.queue_free()
 	_frames.clear()
 	for team: int in _seat_order(commanders_by_team, sides):
 		_titled_card(_cards, identity, team).bind(commanders_by_team.get(team))

@@ -119,6 +119,9 @@ const SEAM_MARGIN := 18.0
 ## owner-tinted city ridge follows the same team colour the board paints, and the
 ## two depths one cell is read at cannot overwrite each other.
 static var _tint_cache: Dictionary = {}
+## The atlas as a mutable RGBA8 Image, decompressed once for `_cell_tint`'s reads
+## (MapThumbnail._atlas_source_image documents the same trade).
+static var _atlas_image: Image
 
 var unit: Unit
 var terrain: TerrainType
@@ -775,6 +778,16 @@ static func _terrain_atlas() -> Texture2D:
 	return load(BattleView.ATLAS_PATH)
 
 
+## The atlas image `_cell_tint` samples, decompressed once and kept — `get_image`
+## on every cache miss was ~140 decompressions a run.
+static func _atlas_source_image() -> Image:
+	if _atlas_image == null:
+		_atlas_image = _terrain_atlas().get_image()
+		if _atlas_image.get_format() != Image.FORMAT_RGBA8:
+			_atlas_image.convert(Image.FORMAT_RGBA8)
+	return _atlas_image
+
+
 ## The terrain tile's average colour, for the horizon ridge behind it. Sampled
 ## off the art rather than tabled here, so a new terrain — or a repainted one —
 ## needs no entry in the presentation layer at all.
@@ -801,8 +814,8 @@ static func _cell_tint(column: int, row: int, window: Rect2i) -> Color:
 	var key := [column, row, window]
 	if _tint_cache.has(key):
 		return _tint_cache[key]
-	var tint := Color.SLATE_GRAY
-	var image: Image = _terrain_atlas().get_image()
+	var tint := CutscenePalette.PLATE
+	var image := _atlas_source_image()
 	if image != null:
 		var total := Color(0.0, 0.0, 0.0)
 		var samples := 0

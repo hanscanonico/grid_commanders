@@ -150,6 +150,7 @@ func _note(text: String) -> Label:
 ## that plays the wrong match.
 func _fill(summaries: Array[ReplayFile.Summary]) -> void:
 	for button in _row_buttons:
+		_rows.remove_child(button)
 		button.queue_free()
 	_row_buttons.clear()
 	_paths = PackedStringArray()
