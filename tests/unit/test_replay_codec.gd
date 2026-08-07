@@ -226,5 +226,19 @@ func test_a_header_that_is_not_one_says_which_part_is_missing() -> void:
 ## disposable, so the line under it is the whole migration policy — an older
 ## format is refused, out loud, rather than read.
 func test_an_older_format_is_refused_rather_than_read() -> void:
-	assert_eq(ReplayCodec.FORMAT, 2)
+	assert_eq(ReplayCodec.FORMAT, 3)
 	assert_string_contains(ReplayCodec.header_error({"replay": 1, "opening": {}}), "format 1")
+
+
+# --- the self-check (plan D3) ---------------------------------------------------
+
+
+## Second Wind reads `refreshable`, so a rule change to which actions leave it
+## set has to be able to move the checkpoint — otherwise a replay recorded under
+## the old rule plays clean and only diverges at the next Second Wind (COM-173).
+func test_the_digest_notices_refreshable() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 i 0 0")
+	state.rng.seed = 1
+	var before := ReplayCodec.checkpoint(state)
+	state.units[0].refreshable = true
+	assert_ne(ReplayCodec.checkpoint(state), before)

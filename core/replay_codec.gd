@@ -27,10 +27,11 @@ extends RefCounted
 ## That is also why `encode_command` takes the state **before** the command is
 ## applied: after a drop the passenger has left the cargo it was named in.
 
-## The line format, not the save format. Bumped when a line's shape changes; a
-## replay is disposable (plan D3), so there is no upgrade path to owe and older
-## formats are refused rather than read.
-const FORMAT := 2
+## The line format, not the save format. Bumped when a line's shape changes, or
+## when the checkpoint digest starts reading a field it did not before — a replay
+## is disposable (plan D3), so there is no upgrade path to owe and older formats
+## are refused rather than read.
+const FORMAT := 3
 
 ## `DropCommand` with no passenger named — "the first loaded", which is what
 ## `DropCommand._rider` does with a null and what every single-slot transport
@@ -311,6 +312,7 @@ static func checkpoint(state: GameState) -> int:
 			unit.ammo,
 			1 if unit.acted else 0,
 			1 if unit.dived else 0,
+			1 if unit.refreshable else 0,
 			state.units.find(unit.carrier),
 		]:
 			digest = _mix(digest, value)
