@@ -1152,7 +1152,16 @@ that must survive any change; the full rationale, milestones and risk registers 
   (`campaign.tres` plus `missions/*.tres`, discovered by `CampaignDB` and never listed by hand),
   every mission owns a board under `maps/campaign/<campaign>/`, and `make campaigns`
   (`tools/check_campaigns.gd`) is the content gate — the board parses, the seating is one the
-  board deals, every objective names ground that exists, the launch builds. Five decisions:
+  board deals, every objective names ground that exists, the tier is one that ships
+  (`MissionDefinition.difficulty_error`, because `DifficultyDB.by_id` falls back to Normal
+  silently — right for a save naming a retired tier, invisible for a typo in a mission file),
+  every story line's speaker is on the roster (`story_error`), the launch builds. The story is
+  dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
+  **commander id** ("" = narration) because the roster already owns a general's name and colour
+  and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
+  sentence. `MissionSpeech` is the one drawer of a spoken line, because two screens say them —
+  the hub's briefing and `CampaignDebriefPanel`, the briefing's mirror, which plays the victory
+  dialogue or the defeat line on the way back from a battle before the hub. Five decisions:
   D1: **a mission states its match as `MatchRequest`'s own field list — seats and sides included —
   and `MissionDefinition.to_request()` is the one conversion.** The handoff's `player_team` /
   `ai_teams` pair cannot say "seats 1 and 3 play, and 1 stands with 3", which The Hollow Crown's

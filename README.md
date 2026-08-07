@@ -31,7 +31,7 @@ make verify          # the merge gate: check + lint + format-check + test, in on
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
-make campaigns       # walk all 108 authored campaign missions: board parses, seating legal, objectives name real ground, launch builds
+make campaigns       # the campaign content gate: walk all 108 authored missions (what it checks: see Campaigns below)
 make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
@@ -741,16 +741,19 @@ its own.
 
 Picking a war opens its **hub**: the mission list in play order under its block headers, locked rows
 greyed out, stars beside every cleared mission and a `cleared · stars` line up top. Picking a
-mission swaps the list for its **briefing** — the story, the objectives, what fails it, the par
-day — and **Deploy** stages it through the same launch path a skirmish uses; the button reads
+mission swaps the list for its **briefing** — the story, spoken by the generals themselves, each
+line under its speaker's name in their faction's colour, then the objectives, what fails it, the
+par day — and **Deploy** stages it through the same launch path a skirmish uses; the button reads
 **Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
 every objective at once (or by ordinary tactical victory) and lost by any failure condition — a
 deadline, a fallen ally — or by tactical defeat, and **losing outranks winning**: a deadline that
 expires on the very board that completed the objective is a failure. The victory screen reads
 **Mission complete** or **Mission failed** with the reason, counts stars — one for finishing, one
 for beating the par day, one per bonus objective — and its action button reads **Retry**, which
-re-arms the mission itself rather than rematching its finished board. Clearing a mission unlocks
-the next; replaying one keeps the best stars and best day it ever earned.
+re-arms the mission itself rather than rematching its finished board. Leaving the battle plays
+the **debrief** before the hub — what the generals say about what just happened on a win, the
+narrator's one line on a loss — with the stars earned and the mission the win unlocked. Clearing
+a mission unlocks the next; replaying one keeps the best stars and best day it ever earned.
 
 Progress is one file per campaign under `user://campaigns/`, written through a temp and a backup
 like the skirmish save, so the six wars advance independently and finishing one cannot corrupt
@@ -760,7 +763,8 @@ one skirmish save, and the hub is where a saved mission picks its board back up.
 
 `make campaigns` is the authoring gate: it walks every mission of every campaign and fails loudly
 if a board does not parse, a seating names a seat the board does not deal, an objective names
-ground that does not exist, or the launch does not build.
+ground that does not exist, a mission asks for a difficulty tier that does not ship, a story
+line's speaker is not on the commander roster, or the launch does not build.
 
 ## Replays
 

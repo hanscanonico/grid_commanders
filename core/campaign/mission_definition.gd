@@ -111,9 +111,6 @@ func definition_error(map: MapData) -> String:
 	return ""
 
 
-## Why a line of this mission's story could not be spoken, or "". Split from
-## `definition_error` because it needs the roster and that one needs the board,
-## and a caller holding only one of them should still be able to ask.
 ## Why this mission could not be launched at the tier it names, or "". Split out
 ## because `DifficultyDB.by_id` falls back to Normal for an unknown id rather
 ## than failing — which is right for a save naming a retired tier, and silent
@@ -125,6 +122,9 @@ func difficulty_error(difficulty_db: DifficultyDB) -> String:
 	return ""
 
 
+## Why a line of this mission's story could not be spoken, or "". Split from
+## `definition_error` because it needs the roster and that one needs the board,
+## and a caller holding only one of them should still be able to ask.
 func story_error(commander_db: CommanderDB) -> String:
 	for line: MissionLine in briefing + victory:
 		if line == null:

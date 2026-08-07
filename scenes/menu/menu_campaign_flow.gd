@@ -102,9 +102,6 @@ func chrome_hub() -> Dictionary[String, Control]:
 	return _hub.chrome()
 
 
-## Dev captures only: poses the hub — and optionally its first briefing — on a
-## *fresh* profile, so the picture does not depend on how far the machine that
-## took it happens to have played.
 ## Dev captures only: opens whichever campaign page this run asked for and hands
 ## back the chrome to measure it against, or an empty Callable when it asked for
 ## none. One entry point because the three pages pose identically and the menu
