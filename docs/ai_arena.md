@@ -51,6 +51,17 @@ make arena-anchors ARENA_POOL=training WORKERS=6
 the record shape, and the merge bar that keeps the arena and the Balance Lab one
 engine. This document is about the *judgement* laid over it.
 
+**Commanders are neutral by default and seatable on request.** The first
+campaign was commander-free (plan R8): `doctrine_weight` inert, no passives, no
+powers — a candidate measured as a planner. `--red-co=` / `--blue-co=` (or
+`red_co` / `blue_co` per pairing in a shard file) seat a general on a side, and
+the record carries both ids, so a campaign can now measure a vector with
+doctrines and powers live. A spec that says nothing plays exactly the
+commander-free measurement it always did, one profile duel under two different
+generals is not a mirror, and the pools and leaderboard remain commander-blind —
+a commander-seated run is its own measurement, read from its own records, until
+a campaign that seats generals owns a pool split for them.
+
 ## What a match is worth
 
 Win or lose over twenty continuous dials is a step function: almost every

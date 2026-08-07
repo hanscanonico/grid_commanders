@@ -586,9 +586,13 @@ the front of the seed range and the shard would look healthy.
   {"map": "clash", "red": "data/ai/hard.tres", "blue": "reports/ai_arena/gen1/c7.tres"}]}
 ```
 
-**Commanders are neutral throughout**, so `doctrine_weight` is inert and a
+**Commanders are neutral by default**, so `doctrine_weight` is inert and a
 candidate is measured as a planner rather than as a general. That is a scope
-choice, and the plan records it as R8.
+choice, and the plan records it as R8. It is a default rather than a rule:
+`--red-co=` / `--blue-co=` seat a commander on a side by id (a pairing says
+`red_co` / `blue_co`), the record carries both ids, and a mistyped id is refused
+rather than quietly seated neutral. A profile duel under two different generals
+is played from both seats — it stops being a mirror.
 
 ### What it writes
 

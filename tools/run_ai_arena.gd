@@ -17,6 +17,9 @@ extends SceneTree
 ##                                reports/ beside the run that wrote it.
 ##     --pairings=<file.json>     play a whole shard instead: every pairing the
 ##                                file names, which is one process's unit of work
+##     --red-co= / --blue-co=     seat a commander on a side by id (default
+##                                neutral, R8's commander-free measurement); a
+##                                shard file says `red_co`/`blue_co` per pairing
 ##     --map=scrimmage            board for pairings that name none
 ##     --seeds=4                  paired seeds per pairing, both seats each
 ##     --seed-offset=8            skip the first N seeds of that range, so a pool
@@ -41,8 +44,9 @@ extends SceneTree
 ## interesting pairing is re-run through `make balance-sim` with the full
 ## instruments on — which is the point of the two being one engine.
 ##
-## Commanders are neutral throughout, so `doctrine_weight` is inert and a
-## candidate is measured as a planner rather than as a general (plan R8).
+## Commanders are neutral by default, so `doctrine_weight` is inert and a
+## candidate is measured as a planner rather than as a general (plan R8); a
+## pairing that seats generals measures it with doctrines and powers live.
 ##
 ## Determinism: same board, seed and profiles => the same match and the same
 ## record, and the Lab plays that same match from the same seed —
@@ -67,7 +71,10 @@ func _init() -> void:
 		return
 	print("ai-arena: %d pairing(s) to play" % pairings.size())
 	var shard := ArenaShard.new(
-		TerrainDB.load_default(), UnitDB.load_default(), load(DAMAGE_CHART_PATH)
+		TerrainDB.load_default(),
+		UnitDB.load_default(),
+		load(DAMAGE_CHART_PATH),
+		CommanderDB.load_default()
 	)
 	var records := shard.play(pairings)
 	if shard.error != "":

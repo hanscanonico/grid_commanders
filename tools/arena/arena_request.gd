@@ -31,11 +31,17 @@ const DEFAULT_OUT_ROOT := "reports/ai_arena"
 ## than ignored: `offset` for `seed_offset` would quietly play the wrong seeds
 ## and the shard would look fine.
 const SHARD_KEYS: Array[String] = ["map", "seeds", "seed_offset", "days", "pairings"]
-const PAIRING_KEYS: Array[String] = ["map", "red", "blue", "seeds", "seed_offset", "days"]
+const PAIRING_KEYS: Array[String] = [
+	"map", "red", "blue", "red_co", "blue_co", "seeds", "seed_offset", "days"
+]
 
 var map_name := DEFAULT_MAP
 var red_path := ""
 var blue_path := ""
+## Commander id seated on each side, "" for the neutral default — R8's
+## commander-free measurement stays every spec's unless it asks otherwise.
+var red_co := ""
+var blue_co := ""
 ## The shard file `--pairings=` named, or "" when the flags name one pairing.
 var pairings_path := ""
 var seeds := DEFAULT_SEEDS
@@ -52,16 +58,21 @@ class Pairing:
 	var map_name := ""
 	var red_path := ""
 	var blue_path := ""
+	## Commander ids, "" for neutral.
+	var red_co := ""
+	var blue_co := ""
 	## Resolved by the request, which owns the defaults and what the shard file
 	## overrides them with.
 	var seeds := 0
 	var seed_offset := 0
 	var days := 0
 
-	## Two identical vectors. The schedule plays such a matchup from one seat,
-	## because swapping the seats of a mirror replays the identical match.
+	## Two identical vectors under two identical generals. The schedule plays
+	## such a matchup from one seat, because swapping the seats of a mirror
+	## replays the identical match — which stops being true the moment either
+	## half differs.
 	func mirror() -> bool:
-		return red_path == blue_path
+		return red_path == blue_path and red_co == blue_co
 
 
 ## Reads the flags. Returns a request whose `error` says why it is unusable
@@ -76,6 +87,10 @@ static func parse(args: PackedStringArray) -> ArenaRequest:
 			request.red_path = arg.get_slice("=", 1).strip_edges()
 		elif arg.begins_with("--blue-profile="):
 			request.blue_path = arg.get_slice("=", 1).strip_edges()
+		elif arg.begins_with("--red-co="):
+			request.red_co = _commander(arg.get_slice("=", 1))
+		elif arg.begins_with("--blue-co="):
+			request.blue_co = _commander(arg.get_slice("=", 1))
 		elif arg.begins_with("--pairings="):
 			request.pairings_path = arg.get_slice("=", 1).strip_edges()
 		elif arg.begins_with("--seeds="):
@@ -99,7 +114,7 @@ static func parse(args: PackedStringArray) -> ArenaRequest:
 ## a disk.
 func pairings(text: String) -> Array[Pairing]:
 	if pairings_path == "":
-		return [_pairing(map_name, red_path, blue_path, seeds, seed_offset, days)]
+		return [_pairing(map_name, red_path, blue_path, red_co, blue_co, seeds, seed_offset, days)]
 	var json := JSON.new()
 	if json.parse(text) != OK:
 		error = (
@@ -128,7 +143,9 @@ func run_name() -> String:
 	if pairings_path != "":
 		parts.append(pairings_path.get_file().trim_suffix(".json"))
 	else:
-		parts.append_array([map_name, slug(red_path), "vs", slug(blue_path)])
+		parts.append_array(
+			[map_name, side_label(red_path, red_co), "vs", side_label(blue_path, blue_co)]
+		)
 		parts.append("s%d" % seeds)
 		if seed_offset > 0:
 			parts.append("o%d" % seed_offset)
@@ -147,8 +164,8 @@ func run_name() -> String:
 ## request carries and cannot forget the next.
 func digest() -> String:
 	var spec := (
-		"%s|%s|%s|%s|%d|%d|%d"
-		% [pairings_path, map_name, red_path, blue_path, seeds, seed_offset, days]
+		"%s|%s|%s|%s|%s|%s|%d|%d|%d"
+		% [pairings_path, map_name, red_path, blue_path, red_co, blue_co, seeds, seed_offset, days]
 	)
 	return spec.sha1_text().substr(0, 8)
 
@@ -161,6 +178,14 @@ func artifact_dir() -> String:
 ## two profiles in one run should not share one.
 static func slug(profile_path: String) -> String:
 	return profile_path.get_file().trim_suffix(".tres")
+
+
+## A seat's readable name: the candidate's slug, plus the commander it carries
+## when one is seated — `default+gideon_holt`. Neutral seats keep the bare slug,
+## so every commander-free run keeps the directory name it always had.
+static func side_label(profile_path: String, co: String) -> String:
+	var name := slug(profile_path)
+	return name if co == "" else "%s+%s" % [name, co]
 
 
 ## A path spelled the way the engine reads one, or "" when it leaves the project.
@@ -176,6 +201,8 @@ static func project_path(path: String) -> String:
 func _check() -> void:
 	if pairings_path != "" and (red_path != "" or blue_path != ""):
 		error = "--pairings= names its own profiles; drop --red-profile/--blue-profile"
+	elif pairings_path != "" and (red_co != "" or blue_co != ""):
+		error = "--pairings= seats its own commanders; drop --red-co/--blue-co"
 	elif pairings_path == "" and (red_path == "" or blue_path == ""):
 		error = "a side is a profile: --red-profile=<path.tres> --blue-profile=<path.tres>"
 	elif out_dir != "":
@@ -210,6 +237,8 @@ func _read_pairings(shard: Dictionary) -> Array[Pairing]:
 				str(_setting(pairing, shard, "map", map_name)),
 				red,
 				blue,
+				str(pairing.get("red_co", "")),
+				str(pairing.get("blue_co", "")),
 				int(_setting(pairing, shard, "seeds", seeds)),
 				int(_setting(pairing, shard, "seed_offset", seed_offset)),
 				int(_setting(pairing, shard, "days", days))
@@ -238,13 +267,29 @@ static func _unknown_key(source: Dictionary, allowed: Array[String]) -> String:
 
 
 static func _pairing(
-	map_name: String, red: String, blue: String, seeds: int, offset: int, days: int
+	map_name: String,
+	red: String,
+	blue: String,
+	red_co: String,
+	blue_co: String,
+	seeds: int,
+	offset: int,
+	days: int
 ) -> Pairing:
 	var pairing := Pairing.new()
 	pairing.map_name = map_name
 	pairing.red_path = red
 	pairing.blue_path = blue
+	pairing.red_co = _commander(red_co)
+	pairing.blue_co = _commander(blue_co)
 	pairing.seeds = maxi(1, seeds)
 	pairing.seed_offset = maxi(0, offset)
 	pairing.days = maxi(1, days)
 	return pairing
+
+
+## "" and "none" both say the neutral seat, normalised to "" so a spec spelling
+## either reads back — and mirrors — the same.
+static func _commander(text: String) -> String:
+	var trimmed := text.strip_edges()
+	return "" if trimmed == str(CommanderType.NEUTRAL_ID) else trimmed

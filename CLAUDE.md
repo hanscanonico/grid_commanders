@@ -613,7 +613,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   arena volume the telemetry is the dominant write cost and a pairing worth a closer look is re-run
   through `make balance-sim` with every instrument on. **`BalanceSideSpec` is untouched**: its
   grammar is watch mode's too, so a profile path is a different flag rather than a third field in
-  it. Commanders are neutral throughout, which makes `doctrine_weight` inert (R8).
+  it. Commanders are neutral by default, which makes `doctrine_weight` inert (R8) — and
+  seatable per side since 2026-08-07 (`--red-co=`/`--blue-co=`, `red_co`/`blue_co` in a shard
+  file), so a campaign can measure a vector with doctrines and powers live; a spec that says
+  nothing still plays R8's commander-free measurement, and the pools and leaderboard stay
+  commander-blind until a campaign that seats generals owns a pool split for them.
   Two things had to become single authorities for the presets to stay one engine, and both are the
   merge bar reading backwards: `BalanceMatchSchedule` owns which seeds a matchup plays and which
   seatings (including that a mirror is played once), and `BalanceMatchEngine.army_value` owns the

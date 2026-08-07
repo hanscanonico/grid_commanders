@@ -82,6 +82,58 @@ func test_a_match_needs_a_candidate_a_side() -> void:
 	assert_ne(_parse([]).error, "", "neither")
 
 
+func test_a_side_may_seat_a_commander() -> void:
+	var pairings := _pairings(
+		[
+			"--red-profile=a.tres",
+			"--blue-profile=b.tres",
+			"--red-co=gideon_holt",
+			"--blue-co=none",
+		]
+	)
+	var pairing: ArenaRequest.Pairing = pairings[0]
+	assert_eq(pairing.red_co, "gideon_holt")
+	assert_eq(pairing.blue_co, "", "'none' is the neutral default, said out loud")
+
+
+func test_two_generals_on_one_profile_are_not_a_mirror() -> void:
+	# Swapping the seats of a true mirror replays the identical match; with the
+	# generals differing it does not, so both seats must be played.
+	var seated := _pairings(
+		["--red-profile=a.tres", "--blue-profile=a.tres", "--red-co=gideon_holt"]
+	)
+	assert_false((seated[0] as ArenaRequest.Pairing).mirror())
+	var bare := _pairings(["--red-profile=a.tres", "--blue-profile=a.tres"])
+	assert_true((bare[0] as ArenaRequest.Pairing).mirror())
+
+
+func test_a_commander_beside_a_shard_file_is_refused() -> void:
+	var request := _parse(["--pairings=shard.json", "--red-co=gideon_holt"])
+	assert_string_contains(request.error, "--pairings")
+
+
+func test_a_seated_commander_names_the_run_apart() -> void:
+	var bare := _parse(["--map=clash", "--red-profile=a.tres", "--blue-profile=b.tres"])
+	var seated := _parse(
+		[
+			"--map=clash",
+			"--red-profile=a.tres",
+			"--blue-profile=b.tres",
+			"--red-co=gideon_holt",
+		]
+	)
+	assert_string_contains(seated.run_name(), "a+gideon_holt")
+	assert_ne(bare.run_name(), seated.run_name(), "two measurements, two directories")
+
+
+func test_a_pairing_may_seat_its_own_generals() -> void:
+	var text := '{"pairings": [{"red": "a.tres", "blue": "b.tres", "red_co": "cass_orlov"}]}'
+	var pairings := _pairings(["--pairings=shard.json"], text)
+	var pairing: ArenaRequest.Pairing = pairings[0]
+	assert_eq(pairing.red_co, "cass_orlov")
+	assert_eq(pairing.blue_co, "")
+
+
 func test_an_unknown_flag_is_refused() -> void:
 	var request := _parse(["--red-profile=a.tres", "--blue-profile=b.tres", "--tier=hard"])
 	assert_string_contains(request.error, "--tier=hard")
