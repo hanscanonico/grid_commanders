@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid Commanders — Campaign Depth: six wars, not 108 battles</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :where(.grid, .flex) > * { min-width: 0; }
+    :where(p, h1, h2, h3, h4, li, dd, td, th, .badge) { overflow-wrap: anywhere; }
+
+    :root {
+      --gc-water: #2779b9;
+      --gc-water-dark: #155383;
+      --gc-grass: #86c95a;
+      --gc-road: #d8c49a;
+      --gc-ink: #172838;
+      --gc-red: #d94d3f;
+      --gc-blue: #3276c6;
+      --gc-iron: #6d6f7e;
+      --gc-verdant: #4e9a5c;
+      --gc-amber: #e0a03c;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--gc-ink);
+      background-color: var(--gc-water);
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+    }
+    .gc-shell {
+      width: min(1180px, calc(100% - 1.25rem));
+      margin: 0 auto;
+      border-inline: 6px solid rgba(255,255,255,.16);
+      background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+      box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+    }
+    .gc-hero {
+      position: relative; overflow: hidden; color: white;
+      background:
+        linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+        repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+    }
+    .gc-kicker { letter-spacing: .18em; text-transform: uppercase; font: 700 .75rem/1.4 ui-monospace, monospace; }
+    .gc-num {
+      display: inline-grid; place-items: center; width: 2rem; height: 2rem;
+      font: 800 .8rem/1 ui-monospace, monospace; color: white;
+      background: var(--gc-water-dark); border-radius: .25rem;
+    }
+    .pl { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .rd { border-left: 4px solid var(--gc-water-dark); }
+    .hot { color: var(--gc-red); font-weight: 700; }
+    .ok { color: var(--gc-verdant); font-weight: 700; }
+    .dim { opacity: .68; }
+    .gc-card {
+      background: white; border: 2px solid rgba(23,40,56,.14);
+      border-bottom-width: 4px; border-radius: .35rem;
+    }
+    .gc-dec {
+      background: white; border: 2px solid rgba(23,40,56,.14);
+      border-left: 6px solid var(--gc-water-dark); border-radius: .3rem;
+    }
+    .gc-dec.waiver { border-left-color: var(--gc-amber); }
+    .gc-risk { background: white; border: 2px solid rgba(217,77,63,.28); border-left: 6px solid var(--gc-red); border-radius: .3rem; }
+    .gc-ms { background: white; border: 2px solid rgba(23,40,56,.14); border-top: 5px solid var(--gc-grass); border-radius: .3rem; }
+    code, .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: rgba(23,40,56,.07); padding: .05em .3em; border-radius: .2em; font-size: .92em;
+    }
+    pre.code {
+      display: block; padding: .85rem 1rem; overflow-x: auto; line-height: 1.5;
+      background: #0f2436; color: #cfe4f5; border-radius: .3rem; font-size: .8rem;
+    }
+    pre.code .k { color: #86c95a; }
+    pre.code .c { color: #7c93a7; font-style: italic; }
+    pre.code .s { color: #e0a03c; }
+    table.gc-t { width: 100%; border-collapse: collapse; font-size: .875rem; background: white; }
+    table.gc-t th {
+      text-align: left; background: var(--gc-water-dark); color: white;
+      padding: .5rem .7rem; font: 700 .72rem/1.3 ui-monospace, monospace;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    table.gc-t td { padding: .5rem .7rem; border-top: 1px solid rgba(23,40,56,.12); vertical-align: top; }
+    table.gc-t tr:nth-child(even) td { background: rgba(23,40,56,.025); }
+    .bar { height: 1.1rem; background: var(--gc-water-dark); border-radius: 2px; }
+    .bar.alt { background: var(--gc-iron); }
+    h2 { scroll-margin-top: 1rem; }
+    .toc a { text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="py-6">
+<div class="gc-shell">
+
+  <!-- ══ HERO ══ -->
+  <header class="gc-hero px-6 md:px-10 py-10">
+    <div class="gc-kicker opacity-80">Grid Commanders · campaign mode · design of record · rev 1 · 2026-08-07</div>
+    <h1 class="mt-3 text-3xl md:text-5xl font-black leading-tight">Campaign Depth</h1>
+    <p class="mt-1 text-lg md:text-xl opacity-90 font-semibold">Six wars, not 108 battles.</p>
+    <p class="mt-5 max-w-3xl opacity-90 leading-relaxed">
+      The six campaigns ship 108 authored missions with real dialogue and a real story treatment behind
+      them — and 86 of their 108 primary objectives are <span class="pl">CaptureCell</span>, which is the
+      skirmish win condition with a label on it. Nothing on the board knows a mission is being played,
+      nothing can happen during a fight that the player did not do, and nothing at all carries from one
+      mission to the next. This plan is the engine work that turns an ordered list of duels into a war:
+      a wider objective vocabulary, scripted mid-battle events, a consequence ledger, an army that
+      carries its wounds, interludes and optional missions — then a retrofit pass over all 108.
+    </p>
+    <div class="mt-7 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
+      <div class="bg-white/10 rounded p-3">
+        <div class="gc-kicker opacity-70">Milestones</div>
+        <div class="text-2xl font-black">CD1–CD8</div>
+        <div class="text-xs opacity-70">playable at every one</div>
+      </div>
+      <div class="bg-white/10 rounded p-3">
+        <div class="gc-kicker opacity-70">New verbs</div>
+        <div class="text-2xl font-black">6 + 7 + 9</div>
+        <div class="text-xs opacity-70">objectives · triggers · effects</div>
+      </div>
+      <div class="bg-white/10 rounded p-3">
+        <div class="gc-kicker opacity-70">Retrofit</div>
+        <div class="text-2xl font-black">108</div>
+        <div class="text-xs opacity-70">missions, six PRs</div>
+      </div>
+      <div class="bg-white/10 rounded p-3">
+        <div class="gc-kicker opacity-70">core/ waiver</div>
+        <div class="text-2xl font-black">1</div>
+        <div class="text-xs opacity-70"><span class="pl">Unit.tag</span>, inert data</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ TOC ══ -->
+  <nav class="toc px-6 md:px-10 py-5 bg-base-300/40 border-y-2 border-base-300">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-1 text-sm">
+      <a href="#s1">1 · The finding</a>
+      <a href="#s2">2 · What ships</a>
+      <a href="#s3">3 · Locked decisions</a>
+      <a href="#s4">4 · The vocabulary</a>
+      <a href="#s5">5 · Milestones CD1–CD8</a>
+      <a href="#s6">6 · The retrofit</a>
+      <a href="#s7">7 · Risk register</a>
+      <a href="#s8">8 · Gates &amp; supersessions</a>
+    </div>
+  </nav>
+
+  <main class="px-6 md:px-10 py-8 space-y-14">
+
+  <!-- ══ 1 · THE FINDING ══ -->
+  <section id="s1">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">01</span>
+      <h2 class="text-2xl font-black">The finding</h2>
+    </div>
+    <p class="mt-2 text-sm dim">Measured over all 108 shipped missions, not asserted.</p>
+
+    <div class="mt-5 grid md:grid-cols-2 gap-5">
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">Primary objectives, 108 missions</div>
+        <table class="gc-t mt-3">
+          <tr><td class="pl w-40">CaptureCell</td><td class="w-full"><div class="bar" style="width:100%"></div></td><td class="pl font-bold">86</td></tr>
+          <tr><td class="pl">OwnProperties</td><td><div class="bar alt" style="width:29%"></div></td><td class="pl font-bold">25</td></tr>
+          <tr><td class="pl">SurviveUntilDay</td><td><div class="bar alt" style="width:22%"></div></td><td class="pl font-bold">19</td></tr>
+          <tr><td class="pl">AllySurvives</td><td><div class="bar alt" style="width:5%"></div></td><td class="pl font-bold">4</td></tr>
+        </table>
+        <p class="mt-3 text-sm">
+          <span class="hot">89 of 108 missions have exactly one objective</span>, and in the overwhelming
+          majority that objective is “take the enemy HQ” — which is what
+          <span class="pl">GameState</span> already ends a match on. The mission layer is, for most of the
+          campaign, a caption.
+        </p>
+      </div>
+
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">Everything else about the 108</div>
+        <table class="gc-t mt-3">
+          <tr><th>Fact</th><th>Measured</th></tr>
+          <tr><td>Failure conditions in the whole game</td><td><span class="pl">DayDeadline</span> ×78 — <span class="hot">and nothing else</span></td></tr>
+          <tr><td>Two-army duels</td><td>100 of 108 (8 seat three AI armies)</td></tr>
+          <tr><td>Fog on</td><td>11 of 108</td></tr>
+          <tr><td>Board sizes</td><td>12×9 → 23×9; commonest 16×9</td></tr>
+          <tr><td>Starting armies</td><td>4–18 units, mirrored per side</td></tr>
+          <tr><td>Owned properties at start</td><td>2–8; 47 boards deal exactly 4</td></tr>
+          <tr><td>Mid-battle scripted beats</td><td><span class="hot">0</span></td></tr>
+          <tr><td>State carried between missions</td><td><span class="hot">unlocked ids, stars, best day — nothing else</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="mt-5 rd bg-base-100 p-4">
+      <h3 class="font-black">Three structural gaps, in the order they hurt</h3>
+      <ol class="mt-3 space-y-3 text-sm list-decimal ml-5">
+        <li>
+          <b>A mission cannot ask for anything a skirmish cannot.</b> The vocabulary is four objective
+          Resources and one failure. Every beat the story treatments wanted — evacuate, escort, keep this
+          general alive, destroy that column, hold this ridge — was ruled out at authoring time and
+          rewritten as “capture ground by day N”. <span class="pl">.lavish/campaign-scenarios-plan.html</span>
+          §5 says so explicitly and calls it “the trap every campaign treatment falls into”. The campaign
+          that shipped is precisely the campaign that vocabulary can express.
+        </li>
+        <li>
+          <b>Nothing can happen during a battle that the player did not do.</b> There are no triggers, no
+          reinforcements, no defections, no dialogue inside a fight. A mission is fully determined at
+          deploy time, so its shape is knowable from the briefing card and never surprises anyone.
+        </li>
+        <li>
+          <b>The board does not know it is in a campaign, and the campaign does not remember the board.</b>
+          <span class="pl">battle.gd</span> touches <span class="pl">CampaignSession</span> at exactly one
+          line — <span class="pl">decide(game)</span>. The objective, the deadline and the bonus star are
+          printed once on the hub's briefing card and never appear again. And
+          <span class="pl">CampaignState</span> carries unlocked ids, stars and a best day, so mission 18
+          opens in a state indistinguishable from mission 1.
+        </li>
+      </ol>
+    </div>
+
+    <div class="mt-4 p-4 gc-card">
+      <p class="text-sm">
+        <b>What is <span class="ok">not</span> wrong.</b> The story itself is good and it is already data:
+        <span class="pl">MissionLine</span> with a commander id as speaker, briefing and victory dialogue on
+        every one of the 108, a narrator's defeat line, six premises with real shape and a full treatment
+        behind them. The campaign layer's architecture is also sound — pure, Node-free, observing at one
+        seam, saving through its own codec. <b>Nothing in this plan replaces any of that.</b> The words are
+        fine; they have nowhere to land inside a fight, and no consequences behind them.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ 2 · WHAT SHIPS ══ -->
+  <section id="s2">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">02</span>
+      <h2 class="text-2xl font-black">What ships</h2>
+    </div>
+    <p class="mt-2 text-sm dim">Six capabilities, then a retrofit that uses all of them on all 108 missions.</p>
+
+    <div class="mt-5 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">A · Objective vocabulary</div>
+        <p class="mt-2 text-sm">Six new <span class="pl">MissionObjective</span> subclasses so a mission can
+        ask for destruction, protection, arrival, endurance and restraint — not only conquest. Plus the
+        board's first ability to <b>name a unit</b>, without which half of them are unsayable.</p>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">B · Scripted events</div>
+        <p class="mt-2 text-sm">A <span class="pl">MissionEvent</span> is a set of triggers and a set of
+        effects. Reinforcements land, a garrison defects, a bridge is dropped, a marshal speaks mid-fight,
+        a hidden objective is revealed. <b>Every effect is applied as a Command</b>, so a scripted beat is
+        in the log, the save and the replay with no special case.</p>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">C · The consequence ledger</div>
+        <p class="mt-2 text-sm">Named facts written by one mission and read by the next: which town was
+        saved, whether the courier lived, how many marshals are still standing. They change later
+        briefings, later starting boards and which missions open.</p>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D · The carried army</div>
+        <p class="mt-2 text-sm">Survivors roll forward and losses hurt — but a carried unit <b>replaces</b>
+        a map-authored one in an authored slot, so every board still fields exactly the army it was
+        balanced for. What carries is condition and identity, never force size.</p>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">E · Interludes &amp; branches</div>
+        <p class="mt-2 text-sm">A narrative page between blocks that shows what the last three missions
+        cost and what the enemy did about it, and optional missions that open on ledger facts — so two
+        players' routes through the eighteen differ.</p>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">F · Mission presence on the board</div>
+        <p class="mt-2 text-sm">An objective panel that stays up during the fight — what wins, what loses,
+        the deadline counting down, bonus progress — and the speech overlay an event talks through. An
+        event nobody is told about is indistinguishable from a bug.</p>
+      </div>
+    </div>
+
+    <div class="mt-6 rd bg-base-100 p-4">
+      <h3 class="font-black">The shape of one mission, after</h3>
+      <p class="mt-2 text-sm dim">Sketch of the authored data, not final field names.</p>
+<pre class="code mt-3"><span class="c"># maps/campaign/the_long_front/lf08_after_hammerfall.txt</span>
+[units]
+1 i 3 6              <span class="c"># ordinary starting unit</span>
+1 t 4 6 ^            <span class="c"># ^ = carry slot: the campaign roster fills it,</span>
+1 t 4 7 ^            <span class="c">#     the map's own tank stands here if it cannot</span>
+2 a 14 4 draeg_gun   <span class="c"># a named unit — objectives and events can reach it</span>
+
+<span class="c"># lf08_after_hammerfall.tres</span>
+objectives    = [ <span class="k">DestroyUnit</span> { tag: <span class="s">"draeg_gun"</span> } ]
+failures      = [ <span class="k">ProtectUnit</span> { tag: <span class="s">"carrow_relay"</span> },
+                  <span class="k">DayDeadline</span> { last_day: 12 } ]
+bonus         = [ <span class="k">LossLimit</span> { max_losses: 2 } ]
+
+events = [
+  <span class="k">MissionEvent</span> {
+    id: <span class="s">"iron_relief"</span>
+    triggers: [ <span class="k">DayReached</span> { day: 5 } ]
+    lines:    [ viktor_draeg: <span class="s">"You bought five days. I brought a division."</span> ]
+    effects:  [ <span class="k">SpawnUnits</span> { 2, [ md@16,3  md@16,6  r@17,4 ] } ]
+  }
+  <span class="k">MissionEvent</span> {
+    id: <span class="s">"the_wardens_turn"</span>
+    triggers: [ <span class="k">UnitDestroyed</span> { tag: <span class="s">"draeg_gun"</span> },
+                <span class="k">Flag</span> { flag: <span class="s">"greenwater_held"</span>, at_least: 1 } ]
+    lines:    [ ivar_thorne: <span class="s">"The wardens remember Greenwater. They are yours."</span> ]
+    effects:  [ <span class="k">Defect</span> { from: 2, to: 1, tags: [<span class="s">"warden_column"</span>] },
+                <span class="k">SetFlag</span> { flag: <span class="s">"wardens_joined"</span>, value: 1 } ]
+  }
+]</pre>
+      <p class="mt-3 text-sm">
+        Everything above is data under <span class="pl">data/campaigns/</span> and
+        <span class="pl">maps/campaign/</span>. The second event is the plan in one block: it fires on a
+        board fact <b>and a fact from an earlier mission</b>, it speaks, it changes who an army belongs to,
+        and it writes a fact the rest of the campaign can read.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ 3 · DECISIONS ══ -->
+  <section id="s3">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">03</span>
+      <h2 class="text-2xl font-black">Locked decisions</h2>
+    </div>
+    <p class="mt-2 text-sm dim">The rationale that must survive any change in this area. Read the one that owns your file before editing it.</p>
+
+    <div class="mt-5 space-y-4">
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D1 · An event effect is a Command</div>
+        <p class="mt-2 text-sm">
+          A scripted beat mutates the board through a single new
+          <span class="pl">MissionEventCommand</span> under <span class="pl">core/commands/</span>, issued at
+          the one live broker (<span class="pl">Battle.execute_command</span> →
+          <span class="pl">BattleCommandPipeline</span>) — never by the campaign layer reaching into
+          <span class="pl">GameState</span> between commands. This is the more-commanders plan's D2 applied
+          verbatim: a power is deliberately just another command, and that is what puts it in the log, the
+          save, the replay and the AI's world with no special case.
+        </p>
+        <p class="mt-2 text-sm">
+          <b>Rejected alternative:</b> a campaign-layer mutator that writes the board directly. It is
+          invisible to <span class="pl">ReplayRecorder</span>, so every campaign replay fails its own
+          48-bit digest at the first event; and a mid-mission save would resume onto a board its own
+          command log cannot account for. <span class="pl">ReplayCodec.FORMAT</span> goes to <b>3</b> and
+          older recordings are refused outright, which is the replay plan's D3.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D2 · A trigger is a pure read of the committed board and the mission's own tally</div>
+        <p class="mt-2 text-sm">
+          <span class="pl">MissionTrigger.is_met(state, team, progress)</span> takes
+          <span class="pl">MissionObjective.is_met</span>'s shape and inherits its whole contract: it reads
+          only authorities that already exist, it never mutates, and it re-derives nothing the sim owns.
+          No timers, no callbacks, no <span class="pl">EventBus</span> subscription — so an event can only
+          fire at a command boundary, which is exactly where <span class="pl">MissionRuntime</span> is
+          already asked, and there is one place in the codebase to look.
+        </p>
+        <p class="mt-2 text-sm">
+          Some conditions are not answerable from one board — “which events have already fired”, “how many
+          consecutive days we have held the ridge”, “how many units we have lost”.
+          <span class="pl">MissionProgress</span> is that tally: a small integer dictionary with
+          <b>exactly one writer</b> (the same seam that fires events), saved in the campaign profile beside
+          the embedded battle. It is mission bookkeeping, not board state, which is why
+          <span class="pl">SaveCodec</span> does not grow a field for it and a skirmish save is untouched.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D3 · Events fire before the verdict, and a boundary settles whole</div>
+        <p class="mt-2 text-sm">
+          Precedence in <span class="pl">Battle.conclude_command</span> becomes: fallen-army banner →
+          <b>due events</b> → <span class="pl">CampaignSession.decide</span>. Every event due at a boundary
+          applies before any verdict is taken, because a relief column that arrives on the turn the
+          deadline expires must be on the board the deadline is judged against, and an event that ends the
+          mission is a <span class="pl">MissionRuntime</span> reason like any other. Within a boundary,
+          events fire in the mission's authored order and each is a separate command, so a replay can show
+          them landing one at a time.
+        </p>
+        <p class="mt-2 text-sm">
+          <span class="pl">MissionRuntime</span>'s own precedence is untouched — losing still outranks
+          winning throughout. Events are a step <i>in front of</i> that class, never a case inside it.
+        </p>
+      </div>
+
+      <div class="gc-dec waiver p-4">
+        <div class="gc-kicker" style="color:var(--gc-amber)">D4 · The board can name a unit — the one <span class="pl">core/</span> waiver <span class="badge badge-success badge-sm align-middle">taken in CD1</span></div>
+        <p class="mt-2 text-sm">
+          <span class="pl">Unit.tag: StringName</span>, empty by default, authored as an optional fifth
+          column on a map's <span class="pl">[units]</span> row and carried in save <b>v9</b>. Without it,
+          “destroy Draeg's siege gun”, “the marshal must survive” and “get the courier to the pass” are all
+          unsayable — which is exactly the rejected-verb list the scenarios plan's §5 wrote off.
+        </p>
+        <p class="mt-2 text-sm">
+          It is <b>inert data</b>: nothing in <span class="pl">core/rules/</span>, nothing in
+          <span class="pl">ai/</span> and nothing in the damage chart reads a tag, so a tagged unit fights,
+          moves, is priced and is planned against identically to an untagged one. The merge bar is the
+          usual one and it is what stands in for the waiver: a fixed-seed byte-diff of
+          <span class="pl">make commander-balance</span> and <span class="pl">make difficulty-check</span>
+          with no accepted departure. Read it the way the AI Arena's AR1 cache is read — a recorded,
+          justified departure, not a rule violation.
+        </p>
+        <p class="mt-2 text-sm">
+          <b>Rejected alternative:</b> identify a unit by the cell it started on. A unit that moves stops
+          being identifiable, and a protect objective matters precisely when the unit is moving.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D5 · Consequences are a flag ledger, and a flag is written by an event</div>
+        <p class="mt-2 text-sm">
+          <span class="pl">CampaignState.flags: Dictionary[StringName, int]</span>, carried by
+          <span class="pl">CampaignSaveCodec</span> <b>VERSION 2</b>. A flag is set only by a
+          <span class="pl">SetFlag</span> effect or by mission completion (stars, bonus, verdict). Integers
+          rather than booleans, so a ledger can count — “cities saved: 4”, “marshals still standing: 3” —
+          without a second kind of fact.
+        </p>
+        <p class="mt-2 text-sm">
+          A flag reaches the board only by <b>choosing which authored content is used</b> — a variant
+          briefing line, a conditional starting unit, whether a mission opens — <b>never by tuning a
+          number</b>. Nothing in <span class="pl">core/</span> or <span class="pl">ai/</span> reads one.
+          That boundary is what keeps a campaign from becoming a second, invisible balance surface: a
+          player who saved every city plays a different <i>authored</i> mission, not the same mission
+          against a weaker AI.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D6 · The carried army carries condition, never quantity</div>
+        <p class="mt-2 text-sm">
+          A board authors <b>carry slots</b> — a marked <span class="pl">[units]</span> row. A mission's
+          carried roster fills them in order, and <b>the map's own authored unit stands in any slot the
+          roster cannot fill</b> (short roster, first mission of a block, a mission that declares
+          <span class="pl">carry_in = false</span> because the player has changed commander or faction).
+        </p>
+        <p class="mt-2 text-sm">
+          So every board always fields exactly the army it was balanced for. What carries forward is
+          <b>HP, tag and identity</b>. This is the single decision that makes carry-over shippable across
+          108 boards nobody is going to re-balance, and it is also the better game: a veteran tank at 40 HP
+          is a unit you have a history with and a decision to make about, not an arithmetic disadvantage.
+        </p>
+        <p class="mt-2 text-sm">
+          <b>Rejected alternative:</b> survivors appended to the map's army. It is the only version of
+          carry-over that changes force size, and it invalidates the authoring of all 108 boards at once —
+          in both directions, since a player who lost nothing snowballs and a player who lost badly
+          death-spirals.
+        </p>
+        <p class="mt-2 text-sm">
+          The floor is explicit and authored: a mission declares the HP a carried unit is refit to at
+          minimum (<span class="pl">carry_floor_hp</span>), so “the campaign is unwinnable because mission 6
+          went badly” is a number an author sets rather than an emergent property. R1 owns the risk.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D7 · One source for what comes next; branching narrows, it never forks</div>
+        <p class="mt-2 text-sm">
+          <span class="pl">CampaignDefinition.missions</span> stays the <b>only</b> order — that class's own
+          comment already states why (“two sources for what comes after this is how a campaign ends up with
+          a mission nothing reaches”), and this plan does not spend it. Branching is
+          <span class="pl">MissionDefinition.unlock_requires</span>: a ledger/star condition saying whether
+          a mission opens at all. The campaign advances to the next mission in the list whose condition
+          holds.
+        </p>
+        <p class="mt-2 text-sm">
+          That buys optional missions (open one, skip it) and alternate routes (two adjacent missions, at
+          most one of which opens) while making it structurally impossible to author an unreachable
+          mission. <span class="pl">is_complete</span> counts only missions that could have opened, so a
+          route not taken does not read as a campaign not finished.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D8 · Mission presence on the board is presentation, and it is the event system's mouth</div>
+        <p class="mt-2 text-sm">
+          An objective panel and an event speech overlay under <span class="pl">scenes/ui/</span>, built
+          from <span class="pl">UiTheme</span> / <span class="pl">UiKit</span> with no hardcoded colour or
+          size (the HUD plan's rule), reading <span class="pl">CampaignSession</span> and nothing else. The
+          speech overlay reuses <span class="pl">MissionSpeech</span>, so a line spoken mid-battle is drawn
+          by the same drawer as the briefing's.
+        </p>
+        <p class="mt-2 text-sm">
+          It obeys the boundary conventions already in force: an event's speech is an awaited blocking beat
+          any press skips (<span class="pl">TransitionInput</span>, ux-recovery D3), no interactive menu
+          sits under it, and it is suppressed while <span class="pl">animator.capturing</span> and under
+          Instant so <span class="pl">make smoke</span> stays byte-stable outside the frames the panel is
+          deliberately in.
+        </p>
+      </div>
+
+      <div class="gc-dec p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">D9 · Every mission carries a beat, and the content gate proves it</div>
+        <p class="mt-2 text-sm">
+          <span class="pl">make campaigns</span> (<span class="pl">tools/check_campaigns.gd</span>) is the
+          authoring authority and it grows to hold the new content: every mission names at least one event;
+          every trigger and effect resolves; every tag an objective, trigger or effect names exists on that
+          mission's board; every flag read is written by some earlier mission on every route that reaches
+          the reader; every carry slot is a legal cell for what can land in it; and <b>every mission is
+          reachable</b>. That last check is what keeps D7 honest, and the flag-reachability check is what
+          stops a branch from producing a briefing line that refers to something that never happened.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ 4 · THE VOCABULARY ══ -->
+  <section id="s4">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">04</span>
+      <h2 class="text-2xl font-black">The vocabulary</h2>
+    </div>
+    <p class="mt-2 text-sm dim">
+      Six objectives, seven triggers, nine effects. Each is one small Resource under
+      <span class="pl">core/campaign/</span> answering exactly one question, the way the four shipped
+      objectives already do.
+    </p>
+
+    <div class="mt-5 grid lg:grid-cols-3 gap-5">
+      <div>
+        <div class="gc-kicker mb-2" style="color:var(--gc-water-dark)">New objectives &amp; failures</div>
+        <table class="gc-t">
+          <tr><th>Resource</th><th>Asks</th></tr>
+          <tr><td class="pl">DestroyUnit</td><td>a tagged unit is off the board</td></tr>
+          <tr><td class="pl">ProtectUnit</td><td>a tagged unit is still standing <span class="dim">(a failure)</span></td></tr>
+          <tr><td class="pl">ReachCell</td><td>N of our units stand on named ground <span class="dim">— the exit zone §5 ruled out</span></td></tr>
+          <tr><td class="pl">HoldCell</td><td>we have held a cell for N consecutive days <span class="dim">(tallied, D2)</span></td></tr>
+          <tr><td class="pl">DefeatTeam</td><td>one named army is eliminated, not the whole side</td></tr>
+          <tr><td class="pl">LossLimit</td><td>we have lost fewer than N units <span class="dim">(tallied)</span></td></tr>
+        </table>
+        <p class="mt-2 text-xs dim">The four shipped objectives are untouched and stay the workhorses.</p>
+      </div>
+
+      <div>
+        <div class="gc-kicker mb-2" style="color:var(--gc-water-dark)">Triggers</div>
+        <table class="gc-t">
+          <tr><th>Resource</th><th>Fires when</th></tr>
+          <tr><td class="pl">DayReached</td><td>the day counter passes N</td></tr>
+          <tr><td class="pl">CellOwned</td><td>named ground changes hands</td></tr>
+          <tr><td class="pl">UnitDestroyed</td><td>a tagged unit dies</td></tr>
+          <tr><td class="pl">UnitReached</td><td>a tagged unit stands on named ground</td></tr>
+          <tr><td class="pl">ForceStrength</td><td>a side is above/below N units</td></tr>
+          <tr><td class="pl">ObjectiveMet</td><td>one of this mission's objectives completes</td></tr>
+          <tr><td class="pl">Flag</td><td>the ledger holds a fact <span class="dim">— the cross-mission one</span></td></tr>
+        </table>
+      </div>
+
+      <div>
+        <div class="gc-kicker mb-2" style="color:var(--gc-water-dark)">Effects</div>
+        <table class="gc-t">
+          <tr><th>Resource</th><th>Does</th></tr>
+          <tr><td class="pl">SpawnUnits</td><td>lands units, optionally tagged and pre-damaged</td></tr>
+          <tr><td class="pl">RemoveUnits</td><td>takes units off <span class="dim">(banks nothing — Hammerfall's D4)</span></td></tr>
+          <tr><td class="pl">SetOwner</td><td>flips property ownership</td></tr>
+          <tr><td class="pl">Defect</td><td>moves units between armies</td></tr>
+          <tr><td class="pl">GrantFunds</td><td>a resupply, a subsidy</td></tr>
+          <tr><td class="pl">GrantCharge</td><td>banks Command Power charge</td></tr>
+          <tr><td class="pl">RevealObjective</td><td>a hidden objective becomes live</td></tr>
+          <tr><td class="pl">SetFlag</td><td>writes the ledger</td></tr>
+          <tr><td class="pl">EndMission</td><td>ends it, with a reason</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="mt-5 rd bg-base-100 p-4">
+      <h3 class="font-black">Against §5's rejected-verb list</h3>
+      <table class="gc-t mt-3">
+        <tr><th>Beat the treatments wanted</th><th>Was</th><th>Becomes</th></tr>
+        <tr><td>Evacuate an asset to safety</td><td class="hot">unsayable</td><td class="pl">ReachCell</td></tr>
+        <tr><td>Protect a convoy that moves</td><td class="hot">unsayable</td><td class="pl">ProtectUnit + ReachCell</td></tr>
+        <tr><td>Keep a named unit or ally alive</td><td class="hot">unsayable</td><td class="pl">ProtectUnit</td></tr>
+        <tr><td>Reinforcements arrive</td><td class="hot">unsayable</td><td class="pl">DayReached → SpawnUnits</td></tr>
+        <tr><td>An army changes sides mid-mission</td><td class="hot">unsayable</td><td class="pl">Defect</td></tr>
+        <tr><td>A beat that depends on an earlier mission</td><td class="hot">unsayable</td><td class="pl">Flag</td></tr>
+        <tr><td>Count a side's properties, not a team's</td><td class="ok">already shipped</td><td class="dim">unchanged — objectives read by side</td></tr>
+        <tr><td>Seat four armies in two sides</td><td class="ok">already shipped</td><td class="dim">unchanged — <span class="pl">seats</span>/<span class="pl">sides</span> on the mission</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ 5 · MILESTONES ══ -->
+  <section id="s5">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">05</span>
+      <h2 class="text-2xl font-black">Milestones</h2>
+    </div>
+    <p class="mt-2 text-sm dim">Each one ships something playable. CD1–CD6 are engine and are inert until content uses them; CD7 is the content.</p>
+
+    <div class="mt-5 space-y-4">
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD1</span>
+          <h3 class="font-black text-lg">The board can name a unit</h3>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
+          <span class="text-xs dim">D4 · no player-visible change</span>
+        </div>
+        <p class="mt-2 text-sm">
+          <span class="pl">Unit.tag</span>; the optional fifth column in <span class="pl">MapData</span>'s
+          <span class="pl">[units]</span> parse and its lint (a tag is unique per board, and a legal
+          identifier); <span class="pl">SaveCodec</span> v9 carrying it, with v8 loading to empty tags.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate:</b> both balance reports byte-identical; every v8 save and every shipped replay still loads; <span class="pl">make verify</span> green.</p>
+      </div>
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD2</span>
+          <h3 class="font-black text-lg">The objective vocabulary, and the board says what it wants</h3>
+          <span class="text-xs dim">D8's first half</span>
+        </div>
+        <p class="mt-2 text-sm">
+          Six new <span class="pl">MissionObjective</span> subclasses with a
+          <span class="pl">definition_error</span> each; <span class="pl">MissionProgress</span> and its one
+          writer (D2), saved by <span class="pl">CampaignSaveCodec</span>; the in-battle objective panel.
+          One exemplar mission per campaign is re-authored to use a new verb, so the milestone is playable.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate:</b> a unit test per objective driving a fixture board;
+        <span class="pl">make campaigns</span> green; the panel appears in a new
+        <span class="pl">make smoke</span> scenario and nowhere else.</p>
+      </div>
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD3</span>
+          <h3 class="font-black text-lg">The event system</h3>
+          <span class="text-xs dim">D1 · D2 · D3 · the largest milestone</span>
+        </div>
+        <p class="mt-2 text-sm">
+          <span class="pl">MissionEvent</span> with its triggers and effects;
+          <span class="pl">MissionEventCommand</span> under <span class="pl">core/commands/</span>; the
+          <span class="pl">conclude_command</span> firing seam and the turn-start boundary; replay
+          <span class="pl">FORMAT</span> → 3 with the new line kind; the event speech overlay; the fired-set
+          in <span class="pl">MissionProgress</span> so a resumed mission does not re-fire.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate:</b>
+        <span class="pl">tests/unit/test_replay_fidelity.gd</span> gains a seeded campaign mission with
+        events, reproducing every checkpoint and an identical final board; a save/resume test across a
+        fired event; an <span class="pl">AIPlanCache</span> test proving a plan is dropped when an effect
+        removes or defects the unit it was for (R7).</p>
+      </div>
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD4</span>
+          <h3 class="font-black text-lg">The consequence ledger</h3>
+          <span class="text-xs dim">D5</span>
+        </div>
+        <p class="mt-2 text-sm">
+          <span class="pl">CampaignState.flags</span> and <span class="pl">CampaignSaveCodec</span> v2;
+          the <span class="pl">SetFlag</span> effect and the automatic completion flags; variant
+          <span class="pl">MissionLine</span>s (<span class="pl">requires</span> /
+          <span class="pl">unless</span>) so a briefing reads differently after a different mission 5;
+          flag-conditional starting units on a mission's board.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate:</b> a v1 campaign profile loads and gains an empty ledger; a
+        two-mission fixture campaign where the second mission's briefing and board both differ by a flag.</p>
+      </div>
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD5</span>
+          <h3 class="font-black text-lg">The carried army</h3>
+          <span class="text-xs dim">D6</span>
+        </div>
+        <p class="mt-2 text-sm">
+          The carry-slot marker in the map format; <span class="pl">CampaignState.roster</span> banked on
+          victory and restored into slots at deploy; the refit and the
+          <span class="pl">carry_floor_hp</span> guard; <span class="pl">carry_in</span> /
+          <span class="pl">carry_out</span> on the mission so a commander change resets the army.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate:</b> a slot always ends up occupied by exactly one unit of the
+        authored type, roster or not; a fixture campaign proving three missions of accumulated damage and
+        the floor holding.</p>
+      </div>
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD6</span>
+          <h3 class="font-black text-lg">Interludes and optional missions</h3>
+          <span class="text-xs dim">D7</span>
+        </div>
+        <p class="mt-2 text-sm">
+          <span class="pl">CampaignInterlude</span> (block-indexed narrative pages, variant by flag) shown
+          between blocks by <span class="pl">MenuCampaignFlow</span>;
+          <span class="pl">MissionDefinition.unlock_requires</span> and the “advance to the next mission
+          that opens” walk; the hub showing the war's state — flags earned, route taken, army condition.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate:</b> a fixture campaign with a skipped optional mission reports
+        complete; <span class="pl">make campaigns</span>' reachability check fails a deliberately
+        unreachable mission.</p>
+      </div>
+
+      <div class="gc-ms p-4" style="border-top-color: var(--gc-amber)">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-warning pl">CD7</span>
+          <h3 class="font-black text-lg">The retrofit — all 108 missions</h3>
+          <span class="text-xs dim">six PRs, one per campaign, each independently shippable</span>
+        </div>
+        <p class="mt-2 text-sm">
+          Every mission gets a real objective, at least one event, its place in the ledger, and carry slots
+          on its board. §6 is the authoring rule this pass follows. Six PRs so a campaign can land and be
+          played while the next is authored, and so a regression is attributable to one war.
+        </p>
+        <p class="mt-2 text-sm"><b>Gate per campaign:</b> <span class="pl">make campaigns</span> green; a
+        seeded soak playing every mission of that campaign to a verdict with no rejected command and no
+        stall; the campaign played by hand end to end.</p>
+      </div>
+
+      <div class="gc-ms p-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="badge badge-neutral pl">CD8</span>
+          <h3 class="font-black text-lg">The gate and the record</h3>
+        </div>
+        <p class="mt-2 text-sm">
+          <span class="pl">make campaigns</span> grown to D9 in full; a campaign soak test in
+          <span class="pl">tests/unit/</span> covering every shipped mission;
+          <span class="pl">docs/campaign_authoring.md</span> — the vocabulary, the authoring rule, the
+          ledger's fact list per campaign, and how to add a mission. The plan's own milestone pass and the
+          supersessions in §8 written into <span class="pl">CLAUDE.md</span>.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ 6 · THE RETROFIT ══ -->
+  <section id="s6">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">06</span>
+      <h2 class="text-2xl font-black">The retrofit</h2>
+    </div>
+    <p class="mt-2 text-sm dim">108 missions is the bulk of this plan. The authoring rule is what keeps it from becoming 108 gimmicks.</p>
+
+    <div class="mt-5 rd bg-base-100 p-4">
+      <h3 class="font-black">The authoring rule</h3>
+      <p class="mt-2 text-sm">
+        <b>A mission's event should be the thing its briefing already promised.</b> The dialogue on all 108
+        missions is already written and it already says what the fight is about — “Orlov and I split the
+        attack across two passes”, “her column is advancing in the open, in daylight”. An event that
+        <i>performs</i> that sentence is the mission finally doing what it said; an event that contradicts
+        it is a gimmick. Most events should therefore be small: a line spoken at the moment it becomes
+        true, plus one board fact. A minority — the act openers, the block finales, the turning points —
+        carry the big ones: the relief column, the defection, the revealed objective.
+      </p>
+      <p class="mt-2 text-sm">
+        The corollary is that <b>the retrofit is mostly reading the dialogue that is already there</b> and
+        asking what would have to happen on the board for it to be true. That is a much cheaper pass than
+        inventing 108 new beats, and a much better one.
+      </p>
+    </div>
+
+    <div class="mt-5 grid md:grid-cols-2 gap-5">
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">Per mission, what the pass does</div>
+        <ol class="mt-2 text-sm list-decimal ml-5 space-y-1">
+          <li>Re-read the briefing and name the fight it describes.</li>
+          <li>Replace the primary objective if “take their HQ” is not that fight.</li>
+          <li>Tag whatever the objective or the story names on the board.</li>
+          <li>Author one event: the promised beat, its trigger, its line, its board fact.</li>
+          <li>Wire the ledger — what this mission writes, what it reads.</li>
+          <li>Mark carry slots on the board (typically the player's core 2–4 units).</li>
+          <li>Re-check par day and the deadline against the new shape.</li>
+        </ol>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">Per campaign, the shape to hold</div>
+        <ul class="mt-2 text-sm space-y-2">
+          <li><b>The ledger has a spine.</b> Each of the six wars gets a named handful of facts (5–8) that
+          its 18 missions write and read — not a fact per mission, which is a ledger nobody can follow.</li>
+          <li><b>Blocks close.</b> Every block's last mission writes a fact its interlude reads, so the
+          three-mission rhythm the <span class="pl">block_titles</span> already declare becomes something
+          the player is told about.</li>
+          <li><b>Two optional missions per campaign, no more.</b> Enough that a route is a route; few
+          enough that the reachability and flag checks stay legible.</li>
+          <li><b>Carry resets at block boundaries</b> where the player changes commander — which is most of
+          them, and is why D6's short-roster fallback is the common case rather than the edge.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-5 gc-card p-4">
+      <div class="gc-kicker" style="color:var(--gc-water-dark)">Order, and why</div>
+      <table class="gc-t mt-3">
+        <tr><th>#</th><th>Campaign</th><th>Why here</th></tr>
+        <tr><td class="pl">1</td><td>The Hollow Crown</td><td>The alliance beats and the 2v2 missions are already the most event-shaped content in the game; it exercises <span class="pl">Defect</span>, <span class="pl">ProtectUnit</span> and the ledger hardest, so it finds the vocabulary's gaps first.</td></tr>
+        <tr><td class="pl">2</td><td>The Long Front</td><td>“Lose separately, hold together, take it back” is a three-act shape the ledger and the interludes were designed for; it proves the carried army over a continuous front.</td></tr>
+        <tr><td class="pl">3</td><td>The Quiet War</td><td>The fog missions and the “prove it” act are what <span class="pl">RevealObjective</span> and the tagged-unit verbs exist for.</td></tr>
+        <tr><td class="pl">4</td><td>The Furnace Winter</td><td>Depots and pipelines are <span class="pl">HoldCell</span> and <span class="pl">ReachCell</span> almost verbatim.</td></tr>
+        <tr><td class="pl">5</td><td>The Collection</td><td>The ledger fiction is literally a ledger; its facts write themselves.</td></tr>
+        <tr><td class="pl">6</td><td>The Six Marshals</td><td>Six blocks of three against six different marshals is the widest content but the most repetitive structure — best done last, with the vocabulary settled.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ 7 · RISKS ══ -->
+  <section id="s7">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">07</span>
+      <h2 class="text-2xl font-black">Risk register</h2>
+    </div>
+
+    <div class="mt-5 space-y-3">
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R1 · The carried army death-spirals</div>
+        <p class="mt-2 text-sm">A player who loses badly in mission 6 carries a broken army into 7, loses
+        worse, and the campaign becomes unwinnable without a replay. <b>Guard:</b> D6's floor
+        (<span class="pl">carry_floor_hp</span>) is authored per mission and the roster only ever
+        <i>replaces</i>, so the worst case is the board's own army at the floor — never fewer units. Blocks
+        reset the roster. CD5's fixture campaign tests three consecutive bad missions.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R2 · Event soup</div>
+        <p class="mt-2 text-sm">Every mission having a beat becomes a twist per mission, which is a campaign
+        with no baseline and therefore no surprises. <b>Guard:</b> §6's authoring rule — the event performs
+        what the briefing already promised, and most are a line plus one small board fact. The big beats
+        are budgeted per block, not per mission.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R3 · Replay format churn</div>
+        <p class="mt-2 text-sm"><span class="pl">FORMAT</span> → 3 refuses every recording on disk, which is
+        by design (replay D3) but is a cost paid once. <b>Guard:</b> the bump happens in CD3 and nowhere
+        else in this plan; CD1's tag rides in the save envelope, not the line format, and every later
+        milestone adds effects rather than line kinds.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R4 · A trigger reads something not on the board</div>
+        <p class="mt-2 text-sm">The one way to break determinism here: a trigger that consults the clock, a
+        setting, or the presentation layer would replay differently. <b>Guard:</b> D2 is the rule and
+        <span class="pl">tools/check_scripts.sh</span> can enforce the import boundary the way it already
+        enforces the single live broker; <span class="pl">test_replay_fidelity.gd</span> is the proof.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R5 · Two save formats move in different milestones</div>
+        <p class="mt-2 text-sm">Board save v9 lands in CD1; campaign profile v2 in CD4; the profile embeds
+        the board save. A v1 profile holding a v8 battle must still resume. <b>Guard:</b> the two codecs are
+        already independent by design and each validates its own shape; CD4's gate names this case
+        explicitly.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R6 · Authoring volume</div>
+        <p class="mt-2 text-sm">108 missions × four kinds of change is the majority of the plan's hours.
+        <b>Guard:</b> CD7 is six independently shippable PRs in a deliberate order (§6), so value lands
+        continuously and a regression is attributable to one war. The engine milestones are complete and
+        gated before any of it starts.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R7 · The planner is surprised by an effect</div>
+        <p class="mt-2 text-sm">An effect that removes, spawns or defects units mid-turn can leave
+        <span class="pl">AIPlanCache</span> holding a plan for a unit that no longer exists or no longer
+        belongs to that army. <b>Guard:</b> the cache already drops on a board diff rather than on the
+        returned command, which is the correct existing behaviour — CD3 owes it a test per effect kind
+        rather than new code. A reinforcement wave the planner did not foresee is fine and intended: it
+        replans every command.</p>
+      </div>
+      <div class="gc-risk p-4">
+        <div class="gc-kicker" style="color:var(--gc-red)">R8 · The ledger becomes a difficulty surface</div>
+        <p class="mt-2 text-sm">The tempting next step after flags is “a player who is struggling gets a
+        weaker enemy”. <b>Guard:</b> D5 forbids it — a flag chooses authored content, never a number — and
+        the difficulty plan's lock already forbids a campaign shipping its own AI values. A mission names a
+        shipped tier and nothing else.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 8 · GATES ══ -->
+  <section id="s8">
+    <div class="flex items-center gap-3">
+      <span class="gc-num">08</span>
+      <h2 class="text-2xl font-black">Gates &amp; supersessions</h2>
+    </div>
+
+    <div class="mt-5 grid md:grid-cols-2 gap-5">
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">The bar every milestone clears</div>
+        <ul class="mt-2 text-sm space-y-2">
+          <li><b>Both balance reports byte-identical</b> across CD1–CD6 with no accepted departure —
+          <span class="pl">make commander-balance</span> and <span class="pl">make difficulty-check</span>.
+          Nothing in this plan may change how a shot resolves or how the planner scores, and the tag waiver
+          (D4) is what this bar stands in for.</li>
+          <li><span class="pl">make verify</span> green — check, lint, format-check, GUT.</li>
+          <li><span class="pl">make campaigns</span> green.</li>
+          <li><span class="pl">make smoke</span> byte-stable outside the frames the objective panel and the
+          event overlay are deliberately in; those get their own scenarios and a recorded
+          <span class="pl">SMOKE_HASHES</span> manifest.</li>
+          <li><span class="pl">test_replay_fidelity.gd</span> reproduces a campaign mission with events,
+          end to end, from CD3 onward.</li>
+        </ul>
+      </div>
+      <div class="gc-card p-4">
+        <div class="gc-kicker" style="color:var(--gc-water-dark)">What this plan supersedes</div>
+        <ul class="mt-2 text-sm space-y-2">
+          <li><b><span class="pl">campaign-scenarios-plan.html</span> §5</b> — the expressibility ruling
+          that <i>evacuate</i>, <i>escort</i>, <i>keep alive</i>, <i>reinforcements</i> and <i>changes
+          sides</i> “are presumed to need engine work until proven otherwise”. This plan <b>is</b> that
+          engine work; §5's table is answered line by line in §4 above. Its underlying rule survives intact
+          and is worth restating: a tactic being shipped is not a mission being expressible.</li>
+          <li><b><span class="pl">campaign-mode-plan.html</span>'s out-of-scope list</b> — “mid-mission
+          reinforcements, scripted event triggers, escort units, branching missions, a persistent army”.
+          All five are in scope here, under D1–D7. That plan's architecture (MissionRuntime, the objective
+          Resources, the campaign save, hub → briefing → battle → debrief) is <b>not</b> superseded and is
+          what this builds on.</li>
+          <li>The campaign entry in <span class="pl">CLAUDE.md</span> gains this plan's decisions; its
+          existing D1–D5 stand unchanged, and D2's “no evacuate/escort/named-unit objective exists on
+          purpose” is the one clause this retires.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-5 rd bg-base-100 p-4">
+      <h3 class="font-black">What this plan deliberately does not do</h3>
+      <ul class="mt-2 text-sm space-y-1 list-disc ml-5">
+        <li><b>No new commanders, factions, units, terrain or art rows.</b> The roster of 22 and the four
+        liveries are the cast; this is entirely mission and campaign work.</li>
+        <li><b>No animated cutscenes.</b> Events speak through <span class="pl">MissionSpeech</span> and the
+        existing banner conventions — the same text-and-portrait vocabulary the briefings already use.</li>
+        <li><b>No campaign-specific AI.</b> A mission names a shipped difficulty tier and a shipped
+        commander doctrine; the difficulty plan's lock holds (a tier is an <span class="pl">AIProfile</span>
+        and a label, and the AI never cheats).</li>
+        <li><b>No per-mission balance tuning of the roster or the damage chart.</b> Balance lives in
+        <span class="pl">data/</span> and is the whole game's, not a mission's.</li>
+      </ul>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="px-6 md:px-10 py-6 border-t-2 border-base-300 text-sm dim">
+    <p><b>Grid Commanders — Campaign Depth</b> · design of record · rev 1 · 2026-08-07.
+    Scoped against <span class="pl">campaign-mode-plan.html</span> (the architecture) and
+    <span class="pl">campaign-scenarios-plan.html</span> (the six premises), whose §5 it answers.
+    Milestones CD1–CD8; nothing here is shipped.</p>
+  </footer>
+
+</div>
+</body>
+</html>

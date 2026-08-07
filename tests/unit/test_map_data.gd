@@ -96,12 +96,14 @@ func test_units_section_parsed() -> void:
 	var map := MapData.parse(text, db)
 	assert_not_null(map)
 	assert_eq(map.starting_units.size(), 2)
-	assert_eq(map.starting_units[0], {"team": 1, "symbol": "i", "cell": Vector2i(0, 0)})
-	assert_eq(map.starting_units[1], {"team": 2, "symbol": "t", "cell": Vector2i(3, 0)})
+	assert_eq(map.starting_units[0], {"team": 1, "symbol": "i", "cell": Vector2i(0, 0), "tag": &""})
+	assert_eq(map.starting_units[1], {"team": 2, "symbol": "t", "cell": Vector2i(3, 0), "tag": &""})
 
 
 func test_bad_unit_line_rejected() -> void:
 	assert_null(MapData.parse("[terrain]\n..\n[units]\n1 i 0", db))
+	assert_push_error("bad unit line")
+	assert_null(MapData.parse("[terrain]\n..\n[units]\n1 i 0 0 tag extra", db))
 	assert_push_error("bad unit line")
 
 
