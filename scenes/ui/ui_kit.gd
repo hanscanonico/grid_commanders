@@ -58,7 +58,7 @@ static func help_label(text: String) -> Label:
 ## A thin ink divider between a panel's rows (handoff --border-soft).
 static func rule() -> Control:
 	var line := ColorRect.new()
-	line.color = Color(UiTheme.INK.r, UiTheme.INK.g, UiTheme.INK.b, 0.45)
+	line.color = UiTheme.BORDER_SOFT
 	line.custom_minimum_size = Vector2(0, UiTheme.BORDER)
 	return line
 
@@ -103,10 +103,7 @@ static func segment(
 	var group_tip := _tip_label(col, micro, tip, tip_detail)
 
 	var frame := PanelContainer.new()
-	var frame_box := UiTheme.flat(UiTheme.PAPER)
-	frame_box.border_color = UiTheme.HARD_BORDER
-	frame_box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(frame_box)
+	var frame_box := UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	frame.add_theme_stylebox_override("panel", frame_box)
 	col.add_child(frame)
 
@@ -256,14 +253,11 @@ static func toggle(
 static func identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 	var theme := identity.theme(team)
 	var chip := PanelContainer.new()
-	var box := UiTheme.flat(UiTheme.PAPER)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
+	var box := UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	box.content_margin_left = 4
 	box.content_margin_right = 4
 	box.content_margin_top = 1
 	box.content_margin_bottom = 1
-	UiTheme.hard_shadow(box)
 	chip.add_theme_stylebox_override("panel", box)
 
 	var row := HBoxContainer.new()
@@ -271,10 +265,7 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	var dot := Panel.new()
 	dot.custom_minimum_size = Vector2(6, 6)
 	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var dot_box := UiTheme.flat(theme.color)
-	dot_box.border_color = UiTheme.HARD_BORDER
-	dot_box.set_border_width_all(1)
-	dot.add_theme_stylebox_override("panel", dot_box)
+	dot.add_theme_stylebox_override("panel", UiTheme.bordered(theme.color, UiTheme.HARD_BORDER))
 	row.add_child(dot)
 
 	var label := Label.new()
@@ -303,9 +294,7 @@ static func _tip_label(into: Container, text: String, tip: String, tip_detail: S
 
 
 static func _paint_check(check: Panel, mark: Label, on: bool) -> void:
-	var box := UiTheme.flat(UiTheme.CAPTURE if on else UiTheme.PAPER_2)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(box)
+	var fill := UiTheme.CAPTURE if on else UiTheme.PAPER_2
+	var box := UiTheme.bordered(fill, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	check.add_theme_stylebox_override("panel", box)
 	mark.visible = on

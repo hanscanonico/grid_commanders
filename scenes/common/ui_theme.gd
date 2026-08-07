@@ -66,6 +66,11 @@ const PAPER := CommanderVisuals.PAPER
 const INK := CommanderVisuals.PAPER_INK  # body text / muted borders on cream
 const HARD_BORDER := CommanderVisuals.HARD_BORDER  # the darkest outline
 
+## A thin ink rule between two rows (handoff --border-soft): INK faded to 45%.
+const BORDER_SOFT := Color(INK, 0.45)
+## The wash a map cell takes on hover, unselected: PAPER_RAISED faded to 35%.
+const HOVER_WASH := Color(PAPER_RAISED, 0.35)
+
 # --- canvas-pixel metrics (plan section 2) -------------------------------------
 const CONTENT_W := 370  # handoff 740 content column
 const ACTION_W := 122  # handoff 244 action stack
@@ -241,6 +246,19 @@ static func flat(color: Color) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = color
 	box.anti_aliasing = false
+	return box
+
+
+## The recipe every bordered box on the shell reads: a flat fill, an outline of
+## `width`, and — for the chrome that wants it — the signature hard shadow.
+static func bordered(
+	fill: Color, border: Color, width: int = BORDER, hard_shadow := false
+) -> StyleBoxFlat:
+	var box := flat(fill)
+	box.border_color = border
+	box.set_border_width_all(width)
+	if hard_shadow:
+		UiTheme.hard_shadow(box)
 	return box
 
 

@@ -641,12 +641,10 @@ func _small_label(size: int) -> Label:
 
 
 func _hard(border: Color, width: int) -> StyleBoxFlat:
-	var box := UiTheme.flat(_INACTIVE)
-	box.border_color = border
-	box.set_border_width_all(width)
+	# The signature hard offset shadow, from the one authority (plan MN3).
+	var box := UiTheme.bordered(_INACTIVE, border, width, true)
 	box.content_margin_left = 4
 	box.content_margin_right = 4
 	box.content_margin_top = 2
 	box.content_margin_bottom = 2
-	# The signature hard offset shadow, from the one authority (plan MN3).
-	return UiTheme.hard_shadow(box)
+	return box

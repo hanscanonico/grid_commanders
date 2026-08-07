@@ -357,10 +357,7 @@ func _build_header() -> Control:
 	row.add_theme_constant_override("separation", 8)
 
 	var icon_frame := PanelContainer.new()
-	var icon_box := UiTheme.flat(UiTheme.SLATE_800)
-	icon_box.border_color = UiTheme.HARD_BORDER
-	icon_box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(icon_box)
+	var icon_box := UiTheme.bordered(UiTheme.SLATE_800, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	icon_frame.add_theme_stylebox_override("panel", icon_box)
 	var icon := TextureRect.new()
 	icon.texture = load(ICON_PATH) if ResourceLoader.exists(ICON_PATH) else null
@@ -774,12 +771,7 @@ func _select_map(index: int) -> void:
 
 func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool) -> void:
 	var meridian := UiTheme.menu_identity().theme(1)
-	var box := UiTheme.flat(UiTheme.PAPER_RAISED if selected else Color(0, 0, 0, 0))
-	box.set_corner_radius_all(UiTheme.RADIUS)
-	box.content_margin_left = 4
-	box.content_margin_right = 4
-	box.content_margin_top = 4
-	box.content_margin_bottom = 4
+	var box := _map_cell_box(UiTheme.PAPER_RAISED if selected else Color(0, 0, 0, 0))
 	if selected:
 		box.border_color = meridian.color
 		box.set_border_width_all(UiTheme.PANEL_BORDER)
@@ -793,9 +785,14 @@ func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool
 
 
 func _cell_hover_box() -> StyleBoxFlat:
-	var box := UiTheme.flat(
-		Color(UiTheme.PAPER_RAISED.r, UiTheme.PAPER_RAISED.g, UiTheme.PAPER_RAISED.b, 0.35)
-	)
+	return _map_cell_box(UiTheme.HOVER_WASH)
+
+
+## The map picker cell's shared frame: a flat fill, a whisker of rounding and the
+## grid's even inset. `_style_map_cell` layers a border and shadow on top when the
+## cell is selected; the hover wash and the unselected rest state need neither.
+func _map_cell_box(fill: Color) -> StyleBoxFlat:
+	var box := UiTheme.flat(fill)
 	box.set_corner_radius_all(UiTheme.RADIUS)
 	box.content_margin_left = 4
 	box.content_margin_right = 4

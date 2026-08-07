@@ -44,7 +44,7 @@ func _ready() -> void:
 
 func _build() -> void:
 	add_theme_stylebox_override(
-		"panel", _box(CommanderVisuals.PAPER, CommanderVisuals.HARD_BORDER, 4)
+		"panel", UiTheme.bordered(CommanderVisuals.PAPER, CommanderVisuals.HARD_BORDER, 4)
 	)
 
 	var row := HBoxContainer.new()
@@ -104,7 +104,9 @@ func bind(commander: CommanderType, team: int) -> void:
 	if not _built:
 		_build()
 	var theme := CommanderVisuals.theme_for(commander)
-	add_theme_stylebox_override("panel", _box(CommanderVisuals.PAPER, theme.color_dark, 4))
+	add_theme_stylebox_override(
+		"panel", UiTheme.bordered(CommanderVisuals.PAPER, theme.color_dark, 4)
+	)
 	_field.add_theme_stylebox_override("panel", _flat(theme.color))
 	_portrait.texture = CommanderVisuals.portrait_for(commander)
 	_eyebrow.text = "%s · COMMAND POWER" % commander.display_name.to_upper()
@@ -141,11 +143,4 @@ func _mono(size: int, color: Color) -> Label:
 func _flat(color: Color) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = color
-	return box
-
-
-func _box(bg: Color, border: Color, width: int) -> StyleBoxFlat:
-	var box := _flat(bg)
-	box.border_color = border
-	box.set_border_width_all(width)
 	return box

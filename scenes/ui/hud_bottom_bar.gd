@@ -138,7 +138,9 @@ func _build_commander(row: HBoxContainer) -> void:
 	_meter_frame = Panel.new()
 	_meter_frame.custom_minimum_size = UiTheme.HUD_METER
 	_meter_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_meter_frame.add_theme_stylebox_override("panel", _trough_box())
+	_meter_frame.add_theme_stylebox_override(
+		"panel", UiTheme.bordered(UiTheme.SLATE_900, UiTheme.HARD_BORDER)
+	)
 	meter_row.add_child(_meter_frame)
 	# The fill is a child of the trough rather than a ProgressBar so the meter is
 	# one flat rectangle inside a hard ink frame, with no engine-drawn rounding.
@@ -401,13 +403,3 @@ func _terrain_texture(terrain: TerrainType, owner_team: int) -> AtlasTexture:
 	var px := BattleView.TERRAIN_PX
 	atlas.region = Rect2(terrain.atlas_col * px, row * px, px, px)
 	return atlas
-
-
-# --- small builders -----------------------------------------------------------
-
-
-func _trough_box() -> StyleBoxFlat:
-	var box := UiTheme.flat(UiTheme.SLATE_900)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(1)
-	return box

@@ -78,7 +78,7 @@ func bind(commander: CommanderType) -> void:
 
 func _build() -> void:
 	custom_minimum_size.x = maxf(custom_minimum_size.x, MIN_WIDTH)
-	add_theme_stylebox_override("panel", _hard_box(UiTheme.HARD_BORDER, 3))
+	add_theme_stylebox_override("panel", UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, 3))
 
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 0)
@@ -138,7 +138,9 @@ func _build() -> void:
 	_doctrine_label = _labelled_block(copy, "DOCTRINE")
 
 	_power_box = PanelContainer.new()
-	_power_box.add_theme_stylebox_override("panel", _hard_box(UiTheme.SLATE_700, 2))
+	_power_box.add_theme_stylebox_override(
+		"panel", UiTheme.bordered(UiTheme.PAPER, UiTheme.SLATE_700, 2)
+	)
 	copy.add_child(_power_box)
 	var power_rows := VBoxContainer.new()
 	power_rows.add_theme_constant_override("separation", 1)
@@ -253,10 +255,3 @@ func _paper_panel(child: Control, h: int, v: int) -> PanelContainer:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(UiKit.pad(child, h, v))
 	return panel
-
-
-func _hard_box(border: Color, width: int) -> StyleBoxFlat:
-	var box := UiTheme.flat(UiTheme.PAPER)
-	box.border_color = border
-	box.set_border_width_all(width)
-	return box
