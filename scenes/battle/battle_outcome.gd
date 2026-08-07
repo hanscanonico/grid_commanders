@@ -113,6 +113,8 @@ func _action_word() -> String:
 
 func _release_mouse_guard() -> void:
 	await _battle.get_tree().create_timer(float(INPUT_GUARD_MS) / 1000.0).timeout
+	if not is_instance_valid(_battle):
+		return  # the lockup was left for a rematch or the menu; that run is not ours to end
 	if _battle.state != Battle.State.VICTORY:
 		return
 	victory_screen.rematch_button.mouse_filter = Control.MOUSE_FILTER_STOP
