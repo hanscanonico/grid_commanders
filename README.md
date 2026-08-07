@@ -25,12 +25,13 @@ target fails with "Godot binary not found". Symlink the one you already have:
 Then:
 
 ```sh
-make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue)
+make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue / Campaign)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
 make verify          # the merge gate: check + lint + format-check + test, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
+make campaigns       # walk all 108 authored campaign missions: board parses, seating legal, objectives name real ground, launch builds
 make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
@@ -349,7 +350,8 @@ is the match you meant. With nothing to resume the line reads `NO SAVED MATCH`; 
 build cannot open — a truncated file, a damaged one, or a board that has moved since — it reads
 `SAVED MATCH UNREADABLE` and says why underneath, because being told you never had a save is the
 wrong thing to hear about one you did. Either way the button is greyed out (disabled, not hidden).
-**Replays** opens the recordings page (see Replays below), and **Quit** exits.
+**Campaign** opens the campaign select (see Campaigns below), **Replays** opens the recordings
+page (see Replays below), and **Quit** exits.
 
 The **seat strip** is one row per army the board deals — how many there are is the board's answer, so
 it re-deals itself whenever you pick a different map. Each row is a **Human** / **CPU** choice and a
@@ -562,7 +564,8 @@ mouse, keyboard, or controller throughout.
   slot exactly as **Save** does and only then goes back — a failed write keeps you on the board and
   says so — while **Main Menu Without Saving** asks a second time first, on a two-row confirmation
   whose safe answer is the one already highlighted. Neither adds a slot: the save model stays the
-  single one Continue reads
+  single one Continue reads. A campaign mission is the one exception — both save rows write it
+  into its campaign's profile instead of the skirmish slot (see Campaigns below)
 - The HUD is two opaque bars docked above and below the board, never panels floating on it: the
   board sits in the band they leave over, and only transient things — damage numbers, the capture
   counter and the badge on the tile being taken, the movement arrow, the attack forecast, the
@@ -726,6 +729,39 @@ drifting backdrop and blinking **PRESS START** pin still under a capture (the an
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
 
+## Campaigns
+
+**Campaign** on the main menu opens six authored wars against the Iron Dominion — *The Six
+Marshals*, *The Collection*, *The Furnace Winter*, *The Hollow Crown*, *The Long Front* and *The
+Quiet War* — eighteen missions each, every mission on its own board under `maps/campaign/`. You
+play the other three factions' commanders; the casting, seating, grouping, fog and difficulty are
+each mission's own (`data/campaigns/<campaign>/missions/`), so an act can be a 2v2 as easily as a
+duel, and difficulty is always one of the shipped tiers — no mission carries tuned AI numbers of
+its own.
+
+Picking a war opens its **hub**: the mission list in play order under its block headers, locked rows
+greyed out, stars beside every cleared mission and a `cleared · stars` line up top. Picking a
+mission swaps the list for its **briefing** — the story, the objectives, what fails it, the par
+day — and **Deploy** stages it through the same launch path a skirmish uses; the button reads
+**Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
+every objective at once (or by ordinary tactical victory) and lost by any failure condition — a
+deadline, a fallen ally — or by tactical defeat, and **losing outranks winning**: a deadline that
+expires on the very board that completed the objective is a failure. The victory screen reads
+**Mission complete** or **Mission failed** with the reason, counts stars — one for finishing, one
+for beating the par day, one per bonus objective — and its action button reads **Retry**, which
+re-arms the mission itself rather than rematching its finished board. Clearing a mission unlocks
+the next; replaying one keeps the best stars and best day it ever earned.
+
+Progress is one file per campaign under `user://campaigns/`, written through a temp and a backup
+like the skirmish save, so the six wars advance independently and finishing one cannot corrupt
+another's record. Inside a mission, both save rows on the map menu write the match *into its
+campaign's profile* rather than the skirmish slot — **Continue** on the main menu still means the
+one skirmish save, and the hub is where a saved mission picks its board back up.
+
+`make campaigns` is the authoring gate: it walks every mission of every campaign and fails loudly
+if a board does not parse, a seating names a seat the board does not deal, an objective names
+ground that does not exist, or the launch does not build.
+
 ## Replays
 
 **Every match records itself** as it is played, to a rotating slot under `user://replays/` — ten of
@@ -859,15 +895,19 @@ already failing would muddy both readings.
 - `data/` — game data as `Resource` files (terrain, units, the damage chart, the commander
   roster in `data/commanders/`, the AI profiles in `data/ai/` — every weight the opponent scores
   with, so tuning its behaviour is a data edit rather than a code change — and the difficulty
-  tiers in `data/difficulty/`, each of which is just a label plus one of those profiles).
+  tiers in `data/difficulty/`, each of which is just a label plus one of those profiles, and the
+  campaigns in `data/campaigns/` — one directory per war, `campaign.tres` plus its
+  `missions/*.tres`, discovered by `CampaignDB` rather than listed by hand).
 - `maps/` — plain-text maps: an ASCII terrain grid, a *starting* property-ownership section, and
-  an optional starting-units section. `MapData` (core) is authoritative for terrain and is never
+  an optional starting-units section; campaign boards live under `maps/campaign/<campaign>/`. `MapData` (core) is authoritative for terrain and is never
   mutated by play; runtime ownership, funds, and turn state live in `GameState`. The TileMapLayer is just paint.
 - `scenes/` — presentation: main menu, battle scene, cursor, UI panels.
 - `autoload/` — singletons: the event bus, the one match request the menu (or a rematch) stages
   for the battle scene, the device preferences this machine keeps between launches (`Settings` —
   the game speed above, whether battles play the full-screen cut-ins, and which first-match hints
-  this player has retired), and the sound-effect player.
+  this player has retired), the sound-effect player, and the campaign session (`CampaignSession` —
+  which war and mission is being played, carried across the scene change; navigation intent only,
+  it decides no rule and holds no board).
 - `tools/` — the art and sound build scripts: the headless ground-tile, sound, and portrait
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
   Assets below); and the offline balance
