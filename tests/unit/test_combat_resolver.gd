@@ -73,6 +73,21 @@ func test_forecast_no_counter_from_indirect_defender() -> void:
 	assert_eq(forecast.counter_damage, -1, "artillery never counters")
 
 
+## The damage chart carries a real cell for artillery vs. sub, but AttackRange's
+## can_engage refuses a submerged target to everything but a hunter — the same
+## gate a live AttackCommand only ever reaches through can_fire first. The
+## forecast has to refuse it unprompted, or a caller that skips that pre-gate
+## (an AI plan cache miss, a future forecaster) would price a shot that could
+## never be fired.
+func test_forecast_against_a_dived_sub_from_a_non_hunter_cannot_attack() -> void:
+	var state := _state("[terrain]\n..S\n[units]\n1 g 0 0\n2 s 2 0")
+	state.rng.seed = 42
+	var sub := state.units[1]
+	sub.dived = true
+	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), sub)
+	assert_false(forecast.can_attack, "artillery cannot reach under the water, dived or not")
+
+
 ## forecast() is the convenience for the defender's real cell, so the two must
 ## agree there or every existing caller has quietly changed answer.
 func test_forecast_at_the_defenders_own_cell_matches_forecast() -> void:
