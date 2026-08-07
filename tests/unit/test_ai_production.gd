@@ -369,3 +369,120 @@ func test_a_negative_doctrine_bias_still_reaches_the_tail_with_reactivity_on() -
 		&"recon",
 		"the doctrine's negative bias must still reach the tail with reactivity on"
 	)
+
+
+# --- COM-180: the supply want's clamp -----------------------------------------
+#
+# Every other tier in _build_rank clamps the *sum* of priority/duplicates/bias
+# at zero, so a strongly negative bias is capped rather than reversed. The
+# supply want clamped the bias alone, so a doctrine that wanted the truck
+# sooner could never move it while one that wanted it later still could.
+
+
+## A doctrine that wants the resupply truck sooner than the standing priority
+## does, by however much apc_bias says.
+class TruckAdviser:
+	extends CommanderType
+
+	var apc_bias: int = 0
+
+	func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
+		return apc_bias if unit_type.id == &"apc" else 0
+
+
+## A base, its capture roster already at the floor, and a priority list that
+## only a tank and the truck can ever reach — the other three entries name
+## naval and air ids a base cannot build, so they hold their tail slots
+## without ever costing a candidate.
+const SUPPLY_WANT_BOARD := """
+[terrain]
+B....
+.....
+[owners]
+1 0 0
+[units]
+1 i 1 0
+1 i 2 0
+1 i 3 0
+"""
+
+
+func _supply_want_profile() -> AIProfile:
+	var profile := AIProfile.new()
+	profile.build_priority = ([&"battleship", &"bomber", &"cruiser", &"tank"] as Array[StringName])
+	return profile
+
+
+func _supply_want_build(commander: CommanderType) -> StringName:
+	var state := _state(SUPPLY_WANT_BOARD)
+	if commander != null:
+		state.set_commander(1, commander)
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 99999
+	var command := AIController.new(unit_db, _supply_want_profile()).plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	return (command as BuildCommand).unit_type.id
+
+
+## The practical effect: an unbiased army fills the list's tank before it ever
+## reaches the truck, and a doctrine that wants the truck can pull it ahead of
+## a tank the list still prefers on its own.
+func test_a_hungry_doctrine_buys_the_truck_a_blind_planner_would_not() -> void:
+	assert_eq(
+		_supply_want_build(null),
+		&"tank",
+		"an unbiased army reaches the list's tank before the truck's want"
+	)
+	var wanting := TruckAdviser.new()
+	wanting.apc_bias = -4
+	assert_eq(
+		_supply_want_build(wanting),
+		&"apc",
+		"a doctrine that wants the truck should be able to pull it ahead of the list"
+	)
+
+
+## The exact arithmetic: unbiased is unchanged, a bias inside the tier moves
+## the truck by its own amount, a bias past the tier floors there rather than
+## being refused outright, and a positive bias still pushes it down unclamped.
+func test_the_supply_want_clamps_the_sum_not_the_bias_alone() -> void:
+	var apc: UnitType = unit_db.by_id(&"apc")
+	var planner := AIProductionPlanner.new(AIProfile.new())
+	var list_size := AIProfile.new().build_priority.size()
+	var floor_rank := AIProductionPlanner.RANK_PRIORITY
+
+	var neutral := AIProductionPlanner.BuildWants.new()
+	neutral.short_of_supply = true
+	assert_eq(
+		planner._build_rank(apc, neutral),
+		floor_rank + list_size,
+		"an unbiased truck still ranks one place under the list's tail"
+	)
+
+	var wanted := AIProductionPlanner.BuildWants.new()
+	wanted.short_of_supply = true
+	wanted.doctrine_bias = {&"apc": -(list_size - 1)}
+	assert_eq(
+		planner._build_rank(apc, wanted),
+		floor_rank + 1,
+		"a bias inside the tier moves the truck by exactly its own amount"
+	)
+
+	var starved := AIProductionPlanner.BuildWants.new()
+	starved.short_of_supply = true
+	starved.doctrine_bias = {&"apc": -(list_size + 50)}
+	assert_eq(
+		planner._build_rank(apc, starved),
+		floor_rank,
+		"the tier floor stops the pull; clamping the bias alone would have refused it entirely"
+	)
+
+	var pushed := AIProductionPlanner.BuildWants.new()
+	pushed.short_of_supply = true
+	pushed.doctrine_bias = {&"apc": 5}
+	assert_eq(
+		planner._build_rank(apc, pushed),
+		floor_rank + list_size + 5,
+		"a positive bias still pushes the truck down, unclamped"
+	)

@@ -12,6 +12,9 @@ const TIER_STRIDE := 1000
 ## "The army is missing something it cannot do without." Ordered within itself:
 ## the capture roster first, then the one truck that keeps the rest firing.
 const RANK_SHORTFALL := TIER_STRIDE
+## "Follow the standing priority" — the doctrine tail and the supply want
+## share this floor, so a doctrine can pull either up but never past it.
+const RANK_PRIORITY := TIER_STRIDE * 2
 ## "Never buy this" — above every tier, so it loses every comparison.
 const RANK_NONE := TIER_STRIDE * 100
 
@@ -61,9 +64,6 @@ class BuildWants:
 
 	func bias_of(id: StringName) -> int:
 		return int(doctrine_bias.get(id, 0))
-
-	func first_priority_rank() -> int:
-		return TIER_STRIDE * 2
 
 
 var profile: AIProfile
@@ -161,7 +161,7 @@ func _worth_waiting_for(
 	funds: int,
 	best_rank: int
 ) -> bool:
-	if best_rank < wants.first_priority_rank() or profile.save_up_turns <= 0:
+	if best_rank < RANK_PRIORITY or profile.save_up_turns <= 0:
 		return false
 	var budget := funds + TurnRules.income_for(context.state, context.team) * profile.save_up_turns
 	for terrain in facilities:
@@ -192,10 +192,10 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 	var bias := wants.bias_of(unit_type.id)
 	if wants.reactive_order.has(unit_type.id):
 		var reactive := int(wants.reactive_order[unit_type.id])
-		return TIER_STRIDE * 2 + maxi(0, reactive + duplicates + bias)
+		return RANK_PRIORITY + maxi(0, reactive + duplicates + bias)
 	var priority := profile.build_priority.find(unit_type.id)
 	if priority >= 0:
-		return TIER_STRIDE * 2 + maxi(0, priority + duplicates + bias)
+		return RANK_PRIORITY + maxi(0, priority + duplicates + bias)
 	if unit_type.can_resupply and wants.short_of_supply:
 		# One place below the list's last entry, so every listed unit the money
 		# reaches outranks the truck and it is bought once duplicates have pushed
@@ -204,11 +204,11 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 		# second: the planner cannot ferry, so a spare would follow it doing
 		# nothing. That is why this is a want and not a place on the list, where
 		# duplicate_priority_cost would eventually buy another.
-		return TIER_STRIDE * 2 + profile.build_priority.size() + maxi(0, bias)
+		return RANK_PRIORITY + maxi(0, profile.build_priority.size() + bias)
 	if bias < 0 and unit_type.max_range > 0:
 		# A doctrine may pull a combat unit the list omits onto its tail — never
 		# a transport, which stays without a rank to move.
-		return TIER_STRIDE * 2 + maxi(0, profile.build_priority.size() + duplicates + bias)
+		return RANK_PRIORITY + maxi(0, profile.build_priority.size() + duplicates + bias)
 	if unit_type.can_capture:
 		return TIER_STRIDE * 3
 	return RANK_NONE

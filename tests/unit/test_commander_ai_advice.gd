@@ -173,7 +173,9 @@ func test_build_bias_reranks_the_priority_tier() -> void:
 
 ## The urgent tiers stay urgent: with an enemy bomber overhead the planner
 ## builds its air answer whatever the doctrine thinks of it, and no bias pulls
-## a transport into production.
+## a transport onto the list's tail (the mechanism build_bias uses for an
+## unlisted combat unit; a truck already on the board has no supply want of
+## its own for a bias to move instead, isolating this from COM-180's clamp).
 func test_urgent_tiers_and_transports_ignore_the_bias() -> void:
 	var bombed := _state("[terrain]\nB....\n.....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n2 b 4 1")
 	bombed.set_commander(1, SaboteurAdviser.new())
@@ -183,12 +185,12 @@ func test_urgent_tiers_and_transports_ignore_the_bias() -> void:
 		"the air-answer tier outranks any doctrine bias"
 	)
 
-	var quiet := _state(FUNDED_BASE_BOARD)
+	var quiet := _state(FUNDED_BASE_BOARD + "\n1 p 4 0")
 	quiet.set_commander(1, SaboteurAdviser.new())
 	assert_eq(
 		_planned_build(quiet, AIProfile.new()),
 		&"md_tank",
-		"an unarmed transport has no rank for a bias to move"
+		"an unarmed transport has no rank on the list's tail for a bias to move"
 	)
 
 
