@@ -378,16 +378,53 @@ func cargo_of(transport: Unit) -> Array[Unit]:
 
 
 func remove_unit(unit: Unit) -> void:
+	_take_off_board(unit)
+	_check_rout(unit.team)
+
+
+## The mechanics of taking a unit off the board — cargo cascades with its
+## transport, the abandoned capture clears — without the rout check that
+## follows it in `remove_unit`. Split out so `remove_units` can take a whole
+## batch off the board before anyone's rout is judged; see its comment.
+func _take_off_board(unit: Unit) -> void:
 	# Cargo goes down with its transport.
 	for passenger in cargo_of(unit):
-		remove_unit(passenger)
+		_take_off_board(passenger)
 	units.erase(unit)
 	# A dying unit abandons any capture in progress. A passenger owns no cell of
 	# its own — its stored cell is stale from wherever it last boarded — so it can
 	# hold no capture, and erasing by that cell would wipe an unrelated one.
 	if unit.carrier == null:
 		capture_progress.erase(unit.cell)
-	_check_rout(unit.team)
+
+
+## Removes many units in one atomic sweep, deferring rout and victory to a
+## single pass after the whole batch is off the board.
+##
+## `remove_unit` checks rout as each unit comes off, which is exactly right
+## for a single kill but wrong for a caller that can empty more than one army
+## in the same command — Hammerfall's blast (COM-179). Checked one at a time,
+## the army whose last unit happens to be removed first is eliminated first,
+## and `_check_victory` then finds the other emptied army's doomed unit still
+## standing (it hasn't been removed yet) and crowns it — a winner chosen by
+## the scan order of the caller's own list rather than by the board. Taking
+## the whole batch off the board first, eliminating every army it emptied in
+## one ascending-team-id pass, and checking victory exactly once afterward
+## makes the outcome a function of the board alone, whatever order `doomed`
+## was built in.
+func remove_units(doomed: Array[Unit]) -> void:
+	var touched: Dictionary[int, bool] = {}
+	for unit in doomed:
+		touched[unit.team] = true
+		_take_off_board(unit)
+	var emptied: Array[int] = []
+	for team in touched:
+		if not is_eliminated(team) and units_of(team).is_empty():
+			emptied.append(team)
+	emptied.sort()
+	for team in emptied:
+		_fall(team)
+	_check_victory()
 
 
 func owner_at(cell: Vector2i) -> int:
@@ -509,19 +546,25 @@ func winners() -> Array[int]:
 ## and take. The one exception falls out of ordering rather than a rule: an HQ
 ## taken by capture belongs to the capturer before this runs, so a conqueror keeps
 ## the seat it actually stood on and nothing else.
-##
-## Idempotent, and the flag is set first: removing units routes back through
-## `_check_rout`, which stops at an army that has already fallen.
 func eliminate(team: int) -> void:
+	_fall(team)
+	_check_victory()
+
+
+## `eliminate`'s mechanics without the victory check that follows it — the
+## half `remove_units` runs per emptied army before checking victory once for
+## the whole batch, so a call already inside a rout check (or a bulk removal)
+## never runs it twice. Idempotent, guarded here rather than by a caller: an
+## army already flagged fallen has nothing left for this to take off the board.
+func _fall(team: int) -> void:
 	if is_eliminated(team):
 		return
 	eliminated[team] = true
 	for unit in units_of(team):
-		remove_unit(unit)
+		_take_off_board(unit)
 	for cell in properties_of(team):
 		property_owners[cell] = MapData.NEUTRAL
 		capture_progress.erase(cell)
-	_check_victory()
 
 
 ## An army with nothing left on the board has fallen. Reached from `remove_unit`,
@@ -541,7 +584,18 @@ func _check_victory() -> void:
 		return
 	var alive := active_teams()
 	if alive.is_empty():
-		return  # everyone fell in the same breath; nobody won
+		# Every death used to remove one army at a time, so the last team
+		# standing was always found before the second-to-last one could finish
+		# falling too. A blast that empties more than one army in the same
+		# command breaks that: `remove_units` (COM-179) can legitimately land
+		# here when it eliminates every remaining side in one pass. Nothing
+		# past this point models a draw — `winner` stays 0 and `next_team()`
+		# has nobody to hand the turn to — so this is flagged loud rather than
+		# silent, the same refusal `SaveCodec._eliminated_error` already gives
+		# this exact shape in a save file, rather than let the match spin
+		# forever on an empty board with nobody told why.
+		push_error("GameState: every remaining army fell at once; no side is left to win")
+		return
 	for team in alive:
 		if not allied(alive[0], team):
 			return

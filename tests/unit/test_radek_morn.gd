@@ -206,6 +206,36 @@ func test_an_army_that_loses_its_last_unit_in_the_square_falls() -> void:
 	assert_eq(state.winner, 1, "and the match resolved on the power")
 
 
+## COM-179: `remove_unit` used to check rout one death at a time, so a blast
+## emptying two armies at once had its winner decided by which unit
+## `power_blast_cells`' scan happened to reach first — the army whose last
+## unit came off the board first fell first, and `_check_victory` then found
+## the other side's doomed unit still standing and crowned it. Mirroring the
+## board swaps which of the two units the scan meets first; the outcome must
+## not move with it. Both his own last unit and the rival's are in the square,
+## so this is a true mutual wipeout: nobody is left to win.
+func test_a_mutual_wipeout_resolves_the_same_regardless_of_scan_order() -> void:
+	var his_unit_scanned_first := _state("[terrain]\n...\n...\n...\n[units]\n1 t 0 0\n2 t 2 0")
+	his_unit_scanned_first.rng.seed = 179
+	_fire_at(his_unit_scanned_first, Vector2i(1, 1))
+	assert_push_error("every remaining army fell at once")
+
+	var rival_scanned_first := _state("[terrain]\n...\n...\n...\n[units]\n1 t 2 0\n2 t 0 0")
+	rival_scanned_first.rng.seed = 179
+	_fire_at(rival_scanned_first, Vector2i(1, 1))
+	assert_push_error("every remaining army fell at once")
+
+	for state in [his_unit_scanned_first, rival_scanned_first]:
+		assert_eq(state.winner, 0, "a mutual wipeout has no side left to crown")
+		assert_true(state.is_eliminated(1), "his own last unit went into the square too")
+		assert_true(state.is_eliminated(2), "and so did theirs")
+	assert_eq(
+		his_unit_scanned_first.winner,
+		rival_scanned_first.winner,
+		"same outcome whichever unit the blast scan met first"
+	)
+
+
 ## R4: the Balance Lab is *told* how a match ended rather than reading it back off
 ## a board elimination has already cleared, and a power rout is a rout. A misread
 ## here silently corrupts every balance report afterwards.

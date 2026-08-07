@@ -67,11 +67,15 @@ func power_blast_cells(state: GameState, _team: int, target: Vector2i) -> Array[
 ## is, however much health it has left — and cargo with the transport it is
 ## riding, which `remove_unit` already takes down.
 ##
-## Two rules ride on that, both of them D4's. The doomed are collected before any
+## Three rules ride on that, all of them D4's. The doomed are collected before any
 ## of them is removed, because `remove_unit` mutates the very list the footprint
 ## is being read against. And nothing is banked to either meter: charge is minted
 ## in three calls inside CombatResolver and nowhere else, so a death outside a
 ## fight pays nobody — the same rule a plane that starves its own tank relies on.
+## And the whole batch goes through `GameState.remove_units` rather than a loop
+## of `remove_unit`, so a blast that empties two armies at once is decided by
+## the board, never by which of them this scan happened to reach first
+## (COM-179).
 ##
 ## Properties are untouched. A headquarters, factory or city in the square keeps
 ## its owner; only what is standing on it dies.
@@ -81,8 +85,7 @@ func on_power_activated(state: GameState, team: int, target: Vector2i = Vector2i
 		var unit := state.unit_at(cell)
 		if unit != null:
 			doomed.append(unit)
-	for unit in doomed:
-		state.remove_unit(unit)
+	state.remove_units(doomed)
 
 
 func power_target(state: GameState, team: int) -> Vector2i:
