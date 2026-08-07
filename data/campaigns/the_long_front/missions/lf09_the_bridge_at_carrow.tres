@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_take_carrow"]
 script = ExtResource("2")
 text = "Take Carrow and open the crossing."
 cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Carrow's the one bridge east for forty miles. Vale's engineers have been digging in around it since the line stopped moving."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Every day the works harden. We take the crossing now, or the alliance never takes it at all."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Vale's second trench line is still open. That's the window — it won't stay that way."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Then we don't wait for it to close. Moving now."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Carrow falls before the second trench line closes. Road east is open for the first time since the crossing."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Marking it on the map. Already counting the properties beyond it."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_take_carrow")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-"Carrow is the one bridge east for forty miles, and Konrad Vale's engineers have been digging in around it since the line stopped moving.",
-"Every day the works harden. Orin Flux takes the crossing now, or the allies never take it at all."
-])
-victory = Array[String]([
-"Carrow falls before Vale's second trench line closes. The road east is open for the first time since the crossing.",
-"Flux marks it on the map and starts counting the properties beyond it."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vale's works held, and the crossing stayed his — a wall the allies will have to go around, not through."

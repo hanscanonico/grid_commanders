@@ -54,8 +54,13 @@ extends Resource
 @export var par_day: int = 0
 
 @export_group("Story")
-@export var briefing: Array[String] = []
-@export var victory: Array[String] = []
+## What is said before the battle and after it is won, as lines with speakers —
+## a campaign is a conversation between the generals fighting it. A line with no
+## speaker is narration.
+@export var briefing: Array[MissionLine] = []
+@export var victory: Array[MissionLine] = []
+## One narrator's sentence on a loss. Not dialogue: a defeat is the only beat
+## nobody in the fiction is present to comment on.
 @export_multiline var defeat: String = ""
 
 
@@ -101,6 +106,19 @@ func definition_error(map: MapData) -> String:
 		if objective == null:
 			return "mission '%s' holds an empty objective slot" % id
 		var error := objective.definition_error(map, player_team)
+		if error != "":
+			return "mission '%s': %s" % [id, error]
+	return ""
+
+
+## Why a line of this mission's story could not be spoken, or "". Split from
+## `definition_error` because it needs the roster and that one needs the board,
+## and a caller holding only one of them should still be able to ask.
+func story_error(commander_db: CommanderDB) -> String:
+	for line: MissionLine in briefing + victory:
+		if line == null:
+			return "mission '%s' holds an empty story line" % id
+		var error := line.definition_error(commander_db)
 		if error != "":
 			return "mission '%s': %s" % [id, error]
 	return ""

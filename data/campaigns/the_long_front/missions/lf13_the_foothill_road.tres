@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
 text = "Take Vale's forward works."
 cell = Vector2i(16, 7)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "We're crossing our own border for the first time, Sol. This is ground the Dominion has never had to defend."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "Vale's engineers have dug a works into the only road through the passes. Give me three days, I take it or I know why not."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Take it. The highlands stay his if you don't, and we've come too far to stop at the foot of them."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "Understood. Moving at first light."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "The works fall. The only road through the passes belongs to the alliance for the first time in this war."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Weigh that against six weeks of retreat. It's a fair trade, and it's only the first one."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_works")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 8
-briefing = Array[String]([
-"The allied line finally crosses its own border. Rhea Sol leads the column into ground the Dominion has never had to defend.",
-"Konrad Vale's engineers have dug a works into the only road through the passes. Take it, or the highlands stay his."
-])
-victory = Array[String]([
-"The works fall, and the only road through the passes belongs to the alliance for the first time in this war.",
-"Sol counts the cost against the six weeks Meridian, Aurora and the League spent retreating. It is a fair trade."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vale's works held the passes, and the highlands stayed exactly what they have always been: Iron ground."

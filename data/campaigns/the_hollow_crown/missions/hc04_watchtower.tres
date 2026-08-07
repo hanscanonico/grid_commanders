@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 9
 script = ExtResource("4")
 text = "Hold every property on the board at once."
 count = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "This stretch runs the same as everywhere I'm posted, Commander. Like a ledger."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"rhea_sol"
+text = "Three checkpoints, nine days. You won't leave any undefended for a tenth."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"rhea_sol"
+text = "Take her headquarters and the whole ledger closes at once."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"rhea_sol"
+text = "Watchtower road is ours. Her busiest entry, gone."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "For once the accounting favours you. I will remember the figures."
 
 [resource]
 script = ExtResource("1")
@@ -40,13 +66,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
-briefing = Array[String]([
-"Vance runs this stretch like a ledger, same as everywhere she is posted.",
-"Three checkpoints, nine days. She will not leave any of them undefended for a tenth.",
-"Take her headquarters and the whole ledger closes at once."
-])
-victory = Array[String]([
-"The watchtower road is ours. Vance's ledger just lost its busiest entry.",
-"For once, the accounting favours us."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Vance's ledger stayed open, and the watchtower road stayed hers."

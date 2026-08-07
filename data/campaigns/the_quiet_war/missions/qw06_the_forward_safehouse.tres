@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_take_the_safehouse"]
 script = ExtResource("2")
 text = "Take the forward safehouse."
 cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Every flipped town, every column in the woods, every forged ledger — all of it ran through one garrison base on no map anyone issued."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Then we take the source this time, not another symptom of it."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "It's defended lighter than it should be for what it's hiding. Orlov doesn't expect us to have found it yet."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Good. I'll take his surprise over his strength any day."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The safehouse falls, and its files fall with it. Names, routes, towns not yet touched."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Not the end of his network. First time we've read its handwriting, though — that's worth the fight."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_safehouse")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-"Every flipped town, every column in the woods, every forged ledger — all of it ran through one garrison base on no map anyone issued.",
-"Ivar Thorne takes the source this time, not another symptom of it."
-])
-victory = Array[String]([
-"The safehouse falls, and its files fall with it — names, routes, towns not yet touched.",
-"It is not the end of Orlov's network. It is the first time the alliance has read its handwriting."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The safehouse burned its files before Thorne's column got the gate open, and the network stayed a rumour."

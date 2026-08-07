@@ -1,12 +1,48 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_take_draeg_hq"]
 script = ExtResource("2")
 text = "Take Draeg's headquarters."
 cell = Vector2i(18, 9)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Every nation the spearhead put to flight in the opening week stands on this ground together, Voss. You bought that first morning with four units and a river."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then I'll finish what I started there. Take Draeg's headquarters — there's nowhere left behind it for this war to go."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "Eighteen days, Commander Voss. I confess I did not expect to see you standing on this side of the line."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Neither did I, General. Let's not waste either of our time pretending this ends any other way."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "The uniform outlasts the officer who wears it. Remember that, when you sit behind this desk."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "The keep falls. The line that ran from the customs road to the highlands finally has an end written on it."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "You're standing where his desk stood this morning, Voss. Don't sit down yet — there's a great deal still to rebuild."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +64,6 @@ objectives = Array[Resource]([SubResource("Objective_take_draeg_hq")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 9
-briefing = Array[String]([
-"Every nation the spearhead put to flight in the opening week stands on this ground together. Mara Voss, who bought that first morning with four units and a river, leads the army that ends it.",
-"Take Draeg's headquarters. There is nowhere left behind it for the war to go."
-])
-victory = Array[String]([
-"The keep falls, and the long front that ran from the customs road to the highlands finally has an end written on it.",
-"Voss stands where Draeg's desk stood that morning and does not sit down. There is a great deal still to rebuild."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
 defeat = "The keep held, and the alliance that took eighteen days to build broke against the one wall it could not move."

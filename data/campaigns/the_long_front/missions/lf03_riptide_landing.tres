@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_the_coast"]
 script = ExtResource("2")
 text = "Hold the coast road until day 6."
 day = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Second column's ashore behind the picket line, Rook. Same morning Meridian lost its border — this isn't a coincidence."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Coordinated landings on two fronts, noted. We don't have ground to trade for time, so we hold the road instead."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Four units against a beachhead. The tide won't cover for you twice."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Then we make the first tide count. Get the coast watch moving inland the moment the road's secure."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Picket held the road long enough. Coast watch is inland and accounted for."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Three units left standing. I'll call that a win worth having."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_coast")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-"The same morning Meridian is losing its border, Draeg's second column comes ashore behind the Aurora picket line.",
-"Rook has the sea at his back and no ground to trade for time. Hold the coast road anyway."
-])
-victory = Array[String]([
-"The picket held the road long enough for the coast watch to fall back inland.",
-"Rook counts three units left standing and calls it a win worth having."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The coast road broke before the watch could pull back, and the sea gave nobody anywhere further to go."

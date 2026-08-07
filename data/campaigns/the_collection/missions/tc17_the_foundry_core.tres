@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_foundry_core_until_day_8"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ day = 8
 script = ExtResource("3")
 text = "The core fell before day 8."
 last_day = 8
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Everything we've taken this act comes down to holding this ground. Morn's throwing what's left at it, Hammerfall included."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Then nothing gets bunched, and nothing gets thrown at us worth the charge. I've held worse ground on a thinner budget."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Spread the line, keep nothing bunched, and hold to day eight."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Day eight. The core held, and Morn's got nothing left to throw at it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "One foundry from the end of this."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_foundry_core_until
 failures = Array[Resource]([SubResource("Failure_the_core_fell_before_day_8")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"Everything we've taken this act comes down to holding this ground. Morn is throwing what's left at it, Hammerfall included.",
-	"Spread the line, keep nothing bunched, and hold to day eight."
-])
-victory = Array[String]([
-	"Day eight. The core held, and Morn has nothing left to throw at it."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The line held too tight in one place, and Hammerfall found exactly what it needed."

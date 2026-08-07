@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 10
 script = ExtResource("4")
 text = "Hold every property the alliance can reach."
 count = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "Orlov and I split the attack across two passes, Quill. Bet you can't answer both."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "I take the western pass. You take the eastern. Neither of us fights this one alone."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"lyra_quill"
+text = "Good odds either way — two fronts only work against an alliance that fights like one army."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"lyra_quill"
+text = "Both passes held. Two fronts bought them two defeats instead of one."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "We answered as one army. Exactly what they bet against."
 
 [resource]
 script = ExtResource("1")
@@ -42,13 +68,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
-briefing = Array[String]([
-"Morn and Orlov split their attack across two passes, betting we cannot answer both.",
-"Draeg takes the western pass; we take the eastern. Neither of us fights this one alone.",
-"Hold the relay. Two fronts only work against an alliance that fights like one army."
-])
-victory = Array[String]([
-"Both passes held. Two fronts bought Morn and Orlov nothing but two defeats instead of one.",
-"The alliance answered as one army, which is exactly what they bet against."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "One front gave way, and Morn's bet on our alliance's seams paid off."

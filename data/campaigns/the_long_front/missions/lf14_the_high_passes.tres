@@ -1,13 +1,44 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_four_cities"]
 script = ExtResource("2")
 text = "Hold all four highland cities."
 count = 4
 terrain_id = &"city"
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "Vance is throwing a second heavy column into the passes to keep the highland cities out of our hands."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "Mixed force, no domain advantage on rock and passes. We take and hold all four cities anyway."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "Four cities, one column trying to stop you taking any of them. The numbers favour speed over caution."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "Speed it is. Weather's clear — that won't last either."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "All four cities fly allied colours by nightfall. Her column falls back deeper into the highlands."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "We dig in on ground that produces for the front instead of against it. Good trade for a bad coast to leave behind."
 
 [resource]
 script = ExtResource("1")
@@ -29,12 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_four_cities")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 8
-briefing = Array[String]([
-"Iona Vance throws a second heavy column into the passes to keep the highland cities out of allied hands.",
-"Halden Marr's mixed force does not have a domain advantage here. Take and hold all four cities anyway."
-])
-victory = Array[String]([
-"All four cities fly allied colours by nightfall. Vance's column falls back deeper into the highlands.",
-"Marr's army digs in on ground that produces for the front instead of against it."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vance held enough of the four to bleed the advance dry, and the passes stayed contested."

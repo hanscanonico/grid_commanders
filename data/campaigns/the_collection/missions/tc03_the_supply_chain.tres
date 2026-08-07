@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_first_depot"]
 script = ExtResource("2")
@@ -24,6 +25,31 @@ script = ExtResource("3")
 text = "The chain was broken before day 10."
 last_day = 10
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Three depots, three line items on the forged ledger. Ferrow means to take the whole chain in one sweep."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"rhea_sol"
+text = "Six to ten days of exposure on each, depending how thin he spreads. Hold all three and none of that math works for him."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Hold all three and the ledger's claim on this road is finished."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"rhea_sol"
+text = "All three depots held. The supply chain never left our hands, not for a day."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Ferrow's sweep found nothing to sweep."
+
 [resource]
 script = ExtResource("1")
 id = &"tc03_the_supply_chain"
@@ -44,11 +70,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_first_depot"), Sub
 failures = Array[Resource]([SubResource("Failure_the_chain_was_broken_before_day_10")])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-	"Three depots, three line items on the forged ledger. Ferrow means to take the whole chain in one sweep.",
-	"Hold all three and the ledger's claim on this road is finished."
-])
-victory = Array[String]([
-	"All three depots held. The supply chain never left our hands."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "One depot fell, and Ferrow's raiders used it to roll up the other two."

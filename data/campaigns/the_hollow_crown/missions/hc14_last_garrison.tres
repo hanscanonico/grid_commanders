@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 10
 script = ExtResource("4")
 text = "Hold every property the alliance can reach."
 count = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "My ledger and his bounty book both close here, Warden. The outer wall is the last garrison before the throne room."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "I fight beside you for the wall itself. Whoever holds it holds the last approach."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "Take the relay. Nothing left behind this wall but the crown."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"nia_rowan"
+text = "Outer wall's ours. Both ledger and bounty book close for good."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "Nothing stands between us and the throne room now, Commander. I have not forgotten what I said at the ridge."
 
 [resource]
 script = ExtResource("1")
@@ -42,13 +68,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
-briefing = Array[String]([
-"Vance's ledger and Ferrow's bounty book both close here — the outer wall is the last garrison before the throne room.",
-"Draeg fights beside us for the wall itself. Whoever holds it holds the last approach.",
-"Take the relay. There is nothing left behind this wall but the crown."
-])
-victory = Array[String]([
-"The outer wall is ours. Vance's ledger and Ferrow's bounty book both close for good.",
-"Nothing stands between the alliance and the throne room now."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The outer wall held, and the last garrison stayed exactly what its name promised."

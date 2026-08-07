@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_the_line"]
 script = ExtResource("2")
 text = "Hold the line until day 7."
 day = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Vance is committing her heaviest column of the war to break the line before we bring up reserves, Colt. No fog to hide behind this time — only the line itself."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Then I hold it the way I always have. Refuse, refit, refuse again."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "I've held lines like that. It costs more in the open than it ever did in fog."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Everything costs more in the open. Doesn't mean I stop paying it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Her push spends itself against a line that won't move. You're standing exactly where you started."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Second Wind found plenty of reasons to keep fighting today. I'll take that as a compliment."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_line")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-"Iona Vance commits her heaviest column of the war to break the line before the alliance can bring up reserves. There is no fog to hide behind this time — only the line itself.",
-"Iris Colt holds it the way she always has: refuse, refit, refuse again."
-])
-victory = Array[String]([
-"Vance's push spends itself against a line that will not move. Colt's units stand exactly where they started.",
-"Second Wind found plenty of reasons to keep fighting today."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The line broke in the open, with nowhere to hide the reason why."

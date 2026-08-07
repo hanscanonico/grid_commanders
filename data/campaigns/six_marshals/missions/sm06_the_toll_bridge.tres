@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_west_bank_until_day_8"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ day = 8
 script = ExtResource("3")
 text = "The bridges fell before day 8."
 last_day = 8
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Vale's whole column has to cross two bridges to reach us. Let his expensive units queue for the privilege."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "Two lanes, one outcome — every attack that funnels through them is a bad trade for him, reliably."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Hold the bank. Every attack he makes here he pays double for."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "Day eight. The odds favored us the whole way, and the bridges are choked with wrecks that cost him a fortune apiece."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Vale finally found a fight his ledger couldn't win."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_west_bank_until_da
 failures = Array[Resource]([SubResource("Failure_the_bridges_fell_before_day_8")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"Vale's whole column has to cross two bridges to reach us. Let his expensive units queue up for the privilege.",
-	"Hold the bank. Every attack he makes here he pays double for."
-])
-victory = Array[String]([
-	"Day eight. The bridges are choked with wrecks that cost Vale a fortune apiece."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The bridges held for Vale's column, and the toll came due on our side of the river."

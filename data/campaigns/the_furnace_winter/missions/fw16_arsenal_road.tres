@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -25,6 +26,31 @@ script = ExtResource("3")
 text = "Hold every property on the board at once."
 count = 7
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"dane_ferrow"
+text = "Arsenal Road. My favourite ground, Wren — rich pickings for a raider paid per kill."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"sable_wren"
+text = "Vale's extra base. Same as always. We take your headquarters instead."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"sable_wren"
+text = "No arsenal, no raider gets paid."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"sable_wren"
+text = "Arsenal's ours. Hunting season's closed."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"dane_ferrow"
+text = "Rode out with an empty ledger. That's the only defeat I understand."
+
 [resource]
 script = ExtResource("1")
 id = &"fw16_arsenal_road"
@@ -45,13 +71,6 @@ objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 7
-briefing = Array[String]([
-"The arsenal is Ferrow's favourite hunting ground — rich pickings for a raider paid per kill.",
-"He starts with the extra base Vale's doctrine gives every enforcer. We start behind, as always.",
-"Take his headquarters. An arsenal that cannot pay its raider stops being worth raiding."
-])
-victory = Array[String]([
-"The arsenal road is ours. Ferrow's favourite hunting ground just closed for the season.",
-"He rode out east with an empty ledger, which is the only defeat he understands."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The arsenal stayed his hunting ground, and the deadline ran out with the ledger still open."

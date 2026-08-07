@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 11
 script = ExtResource("4")
 text = "Hold every property the alliance can reach."
 count = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "Vance and I rarely cooperate, Thorne. The crossroads is worth the exception."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "Whoever holds it holds the shortest road to the capital. That is worth more to us than to them."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"ivar_thorne"
+text = "Then we take it before their exception becomes permanent."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"ivar_thorne"
+text = "Crossroads is ours. Their exception didn't survive contact."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "The road to the capital is shorter now. For us."
 
 [resource]
 script = ExtResource("1")
@@ -42,13 +68,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 7
-briefing = Array[String]([
-"Morn and Vance rarely cooperate, but the crossroads is worth an exception for both of them.",
-"Whoever holds it holds the shortest road to the capital. That is worth more to us than to them.",
-"Take the relay before their exception becomes permanent."
-])
-victory = Array[String]([
-"The crossroads is ours. Morn and Vance's exception did not survive contact.",
-"The road to the capital just got shorter — for us."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The crossroads stayed contested, and the shortest road to the capital stayed closed to us."

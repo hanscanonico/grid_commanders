@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_near_bank_until_day_4_then_"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ day = 4
 script = ExtResource("3")
 text = "The bank fell before the crossing force could form up."
 last_day = 4
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "This is a short window, not a siege. Hold the bank, mass at the bridge, and go before Vance's edge compounds."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"perrin_ash"
+text = "Four days to form up, then one push across. No loitering on either side of that line."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Then the crossing is ours to force."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"perrin_ash"
+text = "The bank held, the bridge is ours, and Vance never got the long fight she wanted."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Four days. That's all the window she ever had."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_near_bank_until_da
 failures = Array[Resource]([SubResource("Failure_the_bank_fell_before_the_crossing_fo")])
 bonus_objectives = Array[Resource]([])
 par_day = 4
-briefing = Array[String]([
-	"This is a short window, not a siege. Hold the bank, mass at the bridge, and go before Vance's edge compounds.",
-	"Four days. Then the crossing is ours to force."
-])
-victory = Array[String]([
-	"The bank held, the bridge is ours, and Vance never got the long fight she wanted."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The bank held too passively, and by the time the strike came, her army had grown into it."

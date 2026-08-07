@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -25,6 +26,31 @@ script = ExtResource("4")
 text = "Hold every property on the road at once."
 count = 6
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Two depots stand between you and the eastern fields, Commander. Both closed, both mine."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "No convoy to escort this time, just the road. We take the depots in order."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Ten days. She won't leave them undefended for an eleventh."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Both depots open. The eastern road's running fuel again."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Withdrawn to the next junction. I'll be waiting there with a longer ledger."
+
 [resource]
 script = ExtResource("1")
 id = &"fw07_pipeline_east"
@@ -45,13 +71,6 @@ objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 7
-briefing = Array[String]([
-"Two depots stand between us and the eastern fields — both garrisoned, both closed.",
-"There is no convoy here to escort, only the road itself. Take the depots in order.",
-"Ten days. Vance will not leave them undefended for an eleventh."
-])
-victory = Array[String]([
-"Both depots are open, and the eastern road is running fuel again.",
-"Vance's garrisons pulled back to the next junction. We will meet them there."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The road stayed closed, and the eastern fields stayed dark for another season."

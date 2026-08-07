@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 9
 script = ExtResource("4")
 text = "Hold every property on the board at once."
 count = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "I dug in across the capital road itself, Ash. Last obstacle before the walls."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "Your numbers are honest, same as ever. Ours have to be better today."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "Take the headquarters. The road opens the moment it falls."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "Road's open. Your honest numbers weren't honest enough."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "No. They were not. The walls are yours to look at now, Commander — make of that what you will."
 
 [resource]
 script = ExtResource("1")
@@ -40,13 +66,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
-briefing = Array[String]([
-"Orlov dug in across the capital road itself — the last obstacle before the city walls.",
-"His numbers are honest, same as ever. Ours have to be better.",
-"Take his headquarters and the road to the capital is finally ours to walk."
-])
-victory = Array[String]([
-"The capital road is open. Orlov's honest numbers were not honest enough today.",
-"The city walls are in sight for the first time this war."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Orlov's numbers held, and the capital road stayed exactly as far away as it started."

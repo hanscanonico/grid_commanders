@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_the_line"]
 script = ExtResource("2")
 text = "Hold the customs line until the column has cleared."
 day = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Draeg's armour crossed at first light, Commander. Four units is what you have between the border and the column."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then four units is what holds it. I don't need to win this line — I need to keep it standing."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The column clears by day six if you do. Every hour past that, someone in it doesn't."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then we don't blink for six days. Get everyone off the road who isn't fighting on it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The column's clear. Draeg's tanks own the customs road now, and nothing they were sent to take."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "I fold the map and fall back to the next line. This won't be the last one."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_line")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-"Viktor Draeg's armour crossed at first light. Four units are all Voss has between the border and the column falling back behind her.",
-"This is not a line to keep — it is a clock to run out. Hold the road until the retreat clears."
-])
-victory = Array[String]([
-"The column made it out. Draeg's tanks own the customs road now, but they own nothing they were sent for.",
-"Voss folds her map and falls back to the next line. This will not be the last one."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The column was still on the road when the line broke. Draeg's armour did not stop to count what it drove over."

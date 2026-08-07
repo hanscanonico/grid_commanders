@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_foundries"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ count = 3
 script = ExtResource("3")
 text = "The belt stayed Iron's past day 10."
 last_day = 10
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "This belt built the army that crossed our border in the first place. Take the majority and it starts building ours instead."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"sable_wren"
+text = "Outbuild her. Don't outfight her."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Three of five foundries. She'll grind for every one."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"sable_wren"
+text = "Three foundries. Iron builds for us now."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Her own production line is working against her."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_five_foun
 failures = Array[Resource]([SubResource("Failure_the_belt_stayed_iron_s_past_day_10")])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-	"This belt built the army that crossed our border in the first place. Take the majority and it starts building ours instead.",
-	"Three of five foundries. Vance will grind for every one — outproduce her, don't out-fight her."
-])
-victory = Array[String]([
-	"Three foundries, ours. Iron's own production line is working against Iron now."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The belt stayed contested, and the foundries kept turning out Vance's reinforcements."

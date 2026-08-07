@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -35,6 +36,36 @@ script = ExtResource("3")
 text = "Hold every property on the road at once."
 count = 7
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "I garrisoned the last mile myself, Ash. Past it is the foundry road, and I don't hand that over lightly."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "Three depots, eight days. Every one's the last thing standing between us and you."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "Clean approach, hold what we take. This is the Depots' last stretch."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "Last mile's open. The foundry road runs clear ahead of us."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "I withdrew east. First time all winter. Take a moment — you've earned it."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+speaker = &"perrin_ash"
+text = "We will. Then we're coming for the furnace."
+
 [resource]
 script = ExtResource("1")
 id = &"fw12_last_mile"
@@ -55,13 +86,6 @@ objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 5
-briefing = Array[String]([
-"Vale personally garrisoned the last mile. Past it is the foundry road itself.",
-"Three depots, eight days, and every one of them is the last thing standing in his way of us.",
-"This is the Depots' last stretch. Win it and the furnace itself is in reach."
-])
-victory = Array[String]([
-"The last mile is open. The foundry road lies ahead with nothing closed on it.",
-"Vale withdrew east for the first time this winter. We are inside his own supply line now."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The last mile held, and the foundry road stayed exactly as far away as it started."

@@ -35,6 +35,7 @@ var _brief_back: Button
 var _row_buttons: Array[Button] = []
 var _ids: Array[StringName] = []
 
+var _commanders := CommanderDB.load_default()
 var _campaign: CampaignDefinition
 var _progress: CampaignState
 var _showing: StringName = &""
@@ -207,6 +208,28 @@ func _note(text: String) -> Label:
 	return label
 
 
+## One spoken line: the general's name in their faction's colour above their
+## words, or plain text when nobody is speaking. The name and the colour are
+## asked of the roster and SideIdentity — the two authorities that already own
+## them — so a line names a general the same way every other surface does.
+func _speech(line: MissionLine) -> Control:
+	if line.is_narration():
+		return _body_line(line.text)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 0)
+	box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var commander := _commanders.by_id(line.speaker)
+	var name := Label.new()
+	name.text = commander.display_name.to_upper()
+	name.add_theme_font_override("font", UiTheme.stat(true))
+	name.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	name.add_theme_color_override("font_color", CommanderVisuals.theme_for(commander).color)
+	name.custom_minimum_size = Vector2(_ROW_WIDTH, 0)
+	box.add_child(name)
+	box.add_child(_body_line(line.text))
+	return box
+
+
 func _body_line(text: String, dim: bool = false) -> Label:
 	var label := Label.new()
 	label.text = text
@@ -281,8 +304,8 @@ func _open_briefing(slot: int) -> void:
 	_deploy_button.text = "Resume" if mission.id == _resume_mission else "Deploy"
 	for child in _brief_body.get_children():
 		child.queue_free()
-	for line in mission.briefing:
-		_brief_body.add_child(_body_line(line))
+	for line: MissionLine in mission.briefing:
+		_brief_body.add_child(_speech(line))
 	_brief_body.add_child(_body_line(""))
 	for objective in mission.objectives:
 		if objective != null and objective.text != "":

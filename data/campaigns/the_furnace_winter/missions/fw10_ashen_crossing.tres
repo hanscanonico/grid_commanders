@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -30,6 +31,31 @@ script = ExtResource("4")
 text = "Hold every property on the road at once."
 count = 7
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Three depots this time, spaced so no single column of yours reaches all three."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"lyra_quill"
+text = "Spaced doesn't mean safe — the far depot funds the middle one. Break the order, break the funding."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"lyra_quill"
+text = "Nine days for three checkpoints. Don't stop to hold what's already taken."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"lyra_quill"
+text = "All three open. The odds on that chain holding were never good."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Every link broken. I will not space them the same way twice."
+
 [resource]
 script = ExtResource("1")
 id = &"fw10_ashen_crossing"
@@ -50,13 +76,6 @@ objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
-briefing = Array[String]([
-"Three depots this time, and Vance has learned to space her garrisons out.",
-"Nine days for three checkpoints is tight. Do not stop to hold ground you have already taken.",
-"The far depot funds the middle one. Take them in order and starve the chain."
-])
-victory = Array[String]([
-"All three depots are open. The ashen road runs east to west again.",
-"Vance's chain is broken at every link. She will not space them the same way twice."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The ashen road stayed a chain of closed gates, and the deadline closed with it."

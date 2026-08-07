@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ count = 3
 script = ExtResource("3")
 text = "The books closed before day 9 with the towns still split."
 last_day = 9
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The forged audit \"auctions\" these towns to whoever holds them when it closes. Ferrow's racing the clock as much as us."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"halden_marr"
+text = "Weather's turning on the coast road — that favors whoever moves first. Let's be the ones who move first."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Three of five, and the auction closes in our favor."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"halden_marr"
+text = "Three towns, ours, when the books closed. The auction's over before it started."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Ferrow bid on ground he never held."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_five_town
 failures = Array[Resource]([SubResource("Failure_the_books_closed_before_day_9_with_t")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"The forged audit \"auctions\" these towns to whoever holds them when it closes. Ferrow is racing the clock as much as us.",
-	"Three of five, and the auction closes in our favour."
-])
-victory = Array[String]([
-	"Three towns, ours, when the books closed. The auction is over before it started."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The books closed with the towns still contested, and the ledger called it Ferrow's."

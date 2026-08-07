@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_take_the_first_listening_post"]
 script = ExtResource("2")
@@ -24,6 +25,31 @@ script = ExtResource("3")
 text = "The wire stayed live past day 10."
 last_day = 10
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Every post on this road reports straight to Orlov. Cut all three and his witnesses stop being found."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "We start this one behind on income — the odds favor speed over an even fight, every time I run it."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Move fast, not evenly."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "All three posts, ours. The wire's cut, and the odds just flipped in our favor for once."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Orlov's hunting blind now."
+
 [resource]
 script = ExtResource("1")
 id = &"tc09_the_listening_posts"
@@ -44,11 +70,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_first_listening_po
 failures = Array[Resource]([SubResource("Failure_the_wire_stayed_live_past_day_10")])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-	"Every post on this road reports straight to Orlov. Cut all three and his witnesses stop being found.",
-	"We start this one outgunned on income — move fast, not evenly."
-])
-victory = Array[String]([
-	"All three posts, ours. The wire is cut, and Orlov is hunting blind."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The posts stayed live, and Orlov's garrison heard us coming from three directions."

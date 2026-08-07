@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -25,6 +26,36 @@ script = ExtResource("2")
 text = "Take the northern relay as well."
 cell = Vector2i(11, 2)
 
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "The Director of Supply doesn't usually carry a rifle count. I make an exception for a pass worth holding."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"halden_marr"
+text = "You want Kestrel held as a lesson. We want it as a foothold."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"halden_marr"
+text = "Hold four properties, win the pass, and the roads start opening on their own weight."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"halden_marr"
+text = "You withdrew from the pass yourself. That's not a thing you do twice."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "No. It is not. This valley was never the whole of it, Commander."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+speaker = &"halden_marr"
+text = "Then we'll see the rest of it, one depot at a time."
+
 [resource]
 script = ExtResource("1")
 id = &"fw06_first_thaw"
@@ -45,13 +76,6 @@ objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 4
-briefing = Array[String]([
-"Vale came to the line himself. The Director of Supply does not usually carry a rifle count.",
-"He wants Kestrel Pass held as an example. We want it as a foothold.",
-"This is the Freeze's last checkpoint. Win it and the roads start opening on their own weight."
-])
-victory = Array[String]([
-"Vale withdrew from the pass in person, which is not a thing he does twice.",
-"The Freeze breaks here. Whatever he planned for spring, he plans it a foothold short."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vale held the pass himself, and the Freeze goes on exactly as he designed it."

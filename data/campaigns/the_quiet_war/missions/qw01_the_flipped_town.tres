@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_retake_selwich"]
 script = ExtResource("2")
 text = "Retake Selwich."
 cell = Vector2i(6, 3)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "No shots fired, no declaration made. Selwich's garrison changed sides overnight, and the map office heard it from a farmer."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "A garrison doesn't just change its mind, Flux. Someone paid for that, or scared them into it."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "My screen went to look. It's already Orlov's — whichever it was, it worked without a fight."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Then take it back the same way it was lost. Quietly, before he decides it's worth defending."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Selwich comes back without a fight this time either. The garrison that flipped it isn't the one that held it."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "I don't like what that implies about the next town over. Neither should you."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_retake_selwich")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 5
-briefing = Array[String]([
-"No shots fired, no declaration made — Selwich's garrison changed sides overnight, and the map office found out from a farmer.",
-"Orin Flux's screen goes to look. It is already Cass Orlov's."
-])
-victory = Array[String]([
-"Selwich comes back without a fight this time either — the garrison that flipped it is not the garrison that holds it now.",
-"Flux files the report and does not like what it implies about the next town over."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Selwich stayed flipped, and the border district got a second town nobody officially lost."

@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
 text = "Take Vale's engineering works."
 cell = Vector2i(17, 7)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "Vale's border works went from forged rail permits to a fortified position in the open, Marr. The paperwork phase is over."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "Then I take it the honest way this time. An army in daylight, not a ledger in the dark."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "No domain edge on rock and timber walls. You'll need to earn every yard of it."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "I've earned worse in worse weather. This'll do."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "The works fall to a straightforward fight. First straightforward thing Vale's offered this whole war."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "My report needs no footnotes. Ground taken, ground held."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_works")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-"Konrad Vale's border works went from forged rail permits to a fortified position in the open — the paperwork phase is over.",
-"Halden Marr takes it the honest way this time, with an army in daylight rather than a ledger in the dark."
-])
-victory = Array[String]([
-"The works fall to a straightforward fight, which is the first straightforward thing Vale has offered this war.",
-"Marr's report needs no footnotes. Ground taken, ground held."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The works held, and Vale's fortifications proved as stubborn as his paperwork."

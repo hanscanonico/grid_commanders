@@ -127,3 +127,32 @@ func test_par_falls_inside_the_missions_own_deadline() -> void:
 							% [campaign.id, mission.id, mission.par_day]
 						)
 					)
+
+
+## A speaker who is not on the roster prints as a blank name beside real
+## dialogue, which reads as a rendering fault rather than a typo in a data file.
+func test_every_spoken_line_names_a_general_who_exists() -> void:
+	for campaign in db.all():
+		for mission: MissionDefinition in campaign.missions:
+			assert_eq(mission.story_error(commander_db), "", "%s/%s" % [campaign.id, mission.id])
+
+
+## A briefing nobody speaks is the narration the dialogue pass exists to replace.
+## Counted rather than forbidden: a narrator's line is legitimate, an entire
+## campaign of them is the thing that was wrong.
+func test_most_of_a_campaigns_briefing_is_spoken() -> void:
+	for campaign in db.all():
+		var spoken := 0
+		var total := 0
+		for mission: MissionDefinition in campaign.missions:
+			for line: MissionLine in mission.briefing + mission.victory:
+				total += 1
+				if not line.is_narration():
+					spoken += 1
+		if total == 0:
+			continue
+		assert_gt(
+			float(spoken) / float(total),
+			0.5,
+			"%s: only %d of %d story lines have a speaker" % [campaign.id, spoken, total]
+		)

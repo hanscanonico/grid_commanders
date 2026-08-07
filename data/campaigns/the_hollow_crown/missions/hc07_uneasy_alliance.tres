@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 12
 script = ExtResource("4")
 text = "Hold every property the alliance can reach."
 count = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "I will not survive the winter without allies, Commander. I suspect neither will you."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Orlov and Morn both want the succession for themselves. That makes this easy, in its way."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "Fight beside my army, not around it. The relay on the ridge is worth sharing first."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"iris_colt"
+text = "Relay's ours, and your banner's still flying beside ours."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "An uneasy alliance held its first test. I keep my word, Commander — remember that."
 
 [resource]
 script = ExtResource("1")
@@ -42,13 +68,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 8
-briefing = Array[String]([
-"Marshal Draeg sent word: he will not survive the winter without allies, and neither will we.",
-"Orlov and Morn hold the south bank in force, each claiming the succession for himself.",
-"Fight beside Draeg's army, not around it. The relay on the ridge is the first thing worth sharing."
-])
-victory = Array[String]([
-"The relay is ours, and Draeg's banner still flies beside our own.",
-"An uneasy alliance held its first test. Orlov and Morn will not offer a second one so cheaply."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The rivals took the ridge, and the alliance's first test ended before it proved anything."

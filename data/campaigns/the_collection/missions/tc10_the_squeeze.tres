@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_hq_until_day_7"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ day = 7
 script = ExtResource("3")
 text = "The HQ fell before day 7."
 last_day = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Vale has three of the four towns and the income to match. This is the worst position of the war so far."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"ivar_thorne"
+text = "Good. I fight hardest with my back against something. Seven days — we hold."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Reinforcements break the squeeze the moment they land."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"ivar_thorne"
+text = "Day seven. The siege broke, and I'm still standing to see it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Vale's financing couldn't buy back what he lost holding it."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_hq_until_day_7")])
 failures = Array[Resource]([SubResource("Failure_the_hq_fell_before_day_7")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"Vale has three of the four towns and the income to match. This is the worst position of the war so far — survive it.",
-	"Seven days. Reinforcements break the squeeze the moment they land."
-])
-victory = Array[String]([
-	"Day seven. The siege broke, and Vale's financing couldn't buy back what he lost holding it."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The squeeze held, and the last town fell with the HQ behind it."

@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -19,6 +20,31 @@ last_day = 12
 script = ExtResource("4")
 text = "Hold every property on the board at once."
 count = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Two bases deep, Commander, and I open richer than you by design. Vale's doctrine, not an accident."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "Design or not, a headquarters is a headquarters. Take it and the gate stops being yours to close."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "No time to out-produce her. We go straight for the command post."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "Gate's down. Your forward command answers to us now."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Whatever richer opening he gave me, it bought one headquarters and no more."
 
 [resource]
 script = ExtResource("1")
@@ -40,13 +66,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 8
-briefing = Array[String]([
-"Past the last mile is the foundry itself — two bases deep and built to outlast a siege.",
-"Vance's opening here is richer than ours by design. Vale's doctrine, not an accident.",
-"Take her forward headquarters and the gate stops being hers to close."
-])
-victory = Array[String]([
-"The gate is down. Vance's forward command answers to us now.",
-"Whatever richer opening Vale gave her, it bought one headquarters and no more."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The gate held, and the foundry kept its richer defender through another winter."

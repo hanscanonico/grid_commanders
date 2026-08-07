@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_survive_the_ambush"]
 script = ExtResource("2")
 text = "Survive until day 4."
 day = 4
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Orlov's raiders picked this wood because the map calls it empty ground, Calder. It hasn't been empty since your column moved through it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "Then let's make his ambush cost him more than it saves. A cheaper, smaller force reaches the tree line first."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "That's the one thing his plan never accounted for. He's set the trap for someone who isn't there."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "Good. I'd rather spend less than he expects and still walk away."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "The ambush springs on ground it can't hold. Your column was never where the map said it would be."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "His raiders scatter into terrain that no longer favours them either. Small price for a wasted trap."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_survive_the_ambush")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 4
-briefing = Array[String]([
-"Orlov's raiders picked this wood because the map calls it empty ground. It has not been empty since Ines Calder's column moved through it.",
-"A cheaper, smaller force reaches the tree line first — the one thing this ambush never accounted for."
-])
-victory = Array[String]([
-"The ambush springs on ground it cannot hold. Calder's column was never where the map said it would be.",
-"Orlov's raiders scatter into terrain that no longer favours them either."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The ambush caught the column exactly where the map promised it would be."

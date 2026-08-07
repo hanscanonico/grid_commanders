@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_take_the_airfield"]
 script = ExtResource("2")
 text = "Take the airfield before it fields anything."
 cell = Vector2i(12, 3)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "Ferrow's turned a captured airfield into a raiding base against the advance. Every day it stands, the highlands cost more."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"perrin_ash"
+text = "Then I take it back before it fields anything that flies. Give me the fastest approach you've got."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "North ridge, no cover, but it's the only route that beats his garrison to the strip."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"perrin_ash"
+text = "North ridge it is. In the air before he knows we're moving."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"halden_marr"
+text = "The airfield changes hands before a single interceptor lifts off it. His raiders scatter into the passes on foot."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"perrin_ash"
+text = "Logging the field as recovered production, not just recovered ground. That's the part that matters."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_airfield")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-"Dane Ferrow has turned a captured Iron airfield into a raiding base against the advance — every day it stands, the cost of the highlands climbs.",
-"Perrin Ash takes it back before it fields anything that flies."
-])
-victory = Array[String]([
-"The airfield changes hands before a single interceptor lifts off it. Ferrow's raiders scatter into the passes on foot.",
-"Ash logs the field as recovered production, not just recovered ground."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The airfield stayed Ferrow's, and the advance started paying for it in aircraft it never saw coming."

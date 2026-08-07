@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_take_the_depot_before_draeg_s_column"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ cell = Vector2i(7, 4)
 script = ExtResource("3")
 text = "The gate fell to the column before day 9."
 last_day = 9
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "The sixth marshal isn't the terror. Viktor Draeg is worse in a simpler way — his tanks hit fifteen percent harder than the chart admits, and shrug off a point of your cover besides."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "I field an honest army, Commander. It simply outperforms yours."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"mara_voss"
+text = "Then we don't fight it on his terms. One gap in the wall — own it, and his whole column stalls there."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"mara_voss"
+text = "The gate held. Draeg's column never found the open ground it needed."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Honest or not, an army that can't move is an army that loses."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_depot_before_draeg
 failures = Array[Resource]([SubResource("Failure_the_gate_fell_to_the_column_before_d")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"Draeg's tanks hit fifteen percent harder than the chart says. Fight them where the ground makes that not matter.",
-	"One gap in the wall. Own it, and his whole column stalls there."
-])
-victory = Array[String]([
-	"The gate held. Draeg's column never found the open ground it needed."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The column found room to spread out, and armour in the open is armour that wins."

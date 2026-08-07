@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_the_seawall"]
 script = ExtResource("2")
 text = "Hold the seawall road until day 5."
 day = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Rook's picket bought a day. Cost him half his force, and the port's still emptying out below you, Quill."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"lyra_quill"
+text = "Five days, then. Give me the odds on the seawall holding that long."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Worse than yesterday's, better than tomorrow's. That's the only trend I can promise."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"lyra_quill"
+text = "Good enough to bet on. Let the last boats clear — that's the whole job."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Last boat clears the harbour mouth as your line finally breaks. Exact trade, to the minute."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"lyra_quill"
+text = "The port's his. Nobody left in it was worth the keeping."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_seawall")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 5
-briefing = Array[String]([
-"Rook's picket bought a day, and it cost him half his force. Lyra Quill has what is left, and the port is still emptying out.",
-"Five more days. Hold the seawall and let the last boats clear."
-])
-victory = Array[String]([
-"The last boat clears the harbour mouth as Quill's line finally breaks. That is the trade she came here to make.",
-"The port is Draeg's. Nobody left in it was worth taking."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The seawall gave way with the harbour still full, and the retreat became a rout."

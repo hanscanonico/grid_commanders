@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_hills_until_day_7"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ day = 7
 script = ExtResource("3")
 text = "The line broke before day 7."
 last_day = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "This ground favors whoever uses the cover. Pull the wounded into the woods and let the healthy stand watch."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Reinforcements arrive day seven. Every unit we keep intact until then is one Orlov doesn't get to count."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Keep the line whole. He's patient, but he's not going anywhere either."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Day seven. The hunting party found nothing standing wounded, and nothing standing wounded found them."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Orlov's patience finally ran out first."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_hills_until_day_7"
 failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_7")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"This ground favours whoever uses the cover. Pull the wounded into the woods and let the healthy stand watch.",
-	"Reinforcements are seven days out. Keep the line whole until they arrive."
-])
-victory = Array[String]([
-	"Day seven. The hunting party never found the kill it came for."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Orlov's patience paid off — a wounded flank finally stood in the open."

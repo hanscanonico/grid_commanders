@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_the_customs_depot_the_ledger_na"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ cell = Vector2i(6, 4)
 script = ExtResource("3")
 text = "The depot was seized before day 8."
 last_day = 8
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "A Directorate audit surfaced overnight, claiming this depot as payment on a debt that never existed. Ferrow's signature is all over it — he still steals off every kill he lands."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Then he doesn't get the kills. His raiders don't carry the armor to trade evenly — hold formation and make him pay for every approach."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Hold the depot and the claim dies with it."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "The depot is ours. Whatever the ledger says, Ferrow left empty-handed."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "First entry in his forged book, and it's already a loss."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_customs_depot_the_
 failures = Array[Resource]([SubResource("Failure_the_depot_was_seized_before_day_8")])
 bonus_objectives = Array[Resource]([])
 par_day = 5
-briefing = Array[String]([
-	"A Directorate audit surfaced overnight, claiming this depot as payment on a debt that never existed.",
-	"Ferrow doesn't care whose ledger it is. Hold the depot and the claim dies with it."
-])
-victory = Array[String]([
-	"The depot is ours. Whatever the ledger says, Ferrow left empty-handed."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The depot changed hands, and the forged ledger gained its first entry."

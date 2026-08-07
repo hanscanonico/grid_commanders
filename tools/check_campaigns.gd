@@ -75,6 +75,9 @@ func _check_mission(
 	if error != "":
 		_fail("%s: %s" % [where, error])
 		return
+	var story := mission.story_error(commander_db)
+	if story != "":
+		_fail("%s: %s" % [where, story])
 	for team: int in mission.commanders:
 		var commander_id: StringName = mission.commanders[team]
 		if not commander_db.has(commander_id):

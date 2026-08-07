@@ -1,13 +1,44 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_three_towns"]
 script = ExtResource("2")
 text = "Hold all three border towns."
 count = 3
 terrain_id = &"city"
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Three border towns are filing for Iron rail permits nobody in Meridian approved. That's Vale's paperwork, Rowan — he takes ground without a shot."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "Then I don't fight for the towns. I sit on all three before the ink dries."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Three towns, one column, and a clock running on the permits. You'll need to split your force to make it."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "I trust the ground more than I trust his paperwork. Splitting it is."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "All three towns fly Meridian colours before the ink would've dried. His rail office has nothing left to file."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "This won't be the last quiet annexation attempted this season. I'd bet the wood on it."
 
 [resource]
 script = ExtResource("1")
@@ -29,12 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_three_towns")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-"Three border towns are registering for Iron rail permits nobody in Meridian ever approved. That is Konrad Vale's paperwork, and paperwork is how he takes ground without a shot.",
-"Nia Rowan does not have to fight for the towns. She has to sit on all three before the permits do."
-])
-victory = Array[String]([
-"All three towns fly Meridian colours when the ink would have dried. Vale's rail office has nothing left to file.",
-"Rowan does not think this is the last quiet annexation attempted this season."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "One town too many went through on paper, and the frontier is a little less Meridian's than the map says."

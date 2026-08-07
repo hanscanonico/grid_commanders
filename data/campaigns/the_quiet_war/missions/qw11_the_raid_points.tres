@@ -1,13 +1,44 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_three_towns"]
 script = ExtResource("2")
 text = "Hold all three raid towns at once."
 count = 3
 terrain_id = &"city"
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "Three small towns have traded hands all month between Ferrow's raiders and whoever held them last week. Nobody's held all three at once."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "I'm done trading, Rowan. Hold all three, and end the argument for good."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "The last four garrisons couldn't hold the ground long enough for it to matter. What's different this time?"
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "This time I'm not leaving until it does."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"nia_rowan"
+text = "All three towns fly the same colours for the first time this month. His raiders have nowhere left to trade for."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "I did what the last four garrisons couldn't. Held the ground long enough for it to matter."
 
 [resource]
 script = ExtResource("1")
@@ -29,12 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_three_towns")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 5
-briefing = Array[String]([
-"Three small towns have traded hands all month between Ferrow's raiders and whoever held them last week. Nobody has held all three at once.",
-"Tomas Reed is done trading. Hold all three, and end the argument for good."
-])
-victory = Array[String]([
-"All three towns fly the same colours for the first time this month. Ferrow's raiders have nowhere left to trade for.",
-"Reed did what the last four garrisons could not: hold the ground long enough for it to matter."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "One town changed hands again before the other two were secure, and the argument goes on."

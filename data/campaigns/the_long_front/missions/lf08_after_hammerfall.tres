@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_retake_averyn"]
 script = ExtResource("2")
@@ -13,6 +14,36 @@ cell = Vector2i(9, 5)
 script = ExtResource("3")
 text = "Morn garrisoned the ruins past day 8."
 last_day = 8
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Averyn had no garrison worth the name. Morn's Command Power fell on it overnight and left nothing standing to defend."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Then we're not marching to save the town. We're marching so he doesn't get to keep the ground it stood on."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Understood. No garrison to retake, just ashes and whatever he's left behind to hold them."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Take it anyway. Every acre he keeps after that is a second atrocity, not just the first."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Averyn's ashes fly the alliance's colours again. Not a victory anyone's celebrating."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Log it as ground recovered and move on. There'll be time to grieve it later — not today."
 
 [resource]
 script = ExtResource("1")
@@ -34,12 +65,6 @@ objectives = Array[Resource]([SubResource("Objective_retake_averyn")])
 failures = Array[Resource]([SubResource("Failure_day_8")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-"Averyn had no garrison worth the name. Radek Morn's Command Power fell on it overnight and left nothing standing to defend.",
-"Gideon Holt is not marching to save the town. He is marching so Morn does not get to keep the ground it stood on."
-])
-victory = Array[String]([
-"Averyn's ashes fly the alliance's colours again. It is not a victory anyone is celebrating.",
-"Holt logs it as ground recovered and moves on. There will be time to grieve it later."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Morn's garrison dug in before Holt reached the ruins, and Averyn stayed his."

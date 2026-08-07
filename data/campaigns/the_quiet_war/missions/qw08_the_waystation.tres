@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_take_the_waystation"]
 script = ExtResource("2")
@@ -13,6 +14,36 @@ cell = Vector2i(9, 2)
 script = ExtResource("3")
 text = "The waystation stayed Ferrow's past day 4."
 last_day = 4
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"sera_lark"
+text = "Ferrow keeps a hidden depot for every column that's crossed unnoticed. You found it on a hunch, Flux — don't waste the head start."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "The screen's extra vision made the hunch. Hit it before his garrison learns their depot isn't as hidden as it was yesterday."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"sera_lark"
+text = "Then we move now, not at first light. Every hour's a chance he finds out."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Agreed. Moving."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"sera_lark"
+text = "The waystation falls, and with it every route his raiders have used for a month."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Marking the depot recovered. Starting to read the routes backward, toward whoever built them."
 
 [resource]
 script = ExtResource("1")
@@ -34,12 +65,6 @@ objectives = Array[Resource]([SubResource("Objective_take_the_waystation")])
 failures = Array[Resource]([SubResource("Failure_day_4")])
 bonus_objectives = Array[Resource]([])
 par_day = 4
-briefing = Array[String]([
-"Dane Ferrow keeps a hidden depot for every column that has crossed unnoticed. Orin Flux found it on a hunch his screen's extra vision made possible.",
-"Hit it before Ferrow's garrison learns their depot is not as hidden as it was yesterday."
-])
-victory = Array[String]([
-"The waystation falls, and with it every route Ferrow's raiders have used for a month.",
-"Flux marks the depot as recovered and starts reading the routes backward, toward whoever built them."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The waystation held, and stayed exactly as hidden as it needed to be."

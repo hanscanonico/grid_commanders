@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -25,6 +26,31 @@ last_day = 11
 script = ExtResource("5")
 text = "Hold every property the alliance can reach."
 count = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("6")
+speaker = &"cass_orlov"
+text = "I commit by the numbers. Ferrow raids for bounty. A strange pairing, but not a weak one."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "My column took losses at the last crossing, Commander. I cannot take this fight alone."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("6")
+speaker = &"mara_voss"
+text = "Then you won't. I hold, I don't chase — hold the relay, keep his army whole."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("6")
+speaker = &"mara_voss"
+text = "Relay holds. Your column's bloodied, but whole."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Orlov's numbers and Ferrow's bounty both came up short against two armies fighting as one. I will not forget it."
 
 [resource]
 script = ExtResource("1")
@@ -48,13 +74,6 @@ objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 7
-briefing = Array[String]([
-"Orlov commits by the numbers and Ferrow raids for bounty — a strange pairing, but a dangerous one.",
-"Draeg's column took losses at the last crossing. He cannot afford to take the next fight alone.",
-"Hold the relay and keep his army whole. A broken column is a broken alliance."
-])
-victory = Array[String]([
-"The relay holds, and Draeg's column is bloodied but whole.",
-"Orlov's numbers and Ferrow's bounty both came up short against two armies fighting as one."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Draeg's column broke on the ridge road, and the alliance lost its first marshal."

@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -18,6 +19,31 @@ last_day = 8
 script = ExtResource("2")
 text = "Take the northern relay as well."
 cell = Vector2i(10, 2)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "The magazine base is dug in, Commander. I ration everything, including how long you get to try."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"rhea_sol"
+text = "HQ, three units, four days. That's the ledger we're working from."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"rhea_sol"
+text = "Take the base before the clock rations us out of the fight."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"rhea_sol"
+text = "Magazine's ours. Four days, and the accounting closed in our favour."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "A column lost defending nothing. I will revise the ration."
 
 [resource]
 script = ExtResource("1")
@@ -39,13 +65,6 @@ objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 4
-briefing = Array[String]([
-"Vance rations everything, including patience. Her garrison at the magazine base is dug in.",
-"We start on an empty ledger — an HQ, three units, and a clock.",
-"Take the base before she rations us out of the fight entirely."
-])
-victory = Array[String]([
-"The magazine base is ours. Vance's ration book just lost its accounting.",
-"Our factories are running again, and hers just lost a column defending nothing."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "Vance's ration held, and our factories stayed as cold as the ground."

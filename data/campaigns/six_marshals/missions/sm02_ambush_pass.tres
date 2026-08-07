@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_four_of_the_pass_towns"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ count = 4
 script = ExtResource("3")
 text = "The passes stayed open past day 10."
 last_day = 10
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Ferrow's second column is probing the passes. He wants a lane through, not a fight — and every kill he lands still pays into his bounty."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Then make sure nothing he touches is worth killing. His raiders are thin-skinned — corner one and it comes apart."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Let him commit to one gap, then close on him from the towns either side."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Both gaps are ours. Ferrow's column broke off with nothing to show for the climb."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "No kills, no bounty. That's the only ledger entry that matters today."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_pass_towns
 failures = Array[Resource]([SubResource("Failure_the_passes_stayed_open_past_day_10")])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-	"Ferrow's second column is probing the passes. He wants a lane through, not a fight.",
-	"Let him commit to one gap, then close on him from the towns either side."
-])
-victory = Array[String]([
-	"Both gaps are ours. Ferrow's column broke off with nothing to show for the climb."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The passes changed hands, and Ferrow's ledger got heavier."

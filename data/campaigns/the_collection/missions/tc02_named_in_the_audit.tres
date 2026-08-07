@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_four_named_towns"]
 script = ExtResource("2")
@@ -13,6 +14,31 @@ count = 3
 script = ExtResource("3")
 text = "The audit's claim went unanswered past day 9."
 last_day = 9
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "The forged audit names these four towns as reparations owed. Ferrow means to collect on paper what he can't win outright."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Funny thing about paper claims — they need boots on the ground to mean anything. Let's not give him the boots."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Hold three of the four and the claim has nothing behind it."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Three towns held. The audit's claim is worth exactly the paper it's written on."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Ferrow's ledger just got a correction."
 
 [resource]
 script = ExtResource("1")
@@ -34,11 +60,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_name
 failures = Array[Resource]([SubResource("Failure_the_audit_s_claim_went_unanswered_pa")])
 bonus_objectives = Array[Resource]([])
 par_day = 6
-briefing = Array[String]([
-	"The forged audit names these four towns as reparations owed. Ferrow means to collect on paper what he can't win outright.",
-	"Hold three of the four and the claim has nothing behind it."
-])
-victory = Array[String]([
-	"Three towns held. The audit's claim is worth exactly the paper it's written on."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The towns fell one by one, and the ledger's forged debt started looking real."

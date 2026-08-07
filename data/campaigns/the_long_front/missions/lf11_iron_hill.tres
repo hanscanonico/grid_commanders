@@ -1,12 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 
 [sub_resource type="Resource" id="Objective_hold_iron_hill"]
 script = ExtResource("2")
 text = "Hold the line until day 7."
 day = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Vance is committing a heavier column than anything we've faced since the crossing. She means to break the line in one push."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "My answer hasn't changed. Hold, refuse, hold again — we don't have to advance today, only not break."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Second Wind's charged if you need the extra swing. I'd rather you didn't, but I'd rather you had it."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "I'll take having it. Doesn't mean I plan on needing it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Her push spent itself against ground that refused to give. You're standing exactly where you started — that's the whole win."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "Every unit that comes back off this line is one Second Wind found a reason to keep fighting."
 
 [resource]
 script = ExtResource("1")
@@ -28,12 +59,6 @@ objectives = Array[Resource]([SubResource("Objective_hold_iron_hill")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 7
-briefing = Array[String]([
-"Iona Vance commits a heavier column than anything the allies have faced since the crossing — she means to break the line in one push.",
-"Iris Colt's answer has not changed: hold, refuse, hold again. The line does not have to advance today. It only has to not break."
-])
-victory = Array[String]([
-"Vance's push spends itself against ground that refuses to give. Colt's units stand where they started, which is the whole win.",
-"Every unit that comes back from this line is one Second Wind found a reason to keep fighting."
-])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Iron Hill broke, and the allied front lost the high ground it had held since the narrows."
