@@ -292,10 +292,23 @@ max-public-methods: 22
 # BattleOverlayScenario and BattleVictoryScenario were. COM-94's cut-in split is
 # still the one that is due there.
 #
+# 1438 -> 1415 for COM-94 itself. The cut-in family — both `_stage_*_cut_in`,
+# the two skip walks, the pair staging and the atlas-row checks — is the split
+# these notes had been naming as due since COM-13's raise, and it moved
+# wholesale to scenes/battle/battle_cutscene_scenario.gd (553 lines): what
+# stayed in the driver is the four-line dispatch arm that recognises a cut-in
+# mode by its prefix and reaches the new class, the same shape COM-13's own
+# raise left behind for BattleFeedbackScenario. The driver drops to 933, and
+# battle.gd — unmoved by this change, at its own 1415 — is the widest file in
+# the tree again, so the ceiling tracks it directly. Its tools/check_scripts.sh
+# budget stays at the same number rather than coming out: the moment a wider
+# file takes the ceiling from it, that entry is what stops it inheriting the
+# borrowed slack, exactly as it did for the driver here.
+#
 # This setting is one number for the whole project — gdlint has no per-path
 # override — so it only ever tracks the *longest* file, and everyone shorter
 # gets that file's slack for free. COM-81: scenes/battle/battle.gd had been
 # living in it, so the ledger above was a ratchet the file it was written for no
 # longer felt. The per-file budgets in tools/check_scripts.sh are the tight half,
 # and they run in `make check`; this stays the repo-wide outer bound.
-max-file-lines: 1438
+max-file-lines: 1415
