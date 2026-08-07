@@ -52,7 +52,7 @@ make balance-watch SIM="--map=ironworks --red=gideon_holt:normal --blue=cass_orl
 
 ### A side is `<commander>:<tier>`
 
-Commander id or `none`; tier `easy`/`normal`/`hard`. Both halves are optional
+Commander id or `none`; tier `easy`/`normal`/`hard`/`brutal`. Both halves are optional
 (`gideon_holt`, `:hard`, or nothing) and default to `none:normal`. Ids are
 checked against the databases, so a typo fails the run instead of quietly
 measuring a neutral matchup.

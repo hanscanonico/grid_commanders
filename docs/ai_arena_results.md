@@ -22,8 +22,20 @@ campaign supersedes this file rather than editing around it.
 > `supply_weight` and `supply_unit_target` have since landed live on every tier
 > and no search has touched them — the composed vector carries the shipped
 > values for both, and they are the first thing a second campaign should cover.
-> **No `data/` file was edited** (D8); every profile named here is under
-> `reports/`, and AR7 is where a champion gets read at a table.
+> No `data/` file was edited *by the campaign* (D8); every profile it wrote is
+> under `reports/`.
+
+> **The champion has since shipped.** On 2026-08-06 a human read this document
+> and seated the `everything` vector verbatim as a fourth difficulty tier —
+> **Brutal**, `data/ai/brutal.tres`, which is D8 working rather than an exception
+> to it: the arena recommended and a person decided. Nothing was retuned on the
+> way in, so the tier and this measurement are the same sixteen numbers, and
+> `tests/unit/test_difficulty.gd` pins them to each other. Everything below still
+> reads as the measurement it was; the caveats in [What the number is not evidence
+> of](#what-the-number-is-not-evidence-of) shipped with it and are repeated in the
+> profile's own header. It is outside the DF4 ladder gate
+> (`docs/difficulty_check.md` §1), so both committed balance reports are
+> unmoved.
 
 ## What it cost
 
