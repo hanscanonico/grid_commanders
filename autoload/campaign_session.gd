@@ -81,10 +81,25 @@ func max_stars() -> int:
 	return _runtime.max_stars() if _runtime != null else 0
 
 
-## Forget the campaign — leaving for the menu, or starting a skirmish. Called on
-## the way out so a later skirmish cannot inherit a mission nobody is playing,
-## which is the same reason `MatchConfig.take()` clears.
+## Write the mission in progress into the campaign's profile, board included, so
+## a mid-mission save stays the campaign's to resume. The envelope is
+## `SaveCodec.encode`'s, handed in whole: this session holds no board and never
+## reads inside one. False — and nothing written — outside a campaign.
+func save_battle(battle: Dictionary) -> bool:
+	if progress == null or mission == null:
+		return false
+	progress.active_mission = mission.id
+	return CampaignProfile.save_progress(progress, battle)
+
+
+## Forget the campaign — leaving for the menu, or starting a skirmish. Resets
+## every field this session owns, the verdict and the runtime included: a later
+## skirmish must not inherit a mission nobody is playing, neither its objectives
+## through `decide` nor its result on the victory screen — the same reason
+## `MatchConfig.take()` clears.
 func clear() -> void:
 	campaign = null
 	mission = null
 	progress = null
+	outcome = null
+	_runtime = null

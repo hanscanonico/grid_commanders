@@ -53,6 +53,11 @@ var commanders: Dictionary = {}
 ## its own board, sides, commanders and tier, so everything above is ignored when
 ## this is true and the file is actually there.
 var resume := false
+## Resume the battle embedded in this campaign's profile instead of starting the
+## mission fresh; empty for every other launch. The campaign sibling of `resume`,
+## kept apart from it because the two read different slots on purpose: a mission
+## in progress is the campaign's business and must never touch the skirmish save.
+var campaign_resume: StringName = &""
 ## `--seed=`. Negative means randomize, which is every match but a watched one.
 var seed_value := -1
 ## `--replay=<path>`: watch a recorded match instead of playing one. The recording

@@ -30,6 +30,12 @@ func _init(battle: Battle) -> void:
 ## reports at all: `save_and_leave` may only go once the match is on disk.
 func save_match() -> bool:
 	var game := _battle.game
+	# A campaign mission saves into its campaign's profile, never the skirmish
+	# slot: Continue means one unambiguous thing, and a mission in progress is the
+	# campaign hub's to resume — with the session armed, so the mission can still
+	# be decided and recorded.
+	if CampaignSession.active():
+		return _save_mission(game)
 	if not SaveGame.save(game, _battle.ai_teams, SaveGame.SAVE_PATH, _battle.difficulty.id):
 		# SaveGame has already pushed the disk error; this is the player's half of
 		# it, and it says where they still are as well as what failed.
@@ -39,6 +45,19 @@ func save_match() -> bool:
 	# overwrote the last save with. Same words the menu's Continue caption will read
 	# back, through the one formatter (SaveCodec.describe).
 	_battle.present_banner("Saved %s" % SaveCodec.describe(game.day, game.map_path))
+	return true
+
+
+## The campaign half of `save_match`: the whole board rides inside the profile as
+## `SaveCodec.encode`'s envelope, so the mission keeps the one encoder every save
+## has. Named by the mission rather than the board, because that is what the hub
+## offers to resume.
+func _save_mission(game: GameState) -> bool:
+	var envelope := SaveCodec.encode(game, _battle.ai_teams, _battle.difficulty.id)
+	if not CampaignSession.save_battle(envelope):
+		_battle.present_banner("Save failed — still in the match")
+		return false
+	_battle.present_banner("Saved %s — Day %d" % [CampaignSession.mission.title, game.day])
 	return true
 
 
@@ -87,6 +106,12 @@ func to_main_menu() -> void:
 ## A replay restarts the *recording* instead, which is the only thing it could
 ## honestly do: a playback seats no computer, so a request derived from its board
 ## would open the recorded match as a hot-seat game nobody was playing.
+##
+## A campaign mission retries the *mission* for the same kind of reason: a
+## request derived from the finished board would be a skirmish the session still
+## thinks is the mission — its objectives dead and its verdict already written,
+## ready to be recorded a second time. Re-entering through `CampaignSession.begin`
+## re-arms the runtime and clears the verdict, exactly as the hub's Deploy does.
 func rematch() -> void:
 	MatchConfig.stage(_rematch_request())
 	_battle.get_tree().reload_current_scene()
@@ -95,4 +120,8 @@ func rematch() -> void:
 func _rematch_request() -> MatchRequest:
 	if _battle.replay_path != "":
 		return MatchRequest.from_replay(_battle.replay_path)
+	if CampaignSession.active():
+		return CampaignSession.begin(
+			CampaignSession.campaign, CampaignSession.mission, CampaignSession.progress
+		)
 	return MatchRequest.from_match(_battle.game, _battle.ai_teams, _battle.difficulty.id)

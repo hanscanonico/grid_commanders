@@ -38,6 +38,9 @@ var _ids: Array[StringName] = []
 var _campaign: CampaignDefinition
 var _progress: CampaignState
 var _showing: StringName = &""
+## The mission whose saved board the profile holds, or "" — what turns its
+## Deploy into a Resume. Read once at `begin`, because it is a disk fact.
+var _resume_mission: StringName = &""
 
 
 func _ready() -> void:
@@ -49,6 +52,9 @@ func _ready() -> void:
 func begin(campaign: CampaignDefinition, progress: CampaignState) -> void:
 	_campaign = campaign
 	_progress = progress
+	_resume_mission = &""
+	if progress.active_mission != &"" and not CampaignProfile.load_battle(campaign.id).is_empty():
+		_resume_mission = progress.active_mission
 	_title.text = campaign.title.to_upper()
 	_subtitle.text = (
 		"%d of %d cleared · %d stars"
@@ -270,6 +276,9 @@ func _open_briefing(slot: int) -> void:
 	_showing = mission.id
 	_brief_title.text = mission.title.to_upper()
 	_brief_where.text = mission.location
+	# The word has to name what pressing it does: the mission the profile is
+	# midway through picks its saved board back up rather than starting over.
+	_deploy_button.text = "Resume" if mission.id == _resume_mission else "Deploy"
 	for child in _brief_body.get_children():
 		child.queue_free()
 	for line in mission.briefing:

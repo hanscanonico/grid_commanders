@@ -118,7 +118,18 @@ func _deploy(mission_id: StringName) -> void:
 	var progress := CampaignProfile.load_progress(_campaign.id)
 	if progress == null:
 		progress = CampaignState.begin(_campaign)
-	MatchConfig.stage(CampaignSession.begin(_campaign, mission, progress))
+	# The mission the profile is midway through resumes its saved board rather
+	# than restarting; the check is made before `begin`, which claims the mission
+	# either way. Any other deploy starts fresh, snapshot or none — a snapshot
+	# belongs to exactly the mission that wrote it.
+	var resumes := (
+		progress.active_mission == mission.id
+		and not CampaignProfile.load_battle(_campaign.id).is_empty()
+	)
+	var request := CampaignSession.begin(_campaign, mission, progress)
+	if resumes:
+		request.campaign_resume = _campaign.id
+	MatchConfig.stage(request)
 	_launch.call()
 
 

@@ -60,6 +60,15 @@ static func build(
 	result.difficulty = difficulty_db.by_id(request.difficulty)
 	if request.replay_requested:
 		return _build_replay(request, terrain_db, unit_db, chart, commander_db, difficulty_db)
+	# A campaign resume reads the battle embedded in the campaign's profile — the
+	# same `SaveCodec` envelope as the skirmish slot, in a different place on
+	# purpose. Refused out loud rather than dropped to a fresh mission start, for
+	# COM-121's reason: day one of the mission would look exactly like the resume
+	# working, with the player's half-played attempt quietly gone.
+	if request.campaign_resume != &"":
+		return _build_campaign_resume(
+			request, terrain_db, unit_db, chart, commander_db, difficulty_db
+		)
 	# A slot that holds nothing is not a resume that failed: the request states a
 	# board too, and playing it is what a launch that found an empty slot has always
 	# done. A save that is *there* and will not load is the other case, and falling
@@ -159,6 +168,41 @@ static func build(
 		result.game.rng.seed = request.seed_value
 	else:
 		result.game.rng.randomize()
+	return result
+
+
+## The mission a campaign profile was midway through, rebuilt from the envelope
+## embedded in it. `SaveCodec.decode` is the one rebuilder, exactly as the
+## skirmish resume above and the replay opening below — so the mission's units,
+## RNG, commanders and tier come back through every validation a save already
+## has. Null, with a pushed error, when the profile holds no battle or one the
+## codec refuses.
+static func _build_campaign_resume(
+	request: MatchRequest,
+	terrain_db: TerrainDB,
+	unit_db: UnitDB,
+	chart: DamageChart,
+	commander_db: CommanderDB,
+	difficulty_db: DifficultyDB
+) -> BuiltMatch:
+	var battle := CampaignProfile.load_battle(request.campaign_resume)
+	if battle.is_empty():
+		push_error(
+			(
+				"battle: campaign '%s' holds no mission in progress; there is no match to play"
+				% request.campaign_resume
+			)
+		)
+		return null
+	var loaded := SaveCodec.decode(battle, terrain_db, unit_db, chart, commander_db)
+	if loaded == null:
+		push_error("battle: the saved mission cannot be read; there is no match to play")
+		return null
+	var result := BuiltMatch.new()
+	result.game = loaded.state
+	result.ai_teams = loaded.ai_teams
+	result.difficulty = difficulty_db.by_id(loaded.difficulty)
+	result.map = result.game.map
 	return result
 
 

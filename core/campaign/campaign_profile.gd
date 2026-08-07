@@ -118,8 +118,9 @@ static func _swap_into_place(temp_path: String, backup_path: String, path: Strin
 	return true
 
 
-## Forgets a campaign's progress. Used by the hub's restart, so it removes the
-## siblings too — a backup left behind would be read back as the progress the
+## Forgets a campaign's progress. No shipped screen calls it yet — it exists for
+## the restart a hub will someday offer, and for the tests — so it removes the
+## siblings too: a backup left behind would be read back as the progress the
 ## player just discarded.
 static func erase(campaign_id: StringName) -> void:
 	var dir := DirAccess.open("user://")

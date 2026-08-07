@@ -83,11 +83,7 @@ func enter_victory() -> void:
 	# player has seen the result is progress they cannot connect to anything.
 	CampaignSession.record(_battle.game.day)
 	Sfx.play(&"fanfare")
-	# A playback has no match to play again: the button restarts the recording, and
-	# the word on it has to be the one that names what pressing it does.
-	victory_screen.announce(
-		_result_text(), _day_text(), "Restart" if _battle.replay_path != "" else "Rematch"
-	)
+	victory_screen.announce(_result_text(), _day_text(), _action_word())
 	_bind_victory_commander()
 	victory_screen.show()
 	victory_screen.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -101,6 +97,18 @@ func enter_victory() -> void:
 		focused.release_focus()
 	if _watching:
 		_report_watched_result()
+
+
+## What pressing the action button does, which is what the word on it has to
+## name: a playback has no match to play again, so it restarts the recording; a
+## campaign mission is retried through the session, never rematched as the
+## skirmish its finished board looks like; everything else plays itself again.
+func _action_word() -> String:
+	if _battle.replay_path != "":
+		return "Restart"
+	if CampaignSession.active():
+		return "Retry"
+	return "Rematch"
 
 
 func _release_mouse_guard() -> void:
