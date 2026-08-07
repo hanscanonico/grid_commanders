@@ -225,6 +225,46 @@ func _planner(cached: bool, profile: AIProfile) -> AIController:
 	return UncachedController.new(unit_db, profile)
 
 
+## `sides` grouping more than two armies, played by hand rather than through
+## `BalanceMatchEngine.play()` — which plays exactly two sides (the
+## asymmetric-board plan's R4) — the same way `test_alliance_soak.gd`'s own loop
+## does: one controller per army, held across the whole match. This is COM-177's
+## run: an ally changing is not "an enemy moved," and the only way to prove the
+## cache never under-drops on that distinction is to play a grouped match twice,
+## cached and not, and demand the same commands.
+func over_grouped_match(
+	map: MapData, sides: Dictionary, profile: AIProfile, seed_val: int, days: int
+) -> Diff:
+	var result := Diff.new()
+	var cached := _grouped_command_log(map, sides, profile, true, seed_val, days)
+	var uncached := _grouped_command_log(map, sides, profile, false, seed_val, days)
+	result.commands = mini(cached.size(), uncached.size())
+	result.divergence = divergence(cached, uncached)
+	return result
+
+
+## One seeded grouped match's command log, as `describe` spells it — there is no
+## recorder here, because the comparison is between two logs rather than a
+## report.
+func _grouped_command_log(
+	map: MapData, sides: Dictionary, profile: AIProfile, cached: bool, seed_val: int, days: int
+) -> Array[String]:
+	var built := GameState.create(map, unit_db, chart)
+	built.sides = sides.duplicate()
+	built.rng.seed = seed_val
+	var planners: Dictionary = {}
+	for team in built.teams:
+		planners[team] = _planner(cached, profile)
+	var cap := BalanceMatchEngine.command_ceiling(days, built.teams.size())
+	var log: Array[String] = []
+	while built.winner == 0 and built.day <= days and log.size() < cap:
+		var planner: AIController = planners[built.current_team]
+		var command := planner.plan_next_command(built)
+		log.append(describe(command))
+		command.apply(built)
+	return log
+
+
 ## The first command the two logs disagree on, or "" when they are identical.
 ## Reported rather than asserted whole, because a match is hundreds of commands
 ## and only the first divergence says anything about the rule that went missing.

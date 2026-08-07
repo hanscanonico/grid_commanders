@@ -195,15 +195,24 @@ func _drop_what_changed(context: AIPlanningContext) -> bool:
 
 
 ## Files one changed unit under what its change reaches, and answers whether it
-## was an enemy's. Only our own army keeps formation or deals claims; an enemy's
-## condition is priced where it stands, and the list it belongs to is read apart.
+## was an enemy's — allegiance is the question, asked of `allied()`, never team
+## id: an ally can no more appear in the threat map than in `visible_enemies`
+## (both read the same `allied` filter), so an ally's condition changing can
+## never be the reason a threat-weighing tier drops the whole cache. An ally
+## still occupies and vacates cells like any friendly, and that reaches its plan
+## through the same touched-cell envelope an own-team move already relies on
+## (the caller walks it regardless of what this returns) — only our own army
+## keeps formation or deals claims, so those two stay gated on the team itself.
+## An enemy's condition is priced where it stands, and the list it belongs to is
+## read apart.
 func _note_change(unit: Unit, context: AIPlanningContext, moved: bool) -> bool:
-	if unit.team != context.team:
+	if not context.state.allied(unit.team, context.team):
 		return true
-	if moved:
-		_stale_columns[unit.type.domain] = true
-	if unit.type.can_capture:
-		_stale_claims = true
+	if unit.team == context.team:
+		if moved:
+			_stale_columns[unit.type.domain] = true
+		if unit.type.can_capture:
+			_stale_claims = true
 	return false
 
 
