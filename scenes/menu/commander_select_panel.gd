@@ -351,7 +351,12 @@ func _grab_first_mini() -> void:
 func _rebuild_minis() -> void:
 	var row := _mini_buttons[0].get_parent() if not _mini_buttons.is_empty() else _find_mini_row()
 	for button in _mini_buttons:
-		button.free()  # immediate, never called from a mini's own callback
+		# Deferred: this runs from _input via _confirm, and a mini can be the
+		# viewport's focus owner when it does. remove_child leaves the tree
+		# synchronously (so the row's children below never see a corpse), but
+		# freeing itself is deferred so the focus owner outlives the handler.
+		row.remove_child(button)
+		button.queue_free()
 	_mini_buttons.clear()
 	_mini_marks.clear()
 	for commander: CommanderType in _members():
