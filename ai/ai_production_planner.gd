@@ -78,13 +78,14 @@ func _init(p_profile: AIProfile) -> void:
 func plan(context: AIPlanningContext) -> Command:
 	var state := context.state
 	var funds: int = state.funds[context.team]
+	var doctrine_bias := _doctrine_bias(context)
 	var wants := BuildWants.from_facts(
 		context.friendly_units,
 		_outgunned_in_the_air(context),
 		_capture_unit_target(context),
 		_supply_unit_target(),
-		_reactive_order(context),
-		_doctrine_bias(context)
+		_reactive_order(context, doctrine_bias),
+		doctrine_bias
 	)
 	var best_cell := Vector2i.ZERO
 	var best_choice: UnitType = null
@@ -230,18 +231,27 @@ func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
 
 ## S3. Orders combat units by how well they answer the enemy's cost-weighted
 ## roster, blended with the static build-priority order.
-func _reactive_order(context: AIPlanningContext) -> Dictionary:
+##
+## Candidates are filtered to what `_build_rank` would already buy with
+## reactivity off — on `build_priority`, or pulled onto its tail by a negative
+## doctrine bias. Reactivity reorders that set; it may not widen it. Every
+## armed unit used to qualify, which let this tier's blanket `has()` check
+## (checked first in `_build_rank`) shadow the priority list, the doctrine
+## tail and the supply want for the whole roster whenever the dial was on —
+## an unlisted, unbiased recon reading as buyable on Difficult (COM-172).
+func _reactive_order(context: AIPlanningContext, doctrine_bias: Dictionary) -> Dictionary:
 	if (
 		profile.build_reactivity <= 0.0
 		or context.enemy_roster.is_empty()
 		or context.state.damage_chart == null
 	):
 		return {}
+	var reactivity := clampf(profile.build_reactivity, 0.0, 1.0)
 	var candidates: Array[UnitType] = []
 	var effectiveness: Dictionary = {}
 	var max_eff := 0.0
 	for unit_type in context.unit_types:
-		if unit_type.max_range <= 0:
+		if unit_type.max_range <= 0 or not _reactivity_eligible(unit_type, doctrine_bias):
 			continue
 		candidates.append(unit_type)
 		var value := _effectiveness(context.state, unit_type, context.enemy_roster)
@@ -258,15 +268,22 @@ func _reactive_order(context: AIPlanningContext) -> Dictionary:
 		if rank >= 0:
 			static_norm = float(priority.size() - rank) / float(priority.size())
 		var eff_norm := float(effectiveness[cand.id]) / max_eff
-		var score := (
-			(1.0 - profile.build_reactivity) * static_norm + profile.build_reactivity * eff_norm
-		)
+		var score := (1.0 - reactivity) * static_norm + reactivity * eff_norm
 		scored.append([score, i, cand.id])
 	scored.sort_custom(_by_score_then_scan_order)
 	var order: Dictionary = {}
 	for i in scored.size():
 		order[scored[i][2]] = i
 	return order
+
+
+## Whether `unit_type` would already earn a rank from `_build_rank`'s
+## non-reactive branches: listed on `build_priority`, or pulled onto its tail
+## by a negative doctrine bias (the same test that branch itself makes).
+func _reactivity_eligible(unit_type: UnitType, doctrine_bias: Dictionary) -> bool:
+	if profile.build_priority.has(unit_type.id):
+		return true
+	return int(doctrine_bias.get(unit_type.id, 0)) < 0
 
 
 ## Best score first, ties broken by database order.

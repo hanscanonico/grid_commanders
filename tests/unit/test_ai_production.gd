@@ -302,3 +302,70 @@ func test_a_chart_less_state_plans_at_the_reactive_tier() -> void:
 	var planner := AIController.new(unit_db, profile)
 	var command := planner.plan_next_command(state)
 	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+
+
+# --- reactivity may reorder what is buyable, never widen it (COM-172) --------
+
+## A base with the capture roster already filled, an enemy infantry to price
+## candidates against, and just enough funds for mech (3000, build_priority's
+## tail) or recon (4000, on no tier's list).
+const REACTIVE_TIER_BOARD := """
+[terrain]
+B....
+.....
+[owners]
+1 0 0
+[units]
+1 i 1 0
+1 i 2 0
+1 i 3 0
+2 i 4 1
+"""
+
+
+## The recon answers a lone infantry well enough (70 base damage) to outscore
+## mech (65, secondary) on effectiveness alone, so before the fix — which
+## admitted every armed type as a reactive candidate — full reactivity bought
+## the recon over mech even with no doctrine wanting one. The recon carries no
+## build_priority entry and no negative bias, so it must stay unbuyable: S3
+## reorders what the priority list and the doctrine tail already buy, it does
+## not widen it.
+func test_reactivity_never_buys_an_unlisted_unbiased_unit() -> void:
+	var state := _state(REACTIVE_TIER_BOARD)
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 4000
+	var profile := AIProfile.new()
+	profile.build_reactivity = 1.0
+	profile.save_up_turns = 0  # isolate the reactive tier from the banking rule
+	var command := AIController.new(unit_db, profile).plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq(
+		(command as BuildCommand).unit_type.id,
+		&"mech",
+		(
+			"recon outscores mech on effectiveness alone but is on no tier's list and carries no"
+			+ " doctrine bias, so it must lose to the unit the documented mechanism actually offers"
+		)
+	)
+
+
+## Same board and funds, but Orin Flux's negative scout_build_bias is what is
+## meant to pull a recon onto the tail (commander-doctrine-ai D1) — reactivity
+## must not block that mechanism, only reorder within it.
+func test_a_negative_doctrine_bias_still_reaches_the_tail_with_reactivity_on() -> void:
+	var state := _state(REACTIVE_TIER_BOARD)
+	state.set_commander(1, OrinFlux.new())
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 4000
+	var profile := AIProfile.new()
+	profile.build_reactivity = 0.6
+	profile.save_up_turns = 0  # isolate the reactive tier from the banking rule
+	var command := AIController.new(unit_db, profile).plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq(
+		(command as BuildCommand).unit_type.id,
+		&"recon",
+		"the doctrine's negative bias must still reach the tail with reactivity on"
+	)
