@@ -97,11 +97,15 @@ static func display_name(path: String) -> String:
 ## tools and the battle scene resolve a spec identically — a watched match has to
 ## be played on the same board its headless row was, and two resolvers would
 ## eventually disagree about that.
-static func resolve(name: String) -> String:
+##
+## `fixtures_dir` defaults to `FIXTURES_DIR` for every real caller; it exists so
+## a test can point the fixture half of the lookup at a scratch directory
+## instead of writing into the versioned `maps/fixtures/` (COM-212).
+static func resolve(name: String, fixtures_dir: String = FIXTURES_DIR) -> String:
 	var bare := name.strip_edges().trim_suffix(".txt")
 	if bare == "":
 		return ""
-	for dir in [MAPS_DIR, FIXTURES_DIR]:
+	for dir in [MAPS_DIR, fixtures_dir]:
 		var path: String = dir.path_join("%s.txt" % bare)
 		if ResourceLoader.exists(path) or FileAccess.file_exists(path):
 			return path
