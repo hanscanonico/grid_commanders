@@ -208,39 +208,8 @@ func _note(text: String) -> Label:
 	return label
 
 
-## One spoken line: the general's name in their faction's colour above their
-## words, or plain text when nobody is speaking. The name and the colour are
-## asked of the roster and SideIdentity — the two authorities that already own
-## them — so a line names a general the same way every other surface does.
-func _speech(line: MissionLine) -> Control:
-	if line.is_narration():
-		return _body_line(line.text)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 0)
-	box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var commander := _commanders.by_id(line.speaker)
-	var name := Label.new()
-	name.text = commander.display_name.to_upper()
-	name.add_theme_font_override("font", UiTheme.stat(true))
-	name.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	name.add_theme_color_override("font_color", CommanderVisuals.theme_for(commander).color)
-	name.custom_minimum_size = Vector2(_ROW_WIDTH, 0)
-	box.add_child(name)
-	box.add_child(_body_line(line.text))
-	return box
-
-
 func _body_line(text: String, dim: bool = false) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
-	if dim:
-		label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size = Vector2(_ROW_WIDTH, 0)
-	label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	return label
+	return MissionSpeech.paragraph(text, dim)
 
 
 # --- the list ----------------------------------------------------------------
@@ -305,7 +274,7 @@ func _open_briefing(slot: int) -> void:
 	for child in _brief_body.get_children():
 		child.queue_free()
 	for line: MissionLine in mission.briefing:
-		_brief_body.add_child(_speech(line))
+		_brief_body.add_child(MissionSpeech.render(line, _commanders))
 	_brief_body.add_child(_body_line(""))
 	for objective in mission.objectives:
 		if objective != null and objective.text != "":

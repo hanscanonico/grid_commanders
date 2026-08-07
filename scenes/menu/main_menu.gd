@@ -190,13 +190,12 @@ func _ready() -> void:
 	# Both campaign pages photograph over a hidden menu for the replays page's
 	# reason, and the hub is posed on a *fresh* profile so the picture does not
 	# depend on how far the machine that took it happens to have played.
-	if _capture_driver.poses_campaigns():
-		_campaign_flow.open()
-		await _capture_driver.capture(shot_path, _campaign_flow.chrome_picker)
-		return
-	if _capture_driver.poses_campaign_hub():
-		_campaign_flow.pose_hub(_capture_driver.poses_campaign_brief())
-		await _capture_driver.capture(shot_path, _campaign_flow.chrome_hub)
+	# All three campaign pages pose the same way, so the flow that owns them owns
+	# that too: it answers with the chrome to measure, or nothing when this run is
+	# not posing one of its pages.
+	var campaign_chrome := _campaign_flow.pose(_capture_driver)
+	if campaign_chrome.is_valid():
+		await _capture_driver.capture(shot_path, campaign_chrome)
 		return
 
 	# Dev captures of the selection page — which seat it walks to and which general
