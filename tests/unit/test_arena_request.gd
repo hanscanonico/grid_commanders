@@ -126,6 +126,18 @@ func test_a_seated_commander_names_the_run_apart() -> void:
 	assert_ne(bare.run_name(), seated.run_name(), "two measurements, two directories")
 
 
+func test_a_seated_commander_moves_the_digest() -> void:
+	# The run name already differs through its readable label; the hashed spec
+	# must carry the general too, or two labels trimmed to one slug would land
+	# a seated measurement in the commander-free run's directory.
+	var bare := _parse(["--red-profile=a.tres", "--blue-profile=b.tres"])
+	var seated := _parse(
+		["--red-profile=a.tres", "--blue-profile=b.tres", "--blue-co=radek_morn"]
+	)
+	assert_ne(bare.digest(), seated.digest())
+	assert_ne(bare.artifact_dir(), seated.artifact_dir(), "two measurements, two directories")
+
+
 func test_a_pairing_may_seat_its_own_generals() -> void:
 	var text := '{"pairings": [{"red": "a.tres", "blue": "b.tres", "red_co": "cass_orlov"}]}'
 	var pairings := _pairings(["--pairings=shard.json"], text)

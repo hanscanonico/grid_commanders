@@ -182,7 +182,9 @@ static func slug(profile_path: String) -> String:
 
 ## A seat's readable name: the candidate's slug, plus the commander it carries
 ## when one is seated — `default+gideon_holt`. Neutral seats keep the bare slug,
-## so every commander-free run keeps the directory name it always had.
+## so a commander-free run keeps the readable part of the name it always had;
+## its digest suffix moved once, when `digest()` began hashing the two commander
+## fields, so the exact directory is new across that change.
 static func side_label(profile_path: String, co: String) -> String:
 	var name := slug(profile_path)
 	return name if co == "" else "%s+%s" % [name, co]
