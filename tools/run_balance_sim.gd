@@ -17,7 +17,7 @@ extends SceneTree
 ##                               (clash/ridge/combined/holdings/channel);
 ##                               default first_steps
 ##     --red=<co>:<tier>         a side spec — commander id or `none`, tier
-##     --blue=<co>:<tier>        easy/normal/hard. Default none:normal.
+##     --blue=<co>:<tier>        easy/normal/hard/brutal. Default none:normal.
 ##     --seeds=10                paired seed count (default 4)
 ##     --seed=1003               one pinned seed instead, both seats played —
 ##                               `make balance-watch` replays the seat-0 row
