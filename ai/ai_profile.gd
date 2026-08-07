@@ -408,7 +408,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## a missing or broken file from taking the AI out entirely — it plays with the
 ## defaults above, which are the same numbers.
 static func load_default() -> AIProfile:
-	var profile: AIProfile = load(DEFAULT_PATH)
+	var profile := load(DEFAULT_PATH) as AIProfile
 	if profile == null:
 		push_error("AIProfile: cannot load %s; using built-in defaults" % DEFAULT_PATH)
 		return AIProfile.new()

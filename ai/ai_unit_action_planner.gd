@@ -107,14 +107,16 @@ func _consider_attacks(
 		# The walk to a firing cell and the fire it invites depend only on that
 		# cell, so work them out once per destination and only after finding a
 		# legal target there.
-		var dest_penalty := -1.0
+		var dest_penalty := 0.0
+		var dest_priced := false
 		var incoming := 0
 		for enemy in candidates:
 			if not AttackRange.reaches(ring, dest, enemy.cell):
 				continue
 			if not AttackRange.can_fire(state, unit, enemy):
 				continue
-			if dest_penalty < 0.0:
+			if not dest_priced:
+				dest_priced = true
 				if threat == null and profile.threat_aversion > 0.0:
 					threat = context.threat_map()
 				if threat != null:
@@ -316,7 +318,7 @@ func _consider_captures(
 		# conquered fells nobody, so taking it is worth a city and no more.
 		if state.home_hq.has(owner) and state.home_hq[owner] == cell:
 			score *= profile.hq_capture_multiplier
-		if _produces(terrain):
+		if profile.production_capture_multiplier != 1.0 and _produces(terrain):
 			score *= profile.production_capture_multiplier
 		var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
 		var step_cost: int = reachable.costs[cell]
@@ -812,19 +814,21 @@ func _enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.Ad
 ## what keeps a unit an errand has already taken from claiming ground it will
 ## never walk to.
 func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
-	var goal := AIPlanningContext.AdvanceGoal.new()
 	if unit.running_dry(profile.refuel_margin_turns):
 		var refits := _servicing_properties(context, unit)
 		if not refits.is_empty():
+			var goal := AIPlanningContext.AdvanceGoal.new()
 			goal.cell = _nearest(unit.cell, refits)
 			return goal
 	if unit.hp <= _retreat_threshold(context.state, unit):
 		var repairs := _servicing_properties(context, unit)
 		if not repairs.is_empty():
+			var goal := AIPlanningContext.AdvanceGoal.new()
 			goal.cell = _nearest(unit.cell, repairs)
 			return goal
 	var besieged := _besieged_home_hqs(context, unit)
 	if not besieged.is_empty():
+		var goal := AIPlanningContext.AdvanceGoal.new()
 		goal.cell = _nearest(unit.cell, besieged)
 		goal.stand_off = AttackRange.is_indirect(unit)
 		return goal
