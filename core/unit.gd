@@ -2,6 +2,11 @@ class_name Unit
 extends RefCounted
 ## One unit instance on the battlefield. Pure simulation state.
 
+## Internal HP is 0-100; a dead unit is removed rather than held at zero, so a
+## live one's floor is one and its ceiling is full health.
+const MAX_HP := 100
+const MIN_HP := 1
+
 var type: UnitType
 var team: int
 var cell: Vector2i

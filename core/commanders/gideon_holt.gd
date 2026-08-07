@@ -36,7 +36,7 @@ func repair_cost_pct(_state: GameState, _unit: Unit) -> int:
 func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2i.ZERO) -> void:
 	for unit in state.units_of(team):
 		unit.resupply()
-		unit.hp = mini(100, unit.hp + depot_heal_hp)
+		unit.hp = mini(Unit.MAX_HP, unit.hp + depot_heal_hp)
 
 
 ## Nothing in his kit is a fight, so nothing about the fight gates it. The

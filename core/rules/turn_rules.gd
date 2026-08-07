@@ -102,11 +102,11 @@ static func expire_power(state: GameState, team: int, duration: CommanderType.Du
 ## proportionally to unit cost. Skipped (not partial) when funds don't cover the
 ## full heal.
 static func _repair(state: GameState, unit: Unit) -> void:
-	if unit.hp >= 100:
+	if unit.hp >= Unit.MAX_HP:
 		return
 	if not _serviced_here(state, unit):
 		return
-	var heal := mini(state.rules_config.repair_hp, 100 - unit.hp)
+	var heal := mini(state.rules_config.repair_hp, Unit.MAX_HP - unit.hp)
 	var full_price := unit.type.cost * heal / 100
 	var cost := full_price * state.commander_of(unit.team).repair_cost_pct(state, unit) / 100
 	if state.funds[unit.team] < cost:

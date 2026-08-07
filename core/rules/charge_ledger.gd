@@ -35,7 +35,7 @@ static func bank_losses(state: GameState, victim: Unit, hp_lost: int, dealer_tea
 	var lethal := hp_lost >= victim.hp
 	if lethal:
 		_transfer_bounty(state, victim, dealer_team)
-	var value := victim.type.cost * hp_lost / 100
+	var value := victim.type.cost * hp_lost / Unit.MAX_HP
 	state.add_charge(victim.team, value * state.rules_config.charge_pct_lost / 100)
 	state.add_charge(dealer_team, value * state.rules_config.charge_pct_dealt / 100)
 	if lethal:

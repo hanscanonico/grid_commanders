@@ -379,6 +379,25 @@ func _can_strike_an_opponent(state: GameState, team: int, ready_only: bool) -> b
 func _can_strike(
 	state: GameState, team: int, attacker_team: int, defender_team: int, ready_only: bool
 ) -> bool:
+	for target in state.units:
+		if not state.allied(target.team, defender_team) or target.carrier != null:
+			continue
+		if Vision.is_hidden_from(state, team, target):
+			continue
+		if _can_strike_cell(state, team, attacker_team, target.cell, ready_only):
+			return true
+	return false
+
+
+## True when a unit of `attacker_team` could bring `cell` under fire — `_can_strike`'s
+## own skip list (team, carrier, max range), its `ready_only` acted gate, the
+## `Vision.is_hidden_from` gate and `AttackRange.strike_reach`, generalised to a cell
+## nothing needs to be standing on yet. `_can_strike` walks it once per candidate
+## target's cell; a doctrine grading empty ground (Mara Voss's `stand_value`) walks
+## it directly.
+func _can_strike_cell(
+	state: GameState, team: int, attacker_team: int, cell: Vector2i, ready_only: bool = false
+) -> bool:
 	for unit in state.units:
 		if unit.team != attacker_team or unit.carrier != null or unit.type.max_range <= 0:
 			continue
@@ -386,14 +405,8 @@ func _can_strike(
 			continue
 		if Vision.is_hidden_from(state, team, unit):
 			continue
-		var reach := AttackRange.strike_reach(state, unit)
-		for target in state.units:
-			if not state.allied(target.team, defender_team) or target.carrier != null:
-				continue
-			if Vision.is_hidden_from(state, team, target):
-				continue
-			if Grid.manhattan(target.cell, unit.cell) <= reach:
-				return true
+		if Grid.manhattan(unit.cell, cell) <= AttackRange.strike_reach(state, unit):
+			return true
 	return false
 
 

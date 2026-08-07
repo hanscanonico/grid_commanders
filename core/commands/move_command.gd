@@ -41,7 +41,7 @@ static func validate_path_steps(
 		return "path must start at the unit's cell"
 	var cost := 0
 	for i in range(1, unit_path.size()):
-		if (unit_path[i] - unit_path[i - 1]).length_squared() != 1:
+		if Grid.manhattan(unit_path[i], unit_path[i - 1]) != 1:
 			return "path is not contiguous"
 		var terrain := state.map.terrain_at(unit_path[i])
 		if terrain == null:

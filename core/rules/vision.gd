@@ -148,6 +148,9 @@ static func _reveal_around(
 			# Which terrain conceals is the terrain's own flag rather than a name
 			# checked here, so a reef hides a submarine exactly as woods hide a
 			# tank, and adding cover is a data edit.
+			#
+			# absi(dx) + absi(dy) is Grid.manhattan(Vector2i.ZERO, Vector2i(dx, dy)),
+			# inlined: this walk is per-cell in a fill run after every command.
 			if state.map.terrain_at(cell).conceals and absi(dx) + absi(dy) > 1:
 				continue  # cover hides anything not right next to a viewer
 			cells[cell] = true

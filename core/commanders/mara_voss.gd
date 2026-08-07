@@ -60,14 +60,10 @@ func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 
 
 ## True when any enemy this team can see could bring `cell` under fire next
-## turn — the same Manhattan over-estimate the power gates use, with hidden
-## units left to Vision's judgement like everywhere else in the toolkit.
+## turn — `_can_strike_cell`, walked once per opponent army exactly as
+## `_opponents_can_strike` walks `_can_strike`.
 func _enemy_can_reach(state: GameState, team: int, cell: Vector2i) -> bool:
-	for enemy in state.units:
-		if state.allied(enemy.team, team) or enemy.carrier != null or enemy.type.max_range <= 0:
-			continue
-		if Vision.is_hidden_from(state, team, enemy):
-			continue
-		if Grid.manhattan(enemy.cell, cell) <= AttackRange.strike_reach(state, enemy):
+	for other in _opponents_of(state, team):
+		if _can_strike_cell(state, team, other, cell):
 			return true
 	return false

@@ -193,6 +193,8 @@ static func ring_cells(state: GameState, from: Vector2i, low: int, high: int) ->
 	for dx in range(-high, high + 1):
 		var span := high - absi(dx)
 		for dy in range(-span, span + 1):
+			# Grid.manhattan(Vector2i.ZERO, Vector2i(dx, dy)), inlined: this walk is
+			# per-cell in the board's hottest fill and a call here is not free.
 			if absi(dx) + absi(dy) < low:
 				continue
 			var cell: Vector2i = from + Vector2i(dx, dy)

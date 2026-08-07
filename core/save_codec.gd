@@ -175,10 +175,10 @@ const NO_VERSION := 0
 
 ## What a live unit's internal HP may be. Zero is not a wounded unit, it is a dead
 ## one: every route that takes a unit to zero removes it in the same breath, so a
-## save that records one is describing a board the rules cannot produce. The ceiling
-## is Unit's own full health — see its header on the 0-100 scale the UI divides by ten.
-const MIN_HP := 1
-const MAX_HP := 100
+## save that records one is describing a board the rules cannot produce. Both
+## bounds are Unit's own — see its header on the 0-100 scale the UI divides by ten.
+const MIN_HP := Unit.MIN_HP
+const MAX_HP := Unit.MAX_HP
 
 
 class LoadedMatch:

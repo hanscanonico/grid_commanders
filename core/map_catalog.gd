@@ -29,10 +29,25 @@ const FIXTURES_DIR := "res://maps/fixtures"
 ## Every shipped map, alphabetically by filename — a stable order that does not
 ## depend on the filesystem's. `ordered()` is what the menu shows.
 static func paths() -> Array[String]:
+	return _txt_paths(MAPS_DIR)
+
+
+## Every fixture board, alphabetically — the same discovery `paths()` does, one
+## directory down. One function rather than a DirAccess loop per caller, for the
+## reason the class exists: the name resolver and the map lint have to be reading
+## the same set of files.
+static func fixture_paths() -> Array[String]:
+	return _txt_paths(FIXTURES_DIR)
+
+
+## Every `.txt` board directly under `dir`, alphabetically by filename — a stable
+## order that does not depend on the filesystem's. Shared by `paths()` and
+## `fixture_paths()`, which differ only in which directory they scan.
+static func _txt_paths(dir_path: String) -> Array[String]:
 	var result: Array[String] = []
-	var dir := DirAccess.open(MAPS_DIR)
+	var dir := DirAccess.open(dir_path)
 	if dir == null:
-		push_error("MapCatalog: cannot open %s" % MAPS_DIR)
+		push_error("MapCatalog: cannot open %s" % dir_path)
 		return result
 	var files := dir.get_files()
 	files.sort()
@@ -41,27 +56,7 @@ static func paths() -> Array[String]:
 		var map_file := file.trim_suffix(".remap")
 		if not map_file.ends_with(".txt"):
 			continue
-		result.append(MAPS_DIR.path_join(map_file))
-	return result
-
-
-## Every fixture board, alphabetically — the same discovery `paths()` does, one
-## directory down. One function rather than a DirAccess loop per caller, for the
-## reason the class exists: the name resolver and the map lint have to be reading
-## the same set of files.
-static func fixture_paths() -> Array[String]:
-	var result: Array[String] = []
-	var dir := DirAccess.open(FIXTURES_DIR)
-	if dir == null:
-		push_error("MapCatalog: cannot open %s" % FIXTURES_DIR)
-		return result
-	var files := dir.get_files()
-	files.sort()
-	for file in files:
-		var map_file := file.trim_suffix(".remap")
-		if not map_file.ends_with(".txt"):
-			continue
-		result.append(FIXTURES_DIR.path_join(map_file))
+		result.append(dir_path.path_join(map_file))
 	return result
 
 
