@@ -1031,7 +1031,7 @@ func _fire_power(command: PowerCommand) -> void:
 	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
-		state = State.IDLE
+		state = rest_state()
 		return
 	_clear_selection(false)
 	await conclude_command(receipt)
