@@ -39,8 +39,14 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # Nothing there is loose; every targeting state and every board lens is Battle's
 # by the same rule, so the budget follows the file rather than the file being
 # trimmed to it.
+#
+# 1411 -> 1415: the campaign layer's one seam. `conclude_command` is where a
+# committed command settles, so asking the mission whether it is over belongs
+# here and nowhere else. The runtime itself was kept out — CampaignSession owns
+# it, and Battle holds no mission field — so the four lines are the branch and
+# its reason, with nothing loose left to move.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1411
+scenes/battle/battle.gd 1415
 scenes/menu/main_menu.gd 1112
 "
 

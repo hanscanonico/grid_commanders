@@ -1,0 +1,35 @@
+# The Long Front 12 — "The Forward Camp". Cass Orlov's fortified camp is
+# the last thing standing between the allied line and the foothills of the
+# Iron highlands. Alina Ward closes the act by taking it — the front stops
+# holding here and starts moving.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+..................
+.Q====......MM....
+..=......MM.....MM
+..=...C......B....
+FF=======....MM...
+..F......C......MM
+......======......
+.........====..MM.
+.................Q
+..................
+[owners]
+1 1 1
+2 13 3
+2 17 8
+[units]
+1 i 2 2
+1 i 3 3
+1 m 4 2
+1 r 2 1
+1 t 3 4
+1 t 4 4
+1 g 4 3
+2 i 10 4
+2 i 12 5
+2 r 13 6
+2 t 15 5
+2 t 16 3
+2 a 12 3
+2 g 13 5

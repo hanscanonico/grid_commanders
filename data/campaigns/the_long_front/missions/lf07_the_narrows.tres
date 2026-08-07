@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+
+[sub_resource type="Resource" id="Objective_hold_the_narrows"]
+script = ExtResource("2")
+text = "Hold the narrows until day 7."
+day = 7
+
+[resource]
+script = ExtResource("1")
+id = &"lf07_the_narrows"
+title = "The Narrows"
+location = "The narrows, allied front"
+map_path = "res://maps/campaign/the_long_front/lf07_the_narrows.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"mara_voss",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_the_narrows")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 7
+briefing = Array[String]([
+"Three retreats met on one road and stopped retreating. Meridian, Aurora and the League have put their columns behind one line, and Mara Voss is asked to hold it.",
+"Draeg's spearhead has not slowed. It has only run out of open ground to go around."
+])
+victory = Array[String]([
+"The narrows held. For the first time since the crossing, Draeg's column stops rather than advances.",
+"Voss has a base behind her now, and an alliance in front of her. Both are new."
+])
+defeat = "The narrows broke, and three nations' retreats became one rout with nowhere left to fall back to."

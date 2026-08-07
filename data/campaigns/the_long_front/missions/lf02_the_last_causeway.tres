@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+
+[sub_resource type="Resource" id="Objective_hold_the_causeway"]
+script = ExtResource("2")
+text = "Hold the river line until day 6."
+day = 6
+
+[resource]
+script = ExtResource("1")
+id = &"lf02_the_last_causeway"
+title = "The Last Causeway"
+location = "The Arden river, Meridian frontier"
+map_path = "res://maps/campaign/the_long_front/lf02_the_last_causeway.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"mara_voss",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_hold_the_causeway")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+"The Arden river will not stop Draeg's infantry, but it will stop his tanks — everything that matters funnels onto one bridge.",
+"Hold the crossing. Every hour it costs him is an hour the column gains."
+])
+victory = Array[String]([
+"The bridge held long enough. Draeg's armour is still stacked on the wrong bank when the last wagon clears the ridge.",
+"It is a delay, not a victory. Voss knows the difference and keeps moving."
+])
+defeat = "The causeway fell before the column cleared, and the river stopped being a defence at all."

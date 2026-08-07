@@ -1,0 +1,27 @@
+# The Quiet War 4 — "The Governor's Scandal". A ledger nobody can trace
+# surfaced this morning naming the city's governor as an Iron asset. He
+# will sign the annexation papers by nightfall unless Gideon Holt's column
+# reaches the city hall first.
+# Symbols: . plains  F woods  = road  C city  Q HQ
+[terrain]
+................
+.Q====....FF....
+..=...F...FF....
+..=...C.........
+FF=====.........
+..F.....C.......
+......====......
+........===....Q
+................
+[owners]
+1 1 1
+2 6 3
+2 15 7
+[units]
+1 i 2 2
+1 m 3 2
+1 r 2 1
+2 i 5 3
+2 i 12 6
+2 r 13 5
+2 t 14 6

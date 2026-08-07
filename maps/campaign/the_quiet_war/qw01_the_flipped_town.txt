@@ -1,0 +1,27 @@
+# The Quiet War 1 — "The Flipped Town". No shots fired, no declaration
+# made — the garrison at Selwich changed sides overnight and the map
+# office found out from a farmer. Orin Flux's screen goes to look, and
+# finds it is already Orlov's.
+# Symbols: . plains  F woods  = road  C city  Q HQ
+[terrain]
+................
+.Q====...FF.....
+..=....F....FF..
+..=...C.........
+FF=====.........
+..F.....C.......
+......====......
+........===....Q
+................
+[owners]
+1 1 1
+2 6 3
+2 15 7
+[units]
+1 i 2 2
+1 r 2 1
+1 m 3 2
+2 i 5 3
+2 i 12 6
+2 r 13 5
+2 t 14 6

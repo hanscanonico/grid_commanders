@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf01_customs_line.tres" id="2"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf02_the_last_causeway.tres" id="3"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf03_riptide_landing.tres" id="4"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf04_seawall_retreat.tres" id="5"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf05_greenwood_ambuscade.tres" id="6"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf06_the_last_grove.tres" id="7"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf07_the_narrows.tres" id="8"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf08_after_hammerfall.tres" id="9"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf09_the_bridge_at_carrow.tres" id="10"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf10_the_supply_line.tres" id="11"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf11_iron_hill.tres" id="12"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf12_the_forward_camp.tres" id="13"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf13_the_foothill_road.tres" id="14"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf14_the_high_passes.tres" id="15"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf15_the_airfield_raid.tres" id="16"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf16_reckoning_at_averyn_pass.tres" id="17"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf17_the_shadow_of_the_keep.tres" id="18"]
+[ext_resource type="Resource" path="res://data/campaigns/the_long_front/missions/lf18_the_keep_at_draeg_hold.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+id = &"the_long_front"
+title = "The Long Front"
+premise = "No conspiracy and no lie: Iron simply comes, with Viktor Draeg's armour as the tip of the spear. Meridian, Aurora and the Verdant League lose separately, then hold together, then take the highlands back as one army."
+antagonist = "The Iron Dominion"
+missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
+block_titles = Array[String](["Alone", "Together", "Forward"])
+block_lengths = Array[int]([6, 6, 6])

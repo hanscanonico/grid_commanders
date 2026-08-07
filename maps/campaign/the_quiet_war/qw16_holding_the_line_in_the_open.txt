@@ -1,0 +1,33 @@
+# The Quiet War 16 — "Holding the Line in the Open". Iona Vance commits
+# her heaviest column of the war to break Iris Colt's line before the
+# alliance can bring up reserves. There is no fog to hide behind — only
+# the line itself.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+MM..............MM
+.Q====......MM....
+..=......MM.......
+..=...C...........
+FF=======.........
+..F......C........
+......======......
+.........====....Q
+MM..............MM
+[owners]
+1 1 1
+2 17 7
+[units]
+1 i 2 2
+1 i 3 3
+1 m 4 2
+1 r 2 1
+1 t 3 4
+1 t 4 4
+1 a 4 5
+2 i 13 6
+2 i 14 5
+2 r 12 6
+2 t 13 5
+2 t 15 5
+2 T 14 6
+2 a 12 5

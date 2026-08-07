@@ -1,0 +1,32 @@
+# The Quiet War 14 — "The Daylight March". Rumours put Viktor Draeg's
+# own spearhead on this stretch of border, hedging Orlov's play with real
+# armour. Rhea Sol answers by taking and holding every city on the map —
+# the least ambiguous statement there is.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+....................
+.Q====....C...MM....
+..=.....MM...MM.....
+..=...C....MM.......
+FF========....C.....
+....F.....C.....MM..
+........=======...MM
+...........====....Q
+....................
+[owners]
+1 1 1
+2 19 7
+[units]
+1 i 2 2
+1 i 3 3
+1 m 4 2
+1 r 2 1
+1 t 3 4
+1 t 4 4
+1 a 3 5
+2 i 15 6
+2 i 16 5
+2 r 14 6
+2 t 19 5
+2 t 17 6
+2 a 16 6

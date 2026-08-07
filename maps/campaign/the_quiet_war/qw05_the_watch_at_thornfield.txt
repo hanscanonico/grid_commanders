@@ -1,0 +1,26 @@
+# The Quiet War 5 — "The Watch at Thornfield". Vale's column is moving on
+# Thornfield before the town can be garrisoned properly. Cassian Rook's
+# picket has to make the wood line look like more than it is until
+# reinforcements can reach the city.
+# Symbols: . plains  F woods  C city  Q HQ
+[terrain]
+FF............FF
+.Q....FF....FF..
+F....F...C...FF.
+..F....FF....FF.
+F.....F....FF...
+..F....F...F..Q.
+....FF..........
+......F.........
+................
+[owners]
+1 1 1
+2 14 5
+[units]
+1 i 2 1
+1 i 3 2
+1 m 2 2
+2 i 11 4
+2 i 12 2
+2 m 12 5
+2 r 10 4

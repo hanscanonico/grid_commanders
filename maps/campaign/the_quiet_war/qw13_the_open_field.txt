@@ -1,0 +1,38 @@
+# The Quiet War 13 — "The Open Field". There is nothing quiet about
+# this. Iona Vance's column advances in the open, in daylight, and every
+# instrument the network needed to hide is worthless now. Alina Ward
+# answers with an army instead of a screen.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+....................
+.Q====...B....C.....
+..=....MM..MMM...MMM
+..=...C...FF........
+FF========....MM....
+....F.....C.....MM..
+........=======...MM
+...........====..B..
+..................Q.
+....................
+[owners]
+1 1 1
+1 9 1
+2 17 7
+2 18 8
+[units]
+1 i 4 2
+1 i 5 3
+1 m 6 2
+1 r 4 1
+1 t 5 4
+1 t 6 4
+1 a 4 4
+1 g 5 5
+2 i 15 6
+2 i 14 7
+2 r 15 5
+2 t 14 6
+2 t 13 7
+2 T 16 6
+2 a 14 5
+2 g 13 5

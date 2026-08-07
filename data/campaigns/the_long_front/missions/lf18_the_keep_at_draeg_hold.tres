@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+
+[sub_resource type="Resource" id="Objective_take_draeg_hq"]
+script = ExtResource("2")
+text = "Take Draeg's headquarters."
+cell = Vector2i(18, 9)
+
+[resource]
+script = ExtResource("1")
+id = &"lf18_the_keep_at_draeg_hold"
+title = "The Keep at Draeg Hold"
+location = "Draeg Hold, the Iron highlands"
+map_path = "res://maps/campaign/the_long_front/lf18_the_keep_at_draeg_hold.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"mara_voss",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_take_draeg_hq")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 9
+briefing = Array[String]([
+"Every nation the spearhead put to flight in the opening week stands on this ground together. Mara Voss, who bought that first morning with four units and a river, leads the army that ends it.",
+"Take Draeg's headquarters. There is nowhere left behind it for the war to go."
+])
+victory = Array[String]([
+"The keep falls, and the long front that ran from the customs road to the highlands finally has an end written on it.",
+"Voss stands where Draeg's desk stood that morning and does not sit down. There is a great deal still to rebuild."
+])
+defeat = "The keep held, and the alliance that took eighteen days to build broke against the one wall it could not move."

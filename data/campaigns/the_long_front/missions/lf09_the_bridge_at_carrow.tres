@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+
+[sub_resource type="Resource" id="Objective_take_carrow"]
+script = ExtResource("2")
+text = "Take Carrow and open the crossing."
+cell = Vector2i(10, 3)
+
+[resource]
+script = ExtResource("1")
+id = &"lf09_the_bridge_at_carrow"
+title = "The Bridge at Carrow"
+location = "Carrow crossing, allied front"
+map_path = "res://maps/campaign/the_long_front/lf09_the_bridge_at_carrow.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"orin_flux",
+2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_carrow")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+"Carrow is the one bridge east for forty miles, and Konrad Vale's engineers have been digging in around it since the line stopped moving.",
+"Every day the works harden. Orin Flux takes the crossing now, or the allies never take it at all."
+])
+victory = Array[String]([
+"Carrow falls before Vale's second trench line closes. The road east is open for the first time since the crossing.",
+"Flux marks it on the map and starts counting the properties beyond it."
+])
+defeat = "Vale's works held, and the crossing stayed his — a wall the allies will have to go around, not through."

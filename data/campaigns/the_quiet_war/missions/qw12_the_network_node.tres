@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_node"]
+script = ExtResource("2")
+text = "Take Morn's forward base."
+cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Failure_day_5"]
+script = ExtResource("3")
+text = "The node kept running past day 5."
+last_day = 5
+
+[resource]
+script = ExtResource("1")
+id = &"qw12_the_network_node"
+title = "The Network Node"
+location = "The forward raid base, Aurora border woods"
+map_path = "res://maps/campaign/the_quiet_war/qw12_the_network_node.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"sera_lark",
+2: &"radek_morn"
+}
+fog_enabled = true
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_take_the_node")])
+failures = Array[Resource]([SubResource("Failure_day_5")])
+bonus_objectives = Array[Resource]([])
+par_day = 5
+briefing = Array[String]([
+"Every cache, relay and raid column this act has cut all ran through one forward base. Sera Lark closes it before Morn can stand up a second one somewhere harder to find.",
+"Move fast. A network this exposed does not stay exposed for long."
+])
+victory = Array[String]([
+"The node falls, and for the first time since Selwich the network has nowhere left to report to.",
+"Lark does not think Morn is finished. She thinks he is about to stop being quiet about it."
+])
+defeat = "The node held, and rebuilt itself somewhere the next scout will have to find all over again."

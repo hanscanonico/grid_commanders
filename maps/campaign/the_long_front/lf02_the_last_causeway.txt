@@ -1,0 +1,33 @@
+# The Long Front 2 — "The Last Causeway". Voss falls back a second time, to
+# a river she means to make Draeg pay to cross. His armour needs the bridge;
+# his infantry can wade — so the causeway buys time, it does not seal the
+# river, and the objective stays the clock.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  Q HQ
+[terrain]
+....~...........
+.Q==+...F...MM..
+....~..F....MM..
+..C.~...........
+....~=====......
+..F.~....C......
+....~........MM.
+....~....===...Q
+....~...........
+[owners]
+# team x y — Voss (1) holds the west HQ, Draeg (2) the east.
+1 1 1
+2 15 7
+[units]
+# team symbol x y
+1 m 1 2
+1 r 2 1
+1 t 3 3
+1 i 2 2
+2 i 8 5
+2 i 10 6
+2 r 12 6
+2 t 9 6
+2 t 11 7
+2 t 13 7
+2 a 14 7

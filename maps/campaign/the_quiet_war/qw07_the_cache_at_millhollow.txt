@@ -1,0 +1,25 @@
+# The Quiet War 7 — "The Cache at Millhollow". Radek Morn's forward
+# supply cache moves at first light. Lyra Quill has one night in the
+# trees to take it before it becomes ammunition somewhere she cannot
+# reach.
+# Symbols: . plains  F woods  C city  Q HQ
+[terrain]
+F............F
+.Q.....FF.....
+F.....F..C....
+..F.....FF....
+F......F......
+..F.....F....Q
+...F..........
+..............
+..............
+[owners]
+1 1 1
+2 9 2
+2 13 5
+[units]
+1 m 2 1
+1 i 3 2
+2 i 9 4
+2 i 10 2
+2 r 11 5

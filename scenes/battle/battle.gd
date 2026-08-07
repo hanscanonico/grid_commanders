@@ -381,12 +381,11 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 	if not receipt.applied:
 		return
 	await _announce_fallen(receipt.fallen)
-	# A campaign mission's own verdict outranks the receipt's; CampaignSession.decide
-	# answers false for every skirmish, which is what leaves one unchanged.
+	# A mission's verdict outranks the receipt's, and `decide` is false for every
+	# skirmish — which is what leaves a match outside a campaign unchanged.
 	if CampaignSession.decide(game):
 		enter_victory()
-		return
-	if receipt.turn_changed:
+	elif receipt.turn_changed:
 		start_turn()
 	elif receipt.winner != 0:
 		enter_victory()

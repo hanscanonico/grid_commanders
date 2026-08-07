@@ -1,0 +1,25 @@
+# The Quiet War 3 — "Quiet Ground". Konrad Vale's engineers have three
+# border towns registering for Iron rail permits nobody in Meridian ever
+# approved. Nia Rowan does not have to fight for them — she has to sit on
+# all three before the paperwork does.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+FF............FF
+.QF..C..FF..MM..
+F.=...FF..MM....
+..=..F.C......MM
+F.====...FF...MM
+..F.=....C....MM
+....F.=......Q..
+.....FF.........
+................
+[owners]
+1 1 1
+2 13 6
+[units]
+1 i 3 1
+1 m 2 2
+1 r 4 2
+2 i 11 5
+2 i 10 3
+2 m 12 4

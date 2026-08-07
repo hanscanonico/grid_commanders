@@ -1,0 +1,35 @@
+# The Long Front 13 — "The Foothill Road". The allied line finally pushes
+# past its own border. Rhea Sol leads the first column into ground the Iron
+# Dominion has never had to defend before, and Konrad Vale's engineers dig
+# in on the only road through the passes.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+MMM..............MMM
+M.Q====.......MM....
+...=....MM...MM.....
+...=...C...MMM......
+FF.=======...MM.....
+...F......C...MM....
+.......======...MM..
+..........====..B...
+.................Q..
+MM................MM
+[owners]
+1 2 1
+2 17 8
+2 16 7
+[units]
+1 i 3 2
+1 i 4 3
+1 m 5 2
+1 r 3 1
+1 t 4 4
+1 t 5 4
+1 g 4 5
+2 i 14 6
+2 i 13 7
+2 r 16 5
+2 t 13 6
+2 t 12 7
+2 a 13 5
+2 g 12 6

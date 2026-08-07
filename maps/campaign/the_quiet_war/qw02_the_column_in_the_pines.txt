@@ -1,0 +1,26 @@
+# The Quiet War 2 — "The Column in the Pines". A whole company moved
+# through the Aurora pine belt without tripping a single patrol. Sable
+# Wren knows these woods better than the map does, and she is the one
+# asked to find where it went to ground.
+# Symbols: . plains  F woods  = road  C city  Q HQ
+[terrain]
+FF............FF
+.QFF..FFF...FF..
+F.=..FF...F...FF
+..=FF..C...FF...
+FF===...FF....FF
+..FF=...FFF...FF
+F...=..FF....Q..
+....FF..........
+................
+[owners]
+1 1 1
+2 7 3
+2 13 6
+[units]
+1 m 2 1
+1 i 3 2
+1 r 4 3
+2 i 9 4
+2 i 12 5
+2 m 12 6
