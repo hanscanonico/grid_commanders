@@ -39,11 +39,11 @@ const FORMAT := 3
 const NO_PASSENGER := -1
 
 ## Every field of a header line, and the shape it must carry. Read off this table
-## rather than checked by hand, the way `SaveCodec.KEY_RULES` is: two lists that
+## rather than checked by hand, the way `SaveSchema.KEY_RULES` is: two lists that
 ## have to agree by hand is the drift COM-54 was about.
 const HEADER_KEY_RULES := {
-	"replay": SaveCodec.Shape.NUMBER,
-	"opening": SaveCodec.Shape.DICTIONARY,
+	"replay": SaveSchema.Shape.NUMBER,
+	"opening": SaveSchema.Shape.DICTIONARY,
 }
 
 ## What each kind of line must name, beyond `c` itself. Presence is checked from
@@ -114,7 +114,7 @@ static func header_error(line: Dictionary) -> String:
 	for key: String in HEADER_KEY_RULES:
 		if not line.has(key):
 			return "the header names no %s" % key
-		if not SaveCodec.is_shape(line[key], HEADER_KEY_RULES[key]):
+		if not SaveSchema.is_shape(line[key], HEADER_KEY_RULES[key]):
 			return "the header's %s is not %s" % [key, _shape_name(HEADER_KEY_RULES[key])]
 	var format := int(line["replay"])
 	if format != FORMAT:
@@ -384,14 +384,14 @@ static func decode_path(value: Variant) -> Array[Vector2i]:
 	return path
 
 
-static func _shape_name(shape: SaveCodec.Shape) -> String:
+static func _shape_name(shape: SaveSchema.Shape) -> String:
 	match shape:
-		SaveCodec.Shape.NUMBER:
+		SaveSchema.Shape.NUMBER:
 			return "a number"
-		SaveCodec.Shape.STRING:
+		SaveSchema.Shape.STRING:
 			return "a string"
-		SaveCodec.Shape.DICTIONARY:
+		SaveSchema.Shape.DICTIONARY:
 			return "a dictionary"
-		SaveCodec.Shape.ARRAY:
+		SaveSchema.Shape.ARRAY:
 			return "an array"
 	return "a boolean"

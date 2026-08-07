@@ -305,10 +305,10 @@ func test_a_version_2_save_may_lack_the_dive_flag_but_not_commanders() -> void:
 ## complete, so the table above cannot be demanding a key nothing produces.
 func test_a_freshly_encoded_save_carries_everything_its_version_promises() -> void:
 	assert_eq(SaveCodec.validate(_encoded()), "")
-	for key: String in SaveCodec.KEY_RULES:
+	for key: String in SaveSchema.KEY_RULES:
 		assert_has(_encoded(), key, "encode must write every key its version claims")
-	for key: String in SaveCodec.UNIT_KEY_RULES:
+	for key: String in SaveSchema.UNIT_KEY_RULES:
 		assert_has((_encoded()["units"] as Array)[0] as Dictionary, key)
-	for key: String in SaveCodec.COMMANDER_KEY_RULES:
+	for key: String in SaveSchema.COMMANDER_KEY_RULES:
 		for team: int in _encoded()["teams"] as Array:
 			assert_has(_encoded()["commanders"][str(team)] as Dictionary, key)

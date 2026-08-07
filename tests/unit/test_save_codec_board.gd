@@ -327,6 +327,7 @@ func test_a_carried_unit_is_exempt_from_both_new_checks() -> void:
 				"acted": false,
 				"dived": false,
 				"refreshable": false,
+				"tag": "",
 				"carrier": SaveCodec.NO_CARRIER,
 			}
 		)

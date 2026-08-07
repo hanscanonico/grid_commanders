@@ -212,21 +212,21 @@ func test_a_value_inside_a_well_shaped_key_is_still_checked() -> void:
 
 # --- is_shape ------------------------------------------------------------------
 #
-# The one reader of every shape the rule tables declare (COM-175): ReplayCodec's
-# header check calls this directly rather than keeping its own copy, so pinning
-# it here is pinning both.
+# The one reader of every shape the rule tables declare (COM-175), on `SaveSchema`
+# rather than here (COM-184): ReplayCodec's header check calls it directly rather
+# than keeping its own copy, so pinning it here is pinning both.
 
 
 func test_is_shape_accepts_string_names_and_refuses_undeclared_shapes() -> void:
 	# A commander or difficulty id decodes as a StringName, not a String, and a
 	# save's own KEY_RULES has always accepted it for Shape.STRING — the fork this
 	# ticket closed treated that as a rejection instead.
-	assert_true(SaveCodec.is_shape(&"alina_ward", SaveCodec.Shape.STRING))
-	assert_true(SaveCodec.is_shape("alina_ward", SaveCodec.Shape.STRING))
+	assert_true(SaveSchema.is_shape(&"alina_ward", SaveSchema.Shape.STRING))
+	assert_true(SaveSchema.is_shape("alina_ward", SaveSchema.Shape.STRING))
 	# An out-of-range shape is refused for every kind of value, bool included —
 	# the fork this ticket closed fell through to `value is bool` instead.
 	for value: Variant in [true, false, 1, 1.5, "x", &"x", [], {}]:
-		assert_false(SaveCodec.is_shape(value, 99))
+		assert_false(SaveSchema.is_shape(value, 99))
 
 
 # --- carrier relationships ----------------------------------------------------
