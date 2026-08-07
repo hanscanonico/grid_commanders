@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_the_seawall"]
+script = ExtResource("2")
+text = "Hold the seawall road until day 5."
+day = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Rook's picket bought a day. Cost him half his force, and the port's still emptying out below you, Quill."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"lyra_quill"
+text = "Five days, then. Give me the odds on the seawall holding that long."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Worse than yesterday's, better than tomorrow's. That's the only trend I can promise."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"lyra_quill"
+text = "Good enough to bet on. Let the last boats clear — that's the whole job."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Last boat clears the harbour mouth as your line finally breaks. Exact trade, to the minute."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"lyra_quill"
+text = "The port's his. Nobody left in it was worth the keeping."
+
+[resource]
+script = ExtResource("1")
+id = &"lf04_seawall_retreat"
+title = "Seawall Retreat"
+location = "The Seawall district, Aurora Compact"
+map_path = "res://maps/campaign/the_long_front/lf04_seawall_retreat.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"lyra_quill",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_hold_the_seawall")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 5
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The seawall gave way with the harbour still full, and the retreat became a rout."

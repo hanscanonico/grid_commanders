@@ -1,0 +1,32 @@
+# Six Marshals M9 — "Broken Ground". Orlov's hunting party keeps
+# circling for a weak flank. Teaching board: woods and mountain break
+# sightlines everywhere, giving a wounded unit somewhere to actually hide.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+................
+......M.........
+...FF..C...FF...
+................
+.B..............
+.QF....FF....FQ.
+..............B.
+................
+...FF...C..FF...
+.........M......
+................
+[owners]
+# team x y
+1 1 5
+2 14 5
+1 1 4
+2 14 6
+[units]
+# team symbol x y
+1 i 1 3
+1 m 2 4
+1 r 1 6
+1 a 2 6
+2 i 14 3
+2 m 13 4
+2 r 14 6
+2 a 13 6

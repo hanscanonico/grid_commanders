@@ -1,0 +1,30 @@
+# The Long Front 6 — "The Last Grove". Draeg's column closes on the League's
+# elder shrine. Nia Rowan cannot hold the whole wood, so the mission is the
+# clock again — the shrine city is worth reaching if the fight allows it,
+# never worth dying for.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+................
+.QF==..FF..MMM..
+F.=..F.F....MM..
+F.=..........C..
+FF=====.........
+..F....=..C.....
+F....==....MMM..
+.........===...Q
+................
+[owners]
+# team x y — Rowan (1) holds the west HQ, Draeg (2) the east.
+1 1 1
+2 15 7
+[units]
+# team symbol x y
+1 i 2 2
+1 m 3 3
+1 r 2 1
+2 i 11 6
+2 i 12 5
+2 r 10 6
+2 t 11 5
+2 t 14 6
+2 a 9 5

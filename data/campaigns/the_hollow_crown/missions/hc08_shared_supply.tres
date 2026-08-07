@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the contested relay for the alliance."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("3")
+text = "Keep the marshal's army in the field."
+team = 2
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
+text = "The rivals held the field past day 12."
+last_day = 12
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("5")
+text = "Hold every property the alliance can reach."
+count = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "I want this depot for the bounty. Vance wants it for the ledger. Either way, you lose it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "My column is thinner than I let on, Commander. Losing me loses the alliance with it."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("6")
+speaker = &"sera_lark"
+text = "Then we hold the relay and keep his army in the field. Both, not either."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("6")
+speaker = &"sera_lark"
+text = "Depot road's shared, and your banner's still standing at the end of it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Ferrow and Vance retreat to lick two very different wounds. I do not forget who stood with me here."
+
+[resource]
+script = ExtResource("1")
+id = &"hc08_shared_supply"
+title = "Shared Supply"
+location = "The depot road behind the ridge"
+map_path = "res://maps/campaign/the_hollow_crown/hc08_shared_supply.txt"
+player_team = 1
+ai_teams = Array[int]([2, 3, 4])
+seats = Array[int]([])
+sides = {1: 0, 2: 0, 3: 1, 4: 1}
+commanders = {
+1: &"sera_lark",
+2: &"viktor_draeg",
+3: &"dane_ferrow",
+4: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 8
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "Draeg's army broke, and the alliance broke with it before the depot road was ever decided."

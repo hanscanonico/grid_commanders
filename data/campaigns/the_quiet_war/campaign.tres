@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw01_the_flipped_town.tres" id="2"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw02_the_column_in_the_pines.tres" id="3"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw03_quiet_ground.tres" id="4"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw04_the_governors_scandal.tres" id="5"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw05_the_watch_at_thornfield.tres" id="6"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw06_the_forward_safehouse.tres" id="7"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw07_the_cache_at_millhollow.tres" id="8"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw08_the_waystation.tres" id="9"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw09_ambush_ground.tres" id="10"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw10_the_relay_tower.tres" id="11"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw11_the_raid_points.tres" id="12"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw12_the_network_node.tres" id="13"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw13_the_open_field.tres" id="14"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw14_the_daylight_march.tres" id="15"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw15_the_engineering_works.tres" id="16"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw16_holding_the_line_in_the_open.tres" id="17"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw17_the_last_outpost.tres" id="18"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw18_the_man_himself.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+id = &"the_quiet_war"
+title = "The Quiet War"
+premise = "Cass Orlov does not cross borders; he dissolves them. Border provinces begin \"requesting Iron protection\" after their garrisons mutiny, their arsenals burn, and their governors fall to scandals that arrive too conveniently."
+antagonist = "The Iron Dominion"
+missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
+block_titles = Array[String](["Prove It", "Cut the Network", "Daylight"])
+block_lengths = Array[int]([6, 6, 6])

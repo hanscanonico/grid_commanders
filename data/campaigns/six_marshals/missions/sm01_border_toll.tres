@@ -1,0 +1,75 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_take_road_city"]
+script = ExtResource("2")
+text = "Take the customs city on the road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Failure_day_8"]
+script = ExtResource("3")
+text = "The road stayed closed past day 8."
+last_day = 8
+
+[sub_resource type="Resource" id="Bonus_south_city"]
+script = ExtResource("2")
+text = "Hold the southern city as well."
+cell = Vector2i(5, 7)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Ferrow crossed at the coal bridge before dawn. He is not taking ground, Commander — he is taking payment."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Then we stop paying. What is he actually after?"
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The customs city. Every column he breaks funds the next one, and that road is where the money walks."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Take the city, close the road. Nobody trades with him on open ground — make him come to us."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Road's open. His columns pulled back east with less than they came for."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "He was paid in nothing. That is the only language he reads."
+
+[resource]
+script = ExtResource("1")
+id = &"sm01_border_toll"
+title = "Border Toll"
+location = "The customs road, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm01_border_toll.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"alina_ward",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_road_city")])
+failures = Array[Resource]([SubResource("Failure_day_8")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_south_city")])
+par_day = 5
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The road stayed shut, and the toll went on being collected in armour and men."

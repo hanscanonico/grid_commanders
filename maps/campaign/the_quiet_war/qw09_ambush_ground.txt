@@ -1,0 +1,25 @@
+# The Quiet War 9 — "Ambush Ground". Orlov's raiders picked this wood
+# because the map calls it empty. Ines Calder does not need it to be
+# anything else — a smaller, cheaper column that reaches the ambush
+# first is the one thing it did not account for.
+# Symbols: . plains  F woods  M mountain  Q HQ
+[terrain]
+F............F
+.Q.....MM.....
+F.....F..MM...
+..F.....FF....
+F......F......
+..F.....F....Q
+...F..........
+..............
+..............
+[owners]
+1 1 1
+2 13 5
+[units]
+1 m 2 1
+1 i 3 2
+1 r 2 2
+2 i 9 4
+2 i 10 2
+2 m 11 5

@@ -1,0 +1,24 @@
+# The Quiet War 8 — "The Waystation". Dane Ferrow keeps a hidden depot
+# for every column that has ever crossed unnoticed. Orin Flux found it
+# on a hunch and a vision bonus nobody else's screen would have caught.
+# Symbols: . plains  F woods  B base  Q HQ
+[terrain]
+F............F
+.Q.....FF.....
+F.....F..B....
+..F.....FF....
+F......F......
+..F.....F....Q
+...F..........
+..............
+..............
+[owners]
+1 1 1
+2 9 2
+2 13 5
+[units]
+1 r 2 1
+1 i 3 2
+2 i 9 4
+2 i 10 2
+2 r 11 5

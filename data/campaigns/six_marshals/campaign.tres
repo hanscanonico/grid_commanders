@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm01_border_toll.tres" id="2"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm02_ambush_pass.tres" id="3"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm03_the_long_watch.tres" id="4"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm04_the_foundry_gate.tres" id="5"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm05_the_open_ledger.tres" id="6"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm06_the_toll_bridge.tres" id="7"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm07_the_watchtower.tres" id="8"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm08_close_quarters.tres" id="9"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm09_broken_ground.tres" id="10"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm10_first_blood.tres" id="11"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm11_the_running_tally.tres" id="12"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm12_the_narrow_crossing.tres" id="13"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm13_the_narrow_gate.tres" id="14"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm14_the_treeline.tres" id="15"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm15_the_last_span.tres" id="16"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm16_the_wide_field.tres" id="17"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm17_scattered_ground.tres" id="18"]
+[ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm18_the_last_terror.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+id = &"six_marshals"
+title = "The Six Marshals"
+premise = "The Dominion's autocrat is dead, and the succession goes to whichever marshal delivers the greatest conquest. Six private wars cross the border at once — and each is fought in its marshal's own style."
+antagonist = "The Iron Dominion"
+missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
+block_titles = Array[String](["Ferrow — the plunderer", "Vale — the industrialist", "Orlov — the hunter", "Vance — the attritionist", "Draeg — the spearhead", "Morn — the terror"])
+block_lengths = Array[int]([3, 3, 3, 3, 3, 3])

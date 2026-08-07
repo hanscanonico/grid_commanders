@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_the_narrows"]
+script = ExtResource("2")
+text = "Hold the narrows until day 7."
+day = 7
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Three retreats met on one road and stopped retreating, Voss. Aurora and the League are behind this line with you now."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then it's not my line anymore — it's ours. Draeg's spearhead hasn't slowed, only run out of ground to go around."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "My picket bought a day at the seawall. I'll spend today the same way, on your flank."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then hold what's yours and I'll hold what's mine. First time in a week that's actually true."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "The narrows held. First time since the crossing his column's stopped instead of advancing."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "We've got a base behind us now, and an alliance in front of us. Both are new — I intend to get used to them."
+
+[resource]
+script = ExtResource("1")
+id = &"lf07_the_narrows"
+title = "The Narrows"
+location = "The narrows, allied front"
+map_path = "res://maps/campaign/the_long_front/lf07_the_narrows.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"mara_voss",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_the_narrows")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The narrows broke, and three nations' retreats became one rout with nowhere left to fall back to."

@@ -1,0 +1,30 @@
+# Six Marshals M7 — "The Watchtower". Orlov's hunters favour a fair
+# fight they can pick apart. Teaching board: a mirrored duel with one
+# prize in the centre, so the fight is even until someone gets hurt.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+...............
+...............
+.......F.......
+...F.......F...
+.B.............
+=Q=====C=====Q=
+.............B.
+...F.......F...
+.......F.......
+...............
+...............
+[owners]
+# team x y
+1 1 5
+2 13 5
+1 1 4
+2 13 6
+[units]
+# team symbol x y
+1 i 2 5
+1 m 1 6
+1 r 2 4
+2 i 12 5
+2 m 13 4
+2 r 12 6

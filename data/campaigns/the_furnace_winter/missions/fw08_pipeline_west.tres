@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Retake depot 1 of the fuel road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("2")
+text = "Retake depot 2 of the fuel road."
+cell = Vector2i(13, 3)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The road stayed closed past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the road at once."
+count = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "The western depots mirror the eastern pair. I built them identically — economy of design."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"mara_voss"
+text = "Then we've already learned this fight once. I hold, I don't chase — we take both and stop."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"mara_voss"
+text = "Ten days, same as the east. Don't give her time to learn from her own mistake."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"mara_voss"
+text = "Western road's open. Both pipelines answer to us now."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "The same lesson, twice. That is a cost I did not budget for."
+
+[resource]
+script = ExtResource("1")
+id = &"fw08_pipeline_west"
+title = "Pipeline West"
+location = "The western fuel road"
+map_path = "res://maps/campaign/the_furnace_winter/fw08_pipeline_west.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"mara_voss",
+2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "The western depots held, and the identical design taught us nothing in time."

@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_hold_the_timber_line_until_day_6"]
+script = ExtResource("2")
+text = "Hold the timber line until day 6."
+day = 6
+
+[sub_resource type="Resource" id="Failure_the_line_broke_before_day_6"]
+script = ExtResource("3")
+text = "The line broke before day 6."
+last_day = 6
+
+[sub_resource type="Resource" id="Bonus_take_the_northern_camp_for_a_bonus"]
+script = ExtResource("4")
+text = "Take the northern camp for a bonus."
+cell = Vector2i(6, 2)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Ferrow is paid by the kill, not the mile. He'll hit whatever's weakest and pull back before you can answer."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Then nothing stands alone. Every position gets support within reach before we call the line held."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "His raiders are quick and thin-skinned — they can't trade evenly if you make them stand and fight."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Day six. The timber line held, and the count came out even — ours."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Ferrow's raiders bled for ground they never got to keep."
+
+[resource]
+script = ExtResource("1")
+id = &"sm03_the_long_watch"
+title = "The Long Watch"
+location = "Timber country, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm03_the_long_watch.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"cassian_rook",
+	2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_the_timber_line_until_day_6")])
+failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_6")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_camp_for_a_bonus")])
+par_day = 5
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "The raiders kept coming back to the same weak flank, and eventually it gave."

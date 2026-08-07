@@ -1,0 +1,32 @@
+# The Long Front 11 — "Iron Hill". Iona Vance throws a heavier column at
+# the allied line than anything since the crossing. Iris Colt's answer is
+# the same as ever: hold, refuse, hold again — the line does not have to
+# advance today, only refuse to break.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+MM..............MM
+.Q====......MM....
+..=......MM.......
+..=...C...........
+FF=======.........
+..F......C........
+......======......
+.........====....Q
+..................
+[owners]
+1 1 1
+2 17 7
+[units]
+1 i 2 2
+1 i 3 3
+1 m 4 2
+1 r 2 1
+1 t 3 4
+1 a 4 4
+2 i 13 6
+2 i 14 5
+2 r 12 6
+2 t 13 5
+2 t 14 6
+2 T 15 6
+2 g 12 5

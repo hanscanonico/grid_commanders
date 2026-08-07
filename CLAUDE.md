@@ -1145,6 +1145,57 @@ that must survive any change; the full rationale, milestones and risk registers 
   "having fought nothing", so it fires only when nothing was fought or captured across **both**
   turns the walk spans — a unit that went out, took its shot and came home is not walking in a
   circle, and a finding whose own detail line the board contradicts is worse than a miss.
+- **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
+  four-army play and this entry supersedes it where they disagree) — six authored wars against the
+  Iron Dominion, eighteen missions each, the player rotating through the other three factions'
+  commanders. The content is data end to end: a campaign is a directory under `data/campaigns/`
+  (`campaign.tres` plus `missions/*.tres`, discovered by `CampaignDB` and never listed by hand),
+  every mission owns a board under `maps/campaign/<campaign>/`, and `make campaigns`
+  (`tools/check_campaigns.gd`) is the content gate — the board parses, the seating is one the
+  board deals, every objective names ground that exists, the tier is one that ships
+  (`MissionDefinition.difficulty_error`, because `DifficultyDB.by_id` falls back to Normal
+  silently — right for a save naming a retired tier, invisible for a typo in a mission file),
+  every story line's speaker is on the roster (`story_error`), the launch builds. The story is
+  dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
+  **commander id** ("" = narration) because the roster already owns a general's name and colour
+  and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
+  sentence. `MissionSpeech` is the one drawer of a spoken line, because two screens say them —
+  the hub's briefing and `CampaignDebriefPanel`, the briefing's mirror, which plays the victory
+  dialogue or the defeat line on the way back from a battle before the hub. Five decisions:
+  D1: **a mission states its match as `MatchRequest`'s own field list — seats and sides included —
+  and `MissionDefinition.to_request()` is the one conversion.** The handoff's `player_team` /
+  `ai_teams` pair cannot say "seats 1 and 3 play, and 1 stands with 3", which The Hollow Crown's
+  Act II needs; a mission therefore boots through `MatchConfig.stage` and `BattleSetup` exactly as
+  a menu launch does, and no campaign-only launch path exists.
+  D2: **an objective is a pure read, by side, never by team.** Each `MissionObjective` subclass
+  under `core/campaign/objectives/` reads only authorities that already exist (`owner_at`,
+  `allied`, `is_eliminated`, `winners`) and counts ground and armies through `GameState.allied` —
+  an ally's property is not a legal capture target, so a team-only count could be driven
+  permanently below target by the player's own allied AI. `AllySurvivesObjective` exists because
+  `winners()` lists survivors only, so "keep the marshal alive" is otherwise unsayable. Every
+  objective's `definition_error` is checked when a mission loads, loud at the door. No
+  evacuate/escort/convoy objective exists on purpose — no exit-zone, cargo or named-unit-survival
+  condition is expressible — so The Collection and The Furnace Winter author those beats as
+  ground-held-to-a-deadline and static depot chains instead.
+  D3: **`MissionRuntime`'s precedence is the class's whole point: losing outranks winning
+  throughout** — tactical defeat, then failure conditions, then tactical victory, then
+  objectives — so a deadline that expires on the same board its objective completes is a failure.
+  It is asked at the one seam the live scene already has: `CampaignSession.decide(game)` in
+  `Battle.conclude_command`, four lines, and `decide` returns false for every skirmish — the sim
+  gained no hook and every pre-existing test is untouched.
+  D4: **`CampaignSession` is a second autoload beside `MatchConfig`, navigation intent only** —
+  `MatchConfig` deliberately carries exactly one typed request and nothing else, and a battle
+  outside a campaign must not have to know a campaign exists. `clear()` empties it whole, runtime
+  and verdict included, for the same reason `MatchConfig.take()` clears.
+  D5: **progress is one file per campaign** under `user://campaigns/`, temp+backup like
+  `SaveGame`, so six wars advance independently and finishing one cannot corrupt another's record.
+  The mid-mission board is `SaveCodec.encode`'s envelope embedded whole (`CampaignSaveCodec`
+  serialises no board of its own) and the skirmish slot is never touched, so Continue keeps one
+  unambiguous meaning; a damaged profile is read through a `JSON` instance rather than
+  `JSON.parse_string`, whose static call logs an engine error for a condition `SaveGame` already
+  treats as expected. The two file-line budgets the feature raised (`battle.gd`, `main_menu.gd`)
+  are recorded with their reasons in `tools/check_scripts.sh`, extraction first —
+  `MenuCampaignFlow` owns the menu's campaign walk.
 
 ## Architecture — the rules that matter most
 
@@ -1176,19 +1227,19 @@ The AI plugs in at the exact same point as player input.
 
 ```
 res://
-├─ core/        # sim: game_state.gd, commands/, rules/, commanders/  (NO Node references)
+├─ core/        # sim: game_state.gd, commands/, rules/, commanders/, campaign/  (NO Node references)
 ├─ data/        # .tres resources: units/, terrain/, commanders/, ai/, difficulty/,
-│              # battle_anim/ (weapon signatures), damage_chart
+│              # battle_anim/ (weapon signatures), campaigns/, damage_chart
 ├─ scenes/
 │  ├─ battle/   # battle.tscn, cursor, unit_sprite
 │  │  └─ cutscene/  # the combat & capture cut-ins and the BattleStyle they read
-│  ├─ menu/     # main_menu.tscn — map and commander select, match options
+│  ├─ menu/     # main_menu.tscn — map and commander select, match options, campaign screens
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip
-├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx
+├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, CampaignSession
 ├─ ai/          # AIController façade + planning context + unit/production planners
 │              # ai_profile.gd owns every weight; NO Node references
-├─ maps/        # map scenes / map resources
+├─ maps/        # map scenes / map resources (campaign boards under maps/campaign/)
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
 │              # (tools/arena/), replay analyser (tools/replay/), art & sfx pipeline
@@ -1234,7 +1285,10 @@ Follow the official Godot GDScript style guide. Key points:
   every menu obey is checked without a pad. `SeatStrip.normalised_sides` and
   `SeatStrip.reopened_seats` join them on the same terms and for the same reason: the grouping and
   seating arithmetic a shrinking roster runs through is static and pure, so it is checked without
-  building the strip.
+  building the strip. `CampaignSession` earns `MatchConfig`'s exception the same way: the autoload
+  is up for the whole headless run and reachable without a scene, and its lifecycle — armed by
+  `begin`, silent for every skirmish, emptied whole by `clear` — is exactly what
+  `tests/unit/test_campaign_session.gd` pins.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 

@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_take_the_relay_before_morn_s_hammerf"]
+script = ExtResource("2")
+text = "Take the relay before Morn's Hammerfall comes online."
+cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Failure_the_relay_stayed_in_morn_s_hands_pas"]
+script = ExtResource("3")
+text = "The relay stayed in Morn's hands past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "The last marshal. Radek Morn doesn't fight for ground, Gideon — he fights to erase it. Hammerfall flattens a three-by-three block, whole."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "Ground remembers nothing, Commander. Neither will yours."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Then we don't give him a block to erase. Spread the advance — there's no target worth the charge."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The relay's the prize. Keep it, and keep the army loose while we do."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "The relay's ours, and Morn never found three units close enough together to be worth the charge."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Erase nothing, spend nothing. That's how you beat him."
+
+[resource]
+script = ExtResource("1")
+id = &"sm16_the_wide_field"
+title = "The Wide Field"
+location = "The open plain, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm16_the_wide_field.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"gideon_holt",
+	2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_take_the_relay_before_morn_s_hammerf")])
+failures = Array[Resource]([SubResource("Failure_the_relay_stayed_in_morn_s_hands_pas")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The advance bunched at the relay, and Hammerfall found exactly the target it wanted."

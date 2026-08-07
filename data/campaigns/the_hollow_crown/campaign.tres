@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc01_border_skirmish.tres" id="2"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc02_river_line.tres" id="3"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc03_the_garrison.tres" id="4"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc04_watchtower.tres" id="5"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc05_the_ultimatum.tres" id="6"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc06_the_crack.tres" id="7"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc07_uneasy_alliance.tres" id="8"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc08_shared_supply.tres" id="9"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc09_the_crossroads.tres" id="10"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc10_broken_column.tres" id="11"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc11_two_fronts.tres" id="12"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc12_the_bargain_kept.tres" id="13"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc13_the_capital_road.tres" id="14"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc14_last_garrison.tres" id="15"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc15_the_regents_gate.tres" id="16"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc16_siege_lines.tres" id="17"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc17_the_high_seat.tres" id="18"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc18_the_hollow_crown.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+id = &"the_hollow_crown"
+title = "The Hollow Crown"
+premise = "The Directorate falls, and the Iron Dominion's six marshals do not agree on who follows it. For the three border nations this is a civil war with tank divisions spilling over every frontier — and surviving it means making sure the right marshal wins."
+antagonist = "The rival marshals of the Iron Dominion"
+missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
+block_titles = Array[String](["The Crack", "The Bargain", "The Crown"])
+block_lengths = Array[int]([6, 6, 6])

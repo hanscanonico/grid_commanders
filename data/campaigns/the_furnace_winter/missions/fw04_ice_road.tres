@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the crossroads base. It is the only way this army builds anything."
+cell = Vector2i(6, 5)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "Vale's garrison held the crossroads past day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Take the northern relay as well."
+cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"tomas_reed"
+text = "The causeway's frozen solid, but it's still a factory the moment it's ours."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Three columns across already, Reed. Fourth's on the ice behind them."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"tomas_reed"
+text = "Every column he breaks funds the next. We don't feed him one at a time."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"tomas_reed"
+text = "Causeway's open. The base builds for us now, not for his raiders."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Pulled back with less than I came for. Fine. There's always a next crossing."
+
+[resource]
+script = ExtResource("1")
+id = &"fw04_ice_road"
+title = "Ice Road"
+location = "The frozen causeway, north of Kestrel"
+map_path = "res://maps/campaign/the_furnace_winter/fw04_ice_road.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"tomas_reed",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 5
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "The causeway stayed his, and the toll went on being paid in armour and men."

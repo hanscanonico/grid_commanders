@@ -1,0 +1,31 @@
+# The Collection — Act II, M9 — "The Listening Posts". Three posts
+# along the border feed Orlov everything he needs to keep the witnesses
+# found. Teaching board: another static chain, this time taken from behind on funds.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+..................
+..................
+....F....F....F...
+..................
+=Q====C======C==B=
+.B........C.....Q.
+..................
+....F....F....F...
+..................
+..................
+[owners]
+# team x y
+1 1 4
+2 16 5
+2 16 4
+1 1 5
+2 6 4
+2 10 5
+[units]
+# team symbol x y
+1 i 1 3
+1 r 2 4
+2 i 16 6
+2 t 15 5
+2 r 16 3
+2 m 15 6

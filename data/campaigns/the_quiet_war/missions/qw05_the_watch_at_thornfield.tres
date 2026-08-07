@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_thornfield"]
+script = ExtResource("2")
+text = "Hold Thornfield until day 6."
+day = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Vale's column is moving on Thornfield before it can be garrisoned properly. You've got one picket and a wood line, Rook."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "I doubted you at Selwich, Flux. I won't make that mistake twice — make the tree line look like more than it is."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Reinforcements are six days out. That's the whole of what I can promise you."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Six days of bluffing a wood line. I've done worse with less."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Thornfield holds. His column pulls back to look for a softer town and doesn't find one this week."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "The woods were the real reinforcement. My picket just had to stand in them."
+
+[resource]
+script = ExtResource("1")
+id = &"qw05_the_watch_at_thornfield"
+title = "The Watch at Thornfield"
+location = "Thornfield, Aurora border woods"
+map_path = "res://maps/campaign/the_quiet_war/qw05_the_watch_at_thornfield.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"cassian_rook",
+2: &"konrad_vale"
+}
+fog_enabled = true
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_thornfield")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "Thornfield fell before the relief column crossed the ridge, and Vale had his town by nightfall."

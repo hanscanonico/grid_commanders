@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc01_the_ledger_opens.tres" id="2"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc02_named_in_the_audit.tres" id="3"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc03_the_supply_chain.tres" id="4"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc04_the_garrison_auction.tres" id="5"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc05_the_tally_post.tres" id="6"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc06_the_seized_province.tres" id="7"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc07_the_blockade.tres" id="8"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc08_silencing_the_witness.tres" id="9"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc09_the_listening_posts.tres" id="10"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc10_the_squeeze.tres" id="11"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc11_the_comeback.tres" id="12"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc12_the_counting_house.tres" id="13"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc13_crossing_the_line.tres" id="14"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc14_draegs_line.tres" id="15"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc15_the_foundry_chain.tres" id="16"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc16_out_producing_the_foundry.tres" id="17"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc17_the_foundry_core.tres" id="18"]
+[ext_resource type="Resource" path="res://data/campaigns/the_collection/missions/tc18_closing_the_ledger.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+id = &"the_collection"
+title = "The Collection"
+premise = "Iron claims the old war's reparations were never paid. A forged Directorate audit \"finds\" the debt runs the other way, and Dane Ferrow crosses the border with a ledger rather than a flag. Cities are collateral, convoys are interest."
+antagonist = "The Iron Dominion"
+missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
+block_titles = Array[String](["The Seizure", "The Strangle", "The Repossession"])
+block_lengths = Array[int]([6, 6, 6])

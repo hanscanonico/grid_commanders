@@ -1,0 +1,31 @@
+# Six Marshals M4 — "The Foundry Gate". Vale is building a forward
+# base on the crossroads. Teaching board: a contested third factory
+# in the middle of the map — take it before he does and his
+# premium-priced army never gets to grow.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+......=..=......
+.QB...=..=......
+..F...=..=...F..
+......=..=......
+......=B==......
+......=.C=......
+......=..=......
+..F...=..=...F..
+......=..=...BQ.
+......=..=......
+[owners]
+# team x y
+1 1 1
+2 14 8
+1 2 1
+1 7 4
+2 13 8
+[units]
+# team symbol x y
+1 i 1 2
+1 t 2 2
+1 r 3 1
+2 i 14 7
+2 t 13 6
+2 g 14 6

@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Take the crossroads base. It is the only way this army builds anything."
+cell = Vector2i(6, 4)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "Vale's garrison held the crossroads past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("2")
+text = "Take the northern relay as well."
+cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "One base left standing in Milltown, and Ferrow's decided burning it is cheaper than defending it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Cheaper for me. You're welcome to the ash, quartermaster."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We've got an HQ and nothing else. Reach it before he strikes the match."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Base held. Milltown eats through the winter, and so do we."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Scattered into the treeline. I'll collect on this later."
+
+[resource]
+script = ExtResource("1")
+id = &"fw02_last_granary"
+title = "Last Granary"
+location = "Milltown, three miles from the line"
+map_path = "res://maps/campaign/the_furnace_winter/fw02_last_granary.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"gideon_holt",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 6
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "The base burned rather than change hands, and Milltown starves through the freeze."

@@ -1,0 +1,40 @@
+# The Collection — Act III, M18 — "Closing the Ledger" (Finale).
+# Ferrow has fallen back to the foundry that started the whole forged
+# war, staking everything on one last defence. Teaching board: the
+# widest fight of the campaign — spread wide, break through, and close the account for good.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+.....................
+.....................
+.QBF...C.....C...F...
+..........F..........
+.....................
+.....................
+MMMM..MMMMBMMMM..MMMM
+.....................
+.....................
+..........F..........
+...F...C.....C...FBQ.
+.....................
+.....................
+[owners]
+# team x y
+1 1 2
+2 19 10
+1 2 2
+1 10 6
+2 18 10
+[units]
+# team symbol x y
+1 i 1 3
+1 t 2 3
+1 g 1 4
+1 a 2 4
+1 r 1 5
+1 m 2 5
+2 i 19 9
+2 t 18 9
+2 g 19 8
+2 a 18 8
+2 r 19 7
+2 m 18 7

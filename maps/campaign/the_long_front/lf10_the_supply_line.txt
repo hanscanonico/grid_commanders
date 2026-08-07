@@ -1,0 +1,31 @@
+# The Long Front 10 — "The Supply Line". Dane Ferrow is not here to hold
+# ground, only to burn what feeds it. Sable Wren has to keep every city in
+# the district producing or the allied line starves before it can
+# counterattack.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+..................
+.Q====...C........
+..=....F.....MM...
+..=.....C.........
+FF=======.........
+..F......C........
+......======...MM.
+.........====....Q
+..................
+..................
+[owners]
+1 1 1
+2 17 7
+[units]
+1 i 2 2
+1 i 3 3
+1 m 4 2
+1 r 2 1
+1 t 3 4
+2 i 13 6
+2 i 14 5
+2 r 12 6
+2 t 14 6
+2 t 15 5
+2 a 12 5

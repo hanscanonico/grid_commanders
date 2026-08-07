@@ -1,0 +1,30 @@
+# The Long Front 5 — "Greenwood Ambuscade". Draeg's third column pushes into
+# the Verdant League's home woods. Ivar Thorne trades open ground for tree
+# cover the tanks cannot exploit — the retreat is the same clock as
+# Meridian's and Aurora's, fought on kinder terrain.
+# Symbols: . plains  F woods  M mountain  = road  C city  Q HQ
+[terrain]
+................
+.QF==..FF..MMM..
+..=..F.F....MM..
+F.=..C.F........
+FF=====.........
+..F....=..C.....
+F....==....MMM..
+.........===...Q
+................
+[owners]
+# team x y — Thorne (1) holds the west HQ, Draeg (2) the east.
+1 1 1
+2 15 7
+[units]
+# team symbol x y
+1 i 2 2
+1 m 3 3
+1 r 2 1
+2 i 11 6
+2 i 12 5
+2 r 10 6
+2 t 11 5
+2 t 14 6
+2 a 9 5

@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_camp"]
+script = ExtResource("2")
+text = "Take Orlov's forward base."
+cell = Vector2i(13, 3)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Orlov's fortified camp is the last thing standing between us and the foothills of the Iron highlands."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Then it's the last thing standing between defence and offence. Take the camp, and the front stops holding and starts moving."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Six weeks of retreat, three nations, one alliance — and now we're the ones advancing. Feels strange to say out loud."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Say it anyway. We'll need to believe it before the highlands do."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The camp falls, and with it the last piece of ground his spearhead took in the opening week."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "I'm looking east, past the foothills, to where the highlands start. We've never fought there before."
+
+[resource]
+script = ExtResource("1")
+id = &"lf12_the_forward_camp"
+title = "The Forward Camp"
+location = "The foothill camp, allied front"
+map_path = "res://maps/campaign/the_long_front/lf12_the_forward_camp.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"alina_ward",
+2: &"cass_orlov"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_the_camp")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "Orlov's camp held, and the allied line stayed where it has stood since the narrows."

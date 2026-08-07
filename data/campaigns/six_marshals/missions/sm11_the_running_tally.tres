@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_hold_four_of_the_six_towns"]
+script = ExtResource("2")
+text = "Hold four of the six towns."
+count = 4
+
+[sub_resource type="Resource" id="Failure_the_race_stayed_even_past_day_10"]
+script = ExtResource("3")
+text = "The race stayed even past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Every extra turn her doctrine bites harder. Race for the towns — don't stop to trade evenly with her."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"nia_rowan"
+text = "Ground holds better than roads promise. Take what's ours and dig in before she catches up."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Four of six wins it. Speed beats her attrition; a stand-up fight does not."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"nia_rowan"
+text = "Four towns, ours, before Vance's army found its footing."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "She never got the long grind she was built for."
+
+[resource]
+script = ExtResource("1")
+id = &"sm11_the_running_tally"
+title = "The Running Tally"
+location = "The market belt, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm11_the_running_tally.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"nia_rowan",
+	2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_towns")])
+failures = Array[Resource]([SubResource("Failure_the_race_stayed_even_past_day_10")])
+bonus_objectives = Array[Resource]([])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "The race turned into a grind, and a grind was always going to be hers."

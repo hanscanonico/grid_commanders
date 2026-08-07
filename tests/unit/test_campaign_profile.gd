@@ -1,0 +1,119 @@
+extends GutTest
+## Campaign progress on disk.
+##
+## `SaveGame`'s tests' sibling and for the same reason: the promise is that a
+## profile that fails to write leaves the previous one exactly as it was, and
+## that a damaged file costs a campaign's record rather than the menu.
+##
+## Every case writes under a campaign id no shipped campaign uses, so a run of
+## the suite can never touch a real profile.
+
+const PROBE := &"__probe_campaign"
+
+var campaign: CampaignDefinition
+
+
+func before_each() -> void:
+	CampaignProfile.erase(PROBE)
+	campaign = CampaignDefinition.new()
+	campaign.id = PROBE
+	campaign.title = "Probe"
+	for id: StringName in [&"one", &"two", &"three"]:
+		var mission := MissionDefinition.new()
+		mission.id = id
+		mission.map_path = "res://maps/first_steps.txt"
+		campaign.missions.append(mission)
+
+
+func after_each() -> void:
+	CampaignProfile.erase(PROBE)
+
+
+func test_nothing_is_on_disk_until_something_is_written() -> void:
+	assert_false(CampaignProfile.has_profile(PROBE))
+	assert_null(CampaignProfile.load_progress(PROBE))
+	assert_eq(CampaignProfile.load_battle(PROBE), {})
+
+
+func test_progress_survives_the_disk() -> void:
+	var state := CampaignState.begin(campaign)
+	state.complete(campaign, &"one", 3, 4)
+	assert_true(CampaignProfile.save_progress(state))
+	assert_true(CampaignProfile.has_profile(PROBE))
+	var back := CampaignProfile.load_progress(PROBE)
+	assert_not_null(back)
+	assert_eq(back.campaign_id, PROBE)
+	assert_eq(back.stars_for(&"one"), 3)
+	assert_eq(back.records[&"one"].best_day, 4)
+	assert_true(back.is_unlocked(&"two"), "clearing one opened the next")
+
+
+func test_a_second_write_replaces_the_first_and_leaves_no_siblings() -> void:
+	var state := CampaignState.begin(campaign)
+	state.complete(campaign, &"one", 1, 9)
+	assert_true(CampaignProfile.save_progress(state))
+	state.complete(campaign, &"two", 2, 5)
+	assert_true(CampaignProfile.save_progress(state))
+	var back := CampaignProfile.load_progress(PROBE)
+	assert_eq(back.records.size(), 2)
+	# The backup and temp are staging posts, not leftovers: one read back later
+	# would be progress the player has already moved past.
+	var path := CampaignProfile.path_for(PROBE)
+	assert_false(FileAccess.file_exists(path + CampaignProfile.BACKUP_SUFFIX), "no backup left")
+	assert_false(FileAccess.file_exists(path + CampaignProfile.TEMP_SUFFIX), "no temp left")
+
+
+## The snapshot comes back key for key, but JSON has one number type, so what
+## went in as 8 comes back as 8.0. That is the same round trip `SaveGame` has
+## always made — `SaveCodec` reads every number through an `int()` cast for this
+## reason — and it is asserted rather than papered over so the next reader knows
+## the floats are the format's and not a bug here.
+func test_the_battle_in_progress_rides_along_untouched() -> void:
+	var state := CampaignState.begin(campaign)
+	state.active_mission = &"one"
+	var battle := {"version": 8, "day": 3, "anything": "the skirmish codec's business"}
+	assert_true(CampaignProfile.save_progress(state, battle))
+	var back := CampaignProfile.load_battle(PROBE)
+	assert_eq(back.keys().size(), 3)
+	assert_eq(int(back["version"]), 8)
+	assert_eq(int(back["day"]), 3)
+	assert_eq(back["anything"], "the skirmish codec's business")
+
+
+func test_a_damaged_profile_reads_as_absent_rather_than_crashing() -> void:
+	var file := FileAccess.open(CampaignProfile.path_for(PROBE), FileAccess.WRITE)
+	file.store_string("{ this is not json")
+	file.close()
+	# The codec's refusal is the log's business; the menu's is that the row still
+	# works and offers a fresh start.
+	assert_null(CampaignProfile.load_progress(PROBE))
+	assert_push_error_count(1, "the damaged file is named once, in the log")
+
+
+func test_erase_takes_the_siblings_with_it() -> void:
+	var state := CampaignState.begin(campaign)
+	assert_true(CampaignProfile.save_progress(state))
+	var path := CampaignProfile.path_for(PROBE)
+	var backup := FileAccess.open(path + CampaignProfile.BACKUP_SUFFIX, FileAccess.WRITE)
+	backup.store_string("{}")
+	backup.close()
+	CampaignProfile.erase(PROBE)
+	assert_false(CampaignProfile.has_profile(PROBE))
+	assert_false(FileAccess.file_exists(path + CampaignProfile.BACKUP_SUFFIX))
+
+
+## Six campaigns progress independently, so one file each — finishing one must
+## not be able to touch the record of another.
+func test_each_campaign_keeps_its_own_file() -> void:
+	var other := &"__probe_campaign_two"
+	CampaignProfile.erase(other)
+	var mine := CampaignState.begin(campaign)
+	mine.complete(campaign, &"one", 3, 2)
+	assert_true(CampaignProfile.save_progress(mine))
+	var theirs := CampaignState.new()
+	theirs.campaign_id = other
+	theirs.unlocked[&"one"] = true
+	assert_true(CampaignProfile.save_progress(theirs))
+	assert_eq(CampaignProfile.load_progress(PROBE).stars_for(&"one"), 3, "untouched")
+	assert_ne(CampaignProfile.path_for(PROBE), CampaignProfile.path_for(other))
+	CampaignProfile.erase(other)

@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_take_the_forward_depot_before_vance_"]
+script = ExtResource("2")
+text = "Take the forward depot before Vance digs in."
+cell = Vector2i(6, 4)
+
+[sub_resource type="Resource" id="Failure_the_depot_stayed_contested_past_day_"]
+script = ExtResource("3")
+text = "The depot stayed contested past day 6."
+last_day = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Vance is the fifth marshal, and the hardest kind — every fight she's in, she's a little stronger than the chart says."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "Three percent here, three there. It costs you nothing to notice and everything to ignore."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"iris_colt"
+text = "Then we don't give her the turns to compound it. Fast and clean, before she finds her rhythm."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"iris_colt"
+text = "Take the depot before she digs in — there's no version of this that gets easier tomorrow."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"iris_colt"
+text = "Fast and clean. The depot fell before Vance's army ever found its footing."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Every day we don't give her is a day her edge doesn't get to spend."
+
+[resource]
+script = ExtResource("1")
+id = &"sm10_first_blood"
+title = "First Blood"
+location = "The forward depot, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm10_first_blood.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"iris_colt",
+	2: &"iona_vance"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_take_the_forward_depot_before_vance_")])
+failures = Array[Resource]([SubResource("Failure_the_depot_stayed_contested_past_day_")])
+bonus_objectives = Array[Resource]([])
+par_day = 4
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The fight dragged on, and every extra day was a day that belonged to her."

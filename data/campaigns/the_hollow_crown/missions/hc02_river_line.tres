@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Break the line and take their headquarters."
+cell = Vector2i(15, 2)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The line held past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the board at once."
+count = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "I don't probe, quartermaster. I commit. This crossing is committed to."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "No tricks up your sleeve, then. Almost restful, fighting a man who plays it straight."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Meet his commitment with one of our own and take that headquarters."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"gideon_holt"
+text = "Line broke exactly where the numbers said it would — once the numbers were ours."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "Withdrawn, no ceremony. I will be back with better numbers."
+
+[resource]
+script = ExtResource("1")
+id = &"hc02_river_line"
+title = "River Line"
+location = "The Verdant frontier, southern reach"
+map_path = "res://maps/campaign/the_hollow_crown/hc02_river_line.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"gideon_holt",
+2: &"cass_orlov"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "The numbers favoured Orlov today, and the river line stayed his."

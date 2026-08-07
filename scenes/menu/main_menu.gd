@@ -69,12 +69,17 @@ var _continue_button: Button
 var _continue_caption: Label
 ## The tip hanging off that line, re-worded with it by `_refresh_continue`.
 var _continue_tip: Tooltip
+var _campaign_button: Button
 var _replay_button: Button
 var _quit_button: Button
 var _press_start: Label
 
 var _select_panel: CommanderSelectPanel
 var _replay_panel: ReplayPickerPanel
+## Pick a war, pick a mission, deploy — the menu's campaign navigation, kept
+## whole in its own collaborator because it is a different question from the
+## board-and-fog setup this page is otherwise about.
+var _campaign_flow: MenuCampaignFlow
 ## The seats the computer will play, taken off the strip when Start was pressed
 ## and carried across the selection page so `confirmed` stages the same table the
 ## player set up rather than re-asking a strip they may have walked back to.
@@ -131,7 +136,19 @@ func _ready() -> void:
 	add_child(_replay_panel)
 	_replay_panel.picked.connect(_on_replay_picked)
 	_replay_panel.cancelled.connect(_on_replay_cancelled)
+	_campaign_flow = MenuCampaignFlow.new(
+		self,
+		_menu_root,
+		func() -> void: _campaign_button.grab_focus(),
+		func() -> void: get_tree().change_scene_to_file(BATTLE_SCENE)
+	)
 
+	# Coming back from a mission lands on the hub it was launched from, not on the
+	# menu: the campaign is still the thing being played, and the next mission is
+	# one row below the one just finished. The session is cleared as it is read, so
+	# a later Quit-to-menu cannot reopen a campaign nobody is in.
+	if CampaignSession.active():
+		_campaign_flow.resume()
 	_refresh_continue()
 	_start_button.pressed.connect(func() -> void: _open_select(_seat_strip.ai_teams()))
 	# The strip is the only writer of who plays what, so the rule that a table with
@@ -144,6 +161,7 @@ func _ready() -> void:
 	# the roster is the board's answer and both of them are downstream of it.
 	_refresh_map_facts()
 	_continue_button.pressed.connect(_continue)
+	_campaign_button.pressed.connect(_campaign_flow.open)
 	_replay_button.pressed.connect(_open_replays)
 	_quit_button.pressed.connect(get_tree().quit)
 	if _capture_driver.poses_setup_context():
@@ -167,6 +185,17 @@ func _ready() -> void:
 	if _capture_driver.poses_replays():
 		_open_replays()
 		await _capture_driver.capture(shot_path, _replay_panel.chrome)
+		return
+
+	# Both campaign pages photograph over a hidden menu for the replays page's
+	# reason, and the hub is posed on a *fresh* profile so the picture does not
+	# depend on how far the machine that took it happens to have played.
+	# All three campaign pages pose the same way, so the flow that owns them owns
+	# that too: it answers with the chrome to measure, or nothing when this run is
+	# not posing one of its pages.
+	var campaign_chrome := _campaign_flow.pose(_capture_driver)
+	if campaign_chrome.is_valid():
+		await _capture_driver.capture(shot_path, campaign_chrome)
 		return
 
 	# Dev captures of the selection page — which seat it walks to and which general
@@ -639,6 +668,12 @@ func _build_action_stack(animate: bool) -> Control:
 	# A disabled button takes no focus — the case the hoverable caption covers.
 	_continue_tip.follow_focus(_continue_button)
 	col.add_child(_continue_caption)
+
+	# Above Replays, below Continue: an authored war is a different offer from the
+	# skirmish this page is otherwise about, and it is the one a first-time player
+	# is most likely to want.
+	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.SECONDARY, null)
+	col.add_child(_campaign_button)
 
 	# Below Continue, above Quit: it is the third thing you can do with a match, and
 	# the only surface that tells a player their matches are being recorded at all.

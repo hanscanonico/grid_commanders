@@ -1,0 +1,29 @@
+# The Hollow Crown — "The Regent's Gate".
+# A standard two-army front. No allies here yet — the succession war has
+# not reached this crossing.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+.......M.............
+....F....F....F......
+.Q.................Q.
+.====C====C====C====.
+.B.................B.
+......F....F....F....
+.............M.......
+[owners]
+1 1 2
+1 1 4
+2 19 2
+2 19 4
+[units]
+1 i 2 2
+1 i 2 4
+1 m 3 3
+1 r 2 3
+1 t 3 2
+2 i 17 2
+2 i 17 4
+2 m 16 3
+2 r 17 3
+2 t 16 2

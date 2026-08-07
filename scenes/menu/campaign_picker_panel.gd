@@ -1,0 +1,177 @@
+class_name CampaignPickerPanel
+extends Control
+## The six campaigns, shown over the main menu without tearing it down —
+## `ReplayPickerPanel`'s sibling, built the same way and for the same reason: a
+## Back has to land on the setup exactly as it was left.
+##
+## Each row names a campaign and how far its own profile has got, because
+## progress is per campaign (`CampaignProfile` keeps one file each) and a player
+## returning after a week needs the menu to answer "which one was I in?" without
+## opening any of them.
+##
+## It reads campaigns and profiles and hands back an id. It never starts a
+## battle and never touches `core/` beyond the two registries it asks.
+
+signal picked(campaign_id: StringName)
+signal cancelled
+
+const _TITLE_SIZE := 15
+const _ROW_HEIGHT := 22
+const _ROW_WIDTH := 400
+
+var _title: Label
+var _rows: VBoxContainer
+var _empty: Label
+var _back_button: Button
+var _row_buttons: Array[Button] = []
+var _ids: Array[StringName] = []
+
+
+func _ready() -> void:
+	_build()
+	hide()
+
+
+## Opens the page on a roster of campaigns. Handed in rather than read here for
+## `ReplayPickerPanel.begin`'s reason: a photographed frame must not depend on
+## what the machine that took it happens to have on disk.
+func begin(campaigns: Array[CampaignDefinition]) -> void:
+	_fill(campaigns)
+	show()
+	if _row_buttons.is_empty():
+		_back_button.grab_focus()
+	else:
+		_row_buttons[0].grab_focus()
+
+
+func chrome() -> Dictionary[String, Control]:
+	var named: Dictionary[String, Control] = {"the campaign title": _title, "Back": _back_button}
+	if _row_buttons.is_empty():
+		named["the empty note"] = _empty
+	else:
+		named["the first campaign row"] = _row_buttons[0]
+	return named
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed(&"cancel"):
+		get_viewport().set_input_as_handled()
+		_leave()
+
+
+# --- build -------------------------------------------------------------------
+
+
+func _build() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var bg := ColorRect.new()
+	bg.color = UiTheme.veil(0.985)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for edge in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + edge, 8)
+	add_child(margin)
+
+	var main := VBoxContainer.new()
+	main.add_theme_constant_override("separation", 6)
+	margin.add_child(main)
+
+	_title = Label.new()
+	_title.text = "CAMPAIGNS"
+	_title.add_theme_font_override("font", UiTheme.display(true))
+	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main.add_child(_title)
+
+	main.add_child(_note("Six wars against the Iron Dominion. Eighteen missions each."))
+
+	_empty = _note("No campaigns installed.")
+	main.add_child(_empty)
+
+	var frame := ScrollContainer.new()
+	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main.add_child(frame)
+
+	_rows = VBoxContainer.new()
+	_rows.add_theme_constant_override("separation", 3)
+	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	frame.add_child(_rows)
+
+	_back_button = Button.new()
+	_back_button.text = "Back"
+	UiTheme.apply_button(_back_button, UiTheme.ButtonVariant.GHOST, null, UiTheme.SIZE_BUTTON)
+	_back_button.custom_minimum_size = Vector2(_ROW_WIDTH, 20)
+	_back_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_back_button.pressed.connect(_leave)
+	main.add_child(_back_button)
+
+	var footer := Label.new()
+	footer.add_theme_font_override("font", UiTheme.stat())
+	footer.add_theme_font_size_override("font_size", 8)
+	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	footer.text = "UP/DOWN  BROWSE      ENTER  OPEN      ESC  BACK      MOUSE OK"
+	main.add_child(footer)
+
+
+func _note(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.stat())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return label
+
+
+func _fill(campaigns: Array[CampaignDefinition]) -> void:
+	for button in _row_buttons:
+		button.queue_free()
+	_row_buttons.clear()
+	_ids.clear()
+	_empty.visible = campaigns.is_empty()
+	for campaign in campaigns:
+		var button := Button.new()
+		button.text = _row_text(campaign)
+		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
+		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
+		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var index := _ids.size()
+		button.pressed.connect(func() -> void: _pick(index))
+		_rows.add_child(button)
+		_row_buttons.append(button)
+		_ids.append(campaign.id)
+
+
+## "The Six Marshals — 4/18 · 9 stars", or "— new" for one never opened. The
+## progress half is read off the campaign's own profile, so a row answers "which
+## one was I in?" without opening it.
+func _row_text(campaign: CampaignDefinition) -> String:
+	var progress := CampaignProfile.load_progress(campaign.id)
+	if progress == null:
+		return "%s   —   new" % campaign.title
+	var cleared := progress.records.size()
+	if cleared >= campaign.mission_count():
+		return "%s   —   complete · %d stars" % [campaign.title, progress.total_stars()]
+	return (
+		"%s   —   %d/%d · %d stars"
+		% [campaign.title, cleared, campaign.mission_count(), progress.total_stars()]
+	)
+
+
+func _pick(index: int) -> void:
+	if index < 0 or index >= _ids.size():
+		return
+	hide()
+	picked.emit(_ids[index])
+
+
+func _leave() -> void:
+	hide()
+	cancelled.emit()

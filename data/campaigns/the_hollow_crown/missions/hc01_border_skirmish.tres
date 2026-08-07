@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_0"]
+script = ExtResource("2")
+text = "Break the line and take their headquarters."
+cell = Vector2i(15, 2)
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("3")
+text = "The line held past day 10."
+last_day = 10
+
+[sub_resource type="Resource" id="Bonus_0"]
+script = ExtResource("4")
+text = "Hold every property on the board at once."
+count = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "The line gets tested every spring, Commander. This year I brought more than a probing column."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Noted for the record. The Directorate still stands, officially — nobody at this crossing believes it will for long."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Hold the line. Push him back east of the crossing."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("5")
+speaker = &"cassian_rook"
+text = "Column withdrew in good order. For Morn, that counts as a warning shot answered."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "It does. Enjoy the quiet, Commander — it is not going to last."
+
+[resource]
+script = ExtResource("1")
+id = &"hc01_border_skirmish"
+title = "Border Skirmish"
+location = "The Meridian-Iron line, north crossing"
+map_path = "res://maps/campaign/the_hollow_crown/hc01_border_skirmish.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"cassian_rook",
+2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+par_day = 7
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
+defeat = "Morn's column crossed and dug in, and the spring test just became a permanent fixture."

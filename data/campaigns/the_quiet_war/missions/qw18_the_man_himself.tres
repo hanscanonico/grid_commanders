@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_orlovs_hq"]
+script = ExtResource("2")
+text = "Take Orlov's headquarters."
+cell = Vector2i(18, 9)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Orlov never crossed a border in the open until there was no border left to dissolve, Ash. Every flipped town, every ledger, every raid pointed here."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"perrin_ash"
+text = "Then I finish it the way it should have started. An army, in daylight, against a headquarters that thought nobody would find it."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"cass_orlov"
+text = "Found, Commander Ash, but not finished. I've enjoyed watching you all learn to read my handwriting — genuinely."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"perrin_ash"
+text = "Enjoy it while it lasts. It ends today."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"cass_orlov"
+text = "A wall taken isn't a man caught, Commander. Remember that the next time you think a war is over."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "The headquarters falls, and every quiet annexation this war ran on stops being quiet or an annexation."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("3")
+speaker = &"perrin_ash"
+text = "We don't find Orlov himself among the papers. Some wars end with a wall taken, not a man caught."
+
+[resource]
+script = ExtResource("1")
+id = &"qw18_the_man_himself"
+title = "The Man Himself"
+location = "Orlov's headquarters, the border he dissolved"
+map_path = "res://maps/campaign/the_quiet_war/qw18_the_man_himself.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"perrin_ash",
+2: &"cass_orlov"
+}
+fog_enabled = false
+difficulty = &"hard"
+objectives = Array[Resource]([SubResource("Objective_take_orlovs_hq")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 9
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
+defeat = "The headquarters held, and the war Orlov never declared stays exactly as undeclared as he wanted it."

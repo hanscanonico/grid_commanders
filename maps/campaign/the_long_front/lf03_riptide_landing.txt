@@ -1,0 +1,30 @@
+# The Long Front 3 — "Riptide Landing". Draeg's spearhead swings south to the
+# Aurora coast, landing armour behind the picket line. Cassian Rook has to
+# buy the same morning Voss bought inland, on ground with the sea at his
+# back instead of open country.
+# Symbols: . plains  F woods  M mountain  = road  S sea  C city  Q HQ
+[terrain]
+SSSSSSSSSSSSSSSS
+S.Q==...F...MM.S
+S..=....F...MM.S
+S..=..C........S
+SFF=====.......S
+S..F...=..C....S
+S.....==....MM.S
+S........===..QS
+SSSSSSSSSSSSSSSS
+[owners]
+# team x y — Rook (1) holds the west HQ, Draeg (2) the east.
+1 2 1
+2 14 7
+[units]
+# team symbol x y
+1 i 3 2
+1 r 3 1
+1 t 4 3
+2 i 11 6
+2 i 12 5
+2 r 10 6
+2 t 11 5
+2 t 14 6
+2 a 9 5

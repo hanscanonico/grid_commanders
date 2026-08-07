@@ -1,0 +1,28 @@
+# Six Marshals M10 — "First Blood". Vance grinds — every extra turn
+# favours her. Teaching board: small and direct, one prize on the
+# road between the HQs. Move fast or don't move at all.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+.............
+.............
+....F........
+.B...........
+=Q====C====Q=
+...........B.
+........F....
+.............
+.............
+[owners]
+# team x y
+1 1 4
+2 11 4
+1 1 3
+2 11 5
+[units]
+# team symbol x y
+1 i 1 5
+1 t 2 4
+1 r 1 2
+2 i 11 3
+2 t 10 4
+2 r 11 6

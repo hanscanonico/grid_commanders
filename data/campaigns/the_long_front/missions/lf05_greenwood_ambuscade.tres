@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_the_woods"]
+script = ExtResource("2")
+text = "Hold the greenwood road until day 6."
+day = 6
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "Draeg's third column is into our home trees, Thorne. Open ground is gone — this is what's left to trade."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Then we trade cover for time. The woods won't stop tanks forever, but they'll slow them long enough."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "Six days of slowing costs us the tree line either way. Just tell me it's worth losing."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Everything's worth losing if it buys the road. Hold until day six — that's the whole fight."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "The column ground to a crawl in the tree line. Never found the road it needed."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "Fair trade. We fall back deeper into League ground anyway — there's more forest to lose."
+
+[resource]
+script = ExtResource("1")
+id = &"lf05_greenwood_ambuscade"
+title = "Greenwood Ambuscade"
+location = "The Greenwood, Verdant League"
+map_path = "res://maps/campaign/the_long_front/lf05_greenwood_ambuscade.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"ivar_thorne",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_hold_the_woods")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The trees slowed Draeg down, but not enough — the road broke and the column marched on through open ground."

@@ -1,0 +1,29 @@
+# The Long Front 4 — "Seawall Retreat". The port district empties out while
+# Lyra Quill's screen holds the seawall road. Fewer units than Riptide
+# Landing — the picket has already taken losses covering the evacuation.
+# Symbols: . plains  F woods  M mountain  = road  S sea  C city  Q HQ
+[terrain]
+SSSSSSSSSSSSSSSS
+S.Q==..F....MM.S
+S..=...F....MM.S
+S..=.C.........S
+SFF====.....C..S
+S..F..=........S
+S....==.....MM.S
+S.......====..QS
+SSSSSSSSSSSSSSSS
+[owners]
+# team x y — Quill (1) holds the west HQ, Draeg (2) the east.
+1 2 1
+2 14 7
+[units]
+# team symbol x y
+1 i 3 2
+1 t 4 3
+2 i 10 6
+2 i 11 5
+2 r 9 6
+2 t 10 5
+2 t 14 6
+2 a 9 5
+2 g 11 6

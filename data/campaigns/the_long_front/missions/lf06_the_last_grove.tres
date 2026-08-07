@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_hold_the_grove"]
+script = ExtResource("2")
+text = "Hold until day 6."
+day = 6
+
+[sub_resource type="Resource" id="Bonus_shrine_city"]
+script = ExtResource("3")
+text = "Reach the elder shrine before the retreat."
+cell = Vector2i(13, 3)
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "Draeg's column is a day from the elder shrine, Rowan. We can't hold the whole wood — only buy the keepers time to empty it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"nia_rowan"
+text = "Then that's the order. Reach the shrine if the fight allows it — nobody dies for a building."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "I've got the evacuation route mapped. Every hour you buy me is people out, not just relics."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"nia_rowan"
+text = "Then I'll buy you as many as the ground has got in it."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "The shrine's keepers are gone by the time the fighting reaches the grove. Carried out, not driven out."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"nia_rowan"
+text = "Three nations have lost ground on the same morning. None of us lost it alone — small comfort, but it's something."
+
+[resource]
+script = ExtResource("1")
+id = &"lf06_the_last_grove"
+title = "The Last Grove"
+location = "The elder shrine, Verdant League"
+map_path = "res://maps/campaign/the_long_front/lf06_the_last_grove.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"nia_rowan",
+2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"easy"
+objectives = Array[Resource]([SubResource("Objective_hold_the_grove")])
+failures = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_shrine_city")])
+par_day = 6
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The grove fell with the shrine still standing in it, and standing was not enough."

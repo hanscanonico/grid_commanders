@@ -1,0 +1,31 @@
+# The Collection — Act I, M3 — "The Supply Chain". Three depots
+# along one road, each named in the ledger as a separate seizure.
+# Teaching board: a chain of static ground to take and hold in one push, not a moving convoy to babysit.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+....................
+....................
+....F.....F.....F...
+....................
+=Q====C=======C===B=
+.B........C.......Q.
+....................
+....F.....F.....F...
+....................
+....................
+[owners]
+# team x y
+1 1 4
+2 18 5
+2 18 4
+1 1 5
+[units]
+# team symbol x y
+1 i 1 3
+1 t 2 4
+1 r 1 6
+1 m 2 6
+2 i 18 6
+2 t 17 5
+2 r 18 3
+2 m 17 4

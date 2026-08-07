@@ -1,0 +1,30 @@
+# Six Marshals M3 — "The Long Watch". Ferrow keeps raiding the same
+# timber line rather than press it. Teaching board: woods everywhere,
+# cover to rotate a wounded unit through rather than ground worth
+# dying over — the lesson is patience, not conquest.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+.......M.......
+.Q.FF.....FF...
+.B.F..C........
+...............
+.......FF...F..
+..F....F.......
+...............
+...FF...C....B.
+..........FF.Q.
+.......M.......
+[owners]
+# team x y
+1 1 1
+2 13 8
+1 1 2
+2 13 7
+[units]
+# team symbol x y
+1 i 2 1
+1 m 2 2
+1 r 3 3
+2 i 12 8
+2 r 11 7
+2 t 12 6

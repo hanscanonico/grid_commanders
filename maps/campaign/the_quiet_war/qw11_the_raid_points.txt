@@ -1,0 +1,25 @@
+# The Quiet War 11 — "The Raid Points". Three small towns have been
+# traded back and forth all month between Ferrow's raiders and whoever
+# held them last. Tomas Reed is done trading — hold all three at once
+# and end the argument.
+# Symbols: . plains  F woods  C city  Q HQ
+[terrain]
+F............F
+.Q..C..FF.....
+F.....F..C....
+..F.....FF....
+F...C..F......
+..F.....F....Q
+...F..........
+..............
+..............
+[owners]
+1 1 1
+2 13 5
+[units]
+1 m 2 1
+1 i 3 2
+1 r 3 1
+2 i 9 4
+2 i 10 2
+2 m 11 5

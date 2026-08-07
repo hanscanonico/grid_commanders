@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_take_city_hall"]
+script = ExtResource("2")
+text = "Take city hall before the signing."
+cell = Vector2i(6, 3)
+
+[sub_resource type="Resource" id="Failure_day_5"]
+script = ExtResource("3")
+text = "The papers were signed past day 5."
+last_day = 5
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "A ledger nobody can trace surfaced this morning, Holt. It names the city's governor as an Iron asset."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Naturally it surfaced this morning, the one morning I've got somewhere else to be."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "He signs the annexation papers by nightfall unless your column reaches city hall first."
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Then city hall it is. I do love a deadline that comes with a villain already attached."
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "City hall's yours before the ink is dry on anything. Governor's in custody, ledger's in evidence."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Confirms what you already suspected, Flux. This was never one town. It's a list."
+
+[resource]
+script = ExtResource("1")
+id = &"qw04_the_governors_scandal"
+title = "The Governor's Scandal"
+location = "The city hall, Meridian border district"
+map_path = "res://maps/campaign/the_quiet_war/qw04_the_governors_scandal.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"gideon_holt",
+2: &"cass_orlov"
+}
+fog_enabled = true
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_city_hall")])
+failures = Array[Resource]([SubResource("Failure_day_5")])
+bonus_objectives = Array[Resource]([])
+par_day = 5
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
+defeat = "The papers were signed, and the city became Iron ground the same way Selwich did — without anyone firing a shot."
