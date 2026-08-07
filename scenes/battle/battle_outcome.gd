@@ -77,6 +77,11 @@ func enter_victory() -> void:
 	if _result_winner == 0:
 		_result_winner = _battle.game.winner
 	_battle.animator.hide_banner()
+	# The profile is written here, on the one screen a finished mission always
+	# reaches, rather than where the verdict was reached: a mission decided
+	# mid-turn is still being animated then, and progress written before the
+	# player has seen the result is progress they cannot connect to anything.
+	CampaignSession.record(_battle.game.day)
 	Sfx.play(&"fanfare")
 	# A playback has no match to play again: the button restarts the recording, and
 	# the word on it has to be the one that names what pressing it does.
@@ -144,6 +149,16 @@ func accepts_action(button: Button) -> bool:
 ## so a duel prints exactly the sentence it always did. A scored day-cap win has
 ## no elimination behind it and names its one team.
 func _result_text() -> String:
+	# A mission says whether *it* was completed, not who was left standing: its
+	# verdict already accounts for a tactical victory, and "Mission complete" is
+	# what a player who just took a relay on a deadline is waiting to read.
+	var outcome := CampaignSession.outcome
+	if outcome != null:
+		return (
+			"Mission complete!"
+			if outcome.status == MissionRuntime.Status.SUCCESS
+			else "Mission failed"
+		)
 	if _result_winner == 0:
 		return "Draw"
 	var side := _battle.game.winners()
@@ -165,8 +180,17 @@ func _result_text() -> String:
 ## The line under the lockup: the day it took, and on a longer match who fell on
 ## the way.
 func _day_text() -> String:
-	var standings := _standings_text()
 	var day := "Day %d" % _battle.game.day
+	var outcome := CampaignSession.outcome
+	if outcome != null:
+		# The stars and the reason, because a mission's line has to say what was
+		# earned and — on a failure, where there is nothing to count — why.
+		if outcome.status != MissionRuntime.Status.SUCCESS:
+			return "%s  ·  %s" % [day, outcome.reason]
+		var most := CampaignSession.max_stars()
+		var stars := "★".repeat(outcome.stars) + "☆".repeat(maxi(0, most - outcome.stars))
+		return "%s  ·  %s" % [day, stars]
+	var standings := _standings_text()
 	return day if standings == "" else "%s  ·  %s" % [day, standings]
 
 

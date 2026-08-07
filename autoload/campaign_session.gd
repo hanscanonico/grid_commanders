@@ -59,17 +59,26 @@ func decide(game: GameState) -> bool:
 	return true
 
 
-## Record a finished mission against the profile and step off it.
+## Write the finished mission to the campaign's profile.
 ##
-## Takes the outcome rather than deciding one: `MissionRuntime` owns that
-## verdict, and a second opinion here is how a mission comes to be cleared on a
-## board it was lost on.
-func finish(outcome: MissionRuntime.Outcome, day: int) -> void:
-	if progress != null and campaign != null and mission != null:
-		if outcome.status == MissionRuntime.Status.SUCCESS:
-			progress.complete(campaign, mission.id, outcome.stars, day)
-		else:
-			progress.active_mission = &""
+## Reads the outcome this session already holds rather than being handed one:
+## `MissionRuntime` decided it and `decide` recorded it, so a second opinion here
+## is how a mission comes to be cleared on a board it was lost on. Silent outside
+## a campaign, and silent before a verdict — the victory screen calls it on every
+## match and only a mission has anything to write.
+func record(day: int) -> void:
+	if outcome == null or progress == null or campaign == null or mission == null:
+		return
+	if outcome.status == MissionRuntime.Status.SUCCESS:
+		progress.complete(campaign, mission.id, outcome.stars, day)
+	else:
+		progress.active_mission = &""
+	CampaignProfile.save_progress(progress)
+
+
+## The most stars this mission could award, for the "★★☆" the debrief prints.
+func max_stars() -> int:
+	return _runtime.max_stars() if _runtime != null else 0
 
 
 ## Forget the campaign — leaving for the menu, or starting a skirmish. Called on
