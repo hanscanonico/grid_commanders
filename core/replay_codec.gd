@@ -301,6 +301,7 @@ static func checkpoint(state: GameState) -> int:
 		var co_state := state.commander_state(team)
 		digest = _mix(digest, co_state.charge)
 		digest = _mix(digest, 1 if co_state.power_active else 0)
+	var carrier_indices := _unit_indices(state)
 	for unit in state.units:
 		digest = _mix_text(digest, String(unit.type.id))
 		for value: int in [
@@ -313,7 +314,7 @@ static func checkpoint(state: GameState) -> int:
 			1 if unit.acted else 0,
 			1 if unit.dived else 0,
 			1 if unit.refreshable else 0,
-			state.units.find(unit.carrier),
+			carrier_indices.get(unit.carrier, -1),
 		]:
 			digest = _mix(digest, value)
 	for key in _sorted_cells(state.property_owners):
@@ -323,6 +324,18 @@ static func checkpoint(state: GameState) -> int:
 		digest = _mix(digest, key)
 		digest = _mix(digest, int(state.capture_progress[_uncell(key)]))
 	return digest
+
+
+## `unit -> index` in `state.units`, built once per `checkpoint` call rather
+## than re-scanned for every one of the n units it digests — the same shape
+## MovementResolver._occupants is waived for (CLAUDE.md). A unit with no
+## carrier is simply absent as a key, so the lookup below falls back to -1
+## exactly as `Array.find` did.
+static func _unit_indices(state: GameState) -> Dictionary:
+	var indices: Dictionary = {}
+	for i in state.units.size():
+		indices[state.units[i]] = i
+	return indices
 
 
 ## Cell keys of a table as sortable integers, ascending. Packed rather than sorted

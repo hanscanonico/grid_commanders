@@ -104,6 +104,7 @@ class Summary:
 static func encode(
 	state: GameState, ai_teams: Array[int], difficulty: StringName = Difficulty.DEFAULT_ID
 ) -> Dictionary:
+	var carrier_indices := _unit_indices(state)
 	var units: Array = []
 	for unit in state.units:
 		(
@@ -121,7 +122,7 @@ static func encode(
 					"dived": unit.dived,
 					"refreshable": unit.refreshable,
 					"tag": String(unit.tag),
-					"carrier": state.units.find(unit.carrier),  # -1 when on the board
+					"carrier": carrier_indices.get(unit.carrier, NO_CARRIER),  # -1 when on the board
 				}
 			)
 		)
@@ -165,6 +166,18 @@ static func encode(
 		"capture_progress": progress,
 		"units": units,
 	}
+
+
+## `unit -> index` in `state.units`, built once per `encode` call rather than
+## re-scanned for every one of the n units it writes out — the same shape
+## MovementResolver._occupants is waived for (CLAUDE.md). A unit with no
+## carrier is simply absent as a key, so the lookup above falls back to
+## `NO_CARRIER` exactly as `Array.find` did.
+static func _unit_indices(state: GameState) -> Dictionary:
+	var indices: Dictionary = {}
+	for i in state.units.size():
+		indices[state.units[i]] = i
+	return indices
 
 
 ## Rebuilds a match from a parsed save. Returns null (with a pushed error
