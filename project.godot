@@ -13,6 +13,7 @@ config/icon="res://assets/icon.png"
 
 [autoload]
 
+CampaignSession="*res://autoload/campaign_session.gd"
 EventBus="*res://autoload/event_bus.gd"
 MatchConfig="*res://autoload/match_config.gd"
 Settings="*res://autoload/settings.gd"

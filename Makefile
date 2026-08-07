@@ -311,6 +311,12 @@ sfx:
 # tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
 # the new PNGs register. These are committed art, so this only needs rerunning
 # when either generator changes or a commander is added.
+# Holds every shipped campaign to the bar a playable mission clears: the board
+# parses, the seating is one the board deals, every objective names ground that
+# exists, and the launch builds. Run it after authoring a mission.
+campaigns:
+	$(GODOT) --headless --path . -s res://tools/check_campaigns.gd
+
 portraits:
 	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd
 	$(GODOT) --headless --path . --import
@@ -335,4 +341,4 @@ gallery-screenshot: import
 	sfx portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure ai-arena arena-report arena-anchors arena-search \
-	balance-watch replay replay-report
+	balance-watch replay replay-report campaigns
