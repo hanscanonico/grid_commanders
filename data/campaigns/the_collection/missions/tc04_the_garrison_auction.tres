@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
+script = ExtResource("2")
+text = "Hold three of the five towns."
+count = 3
+
+[sub_resource type="Resource" id="Failure_the_books_closed_before_day_9_with_t"]
+script = ExtResource("3")
+text = "The books closed before day 9 with the towns still split."
+last_day = 9
+
+[resource]
+script = ExtResource("1")
+id = &"tc04_the_garrison_auction"
+title = "The Garrison Auction"
+location = "The garrison town, Meridian frontier"
+map_path = "res://maps/campaign/the_collection/tc04_the_garrison_auction.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"halden_marr",
+	2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_five_towns")])
+failures = Array[Resource]([SubResource("Failure_the_books_closed_before_day_9_with_t")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+	"The forged audit \"auctions\" these towns to whoever holds them when it closes. Ferrow is racing the clock as much as us.",
+	"Three of five, and the auction closes in our favour."
+])
+victory = Array[String]([
+	"Three towns, ours, when the books closed. The auction is over before it started."
+])
+defeat = "The books closed with the towns still contested, and the ledger called it Ferrow's."

@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_watchtower_at_the_centre_of"]
+script = ExtResource("2")
+text = "Take the watchtower at the centre of the ridge."
+cell = Vector2i(7, 5)
+
+[sub_resource type="Resource" id="Failure_the_watchtower_stayed_out_of_reach_p"]
+script = ExtResource("3")
+text = "The watchtower stayed out of reach past day 9."
+last_day = 9
+
+[resource]
+script = ExtResource("1")
+id = &"sm07_the_watchtower"
+title = "The Watchtower"
+location = "The mirrored ridge, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm07_the_watchtower.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"halden_marr",
+	2: &"cass_orlov"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_the_watchtower_at_the_centre_of")])
+failures = Array[Resource]([SubResource("Failure_the_watchtower_stayed_out_of_reach_p")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+	"Orlov doesn't hunt the strong — he hunts the wounded. Never let a beaten-up unit sit in his sight lines.",
+	"Take the watchtower and pull anything hurt back before he can finish it."
+])
+victory = Array[String]([
+	"The watchtower is ours. Orlov's hunters found nothing worth finishing."
+])
+defeat = "One wounded unit stood its ground too long, and Orlov made an example of it."

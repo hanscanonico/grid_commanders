@@ -1,0 +1,35 @@
+# The Collection — Act II, M11 — "The Comeback". Vale's occupation
+# has grown to four of the five towns in this belt. Teaching board:
+# the deepest squeeze of the act — this is the low point before we push back.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+.................
+.....C.....C.....
+....F.......F....
+.................
+.B...............
+.Q......C......Q.
+...............B.
+.................
+....F.......F....
+.....C.....C.....
+.................
+[owners]
+# team x y
+1 1 5
+2 15 5
+1 1 4
+2 15 6
+2 5 1
+2 11 1
+2 5 9
+2 8 5
+[units]
+# team symbol x y
+1 i 1 3
+1 r 2 6
+2 i 15 3
+2 i 15 7
+2 t 14 4
+2 g 14 6
+2 r 14 3

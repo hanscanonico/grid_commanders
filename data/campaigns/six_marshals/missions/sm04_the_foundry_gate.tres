@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_crossroads_base_before_vale"]
+script = ExtResource("2")
+text = "Take the crossroads base before Vale finishes it."
+cell = Vector2i(7, 4)
+
+[sub_resource type="Resource" id="Failure_vale_finished_fortifying_the_base"]
+script = ExtResource("3")
+text = "Vale finished fortifying the base."
+last_day = 9
+
+[resource]
+script = ExtResource("1")
+id = &"sm04_the_foundry_gate"
+title = "The Foundry Gate"
+location = "The road forks, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm04_the_foundry_gate.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"rhea_sol",
+	2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_the_crossroads_base_before_vale")])
+failures = Array[Resource]([SubResource("Failure_vale_finished_fortifying_the_base")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+	"Vale prices everything twenty percent over the odds and builds it hard to match. Deny him the factory and he never earns the premium back.",
+	"The crossroads base is still going up. Take it while it's still ours to take."
+])
+victory = Array[String]([
+	"The crossroads is ours. Vale's ledger shows a factory that never opened."
+])
+defeat = "Vale finished the base, and every unit that rolled out of it cost us twice."

@@ -1,0 +1,34 @@
+# The Collection — Act III, M15 — "The Foundry Chain". Three foundry
+# depots feed Morn's terror campaign in one straight line. Teaching
+# board: take the whole chain in sequence, static ground the whole way.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+....................
+....................
+....F.....F.....F...
+....................
+.B........C.........
+=Q====C=======C===Q=
+..................B.
+....................
+....F.....F.....F...
+....................
+....................
+[owners]
+# team x y
+1 1 5
+2 18 5
+1 1 4
+2 18 6
+[units]
+# team symbol x y
+1 i 1 6
+1 t 2 5
+1 T 1 4
+1 r 2 4
+1 g 1 7
+2 i 18 4
+2 t 17 5
+2 T 18 6
+2 r 17 6
+2 g 18 7

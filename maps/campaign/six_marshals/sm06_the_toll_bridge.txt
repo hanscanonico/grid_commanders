@@ -1,0 +1,33 @@
+# Six Marshals M6 — "The Toll Bridge". Vale's premium column has one
+# way across the river. Teaching board: two bridges, and every
+# unit he loses funnelling through them cost him more than it cost you.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+........~.......
+....C...~.......
+........~.......
+..F.....~....F..
+........~.......
+=QB==========BQ=
+........+.......
+........~.......
+..F.....~....F..
+........~.......
+........~..C....
+........~.......
+[owners]
+# team x y
+1 1 5
+2 14 5
+1 2 5
+2 13 5
+[units]
+# team symbol x y
+1 i 1 4
+1 m 2 4
+1 g 1 6
+1 r 2 6
+2 i 14 4
+2 m 13 4
+2 g 14 6
+2 r 13 6

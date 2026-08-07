@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_four_of_the_pass_towns"]
+script = ExtResource("2")
+text = "Hold four of the pass towns."
+count = 4
+
+[sub_resource type="Resource" id="Failure_the_passes_stayed_open_past_day_10"]
+script = ExtResource("3")
+text = "The passes stayed open past day 10."
+last_day = 10
+
+[resource]
+script = ExtResource("1")
+id = &"sm02_ambush_pass"
+title = "Ambush Pass"
+location = "The high passes, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm02_ambush_pass.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"gideon_holt",
+	2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_pass_towns")])
+failures = Array[Resource]([SubResource("Failure_the_passes_stayed_open_past_day_10")])
+bonus_objectives = Array[Resource]([])
+par_day = 7
+briefing = Array[String]([
+	"Ferrow's second column is probing the passes. He wants a lane through, not a fight.",
+	"Let him commit to one gap, then close on him from the towns either side."
+])
+victory = Array[String]([
+	"Both gaps are ours. Ferrow's column broke off with nothing to show for the climb."
+])
+defeat = "The passes changed hands, and Ferrow's ledger got heavier."

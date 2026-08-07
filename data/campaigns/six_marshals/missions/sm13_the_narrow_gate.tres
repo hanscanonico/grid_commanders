@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_depot_before_draeg_s_column"]
+script = ExtResource("2")
+text = "Take the depot before Draeg's column breaks through the gate."
+cell = Vector2i(7, 4)
+
+[sub_resource type="Resource" id="Failure_the_gate_fell_to_the_column_before_d"]
+script = ExtResource("3")
+text = "The gate fell to the column before day 9."
+last_day = 9
+
+[resource]
+script = ExtResource("1")
+id = &"sm13_the_narrow_gate"
+title = "The Narrow Gate"
+location = "The armour road, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm13_the_narrow_gate.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"mara_voss",
+	2: &"viktor_draeg"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_take_the_depot_before_draeg_s_column")])
+failures = Array[Resource]([SubResource("Failure_the_gate_fell_to_the_column_before_d")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+	"Draeg's tanks hit fifteen percent harder than the chart says. Fight them where the ground makes that not matter.",
+	"One gap in the wall. Own it, and his whole column stalls there."
+])
+victory = Array[String]([
+	"The gate held. Draeg's column never found the open ground it needed."
+])
+defeat = "The column found room to spread out, and armour in the open is armour that wins."

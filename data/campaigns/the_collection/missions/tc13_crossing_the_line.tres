@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_border_foundry_and_open_the"]
+script = ExtResource("2")
+text = "Take the border foundry and open the province."
+cell = Vector2i(7, 5)
+
+[sub_resource type="Resource" id="Failure_the_border_stayed_closed_past_day_9"]
+script = ExtResource("3")
+text = "The border stayed closed past day 9."
+last_day = 9
+
+[resource]
+script = ExtResource("1")
+id = &"tc13_crossing_the_line"
+title = "Crossing the Line"
+location = "The border foundry, Iron Dominion territory"
+map_path = "res://maps/campaign/the_collection/tc13_crossing_the_line.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"perrin_ash",
+	2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_take_the_border_foundry_and_open_the")])
+failures = Array[Resource]([SubResource("Failure_the_border_stayed_closed_past_day_9")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+	"The forged ledger bought Ferrow two provinces. This is where he starts paying it back — on his own ground.",
+	"Take the border foundry and the whole province opens up behind it."
+])
+victory = Array[String]([
+	"The border foundry is ours. Ferrow's home ground just became the front line."
+])
+defeat = "The border held, and the repossession stalled before it started."

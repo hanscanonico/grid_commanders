@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
+script = ExtResource("2")
+text = "Hold three of the five towns."
+count = 3
+
+[sub_resource type="Resource" id="Failure_the_belt_stayed_lost_past_day_11"]
+script = ExtResource("3")
+text = "The belt stayed lost past day 11."
+last_day = 11
+
+[resource]
+script = ExtResource("1")
+id = &"tc11_the_comeback"
+title = "The Comeback"
+location = "The occupied belt, Meridian-Iron border"
+map_path = "res://maps/campaign/the_collection/tc11_the_comeback.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"orin_flux",
+	2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_five_towns")])
+failures = Array[Resource]([SubResource("Failure_the_belt_stayed_lost_past_day_11")])
+bonus_objectives = Array[Resource]([])
+par_day = 8
+briefing = Array[String]([
+	"Four of five towns, gone, and Vale's premium army holds every one of them. This is the bottom of the squeeze.",
+	"Three towns brings us even. From here, the occupation starts costing him more than it's worth."
+])
+victory = Array[String]([
+	"Three towns, back in hand. The occupation belt just stopped paying for itself."
+])
+defeat = "The belt stayed Vale's, and the occupation kept its books comfortably in the black."

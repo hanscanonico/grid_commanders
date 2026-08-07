@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_hold_the_heartland_line_until_day_9"]
+script = ExtResource("2")
+text = "Hold the heartland line until day 9."
+day = 9
+
+[sub_resource type="Resource" id="Failure_the_line_broke_before_day_9"]
+script = ExtResource("3")
+text = "The line broke before day 9."
+last_day = 9
+
+[sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
+script = ExtResource("4")
+text = "Take the northern town for a bonus."
+cell = Vector2i(6, 2)
+
+[resource]
+script = ExtResource("1")
+id = &"sm18_the_last_terror"
+title = "The Last Terror"
+location = "The contested heartland, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm18_the_last_terror.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"alina_ward",
+	2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_hold_the_heartland_line_until_day_9")])
+failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_9")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus")])
+par_day = 7
+briefing = Array[String]([
+	"Five marshals have already lost their war. Morn thinks fear wins the sixth.",
+	"Spread the line, hold the passes, and let his one great strike find nothing worth the charge.",
+	"Win here and the succession — and the border — is decided."
+])
+victory = Array[String]([
+	"The heartland held. Morn's terror campaign, and with it the Dominion's succession fight, is finished.",
+	"Six marshals crossed the border. Six marshals were answered."
+])
+defeat = "The line bunched under pressure, and Morn's last strike ended the war on his terms."

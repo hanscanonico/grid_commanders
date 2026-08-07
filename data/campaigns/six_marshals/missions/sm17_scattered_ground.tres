@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_four_of_the_six_scattered_towns"]
+script = ExtResource("2")
+text = "Hold four of the six scattered towns."
+count = 4
+
+[sub_resource type="Resource" id="Failure_the_towns_stayed_split_past_day_11"]
+script = ExtResource("3")
+text = "The towns stayed split past day 11."
+last_day = 11
+
+[resource]
+script = ExtResource("1")
+id = &"sm17_scattered_ground"
+title = "Scattered Ground"
+location = "The far corners, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm17_scattered_ground.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"tomas_reed",
+	2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_scattered_towns")])
+failures = Array[Resource]([SubResource("Failure_the_towns_stayed_split_past_day_11")])
+bonus_objectives = Array[Resource]([])
+par_day = 8
+briefing = Array[String]([
+	"This board won't let you mass an army even if you wanted to — every prize is in a different corner.",
+	"Take four towns. Keep your columns apart the way the ground already wants them."
+])
+victory = Array[String]([
+	"Four towns, ours, spread across the board and never once bunched for Morn to punish."
+])
+defeat = "Two columns met at the crossroads to consolidate, and that was the last thing they did together."

@@ -1,0 +1,31 @@
+# Six Marshals M1 — "Border Toll". Ferrow's raiders hit the customs road.
+# Teaching board: one road spine, cities either side, no bases — the fight is
+# over ground already on the map, so the lesson is movement and capture rather
+# than production. Ferrow is paid per kill and is fragile in return, so the
+# board deliberately offers woods on the player's approach: cover is the answer
+# to a raider.
+# Symbols: . plains  F woods  M mountain  = road  ~ river
+#          C city  B base  Q HQ  S sea
+[terrain]
+..........F....
+.Q=====........
+..=....F...MM..
+..=..C.....MM..
+..=.......C....
+FF=======......
+..F....=.......
+.....C.=..FF...
+.......=.....Q.
+[owners]
+# team x y — the player (1) holds the west HQ, Ferrow (2) the east.
+1 1 1
+2 13 8
+[units]
+# team symbol x y
+1 i 3 1
+1 i 2 4
+1 r 3 2
+1 t 2 5
+2 i 12 7
+2 r 11 8
+2 t 12 6

@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_road_city"]
+script = ExtResource("2")
+text = "Take the customs city on the road."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Failure_day_8"]
+script = ExtResource("3")
+text = "The road stayed closed past day 8."
+last_day = 8
+
+[sub_resource type="Resource" id="Bonus_south_city"]
+script = ExtResource("2")
+text = "Hold the southern city as well."
+cell = Vector2i(5, 7)
+
+[resource]
+script = ExtResource("1")
+id = &"sm01_border_toll"
+title = "Border Toll"
+location = "The customs road, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm01_border_toll.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+1: &"alina_ward",
+2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_take_road_city")])
+failures = Array[Resource]([SubResource("Failure_day_8")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_south_city")])
+par_day = 5
+briefing = Array[String]([
+"Ferrow crossed at dawn with a ledger and three columns. He is not taking ground — he is taking payment.",
+"Every column he breaks funds the next one. Do not feed him.",
+"Take the customs city and the road is ours again."
+])
+victory = Array[String]([
+"The road is open. Ferrow's columns pulled back east with less than they came for.",
+"He was paid in nothing. That is the only language he reads."
+])
+defeat = "The road stayed shut, and the toll went on being collected in armour and men."

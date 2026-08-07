@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_take_the_first_foundry_depot"]
+script = ExtResource("2")
+text = "Take the first foundry depot."
+cell = Vector2i(6, 5)
+
+[sub_resource type="Resource" id="Objective_take_the_second_foundry_depot"]
+script = ExtResource("2")
+text = "Take the second foundry depot."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Objective_take_the_third_foundry_depot"]
+script = ExtResource("2")
+text = "Take the third foundry depot."
+cell = Vector2i(14, 5)
+
+[sub_resource type="Resource" id="Failure_the_chain_stayed_iron_s_past_day_11"]
+script = ExtResource("3")
+text = "The chain stayed Iron's past day 11."
+last_day = 11
+
+[resource]
+script = ExtResource("1")
+id = &"tc15_the_foundry_chain"
+title = "The Foundry Chain"
+location = "The production road, Iron Dominion territory"
+map_path = "res://maps/campaign/the_collection/tc15_the_foundry_chain.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"tomas_reed",
+	2: &"radek_morn"
+}
+fog_enabled = false
+difficulty = &"difficult"
+objectives = Array[Resource]([SubResource("Objective_take_the_first_foundry_depot"), SubResource("Objective_take_the_second_foundry_depot"), SubResource("Objective_take_the_third_foundry_depot")])
+failures = Array[Resource]([SubResource("Failure_the_chain_stayed_iron_s_past_day_11")])
+bonus_objectives = Array[Resource]([])
+par_day = 8
+briefing = Array[String]([
+	"Three depots, one road, all feeding the same production line. Morn is defending output, not ground — he'll spend units to keep it running.",
+	"Take all three. Keep your own column spread while you do — Morn's Hammerfall is charged and waiting."
+])
+victory = Array[String]([
+	"The chain is ours, foundry by foundry. The production line stopped the moment the third depot fell."
+])
+defeat = "One depot held, and it was enough to keep the whole chain running against us."

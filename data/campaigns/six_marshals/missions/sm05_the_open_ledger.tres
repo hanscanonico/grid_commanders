@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_five_of_the_market_towns"]
+script = ExtResource("2")
+text = "Hold five of the market towns."
+count = 5
+
+[sub_resource type="Resource" id="Failure_the_market_stayed_split_past_day_11"]
+script = ExtResource("3")
+text = "The market stayed split past day 11."
+last_day = 11
+
+[resource]
+script = ExtResource("1")
+id = &"sm05_the_open_ledger"
+title = "The Open Ledger"
+location = "The market towns, Meridian frontier"
+map_path = "res://maps/campaign/six_marshals/sm05_the_open_ledger.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"ines_calder",
+	2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_five_of_the_market_towns")])
+failures = Array[Resource]([SubResource("Failure_the_market_stayed_split_past_day_11")])
+bonus_objectives = Array[Resource]([])
+par_day = 8
+briefing = Array[String]([
+	"Vale's army costs more than it should and hits harder for it. Don't fight it fund for fund — outgrow it.",
+	"Six towns, nobody's yet. Take the majority before he prices you out of the race."
+])
+victory = Array[String]([
+	"Five towns, ours. Vale's premium army arrived to find the market already closed."
+])
+defeat = "Vale's expensive army finally caught up to a treasury it had outgrown weeks before."

@@ -1,0 +1,26 @@
+# Six Marshals M8 — "Close Quarters". A small board and not much on
+# it. Teaching board: with everyone in everyone's range from turn one,
+# a wounded unit left forward is a free kill for Orlov the moment it drops to five.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+............
+.Q...C......
+.B.F.....C..
+............
+.....FF.....
+............
+..C.....F.B.
+......C...Q.
+............
+[owners]
+# team x y
+1 1 1
+2 10 7
+1 1 2
+2 10 6
+[units]
+# team symbol x y
+1 i 2 1
+1 r 1 3
+2 i 9 7
+2 r 10 5

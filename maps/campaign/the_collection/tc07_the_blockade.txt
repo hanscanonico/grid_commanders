@@ -1,0 +1,32 @@
+# The Collection — Act II, M7 — "The Blockade". Vale is bankrolling
+# an occupation garrison that already holds three of the four towns.
+# Teaching board: we start behind on income — break the blockade before his funding advantage compounds.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+................
+................
+....F.......F...
+......C..C......
+.QB.............
+.............BQ.
+......C..C......
+....F.......F...
+................
+................
+[owners]
+# team x y
+1 1 4
+2 14 5
+1 2 4
+2 13 5
+1 6 3
+2 9 3
+2 6 6
+[units]
+# team symbol x y
+1 i 1 3
+1 r 2 5
+2 i 14 4
+2 i 14 6
+2 t 13 4
+2 r 13 6

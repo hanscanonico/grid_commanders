@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
+
+[sub_resource type="Resource" id="Objective_hold_four_of_the_six_towns"]
+script = ExtResource("2")
+text = "Hold four of the six towns."
+count = 4
+
+[sub_resource type="Resource" id="Failure_the_province_stayed_split_past_day_1"]
+script = ExtResource("3")
+text = "The province stayed split past day 11."
+last_day = 11
+
+[sub_resource type="Resource" id="Bonus_take_the_central_relay_for_a_bonus"]
+script = ExtResource("4")
+text = "Take the central relay for a bonus."
+cell = Vector2i(9, 6)
+
+[resource]
+script = ExtResource("1")
+id = &"tc06_the_seized_province"
+title = "The Seized Province"
+location = "The contested province, Meridian frontier"
+map_path = "res://maps/campaign/the_collection/tc06_the_seized_province.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"mara_voss",
+	2: &"dane_ferrow"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_towns")])
+failures = Array[Resource]([SubResource("Failure_the_province_stayed_split_past_day_1")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_central_relay_for_a_bonus")])
+par_day = 7
+briefing = Array[String]([
+	"Ferrow's ledger now claims the entire province. This is the seizure he's been building to since the border road.",
+	"Hold the majority of the towns and the whole forged claim collapses at once."
+])
+victory = Array[String]([
+	"Four towns, ours. The province stayed exactly what it always was — not his to take."
+])
+defeat = "The province split down the middle, and the ledger recorded it as a clean seizure."

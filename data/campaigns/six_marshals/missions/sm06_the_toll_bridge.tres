@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
+
+[sub_resource type="Resource" id="Objective_hold_the_west_bank_until_day_8"]
+script = ExtResource("2")
+text = "Hold the west bank until day 8."
+day = 8
+
+[sub_resource type="Resource" id="Failure_the_bridges_fell_before_day_8"]
+script = ExtResource("3")
+text = "The bridges fell before day 8."
+last_day = 8
+
+[resource]
+script = ExtResource("1")
+id = &"sm06_the_toll_bridge"
+title = "The Toll Bridge"
+location = "The river crossing, Meridian-Iron border"
+map_path = "res://maps/campaign/six_marshals/sm06_the_toll_bridge.txt"
+player_team = 1
+ai_teams = Array[int]([2])
+seats = Array[int]([])
+sides = {}
+commanders = {
+	1: &"lyra_quill",
+	2: &"konrad_vale"
+}
+fog_enabled = false
+difficulty = &"normal"
+objectives = Array[Resource]([SubResource("Objective_hold_the_west_bank_until_day_8")])
+failures = Array[Resource]([SubResource("Failure_the_bridges_fell_before_day_8")])
+bonus_objectives = Array[Resource]([])
+par_day = 6
+briefing = Array[String]([
+	"Vale's whole column has to cross two bridges to reach us. Let his expensive units queue up for the privilege.",
+	"Hold the bank. Every attack he makes here he pays double for."
+])
+victory = Array[String]([
+	"Day eight. The bridges are choked with wrecks that cost Vale a fortune apiece."
+])
+defeat = "The bridges held for Vale's column, and the toll came due on our side of the river."

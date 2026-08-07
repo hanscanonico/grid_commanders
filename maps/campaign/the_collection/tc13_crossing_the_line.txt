@@ -1,0 +1,32 @@
+# The Collection — Act III, M13 — "Crossing the Line". The war goes
+# to Iron's own soil at last. Ferrow, humiliated twice over, is dug
+# in personally to defend the border foundry. Teaching board: a mountain wall guards the crossing.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
+[terrain]
+................
+................
+.QBF........F...
+................
+................
+MMMM..MCMMM..MMM
+................
+................
+...F........FBQ.
+................
+................
+[owners]
+# team x y
+1 1 2
+2 14 8
+1 2 2
+2 13 8
+[units]
+# team symbol x y
+1 i 1 3
+1 t 2 3
+1 r 1 4
+1 m 2 4
+2 i 14 7
+2 t 13 7
+2 r 14 6
+2 m 13 6
