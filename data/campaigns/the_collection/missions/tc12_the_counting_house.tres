@@ -60,7 +60,7 @@ commanders = {
 	2: &"konrad_vale"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_counting_house_that_funds_t")])
 failures = Array[Resource]([SubResource("Failure_the_counting_house_stayed_vale_s_pas")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus")])

@@ -55,7 +55,7 @@ commanders = {
 	2: &"radek_morn"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_the_foundry_core_until_day_8")])
 failures = Array[Resource]([SubResource("Failure_the_core_fell_before_day_8")])
 bonus_objectives = Array[Resource]([])

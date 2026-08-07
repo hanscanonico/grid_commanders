@@ -55,7 +55,7 @@ commanders = {
 	2: &"viktor_draeg"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_the_west_bank_until_day_7")])
 failures = Array[Resource]([SubResource("Failure_the_span_fell_before_day_7")])
 bonus_objectives = Array[Resource]([])

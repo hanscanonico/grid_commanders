@@ -55,7 +55,7 @@ commanders = {
 	2: &"viktor_draeg"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_towns")])
 failures = Array[Resource]([SubResource("Failure_the_towns_stayed_split_past_day_10")])
 bonus_objectives = Array[Resource]([])

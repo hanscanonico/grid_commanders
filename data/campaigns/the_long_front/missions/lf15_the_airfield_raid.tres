@@ -54,7 +54,7 @@ commanders = {
 2: &"dane_ferrow"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_airfield")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])

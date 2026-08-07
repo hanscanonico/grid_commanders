@@ -65,7 +65,7 @@ commanders = {
 	2: &"dane_ferrow"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_foundry_that_opened_this_wa")])
 failures = Array[Resource]([SubResource("Failure_the_foundry_stayed_ferrow_s_past_day")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus"), SubResource("Bonus_take_the_southern_town_for_a_bonus")])

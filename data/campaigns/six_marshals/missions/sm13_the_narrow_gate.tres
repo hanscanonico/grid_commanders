@@ -55,7 +55,7 @@ commanders = {
 	2: &"viktor_draeg"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_depot_before_draeg_s_column")])
 failures = Array[Resource]([SubResource("Failure_the_gate_fell_to_the_column_before_d")])
 bonus_objectives = Array[Resource]([])

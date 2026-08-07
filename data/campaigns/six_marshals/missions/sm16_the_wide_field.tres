@@ -60,7 +60,7 @@ commanders = {
 	2: &"radek_morn"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_relay_before_morn_s_hammerf")])
 failures = Array[Resource]([SubResource("Failure_the_relay_stayed_in_morn_s_hands_pas")])
 bonus_objectives = Array[Resource]([])

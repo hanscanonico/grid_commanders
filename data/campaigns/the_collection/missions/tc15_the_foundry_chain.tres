@@ -65,7 +65,7 @@ commanders = {
 	2: &"radek_morn"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_first_foundry_depot"), SubResource("Objective_take_the_second_foundry_depot"), SubResource("Objective_take_the_third_foundry_depot")])
 failures = Array[Resource]([SubResource("Failure_the_chain_stayed_iron_s_past_day_11")])
 bonus_objectives = Array[Resource]([])

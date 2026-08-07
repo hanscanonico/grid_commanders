@@ -54,7 +54,7 @@ commanders = {
 2: &"iona_vance"
 }
 fog_enabled = false
-difficulty = &"difficult"
+difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_vances_base")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])

@@ -156,3 +156,14 @@ func test_most_of_a_campaigns_briefing_is_spoken() -> void:
 			0.5,
 			"%s: only %d of %d story lines have a speaker" % [campaign.id, spoken, total]
 		)
+
+
+## `DifficultyDB.by_id` falls back to Normal for an unknown id — right for a save
+## naming a retired tier, silent for a mission whose author typed the name wrong.
+## Thirty missions once asked for a tier that does not exist and played at Normal
+## without a word, which flattened a campaign's whole difficulty curve.
+func test_every_mission_asks_for_a_tier_that_exists() -> void:
+	var tiers := DifficultyDB.load_default()
+	for campaign in db.all():
+		for mission: MissionDefinition in campaign.missions:
+			assert_eq(mission.difficulty_error(tiers), "", "%s/%s" % [campaign.id, mission.id])

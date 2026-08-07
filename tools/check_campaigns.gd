@@ -18,11 +18,12 @@ func _init() -> void:
 	var unit_db := UnitDB.load_default()
 	var chart: DamageChart = load("res://data/damage_chart.tres")
 	var commander_db := CommanderDB.load_default()
+	var difficulty_db := DifficultyDB.load_default()
 	var db := CampaignDB.load_default()
 	if db.size() == 0:
 		_fail("no campaigns found under data/campaigns/")
 	for campaign in db.all():
-		_check_campaign(campaign, terrain_db, unit_db, chart, commander_db)
+		_check_campaign(campaign, terrain_db, unit_db, chart, commander_db, difficulty_db)
 	print("")
 	if _errors.is_empty():
 		print("check_campaigns: %d campaigns, %d missions, all playable" % [db.size(), _missions])
@@ -43,7 +44,8 @@ func _check_campaign(
 	terrain_db: TerrainDB,
 	unit_db: UnitDB,
 	chart: DamageChart,
-	commander_db: CommanderDB
+	commander_db: CommanderDB,
+	difficulty_db: DifficultyDB
 ) -> void:
 	var structural := campaign.definition_error()
 	if structural != "":
@@ -52,7 +54,7 @@ func _check_campaign(
 	print("%s — %s (%d missions)" % [campaign.id, campaign.title, campaign.mission_count()])
 	for mission: MissionDefinition in campaign.missions:
 		_missions += 1
-		_check_mission(campaign, mission, terrain_db, unit_db, chart, commander_db)
+		_check_mission(campaign, mission, terrain_db, unit_db, chart, commander_db, difficulty_db)
 
 
 func _check_mission(
@@ -61,7 +63,8 @@ func _check_mission(
 	terrain_db: TerrainDB,
 	unit_db: UnitDB,
 	chart: DamageChart,
-	commander_db: CommanderDB
+	commander_db: CommanderDB,
+	difficulty_db: DifficultyDB
 ) -> void:
 	var where := "%s/%s" % [campaign.id, mission.id]
 	if not FileAccess.file_exists(mission.map_path):
@@ -75,6 +78,9 @@ func _check_mission(
 	if error != "":
 		_fail("%s: %s" % [where, error])
 		return
+	var tier := mission.difficulty_error(difficulty_db)
+	if tier != "":
+		_fail("%s: %s" % [where, tier])
 	var story := mission.story_error(commander_db)
 	if story != "":
 		_fail("%s: %s" % [where, story])
