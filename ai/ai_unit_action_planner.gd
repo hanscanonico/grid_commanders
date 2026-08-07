@@ -103,6 +103,11 @@ func _consider_attacks(
 	for enemy in context.visible_enemies:
 		if Grid.manhattan(unit.cell, enemy.cell) - span <= ring.y:
 			candidates.append(enemy)
+	# _defend_bonus and the follow-up damage behind _focus_bonus read only the
+	# enemy — never the destination — so each is priced once per enemy that
+	# turns out to have a legal dest, rather than once per (dest, enemy) pair.
+	var defend_bonus: Dictionary = {}
+	var follow_up_damage: Dictionary = {}
 	for dest in dests:
 		# The walk to a firing cell and the fire it invites depend only on that
 		# cell, so work them out once per destination and only after finding a
@@ -125,14 +130,18 @@ func _consider_attacks(
 				dest_penalty = (
 					profile.step_cost_penalty * step_cost + _threat_penalty(unit, incoming)
 				)
+			if not defend_bonus.has(enemy):
+				defend_bonus[enemy] = _defend_bonus(state, unit, enemy)
+			if profile.focus_fire_bonus > 0.0 and not follow_up_damage.has(enemy):
+				follow_up_damage[enemy] = _follow_up_damage(context, unit, enemy)
 			var forecast := CombatResolver.forecast(state, unit, dest, enemy)
 			# The cover is the one term here that belongs to the shot rather than to
 			# the destination: the counter it invites is fire this cell has already
 			# been priced against, and that counter is this enemy's.
 			var score: float = (
 				_attack_score(unit, enemy, forecast)
-				+ _focus_bonus(context, unit, enemy, forecast)
-				+ _defend_bonus(state, unit, enemy)
+				+ _focus_bonus(enemy, forecast, follow_up_damage.get(enemy, 0))
+				+ defend_bonus[enemy]
 				+ _cover_score(state, unit, dest, incoming + forecast.counter_damage)
 				- dest_penalty
 			)
@@ -232,15 +241,18 @@ func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int
 
 ## How much more attractive `enemy` is because other ready friendlies could
 ## still pile onto it this turn. Zero when focus fire is off or this shot kills.
-func _focus_bonus(
-	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast
-) -> float:
+##
+## `raw_follow_up` is `_follow_up_damage`'s answer for `(unit, enemy)` — a
+## function of neither `dest` nor the forecast — so the caller prices it once
+## per enemy rather than asking again for every destination this unit could
+## fire from.
+func _focus_bonus(enemy: Unit, forecast: CombatSnapshot.Forecast, raw_follow_up: int) -> float:
 	if profile.focus_fire_bonus <= 0.0:
 		return 0.0
 	var remaining := enemy.hp - forecast.attack_damage
 	if remaining <= 0:
 		return 0.0
-	var follow_up := mini(remaining, _follow_up_damage(context, unit, enemy))
+	var follow_up := mini(remaining, raw_follow_up)
 	if follow_up <= 0:
 		return 0.0
 	var value := _unit_value(enemy) * mini(forecast.attack_damage, enemy.hp) / 100.0
