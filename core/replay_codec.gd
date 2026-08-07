@@ -114,7 +114,7 @@ static func header_error(line: Dictionary) -> String:
 	for key: String in HEADER_KEY_RULES:
 		if not line.has(key):
 			return "the header names no %s" % key
-		if not _is_shaped(line[key], HEADER_KEY_RULES[key]):
+		if not SaveCodec.is_shape(line[key], HEADER_KEY_RULES[key]):
 			return "the header's %s is not %s" % [key, _shape_name(HEADER_KEY_RULES[key])]
 	var format := int(line["replay"])
 	if format != FORMAT:
@@ -382,19 +382,6 @@ static func decode_path(value: Variant) -> Array[Vector2i]:
 	for step: Variant in value as Array:
 		path.append(decode_cell(step))
 	return path
-
-
-static func _is_shaped(value: Variant, shape: SaveCodec.Shape) -> bool:
-	match shape:
-		SaveCodec.Shape.NUMBER:
-			return value is float or value is int
-		SaveCodec.Shape.STRING:
-			return value is String
-		SaveCodec.Shape.DICTIONARY:
-			return value is Dictionary
-		SaveCodec.Shape.ARRAY:
-			return value is Array
-	return value is bool
 
 
 static func _shape_name(shape: SaveCodec.Shape) -> String:

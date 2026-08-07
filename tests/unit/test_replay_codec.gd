@@ -230,6 +230,15 @@ func test_an_older_format_is_refused_rather_than_read() -> void:
 	assert_string_contains(ReplayCodec.header_error({"replay": 1, "opening": {}}), "format 1")
 
 
+## `header_error` reads every field's shape through `SaveCodec.is_shape` now (COM-175),
+## rather than the hand-forked reader ReplayCodec used to keep beside it — so a
+## StringName, which a save's own commander and difficulty ids decode as, validates
+## against `Shape.STRING` exactly the way a save's would rather than failing the
+## narrower `value is String` the fork checked instead.
+func test_a_header_value_reads_a_string_name_the_way_a_save_would() -> void:
+	assert_true(SaveCodec.is_shape(&"alina_ward", SaveCodec.Shape.STRING))
+
+
 # --- the self-check (plan D3) ---------------------------------------------------
 
 

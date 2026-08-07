@@ -470,7 +470,7 @@ static func validate(data: Dictionary) -> String:
 	if missing != "":
 		return _missing_message(missing, KEY_RULES, version)
 	for key: String in written:
-		if not _is_shape(data[key], int(KEY_RULES[key]["shape"])):
+		if not is_shape(data[key], int(KEY_RULES[key]["shape"])):
 			return "'%s' is malformed" % key
 	# The envelope pass stops at the keys this version promised, and `difficulty` is the
 	# one a version below its own may still be carrying for real. See `_difficulty_error`.
@@ -721,7 +721,7 @@ static func _commander_block_error(data: Dictionary, version: int) -> String:
 				% [version, missing, team]
 			)
 		for key: String in keys:
-			if not _is_shape(record[key], int(COMMANDER_KEY_RULES[key]["shape"])):
+			if not is_shape(record[key], int(COMMANDER_KEY_RULES[key]["shape"])):
 				return (
 					"a version %d save has a malformed '%s' for team %d's commander"
 					% [version, key, team]
@@ -743,7 +743,7 @@ static func _ai_teams_error(data: Dictionary) -> String:
 	if not (teams is Array):
 		return "'ai_teams' is malformed"
 	for team: Variant in teams as Array:
-		if not _is_shape(team, Shape.NUMBER):
+		if not is_shape(team, Shape.NUMBER):
 			return "'ai_teams' is malformed"
 	return ""
 
@@ -766,7 +766,7 @@ static func _ai_teams_error(data: Dictionary) -> String:
 ## locked against every move, announcing a victory nobody could have won.
 static func _turn_and_winner_error(data: Dictionary) -> String:
 	for key: String in ["current_team", "winner"]:
-		if not _is_shape(data.get(key, 0), int(KEY_RULES[key]["shape"])):
+		if not is_shape(data.get(key, 0), int(KEY_RULES[key]["shape"])):
 			return "'%s' is malformed" % key
 	var roster := _roster(data)
 	var turn := int(data.get("current_team", 0))
@@ -789,7 +789,7 @@ static func _turn_and_winner_error(data: Dictionary) -> String:
 ## asks.
 static func _claimed_version(data: Dictionary) -> int:
 	var claimed: Variant = data.get("version")
-	if not _is_shape(claimed, Shape.NUMBER):
+	if not is_shape(claimed, Shape.NUMBER):
 		return NO_VERSION
 	var version := int(claimed)
 	return version if READABLE_VERSIONS.has(version) else NO_VERSION
@@ -812,7 +812,7 @@ static func _claimed_version(data: Dictionary) -> int:
 static func _difficulty_error(data: Dictionary) -> String:
 	if not data.has("difficulty"):
 		return ""
-	if not _is_shape(data["difficulty"], int(KEY_RULES["difficulty"]["shape"])):
+	if not is_shape(data["difficulty"], int(KEY_RULES["difficulty"]["shape"])):
 		return "'difficulty' is malformed"
 	return ""
 
@@ -839,7 +839,7 @@ static func _roster(data: Dictionary) -> Array[int]:
 		return MapData.DEFAULT_TEAMS.duplicate()
 	var roster: Array[int] = []
 	for team: Variant in declared as Array:
-		if not _is_shape(team, Shape.NUMBER):
+		if not is_shape(team, Shape.NUMBER):
 			return MapData.DEFAULT_TEAMS.duplicate()
 		roster.append(int(team))
 	if not _is_seatable(roster):
@@ -876,7 +876,7 @@ static func _decode_sides(data: Dictionary) -> Dictionary:
 	for key: Variant in saved as Dictionary:
 		var side: Variant = (saved as Dictionary)[key]
 		var name := String(key)
-		if not name.is_valid_int() or not _is_shape(side, Shape.NUMBER):
+		if not name.is_valid_int() or not is_shape(side, Shape.NUMBER):
 			return {}
 		out[int(name)] = int(side)
 	return out
@@ -906,7 +906,7 @@ static func _decode_eliminated(data: Dictionary) -> Dictionary[int, bool]:
 	if not (saved is Array):
 		return fallen
 	for team: Variant in saved as Array:
-		if not _is_shape(team, Shape.NUMBER):
+		if not is_shape(team, Shape.NUMBER):
 			return {}
 		fallen[int(team)] = true
 	return fallen
@@ -956,7 +956,7 @@ static func _decode_home_hq(
 			return GameState.home_hqs(map, roster)
 		var record := entry as Dictionary
 		for key: String in HOME_HQ_KEY_RULES:
-			if not _is_shape(record.get(key), int(HOME_HQ_KEY_RULES[key]["shape"])):
+			if not is_shape(record.get(key), int(HOME_HQ_KEY_RULES[key]["shape"])):
 				return GameState.home_hqs(map, roster)
 		homes[int(record["team"])] = Vector2i(int(record["x"]), int(record["y"]))
 	return homes
@@ -1033,7 +1033,7 @@ static func _eliminated_error(data: Dictionary) -> String:
 	var roster := _roster(data)
 	var fallen: Dictionary = {}
 	for team: Variant in saved:
-		if not _is_shape(team, Shape.NUMBER):
+		if not is_shape(team, Shape.NUMBER):
 			return "'eliminated' is malformed"
 		if not roster.has(int(team)):
 			return "the save eliminates team %d, which does not play" % int(team)
@@ -1072,7 +1072,7 @@ static func _sides_error(data: Dictionary) -> String:
 		var name := String(key)
 		if not name.is_valid_int() or not roster.has(int(name)):
 			return "the save allies team %s, which does not play" % name
-		if not _is_shape(saved[key], Shape.NUMBER):
+		if not is_shape(saved[key], Shape.NUMBER):
 			return "the save's side for team %s is malformed" % name
 	return ""
 
@@ -1093,7 +1093,7 @@ static func _teams_error(data: Dictionary) -> String:
 	var declared: Array = data["teams"]
 	var roster: Array[int] = []
 	for team: Variant in declared:
-		if not _is_shape(team, Shape.NUMBER):
+		if not is_shape(team, Shape.NUMBER):
 			return "'teams' is malformed"
 		roster.append(int(team))
 	if not _is_seatable(roster):
@@ -1163,14 +1163,16 @@ static func _funds_error(data: Dictionary) -> String:
 	for team in _roster(data):
 		if not funds.has(str(team)):
 			return "save has no funds for team %d" % team
-		if not _is_shape(funds[str(team)], FUNDS_SHAPE):
+		if not is_shape(funds[str(team)], FUNDS_SHAPE):
 			return "the save's funds for team %d are malformed" % team
 	return ""
 
 
 ## Whether `value` is the kind of thing `shape` describes — the one reader of every
-## shape the rule tables declare, so no field is asked in its own way.
-static func _is_shape(value: Variant, shape: int) -> bool:
+## shape the rule tables declare, so no field is asked in its own way. Public
+## because ReplayCodec reads a header through this same table (COM-54): two
+## readers that had to agree by hand is the drift this rule exists to end.
+static func is_shape(value: Variant, shape: int) -> bool:
 	var kind := typeof(value)
 	match shape:
 		Shape.BOOL:
@@ -1289,6 +1291,6 @@ static func _entries_error(value: Variant, rules: Dictionary, version: int, what
 		if missing != "":
 			return "%s entry is missing '%s'" % [what, missing]
 		for key: String in keys:
-			if not _is_shape(record[key], int(rules[key]["shape"])):
+			if not is_shape(record[key], int(rules[key]["shape"])):
 				return "%s entry's '%s' is malformed" % [what, key]
 	return ""
