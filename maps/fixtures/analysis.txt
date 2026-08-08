@@ -2,10 +2,13 @@
 # city an infantry's walk from each seat's corner. Its starting units are only a
 # placeholder — every test that uses this board clears them and stands its own,
 # because what each detector needs on the board is different.
+# symmetric
 #
 # A fixture, not a shipped map: it is under maps/fixtures/ so MapCatalog.paths()
-# never sees it, which keeps it out of the menu, the map lints and the per-map
-# soak. It exists to be edited by tests.
+# never sees it, which keeps it out of the menu and the per-map soak — but the
+# playability lints in tests/unit/test_maps.gd discover it through
+# MapCatalog.fixture_paths() and run on it like any other board (COM-106). It
+# exists to be edited by tests.
 #
 # It has to be a file rather than an inline board because a replay stores its
 # opening as a save envelope, which names its map by path and reloads it from

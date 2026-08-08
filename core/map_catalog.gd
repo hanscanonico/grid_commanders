@@ -16,12 +16,14 @@ const MAPS_DIR := "res://maps"
 ## which board leads, which board says so, and which board hints cannot drift
 ## apart (COM-122).
 const TUTORIAL_MAP_PATH := "res://maps/boot_camp.txt"
-## Boards that exist to be measured on rather than played: the balance fixtures.
-## Deliberately a subdirectory, because `paths()` below scans only the top level
-## — so a fixture is reachable by name from the offline tools and the battle
-## scene, and still absent from the menu and the per-map AI soak. It is *not*
-## absent from the map lint: the balance verdicts are measured on these boards,
-## so an unplayable one is worse here than on the shelf (COM-106). See
+## Boards that exist to be tested on rather than played: the fixture boards —
+## most measured on for balance, a couple built for a specific test instead
+## (the replay analyser's, the smoke sweep's). Deliberately a subdirectory,
+## because `paths()` below scans only the top level — so a fixture is
+## reachable by name from the offline tools and the battle scene, and still
+## absent from the menu and the per-map AI soak. It is *not* absent from the
+## map lint: the balance verdicts are measured on these boards, so an
+## unplayable one is worse here than on the shelf (COM-106). See
 ## `fixture_paths()`.
 const FIXTURES_DIR := "res://maps/fixtures"
 

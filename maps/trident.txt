@@ -1,4 +1,13 @@
 # Three armies around a central massif, each a prong of the fork.
+# Seats sit as dealt, not in reading order: 1 NW, 3 NE, 2 S. The board mirrors
+# left-right, (x, y) -> (15 - x, y), which pairs 1 and 3 across the massif;
+# seat 2 sits astride that axis at the fork's foot rather than mirroring
+# anything, which is what makes it the third prong and not a duel opponent.
+# No `# symmetric` tag: that lint is a 180-degree *duel* instrument and this
+# board seats three.
+# Land only: the computer cannot plan a ferry, so every army has to be able
+# to walk to every other.
+# Symbols: . plains  F woods  M mountain  C city  B base  Q HQ
 [terrain]
 ................
 ..QB........BQ..
