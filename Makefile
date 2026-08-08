@@ -329,6 +329,7 @@ sfx:
 # parses, the seating is one the board deals, every objective names ground that
 # exists, and the launch builds. Run it after authoring a mission.
 campaigns:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/check_campaigns.gd
 
 portraits:
