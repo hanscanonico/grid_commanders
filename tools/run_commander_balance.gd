@@ -172,7 +172,7 @@ func _init() -> void:
 func _parse_args() -> bool:
 	_commander_ids = _all_commander_ids()
 	_scenario_names = SCENARIO_NAMES.duplicate()
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--commanders="):
 			_commander_ids = _parse_commander_list(arg.get_slice("=", 1))
 		elif arg.begins_with("--scenarios="):

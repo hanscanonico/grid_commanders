@@ -14,8 +14,6 @@ extends RefCounted
 ## Node-free, like the rest of the logic the scene leans on: it takes a request
 ## and the databases, and hands back plain simulation objects.
 
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
-
 
 class BuiltMatch:
 	var map: MapData
@@ -54,7 +52,7 @@ static func build(
 	save_path: String = SaveGame.SAVE_PATH
 ) -> BuiltMatch:
 	var result := BuiltMatch.new()
-	var chart: DamageChart = load(DAMAGE_CHART_PATH)
+	var chart: DamageChart = load(DamageChart.DEFAULT_PATH)
 	var difficulty_db := DifficultyDB.load_default()
 	result.ai_teams = request.ai_teams.duplicate()
 	result.difficulty = difficulty_db.by_id(request.difficulty)

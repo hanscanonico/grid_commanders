@@ -1002,7 +1002,7 @@ func _refuse_continue(caption: String, tip: String, detail: String) -> void:
 ## boots the battle scene onto the fresh match the request also states, on
 ## whatever board the picker is showing, with nothing said (COM-121).
 func _continue() -> void:
-	var chart: DamageChart = load(BattleSetup.DAMAGE_CHART_PATH)
+	var chart: DamageChart = load(DamageChart.DEFAULT_PATH)
 	var loaded := SaveGame.load_game(
 		_terrain_db, UnitDB.load_default(), chart, SaveGame.SAVE_PATH, CommanderDB.load_default()
 	)

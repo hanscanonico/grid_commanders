@@ -18,7 +18,6 @@ extends RefCounted
 
 ## Paired seed count when a run's flags do not say. Each seed plays both seats.
 const DEFAULT_SEEDS := 4
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -33,7 +32,7 @@ static func load_default() -> BalanceHarness:
 	var harness := BalanceHarness.new()
 	harness.terrain_db = TerrainDB.load_default()
 	harness.unit_db = UnitDB.load_default()
-	harness.chart = load(DAMAGE_CHART_PATH)
+	harness.chart = load(DamageChart.DEFAULT_PATH)
 	harness.commander_db = CommanderDB.load_default()
 	harness.difficulty_db = DifficultyDB.load_default()
 	return harness

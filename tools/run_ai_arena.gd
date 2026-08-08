@@ -52,7 +52,6 @@ extends SceneTree
 ## record, and the Lab plays that same match from the same seed —
 ## BalanceMatchSchedule owns the range both read.
 
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 const RECORD_FILE := "matches.json"
 
 
@@ -73,7 +72,7 @@ func _init() -> void:
 	var shard := ArenaShard.new(
 		TerrainDB.load_default(),
 		UnitDB.load_default(),
-		load(DAMAGE_CHART_PATH),
+		load(DamageChart.DEFAULT_PATH),
 		CommanderDB.load_default()
 	)
 	var records := shard.play(pairings)

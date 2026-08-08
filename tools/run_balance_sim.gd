@@ -164,7 +164,7 @@ func _init() -> void:
 ## mistyped commander would otherwise measure a neutral matchup and the run would
 ## look fine.
 func _parse_args() -> bool:
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--map="):
 			_map_name = arg.get_slice("=", 1).strip_edges()
 		elif arg.begins_with("--red="):

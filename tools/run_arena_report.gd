@@ -42,7 +42,7 @@ func _init() -> void:
 
 
 func _parse_args() -> bool:
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--matches="):
 			for path in arg.get_slice("=", 1).split(",", false):
 				_inputs.append(path.strip_edges())
