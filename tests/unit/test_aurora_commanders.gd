@@ -1,4 +1,8 @@
 extends GutTest
+## This is the home for cass_orlov, cassian_rook, lyra_quill and orin_flux
+## coverage — grep for any of those names lands here rather than at a
+## test_cass_orlov.gd-style file that does not exist.
+##
 ## The Aurora Compact three — Lyra Quill, Orin Flux and Cassian Rook — plus
 ## Cass Orlov, who shares their remaining hook needs. Grouped because between
 ## them they cover the last three things wave 2 added: the luck-range hooks, a

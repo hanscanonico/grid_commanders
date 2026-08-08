@@ -1380,7 +1380,25 @@ Follow the official Godot GDScript style guide. Key points:
   building the strip. `CampaignSession` earns `MatchConfig`'s exception the same way: the autoload
   is up for the whole headless run and reachable without a scene, and its lifecycle — armed by
   `begin`, silent for every skirmish, emptied whole by `clear` — is exactly what
-  `tests/unit/test_campaign_session.gd` pins.
+  `tests/unit/test_campaign_session.gd` pins. `BattleSetup` joins them too: it takes a request and
+  the databases and hands back plain simulation objects with no `Node` and no scene path, so
+  `test_seats_flag.gd`, `test_sides_flag.gd` and `test_resume_setup.gd` build a match by calling it
+  directly rather than booting the scene. `BattleMenus` is the same shape one layer up — which rows a menu offers is
+  content, gated by the same command authorities the rows would run, not scene plumbing — so
+  `test_unit_pricing.gd` reads a build row's price and disabled state straight off it.
+  `TutorialHints` and `ControlHints` are Node-free copy registries for the same reason `GameSpeed`
+  is: which mission step is next and which key legend a context prints are each a pure function of
+  state the suite can hand them without a scene, so `test_tutorial_copy.gd` holds both to their
+  character caps directly. `CommanderVisuals` and `SideIdentity` are the single authority for a
+  side's presentation — a portrait, a faction theme, an atlas row, resolved once from the match's
+  commander picks with no `Node` and no scene path — so `test_side_identity.gd` and
+  `test_side_identity_roster.gd` resolve an identity and assert its colours and rows directly.
+  `BattleStyle` (a `Resource`) and its `BattleStyleDB` registry (`RefCounted`) are weapon-signature
+  data rather than drawing, so `test_battle_styles.gd` checks every unit names a style that exists
+  without staging a cut-in. `PathArrow` is the one exception that is not itself Node-free — it
+  `extends Node2D` — but `test_path_arrow.gd` never builds one: `segments()`, the pure function its
+  `_draw` only paints, is static, and is all the suite calls, the same shape
+  `SeatStrip.normalised_sides` and `TransitionInput` are.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly.
 
