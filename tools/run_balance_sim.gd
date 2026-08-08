@@ -179,7 +179,7 @@ func _parse_args() -> bool:
 			_sweep_commander = StringName(arg.get_slice("=", 1).strip_edges())
 		elif arg.begins_with("--seeds="):
 			var value := arg.get_slice("=", 1)
-			var parsed := _int_flag(value, 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
 			if parsed < 0:
 				push_error("balance-sim: --seeds must be a positive integer (got '%s')" % value)
 				return false
@@ -190,14 +190,14 @@ func _parse_args() -> bool:
 			# seed and nothing else, so both seatings are still played and watch
 			# mode — which seats --red as red — reproduces the seat-0 row of the two.
 			var value := arg.get_slice("=", 1)
-			var parsed := _int_flag(value, 0)
+			var parsed := BalanceHarness.int_flag(value, 0)
 			if parsed < 0:
 				push_error("balance-sim: --seed must be a non-negative integer (got '%s')" % value)
 				return false
 			_pinned_seed = parsed
 		elif arg.begins_with("--seed-offset="):
 			var value := arg.get_slice("=", 1)
-			var parsed := _int_flag(value, 0)
+			var parsed := BalanceHarness.int_flag(value, 0)
 			if parsed < 0:
 				push_error(
 					"balance-sim: --seed-offset must be a non-negative integer (got '%s')" % value
@@ -206,7 +206,7 @@ func _parse_args() -> bool:
 			_seed_offset = parsed
 		elif arg.begins_with("--days="):
 			var value := arg.get_slice("=", 1)
-			var parsed := _int_flag(value, 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
 			if parsed < 0:
 				push_error("balance-sim: --days must be a positive integer (got '%s')" % value)
 				return false
@@ -241,17 +241,6 @@ func _parse_args() -> bool:
 	if _sweep != "maps" and _harness.map_of(_map_name) == null:
 		return false
 	return _spec(_red_text) != null and _spec(_blue_text) != null
-
-
-## Validates a numeric flag's raw text before coercing it: an integer at least
-## `min_value`, or -1 (never legal here) otherwise — so `--seeds=four` and
-## `--days=-5` refuse out loud instead of the old `maxi(1, int(...))` quietly
-## landing on 1.
-func _int_flag(value: String, min_value: int) -> int:
-	if not value.is_valid_int():
-		return -1
-	var parsed := value.to_int()
-	return parsed if parsed >= min_value else -1
 
 
 func _spec(text: String) -> BalanceSideSpec:

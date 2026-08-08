@@ -38,6 +38,20 @@ static func load_default() -> BalanceHarness:
 	return harness
 
 
+## Validates a numeric flag's raw text before coercing it: an integer at least
+## `min_value`, or -1 (never legal for any flag that asks) otherwise — so
+## `--seeds=four` and `--days=-5` refuse out loud instead of the old
+## `maxi(1, int(...))` quietly landing on 1.
+##
+## The three drivers share the check and keep their own refusal, because the
+## message names the flag and the tool that read it.
+static func int_flag(value: String, min_value: int) -> int:
+	if not value.is_valid_int():
+		return -1
+	var parsed := value.to_int()
+	return parsed if parsed >= min_value else -1
+
+
 ## A board by name — a fixture for the commander matrix, a shipped map for the
 ## difficulty ladder or the Lab — read once per run and shared across every match
 ## played on it. Safe to share: GameState.create copies the ownership it needs

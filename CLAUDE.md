@@ -68,6 +68,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   recordings are refused outright, which is the replay plan's D3. The save format did not move —
   the strike is one-shot and `power_active` was already saved. `docs/commander_balance.md` and the
   roster counts above are MC5's to close.
+  One name in the plan's MC1 table is superseded: Sera Lark's passive export is
+  **`move_bonus_points`**, not the `road_move_bonus` the table names — her bonus was never keyed to
+  roads and the old name said it was, so COM-221 renamed it in `core/commanders/sera_lark.gd` and
+  `data/commanders/sera_lark.tres` together. The number and the doctrine are unchanged.
 - `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
   tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
   income, vision, damage or luck. Its DF4 acceptance gate is currently **failing, knowingly**

@@ -28,6 +28,9 @@ static func begin_turn(state: GameState) -> void:
 		if _serviced_here(state, unit) or _in_reach_of_suppliers(state, suppliers, unit):
 			unit.resupply()
 		if _lost_to_empty_tank(state, unit):
+			# A supplier that starved is off the board, so the units walked after
+			# it must not still be topped up by it.
+			suppliers.erase(unit)
 			continue  # nothing left to repair, and its cargo went down with it
 		_resupply_cargo(state, unit)
 		_repair(state, unit)

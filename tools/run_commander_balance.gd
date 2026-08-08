@@ -179,14 +179,14 @@ func _parse_args() -> bool:
 			_scenario_names = _parse_scenario_list(arg.get_slice("=", 1))
 		elif arg.begins_with("--seeds="):
 			var value := arg.get_slice("=", 1)
-			var parsed := _int_flag(value, 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
 			if parsed < 0:
 				push_error("balance: --seeds must be a positive integer (got '%s')" % value)
 				return false
 			_seed_count = parsed
 		elif arg.begins_with("--days="):
 			var value := arg.get_slice("=", 1)
-			var parsed := _int_flag(value, 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
 			if parsed < 0:
 				push_error("balance: --days must be a positive integer (got '%s')" % value)
 				return false
@@ -205,17 +205,6 @@ func _parse_args() -> bool:
 		return false
 	_out_dir = resolved
 	return true
-
-
-## Validates a numeric flag's raw text before coercing it: an integer at least
-## `min_value`, or -1 (never legal here) otherwise — so `--seeds=four` and
-## `--days=-5` refuse out loud instead of the old `maxi(1, int(...))` quietly
-## landing on 1.
-func _int_flag(value: String, min_value: int) -> int:
-	if not value.is_valid_int():
-		return -1
-	var parsed := value.to_int()
-	return parsed if parsed >= min_value else -1
 
 
 ## The matrix measures doctrines against each other, so the roster is the

@@ -871,16 +871,19 @@ func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.A
 		if unit.running_dry(profile.refuel_margin_turns):
 			var refit := AIPlanningContext.AdvanceGoal.new()
 			refit.cell = _nearest(unit.cell, servicing)
+			refit.errand = true
 			return refit
 		if unit.hp <= _retreat_threshold(context.state, unit):
 			var repair := AIPlanningContext.AdvanceGoal.new()
 			repair.cell = _nearest(unit.cell, servicing)
+			repair.errand = true
 			return repair
 	var besieged := _besieged_home_hqs(context)
 	if not besieged.is_empty():
 		var goal := AIPlanningContext.AdvanceGoal.new()
 		goal.cell = _nearest(unit.cell, besieged)
 		goal.stand_off = AttackRange.is_indirect(unit)
+		goal.errand = true
 		return goal
 	return null
 
@@ -891,9 +894,16 @@ func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.A
 ## caching a real errand so the second call finds it rather than re-running
 ## the scan. A null errand is never cached: it is not itself a fact about the
 ## unit's final goal, only that this branch found nothing.
+##
+## The memo it reads holds captures and advances too, so a cached goal answers
+## here only when it is flagged an errand. Without that the seeker filter would
+## invert for any unit whose `_advance_goal` had already run — "has an errand"
+## and "has any goal" would be the same test — and drop from the seekers exactly
+## the units it exists to keep.
 func _cached_errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	if context.goals.has(unit):
-		return context.goals[unit]
+		var cached := context.goals[unit]
+		return cached if cached.errand else null
 	var errand := _errand_goal(context, unit)
 	if errand != null:
 		context.goals[unit] = errand

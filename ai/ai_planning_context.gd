@@ -20,6 +20,10 @@ class AdvanceGoal:
 	var cell: Vector2i = Vector2i.ZERO
 	var stand_off: bool = false
 	var keeps_formation: bool = false
+	## An errand — refit, repair, a besieged home HQ — rather than the advance or
+	## a capture. `goals` memoises all of them together, so this is what tells a
+	## reader asking only about errands which kind it has been handed back.
+	var errand: bool = false
 
 
 var state: GameState

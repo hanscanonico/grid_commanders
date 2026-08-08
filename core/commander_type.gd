@@ -376,38 +376,49 @@ func _can_strike_an_opponent(state: GameState, team: int, ready_only: bool) -> b
 ## Anything hidden from `team` — the commander doing the asking — is skipped on
 ## both sides of the question, so no doctrine plans around a unit its own side
 ## cannot see. Vision owns that judgement; it is not re-derived here.
+##
+## The two sides are gathered in their own passes because reach is a fact about
+## the shooter alone: resolved once per attacker it costs one strike_reach call
+## an army, and resolved inside the target walk it costs one per pair.
 func _can_strike(
 	state: GameState, team: int, attacker_team: int, defender_team: int, ready_only: bool
 ) -> bool:
+	var targets: Array[Vector2i] = []
 	for target in state.units:
 		if not state.allied(target.team, defender_team) or target.carrier != null:
 			continue
 		if Vision.is_hidden_from(state, team, target):
 			continue
-		if _can_strike_cell(state, team, attacker_team, target.cell, ready_only):
-			return true
-	return false
-
-
-## True when a unit of `attacker_team` could bring `cell` under fire — `_can_strike`'s
-## own skip list (team, carrier, max range), its `ready_only` acted gate, the
-## `Vision.is_hidden_from` gate and `AttackRange.strike_reach`, generalised to a cell
-## nothing needs to be standing on yet. `_can_strike` walks it once per candidate
-## target's cell; a doctrine grading empty ground (Mara Voss's `stand_value`) walks
-## it directly.
-func _can_strike_cell(
-	state: GameState, team: int, attacker_team: int, cell: Vector2i, ready_only: bool = false
-) -> bool:
+		targets.append(target.cell)
+	if targets.is_empty():
+		return false
+	var attackers: Array[int] = [attacker_team]
 	for unit in state.units:
-		if unit.team != attacker_team or unit.carrier != null or unit.type.max_range <= 0:
+		if not _is_striker(state, team, unit, attackers, ready_only):
 			continue
-		if ready_only and unit.acted:
-			continue
-		if Vision.is_hidden_from(state, team, unit):
-			continue
-		if Grid.manhattan(unit.cell, cell) <= AttackRange.strike_reach(state, unit):
-			return true
+		var reach := AttackRange.strike_reach(state, unit)
+		for cell in targets:
+			if Grid.manhattan(unit.cell, cell) <= reach:
+				return true
 	return false
+
+
+## True when `unit` could open fire for one of `attacker_teams` this turn, as far
+## as `team` can tell: on one of those armies, not cargo, armed, still to act when
+## `ready_only`, and not hidden. The one owner of that skip list, so every reading
+## of "can that cell be brought under fire" — `_can_strike`'s over a whole army,
+## Mara Voss's `stand_value` over one square of empty ground — grades the same
+## shooters. How far each of them reaches is `AttackRange.strike_reach`'s, asked
+## by the caller because only the caller knows whether that answer serves one
+## cell or many.
+func _is_striker(
+	state: GameState, team: int, unit: Unit, attacker_teams: Array[int], ready_only: bool
+) -> bool:
+	if not attacker_teams.has(unit.team) or unit.carrier != null or unit.type.max_range <= 0:
+		return false
+	if ready_only and unit.acted:
+		return false
+	return not Vision.is_hidden_from(state, team, unit)
 
 
 ## True when a capture unit of `team` that has not acted can finish this turn on
