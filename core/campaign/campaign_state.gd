@@ -92,6 +92,14 @@ static func is_derived(name: StringName) -> bool:
 	return key.begins_with(CLEARED) or key.begins_with(STARS)
 
 
+## The mission a derived name is about, and &"" for a fact a beat writes. The one
+## place that split is spelled, so the ledger and the campaign's content gate
+## cannot disagree about which mission a name names.
+static func derived_mission(name: StringName) -> StringName:
+	var key := String(name)
+	return StringName(key.substr(key.find(":") + 1)) if is_derived(name) else &""
+
+
 ## Why `name` could not name a fact, or "". An identifier, so a flag reads in a
 ## profile exactly as an event id does — or one of the derived names, which is a
 ## prefix and the mission it is about.
@@ -100,7 +108,7 @@ static func flag_name_error(name: StringName) -> String:
 	if key == "":
 		return "a flag with no name"
 	if is_derived(name):
-		var mission := key.substr(key.find(":") + 1)
+		var mission := String(derived_mission(name))
 		return "" if mission.is_valid_ascii_identifier() else "'%s' names no mission" % key
 	return "" if key.is_valid_ascii_identifier() else "'%s' is not an identifier" % key
 
@@ -118,13 +126,18 @@ static func flag_name_error(name: StringName) -> String:
 ## A replay is for stars; the war already happened, and later missions have
 ## already been briefed and opened off what it recorded — rewriting it behind
 ## them is the one thing a replay must not do.
+##
+## Returns whether the ledger took what the mission staged, which is the debrief's
+## answer to whether the war moved: a replay stages the same facts and writes none
+## of them, and a screen claiming a change that did not happen is worse than one
+## that says nothing.
 func complete(
 	campaign: CampaignDefinition,
 	mission_id: StringName,
 	stars: int,
 	day: int,
 	tally: MissionProgress = null
-) -> void:
+) -> bool:
 	var record: MissionRecord = records.get(mission_id)
 	if record == null:
 		records[mission_id] = MissionRecord.new(stars, day)
@@ -134,9 +147,11 @@ func complete(
 	var next := campaign.next_mission_id(mission_id)
 	if next != &"":
 		unlocked[next] = true
-	if tally != null and record == null:
+	var took := tally != null and record == null
+	if took:
 		_take_staged_flags(tally)
 	active_mission = &""
+	return took
 
 
 ## Fold what the mission staged into the ledger — the ledger's one writer.

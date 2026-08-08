@@ -70,9 +70,9 @@ func resume() -> bool:
 		return true
 	_menu_root.hide()
 	var stars := CampaignSession.max_stars()
-	# The ledger has already taken what this mission wrote — `CampaignSession.record`
-	# runs on the victory screen — so the debrief speaks and reports the war as it
-	# now stands, which is what a variant victory line is written against.
+	# The ledger has already settled — `CampaignSession.record` runs on the victory
+	# screen — so the debrief speaks against the war as it now stands, which is what
+	# a variant victory line is written against, and reports what that write took.
 	_debrief.begin(
 		mission,
 		outcome,

@@ -50,6 +50,29 @@ func spawned_tags() -> Array[StringName]:
 	return named
 
 
+## Every fact this beat reads the war for, gathered from its triggers — `Flag`
+## alone reads any. What `CampaignDefinition.ledger_error` holds against the facts
+## the campaign writes, a name nothing writes being a beat that never fires.
+func read_flags() -> Array[StringName]:
+	var read: Array[StringName] = []
+	for trigger: MissionTrigger in triggers:
+		var condition := trigger.read_condition() if trigger != null else null
+		if condition != null:
+			read.append(condition.flag)
+	return read
+
+
+## Every fact this beat writes to the war, gathered from its effects — `SetFlag`
+## alone writes any. The other half of the same question.
+func written_flags() -> Array[StringName]:
+	var written: Array[StringName] = []
+	for effect: MissionEffect in effects:
+		var fact := effect.written_flag() if effect != null else null
+		if fact != null:
+			written.append(fact.flag)
+	return written
+
+
 ## Why this event could never fire or could never be applied on this mission's
 ## board, or "". An event with no triggers is refused rather than treated as
 ## always due: a beat nobody can read the conditions of is an authoring slip, and

@@ -96,6 +96,37 @@ func event(event_id: StringName) -> MissionEvent:
 	return null
 
 
+## Every fact this mission reads the war for: the conditions on its variant story
+## lines, and the `Flag` triggers on its beats. Its beats' lines carry none —
+## `story_error` refuses them there — so the story half is the briefing and the
+## victory dialogue.
+##
+## Gathered rather than judged here, because whether the campaign ever writes a
+## name is the one question a mission cannot ask about itself.
+func read_flags() -> Array[StringName]:
+	var read: Array[StringName] = []
+	for line: MissionLine in briefing + victory:
+		if line == null:
+			continue
+		for condition: FlagCondition in line.conditions():
+			read.append(condition.flag)
+	for event: MissionEvent in events:
+		if event != null:
+			read.append_array(event.read_flags())
+	return read
+
+
+## Every fact this mission's beats write to the war. The other half of the same
+## question, and the reason it is not `written_flag` singular: a mission writes the
+## war from as many beats as it has.
+func written_flags() -> Array[StringName]:
+	var written: Array[StringName] = []
+	for event: MissionEvent in events:
+		if event != null:
+			written.append_array(event.written_flags())
+	return written
+
+
 ## Why this mission could never be played or won, or "". Checked at load so an
 ## authoring slip — a board that does not seat the player, a relay that is not a
 ## property — is loud at the door instead of silent in the middle of an act.

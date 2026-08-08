@@ -25,6 +25,9 @@ extends RefCounted
 ## A profile below the current version loads with the parts it never had empty,
 ## which is what it was playing with.
 const VERSION := 3
+## The version the ledger arrived in, named rather than read off `VERSION` so the
+## refusal below stays about the section it is checking when the next format lands.
+const LEDGER_VERSION := 3
 
 
 ## The whole of a campaign profile, as a plain dictionary.
@@ -160,13 +163,19 @@ static func validate(data: Dictionary) -> String:
 
 ## Why this profile's ledger is not one, or "". Tolerant of a fact no mission
 ## writes any more, for the reason a record of a renamed mission is tolerated —
-## but not of a derived name, which nothing has ever stored.
+## but not of a derived name, which nothing has ever stored, and not of a fact in a
+## profile older than the ledger, which no writer could have put there. An older
+## profile whose section is *empty* carries no ledger at all and loads with an empty
+## one, which is what it was playing with.
 static func _flags_error(data: Dictionary) -> String:
 	if not data.has("flags"):
 		return ""
 	if not (data["flags"] is Dictionary):
 		return "save holds a ledger that is not a set of facts"
 	var flags: Dictionary = data["flags"]
+	var version := int(data["version"])
+	if not flags.is_empty() and version < LEDGER_VERSION:
+		return "save claims version %d; the ledger arrived in %d" % [version, LEDGER_VERSION]
 	for key in flags:
 		if not (key is String):
 			return "the ledger holds '%s', which is not a flag" % [key]

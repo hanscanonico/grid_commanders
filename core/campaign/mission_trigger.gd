@@ -33,6 +33,15 @@ func is_met(
 	return false
 
 
+## The band on the consequence ledger this condition reads, or null — `Flag` alone
+## answers with anything. Declared here for the reason `MissionEffect.written_flag`
+## is: the fact is the *war's* rather than the board's, and whether the campaign
+## ever writes the name it asks after is a question only the whole campaign can
+## answer (`CampaignDefinition.ledger_error`).
+func read_condition() -> FlagCondition:
+	return null
+
+
 ## Why this condition could never come true on this mission's board, or "".
 ## Called once when a mission loads, so an authoring mistake — a cell that is not
 ## a property, a unit this board never names — fails visibly at the door rather

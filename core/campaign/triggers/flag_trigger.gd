@@ -22,6 +22,10 @@ func is_met(
 	return condition != null and condition.holds(ledger)
 
 
+func read_condition() -> FlagCondition:
+	return condition
+
+
 func definition_error(_map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if condition == null:
 		return "flag trigger reads nothing"

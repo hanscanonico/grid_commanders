@@ -3,13 +3,16 @@ extends GutTest
 ## and a later one reads.
 ##
 ## The rules worth pinning are the ones a player would notice going wrong. A
-## profile from before the ledger has to open — with an empty one, which is what
-## it was playing with. A mission that went badly and was retried must write the
-## war once, not once per attempt. And a flag must reach the next mission by
-## choosing what is *used* — a briefing line, whether a beat happens — never by
-## moving a number: the last test here is that a fact written to the ledger
-## leaves the board it was written on byte-for-byte where it was, which is also
-## why the ledger can never break a replay.
+## mission that went badly and was retried must write the war once, not once per
+## attempt, and the debrief must report what was *committed* rather than what was
+## staged. And a flag must reach the next mission by choosing what is *used* — a
+## briefing line, whether a beat happens — never by moving a number: the last test
+## here is that a fact written to the ledger leaves the board it was written on
+## byte-for-byte where it was, which is also why the ledger can never break a
+## replay.
+##
+## What may name a fact, what a profile may carry it in, and the campaign-wide
+## check that every name is one the war writes are `test_campaign_ledger_names.gd`'s.
 
 const PROBE := &"__probe_ledger_campaign"
 const HELD := &"greenwater_held"
@@ -124,77 +127,6 @@ func _play(campaign: CampaignDefinition, mission: MissionDefinition, state: Game
 	CampaignSession.record(state.day)
 
 
-# --- the ledger and its save ---------------------------------------------------
-
-
-func test_a_profile_from_before_the_ledger_opens_with_an_empty_one() -> void:
-	var campaign := _campaign()
-	var older := CampaignSaveCodec.encode(CampaignState.begin(campaign))
-	older["version"] = 1
-	older.erase("flags")
-	assert_eq(CampaignSaveCodec.validate(older), "", "a version 1 profile is still a profile")
-	var decoded := CampaignSaveCodec.decode(older)
-	assert_not_null(decoded)
-	assert_eq(decoded.flags, {} as Dictionary[StringName, int])
-	assert_eq(decoded.flag(HELD), 0, "and every fact in it reads as never written")
-
-
-func test_the_ledger_survives_a_round_trip() -> void:
-	var state := CampaignState.begin(_campaign())
-	state.flags[HELD] = 1
-	state.flags[SAVED] = 4
-	var decoded := CampaignSaveCodec.decode(CampaignSaveCodec.encode(state))
-	assert_not_null(decoded)
-	assert_eq(decoded.flag(HELD), 1)
-	assert_eq(decoded.flag(SAVED), 4)
-
-
-func test_a_ledger_no_writer_could_have_produced_is_refused() -> void:
-	var data := CampaignSaveCodec.encode(CampaignState.begin(_campaign()))
-	data["flags"] = {"greenwater held": 1}
-	assert_ne(CampaignSaveCodec.validate(data), "", "a flag is an identifier")
-	data["flags"] = {"greenwater_held": -1}
-	assert_ne(CampaignSaveCodec.validate(data), "", "and a fact is never negative")
-	data["flags"] = {"cleared:probe_one": 1}
-	assert_ne(CampaignSaveCodec.validate(data), "", "the campaign's own record is not stored")
-	data["flags"] = {"a_fact_no_mission_writes_any_more": 2}
-	assert_eq(CampaignSaveCodec.validate(data), "", "but a renamed fact costs itself, not the run")
-
-
-func test_the_stored_ledger_is_in_name_order_whatever_order_it_was_written_in() -> void:
-	var first := CampaignState.begin(_campaign())
-	first.flags[SAVED] = 2
-	first.flags[HELD] = 1
-	var second := CampaignState.begin(_campaign())
-	second.flags[HELD] = 1
-	second.flags[SAVED] = 2
-	assert_eq(
-		JSON.stringify(CampaignSaveCodec.encode(first)),
-		JSON.stringify(CampaignSaveCodec.encode(second))
-	)
-
-
-# --- what the campaign answers for itself --------------------------------------
-
-
-func test_a_cleared_mission_is_a_fact_read_off_the_record_it_already_is() -> void:
-	var campaign := _campaign()
-	var state := CampaignState.begin(campaign)
-	assert_eq(state.flag(&"cleared:probe_one"), 0)
-	assert_eq(state.flag(&"stars:probe_one"), 0)
-	state.complete(campaign, &"probe_one", 2, 5)
-	assert_eq(state.flag(&"cleared:probe_one"), 1)
-	assert_eq(state.flag(&"stars:probe_one"), 2)
-	assert_eq(state.flags, {} as Dictionary[StringName, int], "and nothing is stored twice")
-
-
-func test_a_beat_may_not_write_the_campaigns_own_record() -> void:
-	var map := MapData.parse(ROW, Fixture.terrain_db())
-	assert_ne(_writes(&"cleared:probe_one").definition_error(map, 1, Fixture.unit_db()), "")
-	assert_ne(_writes(&"a flag with spaces").definition_error(map, 1, Fixture.unit_db()), "")
-	assert_eq(_writes(HELD).definition_error(map, 1, Fixture.unit_db()), "")
-
-
 # --- the condition -------------------------------------------------------------
 
 
@@ -286,6 +218,46 @@ func test_a_mission_played_twice_counts_a_fact_once() -> void:
 		1,
 		"and a replay is for stars: the war already happened and later missions read it"
 	)
+
+
+## The debrief reports what was **committed**, never what was staged. One fact
+## assigned and one counted up, because a replay writes neither and the screen has
+## to be as quiet about the counter as about the assignment.
+func test_a_replay_reports_nothing_because_it_recorded_nothing() -> void:
+	var campaign := _campaign()
+	var mission := campaign.missions[0]
+	mission.events.append(_beat(&"the_town_holds", [_writes(HELD)]))
+	mission.events.append(_beat(&"a_town_saved", [_writes(SAVED, 1, true)]))
+
+	_play(campaign, mission, Fixture.state(ROW))
+	assert_eq(CampaignSession.recorded_notes().size(), 2, "the run that wrote the war says so")
+	var written := CampaignProfile.load_progress(PROBE)
+	assert_eq(written.flag(HELD), 1)
+	assert_eq(written.flag(SAVED), 1)
+
+	_play(campaign, mission, Fixture.state(ROW))
+	assert_eq(
+		CampaignSession.recorded_notes(),
+		[] as Array[String],
+		"and the replay of it says nothing, the war its beats wrote having already happened"
+	)
+	var after := CampaignProfile.load_progress(PROBE)
+	assert_eq(after.flag(HELD), 1, "which is exactly what the ledger did")
+	assert_eq(after.flag(SAVED), 1)
+
+
+func test_a_mission_that_was_lost_reports_nothing_either() -> void:
+	var campaign := _campaign()
+	var mission := campaign.missions[0]
+	mission.events.append(_beat(&"the_town_holds", [_writes(HELD)]))
+	var lost := Fixture.state(ROW)
+	CampaignSession.begin(campaign, mission, CampaignState.begin(campaign))
+	CampaignSession.open_board(lost)
+	_fire(lost, mission.events[0])
+	lost.eliminate(1)
+	assert_true(CampaignSession.decide(lost))
+	CampaignSession.record(lost.day)
+	assert_eq(CampaignSession.recorded_notes(), [] as Array[String])
 
 
 func test_two_beats_may_count_the_same_fact_up() -> void:

@@ -35,6 +35,13 @@ func test_every_campaign_is_structurally_sound() -> void:
 		assert_eq(campaign.definition_error(), "", "campaign '%s'" % campaign.id)
 
 
+## A flag a mission reads and no mission of the campaign writes is a variant line
+## nobody ever hears and a gated beat that never fires, with no other symptom.
+func test_every_flag_a_campaign_reads_is_one_it_writes() -> void:
+	for campaign in db.all():
+		assert_eq(campaign.ledger_error(), "", "campaign '%s'" % campaign.id)
+
+
 func test_every_mission_names_a_board_that_parses() -> void:
 	for campaign in db.all():
 		for mission: MissionDefinition in campaign.missions:

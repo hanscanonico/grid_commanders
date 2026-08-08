@@ -27,6 +27,10 @@ var outcome: MissionRuntime.Outcome
 ## campaign-depth D2's one writer.
 var tally: MissionProgress
 var _runtime: MissionRuntime
+## Whether the ledger took what this mission staged, answered by the write itself.
+## False until then, and false for a replay of a mission already cleared — which
+## stages its facts exactly as the first run did and writes none of them.
+var _committed := false
 ## The ending a scripted beat declared, or null. A fact `MissionRuntime` takes
 ## its own view of (campaign-depth D3) rather than a verdict, which is why it is
 ## handed to `evaluate` instead of short-circuiting it — a scripted victory on the
@@ -55,6 +59,7 @@ func begin(
 	tally = resumed_tally if resumed_tally != null else MissionProgress.new()
 	_runtime = MissionRuntime.new(p_mission)
 	_ending = null
+	_committed = false
 	if progress != null:
 		progress.active_mission = p_mission.id
 	return p_mission.to_request()
@@ -171,18 +176,23 @@ func record(day: int) -> void:
 	if outcome == null or progress == null or campaign == null or mission == null:
 		return
 	if outcome.status == MissionRuntime.Status.SUCCESS:
-		progress.complete(campaign, mission.id, outcome.stars, day, tally)
+		_committed = progress.complete(campaign, mission.id, outcome.stars, day, tally)
 	else:
 		progress.active_mission = &""
 	CampaignProfile.save_progress(progress)
 
 
 ## What this mission wrote to the war, in the words its own beats put on it — the
-## debrief's line about what changed. Empty until the mission is won, because
-## nothing is written until then, and empty for a beat that named no consequence.
+## debrief's line about what changed.
+##
+## What was **committed**, never what was staged: empty until the ledger has
+## actually taken the facts, so a replay of a mission already cleared reports
+## nothing, its beats having changed a war that already happened. The debrief is
+## the one screen that tells a player their choices mattered, and a false entry
+## there is worse than no entry. Empty too for a beat that named no consequence.
 func recorded_notes() -> Array[String]:
 	var notes: Array[String] = []
-	if mission == null or outcome == null or outcome.status != MissionRuntime.Status.SUCCESS:
+	if mission == null or not _committed:
 		return notes
 	for event: MissionEvent in mission.events:
 		if event == null or not tally.has_fired(event.id):
@@ -223,3 +233,4 @@ func clear() -> void:
 	tally = null
 	_runtime = null
 	_ending = null
+	_committed = false

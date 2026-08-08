@@ -59,6 +59,17 @@ func is_conditional() -> bool:
 	return requires != null or unless != null
 
 
+## The bands on the war this line reads, in no order — the one place the pair is
+## walked, so a caller checking them and a caller gathering the names they ask
+## after cannot come to disagree about which of them count.
+func conditions() -> Array[FlagCondition]:
+	var read: Array[FlagCondition] = []
+	for condition: FlagCondition in [requires, unless]:
+		if condition != null:
+			read.append(condition)
+	return read
+
+
 ## The lines of a briefing or a debrief that are actually said, in the order they
 ## were authored — the one filter, because two screens print these words.
 ##
@@ -83,9 +94,7 @@ func definition_error(commander_db: CommanderDB) -> String:
 		return "a line has no words"
 	if speaker != &"" and not commander_db.has(speaker):
 		return "'%s' speaks, but is not on the roster" % speaker
-	for condition: FlagCondition in [requires, unless]:
-		if condition == null:
-			continue
+	for condition: FlagCondition in conditions():
 		var error := condition.definition_error()
 		if error != "":
 			return error
