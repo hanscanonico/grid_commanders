@@ -759,8 +759,8 @@ a loss limit counts it as such.
 A mission can also **script what happens while you fight it**. A beat waits for conditions of its
 own — a day reached, a day not yet reached, ground held by a side, a named unit destroyed or
 arrived somewhere, a side worn down to (or built up to) so many units, an objective already
-satisfied — and every one of them has to hold at once, so "took the depot, and took it by day
-four" is one beat. When it comes due it says its piece and changes the board: reinforcements land,
+satisfied, or how an earlier mission of the war went — and every one of them has to hold at once,
+so "took the depot, and took it by day four" is one beat. When it comes due it says its piece and changes the board: reinforcements land,
 a garrison changes sides, a named column is withdrawn, a property changes hands, a purse or a
 Command Power meter is topped up, an objective held back until now comes into play, or the mission
 ends there and then. The words are spoken over the board by the generals themselves, exactly as a
@@ -773,6 +773,18 @@ mission is judged, so a relief column arriving on the day the deadline expires i
 deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
 marked once fires once, and a mission picked back up from a save does not play it again. Six of
 the 108 missions carry one today — one per war — and the rest are still fought as they were.
+
+**A war remembers.** A beat can write a fact to its campaign's ledger — Greenwater held, the
+courier lost, three marshals still standing — and a later mission reads it: a briefing line only
+said on that kind of run, or a beat that fires only then, which is how a board opens two defenders
+short because of what happened in mission five. Facts are numbers rather than yes-or-no, so a
+ledger can count, and a condition on one can ask for a floor, a ceiling or both — "was quick or
+careful" as readily as "went wrong". Which missions you have cleared and the stars they earned are
+asked after in the same words, straight off your record. What a mission writes is taken **when it
+is won**: it reads the war as it stood when it began, a lost or abandoned attempt banks nothing,
+and replaying a mission you have already cleared does not rewrite what later missions were briefed
+off — it can still improve your stars and your best day. When a win does move the war, the debrief
+says so on a `RECORDED` line in the beat's own words. No shipped mission writes a fact yet.
 
 While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
 lists what wins, what loses and the bonuses, ticks each condition as it is satisfied and counts the
@@ -805,7 +817,10 @@ line's speaker is not on the commander roster, or the launch does not build. A m
 held to the same bar: a beat that waits for nothing or does nothing, two beats with the same name,
 a trigger or an effect naming ground, a unit or a seat the board does not have, two units landing
 under one name, an objective held back that no beat ever brings into play — each fails at the door
-rather than as a beat that never fires in the middle of an act.
+rather than as a beat that never fires in the middle of an act. The ledger is checked across the
+whole war rather than one mission: a fact some mission reads and no mission of that campaign ever
+writes, or a cleared-mission name the campaign does not run, is a variant line nobody would ever
+hear, so it fails here too.
 
 ## Replays
 
@@ -958,7 +973,8 @@ already failing would muddy both readings.
   the game speed above, whether battles play the full-screen cut-ins, and which first-match hints
   this player has retired), the sound-effect player, and the campaign session (`CampaignSession` —
   which war and mission is being played, plus the few things that mission has tallied over the
-  boards it has been played on — days a square has been held, units lost — carried across the
+  boards it has been played on — days a square has been held, units lost, the facts its beats have
+  written and the war has not taken yet — carried across the
   scene change; navigation intent only, it decides no rule and holds no board).
 - `tools/` — the art and sound build scripts: the headless ground-tile, sound, and portrait
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
