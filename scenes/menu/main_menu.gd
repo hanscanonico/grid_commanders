@@ -535,9 +535,7 @@ func _build_seats_row() -> Control:
 	# No section label: each row already says which seat it is, and the panel's
 	# height budget is real (see `_chrome`).
 	_seat_strip = SeatStrip.new()
-	_seat_strip.configure(
-		UiTheme.menu_identity().theme(1).color, UiKit.style_segment, UiKit.micro_label
-	)
+	_seat_strip.configure(UiTheme.menu_identity().theme(1).color)
 	col.add_child(_seat_strip)
 	# No help line: the grouping buttons name themselves, each segment carries the
 	# sentence as a tip, and the panel's height is fixed — a line spent here is a
