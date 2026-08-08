@@ -27,10 +27,10 @@ func readout(state: GameState, team: int, _progress: MissionProgress) -> String:
 	return "%d/%d" % [_arrived(state, team), count]
 
 
-func definition_error(map: MapData, _team: int) -> String:
+func definition_error(map: MapData, _team: int, unit_db: UnitDB) -> String:
 	if count <= 0:
 		return "reach objective asks for %d units" % count
-	var fieldable := _fieldable_classes(map)
+	var fieldable := _fieldable_classes(map, unit_db)
 	var named: Dictionary[Vector2i, bool] = {}
 	for cell: Vector2i in cells:
 		if not map.in_bounds(cell):
@@ -50,9 +50,8 @@ func definition_error(map: MapData, _team: int) -> String:
 ## authority on that, so no terrain is named here. It answers what the *board*
 ## could field rather than what this mission's seating will, the tighter question
 ## belonging to the content gate, which holds the mission as well as the board.
-func _fieldable_classes(map: MapData) -> Dictionary[StringName, bool]:
+func _fieldable_classes(map: MapData, unit_db: UnitDB) -> Dictionary[StringName, bool]:
 	var classes: Dictionary[StringName, bool] = {}
-	var unit_db := UnitDB.load_default()
 	for entry: Dictionary in map.starting_units:
 		var unit_type := unit_db.by_symbol(entry["symbol"])
 		if unit_type != null:

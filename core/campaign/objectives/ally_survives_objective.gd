@@ -17,7 +17,7 @@ func is_met(state: GameState, _player_team: int, _progress: MissionProgress) -> 
 	return not state.is_eliminated(team)
 
 
-func definition_error(map: MapData, _player_team: int) -> String:
+func definition_error(map: MapData, _player_team: int, _unit_db: UnitDB) -> String:
 	if not map.teams().has(team):
 		return "ally-survives objective names army %d, which this board does not seat" % team
 	return ""

@@ -46,13 +46,6 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # it, and Battle holds no mission field — so the four lines are the branch and
 # its reason, with nothing loose left to move.
 #
-# 1415 -> 1420: the mission's objective card. One node handed to the view beside
-# the teaching strip, and one call letting a *capture* stage the launch its flags
-# cannot state — a campaign board is not in the map catalogue, so the objective
-# panel's smoke scenario deploys through MatchConfig the way the hub does. The
-# panel itself is a file of its own and Battle still holds no mission field, so
-# there is nothing here to move out.
-#
 # main_menu.gd 1112 -> 1148: the Campaign route. The flow itself was moved out
 # first — MenuCampaignFlow owns the two panels and the walk between them, which
 # is 80 of the 116 lines it arrived as — and what is left is the button, the
@@ -60,7 +53,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # in is a different question from which board and how much fog, so the split is
 # the responsibility rather than the line count; nothing loose is left to move.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1420
+scenes/battle/battle.gd 1415
 scenes/menu/main_menu.gd 1148
 "
 

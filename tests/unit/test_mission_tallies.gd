@@ -162,14 +162,16 @@ func test_hold_cell_refuses_ground_no_run_of_days_could_be_held_on() -> void:
 	var map := MapData.parse(BOARD, terrain_db)
 	var objective := HoldCellObjective.new()
 	objective.cell = Vector2i(3, 0)
-	assert_ne(objective.definition_error(map, 1), "", "plains is nobody's to hold")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "plains is nobody's to hold")
 	objective.cell = Vector2i(9, 9)
-	assert_ne(objective.definition_error(map, 1), "", "and that cell is off the board")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "and that cell is off the board")
 	objective.cell = OURS
 	objective.days = 0
-	assert_ne(objective.definition_error(map, 1), "", "nor is holding it for no days a task")
+	assert_ne(
+		objective.definition_error(map, 1, unit_db), "", "nor is holding it for no days a task"
+	)
 	objective.days = 3
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")
 
 
 # --- losing units -----------------------------------------------------------
@@ -221,10 +223,12 @@ func test_loss_limit_refuses_a_bill_that_cannot_be_run_up() -> void:
 	var map := MapData.parse(BOARD, terrain_db)
 	var objective := LossLimitObjective.new()
 	objective.max_losses = -1
-	assert_ne(objective.definition_error(map, 1), "")
+	assert_ne(objective.definition_error(map, 1, unit_db), "")
 	objective.max_losses = 0
 	assert_eq(
-		objective.definition_error(map, 1), "", "losing nobody is a hard mission, not a bad one"
+		objective.definition_error(map, 1, unit_db),
+		"",
+		"losing nobody is a hard mission, not a bad one"
 	)
 
 

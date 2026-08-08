@@ -24,7 +24,7 @@ func readout(state: GameState, _team: int, _progress: MissionProgress) -> String
 	return "DAY %d/%d" % [state.day, last_day]
 
 
-func definition_error(_map: MapData, _team: int) -> String:
+func definition_error(_map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if last_day < 1:
 		return "deadline ends on day %d, before the match begins" % last_day
 	return ""

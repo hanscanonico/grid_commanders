@@ -23,7 +23,7 @@ func readout(state: GameState, team: int, _progress: MissionProgress) -> String:
 	return "%d/%d" % [_held(state, team), count]
 
 
-func definition_error(map: MapData, _team: int) -> String:
+func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if count <= 0:
 		return "property objective asks for %d properties" % count
 	var available := 0

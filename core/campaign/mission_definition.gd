@@ -82,7 +82,7 @@ func to_request() -> MatchRequest:
 ## Why this mission could never be played or won, or "". Checked at load so an
 ## authoring slip — a board that does not seat the player, a relay that is not a
 ## property — is loud at the door instead of silent in the middle of an act.
-func definition_error(map: MapData) -> String:
+func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	if id == &"":
 		return "mission has no id"
 	if map_path == "":
@@ -105,7 +105,7 @@ func definition_error(map: MapData) -> String:
 	for objective: MissionObjective in objectives + failures + bonus_objectives:
 		if objective == null:
 			return "mission '%s' holds an empty objective slot" % id
-		var error := objective.definition_error(map, player_team)
+		var error := objective.definition_error(map, player_team, unit_db)
 		if error != "":
 			return "mission '%s': %s" % [id, error]
 	return ""

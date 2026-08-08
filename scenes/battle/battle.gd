@@ -218,10 +218,7 @@ func _ready() -> void:
 	commander_db = CommanderDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
 	_exit = BattleExit.new(self)
-	# A capture may need a launch the flags cannot state — a campaign board is not
-	# in the map catalogue — and stages it through MatchConfig like a menu deploy,
-	# so nothing here learns what a campaign is. Inert for every other run.
-	BattleMissionScenario.stage()
+	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
 	# scene just runs it. The menu (or a rematch) stages a request; a run that
 	# booted this scene directly — a smoke scenario, a capture, a watched Balance
@@ -256,9 +253,7 @@ func _ready() -> void:
 	replay_path = built.replay_path
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
-	# The board a mission opens on is what its tally counts from — a fresh one or
-	# a resumed one, whichever this is. Inert for every skirmish.
-	CampaignSession.open_board(game)
+	BattleCampaign.open_board(game)
 	_build_planners(built)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
@@ -388,19 +383,10 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 	if not receipt.applied:
 		return
 	await _announce_fallen(receipt.fallen)
-	# A mission's verdict outranks the receipt's, and `decide` is false for every
-	# skirmish — which is what leaves a match outside a campaign unchanged. It
-	# advances the tally after the pipeline drew the HUD, so the objective card is
-	# a board behind: `start_turn` redraws it on the way in, and every other exit
-	# leaves the board on screen — the victory lockup included — and has to be told.
-	var mission_over := CampaignSession.decide(game)
-	if mission_over or not receipt.turn_changed:
-		refresh_hud()
-	if mission_over:
-		enter_victory()
-	elif receipt.turn_changed:
+	var mission_over := BattleCampaign.decide(self, receipt)
+	if receipt.turn_changed and not mission_over:
 		start_turn()
-	elif receipt.winner != 0:
+	elif mission_over or receipt.winner != 0:
 		enter_victory()
 
 

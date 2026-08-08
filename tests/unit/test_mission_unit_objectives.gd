@@ -106,11 +106,13 @@ func test_destroy_unit_is_met_once_the_named_unit_is_off_the_board() -> void:
 func test_destroy_unit_refuses_a_name_the_board_never_gives() -> void:
 	var map := _map()
 	var objective := DestroyUnitObjective.new()
-	assert_ne(objective.definition_error(map, 1), "", "an unnamed target is no target")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "an unnamed target is no target")
 	objective.tag = &"siege_train"
-	assert_ne(objective.definition_error(map, 1), "", "and nothing on this board is called that")
+	assert_ne(
+		objective.definition_error(map, 1, unit_db), "", "and nothing on this board is called that"
+	)
 	objective.tag = &"draeg_gun"
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")
 
 
 # --- protect a named unit ---------------------------------------------------
@@ -130,9 +132,9 @@ func test_protect_unit_refuses_a_name_the_board_never_gives() -> void:
 	var map := _map()
 	var objective := ProtectUnitObjective.new()
 	objective.tag = &"the_courier"
-	assert_ne(objective.definition_error(map, 1), "")
+	assert_ne(objective.definition_error(map, 1, unit_db), "")
 	objective.tag = &"relay"
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")
 
 
 # --- reach the exit zone ----------------------------------------------------
@@ -167,23 +169,31 @@ func test_reach_cell_never_counts_an_enemy_holding_the_zone() -> void:
 func test_reach_cell_refuses_a_zone_that_could_never_be_filled() -> void:
 	var map := _map()
 	var objective := _zone([Vector2i(2, 1), Vector2i(3, 1)] as Array[Vector2i], 3)
-	assert_ne(objective.definition_error(map, 1), "", "three units onto two cells")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "three units onto two cells")
 	objective = _zone([Vector2i(2, 1), Vector2i(2, 1)] as Array[Vector2i], 2)
-	assert_ne(objective.definition_error(map, 1), "", "one cell named twice is one cell")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "one cell named twice is one cell")
 	objective = _zone([Vector2i(9, 9)] as Array[Vector2i], 1)
-	assert_ne(objective.definition_error(map, 1), "", "and that cell is off the board")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "and that cell is off the board")
 	objective = _zone([Vector2i(2, 1), Vector2i(3, 1)] as Array[Vector2i], 2)
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")
 
 
 func test_reach_cell_refuses_ground_no_unit_this_board_could_field_can_enter() -> void:
 	var objective := _zone([Vector2i(3, 0)] as Array[Vector2i], 1)
 	var landlocked := MapData.parse(LANDLOCKED, terrain_db)
-	assert_ne(objective.definition_error(landlocked, 1), "", "nothing this board fields floats")
+	assert_ne(
+		objective.definition_error(landlocked, 1, unit_db), "", "nothing this board fields floats"
+	)
 	var harbour := MapData.parse(HARBOUR, terrain_db)
-	assert_eq(objective.definition_error(harbour, 1), "", "a port builds hulls for that water")
+	assert_eq(
+		objective.definition_error(harbour, 1, unit_db), "", "a port builds hulls for that water"
+	)
 	var flotilla := MapData.parse(FLOTILLA, terrain_db)
-	assert_eq(objective.definition_error(flotilla, 1), "", "and a board that seats one needs none")
+	assert_eq(
+		objective.definition_error(flotilla, 1, unit_db),
+		"",
+		"and a board that seats one needs none"
+	)
 
 
 # --- break one army ---------------------------------------------------------
@@ -204,8 +214,10 @@ func test_defeat_team_refuses_an_army_the_mission_could_not_break() -> void:
 	var map := _map()
 	var objective := DefeatTeamObjective.new()
 	objective.team = 1
-	assert_ne(objective.definition_error(map, 1), "", "the player cannot be asked to fall")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "the player cannot be asked to fall")
 	objective.team = 4
-	assert_ne(objective.definition_error(map, 1), "", "and this board seats no fourth army")
+	assert_ne(
+		objective.definition_error(map, 1, unit_db), "", "and this board seats no fourth army"
+	)
 	objective.team = 2
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")

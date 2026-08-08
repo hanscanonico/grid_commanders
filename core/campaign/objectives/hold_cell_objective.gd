@@ -26,7 +26,7 @@ func readout(_state: GameState, _team: int, progress: MissionProgress) -> String
 	return "%d/%d DAYS" % [progress.days_held(cell), days]
 
 
-func definition_error(map: MapData, _team: int) -> String:
+func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if days <= 0:
 		return "hold objective asks for %d days" % days
 	if not map.in_bounds(cell):

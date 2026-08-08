@@ -18,7 +18,7 @@ func is_met(state: GameState, _player_team: int, _progress: MissionProgress) -> 
 	return state.is_eliminated(team)
 
 
-func definition_error(map: MapData, player_team: int) -> String:
+func definition_error(map: MapData, player_team: int, _unit_db: UnitDB) -> String:
 	if team == player_team:
 		return "defeat objective names the player's own army %d" % team
 	if not map.teams().has(team):

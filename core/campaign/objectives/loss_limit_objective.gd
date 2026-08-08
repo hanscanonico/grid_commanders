@@ -23,7 +23,7 @@ func readout(_state: GameState, _team: int, progress: MissionProgress) -> String
 	return "%d/%d LOST" % [progress.losses(), max_losses]
 
 
-func definition_error(_map: MapData, _team: int) -> String:
+func definition_error(_map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if max_losses < 0:
 		return "loss limit allows %d losses" % max_losses
 	return ""

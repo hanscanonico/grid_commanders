@@ -23,7 +23,7 @@ func readout(state: GameState, _team: int, _progress: MissionProgress) -> String
 	return "DAY %d/%d" % [state.day, day]
 
 
-func definition_error(_map: MapData, _team: int) -> String:
+func definition_error(_map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if day <= 1:
 		return "survival objective ends on day %d, which is already true at the opening" % day
 	return ""

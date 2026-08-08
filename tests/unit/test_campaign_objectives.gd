@@ -81,11 +81,11 @@ func test_capture_cell_refuses_a_cell_that_is_not_a_property() -> void:
 	var map := MapData.parse(ROW, terrain_db)
 	var objective := CaptureCellObjective.new()
 	objective.cell = Vector2i(3, 0)
-	assert_ne(objective.definition_error(map, 1), "", "plains is not capturable")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "plains is not capturable")
 	objective.cell = Vector2i(99, 99)
-	assert_ne(objective.definition_error(map, 1), "", "and that cell is off the board")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "and that cell is off the board")
 	objective.cell = Vector2i(0, 0)
-	assert_eq(objective.definition_error(map, 1), "", "a city is fine")
+	assert_eq(objective.definition_error(map, 1, unit_db), "", "a city is fine")
 
 
 # --- own N properties -------------------------------------------------------
@@ -121,9 +121,9 @@ func test_own_properties_refuses_a_count_the_board_cannot_reach() -> void:
 	var map := MapData.parse(ROW, terrain_db)
 	var objective := OwnPropertiesObjective.new()
 	objective.count = 9
-	assert_ne(objective.definition_error(map, 1), "", "the board has three properties")
+	assert_ne(objective.definition_error(map, 1, unit_db), "", "the board has three properties")
 	objective.count = 3
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")
 
 
 # --- survive / deadline -----------------------------------------------------
@@ -164,6 +164,6 @@ func test_ally_survives_refuses_an_army_the_board_never_seats() -> void:
 	var map := MapData.parse(ROW, terrain_db)
 	var objective := AllySurvivesObjective.new()
 	objective.team = 4
-	assert_ne(objective.definition_error(map, 1), "")
+	assert_ne(objective.definition_error(map, 1, unit_db), "")
 	objective.team = 2
-	assert_eq(objective.definition_error(map, 1), "")
+	assert_eq(objective.definition_error(map, 1, unit_db), "")

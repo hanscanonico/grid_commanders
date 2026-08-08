@@ -18,7 +18,7 @@ func is_met(state: GameState, _team: int, _progress: MissionProgress) -> bool:
 	return tagged_unit(state, tag) == null
 
 
-func definition_error(map: MapData, _team: int) -> String:
+func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if tag == &"":
 		return "protect objective names no unit"
 	if not board_names(map, tag):

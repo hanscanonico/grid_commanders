@@ -46,7 +46,10 @@ func readout(_state: GameState, _team: int, _progress: MissionProgress) -> Strin
 ## Called once when a mission loads so an authoring mistake — a cell that is not
 ## a property, a count no board can reach — fails visibly at the door rather
 ## than as a mission that silently cannot be won.
-func definition_error(_map: MapData, _team: int) -> String:
+##
+## `unit_db` is handed over rather than loaded here, so this stays the pure read
+## it claims to be: the caller checking a mission already holds one.
+func definition_error(_map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	return ""
 
 
