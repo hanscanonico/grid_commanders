@@ -30,21 +30,44 @@ func readout(state: GameState, team: int, _progress: MissionProgress) -> String:
 func definition_error(map: MapData, _team: int) -> String:
 	if count <= 0:
 		return "reach objective asks for %d units" % count
+	var fieldable := _fieldable_classes(map)
 	var named: Dictionary[Vector2i, bool] = {}
 	for cell: Vector2i in cells:
 		if not map.in_bounds(cell):
 			return "reach objective names %s, off a %dx%d board" % [cell, map.width, map.height]
 		if named.has(cell):
 			return "reach objective names %s twice" % cell
-		var terrain := map.terrain_at(cell)
-		if terrain.move_costs.is_empty():
-			return (
-				"reach objective names %s, which is %s and nothing can enter" % [cell, terrain.id]
-			)
+		if not _enterable(map.terrain_at(cell), fieldable):
+			return "reach objective names %s, which nothing this board fields can enter" % cell
 		named[cell] = true
 	if cells.size() < count:
 		return "reach objective asks %d units onto %d cells" % [count, cells.size()]
 	return ""
+
+
+## Every move class this board could put on a square: what its `[units]` section
+## seats, plus what its properties build — `TerrainType.builds` being the one
+## authority on that, so no terrain is named here. It answers what the *board*
+## could field rather than what this mission's seating will, the tighter question
+## belonging to the content gate, which holds the mission as well as the board.
+func _fieldable_classes(map: MapData) -> Dictionary[StringName, bool]:
+	var classes: Dictionary[StringName, bool] = {}
+	var unit_db := UnitDB.load_default()
+	for entry: Dictionary in map.starting_units:
+		var unit_type := unit_db.by_symbol(entry["symbol"])
+		if unit_type != null:
+			classes[unit_type.move_class] = true
+	for cell: Vector2i in map.property_cells():
+		for move_class: StringName in map.terrain_at(cell).builds:
+			classes[move_class] = true
+	return classes
+
+
+static func _enterable(terrain: TerrainType, classes: Dictionary[StringName, bool]) -> bool:
+	for move_class: StringName in classes:
+		if terrain.is_passable(move_class):
+			return true
+	return false
 
 
 func _arrived(state: GameState, team: int) -> int:

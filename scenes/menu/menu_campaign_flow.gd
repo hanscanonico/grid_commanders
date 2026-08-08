@@ -193,8 +193,10 @@ func _deploy(mission_id: StringName) -> void:
 	# than restarting, and carries on with the tally that board was kept with. Any
 	# other deploy starts fresh, snapshot or none — a snapshot belongs to exactly
 	# the mission that wrote it.
-	var in_progress := CampaignProfile.load_in_progress(_campaign.id)
-	var resumes := progress.active_mission == mission.id and not in_progress.battle.is_empty()
+	var in_progress: CampaignProfile.InProgress = null
+	if progress.active_mission == mission.id:
+		in_progress = CampaignProfile.load_in_progress(_campaign.id)
+	var resumes := in_progress != null and not in_progress.battle.is_empty()
 	var request := CampaignSession.begin(
 		_campaign, mission, progress, in_progress.tally if resumes else null
 	)

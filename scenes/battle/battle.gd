@@ -389,18 +389,19 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 		return
 	await _announce_fallen(receipt.fallen)
 	# A mission's verdict outranks the receipt's, and `decide` is false for every
-	# skirmish — which is what leaves a match outside a campaign unchanged.
-	if CampaignSession.decide(game):
+	# skirmish — which is what leaves a match outside a campaign unchanged. It
+	# advances the tally after the pipeline drew the HUD, so the objective card is
+	# a board behind: `start_turn` redraws it on the way in, and every other exit
+	# leaves the board on screen — the victory lockup included — and has to be told.
+	var mission_over := CampaignSession.decide(game)
+	if mission_over or not receipt.turn_changed:
+		refresh_hud()
+	if mission_over:
 		enter_victory()
 	elif receipt.turn_changed:
 		start_turn()
 	elif receipt.winner != 0:
 		enter_victory()
-	else:
-		# `decide` advanced the tally after the pipeline drew the HUD, so the
-		# objective card is still describing the board before this command. The
-		# three branches above each redraw or replace it already.
-		refresh_hud()
 
 
 ## Asks for the board back while the computer is playing. Public because the Esc
