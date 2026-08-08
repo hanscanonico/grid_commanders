@@ -200,9 +200,10 @@
           <b>A mission cannot ask for anything a skirmish cannot.</b> The vocabulary is four objective
           Resources and one failure. Every beat the story treatments wanted — evacuate, escort, keep this
           general alive, destroy that column, hold this ridge — was ruled out at authoring time and
-          rewritten as “capture ground by day N”. <span class="pl">.lavish/campaign-scenarios-plan.html</span>
-          §5 says so explicitly and calls it “the trap every campaign treatment falls into”. The campaign
-          that shipped is precisely the campaign that vocabulary can express.
+          rewritten as “capture ground by day N”. <span class="pl">campaign-scenarios-plan.html</span>
+          §5 (an uncommitted handoff, not a file in the tree) says so explicitly and calls it “the trap
+          every campaign treatment falls into”. The campaign that shipped is precisely the campaign that
+          vocabulary can express.
         </li>
         <li>
           <b>Nothing can happen during a battle that the player did not do.</b> There are no triggers, no
@@ -895,16 +896,19 @@ events = [
       <div class="gc-card p-4">
         <div class="gc-kicker" style="color:var(--gc-water-dark)">What this plan supersedes</div>
         <ul class="mt-2 text-sm space-y-2">
-          <li><b><span class="pl">campaign-scenarios-plan.html</span> §5</b> — the expressibility ruling
+          <li><b><span class="pl">campaign-scenarios-plan.html</span> §5</b> (uncommitted handoff) — the
+          expressibility ruling
           that <i>evacuate</i>, <i>escort</i>, <i>keep alive</i>, <i>reinforcements</i> and <i>changes
           sides</i> “are presumed to need engine work until proven otherwise”. This plan <b>is</b> that
           engine work; §5's table is answered line by line in §4 above. Its underlying rule survives intact
           and is worth restating: a tactic being shipped is not a mission being expressible.</li>
-          <li><b><span class="pl">campaign-mode-plan.html</span>'s out-of-scope list</b> — “mid-mission
+          <li><b><span class="pl">campaign-mode-plan.html</span>'s out-of-scope list</b> (uncommitted
+          handoff) — “mid-mission
           reinforcements, scripted event triggers, escort units, branching missions, a persistent army”.
           All five are in scope here, under D1–D7. That plan's architecture (MissionRuntime, the objective
           Resources, the campaign save, hub → briefing → battle → debrief) is <b>not</b> superseded and is
-          what this builds on.</li>
+          what this builds on — the committed statement of it is <span class="pl">CLAUDE.md</span>'s
+          “Campaign mode” entry.</li>
           <li>The campaign entry in <span class="pl">CLAUDE.md</span> gains this plan's decisions; its
           existing D1–D5 stand unchanged, and D2's “no evacuate/escort/named-unit objective exists on
           purpose” is the one clause this retires.</li>
@@ -933,7 +937,9 @@ events = [
   <footer class="px-6 md:px-10 py-6 border-t-2 border-base-300 text-sm dim">
     <p><b>Grid Commanders — Campaign Depth</b> · design of record · rev 1 · 2026-08-07.
     Scoped against <span class="pl">campaign-mode-plan.html</span> (the architecture) and
-    <span class="pl">campaign-scenarios-plan.html</span> (the six premises), whose §5 it answers.
+    <span class="pl">campaign-scenarios-plan.html</span> (the six premises), whose §5 it answers — both
+    uncommitted design handoffs rather than files in the tree; the committed record of the campaign
+    layer's architecture and decisions is <span class="pl">CLAUDE.md</span>'s “Campaign mode” entry.
     Milestones CD1–CD8; CD1 is shipped, and each milestone's own card is where its badge says so.</p>
   </footer>
 
