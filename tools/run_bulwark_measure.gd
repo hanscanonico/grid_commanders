@@ -102,11 +102,28 @@ func _init() -> void:
 func _parse_args() -> bool:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seeds="):
-			_seed_count = maxi(1, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := _int_flag(value, 1)
+			if parsed < 0:
+				push_error("bulwark: --seeds must be a positive integer (got '%s')" % value)
+				return false
+			_seed_count = parsed
 		elif arg.begins_with("--seed-offset="):
-			_seed_offset = maxi(0, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := _int_flag(value, 0)
+			if parsed < 0:
+				push_error(
+					"bulwark: --seed-offset must be a non-negative integer (got '%s')" % value
+				)
+				return false
+			_seed_offset = parsed
 		elif arg.begins_with("--days="):
-			_days_cap = maxi(1, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := _int_flag(value, 1)
+			if parsed < 0:
+				push_error("bulwark: --days must be a positive integer (got '%s')" % value)
+				return false
+			_days_cap = parsed
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
 		elif arg.begins_with("--out="):
@@ -123,6 +140,17 @@ func _parse_args() -> bool:
 		return false
 	_out_dir = resolved
 	return true
+
+
+## Validates a numeric flag's raw text before coercing it: an integer at least
+## `min_value`, or -1 (never legal here) otherwise — so `--seeds=four` and
+## `--days=-5` refuse out loud instead of the old `maxi(1, int(...))` quietly
+## landing on 1.
+func _int_flag(value: String, min_value: int) -> int:
+	if not value.is_valid_int():
+		return -1
+	var parsed := value.to_int()
+	return parsed if parsed >= min_value else -1
 
 
 ## Plays one grouping over the whole seed range and reports whether anything
