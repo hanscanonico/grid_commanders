@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/ally_survives_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
@@ -12,15 +12,15 @@ script = ExtResource("2")
 text = "Take the contested relay for the alliance."
 cell = Vector2i(10, 4)
 
-[sub_resource type="Resource" id="Objective_1"]
-script = ExtResource("3")
-text = "Keep the marshal's army in the field."
-team = 2
-
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("4")
 text = "The rivals held the field past day 9."
 last_day = 9
+
+[sub_resource type="Resource" id="Failure_1"]
+script = ExtResource("3")
+text = "Marshal Draeg fell before the siege was broken."
+tag = &"marshal_draeg"
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
@@ -70,8 +70,8 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
-failures = Array[Resource]([SubResource("Failure_0")])
+objectives = Array[Resource]([SubResource("Objective_0")])
+failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_1")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])

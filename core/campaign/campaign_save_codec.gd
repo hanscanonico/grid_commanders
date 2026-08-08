@@ -12,11 +12,15 @@ extends RefCounted
 ## on each of the two cards and finishing a campaign mission cannot overwrite an
 ## unrelated match.
 
-const VERSION := 1
+## 2 carries the mission tally beside the battle. A version 1 profile loads with
+## an empty one, which is what it was playing with.
+const VERSION := 2
 
 
 ## The whole of a campaign profile, as a plain dictionary.
-static func encode(state: CampaignState, battle: Dictionary = {}) -> Dictionary:
+static func encode(
+	state: CampaignState, battle: Dictionary = {}, tally: MissionProgress = null
+) -> Dictionary:
 	var unlocked: Array[String] = []
 	for mission_id: StringName in state.unlocked:
 		if state.unlocked[mission_id]:
@@ -33,8 +37,13 @@ static func encode(state: CampaignState, battle: Dictionary = {}) -> Dictionary:
 		"records": records,
 		"active_mission": String(state.active_mission),
 	}
+	# The tally rides with the battle and is dropped with it: bookkeeping for a
+	# mission nobody is in the middle of is bookkeeping nobody can use, and it is
+	# what stops a restarted mission opening with the last attempt's losses.
 	if not battle.is_empty():
 		data["battle"] = battle
+		if tally != null and not tally.is_empty():
+			data["mission_progress"] = tally.to_dict()
 	return data
 
 
@@ -64,6 +73,13 @@ static func decode(data: Dictionary) -> CampaignState:
 static func battle_of(data: Dictionary) -> Dictionary:
 	var battle = data.get("battle", {})
 	return battle if battle is Dictionary else {}
+
+
+## The tally that battle was being kept with, empty when the profile holds none —
+## which is every version 1 profile, and every profile between missions.
+static func tally_of(data: Dictionary) -> MissionProgress:
+	var counters = data.get("mission_progress", {})
+	return MissionProgress.from_dict(counters if counters is Dictionary else {})
 
 
 ## Why this dictionary is not a campaign profile, or "".
@@ -104,4 +120,12 @@ static func validate(data: Dictionary) -> String:
 		return "save holds a battle that is not a snapshot"
 	if data.has("battle") and String(data.get("active_mission", "")) == "":
 		return "save holds a battle but names no mission it belongs to"
+	if data.has("mission_progress"):
+		if not (data["mission_progress"] is Dictionary):
+			return "save holds a tally that is not a set of counters"
+		if not data.has("battle"):
+			return "save holds a tally but no battle it was kept for"
+		var error := MissionProgress.tally_error(data["mission_progress"])
+		if error != "":
+			return error
 	return ""

@@ -200,6 +200,16 @@ static func requested() -> bool:
 	return CmdArgs.value(args, DEMO_ARG) != "" or _selected_cell(args).x >= 0
 
 
+## The demo this boot runs, asked before any driver exists to hold it — which is
+## why it is static and public: BattleMissionScenario stages its launch before
+## Battle builds anything. A batch entry supersedes a lone `--demo=`, exactly as
+## `_init` reads them.
+static func boot_demo() -> String:
+	if BattleCaptureBatch.requested() != "":
+		return BattleCaptureBatch.demo()
+	return CmdArgs.value(CmdArgs.user(), DEMO_ARG)
+
+
 ## Whether this run is one of the two that exist to photograph the first-match
 ## teaching strip. Every other capture pins the hints away, exactly as it pins
 ## the game speed: the strip's presence would otherwise depend on how much of the
@@ -223,6 +233,10 @@ func run() -> void:
 		return
 	if _shot_path != "":
 		await BattleCaptureBatch.finish_capture(_battle, _shot_path)
+		# A staged mission does not outlive its frame: the next scenario in the
+		# batch — the menu's included, where a live session reopens a hub over the
+		# picture — boots with no campaign in play.
+		CampaignSession.clear()
 
 
 ## Every unit still on screen is one the viewing team is allowed to see.
@@ -372,6 +386,10 @@ func _run_demo(mode: String) -> void:
 			await _stage_power_targeting()  # the aimed power, mid-aim
 		MISSION_STRIP_MODE, MISSION_STRIP_RETIRED:
 			await _stage_mission_strip(mode)
+		BattleMissionScenario.MODE:
+			var mission_error := await BattleMissionScenario.new(_battle).run()
+			if mission_error != "":
+				_fail(mission_error)
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
 		"commander_victory", "victory", "side_victory":

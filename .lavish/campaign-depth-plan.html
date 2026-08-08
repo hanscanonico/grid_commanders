@@ -487,10 +487,18 @@ events = [
         </p>
         <p class="mt-2 text-sm">
           It obeys the boundary conventions already in force: an event's speech is an awaited blocking beat
-          any press skips (<span class="pl">TransitionInput</span>, ux-recovery D3), no interactive menu
-          sits under it, and it is suppressed while <span class="pl">animator.capturing</span> and under
-          Instant so <span class="pl">make smoke</span> stays byte-stable outside the frames the panel is
-          deliberately in.
+          any press skips (<span class="pl">TransitionInput</span>, ux-recovery D3), and no interactive
+          menu sits under it.
+        </p>
+        <p class="mt-2 text-sm">
+          <b>The byte-stability gate is the panel's own visibility, not a capture branch</b> — corrected in
+          CD2, because this decision as first written was self-defeating. Suppressing the panel while
+          <span class="pl">animator.capturing</span> is what the cut-ins do, and it would have hidden the
+          panel in the one scenario that has to photograph it. The shipped gate is stronger and needs no
+          opt-out: the panel is down unless <span class="pl">CampaignSession.active()</span>, and no capture
+          stages a mission except its own, so every skirmish frame is byte-identical by construction rather
+          than by a branch. Instant needs nothing either — the panel has no animation to skip. Measured, not
+          argued: 73 pre-existing scenarios byte-identical across the change, one new frame.
         </p>
       </div>
 
@@ -613,6 +621,7 @@ events = [
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-neutral pl">CD2</span>
           <h3 class="font-black text-lg">The objective vocabulary, and the board says what it wants</h3>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
           <span class="text-xs dim">D8's first half</span>
         </div>
         <p class="mt-2 text-sm">
@@ -624,6 +633,25 @@ events = [
         <p class="mt-2 text-sm"><b>Gate:</b> a unit test per objective driving a fixture board;
         <span class="pl">make campaigns</span> green; the panel appears in a new
         <span class="pl">make smoke</span> scenario and nowhere else.</p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD2 settled.</b> Only <span class="pl">HoldCell</span> and
+          <span class="pl">LossLimit</span> need the tally; the other four are pure reads of one board, so
+          <span class="pl">MissionProgress</span> stayed small. Losses are a set difference against the
+          units last seen rather than "started with, minus have now", because a unit built between two
+          boundaries would otherwise mask a unit killed between them — and a
+          <span class="pl">JoinCommand</span> merge therefore reads as a loss, which is stated on the class
+          rather than special-cased, D2 forbidding a hook to tell the two departures apart. The tally
+          follows the <i>board</i>, so a resume inherits its losses and a retry does not.
+          <span class="pl">CampaignSaveCodec</span> reached <b>VERSION 2</b> here rather than at CD4 as this
+          plan scheduled; CD4 adds its flags inside 2 or bumps again.
+          <span class="pl">MissionObjective.readout()</span> is the one addition to
+          <span class="pl">core/</span> the milestone did not plan: the panel must not re-derive a deadline
+          or a count off an objective's exports, and an objective already carries authored presentation
+          copy in <span class="pl">text</span>. A campaign board is not in
+          <span class="pl">MapCatalog</span>, so the scenario deploys through the shipped
+          <span class="pl">CampaignSession.begin</span> → <span class="pl">MatchConfig.stage</span> pair
+          rather than widening <span class="pl">--map=</span>.
+        </p>
       </div>
 
       <div class="gc-ms p-4">

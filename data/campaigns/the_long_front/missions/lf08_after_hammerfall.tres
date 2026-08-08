@@ -1,9 +1,15 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+
+[sub_resource type="Resource" id="Objective_break_the_garrison"]
+script = ExtResource("5")
+text = "Break the garrison Morn left holding the ashes."
+tag = &"ruin_garrison"
 
 [sub_resource type="Resource" id="Objective_retake_averyn"]
 script = ExtResource("2")
@@ -61,7 +67,7 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_retake_averyn")])
+objectives = Array[Resource]([SubResource("Objective_break_the_garrison"), SubResource("Objective_retake_averyn")])
 failures = Array[Resource]([SubResource("Failure_day_8")])
 bonus_objectives = Array[Resource]([])
 par_day = 6

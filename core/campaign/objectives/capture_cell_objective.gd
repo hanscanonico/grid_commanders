@@ -9,12 +9,12 @@ extends MissionObjective
 @export var cell: Vector2i = Vector2i.ZERO
 
 
-func is_met(state: GameState, team: int) -> bool:
+func is_met(state: GameState, team: int, _progress: MissionProgress) -> bool:
 	var owner := state.owner_at(cell)
 	return owner != 0 and state.allied(owner, team)
 
 
-func definition_error(map: MapData, _team: int) -> String:
+func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if not map.in_bounds(cell):
 		return "capture objective names %s, off a %dx%d board" % [cell, map.width, map.height]
 	if not map.terrain_at(cell).is_property:

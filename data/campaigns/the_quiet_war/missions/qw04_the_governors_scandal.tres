@@ -1,14 +1,15 @@
 [gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
-[sub_resource type="Resource" id="Objective_take_city_hall"]
+[sub_resource type="Resource" id="Objective_reach_city_hall"]
 script = ExtResource("2")
-text = "Take city hall before the signing."
-cell = Vector2i(6, 3)
+text = "Get the column onto city hall before the signing."
+cells = Array[Vector2i]([Vector2i(6, 3), Vector2i(6, 4)])
+count = 2
 
 [sub_resource type="Resource" id="Failure_day_5"]
 script = ExtResource("3")
@@ -61,7 +62,7 @@ commanders = {
 }
 fog_enabled = true
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_take_city_hall")])
+objectives = Array[Resource]([SubResource("Objective_reach_city_hall")])
 failures = Array[Resource]([SubResource("Failure_day_5")])
 bonus_objectives = Array[Resource]([])
 par_day = 5

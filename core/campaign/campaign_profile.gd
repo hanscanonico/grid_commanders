@@ -23,6 +23,21 @@ const TEMP_SUFFIX := ".tmp"
 const BACKUP_SUFFIX := ".bak"
 
 
+## The mission a profile is midway through: the board and the tally it was being
+## kept with. The two are written together and a resume wants both, so they are
+## read together — the profile embeds a whole `SaveCodec` envelope, and asking
+## for one part at a time parses the largest file this class writes twice.
+class InProgress:
+	extends RefCounted
+
+	var battle: Dictionary
+	var tally: MissionProgress
+
+	func _init(p_battle: Dictionary, p_tally: MissionProgress) -> void:
+		battle = p_battle
+		tally = p_tally
+
+
 ## Where a campaign's progress lives. Public so a test can name the file rather
 ## than spelling the convention a second time.
 static func path_for(campaign_id: StringName) -> String:
@@ -68,19 +83,37 @@ static func load_progress(campaign_id: StringName) -> CampaignState:
 ## The battle a profile was midway through, or an empty dictionary. Handed
 ## straight to `SaveCodec.decode`; nothing here reads inside it.
 static func load_battle(campaign_id: StringName) -> Dictionary:
+	return CampaignSaveCodec.battle_of(_read(campaign_id))
+
+
+## That battle and the tally it was being kept with, off one read. What a deploy
+## asks: it needs to know there is a board to pick up *and* what that board was
+## being counted with, and a resumed mission has to open owing the losses it had
+## already taken.
+static func load_in_progress(campaign_id: StringName) -> InProgress:
+	var data := _read(campaign_id)
+	return InProgress.new(CampaignSaveCodec.battle_of(data), CampaignSaveCodec.tally_of(data))
+
+
+## The profile as it sits on disk, or an empty dictionary. Silent, unlike
+## `load_progress`: a caller asking for one part of a profile is asking about a
+## mission in progress, and "there is none" is the ordinary answer.
+static func _read(campaign_id: StringName) -> Dictionary:
 	var path := _slot_path(path_for(campaign_id))
 	if not FileAccess.file_exists(path):
 		return {}
 	var json := JSON.new()
 	if json.parse(FileAccess.get_file_as_string(path)) != OK or not json.data is Dictionary:
 		return {}
-	return CampaignSaveCodec.battle_of(json.data)
+	return json.data
 
 
 ## Writes progress, leaving the previous profile untouched if anything fails.
 ## Returns false and says why; the caller decides whether that is worth telling
 ## the player about.
-static func save_progress(state: CampaignState, battle: Dictionary = {}) -> bool:
+static func save_progress(
+	state: CampaignState, battle: Dictionary = {}, tally: MissionProgress = null
+) -> bool:
 	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(DIR)):
 		var error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
 		if error != OK:
@@ -92,7 +125,7 @@ static func save_progress(state: CampaignState, battle: Dictionary = {}) -> bool
 	if file == null:
 		push_error("CampaignProfile: cannot write %s (%d)" % [temp, FileAccess.get_open_error()])
 		return false
-	file.store_string(JSON.stringify(CampaignSaveCodec.encode(state, battle), "\t"))
+	file.store_string(JSON.stringify(CampaignSaveCodec.encode(state, battle, tally), "\t"))
 	file.close()
 	return _swap_into_place(temp, path + BACKUP_SUFFIX, path)
 

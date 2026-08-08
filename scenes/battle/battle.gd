@@ -218,6 +218,7 @@ func _ready() -> void:
 	commander_db = CommanderDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
 	_exit = BattleExit.new(self)
+	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
 	# scene just runs it. The menu (or a rematch) stages a request; a run that
 	# booted this scene directly — a smoke scenario, a capture, a watched Balance
@@ -252,6 +253,7 @@ func _ready() -> void:
 	replay_path = built.replay_path
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
+	BattleCampaign.open_board(game)
 	_build_planners(built)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
@@ -381,13 +383,10 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 	if not receipt.applied:
 		return
 	await _announce_fallen(receipt.fallen)
-	# A mission's verdict outranks the receipt's, and `decide` is false for every
-	# skirmish — which is what leaves a match outside a campaign unchanged.
-	if CampaignSession.decide(game):
-		enter_victory()
-	elif receipt.turn_changed:
+	var mission_over := BattleCampaign.decide(self, receipt)
+	if receipt.turn_changed and not mission_over:
 		start_turn()
-	elif receipt.winner != 0:
+	elif mission_over or receipt.winner != 0:
 		enter_victory()
 
 
@@ -482,6 +481,7 @@ func _build_view() -> BattleView:
 	built.damage_preview = %DamagePreview
 	built.hud_top = %HudTop
 	built.mission_strip = %MissionStrip
+	built.mission_panel = %MissionObjectives
 	built.db = db
 	built.map = map
 	built.game = game

@@ -53,7 +53,9 @@ func test_every_mission_can_be_won_and_lost_on_its_own_board() -> void:
 			var map := _map_of(mission)
 			if map == null:
 				continue
-			assert_eq(mission.definition_error(map), "", "%s/%s" % [campaign.id, mission.id])
+			assert_eq(
+				mission.definition_error(map, unit_db), "", "%s/%s" % [campaign.id, mission.id]
+			)
 
 
 func test_every_mission_builds_the_match_it_states() -> void:

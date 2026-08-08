@@ -19,17 +19,33 @@ var mission: MissionDefinition
 var progress: CampaignState
 ## The verdict, once a mission has been decided. Read by the outcome screen.
 var outcome: MissionRuntime.Outcome
+## What the mission has tallied over the boards it has been played on — days a
+## square has been held, units lost. Baselined by `open_board` and advanced by
+## `decide`; this session is the only thing that ever writes it, which is
+## campaign-depth D2's one writer.
+var tally: MissionProgress
 var _runtime: MissionRuntime
 
 
 ## Stage a mission and return the launch it is, for `MatchConfig.stage`.
+##
+## `resumed_tally` is the tally the saved board was being kept with, and null
+## starts the mission clean — the tally follows the board, so a retry that
+## inherited the last attempt's losses would fail a loss limit nobody had spent.
+## The caller hands it over rather than this session fetching it, because the
+## caller is already reading the profile to find out whether there is a board to
+## pick up at all; asking again here would be a second opinion about that.
 func begin(
-	p_campaign: CampaignDefinition, p_mission: MissionDefinition, p_progress: CampaignState
+	p_campaign: CampaignDefinition,
+	p_mission: MissionDefinition,
+	p_progress: CampaignState,
+	resumed_tally: MissionProgress = null
 ) -> MatchRequest:
 	campaign = p_campaign
 	mission = p_mission
 	progress = p_progress
 	outcome = null
+	tally = resumed_tally if resumed_tally != null else MissionProgress.new()
 	_runtime = MissionRuntime.new(p_mission)
 	if progress != null:
 		progress.active_mission = p_mission.id
@@ -41,6 +57,21 @@ func active() -> bool:
 	return mission != null
 
 
+## Take the board the mission opens on as the tally's baseline, before a command
+## has been applied to it. Called once by the battle scene, as soon as the board
+## exists; silent outside a campaign.
+##
+## `observe` advances the tally by diffing the board against the last one it saw,
+## so the *first* board it is ever shown can only be a baseline. Left to `decide`
+## that first board is the one command in, and whatever that command cost is
+## free — on a fresh mission, and again on every resume, which is a loss limit a
+## reload spends nothing against.
+func open_board(game: GameState) -> void:
+	if mission == null:
+		return
+	tally.observe(game, mission.player_team)
+
+
 ## Has the mission just ended, on a board a command has been applied to?
 ##
 ## The gate for every skirmish is the null runtime, so a match outside a
@@ -49,10 +80,15 @@ func active() -> bool:
 ## receipt's own winner because `MissionRuntime`'s precedence already turns a
 ## tactical victory into success — consulting both would give one board two
 ## endings. Decided once: a mission already over stays over.
+##
+## The tally is advanced here and before the verdict, because a condition asking
+## how long the ridge has been ours has to be answered about this board rather
+## than the one before it.
 func decide(game: GameState) -> bool:
 	if _runtime == null or outcome != null:
 		return false
-	var verdict := _runtime.evaluate(game)
+	tally.observe(game, mission.player_team)
+	var verdict := _runtime.evaluate(game, tally)
 	if not verdict.is_over():
 		return false
 	outcome = verdict
@@ -89,7 +125,7 @@ func save_battle(battle: Dictionary) -> bool:
 	if progress == null or mission == null:
 		return false
 	progress.active_mission = mission.id
-	return CampaignProfile.save_progress(progress, battle)
+	return CampaignProfile.save_progress(progress, battle, tally)
 
 
 ## Forget the campaign — leaving for the menu, or starting a skirmish. Resets
@@ -102,4 +138,5 @@ func clear() -> void:
 	mission = null
 	progress = null
 	outcome = null
+	tally = null
 	_runtime = null

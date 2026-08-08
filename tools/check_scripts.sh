@@ -46,6 +46,11 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # it, and Battle holds no mission field — so the four lines are the branch and
 # its reason, with nothing loose left to move.
 #
+# CD2 held that 1415 rather than raising it: the objective vocabulary gave the
+# scene two more campaign moments (the mission capture's launch, the tally's
+# opening board), and all three go through BattleCampaign, which owns this
+# battle's whole campaign side. Battle still holds no mission field.
+#
 # main_menu.gd 1112 -> 1148: the Campaign route. The flow itself was moved out
 # first — MenuCampaignFlow owns the two panels and the walk between them, which
 # is 80 of the 116 lines it arrived as — and what is left is the button, the

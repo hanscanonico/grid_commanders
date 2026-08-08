@@ -85,7 +85,11 @@ static func adopt(battle: Node) -> bool:
 
 
 ## The current entry's mode — the label half, with any `@<map>` boot fact off.
+## Parses the queue if nothing has yet, for the same reason `scenario_args()`
+## does: the current entry is asked about before any driver has adopted it.
 static func _mode() -> String:
+	if not _adopted():
+		return ""
 	return _modes[_index].get_slice(MAP_SEPARATOR, 0)
 
 

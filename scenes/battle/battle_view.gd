@@ -54,6 +54,11 @@ var hud_top: HudTopBar
 ## good once the loop has been performed once — so unlike the two bars it floats
 ## over the board and the camera is never framed around it.
 var mission_strip: MissionStrip
+## The campaign mission's terms, kept on the board while it is fought. Down for
+## every skirmish — it asks CampaignSession and nothing else — so it floats for
+## the same reason the strip does rather than being chrome the camera is framed
+## around.
+var mission_panel: MissionObjectivesPanel
 
 ## The transient jitter the animator lays over the board's docking shift. Set —
 ## and tweened — by BattleAnimator.shake_camera rather than written to the
@@ -388,6 +393,9 @@ func refresh_hud() -> void:
 	# has to say "something changed" — and a turn boundary is when a step most
 	# often did (COM-12).
 	mission_strip.refresh()
+	# The mission card reads the board it is describing, so it is handed the same
+	# state everything else here draws from.
+	mission_panel.refresh(game)
 
 
 ## Which seats the computer plays, from Battle, which owns the list. The view

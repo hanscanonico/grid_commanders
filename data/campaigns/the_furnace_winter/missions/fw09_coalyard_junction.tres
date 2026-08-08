@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="6"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -20,6 +21,11 @@ cell = Vector2i(15, 3)
 script = ExtResource("3")
 text = "The road stayed closed past day 9."
 last_day = 9
+
+[sub_resource type="Resource" id="Failure_1"]
+script = ExtResource("6")
+text = "More than three of our units left the column, however they went."
+max_losses = 3
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
@@ -68,7 +74,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
-failures = Array[Resource]([SubResource("Failure_0")])
+failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_1")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])

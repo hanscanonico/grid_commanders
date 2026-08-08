@@ -74,7 +74,7 @@ func _check_mission(
 	if map == null:
 		_fail("%s: board '%s' does not parse" % [where, mission.map_path])
 		return
-	var error := mission.definition_error(map)
+	var error := mission.definition_error(map, unit_db)
 	if error != "":
 		_fail("%s: %s" % [where, error])
 		return
