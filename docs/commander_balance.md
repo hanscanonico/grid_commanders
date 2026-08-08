@@ -368,5 +368,8 @@ this change.
   Evidence: human play — powers were firing too often to stay an event. This is
   a global pacing shift, not a per-commander tune, so it moves one value per the
   ladder above while preserving the roster's cost ordering; the top tier now
-  sits on the plan's 14 000 ceiling. The accrual split (100 % lost / 50 % dealt)
-  is the plan's locked D2 and was not touched.
+  sits on the plan's 14 000 ceiling. [That ceiling described the roster as of
+  this date — the four-commander expansion (more-commanders plan, MC1–MC5)
+  later seated a costlier tier, Radek Morn's 24,000 in the MC5 section above.]
+  The accrual split (100 % lost / 50 % dealt) is the plan's locked D2 and was
+  not touched.
