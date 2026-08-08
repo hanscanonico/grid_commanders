@@ -134,6 +134,8 @@ const HUD_CO_MIN_W := 105
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
+## A full-screen page's title (CommanderSelectPanel, ReplayPickerPanel).
+const SIZE_PAGE_TITLE := 15
 const SIZE_BUTTON := 10
 ## The one announcement size: the beat that stops the board (the day banner) and
 ## the lockup that ends it. Between the wordmark and a panel title, because both

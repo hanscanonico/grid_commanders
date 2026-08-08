@@ -24,7 +24,6 @@ signal cancelled
 ## seat more, and what `begin` falls back to if it is handed nothing.
 const DUEL_SEATS := 2
 
-const _TITLE_SIZE := 15
 const _MINI_H := 82
 ## The private slate/muted palette swaps for the shared UiTheme tokens it already
 ## sat a shade from, so the select page and the menu speak one grey (plan MN3).
@@ -229,7 +228,7 @@ func _build_topbar() -> HBoxContainer:
 	_title = Label.new()
 	_title.text = "SELECT COMMANDER"
 	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_title)
@@ -596,7 +595,11 @@ func _build_chips() -> void:
 
 
 ## Fills a chip in a side's theme, or greys it (theme null) when the side is not
-## yet in hand.
+## yet in hand. Deliberately not `UiKit.identity_chip`: that chip is a settled
+## fact (a dot on cream, read once in the menu footer), while a seat chip is
+## read at a glance across a walk still in progress, seat by seat, so the fill
+## itself is the doctrine and greying an unreached seat has nothing else to
+## show it with.
 func _paint_chip(
 	chip: PanelContainer, label: Label, text: String, theme: CommanderVisuals.FactionTheme
 ) -> void:
@@ -633,10 +636,13 @@ func _style_tab(tab: Button, active: bool) -> void:
 # --- style helpers -----------------------------------------------------------
 
 
+## Every caller sets text and colour itself right after, so the placeholders
+## below never reach a frame; only font and size are this builder's own.
+## Reset to top alignment because `hud_label` centres, and the summary box
+## (unlike a mini or a chip) is taller than its text.
 func _small_label(size: int) -> Label:
-	var label := Label.new()
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", size)
+	var label := UiTheme.hud_label("", size, UiTheme.INK, true)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	return label
 
 

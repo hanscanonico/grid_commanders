@@ -12,7 +12,6 @@ extends Control
 signal picked(path: String)
 signal cancelled
 
-const _TITLE_SIZE := 15
 const _ROW_HEIGHT := 18
 ## The list is a reading column, not a banner. Full-frame rows set a 41-character
 ## label across 624px with the last third empty, which reads as a table missing a
@@ -95,7 +94,7 @@ func _build() -> void:
 	_title = Label.new()
 	_title.text = "REPLAYS"
 	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(_title)
 
@@ -128,19 +127,21 @@ func _build() -> void:
 
 	var footer := Label.new()
 	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", 8)
+	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	footer.text = "UP/DOWN  BROWSE      ENTER  WATCH      ESC  BACK      MOUSE OK"
 	main.add_child(footer)
 
 
 ## A centred Silkscreen micro-line, the panel's one kind of explanatory text.
+## Unlike `UiKit.micro_label`/`help_label`, this reads a sentence rather than a
+## caption, so it keeps its own case and centres rather than uppercasing —
+## `UiTheme.hud_label` still carries the shared font/size/colour build, reset
+## to this page's own alignment (hud_label centres vertically, for a bar row;
+## this note wants that horizontally instead).
 func _note(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_MICRO, UiTheme.NEUTRAL_LIGHT)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
 

@@ -228,12 +228,13 @@ func _labelled_block(parent: Node, micro: String) -> Label:
 
 
 ## One wrapping line of rules copy: Pixelify at the shell's body size, which is
-## also its floor — a step down loses the face's space advance.
+## also its floor — a step down loses the face's space advance. Wrapping is the
+## one thing `UiTheme.hud_label` doesn't offer a HUD readout, so the shared
+## build is reset to top alignment (hud_label centres, for a bar row) and given
+## the wrap its own copy needs.
 func _body(color: Color) -> Label:
-	var label := Label.new()
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
-	label.add_theme_color_override("font_color", color)
+	var label := UiTheme.hud_label("", UiTheme.SIZE_BODY, color, true)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
@@ -241,11 +242,8 @@ func _body(color: Color) -> Label:
 ## A block's caption or the cost beside it — Silkscreen, the face the whole game
 ## sets its labels and numerals in.
 func _micro(text: String, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	label.add_theme_color_override("font_color", color)
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_MICRO, color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	return label
 
 
