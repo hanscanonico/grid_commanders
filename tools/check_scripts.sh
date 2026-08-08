@@ -17,6 +17,12 @@
 
 set -uo pipefail
 
+# Every path below (project.godot, .godot/*, the res://-relative scripts
+# themselves) is repo-relative — run from anywhere else and the sweep
+# silently checks nothing. cd to the repo root derived from $0, not
+# CLAUDE_PROJECT_DIR (that's a hook-only variable and this script isn't one).
+cd "$(dirname "$0")/.." || exit 1
+
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 
 # Per-file line budgets, tighter than gdlintrc's repo-wide max-file-lines.
@@ -68,16 +74,19 @@ if [[ ! -x "$GODOT" ]]; then
 	exit 1
 fi
 
-# Every project script, in a stable order. .claude/worktrees holds whole nested
-# checkouts of this same repo; without excluding it every project file gets
-# checked twice, once at a path Godot cannot resolve res:// imports for.
+# Every project script, in a stable order, NUL-separated so a path with a
+# space or newline in it survives every pipeline below. .claude/worktrees
+# holds whole nested checkouts of this same repo; without excluding it every
+# project file gets checked twice, once at a path Godot cannot resolve res://
+# imports for.
 project_scripts() {
 	find . -name '*.gd' \
 		-not -path './.godot/*' \
 		-not -path './addons/*' \
 		-not -path './bin/*' \
-		-not -path './.claude/*' |
-		sort
+		-not -path './.claude/*' \
+		-print0 |
+		sort -z
 }
 
 # A `class_name` is a global identifier only because
@@ -91,7 +100,7 @@ project_scripts() {
 # than importing behind the caller's back.
 CLASS_CACHE=".godot/global_script_class_cache.cfg"
 
-declared_classes="$(project_scripts | xargs grep -hE '^class_name [A-Za-z_]' | awk '{print $2}' | sort -u)"
+declared_classes="$(project_scripts | xargs -0 grep -hE '^class_name [A-Za-z_]' | awk '{print $2}' | sort -u)"
 if [[ -f "$CLASS_CACHE" ]]; then
 	cached_classes="$(sed -n 's/^"class": &"\([^"]*\)".*/\1/p' "$CLASS_CACHE" | sort -u)"
 else
@@ -137,7 +146,9 @@ failed=0
 checked=0
 
 # bash 3.2 (macOS system bash) has no mapfile, so stream the paths instead.
-while IFS= read -r file; do
+# NUL-delimited, matching project_scripts, so a path with a space survives
+# this loop too.
+while IFS= read -r -d '' file; do
 	checked=$((checked + 1))
 	# Strip the leading './' so reported paths line up with res:// paths.
 	raw="$("$GODOT" --headless --path . --check-only -s "${file#./}" 2>&1)"
@@ -151,7 +162,7 @@ while IFS= read -r file; do
 	fi
 done < <(
 	if (($#)); then
-		printf '%s\n' "$@"
+		printf '%s\0' "$@"
 	else
 		project_scripts
 	fi
