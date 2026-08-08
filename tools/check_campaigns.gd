@@ -57,6 +57,11 @@ func _check_campaign(
 	var ledger := campaign.ledger_error()
 	if ledger != "":
 		_fail(ledger)
+	# The other check that needs the whole war at once: a mission that carries an
+	# army in behind one that carries none out opens with nothing having arrived.
+	var chain := campaign.carry_error()
+	if chain != "":
+		_fail(chain)
 	print("%s — %s (%d missions)" % [campaign.id, campaign.title, campaign.mission_count()])
 	for mission: MissionDefinition in campaign.missions:
 		_missions += 1

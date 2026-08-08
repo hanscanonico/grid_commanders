@@ -19,11 +19,13 @@
 1 1 1
 2 15 7
 [units]
-# team symbol x y
+# team symbol x y — ^ marks a carry slot: the recon, tank and infantry Voss
+# brought off the customs line stand here, at whatever the retreat left of them.
+# The mech is the only thing the frontier could spare her, and is always fresh.
 1 m 1 2
-1 r 2 1
-1 t 3 3
-1 i 2 2
+1 r 2 1 ^
+1 t 3 3 ^
+1 i 2 2 ^
 2 i 8 5
 2 i 10 6
 2 r 12 6

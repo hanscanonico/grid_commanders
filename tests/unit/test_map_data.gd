@@ -96,8 +96,14 @@ func test_units_section_parsed() -> void:
 	var map := MapData.parse(text, db)
 	assert_not_null(map)
 	assert_eq(map.starting_units.size(), 2)
-	assert_eq(map.starting_units[0], {"team": 1, "symbol": "i", "cell": Vector2i(0, 0), "tag": &""})
-	assert_eq(map.starting_units[1], {"team": 2, "symbol": "t", "cell": Vector2i(3, 0), "tag": &""})
+	assert_eq(
+		map.starting_units[0],
+		{"team": 1, "symbol": "i", "cell": Vector2i(0, 0), "tag": &"", "carry": false}
+	)
+	assert_eq(
+		map.starting_units[1],
+		{"team": 2, "symbol": "t", "cell": Vector2i(3, 0), "tag": &"", "carry": false}
+	)
 
 
 func test_bad_unit_line_rejected() -> void:
@@ -105,6 +111,28 @@ func test_bad_unit_line_rejected() -> void:
 	assert_push_error("bad unit line")
 	assert_null(MapData.parse("[terrain]\n..\n[units]\n1 i 0 0 tag extra", db))
 	assert_push_error("bad unit line")
+
+
+## The carry slot is the last column of the row, after the optional tag: a
+## campaign's carried army stands there instead of this unit (campaign-depth D6).
+func test_carry_slots_parsed() -> void:
+	var text := "[terrain]\n....\n[units]\n1 i 0 0 ^\n1 t 1 0 courier ^\n2 t 3 0"
+	var map := MapData.parse(text, db)
+	assert_not_null(map)
+	assert_true(map.starting_units[0].carry, "a marked row is a carry slot")
+	assert_true(map.starting_units[1].carry, "and so is a marked row that is also named")
+	assert_eq(map.starting_units[1].tag, &"courier", "the name is still the name")
+	assert_false(map.starting_units[2].carry, "an unmarked row is the unit it always was")
+
+
+## The mark can never be read as a name, in either direction: a tag is an
+## identifier and `^` is not, so a board naming `^` is refused rather than
+## quietly carrying a unit called that.
+func test_the_carry_mark_is_not_a_tag() -> void:
+	assert_null(MapData.parse("[terrain]\n..\n[units]\n1 i 0 0 ^ ^", db))
+	assert_push_error("is not an identifier")
+	assert_null(MapData.parse("[terrain]\n..\n[units]\n1 i 0 ^", db))
+	assert_push_error("unit cell must be integer coordinates")
 
 
 func test_unit_out_of_bounds_rejected() -> void:

@@ -123,6 +123,20 @@ func record_event(command: MissionEventCommand) -> void:
 		_ending = command.ending
 
 
+## Stand the army the war remembers in this board's carry slots, on a board
+## nothing has been applied to yet — so the veterans are part of the board the
+## mission opens on, and the save, the recording and the tally all take it as it
+## stands (campaign-depth D6).
+##
+## Silent outside a campaign and for every mission that carries nothing in, which
+## is every mission but the few in an authored chain: the map's own army stands
+## and the board opens exactly as it was authored.
+func deploy_army(game: GameState) -> void:
+	if mission == null or progress == null or not mission.carry_in:
+		return
+	CampaignRoster.deploy(game, mission.player_team, progress.roster, mission.carry_floor_hp)
+
+
 ## Take the board the mission opens on as the tally's baseline, before a command
 ## has been applied to it. Called once by the battle scene, as soon as the board
 ## exists; silent outside a campaign.
@@ -172,11 +186,23 @@ func decide(game: GameState) -> bool:
 ## The tally goes with the clear, because the facts this mission staged are the
 ## ledger's only on a mission that was actually finished: a defeat is retried,
 ## and the war remembers the attempt that stood.
-func record(day: int) -> void:
+##
+## The army it fielded goes the same way and on the same answer — the war takes it
+## on the first clear and never again (`CampaignState`'s replay rules), because the
+## roster *is* the next mission's board and a casual replay must not re-deal one the
+## player has already played past. Which is why the finished **board** is handed
+## over rather than only its day: what survived is on it, and asking the board is
+## the only way to know.
+func record(game: GameState) -> void:
 	if outcome == null or progress == null or campaign == null or mission == null:
 		return
 	if outcome.status == MissionRuntime.Status.SUCCESS:
-		_committed = progress.complete(campaign, mission.id, outcome.stars, day, tally)
+		_committed = progress.complete(campaign, mission.id, outcome.stars, game.day, tally)
+		if _committed:
+			var carried: Array[CarriedUnit] = []
+			if mission.carry_out:
+				carried = CampaignRoster.bank(game, mission.player_team)
+			progress.roster = carried
 	else:
 		progress.active_mission = &""
 	CampaignProfile.save_progress(progress)

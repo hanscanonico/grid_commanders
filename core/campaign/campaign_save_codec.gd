@@ -22,12 +22,19 @@ extends RefCounted
 ## rules rather than a key smuggled into 2, because `validate` refuses a file no
 ## writer could have produced and a version 2 profile carrying flags is one.
 ##
+## 4 carries the army the war remembers: what survived the last mission that
+## carried its survivors out (campaign-depth D6). A section of its own for the
+## same reason the ledger got one — a version 3 profile carrying a roster is a
+## file no writer could have produced, and `validate` refuses those.
+##
 ## A profile below the current version loads with the parts it never had empty,
 ## which is what it was playing with.
-const VERSION := 3
+const VERSION := 4
 ## The version the ledger arrived in, named rather than read off `VERSION` so the
 ## refusal below stays about the section it is checking when the next format lands.
 const LEDGER_VERSION := 3
+## The version the carried army arrived in, named for the same reason.
+const ROSTER_VERSION := 4
 
 
 ## The whole of a campaign profile, as a plain dictionary.
@@ -50,6 +57,7 @@ static func encode(
 		"records": records,
 		"active_mission": String(state.active_mission),
 		"flags": _flags_of(state),
+		"roster": _roster_of(state),
 	}
 	# The tally rides with the battle and is dropped with it: bookkeeping for a
 	# mission nobody is in the middle of is bookkeeping nobody can use, and it is
@@ -82,6 +90,8 @@ static func decode(data: Dictionary) -> CampaignState:
 	var flags: Dictionary = data.get("flags", {})
 	for name: String in flags:
 		state.flags[StringName(name)] = int(flags[name])
+	for record: Dictionary in data.get("roster", []):
+		state.roster.append(CarriedUnit.from_dict(record))
 	return state
 
 
@@ -96,6 +106,15 @@ static func _flags_of(state: CampaignState) -> Dictionary:
 	for name: String in names:
 		flags[name] = state.flags[StringName(name)]
 	return flags
+
+
+## The carried army as the profile stores it: a list in the order it will fill the
+## next board's carry slots, which is the order it was banked in.
+static func _roster_of(state: CampaignState) -> Array:
+	var roster: Array = []
+	for carried: CarriedUnit in state.roster:
+		roster.append(carried.to_dict())
+	return roster
 
 
 ## The embedded battle, or an empty dictionary when the profile is between
@@ -158,7 +177,8 @@ static func validate(data: Dictionary) -> String:
 		var error := MissionProgress.tally_error(data["mission_progress"])
 		if error != "":
 			return error
-	return _flags_error(data)
+	var ledger := _flags_error(data)
+	return ledger if ledger != "" else _roster_error(data)
 
 
 ## Why this profile's ledger is not one, or "". Tolerant of a fact no mission
@@ -187,4 +207,24 @@ static func _flags_error(data: Dictionary) -> String:
 		var value = flags[key]
 		if not (value is float or value is int) or int(value) < 0:
 			return "flag '%s' holds %s" % [key, value]
+	return ""
+
+
+## Why this profile's carried army is not one, or "". The ledger's rules at the
+## width a roster has: a profile older than the section may not carry an army, an
+## empty section is what a profile from before it was playing with, and each record
+## is held to `CarriedUnit`'s own shape rather than to a second opinion here.
+static func _roster_error(data: Dictionary) -> String:
+	if not data.has("roster"):
+		return ""
+	if not (data["roster"] is Array):
+		return "save holds a carried army that is not a list"
+	var roster: Array = data["roster"]
+	var version := int(data["version"])
+	if not roster.is_empty() and version < ROSTER_VERSION:
+		return "save claims version %d; the carried army arrived in %d" % [version, ROSTER_VERSION]
+	for record in roster:
+		var error := CarriedUnit.record_error(record)
+		if error != "":
+			return "the carried army: %s" % error
 	return ""

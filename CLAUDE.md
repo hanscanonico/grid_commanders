@@ -1173,7 +1173,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
   beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
   the army a mission hands the next one, interludes and optional missions, across all six wars.
-  Milestones CD1–CD8, **CD1–CD4 shipped**. It is the design of record for the campaign's *depth*;
+  Milestones CD1–CD8, **CD1–CD5 shipped**. It is the design of record for the campaign's *depth*;
   the **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
   data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
   read together. It retired exactly one clause of that entry — D2's "no evacuate/escort/convoy
@@ -1329,14 +1329,53 @@ that must survive any change; the full rationale, milestones and risk registers 
   `MissionTrigger.is_met` grew a **defaulted** `ledger` parameter across all seven shipped triggers
   — GDScript requires an override to match the base signature — and null is a mission played
   outside a campaign profile, where every fact reads zero.
-  The campaign profile is **VERSION 3**, a section of its own rather than a key smuggled into 2,
-  because `validate` refuses a file no writer could have produced and a v2 profile carrying flags is
-  one; a v1 or v2 profile loads with an empty ledger.
+  CD4 took the campaign profile to **VERSION 3**, a section of its own rather than a key smuggled
+  into 2, because `validate` refuses a file no writer could have produced and a v2 profile carrying
+  flags is one; a v1 or v2 profile loads with an empty ledger. (The current version is the Campaign
+  mode entry's, below.)
   `CampaignDefinition.ledger_error` is the one campaign-wide question a mission cannot ask about
   itself — a fact no mission of the campaign writes, or a `cleared:` / `stars:` name for a mission
   it does not run — and `make campaigns` is where it is asked, both slips being otherwise silent.
   **No shipped mission authors a flag yet** — CD7 owns the 108 — so the variant lines and the
   `RECORDED` rows are inert in shipped content, the way CD1–CD3's capabilities shipped inert.
+  **CD5 shipped the carried army on D6, scoped to the one chain the shipped content has; what a
+  future session must not undo is below, and the plan's own "What CD5 settled" carries the rest.**
+  **The scope is measured and it is one pair.** The campaigns rotate the player's commander almost
+  every mission — the original brief — so a carried army has almost nowhere to go: across all 108,
+  exactly one consecutive pair shares a player commander (`lf01` → `lf02`, both Mara Voss), and that
+  is the one chain authored. `tests/unit/test_campaign_carry_authoring.gd` pins that the other 106
+  boards carry no slot and no carry flag, so CD7 inherits a clean field.
+  **D6's short-roster fallback is the rule rather than the edge**, which is what makes the milestone
+  safe: `CampaignRoster.deploy` only ever writes `hp` and `tag` onto units `GameState.create` has
+  already built — it creates nothing, removes nothing, moves nothing and changes no type — so the
+  empty-roster case is a no-op loop and 106 missions are untouched by construction rather than by a
+  branch. **A veteran is identified across the gap by its type**, claiming the first unclaimed slot
+  the board authored for that type, order breaking ties only (board order for slots, bank order for
+  veterans): an object reference dies with the board, a cell means nothing on a different map, and a
+  positional index breaks the moment a unit in the middle dies. A veteran the next board authored no
+  slot for is gone from the war. **Cargo banks as itself and arrives alone** — carriage is board
+  state, only condition and identity cross, and `[units]` has no cargo syntax anyway. **A carried
+  tag fills only a slot the board left unnamed**, and only if that name is not already there: the
+  board's authored names are the mission's, because an objective can only name what the board
+  authored, and `SaveCodec` refuses two units sharing a tag.
+  **The carry mark is `^`, the last column of a `[units]` row, after the optional CD1 tag** — it
+  cannot be read as one in either direction, a tag being an ASCII identifier `UnitTag` refuses `^`
+  as, and `core/map_data.gd`'s header comment is the authoritative statement of the map format.
+  **A failed mission banks nothing**, so a retry redeploys the army the attempt began with (CD4's
+  staged flags and CD2's tally, same rule), and a replay of a cleared mission does not re-bank —
+  `CampaignState.complete`'s first-clear answer governs the roster as well as the ledger, which is
+  why `CampaignSession.record` is handed the finished **board** rather than only its day: what
+  survived is on it. `carry_out = false` **clears** the roster rather than merely not adding to it —
+  the chain ends and the war forgets the army, which is what handing the front to another general
+  means. The campaign profile is **VERSION 4** for it, on the same rule the ledger's own section
+  followed (below); a v1–v3 profile opens with an empty roster and a v3 profile *holding* one is
+  refused by name.
+  **A resumed mission does not redeploy**: `BattleCampaign.open_board(game, fresh)` stands the army
+  only on a board nobody has played, its slots having been filled when the mission first opened. And
+  deploy runs **after** `TurnRules.begin_turn` (which `GameState.create` calls), so a carried unit
+  standing on a friendly property misses day-one repair — chosen over threading a roster into the
+  sim's constructor for one day of one property's repair, deterministic either way, recorded rather
+  than hidden.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'
@@ -1351,7 +1390,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   scripted effect is asked `board_error` against the board the mission **opens on** — the one
   question `definition_error` cannot ask, a map dealing every seat it names while a mission may
   have closed some of them — and the campaign is asked `ledger_error` for the facts its content
-  reads (CD4, above). The story is
+  reads (CD4, above) and `carry_error` for a mission that carries an army in behind one that carries
+  none out (CD5, above; the per-mission half — a refit floor no unit could reach, a carry slot on
+  another army's row, a mission carrying an army in onto a board with no slot — is
+  `MissionDefinition.definition_error`'s). The story is
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
   and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
@@ -1401,10 +1443,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   D5: **progress is one file per campaign** under `user://campaigns/`, temp+backup like
   `SaveGame`, so six wars advance independently and finishing one cannot corrupt another's record.
   The mid-mission board is `SaveCodec.encode`'s envelope embedded whole (`CampaignSaveCodec`
-  serialises no board of its own; its own format is **VERSION 3** — 2 arrived with CD2's mission
-  tally, 3 with CD4's consequence ledger, and a profile below the current version loads with the
-  parts it never had empty — the board save is deliberately untouched throughout, this being
-  mission bookkeeping rather than
+  serialises no board of its own; its own format is **VERSION 4** — 2 arrived with CD2's mission
+  tally, 3 with CD4's consequence ledger, 4 with CD5's carried army, and a profile below the current
+  version loads with the parts it never had empty — the board save is deliberately untouched
+  throughout, this being mission bookkeeping rather than
   board state, so a skirmish save is byte-unchanged) and the skirmish slot is never touched, so
   Continue keeps one unambiguous meaning; a damaged profile is read through a `JSON` instance
   rather than

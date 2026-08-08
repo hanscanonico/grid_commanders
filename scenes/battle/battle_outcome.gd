@@ -81,7 +81,7 @@ func enter_victory() -> void:
 	# reaches, rather than where the verdict was reached: a mission decided
 	# mid-turn is still being animated then, and progress written before the
 	# player has seen the result is progress they cannot connect to anything.
-	CampaignSession.record(_battle.game.day)
+	CampaignSession.record(_battle.game)
 	Sfx.play(&"fanfare")
 	victory_screen.announce(_result_text(), _day_text(), _action_word())
 	_bind_victory_commander()

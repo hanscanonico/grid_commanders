@@ -786,6 +786,18 @@ and replaying a mission you have already cleared does not rewrite what later mis
 off — it can still improve your stars and your best day. When a win does move the war, the debrief
 says so on a `RECORDED` line in the beat's own words. No shipped mission writes a fact yet.
 
+**An army carries.** A war can hand one mission's survivors to the next — authored where the same
+general fights both, since an army only ever follows its own commander. The second board marks some
+of its own starting units as slots those veterans stand in, at the HP and the name they came off the
+last board with, refit to whatever minimum that mission's author set. A slot the war has no unit of that type for keeps the fresh one
+the board authored, so every board still fields exactly the army it was balanced for — a wounded
+tank is a decision you have to make about it, never a tank you are missing. Nothing else crosses:
+what was riding inside a transport is banked as itself and arrives on its own feet. A lost mission
+banks nothing, so a **Retry** deploys the army the attempt began with, and replaying a mission you
+have already cleared does not re-deal what the ones after it opened on. One chain is authored today
+— the two *Long Front* missions Mara Voss fights in a row — and every other board opens at full
+strength as it always did.
+
 While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
 lists what wins, what loses and the bonuses, ticks each condition as it is satisfied and counts the
 ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It lists exactly the conditions you are
@@ -820,7 +832,10 @@ under one name, an objective held back that no beat ever brings into play — ea
 rather than as a beat that never fires in the middle of an act. The ledger is checked across the
 whole war rather than one mission: a fact some mission reads and no mission of that campaign ever
 writes, or a cleared-mission name the campaign does not run, is a variant line nobody would ever
-hear, so it fails here too.
+hear, so it fails here too. The carried army is held to the same bar, every slip in it being an
+army that quietly never arrives: a mission that carries one in behind a mission that carries none
+out, a mission that carries one in onto a board with no slot to stand it in, a carry slot marked on
+another army's row, or a refit minimum no unit could ever be refit to.
 
 ## Replays
 

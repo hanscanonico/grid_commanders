@@ -94,6 +94,24 @@ func definition_error() -> String:
 	return ""
 
 
+## Why this campaign's carried army could never reach the mission expecting it, or
+## "". `ledger_error`'s shape at the width a chain has, and the same kind of silent
+## slip: a mission that carries an army in behind one that carries none out opens
+## with the map's own units and nothing to say that anything was meant to arrive.
+func carry_error() -> String:
+	var carried := false
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		if entry.carry_in and not carried:
+			return (
+				"campaign '%s': mission '%s' carries an army in and the one before it carries none out"
+				% [id, entry.id]
+			)
+		carried = entry.carry_out
+	return ""
+
+
 ## Why this campaign's consequence ledger could never read the way its content
 ## asks, or "". The campaign-wide question a mission cannot ask about itself, and
 ## both slips it catches are otherwise **silent**: a fact nothing writes and a

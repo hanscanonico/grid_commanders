@@ -60,6 +60,21 @@ extends Resource
 ## mission this vocabulary was written for.
 @export var events: Array[MissionEvent] = []
 
+@export_group("The carried army")
+## Whether the army the war remembers stands in this board's carry slots
+## (campaign-depth D6). False is the ordinary answer and the one a change of
+## commander forces: the map's own units stand and the mission opens exactly as it
+## was authored.
+@export var carry_in := false
+## Whether what survives this mission is what the next one carries. False ends the
+## chain — the war forgets the army, which is what handing the front to another
+## general means.
+@export var carry_out := false
+## The HP a carried unit is refit to at minimum before it deploys. The author's
+## answer to "the campaign is unwinnable because mission six went badly": 0 refits
+## nothing and a veteran lands exactly as it stood.
+@export_range(0, Unit.MAX_HP) var carry_floor_hp := 0
+
 @export_group("Story")
 ## What is said before the battle and after it is won, as lines with speakers —
 ## a campaign is a conversation between the generals fighting it. A line with no
@@ -162,7 +177,10 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	var ids_error := _objective_ids_error()
 	if ids_error != "":
 		return ids_error
-	return _hidden_objectives_error()
+	var hidden_error := _hidden_objectives_error()
+	if hidden_error != "":
+		return hidden_error
+	return _carry_error(map)
 
 
 ## Why this mission's scripted beats could not play, or "". Ids are unique
@@ -239,6 +257,30 @@ func _hidden_objectives_error() -> String:
 	for objective_id: StringName in hidden_ids:
 		if not hidden_ids[objective_id]:
 			return "mission '%s' hides '%s' and no event reveals it" % [id, objective_id]
+	return ""
+
+
+## Why this mission's carried army could not land, or "". Three authoring slips
+## with no other symptom, because a slot that is never filled looks exactly like a
+## board opening as authored: a floor no unit could be refit to, a carry mark on
+## another army's row — the roster is the player's, so nothing will ever stand
+## there — and a mission that carries the war's army in onto a board with nowhere
+## to put it.
+func _carry_error(map: MapData) -> String:
+	if carry_floor_hp < 0 or carry_floor_hp > Unit.MAX_HP:
+		return "mission '%s' refits a carried unit to %d HP" % [id, carry_floor_hp]
+	var slots := 0
+	for entry: Dictionary in map.starting_units:
+		if not entry.carry:
+			continue
+		if entry.team != player_team:
+			return (
+				"mission '%s': the carry slot at %s is team %d's, not the player's"
+				% [id, entry.cell, entry.team]
+			)
+		slots += 1
+	if carry_in and slots == 0:
+		return "mission '%s' carries an army in and its board has no carry slot" % id
 	return ""
 
 

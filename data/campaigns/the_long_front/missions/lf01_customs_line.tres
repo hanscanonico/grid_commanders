@@ -59,6 +59,7 @@ objectives = Array[Resource]([SubResource("Objective_hold_the_line")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 par_day = 6
+carry_out = true
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The column was still on the road when the line broke. Draeg's armour did not stop to count what it drove over."
