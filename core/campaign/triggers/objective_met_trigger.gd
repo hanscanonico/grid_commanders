@@ -15,7 +15,9 @@ extends MissionTrigger
 @export var objective: MissionObjective
 
 
-func is_met(state: GameState, team: int, progress: MissionProgress) -> bool:
+func is_met(
+	state: GameState, team: int, progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	return objective != null and objective.is_met(state, team, progress)
 
 

@@ -26,12 +26,15 @@ extends Resource
 
 
 ## Is this event due on the board as it now stands? Every trigger has to hold,
-## and a `once` event that has already fired is never due again.
-func is_due(state: GameState, team: int, progress: MissionProgress) -> bool:
+## and a `once` event that has already fired is never due again. `ledger` is the
+## campaign's, for the `Flag` trigger; null is a mission played outside a profile.
+func is_due(
+	state: GameState, team: int, progress: MissionProgress, ledger: CampaignState = null
+) -> bool:
 	if once and progress.has_fired(id):
 		return false
 	for trigger: MissionTrigger in triggers:
-		if trigger == null or not trigger.is_met(state, team, progress):
+		if trigger == null or not trigger.is_met(state, team, progress, ledger):
 			return false
 	return true
 

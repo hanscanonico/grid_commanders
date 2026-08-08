@@ -15,9 +15,16 @@ extends RefCounted
 ## 2 carries the mission tally beside the battle — its counters, and since the
 ## event system the beats that have already fired and the hidden objectives they
 ## revealed, all of which are counters like any other and so needed no second
-## format. A version 1 profile loads with an empty tally, which is what it was
-## playing with.
-const VERSION := 2
+## format.
+##
+## 3 carries the consequence ledger: the named facts one mission wrote and a
+## later one reads (campaign-depth D5). A section of its own with its own shape
+## rules rather than a key smuggled into 2, because `validate` refuses a file no
+## writer could have produced and a version 2 profile carrying flags is one.
+##
+## A profile below the current version loads with the parts it never had empty,
+## which is what it was playing with.
+const VERSION := 3
 
 
 ## The whole of a campaign profile, as a plain dictionary.
@@ -39,6 +46,7 @@ static func encode(
 		"unlocked": unlocked,
 		"records": records,
 		"active_mission": String(state.active_mission),
+		"flags": _flags_of(state),
 	}
 	# The tally rides with the battle and is dropped with it: bookkeeping for a
 	# mission nobody is in the middle of is bookkeeping nobody can use, and it is
@@ -68,7 +76,23 @@ static func decode(data: Dictionary) -> CampaignState:
 			int(record["stars"]), int(record["best_day"])
 		)
 	state.active_mission = StringName(data.get("active_mission", ""))
+	var flags: Dictionary = data.get("flags", {})
+	for name: String in flags:
+		state.flags[StringName(name)] = int(flags[name])
 	return state
+
+
+## The ledger as the profile stores it: a plain dictionary in name order, so two
+## profiles holding the same war are the same text.
+static func _flags_of(state: CampaignState) -> Dictionary:
+	var names: Array[String] = []
+	for name: StringName in state.flags:
+		names.append(String(name))
+	names.sort()
+	var flags: Dictionary = {}
+	for name: String in names:
+		flags[name] = state.flags[StringName(name)]
+	return flags
 
 
 ## The embedded battle, or an empty dictionary when the profile is between
@@ -131,4 +155,27 @@ static func validate(data: Dictionary) -> String:
 		var error := MissionProgress.tally_error(data["mission_progress"])
 		if error != "":
 			return error
+	return _flags_error(data)
+
+
+## Why this profile's ledger is not one, or "". Tolerant of a fact no mission
+## writes any more, for the reason a record of a renamed mission is tolerated —
+## but not of a derived name, which nothing has ever stored.
+static func _flags_error(data: Dictionary) -> String:
+	if not data.has("flags"):
+		return ""
+	if not (data["flags"] is Dictionary):
+		return "save holds a ledger that is not a set of facts"
+	var flags: Dictionary = data["flags"]
+	for key in flags:
+		if not (key is String):
+			return "the ledger holds '%s', which is not a flag" % [key]
+		var name_error := CampaignState.flag_name_error(StringName(key))
+		if name_error != "":
+			return "the ledger: %s" % name_error
+		if CampaignState.is_derived(StringName(key)):
+			return "the ledger holds '%s', which is the campaign's own record" % key
+		var value = flags[key]
+		if not (value is float or value is int) or int(value) < 0:
+			return "flag '%s' holds %s" % [key, value]
 	return ""

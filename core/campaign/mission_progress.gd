@@ -19,13 +19,15 @@ extends RefCounted
 ## so a resumed mission neither forgets its losses nor counts them a second time.
 
 ## Counter keys, as the profile stores them. A hold is keyed by its cell, so one
-## tally answers for every square a mission might ask about; a fired event and a
-## revealed objective are keyed by their own names, which is why both are
-## authored as identifiers.
+## tally answers for every square a mission might ask about; a fired event, a
+## revealed objective and a staged flag are keyed by their own names, which is
+## why all three are authored as identifiers.
 const LOSSES := "losses"
 const HELD := "held:"
 const FIRED := "fired:"
 const REVEALED := "revealed:"
+const FLAG_SET := "flagset:"
+const FLAG_ADD := "flagadd:"
 
 var _counters: Dictionary[String, int] = {}
 ## Instance ids of our side's units at the last boundary — the identity a
@@ -82,6 +84,28 @@ func is_revealed(objective_id: StringName) -> bool:
 	return _counters.has(REVEALED + String(objective_id))
 
 
+## Note a fact a `SetFlag` beat wrote, for the campaign's ledger to take when the
+## mission is finished. It waits here rather than going straight to the ledger
+## for the reason every other counter follows the board: an attempt that was
+## abandoned or lost banks nothing, so a retry cannot count a fact twice.
+func stage_flag(name: StringName, value: int, accumulate: bool) -> void:
+	if not accumulate:
+		_counters[FLAG_SET + String(name)] = value
+		return
+	var key := FLAG_ADD + String(name)
+	_counters[key] = _counters.get(key, 0) + value
+
+
+## Facts this mission has assigned outright, by name.
+func flag_assignments() -> Dictionary[String, int]:
+	return _staged(FLAG_SET)
+
+
+## Facts this mission has raised, by name and by how much.
+func flag_increments() -> Dictionary[String, int]:
+	return _staged(FLAG_ADD)
+
+
 func is_empty() -> bool:
 	return _counters.is_empty()
 
@@ -124,6 +148,14 @@ static func tally_error(data: Dictionary) -> String:
 		if not (count is float or count is int) or int(count) < 0:
 			return "counter '%s' holds %s" % [key, count]
 	return ""
+
+
+func _staged(prefix: String) -> Dictionary[String, int]:
+	var staged: Dictionary[String, int] = {}
+	for key: String in _counters:
+		if key.begins_with(prefix):
+			staged[key.trim_prefix(prefix)] = _counters[key]
+	return staged
 
 
 ## Our side's units on this board, keyed by instance id. Cargo counts: a
@@ -171,7 +203,7 @@ static func _hold_key(cell: Vector2i) -> String:
 static func _is_counter(key: String) -> bool:
 	if key == LOSSES:
 		return true
-	for prefix: String in [FIRED, REVEALED]:
+	for prefix: String in [FIRED, REVEALED, FLAG_SET, FLAG_ADD]:
 		if key.begins_with(prefix):
 			return key.trim_prefix(prefix).is_valid_ascii_identifier()
 	if not key.begins_with(HELD):

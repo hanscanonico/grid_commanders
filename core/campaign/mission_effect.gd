@@ -62,3 +62,11 @@ func spawned_tags() -> Array[StringName]:
 ## verdict authority: precedence stays that class's (D3).
 func mission_end() -> EndMissionEffect:
 	return null
+
+
+## The fact this effect writes to the consequence ledger, or null — `SetFlag`
+## alone answers, and it answers with itself. The third payload that is the
+## *mission's* rather than the board's, declared here for the same reason the
+## other two are.
+func written_flag() -> SetFlagEffect:
+	return null

@@ -41,6 +41,11 @@ const DEFECT_MISSION := &"lf08_after_hammerfall"
 const GARRISON := &"ruin_garrison"
 const DEFECT_EVENT := &"the_garrison_turns"
 const GARRISON_ARMY := 2
+## The fact the defection is gated on, which makes the frame CD4's live proof as
+## well: the consequence ledger is what decides whether this board opens with the
+## garrison on our side, and with the fact missing the beat does not fire and
+## `_run_defection` says so.
+const GARRISON_FLAG := &"wardens_wavered"
 
 var _battle: Battle
 
@@ -66,9 +71,11 @@ static func stage() -> void:
 	if mission == null:
 		push_error("capture: no mission '%s' to pose a campaign frame on" % mission_id)
 		return
+	var progress := CampaignState.begin(campaign)
 	if defecting:
 		mission = _posed_defection(mission)
-	MatchConfig.stage(CampaignSession.begin(campaign, mission, CampaignState.begin(campaign)))
+		progress.flags[GARRISON_FLAG] = 1
+	MatchConfig.stage(CampaignSession.begin(campaign, mission, progress))
 
 
 ## The shipped mission carrying one beat of the scenario's own: no authored
@@ -77,17 +84,23 @@ static func stage() -> void:
 ## `CampaignDB` handed over, and it states the whole event list rather than
 ## appending to it, so nothing shipped is altered and the frame is the defection
 ## alone. Day one is the trigger because `Battle` fires its due beats on the board
-## it opens on, which is a boundary no play has to reach.
+## it opens on, which is a boundary no play has to reach — and the flag beside it
+## is what makes this the same board a mission opens differently on because of an
+## earlier one.
 static func _posed_defection(shipped: MissionDefinition) -> MissionDefinition:
 	var trigger := DayReachedTrigger.new()
 	trigger.day = 1
+	var condition := FlagCondition.new()
+	condition.flag = GARRISON_FLAG
+	var remembered := FlagTrigger.new()
+	remembered.condition = condition
 	var defection := DefectEffect.new()
 	defection.from_team = GARRISON_ARMY
 	defection.to_team = shipped.player_team
 	defection.tags = [GARRISON]
 	var beat := MissionEvent.new()
 	beat.id = DEFECT_EVENT
-	beat.triggers = [trigger]
+	beat.triggers = [trigger, remembered]
 	beat.effects = [defection]
 	var posed := shipped.duplicate() as MissionDefinition
 	posed.events = [beat]

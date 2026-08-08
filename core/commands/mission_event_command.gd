@@ -13,12 +13,13 @@ var event: MissionEvent
 var team: int
 
 ## Populated by apply(): what the effects said about the *mission* rather than
-## the board. A command is handed a board and nothing else, so the two effects
-## whose payload is mission bookkeeping declare it here, and the campaign layer —
-## the one writer of both the tally and the verdict — acts on it at the same
+## the board. A command is handed a board and nothing else, so the effects whose
+## payload is mission bookkeeping declare it here, and the campaign layer — the
+## one writer of the tally, the verdict and the ledger — acts on it at the same
 ## boundary.
 var revealed: Array[StringName] = []
 var ending: EndMissionEffect
+var written: Array[SetFlagEffect] = []
 
 
 func _init(p_event: MissionEvent, p_team: int) -> void:
@@ -60,3 +61,6 @@ func apply(state: GameState) -> void:
 		var declared := effect.mission_end()
 		if declared != null:
 			ending = declared
+		var fact := effect.written_flag()
+		if fact != null:
+			written.append(fact)

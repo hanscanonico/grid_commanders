@@ -704,6 +704,7 @@ events = [
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-neutral pl">CD4</span>
           <h3 class="font-black text-lg">The consequence ledger</h3>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
           <span class="text-xs dim">D5</span>
         </div>
         <p class="mt-2 text-sm">
@@ -715,6 +716,30 @@ events = [
         </p>
         <p class="mt-2 text-sm"><b>Gate:</b> a v1 campaign profile loads and gains an empty ledger; a
         two-mission fixture campaign where the second mission's briefing and board both differ by a flag.</p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD4 settled.</b> <b>Flag-conditional starting units needed no new mechanism</b> — CD3
+          already fires events on the opening board, so "this board opens two defenders short because the
+          bridge was blown in mission five" is an ordinary event with a <span class="pl">Flag</span> trigger
+          and a <span class="pl">SpawnUnits</span> effect. That is the whole of D5's board reach, and it is
+          why a flag structurally cannot touch a number: the only thing a flag does to a board is decide
+          whether an <i>authored</i> beat fires.
+          <b>A flag is staged mid-mission and committed on the win</b>, which departs from D5's "set by a
+          `SetFlag` effect" read literally and is the same answer the codebase already gave the tally: a
+          retry must not inherit an attempt's writes, or a counting flag counts twice per attempt. The
+          author-facing rule is one sentence — <i>a mission reads the war as it stood when it began, and
+          writes to it when it is won.</i>
+          <b><span class="pl">at_most</span> ships beside <span class="pl">at_least</span></b>, because a
+          ledger that can only say what went wrong makes "the war carries between missions" mean only "it
+          gets worse"; CD3's <span class="pl">DayBefore</span> is the writing half of the same repair.
+          <span class="pl">cleared:</span> and <span class="pl">stars:</span> are <b>derived, never
+          stored</b> — answered off <span class="pl">records</span>, so there is no second copy to drift,
+          and the codec refuses a stored one. Variant lines are <b>independently included</b> rather than
+          alternatives: an either/or is two adjacent lines with opposite conditions, and a group would need
+          a default nobody authored. A replay of an already-cleared mission does <b>not</b> rewrite the
+          ledger, found by test — committing every time double-counts, and a casual replay must not rewrite
+          a war that later missions were already briefed off.
+          The campaign profile reached <b>VERSION 3</b>; a v1 or v2 profile opens with an empty ledger.
+        </p>
       </div>
 
       <div class="gc-ms p-4">

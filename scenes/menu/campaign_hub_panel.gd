@@ -273,7 +273,9 @@ func _open_briefing(slot: int) -> void:
 	_deploy_button.text = "Resume" if mission.id == _resume_mission else "Deploy"
 	for child in _brief_body.get_children():
 		child.queue_free()
-	for line: MissionLine in mission.briefing:
+	# The briefing is read against the war so far, so a mission that has a
+	# different opening after a different mission five gets it (campaign-depth D5).
+	for line: MissionLine in MissionLine.spoken(mission.briefing, _progress):
 		_brief_body.add_child(MissionSpeech.render(line, _commanders))
 	_brief_body.add_child(_body_line(""))
 	for objective in mission.objectives:

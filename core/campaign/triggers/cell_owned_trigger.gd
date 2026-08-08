@@ -21,7 +21,9 @@ enum Holder {
 @export var holder: Holder = Holder.ENEMY
 
 
-func is_met(state: GameState, team: int, _progress: MissionProgress) -> bool:
+func is_met(
+	state: GameState, team: int, _progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	var owner := state.owner_at(cell)
 	match holder:
 		Holder.OURS:

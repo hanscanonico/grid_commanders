@@ -16,14 +16,20 @@ extends Resource
 ## a mission unwinnable.
 ##
 ## An event's triggers are a **conjunction** — every one of them must hold — and
-## that is what makes a seven-word vocabulary expressive: `ObjectiveMet` plus
-## `DayBefore` is "did it, and did it fast".
+## that is what makes a small vocabulary expressive: `ObjectiveMet` plus
+## `DayBefore` is "did it, and did it fast", and either of them plus `Flag` is
+## the same beat conditioned on how an earlier mission went.
 
 
 ## Does this condition hold on the board as it now stands? `team` is the
 ## mission's player team; a side-wide reading asks `state.allied`. `progress` is
-## the mission's tally, for the conditions no single board can answer.
-func is_met(_state: GameState, _team: int, _progress: MissionProgress) -> bool:
+## the mission's tally, for the conditions no single board can answer, and
+## `ledger` is the campaign's consequence ledger — which `Flag` alone reads,
+## being the one condition that reaches outside this mission. A null ledger is a
+## mission played outside a campaign profile, where every fact reads zero.
+func is_met(
+	_state: GameState, _team: int, _progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	return false
 
 
