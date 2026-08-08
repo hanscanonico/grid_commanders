@@ -37,9 +37,18 @@ func apply(state: GameState) -> void:
 
 ## Friendlies this unit could refill standing on `from`. Public so the UI can
 ## decide whether to offer the Supply action at all.
-func friendlies_in_reach(state: GameState, from: Vector2i) -> Array[Unit]:
+##
+## `friendlies` is a pre-fetched `state.units_of(unit.team)`, for a caller
+## scoring many `from` cells against the one roster (the AI planner, sweeping
+## every reachable cell) rather than re-scanning the whole board per cell.
+## Default empty scans, today's behaviour; either way every `from` runs
+## through the one rule, `TurnRules.in_supply_reach`.
+func friendlies_in_reach(
+	state: GameState, from: Vector2i, friendlies: Array[Unit] = []
+) -> Array[Unit]:
+	var candidates := friendlies if not friendlies.is_empty() else state.units_of(unit.team)
 	var result: Array[Unit] = []
-	for other in state.units_of(unit.team):
+	for other in candidates:
 		if TurnRules.in_supply_reach(state, unit, from, other):
 			result.append(other)
 	return result

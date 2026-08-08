@@ -635,15 +635,20 @@ func _consider_supply(
 	# rather than re-derived because the radius is the commander's: Gideon Holt
 	# supplies two tiles out, and adjacency spelled here would miss the second. It
 	# takes the cell it is asked about, so one command answers for every cell.
+	# The team roster is fetched once here rather than once per reachable cell
+	# (~45 for an APC) and handed to `friendlies_in_reach`, which still owns the
+	# rule and every `from` still runs through it — a scoring cache, not a
+	# second opinion.
 	var standing: Array[Vector2i] = [unit.cell]
 	var probe := SupplyCommand.new(unit, standing)
+	var team_units := state.units_of(unit.team)
 	var best_score := plan.score
 	var best_cell := unit.cell
 	var found := false
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var value := _supply_value(probe.friendlies_in_reach(state, cell))
+		var value := _supply_value(probe.friendlies_in_reach(state, cell, team_units))
 		if value <= 0.0:
 			continue
 		var score := (
