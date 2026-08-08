@@ -1,4 +1,4 @@
-# The merge gate, run for us instead of remembered: the same four targets
+# The merge gate, run for us instead of remembered: the same targets
 # `make verify` chains, in the same cheapest-first order.
 #
 # `make smoke` is deliberately absent — it renders, so it needs a display and
@@ -81,7 +81,7 @@ jobs:
       - name: test
         run: make test
 
-      # Not one of the four, and about a second: the pinned Balance Lab match
-      # against its committed golden (balance plan D1's merge bar).
+      # `make verify`'s last step, and about a second: the pinned Balance Lab
+      # match against its committed golden (balance plan D1's merge bar).
       - name: determinism
         run: make determinism

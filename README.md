@@ -27,7 +27,7 @@ Then:
 ```sh
 make run             # boot the game — the menu (map, seats, difficulty, speed, commanders, fog, Start / Continue / Campaign)
 make hotseat         # skip the menu: straight into a two-player hot-seat match (no AI)
-make verify          # the merge gate: check + lint + format-check + test, in one command
+make verify          # the merge gate: check + lint + format-check + test + determinism, in one command
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
@@ -61,18 +61,18 @@ make replay-report REPLAY=<file>  # read one instead: what the computer left on 
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
-and runs the suite, cheapest step first. Every headless run ends with `ObjectDB instances were
-leaked at exit` and `resources still in use` — that is the engine failing to tear down a *script*
-reference cycle (`AttackCommand.validate()` referring to its sibling `MoveCommand` pins the core
-script graph), reproducible in twelve lines with no GUT involved. No gameplay object leaks, so the
-gate reads exit status and ignores it.
+runs the suite, and replays the pinned determinism match, cheapest step first. Every headless run
+ends with `ObjectDB instances were leaked at exit` and `resources still in use` — that is the engine
+failing to tear down a *script* reference cycle (`AttackCommand.validate()` referring to its sibling
+`MoveCommand` pins the core script graph), reproducible in twelve lines with no GUT involved. No
+gameplay object leaks, so the gate reads exit status and ignores it.
 
 It is also run for you: `.github/workflows/verify.yml` fetches the pinned engine and plays the same
-four targets, in the same order, on every pull request and every push to `main`. `make smoke` is not
+targets, in the same order, on every pull request and every push to `main`. `make smoke` is not
 in it — it renders, so it needs a display and stays a local gate. Every target reads `GODOT`, so a
 machine with the engine somewhere else runs the gate with `make verify GODOT=/path/to/godot`.
 
-`make determinism` runs beside those four in CI, and asks about reproducibility rather than style:
+`make determinism` is the gate's last step, and asks about reproducibility rather than style:
 it replays one pinned AI-vs-AI match — one board, one seed, about a second — and byte-diffs its
 report against the golden committed under `tests/fixtures/determinism/`. That is the balance plan's
 fixed-seed merge bar with a committed side to diff against at last. A rules, data or planner change
@@ -913,7 +913,9 @@ already failing would muddy both readings.
   `AIPlanningContext` supplies scan-stable facts to the coarse unit-action and production
   planners. It remains pure simulation and returns the exact same `Command` objects player input
   produces for the battle scene to apply and animate.
-- `data/` — game data as `Resource` files (terrain, units, the damage chart, the commander
+- `data/` — game data as `Resource` files (terrain, units, the damage chart, the match-wide
+  balance levers in `data/rules.tres` — capture speed, income, repair, the charge split, the
+  pricing floor and step, the neutral luck bounds — the commander
   roster in `data/commanders/`, the AI profiles in `data/ai/` — every weight the opponent scores
   with, so tuning its behaviour is a data edit rather than a code change — and the difficulty
   tiers in `data/difficulty/`, each of which is just a label plus one of those profiles, and the

@@ -56,18 +56,23 @@ that must survive any change; the full rationale, milestones and risk registers 
   a legal aim, fog or no fog**: `PowerCommand.validate` refuses an off-board target and nothing
   else, and the preview is deliberately unfogged — what fog costs the player is knowing what was
   standing there. D4: **Hammerfall is the only thing in the game that removes a unit without a
-  shot**, through `GameState.remove_unit`, so a match can now end without one; the doomed are
-  collected before any is removed (`state.units` is being read and `remove_unit` mutates it) and
+  shot**, through `GameState.remove_units`, so a match can now end without one; the doomed are
+  collected before any is removed (`state.units` is being read and removal mutates it) and
   **nothing is banked to either meter**, charge being minted inside `ChargeLedger.bank_losses`
   and nowhere else — banking it to the victim would make the answer to the most expensive power in
   the game their own power. Units only: a headquarters, factory or city in the square keeps its
-  owner. D5: **the computer aims through the doctrine, never through the planner** —
+  owner. **The whole batch comes off the board before any army's rout is judged** (COM-179): a
+  blast that empties two armies is then decided by the board rather than by the footprint's scan
+  order, and one that empties *every* survivor is a deliberate deterministic no-winner — `winner`
+  stays 0 with a loud `push_error`, and the victory screen has no presentation for it.
+  D5: **the computer aims through the doctrine, never through the planner** —
   `RadekMorn._best_blast` answers both `wants_power` and `power_target`, so it cannot want to fire
   and then aim somewhere it did not want; `ai/` gained one branch in `_plan_power` and nothing else.
-  The replay line for a power carries its target and `ReplayCodec.FORMAT` is **2**; older
-  recordings are refused outright, which is the replay plan's D3. The save format did not move —
-  the strike is one-shot and `power_active` was already saved. `docs/commander_balance.md` and the
-  roster counts above are MC5's to close.
+  The replay line for a power carries its target, which is what bumped `ReplayCodec.FORMAT` to 2;
+  the constant has moved on since (COM-173 digested `Unit.refreshable`) and `core/replay_codec.gd`
+  owns its current value. Older recordings are refused outright, which is the replay plan's D3.
+  The save format did not move — the strike is one-shot and `power_active` was already saved.
+  `docs/commander_balance.md` and the roster counts above are MC5's to close.
   One name in the plan's MC1 table is superseded: Sera Lark's passive export is
   **`move_bonus_points`**, not the `road_move_bonus` the table names — her bonus was never keyed to
   roads and the old name said it was, so COM-221 renamed it in `core/commanders/sera_lark.gd` and
@@ -255,8 +260,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   doctrine-owned. What shipped is the other half. D1/D3: three advisory hooks on `CommanderType`
   beside `wants_power` — `stand_value` (tiles, the advance path only), `build_bias` (build-list
   places, the priority tier only: a negative bias may pull an unlisted *combat* unit onto the
-  list's tail, which is how a doctrine buys the recon, and no bias reaches a transport or
-  outranks the air-answer and capture-shortage tiers), `retreat_hp_delta` (the repair gate) —
+  list's tail, which is how a doctrine buys the recon, and no bias reaches a transport the list
+  omits or outranks the air-answer and capture-shortage tiers — the one transport a bias does move
+  is the supply truck, whose want COM-180 clamped as a sum like every sibling tier, so a doctrine
+  pulls it earlier or later within the priority tier and never past its floor),
+  `retreat_hp_delta` (the repair gate) —
   every number `@export` on the general's `.tres`. D2: `AIProfile.doctrine_weight` is the one
   planner dial, written into every tier and on at every tier — a commander's personality is a
   match fact, not a difficulty smart — and 0 skips the hooks entirely, restoring the
@@ -715,7 +723,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   `UiTheme` sits at the repo's public-method ceiling; a widget a screen keeps its own copy of is
   the drift D1 exists to prevent, which `pad` had already done in three files. The cut-in's shared
   colour vocabulary is `scenes/battle/cutscene/cutscene_palette.gd` (`CutscenePalette`), declared
-  once, after a `SLATE_800` there held a different value from `UiTheme.SLATE_800`. Map thumbnails
+  once, after a `SLATE_800` there held a different value from `UiTheme.SLATE_800`; the board's three
+  overlay washes are its sibling, `scenes/battle/overlay_palette.gd` (`OverlayPalette`) — a
+  translucent wash over art is a different vocabulary from the shell's opaque chrome, so neither
+  belongs on `UiTheme` and both are declared once where they are painted. Map thumbnails
   (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
   a miniature can never be a second opinion. The shared `CommanderCard`'s deferred dress is that
   named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
@@ -974,7 +985,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   `tests/unit/test_alliance_soak.gd` plays the shipped boards in the
   groupings their seat strips offer, not only the fixture: a grouping that ran only on a fixture is
   a capability nobody can pick.
-  `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the map lint — sized to fit
+  `maps/fixtures/quartet.txt` stays a fixture, out of the menu and out of the per-map soak — though
+  `tests/unit/test_maps.gd`'s *playability* lints do reach every fixture through
+  `MapCatalog.fixture_paths()`, so it is held to them like any board — sized to fit
   the battle viewport whole, and the board `make smoke`'s `side_victory` and `mixed_seat_handoff+fog`
   scenarios run on. The plan artifact carries its own milestone pass: FP1–FP6 are marked shipped in
   `.lavish/four-players-plan.html`, whose decisions stay as authored — every supersession is here.
@@ -1299,7 +1312,9 @@ that must survive any change; the full rationale, milestones and risk registers 
    changes. This keeps rules unit-testable and lets the AI simulate moves cheaply.
    - **Nothing in `core/` may reference a `Node`, a scene, `get_node`, `SceneTree`, or anything
      under `scenes/`.** If you reach for a Node inside `core/`, you're in the wrong layer.
-2. **Data-driven via Resources.** Unit stats, terrain properties, and the damage chart are
+2. **Data-driven via Resources.** Unit stats, terrain properties, the damage chart, and the
+   match-wide balance levers (`RulesConfig` in `data/rules.tres` — capture speed, income, repair,
+   property vision, the charge split, the pricing floor and step, the neutral luck bounds) are
    `.tres` `Resource` files under `data/`, not constants in code. Balancing = editing data;
    adding a unit = adding a file. The damage chart is one resource holding two attacker × defender
    base-damage matrices — the stocked primary and the infinite-ammo secondary — and it owns which
@@ -1324,7 +1339,7 @@ The AI plugs in at the exact same point as player input.
 res://
 ├─ core/        # sim: game_state.gd, commands/, rules/, commanders/, campaign/  (NO Node references)
 ├─ data/        # .tres resources: units/, terrain/, commanders/, ai/, difficulty/,
-│              # battle_anim/ (weapon signatures), campaigns/, damage_chart
+│              # battle_anim/ (weapon signatures), campaigns/, damage_chart, rules
 ├─ scenes/
 │  ├─ battle/   # battle.tscn, cursor, unit_sprite
 │  │  └─ cutscene/  # the combat & capture cut-ins and the BattleStyle they read
@@ -1408,14 +1423,18 @@ Follow the official Godot GDScript style guide. Key points:
   `_draw` only paints, is static, and is all the suite calls, the same shape
   `SeatStrip.normalised_sides` and `TransitionInput` are.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
-- Keep tests deterministic: seed the RNG explicitly.
+- Keep tests deterministic: seed the RNG explicitly. `tests/helpers/fixture.gd` (`Fixture`) is where
+  a board, a path, a command line and the shared databases come from — it seeds every state it
+  builds — so build one through it rather than re-rolling a local `_state` helper, and set
+  `state.rng.seed` yourself only when the test wants a different stream.
 
 Run the suite with `make test` — it runs GUT headless against `tests/unit` via `.gutconfig.json`.
 See README.md for engine setup and the other `make` targets.
 
 Before a change is done, run `make verify` — the aggregate gate it chains, in order: `check`
 (`tools/check_scripts.sh`, a lightweight script audit), `lint` (`gdlint`), `format-check`
-(`gdformat --check`), then the GUT suite. `make format` rewrites files to satisfy `format-check`,
+(`gdformat --check`), the GUT suite, then `determinism` (the ~1s pinned-match replay, byte-diffed
+against its committed golden). `make format` rewrites files to satisfy `format-check`,
 and any gate also runs alone (`make lint`, `make test`, …). GDScript is tab-indented — let
 `gdformat` settle whitespace rather than hand-aligning, and a green `make verify` is the bar a
 change clears before it ships.
