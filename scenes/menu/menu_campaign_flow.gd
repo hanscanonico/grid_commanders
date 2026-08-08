@@ -190,15 +190,14 @@ func _deploy(mission_id: StringName) -> void:
 	if progress == null:
 		progress = CampaignState.begin(_campaign)
 	# The mission the profile is midway through resumes its saved board rather
-	# than restarting; the check is made before `begin`, which claims the mission
-	# either way and takes the same answer for the tally that board was kept with.
-	# Any other deploy starts fresh, snapshot or none — a snapshot belongs to
-	# exactly the mission that wrote it.
-	var resumes := (
-		progress.active_mission == mission.id
-		and not CampaignProfile.load_battle(_campaign.id).is_empty()
+	# than restarting, and carries on with the tally that board was kept with. Any
+	# other deploy starts fresh, snapshot or none — a snapshot belongs to exactly
+	# the mission that wrote it.
+	var in_progress := CampaignProfile.load_in_progress(_campaign.id)
+	var resumes := progress.active_mission == mission.id and not in_progress.battle.is_empty()
+	var request := CampaignSession.begin(
+		_campaign, mission, progress, in_progress.tally if resumes else null
 	)
-	var request := CampaignSession.begin(_campaign, mission, progress, resumes)
 	if resumes:
 		request.campaign_resume = _campaign.id
 	MatchConfig.stage(request)

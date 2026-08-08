@@ -36,6 +36,11 @@ func definition_error(map: MapData, _team: int) -> String:
 			return "reach objective names %s, off a %dx%d board" % [cell, map.width, map.height]
 		if named.has(cell):
 			return "reach objective names %s twice" % cell
+		var terrain := map.terrain_at(cell)
+		if terrain.move_costs.is_empty():
+			return (
+				"reach objective names %s, which is %s and nothing can enter" % [cell, terrain.id]
+			)
 		named[cell] = true
 	if cells.size() < count:
 		return "reach objective asks %d units onto %d cells" % [count, cells.size()]

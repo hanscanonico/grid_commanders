@@ -24,6 +24,25 @@ CCQ.
 3 i 0 1
 """
 
+
+## A board of ground no move class has a cost for. No shipped terrain is like
+## this — every one of them is at least flyable — so the zone guard is checked
+## against the case it exists for rather than against a terrain id.
+class SealedMap:
+	extends MapData
+
+	func _init() -> void:
+		width = 4
+		height = 2
+
+	func terrain_at(cell: Vector2i) -> TerrainType:
+		if not in_bounds(cell):
+			return null
+		var wall := TerrainType.new()
+		wall.id = &"wall"
+		return wall
+
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -143,6 +162,12 @@ func test_reach_cell_refuses_a_zone_that_could_never_be_filled() -> void:
 	assert_ne(objective.definition_error(map, 1), "", "and that cell is off the board")
 	objective = _zone([Vector2i(2, 1), Vector2i(3, 1)] as Array[Vector2i], 2)
 	assert_eq(objective.definition_error(map, 1), "")
+
+
+func test_reach_cell_refuses_ground_nothing_could_ever_stand_on() -> void:
+	var objective := _zone([Vector2i(1, 1)] as Array[Vector2i], 1)
+	assert_ne(objective.definition_error(SealedMap.new(), 1), "", "a zone nothing can enter")
+	assert_eq(objective.definition_error(_map(), 1), "", "while open ground is a zone")
 
 
 # --- break one army ---------------------------------------------------------

@@ -28,6 +28,7 @@ func _init() -> void:
 			var n := 0
 			var runtime := MissionRuntime.new(m)
 			var tally := MissionProgress.new()
+			tally.observe(st, m.player_team)
 			var decided := false
 			while st.winner == 0 and st.day <= DAYS and n < cap:
 				var c := ai.plan_next_command(st)

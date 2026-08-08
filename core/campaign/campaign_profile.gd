@@ -23,6 +23,21 @@ const TEMP_SUFFIX := ".tmp"
 const BACKUP_SUFFIX := ".bak"
 
 
+## The mission a profile is midway through: the board and the tally it was being
+## kept with. The two are written together and a resume wants both, so they are
+## read together — the profile embeds a whole `SaveCodec` envelope, and asking
+## for one part at a time parses the largest file this class writes twice.
+class InProgress:
+	extends RefCounted
+
+	var battle: Dictionary
+	var tally: MissionProgress
+
+	func _init(p_battle: Dictionary, p_tally: MissionProgress) -> void:
+		battle = p_battle
+		tally = p_tally
+
+
 ## Where a campaign's progress lives. Public so a test can name the file rather
 ## than spelling the convention a second time.
 static func path_for(campaign_id: StringName) -> String:
@@ -71,11 +86,13 @@ static func load_battle(campaign_id: StringName) -> Dictionary:
 	return CampaignSaveCodec.battle_of(_read(campaign_id))
 
 
-## The mission tally that battle was being kept with, empty when there is none.
-## Its companion: a resumed mission has to open owing the losses it had already
-## taken.
-static func load_tally(campaign_id: StringName) -> MissionProgress:
-	return CampaignSaveCodec.tally_of(_read(campaign_id))
+## That battle and the tally it was being kept with, off one read. What a deploy
+## asks: it needs to know there is a board to pick up *and* what that board was
+## being counted with, and a resumed mission has to open owing the losses it had
+## already taken.
+static func load_in_progress(campaign_id: StringName) -> InProgress:
+	var data := _read(campaign_id)
+	return InProgress.new(CampaignSaveCodec.battle_of(data), CampaignSaveCodec.tally_of(data))
 
 
 ## The profile as it sits on disk, or an empty dictionary. Silent, unlike

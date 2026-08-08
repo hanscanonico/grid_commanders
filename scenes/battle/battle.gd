@@ -256,6 +256,9 @@ func _ready() -> void:
 	replay_path = built.replay_path
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
+	# The board a mission opens on is what its tally counts from — a fresh one or
+	# a resumed one, whichever this is. Inert for every skirmish.
+	CampaignSession.open_board(game)
 	_build_planners(built)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
@@ -393,6 +396,11 @@ func conclude_command(receipt: BattleCommandReceipt) -> void:
 		start_turn()
 	elif receipt.winner != 0:
 		enter_victory()
+	else:
+		# `decide` advanced the tally after the pipeline drew the HUD, so the
+		# objective card is still describing the board before this command. The
+		# three branches above each redraw or replace it already.
+		refresh_hud()
 
 
 ## Asks for the board back while the computer is playing. Public because the Esc

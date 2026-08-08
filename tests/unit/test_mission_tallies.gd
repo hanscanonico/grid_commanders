@@ -42,6 +42,11 @@ func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+	CampaignSession.clear()
+
+
+func after_each() -> void:
+	CampaignSession.clear()
 
 
 func _state(allies: Array = []) -> GameState:
@@ -79,6 +84,28 @@ func _profile() -> CampaignState:
 ## JSON's one number type rather than as the ints they were written with.
 func _stored(data: Dictionary) -> Dictionary:
 	return JSON.parse_string(JSON.stringify(data))
+
+
+## A mission the session can be armed with: the player is team 1, and the board
+## it names is only ever the one this file parses by hand.
+func _mission() -> CampaignDefinition:
+	var campaign := CampaignDefinition.new()
+	campaign.id = &"probe_tally"
+	campaign.title = "Probe"
+	var mission := MissionDefinition.new()
+	mission.id = &"probe_one"
+	mission.title = "Probe One"
+	mission.map_path = "res://maps/first_steps.txt"
+	mission.player_team = 1
+	campaign.missions.append(mission)
+	return campaign
+
+
+## A deployed mission, as the hub stages one: fresh when `resumed` is null, and
+## picking up a saved tally when it is not.
+func _deploy(resumed: MissionProgress = null) -> void:
+	var campaign := _mission()
+	CampaignSession.begin(campaign, campaign.missions[0], CampaignState.begin(campaign), resumed)
 
 
 # --- holding ground ---------------------------------------------------------
@@ -218,6 +245,42 @@ func test_a_resumed_tally_keeps_its_counts_and_recounts_nothing() -> void:
 	state.remove_unit(state.units_of(1)[0])
 	resumed.observe(state, 1)
 	assert_eq(resumed.losses(), 2, "and what it loses after the resume is still counted")
+
+
+## The board the mission opens on is the baseline, so the very first command is
+## diffed against something. Left to `decide`, that command *was* the baseline
+## and whatever it cost was free.
+func test_a_loss_on_the_first_command_of_a_mission_counts() -> void:
+	var state := _state()
+	_deploy()
+	CampaignSession.open_board(state)
+	state.remove_unit(state.units_of(1)[0])
+	CampaignSession.decide(state)
+	assert_eq(CampaignSession.tally.losses(), 1, "the first command is not a free one")
+
+
+## And again after every resume, or a loss limit is spent by saving and
+## reloading rather than by keeping the column alive.
+func test_a_loss_on_the_first_command_after_a_resume_counts() -> void:
+	var state := _state()
+	var tally := _tally(state)
+	state.remove_unit(state.units_of(1)[0])
+	tally.observe(state, 1)
+	var saved := _stored(CampaignSaveCodec.encode(_profile(), {"day": 4}, tally))
+	_deploy(CampaignSaveCodec.tally_of(saved))
+	assert_eq(CampaignSession.tally.losses(), 1, "the resume opens owing what it had lost")
+	CampaignSession.open_board(state)
+	state.remove_unit(state.units_of(1)[0])
+	CampaignSession.decide(state)
+	assert_eq(CampaignSession.tally.losses(), 2, "and a reload buys no casualty back")
+
+
+## The other half of that rule: a retry is not a resume, and starts clean.
+func test_a_retried_mission_opens_owing_nothing() -> void:
+	var state := _state()
+	_deploy()
+	CampaignSession.open_board(state)
+	assert_eq(CampaignSession.tally.losses(), 0, "nobody has spent a unit on this attempt")
 
 
 func test_a_tally_is_dropped_with_the_battle_it_was_kept_for() -> void:
