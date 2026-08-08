@@ -68,19 +68,35 @@ static func load_progress(campaign_id: StringName) -> CampaignState:
 ## The battle a profile was midway through, or an empty dictionary. Handed
 ## straight to `SaveCodec.decode`; nothing here reads inside it.
 static func load_battle(campaign_id: StringName) -> Dictionary:
+	return CampaignSaveCodec.battle_of(_read(campaign_id))
+
+
+## The mission tally that battle was being kept with, empty when there is none.
+## Its companion: a resumed mission has to open owing the losses it had already
+## taken.
+static func load_tally(campaign_id: StringName) -> MissionProgress:
+	return CampaignSaveCodec.tally_of(_read(campaign_id))
+
+
+## The profile as it sits on disk, or an empty dictionary. Silent, unlike
+## `load_progress`: a caller asking for one part of a profile is asking about a
+## mission in progress, and "there is none" is the ordinary answer.
+static func _read(campaign_id: StringName) -> Dictionary:
 	var path := _slot_path(path_for(campaign_id))
 	if not FileAccess.file_exists(path):
 		return {}
 	var json := JSON.new()
 	if json.parse(FileAccess.get_file_as_string(path)) != OK or not json.data is Dictionary:
 		return {}
-	return CampaignSaveCodec.battle_of(json.data)
+	return json.data
 
 
 ## Writes progress, leaving the previous profile untouched if anything fails.
 ## Returns false and says why; the caller decides whether that is worth telling
 ## the player about.
-static func save_progress(state: CampaignState, battle: Dictionary = {}) -> bool:
+static func save_progress(
+	state: CampaignState, battle: Dictionary = {}, tally: MissionProgress = null
+) -> bool:
 	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(DIR)):
 		var error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
 		if error != OK:
@@ -92,7 +108,7 @@ static func save_progress(state: CampaignState, battle: Dictionary = {}) -> bool
 	if file == null:
 		push_error("CampaignProfile: cannot write %s (%d)" % [temp, FileAccess.get_open_error()])
 		return false
-	file.store_string(JSON.stringify(CampaignSaveCodec.encode(state, battle), "\t"))
+	file.store_string(JSON.stringify(CampaignSaveCodec.encode(state, battle, tally), "\t"))
 	file.close()
 	return _swap_into_place(temp, path + BACKUP_SUFFIX, path)
 

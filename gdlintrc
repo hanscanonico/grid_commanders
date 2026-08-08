@@ -284,10 +284,18 @@ max-public-methods: 22
 # per-file budget in tools/check_scripts.sh instead. COM-94's cut-in split is
 # still the one that is due, and it is still not a merge's job.
 #
+# 1420 -> 1438 and the ceiling is still the scenario driver's: CD2's
+# `objective_panel` is the one scenario that plays a campaign mission, and the
+# driver keeps only what cannot live anywhere else — the demo name asked before
+# any driver exists, the dispatch row, and the session cleared once the frame is
+# written. The scenario itself is BattleMissionScenario, extracted first the way
+# BattleOverlayScenario and BattleVictoryScenario were. COM-94's cut-in split is
+# still the one that is due there.
+#
 # This setting is one number for the whole project — gdlint has no per-path
 # override — so it only ever tracks the *longest* file, and everyone shorter
 # gets that file's slack for free. COM-81: scenes/battle/battle.gd had been
 # living in it, so the ledger above was a ratchet the file it was written for no
 # longer felt. The per-file budgets in tools/check_scripts.sh are the tight half,
 # and they run in `make check`; this stays the repo-wide outer bound.
-max-file-lines: 1420
+max-file-lines: 1438

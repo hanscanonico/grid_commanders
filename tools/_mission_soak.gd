@@ -27,6 +27,7 @@ func _init() -> void:
 			var cap := maxi(400, map.width * map.height * 4)
 			var n := 0
 			var runtime := MissionRuntime.new(m)
+			var tally := MissionProgress.new()
 			var decided := false
 			while st.winner == 0 and st.day <= DAYS and n < cap:
 				var c := ai.plan_next_command(st)
@@ -34,7 +35,8 @@ func _init() -> void:
 					break
 				c.apply(st)
 				n += 1
-				if not decided and runtime.evaluate(st).is_over():
+				tally.observe(st, m.player_team)
+				if not decided and runtime.evaluate(st, tally).is_over():
 					decided = true
 			played += 1
 			if n >= cap:

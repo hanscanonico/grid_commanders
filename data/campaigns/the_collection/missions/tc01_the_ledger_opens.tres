@@ -1,14 +1,15 @@
 [gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 
-[sub_resource type="Resource" id="Objective_hold_the_customs_depot_the_ledger_na"]
+[sub_resource type="Resource" id="Objective_hold_the_customs_depot_two_days"]
 script = ExtResource("2")
-text = "Hold the customs depot the ledger names."
+text = "Hold the customs depot the ledger names for two days."
 cell = Vector2i(6, 4)
+days = 2
 
 [sub_resource type="Resource" id="Failure_the_depot_was_seized_before_day_8"]
 script = ExtResource("3")
@@ -56,7 +57,7 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_hold_the_customs_depot_the_ledger_na")])
+objectives = Array[Resource]([SubResource("Objective_hold_the_customs_depot_two_days")])
 failures = Array[Resource]([SubResource("Failure_the_depot_was_seized_before_day_8")])
 bonus_objectives = Array[Resource]([])
 par_day = 5

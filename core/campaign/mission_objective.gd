@@ -24,8 +24,22 @@ extends Resource
 
 ## Is this condition satisfied on the board as it now stands?
 ## `team` is the mission's player team; a side-wide reading asks `state.allied`.
-func is_met(_state: GameState, _team: int) -> bool:
+## `progress` is the mission's tally, for the two conditions no single board can
+## answer; every other objective ignores it.
+func is_met(_state: GameState, _team: int, _progress: MissionProgress) -> bool:
 	return false
+
+
+## How far along this condition is, in a handful of characters — "DAY 4/8",
+## "2/3 DAYS", "1/2 LOST". Empty when there is nothing to count and the tick
+## beside the text is the whole story.
+##
+## Here rather than in the panel that prints it, for the same reason `is_met` is:
+## a readout worked out from an objective's `@export`s somewhere else is a second
+## opinion about what that objective is measuring, and it would drift the first
+## time one of them learns to count something new.
+func readout(_state: GameState, _team: int, _progress: MissionProgress) -> String:
+	return ""
 
 
 ## Why this objective could never be satisfied on this mission's board, or "".
@@ -34,3 +48,29 @@ func is_met(_state: GameState, _team: int) -> bool:
 ## than as a mission that silently cannot be won.
 func definition_error(_map: MapData, _team: int) -> String:
 	return ""
+
+
+## The unit this board calls `tag`, or null when nothing on it does. The one
+## place a name is resolved, so two conditions asking after the same marshal
+## cannot disagree about who it is; a tag names at most one unit per board
+## (`UnitTag.duplicate_error`), so the first match is the answer. An empty tag
+## names nobody, though most units carry one.
+static func tagged_unit(state: GameState, tag: StringName) -> Unit:
+	if tag == &"":
+		return null
+	for unit in state.units:
+		if unit.tag == tag:
+			return unit
+	return null
+
+
+## Does this board deal a unit called `tag`? What a `definition_error` asks, so a
+## mission naming a unit its map never names fails at the door rather than as an
+## objective that is satisfied before the first command.
+static func board_names(map: MapData, tag: StringName) -> bool:
+	if tag == &"":
+		return false
+	for entry: Dictionary in map.starting_units:
+		if entry["tag"] == tag:
+			return true
+	return false

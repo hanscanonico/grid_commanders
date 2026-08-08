@@ -48,7 +48,10 @@ func _init(mission: MissionDefinition) -> void:
 	_mission = mission
 
 
-## The verdict on the board as it now stands.
+## The verdict on the board as it now stands, plus the mission's tally for the
+## two conditions a board cannot answer alone. Read-only in both: this class
+## decides, and `MissionProgress` is advanced by its one writer before we are
+## asked.
 ##
 ## Order, and why each step outranks the next:
 ##   1. The player was beaten — routed, or their HQ taken. A tactical defeat is
@@ -60,30 +63,30 @@ func _init(mission: MissionDefinition) -> void:
 ##      objectives are still unmet, because there is nobody left to contest them.
 ##   4. Every objective is satisfied.
 ##   5. Otherwise it is still being played.
-func evaluate(state: GameState) -> Outcome:
+func evaluate(state: GameState, progress: MissionProgress) -> Outcome:
 	var team := _mission.player_team
 	if state.winner != 0 and not state.allied(state.winner, team):
 		return Outcome.new(Status.FAILURE, "Your army was destroyed.")
 	if state.is_eliminated(team):
 		return Outcome.new(Status.FAILURE, "Your army was destroyed.")
 	for failure: MissionObjective in _mission.failures:
-		if failure != null and failure.is_met(state, team):
+		if failure != null and failure.is_met(state, team, progress):
 			return Outcome.new(Status.FAILURE, failure.text)
 	if state.winner != 0 and state.allied(state.winner, team):
-		return Outcome.new(Status.SUCCESS, "The enemy army was broken.", _stars(state))
-	if _objectives_met(state):
-		return Outcome.new(Status.SUCCESS, _mission_summary(), _stars(state))
+		return Outcome.new(Status.SUCCESS, "The enemy army was broken.", _stars(state, progress))
+	if _objectives_met(state, progress):
+		return Outcome.new(Status.SUCCESS, _mission_summary(), _stars(state, progress))
 	return Outcome.new()
 
 
 ## Whether every required objective is satisfied. A mission with no objectives
 ## is never won this way — it is won tactically, which step 3 already covers, so
 ## an empty list must not read as "all of nothing is true".
-func _objectives_met(state: GameState) -> bool:
+func _objectives_met(state: GameState, progress: MissionProgress) -> bool:
 	if _mission.objectives.is_empty():
 		return false
 	for objective: MissionObjective in _mission.objectives:
-		if objective == null or not objective.is_met(state, _mission.player_team):
+		if objective == null or not objective.is_met(state, _mission.player_team, progress):
 			return false
 	return true
 
@@ -91,12 +94,12 @@ func _objectives_met(state: GameState) -> bool:
 ## One star for finishing, one for finishing inside par, one for every bonus
 ## objective standing at the end. Deliberately countable by the player: no
 ## hidden score, and each star names the thing it was for.
-func _stars(state: GameState) -> int:
+func _stars(state: GameState, progress: MissionProgress) -> int:
 	var stars := 1
 	if _mission.par_day > 0 and state.day <= _mission.par_day:
 		stars += 1
 	for bonus: MissionObjective in _mission.bonus_objectives:
-		if bonus != null and bonus.is_met(state, _mission.player_team):
+		if bonus != null and bonus.is_met(state, _mission.player_team, progress):
 			stars += 1
 	return stars
 

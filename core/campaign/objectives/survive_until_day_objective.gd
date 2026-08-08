@@ -15,8 +15,12 @@ extends MissionObjective
 @export var day: int = 7
 
 
-func is_met(state: GameState, _team: int) -> bool:
+func is_met(state: GameState, _team: int, _progress: MissionProgress) -> bool:
 	return state.day >= day
+
+
+func readout(state: GameState, _team: int, _progress: MissionProgress) -> String:
+	return "DAY %d/%d" % [state.day, day]
 
 
 func definition_error(_map: MapData, _team: int) -> String:

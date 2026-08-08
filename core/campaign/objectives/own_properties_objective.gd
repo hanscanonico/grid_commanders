@@ -15,8 +15,12 @@ extends MissionObjective
 @export var terrain_id: StringName = &""
 
 
-func is_met(state: GameState, team: int) -> bool:
+func is_met(state: GameState, team: int, _progress: MissionProgress) -> bool:
 	return _held(state, team) >= count
+
+
+func readout(state: GameState, team: int, _progress: MissionProgress) -> String:
+	return "%d/%d" % [_held(state, team), count]
 
 
 func definition_error(map: MapData, _team: int) -> String:

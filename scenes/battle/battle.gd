@@ -218,6 +218,10 @@ func _ready() -> void:
 	commander_db = CommanderDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
 	_exit = BattleExit.new(self)
+	# A capture may need a launch the flags cannot state — a campaign board is not
+	# in the map catalogue — and stages it through MatchConfig like a menu deploy,
+	# so nothing here learns what a campaign is. Inert for every other run.
+	BattleMissionScenario.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
 	# scene just runs it. The menu (or a rematch) stages a request; a run that
 	# booted this scene directly — a smoke scenario, a capture, a watched Balance
@@ -482,6 +486,7 @@ func _build_view() -> BattleView:
 	built.damage_preview = %DamagePreview
 	built.hud_top = %HudTop
 	built.mission_strip = %MissionStrip
+	built.mission_panel = %MissionObjectives
 	built.db = db
 	built.map = map
 	built.game = game

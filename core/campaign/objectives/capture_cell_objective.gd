@@ -9,7 +9,7 @@ extends MissionObjective
 @export var cell: Vector2i = Vector2i.ZERO
 
 
-func is_met(state: GameState, team: int) -> bool:
+func is_met(state: GameState, team: int, _progress: MissionProgress) -> bool:
 	var owner := state.owner_at(cell)
 	return owner != 0 and state.allied(owner, team)
 

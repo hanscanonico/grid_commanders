@@ -22,12 +22,16 @@ CCQ.
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
+## None of this file's conditions reads the tally; a fresh one stands in for the
+## live one every verdict is taken with.
+var _tally: MissionProgress
 
 
 func before_each() -> void:
 	terrain_db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	chart = load("res://data/damage_chart.tres")
+	_tally = MissionProgress.new()
 
 
 func _state() -> GameState:
@@ -68,7 +72,7 @@ func _mission(objectives: Array = [], failures: Array = []) -> MissionDefinition
 
 func test_a_mission_runs_until_something_decides_it() -> void:
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
-	var outcome := runtime.evaluate(_state())
+	var outcome := runtime.evaluate(_state(), _tally)
 	assert_eq(outcome.status, MissionRuntime.Status.RUNNING)
 	assert_false(outcome.is_over())
 
@@ -77,7 +81,7 @@ func test_meeting_every_objective_wins_it() -> void:
 	var state := _state()
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.set_owner(Vector2i(1, 0), 1)
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.SUCCESS)
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.SUCCESS)
 
 
 func test_every_objective_must_be_met_at_once() -> void:
@@ -86,16 +90,16 @@ func test_every_objective_must_be_met_at_once() -> void:
 		_mission([_capture(Vector2i(1, 0)), _capture(Vector2i(2, 0))])
 	)
 	state.set_owner(Vector2i(1, 0), 1)
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.RUNNING, "one of two")
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.RUNNING, "one of two")
 	state.set_owner(Vector2i(2, 0), 1)
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.SUCCESS)
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.SUCCESS)
 
 
 func test_routing_the_enemy_wins_a_mission_whose_objectives_are_unmet() -> void:
 	var state := _state()
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.winner = 1
-	var outcome := runtime.evaluate(state)
+	var outcome := runtime.evaluate(state, _tally)
 	assert_eq(outcome.status, MissionRuntime.Status.SUCCESS)
 	assert_eq(outcome.reason, "The enemy army was broken.")
 
@@ -103,21 +107,21 @@ func test_routing_the_enemy_wins_a_mission_whose_objectives_are_unmet() -> void:
 func test_a_mission_with_no_objectives_is_not_won_by_vacuous_truth() -> void:
 	# "All of nothing is true" would end such a mission on its first command.
 	var runtime := MissionRuntime.new(_mission([], [_deadline(6)]))
-	assert_eq(runtime.evaluate(_state()).status, MissionRuntime.Status.RUNNING)
+	assert_eq(runtime.evaluate(_state(), _tally).status, MissionRuntime.Status.RUNNING)
 
 
 func test_losing_tactically_fails_it() -> void:
 	var state := _state()
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.winner = 2
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.FAILURE)
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.FAILURE)
 
 
 func test_a_failure_condition_fails_it() -> void:
 	var state := _state()
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))], [_deadline(6)]))
 	state.day = 7
-	var outcome := runtime.evaluate(state)
+	var outcome := runtime.evaluate(state, _tally)
 	assert_eq(outcome.status, MissionRuntime.Status.FAILURE)
 	assert_eq(
 		outcome.reason, "The relay went dark on day 7.", "the debrief says which clock ran out"
@@ -134,7 +138,7 @@ func test_the_deadline_outranks_the_objectives_met_on_the_same_board() -> void:
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))], [_deadline(6)]))
 	state.set_owner(Vector2i(1, 0), 1)
 	state.day = 7
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.FAILURE)
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.FAILURE)
 
 
 func test_being_beaten_outranks_everything() -> void:
@@ -142,7 +146,7 @@ func test_being_beaten_outranks_everything() -> void:
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.set_owner(Vector2i(1, 0), 1)
 	state.winner = 2
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.FAILURE)
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.FAILURE)
 
 
 func test_an_eliminated_player_has_lost_even_with_no_winner_declared() -> void:
@@ -150,7 +154,7 @@ func test_an_eliminated_player_has_lost_even_with_no_winner_declared() -> void:
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.set_owner(Vector2i(1, 0), 1)
 	state.eliminated[1] = true
-	assert_eq(runtime.evaluate(state).status, MissionRuntime.Status.FAILURE)
+	assert_eq(runtime.evaluate(state, _tally).status, MissionRuntime.Status.FAILURE)
 
 
 func test_an_allys_victory_is_ours() -> void:
@@ -160,7 +164,7 @@ func test_an_allys_victory_is_ours() -> void:
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.winner = 2
 	assert_eq(
-		runtime.evaluate(state).status,
+		runtime.evaluate(state, _tally).status,
 		MissionRuntime.Status.SUCCESS,
 		"team 2 stands with us, so its victory is not our defeat"
 	)
@@ -173,7 +177,7 @@ func test_one_star_for_finishing() -> void:
 	var state := _state()
 	var runtime := MissionRuntime.new(_mission([_capture(Vector2i(1, 0))]))
 	state.set_owner(Vector2i(1, 0), 1)
-	assert_eq(runtime.evaluate(state).stars, 1)
+	assert_eq(runtime.evaluate(state, _tally).stars, 1)
 
 
 func test_a_second_star_for_finishing_inside_par() -> void:
@@ -183,9 +187,9 @@ func test_a_second_star_for_finishing_inside_par() -> void:
 	var runtime := MissionRuntime.new(mission)
 	state.set_owner(Vector2i(1, 0), 1)
 	state.day = 4
-	assert_eq(runtime.evaluate(state).stars, 2, "day 4 is inside par 4")
+	assert_eq(runtime.evaluate(state, _tally).stars, 2, "day 4 is inside par 4")
 	state.day = 5
-	assert_eq(runtime.evaluate(state).stars, 1)
+	assert_eq(runtime.evaluate(state, _tally).stars, 1)
 
 
 func test_a_star_for_each_bonus_objective_standing_at_the_end() -> void:
@@ -195,9 +199,9 @@ func test_a_star_for_each_bonus_objective_standing_at_the_end() -> void:
 	var runtime := MissionRuntime.new(mission)
 	assert_eq(runtime.max_stars(), 2, "one to finish, one for the bonus")
 	state.set_owner(Vector2i(1, 0), 1)
-	assert_eq(runtime.evaluate(state).stars, 1)
+	assert_eq(runtime.evaluate(state, _tally).stars, 1)
 	state.set_owner(Vector2i(2, 0), 1)
-	assert_eq(runtime.evaluate(state).stars, 2)
+	assert_eq(runtime.evaluate(state, _tally).stars, 2)
 
 
 func test_a_failed_mission_earns_nothing() -> void:
@@ -207,4 +211,4 @@ func test_a_failed_mission_earns_nothing() -> void:
 	var runtime := MissionRuntime.new(mission)
 	state.set_owner(Vector2i(1, 0), 1)
 	state.day = 7
-	assert_eq(runtime.evaluate(state).stars, 0)
+	assert_eq(runtime.evaluate(state, _tally).stars, 0)

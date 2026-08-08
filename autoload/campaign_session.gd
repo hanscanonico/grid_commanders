@@ -19,17 +19,29 @@ var mission: MissionDefinition
 var progress: CampaignState
 ## The verdict, once a mission has been decided. Read by the outcome screen.
 var outcome: MissionRuntime.Outcome
+## What the mission has tallied over the boards it has been played on — days a
+## square has been held, units lost. Advanced by `decide` and nowhere else, which
+## is campaign-depth D2's one writer.
+var tally: MissionProgress
 var _runtime: MissionRuntime
 
 
 ## Stage a mission and return the launch it is, for `MatchConfig.stage`.
+##
+## `resuming` says the saved board is being picked up rather than the mission
+## restarted, and the tally follows the board: a retry that inherited the last
+## attempt's losses would fail a loss limit nobody had spent.
 func begin(
-	p_campaign: CampaignDefinition, p_mission: MissionDefinition, p_progress: CampaignState
+	p_campaign: CampaignDefinition,
+	p_mission: MissionDefinition,
+	p_progress: CampaignState,
+	resuming := false
 ) -> MatchRequest:
 	campaign = p_campaign
 	mission = p_mission
 	progress = p_progress
 	outcome = null
+	tally = CampaignProfile.load_tally(p_campaign.id) if resuming else MissionProgress.new()
 	_runtime = MissionRuntime.new(p_mission)
 	if progress != null:
 		progress.active_mission = p_mission.id
@@ -49,10 +61,15 @@ func active() -> bool:
 ## receipt's own winner because `MissionRuntime`'s precedence already turns a
 ## tactical victory into success — consulting both would give one board two
 ## endings. Decided once: a mission already over stays over.
+##
+## The tally is advanced here and before the verdict, because a condition asking
+## how long the ridge has been ours has to be answered about this board rather
+## than the one before it.
 func decide(game: GameState) -> bool:
 	if _runtime == null or outcome != null:
 		return false
-	var verdict := _runtime.evaluate(game)
+	tally.observe(game, mission.player_team)
+	var verdict := _runtime.evaluate(game, tally)
 	if not verdict.is_over():
 		return false
 	outcome = verdict
@@ -89,7 +106,7 @@ func save_battle(battle: Dictionary) -> bool:
 	if progress == null or mission == null:
 		return false
 	progress.active_mission = mission.id
-	return CampaignProfile.save_progress(progress, battle)
+	return CampaignProfile.save_progress(progress, battle, tally)
 
 
 ## Forget the campaign — leaving for the menu, or starting a skirmish. Resets
@@ -102,4 +119,5 @@ func clear() -> void:
 	mission = null
 	progress = null
 	outcome = null
+	tally = null
 	_runtime = null
