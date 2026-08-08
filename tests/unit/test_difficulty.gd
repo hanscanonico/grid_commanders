@@ -15,17 +15,10 @@ var db: DifficultyDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 	db = DifficultyDB.load_default()
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
 
 
 func test_every_tier_loads() -> void:
@@ -148,7 +141,7 @@ func test_brutal_leaves_the_refused_dials_off() -> void:
 func test_brutal_reaches_a_different_command_than_normal() -> void:
 	var map_text := "[terrain]\nB...\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0"
 
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	state.funds[1] = 20000
 	for unit in state.units:
 		unit.acted = true
@@ -163,7 +156,7 @@ func test_brutal_reaches_a_different_command_than_normal() -> void:
 
 
 func _defends_its_hq(tier: StringName) -> bool:
-	var state := _state(HQ_SIEGE)
+	var state := Fixture.state(HQ_SIEGE)
 	state.capture_progress[Vector2i(0, 0)] = 5
 	var command := AIController.new(unit_db, db.by_id(tier).profile()).plan_next_command(state)
 	return command is AttackCommand and (command as AttackCommand).target_cell == Vector2i(0, 0)
@@ -227,7 +220,7 @@ func test_a_tier_without_a_profile_still_yields_one() -> void:
 func test_easy_reaches_a_different_command_than_normal() -> void:
 	var map_text := "[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n1 i 4 0"
 
-	var normal_state := _state(map_text)
+	var normal_state := Fixture.state(map_text)
 	normal_state.funds[1] = 20000
 	for unit in normal_state.units:
 		unit.acted = true
@@ -237,7 +230,7 @@ func test_easy_reaches_a_different_command_than_normal() -> void:
 	assert_true(normal_pick is BuildCommand, "expected a build, got %s" % normal_pick)
 	assert_eq((normal_pick as BuildCommand).unit_type.id, &"md_tank")
 
-	var easy_state := _state(map_text)
+	var easy_state := Fixture.state(map_text)
 	easy_state.funds[1] = 20000
 	for unit in easy_state.units:
 		unit.acted = true
@@ -258,7 +251,7 @@ func test_easy_reaches_a_different_command_than_normal() -> void:
 func test_easy_stops_buying_capture_units_before_normal() -> void:
 	var map_text := "[terrain]\nB...\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0"
 
-	var easy_state := _state(map_text)
+	var easy_state := Fixture.state(map_text)
 	easy_state.funds[1] = 20000
 	for unit in easy_state.units:
 		unit.acted = true
@@ -268,7 +261,7 @@ func test_easy_stops_buying_capture_units_before_normal() -> void:
 	assert_true(easy_pick is BuildCommand)
 	assert_eq((easy_pick as BuildCommand).unit_type.id, &"tank")
 
-	var normal_state := _state(map_text)
+	var normal_state := Fixture.state(map_text)
 	normal_state.funds[1] = 20000
 	for unit in normal_state.units:
 		unit.acted = true

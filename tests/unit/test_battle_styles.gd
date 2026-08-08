@@ -20,8 +20,8 @@ var chart: DamageChart
 
 func before_each() -> void:
 	styles = BattleStyleDB.load_default()
-	units = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	units = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func test_every_unit_names_a_style_that_exists() -> void:

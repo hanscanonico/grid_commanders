@@ -12,25 +12,15 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _state(map_text: String, fog: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	assert_not_null(map, "test map should parse")
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state, "test state should build")
+	var state := Fixture.state(map_text)
 	state.fog_enabled = fog
 	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
 
 
 ## Fires Sable Wren's Vanish for team 2, the doctrine that hides a unit even from
@@ -117,7 +107,7 @@ func test_a_move_is_cut_short_at_the_hidden_enemy() -> void:
 	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n2 i 3 0")
 	var mover := state.units[0]
 	var command := MoveCommand.new(
-		mover, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
+		mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
 	)
 	assert_eq(
 		command.validate(state), "", "a hidden occupant must not be refused — that is the probe"
@@ -138,7 +128,7 @@ func test_the_attack_bound_to_an_ambushed_move_is_aborted() -> void:
 	var target := state.units[2]
 	var command := AttackCommand.new(
 		mover,
-		_path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]),
+		Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]),
 		Vector2i(3, 1)
 	)
 	assert_eq(command.validate(state), "", "the shot is legal on paper, from the intended cell")
@@ -155,7 +145,9 @@ func test_a_friendly_on_the_path_is_not_an_ambush() -> void:
 	# length and nothing is cut short.
 	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n1 i 1 0", false)
 	var mover := state.units[0]
-	var command := MoveCommand.new(mover, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]))
+	var command := MoveCommand.new(
+		mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+	)
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_false(command.ambushed)
@@ -170,7 +162,7 @@ func test_a_capture_bound_to_an_ambushed_move_is_aborted() -> void:
 	_vanish(state)
 	var mover := state.units[0]
 	var command := CaptureCommand.new(
-		mover, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+		mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 	)
 	assert_eq(command.validate(state), "")
 	command.apply(state)

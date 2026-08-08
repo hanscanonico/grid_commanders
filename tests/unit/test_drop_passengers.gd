@@ -10,30 +10,16 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func test_drop_judges_each_passenger_not_just_the_first() -> void:
 	# A lander beached on a shoal carries a tank (treads, loaded first) and then an
 	# infantry (foot). The mountain beside it takes the infantry but not the tank;
 	# judging every drop against the first passenger wrongly refused the infantry.
-	var state := _state("[terrain]\n._S\nSMS\n[units]\n1 l 1 0")
+	var state := Fixture.state("[terrain]\n._S\nSMS\n[units]\n1 l 1 0")
 	var lander := state.units[0]
 	var tank := Unit.create(unit_db.by_id(&"tank"), 1, lander.cell)
 	tank.carrier = lander
@@ -42,7 +28,7 @@ func test_drop_judges_each_passenger_not_just_the_first() -> void:
 	state.units.append(tank)
 	state.units.append(infantry)
 	assert_eq(state.cargo_of(lander), [tank, infantry] as Array[Unit], "tank is loaded first")
-	var path := _path([Vector2i(1, 0)])
+	var path := Fixture.path([Vector2i(1, 0)])
 	# The named second passenger drops onto the mountain the tank cannot climb.
 	var drop_infantry := DropCommand.new(lander, path, Vector2i(1, 1), infantry)
 	assert_eq(drop_infantry.validate(state), "")
@@ -75,14 +61,16 @@ func test_drop_judges_each_passenger_not_just_the_first() -> void:
 ## nowhere to step. Reporting the second as the first plays the trap cue for a
 ## plain blockage.
 func test_a_blocked_drop_is_not_an_ambush() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 p 0 0\n2 i 2 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 p 0 0\n2 i 2 0")
 	state.fog_enabled = true
 	var apc := state.units[0]
 	var rider := Unit.create(unit_db.by_id(&"infantry"), 1, apc.cell)
 	rider.carrier = apc
 	state.units.append(rider)
 	# The enemy sits on the drop cell, not on the path, and team 1 cannot see it.
-	var command := DropCommand.new(apc, _path([Vector2i(0, 0), Vector2i(1, 0)]), Vector2i(2, 0))
+	var command := DropCommand.new(
+		apc, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]), Vector2i(2, 0)
+	)
 	assert_eq(
 		command.validate(state), "", "a hidden occupant must not be refused — that reveals it"
 	)
@@ -94,7 +82,7 @@ func test_a_blocked_drop_is_not_an_ambush() -> void:
 
 
 func test_a_drop_whose_move_is_ambushed_still_reports_the_trap() -> void:
-	var state := _state("[terrain]\n....\n....\n[units]\n1 p 0 0\n2 i 2 0")
+	var state := Fixture.state("[terrain]\n....\n....\n[units]\n1 p 0 0\n2 i 2 0")
 	state.fog_enabled = true
 	var apc := state.units[0]
 	var rider := Unit.create(unit_db.by_id(&"infantry"), 1, apc.cell)
@@ -102,7 +90,7 @@ func test_a_drop_whose_move_is_ambushed_still_reports_the_trap() -> void:
 	state.units.append(rider)
 	# This time the hidden enemy is *on* the path, and the drop cell is clear.
 	var command := DropCommand.new(
-		apc, _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Vector2i(2, 1)
+		apc, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), Vector2i(2, 1)
 	)
 	assert_eq(command.validate(state), "")
 	command.apply(state)

@@ -14,16 +14,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _fight(attacker: Unit, defender: Unit) -> Engagement:
@@ -41,7 +34,7 @@ func _fight(attacker: Unit, defender: Unit) -> Engagement:
 
 
 func test_teams_start_neutral() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	for team in GameState.TEAMS:
 		assert_eq(state.commander_of(team).id, CommanderType.NEUTRAL_ID)
 		assert_false(state.commander_of(team).has_power())
@@ -50,7 +43,7 @@ func test_teams_start_neutral() -> void:
 
 
 func test_neutral_hooks_return_the_pre_commander_rules() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	var tank := state.units[0]
 	var infantry := state.units[1]
 	var co := state.commander_of(1)
@@ -92,7 +85,7 @@ func test_golden_damage_matrix_for_the_neutral_commander() -> void:
 		["[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0", 5],  # plains 1*: 5 * 0.9 = 4.5
 	]
 	for case: Array in cases:
-		var state := _state(case[0])
+		var state := Fixture.state(case[0])
 		var forecast := CombatResolver.forecast(
 			state, state.units[0], state.units[0].cell, state.units[1]
 		)
@@ -103,7 +96,7 @@ func test_golden_damage_matrix_for_the_neutral_commander() -> void:
 ## less well. Pinned here because both terms sit inside the same multiplier
 ## chain the doctrines hook into.
 func test_golden_damage_matrix_for_damaged_units() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	state.units[0].hp = 50  # 5 displayed
 	# 75 * 0.5 * (1 - 0.1 * 1 * 1.0) = 33.75 -> 34.
 	assert_eq(
@@ -145,7 +138,7 @@ func test_a_no_commander_match_is_deterministic() -> void:
 
 ## Fixed seed, fixed command list: attack, end turn, end turn.
 func _play_scripted_match() -> Dictionary:
-	var state := _state("[terrain]\n.C.\n.C.\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n.C.\n.C.\n[units]\n1 t 0 0\n2 i 1 0")
 	state.rng.seed = 424242
 	state.set_owner(Vector2i(1, 0), 1)
 	state.set_owner(Vector2i(1, 1), 1)

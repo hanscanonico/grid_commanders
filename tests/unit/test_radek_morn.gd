@@ -10,19 +10,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, morn_team: int = 1) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if morn_team != 0:
-		state.set_commander(morn_team, commander_db.by_id(&"radek_morn"))
-	return state
+	return Fixture.state(map_text, {} if morn_team == 0 else {morn_team: &"radek_morn"})
 
 
 ## Fires at `target` through the real command, meter and all, so nothing here

@@ -10,8 +10,8 @@ var unit_db: UnitDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
 
 
 func test_default_config_loads() -> void:

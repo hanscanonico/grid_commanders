@@ -80,8 +80,8 @@ var terrain_db: TerrainDB
 
 
 func before_each() -> void:
-	unit_db = UnitDB.load_default()
-	terrain_db = TerrainDB.load_default()
+	unit_db = Fixture.unit_db()
+	terrain_db = Fixture.terrain_db()
 
 
 func test_every_resource_under_data_loads() -> void:

@@ -16,24 +16,15 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
+	var state := Fixture.state(map_text)
 	state.rng.seed = 1
 	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
 
 
 ## Opens a recorder on `state` and returns it, with team 1 and 2 both on Normal.
@@ -72,8 +63,8 @@ func test_a_kill_is_the_attacker_s_and_a_counter_death_is_its_loss() -> void:
 	enemy_infantry.hp = 10  # one pip: the tank's shot kills outright
 	mech.hp = 10  # and the tank it pokes counters lethally
 	var recorder := _recorder(state)
-	_apply(recorder, state, AttackCommand.new(tank, _path([Vector2i(0, 0)]), Vector2i(1, 0)))
-	_apply(recorder, state, AttackCommand.new(mech, _path([Vector2i(2, 0)]), Vector2i(3, 0)))
+	_apply(recorder, state, AttackCommand.new(tank, Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0)))
+	_apply(recorder, state, AttackCommand.new(mech, Fixture.path([Vector2i(2, 0)]), Vector2i(3, 0)))
 	recorder.end_match(state)
 	var row: Dictionary = recorder.rows()[recorder.rows().size() - 1]
 	assert_eq(row["team"], 1)
@@ -91,7 +82,7 @@ func test_a_join_merge_is_neither_a_kill_nor_a_loss() -> void:
 	var twin := state.units[1]
 	twin.hp = 50  # a full-strength twin refuses the join
 	var recorder := _recorder(state)
-	_apply(recorder, state, JoinCommand.new(mover, _path([Vector2i(0, 0), Vector2i(1, 0)])))
+	_apply(recorder, state, JoinCommand.new(mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])))
 	var row := _close(recorder, state)
 	assert_eq(row["merged"], 1, "the mover left the board without dying")
 	assert_eq(row["lost"], "", "a merge is not a loss")
@@ -103,7 +94,9 @@ func test_boarding_a_transport_is_not_a_removal_at_all() -> void:
 	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n1 p 1 0")
 	var infantry := state.units[0]
 	var recorder := _recorder(state)
-	_apply(recorder, state, LoadCommand.new(infantry, _path([Vector2i(0, 0), Vector2i(1, 0)])))
+	_apply(
+		recorder, state, LoadCommand.new(infantry, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]))
+	)
 	var row := _close(recorder, state)
 	assert_eq(row["lost"], "", "a passenger is not a casualty")
 	assert_eq(row["merged"], 0)
@@ -234,7 +227,9 @@ func test_bounty_plunder_is_signed_and_closes_the_turn_s_funds() -> void:
 	state.funds[2] = 5000
 	var recorder := _recorder(state)
 	_apply(
-		recorder, state, AttackCommand.new(state.units[0], _path([Vector2i.ZERO]), Vector2i(1, 0))
+		recorder,
+		state,
+		AttackCommand.new(state.units[0], Fixture.path([Vector2i.ZERO]), Vector2i(1, 0))
 	)
 	recorder.end_match(state)
 	var row: Dictionary = recorder.rows()[recorder.rows().size() - 1]
@@ -253,7 +248,9 @@ func test_a_stolen_bounty_is_carried_to_the_victim_s_next_row() -> void:
 	state.funds[2] = 5000
 	var recorder := _recorder(state)
 	_apply(
-		recorder, state, AttackCommand.new(state.units[0], _path([Vector2i.ZERO]), Vector2i(1, 0))
+		recorder,
+		state,
+		AttackCommand.new(state.units[0], Fixture.path([Vector2i.ZERO]), Vector2i(1, 0))
 	)
 	var thief := _close(recorder, state)
 	var victim := _close(recorder, state)
@@ -272,11 +269,15 @@ func test_only_a_completed_capture_counts() -> void:
 	var state := _state("[terrain]\nC.\n[units]\n1 i 1 0")
 	var infantry := state.units[0]
 	var recorder := _recorder(state)
-	_apply(recorder, state, CaptureCommand.new(infantry, _path([Vector2i(1, 0), Vector2i(0, 0)])))
+	_apply(
+		recorder,
+		state,
+		CaptureCommand.new(infantry, Fixture.path([Vector2i(1, 0), Vector2i(0, 0)]))
+	)
 	var first := _close(recorder, state)
 	assert_eq(first["captures"], 0, "chipping at a property is not yet a capture")
 	_close(recorder, state)  # blue's turn
-	_apply(recorder, state, CaptureCommand.new(infantry, _path([Vector2i(0, 0)])))
+	_apply(recorder, state, CaptureCommand.new(infantry, Fixture.path([Vector2i(0, 0)])))
 	var second := _close(recorder, state)
 	assert_eq(second["captures"], 1, "the turn it flips is the turn it counts")
 	assert_eq(second["properties"], 1)
@@ -292,7 +293,7 @@ func test_an_army_swept_off_by_an_hq_capture_is_forfeited_rather_than_killed() -
 	var state := _state("[terrain]\n.Q..\n[owners]\n2 1 0\n[units]\n1 i 1 0\n2 t 3 0")
 	state.capture_progress[Vector2i(1, 0)] = 1  # one turn finishes it
 	var recorder := _recorder(state)
-	_apply(recorder, state, CaptureCommand.new(state.units[0], _path([Vector2i(1, 0)])))
+	_apply(recorder, state, CaptureCommand.new(state.units[0], Fixture.path([Vector2i(1, 0)])))
 	assert_true(state.is_eliminated(2), "the HQ's owner is out of the match")
 	# The match ended on the capture, so the turn closes the way the harness closes
 	# it — there is no EndTurnCommand after a winner.
@@ -349,7 +350,7 @@ func test_reconcile_closes_over_a_match_with_a_kill_a_build_and_a_merge() -> voi
 	twin.hp = 40
 	var recorder := _recorder(state)
 	_apply(recorder, state, BuildCommand.new(1, unit_db.by_symbol("i"), Vector2i(0, 0)))
-	_apply(recorder, state, JoinCommand.new(mover, _path([Vector2i(1, 0), Vector2i(2, 0)])))
+	_apply(recorder, state, JoinCommand.new(mover, Fixture.path([Vector2i(1, 0), Vector2i(2, 0)])))
 	_close(recorder, state)
 	_close(recorder, state)
 	assert_eq(

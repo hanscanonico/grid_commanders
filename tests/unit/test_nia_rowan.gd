@@ -9,26 +9,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, with_nia: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if with_nia:
-		state.set_commander(1, commander_db.by_id(&"nia_rowan"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(1, state.commander_of(1).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {1: &"nia_rowan"} if with_nia else {})
 
 
 # --- the terrain discount ----------------------------------------------------
@@ -103,7 +91,7 @@ func test_the_power_moves_and_sights_foot_units_and_recon() -> void:
 	var infantry := state.units[0]
 	var recon := state.units[1]
 	var tank := state.units[2]
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(MovementResolver.move_budget(state, infantry), infantry.type.move_points + 1)
 	assert_eq(MovementResolver.move_budget(state, recon), recon.type.move_points + 1)
 	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points, "treads sit it out")
@@ -116,14 +104,14 @@ func test_the_power_reveals_woods_at_range() -> void:
 	state.fog_enabled = true
 	var woods := Vector2i(2, 0)
 	assert_false(Vision.visible_cells(state, 1).has(woods), "two tiles away, so hidden")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_true(Vision.visible_cells(state, 1).has(woods), "Ghost March sees into it")
 
 
 func test_the_power_does_not_reveal_woods_for_the_other_side() -> void:
 	var state := _state("[terrain]\n..F..\n.....\n[units]\n1 i 0 0\n2 i 4 0")
 	state.fog_enabled = true
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_false(Vision.visible_cells(state, 2).has(Vector2i(2, 0)))
 
 
@@ -131,7 +119,7 @@ func test_the_power_expires_with_the_turn() -> void:
 	var state := _state("[terrain]\n..F..\n.....\n[units]\n1 i 0 0")
 	state.fog_enabled = true
 	var infantry := state.units[0]
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_true(Vision.visible_cells(state, 1).has(Vector2i(2, 0)))
 	EndTurnCommand.new().apply(state)
 	assert_false(Vision.visible_cells(state, 1).has(Vector2i(2, 0)))
@@ -142,7 +130,7 @@ func test_the_power_expires_with_the_turn() -> void:
 func test_the_terrain_discount_outlives_the_power() -> void:
 	var state := _state("[terrain]\n.M\n[units]\n1 i 0 0")
 	var mountain := terrain_db.by_symbol("M")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	EndTurnCommand.new().apply(state)
 	assert_eq(MovementResolver.step_cost(state, state.units[0], mountain), 1)
 

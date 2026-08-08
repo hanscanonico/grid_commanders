@@ -9,46 +9,39 @@ extends GutTest
 ## silently loses.
 
 
-func _args(list: Array) -> PackedStringArray:
-	var out := PackedStringArray()
-	for item: String in list:
-		out.append(item)
-	return out
-
-
 func test_value_reads_what_follows_the_equals() -> void:
-	assert_eq(CmdArgs.value(_args(["--map=dustbowl"]), "--map"), "dustbowl")
+	assert_eq(CmdArgs.value(Fixture.args(["--map=dustbowl"]), "--map"), "dustbowl")
 
 
 func test_value_is_empty_when_the_flag_is_absent() -> void:
-	assert_eq(CmdArgs.value(_args(["--fog"]), "--map"), "")
+	assert_eq(CmdArgs.value(Fixture.args(["--fog"]), "--map"), "")
 
 
 ## Five of the six loops this replaced assigned into a variable as they walked,
 ## so the last spelling won. Kept, so a repeated flag means what it always did.
 func test_the_last_spelling_wins() -> void:
-	assert_eq(CmdArgs.value(_args(["--map=a", "--map=b"]), "--map"), "b")
+	assert_eq(CmdArgs.value(Fixture.args(["--map=a", "--map=b"]), "--map"), "b")
 
 
 ## `--co-select` is valid bare and with a value; bare means the Red slot.
 func test_a_bare_flag_takes_the_fallback() -> void:
-	assert_eq(CmdArgs.value(_args(["--co-select"]), "--co-select", "red"), "red")
-	assert_eq(CmdArgs.value(_args(["--co-select=blue"]), "--co-select", "red"), "blue")
+	assert_eq(CmdArgs.value(Fixture.args(["--co-select"]), "--co-select", "red"), "red")
+	assert_eq(CmdArgs.value(Fixture.args(["--co-select=blue"]), "--co-select", "red"), "blue")
 
 
 func test_a_prefix_is_not_a_match() -> void:
 	# `--co` must not answer for `--co-select`, which sits right beside it on the
 	# same command lines the capture flows use.
-	assert_eq(CmdArgs.value(_args(["--co-select=blue"]), "--co"), "")
-	assert_false(CmdArgs.has(_args(["--co-select=blue"]), "--co"))
+	assert_eq(CmdArgs.value(Fixture.args(["--co-select=blue"]), "--co"), "")
+	assert_false(CmdArgs.has(Fixture.args(["--co-select=blue"]), "--co"))
 
 
 func test_has_separates_an_empty_flag_from_a_missing_one() -> void:
-	assert_true(CmdArgs.has(_args(["--co="]), "--co"), "passed, with nothing after it")
-	assert_false(CmdArgs.has(_args(["--fog"]), "--co"), "not passed at all")
-	assert_eq(CmdArgs.value(_args(["--co="]), "--co"), "", "both look empty to value()")
+	assert_true(CmdArgs.has(Fixture.args(["--co="]), "--co"), "passed, with nothing after it")
+	assert_false(CmdArgs.has(Fixture.args(["--fog"]), "--co"), "not passed at all")
+	assert_eq(CmdArgs.value(Fixture.args(["--co="]), "--co"), "", "both look empty to value()")
 
 
 func test_flag_matches_only_the_bare_switch() -> void:
-	assert_true(CmdArgs.flag(_args(["--hotseat"]), "--hotseat"))
-	assert_false(CmdArgs.flag(_args(["--hotseat=yes"]), "--hotseat"))
+	assert_true(CmdArgs.flag(Fixture.args(["--hotseat"]), "--hotseat"))
+	assert_false(CmdArgs.flag(Fixture.args(["--hotseat=yes"]), "--hotseat"))

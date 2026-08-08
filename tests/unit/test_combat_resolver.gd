@@ -6,16 +6,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func test_chart_loads() -> void:
@@ -28,7 +21,7 @@ func test_chart_loads() -> void:
 
 func test_forecast_full_hp_on_plains() -> void:
 	# Tank MG vs Infantry on plains (1 star): 75 * 1.0 * 0.9 = 67.5 -> 68
-	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
 	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 	assert_true(forecast.can_attack)
 	assert_eq(forecast.attack_damage, 68)
@@ -39,13 +32,13 @@ func test_forecast_full_hp_on_plains() -> void:
 
 func test_forecast_ignores_luck_and_respects_terrain() -> void:
 	# Road has 0 defense stars: Tank MG vs Infantry = flat 75.
-	var road_state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0")
+	var road_state := Fixture.state("[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0")
 	var road_forecast := CombatResolver.forecast(
 		road_state, road_state.units[0], Vector2i(0, 0), road_state.units[1]
 	)
 	assert_eq(road_forecast.attack_damage, 75)
 	# Mountain (4 stars) shields the defender: 75 * 1.0 * 0.6 = 45.
-	var mountain_state := _state("[terrain]\n.M\n[units]\n1 t 0 0\n2 i 1 0")
+	var mountain_state := Fixture.state("[terrain]\n.M\n[units]\n1 t 0 0\n2 i 1 0")
 	var mountain_forecast := CombatResolver.forecast(
 		mountain_state, mountain_state.units[0], Vector2i(0, 0), mountain_state.units[1]
 	)
@@ -54,20 +47,20 @@ func test_forecast_ignores_luck_and_respects_terrain() -> void:
 
 func test_forecast_damaged_attacker_scales() -> void:
 	# tank at 5 displayed HP: 55 * 0.5 * 0.9 = 24.75 -> 25 vs full tank
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
 	state.units[0].hp = 50
 	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 	assert_eq(forecast.attack_damage, 25)
 
 
 func test_forecast_unarmed_attacker_cannot_attack() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 p 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 p 0 0\n2 i 1 0")
 	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 	assert_false(forecast.can_attack)
 
 
 func test_forecast_no_counter_from_indirect_defender() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 g 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 g 1 0")
 	var forecast := CombatResolver.forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
 	assert_true(forecast.can_attack)
 	assert_eq(forecast.counter_damage, -1, "artillery never counters")
@@ -80,7 +73,7 @@ func test_forecast_no_counter_from_indirect_defender() -> void:
 ## (an AI plan cache miss, a future forecaster) would price a shot that could
 ## never be fired.
 func test_forecast_against_a_dived_sub_from_a_non_hunter_cannot_attack() -> void:
-	var state := _state("[terrain]\n..S\n[units]\n1 g 0 0\n2 s 2 0")
+	var state := Fixture.state("[terrain]\n..S\n[units]\n1 g 0 0\n2 s 2 0")
 	state.rng.seed = 42
 	var sub := state.units[1]
 	sub.dived = true
@@ -91,7 +84,7 @@ func test_forecast_against_a_dived_sub_from_a_non_hunter_cannot_attack() -> void
 ## forecast() is the convenience for the defender's real cell, so the two must
 ## agree there or every existing caller has quietly changed answer.
 func test_forecast_at_the_defenders_own_cell_matches_forecast() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
 	var convenience := CombatResolver.forecast(
 		state, state.units[0], Vector2i(0, 0), state.units[1]
 	)
@@ -107,7 +100,7 @@ func test_forecast_at_the_defenders_own_cell_matches_forecast() -> void:
 ## not the cover it has now.
 func test_forecast_at_reads_the_cover_of_the_cell_it_is_given() -> void:
 	# The infantry stands on road (0 stars); the mountain beside it is 4.
-	var state := _state("[terrain]\n.=M.\n[units]\n1 t 3 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n.=M.\n[units]\n1 t 3 0\n2 i 1 0")
 	var tank := state.units[0]
 	var infantry := state.units[1]
 	var on_road := CombatResolver.forecast(state, tank, Vector2i(3, 0), infantry)
@@ -122,7 +115,7 @@ func test_forecast_at_reads_the_cover_of_the_cell_it_is_given() -> void:
 ## effective cell too — a defender that could not reach the attacker from where
 ## it stands may well reach it from the cell being scored.
 func test_forecast_at_measures_the_counter_from_the_effective_cell() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n2 i 3 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 t 0 0\n2 i 3 0")
 	var tank := state.units[0]
 	var infantry := state.units[1]
 	var far := CombatResolver.forecast_at(state, tank, Vector2i(0, 0), infantry, Vector2i(3, 0))
@@ -134,7 +127,7 @@ func test_forecast_at_measures_the_counter_from_the_effective_cell() -> void:
 
 ## The whole reason the parameter exists: asking about a cell is a pure read.
 func test_forecast_at_never_moves_the_defender() -> void:
-	var state := _state("[terrain]\n.M..\n[units]\n1 t 0 0\n2 i 3 0")
+	var state := Fixture.state("[terrain]\n.M..\n[units]\n1 t 0 0\n2 i 3 0")
 	var infantry := state.units[1]
 	CombatResolver.forecast_at(state, state.units[0], Vector2i(0, 0), infantry, Vector2i(1, 0))
 	assert_eq(infantry.cell, Vector2i(3, 0), "the defender was never stood anywhere")
@@ -143,7 +136,7 @@ func test_forecast_at_never_moves_the_defender() -> void:
 
 
 func test_resolve_luck_bounds_and_hp() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0")
 	state.rng.seed = 1234
 	var defender := state.units[1]
 	var result := CombatResolver.resolve(state, state.units[0], defender)
@@ -159,7 +152,7 @@ func test_resolve_luck_bounds_and_hp() -> void:
 func test_resolve_is_deterministic_for_same_seed() -> void:
 	var damages: Array[int] = []
 	for run in 2:
-		var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 t 1 0")
+		var state := Fixture.state("[terrain]\n...\n[units]\n1 t 0 0\n2 t 1 0")
 		state.rng.seed = 99
 		var result := CombatResolver.resolve(state, state.units[0], state.units[1])
 		damages.append(result.attack_damage)
@@ -169,7 +162,7 @@ func test_resolve_is_deterministic_for_same_seed() -> void:
 
 
 func test_resolve_kill_removes_defender_and_skips_counter() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10  # any hit kills
@@ -182,7 +175,7 @@ func test_resolve_kill_removes_defender_and_skips_counter() -> void:
 
 
 func test_resolve_counter_can_kill_attacker() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 m 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0\n2 m 1 0")
 	state.rng.seed = 5
 	var attacker := state.units[0]
 	attacker.hp = 10  # 1 displayed HP; the mech's counter will kill
@@ -196,7 +189,7 @@ func test_resolve_counter_can_kill_attacker() -> void:
 
 func test_resolve_no_counter_beyond_adjacency() -> void:
 	# artillery fires from range 2; the tank defender cannot counter
-	var state := _state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
 	state.rng.seed = 3
 	var result := CombatResolver.resolve(state, state.units[0], state.units[1])
 	assert_gt(result.attack_damage, 0)
@@ -204,7 +197,7 @@ func test_resolve_no_counter_beyond_adjacency() -> void:
 
 
 func test_resolve_unarmed_defender_cannot_counter() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 p 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 p 1 0")
 	state.rng.seed = 3
 	var result := CombatResolver.resolve(state, state.units[0], state.units[1])
 	assert_false(result.countered)
@@ -214,8 +207,8 @@ func test_resolve_unarmed_defender_cannot_counter() -> void:
 ## nothing. Without this an aircraft parked over a mountain would be the hardest
 ## target in the game, which is not what a mountain is for.
 func test_terrain_gives_aircraft_no_cover() -> void:
-	var over_plains := _state("[terrain]\n..\n[units]\n1 a 0 0\n2 h 1 0")
-	var over_mountain := _state("[terrain]\n.M\n[units]\n1 a 0 0\n2 h 1 0")
+	var over_plains := Fixture.state("[terrain]\n..\n[units]\n1 a 0 0\n2 h 1 0")
+	var over_mountain := Fixture.state("[terrain]\n.M\n[units]\n1 a 0 0\n2 h 1 0")
 	assert_eq(
 		(
 			CombatResolver
@@ -236,8 +229,8 @@ func test_terrain_gives_aircraft_no_cover() -> void:
 ## The other half of the same rule: ground units read the terrain exactly as they
 ## always did, so nothing about the base game's cover changed.
 func test_terrain_still_covers_ground_units() -> void:
-	var on_plains := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
-	var in_woods := _state("[terrain]\n.F\n[units]\n1 t 0 0\n2 t 1 0")
+	var on_plains := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+	var in_woods := Fixture.state("[terrain]\n.F\n[units]\n1 t 0 0\n2 t 1 0")
 	assert_gt(
 		(
 			CombatResolver

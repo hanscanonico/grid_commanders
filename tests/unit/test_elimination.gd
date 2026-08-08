@@ -36,25 +36,16 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _state(map_text: String, allies: Array = []) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
+	var state := Fixture.state(map_text)
 	for team: int in allies:
 		state.sides[team] = 0
 	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
 
 
 ## Every unit of `team`, gone — the rout the sim reaches through `remove_unit`.
@@ -77,7 +68,7 @@ func test_in_a_duel_the_first_elimination_is_the_victory() -> void:
 func test_a_duel_hq_capture_still_ends_the_match_on_the_spot() -> void:
 	var state := _state("[terrain]\nQ.\n[owners]\n2 0 0\n[units]\n1 i 0 0\n2 i 1 0")
 	state.capture_progress[Vector2i(0, 0)] = 1
-	var command := CaptureCommand.new(state.units[0], _path([Vector2i(0, 0)]))
+	var command := CaptureCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]))
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_true(state.is_eliminated(2))
@@ -92,7 +83,7 @@ func test_a_duel_hq_capture_still_ends_the_match_on_the_spot() -> void:
 func test_an_army_routed_by_a_counter_on_its_own_turn_falls_there_and_then() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 T 1 0")
 	state.units[0].hp = 5  # one counter kills it
-	var command := AttackCommand.new(state.units[0], _path([Vector2i(0, 0)]), Vector2i(1, 0))
+	var command := AttackCommand.new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_true(state.units_of(1).is_empty(), "the attacker died to the reply")
@@ -128,7 +119,7 @@ func test_an_allied_pair_wins_together() -> void:
 func test_a_fallen_armys_ground_goes_neutral_and_is_retaken_by_whoever_gets_there() -> void:
 	var state := _state(FALLEN_EMPIRE)
 	state.capture_progress[Vector2i(2, 0)] = 1
-	CaptureCommand.new(state.units[0], _path([Vector2i(2, 0)])).apply(state)
+	CaptureCommand.new(state.units[0], Fixture.path([Vector2i(2, 0)])).apply(state)
 	assert_true(state.is_eliminated(2), "the HQ's owner fell")
 	assert_eq(state.winner, 0, "but two armies are still fighting")
 	assert_eq(state.owner_at(Vector2i(2, 0)), 1, "the conqueror keeps the HQ it took")
@@ -139,7 +130,7 @@ func test_a_fallen_armys_ground_goes_neutral_and_is_retaken_by_whoever_gets_ther
 	# Two different survivors now take the loose ground, which is the whole point
 	# of neutral rather than forfeit.
 	state.capture_progress[Vector2i(0, 0)] = 1
-	CaptureCommand.new(state.units_of(3)[0], _path([Vector2i(0, 0)])).apply(state)
+	CaptureCommand.new(state.units_of(3)[0], Fixture.path([Vector2i(0, 0)])).apply(state)
 	assert_eq(state.owner_at(Vector2i(0, 0)), 3, "team 3 took one")
 	assert_eq(state.owner_at(Vector2i(2, 0)), 1, "team 1 still holds the other")
 

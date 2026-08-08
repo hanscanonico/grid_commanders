@@ -4,7 +4,7 @@ var db: TerrainDB
 
 
 func before_each() -> void:
-	db = TerrainDB.load_default()
+	db = Fixture.terrain_db()
 
 
 ## The database is a directory scan, so the number worth pinning is "all of

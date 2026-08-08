@@ -10,26 +10,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, vance_team: int = 1) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if vance_team != 0:
-		state.set_commander(vance_team, commander_db.by_id(&"iona_vance"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(state.current_team, state.commander_of(state.current_team).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {} if vance_team == 0 else {vance_team: &"iona_vance"})
 
 
 func _attack_damage(state: GameState) -> int:
@@ -75,7 +63,7 @@ func test_the_swing_moves_a_pip_on_both_sides() -> void:
 	var theirs := state.units[1]
 	hers.hp = 50
 	theirs.hp = 50
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(hers.hp, 60, "a pip onto her own")
 	assert_eq(theirs.hp, 40, "a pip off theirs")
 
@@ -84,7 +72,7 @@ func test_the_heal_never_overshoots_full_health() -> void:
 	var state := _state("[terrain]\n===\n[units]\n1 t 0 0\n1 i 1 0\n2 t 2 0")
 	state.units[0].hp = 100
 	state.units[1].hp = 95
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(state.units[0].hp, 100, "already full")
 	assert_eq(state.units[1].hp, 100, "a part-pip short of full")
 
@@ -97,7 +85,7 @@ func test_a_hostile_unit_on_its_last_pip_keeps_it() -> void:
 	state.units[1].hp = 15
 	state.units[2].hp = 10
 	state.units[3].hp = 3
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(state.units[1].hp, 10, "down to the floor and no further")
 	assert_eq(state.units[2].hp, 10, "already on the floor")
 	assert_eq(state.units[3].hp, 3, "under the floor, and not healed up to it")
@@ -113,7 +101,7 @@ func test_an_ally_is_untouched_by_both_halves() -> void:
 	state.sides = {1: 0, 2: 0}
 	for unit in state.units:
 		unit.hp = 50
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(state.units[0].hp, 60, "hers")
 	assert_eq(state.units[1].hp, 50, "her ally's, neither mended nor hurt")
 	assert_eq(state.units[2].hp, 40, "a rival")
@@ -126,7 +114,7 @@ func test_the_harm_lands_on_all_three_opponents_of_a_four_army_board() -> void:
 	var state := _state("[terrain]\n====\n[units]\n1 t 0 0\n2 t 1 0\n3 t 2 0\n4 t 3 0")
 	for unit in state.units:
 		unit.hp = 50
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(state.units[0].hp, 60)
 	for unit in state.units.slice(1):
 		assert_eq(unit.hp, 40, "team %d" % unit.team)

@@ -57,9 +57,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _state(map_text: String, seats: Array[int] = []) -> GameState:
@@ -77,17 +77,10 @@ func _quartet(seats: Array[int] = []) -> GameState:
 	return state
 
 
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
-
-
 ## One capture that finishes this turn, wherever the unit already stands.
 func _capture(state: GameState, unit: Unit, cell: Vector2i) -> void:
 	state.capture_progress[cell] = 1
-	CaptureCommand.new(unit, _path([cell])).apply(state)
+	CaptureCommand.new(unit, Fixture.path([cell])).apply(state)
 
 
 # --- the seating -------------------------------------------------------------

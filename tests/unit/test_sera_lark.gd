@@ -9,26 +9,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, with_lark: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if with_lark:
-		state.set_commander(1, commander_db.by_id(&"sera_lark"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(1, state.commander_of(1).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {1: &"sera_lark"} if with_lark else {})
 
 
 ## One board with a unit of each domain on it: foot, treads, air and a hull.
@@ -78,7 +66,7 @@ func test_the_passive_reaches_a_tile_the_neutral_army_cannot() -> void:
 
 func test_the_power_stacks_on_the_passive() -> void:
 	var state := _all_domains()
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	for unit in state.units:
 		assert_eq(
 			MovementResolver.move_budget(state, unit),
@@ -90,7 +78,7 @@ func test_the_power_stacks_on_the_passive() -> void:
 func test_the_power_expires_with_the_turn_and_the_passive_outlives_it() -> void:
 	var state := _all_domains()
 	var infantry := state.units[0]
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	EndTurnCommand.new().apply(state)
 	assert_eq(MovementResolver.move_budget(state, infantry), infantry.type.move_points + 1)
 
@@ -100,7 +88,7 @@ func test_the_power_expires_with_the_turn_and_the_passive_outlives_it() -> void:
 func test_fuel_is_spent_for_the_steps_taken_not_the_budget_granted() -> void:
 	var state := _state("[terrain]\n......\n[units]\n1 i 0 0")
 	var infantry := state.units[0]
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(MovementResolver.move_budget(state, infantry), infantry.type.move_points + 2)
 	var before := infantry.fuel
 	state.advance_unit(infantry, [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])

@@ -15,19 +15,16 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 ## Team 2 plays Sable Wren and hides in woods; team 1 is the AI hunting them.
 func _state(map_text: String, fog: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
+	var state := Fixture.state(map_text, {2: &"sable_wren"})
 	state.fog_enabled = fog
-	state.set_commander(2, commander_db.by_id(&"sable_wren"))
 	return state
 
 

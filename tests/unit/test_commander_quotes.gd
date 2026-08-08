@@ -18,7 +18,7 @@ var commanders: CommanderDB
 
 
 func before_each() -> void:
-	commanders = CommanderDB.load_default()
+	commanders = Fixture.commander_db()
 
 
 func test_every_powered_general_has_quotes() -> void:

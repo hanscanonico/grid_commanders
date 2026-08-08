@@ -93,8 +93,8 @@ const EXPECTED_SECONDARIES := {
 
 
 func before_each() -> void:
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## Both levels of the chart are keyed by unit id, and a misspelling on either

@@ -12,16 +12,9 @@ extends GutTest
 ## loud rather than quietly played as an ordinary match on the default board.
 
 
-func _args(list: Array) -> PackedStringArray:
-	var out := PackedStringArray()
-	for item: String in list:
-		out.append(item)
-	return out
-
-
 func test_replay_names_a_recording_to_watch() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--replay=  user://replays/a.jsonl  "]))
+	request.apply_cmdline(Fixture.args(["--replay=  user://replays/a.jsonl  "]))
 	assert_eq(request.replay_path, "user://replays/a.jsonl", "trimmed, not resolved")
 	assert_true(request.replay_requested, "and this launch is a viewing")
 
@@ -32,14 +25,14 @@ func test_replay_names_a_recording_to_watch() -> void:
 ## refuses.
 func test_an_empty_replay_flag_still_asks_for_a_replay() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--replay="]))
+	request.apply_cmdline(Fixture.args(["--replay="]))
 	assert_eq(request.replay_path, "")
 	assert_true(request.replay_requested)
 
 
 func test_a_launch_naming_no_replay_is_not_a_viewing() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--fog"]))
+	request.apply_cmdline(Fixture.args(["--fog"]))
 	assert_false(request.replay_requested)
 
 
@@ -50,9 +43,9 @@ func test_a_launch_naming_no_replay_is_not_a_viewing() -> void:
 ## may quietly turn off the other.
 func test_replay_and_watch_are_two_flags_not_one() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--replay=user://replays/a.jsonl", "--watch"]))
+	request.apply_cmdline(Fixture.args(["--replay=user://replays/a.jsonl", "--watch"]))
 	assert_eq(request.replay_path, "user://replays/a.jsonl")
 	assert_true(request.watching)
 	var watched := MatchRequest.new()
-	watched.apply_cmdline(_args(["--watch"]))
+	watched.apply_cmdline(Fixture.args(["--watch"]))
 	assert_eq(watched.replay_path, "", "watch mode alone replays nothing off disk")

@@ -8,17 +8,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state() -> GameState:
-	var map := MapData.parse("[terrain]\n...\n...\n[units]\n1 t 0 0\n2 i 2 0", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	return Fixture.state("[terrain]\n...\n...\n[units]\n1 t 0 0\n2 i 2 0")
 
 
 ## A commander built in the test rather than loaded, so the expiry machinery can

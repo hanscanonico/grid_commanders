@@ -20,7 +20,7 @@ var terrain_db: TerrainDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
+	terrain_db = Fixture.terrain_db()
 
 
 func test_the_grouped_parity_lint_can_tell_an_uneven_ally_apart() -> void:

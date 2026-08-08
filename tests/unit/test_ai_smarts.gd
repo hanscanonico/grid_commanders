@@ -22,17 +22,10 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _profile() -> AIProfile:
@@ -53,7 +46,7 @@ func _profile() -> AIProfile:
 ## ~1.6 leaves the tank inside the ring however confident the docs sound.
 func test_advance_threat_tiles_keeps_a_tank_out_of_the_artillery_ring() -> void:
 	var blind := AIController.new(unit_db, _profile())
-	var blind_move := blind.plan_next_command(_state(ARTILLERY_RING_BOARD))
+	var blind_move := blind.plan_next_command(Fixture.state(ARTILLERY_RING_BOARD))
 	assert_true(blind_move is MoveCommand, "expected an advance, got %s" % blind_move)
 	var blind_path: Array[Vector2i] = (blind_move as MoveCommand).path
 	assert_eq(
@@ -64,7 +57,7 @@ func test_advance_threat_tiles_keeps_a_tank_out_of_the_artillery_ring() -> void:
 
 	var wary_profile := _profile()
 	wary_profile.advance_threat_tiles = 2.0
-	var wary_state := _state(ARTILLERY_RING_BOARD)
+	var wary_state := Fixture.state(ARTILLERY_RING_BOARD)
 	var wary_move := AIController.new(unit_db, wary_profile).plan_next_command(wary_state)
 	assert_true(wary_move is MoveCommand, "expected an advance, got %s" % wary_move)
 	var wary_path: Array[Vector2i] = (wary_move as MoveCommand).path
@@ -84,7 +77,7 @@ func test_advance_threat_tiles_keeps_a_tank_out_of_the_artillery_ring() -> void:
 func test_the_shipped_difficult_profile_refuses_the_artillery_ring() -> void:
 	var hard: AIProfile = load("res://data/ai/hard.tres")
 	assert_not_null(hard, "data/ai/hard.tres should load")
-	var state := _state(ARTILLERY_RING_BOARD)
+	var state := Fixture.state(ARTILLERY_RING_BOARD)
 	var move := AIController.new(unit_db, hard).plan_next_command(state)
 	assert_true(move is MoveCommand, "expected an advance, got %s" % move)
 	var path: Array[Vector2i] = (move as MoveCommand).path
@@ -105,7 +98,7 @@ func test_advance_threat_tiles_are_priced_in_tiles() -> void:
 	var timid := _profile()
 	timid.advance_threat_tiles = 1.5  # 0.945 tiles: not quite enough to give one up
 	var timid_move := AIController.new(unit_db, timid).plan_next_command(
-		_state(ARTILLERY_RING_BOARD)
+		Fixture.state(ARTILLERY_RING_BOARD)
 	)
 	var timid_path: Array[Vector2i] = (timid_move as MoveCommand).path
 	assert_eq(
@@ -117,7 +110,7 @@ func test_advance_threat_tiles_are_priced_in_tiles() -> void:
 	var timider := _profile()
 	timider.advance_threat_tiles = 1.6  # 1.008 tiles: just over the line
 	var timider_move := AIController.new(unit_db, timider).plan_next_command(
-		_state(ARTILLERY_RING_BOARD)
+		Fixture.state(ARTILLERY_RING_BOARD)
 	)
 	var timider_path: Array[Vector2i] = (timider_move as MoveCommand).path
 	assert_eq(
@@ -135,7 +128,7 @@ func test_a_wounded_unit_flinches_harder_than_a_healthy_one() -> void:
 	var dial := _profile()
 	dial.advance_threat_tiles = 1.2
 
-	var healthy := _state(ARTILLERY_RING_BOARD)
+	var healthy := Fixture.state(ARTILLERY_RING_BOARD)
 	var healthy_move := AIController.new(unit_db, dial).plan_next_command(healthy)
 	var healthy_path: Array[Vector2i] = (healthy_move as MoveCommand).path
 	assert_eq(
@@ -144,7 +137,7 @@ func test_a_wounded_unit_flinches_harder_than_a_healthy_one() -> void:
 		"63 of a full 100 is worth 0.76 tiles at this dial — the fresh tank presses on"
 	)
 
-	var hurt := _state(ARTILLERY_RING_BOARD)
+	var hurt := Fixture.state(ARTILLERY_RING_BOARD)
 	hurt.units[0].hp = 49  # still above retreat_hp, so it is advancing, not fleeing
 	var hurt_move := AIController.new(unit_db, dial).plan_next_command(hurt)
 	assert_true(hurt_move is MoveCommand, "expected an advance, got %s" % hurt_move)
@@ -164,10 +157,10 @@ func test_the_attack_dial_does_not_steer_the_advance() -> void:
 	var attack_only := _profile()
 	attack_only.threat_aversion = 5.0
 	var wary := AIController.new(unit_db, attack_only).plan_next_command(
-		_state(ARTILLERY_RING_BOARD)
+		Fixture.state(ARTILLERY_RING_BOARD)
 	)
 	var blind := AIController.new(unit_db, _profile()).plan_next_command(
-		_state(ARTILLERY_RING_BOARD)
+		Fixture.state(ARTILLERY_RING_BOARD)
 	)
 	assert_true(wary is MoveCommand and blind is MoveCommand)
 	assert_eq(
@@ -184,7 +177,7 @@ func test_threat_aversion_still_takes_a_worthwhile_attack() -> void:
 	var map_text := "[terrain]\n....\n[units]\n1 t 0 0\n2 g 1 0\n2 t 3 0"
 	var wary_profile := _profile()
 	wary_profile.threat_aversion = 0.5
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	var command := AIController.new(unit_db, wary_profile).plan_next_command(state)
 	assert_true(command is AttackCommand, "a profitable shot survives the threat discount")
 	assert_eq((command as AttackCommand).target_cell, Vector2i(1, 0))
@@ -199,8 +192,8 @@ func test_an_unreachable_enemy_threatens_nothing() -> void:
 	var wary_profile := _profile()
 	wary_profile.threat_aversion = 5.0
 	wary_profile.advance_threat_tiles = 5.0
-	var wary := AIController.new(unit_db, wary_profile).plan_next_command(_state(map_text))
-	var blind := AIController.new(unit_db, _profile()).plan_next_command(_state(map_text))
+	var wary := AIController.new(unit_db, wary_profile).plan_next_command(Fixture.state(map_text))
+	var blind := AIController.new(unit_db, _profile()).plan_next_command(Fixture.state(map_text))
 	assert_true(wary is MoveCommand and blind is MoveCommand)
 	assert_eq(
 		(wary as MoveCommand).path,
@@ -214,7 +207,7 @@ func test_an_unreachable_enemy_threatens_nothing() -> void:
 ## and asks through an effective cell rather than by moving anything. Scoring a
 ## move must leave no trace on the board at all.
 func test_measuring_a_cell_never_moves_the_unit() -> void:
-	var state := _state(ARTILLERY_RING_BOARD)
+	var state := Fixture.state(ARTILLERY_RING_BOARD)
 	var tank := state.units_of(1)[0]
 	var origin := tank.cell
 	var before := _board_snapshot(state)
@@ -232,7 +225,7 @@ func test_measuring_a_cell_never_moves_the_unit() -> void:
 ## against subs but cannot hit a submerged one, exactly the shot AttackCommand
 ## would refuse; pricing it in would make the boat flee threats that do not exist.
 func test_a_battleship_does_not_threaten_a_dived_sub() -> void:
-	var state := _state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 B 3 0")
+	var state := Fixture.state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 B 3 0")
 	var sub := state.units_of(1)[0]
 	sub.dived = true
 	var map := ThreatMap.build(state, state.units_of(2))
@@ -246,7 +239,7 @@ func test_a_battleship_does_not_threaten_a_dived_sub() -> void:
 ## The gate is the dive and only the dive: a cruiser can hit submerged, so going
 ## under does not hide the boat from it and the map still prices its forecast.
 func test_a_cruiser_still_threatens_a_dived_sub() -> void:
-	var state := _state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 c 3 0")
+	var state := Fixture.state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 c 3 0")
 	var sub := state.units_of(1)[0]
 	sub.dived = true
 	var map := ThreatMap.build(state, state.units_of(2))
@@ -260,7 +253,7 @@ func test_a_cruiser_still_threatens_a_dived_sub() -> void:
 ## And an undived sub is an ordinary battleship target, so the gate leaves the
 ## surfaced number untouched: routing through can_engage changed nothing here.
 func test_an_undived_sub_still_takes_the_battleships_forecast() -> void:
-	var state := _state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 B 3 0")
+	var state := Fixture.state("[terrain]\nSSSSSSS\n[units]\n1 s 0 0\n2 B 3 0")
 	var sub := state.units_of(1)[0]
 	var map := ThreatMap.build(state, state.units_of(2))
 	assert_gt(
@@ -279,7 +272,7 @@ func test_an_undived_sub_still_takes_the_battleships_forecast() -> void:
 ## it happens to agree with the mixed origin here; that is the approximation
 ## being pinned, not a claim that the map is right in general.
 func test_ward_combined_arms_makes_the_firing_cell_matter_to_the_map() -> void:
-	var state := _state("[terrain]\n......\n......\n[units]\n1 t 3 0\n1 i 3 1\n2 i 4 0")
+	var state := Fixture.state("[terrain]\n......\n......\n[units]\n1 t 3 0\n1 i 3 1\n2 i 4 0")
 	state.rng.seed = 1
 	state.set_commander(1, commander_db.by_id(&"alina_ward"))
 	var tank := state.units[0]
@@ -345,7 +338,9 @@ func _board_snapshot(state: GameState) -> Array[String]:
 func test_focus_fire_picks_the_target_the_team_can_finish() -> void:
 	var map_text := "[terrain]\n................\n[units]\n1 t 5 0\n1 t 15 0\n2 t 3 0\n2 t 8 0"
 
-	var scattered := AIController.new(unit_db, _profile()).plan_next_command(_state(map_text))
+	var scattered := AIController.new(unit_db, _profile()).plan_next_command(
+		Fixture.state(map_text)
+	)
 	assert_true(scattered is AttackCommand, "expected an attack, got %s" % scattered)
 	assert_eq(
 		(scattered as AttackCommand).target_cell,
@@ -355,7 +350,7 @@ func test_focus_fire_picks_the_target_the_team_can_finish() -> void:
 
 	var focused_profile := _profile()
 	focused_profile.focus_fire_bonus = 0.4
-	var focused_state := _state(map_text)
+	var focused_state := Fixture.state(map_text)
 	var focused := AIController.new(unit_db, focused_profile).plan_next_command(focused_state)
 	assert_true(focused is AttackCommand, "expected an attack, got %s" % focused)
 	assert_eq(
@@ -370,7 +365,7 @@ func test_focus_fire_picks_the_target_the_team_can_finish() -> void:
 ## it — otherwise the AI would rate finished targets above fresh ones.
 func test_focus_fire_adds_nothing_to_a_shot_that_already_kills() -> void:
 	var map_text := "[terrain]\n....\n[units]\n1 t 0 0\n2 i 1 0\n2 i 3 0"
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	state.units[1].hp = 10  # one shot finishes it
 	var focused_profile := _profile()
 	focused_profile.focus_fire_bonus = 5.0
@@ -397,7 +392,7 @@ func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
 	var battleship_board := "[terrain]\nSSSSSSSS\n[units]\n1 c 0 0\n1 B 4 0\n2 s 7 0"
 
 	# A battleship cannot hit a submerged sub, so it adds no follow-up.
-	var dived := _state(battleship_board)
+	var dived := Fixture.state(battleship_board)
 	var dived_sub := dived.units_of(2)[0]
 	dived_sub.dived = true
 	context.begin(dived)
@@ -408,7 +403,7 @@ func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
 	)
 
 	# The same battleship against a surfaced sub is unchanged: an ordinary target.
-	var surfaced := _state(battleship_board)
+	var surfaced := Fixture.state(battleship_board)
 	context.begin(surfaced)
 	assert_gt(
 		planner._follow_up_damage(context, surfaced.units_of(1)[0], surfaced.units_of(2)[0]),
@@ -417,7 +412,7 @@ func test_follow_up_gates_a_dived_sub_on_can_engage() -> void:
 	)
 
 	# A cruiser can hit submerged, so a dive does not hide the sub from its follow-up.
-	var hunted := _state("[terrain]\nSSSSSSSS\n[units]\n1 B 0 0\n1 c 6 0\n2 s 7 0")
+	var hunted := Fixture.state("[terrain]\nSSSSSSSS\n[units]\n1 B 0 0\n1 c 6 0\n2 s 7 0")
 	var hunted_sub := hunted.units_of(2)[0]
 	hunted_sub.dived = true
 	context.begin(hunted)
@@ -462,7 +457,7 @@ func test_reactive_building_still_respects_the_purse() -> void:
 	)
 	var reactive_profile := _profile()
 	reactive_profile.build_reactivity = 1.0
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	state.funds[1] = 6500  # rockets and tank both out of reach
 	for unit in state.units:
 		unit.acted = true
@@ -495,7 +490,7 @@ func test_reactive_building_falls_back_to_the_list_with_no_enemy_seen() -> void:
 ## the md_tank one turn of income out of reach, the planner would rightly bank
 ## rather than buy, and these tests pin *what* the team buys, not *when*.
 func _build_pick(map_text: String, profile: AIProfile) -> StringName:
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	profile.save_up_turns = 0
 	state.funds[1] = 15000
 	for unit in state.units:

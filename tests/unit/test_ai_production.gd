@@ -42,17 +42,10 @@ var ai: AIController
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 	ai = AIController.new(unit_db)
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
 
 
 ## Puts a unit aboard `carrier`, the way a save or a hot-seat handover leaves one.
@@ -66,7 +59,7 @@ func _board(state: GameState, id: StringName, carrier: Unit) -> Unit:
 func _assert_every_tier_builds(map_text: String, expected_domain: StringName) -> void:
 	var difficulty_db := DifficultyDB.load_default()
 	for tier in difficulty_db.all():
-		var state := _state(map_text)
+		var state := Fixture.state(map_text)
 		for unit in state.units:
 			unit.acted = true
 		state.funds[1] = 99999
@@ -95,7 +88,9 @@ func test_every_tier_builds_hulls_at_a_port() -> void:
 
 
 func test_builds_aircraft_at_an_airport() -> void:
-	var state := _state("[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0")
+	var state := Fixture.state(
+		"[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
+	)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 99999
@@ -109,7 +104,7 @@ func test_builds_aircraft_at_an_airport() -> void:
 ## afford must not stop the base beside it from producing — that stall would look
 ## exactly like an AI that has given up.
 func test_an_unaffordable_airport_does_not_block_the_base_beside_it() -> void:
-	var state := _state("[terrain]\nAB...\n[owners]\n1 0 0\n1 1 0\n[units]\n1 i 4 0")
+	var state := Fixture.state("[terrain]\nAB...\n[owners]\n1 0 0\n1 1 0\n[units]\n1 i 4 0")
 	state.units[0].acted = true
 	state.funds[1] = 1000  # an infantry's worth, and nothing that flies
 	var command := ai.plan_next_command(state)
@@ -122,7 +117,7 @@ func test_an_unaffordable_airport_does_not_block_the_base_beside_it() -> void:
 ## is asked about separately — an AI that skipped it would bank funds while
 ## bombers worked its army over.
 func test_buys_an_air_answer_when_the_enemy_is_flying() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0\n2 b 4 0"
 	)
 	for unit in state.units_of(1):
@@ -139,7 +134,7 @@ func test_buys_an_air_answer_when_the_enemy_is_flying() -> void:
 
 ## And stops once it has enough of them, rather than buying anti-air forever.
 func test_stops_buying_air_answers_once_covered() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		(
 			"[terrain]\nB......\n[owners]\n1 0 0\n"
 			+ "[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0\n1 a 4 0\n1 a 5 0\n2 b 6 0"
@@ -160,7 +155,7 @@ func test_stops_buying_air_answers_once_covered() -> void:
 ## A plane low on fuel breaks off for somewhere that refits it. A city will not,
 ## so heading there would be a retreat to nowhere.
 func test_a_low_aircraft_heads_for_an_airfield_not_a_city() -> void:
-	var state := _state("[terrain]\nA...C\n[owners]\n1 0 0\n1 4 0\n[units]\n1 h 3 0")
+	var state := Fixture.state("[terrain]\nA...C\n[owners]\n1 0 0\n1 4 0\n[units]\n1 h 3 0")
 	var copter := state.units[0]
 	copter.fuel = 2
 	var command := ai.plan_next_command(state)
@@ -175,13 +170,13 @@ func test_a_low_aircraft_heads_for_an_airfield_not_a_city() -> void:
 
 ## With a full tank the same helicopter has no reason to break off.
 func test_a_fuelled_aircraft_ignores_the_airfield() -> void:
-	var state := _state("[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 h 3 0\n2 i 4 0")
+	var state := Fixture.state("[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 h 3 0\n2 i 4 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is AttackCommand, "a full copter should go hunting, not home")
 
 
 func test_builds_hulls_at_a_port() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nP....\nSSSSS\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
 	)
 	for unit in state.units:
@@ -196,7 +191,7 @@ func test_builds_hulls_at_a_port() -> void:
 ## The AI must never buy a transport: it cannot plan load-move-unload across
 ## turns, and a lander it will not use is 12 000 spent on nothing.
 func test_never_buys_a_transport_it_cannot_use() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nP....\nSSSSS\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
 	)
 	for unit in state.units:
@@ -215,7 +210,7 @@ func test_never_buys_a_transport_it_cannot_use() -> void:
 ## A hull low on fuel makes for a port, not the airfield or the city next to it —
 ## the same domain gate TurnRules applies when it decides who gets refitted.
 func test_a_low_hull_heads_for_a_port() -> void:
-	var state := _state("[terrain]\nPSSSA\nSSSSS\n[owners]\n1 0 0\n1 4 0\n[units]\n1 c 3 0")
+	var state := Fixture.state("[terrain]\nPSSSA\nSSSSS\n[owners]\n1 0 0\n1 4 0\n[units]\n1 c 3 0")
 	state.units[0].fuel = 2
 	var command := ai.plan_next_command(state)
 	assert_true(command is MoveCommand, "expected a move, got %s" % command)
@@ -224,7 +219,7 @@ func test_a_low_hull_heads_for_a_port() -> void:
 
 
 func test_builds_infantry_when_short_on_capture_units() -> void:
-	var state := _state("[terrain]\nB.\n[owners]\n1 0 0\n[units]\n1 i 1 0")
+	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0\n[units]\n1 i 1 0")
 	state.units[0].acted = true
 	var command := ai.plan_next_command(state)  # funds: 1000 day-1 income
 	assert_true(command is BuildCommand, "expected a build, got %s" % command)
@@ -233,7 +228,9 @@ func test_builds_infantry_when_short_on_capture_units() -> void:
 
 
 func test_builds_tank_with_funds_and_enough_capture_units() -> void:
-	var state := _state("[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0")
+	var state := Fixture.state(
+		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
+	)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 7000
@@ -247,7 +244,9 @@ func test_builds_tank_with_funds_and_enough_capture_units() -> void:
 ## either. Counting one toward the capture roster suppresses infantry buys for
 ## the rest of the match.
 func test_a_carried_infantry_does_not_fill_the_capture_roster() -> void:
-	var state := _state("[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 p 3 0")
+	var state := Fixture.state(
+		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 p 3 0"
+	)
 	_board(state, &"infantry", state.units[2])
 	for unit in state.units:
 		unit.acted = true
@@ -265,7 +264,7 @@ func test_a_carried_infantry_does_not_fill_the_capture_roster() -> void:
 ## one of the units that cover the sky. The three infantry fill the capture
 ## roster, so the only shortfall left on the board is the air one.
 func test_a_carried_unit_is_not_an_air_answer() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		(
 			"[terrain]\nB....\nSSSSS\n[owners]\n1 0 0\n"
 			+ "[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n1 a 4 0\n1 l 1 1\n2 b 3 1"
@@ -331,7 +330,7 @@ B....
 ## reorders what the priority list and the doctrine tail already buy, it does
 ## not widen it.
 func test_reactivity_never_buys_an_unlisted_unbiased_unit() -> void:
-	var state := _state(REACTIVE_TIER_BOARD)
+	var state := Fixture.state(REACTIVE_TIER_BOARD)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 4000
@@ -354,7 +353,7 @@ func test_reactivity_never_buys_an_unlisted_unbiased_unit() -> void:
 ## meant to pull a recon onto the tail (commander-doctrine-ai D1) — reactivity
 ## must not block that mechanism, only reorder within it.
 func test_a_negative_doctrine_bias_still_reaches_the_tail_with_reactivity_on() -> void:
-	var state := _state(REACTIVE_TIER_BOARD)
+	var state := Fixture.state(REACTIVE_TIER_BOARD)
 	state.set_commander(1, OrinFlux.new())
 	for unit in state.units:
 		unit.acted = true
@@ -414,7 +413,7 @@ func _supply_want_profile() -> AIProfile:
 
 
 func _supply_want_build(commander: CommanderType) -> StringName:
-	var state := _state(SUPPLY_WANT_BOARD)
+	var state := Fixture.state(SUPPLY_WANT_BOARD)
 	if commander != null:
 		state.set_commander(1, commander)
 	for unit in state.units:

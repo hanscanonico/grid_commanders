@@ -15,22 +15,15 @@ var ai: AIController
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 	ai = AIController.new(unit_db)
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
 
 
 ## A live home HQ still outranks a nearer city — the untouched behaviour.
 func test_a_live_home_hq_still_outranks_a_nearer_city() -> void:
-	var state := _state("[terrain]\nQC.\n[owners]\n2 0 0\n[units]\n1 i 2 0")
+	var state := Fixture.state("[terrain]\nQC.\n[owners]\n2 0 0\n[units]\n1 i 2 0")
 	assert_true(state.home_hq.has(2), "the fixture must actually seat a home HQ to prove anything")
 	var command := ai.plan_next_command(state)
 	assert_true(command is CaptureCommand, "expected a capture, got %s" % command)
@@ -43,7 +36,7 @@ func test_a_live_home_hq_still_outranks_a_nearer_city() -> void:
 ## own comment: "an unowned HQ has no army behind it to fall"). It must now
 ## score like the plain city sitting one tile closer.
 func test_a_conquered_home_hq_scores_as_a_plain_city() -> void:
-	var state := _state("[terrain]\nQC.\n[owners]\n2 0 0\n[units]\n1 i 2 0")
+	var state := Fixture.state("[terrain]\nQC.\n[owners]\n2 0 0\n[units]\n1 i 2 0")
 	state.home_hq.erase(2)
 	var command := ai.plan_next_command(state)
 	assert_true(command is CaptureCommand, "expected a capture, got %s" % command)

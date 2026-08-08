@@ -16,23 +16,16 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## The animation is handed the result *after* the command applied, so both units
 ## already hold their post-combat HP. The snapshot is the only record of what
 ## they went in with.
 func test_resolve_snapshots_the_hp_both_sides_went_in_with() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	state.rng.seed = 11
 	var attacker := state.units[0]
 	var defender := state.units[1]
@@ -50,7 +43,7 @@ func test_resolve_snapshots_the_hp_both_sides_went_in_with() -> void:
 ## from the state, so the cut-in's entire "this side was still standing a moment
 ## ago" comes from the snapshot.
 func test_resolve_snapshots_survive_a_kill() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10  # any hit kills
@@ -65,7 +58,7 @@ func test_resolve_snapshots_survive_a_kill() -> void:
 ## that exchange and no other. An indirect attack — no counter, no reply — still
 ## records both sides, because the cut-in stages both halves either way.
 func test_resolve_snapshots_an_unanswered_volley() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
 	state.rng.seed = 3
 	var attacker := state.units[0]
 	attacker.hp = 41  # 5 displayed
@@ -81,7 +74,7 @@ func test_resolve_snapshots_an_unanswered_volley() -> void:
 ## only for as long as every caller handed over a result the board had already
 ## applied.
 func test_resolve_snapshots_the_hp_both_sides_came_out_with() -> void:
-	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 m 1 0")
+	var state := Fixture.state("[terrain]\n==\n[units]\n1 t 0 0\n2 m 1 0")
 	state.rng.seed = 11
 	var attacker := state.units[0]
 	var defender := state.units[1]
@@ -96,7 +89,7 @@ func test_resolve_snapshots_the_hp_both_sides_came_out_with() -> void:
 ## A killed unit leaves the state, and an unanswered volley leaves the attacker
 ## untouched: the two ends of the range the after-snapshot has to cover.
 func test_resolve_snapshots_a_kill_and_an_unanswered_volley() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	state.rng.seed = 7
 	var defender := state.units[1]
 	defender.hp = 10  # any hit kills
@@ -110,10 +103,10 @@ func test_resolve_snapshots_a_kill_and_an_unanswered_volley() -> void:
 ## gave it. The cut-in arcs an indirect round higher, and asking AttackRange again
 ## at replay time is the second opinion the plan's D1 forbids.
 func test_resolve_snapshots_whether_the_opening_shot_was_lobbed() -> void:
-	var flat := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var flat := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	flat.rng.seed = 3
 	assert_false(CombatResolver.resolve(flat, flat.units[0], flat.units[1]).attacker_indirect)
-	var lobbed := _state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
+	var lobbed := Fixture.state("[terrain]\n...\n[units]\n1 g 0 0\n2 t 2 0")
 	lobbed.rng.seed = 3
 	var result := CombatResolver.resolve(lobbed, lobbed.units[0], lobbed.units[1])
 	assert_true(result.attacker_indirect)
@@ -123,7 +116,7 @@ func test_resolve_snapshots_whether_the_opening_shot_was_lobbed() -> void:
 ## The weapon pair is replay data just like HP. Tank chooses its MG against a
 ## Mech, while the surviving stocked Mech independently chooses its bazooka.
 func test_resolve_snapshots_each_sides_independent_weapon_slot() -> void:
-	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 m 1 0")
+	var state := Fixture.state("[terrain]\n==\n[units]\n1 t 0 0\n2 m 1 0")
 	state.rng.seed = 11
 	var tank := state.units[0]
 	var mech := state.units[1]

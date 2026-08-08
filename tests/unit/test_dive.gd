@@ -17,16 +17,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## The shipped naval board, which deals each fleet a submarine — the state a save
@@ -46,22 +39,15 @@ func _sub_of(state: GameState, team: int) -> Unit:
 	return null
 
 
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
-
-
 # --- the command --------------------------------------------------------------
 
 
 ## Diving is an ordinary turn: the boat repositions and goes under in one action,
 ## rather than spending a turn standing still to close a hatch.
 func test_a_sub_dives_while_moving() -> void:
-	var state := _state("[terrain]\nSSS\n[units]\n1 s 0 0")
+	var state := Fixture.state("[terrain]\nSSS\n[units]\n1 s 0 0")
 	var sub := state.units[0]
-	var command := DiveCommand.new(sub, _path([Vector2i(0, 0), Vector2i(1, 0)]), true)
+	var command := DiveCommand.new(sub, Fixture.path([Vector2i(0, 0), Vector2i(1, 0)]), true)
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_true(sub.dived)
@@ -70,34 +56,35 @@ func test_a_sub_dives_while_moving() -> void:
 
 
 func test_surfacing_is_the_same_command_the_other_way() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 0 0")
+	var state := Fixture.state("[terrain]\nSS\n[units]\n1 s 0 0")
 	var sub := state.units[0]
 	sub.dived = true
-	var command := DiveCommand.new(sub, _path([Vector2i(0, 0)]), false)
+	var command := DiveCommand.new(sub, Fixture.path([Vector2i(0, 0)]), false)
 	assert_eq(command.validate(state), "")
 	command.apply(state)
 	assert_false(sub.dived)
 
 
 func test_dive_rejections() -> void:
-	var state := _state("[terrain]\nSS\n..\n[units]\n1 s 0 0\n1 c 1 0\n1 t 0 1")
+	var state := Fixture.state("[terrain]\nSS\n..\n[units]\n1 s 0 0\n1 c 1 0\n1 t 0 1")
 	var sub := state.units[0]
 	assert_eq(
-		DiveCommand.new(state.units[1], _path([Vector2i(1, 0)]), true).validate(state),
+		DiveCommand.new(state.units[1], Fixture.path([Vector2i(1, 0)]), true).validate(state),
 		"unit cannot dive",
 		"a cruiser hunts submarines, it does not become one"
 	)
 	assert_eq(
-		DiveCommand.new(state.units[2], _path([Vector2i(0, 1)]), true).validate(state),
+		DiveCommand.new(state.units[2], Fixture.path([Vector2i(0, 1)]), true).validate(state),
 		"unit cannot dive"
 	)
 	assert_eq(
-		DiveCommand.new(sub, _path([Vector2i(0, 0)]), false).validate(state),
+		DiveCommand.new(sub, Fixture.path([Vector2i(0, 0)]), false).validate(state),
 		"already on the surface"
 	)
 	sub.dived = true
 	assert_eq(
-		DiveCommand.new(sub, _path([Vector2i(0, 0)]), true).validate(state), "already submerged"
+		DiveCommand.new(sub, Fixture.path([Vector2i(0, 0)]), true).validate(state),
+		"already submerged"
 	)
 
 
@@ -108,7 +95,7 @@ func test_dive_rejections() -> void:
 ## of diving, and it has to hold in the command that validates the shot — the
 ## planner and the targeting overlay ask the same authority.
 func test_only_a_hunter_can_engage_a_dived_sub() -> void:
-	var state := _state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 B 0 0\n2 c 2 0")
+	var state := Fixture.state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 B 0 0\n2 c 2 0")
 	var sub := state.units[0]
 	sub.dived = true
 	EndTurnCommand.new().apply(state)  # blue's turn
@@ -119,12 +106,13 @@ func test_only_a_hunter_can_engage_a_dived_sub() -> void:
 	)
 	assert_true(AttackRange.can_engage(state, cruiser, sub), "a cruiser is built for exactly this")
 	assert_eq(
-		AttackCommand.new(cruiser, _path([Vector2i(2, 0)]), Vector2i(1, 0)).validate(state), ""
+		AttackCommand.new(cruiser, Fixture.path([Vector2i(2, 0)]), Vector2i(1, 0)).validate(state),
+		""
 	)
 
 
 func test_surfacing_makes_the_sub_targetable_again() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 1 0\n2 B 0 0")
+	var state := Fixture.state("[terrain]\nSS\n[units]\n1 s 1 0\n2 B 0 0")
 	var sub := state.units[0]
 	var battleship := state.units[1]
 	sub.dived = true
@@ -136,7 +124,7 @@ func test_surfacing_makes_the_sub_targetable_again() -> void:
 ## A boat that shot back would give itself away, so it does not — which is what
 ## makes attacking from under the water worth the fuel.
 func test_a_dived_sub_does_not_counterattack() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 1 0\n2 c 0 0")
+	var state := Fixture.state("[terrain]\nSS\n[units]\n1 s 1 0\n2 c 0 0")
 	state.rng.seed = 3
 	var sub := state.units[0]
 	sub.dived = true
@@ -149,7 +137,7 @@ func test_a_dived_sub_does_not_counterattack() -> void:
 ## And the mirror: a submerged attacker is countered only by something that could
 ## have engaged it in the first place.
 func test_only_a_hunter_counters_a_submerged_attacker() -> void:
-	var state := _state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 B 0 0\n2 c 2 0")
+	var state := Fixture.state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 B 0 0\n2 c 2 0")
 	state.rng.seed = 3
 	var sub := state.units[0]
 	sub.dived = true
@@ -168,7 +156,7 @@ func test_only_a_hunter_counters_a_submerged_attacker() -> void:
 ## Being under the water is not a question of how far anyone can see, so unlike
 ## every other hiding rule this one holds in a match with no fog at all.
 func test_a_dived_sub_is_hidden_without_fog() -> void:
-	var state := _state("[terrain]\nSSSS\n[units]\n1 s 0 0\n2 B 3 0")
+	var state := Fixture.state("[terrain]\nSSSS\n[units]\n1 s 0 0\n2 B 3 0")
 	var sub := state.units[0]
 	sub.dived = true
 	assert_false(state.fog_enabled, "this is the clear-weather case on purpose")
@@ -182,16 +170,16 @@ func test_a_dived_sub_is_hidden_without_fog() -> void:
 
 ## Hunting a submarine means closing with it: standing next to one gives it up.
 func test_an_adjacent_enemy_finds_a_dived_sub() -> void:
-	var state := _state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 c 2 0")
+	var state := Fixture.state("[terrain]\nSSS\n[units]\n1 s 1 0\n2 c 2 0")
 	var sub := state.units[0]
 	sub.dived = true
 	assert_false(Vision.is_hidden_from(state, 2, sub), "the cruiser is right on top of it")
-	MoveCommand.new(state.units[1], _path([Vector2i(2, 0)])).apply(state)
+	MoveCommand.new(state.units[1], Fixture.path([Vector2i(2, 0)])).apply(state)
 	assert_false(Vision.is_hidden_from(state, 2, sub))
 
 
 func test_a_surfaced_sub_hides_from_nobody() -> void:
-	var state := _state("[terrain]\nSSSS\n[units]\n1 s 0 0\n2 B 3 0")
+	var state := Fixture.state("[terrain]\nSSSS\n[units]\n1 s 0 0\n2 B 3 0")
 	assert_false(Vision.is_hidden_from(state, 2, state.units[0]))
 
 
@@ -201,7 +189,7 @@ func test_a_surfaced_sub_hides_from_nobody() -> void:
 ## Staying under costs several times what running on the surface does. That is
 ## the clock the whole mechanic is played against: hiding is safe and expensive.
 func test_staying_under_burns_the_dived_rate() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 0 0")
+	var state := Fixture.state("[terrain]\nSS\n[units]\n1 s 0 0")
 	var sub := state.units[0]
 	sub.dived = true
 	assert_eq(sub.upkeep(), sub.type.dived_fuel_upkeep)
@@ -213,7 +201,7 @@ func test_staying_under_burns_the_dived_rate() -> void:
 
 
 func test_a_sub_that_stays_under_too_long_is_lost() -> void:
-	var state := _state("[terrain]\nSS\n[units]\n1 s 0 0\n1 c 1 0")
+	var state := Fixture.state("[terrain]\nSS\n[units]\n1 s 0 0\n1 c 1 0")
 	var sub := state.units[0]
 	sub.dived = true
 	sub.fuel = sub.type.dived_fuel_upkeep
@@ -289,7 +277,7 @@ func _threat_weighing_profile() -> AIProfile:
 ## standing when it decided to. That needs a threat dial live to pay for the map
 ## the ranking reads — see the zero-dial pair below for the tier that will not.
 func test_a_threatened_sub_dives_where_it_is_safer() -> void:
-	var state := _state(OPEN_CHANNEL)
+	var state := Fixture.state(OPEN_CHANNEL)
 	var command := AIController.new(unit_db, _threat_weighing_profile()).plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
 	if not (command is DiveCommand):
@@ -298,7 +286,7 @@ func test_a_threatened_sub_dives_where_it_is_safer() -> void:
 	assert_true((command as DiveCommand).submerge)
 	assert_eq(
 		(command as DiveCommand).path,
-		_path([Vector2i(6, 0), Vector2i(5, 0)]),
+		Fixture.path([Vector2i(6, 0), Vector2i(5, 0)]),
 		"one step west is out of the battleship's ring"
 	)
 
@@ -306,13 +294,13 @@ func test_a_threatened_sub_dives_where_it_is_safer() -> void:
 ## And where nothing it can reach is safer, it goes under where it stands: the
 ## boat's own cell is in the comparison at no cost, so it holds every tie.
 func test_a_sub_with_nowhere_safer_dives_in_place() -> void:
-	var state := _state(CLOSED_POCKET)
+	var state := Fixture.state(CLOSED_POCKET)
 	var command := AIController.new(unit_db, _threat_weighing_profile()).plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
 	if not (command is DiveCommand):
 		return
 	assert_eq(command.validate(state), "")
-	assert_eq((command as DiveCommand).path, _path([Vector2i(6, 0)]))
+	assert_eq((command as DiveCommand).path, Fixture.path([Vector2i(6, 0)]))
 
 
 # --- COM-200: a zero-dial tier does not pay for the map ------------------------
@@ -331,7 +319,7 @@ func test_a_sub_with_nowhere_safer_dives_in_place() -> void:
 ## hull has no repair cells either, so cost is the only key still live — and
 ## staying put is the cheapest cell there is.
 func test_a_zero_dial_tier_dives_in_place_without_building_the_threat_map() -> void:
-	var state := _state(OPEN_CHANNEL)
+	var state := Fixture.state(OPEN_CHANNEL)
 	var context := AIPlanningContext.new(unit_db)
 	context.begin(state)
 	var command := AIUnitActionPlanner.new(AIProfile.new()).plan_next(context)
@@ -346,7 +334,7 @@ func test_a_zero_dial_tier_dives_in_place_without_building_the_threat_map() -> v
 	assert_true((command as DiveCommand).submerge)
 	assert_eq(
 		(command as DiveCommand).path,
-		_path([Vector2i(6, 0)]),
+		Fixture.path([Vector2i(6, 0)]),
 		"no threat dial is live, so nothing ranks the safer cell over this one"
 	)
 
@@ -368,7 +356,7 @@ const COAST_ROAD := "[terrain]\nSSSSSSSS\n........\n[units]\n1 s 0 0\n2 t 7 1"
 ## what the boat is deciding about. Read off the type instead, the doctrine is
 ## invisible and the sub sits on the surface waiting for a tank it never saw coming.
 func test_a_sub_dives_from_a_threat_a_move_bonus_creates() -> void:
-	var state := _state(COAST_ROAD)
+	var state := Fixture.state(COAST_ROAD)
 	state.set_commander(2, CommanderDB.load_default().by_id(&"cass_orlov"))
 	assert_false(
 		AIController.new(unit_db).plan_next_command(state) is DiveCommand,
@@ -386,7 +374,7 @@ func test_a_sub_dives_from_a_threat_a_move_bonus_creates() -> void:
 ## And the same authority from the other side: an empty tank is a shorter reach,
 ## so a grounded bomber is not worth burning the dive rate over.
 func test_a_sub_ignores_a_bomber_with_no_fuel_to_reach_it() -> void:
-	var state := _state("[terrain]\nSSSSSS\n[units]\n1 s 0 0\n2 b 5 0")
+	var state := Fixture.state("[terrain]\nSSSSSS\n[units]\n1 s 0 0\n2 b 5 0")
 	var bomber := state.units[1]
 	bomber.fuel = 2
 	assert_gt(bomber.type.move_points, 4, "the type alone would cross this board")
@@ -401,7 +389,7 @@ func test_a_sub_ignores_a_bomber_with_no_fuel_to_reach_it() -> void:
 ## goes under then. Adding its movement to its gun is a turn of dived upkeep spent
 ## on a shot nobody could have taken.
 func test_a_sub_ignores_a_battleship_that_must_close_first() -> void:
-	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 B 8 0")
+	var state := Fixture.state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 B 8 0")
 	assert_false(
 		AIController.new(unit_db).plan_next_command(state) is DiveCommand,
 		"the guns reach six; the boat has a turn in hand"
@@ -427,7 +415,7 @@ func test_a_sub_ignores_a_battleship_that_must_close_first() -> void:
 ## has no answer to and cannot be followed under by, which is what a submarine is
 ## for.
 func test_a_staged_fleet_action_dives_and_stays_legal() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		(
 			"[terrain]\nSSSSSSSSSSSSSS\nSSSSSSSSSSSSSS\n[units]\n"
 			+ "1 s 0 0\n1 B 0 1\n1 b 1 1\n2 s 13 0\n2 B 13 1\n2 b 12 1"

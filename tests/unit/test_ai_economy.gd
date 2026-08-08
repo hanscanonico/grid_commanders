@@ -181,9 +181,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _profile(capture_units_per_property: float) -> AIProfile:
@@ -230,6 +230,7 @@ func _rows_after_a_day(
 	var map := MapData.parse(map_text, terrain_db)
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
+	state.rng.seed = 1701  # COM-206: commands are applied for real below
 	var hurt := state.unit_at(wounded)
 	if hurt != null:
 		hurt.hp = WOUNDED_HP

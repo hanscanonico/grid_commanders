@@ -19,19 +19,12 @@ const FOUR_ARMY_BOARD := "res://maps/compass.txt"
 const QUARTET := "res://maps/fixtures/quartet.txt"
 
 
-func _args(list: Array) -> PackedStringArray:
-	var args := PackedStringArray()
-	for item: String in list:
-		args.append(item)
-	return args
-
-
 ## The match a set of flags stages on `map_path`, built the way a boot builds it.
 ## Null when the build was refused, which is a result these cases assert on.
 func _staged(map_path: String, flags: Array) -> BattleSetup.BuiltMatch:
 	var request := MatchRequest.new()
 	request.map_path = map_path
-	request.apply_cmdline(_args(flags))
+	request.apply_cmdline(Fixture.args(flags))
 	return BattleSetup.build(
 		request, TerrainDB.load_default(), UnitDB.load_default(), CommanderDB.load_default()
 	)
@@ -42,13 +35,13 @@ func _staged(map_path: String, flags: Array) -> BattleSetup.BuiltMatch:
 
 func test_naming_no_seats_fills_every_one_of_them() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--fog"]))
+	request.apply_cmdline(Fixture.args(["--fog"]))
 	assert_eq(request.seats, [] as Array[int], "empty is the whole board, as it always was")
 
 
 func test_seats_names_which_armies_play() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--seats=1,3,4"]))
+	request.apply_cmdline(Fixture.args(["--seats=1,3,4"]))
 	assert_eq(request.seats, [1, 3, 4] as Array[int], "in the order written, never renumbered")
 
 
@@ -57,20 +50,20 @@ func test_seats_names_which_armies_play() -> void:
 func test_an_empty_seats_flag_reopens_every_seat() -> void:
 	var request := MatchRequest.new()
 	request.seats = [1, 3] as Array[int]
-	request.apply_cmdline(_args(["--seats="]))
+	request.apply_cmdline(Fixture.args(["--seats="]))
 	assert_eq(request.seats, [] as Array[int], "cleared, not left standing")
 
 
 func test_omitting_seats_leaves_the_seating_alone() -> void:
 	var request := MatchRequest.new()
 	request.seats = [1, 3] as Array[int]
-	request.apply_cmdline(_args(["--fog"]))
+	request.apply_cmdline(Fixture.args(["--fog"]))
 	assert_eq(request.seats, [1, 3] as Array[int], "untouched")
 
 
 func test_a_seating_that_is_not_one_is_refused_out_loud() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--seats=1,north"]))
+	request.apply_cmdline(Fixture.args(["--seats=1,north"]))
 	assert_push_error("--seats=1,north is not a seating")
 	assert_eq(
 		request.seats, [] as Array[int], "and the whole board plays, said rather than assumed"
@@ -82,7 +75,7 @@ func test_a_seating_that_is_not_one_is_refused_out_loud() -> void:
 ## `--seats` is read first — the list has to be dealt over the right table.
 func test_co_is_dealt_over_the_filled_seats() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--seats=1,3", "--co=alina_ward,viktor_draeg"]))
+	request.apply_cmdline(Fixture.args(["--seats=1,3", "--co=alina_ward,viktor_draeg"]))
 	assert_eq(request.commanders[1], &"alina_ward")
 	assert_eq(request.commanders[3], &"viktor_draeg", "the second id went to the second army")
 	assert_false(request.commanders.has(2), "and nobody was seated in the closed chair")
@@ -90,7 +83,7 @@ func test_co_is_dealt_over_the_filled_seats() -> void:
 
 func test_co_is_dealt_over_the_whole_board_when_no_seat_is_closed() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--co=alina_ward,viktor_draeg"]))
+	request.apply_cmdline(Fixture.args(["--co=alina_ward,viktor_draeg"]))
 	assert_eq(request.commanders[1], &"alina_ward")
 	assert_eq(request.commanders[2], &"viktor_draeg")
 
