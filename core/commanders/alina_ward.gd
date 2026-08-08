@@ -45,13 +45,20 @@ func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 ## is where the unit is about to stand, not where it is. The unit itself is
 ## therefore skipped: it is still sitting on its old cell, and finding itself
 ## there would never count anyway (same team, same class).
+##
+## One pass over `state.units` rather than four `unit_at` scans (each itself a
+## walk of every unit): `stand_value` asks this once per candidate cell an
+## advancing unit is weighing, so the four-scan shape was quartering the board's
+## unit list on every cell of every sweep for no answer `unit_at` gives that a
+## single pass testing the four offsets does not.
 func _has_mixed_neighbour(state: GameState, unit: Unit, from: Vector2i) -> bool:
-	for dir in MovementResolver.DIRECTIONS:
-		var other := state.unit_at(from + dir)
+	for other in state.units:
 		# `!= unit.team`, deliberately not `allied` (four-players plan D2): combined
 		# arms is what *her* army fields beside itself, not what stands nearby.
-		if other == null or other == unit or other.team != unit.team:
+		if other == unit or other.carrier != null or other.team != unit.team:
 			continue
-		if other.type.move_class != unit.type.move_class:
+		if other.type.move_class == unit.type.move_class:
+			continue
+		if MovementResolver.DIRECTIONS.has(other.cell - from):
 			return true
 	return false

@@ -9,26 +9,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, with_sable: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if with_sable:
-		state.set_commander(1, commander_db.by_id(&"sable_wren"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(1, state.commander_of(1).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {1: &"sable_wren"} if with_sable else {})
 
 
 # --- the doctrine ------------------------------------------------------------
@@ -59,6 +47,24 @@ func test_her_units_are_softer_on_roads() -> void:
 			. attack_damage
 		),
 		83
+	)
+
+
+## A reef conceals exactly like woods (both carry TerrainType.conceals), so her
+## cover doctrine has to key on that flag rather than on the woods id — a naval
+## board's only cover must not leave her army worth nothing standing in it.
+## Land units cannot enter a reef, so this is a ship matchup: Battleship vs
+## Cruiser from a reef (1 star, hers count as 2): 95 * (1 - 0.2) = 76,
+## against 95 * 0.9 = 85.5 -> 86.
+func test_her_units_get_an_extra_star_in_a_reef() -> void:
+	var state := _state("[terrain]\nS*\n[units]\n2 B 0 0\n1 c 1 0")
+	assert_eq(
+		(
+			CombatResolver
+			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
+			. attack_damage
+		),
+		76
 	)
 
 
@@ -101,7 +107,21 @@ func test_vanish_hides_her_woods_units_from_an_adjacent_enemy() -> void:
 	assert_true(visible.has(Vector2i(1, 0)), "adjacent, so the cell itself is seen")
 	assert_true(Vision.can_see_unit(state, 2, hidden, visible), "and normally so is she")
 
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
+	visible = Vision.visible_cells(state, 2)
+	assert_true(visible.has(Vector2i(1, 0)), "the cell is still visible")
+	assert_false(Vision.can_see_unit(state, 2, hidden, visible), "but the unit on it is not")
+
+
+func test_vanish_hides_her_reef_units_from_an_adjacent_enemy() -> void:
+	var state := _state("[terrain]\nS*\n[units]\n1 c 1 0\n2 c 0 0")
+	state.fog_enabled = true
+	var hidden := state.units[0]
+	var visible := Vision.visible_cells(state, 2)
+	assert_true(visible.has(Vector2i(1, 0)), "adjacent, so the cell itself is seen")
+	assert_true(Vision.can_see_unit(state, 2, hidden, visible), "and normally so is she")
+
+	assert_eq(Fixture.fire_power(state, 1), "")
 	visible = Vision.visible_cells(state, 2)
 	assert_true(visible.has(Vector2i(1, 0)), "the cell is still visible")
 	assert_false(Vision.can_see_unit(state, 2, hidden, visible), "but the unit on it is not")
@@ -110,7 +130,7 @@ func test_vanish_hides_her_woods_units_from_an_adjacent_enemy() -> void:
 func test_vanish_does_not_hide_her_units_in_the_open() -> void:
 	var state := _state("[terrain]\n..\n..\n[units]\n1 i 1 0\n2 t 0 0")
 	state.fog_enabled = true
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	var visible := Vision.visible_cells(state, 2)
 	assert_true(Vision.can_see_unit(state, 2, state.units[0], visible), "no cover, no ambush")
 
@@ -118,7 +138,7 @@ func test_vanish_does_not_hide_her_units_in_the_open() -> void:
 func test_she_can_always_see_her_own_hidden_units() -> void:
 	var state := _state("[terrain]\n.F\n..\n[units]\n1 i 1 0\n2 t 0 0")
 	state.fog_enabled = true
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	var visible := Vision.visible_cells(state, 1)
 	assert_true(Vision.can_see_unit(state, 1, state.units[0], visible))
 
@@ -126,7 +146,7 @@ func test_she_can_always_see_her_own_hidden_units() -> void:
 ## Fog off means nothing is hidden from anyone, power or not.
 func test_vanish_does_nothing_without_fog() -> void:
 	var state := _state("[terrain]\n.F\n..\n[units]\n1 i 1 0\n2 t 0 0")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	var visible := Vision.visible_cells(state, 2)
 	assert_true(Vision.can_see_unit(state, 2, state.units[0], visible))
 
@@ -143,7 +163,7 @@ func test_the_ambush_bonus_applies_from_woods() -> void:
 		),
 		5
 	)
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(
 		(
 			CombatResolver
@@ -154,9 +174,32 @@ func test_the_ambush_bonus_applies_from_woods() -> void:
 	)
 
 
+## Cruiser vs Sub from a reef, base 90 against open water (no cover on the
+## defender's side): 90 * 1.4 = 126, against 90 flat.
+func test_the_ambush_bonus_applies_from_a_reef() -> void:
+	var state := _state("[terrain]\n*S\n[units]\n1 c 0 0\n2 s 1 0")
+	assert_eq(
+		(
+			CombatResolver
+			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
+			. attack_damage
+		),
+		90
+	)
+	assert_eq(Fixture.fire_power(state, 1), "")
+	assert_eq(
+		(
+			CombatResolver
+			. forecast(state, state.units[0], Vector2i(0, 0), state.units[1])
+			. attack_damage
+		),
+		126
+	)
+
+
 func test_the_ambush_bonus_does_not_apply_from_open_ground() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	var fight := Engagement.create(
 		state.units[0], Vector2i(0, 0), 10, state.units[1], Vector2i(1, 0), 10
 	)
@@ -168,7 +211,7 @@ func test_the_ambush_bonus_does_not_apply_from_open_ground() -> void:
 func test_vanish_covers_the_opponents_turn() -> void:
 	var state := _state("[terrain]\n.F\n..\n[units]\n1 i 1 0\n2 t 0 0")
 	state.fog_enabled = true
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	EndTurnCommand.new().apply(state)
 	var visible := Vision.visible_cells(state, 2)
 	assert_false(
@@ -177,6 +220,14 @@ func test_vanish_covers_the_opponents_turn() -> void:
 	EndTurnCommand.new().apply(state)
 	visible = Vision.visible_cells(state, 2)
 	assert_true(Vision.can_see_unit(state, 2, state.units[0], visible), "and back as hers opens")
+
+
+## _has_unit_in_cover keys on the same conceals flag: a reef is the only cover
+## on a naval board, and an army standing in it must still be able to fire
+## Vanish rather than sit on a banked meter for want of woods.
+func test_vanish_fires_when_an_enemy_can_reach_her_line_in_a_reef() -> void:
+	var state := _state("[terrain]\n*SSSSSSS\n[units]\n1 c 0 0\n2 s 5 0")
+	assert_true(state.commander_of(1).wants_power(state, 1))
 
 
 # --- ground advice -----------------------------------------------------------

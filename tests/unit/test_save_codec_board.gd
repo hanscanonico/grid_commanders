@@ -24,9 +24,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _encoded() -> Dictionary:
@@ -95,7 +95,7 @@ func test_no_winner_yet_is_not_a_bad_winner() -> void:
 	var map := MapData.load_from_file(MAP_PATH, terrain_db)
 	var data := _encoded()
 	data["winner"] = 0
-	assert_eq(SaveCodec.board_error(data, map), "")
+	assert_eq(SaveCodec.board_error(data, map, unit_db), "")
 
 
 ## `board_error` is public and `validate` is a separate call, so a caller that has
@@ -103,13 +103,17 @@ func test_no_winner_yet_is_not_a_bad_winner() -> void:
 ## runtime error off a key that was never there.
 func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
 	var map := MapData.load_from_file(MAP_PATH, terrain_db)
-	assert_ne(SaveCodec.board_error({}, map), "", "a save with no lists at all is a reason")
+	assert_ne(
+		SaveCodec.board_error({}, map, unit_db), "", "a save with no lists at all is a reason"
+	)
 	var data := _encoded()
 	data["units"] = ["not a unit"]
-	assert_ne(SaveCodec.board_error(data, map), "", "so is an entry that is not a dictionary")
+	assert_ne(
+		SaveCodec.board_error(data, map, unit_db), "", "so is an entry that is not a dictionary"
+	)
 	data = _encoded()
 	(data["owners"] as Array)[0].erase("x")
-	assert_ne(SaveCodec.board_error(data, map), "", "so is an entry with no cell to check")
+	assert_ne(SaveCodec.board_error(data, map, unit_db), "", "so is an entry with no cell to check")
 	# And so is a version no release wrote. It decides which fields every entry is asked
 	# for, and this is the one function that never gets to refuse it: trusted, a version
 	# below the oldest readable one asks for nothing, leaving the cell and HP reads below
@@ -119,7 +123,7 @@ func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
 		data = _encoded()
 		data["version"] = version
 		data["units"] = [{}]
-		assert_ne(SaveCodec.board_error(data, map), "", "an unreadable version is floored")
+		assert_ne(SaveCodec.board_error(data, map, unit_db), "", "an unreadable version is floored")
 	# The turn and the winner are read the same way and were the last two that were not:
 	# `int()` will not take a Dictionary or an Array, and with the entry lists empty there
 	# is nothing before them to intercept a save that never went through `validate`.
@@ -127,11 +131,15 @@ func test_an_unvalidated_dictionary_comes_back_as_a_reason() -> void:
 		data = _encoded()
 		data["units"] = []
 		data["current_team"] = named
-		assert_ne(SaveCodec.board_error(data, map), "", "a turn that is not a side is a reason")
+		assert_ne(
+			SaveCodec.board_error(data, map, unit_db), "", "a turn that is not a side is a reason"
+		)
 		data = _encoded()
 		data["units"] = []
 		data["winner"] = named
-		assert_ne(SaveCodec.board_error(data, map), "", "and so is a winner that is not one")
+		assert_ne(
+			SaveCodec.board_error(data, map, unit_db), "", "and so is a winner that is not one"
+		)
 
 
 func test_an_owned_property_off_the_board_is_rejected() -> void:
@@ -152,7 +160,7 @@ func test_a_capture_in_progress_off_the_board_is_rejected() -> void:
 ## still be read, so none of the bounds above has been drawn one cell too tight.
 func test_a_freshly_encoded_save_passes_the_board_check() -> void:
 	var map := MapData.load_from_file(MAP_PATH, terrain_db)
-	assert_eq(SaveCodec.board_error(_encoded(), map), "")
+	assert_eq(SaveCodec.board_error(_encoded(), map, unit_db), "")
 	assert_not_null(_decode(_encoded()))
 
 
@@ -163,11 +171,16 @@ func test_the_bounds_include_their_own_edges() -> void:
 	var data := _encoded()
 	var unit: Dictionary = (data["units"] as Array)[0]
 	unit["hp"] = SaveCodec.MAX_HP
+	# first_steps' far corner is sea — this test is about the bound, not about
+	# who may float there, so it flies an air unit, passable on every terrain.
+	unit["type"] = "b_copter"
 	unit["x"] = map.width - 1
 	unit["y"] = map.height - 1
-	assert_eq(SaveCodec.board_error(data, map), "", "the last cell of the board is on it")
+	assert_eq(SaveCodec.board_error(data, map, unit_db), "", "the last cell of the board is on it")
 	unit["hp"] = SaveCodec.MIN_HP
-	assert_eq(SaveCodec.board_error(data, map), "", "one HP is a unit clinging on, not a corpse")
+	assert_eq(
+		SaveCodec.board_error(data, map, unit_db), "", "one HP is a unit clinging on, not a corpse"
+	)
 
 
 # --- arrangements no command would have allowed (COM-53) ----------------------
@@ -218,7 +231,9 @@ func test_a_transport_on_the_other_side_is_rejected() -> void:
 
 ## The one level of nesting the sim refuses: a loaded carrier that itself boards
 ## would freeze its own cargo at the boarding cell. Staged with a Lander, since it
-## is the only hull that carries what the APC drives on.
+## is the only hull that carries what the APC drives on. Parked at sea rather than
+## at (1, 1): a lander sits on the board in its own right here (it is not the rider
+## this case is about), so it has to be somewhere its own hull could actually be.
 func test_a_loaded_carrier_riding_in_another_is_rejected() -> void:
 	var data := _encoded()
 	(
@@ -227,7 +242,7 @@ func test_a_loaded_carrier_riding_in_another_is_rejected() -> void:
 			{
 				"type": "lander",
 				"team": 1,
-				"x": 1,
+				"x": 0,
 				"y": 1,
 				"hp": 100,
 				"fuel": 99,
@@ -254,3 +269,71 @@ func test_a_legally_carried_unit_still_loads() -> void:
 	var loaded := _decode(data)
 	assert_not_null(loaded)
 	assert_eq(loaded.state.cargo_of(loaded.state.units[5]).size(), 1)
+
+
+# --- board state no living unit could occupy (COM-174) ------------------------
+#
+# `GameState.create` refuses two starting units on one cell and a unit on terrain
+# its move class cannot enter ("two starting units on cell %s", "%s cannot stand
+# on %s at %s"), but `board_error` checked neither: a hand-edited or truncated
+# save with two units on a cell loaded clean, `unit_at` returning the first and
+# leaving the second a ghost — untargetable, unattackable, blocking nothing in
+# `_occupants`, yet still drawn and still counted for `_check_rout` — and a
+# battleship saved onto a mountain was the same class of board the rules cannot
+# reason about.
+
+
+## One case per rule `GameState.create` already enforces, in one function so the
+## suite stays under the shared method ceiling rather than moving it.
+func test_a_board_no_living_unit_could_occupy_is_rejected() -> void:
+	var data := _encoded()
+	_units(data)[1]["x"] = _units(data)[0]["x"]
+	_units(data)[1]["y"] = _units(data)[0]["y"]
+	assert_null(_decode(data), "the second unit is a ghost, not a legal occupant")
+	assert_push_error("two units stand on")
+	data = _encoded()
+	_units(data)[0]["x"] = 0
+	_units(data)[0]["y"] = 0  # sea; Red's infantry (foot) cannot stand on it
+	assert_null(_decode(data))
+	assert_push_error("cannot stand on")
+
+
+## The exemption both checks need: a unit riding a transport shares no cell of
+## its own — `advance_unit` mirrors a rider's cell onto its carrier's the moment
+## it boards, and that is what `encode` writes back out — so a carried unit must
+## be let through both checks rather than compared against the very cell it
+## mirrors. The second half sits over terrain its own move class could never
+## cross on its own two feet — an infantry riding a Lander moored at sea is
+## exactly that, and exactly legal.
+func test_a_carried_unit_is_exempt_from_both_new_checks() -> void:
+	var data := _encoded()
+	_units(data)[0]["carrier"] = 5  # infantry riding the APC
+	_units(data)[0]["x"] = _units(data)[5]["x"]
+	_units(data)[0]["y"] = _units(data)[5]["y"]  # mirrors the carrier's cell
+	assert_not_null(_decode(data), "a carried unit shares its carrier's cell and stands on nothing")
+
+	data = _encoded()
+	(
+		_units(data)
+		. append(
+			{
+				"type": "lander",
+				"team": 1,
+				"x": 0,
+				"y": 0,
+				"hp": 100,
+				"fuel": 99,
+				"ammo": 0,
+				"acted": false,
+				"dived": false,
+				"refreshable": false,
+				"tag": "",
+				"carrier": SaveCodec.NO_CARRIER,
+			}
+		)
+	)
+	_units(data)[0]["carrier"] = _units(data).size() - 1  # infantry riding the lander
+	_units(data)[0]["x"] = 0
+	_units(data)[0]["y"] = 0  # mirrors the lander's cell, which foot cannot stand on
+	var loaded := _decode(data)
+	assert_not_null(loaded, "a carried unit's own move class is never asked of its cell")

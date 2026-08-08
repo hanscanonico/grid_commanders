@@ -86,7 +86,7 @@ func _leave() -> void:
 	if _battle.game.winner != 0:
 		_battle.enter_victory()
 	else:
-		_battle.state = Battle.State.IDLE
+		_battle.state = _battle.rest_state()
 
 
 ## Routes a planned command through the shared live executor. A rejected plan is

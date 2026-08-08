@@ -14,27 +14,13 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func test_ground_units_burn_no_fuel_standing_still() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0")
 	state.units[0].fuel = 40
 	EndTurnCommand.new().apply(state)
 	EndTurnCommand.new().apply(state)  # back to red
@@ -44,7 +30,7 @@ func test_ground_units_burn_no_fuel_standing_still() -> void:
 ## Day one is charged like any other, for both sides: create() opens the match
 ## with the first team's begin_turn, and the second team pays on its own first.
 func test_aircraft_burn_upkeep_every_turn() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 b 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 b 0 0")
 	var bomber := state.units[0]
 	var upkeep := bomber.type.fuel_upkeep
 	assert_eq(bomber.fuel, 99 - upkeep, "the opening day costs a day of fuel too")
@@ -54,7 +40,7 @@ func test_aircraft_burn_upkeep_every_turn() -> void:
 
 
 func test_aircraft_is_lost_when_the_tank_runs_dry() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 b 0 0\n1 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 b 0 0\n1 i 1 0")
 	var bomber := state.units[0]
 	bomber.fuel = bomber.type.fuel_upkeep  # exactly enough for one more day
 	EndTurnCommand.new().apply(state)
@@ -67,7 +53,7 @@ func test_aircraft_is_lost_when_the_tank_runs_dry() -> void:
 ## so a plane that reached its airfield is always full again and can never die on
 ## friendly tarmac — even having landed with an empty tank.
 func test_an_aircraft_on_its_airfield_is_never_lost() -> void:
-	var state := _state("[terrain]\nA.\n[owners]\n1 0 0\n[units]\n1 b 0 0")
+	var state := Fixture.state("[terrain]\nA.\n[owners]\n1 0 0\n[units]\n1 b 0 0")
 	var bomber := state.units[0]
 	bomber.fuel = 0
 	EndTurnCommand.new().apply(state)
@@ -77,7 +63,7 @@ func test_an_aircraft_on_its_airfield_is_never_lost() -> void:
 
 
 func test_a_city_does_not_refit_aircraft() -> void:
-	var state := _state("[terrain]\nC.\n[owners]\n1 0 0\n[units]\n1 h 0 0")
+	var state := Fixture.state("[terrain]\nC.\n[owners]\n1 0 0\n[units]\n1 h 0 0")
 	var copter := state.units[0]
 	copter.fuel = 30
 	copter.hp = 50
@@ -88,7 +74,7 @@ func test_a_city_does_not_refit_aircraft() -> void:
 
 
 func test_an_airport_does_not_refit_ground_units() -> void:
-	var state := _state("[terrain]\nA.\n[owners]\n1 0 0\n[units]\n1 t 0 0")
+	var state := Fixture.state("[terrain]\nA.\n[owners]\n1 0 0\n[units]\n1 t 0 0")
 	var tank := state.units[0]
 	tank.fuel = 20
 	tank.ammo = 0
@@ -101,7 +87,7 @@ func test_an_airport_does_not_refit_ground_units() -> void:
 ## An APC refuels anything it can reach, aircraft included — the field supply
 ## that makes a forward push sustainable without holding an airfield.
 func test_an_apc_refuels_an_aircraft_in_the_field() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 p 0 0\n1 h 1 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 p 0 0\n1 h 1 0")
 	var copter := state.units[1]
 	copter.fuel = 10
 	EndTurnCommand.new().apply(state)
@@ -112,10 +98,10 @@ func test_an_apc_refuels_an_aircraft_in_the_field() -> void:
 ## Cargo does not fly itself, so it pays no upkeep and cannot run dry in the
 ## hold — but it still goes down with the transport that does.
 func test_cargo_burns_nothing_and_dies_with_its_carrier() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 H 0 0\n1 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 H 0 0\n1 i 1 0")
 	var copter := state.units[0]
 	var rifleman := state.units[1]
-	LoadCommand.new(rifleman, _path([Vector2i(1, 0), Vector2i(0, 0)])).apply(state)
+	LoadCommand.new(rifleman, Fixture.path([Vector2i(1, 0), Vector2i(0, 0)])).apply(state)
 	rifleman.fuel = 3
 	copter.fuel = copter.type.fuel_upkeep
 	EndTurnCommand.new().apply(state)
@@ -128,7 +114,7 @@ func test_cargo_burns_nothing_and_dies_with_its_carrier() -> void:
 ## Running yourself dry is not an exchange, so neither meter gains from it.
 ## Otherwise starving your own air force would be a way to feed a Command Power.
 func test_a_crash_banks_no_command_power_charge() -> void:
-	var state := _state("[terrain]\n..\n..\n[units]\n1 b 0 0\n1 i 1 0\n2 i 0 1")
+	var state := Fixture.state("[terrain]\n..\n..\n[units]\n1 b 0 0\n1 i 1 0\n2 i 0 1")
 	var commanders := CommanderDB.load_default()
 	state.set_commander(1, commanders.by_id(&"mara_voss"))
 	state.set_commander(2, commanders.by_id(&"mara_voss"))
@@ -144,7 +130,7 @@ func test_a_crash_banks_no_command_power_charge() -> void:
 ## Wiping yourself out is still a rout: the match cannot carry on with one side
 ## holding no units because its last plane fell.
 func test_losing_the_last_unit_to_fuel_ends_the_match() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 b 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 b 0 0\n2 i 1 0")
 	state.units[0].fuel = state.units[0].type.fuel_upkeep
 	EndTurnCommand.new().apply(state)
 	EndTurnCommand.new().apply(state)
@@ -153,7 +139,7 @@ func test_losing_the_last_unit_to_fuel_ends_the_match() -> void:
 
 ## The warning the board badge, the tile panel and the AI all share.
 func test_running_dry_flags_only_units_an_empty_tank_kills() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n1 h 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n1 h 1 0")
 	var tank := state.units[0]
 	var copter := state.units[1]
 	tank.fuel = 0

@@ -147,10 +147,12 @@ longer exists.
   negative again, while replanning after every command already exposes a wounded
   target's finishing shot to the next attacker. `data/ai/hard.tres` carries the
   same note at the dial itself.
-- **S3 `build_reactivity` — counter-building.** Re-ranks each affordable combat
-  unit by its damage-chart effectiveness against the enemy's actual cost-weighted
-  roster, blended over the static `build_priority` list. With no enemy in sight
-  there is nothing to react to and the static list decides.
+- **S3 `build_reactivity` — counter-building.** Re-ranks the units the planner
+  would buy anyway — those on `build_priority`, plus any a negative doctrine bias
+  pulls onto its tail — by their damage-chart effectiveness against the enemy's
+  actual cost-weighted roster, blended over the static `build_priority` order. It
+  reorders that set and may not widen it (COM-172), and the dial is `0..1`. With
+  no enemy in sight there is nothing to react to and the static list decides.
 
 ## 3. Running the gate
 

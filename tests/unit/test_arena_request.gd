@@ -25,15 +25,8 @@ const SHARD := """
 """
 
 
-func _args(list: Array) -> PackedStringArray:
-	var out := PackedStringArray()
-	for item: String in list:
-		out.append(item)
-	return out
-
-
 func _parse(list: Array) -> ArenaRequest:
-	return ArenaRequest.parse(_args(list))
+	return ArenaRequest.parse(Fixture.args(list))
 
 
 func _pairings(list: Array, text: String = "") -> Array:

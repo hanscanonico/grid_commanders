@@ -48,3 +48,19 @@ func test_the_cached_databases_are_the_shipped_ones() -> void:
 		"and the unit types in it are the ones every other loader gets"
 	)
 	assert_same(Fixture.chart(), load("res://data/damage_chart.tres"))
+
+
+## COM-206's proof: a state built by the fixture draws combat luck from a fixed
+## seed rather than the engine's own entropy, so the same shot resolves to the
+## same HP on every run. A neutral Tank has no primary weapon entry against
+## Infantry (the secondary MG is the shot the chart selects), so this is the
+## unit_pricing plan's "only the secondary is in scope" matchup as well as the
+## simplest deterministic one to pin.
+func test_the_default_seed_is_pinned() -> void:
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var attacker := state.units[0]
+	var defender := state.units[1]
+	var command := AttackCommand.new(attacker, Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_eq(defender.hp, 28, "seed %d's roll on a fixed matchup" % Fixture.DEFAULT_SEED)

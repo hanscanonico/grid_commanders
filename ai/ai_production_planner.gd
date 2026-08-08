@@ -12,6 +12,9 @@ const TIER_STRIDE := 1000
 ## "The army is missing something it cannot do without." Ordered within itself:
 ## the capture roster first, then the one truck that keeps the rest firing.
 const RANK_SHORTFALL := TIER_STRIDE
+## "Follow the standing priority" — the doctrine tail and the supply want
+## share this floor, so a doctrine can pull either up but never past it.
+const RANK_PRIORITY := TIER_STRIDE * 2
 ## "Never buy this" — above every tier, so it loses every comparison.
 const RANK_NONE := TIER_STRIDE * 100
 
@@ -23,19 +26,19 @@ class BuildWants:
 	var short_of_capture_units: bool = false
 	var short_of_supply: bool = false
 	## Unit id -> number the team already fields.
-	var owned: Dictionary = {}
+	var owned: Dictionary[StringName, int] = {}
 	## Unit id -> place in S3's standing tier, best first.
-	var reactive_order: Dictionary = {}
+	var reactive_order: Dictionary[StringName, int] = {}
 	## Unit id -> places of commander re-rank, already scaled by doctrine_weight.
-	var doctrine_bias: Dictionary = {}
+	var doctrine_bias: Dictionary[StringName, int] = {}
 
 	static func from_facts(
 		friendly_units: Array[Unit],
 		p_outgunned_in_the_air: bool,
 		capture_unit_target: int,
 		supply_unit_target: int,
-		p_reactive_order: Dictionary,
-		p_doctrine_bias: Dictionary
+		p_reactive_order: Dictionary[StringName, int],
+		p_doctrine_bias: Dictionary[StringName, int]
 	) -> BuildWants:
 		var wants := BuildWants.new()
 		wants.outgunned_in_the_air = p_outgunned_in_the_air
@@ -45,7 +48,7 @@ class BuildWants:
 			if unit.carrier != null:
 				continue  # a passenger takes no ground, refills nobody and is never bought against
 			var id := unit.type.id
-			wants.owned[id] = int(wants.owned.get(id, 0)) + 1
+			wants.owned[id] = wants.owned.get(id, 0) + 1
 			if unit.type.can_capture:
 				capture_units += 1
 			if unit.type.can_resupply:
@@ -57,13 +60,10 @@ class BuildWants:
 		return wants
 
 	func count_of(id: StringName) -> int:
-		return int(owned.get(id, 0))
+		return owned.get(id, 0)
 
 	func bias_of(id: StringName) -> int:
-		return int(doctrine_bias.get(id, 0))
-
-	func first_priority_rank() -> int:
-		return TIER_STRIDE * 2
+		return doctrine_bias.get(id, 0)
 
 
 var profile: AIProfile
@@ -78,14 +78,20 @@ func _init(p_profile: AIProfile) -> void:
 func plan(context: AIPlanningContext) -> Command:
 	var state := context.state
 	var funds: int = state.funds[context.team]
+	var doctrine_bias := _doctrine_bias(context)
 	var wants := BuildWants.from_facts(
 		context.friendly_units,
 		_outgunned_in_the_air(context),
 		_capture_unit_target(context),
 		_supply_unit_target(),
-		_reactive_order(context),
-		_doctrine_bias(context)
+		_reactive_order(context, doctrine_bias),
+		doctrine_bias
 	)
+	# One price per unit type for the whole decision: UnitPricing.cost_for is
+	# constant across facilities (it reads the commander, the team and the
+	# type, never the terrain), so every facility and the banking check below
+	# ask this rather than the authority directly.
+	var prices := _prices(context)
 	var best_cell := Vector2i.ZERO
 	var best_choice: UnitType = null
 	var best_rank := RANK_NONE
@@ -95,7 +101,7 @@ func plan(context: AIPlanningContext) -> Command:
 		if terrain.builds.is_empty() or state.unit_at(cell) != null:
 			continue
 		facilities.append(terrain)
-		var choice := _pick_build(context, terrain, wants, funds)
+		var choice := _pick_build(context, terrain, wants, funds, prices)
 		if choice == null:
 			continue
 		var rank := _build_rank(choice, wants)
@@ -105,9 +111,17 @@ func plan(context: AIPlanningContext) -> Command:
 			best_cell = cell
 	if best_choice == null:
 		return null
-	if _worth_waiting_for(context, facilities, wants, funds, best_rank):
+	if _worth_waiting_for(context, facilities, wants, funds, best_rank, prices):
 		return null
 	return BuildCommand.new(context.team, best_choice, best_cell)
+
+
+## Unit id -> UnitPricing.cost_for's answer, built once per `plan()` call.
+func _prices(context: AIPlanningContext) -> Dictionary[StringName, int]:
+	var prices: Dictionary[StringName, int] = {}
+	for unit_type in context.unit_types:
+		prices[unit_type.id] = UnitPricing.cost_for(context.state, context.team, unit_type)
+	return prices
 
 
 ## How many capture-capable units the team wants: the profile's floor, raised by
@@ -119,11 +133,7 @@ func plan(context: AIPlanningContext) -> Command:
 func _capture_unit_target(context: AIPlanningContext) -> int:
 	if profile.capture_units_per_property <= 0.0:
 		return profile.capture_unit_target
-	var state := context.state
-	var unowned := 0
-	for cell in state.map.property_cells():
-		if not state.allied(state.owner_at(cell), context.team):
-			unowned += 1
+	var unowned := context.capturable_properties().size()
 	var wanted := ceili(profile.capture_units_per_property * float(unowned))
 	return maxi(profile.capture_unit_target, wanted)
 
@@ -137,12 +147,16 @@ func _supply_unit_target() -> int:
 
 ## The best unit this facility can produce for the money, or null.
 func _pick_build(
-	context: AIPlanningContext, terrain: TerrainType, wants: BuildWants, funds: int
+	context: AIPlanningContext,
+	terrain: TerrainType,
+	wants: BuildWants,
+	funds: int,
+	prices: Dictionary[StringName, int]
 ) -> UnitType:
 	var best: UnitType = null
 	var best_rank := RANK_NONE
 	for unit_type in context.unit_types:
-		var price := UnitPricing.cost_for(context.state, context.team, unit_type)
+		var price: int = prices[unit_type.id]
 		if not terrain.can_build(unit_type.move_class) or funds < price:
 			continue
 		var rank := _build_rank(unit_type, wants)
@@ -158,14 +172,15 @@ func _worth_waiting_for(
 	facilities: Array[TerrainType],
 	wants: BuildWants,
 	funds: int,
-	best_rank: int
+	best_rank: int,
+	prices: Dictionary[StringName, int]
 ) -> bool:
-	if best_rank < wants.first_priority_rank() or profile.save_up_turns <= 0:
+	if best_rank < RANK_PRIORITY or profile.save_up_turns <= 0:
 		return false
 	var budget := funds + TurnRules.income_for(context.state, context.team) * profile.save_up_turns
 	for terrain in facilities:
 		for unit_type in context.unit_types:
-			var price := UnitPricing.cost_for(context.state, context.team, unit_type)
+			var price: int = prices[unit_type.id]
 			if not terrain.can_build(unit_type.move_class) or price > budget:
 				continue
 			if _build_rank(unit_type, wants) < best_rank:
@@ -190,11 +205,11 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 	var duplicates := wants.count_of(unit_type.id) * profile.duplicate_priority_cost
 	var bias := wants.bias_of(unit_type.id)
 	if wants.reactive_order.has(unit_type.id):
-		var reactive := int(wants.reactive_order[unit_type.id])
-		return TIER_STRIDE * 2 + maxi(0, reactive + duplicates + bias)
+		var reactive := wants.reactive_order[unit_type.id]
+		return RANK_PRIORITY + maxi(0, reactive + duplicates + bias)
 	var priority := profile.build_priority.find(unit_type.id)
 	if priority >= 0:
-		return TIER_STRIDE * 2 + maxi(0, priority + duplicates + bias)
+		return RANK_PRIORITY + maxi(0, priority + duplicates + bias)
 	if unit_type.can_resupply and wants.short_of_supply:
 		# One place below the list's last entry, so every listed unit the money
 		# reaches outranks the truck and it is bought once duplicates have pushed
@@ -203,11 +218,11 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 		# second: the planner cannot ferry, so a spare would follow it doing
 		# nothing. That is why this is a want and not a place on the list, where
 		# duplicate_priority_cost would eventually buy another.
-		return TIER_STRIDE * 2 + profile.build_priority.size() + maxi(0, bias)
+		return RANK_PRIORITY + maxi(0, profile.build_priority.size() + bias)
 	if bias < 0 and unit_type.max_range > 0:
 		# A doctrine may pull a combat unit the list omits onto its tail — never
 		# a transport, which stays without a rank to move.
-		return TIER_STRIDE * 2 + maxi(0, profile.build_priority.size() + duplicates + bias)
+		return RANK_PRIORITY + maxi(0, profile.build_priority.size() + duplicates + bias)
 	if unit_type.can_capture:
 		return TIER_STRIDE * 3
 	return RANK_NONE
@@ -216,11 +231,11 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 ## Unit id -> how far the commander's doctrine moves it on the build list,
 ## scaled by the profile's doctrine weight. Empty when the dial is off — the
 ## hook is then never called, which keeps a zero-weight profile byte-identical.
-func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
+func _doctrine_bias(context: AIPlanningContext) -> Dictionary[StringName, int]:
 	if profile.doctrine_weight <= 0.0:
 		return {}
 	var commander := context.state.commander_of(context.team)
-	var bias: Dictionary = {}
+	var bias: Dictionary[StringName, int] = {}
 	for unit_type in context.unit_types:
 		var advice := commander.build_bias(context.state, context.team, unit_type)
 		if advice != 0:
@@ -230,18 +245,29 @@ func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
 
 ## S3. Orders combat units by how well they answer the enemy's cost-weighted
 ## roster, blended with the static build-priority order.
-func _reactive_order(context: AIPlanningContext) -> Dictionary:
+##
+## Candidates are filtered to what `_build_rank` would already buy with
+## reactivity off — on `build_priority`, or pulled onto its tail by a negative
+## doctrine bias. Reactivity reorders that set; it may not widen it. Every
+## armed unit used to qualify, which let this tier's blanket `has()` check
+## (checked first in `_build_rank`) shadow the priority list, the doctrine
+## tail and the supply want for the whole roster whenever the dial was on —
+## an unlisted, unbiased recon reading as buyable on Difficult (COM-172).
+func _reactive_order(
+	context: AIPlanningContext, doctrine_bias: Dictionary[StringName, int]
+) -> Dictionary[StringName, int]:
 	if (
 		profile.build_reactivity <= 0.0
 		or context.enemy_roster.is_empty()
 		or context.state.damage_chart == null
 	):
 		return {}
+	var reactivity := clampf(profile.build_reactivity, 0.0, 1.0)
 	var candidates: Array[UnitType] = []
-	var effectiveness: Dictionary = {}
+	var effectiveness: Dictionary[StringName, float] = {}
 	var max_eff := 0.0
 	for unit_type in context.unit_types:
-		if unit_type.max_range <= 0:
+		if unit_type.max_range <= 0 or not _reactivity_eligible(unit_type, doctrine_bias):
 			continue
 		candidates.append(unit_type)
 		var value := _effectiveness(context.state, unit_type, context.enemy_roster)
@@ -250,23 +276,30 @@ func _reactive_order(context: AIPlanningContext) -> Dictionary:
 	if max_eff <= 0.0:
 		return {}
 	var priority := profile.build_priority
-	var scored: Array = []
+	var scored: Array[Array] = []
 	for i in candidates.size():
 		var cand := candidates[i]
 		var static_norm := 0.0
 		var rank := priority.find(cand.id)
 		if rank >= 0:
 			static_norm = float(priority.size() - rank) / float(priority.size())
-		var eff_norm := float(effectiveness[cand.id]) / max_eff
-		var score := (
-			(1.0 - profile.build_reactivity) * static_norm + profile.build_reactivity * eff_norm
-		)
+		var eff_norm := effectiveness[cand.id] / max_eff
+		var score := (1.0 - reactivity) * static_norm + reactivity * eff_norm
 		scored.append([score, i, cand.id])
 	scored.sort_custom(_by_score_then_scan_order)
-	var order: Dictionary = {}
+	var order: Dictionary[StringName, int] = {}
 	for i in scored.size():
 		order[scored[i][2]] = i
 	return order
+
+
+## Whether `unit_type` would already earn a rank from `_build_rank`'s
+## non-reactive branches: listed on `build_priority`, or pulled onto its tail
+## by a negative doctrine bias (the same test that branch itself makes).
+func _reactivity_eligible(unit_type: UnitType, doctrine_bias: Dictionary[StringName, int]) -> bool:
+	if profile.build_priority.has(unit_type.id):
+		return true
+	return doctrine_bias.get(unit_type.id, 0) < 0
 
 
 ## Best score first, ties broken by database order.

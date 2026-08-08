@@ -38,6 +38,13 @@ const SIDE_LABELS: Array[String] = ["A", "B", "C", "D"]
 ## The smallest table that is a match, which is also `GameState.MIN_SEATS` — the
 ## sim refuses a smaller one, and this is the menu never offering to build it.
 const MIN_FILLED := GameState.MIN_SEATS
+## The seat/side rows' segment-button height, against `UiKit.segment`'s default of
+## 18: two rows share a line here where a stand-alone group gets one to itself, and
+## the panel's height budget is real (`_seat_row`), so the strip is the one caller
+## that asks for a row a size denser. Named because it is the one size this file
+## does own — the colour and the widget shape both come from `UiKit` (`configure`
+## and `_seat_row`).
+const _SEAT_SEGMENT_HEIGHT := 16
 ## The one-tap tables, each of them a seating *and* a grouping — the two facts a
 ## row would otherwise take four taps to say between them. Offered only on a board
 ## that seats four, because they are the only rosters where more than one of
@@ -106,16 +113,13 @@ var _empty_buttons: Array[Button] = []
 ## the opposite in the one place the eye goes to check.
 var _side_segments: Array[Control] = []
 var _accent: Color = Color.WHITE
-var _style_segment: Callable
-var _micro_label: Callable
 
 
-## Wires the strip to the menu's own segment styling, so a seat button looks
-## exactly like a difficulty button and this file defines no colours of its own.
-func configure(accent: Color, style_segment: Callable, micro: Callable) -> void:
+## Sets the seat rows' accent, the one thing about them the strip does not read
+## off `UiKit` or `UiTheme` itself — a seat button's colour is the match's faction,
+## which only the caller (the menu) knows.
+func configure(accent: Color) -> void:
 	_accent = accent
-	_style_segment = style_segment
-	_micro_label = micro
 
 
 ## Deals the strip for a board that seats `count` armies, keeping each seat's
@@ -398,10 +402,11 @@ func _rebuild() -> void:
 
 ## One seat on one line: a label, who plays it, and which side it stands on.
 ##
-## Built here rather than through the panel's `_build_segment` because that one
-## stacks a caption above every control, and four of those do not fit the panel's
-## fixed height. Only the *styling* is borrowed, so a seat button still looks
-## exactly like a difficulty button.
+## Built off `UiKit.segment` with no caption (an empty `micro` hands back the
+## bordered run bare) because the captioned form stacks a label above every
+## control, and four of those do not fit the panel's fixed height — so a seat
+## button still looks exactly like a difficulty button without the caption it has
+## no room for.
 ##
 ## The Empty choice is built only on a board where some seat could ever close —
 ## which is every board seating more than the two a match needs. A duel board's row
@@ -411,28 +416,51 @@ func _seat_row(index: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var name_label: Label = _micro_label.call("P%d" % _seats[index])
+	var name_label := UiKit.micro_label("P%d" % _seats[index])
 	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name_label)
 	var offered := SEAT_LABELS.size() if _closable() else SEAT_LABELS.size() - 1
 	var choices := PackedStringArray()
 	for label: String in SEAT_LABELS.slice(0, offered):
 		choices.append(label)
-	var who := _segment(
-		choices, _who[index], func(choice: int) -> void: _set_seat(index, choice), _who_restyle
+	var who_buttons: Array[Button] = []
+	var who := UiKit.segment(
+		"",
+		choices,
+		_who[index],
+		_accent,
+		"",
+		"",
+		func(choice: int) -> void: _set_seat(index, choice),
+		who_buttons,
+		_who_restyle,
+		_SEAT_SEGMENT_HEIGHT
 	)
 	# A third choice on the same line is a third word to fit, and the seat's words
 	# are the long ones — "Human" clipped to "Huma" at an even split. The badges are
 	# single letters and can spare the room.
+	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	who.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	who.size_flags_stretch_ratio = 2.0 if _closable() else 1.0
 	row.add_child(who)
-	_empty_buttons.append(_segment_button(who, Seat.EMPTY) if _closable() else null)
+	_empty_buttons.append(who_buttons[Seat.EMPTY] if _closable() else null)
 	var badges := PackedStringArray()
 	for label: String in SIDE_LABELS.slice(0, maxi(2, _seats.size())):
 		badges.append(label)
-	var side := _segment(
-		badges, _side[index], func(choice: int) -> void: _set_side(index, choice), _side_restyle
+	var side := UiKit.segment(
+		"",
+		badges,
+		_side[index],
+		_accent,
+		"",
+		"",
+		func(choice: int) -> void: _set_side(index, choice),
+		[],
+		_side_restyle,
+		_SEAT_SEGMENT_HEIGHT
 	)
+	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(side)
 	_side_segments.append(side)
 	return row
@@ -444,59 +472,6 @@ func _closable() -> bool:
 	return _seats.size() > MIN_FILLED
 
 
-## The `choice`-th button inside a segment built by `_segment`, or null. Reached
-## through the tree rather than returned alongside it because only one caller wants
-## one, and threading a second return value through every segment for its sake
-## would put the exception in the shared path.
-func _segment_button(segment: Control, choice: int) -> Button:
-	var run := segment.get_child(0)
-	if run == null or choice >= run.get_child_count():
-		return null
-	return run.get_child(choice) as Button
-
-
-## A run of joined toggle buttons, styled by the panel so it matches every other
-## segmented control on the screen. `restyle_sink` collects the callable that
-## moves the highlight, so a change made anywhere else — a preset, the capture
-## pose — repaints this run rather than rebuilding the strip around it.
-func _segment(
-	labels: PackedStringArray,
-	selected: int,
-	on_select: Callable,
-	restyle_sink: Array[Callable] = []
-) -> Control:
-	var frame := PanelContainer.new()
-	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var run := HBoxContainer.new()
-	run.add_theme_constant_override("separation", 0)
-	frame.add_child(run)
-	var buttons: Array[Button] = []
-	for i in labels.size():
-		var seg := Button.new()
-		seg.text = labels[i]
-		seg.toggle_mode = true
-		seg.clip_text = true
-		seg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		seg.custom_minimum_size = Vector2(0, 16)
-		seg.add_theme_font_override("font", UiTheme.display())
-		seg.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
-		run.add_child(seg)
-		buttons.append(seg)
-	var restyle := func(index: int) -> void:
-		for i in buttons.size():
-			_style_segment.call(buttons[i], i == index, i > 0, _accent)
-	restyle.call(selected)
-	restyle_sink.append(restyle)
-	for i in labels.size():
-		buttons[i].pressed.connect(
-			func() -> void:
-				restyle.call(i)
-				on_select.call(i)
-		)
-	return frame
-
-
 func _refresh_presets() -> void:
 	for child in _presets.get_children():
 		_presets.remove_child(child)
@@ -504,13 +479,14 @@ func _refresh_presets() -> void:
 	# Only a four-seat board has more than one table worth a shortcut.
 	if _seats.size() < 4:
 		return
-	var caption: Label = _micro_label.call("TABLE")
-	_presets.add_child(caption)
+	_presets.add_child(UiKit.micro_label("TABLE"))
 	for preset: Dictionary in PRESETS:
 		var button := Button.new()
 		button.text = String(preset["label"])
-		button.add_theme_font_size_override("font_size", 9)
-		button.tooltip_text = String(preset["help"])
+		# The segmented control's own size: a preset row sits directly under the
+		# seat/side segments it sets in one tap, at the same density.
+		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_SEGMENT)
+		Tooltip.attach(button, String(preset["help"]), "", Tooltip.Side.BOTTOM)
 		button.pressed.connect(func() -> void: _apply_preset(preset))
 		_presets.add_child(button)
 

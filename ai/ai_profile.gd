@@ -175,8 +175,12 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 @export var focus_fire_bonus: float = 0.0
 ## How strongly the build choice re-ranks toward what the damage chart says beats
 ## the enemy's actual cost-weighted roster, blended over the static list (S3).
-## 0 keeps the static build_priority order exactly.
-@export var build_reactivity: float = 0.0
+## 0 keeps the static build_priority order exactly. Past 1.0 the blend in
+## `AIProductionPlanner._reactive_order` runs its static-list coefficient
+## negative and reads the list upside down, the same shape as condition_weight
+## above — ranged for the same reason and clamped at the read for the same
+## reason (COM-172).
+@export_range(0.0, 1.0) var build_reactivity: float = 0.0
 
 # --- Judgement capabilities ---------------------------------------------------
 #
@@ -404,7 +408,7 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## a missing or broken file from taking the AI out entirely — it plays with the
 ## defaults above, which are the same numbers.
 static func load_default() -> AIProfile:
-	var profile: AIProfile = load(DEFAULT_PATH)
+	var profile := load(DEFAULT_PATH) as AIProfile
 	if profile == null:
 		push_error("AIProfile: cannot load %s; using built-in defaults" % DEFAULT_PATH)
 		return AIProfile.new()

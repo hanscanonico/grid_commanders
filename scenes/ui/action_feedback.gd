@@ -15,7 +15,7 @@ var reason := ""
 
 var _label: Label
 var _dismiss_tween: Tween
-var _built_this_turn: Dictionary = {}  # Unit -> true
+var _built_this_turn: Dictionary[Unit, bool] = {}
 
 
 func _ready() -> void:
@@ -81,8 +81,6 @@ func clear_turn() -> void:
 
 
 func _panel_box() -> StyleBoxFlat:
-	var box := UiTheme.flat(UiTheme.SLATE_800)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
+	var box := UiTheme.bordered(UiTheme.SLATE_800, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	box.set_corner_radius_all(UiTheme.RADIUS)
-	return UiTheme.hard_shadow(box)
+	return box

@@ -24,7 +24,6 @@ signal cancelled
 ## seat more, and what `begin` falls back to if it is handed nothing.
 const DUEL_SEATS := 2
 
-const _TITLE_SIZE := 15
 const _MINI_H := 82
 ## The private slate/muted palette swaps for the shared UiTheme tokens it already
 ## sat a shade from, so the select page and the menu speak one grey (plan MN3).
@@ -229,7 +228,7 @@ func _build_topbar() -> HBoxContainer:
 	_title = Label.new()
 	_title.text = "SELECT COMMANDER"
 	_title.add_theme_font_override("font", UiTheme.display(true))
-	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
+	_title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_title)
@@ -351,7 +350,12 @@ func _grab_first_mini() -> void:
 func _rebuild_minis() -> void:
 	var row := _mini_buttons[0].get_parent() if not _mini_buttons.is_empty() else _find_mini_row()
 	for button in _mini_buttons:
-		button.free()  # immediate, never called from a mini's own callback
+		# Deferred: this runs from _input via _confirm, and a mini can be the
+		# viewport's focus owner when it does. remove_child leaves the tree
+		# synchronously (so the row's children below never see a corpse), but
+		# freeing itself is deferred so the focus owner outlives the handler.
+		row.remove_child(button)
+		button.queue_free()
 	_mini_buttons.clear()
 	_mini_marks.clear()
 	for commander: CommanderType in _members():
@@ -591,7 +595,11 @@ func _build_chips() -> void:
 
 
 ## Fills a chip in a side's theme, or greys it (theme null) when the side is not
-## yet in hand.
+## yet in hand. Deliberately not `UiKit.identity_chip`: that chip is a settled
+## fact (a dot on cream, read once in the menu footer), while a seat chip is
+## read at a glance across a walk still in progress, seat by seat, so the fill
+## itself is the doctrine and greying an unreached seat has nothing else to
+## show it with.
 func _paint_chip(
 	chip: PanelContainer, label: Label, text: String, theme: CommanderVisuals.FactionTheme
 ) -> void:
@@ -628,20 +636,21 @@ func _style_tab(tab: Button, active: bool) -> void:
 # --- style helpers -----------------------------------------------------------
 
 
+## Every caller sets text and colour itself right after, so the placeholders
+## below never reach a frame; only font and size are this builder's own.
+## Reset to top alignment because `hud_label` centres, and the summary box
+## (unlike a mini or a chip) is taller than its text.
 func _small_label(size: int) -> Label:
-	var label := Label.new()
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", size)
+	var label := UiTheme.hud_label("", size, UiTheme.INK, true)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	return label
 
 
 func _hard(border: Color, width: int) -> StyleBoxFlat:
-	var box := UiTheme.flat(_INACTIVE)
-	box.border_color = border
-	box.set_border_width_all(width)
+	# The signature hard offset shadow, from the one authority (plan MN3).
+	var box := UiTheme.bordered(_INACTIVE, border, width, true)
 	box.content_margin_left = 4
 	box.content_margin_right = 4
 	box.content_margin_top = 2
 	box.content_margin_bottom = 2
-	# The signature hard offset shadow, from the one authority (plan MN3).
-	return UiTheme.hard_shadow(box)
+	return box

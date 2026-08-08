@@ -11,7 +11,7 @@ const DEFAULT_ID := Difficulty.DEFAULT_ID
 ## before this list learns about it is still shown — just at the end.
 const ORDER: Array[StringName] = [&"easy", &"normal", &"hard", &"brutal"]
 
-var _by_id: Dictionary = {}
+var _by_id: Dictionary[StringName, Difficulty] = {}
 
 
 static func load_default() -> DifficultyDB:

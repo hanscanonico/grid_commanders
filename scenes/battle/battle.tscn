@@ -28,13 +28,10 @@ modulate = Color(0.45, 0.47, 0.56, 1)
 [node name="TerrainLayer" type="TileMapLayer" parent="."]
 
 [node name="MoveOverlay" type="TileMapLayer" parent="."]
-modulate = Color(0.35, 0.55, 1, 0.75)
 
 [node name="AttackOverlay" type="TileMapLayer" parent="."]
-modulate = Color(1, 0.35, 0.3, 0.8)
 
 [node name="ThreatOverlay" type="TileMapLayer" parent="."]
-modulate = Color(1, 0.35, 0.3, 0.38)
 
 [node name="PathArrow" type="Node2D" parent="."]
 script = ExtResource("13")
@@ -174,13 +171,13 @@ grow_vertical = 2
 mouse_filter = 1
 
 [node name="HandoffBackdrop" type="ColorRect" parent="UI/HandoffScreen"]
+unique_name_in_owner = true
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.03, 0.035, 0.06, 1)
 
 [node name="HandoffCenter" type="CenterContainer" parent="UI/HandoffScreen"]
 anchors_preset = 15
@@ -197,20 +194,18 @@ theme_override_constants/separation = 8
 [node name="HandoffLabel" type="Label" parent="UI/HandoffScreen/HandoffCenter/HandoffRows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 text = "First Army — press confirm when ready"
 
 [node name="HandoffHint" type="Label" parent="UI/HandoffScreen/HandoffCenter/HandoffRows"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
 text = "Pass the device over before continuing."
 
 [node name="HandoffButton" type="Button" parent="UI/HandoffScreen/HandoffCenter/HandoffRows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
 text = "Ready"
 
 [node name="CommanderInfoSheet" type="Control" parent="UI"]

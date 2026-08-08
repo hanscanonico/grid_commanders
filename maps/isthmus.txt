@@ -1,14 +1,16 @@
-# Two coasts pinched to a diagonal neck; the neck's city is the choke.
+# Two coasts pinched to a diagonal neck; the road through it is the short
+# crossing, guarded by the mountain and forest strung along it.
 # symmetric
-# Sea was a hard wall here until hulls could sail it, and the neck is now only
-# the *land* route. Each port opens onto its own pocket of water and the pockets
-# meet nowhere a short-ranged hull can swim, so the one thing that crosses the
-# isthmus without touching the road is a battleship's gun: the two pockets come
-# within five tiles of each other beside the neck, which is inside a battleship's
-# 2-6 arc and outside everything else's. The beaches at (10, 3) and (9, 8) are
-# where a lander puts armour ashore behind the far line — they are coastal *road*
-# cells, which cost every land class exactly what road did, so the crossing stays
-# the crossing and no hull can sail through them.
+# Sea rings the whole board — one closed body of water, and it is what both
+# ports open onto: team 1's at (2, 5) into the bay it cuts inland on the west,
+# team 2's at (17, 6) into the bay on the east. A hull can sail that ring from
+# one port to the other, but only the long way, all the way around — the
+# road through the neck is still the short route. The shoals at (10, 3) and
+# (9, 8) are where a lander puts armour ashore without the long sail — they
+# are coastal *road* cells, which cost every land class exactly what road
+# did, and each sits on the far side of the neck from the port that reaches
+# it, so a landing there is a shortcut behind the line, not a bridge across
+# it.
 # Mirrors on (x, y) -> (19 - x, 11 - y).
 # Symbols: . plains  F woods  M mountain  = road  ~ river  _ shoal
 #          C city  B base  Q HQ  P port  S sea

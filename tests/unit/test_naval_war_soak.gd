@@ -31,9 +31,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func test_the_ai_fights_a_naval_war_without_the_rules_refusing_it() -> void:

@@ -78,7 +78,7 @@ func bind(commander: CommanderType) -> void:
 
 func _build() -> void:
 	custom_minimum_size.x = maxf(custom_minimum_size.x, MIN_WIDTH)
-	add_theme_stylebox_override("panel", _hard_box(UiTheme.HARD_BORDER, 3))
+	add_theme_stylebox_override("panel", UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, 3))
 
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 0)
@@ -138,7 +138,9 @@ func _build() -> void:
 	_doctrine_label = _labelled_block(copy, "DOCTRINE")
 
 	_power_box = PanelContainer.new()
-	_power_box.add_theme_stylebox_override("panel", _hard_box(UiTheme.SLATE_700, 2))
+	_power_box.add_theme_stylebox_override(
+		"panel", UiTheme.bordered(UiTheme.PAPER, UiTheme.SLATE_700, 2)
+	)
 	copy.add_child(_power_box)
 	var power_rows := VBoxContainer.new()
 	power_rows.add_theme_constant_override("separation", 1)
@@ -226,12 +228,13 @@ func _labelled_block(parent: Node, micro: String) -> Label:
 
 
 ## One wrapping line of rules copy: Pixelify at the shell's body size, which is
-## also its floor — a step down loses the face's space advance.
+## also its floor — a step down loses the face's space advance. Wrapping is the
+## one thing `UiTheme.hud_label` doesn't offer a HUD readout, so the shared
+## build is reset to top alignment (hud_label centres, for a bar row) and given
+## the wrap its own copy needs.
 func _body(color: Color) -> Label:
-	var label := Label.new()
-	label.add_theme_font_override("font", UiTheme.display())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
-	label.add_theme_color_override("font_color", color)
+	var label := UiTheme.hud_label("", UiTheme.SIZE_BODY, color, true)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
@@ -239,11 +242,8 @@ func _body(color: Color) -> Label:
 ## A block's caption or the cost beside it — Silkscreen, the face the whole game
 ## sets its labels and numerals in.
 func _micro(text: String, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
-	label.add_theme_color_override("font_color", color)
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_MICRO, color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	return label
 
 
@@ -253,10 +253,3 @@ func _paper_panel(child: Control, h: int, v: int) -> PanelContainer:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(UiKit.pad(child, h, v))
 	return panel
-
-
-func _hard_box(border: Color, width: int) -> StyleBoxFlat:
-	var box := UiTheme.flat(UiTheme.PAPER)
-	box.border_color = border
-	box.set_border_width_all(width)
-	return box

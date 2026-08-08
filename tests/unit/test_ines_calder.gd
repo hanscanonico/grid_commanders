@@ -9,18 +9,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state() -> GameState:
-	var map := MapData.parse("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	state.set_commander(1, commander_db.by_id(&"ines_calder"))
-	return state
+	return Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0", {1: &"ines_calder"})
 
 
 func _fight(state: GameState) -> Engagement:

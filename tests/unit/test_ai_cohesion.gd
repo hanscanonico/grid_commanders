@@ -68,9 +68,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _profile(cohesion_tiles: float, defend_weight: float = 0.0) -> AIProfile:
@@ -87,6 +87,8 @@ func _march(map_text: String, profile: AIProfile, days: int, wounds: Dictionary 
 	var map := MapData.parse(map_text, terrain_db)
 	var state := GameState.create(map, unit_db, chart)
 	assert_not_null(state)
+	state.rng.seed = 1701  # COM-206: commands are applied for real below
+
 	for unit in state.units:
 		if unit.team == 1 and wounds.has(unit.type.symbol):
 			unit.hp = wounds[unit.type.symbol]

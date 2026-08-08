@@ -58,17 +58,10 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _blind_profile() -> AIProfile:
@@ -81,7 +74,7 @@ func _blind_profile() -> AIProfile:
 
 
 func test_the_neutral_commander_advises_nothing() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	var co := state.commander_of(1)
 	var tank := state.units[0]
 	assert_eq(co.stand_value(state, tank, Vector2i(1, 0)), 0)
@@ -111,7 +104,7 @@ func _advance_destination(state: GameState, profile: AIProfile) -> Vector2i:
 
 
 func test_stand_advice_moves_a_quiet_advance() -> void:
-	var advised := _state(QUIET_WOODS_BOARD)
+	var advised := Fixture.state(QUIET_WOODS_BOARD)
 	advised.set_commander(1, WoodsAdviser.new())
 	assert_eq(
 		_advance_destination(advised, AIProfile.new()),
@@ -121,9 +114,9 @@ func test_stand_advice_moves_a_quiet_advance() -> void:
 
 
 func test_a_zero_doctrine_weight_ignores_stand_advice() -> void:
-	var advised := _state(QUIET_WOODS_BOARD)
+	var advised := Fixture.state(QUIET_WOODS_BOARD)
 	advised.set_commander(1, WoodsAdviser.new())
-	var neutral := _state(QUIET_WOODS_BOARD)
+	var neutral := Fixture.state(QUIET_WOODS_BOARD)
 	assert_eq(
 		_advance_destination(advised, _blind_profile()),
 		_advance_destination(neutral, AIProfile.new()),
@@ -159,23 +152,27 @@ func _planned_build(state: GameState, profile: AIProfile) -> StringName:
 
 
 func test_build_bias_reranks_the_priority_tier() -> void:
-	var neutral := _state(FUNDED_BASE_BOARD)
+	var neutral := Fixture.state(FUNDED_BASE_BOARD)
 	assert_eq(_planned_build(neutral, AIProfile.new()), &"md_tank")
 
-	var advised := _state(FUNDED_BASE_BOARD)
+	var advised := Fixture.state(FUNDED_BASE_BOARD)
 	advised.set_commander(1, ArtilleryAdviser.new())
 	assert_eq(_planned_build(advised, AIProfile.new()), &"artillery")
 
-	var blinded := _state(FUNDED_BASE_BOARD)
+	var blinded := Fixture.state(FUNDED_BASE_BOARD)
 	blinded.set_commander(1, ArtilleryAdviser.new())
 	assert_eq(_planned_build(blinded, _blind_profile()), &"md_tank")
 
 
 ## The urgent tiers stay urgent: with an enemy bomber overhead the planner
 ## builds its air answer whatever the doctrine thinks of it, and no bias pulls
-## a transport into production.
+## a transport onto the list's tail (the mechanism build_bias uses for an
+## unlisted combat unit; a truck already on the board has no supply want of
+## its own for a bias to move instead, isolating this from COM-180's clamp).
 func test_urgent_tiers_and_transports_ignore_the_bias() -> void:
-	var bombed := _state("[terrain]\nB....\n.....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n2 b 4 1")
+	var bombed := Fixture.state(
+		"[terrain]\nB....\n.....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n2 b 4 1"
+	)
 	bombed.set_commander(1, SaboteurAdviser.new())
 	assert_eq(
 		_planned_build(bombed, AIProfile.new()),
@@ -183,12 +180,12 @@ func test_urgent_tiers_and_transports_ignore_the_bias() -> void:
 		"the air-answer tier outranks any doctrine bias"
 	)
 
-	var quiet := _state(FUNDED_BASE_BOARD)
+	var quiet := Fixture.state(FUNDED_BASE_BOARD + "\n1 p 4 0")
 	quiet.set_commander(1, SaboteurAdviser.new())
 	assert_eq(
 		_planned_build(quiet, AIProfile.new()),
 		&"md_tank",
-		"an unarmed transport has no rank for a bias to move"
+		"an unarmed transport has no rank on the list's tail for a bias to move"
 	)
 
 
@@ -196,7 +193,7 @@ func test_urgent_tiers_and_transports_ignore_the_bias() -> void:
 
 
 func _build_as(map_text: String, commander_id: StringName, funds: int) -> Command:
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	if commander_id != CommanderType.NEUTRAL_ID:
 		state.set_commander(1, commander_db.by_id(commander_id))
 	for unit in state.units:
@@ -249,7 +246,7 @@ C.............
 
 
 func test_retreat_advice_moves_the_repair_line() -> void:
-	var neutral := _state(WOUNDED_TANK_BOARD)
+	var neutral := Fixture.state(WOUNDED_TANK_BOARD)
 	neutral.units[0].hp = 55
 	assert_gt(
 		_advance_destination(neutral, AIProfile.new()).x,
@@ -257,7 +254,7 @@ func test_retreat_advice_moves_the_repair_line() -> void:
 		"at 55 HP the neutral tank still advances"
 	)
 
-	var advised := _state(WOUNDED_TANK_BOARD)
+	var advised := Fixture.state(WOUNDED_TANK_BOARD)
 	advised.units[0].hp = 55
 	advised.set_commander(1, EarlyRepairAdviser.new())
 	assert_lt(

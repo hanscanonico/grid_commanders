@@ -8,25 +8,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	state.set_commander(1, commander_db.by_id(&"mara_voss"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(1, state.commander_of(1).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {1: &"mara_voss"})
 
 
 # --- the doctrine ------------------------------------------------------------
@@ -75,7 +64,7 @@ func test_indirect_units_are_untouched() -> void:
 ## plays, since that is the turn it defends against.
 func test_the_power_covers_the_opponents_turn() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	EndTurnCommand.new().apply(state)
 	assert_true(state.power_active(1), "still up on blue's turn")
 	# Blue's Tank MG into her defended Infantry: 75 * (200 - 130)/100 * 0.9
@@ -102,7 +91,7 @@ func test_the_power_covers_the_opponents_turn() -> void:
 
 func test_the_power_stacks_onto_the_counter_bonus() -> void:
 	var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 t 1 0")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	var fight := Engagement.create(
 		state.units[0], Vector2i(0, 0), 10, state.units[1], Vector2i(1, 0), 10, true
 	)

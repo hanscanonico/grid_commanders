@@ -38,11 +38,15 @@ var path_arrow: PathArrow
 var capture_pips: CapturePips
 
 
-## Builds the tile sets. Call once, after the node fields are set.
+## Builds the tile sets and paints the layers from OverlayPalette. Call once,
+## after the node fields are set.
 func setup() -> void:
 	move_layer.tile_set = _build_overlay_tile_set()
 	attack_layer.tile_set = move_layer.tile_set
 	threat_layer.tile_set = _build_threat_tile_set()
+	move_layer.modulate = OverlayPalette.MOVE
+	attack_layer.modulate = OverlayPalette.ATTACK
+	threat_layer.modulate = OverlayPalette.THREAT
 
 
 ## Highlights reachable cells — a unit's movement range, or where a transport
@@ -69,7 +73,7 @@ func trace_path(path: Array[Vector2i]) -> void:
 
 ## Pins the capture chips, keyed by cell to the points each property still owes.
 ## The caller has already put them through the fog gate.
-func show_capture_pips(pips: Dictionary) -> void:
+func show_capture_pips(pips: Dictionary[Vector2i, int]) -> void:
 	capture_pips.set_pips(pips)
 
 
@@ -96,7 +100,8 @@ func _build_overlay_tile_set() -> TileSet:
 ## The period divides the tile (TILE % THREAT_STRIPE == 0), which is what makes
 ## the stripes run unbroken across cell boundaries — a shading that restarted at
 ## every edge would draw the very grid the lens is meant to read past. Colour and
-## depth stay the layer's modulate in battle.tscn, like the fog's.
+## depth stay OverlayPalette's modulate, set here in setup() — unlike the fog's,
+## which stays battle.tscn's own.
 func _build_threat_tile_set() -> TileSet:
 	var image := Image.create(TILE, TILE, false, Image.FORMAT_RGBA8)
 	for y in TILE:

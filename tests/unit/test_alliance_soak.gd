@@ -89,10 +89,10 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 ## Free-for-all, 2v2 each way round, and a 3v1 — the three groupings the plan
@@ -171,7 +171,11 @@ func test_the_ai_plays_pinwheel_at_every_seating_its_corners_offer() -> void:
 ## first command the rules turn down — which is the whole point — and on a run
 ## that never ends.
 func _soak(
-	label: String, sides: Dictionary, rng_seed: int, board: String = FIXTURE, seats: Array[int] = []
+	label: String,
+	sides: Dictionary[int, int],
+	rng_seed: int,
+	board: String = FIXTURE,
+	seats: Array[int] = []
 ) -> void:
 	var map := MapData.load_from_file(board, terrain_db)
 	assert_not_null(map, "%s should parse" % board)

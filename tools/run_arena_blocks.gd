@@ -19,7 +19,7 @@ const DEFAULT_BASE := "data/ai/default.tres"
 
 func _init() -> void:
 	var base := DEFAULT_BASE
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--base="):
 			base = arg.get_slice("=", 1).strip_edges()
 		else:

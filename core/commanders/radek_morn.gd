@@ -67,11 +67,15 @@ func power_blast_cells(state: GameState, _team: int, target: Vector2i) -> Array[
 ## is, however much health it has left — and cargo with the transport it is
 ## riding, which `remove_unit` already takes down.
 ##
-## Two rules ride on that, both of them D4's. The doomed are collected before any
+## Three rules ride on that, all of them D4's. The doomed are collected before any
 ## of them is removed, because `remove_unit` mutates the very list the footprint
 ## is being read against. And nothing is banked to either meter: charge is minted
 ## in three calls inside CombatResolver and nowhere else, so a death outside a
 ## fight pays nobody — the same rule a plane that starves its own tank relies on.
+## And the whole batch goes through `GameState.remove_units` rather than a loop
+## of `remove_unit`, so a blast that empties two armies at once is decided by
+## the board, never by which of them this scan happened to reach first
+## (COM-179).
 ##
 ## Properties are untouched. A headquarters, factory or city in the square keeps
 ## its owner; only what is standing on it dies.
@@ -81,16 +85,41 @@ func on_power_activated(state: GameState, team: int, target: Vector2i = Vector2i
 		var unit := state.unit_at(cell)
 		if unit != null:
 			doomed.append(unit)
-	for unit in doomed:
-		state.remove_unit(unit)
+	state.remove_units(doomed)
+
+
+## The board scan behind both `wants_power` and `power_target`, memoised for the
+## one call site that asks both back to back with nothing applied between them
+## (`AIController._plan_power`, plan D5's shape: one gate, one aim, one function).
+## `wants_power` is the only writer and never trusts a memo itself — it is asked
+## once a decision for as long as the meter sits full, and the board moves between
+## decisions, so it always rescans and re-stamps. `power_target` only ever reads
+## the memo back, and only when the key still matches what `wants_power` just
+## stamped; called any other way — every direct test in this suite calls it on its
+## own — it falls through to a fresh scan rather than risk a stale one. The key is
+## deliberately coarse (state identity, day, team, unit count): it is not asked to
+## detect every mutation, only to prove none happened since the write moments ago,
+## and a unit count drop after a scan is the one mutation firing itself can cause.
+var _blast_key: Array = []
+var _blast: Blast = null
+
+
+func _blast_cache_key(state: GameState, team: int) -> Array:
+	return [state.get_instance_id(), state.day, team, state.units.size()]
 
 
 func power_target(state: GameState, team: int) -> Vector2i:
+	var key := _blast_cache_key(state, team)
+	if _blast != null and _blast_key == key:
+		return _blast.cell
 	return _best_blast(state, team).cell
 
 
 func wants_power(state: GameState, team: int) -> bool:
-	return _best_blast(state, team).value >= hammer_want_value
+	var blast := _best_blast(state, team)
+	_blast_key = _blast_cache_key(state, team)
+	_blast = blast
+	return blast.value >= hammer_want_value
 
 
 ## The best square, walked in scan order over the board so a replan off one board
@@ -116,10 +145,12 @@ func _best_blast(state: GameState, team: int) -> Blast:
 
 ## What the blast at `target` is worth, in funds. Through `power_blast_cells` like
 ## everything else, so the square he scores is the square he clears.
-func _footprint_value(state: GameState, team: int, target: Vector2i, standing: Dictionary) -> int:
+func _footprint_value(
+	state: GameState, team: int, target: Vector2i, standing: Dictionary[Vector2i, int]
+) -> int:
 	var value := 0
 	for cell in power_blast_cells(state, team, target):
-		value += int(standing.get(cell, 0))
+		value += standing.get(cell, 0)
 	return value
 
 
@@ -127,13 +158,13 @@ func _footprint_value(state: GameState, team: int, target: Vector2i, standing: D
 ## hostile unit a gain, one of his own side a loss. Built once per scan rather
 ## than asked per square, since every square the board offers reads the same
 ## units.
-func _standing_value(state: GameState, team: int) -> Dictionary:
-	var table: Dictionary = {}
+func _standing_value(state: GameState, team: int) -> Dictionary[Vector2i, int]:
+	var table: Dictionary[Vector2i, int] = {}
 	for unit in state.units:
 		# A passenger is lost on its transport's cell — its own is stale from
 		# wherever it last boarded, and the transport is what the blast finds.
 		var cell := unit.cell if unit.carrier == null else unit.carrier.cell
-		table[cell] = int(table.get(cell, 0)) + _worth_to(state, team, unit)
+		table[cell] = table.get(cell, 0) + _worth_to(state, team, unit)
 	return table
 
 

@@ -1,4 +1,8 @@
 extends GutTest
+## This is the home for cass_orlov, cassian_rook, lyra_quill and orin_flux
+## coverage — grep for any of those names lands here rather than at a
+## test_cass_orlov.gd-style file that does not exist.
+##
 ## The Aurora Compact three — Lyra Quill, Orin Flux and Cassian Rook — plus
 ## Cass Orlov, who shares their remaining hook needs. Grouped because between
 ## them they cover the last three things wave 2 added: the luck-range hooks, a
@@ -7,13 +11,6 @@ extends GutTest
 
 func _state(map_text: String, commander: StringName) -> GameState:
 	return Fixture.state(map_text, {} if commander == &"" else {1: commander})
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(1, state.commander_of(1).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
 
 
 # --- Lyra Quill: the luck hooks ----------------------------------------------
@@ -48,7 +45,7 @@ func test_her_power_removes_the_roll() -> void:
 	for seed_value in 10:
 		var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0", &"lyra_quill")
 		state.rng.seed = seed_value
-		_fire_power(state)
+		assert_eq(Fixture.fire_power(state, 1), "")
 		var result := CombatResolver.resolve(state, state.units[0], state.units[1])
 		assert_eq(result.attack_damage, 74 + 9, "seed %d" % seed_value)
 
@@ -87,7 +84,7 @@ func test_signal_jam_strips_enemy_fuel_and_ammo() -> void:
 	var friendly := state.units[0]
 	var friendly_fuel := friendly.fuel
 	enemy.ammo = 5
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(enemy.fuel, enemy.type.max_fuel - 10, "10 fuel gone")
 	assert_eq(enemy.ammo, 4, "and one shell")
 	assert_eq(friendly.fuel, friendly_fuel, "his own army is untouched")
@@ -98,7 +95,7 @@ func test_signal_jam_shortens_enemy_vision() -> void:
 	state.fog_enabled = true
 	var far := Vector2i(1, 1)  # 4 + 0 = Manhattan 4 from the enemy recon at (5,1)
 	assert_true(Vision.visible_cells(state, 2).has(far), "recon sees 5")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_true(state.power_active(1))
 	var jammed := Vision.visible_cells(state, 2)
 	assert_true(jammed.has(Vector2i(2, 1)), "still sees 4")
@@ -109,7 +106,7 @@ func test_signal_jam_shortens_enemy_vision() -> void:
 ## opponent actually plays.
 func test_signal_jam_lasts_through_the_opponents_turn() -> void:
 	var state := _state("[terrain]\n===\n[units]\n1 r 0 0\n2 t 2 0", &"orin_flux")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	EndTurnCommand.new().apply(state)
 	assert_true(state.power_active(1), "still jamming while blue plays")
 	EndTurnCommand.new().apply(state)
@@ -140,7 +137,7 @@ func test_his_power_trades_damage_for_movement() -> void:
 	)
 	var recon := state.units[0]
 	var tank := state.units[1]
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(MovementResolver.move_budget(state, recon), recon.type.move_points + 3, "1 + 2")
 	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points + 2)
 	# Tank now at -30 total: 75 * 0.7 * 0.9 = 47.25 -> 47.
@@ -187,7 +184,7 @@ func test_her_power_widens_what_counts_as_damaged() -> void:
 	target.hp = 90  # 9 displayed: outside the passive, inside the power
 	var fight := Engagement.create(state.units[0], Vector2i(0, 0), 10, target, Vector2i(1, 0), 9)
 	assert_eq(state.commander_of(1).attack_bonus(state, fight), 0, "passive needs 5 HP or less")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(state.commander_of(1).attack_bonus(state, fight), 30)
 
 
@@ -205,7 +202,7 @@ func test_her_power_hurries_the_two_units_that_do_the_chasing() -> void:
 			unit.type.move_points,
 			"%s walks its own distance while the meter is banking" % unit.type.id
 		)
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(MovementResolver.move_budget(state, recon), recon.type.move_points + 1)
 	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points + 1)
 	assert_eq(

@@ -147,6 +147,22 @@ func test_commanders_play_command_for_command() -> void:
 		)
 
 
+## COM-177's own run: three armies allied against a fourth, at the tier that
+## weighs a threat map (the one dial `_note_change`'s allegiance question
+## gates). `BalanceMatchEngine.play()` plays exactly two sides (asymmetric-board
+## plan R4), so this is played by hand through `over_grouped_match`, the way
+## `test_alliance_soak.gd` plays a grouping — and it is a milestone that could
+## have changed which commands survive a resync, so it earns its own run rather
+## than riding on the boards above, which are all still 1v1.
+func test_an_allied_grouping_plays_command_for_command() -> void:
+	var map := MapData.load_from_file("res://maps/fixtures/quartet.txt", diff.terrain_db)
+	assert_not_null(map, "the quartet fixture must load")
+	var sides: Dictionary[int, int] = {1: 0, 2: 0, 3: 0, 4: 1}
+	var result := diff.over_grouped_match(map, sides, HARD_TIER, 7, 12)
+	assert_gt(result.commands, 10, "the fixture should play a real match")
+	assert_eq(result.divergence, "", "the cache must not change a command under an alliance")
+
+
 func _assert_agrees_over_a_match(
 	board: String, profile: AIProfile, hint: String, commanders: Dictionary = {}
 ) -> void:

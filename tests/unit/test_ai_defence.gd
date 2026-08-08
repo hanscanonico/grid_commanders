@@ -32,15 +32,13 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _state(map_text: String, hq_points_left: int = GameState.CAPTURE_POINTS) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
+	var state := Fixture.state(map_text)
 	if hq_points_left < GameState.CAPTURE_POINTS:
 		state.capture_progress[Vector2i(0, 0)] = hq_points_left
 	return state

@@ -151,10 +151,10 @@ func _init() -> void:
 		quit(2)
 		return
 	var summary := BalanceRunSummary.build(_config(), matches, recorder.rows())
-	_write(matches, recorder, summary)
+	var write_ok := _write(matches, recorder, summary)
 	_print_summary(summary, matches)
 	var totals: Dictionary = summary["totals"]
-	quit(0 if totals["invariants_clean"] else 1)
+	quit(0 if write_ok and totals["invariants_clean"] else 1)
 
 
 # --- setup -------------------------------------------------------------------
@@ -164,7 +164,7 @@ func _init() -> void:
 ## mistyped commander would otherwise measure a neutral matchup and the run would
 ## look fine.
 func _parse_args() -> bool:
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--map="):
 			_map_name = arg.get_slice("=", 1).strip_edges()
 		elif arg.begins_with("--red="):
@@ -178,17 +178,39 @@ func _parse_args() -> bool:
 		elif arg.begins_with("--commander="):
 			_sweep_commander = StringName(arg.get_slice("=", 1).strip_edges())
 		elif arg.begins_with("--seeds="):
-			_seed_count = maxi(1, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
+			if parsed < 0:
+				push_error("balance-sim: --seeds must be a positive integer (got '%s')" % value)
+				return false
+			_seed_count = parsed
 		elif arg.begins_with("--seed="):
 			# Watch mode's spelling, accepted here too: a suspicious row's flags
 			# copied verbatim off the CSV replay that seed headlessly. It pins the
 			# seed and nothing else, so both seatings are still played and watch
 			# mode — which seats --red as red — reproduces the seat-0 row of the two.
-			_pinned_seed = maxi(0, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 0)
+			if parsed < 0:
+				push_error("balance-sim: --seed must be a non-negative integer (got '%s')" % value)
+				return false
+			_pinned_seed = parsed
 		elif arg.begins_with("--seed-offset="):
-			_seed_offset = maxi(0, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 0)
+			if parsed < 0:
+				push_error(
+					"balance-sim: --seed-offset must be a non-negative integer (got '%s')" % value
+				)
+				return false
+			_seed_offset = parsed
 		elif arg.begins_with("--days="):
-			_days_cap = maxi(1, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
+			if parsed < 0:
+				push_error("balance-sim: --days must be a positive integer (got '%s')" % value)
+				return false
+			_days_cap = parsed
 		elif arg.begins_with("--out="):
 			_out_dir = arg.get_slice("=", 1).strip_edges()
 		elif arg == "--no-commands":
@@ -255,11 +277,33 @@ func _build_jobs() -> Array[Job]:
 				against.tier = _sweep_tier
 				jobs.append_array(_pair(String(co.id), _map_name, subject, against))
 		"maps":
+			var skipped := 0
 			for path in MapCatalog.paths():
 				var name := path.get_file().trim_suffix(".txt")
-				if _harness.map_of(name) == null:
+				var map := _harness.map_of(name)
+				if map == null:
+					continue
+				var seats := map.player_count()
+				if seats > 2:
+					print(
+						(
+							(
+								"balance-sim: skipping %s — seats %d armies and the engine plays two "
+								+ "(asymmetric-board R4)"
+							)
+							% [name, seats]
+						)
+					)
+					skipped += 1
 					continue
 				jobs.append_array(_pair(name, name, red, blue))
+			if skipped > 0:
+				print(
+					(
+						"balance-sim: skipped %d multi-seat board(s) of %d shipped"
+						% [skipped, MapCatalog.paths().size()]
+					)
+				)
 		"tiers":
 			for pairing: Array in TIER_LADDER:
 				var high := BalanceSideSpec.new()
@@ -497,21 +541,39 @@ func _open_replay(match_id: String) -> ReplayFile:
 	return ReplayFile.open_at(dir.path_join(name + ReplayFile.EXTENSION))
 
 
+## Returns whether every artifact landed. A write failure is reported here and
+## must reach the exit code the caller quits with — a half-written sweep must
+## never print its wrote-N-rows line and then exit 0.
 func _write(
 	matches: Array[Dictionary], recorder: BalanceMatchRecorder, summary: Dictionary
-) -> void:
+) -> bool:
 	var out := _artifact_dir
 	var dir := BalanceReportWriter.prepare_dir(out)
-	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), matches, MATCH_COLUMNS)
-	BalanceReportWriter.write_csv(
-		dir.path_join("timeline.csv"), recorder.rows(), BalanceMatchRecorder.TIMELINE_COLUMNS
+	if dir == "":
+		return false
+	var ok := true
+	ok = BalanceReportWriter.write_csv(dir.path_join("matches.csv"), matches, MATCH_COLUMNS) and ok
+	ok = (
+		BalanceReportWriter.write_csv(
+			dir.path_join("timeline.csv"), recorder.rows(), BalanceMatchRecorder.TIMELINE_COLUMNS
+		)
+		and ok
 	)
-	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
+	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
 	if _log_commands:
-		BalanceReportWriter.write_jsonl(dir.path_join("commands.jsonl"), recorder.command_log())
-	BalanceReportWriter.write_text(
-		dir.path_join("report.html"), BalanceReportHtml.render(summary, recorder.rows())
+		ok = (
+			BalanceReportWriter.write_jsonl(dir.path_join("commands.jsonl"), recorder.command_log())
+			and ok
+		)
+	ok = (
+		BalanceReportWriter.write_text(
+			dir.path_join("report.html"), BalanceReportHtml.render(summary, recorder.rows())
+		)
+		and ok
 	)
+	if not ok:
+		push_error("balance-sim: failed to write the report to %s" % out)
+		return false
 	print(
 		(
 			"balance-sim: wrote %d match rows, %d timeline rows%s to %s"
@@ -528,6 +590,7 @@ func _write(
 		)
 	)
 	print("balance-sim: open %s/report.html to read it" % out)
+	return true
 
 
 func _print_summary(summary: Dictionary, matches: Array[Dictionary]) -> void:

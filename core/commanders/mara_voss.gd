@@ -60,14 +60,16 @@ func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 
 
 ## True when any enemy this team can see could bring `cell` under fire next
-## turn — the same Manhattan over-estimate the power gates use, with hidden
-## units left to Vision's judgement like everywhere else in the toolkit.
+## turn. `stand_value` asks this once per candidate cell an advancing unit is
+## weighing, so the whole opponent set is graded in one pass over `state.units`:
+## asking army by army was rescanning the board once per rival for an answer
+## that only cares whether *any* of them reaches. Who counts as a shooter is
+## `_is_striker`'s, so this and the powers' own gate read one skip list.
 func _enemy_can_reach(state: GameState, team: int, cell: Vector2i) -> bool:
-	for enemy in state.units:
-		if state.allied(enemy.team, team) or enemy.carrier != null or enemy.type.max_range <= 0:
+	var opponents := _opponents_of(state, team)
+	for unit in state.units:
+		if not _is_striker(state, team, unit, opponents, false):
 			continue
-		if Vision.is_hidden_from(state, team, enemy):
-			continue
-		if Grid.manhattan(enemy.cell, cell) <= AttackRange.strike_reach(state, enemy):
+		if Grid.manhattan(unit.cell, cell) <= AttackRange.strike_reach(state, unit):
 			return true
 	return false

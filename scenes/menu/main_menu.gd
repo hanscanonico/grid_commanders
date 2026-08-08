@@ -1,3 +1,4 @@
+class_name MainMenu
 extends Control
 ## Main menu: pick a map and match options, choose commanders on the dedicated
 ## selection page, then hand off to the battle scene by staging one MatchRequest.
@@ -357,10 +358,7 @@ func _build_header() -> Control:
 	row.add_theme_constant_override("separation", 8)
 
 	var icon_frame := PanelContainer.new()
-	var icon_box := UiTheme.flat(UiTheme.SLATE_800)
-	icon_box.border_color = UiTheme.HARD_BORDER
-	icon_box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(icon_box)
+	var icon_box := UiTheme.bordered(UiTheme.SLATE_800, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	icon_frame.add_theme_stylebox_override("panel", icon_box)
 	var icon := TextureRect.new()
 	icon.texture = load(ICON_PATH) if ResourceLoader.exists(ICON_PATH) else null
@@ -538,9 +536,7 @@ func _build_seats_row() -> Control:
 	# No section label: each row already says which seat it is, and the panel's
 	# height budget is real (see `_chrome`).
 	_seat_strip = SeatStrip.new()
-	_seat_strip.configure(
-		UiTheme.menu_identity().theme(1).color, UiKit.style_segment, UiKit.micro_label
-	)
+	_seat_strip.configure(UiTheme.menu_identity().theme(1).color)
 	col.add_child(_seat_strip)
 	# No help line: the grouping buttons name themselves, each segment carries the
 	# sentence as a tip, and the panel's height is fixed — a line spent here is a
@@ -774,12 +770,7 @@ func _select_map(index: int) -> void:
 
 func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool) -> void:
 	var meridian := UiTheme.menu_identity().theme(1)
-	var box := UiTheme.flat(UiTheme.PAPER_RAISED if selected else Color(0, 0, 0, 0))
-	box.set_corner_radius_all(UiTheme.RADIUS)
-	box.content_margin_left = 4
-	box.content_margin_right = 4
-	box.content_margin_top = 4
-	box.content_margin_bottom = 4
+	var box := _map_cell_box(UiTheme.PAPER_RAISED if selected else Color(0, 0, 0, 0))
 	if selected:
 		box.border_color = meridian.color
 		box.set_border_width_all(UiTheme.PANEL_BORDER)
@@ -793,9 +784,14 @@ func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool
 
 
 func _cell_hover_box() -> StyleBoxFlat:
-	var box := UiTheme.flat(
-		Color(UiTheme.PAPER_RAISED.r, UiTheme.PAPER_RAISED.g, UiTheme.PAPER_RAISED.b, 0.35)
-	)
+	return _map_cell_box(UiTheme.HOVER_WASH)
+
+
+## The map picker cell's shared frame: a flat fill, a whisker of rounding and the
+## grid's even inset. `_style_map_cell` layers a border and shadow on top when the
+## cell is selected; the hover wash and the unselected rest state need neither.
+func _map_cell_box(fill: Color) -> StyleBoxFlat:
+	var box := UiTheme.flat(fill)
 	box.set_corner_radius_all(UiTheme.RADIUS)
 	box.content_margin_left = 4
 	box.content_margin_right = 4
@@ -813,6 +809,19 @@ func _map_cell_name(map: MapData, selected: bool) -> String:
 	return cell_name
 
 
+## The caption `_refresh_map_facts` shows for `map`, factored out so the budget
+## check can measure every board without touching `_selected_map`.
+func _map_caption_text(map: MapData) -> String:
+	var parts := [
+		map.width,
+		map.height,
+		_armies_label(map.player_count()),
+		map.property_cells().size(),
+		map.description,
+	]
+	return ("%d×%d · %s · %d properties · %s" % parts).to_upper()
+
+
 ## Header and persistent caption, read off the board itself so no hand-kept table
 ## can drift from it. Tooltips repeat the facts but are never required to choose.
 func _refresh_map_facts() -> void:
@@ -824,19 +833,7 @@ func _refresh_map_facts() -> void:
 	_map_header.text = (
 		"%s · %d×%d" % [MapCatalog.display_name(map.source_path), map.width, map.height]
 	)
-	_map_caption.text = (
-		(
-			"%d×%d · %s · %d properties · %s"
-			% [
-				map.width,
-				map.height,
-				_armies_label(map.player_count()),
-				map.property_cells().size(),
-				map.description,
-			]
-		)
-		. to_upper()
-	)
+	_map_caption.text = _map_caption_text(map)
 	# How many seats there are is the board's answer (plan D1), so the strip is
 	# re-dealt from the selection rather than from anything the player set.
 	if _seat_strip != null:
@@ -1005,7 +1002,7 @@ func _refuse_continue(caption: String, tip: String, detail: String) -> void:
 ## boots the battle scene onto the fresh match the request also states, on
 ## whatever board the picker is showing, with nothing said (COM-121).
 func _continue() -> void:
-	var chart: DamageChart = load(BattleSetup.DAMAGE_CHART_PATH)
+	var chart: DamageChart = load(DamageChart.DEFAULT_PATH)
 	var loaded := SaveGame.load_game(
 		_terrain_db, UnitDB.load_default(), chart, SaveGame.SAVE_PATH, CommanderDB.load_default()
 	)
@@ -1067,8 +1064,9 @@ func _chrome() -> Dictionary[String, Control]:
 ##
 ## Claimed only while the strip is on screen: a `--co-select` capture photographs
 ## the selection page over a hidden menu, and a control the picture does not show
-## is not one this frame promises anything about.
-func _seats_laid_out() -> bool:
+## is not one this frame promises anything about. Read back by
+## MenuCaptureDriver's capture gate; a capture-driver seam.
+func seats_laid_out() -> bool:
 	if not _seat_strip.is_visible_in_tree():
 		return true
 	var error := _seat_strip.layout_error()
@@ -1080,8 +1078,9 @@ func _seats_laid_out() -> bool:
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
 ## tutorial board leads, that a hot-seat setup has no operable AI difficulty, or
-## that the caption's budget holds for a board this frame does not show.
-func _setup_context_ready() -> bool:
+## that the caption's budget holds for a board this frame does not show. Read
+## back by MenuCaptureDriver's capture gate; a capture-driver seam.
+func setup_context_ready() -> bool:
 	var passed := true
 	var map := _map_at(_selected_map)
 	if map == null or not MapCatalog.teaches(map.source_path):
@@ -1127,13 +1126,13 @@ func _difficulty_follows_mode() -> bool:
 
 ## No board may cost the panel a line the reserved caption does not have — the
 ## COM-5 class again, where the layout budget quietly depended on the selection.
-## Measured on the live label at its settled width, so it is the real wrap.
+## Measured on the live label's text alone; `_selected_map` and the seat strip
+## it would otherwise re-deal per board (COM-48's capture workaround) stay put.
 func _caption_budget_holds() -> bool:
 	var passed := true
-	var chosen := _selected_map
+	var words := _map_caption.text
 	for i in _maps.size():
-		_selected_map = i
-		_refresh_map_facts()
+		_map_caption.text = _map_caption_text(_maps[i])
 		if _map_caption.get_line_count() > MAP_CAPTION_LINES:
 			push_error(
 				(
@@ -1142,6 +1141,5 @@ func _caption_budget_holds() -> bool:
 				)
 			)
 			passed = false
-	_selected_map = chosen
-	_refresh_map_facts()
+	_map_caption.text = words
 	return passed

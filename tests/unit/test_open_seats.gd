@@ -57,9 +57,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _state(map_text: String, seats: Array[int] = []) -> GameState:
@@ -77,17 +77,10 @@ func _quartet(seats: Array[int] = []) -> GameState:
 	return state
 
 
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
-
-
 ## One capture that finishes this turn, wherever the unit already stands.
 func _capture(state: GameState, unit: Unit, cell: Vector2i) -> void:
 	state.capture_progress[cell] = 1
-	CaptureCommand.new(unit, _path([cell])).apply(state)
+	CaptureCommand.new(unit, Fixture.path([cell])).apply(state)
 
 
 # --- the seating -------------------------------------------------------------
@@ -191,8 +184,9 @@ func test_a_seating_that_leaves_fewer_than_two_armies_is_refused() -> void:
 
 
 ## A seating nobody could have meant, refused rather than absorbed — and reported as
-## the repeat it is, not as the short roster `_filled_seats` would have made of it.
-## The save format has always held a roster to this; the sim now answers the same.
+## the repeat it is, not as the short roster `Seating._filled_seats` would have made
+## of it. The save format has always held a roster to this; the sim now answers the
+## same.
 func test_a_seating_that_names_the_same_seat_twice_is_refused() -> void:
 	var map := MapData.load_from_file(QUARTET, terrain_db)
 	assert_null(

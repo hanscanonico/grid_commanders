@@ -37,16 +37,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## Normal's shipped numbers with both logistics dials off, so a test turns on
@@ -108,12 +101,12 @@ func _describe(command: Command) -> String:
 ## The acceptance case: on a board whose only value-positive move is a merge, the
 ## planner merges. Blind it drifts at the enemy instead, two cripples abreast.
 func test_a_wounded_pair_merges_when_nothing_better_is_on_the_ballot() -> void:
-	var blind := _plan(_hurt(_state(WOUNDED_PAIR), 40), _profile())
+	var blind := _plan(_hurt(Fixture.state(WOUNDED_PAIR), 40), _profile())
 	assert_true(blind is MoveCommand, "blind, the pair has nothing to do but advance")
 
 	var profile := _profile()
 	profile.join_weight = LIVE
-	var state := _hurt(_state(WOUNDED_PAIR), 40)
+	var state := _hurt(Fixture.state(WOUNDED_PAIR), 40)
 	var command := _plan(state, profile)
 	assert_true(command is JoinCommand, "expected a join, got %s" % _describe(command))
 	assert_eq(command.validate(state), "", "the planned join must be legal")
@@ -127,7 +120,7 @@ func test_a_wounded_pair_merges_when_nothing_better_is_on_the_ballot() -> void:
 ## The inertness pin: at 0 nothing in the capability runs, so the same board is
 ## played out exactly as it was before the planner had ever heard of joining.
 func test_join_at_zero_never_merges_over_a_whole_turn() -> void:
-	var turn := _plan_a_turn(_hurt(_state(WOUNDED_PAIR), 40), _profile())
+	var turn := _plan_a_turn(_hurt(Fixture.state(WOUNDED_PAIR), 40), _profile())
 	for line in turn:
 		assert_false(line.begins_with("join"), "the dial is off; nothing may merge (%s)" % line)
 
@@ -139,7 +132,7 @@ func test_join_at_zero_never_merges_over_a_whole_turn() -> void:
 func test_a_healthy_twin_is_never_spent_on_a_join() -> void:
 	var profile := _profile()
 	profile.join_weight = LIVE
-	var state := _state(WOUNDED_PAIR)
+	var state := Fixture.state(WOUNDED_PAIR)
 	state.units_of(1)[0].hp = 40  # the walker is a cripple; its twin is fresh
 	var command := _plan(state, profile)
 	assert_false(command is JoinCommand, "a full-strength unit is not spare parts")
@@ -152,10 +145,10 @@ func test_a_merge_that_would_spill_hp_is_refused() -> void:
 	var profile := _profile()
 	profile.join_weight = LIVE
 	profile.retreat_hp = 85  # both twins count as wounded, so only the spill decides
-	var command := _plan(_hurt(_state(WOUNDED_PAIR), 80), profile)
+	var command := _plan(_hurt(Fixture.state(WOUNDED_PAIR), 80), profile)
 	assert_false(command is JoinCommand, "60 of the 80 points carried would evaporate")
 
-	var worthwhile := _plan(_hurt(_state(WOUNDED_PAIR), 50), profile)
+	var worthwhile := _plan(_hurt(Fixture.state(WOUNDED_PAIR), 50), profile)
 	assert_true(worthwhile is JoinCommand, "at 50 each the whole load lands and the merge is on")
 
 
@@ -165,12 +158,12 @@ func test_a_merge_that_would_spill_hp_is_refused() -> void:
 ## The acceptance case: an APC beside a tank with an empty rack tops it up
 ## instead of trailing the army.
 func test_an_apc_tops_up_a_dry_tank_instead_of_drifting() -> void:
-	var blind := _plan(_dry(_state(DRY_TANK)), _profile())
+	var blind := _plan(_dry(Fixture.state(DRY_TANK)), _profile())
 	assert_true(blind is MoveCommand, "blind, the APC has nothing on its ballot but the advance")
 
 	var profile := _profile()
 	profile.supply_weight = LIVE
-	var state := _dry(_state(DRY_TANK))
+	var state := _dry(Fixture.state(DRY_TANK))
 	var command := _plan(state, profile)
 	assert_true(command is SupplyCommand, "expected a supply, got %s" % _describe(command))
 	assert_eq(command.validate(state), "", "the planned supply must be legal")
@@ -183,7 +176,7 @@ func test_an_apc_tops_up_a_dry_tank_instead_of_drifting() -> void:
 
 ## The inertness pin, the same shape as the join one above.
 func test_supply_at_zero_never_refills_over_a_whole_turn() -> void:
-	var turn := _plan_a_turn(_dry(_state(DRY_TANK)), _profile())
+	var turn := _plan_a_turn(_dry(Fixture.state(DRY_TANK)), _profile())
 	for line in turn:
 		assert_false(line.begins_with("supply"), "the dial is off; nothing may refill (%s)" % line)
 
@@ -195,7 +188,7 @@ func test_supply_at_zero_never_refills_over_a_whole_turn() -> void:
 func test_a_part_spent_land_tank_is_not_worth_supplying() -> void:
 	var profile := _profile()
 	profile.supply_weight = LIVE
-	var state := _state(DRY_TANK)
+	var state := Fixture.state(DRY_TANK)
 	state.units_of(1)[1].fuel = 4  # ammo untouched: fuel alone is on the ballot
 	var command := _plan(state, profile)
 	assert_false(command is SupplyCommand, "a land unit low on fuel is parked, not stranded")
@@ -216,7 +209,7 @@ func _buys_with_five_tanks(map_text: String, supply_weight: float) -> StringName
 	var profile := _profile()
 	profile.supply_weight = supply_weight
 	profile.build_priority = [&"tank"] as Array[StringName]
-	var state := _state(map_text)
+	var state := Fixture.state(map_text)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 7000  # a tank, an APC or a mech; nothing costlier

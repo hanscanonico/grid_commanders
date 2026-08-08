@@ -15,7 +15,7 @@ var db: TerrainDB
 
 
 func before_each() -> void:
-	db = TerrainDB.load_default()
+	db = Fixture.terrain_db()
 
 
 func test_dimensions() -> void:

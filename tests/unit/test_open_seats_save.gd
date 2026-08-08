@@ -21,9 +21,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func _quartet(seats: Array[int] = []) -> GameState:
@@ -92,7 +92,7 @@ func test_a_home_hq_that_is_not_an_hq_is_refused() -> void:
 	var map := MapData.load_from_file(QUARTET, terrain_db)
 	var data := SaveCodec.encode(_quartet(), [] as Array[int])
 	data["home_hq"][0] = {"team": 1, "x": 0, "y": 0}
-	assert_eq(SaveCodec.board_error(data, map), "team 1's home HQ at (0, 0) is not an HQ")
+	assert_eq(SaveCodec.board_error(data, map, unit_db), "team 1's home HQ at (0, 0) is not an HQ")
 
 
 ## The same harm reached by deleting instead of editing: no entry at all is an army
@@ -104,7 +104,7 @@ func test_a_home_hq_the_board_deals_but_the_save_omits_is_refused() -> void:
 	(data["home_hq"] as Array).remove_at(0)
 	assert_eq(SaveCodec.validate(data), "", "the list is still well formed, which is the point")
 	assert_eq(
-		SaveCodec.board_error(data, map),
+		SaveCodec.board_error(data, map, unit_db),
 		"the save gives team 1 no home HQ, but its board starts it on one"
 	)
 
@@ -118,7 +118,7 @@ func test_a_home_hq_pinned_to_another_armys_hq_is_refused() -> void:
 	data["home_hq"][0] = {"team": 1, "x": 14, "y": 7}
 	assert_eq(SaveCodec.validate(data), "", "one entry per army, each an army that plays")
 	assert_eq(
-		SaveCodec.board_error(data, map),
+		SaveCodec.board_error(data, map, unit_db),
 		"the save homes team 1 at (14, 7), but its board starts it at (1, 1)"
 	)
 
@@ -133,11 +133,11 @@ func test_an_army_the_board_never_homed_is_owed_no_entry() -> void:
 	assert_eq(state.home_hq, {}, "a board with no HQ on it homes nobody")
 	var data := SaveCodec.encode(state, [] as Array[int])
 	assert_eq(SaveCodec.validate(data), "")
-	assert_eq(SaveCodec.board_error(data, map), "")
+	assert_eq(SaveCodec.board_error(data, map, unit_db), "")
 
 
 func test_a_home_hq_off_the_board_is_refused() -> void:
 	var map := MapData.load_from_file(QUARTET, terrain_db)
 	var data := SaveCodec.encode(_quartet(), [] as Array[int])
 	data["home_hq"][0] = {"team": 1, "x": 99, "y": 99}
-	assert_eq(SaveCodec.board_error(data, map), "home HQ at (99, 99) is off a 16x9 board")
+	assert_eq(SaveCodec.board_error(data, map, unit_db), "home HQ at (99, 99) is off a 16x9 board")

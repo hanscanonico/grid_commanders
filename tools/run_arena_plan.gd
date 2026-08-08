@@ -16,7 +16,7 @@ extends SceneTree
 
 func _init() -> void:
 	var pool := ArenaPools.TRAINING
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--pool="):
 			pool = arg.get_slice("=", 1).strip_edges()
 		else:

@@ -21,6 +21,15 @@ extends RefCounted
 ## resources; nothing in the suite does, and a test that wants a doctored unit
 ## type builds its own rather than editing the shipped one.
 
+## COM-206: `CombatResolver._luck` always draws from `state.rng`, and
+## `GameState.rng`'s own doc says seed it explicitly for a deterministic test —
+## unseeded, a fixture-built state drew combat luck from the engine's own
+## entropy and made a test's outcome depend on when it ran. Every board this
+## builds seeds the same way, so a test that wants a *different* seed sets
+## `state.rng.seed` itself after calling; a later assignment fully re-seeds
+## `RandomNumberGenerator`'s stream rather than mixing into it.
+const DEFAULT_SEED := 1701
+
 static var _terrain_db: TerrainDB
 static var _unit_db: UnitDB
 static var _commander_db: CommanderDB
@@ -37,6 +46,7 @@ static func state(map_text: String, commanders: Dictionary = {}) -> GameState:
 	if game == null:
 		push_error("Fixture: the board does not build a GameState:\n%s" % map_text)
 		return null
+	game.rng.seed = DEFAULT_SEED
 	for team: int in commanders:
 		game.set_commander(team, commander_db().by_id(commanders[team]))
 	return game
@@ -49,6 +59,30 @@ static func path(cells: Array) -> Array[Vector2i]:
 	for cell: Vector2i in cells:
 		typed.append(cell)
 	return typed
+
+
+## `["--map=dustbowl", "--seed=3"]` typed as `CmdArgs` and `MatchRequest` take
+## the command line: a `PackedStringArray`, never the bare Array a test writes.
+static func args(list: Array) -> PackedStringArray:
+	var typed := PackedStringArray()
+	for item: String in list:
+		typed.append(item)
+	return typed
+
+
+## Banks `team`'s Command Power cost and fires it — `team = 0` (no team plays
+## at 0) means "whichever team is on turn", the two doctrines that fire mid
+## sequence rather than for the seated side. Returns `PowerCommand.validate`'s
+## error so the caller keeps its own assertion; `Fixture` asserts nothing; it
+## has no `GutTest` to assert with.
+static func fire_power(state: GameState, team: int = 0) -> String:
+	var acting := team if team != 0 else state.current_team
+	state.add_charge(acting, state.commander_of(acting).power_cost)
+	var command := PowerCommand.new()
+	var error := command.validate(state)
+	if error == "":
+		command.apply(state)
+	return error
 
 
 static func terrain_db() -> TerrainDB:

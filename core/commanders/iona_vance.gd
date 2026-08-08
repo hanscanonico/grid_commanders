@@ -68,7 +68,7 @@ func _swing_hp(state: GameState, team: int) -> int:
 
 
 func _heal_hp(unit: Unit) -> int:
-	return mini(scales_heal_hp, 100 - unit.hp)
+	return mini(scales_heal_hp, Unit.MAX_HP - unit.hp)
 
 
 ## A floor rather than a level: a unit standing on its last pip keeps it, and one

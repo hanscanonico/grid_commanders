@@ -13,7 +13,7 @@ var tiers: DifficultyDB
 
 
 func before_each() -> void:
-	commanders = CommanderDB.load_default()
+	commanders = Fixture.commander_db()
 	tiers = DifficultyDB.load_default()
 
 

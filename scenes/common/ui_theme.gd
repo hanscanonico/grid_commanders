@@ -66,6 +66,11 @@ const PAPER := CommanderVisuals.PAPER
 const INK := CommanderVisuals.PAPER_INK  # body text / muted borders on cream
 const HARD_BORDER := CommanderVisuals.HARD_BORDER  # the darkest outline
 
+## A thin ink rule between two rows (handoff --border-soft): INK faded to 45%.
+const BORDER_SOFT := Color(INK, 0.45)
+## The wash a map cell takes on hover, unselected: PAPER_RAISED faded to 35%.
+const HOVER_WASH := Color(PAPER_RAISED, 0.35)
+
 # --- canvas-pixel metrics (plan section 2) -------------------------------------
 const CONTENT_W := 370  # handoff 740 content column
 const ACTION_W := 122  # handoff 244 action stack
@@ -100,6 +105,14 @@ const PIP_GAP := 1
 ## always inset by its own gap, which is 7 in both (COM-98).
 const HUD_PAD := 7
 const HUD_GAP := 7
+## The separations *inside* a bar's groups — a commander block's rows, a stat
+## line's icons — as opposed to HUD_GAP, which is between the groups. Four
+## sizes because the bottom bar's blocks disagreed on which of them to use
+## with nothing saying which was which (COM-98's shape, found again in COM-192).
+const HUD_GAP_HAIR := 2
+const HUD_GAP_TIGHT := 3
+const HUD_GAP_SNUG := 4
+const HUD_GAP_WIDE := 5
 ## The faction colour square on the top bar (handoff 14px).
 const HUD_CHIP := 7
 ## A group divider's height, per bar: each keeps the inset it wants from its own
@@ -121,6 +134,8 @@ const HUD_CO_MIN_W := 105
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
+## A full-screen page's title (CommanderSelectPanel, ReplayPickerPanel).
+const SIZE_PAGE_TITLE := 15
 const SIZE_BUTTON := 10
 ## The one announcement size: the beat that stops the board (the day banner) and
 ## the lockup that ends it. Between the wordmark and a panel title, because both
@@ -241,6 +256,19 @@ static func flat(color: Color) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = color
 	box.anti_aliasing = false
+	return box
+
+
+## The recipe every bordered box on the shell reads: a flat fill, an outline of
+## `width`, and — for the chrome that wants it — the signature hard shadow.
+static func bordered(
+	fill: Color, border: Color, width: int = BORDER, hard_shadow := false
+) -> StyleBoxFlat:
+	var box := flat(fill)
+	box.border_color = border
+	box.set_border_width_all(width)
+	if hard_shadow:
+		UiTheme.hard_shadow(box)
 	return box
 
 

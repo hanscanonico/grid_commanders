@@ -8,6 +8,9 @@ extends CommanderType
 ## No combat modifier at all — everything she does is positional.
 
 @export var discount_classes: Array[StringName] = [TerrainType.FOOT, TerrainType.BOOT]
+## Deliberately id-keyed: this is a flavour list, "rough going", and no terrain
+## flag states that — inventing one for a single doctrine would be a flag with
+## one reader. Unlike Sable Wren's cover, this is not the concealment rule.
 @export var discount_terrain: Array[StringName] = [&"woods", &"mountain"]
 ## Movement points taken off a discounted step. MovementResolver floors the
 ## result at 1, so this can never make a step free.

@@ -1,4 +1,16 @@
 # Four armies at the compass points, two cities apiece and a wooded centre.
+# Seats sit at the compass points as dealt: 1 north, 2 south, 3 west, 4 east.
+# The board is laid out under a half turn, (x, y) -> (15 - x, 11 - y), which
+# pairs north with south and west with east; a compass has no 90-degree
+# symmetry (width and height differ), so that half turn is the whole of it.
+# No `# symmetric` tag: that lint is a 180-degree *duel* instrument and this
+# board seats four.
+# Every army's nearest two cities sit at exactly 4 and 5 tiles, a ring closed
+# under that half turn — no lint holds the property, so keep it if you edit
+# the board.
+# Land only: the computer cannot plan a ferry, so every army has to be able
+# to walk to every other.
+# Symbols: . plains  F woods  C city  B base  Q HQ
 [terrain]
 ................
 .......QB.......

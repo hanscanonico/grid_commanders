@@ -58,7 +58,7 @@ static func help_label(text: String) -> Label:
 ## A thin ink divider between a panel's rows (handoff --border-soft).
 static func rule() -> Control:
 	var line := ColorRect.new()
-	line.color = Color(UiTheme.INK.r, UiTheme.INK.g, UiTheme.INK.b, 0.45)
+	line.color = UiTheme.BORDER_SOFT
 	line.custom_minimum_size = Vector2(0, UiTheme.BORDER)
 	return line
 
@@ -88,6 +88,16 @@ static func action_button(
 ## segments: reaching for "Quick" is not asking what Speed means. The always-visible
 ## help line under a group is the *screen's*, added by the caller — it is what a
 ## capture gate measures, so the screen keeps hold of it.
+##
+## `micro` is optional: an empty caption builds no label, no tip and no wrapping
+## column, and hands back the bordered run itself — the seat strip's rows are two
+## of these to a line and have no room for a caption over either (SeatStrip's
+## `_seat_row`). `button_sink` and `restyle_sink` collect the buttons and the
+## repaint closure a caller needs to reach in from outside a press: greying one
+## button (`_difficulty_buttons`) or moving the highlight from a sibling control
+## (a seat strip preset) rather than the segment's own. `height` is the segment
+## buttons' minimum height; the seat strip's rows are denser than a stand-alone
+## group and pass 16 against this default of 18.
 static func segment(
 	micro: String,
 	labels: PackedStringArray,
@@ -96,19 +106,13 @@ static func segment(
 	tip: String,
 	tip_detail: String,
 	on_select: Callable,
-	button_sink: Array[Button] = []
+	button_sink: Array[Button] = [],
+	restyle_sink: Array[Callable] = [],
+	height: int = 18
 ) -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	var group_tip := _tip_label(col, micro, tip, tip_detail)
-
 	var frame := PanelContainer.new()
-	var frame_box := UiTheme.flat(UiTheme.PAPER)
-	frame_box.border_color = UiTheme.HARD_BORDER
-	frame_box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(frame_box)
+	var frame_box := UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	frame.add_theme_stylebox_override("panel", frame_box)
-	col.add_child(frame)
 
 	var seg_row := HBoxContainer.new()
 	seg_row.add_theme_constant_override("separation", 0)
@@ -121,10 +125,9 @@ static func segment(
 		seg.toggle_mode = true
 		seg.clip_text = true
 		seg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		seg.custom_minimum_size = Vector2(0, 18)
+		seg.custom_minimum_size = Vector2(0, height)
 		seg.add_theme_font_override("font", UiTheme.display())
 		seg.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
-		group_tip.follow_focus(seg)  # focus lands here, never on the micro-label
 		seg_row.add_child(seg)
 		buttons.append(seg)
 		button_sink.append(seg)
@@ -133,12 +136,23 @@ static func segment(
 		for i in buttons.size():
 			style_segment(buttons[i], i == index, i > 0, accent)
 	restyle.call(selected)
+	restyle_sink.append(restyle)
 	for i in labels.size():
 		buttons[i].pressed.connect(
 			func() -> void:
 				restyle.call(i)
 				on_select.call(i)
 		)
+
+	if micro.is_empty():
+		return frame
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	var group_tip := _tip_label(col, micro, tip, tip_detail)
+	col.add_child(frame)
+	for seg in buttons:
+		group_tip.follow_focus(seg)  # focus lands here, never on the micro-label
 	return col
 
 
@@ -256,14 +270,11 @@ static func toggle(
 static func identity_chip(identity: SideIdentity, team: int, role: String) -> Control:
 	var theme := identity.theme(team)
 	var chip := PanelContainer.new()
-	var box := UiTheme.flat(UiTheme.PAPER)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
+	var box := UiTheme.bordered(UiTheme.PAPER, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	box.content_margin_left = 4
 	box.content_margin_right = 4
 	box.content_margin_top = 1
 	box.content_margin_bottom = 1
-	UiTheme.hard_shadow(box)
 	chip.add_theme_stylebox_override("panel", box)
 
 	var row := HBoxContainer.new()
@@ -271,10 +282,7 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	var dot := Panel.new()
 	dot.custom_minimum_size = Vector2(6, 6)
 	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var dot_box := UiTheme.flat(theme.color)
-	dot_box.border_color = UiTheme.HARD_BORDER
-	dot_box.set_border_width_all(1)
-	dot.add_theme_stylebox_override("panel", dot_box)
+	dot.add_theme_stylebox_override("panel", UiTheme.bordered(theme.color, UiTheme.HARD_BORDER))
 	row.add_child(dot)
 
 	var label := Label.new()
@@ -303,9 +311,7 @@ static func _tip_label(into: Container, text: String, tip: String, tip_detail: S
 
 
 static func _paint_check(check: Panel, mark: Label, on: bool) -> void:
-	var box := UiTheme.flat(UiTheme.CAPTURE if on else UiTheme.PAPER_2)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(UiTheme.BORDER)
-	UiTheme.hard_shadow(box)
+	var fill := UiTheme.CAPTURE if on else UiTheme.PAPER_2
+	var box := UiTheme.bordered(fill, UiTheme.HARD_BORDER, UiTheme.BORDER, true)
 	check.add_theme_stylebox_override("panel", box)
 	mark.visible = on

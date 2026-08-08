@@ -58,7 +58,7 @@ func apply(state: GameState) -> void:
 	if ambushed:
 		return  # stopped short of the property; nothing is captured
 	var dest: Vector2i = path[path.size() - 1]
-	var before: int = state.capture_progress.get(dest, GameState.CAPTURE_POINTS)
+	var before: int = state.capture_progress.get(dest, state.rules_config.capture_points)
 	var remaining := before - capture_strength(state, unit)
 	result = CaptureResult.new()
 	result.points_before = before

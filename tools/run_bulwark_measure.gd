@@ -41,13 +41,12 @@ extends SceneTree
 ## and prints the table docs/bulwark_balance.md was written from.
 
 const MAP_PATH := "res://maps/bulwark.txt"
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 
 ## Seats 1+2+3 against seat 4 — the grouping the board's own header names,
 ## stated here exactly as `test_alliance_soak.gd` states any board's grouping:
 ## directly on `state.sides`, never derived from `MapData.grouping`.
-const ALLIANCE: Dictionary = {1: 0, 2: 0, 3: 0, 4: 1}
-const FREE_FOR_ALL: Dictionary = {}
+const ALLIANCE: Dictionary[int, int] = {1: 0, 2: 0, 3: 0, 4: 1}
+const FREE_FOR_ALL: Dictionary[int, int] = {}
 const ALLIANCE_TEAMS: Array[int] = [1, 2, 3]
 const BULWARK_TEAM := 4
 
@@ -64,9 +63,7 @@ const CSV_COLUMNS: Array[String] = [
 	"eliminated",
 ]
 
-var _terrain_db: TerrainDB
-var _unit_db: UnitDB
-var _chart: DamageChart
+var _harness: BalanceHarness
 var _map: MapData
 
 var _seed_count := 30
@@ -80,10 +77,8 @@ func _init() -> void:
 	if not _parse_args():
 		quit(2)
 		return
-	_terrain_db = TerrainDB.load_default()
-	_unit_db = UnitDB.load_default()
-	_chart = load(DAMAGE_CHART_PATH)
-	_map = MapData.load_from_file(MAP_PATH, _terrain_db)
+	_harness = BalanceHarness.load_default()
+	_map = MapData.load_from_file(MAP_PATH, _harness.terrain_db)
 	if _map == null:
 		push_error("bulwark: cannot load %s" % MAP_PATH)
 		quit(2)
@@ -100,13 +95,30 @@ func _init() -> void:
 ## same policy `tools/run_balance_sim.gd` states: a mistyped `--seeds=` would
 ## otherwise spend half an hour measuring a sample width nobody asked for.
 func _parse_args() -> bool:
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--seeds="):
-			_seed_count = maxi(1, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
+			if parsed < 0:
+				push_error("bulwark: --seeds must be a positive integer (got '%s')" % value)
+				return false
+			_seed_count = parsed
 		elif arg.begins_with("--seed-offset="):
-			_seed_offset = maxi(0, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 0)
+			if parsed < 0:
+				push_error(
+					"bulwark: --seed-offset must be a non-negative integer (got '%s')" % value
+				)
+				return false
+			_seed_offset = parsed
 		elif arg.begins_with("--days="):
-			_days_cap = maxi(1, int(arg.get_slice("=", 1)))
+			var value := arg.get_slice("=", 1)
+			var parsed := BalanceHarness.int_flag(value, 1)
+			if parsed < 0:
+				push_error("bulwark: --days must be a positive integer (got '%s')" % value)
+				return false
+			_days_cap = parsed
 		elif arg.begins_with("--grouping="):
 			_grouping = arg.get_slice("=", 1)
 		elif arg.begins_with("--out="):
@@ -129,7 +141,7 @@ func _parse_args() -> bool:
 ## broke — a rejected command or a genuine stall — which is the "no rejected
 ## command, no stall" half of AB3's gate. A match that simply has not resolved
 ## by `_days_cap` is neither: it is the other half of the gate's answer.
-func _run(label: String, slug: String, sides: Dictionary) -> bool:
+func _run(label: String, slug: String, sides: Dictionary[int, int]) -> bool:
 	print("bulwark: %s — %d seeds, %d-day horizon" % [label, _seed_count, _days_cap])
 	var rows: Array[Dictionary] = []
 	for i in _seed_count:
@@ -142,9 +154,9 @@ func _run(label: String, slug: String, sides: Dictionary) -> bool:
 			return true
 		rows.append(row)
 	var summary := _summarise(label, sides, rows)
-	_write(slug, rows, summary)
+	var write_ok := _write(slug, rows, summary)
 	_print(summary)
-	return summary["total_rejected"] > 0 or summary["total_cap_stalls"] > 0
+	return summary["total_rejected"] > 0 or summary["total_cap_stalls"] > 0 or not write_ok
 
 
 ## One match, fresh state and one `AIController` per army. Mirrors
@@ -156,15 +168,15 @@ func _run(label: String, slug: String, sides: Dictionary) -> bool:
 ## path is walked with the mover's own visibility) and switches off the AR1
 ## plan cache, so alternating it would measure two boards and report one
 ## number. Returns an empty row when the board cannot be seated at all.
-func _play(label: String, sides: Dictionary, seed_val: int) -> Dictionary:
-	var state := GameState.create(_map, _unit_db, _chart)
+func _play(label: String, sides: Dictionary[int, int], seed_val: int) -> Dictionary:
+	var state := GameState.create(_map, _harness.unit_db, _harness.chart)
 	if state == null:
 		return {}
 	state.sides = sides
 	state.rng.seed = seed_val
 	var planners: Dictionary = {}
 	for team in state.teams:
-		planners[team] = AIController.new(_unit_db)
+		planners[team] = AIController.new(_harness.unit_db)
 	var cap := BalanceMatchEngine.command_ceiling(_days_cap, state.teams.size())
 	var commands := 0
 	var rejected := 0
@@ -270,11 +282,17 @@ func _summarise(label: String, sides: Dictionary, rows: Array[Dictionary]) -> Di
 	}
 
 
-func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> void:
+func _write(slug: String, rows: Array[Dictionary], summary: Dictionary) -> bool:
 	var dir := BalanceReportWriter.prepare_dir(_out_dir.path_join(slug))
-	BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
-	BalanceReportWriter.write_json(dir.path_join("summary.json"), summary)
+	if dir == "":
+		return false
+	var ok := BalanceReportWriter.write_csv(dir.path_join("matches.csv"), rows, CSV_COLUMNS)
+	ok = BalanceReportWriter.write_json(dir.path_join("summary.json"), summary) and ok
+	if not ok:
+		push_error("bulwark: failed to write matches.csv and summary.json to %s" % dir)
+		return false
 	print("bulwark: wrote matches.csv and summary.json to %s" % dir)
+	return true
 
 
 func _print(summary: Dictionary) -> void:

@@ -7,12 +7,12 @@ extends CommanderType
 ## No combat modifier, no terrain rule and no economy — the passive is what she
 ## is picked for, and her power is deliberately the smallest on the roster.
 
-@export var road_move_bonus: int = 1
+@export var move_bonus_points: int = 1
 @export var march_move_bonus: int = 1
 
 
 func move_bonus(state: GameState, unit: Unit) -> int:
-	var bonus := road_move_bonus
+	var bonus := move_bonus_points
 	if _is_active(state, unit.team):
 		bonus += march_move_bonus
 	return bonus

@@ -28,9 +28,13 @@ func _ready() -> void:
 	rows.add_theme_constant_override("separation", 6)
 	margin.add_child(rows)
 
+	# Dev-only page, out of the smoke sweep (tools/smoke_scenarios.sh never
+	# boots this scene), so dressing the title off UiTheme rather than the
+	# stock OS font is free to move a pixel here.
 	var title := Label.new()
 	title.text = "COMMANDER CARD GALLERY"
-	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_font_override("font", UiTheme.display(true))
+	title.add_theme_font_size_override("font_size", UiTheme.SIZE_PAGE_TITLE)
 	rows.add_child(title)
 
 	var grid := GridContainer.new()

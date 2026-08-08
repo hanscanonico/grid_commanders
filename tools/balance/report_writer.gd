@@ -40,14 +40,19 @@ static func resolve_out(out_dir: String) -> String:
 
 
 ## Absolutizes a run's out-directory, creating it. Returns "" when `resolve_out`
-## refuses the path, and nothing is written.
+## refuses the path or the directory could not be created, and nothing is
+## written — a caller that goes on to write against "" is the bug this guards
+## against, not a fallback this function offers.
 static func prepare_dir(out_dir: String) -> String:
 	var relative := resolve_out(out_dir)
 	if relative == "":
 		push_error("balance: a run writes under %s/ (got '%s')" % [REPORTS_ROOT, out_dir])
 		return ""
 	var dir := ProjectSettings.globalize_path("res://").path_join(relative)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var error := DirAccess.make_dir_recursive_absolute(dir)
+	if error != OK:
+		push_error("balance: cannot create %s (error %d)" % [dir, error])
+		return ""
 	return dir
 
 
@@ -62,7 +67,7 @@ static func _under_reports(path: String) -> bool:
 ## A column a row does not carry is written empty and reported: a batch is an
 ## hour of matches, and dropping the whole run over one missing key loses every
 ## match that was fine.
-static func write_csv(path: String, rows: Array[Dictionary], columns: Array[String]) -> void:
+static func write_csv(path: String, rows: Array[Dictionary], columns: Array[String]) -> bool:
 	var lines: Array[String] = [",".join(columns)]
 	for row in rows:
 		var cells: Array[String] = []
@@ -73,7 +78,7 @@ static func write_csv(path: String, rows: Array[Dictionary], columns: Array[Stri
 				continue
 			cells.append(_cell(str(row[column])))
 		lines.append(",".join(cells))
-	_store(path, "\n".join(lines) + "\n")
+	return _store(path, "\n".join(lines) + "\n")
 
 
 ## A cell, quoted the way every spreadsheet reads back (RFC 4180): wrapped in
@@ -90,38 +95,41 @@ static func _cell(value: String) -> String:
 	return '"%s"' % value.replace('"', '""')
 
 
-static func write_json(path: String, data: Variant) -> void:
-	_store(path, JSON.stringify(data, "\t"))
+static func write_json(path: String, data: Variant) -> bool:
+	return _store(path, JSON.stringify(data, "\t"))
 
 
 ## One compact JSON object per line. Written in one store rather than a line at a
 ## time because a big sweep's log is tens of thousands of lines and the file API
 ## charges per call, not per byte.
-static func write_jsonl(path: String, entries: Array[Dictionary]) -> void:
+static func write_jsonl(path: String, entries: Array[Dictionary]) -> bool:
 	var lines: Array[String] = []
 	for entry in entries:
 		lines.append(JSON.stringify(entry))
-	_store(path, "\n".join(lines) + "\n" if not lines.is_empty() else "")
+	return _store(path, "\n".join(lines) + "\n" if not lines.is_empty() else "")
 
 
-static func write_text(path: String, text: String) -> void:
-	_store(path, text)
+static func write_text(path: String, text: String) -> bool:
+	return _store(path, text)
 
 
-## Writes a whole artifact, and says so when it could not. Both halves are
-## reported: a run whose disk filled halfway through a sweep must not hand back a
-## truncated report that reads like a finished one.
-static func _store(path: String, text: String) -> void:
+## Writes a whole artifact, and says so when it could not — both halves are
+## reported, and both are the caller's to act on: a run whose disk filled
+## halfway through a sweep must not hand back a truncated report that reads
+## like a finished one, or exit as if it had.
+static func _store(path: String, text: String) -> bool:
 	if not path.is_absolute_path():
 		push_error("balance: no resolved output directory for '%s'" % path)
-		return
+		return false
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("balance: cannot write %s" % path)
-		return
+		return false
 	file.store_string(text)
 	file.flush()
 	var error := file.get_error()
 	file.close()
 	if error != OK:
 		push_error("balance: %s was not written whole (error %d)" % [path, error])
+		return false
+	return true

@@ -48,6 +48,9 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	hp_label.position = HP_LABEL_OFFSET / SPRITE_SCALE
 	fuel_label.scale = Vector2.ONE / SPRITE_SCALE
 	fuel_label.position = FUEL_LABEL_OFFSET / SPRITE_SCALE
+	# The one attention-amber: the low-fuel badge speaks UiTheme.AMMO rather than
+	# a colour authored a shade off it in unit_sprite.tscn.
+	fuel_label.add_theme_color_override("font_color", UiTheme.AMMO)
 	refresh()
 
 

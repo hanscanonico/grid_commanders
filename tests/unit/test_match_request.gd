@@ -16,20 +16,12 @@ extends GutTest
 const RED := 1
 const BLUE := 2
 
-
-func _args(list: Array) -> PackedStringArray:
-	var out := PackedStringArray()
-	for item: String in list:
-		out.append(item)
-	return out
-
-
 # --- defaults -----------------------------------------------------------------
 
 
 func test_a_request_nobody_configured_plays_the_default_match() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args([]))
+	request.apply_cmdline(Fixture.args([]))
 	assert_eq(request.map_path, MatchRequest.DEFAULT_MAP_PATH, "default board")
 	assert_eq(request.ai_teams, [BLUE] as Array[int], "the computer takes blue")
 	assert_false(request.fog_enabled, "fog off")
@@ -43,27 +35,27 @@ func test_a_request_nobody_configured_plays_the_default_match() -> void:
 
 func test_hotseat_clears_the_computer_side() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--hotseat"]))
+	request.apply_cmdline(Fixture.args(["--hotseat"]))
 	assert_eq(request.ai_teams, [] as Array[int], "both seats are human")
 
 
 func test_fog_turns_fog_on() -> void:
 	var request := MatchRequest.new()
 	request.fog_enabled = false
-	request.apply_cmdline(_args(["--fog"]))
+	request.apply_cmdline(Fixture.args(["--fog"]))
 	assert_true(request.fog_enabled)
 
 
 func test_watch_gives_both_seats_to_the_computer() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--watch"]))
+	request.apply_cmdline(Fixture.args(["--watch"]))
 	assert_true(request.watching, "watch mode announced")
 	assert_eq(request.ai_teams, MapData.DEFAULT_TEAMS, "the duel the board has yet to widen")
 
 
 func test_seed_pins_the_match_rng() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--seed=7"]))
+	request.apply_cmdline(Fixture.args(["--seed=7"]))
 	assert_eq(request.seed_value, 7)
 
 
@@ -71,31 +63,31 @@ func test_seed_pins_the_match_rng() -> void:
 ## a real seed rather than "unset" — which is why the sentinel is negative.
 func test_seed_zero_is_a_seed_not_an_absence() -> void:
 	var zero := MatchRequest.new()
-	zero.apply_cmdline(_args(["--seed=0"]))
+	zero.apply_cmdline(Fixture.args(["--seed=0"]))
 	assert_eq(zero.seed_value, 0, "an explicit zero pins the RNG")
 	var negative := MatchRequest.new()
-	negative.apply_cmdline(_args(["--seed=-5"]))
+	negative.apply_cmdline(Fixture.args(["--seed=-5"]))
 	assert_eq(negative.seed_value, 0, "and a negative one is clamped, not read as unset")
 
 
 func test_days_caps_a_watched_match_and_never_goes_below_one() -> void:
 	var capped := MatchRequest.new()
-	capped.apply_cmdline(_args(["--days=12"]))
+	capped.apply_cmdline(Fixture.args(["--days=12"]))
 	assert_eq(capped.days_cap, 12)
 	var zero := MatchRequest.new()
-	zero.apply_cmdline(_args(["--days=0"]))
+	zero.apply_cmdline(Fixture.args(["--days=0"]))
 	assert_eq(zero.days_cap, 1)
 
 
 func test_difficulty_is_carried_as_an_id_for_the_database_to_resolve() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--difficulty=  hard  "]))
+	request.apply_cmdline(Fixture.args(["--difficulty=  hard  "]))
 	assert_eq(request.difficulty, &"hard", "trimmed, not resolved")
 
 
 func test_side_specs_are_kept_unparsed_for_the_labs_own_parser() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--red=alina_ward:hard", "--blue=viktor_draeg:easy"]))
+	request.apply_cmdline(Fixture.args(["--red=alina_ward:hard", "--blue=viktor_draeg:easy"]))
 	assert_eq(request.side_specs[RED], "alina_ward:hard")
 	assert_eq(request.side_specs[BLUE], "viktor_draeg:easy")
 
@@ -106,7 +98,7 @@ func test_an_unknown_map_name_is_refused_rather_than_silently_swapped() -> void:
 	# A watched match on the wrong board would still print a result line, and that
 	# line is what the replay-fidelity check diffs — so the board must not change
 	# quietly. The pushed error is the point; the board staying put is the check.
-	request.apply_cmdline(_args(["--map=no_such_map_anywhere"]))
+	request.apply_cmdline(Fixture.args(["--map=no_such_map_anywhere"]))
 	assert_push_error("unknown map 'no_such_map_anywhere'")
 	assert_eq(request.map_path, MatchRequest.DEFAULT_MAP_PATH, "board unchanged")
 
@@ -116,14 +108,14 @@ func test_an_unknown_map_name_is_refused_rather_than_silently_swapped() -> void:
 
 func test_co_assigns_red_first_then_blue() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--co=alina_ward,viktor_draeg"]))
+	request.apply_cmdline(Fixture.args(["--co=alina_ward,viktor_draeg"]))
 	assert_eq(request.commanders[RED], &"alina_ward")
 	assert_eq(request.commanders[BLUE], &"viktor_draeg")
 
 
 func test_a_blank_side_in_co_plays_without_a_commander() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--co=,viktor_draeg"]))
+	request.apply_cmdline(Fixture.args(["--co=,viktor_draeg"]))
 	assert_false(request.commanders.has(RED), "red has no commander")
 	assert_eq(request.commanders[BLUE], &"viktor_draeg")
 	var over := ",".join(["a", "b", "c", "d", "e"])
@@ -139,14 +131,14 @@ func test_a_blank_side_in_co_plays_without_a_commander() -> void:
 func test_an_empty_co_clears_the_commanders_the_menu_chose() -> void:
 	var request := MatchRequest.new()
 	request.commanders = {RED: &"alina_ward", BLUE: &"viktor_draeg"}
-	request.apply_cmdline(_args(["--co="]))
+	request.apply_cmdline(Fixture.args(["--co="]))
 	assert_eq(request.commanders, {}, "cleared")
 
 
 func test_omitting_co_leaves_the_menus_commanders_alone() -> void:
 	var request := MatchRequest.new()
 	request.commanders = {RED: &"alina_ward"}
-	request.apply_cmdline(_args(["--fog"]))
+	request.apply_cmdline(Fixture.args(["--fog"]))
 	assert_eq(request.commanders[RED], &"alina_ward", "untouched")
 
 
@@ -181,7 +173,7 @@ func test_the_flags_do_not_cancel_a_resume() -> void:
 	var request := MatchRequest.from_menu(
 		MatchRequest.DEFAULT_MAP_PATH, [BLUE] as Array[int], false, &"normal", {}, true
 	)
-	request.apply_cmdline(_args(["--fog", "--hotseat"]))
+	request.apply_cmdline(Fixture.args(["--fog", "--hotseat"]))
 	assert_true(request.resume)
 
 
@@ -190,7 +182,7 @@ func test_a_device_preference_never_enters_the_request() -> void:
 	# resumed match plays at today's preference rather than the one it was saved
 	# under. Settings owns --speed=; nothing here may quietly start carrying it.
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--speed=fast", "--reset-hints"]))
+	request.apply_cmdline(Fixture.args(["--speed=fast", "--reset-hints"]))
 	assert_false(&"speed" in request, "no speed field on the request")
 
 

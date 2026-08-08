@@ -12,8 +12,11 @@ extends GutTest
 ## had nothing was the resolver and the name list a failed flag prints.
 
 ## A fixture named after a shipped board, staged by the precedence test and
-## removed again. Nothing else may be left behind in maps/.
-const SHADOW_PATH := "res://maps/fixtures/ironworks.txt"
+## removed again. Staged under `user://` rather than the versioned
+## `maps/fixtures/`, through `resolve()`'s `fixtures_dir` seam — an aborted run
+## must never leave a stray board in the git-tracked tree (COM-212).
+const SHADOW_DIR := "user://test_map_catalog_fixtures"
+const SHADOW_PATH := "user://test_map_catalog_fixtures/ironworks.txt"
 
 
 func after_each() -> void:
@@ -49,14 +52,15 @@ func test_a_name_nothing_answers_to_is_empty() -> void:
 ## exactly why the rule cannot be observed without staging one: this test writes
 ## the collision, asks, and removes it again.
 func test_a_shipped_board_beats_a_fixture_of_the_same_name() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHADOW_DIR))
 	var file := FileAccess.open(SHADOW_PATH, FileAccess.WRITE)
-	assert_not_null(file, "staging the clash needs maps/fixtures to be writable")
+	assert_not_null(file, "staging the clash needs the scratch fixtures dir to be writable")
 	if file == null:
 		return
 	file.store_string("[terrain]\n..\n..\n")
 	file.close()
 	assert_true(FileAccess.file_exists(SHADOW_PATH), "the clash is staged")
-	assert_eq(MapCatalog.resolve("ironworks"), "res://maps/ironworks.txt")
+	assert_eq(MapCatalog.resolve("ironworks", SHADOW_DIR), "res://maps/ironworks.txt")
 	_remove_shadow()
 	assert_false(FileAccess.file_exists(SHADOW_PATH), "and taken down again")
 

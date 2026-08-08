@@ -14,22 +14,15 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## Displayed HP, like every other HP the player is shown — not the internal
 ## 0-100 the formula subtracts in.
 func test_forecast_snapshots_displayed_hp_for_both_sides() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	var attacker := state.units[0]
 	var defender := state.units[1]
 	attacker.hp = 55  # 6 displayed
@@ -43,7 +36,7 @@ func test_forecast_snapshots_displayed_hp_for_both_sides() -> void:
 ## The bounds are the luck range, and the luck-free percentage is its floor: the
 ## best the defender walks away with is exactly what the percentage alone says.
 func test_defender_bounds_span_the_luck_range() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	var attacker := state.units[0]
 	var defender := state.units[1]
 	var forecast := CombatResolver.forecast(state, attacker, attacker.cell, defender)
@@ -64,7 +57,7 @@ func test_defender_bounds_span_the_luck_range() -> void:
 ## every damage the resolver can actually roll has to land inside the bounds.
 func test_bounds_contain_every_roll_the_resolver_can_produce() -> void:
 	for seed_value in range(40):
-		var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+		var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 		state.rng.seed = seed_value
 		var attacker := state.units[0]
 		var defender := state.units[1]
@@ -93,7 +86,7 @@ func test_bounds_contain_every_roll_the_resolver_can_produce() -> void:
 ## the counter's own spread alone can never account for.
 func test_attacker_bounds_survive_a_shot_that_may_kill_the_counter() -> void:
 	for seed_value in range(40):
-		var state := _state("[terrain]\n..\n[units]\n1 i 0 0\n2 T 1 0")
+		var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0\n2 T 1 0")
 		state.rng.seed = seed_value
 		var attacker := state.units[0]
 		var defender := state.units[1]
@@ -119,7 +112,7 @@ func test_attacker_bounds_survive_a_shot_that_may_kill_the_counter() -> void:
 ## percentage flag it always has.
 func test_no_counter_leaves_the_attacker_untouched() -> void:
 	# An artillery firing from range 2: the infantry cannot shoot back.
-	var state := _state("[terrain]\n...\n[units]\n1 a 0 0\n2 i 2 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 a 0 0\n2 i 2 0")
 	var attacker := state.units[0]
 	var forecast := CombatResolver.forecast(state, attacker, attacker.cell, state.units[1])
 	assert_true(forecast.can_attack)
@@ -131,7 +124,7 @@ func test_no_counter_leaves_the_attacker_untouched() -> void:
 ## A counter that can happen gets its own spread, from the *defending* side's
 ## commander — the counter's attacker is the unit shooting back.
 func test_counter_bounds_come_from_the_countering_side() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
 	var attacker := state.units[0]
 	var forecast := CombatResolver.forecast(state, attacker, attacker.cell, state.units[1])
 	assert_gt(forecast.counter_damage, 0)
@@ -151,7 +144,7 @@ func test_counter_bounds_come_from_the_countering_side() -> void:
 ## Lyra Quill's floor is the case the luck-free percentage alone gets wrong: her
 ## rolls never come up short, so the HP bounds must start above it.
 func test_a_lucky_floor_raises_the_defender_bounds() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
 	var lyra: LyraQuill = CommanderDB.load_default().by_id(&"lyra_quill")
 	state.set_commander(1, lyra)
 	var attacker := state.units[0]

@@ -42,17 +42,10 @@ var ai: AIController
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 	ai = AIController.new(unit_db)
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
 
 
 ## Puts a unit aboard `carrier`, the way a save or a hot-seat handover leaves one.
@@ -66,7 +59,7 @@ func _board(state: GameState, id: StringName, carrier: Unit) -> Unit:
 func _assert_every_tier_builds(map_text: String, expected_domain: StringName) -> void:
 	var difficulty_db := DifficultyDB.load_default()
 	for tier in difficulty_db.all():
-		var state := _state(map_text)
+		var state := Fixture.state(map_text)
 		for unit in state.units:
 			unit.acted = true
 		state.funds[1] = 99999
@@ -95,7 +88,9 @@ func test_every_tier_builds_hulls_at_a_port() -> void:
 
 
 func test_builds_aircraft_at_an_airport() -> void:
-	var state := _state("[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0")
+	var state := Fixture.state(
+		"[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
+	)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 99999
@@ -109,7 +104,7 @@ func test_builds_aircraft_at_an_airport() -> void:
 ## afford must not stop the base beside it from producing — that stall would look
 ## exactly like an AI that has given up.
 func test_an_unaffordable_airport_does_not_block_the_base_beside_it() -> void:
-	var state := _state("[terrain]\nAB...\n[owners]\n1 0 0\n1 1 0\n[units]\n1 i 4 0")
+	var state := Fixture.state("[terrain]\nAB...\n[owners]\n1 0 0\n1 1 0\n[units]\n1 i 4 0")
 	state.units[0].acted = true
 	state.funds[1] = 1000  # an infantry's worth, and nothing that flies
 	var command := ai.plan_next_command(state)
@@ -122,7 +117,7 @@ func test_an_unaffordable_airport_does_not_block_the_base_beside_it() -> void:
 ## is asked about separately — an AI that skipped it would bank funds while
 ## bombers worked its army over.
 func test_buys_an_air_answer_when_the_enemy_is_flying() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0\n2 b 4 0"
 	)
 	for unit in state.units_of(1):
@@ -139,7 +134,7 @@ func test_buys_an_air_answer_when_the_enemy_is_flying() -> void:
 
 ## And stops once it has enough of them, rather than buying anti-air forever.
 func test_stops_buying_air_answers_once_covered() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		(
 			"[terrain]\nB......\n[owners]\n1 0 0\n"
 			+ "[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0\n1 a 4 0\n1 a 5 0\n2 b 6 0"
@@ -160,7 +155,7 @@ func test_stops_buying_air_answers_once_covered() -> void:
 ## A plane low on fuel breaks off for somewhere that refits it. A city will not,
 ## so heading there would be a retreat to nowhere.
 func test_a_low_aircraft_heads_for_an_airfield_not_a_city() -> void:
-	var state := _state("[terrain]\nA...C\n[owners]\n1 0 0\n1 4 0\n[units]\n1 h 3 0")
+	var state := Fixture.state("[terrain]\nA...C\n[owners]\n1 0 0\n1 4 0\n[units]\n1 h 3 0")
 	var copter := state.units[0]
 	copter.fuel = 2
 	var command := ai.plan_next_command(state)
@@ -175,13 +170,13 @@ func test_a_low_aircraft_heads_for_an_airfield_not_a_city() -> void:
 
 ## With a full tank the same helicopter has no reason to break off.
 func test_a_fuelled_aircraft_ignores_the_airfield() -> void:
-	var state := _state("[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 h 3 0\n2 i 4 0")
+	var state := Fixture.state("[terrain]\nA....\n[owners]\n1 0 0\n[units]\n1 h 3 0\n2 i 4 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is AttackCommand, "a full copter should go hunting, not home")
 
 
 func test_builds_hulls_at_a_port() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nP....\nSSSSS\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
 	)
 	for unit in state.units:
@@ -196,7 +191,7 @@ func test_builds_hulls_at_a_port() -> void:
 ## The AI must never buy a transport: it cannot plan load-move-unload across
 ## turns, and a lander it will not use is 12 000 spent on nothing.
 func test_never_buys_a_transport_it_cannot_use() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nP....\nSSSSS\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
 	)
 	for unit in state.units:
@@ -215,7 +210,7 @@ func test_never_buys_a_transport_it_cannot_use() -> void:
 ## A hull low on fuel makes for a port, not the airfield or the city next to it —
 ## the same domain gate TurnRules applies when it decides who gets refitted.
 func test_a_low_hull_heads_for_a_port() -> void:
-	var state := _state("[terrain]\nPSSSA\nSSSSS\n[owners]\n1 0 0\n1 4 0\n[units]\n1 c 3 0")
+	var state := Fixture.state("[terrain]\nPSSSA\nSSSSS\n[owners]\n1 0 0\n1 4 0\n[units]\n1 c 3 0")
 	state.units[0].fuel = 2
 	var command := ai.plan_next_command(state)
 	assert_true(command is MoveCommand, "expected a move, got %s" % command)
@@ -224,7 +219,7 @@ func test_a_low_hull_heads_for_a_port() -> void:
 
 
 func test_builds_infantry_when_short_on_capture_units() -> void:
-	var state := _state("[terrain]\nB.\n[owners]\n1 0 0\n[units]\n1 i 1 0")
+	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0\n[units]\n1 i 1 0")
 	state.units[0].acted = true
 	var command := ai.plan_next_command(state)  # funds: 1000 day-1 income
 	assert_true(command is BuildCommand, "expected a build, got %s" % command)
@@ -233,7 +228,9 @@ func test_builds_infantry_when_short_on_capture_units() -> void:
 
 
 func test_builds_tank_with_funds_and_enough_capture_units() -> void:
-	var state := _state("[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0")
+	var state := Fixture.state(
+		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 m 3 0"
+	)
 	for unit in state.units:
 		unit.acted = true
 	state.funds[1] = 7000
@@ -247,7 +244,9 @@ func test_builds_tank_with_funds_and_enough_capture_units() -> void:
 ## either. Counting one toward the capture roster suppresses infantry buys for
 ## the rest of the match.
 func test_a_carried_infantry_does_not_fill_the_capture_roster() -> void:
-	var state := _state("[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 p 3 0")
+	var state := Fixture.state(
+		"[terrain]\nB....\n[owners]\n1 0 0\n[units]\n1 i 1 0\n1 i 2 0\n1 p 3 0"
+	)
 	_board(state, &"infantry", state.units[2])
 	for unit in state.units:
 		unit.acted = true
@@ -265,7 +264,7 @@ func test_a_carried_infantry_does_not_fill_the_capture_roster() -> void:
 ## one of the units that cover the sky. The three infantry fill the capture
 ## roster, so the only shortfall left on the board is the air one.
 func test_a_carried_unit_is_not_an_air_answer() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		(
 			"[terrain]\nB....\nSSSSS\n[owners]\n1 0 0\n"
 			+ "[units]\n1 i 1 0\n1 i 2 0\n1 i 3 0\n1 a 4 0\n1 l 1 1\n2 b 3 1"
@@ -302,3 +301,187 @@ func test_a_chart_less_state_plans_at_the_reactive_tier() -> void:
 	var planner := AIController.new(unit_db, profile)
 	var command := planner.plan_next_command(state)
 	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+
+
+# --- reactivity may reorder what is buyable, never widen it (COM-172) --------
+
+## A base with the capture roster already filled, an enemy infantry to price
+## candidates against, and just enough funds for mech (3000, build_priority's
+## tail) or recon (4000, on no tier's list).
+const REACTIVE_TIER_BOARD := """
+[terrain]
+B....
+.....
+[owners]
+1 0 0
+[units]
+1 i 1 0
+1 i 2 0
+1 i 3 0
+2 i 4 1
+"""
+
+
+## The recon answers a lone infantry well enough (70 base damage) to outscore
+## mech (65, secondary) on effectiveness alone, so before the fix — which
+## admitted every armed type as a reactive candidate — full reactivity bought
+## the recon over mech even with no doctrine wanting one. The recon carries no
+## build_priority entry and no negative bias, so it must stay unbuyable: S3
+## reorders what the priority list and the doctrine tail already buy, it does
+## not widen it.
+func test_reactivity_never_buys_an_unlisted_unbiased_unit() -> void:
+	var state := Fixture.state(REACTIVE_TIER_BOARD)
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 4000
+	var profile := AIProfile.new()
+	profile.build_reactivity = 1.0
+	profile.save_up_turns = 0  # isolate the reactive tier from the banking rule
+	var command := AIController.new(unit_db, profile).plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq(
+		(command as BuildCommand).unit_type.id,
+		&"mech",
+		(
+			"recon outscores mech on effectiveness alone but is on no tier's list and carries no"
+			+ " doctrine bias, so it must lose to the unit the documented mechanism actually offers"
+		)
+	)
+
+
+## Same board and funds, but Orin Flux's negative scout_build_bias is what is
+## meant to pull a recon onto the tail (commander-doctrine-ai D1) — reactivity
+## must not block that mechanism, only reorder within it.
+func test_a_negative_doctrine_bias_still_reaches_the_tail_with_reactivity_on() -> void:
+	var state := Fixture.state(REACTIVE_TIER_BOARD)
+	state.set_commander(1, OrinFlux.new())
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 4000
+	var profile := AIProfile.new()
+	profile.build_reactivity = 0.6
+	profile.save_up_turns = 0  # isolate the reactive tier from the banking rule
+	var command := AIController.new(unit_db, profile).plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq(
+		(command as BuildCommand).unit_type.id,
+		&"recon",
+		"the doctrine's negative bias must still reach the tail with reactivity on"
+	)
+
+
+# --- COM-180: the supply want's clamp -----------------------------------------
+#
+# Every other tier in _build_rank clamps the *sum* of priority/duplicates/bias
+# at zero, so a strongly negative bias is capped rather than reversed. The
+# supply want clamped the bias alone, so a doctrine that wanted the truck
+# sooner could never move it while one that wanted it later still could.
+
+
+## A doctrine that wants the resupply truck sooner than the standing priority
+## does, by however much apc_bias says.
+class TruckAdviser:
+	extends CommanderType
+
+	var apc_bias: int = 0
+
+	func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
+		return apc_bias if unit_type.id == &"apc" else 0
+
+
+## A base, its capture roster already at the floor, and a priority list that
+## only a tank and the truck can ever reach — the other three entries name
+## naval and air ids a base cannot build, so they hold their tail slots
+## without ever costing a candidate.
+const SUPPLY_WANT_BOARD := """
+[terrain]
+B....
+.....
+[owners]
+1 0 0
+[units]
+1 i 1 0
+1 i 2 0
+1 i 3 0
+"""
+
+
+func _supply_want_profile() -> AIProfile:
+	var profile := AIProfile.new()
+	profile.build_priority = ([&"battleship", &"bomber", &"cruiser", &"tank"] as Array[StringName])
+	return profile
+
+
+func _supply_want_build(commander: CommanderType) -> StringName:
+	var state := Fixture.state(SUPPLY_WANT_BOARD)
+	if commander != null:
+		state.set_commander(1, commander)
+	for unit in state.units:
+		unit.acted = true
+	state.funds[1] = 99999
+	var command := AIController.new(unit_db, _supply_want_profile()).plan_next_command(state)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	return (command as BuildCommand).unit_type.id
+
+
+## The practical effect: an unbiased army fills the list's tank before it ever
+## reaches the truck, and a doctrine that wants the truck can pull it ahead of
+## a tank the list still prefers on its own.
+func test_a_hungry_doctrine_buys_the_truck_a_blind_planner_would_not() -> void:
+	assert_eq(
+		_supply_want_build(null),
+		&"tank",
+		"an unbiased army reaches the list's tank before the truck's want"
+	)
+	var wanting := TruckAdviser.new()
+	wanting.apc_bias = -4
+	assert_eq(
+		_supply_want_build(wanting),
+		&"apc",
+		"a doctrine that wants the truck should be able to pull it ahead of the list"
+	)
+
+
+## The exact arithmetic: unbiased is unchanged, a bias inside the tier moves
+## the truck by its own amount, a bias past the tier floors there rather than
+## being refused outright, and a positive bias still pushes it down unclamped.
+func test_the_supply_want_clamps_the_sum_not_the_bias_alone() -> void:
+	var apc: UnitType = unit_db.by_id(&"apc")
+	var planner := AIProductionPlanner.new(AIProfile.new())
+	var list_size := AIProfile.new().build_priority.size()
+	var floor_rank := AIProductionPlanner.RANK_PRIORITY
+
+	var neutral := AIProductionPlanner.BuildWants.new()
+	neutral.short_of_supply = true
+	assert_eq(
+		planner._build_rank(apc, neutral),
+		floor_rank + list_size,
+		"an unbiased truck still ranks one place under the list's tail"
+	)
+
+	var wanted := AIProductionPlanner.BuildWants.new()
+	wanted.short_of_supply = true
+	wanted.doctrine_bias = {&"apc": -(list_size - 1)}
+	assert_eq(
+		planner._build_rank(apc, wanted),
+		floor_rank + 1,
+		"a bias inside the tier moves the truck by exactly its own amount"
+	)
+
+	var starved := AIProductionPlanner.BuildWants.new()
+	starved.short_of_supply = true
+	starved.doctrine_bias = {&"apc": -(list_size + 50)}
+	assert_eq(
+		planner._build_rank(apc, starved),
+		floor_rank,
+		"the tier floor stops the pull; clamping the bias alone would have refused it entirely"
+	)
+
+	var pushed := AIProductionPlanner.BuildWants.new()
+	pushed.short_of_supply = true
+	pushed.doctrine_bias = {&"apc": 5}
+	assert_eq(
+		planner._build_rank(apc, pushed),
+		floor_rank + list_size + 5,
+		"a positive bias still pushes the truck down, unclamped"
+	)

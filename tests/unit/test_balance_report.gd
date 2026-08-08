@@ -149,10 +149,49 @@ func test_json_is_written_indented() -> void:
 
 
 ## A path that cannot be opened is reported rather than dropped: a run that
-## wrote nowhere must not look like a run that wrote nothing.
+## wrote nowhere must not look like a run that wrote nothing — and it says so
+## to its *caller* too, not only to the log, which is what a driver checks
+## before it prints a success line and exits 0.
 func test_an_unwritable_path_is_reported() -> void:
-	BalanceReportWriter.write_text("user://no_such_dir_here/report.html", "x")
+	var ok := BalanceReportWriter.write_text("user://no_such_dir_here/report.html", "x")
+	assert_false(ok, "a failed write must report false, not just push an error")
 	assert_push_error_count(1, "the failed path is named in the log")
+
+
+## Every write helper answers for itself, all the way down to `_store`: a
+## driver checking one of these is checking the write that actually happened,
+## not a guess about whether `_store` was reached.
+func test_every_write_helper_reports_success() -> void:
+	assert_true(BalanceReportWriter.write_csv(_path("ok.csv"), [{"a": 1}], ["a"]))
+	assert_true(BalanceReportWriter.write_json(_path("ok.json"), {"a": 1}))
+	assert_true(BalanceReportWriter.write_jsonl(_path("ok.jsonl"), [{"a": 1}]))
+	assert_true(BalanceReportWriter.write_text(_path("ok.txt"), "x"))
+
+
+## `prepare_dir` hands a caller an absolute directory it can trust was created.
+func test_prepare_dir_returns_the_absolute_directory_it_created() -> void:
+	var dir := BalanceReportWriter.prepare_dir("reports/test_report_writer_prepare_dir")
+	assert_true(dir.is_absolute_path())
+	assert_true(DirAccess.dir_exists_absolute(dir))
+	DirAccess.remove_absolute(dir)
+
+
+## A directory that cannot be created — here, because a plain file already
+## occupies where a path component of it needs to be — is refused the same way
+## `resolve_out` refusing the path is: "" and a named error, never a directory
+## nothing was actually made under.
+func test_prepare_dir_returns_empty_string_when_the_directory_cannot_be_made() -> void:
+	var blocker := "reports/test_report_writer_prepare_dir_blocker"
+	var blocker_abs := ProjectSettings.globalize_path("res://").path_join(blocker)
+	DirAccess.make_dir_recursive_absolute(blocker_abs.get_base_dir())
+	var file := FileAccess.open(blocker_abs, FileAccess.WRITE)
+	file.store_string("x")
+	file.close()
+	var dir := BalanceReportWriter.prepare_dir(blocker + "/sub")
+	assert_eq(dir, "")
+	assert_push_error_count(1, "the directory that could not be made is named")
+	assert_engine_error_count(1, "the engine's own mkdir failure prints beneath ours")
+	DirAccess.remove_absolute(blocker_abs)
 
 
 # --- the page ----------------------------------------------------------------

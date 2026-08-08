@@ -103,18 +103,25 @@ func _consider_attacks(
 	for enemy in context.visible_enemies:
 		if Grid.manhattan(unit.cell, enemy.cell) - span <= ring.y:
 			candidates.append(enemy)
+	# _defend_bonus and the follow-up damage behind _focus_bonus read only the
+	# enemy — never the destination — so each is priced once per enemy that
+	# turns out to have a legal dest, rather than once per (dest, enemy) pair.
+	var defend_bonus: Dictionary[Unit, float] = {}
+	var follow_up_damage: Dictionary[Unit, int] = {}
 	for dest in dests:
 		# The walk to a firing cell and the fire it invites depend only on that
 		# cell, so work them out once per destination and only after finding a
 		# legal target there.
-		var dest_penalty := -1.0
+		var dest_penalty := 0.0
+		var dest_priced := false
 		var incoming := 0
 		for enemy in candidates:
 			if not AttackRange.reaches(ring, dest, enemy.cell):
 				continue
 			if not AttackRange.can_fire(state, unit, enemy):
 				continue
-			if dest_penalty < 0.0:
+			if not dest_priced:
+				dest_priced = true
 				if threat == null and profile.threat_aversion > 0.0:
 					threat = context.threat_map()
 				if threat != null:
@@ -123,14 +130,18 @@ func _consider_attacks(
 				dest_penalty = (
 					profile.step_cost_penalty * step_cost + _threat_penalty(unit, incoming)
 				)
+			if not defend_bonus.has(enemy):
+				defend_bonus[enemy] = _defend_bonus(state, unit, enemy)
+			if profile.focus_fire_bonus > 0.0 and not follow_up_damage.has(enemy):
+				follow_up_damage[enemy] = _follow_up_damage(context, unit, enemy)
 			var forecast := CombatResolver.forecast(state, unit, dest, enemy)
 			# The cover is the one term here that belongs to the shot rather than to
 			# the destination: the counter it invites is fire this cell has already
 			# been priced against, and that counter is this enemy's.
 			var score: float = (
 				_attack_score(unit, enemy, forecast)
-				+ _focus_bonus(context, unit, enemy, forecast)
-				+ _defend_bonus(state, unit, enemy)
+				+ _focus_bonus(enemy, forecast, follow_up_damage.get(enemy, 0))
+				+ defend_bonus[enemy]
 				+ _cover_score(state, unit, dest, incoming + forecast.counter_damage)
 				- dest_penalty
 			)
@@ -230,15 +241,18 @@ func _cover_score(state: GameState, unit: Unit, cell: Vector2i, priced_fire: int
 
 ## How much more attractive `enemy` is because other ready friendlies could
 ## still pile onto it this turn. Zero when focus fire is off or this shot kills.
-func _focus_bonus(
-	context: AIPlanningContext, unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast
-) -> float:
+##
+## `raw_follow_up` is `_follow_up_damage`'s answer for `(unit, enemy)` — a
+## function of neither `dest` nor the forecast — so the caller prices it once
+## per enemy rather than asking again for every destination this unit could
+## fire from.
+func _focus_bonus(enemy: Unit, forecast: CombatSnapshot.Forecast, raw_follow_up: int) -> float:
 	if profile.focus_fire_bonus <= 0.0:
 		return 0.0
 	var remaining := enemy.hp - forecast.attack_damage
 	if remaining <= 0:
 		return 0.0
-	var follow_up := mini(remaining, _follow_up_damage(context, unit, enemy))
+	var follow_up := mini(remaining, raw_follow_up)
 	if follow_up <= 0:
 		return 0.0
 	var value := _unit_value(enemy) * mini(forecast.attack_damage, enemy.hp) / 100.0
@@ -260,6 +274,10 @@ func _follow_up_damage(context: AIPlanningContext, attacker: Unit, enemy: Unit) 
 			continue  # no chart entry, no loaded weapon, or the target is dived
 		if Grid.manhattan(friendly.cell, enemy.cell) > AttackRange.strike_reach(state, friendly):
 			continue
+		# Priced from friendly.cell, not the cell the follow-up would actually fire
+		# from — the same enemy.cell approximation ThreatMap.incoming_damage makes,
+		# and exact for every doctrine but Alina Ward's combined_arms_pct. Inert
+		# today (focus_fire_bonus ships at 0.0).
 		var forecast := CombatResolver.forecast(state, friendly, friendly.cell, enemy)
 		if forecast.can_attack:
 			total += forecast.attack_damage
@@ -292,8 +310,8 @@ func _defend_bonus(state: GameState, unit: Unit, enemy: Unit) -> float:
 	# conquered fells nobody, so defending it is worth a city and no more.
 	if state.home_hq.has(owner) and state.home_hq[owner] == cell:
 		score *= profile.hq_capture_multiplier
-	var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
-	score += (GameState.CAPTURE_POINTS - points) * profile.capture_progress_bonus
+	var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
+	score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
 	return profile.defend_weight * score
 
 
@@ -306,18 +324,21 @@ func _consider_captures(
 		if not reachable.can_stop_at(cell):
 			continue
 		var terrain := state.map.terrain_at(cell)
+		var owner := state.owner_at(cell)
 		# Through the allegiance authority, not `== unit.team`: an ally's ground is
 		# already the side's, and `CaptureCommand` turns the attempt down.
-		if not terrain.is_property or state.allied(state.owner_at(cell), unit.team):
+		if not terrain.is_property or state.allied(owner, unit.team):
 			continue
 		var score := profile.capture_score
-		if terrain.is_headquarters:
+		# Asked of the home-HQ authority, never of the terrain id: an HQ a survivor
+		# conquered fells nobody, so taking it is worth a city and no more.
+		if state.home_hq.has(owner) and state.home_hq[owner] == cell:
 			score *= profile.hq_capture_multiplier
-		if _produces(terrain):
+		if profile.production_capture_multiplier != 1.0 and _produces(terrain):
 			score *= profile.production_capture_multiplier
-		var points: int = state.capture_progress.get(cell, GameState.CAPTURE_POINTS)
+		var points: int = state.capture_progress.get(cell, state.rules_config.capture_points)
 		var step_cost: int = reachable.costs[cell]
-		score += (GameState.CAPTURE_POINTS - points) * profile.capture_progress_bonus
+		score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
 		score -= profile.step_cost_penalty * step_cost
 		if score > plan.score:
 			plan.score = score
@@ -394,7 +415,7 @@ func _consider_withdraw(
 	var staying := threat.incoming_damage(state, unit, unit.cell)
 	if staying <= 0:
 		return  # nothing is aiming at us, so there is nothing to buy
-	var refuge := _best_refuge(context, unit, reachable)
+	var refuge := _best_refuge(context, unit, reachable, threat)
 	var avoided := staying - threat.incoming_damage(state, unit, refuge)
 	if avoided <= 0:
 		return  # nowhere we can reach is safer than standing still
@@ -410,12 +431,16 @@ func _consider_withdraw(
 ##
 ## One answer for the two things that step out of trouble, the withdrawal and the
 ## dive: where it is safer is one question, and a second walk over the same threat
-## map would be a second opinion on it.
+## map would be a second opinion on it. `threat` is null on a tier with every
+## threat dial at zero — the dive is the one caller that can reach here without
+## one, since `dive_score` is live everywhere (see AIPlanCache._weighs_threat) —
+## and `_incoming` reads a null map as the same non-answer everywhere, which
+## folds the first key out of `_better_refuge` and ranks purely by stand-off,
+## repair and cost.
 func _best_refuge(
-	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, threat: ThreatMap
 ) -> Vector2i:
 	var state := context.state
-	var threat := context.threat_map()
 	var refits := _repair_cells(context, unit)
 	# The enemy this unit is orienting on, and its own ring, both asked for once
 	# for the whole sweep — see _standoff_rank for why the goal is asked for here
@@ -423,14 +448,14 @@ func _best_refuge(
 	var goal := _enemy_goal(context, unit)
 	var ring := AttackRange.band(state, unit)
 	var best_cell := unit.cell
-	var best_incoming := threat.incoming_damage(state, unit, unit.cell)
+	var best_incoming := _incoming(threat, state, unit, unit.cell)
 	var best_stand := _standoff_rank(unit.cell, goal, ring)
 	var best_repairs := refits.has(unit.cell)
 	var best_cost := 0
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var incoming := threat.incoming_damage(state, unit, cell)
+		var incoming := _incoming(threat, state, unit, cell)
 		var stand := _standoff_rank(cell, goal, ring)
 		var repairs := refits.has(cell)
 		var cost: int = reachable.costs[cell]
@@ -443,6 +468,14 @@ func _best_refuge(
 			best_repairs = repairs
 			best_cost = cost
 	return best_cell
+
+
+## `threat`'s reading of `cell`, or every cell held equal when there is no map to
+## ask — the honest answer for a tier that has not paid to build one.
+static func _incoming(threat: ThreatMap, state: GameState, unit: Unit, cell: Vector2i) -> int:
+	if threat == null:
+		return 0
+	return threat.incoming_damage(state, unit, cell)
 
 
 ## Safety first, then the unit's own weapon, then ground that puts it back
@@ -515,12 +548,12 @@ static func _standoff_rank(
 ## Our own properties that would repair this unit, empty while it is unhurt: a
 ## healthy unit has no reason to prefer a workshop to any other safe cell.
 ## Infrastructure is `owner == unit.team` and never `allied` (four-players D2),
-## which is the question _servicing_properties already asks.
+## which is the question `context.servicing_properties` already asks.
 func _repair_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 	var none: Array[Vector2i] = []
 	if unit.hp >= 100:
 		return none
-	return _servicing_properties(context, unit)
+	return context.servicing_properties(unit.type.domain)
 
 
 ## A submarine's two decisions: whether to be under the water, and where to be it.
@@ -547,8 +580,28 @@ func _consider_dive(
 	if not wants or profile.dive_score <= plan.score:
 		return
 	plan.score = profile.dive_score
-	var refuge := _best_refuge(context, unit, reachable)
+	# dive_score is live on every tier, unlike the three dials that build the
+	# map — so a lone submarine on a threat-blind tier must not be what turns
+	# ThreatMap.build on for the whole turn. Only reach for the real map when
+	# something else already warrants its cost.
+	var threat: ThreatMap = null
+	if _weighs_threat():
+		threat = context.threat_map()
+	var refuge := _best_refuge(context, unit, reachable, threat)
 	plan.command = DiveCommand.new(unit, reachable.path_to(refuge), not unit.dived)
+
+
+## Whether any dial that builds the threat map is live. Mirrors
+## AIPlanCache._weighs_threat rather than calling it: the cache asks the
+## question to decide what a *kept* plan can depend on, this asks it to decide
+## what a *fresh* one may build, and each stays free to add a dial without
+## coupling the other's read to it.
+func _weighs_threat() -> bool:
+	return (
+		profile.threat_aversion > 0.0
+		or profile.advance_threat_tiles > 0.0
+		or profile.withdraw_weight > 0.0
+	)
 
 
 ## Whether an enemy that could damage `unit` can plausibly reach it next turn,
@@ -582,15 +635,20 @@ func _consider_supply(
 	# rather than re-derived because the radius is the commander's: Gideon Holt
 	# supplies two tiles out, and adjacency spelled here would miss the second. It
 	# takes the cell it is asked about, so one command answers for every cell.
+	# The team roster is fetched once here rather than once per reachable cell
+	# (~45 for an APC) and handed to `friendlies_in_reach`, which still owns the
+	# rule and every `from` still runs through it — a scoring cache, not a
+	# second opinion.
 	var standing: Array[Vector2i] = [unit.cell]
 	var probe := SupplyCommand.new(unit, standing)
+	var team_units := state.units_of(unit.team)
 	var best_score := plan.score
 	var best_cell := unit.cell
 	var found := false
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
-		var value := _supply_value(probe.friendlies_in_reach(state, cell))
+		var value := _supply_value(probe.friendlies_in_reach(state, cell, team_units))
 		if value <= 0.0:
 			continue
 		var score := (
@@ -761,18 +819,14 @@ static func _position_rank(
 func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	if context.goals.has(unit):
 		return context.goals[unit]
-	var state := context.state
-	var errand := _errand_goal(context, unit)
+	var errand := _cached_errand_goal(context, unit)
 	if errand != null:
-		context.goals[unit] = errand
 		return errand
 	if unit.type.can_capture:
-		var capturable: Array[Vector2i] = []
-		for cell in state.map.property_cells():
-			# Through the allegiance authority, so the planner never walks a unit at
-			# a capture `CaptureCommand` would refuse: an ally's ground is held.
-			if not state.allied(state.owner_at(cell), unit.team):
-				capturable.append(cell)
+		# `capturable_properties` is the allegiance authority read once for the
+		# whole command: an ally's ground is already held, so `CaptureCommand`
+		# would refuse it and a unit is never walked at it.
+		var capturable := context.capturable_properties()
 		if not capturable.is_empty():
 			var capture := AIPlanningContext.AdvanceGoal.new()
 			capture.cell = _claimed_property(context, unit, capturable)
@@ -809,23 +863,51 @@ func _enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.Ad
 ## what keeps a unit an errand has already taken from claiming ground it will
 ## never walk to.
 func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
-	var goal := AIPlanningContext.AdvanceGoal.new()
-	if unit.running_dry(profile.refuel_margin_turns):
-		var refits := _servicing_properties(context, unit)
-		if not refits.is_empty():
-			goal.cell = _nearest(unit.cell, refits)
-			return goal
-	if unit.hp <= _retreat_threshold(context.state, unit):
-		var repairs := _servicing_properties(context, unit)
-		if not repairs.is_empty():
-			goal.cell = _nearest(unit.cell, repairs)
-			return goal
-	var besieged := _besieged_home_hqs(context, unit)
+	# One scan for both the refit and repair checks below — a unit that is
+	# fuel-critical with nothing servicing it used to run this same scan again
+	# for the wound check that follows.
+	var servicing := context.servicing_properties(unit.type.domain)
+	if not servicing.is_empty():
+		if unit.running_dry(profile.refuel_margin_turns):
+			var refit := AIPlanningContext.AdvanceGoal.new()
+			refit.cell = _nearest(unit.cell, servicing)
+			refit.errand = true
+			return refit
+		if unit.hp <= _retreat_threshold(context.state, unit):
+			var repair := AIPlanningContext.AdvanceGoal.new()
+			repair.cell = _nearest(unit.cell, servicing)
+			repair.errand = true
+			return repair
+	var besieged := _besieged_home_hqs(context)
 	if not besieged.is_empty():
+		var goal := AIPlanningContext.AdvanceGoal.new()
 		goal.cell = _nearest(unit.cell, besieged)
 		goal.stand_off = AttackRange.is_indirect(unit)
+		goal.errand = true
 		return goal
 	return null
+
+
+## `_errand_goal`'s answer, shared with `_advance_goal`'s own memo. A unit
+## `_assign_capture_claims` inspects while filtering seekers, and that same
+## unit's own `_advance_goal` call later — this is the one path both walk,
+## caching a real errand so the second call finds it rather than re-running
+## the scan. A null errand is never cached: it is not itself a fact about the
+## unit's final goal, only that this branch found nothing.
+##
+## The memo it reads holds captures and advances too, so a cached goal answers
+## here only when it is flagged an errand. Without that the seeker filter would
+## invert for any unit whose `_advance_goal` had already run — "has an errand"
+## and "has any goal" would be the same test — and drop from the seekers exactly
+## the units it exists to keep.
+func _cached_errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
+	if context.goals.has(unit):
+		var cached := context.goals[unit]
+		return cached if cached.errand else null
+	var errand := _errand_goal(context, unit)
+	if errand != null:
+		context.goals[unit] = errand
+	return errand
 
 
 ## Which of `cells` this unit walks to once capture goals are claimed, so that
@@ -916,22 +998,22 @@ func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array
 	for other in context.friendly_units:
 		if not other.type.can_capture or other.carrier != null:
 			continue
-		if other == unit or cells.has(other.cell) or _errand_goal(context, other) == null:
+		if other == unit or cells.has(other.cell) or _cached_errand_goal(context, other) == null:
 			seekers.append(other)
-	var bids: Array = []
+	var bids: Array[Array] = []
 	for u in seekers.size():
 		for c in cells.size():
 			bids.append([_goal_steps(context.state, seekers[u].cell, cells[c]), u, c])
 	bids.sort_custom(_by_distance_then_scan_order)
-	var held: Dictionary = {}
-	var placed: Dictionary = {}
+	var held: Dictionary[int, int] = {}
+	var placed: Dictionary[int, int] = {}
 	for bid in bids:
 		var u: int = bid[1]
 		var c: int = bid[2]
-		if placed.has(u) or int(held.get(c, 0)) >= profile.capture_claim_depth:
+		if placed.has(u) or held.get(c, 0) >= profile.capture_claim_depth:
 			continue
 		placed[u] = c
-		held[c] = int(held.get(c, 0)) + 1
+		held[c] = held.get(c, 0) + 1
 	for u in seekers.size():
 		var seeker := seekers[u]
 		var claim := (
@@ -953,24 +1035,18 @@ static func _by_distance_then_scan_order(a: Array, b: Array) -> bool:
 	return a[2] < b[2]
 
 
-## Home HQs of our own side with a capture-capable enemy standing on them, in
-## enemy scan order. The one property kind that pulls a unit off the front: a
-## city changes hands and can be taken back, a home HQ ends the army that loses
-## it. Defending anything smaller is left to units that already had a shot.
-func _besieged_home_hqs(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
+## Home HQs of our own side with a capture-capable enemy standing on them. The
+## one property kind that pulls a unit off the front: a city changes hands and
+## can be taken back, a home HQ ends the army that loses it. Defending anything
+## smaller is left to units that already had a shot.
+##
+## The scan itself is `context.besieged_home_hqs()`'s, asked only while
+## `defend_weight` is live — the gate stays here rather than in the context, so
+## a tier with the dial off never pays for the scan at all.
+func _besieged_home_hqs(context: AIPlanningContext) -> Array[Vector2i]:
 	if profile.defend_weight <= 0.0:
-		return cells
-	var state := context.state
-	for enemy in context.visible_enemies:
-		if not enemy.type.can_capture:
-			continue
-		var owner := state.owner_at(enemy.cell)
-		if not state.allied(owner, unit.team):
-			continue
-		if state.home_hq.has(owner) and state.home_hq[owner] == enemy.cell:
-			cells.append(enemy.cell)
-	return cells
+		return []
+	return context.besieged_home_hqs()
 
 
 ## The profile's retreat line, moved by the commander's doctrine — a general
@@ -982,15 +1058,6 @@ func _retreat_threshold(state: GameState, unit: Unit) -> int:
 		if delta != 0:
 			threshold += int(roundf(profile.doctrine_weight * float(delta)))
 	return threshold
-
-
-## Owned properties that refuel and repair this unit's movement domain.
-func _servicing_properties(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-	for cell in context.owned_properties:
-		if context.state.map.terrain_at(cell).services_domain(unit.type.domain):
-			cells.append(cell)
-	return cells
 
 
 static func _nearest(from: Vector2i, cells: Array[Vector2i]) -> Vector2i:

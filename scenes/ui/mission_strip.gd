@@ -185,6 +185,8 @@ func _build() -> void:
 ## it teaches.
 func _place() -> void:
 	await get_tree().process_frame
+	if not is_inside_tree():  # rematch, menu exit or a batch scene change freed the strip
+		return
 	if not visible:
 		return
 	reset_size()

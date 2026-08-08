@@ -108,7 +108,9 @@ func show_turn(
 	# The lighter variant, always: a faction's base hue is close enough to the
 	# slate bar that Iron's chip disappears into it entirely (SPEC's second token
 	# bug). Every faction chip on a dark surface takes the -light value.
-	_chip.add_theme_stylebox_override("panel", _chip_box(side_theme.color_light))
+	_chip.add_theme_stylebox_override(
+		"panel", UiTheme.bordered(side_theme.color_light, UiTheme.HARD_BORDER)
+	)
 	_faction_label.text = faction.to_upper()
 	_doctrine_label.text = doctrine
 	_funds_label.text = _thousands(funds)
@@ -150,10 +152,3 @@ static func _thousands(value: int) -> String:
 			out += ","
 		out += digits[i]
 	return ("-" if value < 0 else "") + out
-
-
-func _chip_box(color: Color) -> StyleBoxFlat:
-	var box := UiTheme.flat(color)
-	box.border_color = UiTheme.HARD_BORDER
-	box.set_border_width_all(1)
-	return box

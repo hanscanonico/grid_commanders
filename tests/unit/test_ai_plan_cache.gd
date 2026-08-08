@@ -81,6 +81,18 @@ SSSSSSSSSSSSSSSS
 2 c 14 0
 """
 
+## Our tank, an ally sixteen tiles off and an enemy twenty-five tiles off — both
+## outside the tank's own envelope, so only the allegiance question is being
+## asked: does the ally's flag count as "an enemy moved"?
+const ALLY_AND_ENEMY := """
+[terrain]
+................................
+[units]
+1 t 4 0
+2 i 20 0
+3 i 29 0
+"""
+
 ## Three tanks in a row with nothing to fight: the first moves six tiles east,
 ## which is another tank's business and not the far one's.
 const PROBES := """
@@ -246,6 +258,29 @@ func test_a_wounded_enemy_keeps_nothing_while_a_threat_dial_is_live() -> void:
 	assert_null(cache.plan_for(probe), "and a wounded enemy is read from wherever it could shoot")
 
 
+## Allegiance is the question, not team id (COM-177): an ally can no more reach
+## the threat map than it can `visible_enemies`, so its own flag flipping is not
+## "an enemy moved" — while a true enemy, unallied, still is.
+func test_an_allys_flag_flip_keeps_a_distant_plan_but_an_enemys_move_still_drops_it() -> void:
+	var profile := AIProfile.new()
+	profile.threat_aversion = 0.1
+	var state := _state(ALLY_AND_ENEMY, _ally_sides)
+	var context := AIPlanningContext.new(unit_db)
+	var probe := state.unit_at(Vector2i(4, 0))
+	var cache := _holding(state, context, probe, profile)
+	context.threat_map()
+	var kept := AIUnitPlan.new()
+	cache.keep(probe, kept)
+	_resync(cache, context, state)
+	assert_eq(cache.plan_for(probe), kept, "the turn's map is built and the board has not moved")
+	state.unit_at(Vector2i(20, 0)).acted = true
+	_resync(cache, context, state)
+	assert_eq(cache.plan_for(probe), kept, "an ally's own flag is not the enemy's business")
+	MoveCommand.new(state.unit_at(Vector2i(29, 0)), [Vector2i(29, 0), Vector2i(28, 0)]).apply(state)
+	_resync(cache, context, state)
+	assert_null(cache.plan_for(probe), "a true enemy is still read from as far as it could shoot")
+
+
 func test_the_meter_moving_keeps_nothing() -> void:
 	var wren := CommanderDB.load_default().by_id(&"sable_wren")
 	assert_not_null(wren)
@@ -367,3 +402,9 @@ func _wound_the_tank(state: GameState) -> void:
 
 func _fog(state: GameState) -> void:
 	state.fog_enabled = true
+
+
+## Teams 1 and 2 grouped onto one side, team 3 left off it and so hostile to
+## both — the same `sides` a seat strip or `--sides=` would write.
+func _ally_sides(state: GameState) -> void:
+	state.sides = {1: 0, 2: 0}

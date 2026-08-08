@@ -4,6 +4,11 @@ extends Resource
 ## -> base damage %). A missing entry means that weapon cannot damage the
 ## defender.
 
+## Where the shipped chart lives. Every caller — the battle scene, the balance
+## tools, the arena — loads the same one match, so the path has one owner
+## rather than a copy at each call site.
+const DEFAULT_PATH := "res://data/damage_chart.tres"
+
 const PRIMARY := &"primary"
 const SECONDARY := &"secondary"
 

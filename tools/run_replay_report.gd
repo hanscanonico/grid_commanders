@@ -20,7 +20,6 @@ extends SceneTree
 ## is why this is deliberately out of `make verify`.
 
 const DEFAULT_OUT_ROOT := "reports/replay"
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 ## How many findings the printed summary lists before saying how many are left,
 ## and how many of each kind the written report shows.
 const PRINTED := 12
@@ -44,7 +43,7 @@ func _init() -> void:
 		recording,
 		TerrainDB.load_default(),
 		UnitDB.load_default(),
-		load(DAMAGE_CHART_PATH),
+		load(DamageChart.DEFAULT_PATH),
 		CommanderDB.load_default()
 	)
 	if _team != 0:
@@ -62,7 +61,7 @@ func _init() -> void:
 ## path that quietly reported on the wrong match would look exactly like a run
 ## that worked.
 func _parse_args() -> bool:
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--replay="):
 			_path = arg.get_slice("=", 1).strip_edges()
 		elif arg.begins_with("--team="):

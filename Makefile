@@ -36,7 +36,7 @@ test:
 	$(GODOT) --headless --path . -s res://addons/gut/gut_cmdln.gd
 
 # The merge gate, in one command. Order is cheapest-feedback-first: parsing
-# fails fastest, style next, the suite last.
+# fails fastest, style next, the suite last, then the ~1s determinism replay.
 #
 # Note on exit noise: every headless run ends with "N ObjectDB instances were
 # leaked at exit" and "resources still in use". That is the engine failing to
@@ -48,7 +48,7 @@ test:
 #
 # Needs Godot 4.7+ (vendored under bin/, see README) and gdtoolkit 4.x for the
 # lint and format steps: pipx install "gdtoolkit==4.*"
-verify: check lint format-check test
+verify: check lint format-check test determinism
 
 # Presentation smoke: drives the battle scene's demo scenarios and proves each
 # still produces a frame. Renders, so it needs a display — keep it out of any
@@ -74,6 +74,7 @@ smoke:
 # docs/commander_balance.md, never the generated report.
 BAL ?=
 commander-balance:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_commander_balance.gd -- $(BAL)
 
 # The difficulty ladder gate (plan DF4): the same runner in --difficulty-check
@@ -88,6 +89,7 @@ commander-balance:
 # docs/difficulty_check.md, never the generated report.
 DIFF ?=
 difficulty-check:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_commander_balance.gd -- \
 		--difficulty-check $(DIFF)
 
@@ -101,6 +103,7 @@ difficulty-check:
 #   make bulwark-measure BULWARK="--seeds=4 --days=40"
 BULWARK ?=
 bulwark-measure:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_bulwark_measure.gd -- $(BULWARK)
 
 # The Balance Lab: the general instrument the two presets above are special
@@ -114,6 +117,7 @@ bulwark-measure:
 #   make balance-sim SIM="--sweep=maps --seeds=6"
 SIM ?=
 balance-sim:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_balance_sim.gd -- $(SIM)
 
 # The same Lab, sharded across processes: one headless engine per shard, several
@@ -141,14 +145,17 @@ balance-pool:
 # A whole matrix goes through the pool: make balance-pool POOL="--preset=arena …"
 ARENA ?=
 ai-arena:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_ai_arena.gd -- $(ARENA)
 
 # Score a finished arena run: one row per candidate, in each pool (arena plan
 # AR4). Reads records and plays nothing, so re-scoring a run after the fitness
 # function moves costs no matches. docs/ai_arena.md is the function it applies.
-#   make arena-report ARGS="--matches=reports/ai_arena/anchors_training"
+#   make arena-report REPORT="--matches=reports/ai_arena/anchors_training"
+REPORT ?=
 arena-report:
-	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- $(ARGS)
+	$(call require-godot)
+	$(GODOT) --headless --path . -s res://tools/run_arena_report.gd -- $(REPORT)
 
 # The calibration, end to end: play one fixed pool of the anchor round-robin
 # across the cores and score it. `ARENA_POOL=training` or `ARENA_POOL=validation`
@@ -161,6 +168,7 @@ arena-report:
 ARENA_POOL ?= training
 WORKERS ?= 6
 arena-anchors:
+	$(call require-godot)
 	@plan=$$($(GODOT) --headless --path . -s res://tools/run_arena_plan.gd -- \
 		--pool=$(ARENA_POOL) | grep '^--maps=') && \
 	echo "arena: $(ARENA_POOL) pool -> $$plan" && \
@@ -212,6 +220,7 @@ replay: import
 # it stays out of `make verify`. Writes to reports/ (gitignored).
 ARGS ?=
 replay-report:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_replay_report.gd -- \
 		--replay="$(REPLAY)" $(ARGS)
 
@@ -281,9 +290,11 @@ sprites-check:
 # Preflight for `unit-sprites`: proves the vendored per-unit sources exist,
 # are the right size, and map onto the roster, without writing anything.
 unit-sprites-check:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/paste_unit_sprites.gd -- --check
 
 ground:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_tiles.gd
 
 sprites:
@@ -296,15 +307,18 @@ sprites:
 # assets/sprites/units/ on every rebuild; without this step a `make tiles`
 # silently drops it. Must follow `sprites`.
 unit-sprites:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/paste_unit_sprites.gd
 
 # Audits the finished atlas cell by cell for one no art reached (none today;
 # this drew the Missiles placeholder until real art landed on column 13).
 # Must follow `unit-sprites`, whose output it preserves.
 unit-placeholders:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_unit_placeholders.gd
 
 sfx:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_sfx.gd
 
 # Regenerates the commander portraits (220x268 busts, drawn as SVG by
@@ -318,10 +332,12 @@ campaigns:
 	$(GODOT) --headless --path . -s res://tools/check_campaigns.gd
 
 portraits:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd
 	$(GODOT) --headless --path . --import
 
 import:
+	$(call require-godot)
 	$(GODOT) --headless --path . --import
 
 # The battle scene is launched directly so demos and captures skip the menu.

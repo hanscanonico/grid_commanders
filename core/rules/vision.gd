@@ -9,15 +9,14 @@ extends RefCounted
 ##   (Manhattan distance). Carried units see nothing.
 ## - Concealing terrain (woods, reefs) hides what stands on it: revealed only
 ##   from distance <= 1, regardless of the viewer's range.
-## - Owned properties watch their surroundings out to PROPERTY_VISION.
+## - Owned properties watch their surroundings out to
+##   `state.rules_config.property_vision`.
 ##
 ## Commanders bend all three: a doctrine can lengthen a unit's sight, let it see
 ## into cover at range, jam an enemy's sight shorter, or hide its own units from
 ## a viewer who can otherwise see the cell they stand on. Because of that last
 ## one, seeing a *cell* and seeing the *unit* on it are now separate questions —
 ## see can_see_unit.
-
-const PROPERTY_VISION := 2
 
 
 ## Vector2i -> true for every cell `team` can currently see.
@@ -45,7 +44,7 @@ static func visible_cells(state: GameState, team: int) -> Dictionary[Vector2i, b
 				state, cells, unit.cell, _sight_of(state, unit), co.sees_into_cover(state, unit)
 			)
 		for cell in state.properties_of(member):
-			_reveal_around(state, cells, cell, PROPERTY_VISION, false)
+			_reveal_around(state, cells, cell, state.rules_config.property_vision, false)
 	return cells
 
 
@@ -73,7 +72,7 @@ static func visible_cells_if_fogged(state: GameState, team: int) -> Dictionary[V
 ## visible_cells, passed in rather than recomputed because callers are drawing a
 ## whole board and already have it.
 static func can_see_unit(
-	state: GameState, viewer_team: int, unit: Unit, visible: Dictionary
+	state: GameState, viewer_team: int, unit: Unit, visible: Dictionary[Vector2i, bool]
 ) -> bool:
 	if state.allied(unit.team, viewer_team):
 		return true
@@ -135,7 +134,11 @@ static func _sight_of(state: GameState, unit: Unit) -> int:
 
 
 static func _reveal_around(
-	state: GameState, cells: Dictionary, from: Vector2i, radius: int, through_cover: bool
+	state: GameState,
+	cells: Dictionary[Vector2i, bool],
+	from: Vector2i,
+	radius: int,
+	through_cover: bool
 ) -> void:
 	for dy in range(-radius, radius + 1):
 		var span: int = radius - absi(dy)
@@ -149,6 +152,9 @@ static func _reveal_around(
 			# Which terrain conceals is the terrain's own flag rather than a name
 			# checked here, so a reef hides a submarine exactly as woods hide a
 			# tank, and adding cover is a data edit.
+			#
+			# absi(dx) + absi(dy) is Grid.manhattan(Vector2i.ZERO, Vector2i(dx, dy)),
+			# inlined: this walk is per-cell in a fill run after every command.
 			if state.map.terrain_at(cell).conceals and absi(dx) + absi(dy) > 1:
 				continue  # cover hides anything not right next to a viewer
 			cells[cell] = true

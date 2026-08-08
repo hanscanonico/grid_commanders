@@ -89,7 +89,7 @@ var game: GameState
 ## while watch mode (balance plan BS3) can put a different commander *and* a
 ## different tier on each side and have each plan with its own profile and its
 ## own per-turn threat map.
-var planners: Dictionary = {}
+var planners: Dictionary[int, AIController] = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
 ## A pause the player asked for during a computer turn, not yet taken effect. The
@@ -276,6 +276,7 @@ func _ready() -> void:
 	victory_screen.rematch_button.pressed.connect(_request_rematch)
 	victory_screen.menu_button.pressed.connect(_request_main_menu)
 	handoff_button.pressed.connect(leave_handoff)
+	HandoffScreen.dress(%HandoffBackdrop, handoff_label, %HandoffHint, handoff_button)
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view)
 	_zoom.setup()
@@ -1031,7 +1032,7 @@ func _fire_power(command: PowerCommand) -> void:
 	state = State.ANIMATING
 	var receipt := await execute_command(command)
 	if receipt.rejected():
-		state = State.IDLE
+		state = rest_state()
 		return
 	_clear_selection(false)
 	await conclude_command(receipt)
@@ -1135,6 +1136,9 @@ func _close_commander_info() -> void:
 
 func start_turn() -> void:
 	action_feedback.clear_turn()
+	# An air or sea unit that ran its tank dry is already gone from the sim, so
+	# the sprite table is resynced before set_active_team walks it.
+	view.sync_sprites()
 	view.set_active_team(game.current_team)
 	if _needs_handoff():
 		_enter_handoff()
@@ -1145,14 +1149,11 @@ func start_turn() -> void:
 ## Everything the incoming team is allowed to see, run once the device has
 ## actually changed hands (immediately, outside fogged hot-seat).
 func _begin_turn() -> void:
-	# Units can be lost between turns with no shot fired: an air or sea unit that
-	# ran its tank dry is already gone from the sim by now, so the board is
-	# resynced before it is drawn — and a side wiped out by its own fuel gauge
-	# ends the match here, exactly as one shot to pieces does.
-	view.sync_sprites()
 	refresh_fog()
 	refresh_hud()
 	refresh_panel()
+	# A side wiped out by its own fuel gauge ends the match here, exactly as one
+	# shot to pieces does.
 	if game.winner != 0:
 		enter_victory()
 		return
@@ -1248,7 +1249,6 @@ func _enter_handoff() -> void:
 		"%s — press confirm when ready" % view.identity.display_name(game.current_team)
 	)
 	handoff_screen.show()
-	handoff_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	handoff_button.grab_focus()
 
 
@@ -1300,7 +1300,7 @@ func refresh_fog() -> void:
 ## unannounced as the ownership flip that will follow it. A presentation split of
 ## a number the sim already holds — never a call back into capture_strength.
 func _refresh_capture_pips() -> void:
-	var pips := {}
+	var pips: Dictionary[Vector2i, int] = {}
 	for cell: Vector2i in game.capture_progress:
 		if perspective.can_see_cell(cell):
 			pips[cell] = game.capture_progress[cell]

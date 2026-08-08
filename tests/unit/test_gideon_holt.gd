@@ -8,19 +8,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, with_gideon: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if with_gideon:
-		state.set_commander(1, commander_db.by_id(&"gideon_holt"))
-	return state
+	return Fixture.state(map_text, {1: &"gideon_holt"} if with_gideon else {})
 
 
 # --- supply radius -----------------------------------------------------------

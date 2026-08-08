@@ -96,7 +96,9 @@ static func step_cost(state: GameState, unit: Unit, terrain: TerrainType) -> int
 ## `visible` is the mover's own sight, handed in for the reason the fill holds one
 ## for its whole walk: it is a whole-board flood, and the validation that asks this
 ## has just walked the path with the same answer.
-static func can_stop(state: GameState, unit: Unit, cell: Vector2i, visible: Dictionary) -> bool:
+static func can_stop(
+	state: GameState, unit: Unit, cell: Vector2i, visible: Dictionary[Vector2i, bool]
+) -> bool:
 	return _can_stop_on(state, unit, state.unit_at(cell), unit.team, visible)
 
 
@@ -109,7 +111,7 @@ static func can_stop(state: GameState, unit: Unit, cell: Vector2i, visible: Dict
 ## is stopped on by nobody, its own side included: Vision.can_see_unit always
 ## sees an ally. Staying put is always legal.
 static func _can_stop_on(
-	state: GameState, unit: Unit, occupant: Unit, seer: int, visible: Dictionary
+	state: GameState, unit: Unit, occupant: Unit, seer: int, visible: Dictionary[Vector2i, bool]
 ) -> bool:
 	if occupant == null or occupant == unit:
 		return true
@@ -161,7 +163,7 @@ static func reachable(
 	# The sighting team's visible cells decide whether a unit on a cell counts at
 	# all. Computed on first need and reused, so a fill that meets nobody that team
 	# has to look for — and any fill at all with fog off — never pays for it.
-	var visible: Dictionary = {}
+	var visible: Dictionary[Vector2i, bool] = {}
 	var visible_computed := false
 	var frontier: Array[Vector2i] = [unit.cell]
 	while not frontier.is_empty():

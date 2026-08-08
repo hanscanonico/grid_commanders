@@ -19,10 +19,10 @@ const BOARD := "[terrain]\n===\n===\n[units]\n1 p 0 0\n1 h 2 0\n2 p 0 1\n2 h 2 1
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _gideon() -> CommanderType:

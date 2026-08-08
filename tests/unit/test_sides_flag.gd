@@ -16,18 +16,11 @@ const DUEL_BOARD := "res://maps/scrimmage.txt"
 const FOUR_ARMY_BOARD := "res://maps/compass.txt"
 
 
-func _args(list: Array) -> PackedStringArray:
-	var args := PackedStringArray()
-	for item: String in list:
-		args.append(item)
-	return args
-
-
 ## The match `--sides=<spec>` stages on `map_path`, built the way a boot builds it.
 func _staged(map_path: String, spec: String) -> GameState:
 	var request := MatchRequest.new()
 	request.map_path = map_path
-	request.apply_cmdline(_args(["--sides=" + spec]))
+	request.apply_cmdline(Fixture.args(["--sides=" + spec]))
 	var built := BattleSetup.build(
 		request, TerrainDB.load_default(), UnitDB.load_default(), CommanderDB.load_default()
 	)
@@ -86,7 +79,7 @@ func test_an_unparseable_grouping_is_refused_rather_than_half_applied() -> void:
 
 func test_the_sides_flag_reaches_the_request() -> void:
 	var request := MatchRequest.new()
-	request.apply_cmdline(_args(["--sides=1+3v2+4"]))
+	request.apply_cmdline(Fixture.args(["--sides=1+3v2+4"]))
 	assert_eq(request.sides[1], request.sides[3])
 	assert_ne(request.sides[1], request.sides[2])
 

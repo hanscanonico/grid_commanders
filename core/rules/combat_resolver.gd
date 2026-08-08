@@ -308,7 +308,7 @@ static func _damage_pct(state: GameState, fight: Engagement, base_damage: int) -
 			- att_co.star_pierce(state, fight)
 		),
 		0,
-		CommanderType.MAX_STARS
+		state.rules_config.max_stars
 	)
 	var att := 100 + att_co.attack_bonus(state, fight)
 	var def := 100 + def_co.defense_bonus(state, fight)
@@ -323,8 +323,7 @@ static func _damage_pct(state: GameState, fight: Engagement, base_damage: int) -
 
 
 static func _select_shot(state: GameState, attacker: Unit, defender: Unit) -> DamageChart.Shot:
-	if state.damage_chart == null:
-		return null
-	return state.damage_chart.select_shot(
-		attacker.type.id, defender.type.id, attacker.ammo, attacker.type.max_ammo
-	)
+	# The same authority the counter already goes through: a submerged target
+	# is engaged only by a hunter, and asking the chart directly here would let
+	# the opening shot see past that gate the counter cannot.
+	return AttackRange.ready_shot(state, attacker, defender)

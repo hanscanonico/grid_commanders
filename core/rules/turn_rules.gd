@@ -8,8 +8,6 @@ extends RefCounted
 ## `in_supply_reach` and `expire_power` — because each was implemented twice and
 ## the two copies had already started to drift.
 
-const REPAIR_HP := 20  # internal HP (= 2 displayed) per turn on a property
-
 
 ## Every turn is charged the same, day one included. That is what keeps the two
 ## sides even: create() opens the match with this for the first team, and the
@@ -20,15 +18,19 @@ static func begin_turn(state: GameState) -> void:
 	var team := state.current_team
 	expire_power(state, team, CommanderType.Duration.ROUND)
 	state.funds[team] += income_for(state, team)
+	var suppliers := _suppliers_of(state, team)
 	for unit in state.units_of(team):
 		unit.acted = false
 		unit.refreshable = false
 		if unit.carrier != null:
 			continue  # cargo burns no upkeep; its transport refills it below
 		_burn_upkeep(unit)
-		if _serviced_here(state, unit) or _in_reach_of_supplier(state, unit):
+		if _serviced_here(state, unit) or _in_reach_of_suppliers(state, suppliers, unit):
 			unit.resupply()
 		if _lost_to_empty_tank(state, unit):
+			# A supplier that starved is off the board, so the units walked after
+			# it must not still be topped up by it.
+			suppliers.erase(unit)
 			continue  # nothing left to repair, and its cargo went down with it
 		_resupply_cargo(state, unit)
 		_repair(state, unit)
@@ -38,7 +40,7 @@ static func begin_turn(state: GameState) -> void:
 ## planner asks this when it weighs banking against buying, so what the AI
 ## expects to be paid is what the turn actually pays it.
 static func income_for(state: GameState, team: int) -> int:
-	return state.properties_of(team).size() * GameState.INCOME_PER_PROPERTY
+	return state.properties_of(team).size() * state.rules_config.income_per_property
 
 
 ## Fuel spent simply by existing, before anything refills it. Zero for ground
@@ -104,11 +106,11 @@ static func expire_power(state: GameState, team: int, duration: CommanderType.Du
 ## proportionally to unit cost. Skipped (not partial) when funds don't cover the
 ## full heal.
 static func _repair(state: GameState, unit: Unit) -> void:
-	if unit.hp >= 100:
+	if unit.hp >= Unit.MAX_HP:
 		return
 	if not _serviced_here(state, unit):
 		return
-	var heal := mini(REPAIR_HP, 100 - unit.hp)
+	var heal := mini(state.rules_config.repair_hp, Unit.MAX_HP - unit.hp)
 	var full_price := unit.type.cost * heal / 100
 	var cost := full_price * state.commander_of(unit.team).repair_cost_pct(state, unit) / 100
 	if state.funds[unit.team] < cost:
@@ -117,12 +119,25 @@ static func _repair(state: GameState, unit: Unit) -> void:
 	unit.hp += heal
 
 
-## A supply unit close enough to reach `unit`, asked of the rule below so the
-## turn's automatic top-up and the Supply action can never disagree about who is
-## in reach of whom.
-static func _in_reach_of_supplier(state: GameState, unit: Unit) -> bool:
-	for other in state.units_of(unit.team):
-		if in_supply_reach(state, other, other.cell, unit):
+## Every unit of `team` that could stand as a supplier this turn, built once by
+## `begin_turn` rather than re-filtered out of the whole roster for each unit it
+## checks in turn — the same shape MovementResolver._occupants is waived for
+## (CLAUDE.md). `in_supply_reach` below stays the one answer to whether a given
+## pair is actually in range; this only narrows who it has to be asked about.
+static func _suppliers_of(state: GameState, team: int) -> Array[Unit]:
+	var suppliers: Array[Unit] = []
+	for unit in state.units_of(team):
+		if unit.type.can_resupply:
+			suppliers.append(unit)
+	return suppliers
+
+
+## A supplier in `suppliers` close enough to reach `unit`, asked of the rule
+## below so the turn's automatic top-up and the Supply action can never
+## disagree about who is in reach of whom.
+static func _in_reach_of_suppliers(state: GameState, suppliers: Array[Unit], unit: Unit) -> bool:
+	for supplier in suppliers:
+		if in_supply_reach(state, supplier, supplier.cell, unit):
 			return true
 	return false
 

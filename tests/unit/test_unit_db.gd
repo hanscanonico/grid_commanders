@@ -8,7 +8,7 @@ var unit_db: UnitDB
 
 
 func before_each() -> void:
-	unit_db = UnitDB.load_default()
+	unit_db = Fixture.unit_db()
 
 
 func _ids(types: Array[UnitType]) -> Array[StringName]:

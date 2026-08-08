@@ -55,7 +55,7 @@ func _init() -> void:
 
 
 func _parse_args() -> bool:
-	for arg in OS.get_cmdline_user_args():
+	for arg in CmdArgs.user():
 		if arg.begins_with("--spec="):
 			_spec_path = arg.get_slice("=", 1).strip_edges()
 		else:

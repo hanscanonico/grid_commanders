@@ -18,7 +18,6 @@ extends RefCounted
 
 ## Paired seed count when a run's flags do not say. Each seed plays both seats.
 const DEFAULT_SEEDS := 4
-const DAMAGE_CHART_PATH := "res://data/damage_chart.tres"
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -33,10 +32,24 @@ static func load_default() -> BalanceHarness:
 	var harness := BalanceHarness.new()
 	harness.terrain_db = TerrainDB.load_default()
 	harness.unit_db = UnitDB.load_default()
-	harness.chart = load(DAMAGE_CHART_PATH)
+	harness.chart = load(DamageChart.DEFAULT_PATH)
 	harness.commander_db = CommanderDB.load_default()
 	harness.difficulty_db = DifficultyDB.load_default()
 	return harness
+
+
+## Validates a numeric flag's raw text before coercing it: an integer at least
+## `min_value`, or -1 (never legal for any flag that asks) otherwise — so
+## `--seeds=four` and `--days=-5` refuse out loud instead of the old
+## `maxi(1, int(...))` quietly landing on 1.
+##
+## The three drivers share the check and keep their own refusal, because the
+## message names the flag and the tool that read it.
+static func int_flag(value: String, min_value: int) -> int:
+	if not value.is_valid_int():
+		return -1
+	var parsed := value.to_int()
+	return parsed if parsed >= min_value else -1
 
 
 ## A board by name — a fixture for the commander matrix, a shipped map for the

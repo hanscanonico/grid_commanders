@@ -2,6 +2,11 @@ class_name Unit
 extends RefCounted
 ## One unit instance on the battlefield. Pure simulation state.
 
+## Internal HP is 0-100; a dead unit is removed rather than held at zero, so a
+## live one's floor is one and its ceiling is full health.
+const MAX_HP := 100
+const MIN_HP := 1
+
 var type: UnitType
 var team: int
 var cell: Vector2i
@@ -22,11 +27,12 @@ var carrier: Unit = null
 ## Submerged (subs only). A dived unit is hidden from enemies that are not
 ## standing next to it — with or without fog, unlike everything else the fog
 ## rules hide — and only a weapon that reaches under the surface can touch it.
-## It still occupies its cell: an enemy that moves into it finds it there. That
-## blocking is visible even when the boat is not — with fog off the move-range
-## overlay shows a one-tile hole where it sits, which gives its position away.
-## Known and accepted: the proper answer is the trap behaviour a hidden unit has
-## in Advance Wars, where moving into one halts you there, and that is deferred.
+## It still occupies its cell, and a movement fill plans through it exactly as
+## it does any other unit the mover cannot see: the cell fills and offers
+## itself as a stopping place. `GameState.advance_unit` springs the Advance
+## Wars trap on contact, halting the mover at the last free cell before it.
+## Same rule with fog on or off — `Vision.is_hidden_from` checks dive ahead of
+## the fog gate.
 var dived: bool = false
 ## The name the board gave this unit, empty for every unit nobody named — the
 ## optional fifth column of a map's [units] row, carried in the save. It is what

@@ -21,27 +21,18 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## A board with `sides` applied. `allies` is a list of teams sharing side 0; every
 ## other army is left ungrouped, which makes it its own side.
 func _state(map_text: String, allies: Array = []) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
+	var state := Fixture.state(map_text)
 	for team: int in allies:
 		state.sides[team] = 0
 	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
 
 
 # --- the authority itself ----------------------------------------------------
@@ -77,8 +68,10 @@ func test_a_grouping_makes_a_side_of_its_members() -> void:
 func test_an_ally_cannot_be_fired_on() -> void:
 	const BOARD := "[terrain]\n....\n[units]\n1 t 0 0\n2 i 1 0"
 	var attack := func(state: GameState) -> String:
-		return AttackCommand.new(state.units[0], _path([Vector2i(0, 0)]), Vector2i(1, 0)).validate(
-			state
+		return (
+			AttackCommand
+			. new(state.units[0], Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
+			. validate(state)
 		)
 	assert_eq(attack.call(_state(BOARD)), "", "a free-for-all rival is a target")
 	assert_eq(
@@ -91,8 +84,8 @@ func test_an_ally_cannot_be_fired_on() -> void:
 func test_an_allys_property_is_not_capturable_but_neutral_ground_still_is() -> void:
 	const BOARD := "[terrain]\nCC\n[owners]\n2 0 0\n[units]\n1 i 0 0"
 	# Standing still on the rival's city, then stepping onto the neutral one.
-	var here := _path([Vector2i(0, 0)])
-	var next_door := _path([Vector2i(0, 0), Vector2i(1, 0)])
+	var here := Fixture.path([Vector2i(0, 0)])
+	var next_door := Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])
 	var capture := func(state: GameState, at: Array[Vector2i]) -> String:
 		return CaptureCommand.new(state.units[0], at).validate(state)
 	assert_eq(capture.call(_state(BOARD), here), "", "a rival's ground is takeable")
@@ -115,8 +108,8 @@ func test_an_allys_property_is_not_capturable_but_neutral_ground_still_is() -> v
 ## still block *stopping*, which is what keeps two units off one cell.
 func test_an_ally_is_walked_through_but_not_stopped_on() -> void:
 	const BOARD := "[terrain]\n....\n[units]\n1 i 0 0\n2 i 1 0"
-	var through := _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
-	var onto := _path([Vector2i(0, 0), Vector2i(1, 0)])
+	var through := Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+	var onto := Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])
 	var rivals := _state(BOARD)
 	assert_eq(
 		MoveCommand.new(rivals.units[0], through).validate(rivals),
@@ -151,7 +144,7 @@ func test_an_ally_never_springs_an_ambush() -> void:
 	allies.fog_enabled = true
 	assert_false(
 		allies.advance_unit(
-			allies.units[0], _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+			allies.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 		),
 		"walking past an ally is not an ambush"
 	)
@@ -160,7 +153,7 @@ func test_an_ally_never_springs_an_ambush() -> void:
 	rivals.fog_enabled = true
 	assert_true(
 		rivals.advance_unit(
-			rivals.units[0], _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+			rivals.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 		),
 		"an unseen rival still does"
 	)
@@ -285,7 +278,9 @@ func test_allies_share_no_infrastructure() -> void:
 	state.funds[2] = 0
 	assert_eq(state.funds[2], 0, "an ally's treasury is its own")
 	assert_eq(
-		JoinCommand.new(state.units[0], _path([Vector2i(0, 0), Vector2i(1, 0)])).validate(state),
+		JoinCommand.new(state.units[0], Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])).validate(
+			state
+		),
 		"can only join an identical friendly unit",
 		"two armies' units do not merge"
 	)

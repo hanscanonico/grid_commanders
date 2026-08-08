@@ -17,6 +17,12 @@
 # No `# symmetric` tag: that lint is a 180-degree *duel* instrument (FP6/R5), and
 # four seats have no opposing pair for it to check.
 #
+# No `# grouping` tag either: that one is a claim that a board is *not* seat-fair
+# (asymmetric-board plan R5), checked against a declared side split — and
+# marchlands opens seat-fair in the 2v2 it is built for, so tagging it would
+# fail the lint's own R5 guard. Its fairness rests on the seat-parity lint above
+# plus design review, the same bar every untagged board is held to.
+#
 # Land only, like the other multi-army boards: the computer cannot plan a ferry, so
 # a board it may have to fight across in any grouping lets every army walk to every
 # other. The mountain shoulders wall the ridge for anything on treads; the four road

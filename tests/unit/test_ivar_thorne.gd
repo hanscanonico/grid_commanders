@@ -10,26 +10,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, thorne_team: int = 1) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if thorne_team != 0:
-		state.set_commander(thorne_team, commander_db.by_id(&"ivar_thorne"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(state.current_team, state.commander_of(state.current_team).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {} if thorne_team == 0 else {thorne_team: &"ivar_thorne"})
 
 
 # --- wounded and dangerous ----------------------------------------------------
@@ -120,7 +108,7 @@ func test_the_cut_reaches_his_own_army_his_allys_and_every_enemys() -> void:
 	state.sides = {1: 0, 2: 0}
 	for unit in state.units:
 		unit.hp = 50
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(state.units[0].hp, 30, "his own")
 	assert_eq(state.units[1].hp, 30, "his ally's, which no other power touches")
 	assert_eq(state.units[2].hp, 30, "a rival")
@@ -136,7 +124,7 @@ func test_nothing_dies_and_a_unit_on_one_pip_is_still_on_one_pip() -> void:
 	state.units[2].hp = 25
 	state.units[3].hp = 10
 	state.units[4].hp = 4
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state), "")
 	assert_eq(state.units[0].hp, 80, "two pips off his own")
 	assert_eq(state.units[1].hp, 80, "two pips off a full one")
 	assert_eq(state.units[2].hp, 10, "down to the floor and no further")

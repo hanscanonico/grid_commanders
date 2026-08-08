@@ -8,26 +8,14 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 
 
 func _state(map_text: String, with_tomas: bool = true) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	if with_tomas:
-		state.set_commander(1, commander_db.by_id(&"tomas_reed"))
-	return state
-
-
-func _fire_power(state: GameState) -> void:
-	state.add_charge(1, state.commander_of(1).power_cost)
-	var command := PowerCommand.new()
-	assert_eq(command.validate(state), "")
-	command.apply(state)
+	return Fixture.state(map_text, {1: &"tomas_reed"} if with_tomas else {})
 
 
 # --- the doctrine ------------------------------------------------------------
@@ -89,7 +77,7 @@ func test_a_neutral_commander_chips_its_displayed_hp() -> void:
 ## a fresh property is worth. The point of the power is the one-turn capture.
 func test_the_power_takes_a_property_in_one_turn() -> void:
 	var state := _state("[terrain]\n.C\n[units]\n1 i 0 0")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(CaptureCommand.capture_strength(state, state.units[0]), 22)
 	CaptureCommand.new(state.units[0], [Vector2i(0, 0), Vector2i(1, 0)]).apply(state)
 	assert_eq(state.owner_at(Vector2i(1, 0)), 1, "captured outright")
@@ -100,14 +88,14 @@ func test_the_power_moves_foot_units_only() -> void:
 	var state := _state("[terrain]\n....\n....\n[units]\n1 i 0 0\n1 t 0 1")
 	var infantry := state.units[0]
 	var tank := state.units[1]
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(MovementResolver.move_budget(state, infantry), infantry.type.move_points + 1)
 	assert_eq(MovementResolver.move_budget(state, tank), tank.type.move_points)
 
 
 func test_the_power_expires_with_the_turn() -> void:
 	var state := _state("[terrain]\n.C\n[units]\n1 i 0 0")
-	_fire_power(state)
+	assert_eq(Fixture.fire_power(state, 1), "")
 	assert_eq(CaptureCommand.capture_strength(state, state.units[0]), 22)
 	EndTurnCommand.new().apply(state)
 	assert_eq(CaptureCommand.capture_strength(state, state.units[0]), 12, "back to the passive")

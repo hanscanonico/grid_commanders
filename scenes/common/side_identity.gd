@@ -52,8 +52,8 @@ const _GENERIC_ORDER: Array[StringName] = [&"meridian", &"aurora", &"iron", &"ve
 ## Aurora v Aurora -> blue + red.
 const _MIRROR_ORDER: Array[StringName] = [&"aurora", &"meridian", &"iron", &"verdant"]
 
-var _theme_by_team: Dictionary = {}  # team -> CommanderVisuals.FactionTheme
-var _name_by_team: Dictionary = {}  # team -> String
+var _theme_by_team: Dictionary[int, CommanderVisuals.FactionTheme] = {}
+var _name_by_team: Dictionary[int, String] = {}
 
 
 ## The identity for a running match, read straight from its commander picks.
@@ -107,7 +107,7 @@ func atlas_row(team: int) -> int:
 ## is left. Every collision falls to the first free theme, so no two sides can
 ## resolve to the same colour and the same picks always resolve the same.
 func _resolve(commanders: Dictionary) -> void:
-	var used: Dictionary = {}  # theme key -> true, for every side already placed
+	var used: Dictionary[StringName, bool] = {}  # theme key -> true, for every side already placed
 	var roster := _seat_order(commanders)
 	for slot in roster.size():
 		var team: int = roster[slot]
@@ -148,7 +148,9 @@ func _seat_order(commanders: Dictionary) -> Array[int]:
 ## distinctness by hue — each theme is its own hue — so this is the "fall back by
 ## hue, never by shade" of plan D3, and the "first classic not in use" of D4,
 ## the two differing only in which order they try the four keys.
-func _fallback(order: Array[StringName], used: Dictionary) -> CommanderVisuals.FactionTheme:
+func _fallback(
+	order: Array[StringName], used: Dictionary[StringName, bool]
+) -> CommanderVisuals.FactionTheme:
 	for key in order:
 		if not used.has(key):
 			return CommanderVisuals.theme_for_key(key)

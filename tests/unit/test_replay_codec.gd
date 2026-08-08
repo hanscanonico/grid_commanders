@@ -13,23 +13,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
-
-
-func _path(cells: Array) -> Array[Vector2i]:
-	var typed: Array[Vector2i] = []
-	for cell: Vector2i in cells:
-		typed.append(cell)
-	return typed
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## A command through the format and back, as JSON in between — which is where a
@@ -44,9 +30,9 @@ func _round_trip(state: GameState, command: Command) -> Command:
 
 
 func test_a_move_names_its_unit_by_the_cell_it_acted_from() -> void:
-	var state := _state("[terrain]\n....\n....\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n....\n....\n[units]\n1 i 0 0")
 	var mover := state.units[0]
-	var path := _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+	var path := Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 
 	var line := ReplayCodec.encode_command(state, MoveCommand.new(mover, path))
 	assert_eq(line["c"], "move")
@@ -58,9 +44,9 @@ func test_a_move_names_its_unit_by_the_cell_it_acted_from() -> void:
 
 
 func test_an_attack_carries_its_target_cell() -> void:
-	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 i 0 0\n2 i 1 0")
 	var attacker := state.units[0]
-	var command := AttackCommand.new(attacker, _path([Vector2i(0, 0)]), Vector2i(1, 0))
+	var command := AttackCommand.new(attacker, Fixture.path([Vector2i(0, 0)]), Vector2i(1, 0))
 	var rebuilt := _round_trip(state, command) as AttackCommand
 	assert_eq(rebuilt.unit, attacker)
 	assert_eq(rebuilt.target_cell, Vector2i(1, 0))
@@ -68,7 +54,7 @@ func test_an_attack_carries_its_target_cell() -> void:
 
 
 func test_a_build_names_a_type_and_takes_its_team_from_the_board() -> void:
-	var state := _state("[terrain]\nB.\n..\n[owners]\n1 0 0\n[units]\n")
+	var state := Fixture.state("[terrain]\nB.\n..\n[owners]\n1 0 0\n[units]\n")
 	state.funds[1] = 9000
 	var command := BuildCommand.new(1, unit_db.by_id(&"infantry"), Vector2i(0, 0))
 	var line := ReplayCodec.encode_command(state, command)
@@ -82,17 +68,17 @@ func test_a_build_names_a_type_and_takes_its_team_from_the_board() -> void:
 
 
 func test_a_dive_carries_which_way_the_hatch_goes() -> void:
-	var state := _state("[terrain]\nSS\nSS\n[units]\n1 s 0 0")
+	var state := Fixture.state("[terrain]\nSS\nSS\n[units]\n1 s 0 0")
 	var boat := state.units[0]
-	var down := _round_trip(state, DiveCommand.new(boat, _path([Vector2i(0, 0)]), true))
+	var down := _round_trip(state, DiveCommand.new(boat, Fixture.path([Vector2i(0, 0)]), true))
 	assert_true((down as DiveCommand).submerge)
 	boat.dived = true
-	var up := _round_trip(state, DiveCommand.new(boat, _path([Vector2i(0, 0)]), false))
+	var up := _round_trip(state, DiveCommand.new(boat, Fixture.path([Vector2i(0, 0)]), false))
 	assert_false((up as DiveCommand).submerge)
 
 
 func test_a_drop_names_the_passenger_by_its_place_in_the_cargo() -> void:
-	var state := _state("[terrain]\n._S\nSMS\n[units]\n1 l 1 0")
+	var state := Fixture.state("[terrain]\n._S\nSMS\n[units]\n1 l 1 0")
 	var lander := state.units[0]
 	var tank := Unit.create(unit_db.by_id(&"tank"), 1, lander.cell)
 	tank.carrier = lander
@@ -101,7 +87,7 @@ func test_a_drop_names_the_passenger_by_its_place_in_the_cargo() -> void:
 	state.units.append(tank)
 	state.units.append(infantry)
 
-	var command := DropCommand.new(lander, _path([Vector2i(1, 0)]), Vector2i(1, 1), infantry)
+	var command := DropCommand.new(lander, Fixture.path([Vector2i(1, 0)]), Vector2i(1, 1), infantry)
 	var line := ReplayCodec.encode_command(state, command)
 	assert_eq(line["p"], 1, "the second rider aboard")
 
@@ -112,13 +98,13 @@ func test_a_drop_names_the_passenger_by_its_place_in_the_cargo() -> void:
 
 
 func test_an_unnamed_passenger_stays_unnamed() -> void:
-	var state := _state("[terrain]\n._S\nSMS\n[units]\n1 l 1 0")
+	var state := Fixture.state("[terrain]\n._S\nSMS\n[units]\n1 l 1 0")
 	var lander := state.units[0]
 	var infantry := Unit.create(unit_db.by_id(&"infantry"), 1, lander.cell)
 	infantry.carrier = lander
 	state.units.append(infantry)
 
-	var command := DropCommand.new(lander, _path([Vector2i(1, 0)]), Vector2i(1, 1))
+	var command := DropCommand.new(lander, Fixture.path([Vector2i(1, 0)]), Vector2i(1, 1))
 	assert_eq(ReplayCodec.encode_command(state, command)["p"], ReplayCodec.NO_PASSENGER)
 	assert_null(
 		(_round_trip(state, command) as DropCommand).passenger,
@@ -127,7 +113,7 @@ func test_an_unnamed_passenger_stays_unnamed() -> void:
 
 
 func test_end_turn_names_nothing_but_itself() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	assert_eq(ReplayCodec.encode_command(state, EndTurnCommand.new()), {"c": "end_turn"})
 	assert_true(_round_trip(state, EndTurnCommand.new()) is EndTurnCommand)
 
@@ -137,7 +123,7 @@ func test_end_turn_names_nothing_but_itself() -> void:
 ## records the origin, which is what its command carried and what every commander
 ## but Radek Morn ignores.
 func test_a_power_names_the_cell_it_was_aimed_at() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	var aimed := PowerCommand.new()
 	aimed.target = Vector2i(1, 0)
 	assert_eq(ReplayCodec.encode_command(state, aimed), {"c": "power", "target": [1, 0]})
@@ -149,11 +135,11 @@ func test_a_power_names_the_cell_it_was_aimed_at() -> void:
 
 
 func test_every_movement_command_round_trips() -> void:
-	var state := _state("[terrain]\n....\n....\n[units]\n1 i 0 0\n1 i 1 0\n1 p 2 0")
+	var state := Fixture.state("[terrain]\n....\n....\n[units]\n1 i 0 0\n1 i 1 0\n1 p 2 0")
 	var mover := state.units[0]
-	var here := _path([Vector2i(0, 0)])
-	var onto_twin := _path([Vector2i(0, 0), Vector2i(1, 0)])
-	var onto_apc := _path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+	var here := Fixture.path([Vector2i(0, 0)])
+	var onto_twin := Fixture.path([Vector2i(0, 0), Vector2i(1, 0)])
+	var onto_apc := Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 	for pair: Array in [
 		[JoinCommand.new(mover, onto_twin), "join"],
 		[LoadCommand.new(mover, onto_apc), "load"],
@@ -171,13 +157,13 @@ func test_every_movement_command_round_trips() -> void:
 
 
 func test_a_kind_this_build_does_not_know_is_refused() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	assert_null(ReplayCodec.command_from(state, unit_db, {"c": "teleport"}))
 	assert_push_error("'teleport' is not a command")
 
 
 func test_a_line_missing_a_field_is_refused_rather_than_guessed() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	assert_null(ReplayCodec.command_from(state, unit_db, {"c": "move"}), "no path")
 	assert_push_error("a move line names no path")
 	assert_null(
@@ -189,13 +175,13 @@ func test_a_line_missing_a_field_is_refused_rather_than_guessed() -> void:
 
 
 func test_a_line_acting_from_an_empty_cell_is_refused() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	assert_null(ReplayCodec.command_from(state, unit_db, {"c": "move", "path": [[1, 0]]}))
 	assert_push_error("where nothing stands")
 
 
 func test_a_build_of_a_type_this_build_no_longer_has_is_refused() -> void:
-	var state := _state("[terrain]\nB.\n[owners]\n1 0 0\n[units]\n")
+	var state := Fixture.state("[terrain]\nB.\n[owners]\n1 0 0\n[units]\n")
 	assert_null(
 		ReplayCodec.command_from(state, unit_db, {"c": "build", "cell": [0, 0], "unit": "mecha"})
 	)
@@ -206,7 +192,7 @@ func test_a_build_of_a_type_this_build_no_longer_has_is_refused() -> void:
 
 
 func test_a_header_states_the_format_and_the_opening() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	var head := ReplayCodec.header(SaveCodec.encode(state, [2] as Array[int]), "a label", "now")
 	assert_eq(ReplayCodec.header_error(head), "")
 	assert_eq(head["label"], "a label")
@@ -226,5 +212,29 @@ func test_a_header_that_is_not_one_says_which_part_is_missing() -> void:
 ## disposable, so the line under it is the whole migration policy — an older
 ## format is refused, out loud, rather than read.
 func test_an_older_format_is_refused_rather_than_read() -> void:
-	assert_eq(ReplayCodec.FORMAT, 2)
+	assert_eq(ReplayCodec.FORMAT, 3)
 	assert_string_contains(ReplayCodec.header_error({"replay": 1, "opening": {}}), "format 1")
+
+
+## `header_error` reads every field's shape through `SaveSchema.is_shape` now
+## (COM-175, moved off `SaveCodec` to `SaveSchema` by COM-184), rather than the
+## hand-forked reader ReplayCodec used to keep beside it — so a StringName, which a
+## save's own commander and difficulty ids decode as, validates against
+## `Shape.STRING` exactly the way a save's would rather than failing the narrower
+## `value is String` the fork checked instead.
+func test_a_header_value_reads_a_string_name_the_way_a_save_would() -> void:
+	assert_true(SaveSchema.is_shape(&"alina_ward", SaveSchema.Shape.STRING))
+
+
+# --- the self-check (plan D3) ---------------------------------------------------
+
+
+## Second Wind reads `refreshable`, so a rule change to which actions leave it
+## set has to be able to move the checkpoint — otherwise a replay recorded under
+## the old rule plays clean and only diverges at the next Second Wind (COM-173).
+func test_the_digest_notices_refreshable() -> void:
+	var state := Fixture.state("[terrain]\n....\n....\n[units]\n1 i 0 0")
+	state.rng.seed = 1
+	var before := ReplayCodec.checkpoint(state)
+	state.units[0].refreshable = true
+	assert_ne(ReplayCodec.checkpoint(state), before)

@@ -23,7 +23,7 @@ class DropOption:
 var _game: GameState
 var _viewing_team: int = 0
 var _blacked_out := false
-var _visible_cells: Dictionary = {}
+var _visible_cells: Dictionary[Vector2i, bool] = {}
 ## Set for a replay: the match is over, so there is nobody left to hide it from
 ## (replay plan D5). It is a *viewer* policy and nothing else — `fog_enabled` on
 ## the state stays exactly as the match was played, because the sim has to resolve
@@ -46,9 +46,13 @@ func _init(p_game: GameState, p_omniscient: bool = false) -> void:
 func refresh(viewing_team: int, blacked_out: bool) -> void:
 	_viewing_team = viewing_team
 	_blacked_out = blacked_out and not _omniscient
-	_visible_cells = (
-		{} if _blacked_out or _omniscient else Vision.visible_cells(_game, viewing_team)
-	)
+	# Not a ternary: GDScript does not carry a typed dictionary's element types
+	# through one, so the `{}` branch would build a plain Dictionary and the
+	# assignment below would refuse it.
+	if _blacked_out or _omniscient:
+		_visible_cells = {}
+	else:
+		_visible_cells = Vision.visible_cells(_game, viewing_team)
 
 
 ## Whose eyes the board is currently drawn through. Read by surfaces that have to

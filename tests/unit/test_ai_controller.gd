@@ -7,21 +7,14 @@ var ai: AIController
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 	ai = AIController.new(unit_db)
 
 
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
-
-
 func test_attacks_enemy_in_range() -> void:
-	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 g 2 0")
+	var state := Fixture.state("[terrain]\n...\n[units]\n1 t 0 0\n2 g 2 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is AttackCommand, "expected an attack, got %s" % command)
 	assert_eq((command as AttackCommand).target_cell, Vector2i(2, 0))
@@ -30,14 +23,14 @@ func test_attacks_enemy_in_range() -> void:
 
 func test_prefers_valuable_target() -> void:
 	# both the infantry and the artillery are attackable; artillery is worth more
-	var state := _state("[terrain]\n....\n[units]\n1 t 1 0\n2 i 0 0\n2 g 2 0")
+	var state := Fixture.state("[terrain]\n....\n[units]\n1 t 1 0\n2 i 0 0\n2 g 2 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is AttackCommand)
 	assert_eq((command as AttackCommand).target_cell, Vector2i(2, 0))
 
 
 func test_captures_nearby_property() -> void:
-	var state := _state("[terrain]\n.C\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n.C\n[units]\n1 i 0 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is CaptureCommand, "expected a capture, got %s" % command)
 	var path: Array[Vector2i] = (command as CaptureCommand).path
@@ -46,7 +39,7 @@ func test_captures_nearby_property() -> void:
 
 
 func test_prefers_hq_over_city() -> void:
-	var state := _state("[terrain]\nQC.\n[owners]\n2 0 0\n[units]\n1 i 2 0")
+	var state := Fixture.state("[terrain]\nQC.\n[owners]\n2 0 0\n[units]\n1 i 2 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is CaptureCommand)
 	var path: Array[Vector2i] = (command as CaptureCommand).path
@@ -54,7 +47,7 @@ func test_prefers_hq_over_city() -> void:
 
 
 func test_continues_capture_in_progress() -> void:
-	var state := _state("[terrain]\nCC\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\nCC\n[units]\n1 i 0 0")
 	state.capture_progress[Vector2i(0, 0)] = 10
 	var command := ai.plan_next_command(state)
 	assert_true(command is CaptureCommand)
@@ -63,7 +56,7 @@ func test_continues_capture_in_progress() -> void:
 
 
 func test_advances_when_out_of_reach() -> void:
-	var state := _state("[terrain]\n............\n[units]\n1 t 0 0\n2 g 11 0")
+	var state := Fixture.state("[terrain]\n............\n[units]\n1 t 0 0\n2 g 11 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is MoveCommand, "expected an advance, got %s" % command)
 	var path: Array[Vector2i] = (command as MoveCommand).path
@@ -76,7 +69,7 @@ func test_advances_when_out_of_reach() -> void:
 ## as a retreat goal — parked on tarmac that never heals, it is removed from play.
 ## With no servicing property it falls through and presses on toward the enemy.
 func test_hurt_unit_will_not_retreat_to_a_property_that_cannot_repair_it() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nA.................\n[owners]\n1 0 0\n[units]\n1 t 3 0\n2 t 16 0"
 	)
 	state.units[0].hp = 40  # at or below retreat_hp, so it is fleeing, not advancing
@@ -95,7 +88,7 @@ func test_hurt_unit_will_not_retreat_to_a_property_that_cannot_repair_it() -> vo
 ## retreat onto an owned one to be repaired. Guards the fix from over-correcting
 ## into never breaking off at all.
 func test_hurt_unit_retreats_to_a_property_that_can_repair_it() -> void:
-	var state := _state(
+	var state := Fixture.state(
 		"[terrain]\nC.................\n[owners]\n1 0 0\n[units]\n1 t 3 0\n2 t 16 0"
 	)
 	state.units[0].hp = 40
@@ -111,7 +104,7 @@ func test_hurt_unit_retreats_to_a_property_that_can_repair_it() -> void:
 
 
 func test_waits_when_isolated() -> void:
-	var state := _state("[terrain]\nS.S.\nSSSS\n[units]\n1 t 1 0\n2 t 3 0")
+	var state := Fixture.state("[terrain]\nS.S.\nSSSS\n[units]\n1 t 1 0\n2 t 3 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is MoveCommand)
 	assert_eq((command as MoveCommand).path, [Vector2i(1, 0)] as Array[Vector2i])
@@ -121,7 +114,7 @@ func test_waits_when_isolated() -> void:
 func test_indirect_unit_backs_off_into_firing_range() -> void:
 	# Artillery (range 2-3) pinned next to a tank can neither fire nor counter,
 	# so it must reposition instead of waiting there forever.
-	var state := _state("[terrain]\n......\n[units]\n1 g 1 0\n2 t 0 0")
+	var state := Fixture.state("[terrain]\n......\n[units]\n1 g 1 0\n2 t 0 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is MoveCommand, "expected a reposition, got %s" % command)
 	var path: Array[Vector2i] = (command as MoveCommand).path
@@ -130,7 +123,7 @@ func test_indirect_unit_backs_off_into_firing_range() -> void:
 
 
 func test_indirect_unit_closes_in_when_out_of_range() -> void:
-	var state := _state("[terrain]\n..........\n[units]\n1 g 0 0\n2 t 9 0")
+	var state := Fixture.state("[terrain]\n..........\n[units]\n1 g 0 0\n2 t 9 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is MoveCommand)
 	var path: Array[Vector2i] = (command as MoveCommand).path
@@ -138,7 +131,7 @@ func test_indirect_unit_closes_in_when_out_of_range() -> void:
 
 
 func test_ends_turn_when_nothing_left() -> void:
-	var state := _state("[terrain]\n..\n[units]\n1 i 0 0")
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
 	state.units[0].acted = true
 	var command := ai.plan_next_command(state)
 	assert_true(command is EndTurnCommand)
@@ -180,7 +173,7 @@ func test_a_sub_dives_from_something_it_cannot_answer() -> void:
 	# Eight tiles off: inside a bomber's reach, since it fires where it lands and
 	# it lands seven tiles out. The boat has no weapon that answers an aircraft at
 	# all, so hiding is the whole of what it can do about one.
-	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0")
+	var state := Fixture.state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0")
 	var command := ai.plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a dive, got %s" % command)
 	assert_true((command as DiveCommand).submerge)
@@ -190,13 +183,13 @@ func test_a_sub_dives_from_something_it_cannot_answer() -> void:
 ## Diving from a cruiser is worse than facing it: the escort reaches under the
 ## water anyway, and a submerged boat gives up its counterattack doing it.
 func test_a_sub_does_not_hide_from_its_hunter() -> void:
-	var state := _state("[terrain]\nSSSSSSSS\n[units]\n1 s 0 0\n2 c 7 0")
+	var state := Fixture.state("[terrain]\nSSSSSSSS\n[units]\n1 s 0 0\n2 c 7 0")
 	var command := ai.plan_next_command(state)
 	assert_false(command is DiveCommand, "hiding from a cruiser buys nothing")
 
 
 func test_a_sub_surfaces_once_the_threat_is_gone() -> void:
-	var state := _state("[terrain]\nSSSSSS\n[units]\n1 s 0 0\n1 c 1 0")
+	var state := Fixture.state("[terrain]\nSSSSSS\n[units]\n1 s 0 0\n1 c 1 0")
 	state.units[0].dived = true
 	var command := ai.plan_next_command(state)
 	assert_true(command is DiveCommand, "expected a surface, got %s" % command)
@@ -206,7 +199,7 @@ func test_a_sub_surfaces_once_the_threat_is_gone() -> void:
 ## Going under on the last of the tank would only mean surfacing again next turn
 ## for exactly that reason, and diving again the turn after. It stays up instead.
 func test_a_sub_low_on_fuel_stays_up() -> void:
-	var state := _state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0")
+	var state := Fixture.state("[terrain]\nSSSSSSSSSSSS\n[units]\n1 s 0 0\n2 b 8 0")
 	var sub := state.units[0]
 	sub.fuel = sub.type.dived_fuel_upkeep + sub.type.move_points
 	var command := ai.plan_next_command(state)

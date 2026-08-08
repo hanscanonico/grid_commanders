@@ -11,6 +11,7 @@
 # The grand tier scales its economy with its area - two bases a seat and 48 neutral cities - so a
 # board this size still escalates. Land only: the computer cannot plan a ferry, so every army has
 # to reach every other on foot.
+# Symbols: . plains  F woods  = road  C city  B base  Q HQ
 [terrain]
 .......C............C.......
 ....B...FF..C..C..FF...B....

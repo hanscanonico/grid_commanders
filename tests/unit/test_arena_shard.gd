@@ -23,9 +23,9 @@ var commander_db: CommanderDB
 
 
 func before_each() -> void:
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-	commander_db = CommanderDB.load_default()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
+	commander_db = Fixture.commander_db()
 	shard = ArenaShard.new(TerrainDB.load_default(), unit_db, chart, commander_db)
 
 

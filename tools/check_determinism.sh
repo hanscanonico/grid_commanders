@@ -23,6 +23,12 @@
 
 set -uo pipefail
 
+# Every path below is repo-relative, and OUT_DIR is rm -rf'd — run from
+# anywhere else and that either fells a stranger's reports/determinism or
+# silently no-ops. cd to the repo root derived from $0, not
+# CLAUDE_PROJECT_DIR (that's a hook-only variable and this script isn't one).
+cd "$(dirname "$0")/.." || exit 1
+
 GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 
 GOLDEN_DIR="tests/fixtures/determinism"

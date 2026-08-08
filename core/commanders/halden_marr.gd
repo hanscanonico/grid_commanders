@@ -5,6 +5,9 @@ extends CommanderType
 
 @export var sea_attack_pct: int = 10
 @export var sea_move_bonus: int = 1
+## Deliberately id-keyed: this is a flavour list, "the coast", and no terrain
+## flag states that — inventing one for a single doctrine would be a flag with
+## one reader. Unlike Sable Wren's cover, this is not the concealment rule.
 @export var shore_terrain: Array[StringName] = [&"shoal", &"reef", &"port"]
 @export var shore_star_bonus: int = 1
 @export var shore_power_attack_pct: int = 10

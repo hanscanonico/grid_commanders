@@ -33,9 +33,9 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 ## Normal's shipped numbers with the join dial moved. `kill_bonus` is exposed
@@ -49,9 +49,7 @@ func _profile(join_weight: float, kill_bonus := 1.6) -> AIProfile:
 
 
 func _state(map_text: String, wounds: Dictionary) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
+	var state := Fixture.state(map_text)
 	for unit in state.units:
 		if wounds.has(unit.cell):
 			unit.hp = wounds[unit.cell]

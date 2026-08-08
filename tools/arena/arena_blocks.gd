@@ -62,7 +62,7 @@ const DIALS := {
 	&"duplicate_priority_cost": {"low": 0.0, "high": 8.0, "step": 2.0, "min_step": 1.0},
 	&"save_up_turns": {"low": 0.0, "high": 6.0, "step": 1.0, "min_step": 1.0},
 	&"air_answer_target": {"low": 0.0, "high": 6.0, "step": 1.0, "min_step": 1.0},
-	&"build_reactivity": {"low": 0.0, "high": 2.0, "step": 0.4, "min_step": 0.1},
+	&"build_reactivity": {"low": 0.0, "high": 1.0, "step": 0.4, "min_step": 0.1},
 	&"capture_units_per_property": {"low": 0.0, "high": 1.0, "step": 0.2, "min_step": 0.05},
 	&"capture_claim_depth": {"low": 0.0, "high": 4.0, "step": 1.0, "min_step": 1.0},
 	&"production_capture_multiplier": {"low": 0.5, "high": 4.0, "step": 0.5, "min_step": 0.25},

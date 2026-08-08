@@ -25,11 +25,11 @@ extends RefCounted
 ## a plan can depend on, so the cache reads the same profile the planner does.
 var profile: AIProfile
 
-var _plans: Dictionary = {}  # Unit -> AIUnitPlan
+var _plans: Dictionary[Unit, AIUnitPlan] = {}
 var _turn_key := ""
-var _units: Dictionary = {}  # Unit -> the condition below, as of the last sync
-var _owners: Dictionary = {}
-var _meters: Dictionary = {}  # team -> [charge, power_active]
+var _units: Dictionary[Unit, Array] = {}  # Unit -> the condition below, as of the last sync
+var _owners: Dictionary[Vector2i, int] = {}
+var _meters: Dictionary[int, Array] = {}  # team -> [charge, power_active]
 var _enemies: Array[Unit] = []
 ## Set by the diff: the enemy list or the ground our side holds moved, so every
 ## goal on the board was chosen over a different list.
@@ -37,7 +37,7 @@ var _stale_goals := false
 ## Set by the diff: a capturer moved, so every capturer's claim was re-dealt.
 var _stale_claims := false
 ## Set by the diff: movement domain -> a unit of it moved, so its column shifted.
-var _stale_columns: Dictionary = {}
+var _stale_columns: Dictionary[StringName, bool] = {}
 
 
 func _init(p_profile: AIProfile) -> void:
@@ -120,13 +120,16 @@ func _may_keep(context: AIPlanningContext) -> bool:
 ## there has to be added here too or the cache would keep plans made before the
 ## map existed.
 ##
-## `dive_score` reads the map too and is deliberately not a fourth. It is live in
-## every profile, so listing it here would keep nothing on any board — including
-## every board with no submarine on it — for a read only a submarine makes; and
-## its read is the last branch of a plan whose earlier branches decide whether it
-## is reached, so a re-score the cache skipped would have taken the same branch
-## and the moment the map is built cannot move. The narrow sea in
-## tests/unit/test_ai_plan_cache.gd is what holds that.
+## `dive_score` is deliberately not a fourth, and now reads the map only where
+## one of these three already warrants it — AIUnitActionPlanner mirrors this
+## same check before it builds one for a dive. It is live in every profile, so
+## listing it here would keep nothing on any board — including every board with
+## no submarine on it — for a read only a submarine makes. Where a dial does
+## warrant the map, the dive's read is the last branch of a plan whose earlier
+## branches decide whether it is reached, so a re-score the cache skipped would
+## have taken the same branch and the moment the map is built cannot move; where
+## none does, the dive reads no map at all and there is nothing here to guard.
+## The narrow sea in tests/unit/test_ai_plan_cache.gd is what holds that.
 func _weighs_threat() -> bool:
 	return (
 		profile.threat_aversion > 0.0
@@ -158,7 +161,7 @@ func _drop_what_changed(context: AIPlanningContext) -> bool:
 	# abandons one — or takes that unit off the board, so it is already touched.
 	var touched: Array[Vector2i] = []
 	var enemy_moved := false
-	var present: Dictionary = {}
+	var present: Dictionary[Unit, bool] = {}
 	for unit in state.units:
 		present[unit] = true
 		var before: Array = _units.get(unit, [])
@@ -195,15 +198,24 @@ func _drop_what_changed(context: AIPlanningContext) -> bool:
 
 
 ## Files one changed unit under what its change reaches, and answers whether it
-## was an enemy's. Only our own army keeps formation or deals claims; an enemy's
-## condition is priced where it stands, and the list it belongs to is read apart.
+## was an enemy's — allegiance is the question, asked of `allied()`, never team
+## id: an ally can no more appear in the threat map than in `visible_enemies`
+## (both read the same `allied` filter), so an ally's condition changing can
+## never be the reason a threat-weighing tier drops the whole cache. An ally
+## still occupies and vacates cells like any friendly, and that reaches its plan
+## through the same touched-cell envelope an own-team move already relies on
+## (the caller walks it regardless of what this returns) — only our own army
+## keeps formation or deals claims, so those two stay gated on the team itself.
+## An enemy's condition is priced where it stands, and the list it belongs to is
+## read apart.
 func _note_change(unit: Unit, context: AIPlanningContext, moved: bool) -> bool:
-	if unit.team != context.team:
+	if not context.state.allied(unit.team, context.team):
 		return true
-	if moved:
-		_stale_columns[unit.type.domain] = true
-	if unit.type.can_capture:
-		_stale_claims = true
+	if unit.team == context.team:
+		if moved:
+			_stale_columns[unit.type.domain] = true
+		if unit.type.can_capture:
+			_stale_claims = true
 	return false
 
 
@@ -244,8 +256,8 @@ static func _condition(unit: Unit) -> Array:
 	return [unit.cell, unit.hp, unit.acted, unit.fuel, unit.ammo, unit.dived, unit.carrier]
 
 
-static func _read_meters(state: GameState) -> Dictionary:
-	var meters: Dictionary = {}
+static func _read_meters(state: GameState) -> Dictionary[int, Array]:
+	var meters: Dictionary[int, Array] = {}
 	for team in state.teams:
 		var co_state := state.commander_state(team)
 		meters[team] = [co_state.charge, co_state.power_active]

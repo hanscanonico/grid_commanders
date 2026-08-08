@@ -9,20 +9,13 @@ var chart: DamageChart
 
 
 func before_each() -> void:
-	terrain_db = TerrainDB.load_default()
-	unit_db = UnitDB.load_default()
-	chart = load("res://data/damage_chart.tres")
-
-
-func _state(map_text: String) -> GameState:
-	var map := MapData.parse(map_text, terrain_db)
-	var state := GameState.create(map, unit_db, chart)
-	assert_not_null(state)
-	return state
+	terrain_db = Fixture.terrain_db()
+	unit_db = Fixture.unit_db()
+	chart = Fixture.chart()
 
 
 func test_ai_uses_a_dry_tanks_secondary() -> void:
-	var state := _state("[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0")
+	var state := Fixture.state("[terrain]\n==\n[units]\n1 t 0 0\n2 i 1 0")
 	state.units[0].ammo = 0
 	var command := AIController.new(unit_db, AIProfile.load_default()).plan_next_command(state)
 	assert_true(command is AttackCommand, "the dry Tank should still take its legal MG shot")
@@ -30,7 +23,7 @@ func test_ai_uses_a_dry_tanks_secondary() -> void:
 
 
 func test_threat_map_prices_a_dry_tank_per_target() -> void:
-	var state := _state("[terrain]\n=====\n[units]\n2 t 4 0")
+	var state := Fixture.state("[terrain]\n=====\n[units]\n2 t 4 0")
 	var enemy := state.units[0]
 	enemy.ammo = 0
 	var map := ThreatMap.build(state, [enemy])
