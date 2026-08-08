@@ -11,9 +11,12 @@ extends PanelContainer
 ## that exists to photograph this panel.
 ##
 ## **It decides nothing.** Whether a condition holds is the objective's answer
-## (`is_met`) and how far along it is is the objective's answer too (`readout`) —
-## this asks, marks and prints. A panel that counted cities its own way would be
-## a second opinion about a mission the runtime has already ruled on.
+## (`is_met`), how far along it is is the objective's answer too (`readout`), and
+## whether it is being judged at all is `is_live` — the same authority
+## `MissionRuntime` asks before it walks a list. This card prints exactly the
+## conditions the verdict is being reached on, so a held-back objective stays off
+## it until a beat reveals it and the two can never disagree about which ones
+## count.
 ##
 ## Floats over the board rather than docking, like the teaching strip and unlike
 ## the two bars: the bars' heights are what the board's viewport is computed
@@ -123,14 +126,28 @@ func _build() -> void:
 
 ## One heading and the conditions under it, or nothing at all when a mission
 ## names none — a card with an empty BONUS heading advertises a star that does
-## not exist.
+## not exist. A heading whose every condition is still hidden is that same empty
+## heading, so the filter comes first: on a LOSE group especially, naming the
+## group alone would tell the player a trap is coming.
 func _group(heading: String, objectives: Array[MissionObjective], game: GameState) -> void:
-	if objectives.is_empty():
+	var live := _live(objectives)
+	if live.is_empty():
 		return
 	_rows.add_child(UiTheme.hud_label(heading, UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	for objective: MissionObjective in live:
+		_rows.add_child(_condition_row(objective, game))
+
+
+## The conditions this card may print: the ones the runtime is judging. An empty
+## slot is not one, and neither is a hidden objective no event has revealed —
+## printing that would hand the player the surprise the mission is holding back
+## and put the card at odds with the verdict.
+func _live(objectives: Array[MissionObjective]) -> Array[MissionObjective]:
+	var live: Array[MissionObjective] = []
 	for objective: MissionObjective in objectives:
-		if objective != null:
-			_rows.add_child(_condition_row(objective, game))
+		if objective != null and objective.is_live(CampaignSession.tally):
+			live.append(objective)
+	return live
 
 
 ## A mark, the authored words, and whatever the objective says about its own

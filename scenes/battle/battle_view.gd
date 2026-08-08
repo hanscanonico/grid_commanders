@@ -247,18 +247,22 @@ func sprite_for(unit: Unit) -> UnitSprite:
 	return _sprites.get(unit)
 
 
-## Brings one sprite back in step with the sim, fog included: the answer is
-## written onto the sprite, which then draws itself from it.
+## Brings one sprite back in step with the sim, fog and faction colours included:
+## both answers are written onto the sprite, which then draws itself from them.
 ##
 ## Deciding it here and storing it there is what makes it stick. A sprite that
 ## worked visibility out for itself would un-hide a fogged enemy every time
 ## anything redrew it — and `UnitSprite` redraws on three different calls — so
-## the decision is made in one place and remembered rather than re-derived.
+## the decision is made in one place and remembered rather than re-derived. The
+## atlas row rides here for the same reason and from the same authority: whose
+## colours a unit wears is `SideIdentity`'s answer, and a unit that changed army
+## since it was drawn has to be asked again.
 func refresh_sprite(unit: Unit) -> void:
 	var sprite: UnitSprite = _sprites.get(unit)
 	if sprite == null:
 		return
 	sprite.fogged = _is_fogged(unit)
+	sprite.atlas_row = identity.atlas_row(unit.team)
 	sprite.refresh()
 
 
@@ -293,12 +297,17 @@ func set_active_team(team: int) -> void:
 ## Brings every sprite back in step with the sim in one pass, for the changes
 ## that touch more of the board than a caller can name unit by unit.
 ##
-## Two of those. A death can take units the combat result never mentions —
+## Three of those. A death can take units the combat result never mentions —
 ## cargo goes down with its transport — so any sprite whose unit has left
-## `game.units` is freed. And a Command Power can heal or refuel a whole side at
+## `game.units` is freed. A Command Power can heal or refuel a whole side at
 ## once, so every surviving sprite is redrawn rather than just the one that
-## acted. Survivors go through `refresh_sprite`, so the pass re-applies fog
-## instead of leaking whatever the last fog pass hid.
+## acted. And a command can *add* a unit nothing named — a scripted beat lands a
+## relief column — so a unit on the board with no sprite gets one here. The pass
+## is the board's reconciliation in both directions; a one-way one leaves an
+## arrival invisible, which is a unit the player is attacked from an empty
+## square by. Survivors go through `refresh_sprite`, so the pass re-applies fog
+## instead of leaking whatever the last fog pass hid, and an arrival goes through
+## `spawn_sprite_for`, which asks the same perspective before it draws anything.
 func sync_sprites() -> void:
 	for unit: Unit in _sprites.keys():
 		if unit in game.units:
@@ -307,6 +316,9 @@ func sync_sprites() -> void:
 		var sprite: UnitSprite = _sprites[unit]
 		_sprites.erase(unit)
 		sprite.queue_free()
+	for unit: Unit in game.units:
+		if not _sprites.has(unit):
+			spawn_sprite_for(unit)
 
 
 ## Re-resolves the match's [SideIdentity] from the sim's current commander picks

@@ -229,6 +229,13 @@ static func _build_replay(
 	if recording == null:
 		return null  # ReplayFile has already said what is wrong with the file
 	var player := ReplayPlayer.new(recording, unit_db)
+	# A recording of a mission is refused whole rather than at its first scripted
+	# beat: without the mission there is no script to resolve one against, and a
+	# playback that opened anyway would run correctly right up to the moment the
+	# story happens and then stop with a message about the board.
+	if player.mission_error() != "":
+		push_error("battle: %s; there is no recording to play" % player.mission_error())
+		return null
 	var loaded := player.opening(terrain_db, chart, commander_db)
 	if loaded == null:
 		return null  # SaveCodec has already said what is wrong with the opening

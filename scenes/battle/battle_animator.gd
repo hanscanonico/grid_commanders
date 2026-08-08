@@ -21,6 +21,7 @@ extends RefCounted
 
 signal banner_finished
 signal power_banner_finished
+signal speech_finished
 
 ## The two durations that deliberately do *not* follow the setting: the shake is
 ## impact feedback and the pulse is idle UI, and neither is gameplay theatre.
@@ -53,6 +54,9 @@ var perspective: BattlePerspective
 var cursor: Sprite2D
 var turn_banner: TurnBanner
 var power_banner: CommanderPowerBanner
+## What a scripted mission beat says, held like the power card and retired by the
+## same press; down for every skirmish, because nothing else ever fills it.
+var mission_speech: MissionSpeechCard
 ## The full-screen battle cut-in. Every resolved attack goes through it when the
 ## player has it on and both sides are visible; see `animate_combat`.
 var cutscene: CombatCutscene
@@ -65,6 +69,7 @@ var capturing := false
 
 var _banner_tween: Tween
 var _power_banner_tween: Tween
+var _speech_tween: Tween
 ## When the last cut-in ended, and how many have run back to back since the
 ## fighting started. Held as elapsed time rather than as a per-turn counter
 ## somebody has to remember to reset: there is no lifecycle to get wrong, and a
@@ -386,6 +391,47 @@ func _finish_power_banner() -> void:
 	power_banner_finished.emit()
 
 
+## One beat of scripted mission dialogue, on the board the beat landed on. The
+## power card's shape throughout, because it is the same kind of thing: a blocking
+## card carrying a general's spoken line, which is also why it holds for the power
+## card's beat rather than the day banner's shorter one — a sentence needs more
+## time than a title. Silent for an event nobody comments on.
+##
+## While capturing it holds, exactly as the power card does, so a posed frame
+## still has the card in it.
+func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
+	if lines.is_empty():
+		return
+	if _speech_tween != null and _speech_tween.is_valid():
+		_speech_tween.kill()
+	mission_speech.announce(lines, commanders)
+	mission_speech.show()
+	# Measured before it is centred: the card is as tall as the words it was just
+	# given, and a PanelContainer's size is a layout pass behind them.
+	mission_speech.reset_size()
+	mission_speech.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	if capturing:
+		return
+	_speech_tween = node.create_tween()
+	_speech_tween.tween_interval(Settings.speed.power_banner_seconds())
+	_speech_tween.tween_callback(_finish_speech)
+	await speech_finished
+
+
+func hide_speech() -> void:
+	if _speech_tween != null and _speech_tween.is_valid():
+		_speech_tween.kill()
+	_finish_speech()
+
+
+func _finish_speech() -> void:
+	_speech_tween = null
+	if not mission_speech.visible:
+		return
+	mission_speech.hide()
+	speech_finished.emit()
+
+
 ## Any keyboard, mouse or controller press retires the visible blocking card.
 ## Returns whether it claimed the event so Battle can stop it over-landing on
 ## the board or a newly revealed action.
@@ -397,6 +443,9 @@ func consume_banner_skip(event: InputEvent) -> bool:
 		return true
 	if power_banner.visible and not capturing:
 		hide_power_banner()
+		return true
+	if mission_speech.visible and not capturing:
+		hide_speech()
 		return true
 	return false
 

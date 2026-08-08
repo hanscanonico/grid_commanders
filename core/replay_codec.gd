@@ -26,12 +26,26 @@ extends RefCounted
 ##
 ## That is also why `encode_command` takes the state **before** the command is
 ## applied: after a drop the passenger has left the cargo it was named in.
+##
+## ## Which mission a recording is of
+##
+## In the **header**, beside `label` and `recorded`, and never in the opening.
+## The opening is a `SaveCodec` envelope verbatim and that envelope does not name
+## a campaign — it describes a board, and a board is the same board whether a
+## mission or a skirmish is being fought on it. A `MissionEventCommand` holds a
+## `MissionEvent` reference, which no file can carry, so an event line names its
+## beat by id and playback resolves the pair through `CampaignDB`. A recording of
+## a skirmish names neither and is byte-identical to what it always was.
 
 ## The line format, not the save format. Bumped when a line's shape changes, or
 ## when the checkpoint digest starts reading a field it did not before — a replay
 ## is disposable (plan D3), so there is no upgrade path to owe and older formats
 ## are refused rather than read.
-const FORMAT := 3
+##
+## 3: the checkpoint digest reads `Unit.refreshable`.
+## 4: the scripted-event line, and the campaign and mission the header names it
+## against.
+const FORMAT := 4
 
 ## `DropCommand` with no passenger named — "the first loaded", which is what
 ## `DropCommand._rider` does with a null and what every single-slot transport
@@ -67,6 +81,7 @@ const REQUIRED_KEYS := {
 	"build": ["cell", "unit"],
 	"power": ["target"],
 	"end_turn": [],
+	"event": ["event"],
 }
 
 ## Keeps the digest inside 48 bits, and that ceiling is load-bearing rather than
@@ -96,6 +111,10 @@ class Replay:
 	## What the menu names it with. Presentation only — nothing is derived from it.
 	var label: String = ""
 	var recorded: String = ""
+	## The mission this was a recording of, or &"" for a skirmish. Unlike `label`,
+	## these two *are* derived from: an event line resolves its beat against them.
+	var campaign: StringName = &""
+	var mission: StringName = &""
 	var entries: Array[Dictionary] = []
 
 
@@ -105,8 +124,21 @@ class Replay:
 ## The line every replay opens with. `label` and `recorded` are the caller's to
 ## supply and may be empty: a clock belongs to whoever is writing, not to a codec,
 ## which is what keeps a Balance Lab replay diffable run to run.
-static func header(opening: Dictionary, label: String = "", recorded: String = "") -> Dictionary:
-	return {"replay": FORMAT, "recorded": recorded, "label": label, "opening": opening}
+##
+## The mission pair is written only when there is one, so a skirmish header is
+## the line it has always been.
+static func header(
+	opening: Dictionary,
+	label: String = "",
+	recorded: String = "",
+	campaign: StringName = &"",
+	mission: StringName = &""
+) -> Dictionary:
+	var line := {"replay": FORMAT, "recorded": recorded, "label": label, "opening": opening}
+	if campaign != &"":
+		line["campaign"] = String(campaign)
+		line["mission"] = String(mission)
+	return line
 
 
 ## "" when `line` is a header this codec can read, else the reason it is not.
@@ -132,6 +164,9 @@ static func header_error(line: Dictionary) -> String:
 ## itself.
 static func encode_command(state: GameState, command: Command) -> Dictionary:
 	var entry := {"c": name_of(command)}
+	if command is MissionEventCommand:
+		entry["event"] = String((command as MissionEventCommand).event.id)
+		return entry
 	if command is PowerCommand:
 		entry["target"] = encode_cell((command as PowerCommand).target)
 		return entry
@@ -165,7 +200,12 @@ static func encode_command(state: GameState, command: Command) -> Dictionary:
 ##
 ## It rebuilds; it does not vet. Whether the command is *legal* is the sim's
 ## answer and the caller asks for it the ordinary way, through `validate`.
-static func command_from(state: GameState, unit_db: UnitDB, entry: Dictionary) -> Command:
+##
+## `mission` is the script an event line is resolved against — the mission the
+## header named — and is null for every recording of a skirmish.
+static func command_from(
+	state: GameState, unit_db: UnitDB, entry: Dictionary, mission: MissionDefinition = null
+) -> Command:
 	var kind := String(entry.get("c", ""))
 	if not REQUIRED_KEYS.has(kind):
 		push_error("ReplayCodec: '%s' is not a command this build knows" % kind)
@@ -176,6 +216,8 @@ static func command_from(state: GameState, unit_db: UnitDB, entry: Dictionary) -
 			return null
 	if kind == "end_turn":
 		return EndTurnCommand.new()
+	if kind == "event":
+		return _event_from(mission, entry)
 	if kind == "power":
 		var power := PowerCommand.new()
 		power.target = decode_cell(entry["target"])
@@ -190,6 +232,24 @@ static func command_from(state: GameState, unit_db: UnitDB, entry: Dictionary) -
 		# about whose turn it was.
 		return BuildCommand.new(state.current_team, type, decode_cell(entry["cell"]))
 	return _movement_from(state, kind, entry)
+
+
+## The scripted beat a line names, bound to the mission the header named.
+##
+## Both refusals are loud and name what is missing, because the alternative is
+## the one thing a self-checking log must never do: skipping the beat plays a
+## different match and fails its digest one line later, with a message about the
+## board rather than about the mission that has moved underneath it.
+static func _event_from(mission: MissionDefinition, entry: Dictionary) -> Command:
+	var event_id := StringName(String(entry["event"]))
+	if mission == null:
+		push_error("ReplayCodec: an event line fires '%s' and no mission was named" % event_id)
+		return null
+	var event := mission.event(event_id)
+	if event == null:
+		push_error("ReplayCodec: mission '%s' has no event '%s'" % [mission.id, event_id])
+		return null
+	return MissionEventCommand.new(event, mission.player_team)
 
 
 ## The eight commands that walk a unit somewhere and then do something.
@@ -229,6 +289,8 @@ static func _movement_from(state: GameState, kind: String, entry: Dictionary) ->
 ## unlike the Balance Lab's log beside it: these names are a *format*, so a file
 ## renamed for tidiness must not quietly stop older replays loading.
 static func name_of(command: Command) -> String:
+	if command is MissionEventCommand:
+		return "event"
 	if command is AttackCommand:
 		return "attack"
 	if command is CaptureCommand:

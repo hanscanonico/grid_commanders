@@ -20,6 +20,15 @@ extends Resource
 ## Shown in the objective HUD and the briefing. Authored per mission, because
 ## "Take the relay at Kestrel" reads better than anything derivable from a cell.
 @export_multiline var text: String = ""
+## Stable name, needed only by a `hidden` objective: it is what a
+## `RevealObjective` effect names and what the mission's revealed set records, so
+## it has to outlive both a save and a reshuffle of the authored list. Every
+## other objective leaves it empty.
+@export var id: StringName = &""
+## A hidden objective is not asked until an event reveals it — the mission whose
+## real goal is only named once you are in it. Nothing is hidden by default, so a
+## mission with none is judged exactly as it was before events existed.
+@export var hidden: bool = false
 
 
 ## Is this condition satisfied on the board as it now stands?
@@ -40,6 +49,13 @@ func is_met(_state: GameState, _team: int, _progress: MissionProgress) -> bool:
 ## time one of them learns to count something new.
 func readout(_state: GameState, _team: int, _progress: MissionProgress) -> String:
 	return ""
+
+
+## Is this condition being judged yet? False only for a hidden objective no event
+## has revealed, and `MissionRuntime` skips those wherever it walks a list: an
+## unrevealed objective can be neither required, nor lost by, nor earn a star.
+func is_live(progress: MissionProgress) -> bool:
+	return not hidden or (progress != null and progress.is_revealed(id))
 
 
 ## Why this objective could never be satisfied on this mission's board, or "".
@@ -71,9 +87,16 @@ static func tagged_unit(state: GameState, tag: StringName) -> Unit:
 ## mission naming a unit its map never names fails at the door rather than as an
 ## objective that is satisfied before the first command.
 static func board_names(map: MapData, tag: StringName) -> bool:
-	if tag == &"":
-		return false
+	return tag != &"" and board_tags(map).has(tag)
+
+
+## Every name this board's own units carry, in row order. The board's half of the
+## uniqueness a tag promises: a mission's scripted arrivals are counted against
+## these as well as against each other, so nothing a mission can put on the board
+## can end up sharing a name with what was already standing on it.
+static func board_tags(map: MapData) -> Array[StringName]:
+	var tags: Array[StringName] = []
 	for entry: Dictionary in map.starting_units:
-		if entry["tag"] == tag:
-			return true
-	return false
+		if entry["tag"] != &"":
+			tags.append(entry["tag"])
+	return tags

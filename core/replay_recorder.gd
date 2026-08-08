@@ -58,14 +58,23 @@ func _init(open_sink: Callable = Callable()) -> void:
 ## built and before a single command. The opening is a `SaveCodec` envelope
 ## verbatim (plan D1), so a match resumed from a save records correctly from
 ## wherever it was picked up.
+##
+## `campaign` and `mission` are what a scripted beat is resolved against on the
+## way back, and they ride in the header for the reason `label` does: the
+## envelope describes a board, and which war that board is being fought in is the
+## recorder's to say. Both empty is a skirmish.
 func begin(
 	state: GameState,
 	ai_teams: Array[int],
 	difficulty: StringName = Difficulty.DEFAULT_ID,
 	label: String = "",
-	recorded: String = ""
+	recorded: String = "",
+	campaign: StringName = &"",
+	mission: StringName = &""
 ) -> void:
-	_header = ReplayCodec.header(SaveCodec.encode(state, ai_teams, difficulty), label, recorded)
+	_header = ReplayCodec.header(
+		SaveCodec.encode(state, ai_teams, difficulty), label, recorded, campaign, mission
+	)
 	if _open_sink.is_null():
 		_lines.append(_header)
 

@@ -28,6 +28,18 @@ var active_team: int = 0
 ## re-derived so that every redraw honours it: a sprite that worked visibility
 ## out for itself would un-hide a fogged enemy on the next refresh.
 var fogged: bool = false
+## The side's resolved faction row this sprite draws in, not `unit.team`: the sim
+## keeps team ints, but which paint a team wears is the SideIdentity resolver's
+## call. The sprite still reads unit.team for everything else — acted grey-out,
+## fog. Held and written by BattleView the same way `fogged` is, and setting it is
+## what repaints the art: a unit can change army mid-match (a scripted defection),
+## and a texture resolved once at setup would leave it in its old colours.
+var atlas_row: int = -1:
+	set(value):
+		if atlas_row == value:
+			return
+		atlas_row = value
+		texture = texture_for(unit.type, value)
 
 @onready var hp_label: Label = $HpLabel
 @onready var fuel_label: Label = $FuelLabel
@@ -36,10 +48,7 @@ var fogged: bool = false
 func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	unit = p_unit
 	active_team = p_active_team
-	# The row is the side's resolved faction row, not p_unit.team: the sim keeps
-	# team ints, but which paint a team wears is the SideIdentity resolver's call.
-	# The sprite still reads unit.team for everything else — acted grey-out, fog.
-	texture = texture_for(p_unit.type, p_atlas_row)
+	atlas_row = p_atlas_row
 	scale = Vector2.ONE * SPRITE_SCALE
 	# The badges are authored against the world grid, so undo the sprite's scale
 	# rather than letting them shrink with the art. Their offsets are authored in

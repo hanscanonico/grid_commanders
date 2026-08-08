@@ -299,8 +299,8 @@ func _run_demo(mode: String) -> void:
 			await _stage_power_targeting()  # the aimed power, mid-aim
 		MISSION_STRIP_MODE, MISSION_STRIP_RETIRED:
 			await _stage_mission_strip(mode)
-		BattleMissionScenario.MODE:
-			var mission_error := await BattleMissionScenario.new(_battle).run()
+		BattleMissionScenario.MODE, BattleMissionScenario.EVENT_MODE, BattleMissionScenario.DEFECT_MODE:
+			var mission_error := await BattleMissionScenario.new(_battle).run(mode)
 			if mission_error != "":
 				_fail(mission_error)
 		"commander_info":

@@ -1,12 +1,15 @@
 class_name MissionProgress
 extends RefCounted
-## The mission's own tally: the few facts an objective needs that no single board
-## can answer — how long a square has been ours, and how many units we have lost.
+## The mission's own tally: the few facts an objective or an event needs that no
+## single board can answer — how long a square has been ours, how many units we
+## have lost, which beats have already played and which hidden objectives are
+## live.
 ##
-## **One writer** (campaign-depth D2). `observe` advances it once per command
-## boundary, from `CampaignSession.decide` and before any objective is asked;
-## everything else here reads. A second writer is a tally two boundaries can
-## disagree about, with nothing left to say which count was the mission's.
+## **One writer** (campaign-depth D2), which is a place rather than a method:
+## `observe` advances the counters once per command boundary and `record_fired` /
+## `reveal` note what that same boundary did, all three from `CampaignSession`
+## and none of them from anywhere else. A second writer is a tally two boundaries
+## can disagree about, with nothing left to say which count was the mission's.
 ##
 ## It is mission bookkeeping rather than board state, which is why `SaveCodec`
 ## grows no field for it: the counters ride in the campaign profile beside the
@@ -16,9 +19,13 @@ extends RefCounted
 ## so a resumed mission neither forgets its losses nor counts them a second time.
 
 ## Counter keys, as the profile stores them. A hold is keyed by its cell, so one
-## tally answers for every square a mission might ask about.
+## tally answers for every square a mission might ask about; a fired event and a
+## revealed objective are keyed by their own names, which is why both are
+## authored as identifiers.
 const LOSSES := "losses"
 const HELD := "held:"
+const FIRED := "fired:"
+const REVEALED := "revealed:"
 
 var _counters: Dictionary[String, int] = {}
 ## Instance ids of our side's units at the last boundary — the identity a
@@ -53,6 +60,28 @@ func days_held(cell: Vector2i) -> int:
 	return _counters.get(_hold_key(cell), 0)
 
 
+## Note that an event has fired. Recorded rather than derived, because what a
+## beat did to the board is not something the board remembers having been done
+## once: a `once` event that re-fired after a reload would land its column twice.
+func record_fired(event_id: StringName) -> void:
+	_counters[FIRED + String(event_id)] = 1
+
+
+func has_fired(event_id: StringName) -> bool:
+	return _counters.has(FIRED + String(event_id))
+
+
+## Bring a hidden objective out of hiding. What `RevealObjective` asks for, and
+## it rides in the tally for the same reason the fired set does — an objective
+## revealed before a save is still revealed after one.
+func reveal(objective_id: StringName) -> void:
+	_counters[REVEALED + String(objective_id)] = 1
+
+
+func is_revealed(objective_id: StringName) -> bool:
+	return _counters.has(REVEALED + String(objective_id))
+
+
 func is_empty() -> bool:
 	return _counters.is_empty()
 
@@ -70,6 +99,18 @@ static func from_dict(data: Dictionary) -> MissionProgress:
 	for key: String in data:
 		progress._counters[key] = int(data[key])
 	return progress
+
+
+## Why `name` could not key a counter, or "". A fired event and a revealed
+## objective are both recorded under their own name, and `_is_counter` refuses a
+## key no writer could have produced — so a name refused here is a mission that
+## writes a profile it can never read back, and the player's mid-mission save is
+## discarded on the way in. Asked by every author of such a name, so the rule is
+## stated once (`UnitTag.name_error`'s shape, and for the same reason).
+static func name_error(name: StringName) -> String:
+	if String(name).is_valid_ascii_identifier():
+		return ""
+	return "'%s' is not an identifier" % name
 
 
 ## Why this dictionary is not a tally, or "". Held to the same bar as the rest of
@@ -130,6 +171,9 @@ static func _hold_key(cell: Vector2i) -> String:
 static func _is_counter(key: String) -> bool:
 	if key == LOSSES:
 		return true
+	for prefix: String in [FIRED, REVEALED]:
+		if key.begins_with(prefix):
+			return key.trim_prefix(prefix).is_valid_ascii_identifier()
 	if not key.begins_with(HELD):
 		return false
 	var coords := key.trim_prefix(HELD).split(",")

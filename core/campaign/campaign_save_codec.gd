@@ -12,8 +12,11 @@ extends RefCounted
 ## on each of the two cards and finishing a campaign mission cannot overwrite an
 ## unrelated match.
 
-## 2 carries the mission tally beside the battle. A version 1 profile loads with
-## an empty one, which is what it was playing with.
+## 2 carries the mission tally beside the battle — its counters, and since the
+## event system the beats that have already fired and the hidden objectives they
+## revealed, all of which are counters like any other and so needed no second
+## format. A version 1 profile loads with an empty tally, which is what it was
+## playing with.
 const VERSION := 2
 
 

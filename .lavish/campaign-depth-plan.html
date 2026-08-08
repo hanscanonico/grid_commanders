@@ -347,7 +347,7 @@ events = [
           <b>Rejected alternative:</b> a campaign-layer mutator that writes the board directly. It is
           invisible to <span class="pl">ReplayRecorder</span>, so every campaign replay fails its own
           48-bit digest at the first event; and a mid-mission save would resume onto a board its own
-          command log cannot account for. <span class="pl">ReplayCodec.FORMAT</span> goes to <b>3</b> and
+          command log cannot account for. <span class="pl">ReplayCodec.FORMAT</span> goes to <b>4</b> and
           older recordings are refused outright, which is the replay plan's D3.
         </p>
       </div>
@@ -658,13 +658,14 @@ events = [
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-neutral pl">CD3</span>
           <h3 class="font-black text-lg">The event system</h3>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
           <span class="text-xs dim">D1 · D2 · D3 · the largest milestone</span>
         </div>
         <p class="mt-2 text-sm">
           <span class="pl">MissionEvent</span> with its triggers and effects;
           <span class="pl">MissionEventCommand</span> under <span class="pl">core/commands/</span>; the
           <span class="pl">conclude_command</span> firing seam and the turn-start boundary; replay
-          <span class="pl">FORMAT</span> → 3 with the new line kind; the event speech overlay; the fired-set
+          <span class="pl">FORMAT</span> → 4 with the new line kind; the event speech overlay; the fired-set
           in <span class="pl">MissionProgress</span> so a resumed mission does not re-fire.
         </p>
         <p class="mt-2 text-sm"><b>Gate:</b>
@@ -672,6 +673,31 @@ events = [
         events, reproducing every checkpoint and an identical final board; a save/resume test across a
         fired event; an <span class="pl">AIPlanCache</span> test proving a plan is dropped when an effect
         removes or defects the unit it was for (R7).</p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD3 settled.</b> <b>The campaign and mission ids ride in the replay
+          <i>header</i>, beside <span class="pl">label</span> and <span class="pl">recorded</span> — never
+          inside the opening envelope</b>, which stays <span class="pl">SaveCodec.encode</span>'s verbatim
+          as D1 requires. A recorded beat names only its id and playback resolves it through
+          <span class="pl">CampaignDB</span>; a skirmish header names neither and is byte-identical to
+          before. A recording whose mission or event no longer resolves is refused <i>by name</i> before a
+          single command replays, because a playback that runs correctly up to the moment the story happens
+          is worse than one that never starts.
+          <b>R7 needed no <span class="pl">ai/</span> code</b>: the plan cache already drops on a board diff
+          rather than on the returned command, so a scripted removal reads as a unit that left and a
+          defection as one that changed team — the milestone owed the test, and the test passes.
+          Two rules were read off the shipped design rather than invented: a scripted removal
+          <b>banks nothing to either meter</b> (Hammerfall's D4), and <b>a defection does not rout the army
+          it empties</b>, because a rout is reached only through <span class="pl">remove_unit</span> and
+          losing your last unit to a change of allegiance is not losing it. <span class="pl">SpawnUnits</span>
+          skips an occupied cell rather than clearing it, which would have made a spawn the second thing in
+          the game that removes a unit without a shot. D8 is exceeded rather than met: the speech card reads
+          <b>nothing</b> — its lines are handed over by the command, as the power banner's are — which is
+          what makes a <b>replay speak the same words</b>.
+          <span class="pl">battle.gd</span> <b>shrank</b> 1415 → 1396 by extracting
+          <span class="pl">BattleRecording</span>, so the budget fell with it rather than rising.
+          <span class="pl">Flag</span> and <span class="pl">SetFlag</span> are deliberately held back to
+          CD4, where the ledger they read is born.
+        </p>
       </div>
 
       <div class="gc-ms p-4">
@@ -852,7 +878,7 @@ events = [
       </div>
       <div class="gc-risk p-4">
         <div class="gc-kicker" style="color:var(--gc-red)">R3 · Replay format churn</div>
-        <p class="mt-2 text-sm"><span class="pl">FORMAT</span> → 3 refuses every recording on disk, which is
+        <p class="mt-2 text-sm"><span class="pl">FORMAT</span> → 4 refuses every recording on disk, which is
         by design (replay D3) but is a cost paid once. <b>Guard:</b> the bump happens in CD3 and nowhere
         else in this plan; CD1's tag rides in the save envelope, not the line format, and every later
         milestone adds effects rather than line kinds.</p>

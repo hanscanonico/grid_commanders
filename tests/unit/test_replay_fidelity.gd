@@ -23,11 +23,19 @@ const DAYS := 8
 ## because playback rebuilds him from `CommanderDB` and a doctored copy would be
 ## re-issued against a meter it never filled.
 const AIMED_DAYS := 12
+## The mission the scripted-beat run plays, and the beat it has to reach: Ferrow
+## picking his lane on day three. A shipped mission rather than a fixture, for the
+## board's own reason — a replay stores its board by path — and because what the
+## header carries is the pair of ids `CampaignDB` resolves.
+const CAMPAIGN := &"six_marshals"
+const MISSION := &"sm02_ambush_pass"
+const EVENT_DAYS := 4
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
 var commander_db: CommanderDB
+var campaign_db: CampaignDB
 
 
 func before_each() -> void:
@@ -35,6 +43,7 @@ func before_each() -> void:
 	unit_db = Fixture.unit_db()
 	chart = Fixture.chart()
 	commander_db = Fixture.commander_db()
+	campaign_db = CampaignDB.load_default()
 
 
 func _setup(seed_val: int, recorder: ReplayRecorder) -> BalanceMatchEngine.Setup:
@@ -54,7 +63,8 @@ func _setup(seed_val: int, recorder: ReplayRecorder) -> BalanceMatchEngine.Setup
 ## the board it lands on. Null when a line refused to rebuild or to apply — each
 ## of which fails here rather than silently shortening the walk.
 func _re_issue(replay: ReplayCodec.Replay, expected_commands: int) -> GameState:
-	var player := ReplayPlayer.new(replay, unit_db)
+	var player := ReplayPlayer.new(replay, unit_db, campaign_db)
+	assert_eq(player.mission_error(), "", "the mission this recording names must still ship")
 	# The commander registry is handed over exactly as BattleSetup and the analyser
 	# hand it over: without it every seat decodes neutral, and a doctrine's match
 	# would be re-issued against rules nobody played it under.
@@ -93,8 +103,86 @@ func _replay_of(lines: Array[Dictionary]) -> ReplayCodec.Replay:
 	var replay := ReplayCodec.Replay.new()
 	replay.format = int(round_tripped[0]["replay"])
 	replay.opening = round_tripped[0]["opening"]
+	replay.campaign = StringName(String(round_tripped[0].get("campaign", "")))
+	replay.mission = StringName(String(round_tripped[0].get("mission", "")))
 	replay.entries = round_tripped.slice(1)
 	return replay
+
+
+func _mission() -> MissionDefinition:
+	var campaign := campaign_db.by_id(CAMPAIGN)
+	assert_not_null(campaign, "the fixture campaign has to ship")
+	var mission := campaign.mission(MISSION) if campaign != null else null
+	assert_not_null(mission, "the fixture mission has to ship")
+	return mission
+
+
+## A mission played headlessly, with the recorder observing at the two moments
+## the live pipeline hands it and the mission's beats fired at the boundary
+## `Battle.conclude_command` fires them at.
+##
+## Its own loop rather than `BalanceMatchEngine`'s, because that engine plays a
+## skirmish and has no campaign in it (balance D2) — so the only place a recorded
+## event line can come from is a walk that fires one. What it must match is the
+## *order*: every beat due lands after the command that made it due and before
+## anything else (campaign-depth D3).
+func _play_mission(
+	mission: MissionDefinition, recorder: ReplayRecorder, seed_val: int, days: int
+) -> GameState:
+	var state := GameState.create(
+		MapData.load_from_file(mission.map_path, terrain_db),
+		unit_db,
+		chart,
+		_commanders_of(mission),
+		mission.seats
+	)
+	assert_not_null(state, "the mission's board has to build")
+	state.map_path = mission.map_path
+	for team: int in mission.sides:
+		state.sides[team] = int(mission.sides[team])
+	state.rng.seed = seed_val
+	recorder.begin(state, state.teams, Difficulty.DEFAULT_ID, "", "", CAMPAIGN, MISSION)
+	var tally := MissionProgress.new()
+	tally.observe(state, mission.player_team)
+	var planners: Dictionary = {}
+	for team in state.teams:
+		planners[team] = AIController.new(unit_db)
+	_fire_due(state, mission, tally, recorder)
+	while state.winner == 0 and state.day <= days:
+		var planner: AIController = planners[state.current_team]
+		var command: Command = planner.plan_next_command(state)
+		if command.validate(state) != "":
+			command = EndTurnCommand.new()
+		_apply(state, command, recorder)
+		tally.observe(state, mission.player_team)
+		_fire_due(state, mission, tally, recorder)
+	return state
+
+
+func _commanders_of(mission: MissionDefinition) -> Dictionary:
+	var commanders: Dictionary = {}
+	for team: int in mission.commanders:
+		commanders[team] = commander_db.by_id(mission.commanders[team])
+	return commanders
+
+
+func _fire_due(
+	state: GameState, mission: MissionDefinition, tally: MissionProgress, recorder: ReplayRecorder
+) -> void:
+	for event: MissionEvent in mission.events:
+		if not event.is_due(state, mission.player_team, tally):
+			continue
+		var command := MissionEventCommand.new(event, mission.player_team)
+		if command.validate(state) != "":
+			continue
+		_apply(state, command, recorder)
+		tally.record_fired(event.id)
+
+
+func _apply(state: GameState, command: Command, recorder: ReplayRecorder) -> void:
+	recorder.before_apply(state, command)
+	command.apply(state)
+	recorder.after_apply(state)
 
 
 # --- the bar -------------------------------------------------------------------
@@ -151,6 +239,51 @@ func test_a_recorded_aimed_power_re_issues_to_the_same_board() -> void:
 		"the replayed board must be the played one, square of ground included"
 	)
 	assert_eq(state.units.size(), outcome.state.units.size())
+
+
+## The merge bar for format 3 (campaign-depth CD3). A scripted beat is a command
+## whose meaning is *entirely* off the board: the line names an event id and
+## nothing else, so a header that lost the mission, or a build that lost the
+## event, replays a match with the reinforcement column missing. The digest is
+## what refuses that; the assertion below is what proves an event line was in the
+## log at all.
+func test_a_recorded_mission_re_issues_its_scripted_beats() -> void:
+	var mission := _mission()
+	var recorder := ReplayRecorder.new()
+	var played := _play_mission(mission, recorder, 4242, EVENT_DAYS)
+
+	var lines := recorder.lines()
+	var beats := 0
+	for line in lines:
+		if String(line.get("c", "")) == "event":
+			beats += 1
+			assert_eq(String(line["event"]), "he_commits", "the line names the beat by id")
+	assert_eq(beats, 1, "the mission's day-three beat has to have landed exactly once")
+
+	var state := _re_issue(_replay_of(lines), lines.size() - 1)
+	assert_not_null(state)
+	if state == null:
+		return
+	assert_eq(
+		ReplayCodec.checkpoint(state),
+		ReplayCodec.checkpoint(played),
+		"the replayed board must be the played one, scripted column included"
+	)
+	assert_eq(state.units.size(), played.units.size())
+
+
+## A recording whose mission this build no longer has is refused by name, before
+## a single command is handed out — never played up to its first scripted beat and
+## then stopped with a message about the board.
+func test_a_recording_of_a_mission_that_has_gone_is_refused_by_name() -> void:
+	var replay := ReplayCodec.Replay.new()
+	replay.campaign = &"six_marshals"
+	replay.mission = &"sm99_a_mission_that_never_shipped"
+	assert_string_contains(ReplayPlayer.new(replay, unit_db, campaign_db).mission_error(), "sm99")
+	replay.campaign = &"a_war_nobody_fought"
+	assert_string_contains(
+		ReplayPlayer.new(replay, unit_db, campaign_db).mission_error(), "a_war_nobody_fought"
+	)
 
 
 ## The recording says nothing about who was thinking — only what was done — so two

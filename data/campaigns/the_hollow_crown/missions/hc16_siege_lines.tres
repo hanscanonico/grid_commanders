@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -52,6 +55,33 @@ script = ExtResource("6")
 speaker = &"viktor_draeg"
 text = "Orlov and Ferrow starved nothing but their own claims. This is the last I ask of you, Commander — the rest of the capital is mine to finish."
 
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("8")
+day = 5
+
+[sub_resource type="Resource" id="Effect_ferrow_takes_the_west"]
+script = ExtResource("9")
+team = 4
+cells = Array[Vector2i]([Vector2i(3, 11)])
+
+[sub_resource type="Resource" id="Effect_orlov_takes_the_east"]
+script = ExtResource("9")
+team = 3
+cells = Array[Vector2i]([Vector2i(17, 11)])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"cass_orlov"
+text = "The lines close today, Ward. Ferrow has the west, I have the east, and nothing walks between them."
+
+[sub_resource type="Resource" id="Event_the_lines_close"]
+script = ExtResource("7")
+id = &"the_lines_close"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_ferrow_takes_the_west"), SubResource("Effect_orlov_takes_the_east")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc16_siege_lines"
@@ -73,6 +103,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_1")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_lines_close")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
