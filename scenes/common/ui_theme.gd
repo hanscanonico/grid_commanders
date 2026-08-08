@@ -105,6 +105,14 @@ const PIP_GAP := 1
 ## always inset by its own gap, which is 7 in both (COM-98).
 const HUD_PAD := 7
 const HUD_GAP := 7
+## The separations *inside* a bar's groups — a commander block's rows, a stat
+## line's icons — as opposed to HUD_GAP, which is between the groups. Four
+## sizes because the bottom bar's blocks disagreed on which of them to use
+## with nothing saying which was which (COM-98's shape, found again in COM-192).
+const HUD_GAP_HAIR := 2
+const HUD_GAP_TIGHT := 3
+const HUD_GAP_SNUG := 4
+const HUD_GAP_WIDE := 5
 ## The faction colour square on the top bar (handoff 14px).
 const HUD_CHIP := 7
 ## A group divider's height, per bar: each keeps the inset it wants from its own

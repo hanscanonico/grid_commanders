@@ -118,13 +118,13 @@ func _build_commander(row: HBoxContainer) -> void:
 	_portrait_field.add_child(_portrait)
 
 	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 3)
+	block.add_theme_constant_override("separation", UiTheme.HUD_GAP_TIGHT)
 	block.custom_minimum_size = Vector2(UiTheme.HUD_CO_MIN_W, 0)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
 
 	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 4)
+	head.add_theme_constant_override("separation", UiTheme.HUD_GAP_SNUG)
 	block.add_child(head)
 	_co_name = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
 	head.add_child(_co_name)
@@ -133,7 +133,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	head.add_child(_power_name)
 
 	var meter_row := HBoxContainer.new()
-	meter_row.add_theme_constant_override("separation", 4)
+	meter_row.add_theme_constant_override("separation", UiTheme.HUD_GAP_SNUG)
 	block.add_child(meter_row)
 	_meter_frame = Panel.new()
 	_meter_frame.custom_minimum_size = UiTheme.HUD_METER
@@ -177,14 +177,14 @@ func _build_unit(row: HBoxContainer) -> void:
 	block.add_child(_unit_icon)
 
 	var data := VBoxContainer.new()
-	data.add_theme_constant_override("separation", 3)
+	data.add_theme_constant_override("separation", UiTheme.HUD_GAP_TIGHT)
 	data.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	data.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	block.add_child(data)
 	_unit_data = data
 
 	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 4)
+	head.add_theme_constant_override("separation", UiTheme.HUD_GAP_SNUG)
 	data.add_child(head)
 	_unit_name = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.WHITE)
 	head.add_child(_unit_name)
@@ -194,7 +194,7 @@ func _build_unit(row: HBoxContainer) -> void:
 	head.add_child(_unit_sub)
 
 	var stats := HBoxContainer.new()
-	stats.add_theme_constant_override("separation", 5)
+	stats.add_theme_constant_override("separation", UiTheme.HUD_GAP_WIDE)
 	data.add_child(stats)
 	_pips = HpPips.new()
 	stats.add_child(_pips)
@@ -206,7 +206,7 @@ func _build_unit(row: HBoxContainer) -> void:
 
 func _build_terrain(row: HBoxContainer) -> void:
 	var block := HBoxContainer.new()
-	block.add_theme_constant_override("separation", 5)
+	block.add_theme_constant_override("separation", UiTheme.HUD_GAP_WIDE)
 	block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(block)
 
@@ -218,7 +218,7 @@ func _build_terrain(row: HBoxContainer) -> void:
 	block.add_child(_terrain_icon)
 
 	var data := VBoxContainer.new()
-	data.add_theme_constant_override("separation", 2)
+	data.add_theme_constant_override("separation", UiTheme.HUD_GAP_HAIR)
 	data.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	block.add_child(data)
 	_terrain_name = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
