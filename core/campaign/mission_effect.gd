@@ -47,6 +47,16 @@ func revealed_objective() -> StringName:
 	return &""
 
 
+## The names this effect gives the units it lands, in the order it lands them —
+## `SpawnUnits` alone answers with anything. A tag names exactly one unit on a
+## board (`UnitTag.duplicate_error`), and a mission can put units on its board
+## from several beats, so the whole script has to be counted together: this is
+## what `MissionDefinition` counts.
+func spawned_tags() -> Array[StringName]:
+	var none: Array[StringName] = []
+	return none
+
+
 ## The ending this effect declares, or null — `EndMission` alone answers, and it
 ## answers with itself. It is a fact `MissionRuntime` reads, never a second
 ## verdict authority: precedence stays that class's (D3).

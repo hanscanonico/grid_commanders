@@ -101,6 +101,18 @@ static func from_dict(data: Dictionary) -> MissionProgress:
 	return progress
 
 
+## Why `name` could not key a counter, or "". A fired event and a revealed
+## objective are both recorded under their own name, and `_is_counter` refuses a
+## key no writer could have produced — so a name refused here is a mission that
+## writes a profile it can never read back, and the player's mid-mission save is
+## discarded on the way in. Asked by every author of such a name, so the rule is
+## stated once (`UnitTag.name_error`'s shape, and for the same reason).
+static func name_error(name: StringName) -> String:
+	if String(name).is_valid_ascii_identifier():
+		return ""
+	return "'%s' is not an identifier" % name
+
+
 ## Why this dictionary is not a tally, or "". Held to the same bar as the rest of
 ## the profile: a counter no writer could have produced is refused rather than
 ## loaded.

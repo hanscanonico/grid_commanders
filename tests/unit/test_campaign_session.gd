@@ -203,6 +203,28 @@ func test_a_decided_mission_is_due_no_further_beats() -> void:
 	assert_ne(event, null)
 
 
+## The boundary a shot ends the match on. The mission has not been judged yet —
+## `decide` runs after the beats — so the session is undecided and the beat's own
+## triggers still hold, but `MissionEventCommand` refuses a decided board by
+## design. Offering the beat there is asking for a refusal, and the live seam
+## reports a refusal as an authoring fault.
+func test_a_decided_match_is_due_no_beats_though_the_mission_is_still_unjudged() -> void:
+	var campaign := _campaign()
+	var event := _with_a_beat(campaign)
+	_begin(campaign)
+	var state := _state()
+	assert_eq(CampaignSession.due_events(state), [event], "day one is what this beat waits for")
+	state.eliminate(2)
+	assert_ne(state.winner, 0, "the last rival is gone")
+	assert_null(CampaignSession.outcome, "and the verdict has not been taken yet")
+	assert_true(CampaignSession.due_events(state).is_empty())
+	assert_ne(
+		MissionEventCommand.new(event, 1).validate(state),
+		"",
+		"which is the refusal that would otherwise have been shouted about"
+	)
+
+
 func test_save_battle_is_refused_outside_a_campaign() -> void:
 	assert_false(CampaignSession.save_battle({"day": 1}))
 	assert_false(CampaignProfile.has_profile(PROBE))

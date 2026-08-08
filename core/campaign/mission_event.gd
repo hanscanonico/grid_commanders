@@ -36,6 +36,17 @@ func is_due(state: GameState, team: int, progress: MissionProgress) -> bool:
 	return true
 
 
+## Every name this beat gives a unit it lands, gathered from its effects. What
+## `MissionDefinition` holds against the rest of the mission's script and against
+## the board's own units, a tag naming two units naming neither.
+func spawned_tags() -> Array[StringName]:
+	var named: Array[StringName] = []
+	for effect: MissionEffect in effects:
+		if effect != null:
+			named.append_array(effect.spawned_tags())
+	return named
+
+
 ## Why this event could never fire or could never be applied on this mission's
 ## board, or "". An event with no triggers is refused rather than treated as
 ## always due: a beat nobody can read the conditions of is an authoring slip, and
@@ -43,8 +54,11 @@ func is_due(state: GameState, team: int, progress: MissionProgress) -> bool:
 func definition_error(map: MapData, team: int, unit_db: UnitDB) -> String:
 	if id == &"":
 		return "event has no id"
-	if not String(id).is_valid_ascii_identifier():
-		return "event id '%s' is not an identifier" % id
+	var key_error := MissionProgress.name_error(id)
+	if key_error != "":
+		return "event id %s" % key_error
+	if not once and not spawned_tags().is_empty():
+		return "event '%s' repeats and lands named units, which it would name twice" % id
 	if triggers.is_empty():
 		return "event '%s' waits for nothing" % id
 	if effects.is_empty():

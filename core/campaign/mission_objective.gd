@@ -87,9 +87,16 @@ static func tagged_unit(state: GameState, tag: StringName) -> Unit:
 ## mission naming a unit its map never names fails at the door rather than as an
 ## objective that is satisfied before the first command.
 static func board_names(map: MapData, tag: StringName) -> bool:
-	if tag == &"":
-		return false
+	return tag != &"" and board_tags(map).has(tag)
+
+
+## Every name this board's own units carry, in row order. The board's half of the
+## uniqueness a tag promises: a mission's scripted arrivals are counted against
+## these as well as against each other, so nothing a mission can put on the board
+## can end up sharing a name with what was already standing on it.
+static func board_tags(map: MapData) -> Array[StringName]:
+	var tags: Array[StringName] = []
 	for entry: Dictionary in map.starting_units:
-		if entry["tag"] == tag:
-			return true
-	return false
+		if entry["tag"] != &"":
+			tags.append(entry["tag"])
+	return tags

@@ -77,12 +77,18 @@ func mission_id() -> StringName:
 ## lists them. Empty for every skirmish, and empty once the mission has been
 ## decided — a beat landing after the verdict changes a board nobody is playing.
 ##
+## Empty on a board the *match* has been decided on for the same reason, and that
+## one comes first: `decide` runs after this at the same boundary, so the shot
+## that ends the fight leaves this boundary's beats due on a board
+## `MissionEventCommand.validate` refuses by design. Offering them would be asking
+## for a refusal, which reads as an authoring fault and is not one.
+##
 ## The board is read **once per boundary**. Asking again after each beat would let
 ## a repeating event fire itself forever inside one command, so a beat another
 ## beat unlocks lands at the next boundary instead.
 func due_events(game: GameState) -> Array[MissionEvent]:
 	var due: Array[MissionEvent] = []
-	if mission == null or outcome != null:
+	if mission == null or outcome != null or game.winner != 0:
 		return due
 	for event: MissionEvent in mission.events:
 		if event != null and event.is_due(game, mission.player_team, tally):

@@ -32,6 +32,14 @@ func apply(state: GameState, _team: int) -> void:
 		state.units.append(unit)
 
 
+func spawned_tags() -> Array[StringName]:
+	var named: Array[StringName] = []
+	for spawn: MissionSpawn in units:
+		if spawn != null and spawn.tag != &"":
+			named.append(spawn.tag)
+	return named
+
+
 func board_error(state: GameState, _team: int) -> String:
 	if not state.teams.has(team):
 		return "spawn lands units for army %d, which is not at this table" % team

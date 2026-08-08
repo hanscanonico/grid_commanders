@@ -138,7 +138,8 @@ func _play_mission(
 	)
 	assert_not_null(state, "the mission's board has to build")
 	state.map_path = mission.map_path
-	state.sides = mission.sides.duplicate()
+	for team: int in mission.sides:
+		state.sides[team] = int(mission.sides[team])
 	state.rng.seed = seed_val
 	recorder.begin(state, state.teams, Difficulty.DEFAULT_ID, "", "", CAMPAIGN, MISSION)
 	var tally := MissionProgress.new()

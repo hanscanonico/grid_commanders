@@ -84,12 +84,35 @@ func _run_event() -> String:
 		return "the mission's '%s' beat did not fire on a board that was due it" % EVENT
 	if _battle.game.unit_at(Vector2i(11, 4)) == null:
 		return "the '%s' beat landed no unit on the road" % EVENT
+	var board_error := _board_error()
+	if board_error != "":
+		return board_error
 	var card := _battle.animator.mission_speech
 	await _battle.get_tree().process_frame
 	var error := card.layout_error()
 	if error != "":
 		return error
 	return _in_band("mission speech card", card)
+
+
+## Whether every unit the sim holds is drawn, and drawn in its own side's
+## colours. Read back off the live sprites rather than photographed, because both
+## are things a scripted beat breaks without the frame looking wrong: a landed
+## column nothing draws is an empty square the player is then attacked from, and
+## a defector still wearing the army it left is a unit that answers to somebody
+## else. `SideIdentity` owns which colours those are, so the check asks it.
+func _board_error() -> String:
+	var identity := _battle.view.identity
+	for unit in _battle.game.units:
+		var sprite := _battle.view.sprite_for(unit)
+		if sprite == null:
+			return "the board draws nothing for the %s at %s" % [unit.type.id, unit.cell]
+		if sprite.atlas_row != identity.atlas_row(unit.team):
+			return (
+				"the %s at %s is drawn in row %d rather than army %d's"
+				% [unit.type.id, unit.cell, sprite.atlas_row, unit.team]
+			)
+	return ""
 
 
 ## The board band the two docked bars leave over, which is what every floating

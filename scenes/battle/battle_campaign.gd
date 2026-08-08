@@ -49,8 +49,16 @@ static func open_board(game: GameState) -> void:
 ## An army felled by a scripted removal is announced exactly as one felled by a
 ## shot, and from here rather than back in `conclude_command`, because the banner
 ## has to land on the board that emptied the seat.
+##
+## A beat an earlier one of the batch ended the match on is moot rather than
+## wrong — the board was read before it was decided, and `MissionEventCommand`
+## refuses a decided board by design — so the batch stops there. What is left
+## rejected is a beat no board could carry, which is an authoring fault and is
+## said out loud.
 static func fire_due(battle: Battle) -> void:
 	for event: MissionEvent in CampaignSession.due_events(battle.game):
+		if battle.game.winner != 0:
+			return
 		var command := MissionEventCommand.new(event, CampaignSession.mission.player_team)
 		var receipt := await battle.execute_command(command)
 		if receipt.rejected():

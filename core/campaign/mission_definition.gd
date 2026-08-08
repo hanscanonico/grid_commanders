@@ -128,14 +128,24 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	var script_error := _events_error(map, unit_db)
 	if script_error != "":
 		return script_error
+	var ids_error := _objective_ids_error()
+	if ids_error != "":
+		return ids_error
 	return _hidden_objectives_error()
 
 
 ## Why this mission's scripted beats could not play, or "". Ids are unique
 ## because the fired set records them: two events called the same thing are one
 ## event that fires once.
+##
+## The names its beats give the units they land are counted **across the whole
+## script and against the board's own units**, because that is the width of what
+## a tag promises: `UnitTag` is the authority and a tag naming two units names
+## neither — an objective watching one has two answers, and `SaveCodec` refuses
+## the mid-mission save outright, which costs the player the mission they are in.
 func _events_error(map: MapData, unit_db: UnitDB) -> String:
 	var seen: Dictionary[StringName, bool] = {}
+	var named := MissionObjective.board_tags(map)
 	for event: MissionEvent in events:
 		if event == null:
 			return "mission '%s' holds an empty event slot" % id
@@ -145,6 +155,29 @@ func _events_error(map: MapData, unit_db: UnitDB) -> String:
 		var error := event.definition_error(map, player_team, unit_db)
 		if error != "":
 			return "mission '%s': %s" % [id, error]
+		named.append_array(event.spawned_tags())
+	var tag_error := UnitTag.duplicate_error(named)
+	if tag_error != "":
+		return "mission '%s': %s" % [id, tag_error]
+	return ""
+
+
+## Why this mission's objective ids could not be recorded, or "". An id is a save
+## key — `MissionProgress` writes the revealed set under it — so it is held to
+## exactly what a counter key may be, and two objectives cannot share one: a
+## reveal names a single objective, and the mission whose second one came live
+## with it is a mission nobody authored.
+func _objective_ids_error() -> String:
+	var seen: Dictionary[StringName, bool] = {}
+	for objective: MissionObjective in objectives + failures + bonus_objectives:
+		if objective.id == &"":
+			continue
+		var key_error := MissionProgress.name_error(objective.id)
+		if key_error != "":
+			return "mission '%s': objective id %s" % [id, key_error]
+		if seen.has(objective.id):
+			return "mission '%s' has two objectives called '%s'" % [id, objective.id]
+		seen[objective.id] = true
 	return ""
 
 

@@ -47,6 +47,31 @@ func _hand_over(cell: Vector2i, team: int) -> SetOwnerEffect:
 	return effect
 
 
+func _land(cell: Vector2i, tag: StringName) -> SpawnUnitsEffect:
+	var spawn := MissionSpawn.new()
+	spawn.unit_type = Fixture.unit_db().by_symbol("t")
+	spawn.cell = cell
+	spawn.tag = tag
+	var effect := SpawnUnitsEffect.new()
+	effect.team = 2
+	effect.units = [spawn]
+	return effect
+
+
+func _secret(cell: Vector2i, objective_id: StringName) -> CaptureCellObjective:
+	var objective := CaptureCellObjective.new()
+	objective.cell = cell
+	objective.id = objective_id
+	objective.hidden = true
+	return objective
+
+
+func _reveal(objective_id: StringName) -> RevealObjectiveEffect:
+	var effect := RevealObjectiveEffect.new()
+	effect.objective_id = objective_id
+	return effect
+
+
 func _event(id: StringName, triggers: Array[MissionTrigger]) -> MissionEvent:
 	var event := MissionEvent.new()
 	event.id = id
@@ -239,6 +264,85 @@ func test_a_mission_pairs_every_hidden_objective_with_the_event_that_reveals_it(
 		mission.definition_error(_map(), Fixture.unit_db()), "", "and that names no objective"
 	)
 	reveal.objective_id = &"the_hq"
+	assert_eq(mission.definition_error(_map(), Fixture.unit_db()), "")
+
+
+func test_a_mission_refuses_two_beats_that_land_one_name() -> void:
+	var mission := _mission()
+	var first := _event(&"iron_relief", [_day(3)])
+	first.effects = [_land(Vector2i(0, 1), &"relief")]
+	var second := _event(&"second_wave", [_day(5)])
+	second.effects = [_land(Vector2i(1, 1), &"relief")]
+	mission.events = [first, second]
+	assert_ne(
+		mission.definition_error(_map(), Fixture.unit_db()),
+		"",
+		"a tag names one unit on a board, and the save refuses a board where it names two"
+	)
+	second.effects = [_land(Vector2i(1, 1), &"reserve")]
+	assert_eq(mission.definition_error(_map(), Fixture.unit_db()), "")
+
+
+func test_a_mission_refuses_a_beat_that_lands_a_name_the_board_already_carries() -> void:
+	var mission := _mission()
+	var event := _event(&"iron_relief", [_day(3)])
+	event.effects = [_land(Vector2i(0, 1), &"courier")]
+	mission.events = [event]
+	assert_ne(
+		mission.definition_error(_map(), Fixture.unit_db()),
+		"",
+		"the board stands a courier already"
+	)
+
+
+func test_a_repeating_beat_may_not_land_a_named_unit() -> void:
+	var mission := _mission()
+	var event := _event(&"barrage", [_day(3)])
+	event.once = false
+	event.effects = [_land(Vector2i(0, 1), &"relief")]
+	mission.events = [event]
+	assert_ne(
+		mission.definition_error(_map(), Fixture.unit_db()),
+		"",
+		"a beat that repeats would land that name a second time"
+	)
+	event.effects = [_land(Vector2i(0, 1), &"")]
+	assert_eq(
+		mission.definition_error(_map(), Fixture.unit_db()), "", "an unnamed column may repeat"
+	)
+
+
+func test_a_mission_refuses_an_objective_id_no_save_could_key() -> void:
+	var mission := _mission()
+	var secret := _secret(Vector2i(2, 0), &"depot-1")
+	mission.objectives.append(secret)
+	var event := _event(&"the_turn", [_day(3)])
+	event.effects = [_reveal(&"depot-1")]
+	mission.events = [event]
+	assert_ne(
+		mission.definition_error(_map(), Fixture.unit_db()),
+		"",
+		"the revealed set is keyed by it, and the profile refuses a key it could not have written"
+	)
+	secret.id = &"the_depot"
+	event.effects = [_reveal(&"the_depot")]
+	assert_eq(mission.definition_error(_map(), Fixture.unit_db()), "")
+
+
+func test_a_mission_refuses_two_objectives_with_one_id() -> void:
+	var mission := _mission()
+	var secret := _secret(Vector2i(2, 0), &"the_hq")
+	var also := _secret(Vector2i(0, 0), &"the_hq")
+	mission.objectives.append(secret)
+	mission.objectives.append(also)
+	var event := _event(&"the_turn", [_day(3)])
+	event.effects = [_reveal(&"the_hq")]
+	mission.events = [event]
+	assert_ne(
+		mission.definition_error(_map(), Fixture.unit_db()), "", "one reveal would bring both live"
+	)
+	also.id = &"the_depot"
+	event.effects = [_reveal(&"the_hq"), _reveal(&"the_depot")]
 	assert_eq(mission.definition_error(_map(), Fixture.unit_db()), "")
 
 
