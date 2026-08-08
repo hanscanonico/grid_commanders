@@ -776,8 +776,10 @@ the 108 missions carry one today — one per war — and the rest are still foug
 
 While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
 lists what wins, what loses and the bonuses, ticks each condition as it is satisfied and counts the
-ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It is up only inside a campaign mission;
-a skirmish looks exactly as it always did.
+ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It lists exactly the conditions you are
+being judged on, so an objective a mission is holding back stays off the card until a beat brings it
+into play, and then appears there. It is up only inside a campaign mission; a skirmish looks exactly
+as it always did.
 
 The victory screen reads
 **Mission complete** or **Mission failed** with the reason, counts stars — one for finishing, one

@@ -1276,9 +1276,14 @@ that must survive any change; the full rationale, milestones and risk registers 
   diff, so a scripted removal reads as a unit that left and a defection as one that changed team;
   the milestone owed the tests and `tests/unit/test_ai_plan_cache.gd` carries them.
   A hidden objective needs a stable save key, so `MissionObjective` gained `id` beside `hidden` and
-  `MissionRuntime._live` skips an unrevealed one wherever it walks a list; `MissionDefinition`
-  refuses a hidden objective no event reveals, that being a mission that cannot be won and has no
-  other symptom. A mission with nothing hidden is judged exactly as before.
+  `MissionObjective.is_live` is the one answer to whether a condition is being judged yet:
+  `MissionRuntime._live` skips an unrevealed one wherever it walks a list, and
+  **`MissionObjectivesPanel` asks that same authority rather than printing the authored lists**, so
+  the card shows exactly the conditions the verdict is reached on and a held-back objective — a
+  failure most of all, which printed would name the trap — stays off it until a beat reveals it.
+  `MissionDefinition` refuses a hidden objective no event reveals, that being a mission that cannot
+  be won and has no other symptom. A mission with nothing hidden is judged, and drawn, exactly as
+  before.
   `Flag` and `SetFlag` are **deliberately absent** — the ledger they read is CD4's, and a trigger
   reading a ledger that does not exist is untestable; `DayBefore` was added in their place, because
   `ObjectiveMet` plus `DayBefore` is "did it, and did it fast", which is how a later ledger records
