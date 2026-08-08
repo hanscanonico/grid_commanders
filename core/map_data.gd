@@ -15,10 +15,14 @@ extends RefCounted
 ##   [owners]
 ##   <team> <x> <y>       # team is 1-based; only property tiles may be owned
 ##   [units]
-##   <team> <symbol> <x> <y> [tag]   # starting units; symbols defined by UnitType.
+##   <team> <symbol> <x> <y> [tag] [^]  # starting units; symbols defined by UnitType.
 ##                                   # the tag is optional and names that one unit for
 ##                                   # a campaign mission's objectives and events: an
 ##                                   # identifier, and unique on the board.
+##                                   # a trailing ^ marks the row a carry slot: a
+##                                   # campaign's carried army stands there instead of
+##                                   # this unit, at this unit's own type. See
+##                                   # CARRY_MARK.
 ##
 ## [owners] and [units] must come after [terrain] (they need the bounds).
 ## [units] is optional: a board that omits it starts both sides with nothing but
@@ -43,6 +47,15 @@ const SYMMETRIC_TAG := "symmetric"
 ## outside that test reads `grouping`, and a board carrying it still plays a
 ## free-for-all unless a launch says otherwise.
 const GROUPING_TAG := "grouping"
+## Marks a `[units]` row as a **carry slot**: the campaign's carried army stands
+## there if it still has a unit of that row's type, and the row's own unit stands
+## there if it has not (campaign-depth D6). So a board always fields exactly the
+## army it was authored with, whatever the war has cost.
+##
+## The last column of the row, after the optional tag, and it can never be read as
+## one: a tag is an identifier and this is not, so a board naming `^` is refused
+## rather than quietly carrying a unit called that.
+const CARRY_MARK := "^"
 
 ## Every team a board may seat, in seat order — the legal maximum a roster is a
 ## prefix of. The one bound on the question, re-exported as `GameState.TEAMS`
@@ -68,7 +81,8 @@ var grouping := ""
 ## Where this map was read from; empty for maps parsed straight from a string.
 var source_path := ""
 ## Raw starting-unit entries: {team: int, symbol: String, cell: Vector2i,
-## tag: StringName}. The tag is empty for a unit the board did not name.
+## tag: StringName, carry: bool}. The tag is empty for a unit the board did not
+## name, and `carry` is true only for a row marked `^` — see CARRY_MARK.
 var starting_units: Array[Dictionary] = []
 var _terrain: Array[TerrainType] = []  # row-major, width * height entries
 var _owners: Dictionary[Vector2i, int] = {}  # missing key = neutral
@@ -232,8 +246,13 @@ func _set_owner_from_line(line: String) -> bool:
 
 func _append_unit_from_line(line: String) -> bool:
 	var parts := line.split(" ", false)
+	# Taken off the end first, so everything below reads the row the format had
+	# before carry slots existed.
+	var carry := parts.size() > 4 and parts[parts.size() - 1] == CARRY_MARK
+	if carry:
+		parts.resize(parts.size() - 1)
 	if parts.size() < 4 or parts.size() > 5:
-		push_error("MapData: bad unit line '%s' (expected: team symbol x y [tag])" % line)
+		push_error("MapData: bad unit line '%s' (expected: team symbol x y [tag] [^])" % line)
 		return false
 	if not parts[2].is_valid_int() or not parts[3].is_valid_int():
 		push_error("MapData: unit cell must be integer coordinates in '%s'" % line)
@@ -251,7 +270,9 @@ func _append_unit_from_line(line: String) -> bool:
 	if tag_error != "":
 		push_error(tag_error)
 		return false
-	starting_units.append({"team": team, "symbol": parts[1], "cell": cell, "tag": tag})
+	starting_units.append(
+		{"team": team, "symbol": parts[1], "cell": cell, "tag": tag, "carry": carry}
+	)
 	return true
 
 

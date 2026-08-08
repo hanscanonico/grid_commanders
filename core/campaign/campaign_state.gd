@@ -4,9 +4,11 @@ extends RefCounted
 ## the best result each cleared mission was cleared with, and what the war has
 ## recorded along the way.
 ##
-## Progress only. It holds no board, no units and no `GameState` — the battle a
-## player is midway through is the ordinary skirmish snapshot, embedded by
-## `CampaignSaveCodec` rather than re-modelled here.
+## Progress only. It holds no board and no `GameState` — the battle a player is
+## midway through is the ordinary skirmish snapshot, embedded by
+## `CampaignSaveCodec` rather than re-modelled here. The one thing it knows about
+## units is `roster`, and that is a record of condition rather than a board: a
+## `CarriedUnit` has no cell, no fuel and no turn.
 
 ## Facts the campaign already knows and so never stores twice: `records` owns
 ## what a mission was cleared with, and a copy of it in `flags` would be a second
@@ -28,6 +30,12 @@ var active_mission: StringName = &""
 ## what the finished mission staged; nothing in `core/rules/` or `ai/` reads one,
 ## because a flag chooses authored content and never tunes a number.
 var flags: Dictionary[StringName, int] = {}
+## The army the war remembers: what stood at the end of the last mission that
+## carried its survivors out (campaign-depth D6). Condition and identity only —
+## `CampaignRoster` is what banks it and what stands it in the next board's carry
+## slots. Empty outside a chain, which is almost everywhere, and emptied by a
+## mission that carries nothing out.
+var roster: Array[CarriedUnit] = []
 
 
 ## The best a mission has ever been finished with. Best, not last: a replay that

@@ -746,7 +746,8 @@ events = [
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-neutral pl">CD5</span>
           <h3 class="font-black text-lg">The carried army</h3>
-          <span class="text-xs dim">D6</span>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
+          <span class="text-xs dim">D6 · scoped, and the scope is measured</span>
         </div>
         <p class="mt-2 text-sm">
           The carry-slot marker in the map format; <span class="pl">CampaignState.roster</span> banked on
@@ -757,6 +758,31 @@ events = [
         <p class="mt-2 text-sm"><b>Gate:</b> a slot always ends up occupied by exactly one unit of the
         authored type, roster or not; a fixture campaign proving three missions of accumulated damage and
         the floor holding.</p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD5 settled, and the number that scopes it.</b> The shipped campaigns rotate the player's
+          commander almost every mission — which is the original brief, the player being meant to rotate
+          through the other three factions' generals — so a carried army has almost nowhere to go.
+          Measured over all 108: <b>exactly one pair of consecutive missions shares a player commander</b>,
+          lf01 → lf02, both Mara Voss. That pair is the one chain authored, and the fiction fits it
+          without being bent (lf01 ends "I fold the map and fall back to the next line"; lf02 opens on the
+          river). The other 106 boards carry no slot and no flag, pinned by a test, so CD7 inherits a clean
+          field.
+          <b>D6's short-roster fallback is therefore the rule rather than the edge</b>, and that is what
+          makes the milestone safe: <span class="pl">deploy</span> only ever writes
+          <span class="pl">hp</span> and <span class="pl">tag</span> on units
+          <span class="pl">GameState.create</span> already built — it creates nothing, removes nothing and
+          moves nothing — so the empty-roster case is a no-op loop and 106 missions are untouched by
+          construction.
+          <b>A veteran is identified across the gap by its type</b>, claiming the first unclaimed slot the
+          board authored for that type: an object reference dies with the board, a cell means nothing on a
+          different map, and a positional index breaks the moment a unit in the middle dies. A veteran the
+          next board authored no slot for is simply gone from the war. Cargo banks as itself and arrives
+          alone — carriage is board state, and only condition and identity cross.
+          <b>A failed mission banks nothing</b>, so a retry redeploys the army the attempt began with —
+          the same rule CD4's flags follow, and for the same reason.
+          The campaign profile reached <b>VERSION 4</b>; a v1–v3 profile opens with an empty roster and a
+          v3 profile <i>holding</i> one is refused by name.
+        </p>
       </div>
 
       <div class="gc-ms p-4">

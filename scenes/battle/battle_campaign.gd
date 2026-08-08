@@ -19,10 +19,18 @@ static func stage() -> void:
 	BattleMissionScenario.stage()
 
 
-## Takes the board a mission opens on as its tally's baseline — a fresh board or a
-## resumed one — so the first command of either is diffed against something rather
-## than becoming the baseline itself.
-static func open_board(game: GameState) -> void:
+## Opens the board a mission is played on: the army the war remembers stands in
+## the board's carry slots, and the tally takes what results as its baseline — so
+## the first command of either a fresh board or a resumed one is diffed against
+## something rather than becoming the baseline itself.
+##
+## `fresh` is false for a **resumed** mission, whose board is the one the player
+## left: its carry slots were filled when it first opened and its units are
+## wherever the fight has since put them, so standing the war's army on it again
+## would deploy onto a board that has already been played.
+static func open_board(game: GameState, fresh: bool) -> void:
+	if fresh:
+		CampaignSession.deploy_army(game)
 	CampaignSession.open_board(game)
 
 

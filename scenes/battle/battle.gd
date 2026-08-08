@@ -254,7 +254,7 @@ func _ready() -> void:
 	replay_path = built.replay_path
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
-	BattleCampaign.open_board(game)
+	BattleCampaign.open_board(game, request.campaign_resume == &"")
 	_build_planners(built)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()

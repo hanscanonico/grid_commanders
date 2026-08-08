@@ -124,7 +124,7 @@ func _play(campaign: CampaignDefinition, mission: MissionDefinition, state: Game
 	for event: MissionEvent in CampaignSession.due_events(state):
 		_fire(state, event)
 	assert_true(CampaignSession.decide(state), "the fixture objective is met at the opening")
-	CampaignSession.record(state.day)
+	CampaignSession.record(state)
 
 
 # --- the condition -------------------------------------------------------------
@@ -180,7 +180,7 @@ func test_nothing_is_written_until_the_mission_is_finished() -> void:
 	lost.eliminate(1)
 	assert_true(CampaignSession.decide(lost))
 	assert_eq(CampaignSession.outcome.status, MissionRuntime.Status.FAILURE)
-	CampaignSession.record(lost.day)
+	CampaignSession.record(lost)
 	assert_eq(CampaignProfile.load_progress(PROBE).flag(HELD), 0, "a mission lost is not the war")
 
 	# Walking away from the battle: the session is emptied without a verdict, the
@@ -208,7 +208,7 @@ func test_a_mission_played_twice_counts_a_fact_once() -> void:
 	_fire(lost, mission.events[0])
 	lost.eliminate(1)
 	assert_true(CampaignSession.decide(lost))
-	CampaignSession.record(lost.day)
+	CampaignSession.record(lost)
 
 	_play(campaign, mission, Fixture.state(ROW))
 	assert_eq(CampaignProfile.load_progress(PROBE).flag(SAVED), 1, "the run that stood, once")
@@ -256,7 +256,7 @@ func test_a_mission_that_was_lost_reports_nothing_either() -> void:
 	_fire(lost, mission.events[0])
 	lost.eliminate(1)
 	assert_true(CampaignSession.decide(lost))
-	CampaignSession.record(lost.day)
+	CampaignSession.record(lost)
 	assert_eq(CampaignSession.recorded_notes(), [] as Array[String])
 
 
@@ -284,7 +284,7 @@ func test_a_fact_staged_before_a_save_survives_the_resume() -> void:
 	CampaignSession.begin(campaign, mission, CampaignProfile.load_progress(PROBE), resumed.tally)
 	CampaignSession.open_board(state)
 	assert_true(CampaignSession.decide(state))
-	CampaignSession.record(state.day)
+	CampaignSession.record(state)
 	assert_eq(
 		CampaignProfile.load_progress(PROBE).flag(HELD),
 		1,
