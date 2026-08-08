@@ -255,23 +255,21 @@ func _append_unit_from_line(line: String) -> bool:
 	return true
 
 
-## "" when `tag` is a name a mission may reach this unit by, else why it is not.
-## An identifier because a tag is authored in a .tres beside code, and unique
-## because a tag naming two units names neither — an objective asking whether it
-## still stands would have two answers, and the board is the only place that can
-## refuse it before one is picked.
-##
-## An empty tag is the ordinary unnamed unit and is always legal, so no board is
-## held to naming anything.
+## "" when `tag` is a name a mission may reach this unit by, else why it is not,
+## in this parser's voice. What makes a name legal is `UnitTag`'s and not this
+## file's, because a save carries the same field and the two must refuse the same
+## strings; the board is only the first place one can be refused, before anything
+## has picked it.
 func _tag_error(tag: StringName, line: String) -> String:
-	if tag == &"":
+	var error := UnitTag.name_error(tag)
+	if error == "":
+		var tags: Array[StringName] = [tag]
+		for entry: Dictionary in starting_units:
+			tags.append(entry.tag)
+		error = UnitTag.duplicate_error(tags)
+	if error == "":
 		return ""
-	if not String(tag).is_valid_ascii_identifier():
-		return "MapData: unit tag '%s' is not an identifier in '%s'" % [tag, line]
-	for entry: Dictionary in starting_units:
-		if entry.tag == tag:
-			return "MapData: unit tag '%s' names two units, in '%s'" % [tag, line]
-	return ""
+	return "MapData: %s in '%s'" % [error, line]
 
 
 ## Reads the roster off the board, once, at the end of `parse` — the last line may

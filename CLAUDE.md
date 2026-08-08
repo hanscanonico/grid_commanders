@@ -1149,6 +1149,56 @@ that must survive any change; the full rationale, milestones and risk registers 
   "having fought nothing", so it fires only when nothing was fought or captured across **both**
   turns the walk spans — a unit that went out, took its shot and came home is not walking in a
   circle, and a finding whose own detail line the board contradicts is worse than a miss.
+- `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
+  beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
+  the army a mission hands the next one, interludes and optional missions, across all six wars.
+  Milestones CD1–CD8, **CD1 shipped**. It is the design of record for the campaign's *depth*; the
+  **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
+  data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
+  read together. It retires exactly one clause of that entry — D2's "no evacuate/escort/convoy
+  objective exists on purpose", which is what CD2 exists to make sayable — and supersedes nothing
+  else there. The diagnosis is the number: 86 of 108 authored objectives are `CaptureCell`, the
+  skirmish win condition with a label on it, and `DayDeadline` is the only failure condition in the
+  game, so the vocabulary cannot express the beats the treatments were written for.
+  Its locked decisions are what a future reader must not break; the seven below are the load-bearing
+  ones, and the plan carries the rest (D8 the in-battle panel and speech overlay as presentation,
+  D9 the content gate).
+  D1: **an event effect is a `Command` issued at the one broker, never a direct board write** —
+  reinforcements arrive, a garrison defects and a bridge falls through the same
+  `BattleCommandPipeline.execute` a player's click reaches, so an event lands in the log, the save
+  and the replay with no special case, exactly as the aimed power did (`more-commanders-plan.html`'s
+  D2, applied to a script).
+  D2: **a trigger is a pure read of the committed board plus the mission's own saved tally** —
+  same rule as an objective (Campaign mode's D2), so a trigger cannot depend on a half-applied
+  command, on animation, or on anything the sim has not settled.
+  D3: **events fire before the verdict, and a boundary settles whole** — `Battle.conclude_command`
+  runs fallen-army banner → due events → `CampaignSession.decide`, or a mission ends on the turn
+  its own relief column was due; `MissionRuntime`'s own precedence is untouched, events being a
+  step in front of that class rather than a case inside it.
+  D4: **`Unit.tag` is INERT DATA and the plan's one `core/` waiver** — a `StringName`, empty by
+  default, authored as the optional fifth column of a map's `[units]` row and carried in save v9;
+  nothing in `core/rules/`, nothing in `ai/` and nothing in the damage chart reads it, so a named
+  unit fights, moves, is priced and is planned against identically to an unnamed one, and the
+  balance byte bar is what stands in for the waiver (the arena plan's D1 waiver, same shape). The
+  rejected alternative is identifying a unit by the cell it started on — a unit that moves stops
+  being identifiable, and a protect objective matters precisely when the unit is moving. What a
+  tag may *be* is `core/unit_tag.gd` (`UnitTag`) and nowhere else: legal identifier, unique per
+  board, asked by `MapData` row by row as it parses and by `SaveCodec.validate` over a decoded unit
+  list, because a save is the second door onto the board and a tag naming two units names neither.
+  D5: **a flag chooses authored content, never a number** — `CampaignState.flags` is a ledger of
+  integers written only by a `SetFlag` effect or by mission completion, and it reaches the board
+  only by picking which authored thing is used (a variant briefing line, a conditional starting
+  unit, whether a mission opens); it may not hand a mission more funds or a weaker AI, or a campaign
+  becomes a second, invisible balance surface. Nothing in `core/` or `ai/` reads one.
+  D6: **the carried army fills authored slots and never appends** — a board authors carry slots and
+  the map's own unit stands in any the roster cannot fill, so every board still fields exactly the
+  army it was balanced for; what carries forward is HP, tag and identity, never force size. The
+  rejected alternative is survivors appended to the map's army, which invalidates the authoring of
+  all 108 boards at once and in both directions.
+  D7: **`CampaignDefinition.missions` stays the only source of order** — branching is
+  `MissionDefinition.unlock_requires` narrowing that list rather than forking it, which makes an
+  unreachable mission structurally impossible to author, and `is_complete` counts only missions that
+  could have opened.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'
@@ -1180,7 +1230,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   objective's `definition_error` is checked when a mission loads, loud at the door. No
   evacuate/escort/convoy objective exists on purpose — no exit-zone, cargo or named-unit-survival
   condition is expressible — so The Collection and The Furnace Winter author those beats as
-  ground-held-to-a-deadline and static depot chains instead.
+  ground-held-to-a-deadline and static depot chains instead. **That clause is retired by
+  `campaign-depth-plan.html`**, whose CD2 is exactly the milestone that makes those objectives
+  sayable; the rest of this entry stands.
   D3: **`MissionRuntime`'s precedence is the class's whole point: losing outranks winning
   throughout** — tactical defeat, then failure conditions, then tactical victory, then
   objectives — so a deadline that expires on the same board its objective completes is a failure.

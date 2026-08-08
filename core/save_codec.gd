@@ -116,7 +116,9 @@ const KEY_RULES := {
 ## plays the resumed turn under, so a quoted one is a unit that cannot move.
 ## `refreshable` arrived in version 8 and qualifies that action for Second Wind, and
 ## `tag` in version 9 is the name its board gave it — empty for most units, and the
-## only way a mission that is about one unit finds it again after a resume.
+## only way a mission that is about one unit finds it again after a resume. What that
+## text may *say* is `UnitTag`'s, asked in `_unit_tags_error`; this says no more than
+## that it is text.
 const UNIT_KEY_RULES := {
 	"type": {"since": 1, "shape": Shape.STRING},
 	"team": {"since": 1, "shape": Shape.NUMBER},
@@ -510,6 +512,9 @@ static func validate(data: Dictionary) -> String:
 	if error != "":
 		return error
 	error = _entries_error(data["units"], UNIT_KEY_RULES, version, "unit")
+	if error != "":
+		return error
+	error = _unit_tags_error(data, version)
 	if error != "":
 		return error
 	return _funds_error(data)
@@ -1103,6 +1108,28 @@ static func _rng_state_error(data: Dictionary) -> String:
 	if not String(data["rng_state"]).is_valid_int():
 		return "'rng_state' is malformed"
 	return ""
+
+
+## "" when the save's unit names are ones a board could have given, else why they
+## are not. `UnitTag`'s rule asked at the codec's own door: a save is the second way
+## a unit reaches the board, and one naming two units the same names neither — the
+## objective asking whether it still stands would have two answers, which is exactly
+## what the parser refuses before a mission can pick one.
+##
+## The entry pass above has already shaped every `tag` as text, so this only asks
+## what those strings say. Gated on the version that writes the field, like every
+## other read of it: below it no unit carries a name at all.
+static func _unit_tags_error(data: Dictionary, version: int) -> String:
+	if version < int(UNIT_KEY_RULES["tag"]["since"]):
+		return ""
+	var tags: Array[StringName] = []
+	for entry: Dictionary in data["units"] as Array:
+		var tag := StringName(String(entry["tag"]))
+		var error := UnitTag.name_error(tag)
+		if error != "":
+			return error
+		tags.append(tag)
+	return UnitTag.duplicate_error(tags)
 
 
 ## "" when the save carries a purse for every side that plays, and every purse is money.

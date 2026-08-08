@@ -82,6 +82,23 @@ func test_a_malformed_tag_is_refused() -> void:
 	assert_string_contains(SaveCodec.validate(data), "tag")
 
 
+## The board is not the only door units come in by, so the rule the parser states
+## has to hold at the codec's too — a hand-edited save naming two units the same
+## names neither, exactly as a hand-edited board would.
+func test_a_save_naming_two_units_the_same_is_refused() -> void:
+	var data := SaveCodec.encode(_state(), [] as Array[int])
+	var units := data["units"] as Array
+	units[0]["tag"] = "relay"
+	units[1]["tag"] = "relay"
+	assert_string_contains(SaveCodec.validate(data), "names two units")
+
+
+func test_a_save_whose_tag_is_not_an_identifier_is_refused() -> void:
+	var data := SaveCodec.encode(_state(), [] as Array[int])
+	(data["units"] as Array)[0]["tag"] = "not-a-name"
+	assert_string_contains(SaveCodec.validate(data), "is not an identifier")
+
+
 ## The compatibility half: a save written before this milestone names nothing, and
 ## must load as the match it was rather than being refused for a field its writer
 ## had never heard of.
