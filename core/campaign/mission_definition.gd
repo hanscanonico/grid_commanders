@@ -73,7 +73,7 @@ extends Resource
 ## The HP a carried unit is refit to at minimum before it deploys. The author's
 ## answer to "the campaign is unwinnable because mission six went badly": 0 refits
 ## nothing and a veteran lands exactly as it stood.
-@export var carry_floor_hp := 0
+@export_range(0, Unit.MAX_HP) var carry_floor_hp := 0
 
 @export_group("Story")
 ## What is said before the battle and after it is won, as lines with speakers —

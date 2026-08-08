@@ -9,6 +9,12 @@ extends RefCounted
 ## `CampaignSaveCodec` rather than re-modelled here. The one thing it knows about
 ## units is `roster`, and that is a record of condition rather than a board: a
 ## `CarriedUnit` has no cell, no fuel and no turn.
+##
+## **What a replay of a cleared mission does**, all three answers in one place:
+## the ledger takes nothing and the carried army is not re-banked — first clear
+## wins — while stars and best day take the best of any run. A star is a personal
+## record, and beating one should count. A flag and an army are the war's own
+## state, which later missions have already been briefed and opened off.
 
 ## Facts the campaign already knows and so never stores twice: `records` owns
 ## what a mission was cleared with, and a copy of it in `flags` would be a second

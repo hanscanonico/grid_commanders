@@ -187,19 +187,22 @@ func decide(game: GameState) -> bool:
 ## ledger's only on a mission that was actually finished: a defeat is retried,
 ## and the war remembers the attempt that stood.
 ##
-## The army it fielded goes the same way and for the same reason (campaign-depth
-## D6) — an attempt that went wrong is retried from the army it began with — which
-## is why the finished **board** is handed over rather than only its day: what
-## survived is on it, and asking the board is the only way to know.
+## The army it fielded goes the same way and on the same answer — the war takes it
+## on the first clear and never again (`CampaignState`'s replay rules), because the
+## roster *is* the next mission's board and a casual replay must not re-deal one the
+## player has already played past. Which is why the finished **board** is handed
+## over rather than only its day: what survived is on it, and asking the board is
+## the only way to know.
 func record(game: GameState) -> void:
 	if outcome == null or progress == null or campaign == null or mission == null:
 		return
 	if outcome.status == MissionRuntime.Status.SUCCESS:
 		_committed = progress.complete(campaign, mission.id, outcome.stars, game.day, tally)
-		var carried: Array[CarriedUnit] = []
-		if mission.carry_out:
-			carried = CampaignRoster.bank(game, mission.player_team)
-		progress.roster = carried
+		if _committed:
+			var carried: Array[CarriedUnit] = []
+			if mission.carry_out:
+				carried = CampaignRoster.bank(game, mission.player_team)
+			progress.roster = carried
 	else:
 		progress.active_mission = &""
 	CampaignProfile.save_progress(progress)

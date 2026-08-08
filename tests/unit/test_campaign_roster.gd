@@ -204,6 +204,13 @@ func test_the_floor_is_the_worst_a_veteran_lands_at() -> void:
 	CampaignRoster.deploy(state, 1, _roster([_carried(&"tank", 80)]), 60)
 	assert_eq(state.unit_at(TANK_SLOT).hp, 80, "and never refit down to it")
 
+	# `_carry_error` refuses a floor above full strength, but it is only ever asked
+	# by `make campaigns`, so the board is what guarantees it: `Unit` is the one
+	# authority on how healthy a unit can be and nothing authored may outbid it.
+	state = Fixture.state(LINE)
+	CampaignRoster.deploy(state, 1, _roster([_carried(&"tank", 20)]), Unit.MAX_HP + 40)
+	assert_eq(state.unit_at(TANK_SLOT).hp, Unit.MAX_HP, "and never past full strength")
+
 
 # --- the names -----------------------------------------------------------------
 
@@ -299,6 +306,14 @@ func test_a_carried_army_no_writer_could_have_produced_is_refused() -> void:
 	assert_ne(CampaignSaveCodec.validate(data), "", "a name is an identifier")
 	data["roster"] = [{"hp": 40}]
 	assert_ne(CampaignSaveCodec.validate(data), "", "and a veteran is always something")
+	data["roster"] = [{"unit": {}, "hp": 40, "tag": ""}]
+	assert_ne(CampaignSaveCodec.validate(data), "", "a type is a name rather than a shape")
+	data["roster"] = [{"unit": "tank", "hp": {}, "tag": ""}]
+	assert_ne(CampaignSaveCodec.validate(data), "", "a condition is a number")
+	data["roster"] = [{"unit": "tank", "hp": "40", "tag": ""}]
+	assert_ne(CampaignSaveCodec.validate(data), "", "and one written as text was never one")
+	data["roster"] = [{"unit": "tank", "hp": 40, "tag": []}]
+	assert_ne(CampaignSaveCodec.validate(data), "", "a name is text or it is nothing")
 	data["roster"] = [{"unit": "siege_walker", "hp": 40, "tag": ""}]
 	assert_eq(
 		CampaignSaveCodec.validate(data),
@@ -351,6 +366,25 @@ func test_a_lost_mission_leaves_the_carried_army_where_it_was() -> void:
 
 	assert_eq(progress.roster.size(), 1, "nothing the attempt did reached the war")
 	assert_eq(progress.roster[0].hp, 70)
+
+
+## The ledger's rule, at the width an army has: the war takes what the first clear
+## left standing and a replay re-banks nothing. Later missions have already been
+## opened off that army — the roster *is* their board — so a second run for stars
+## must not re-deal one the player may already have played past.
+func test_a_replay_of_a_cleared_mission_leaves_the_carried_army_where_it_was() -> void:
+	var campaign := _campaign()
+	var mission := campaign.missions[0]
+	mission.carry_out = true
+	var progress := CampaignState.begin(campaign)
+
+	_win(_deploy(campaign, mission, progress), {TANK_SLOT: 70})
+	assert_eq(progress.roster.size(), 4, "the run that stood is the army the war remembers")
+	assert_eq(progress.roster[2].hp, 70)
+
+	_win(_deploy(campaign, mission, progress), {TANK_SLOT: 15})
+	assert_eq(progress.roster.size(), 4)
+	assert_eq(progress.roster[2].hp, 70, "and a replay is for stars: the war already happened")
 
 
 # --- the milestone's gate ------------------------------------------------------

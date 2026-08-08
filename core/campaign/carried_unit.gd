@@ -57,7 +57,13 @@ static func record_error(record: Variant) -> String:
 		return "'%s' is not a unit type" % data["unit"]
 	if not data.has("hp"):
 		return "carried unit '%s' has no condition" % data["unit"]
-	var carried_hp := int(data["hp"])
+	var condition = data["hp"]
+	if not (condition is float or condition is int):
+		return "carried unit '%s' holds %s, which is no condition" % [data["unit"], condition]
+	var carried_hp := int(condition)
 	if carried_hp < Unit.MIN_HP or carried_hp > Unit.MAX_HP:
 		return "carried unit '%s' holds %d HP" % [data["unit"], carried_hp]
-	return UnitTag.name_error(StringName(data.get("tag", "")))
+	var carried_tag = data.get("tag", "")
+	if not (carried_tag is String):
+		return "carried unit '%s' answers to %s, which is no name" % [data["unit"], carried_tag]
+	return UnitTag.name_error(StringName(carried_tag))

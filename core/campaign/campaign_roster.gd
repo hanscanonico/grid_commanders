@@ -33,7 +33,9 @@ static func bank(state: GameState, team: int) -> Array[CarriedUnit]:
 
 
 ## Stand the carried army in `team`'s carry slots on a board `GameState.create`
-## has just built, refitting each veteran to `floor_hp` at worst.
+## has just built, refitting each veteran to `floor_hp` at worst and to `MAX_HP`
+## at best — `Unit` is the one authority on how healthy a unit can be, and a
+## mission's authored floor is held to it here as well as at the content gate.
 ##
 ## Slots are filled in board order and each takes the first unclaimed veteran of
 ## its own type, so **a slot the roster has nothing for keeps the full-strength
@@ -58,7 +60,7 @@ static func deploy(state: GameState, team: int, carried: Array[CarriedUnit], flo
 			continue
 		claimed[index] = true
 		var veteran := carried[index]
-		unit.hp = maxi(veteran.hp, floor_hp)
+		unit.hp = mini(maxi(veteran.hp, floor_hp), Unit.MAX_HP)
 		# The board's own names are the mission's — an objective can only name what
 		# the board authored — so a carried name fills a slot the board left unnamed
 		# and never takes one that is already spoken for.
