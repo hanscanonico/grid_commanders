@@ -746,8 +746,22 @@ line under its speaker's name in their faction's colour, then the objectives, wh
 par day — and **Deploy** stages it through the same launch path a skirmish uses; the button reads
 **Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
 every objective at once (or by ordinary tactical victory) and lost by any failure condition — a
-deadline, a fallen ally — or by tactical defeat, and **losing outranks winning**: a deadline that
-expires on the very board that completed the objective is a failure. The victory screen reads
+deadline, a fallen ally, a loss limit spent — or by tactical defeat, and **losing outranks
+winning**: a deadline that expires on the very board that completed the objective is a failure.
+A mission asks for more than the enemy's headquarters: take a cell or so many properties, hold out
+to a day, **hold** named ground for a run of whole days, get a number of units onto an **exit
+zone**, **destroy** or **keep alive** a unit the board names, break one named **army**, or finish
+having lost no more than so many units. Everything is counted across your **side** — an ally
+reaching the zone reaches it for both of you, and an ally's casualty is on your bill — except
+"break that army", which is about one army on purpose. Two units merged into one spend a unit, and
+a loss limit counts it as such.
+
+While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
+lists what wins, what loses and the bonuses, ticks each condition as it is satisfied and counts the
+ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It is up only inside a campaign mission;
+a skirmish looks exactly as it always did.
+
+The victory screen reads
 **Mission complete** or **Mission failed** with the reason, counts stars — one for finishing, one
 for beating the par day, one per bonus objective — and its action button reads **Retry**, which
 re-arms the mission itself rather than rematching its finished board. Leaving the battle plays
@@ -759,11 +773,14 @@ Progress is one file per campaign under `user://campaigns/`, written through a t
 like the skirmish save, so the six wars advance independently and finishing one cannot corrupt
 another's record. Inside a mission, both save rows on the map menu write the match *into its
 campaign's profile* rather than the skirmish slot — **Continue** on the main menu still means the
-one skirmish save, and the hub is where a saved mission picks its board back up.
+one skirmish save, and the hub is where a saved mission picks its board back up. What the mission
+has counted rides with the board: resuming one carries on with the days it had held and the units
+it had lost, and a **Retry** starts both clean.
 
 `make campaigns` is the authoring gate: it walks every mission of every campaign and fails loudly
 if a board does not parse, a seating names a seat the board does not deal, an objective names
-ground that does not exist, a mission asks for a difficulty tier that does not ship, a story
+ground or a unit the board does not have (or asks for more than that board could ever give), a
+mission asks for a difficulty tier that does not ship, a story
 line's speaker is not on the commander roster, or the launch does not build.
 
 ## Replays
@@ -910,8 +927,9 @@ already failing would muddy both readings.
   for the battle scene, the device preferences this machine keeps between launches (`Settings` —
   the game speed above, whether battles play the full-screen cut-ins, and which first-match hints
   this player has retired), the sound-effect player, and the campaign session (`CampaignSession` —
-  which war and mission is being played, carried across the scene change; navigation intent only,
-  it decides no rule and holds no board).
+  which war and mission is being played, plus the few things that mission has tallied over the
+  boards it has been played on — days a square has been held, units lost — carried across the
+  scene change; navigation intent only, it decides no rule and holds no board).
 - `tools/` — the art and sound build scripts: the headless ground-tile, sound, and portrait
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
   Assets below); and the offline balance

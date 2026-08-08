@@ -1154,14 +1154,14 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
   beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
   the army a mission hands the next one, interludes and optional missions, across all six wars.
-  Milestones CD1–CD8, **CD1 shipped**. It is the design of record for the campaign's *depth*; the
-  **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
+  Milestones CD1–CD8, **CD1–CD2 shipped**. It is the design of record for the campaign's *depth*;
+  the **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
   data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
-  read together. It retires exactly one clause of that entry — D2's "no evacuate/escort/convoy
-  objective exists on purpose", which is what CD2 exists to make sayable — and supersedes nothing
-  else there. The diagnosis is the number: 86 of 108 authored objectives are `CaptureCell`, the
-  skirmish win condition with a label on it, and `DayDeadline` is the only failure condition in the
-  game, so the vocabulary cannot express the beats the treatments were written for.
+  read together. It retired exactly one clause of that entry — D2's "no evacuate/escort/convoy
+  objective exists on purpose", which CD2 made sayable — and supersedes nothing
+  else there. The diagnosis was the number: 86 of 108 authored objectives were `CaptureCell`, the
+  skirmish win condition with a label on it, and `DayDeadline` the only failure condition in the
+  game, so the vocabulary could not express the beats the treatments were written for.
   Its locked decisions are what a future reader must not break; the seven below are the load-bearing
   ones, and the plan carries the rest (D8 the in-battle panel and speech overlay as presentation,
   D9 the content gate).
@@ -1201,6 +1201,30 @@ that must survive any change; the full rationale, milestones and risk registers 
   `MissionDefinition.unlock_requires` narrowing that list rather than forking it, which makes an
   unreachable mission structurally impossible to author, and `is_complete` counts only missions that
   could have opened.
+  **CD2 shipped the objective vocabulary and the in-battle card, and settled what the plan left
+  open.**
+  `DestroyUnit`, `ProtectUnit`, `ReachCell` and `DefeatTeam` are pure reads of one board;
+  **only `HoldCell` and `LossLimit` need the tally**, which is why `MissionProgress` is a pair of
+  counters rather than a general mission-state bag, and why `is_met` / `readout` /
+  `definition_error` take their extra parameter **required, never defaulted** — a caller that forgot
+  the tally would silently read "never held, never lost", a mission nobody can win. Losses are a
+  **set difference** over the instance ids of our side's units between two boundaries, never
+  "started with, minus have now" (a unit built between them masks a unit killed between them), and
+  the consequence is stated on the class rather than special-cased: a `JoinCommand` merge reads as a
+  loss, because a board diff cannot see which way a unit left and D2 forbids a hook that would tell
+  them apart. **The tally follows the board, not the mission** — `CampaignSession.begin` is handed
+  the resumed tally by the caller already reading the profile, so a resume inherits its losses and a
+  retry starts clean. `MissionObjective.readout()` is the one addition to `core/` the plan did not
+  name: the panel must not re-derive a deadline or a count off an objective's `@export`s, and an
+  objective already carries authored presentation copy in `text`.
+  **D8 is corrected, not followed**: it said the panel is suppressed while `animator.capturing` and
+  under Instant so `make smoke` stays byte-stable, which would hide it in the one scenario that
+  exists to photograph it. The shipped gate needs no opt-out — `MissionObjectivesPanel` is down
+  unless `CampaignSession.active()`, and no capture stages a mission except its own — and the plan
+  artifact carries the amendment. A campaign board is not in `MapCatalog`, so the `objective_panel`
+  scenario deploys through the shipped `CampaignSession.begin` → `MatchConfig.stage` pair
+  (`BattleMissionScenario`) rather than widening `--map=`, and clears the session after the frame so
+  the next `menu_` scenario in the same process opens a menu rather than a campaign hub.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'
@@ -1229,18 +1253,24 @@ that must survive any change; the full rationale, milestones and risk registers 
   an ally's property is not a legal capture target, so a team-only count could be driven
   permanently below target by the player's own allied AI. `AllySurvivesObjective` exists because
   `winners()` lists survivors only, so "keep the marshal alive" is otherwise unsayable. Every
-  objective's `definition_error` is checked when a mission loads, loud at the door. No
-  evacuate/escort/convoy objective exists on purpose — no exit-zone, cargo or named-unit-survival
-  condition is expressible — so The Collection and The Furnace Winter author those beats as
-  ground-held-to-a-deadline and static depot chains instead. **That clause is retired by
-  `campaign-depth-plan.html`**, whose CD2 is exactly the milestone that makes those objectives
-  sayable; the rest of this entry stands.
+  objective's `definition_error` is checked when a mission loads, loud at the door.
+  **`DefeatTeamObjective` is the one deliberate by-team read in the library** and its comment says
+  so, because it looks exactly like the bug this rule warns about: a mission about one marshal is
+  about that marshal's army, and read side-wide it would keep running with the marshal already
+  gone. The clause that no evacuate/escort/convoy objective exists is retired — CD2 shipped the
+  exit-zone, hold, named-unit and loss-limit verbs, and the CD entry above owns what they settled;
+  the rest of this entry stands.
   D3: **`MissionRuntime`'s precedence is the class's whole point: losing outranks winning
   throughout** — tactical defeat, then failure conditions, then tactical victory, then
   objectives — so a deadline that expires on the same board its objective completes is a failure.
-  It is asked at the one seam the live scene already has: `CampaignSession.decide(game)` in
-  `Battle.conclude_command`, four lines, and `decide` returns false for every skirmish — the sim
-  gained no hook and every pre-existing test is untouched.
+  It is asked at the one seam the live scene already has — `Battle.conclude_command`, through
+  `BattleCampaign`, the scene's whole campaign side (the mission capture's launch, the tally's
+  opening board, the verdict) — and it returns false for every skirmish, which is what leaves a
+  match outside a campaign on the code it ran before campaigns existed: the sim gained no hook and
+  every pre-existing test is untouched. `evaluate` takes the tally as a parameter and never writes
+  it; **`CampaignSession.decide` is `MissionProgress`' one writer** (campaign-depth D2) and
+  advances it *before* the verdict, because a condition asking how long the ridge has been ours is
+  about this board rather than the one before it.
   D4: **`CampaignSession` is a second autoload beside `MatchConfig`, navigation intent only** —
   `MatchConfig` deliberately carries exactly one typed request and nothing else, and a battle
   outside a campaign must not have to know a campaign exists. `clear()` empties it whole, runtime
@@ -1248,8 +1278,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   D5: **progress is one file per campaign** under `user://campaigns/`, temp+backup like
   `SaveGame`, so six wars advance independently and finishing one cannot corrupt another's record.
   The mid-mission board is `SaveCodec.encode`'s envelope embedded whole (`CampaignSaveCodec`
-  serialises no board of its own) and the skirmish slot is never touched, so Continue keeps one
-  unambiguous meaning; a damaged profile is read through a `JSON` instance rather than
+  serialises no board of its own; its own format is **VERSION 2**, which arrived with CD2's mission
+  tally — the board save is deliberately untouched, this being mission bookkeeping rather than
+  board state, so a skirmish save is byte-unchanged) and the skirmish slot is never touched, so
+  Continue keeps one unambiguous meaning; a damaged profile is read through a `JSON` instance
+  rather than
   `JSON.parse_string`, whose static call logs an engine error for a condition `SaveGame` already
   treats as expected. The two file-line budgets the feature raised (`battle.gd`, `main_menu.gd`)
   are recorded with their reasons in `tools/check_scripts.sh`, extraction first —
@@ -1293,7 +1326,8 @@ res://
 │  │  └─ cutscene/  # the combat & capture cut-ins and the BattleStyle they read
 │  ├─ menu/     # main_menu.tscn — map and commander select, match options, campaign screens
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
-│  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip
+│  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip,
+│              # the in-battle mission objective card
 ├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, CampaignSession
 ├─ ai/          # AIController façade + planning context + unit/production planners
 │              # ai_profile.gd owns every weight; NO Node references
