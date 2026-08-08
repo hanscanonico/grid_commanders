@@ -87,6 +87,11 @@ func plan(context: AIPlanningContext) -> Command:
 		_reactive_order(context, doctrine_bias),
 		doctrine_bias
 	)
+	# One price per unit type for the whole decision: UnitPricing.cost_for is
+	# constant across facilities (it reads the commander, the team and the
+	# type, never the terrain), so every facility and the banking check below
+	# ask this rather than the authority directly.
+	var prices := _prices(context)
 	var best_cell := Vector2i.ZERO
 	var best_choice: UnitType = null
 	var best_rank := RANK_NONE
@@ -96,7 +101,7 @@ func plan(context: AIPlanningContext) -> Command:
 		if terrain.builds.is_empty() or state.unit_at(cell) != null:
 			continue
 		facilities.append(terrain)
-		var choice := _pick_build(context, terrain, wants, funds)
+		var choice := _pick_build(context, terrain, wants, funds, prices)
 		if choice == null:
 			continue
 		var rank := _build_rank(choice, wants)
@@ -106,9 +111,17 @@ func plan(context: AIPlanningContext) -> Command:
 			best_cell = cell
 	if best_choice == null:
 		return null
-	if _worth_waiting_for(context, facilities, wants, funds, best_rank):
+	if _worth_waiting_for(context, facilities, wants, funds, best_rank, prices):
 		return null
 	return BuildCommand.new(context.team, best_choice, best_cell)
+
+
+## Unit id -> UnitPricing.cost_for's answer, built once per `plan()` call.
+func _prices(context: AIPlanningContext) -> Dictionary:
+	var prices: Dictionary = {}
+	for unit_type in context.unit_types:
+		prices[unit_type.id] = UnitPricing.cost_for(context.state, context.team, unit_type)
+	return prices
 
 
 ## How many capture-capable units the team wants: the profile's floor, raised by
@@ -120,11 +133,7 @@ func plan(context: AIPlanningContext) -> Command:
 func _capture_unit_target(context: AIPlanningContext) -> int:
 	if profile.capture_units_per_property <= 0.0:
 		return profile.capture_unit_target
-	var state := context.state
-	var unowned := 0
-	for cell in state.map.property_cells():
-		if not state.allied(state.owner_at(cell), context.team):
-			unowned += 1
+	var unowned := context.capturable_properties().size()
 	var wanted := ceili(profile.capture_units_per_property * float(unowned))
 	return maxi(profile.capture_unit_target, wanted)
 
@@ -138,12 +147,16 @@ func _supply_unit_target() -> int:
 
 ## The best unit this facility can produce for the money, or null.
 func _pick_build(
-	context: AIPlanningContext, terrain: TerrainType, wants: BuildWants, funds: int
+	context: AIPlanningContext,
+	terrain: TerrainType,
+	wants: BuildWants,
+	funds: int,
+	prices: Dictionary
 ) -> UnitType:
 	var best: UnitType = null
 	var best_rank := RANK_NONE
 	for unit_type in context.unit_types:
-		var price := UnitPricing.cost_for(context.state, context.team, unit_type)
+		var price: int = prices[unit_type.id]
 		if not terrain.can_build(unit_type.move_class) or funds < price:
 			continue
 		var rank := _build_rank(unit_type, wants)
@@ -159,14 +172,15 @@ func _worth_waiting_for(
 	facilities: Array[TerrainType],
 	wants: BuildWants,
 	funds: int,
-	best_rank: int
+	best_rank: int,
+	prices: Dictionary
 ) -> bool:
 	if best_rank < RANK_PRIORITY or profile.save_up_turns <= 0:
 		return false
 	var budget := funds + TurnRules.income_for(context.state, context.team) * profile.save_up_turns
 	for terrain in facilities:
 		for unit_type in context.unit_types:
-			var price := UnitPricing.cost_for(context.state, context.team, unit_type)
+			var price: int = prices[unit_type.id]
 			if not terrain.can_build(unit_type.move_class) or price > budget:
 				continue
 			if _build_rank(unit_type, wants) < best_rank:

@@ -548,12 +548,12 @@ static func _standoff_rank(
 ## Our own properties that would repair this unit, empty while it is unhurt: a
 ## healthy unit has no reason to prefer a workshop to any other safe cell.
 ## Infrastructure is `owner == unit.team` and never `allied` (four-players D2),
-## which is the question _servicing_properties already asks.
+## which is the question `context.servicing_properties` already asks.
 func _repair_cells(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
 	var none: Array[Vector2i] = []
 	if unit.hp >= 100:
 		return none
-	return _servicing_properties(context, unit)
+	return context.servicing_properties(unit.type.domain)
 
 
 ## A submarine's two decisions: whether to be under the water, and where to be it.
@@ -819,18 +819,14 @@ static func _position_rank(
 func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	if context.goals.has(unit):
 		return context.goals[unit]
-	var state := context.state
-	var errand := _errand_goal(context, unit)
+	var errand := _cached_errand_goal(context, unit)
 	if errand != null:
-		context.goals[unit] = errand
 		return errand
 	if unit.type.can_capture:
-		var capturable: Array[Vector2i] = []
-		for cell in state.map.property_cells():
-			# Through the allegiance authority, so the planner never walks a unit at
-			# a capture `CaptureCommand` would refuse: an ally's ground is held.
-			if not state.allied(state.owner_at(cell), unit.team):
-				capturable.append(cell)
+		# `capturable_properties` is the allegiance authority read once for the
+		# whole command: an ally's ground is already held, so `CaptureCommand`
+		# would refuse it and a unit is never walked at it.
+		var capturable := context.capturable_properties()
 		if not capturable.is_empty():
 			var capture := AIPlanningContext.AdvanceGoal.new()
 			capture.cell = _claimed_property(context, unit, capturable)
@@ -867,25 +863,41 @@ func _enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.Ad
 ## what keeps a unit an errand has already taken from claiming ground it will
 ## never walk to.
 func _errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
-	if unit.running_dry(profile.refuel_margin_turns):
-		var refits := _servicing_properties(context, unit)
-		if not refits.is_empty():
-			var goal := AIPlanningContext.AdvanceGoal.new()
-			goal.cell = _nearest(unit.cell, refits)
-			return goal
-	if unit.hp <= _retreat_threshold(context.state, unit):
-		var repairs := _servicing_properties(context, unit)
-		if not repairs.is_empty():
-			var goal := AIPlanningContext.AdvanceGoal.new()
-			goal.cell = _nearest(unit.cell, repairs)
-			return goal
-	var besieged := _besieged_home_hqs(context, unit)
+	# One scan for both the refit and repair checks below — a unit that is
+	# fuel-critical with nothing servicing it used to run this same scan again
+	# for the wound check that follows.
+	var servicing := context.servicing_properties(unit.type.domain)
+	if not servicing.is_empty():
+		if unit.running_dry(profile.refuel_margin_turns):
+			var refit := AIPlanningContext.AdvanceGoal.new()
+			refit.cell = _nearest(unit.cell, servicing)
+			return refit
+		if unit.hp <= _retreat_threshold(context.state, unit):
+			var repair := AIPlanningContext.AdvanceGoal.new()
+			repair.cell = _nearest(unit.cell, servicing)
+			return repair
+	var besieged := _besieged_home_hqs(context)
 	if not besieged.is_empty():
 		var goal := AIPlanningContext.AdvanceGoal.new()
 		goal.cell = _nearest(unit.cell, besieged)
 		goal.stand_off = AttackRange.is_indirect(unit)
 		return goal
 	return null
+
+
+## `_errand_goal`'s answer, shared with `_advance_goal`'s own memo. A unit
+## `_assign_capture_claims` inspects while filtering seekers, and that same
+## unit's own `_advance_goal` call later — this is the one path both walk,
+## caching a real errand so the second call finds it rather than re-running
+## the scan. A null errand is never cached: it is not itself a fact about the
+## unit's final goal, only that this branch found nothing.
+func _cached_errand_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
+	if context.goals.has(unit):
+		return context.goals[unit]
+	var errand := _errand_goal(context, unit)
+	if errand != null:
+		context.goals[unit] = errand
+	return errand
 
 
 ## Which of `cells` this unit walks to once capture goals are claimed, so that
@@ -976,7 +988,7 @@ func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array
 	for other in context.friendly_units:
 		if not other.type.can_capture or other.carrier != null:
 			continue
-		if other == unit or cells.has(other.cell) or _errand_goal(context, other) == null:
+		if other == unit or cells.has(other.cell) or _cached_errand_goal(context, other) == null:
 			seekers.append(other)
 	var bids: Array = []
 	for u in seekers.size():
@@ -1013,24 +1025,18 @@ static func _by_distance_then_scan_order(a: Array, b: Array) -> bool:
 	return a[2] < b[2]
 
 
-## Home HQs of our own side with a capture-capable enemy standing on them, in
-## enemy scan order. The one property kind that pulls a unit off the front: a
-## city changes hands and can be taken back, a home HQ ends the army that loses
-## it. Defending anything smaller is left to units that already had a shot.
-func _besieged_home_hqs(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
+## Home HQs of our own side with a capture-capable enemy standing on them. The
+## one property kind that pulls a unit off the front: a city changes hands and
+## can be taken back, a home HQ ends the army that loses it. Defending anything
+## smaller is left to units that already had a shot.
+##
+## The scan itself is `context.besieged_home_hqs()`'s, asked only while
+## `defend_weight` is live — the gate stays here rather than in the context, so
+## a tier with the dial off never pays for the scan at all.
+func _besieged_home_hqs(context: AIPlanningContext) -> Array[Vector2i]:
 	if profile.defend_weight <= 0.0:
-		return cells
-	var state := context.state
-	for enemy in context.visible_enemies:
-		if not enemy.type.can_capture:
-			continue
-		var owner := state.owner_at(enemy.cell)
-		if not state.allied(owner, unit.team):
-			continue
-		if state.home_hq.has(owner) and state.home_hq[owner] == enemy.cell:
-			cells.append(enemy.cell)
-	return cells
+		return []
+	return context.besieged_home_hqs()
 
 
 ## The profile's retreat line, moved by the commander's doctrine — a general
@@ -1042,15 +1048,6 @@ func _retreat_threshold(state: GameState, unit: Unit) -> int:
 		if delta != 0:
 			threshold += int(roundf(profile.doctrine_weight * float(delta)))
 	return threshold
-
-
-## Owned properties that refuel and repair this unit's movement domain.
-func _servicing_properties(context: AIPlanningContext, unit: Unit) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-	for cell in context.owned_properties:
-		if context.state.map.terrain_at(cell).services_domain(unit.type.domain):
-			cells.append(cell)
-	return cells
 
 
 static func _nearest(from: Vector2i, cells: Array[Vector2i]) -> Vector2i:

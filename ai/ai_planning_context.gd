@@ -43,6 +43,23 @@ var _unit_db: UnitDB
 var _threat_map: ThreatMap = null
 var _threat_key: String = ""
 
+## Property cells no army allied with us holds, and whether that scan has run
+## yet this command. Both planners ask the identical question over the
+## identical scan — the unit planner's capture goal and the production
+## planner's capture-unit target — so it is answered once here rather than
+## twice with two bodies.
+var _capturable_properties: Array[Vector2i] = []
+var _capturable_properties_ready: bool = false
+
+## Servicing properties by movement domain, a small Dictionary because a match
+## fields at most a handful of domains. Cleared with everything else in `begin`.
+var _servicing_properties: Dictionary = {}
+
+## Home HQs of our own side under enemy capture threat, and whether that scan
+## has run yet this command.
+var _besieged_home_hqs: Array[Vector2i] = []
+var _besieged_home_hqs_ready: bool = false
+
 
 func _init(p_unit_db: UnitDB) -> void:
 	_unit_db = p_unit_db
@@ -65,6 +82,54 @@ func begin(p_state: GameState) -> void:
 		enemy_roster.append([enemy.type.cost, enemy.type.id])
 	goals.clear()
 	capture_claims.clear()
+	_capturable_properties_ready = false
+	_servicing_properties.clear()
+	_besieged_home_hqs_ready = false
+
+
+## Property cells held by nobody allied with us, in map scan order. Built on
+## first use and cached for this command: both planners ask the same
+## question over the same board, and the property list itself never changes
+## mid-command.
+func capturable_properties() -> Array[Vector2i]:
+	if not _capturable_properties_ready:
+		_capturable_properties = []
+		for cell in state.map.property_cells():
+			if not state.allied(state.owner_at(cell), team):
+				_capturable_properties.append(cell)
+		_capturable_properties_ready = true
+	return _capturable_properties
+
+
+## Our own properties that refuel and repair `domain`, memoised per domain —
+## a unit's refit and repair goals, and its withdrawal's refuge, all ask this
+## same question and there are only ever a few domains in play at once.
+func servicing_properties(domain: StringName) -> Array[Vector2i]:
+	if not _servicing_properties.has(domain):
+		var cells: Array[Vector2i] = []
+		for cell in owned_properties:
+			if state.map.terrain_at(cell).services_domain(domain):
+				cells.append(cell)
+		_servicing_properties[domain] = cells
+	return _servicing_properties[domain]
+
+
+## Home HQs of our own side with a capture-capable enemy standing on them, in
+## enemy scan order. Built once per command — the team is fixed for the whole
+## decision, so this needs no per-unit key.
+func besieged_home_hqs() -> Array[Vector2i]:
+	if not _besieged_home_hqs_ready:
+		_besieged_home_hqs = []
+		for enemy in visible_enemies:
+			if not enemy.type.can_capture:
+				continue
+			var owner := state.owner_at(enemy.cell)
+			if not state.allied(owner, team):
+				continue
+			if state.home_hq.has(owner) and state.home_hq[owner] == enemy.cell:
+				_besieged_home_hqs.append(enemy.cell)
+		_besieged_home_hqs_ready = true
+	return _besieged_home_hqs
 
 
 ## The threat map for the current turn, built on first use and rebuilt whenever
