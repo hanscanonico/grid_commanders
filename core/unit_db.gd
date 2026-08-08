@@ -4,8 +4,8 @@ extends RefCounted
 
 const UNIT_DIR := "res://data/units"
 
-var _by_id: Dictionary = {}
-var _by_symbol: Dictionary = {}
+var _by_id: Dictionary[StringName, UnitType] = {}
+var _by_symbol: Dictionary[String, UnitType] = {}
 
 
 static func load_default() -> UnitDB:

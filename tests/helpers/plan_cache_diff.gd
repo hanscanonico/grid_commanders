@@ -233,7 +233,7 @@ func _planner(cached: bool, profile: AIProfile) -> AIController:
 ## cache never under-drops on that distinction is to play a grouped match twice,
 ## cached and not, and demand the same commands.
 func over_grouped_match(
-	map: MapData, sides: Dictionary, profile: AIProfile, seed_val: int, days: int
+	map: MapData, sides: Dictionary[int, int], profile: AIProfile, seed_val: int, days: int
 ) -> Diff:
 	var result := Diff.new()
 	var cached := _grouped_command_log(map, sides, profile, true, seed_val, days)
@@ -247,7 +247,12 @@ func over_grouped_match(
 ## recorder here, because the comparison is between two logs rather than a
 ## report.
 func _grouped_command_log(
-	map: MapData, sides: Dictionary, profile: AIProfile, cached: bool, seed_val: int, days: int
+	map: MapData,
+	sides: Dictionary[int, int],
+	profile: AIProfile,
+	cached: bool,
+	seed_val: int,
+	days: int
 ) -> Array[String]:
 	var built := GameState.create(map, unit_db, chart)
 	built.sides = sides.duplicate()

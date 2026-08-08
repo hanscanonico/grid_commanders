@@ -89,7 +89,7 @@ var game: GameState
 ## while watch mode (balance plan BS3) can put a different commander *and* a
 ## different tier on each side and have each plan with its own profile and its
 ## own per-turn threat map.
-var planners: Dictionary = {}
+var planners: Dictionary[int, AIController] = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
 ## A pause the player asked for during a computer turn, not yet taken effect. The
@@ -1300,7 +1300,7 @@ func refresh_fog() -> void:
 ## unannounced as the ownership flip that will follow it. A presentation split of
 ## a number the sim already holds — never a call back into capture_strength.
 func _refresh_capture_pips() -> void:
-	var pips := {}
+	var pips: Dictionary[Vector2i, int] = {}
 	for cell: Vector2i in game.capture_progress:
 		if perspective.can_see_cell(cell):
 			pips[cell] = game.capture_progress[cell]

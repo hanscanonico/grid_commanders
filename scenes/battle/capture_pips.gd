@@ -32,12 +32,12 @@ const BASELINE := 6.0
 const OUTLINE := 2
 
 ## Cell -> capture points still owed.
-var _pips: Dictionary = {}
+var _pips: Dictionary[Vector2i, int] = {}
 
 
 ## Replaces everything drawn. An empty dictionary clears, so callers never need a
 ## separate hide — the same contract the overlay painters have.
-func set_pips(pips: Dictionary) -> void:
+func set_pips(pips: Dictionary[Vector2i, int]) -> void:
 	_pips = pips
 	queue_redraw()
 

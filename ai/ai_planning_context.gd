@@ -30,14 +30,14 @@ var visible_enemies: Array[Unit] = []
 var owned_properties: Array[Vector2i] = []
 var unit_types: Array[UnitType] = []
 ## Cost-weighted production input as [cost, type id] pairs, in enemy scan order.
-var enemy_roster: Array = []
+var enemy_roster: Array[Array] = []
 ## Unit -> AdvanceGoal, populated only when that unit reaches its fallback move.
-var goals: Dictionary = {}
+var goals: Dictionary[Unit, AdvanceGoal] = {}
 ## Unit -> claimed property cell, settled for every capturer at once the first
 ## time one asks. Exactly `goals`' lifetime — cleared by `begin`, so it is one
 ## command deep and nothing about a claim survives the board moving, which is
 ## what keeps AI Economy D3's rejected claims registry rejected.
-var capture_claims: Dictionary = {}
+var capture_claims: Dictionary[Unit, Vector2i] = {}
 
 var _unit_db: UnitDB
 var _threat_map: ThreatMap = null
@@ -53,7 +53,9 @@ var _capturable_properties_ready: bool = false
 
 ## Servicing properties by movement domain, a small Dictionary because a match
 ## fields at most a handful of domains. Cleared with everything else in `begin`.
-var _servicing_properties: Dictionary = {}
+## Values are Array[Vector2i]; GDScript cannot nest typed containers, so the
+## value type stops at the plain Array.
+var _servicing_properties: Dictionary[StringName, Array] = {}
 
 ## Home HQs of our own side under enemy capture threat, and whether that scan
 ## has run yet this command.

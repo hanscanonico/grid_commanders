@@ -20,6 +20,9 @@ var _replay: ReplayCodec.Replay
 var _unit_db: UnitDB
 var _at := 0
 ## The line handed out by the last `next_command`, which `drift` checks against.
+## Left generic: assigned straight from `_replay.entries`, a plain Array[Dictionary]
+## whose elements GDScript refuses to narrow into a typed dictionary variable even
+## with Variant values (a runtime check on the source dictionary's own type).
 var _applied: Dictionary = {}
 
 

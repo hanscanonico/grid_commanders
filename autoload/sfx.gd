@@ -22,7 +22,7 @@ const NAMES: Array[StringName] = [
 ]
 const POOL_SIZE := 6
 
-var _streams: Dictionary = {}
+var _streams: Dictionary[StringName, AudioStream] = {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 

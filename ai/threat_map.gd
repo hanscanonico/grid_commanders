@@ -32,8 +32,10 @@ extends RefCounted
 ## preference, never an illegal move.
 
 ## cell -> Array[Unit]: the enemies that can bring `cell` under fire. An enemy
-## appears at most once per cell however many firing positions reach it.
-var _by_cell: Dictionary = {}
+## appears at most once per cell however many firing positions reach it. The
+## value stays a plain Array — GDScript cannot nest typed containers, so the
+## Unit typing lives only in the doc comment and at each read.
+var _by_cell: Dictionary[Vector2i, Array] = {}
 
 
 ## Builds the map for `team` from the enemies it can see. The caller passes the

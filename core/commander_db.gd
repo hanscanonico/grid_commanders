@@ -8,7 +8,7 @@ extends RefCounted
 
 const COMMANDER_DIR := "res://data/commanders"
 
-var _by_id: Dictionary = {}
+var _by_id: Dictionary[StringName, CommanderType] = {}
 
 
 static func load_default() -> CommanderDB:

@@ -219,7 +219,7 @@ static func threat_cells(
 		return []
 	var low := minimum(state, unit)
 	var high := maximum(state, unit)
-	var seen := {}
+	var seen: Dictionary[Vector2i, bool] = {}
 	for from in firing_cells(state, unit, sight_team):
 		for cell in ring_cells(state, from, low, high):
 			seen[cell] = true

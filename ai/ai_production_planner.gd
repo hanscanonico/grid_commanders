@@ -26,19 +26,19 @@ class BuildWants:
 	var short_of_capture_units: bool = false
 	var short_of_supply: bool = false
 	## Unit id -> number the team already fields.
-	var owned: Dictionary = {}
+	var owned: Dictionary[StringName, int] = {}
 	## Unit id -> place in S3's standing tier, best first.
-	var reactive_order: Dictionary = {}
+	var reactive_order: Dictionary[StringName, int] = {}
 	## Unit id -> places of commander re-rank, already scaled by doctrine_weight.
-	var doctrine_bias: Dictionary = {}
+	var doctrine_bias: Dictionary[StringName, int] = {}
 
 	static func from_facts(
 		friendly_units: Array[Unit],
 		p_outgunned_in_the_air: bool,
 		capture_unit_target: int,
 		supply_unit_target: int,
-		p_reactive_order: Dictionary,
-		p_doctrine_bias: Dictionary
+		p_reactive_order: Dictionary[StringName, int],
+		p_doctrine_bias: Dictionary[StringName, int]
 	) -> BuildWants:
 		var wants := BuildWants.new()
 		wants.outgunned_in_the_air = p_outgunned_in_the_air
@@ -48,7 +48,7 @@ class BuildWants:
 			if unit.carrier != null:
 				continue  # a passenger takes no ground, refills nobody and is never bought against
 			var id := unit.type.id
-			wants.owned[id] = int(wants.owned.get(id, 0)) + 1
+			wants.owned[id] = wants.owned.get(id, 0) + 1
 			if unit.type.can_capture:
 				capture_units += 1
 			if unit.type.can_resupply:
@@ -60,10 +60,10 @@ class BuildWants:
 		return wants
 
 	func count_of(id: StringName) -> int:
-		return int(owned.get(id, 0))
+		return owned.get(id, 0)
 
 	func bias_of(id: StringName) -> int:
-		return int(doctrine_bias.get(id, 0))
+		return doctrine_bias.get(id, 0)
 
 
 var profile: AIProfile
@@ -117,8 +117,8 @@ func plan(context: AIPlanningContext) -> Command:
 
 
 ## Unit id -> UnitPricing.cost_for's answer, built once per `plan()` call.
-func _prices(context: AIPlanningContext) -> Dictionary:
-	var prices: Dictionary = {}
+func _prices(context: AIPlanningContext) -> Dictionary[StringName, int]:
+	var prices: Dictionary[StringName, int] = {}
 	for unit_type in context.unit_types:
 		prices[unit_type.id] = UnitPricing.cost_for(context.state, context.team, unit_type)
 	return prices
@@ -151,7 +151,7 @@ func _pick_build(
 	terrain: TerrainType,
 	wants: BuildWants,
 	funds: int,
-	prices: Dictionary
+	prices: Dictionary[StringName, int]
 ) -> UnitType:
 	var best: UnitType = null
 	var best_rank := RANK_NONE
@@ -173,7 +173,7 @@ func _worth_waiting_for(
 	wants: BuildWants,
 	funds: int,
 	best_rank: int,
-	prices: Dictionary
+	prices: Dictionary[StringName, int]
 ) -> bool:
 	if best_rank < RANK_PRIORITY or profile.save_up_turns <= 0:
 		return false
@@ -205,7 +205,7 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 	var duplicates := wants.count_of(unit_type.id) * profile.duplicate_priority_cost
 	var bias := wants.bias_of(unit_type.id)
 	if wants.reactive_order.has(unit_type.id):
-		var reactive := int(wants.reactive_order[unit_type.id])
+		var reactive := wants.reactive_order[unit_type.id]
 		return RANK_PRIORITY + maxi(0, reactive + duplicates + bias)
 	var priority := profile.build_priority.find(unit_type.id)
 	if priority >= 0:
@@ -231,11 +231,11 @@ func _build_rank(unit_type: UnitType, wants: BuildWants) -> int:
 ## Unit id -> how far the commander's doctrine moves it on the build list,
 ## scaled by the profile's doctrine weight. Empty when the dial is off — the
 ## hook is then never called, which keeps a zero-weight profile byte-identical.
-func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
+func _doctrine_bias(context: AIPlanningContext) -> Dictionary[StringName, int]:
 	if profile.doctrine_weight <= 0.0:
 		return {}
 	var commander := context.state.commander_of(context.team)
-	var bias: Dictionary = {}
+	var bias: Dictionary[StringName, int] = {}
 	for unit_type in context.unit_types:
 		var advice := commander.build_bias(context.state, context.team, unit_type)
 		if advice != 0:
@@ -253,7 +253,9 @@ func _doctrine_bias(context: AIPlanningContext) -> Dictionary:
 ## (checked first in `_build_rank`) shadow the priority list, the doctrine
 ## tail and the supply want for the whole roster whenever the dial was on —
 ## an unlisted, unbiased recon reading as buyable on Difficult (COM-172).
-func _reactive_order(context: AIPlanningContext, doctrine_bias: Dictionary) -> Dictionary:
+func _reactive_order(
+	context: AIPlanningContext, doctrine_bias: Dictionary[StringName, int]
+) -> Dictionary[StringName, int]:
 	if (
 		profile.build_reactivity <= 0.0
 		or context.enemy_roster.is_empty()
@@ -262,7 +264,7 @@ func _reactive_order(context: AIPlanningContext, doctrine_bias: Dictionary) -> D
 		return {}
 	var reactivity := clampf(profile.build_reactivity, 0.0, 1.0)
 	var candidates: Array[UnitType] = []
-	var effectiveness: Dictionary = {}
+	var effectiveness: Dictionary[StringName, float] = {}
 	var max_eff := 0.0
 	for unit_type in context.unit_types:
 		if unit_type.max_range <= 0 or not _reactivity_eligible(unit_type, doctrine_bias):
@@ -274,18 +276,18 @@ func _reactive_order(context: AIPlanningContext, doctrine_bias: Dictionary) -> D
 	if max_eff <= 0.0:
 		return {}
 	var priority := profile.build_priority
-	var scored: Array = []
+	var scored: Array[Array] = []
 	for i in candidates.size():
 		var cand := candidates[i]
 		var static_norm := 0.0
 		var rank := priority.find(cand.id)
 		if rank >= 0:
 			static_norm = float(priority.size() - rank) / float(priority.size())
-		var eff_norm := float(effectiveness[cand.id]) / max_eff
+		var eff_norm := effectiveness[cand.id] / max_eff
 		var score := (1.0 - reactivity) * static_norm + reactivity * eff_norm
 		scored.append([score, i, cand.id])
 	scored.sort_custom(_by_score_then_scan_order)
-	var order: Dictionary = {}
+	var order: Dictionary[StringName, int] = {}
 	for i in scored.size():
 		order[scored[i][2]] = i
 	return order
@@ -294,10 +296,10 @@ func _reactive_order(context: AIPlanningContext, doctrine_bias: Dictionary) -> D
 ## Whether `unit_type` would already earn a rank from `_build_rank`'s
 ## non-reactive branches: listed on `build_priority`, or pulled onto its tail
 ## by a negative doctrine bias (the same test that branch itself makes).
-func _reactivity_eligible(unit_type: UnitType, doctrine_bias: Dictionary) -> bool:
+func _reactivity_eligible(unit_type: UnitType, doctrine_bias: Dictionary[StringName, int]) -> bool:
 	if profile.build_priority.has(unit_type.id):
 		return true
-	return int(doctrine_bias.get(unit_type.id, 0)) < 0
+	return doctrine_bias.get(unit_type.id, 0) < 0
 
 
 ## Best score first, ties broken by database order.

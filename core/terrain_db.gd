@@ -4,8 +4,8 @@ extends RefCounted
 
 const TERRAIN_DIR := "res://data/terrain"
 
-var _by_id: Dictionary = {}
-var _by_symbol: Dictionary = {}
+var _by_id: Dictionary[StringName, TerrainType] = {}
+var _by_symbol: Dictionary[String, TerrainType] = {}
 
 
 static func load_default() -> TerrainDB:

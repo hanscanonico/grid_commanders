@@ -132,6 +132,10 @@ static func encode(
 	var progress: Array = []
 	for cell: Vector2i in state.capture_progress:
 		progress.append({"x": cell.x, "y": cell.y, "points": state.capture_progress[cell]})
+	# Left generic rather than typed: this feeds straight into the returned envelope,
+	# and `validate`'s own tests deliberately corrupt a field's value here (a String
+	# into "funds") to prove the shape check catches it — a typed container would
+	# refuse the corruption before the check under test ever saw it.
 	var commanders: Dictionary = {}
 	var funds: Dictionary = {}
 	for team in state.teams:
@@ -173,8 +177,8 @@ static func encode(
 ## MovementResolver._occupants is waived for (CLAUDE.md). A unit with no
 ## carrier is simply absent as a key, so the lookup above falls back to
 ## `NO_CARRIER` exactly as `Array.find` did.
-static func _unit_indices(state: GameState) -> Dictionary:
-	var indices: Dictionary = {}
+static func _unit_indices(state: GameState) -> Dictionary[Unit, int]:
+	var indices: Dictionary[Unit, int] = {}
 	for i in state.units.size():
 		indices[state.units[i]] = i
 	return indices
@@ -635,7 +639,7 @@ static func _home_hq_board_error(data: Dictionary, map: MapData, version: int) -
 	if error != "":
 		return error
 	var expected := Seating.home_hqs(map, _roster(data))
-	var homed: Dictionary = {}
+	var homed: Dictionary[int, bool] = {}
 	for entry: Dictionary in data["home_hq"] as Array:
 		var team := int(entry["team"])
 		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
@@ -830,10 +834,10 @@ static func _roster(data: Dictionary) -> Array[int]:
 ## like `funds` and `commanders` beside it. An empty grouping stays an empty
 ## dictionary, so a free-for-all — what an ungrouped table hands in — records as
 ## one rather than as a list of one-army sides.
-static func _encode_sides(sides: Dictionary) -> Dictionary:
-	var out: Dictionary = {}
+static func _encode_sides(sides: Dictionary[int, int]) -> Dictionary[String, int]:
+	var out: Dictionary[String, int] = {}
 	for team: int in sides:
-		out[str(team)] = int(sides[team])
+		out[str(team)] = sides[team]
 	return out
 
 
@@ -845,8 +849,8 @@ static func _encode_sides(sides: Dictionary) -> Dictionary:
 ## not an army number, or a side that is not one, reads as no grouping at all rather
 ## than as a coercion nobody asked for, since `int("abc")` is 0 and 0 is the neutral
 ## owner. A malformed grouping is *reported* by `_sides_error`.
-static func _decode_sides(data: Dictionary) -> Dictionary:
-	var out: Dictionary = {}
+static func _decode_sides(data: Dictionary) -> Dictionary[int, int]:
+	var out: Dictionary[int, int] = {}
 	if _claimed_version(data) < int(SaveSchema.KEY_RULES["sides"]["since"]):
 		return out
 	var saved: Variant = data.get("sides")
@@ -968,7 +972,7 @@ static func _home_hq_error(data: Dictionary) -> String:
 	if error != "":
 		return error
 	var roster := _roster(data)
-	var seen: Dictionary = {}
+	var seen: Dictionary[int, bool] = {}
 	for entry: Dictionary in data["home_hq"] as Array:
 		var team := int(entry["team"])
 		if not roster.has(team):
@@ -1014,7 +1018,7 @@ static func _eliminated_error(data: Dictionary) -> String:
 		return ""
 	var saved: Array = data["eliminated"]
 	var roster := _roster(data)
-	var fallen: Dictionary = {}
+	var fallen: Dictionary[int, bool] = {}
 	for team: Variant in saved:
 		if not SaveSchema.is_shape(team, SaveSchema.Shape.NUMBER):
 			return "'eliminated' is malformed"

@@ -171,7 +171,11 @@ func test_the_ai_plays_pinwheel_at_every_seating_its_corners_offer() -> void:
 ## first command the rules turn down — which is the whole point — and on a run
 ## that never ends.
 func _soak(
-	label: String, sides: Dictionary, rng_seed: int, board: String = FIXTURE, seats: Array[int] = []
+	label: String,
+	sides: Dictionary[int, int],
+	rng_seed: int,
+	board: String = FIXTURE,
+	seats: Array[int] = []
 ) -> void:
 	var map := MapData.load_from_file(board, terrain_db)
 	assert_not_null(map, "%s should parse" % board)

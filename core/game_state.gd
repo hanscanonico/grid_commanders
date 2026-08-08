@@ -39,7 +39,7 @@ var teams: Array[int] = MapData.DEFAULT_TEAMS.duplicate()
 ## a free-for-all, a 2v2 and a 3v1. Written once at setup from the `MatchRequest`
 ## and never by a command. The side ids themselves are opaque — nothing compares
 ## them for anything but equality.
-var sides: Dictionary = {}
+var sides: Dictionary[int, int] = {}
 var units: Array[Unit] = []
 var damage_chart: DamageChart
 ## Balance levers a rebuild would otherwise require to sweep — see RulesConfig.

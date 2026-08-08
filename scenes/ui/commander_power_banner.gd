@@ -47,7 +47,7 @@ var _built := false
 ## Activations announced so far, per team — the rotation index for the next
 ## quote. Scene-lifetime state: a loaded save restarts the rotation, which is
 ## cosmetic by construction.
-var _spoken: Dictionary = {}
+var _spoken: Dictionary[int, int] = {}
 var _field: Panel
 var _portrait: TextureRect
 var _eyebrow: Label

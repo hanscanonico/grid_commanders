@@ -15,7 +15,7 @@ var reason := ""
 
 var _label: Label
 var _dismiss_tween: Tween
-var _built_this_turn: Dictionary = {}  # Unit -> true
+var _built_this_turn: Dictionary[Unit, bool] = {}
 
 
 func _ready() -> void:

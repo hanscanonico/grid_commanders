@@ -45,8 +45,8 @@ const MAP_PATH := "res://maps/bulwark.txt"
 ## Seats 1+2+3 against seat 4 — the grouping the board's own header names,
 ## stated here exactly as `test_alliance_soak.gd` states any board's grouping:
 ## directly on `state.sides`, never derived from `MapData.grouping`.
-const ALLIANCE: Dictionary = {1: 0, 2: 0, 3: 0, 4: 1}
-const FREE_FOR_ALL: Dictionary = {}
+const ALLIANCE: Dictionary[int, int] = {1: 0, 2: 0, 3: 0, 4: 1}
+const FREE_FOR_ALL: Dictionary[int, int] = {}
 const ALLIANCE_TEAMS: Array[int] = [1, 2, 3]
 const BULWARK_TEAM := 4
 
@@ -152,7 +152,7 @@ func _int_flag(value: String, min_value: int) -> int:
 ## broke — a rejected command or a genuine stall — which is the "no rejected
 ## command, no stall" half of AB3's gate. A match that simply has not resolved
 ## by `_days_cap` is neither: it is the other half of the gate's answer.
-func _run(label: String, slug: String, sides: Dictionary) -> bool:
+func _run(label: String, slug: String, sides: Dictionary[int, int]) -> bool:
 	print("bulwark: %s — %d seeds, %d-day horizon" % [label, _seed_count, _days_cap])
 	var rows: Array[Dictionary] = []
 	for i in _seed_count:
@@ -179,7 +179,7 @@ func _run(label: String, slug: String, sides: Dictionary) -> bool:
 ## path is walked with the mover's own visibility) and switches off the AR1
 ## plan cache, so alternating it would measure two boards and report one
 ## number. Returns an empty row when the board cannot be seated at all.
-func _play(label: String, sides: Dictionary, seed_val: int) -> Dictionary:
+func _play(label: String, sides: Dictionary[int, int], seed_val: int) -> Dictionary:
 	var state := GameState.create(_map, _harness.unit_db, _harness.chart)
 	if state == null:
 		return {}

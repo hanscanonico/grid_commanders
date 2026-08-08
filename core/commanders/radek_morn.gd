@@ -145,10 +145,12 @@ func _best_blast(state: GameState, team: int) -> Blast:
 
 ## What the blast at `target` is worth, in funds. Through `power_blast_cells` like
 ## everything else, so the square he scores is the square he clears.
-func _footprint_value(state: GameState, team: int, target: Vector2i, standing: Dictionary) -> int:
+func _footprint_value(
+	state: GameState, team: int, target: Vector2i, standing: Dictionary[Vector2i, int]
+) -> int:
 	var value := 0
 	for cell in power_blast_cells(state, team, target):
-		value += int(standing.get(cell, 0))
+		value += standing.get(cell, 0)
 	return value
 
 
@@ -156,13 +158,13 @@ func _footprint_value(state: GameState, team: int, target: Vector2i, standing: D
 ## hostile unit a gain, one of his own side a loss. Built once per scan rather
 ## than asked per square, since every square the board offers reads the same
 ## units.
-func _standing_value(state: GameState, team: int) -> Dictionary:
-	var table: Dictionary = {}
+func _standing_value(state: GameState, team: int) -> Dictionary[Vector2i, int]:
+	var table: Dictionary[Vector2i, int] = {}
 	for unit in state.units:
 		# A passenger is lost on its transport's cell — its own is stale from
 		# wherever it last boarded, and the transport is what the blast finds.
 		var cell := unit.cell if unit.carrier == null else unit.carrier.cell
-		table[cell] = int(table.get(cell, 0)) + _worth_to(state, team, unit)
+		table[cell] = table.get(cell, 0) + _worth_to(state, team, unit)
 	return table
 
 

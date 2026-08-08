@@ -72,7 +72,7 @@ static func visible_cells_if_fogged(state: GameState, team: int) -> Dictionary[V
 ## visible_cells, passed in rather than recomputed because callers are drawing a
 ## whole board and already have it.
 static func can_see_unit(
-	state: GameState, viewer_team: int, unit: Unit, visible: Dictionary
+	state: GameState, viewer_team: int, unit: Unit, visible: Dictionary[Vector2i, bool]
 ) -> bool:
 	if state.allied(unit.team, viewer_team):
 		return true
@@ -134,7 +134,11 @@ static func _sight_of(state: GameState, unit: Unit) -> int:
 
 
 static func _reveal_around(
-	state: GameState, cells: Dictionary, from: Vector2i, radius: int, through_cover: bool
+	state: GameState,
+	cells: Dictionary[Vector2i, bool],
+	from: Vector2i,
+	radius: int,
+	through_cover: bool
 ) -> void:
 	for dy in range(-radius, radius + 1):
 		var span: int = radius - absi(dy)

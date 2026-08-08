@@ -25,11 +25,11 @@ extends RefCounted
 ## a plan can depend on, so the cache reads the same profile the planner does.
 var profile: AIProfile
 
-var _plans: Dictionary = {}  # Unit -> AIUnitPlan
+var _plans: Dictionary[Unit, AIUnitPlan] = {}
 var _turn_key := ""
-var _units: Dictionary = {}  # Unit -> the condition below, as of the last sync
-var _owners: Dictionary = {}
-var _meters: Dictionary = {}  # team -> [charge, power_active]
+var _units: Dictionary[Unit, Array] = {}  # Unit -> the condition below, as of the last sync
+var _owners: Dictionary[Vector2i, int] = {}
+var _meters: Dictionary[int, Array] = {}  # team -> [charge, power_active]
 var _enemies: Array[Unit] = []
 ## Set by the diff: the enemy list or the ground our side holds moved, so every
 ## goal on the board was chosen over a different list.
@@ -37,7 +37,7 @@ var _stale_goals := false
 ## Set by the diff: a capturer moved, so every capturer's claim was re-dealt.
 var _stale_claims := false
 ## Set by the diff: movement domain -> a unit of it moved, so its column shifted.
-var _stale_columns: Dictionary = {}
+var _stale_columns: Dictionary[StringName, bool] = {}
 
 
 func _init(p_profile: AIProfile) -> void:
@@ -161,7 +161,7 @@ func _drop_what_changed(context: AIPlanningContext) -> bool:
 	# abandons one — or takes that unit off the board, so it is already touched.
 	var touched: Array[Vector2i] = []
 	var enemy_moved := false
-	var present: Dictionary = {}
+	var present: Dictionary[Unit, bool] = {}
 	for unit in state.units:
 		present[unit] = true
 		var before: Array = _units.get(unit, [])
@@ -256,8 +256,8 @@ static func _condition(unit: Unit) -> Array:
 	return [unit.cell, unit.hp, unit.acted, unit.fuel, unit.ammo, unit.dived, unit.carrier]
 
 
-static func _read_meters(state: GameState) -> Dictionary:
-	var meters: Dictionary = {}
+static func _read_meters(state: GameState) -> Dictionary[int, Array]:
+	var meters: Dictionary[int, Array] = {}
 	for team in state.teams:
 		var co_state := state.commander_state(team)
 		meters[team] = [co_state.charge, co_state.power_active]

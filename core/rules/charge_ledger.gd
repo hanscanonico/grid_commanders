@@ -53,7 +53,7 @@ static func _transfer_bounty(state: GameState, victim: Unit, dealer_team: int) -
 	if pct <= 0:
 		return
 	var wanted := victim.type.cost * pct / 100
-	var stolen := mini(wanted, int(state.funds.get(victim.team, 0)))
+	var stolen := mini(wanted, state.funds.get(victim.team, 0))
 	if stolen <= 0:
 		return
 	state.funds[victim.team] -= stolen

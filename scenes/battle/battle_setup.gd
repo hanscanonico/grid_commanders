@@ -26,7 +26,7 @@ class BuiltMatch:
 	## team -> Difficulty, when the sides play at *different* tiers. Only watch
 	## mode fills it; a normal match has one computer opponent at one tier, and
 	## `difficulty` above is that tier and the one the save records.
-	var per_team_difficulty: Dictionary = {}
+	var per_team_difficulty: Dictionary[int, Difficulty] = {}
 	## Set only for `--replay=`: the recording this match is a playback of. Null for
 	## every match that is actually being played, which is what everything
 	## downstream asks it.
@@ -132,7 +132,7 @@ static func build(
 	# `--sides=1+3v2+4` on a two-army board is one grouping written for any roster,
 	# which degenerates to the duel that board seats. Nothing there contradicts
 	# anything — the flag simply reached further than the file.
-	result.game.sides = request.sides.duplicate()
+	result.game.sides = _typed_sides(request.sides)
 	var vacant := _sides_off_the_roster(result.game, request.sides)
 	if not vacant.is_empty():
 		push_error(
@@ -239,6 +239,18 @@ static func _build_replay(
 	result.map = loaded.state.map
 	result.difficulty = difficulty_db.by_id(loaded.difficulty)
 	return result
+
+
+## `request.sides` (untyped: it is `MatchRequest`'s own grammar, shared with
+## `--sides=`) carried into `GameState.sides`'s typed shape. GDScript will not
+## coerce a plain `Dictionary`, however int-keyed, into a `Dictionary[int, int]`
+## variable or property in one step — only a fresh typed dictionary built key by
+## key does.
+static func _typed_sides(grouped: Dictionary) -> Dictionary[int, int]:
+	var sides: Dictionary[int, int] = {}
+	for team: int in grouped:
+		sides[team] = int(grouped[team])
+	return sides
 
 
 ## The armies a grouping names that this match **closed** — seats the board deals

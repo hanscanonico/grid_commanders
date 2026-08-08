@@ -106,8 +106,8 @@ func _consider_attacks(
 	# _defend_bonus and the follow-up damage behind _focus_bonus read only the
 	# enemy — never the destination — so each is priced once per enemy that
 	# turns out to have a legal dest, rather than once per (dest, enemy) pair.
-	var defend_bonus: Dictionary = {}
-	var follow_up_damage: Dictionary = {}
+	var defend_bonus: Dictionary[Unit, float] = {}
+	var follow_up_damage: Dictionary[Unit, int] = {}
 	for dest in dests:
 		# The walk to a firing cell and the fire it invites depend only on that
 		# cell, so work them out once per destination and only after finding a
@@ -990,20 +990,20 @@ func _assign_capture_claims(context: AIPlanningContext, unit: Unit, cells: Array
 			continue
 		if other == unit or cells.has(other.cell) or _cached_errand_goal(context, other) == null:
 			seekers.append(other)
-	var bids: Array = []
+	var bids: Array[Array] = []
 	for u in seekers.size():
 		for c in cells.size():
 			bids.append([_goal_steps(context.state, seekers[u].cell, cells[c]), u, c])
 	bids.sort_custom(_by_distance_then_scan_order)
-	var held: Dictionary = {}
-	var placed: Dictionary = {}
+	var held: Dictionary[int, int] = {}
+	var placed: Dictionary[int, int] = {}
 	for bid in bids:
 		var u: int = bid[1]
 		var c: int = bid[2]
-		if placed.has(u) or int(held.get(c, 0)) >= profile.capture_claim_depth:
+		if placed.has(u) or held.get(c, 0) >= profile.capture_claim_depth:
 			continue
 		placed[u] = c
-		held[c] = int(held.get(c, 0)) + 1
+		held[c] = held.get(c, 0) + 1
 	for u in seekers.size():
 		var seeker := seekers[u]
 		var claim := (

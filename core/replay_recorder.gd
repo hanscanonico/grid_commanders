@@ -41,6 +41,10 @@ var _sink_opened := false
 var _lines: Array[Dictionary] = []
 var _seq := 0
 ## The line the opening was encoded as, written ahead of the first command line.
+## Left generic: both are assigned straight from ReplayCodec's plain-Dictionary
+## return, and GDScript refuses that assignment into a typed dictionary variable
+## even with Variant values (a runtime check on the source dictionary's own type,
+## not on what it holds).
 var _header: Dictionary = {}
 ## The line being built between `before_apply` and `after_apply`.
 var _pending: Dictionary = {}

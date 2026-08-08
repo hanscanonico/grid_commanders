@@ -73,7 +73,7 @@ func trace_path(path: Array[Vector2i]) -> void:
 
 ## Pins the capture chips, keyed by cell to the points each property still owes.
 ## The caller has already put them through the fog gate.
-func show_capture_pips(pips: Dictionary) -> void:
+func show_capture_pips(pips: Dictionary[Vector2i, int]) -> void:
 	capture_pips.set_pips(pips)
 
 

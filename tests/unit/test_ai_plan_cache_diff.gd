@@ -157,7 +157,7 @@ func test_commanders_play_command_for_command() -> void:
 func test_an_allied_grouping_plays_command_for_command() -> void:
 	var map := MapData.load_from_file("res://maps/fixtures/quartet.txt", diff.terrain_db)
 	assert_not_null(map, "the quartet fixture must load")
-	var sides := {1: 0, 2: 0, 3: 0, 4: 1}
+	var sides: Dictionary[int, int] = {1: 0, 2: 0, 3: 0, 4: 1}
 	var result := diff.over_grouped_match(map, sides, HARD_TIER, 7, 12)
 	assert_gt(result.commands, 10, "the fixture should play a real match")
 	assert_eq(result.divergence, "", "the cache must not change a command under an alliance")
