@@ -28,13 +28,10 @@ modulate = Color(0.45, 0.47, 0.56, 1)
 [node name="TerrainLayer" type="TileMapLayer" parent="."]
 
 [node name="MoveOverlay" type="TileMapLayer" parent="."]
-modulate = Color(0.35, 0.55, 1, 0.75)
 
 [node name="AttackOverlay" type="TileMapLayer" parent="."]
-modulate = Color(1, 0.35, 0.3, 0.8)
 
 [node name="ThreatOverlay" type="TileMapLayer" parent="."]
-modulate = Color(1, 0.35, 0.3, 0.38)
 
 [node name="PathArrow" type="Node2D" parent="."]
 script = ExtResource("13")
