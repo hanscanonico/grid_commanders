@@ -140,7 +140,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   and the whole list is: `attacker_hp_before` / `defender_hp_before`, their
   `_after` siblings, the two weapon slots the rules selected (`attacker_weapon_slot` /
   `counter_weapon_slot`, with secondary weapons), which the cut-in maps to a style through
-  `BattleStyleDb.for_weapon` and never re-decides, and `attacker_indirect`. The last three
+  `BattleStyleDB.for_weapon` and never re-decides, and `attacker_indirect`. The last three
   arrived by COM-83, which is the rule read the other way: the cut-in was reading "HP after"
   off the *live* unit and asking `AttackRange.is_indirect` at replay time, so it was
   recomputing two things the exchange already knew. `AttackRange` is still the one authority
@@ -1329,6 +1329,10 @@ res://
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip,
 │              # the in-battle mission objective card
 ├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, CampaignSession
+│              # (project.godot also registers _mcp_game_helper, the godot_ai editor
+│              # addon's runtime — it loads in every run today; keeping it out of export
+│              # builds is an open decision, recorded here so the extra autoload is
+│              # never a surprise)
 ├─ ai/          # AIController façade + planning context + unit/production planners
 │              # ai_profile.gd owns every weight; NO Node references
 ├─ maps/        # map scenes / map resources (campaign boards under maps/campaign/)
