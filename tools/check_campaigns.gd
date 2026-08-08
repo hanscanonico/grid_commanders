@@ -105,3 +105,17 @@ func _check_mission(
 		return
 	if not mission.briefing.is_empty() and mission.victory.is_empty():
 		_fail("%s: has a briefing but nothing to say when it is won" % where)
+	_check_events(where, mission, state)
+
+
+## Every scripted effect against the board the mission actually opens on. The
+## mission's own `definition_error` has already held them to the *map*; this is
+## the one question it cannot ask, because a map deals every seat it names while
+## a mission may have closed some of them — reinforcements for a seat nobody is
+## playing parse perfectly and land nowhere.
+func _check_events(where: String, mission: MissionDefinition, state: GameState) -> void:
+	for event: MissionEvent in mission.events:
+		for effect: MissionEffect in event.effects:
+			var error := effect.board_error(state, mission.player_team)
+			if error != "":
+				_fail("%s: event '%s': %s" % [where, event.id, error])

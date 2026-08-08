@@ -97,6 +97,8 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		await _present_power(command as PowerCommand)
 	elif command is BuildCommand:
 		_present_build(command as BuildCommand)
+	elif command is MissionEventCommand:
+		await _present_mission_event(command as MissionEventCommand)
 	elif command is DropCommand:
 		await _present_move(command, mover, watched_move)
 		if drop_passenger != null:
@@ -111,8 +113,12 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	_battle.view.sync_sprites()
 	_battle.refresh_fog()
 	if game.eliminated.size() > standing_before:
-		_repaint_properties(game)
 		receipt.fallen = _fallen_since(game, standing_before)
+	# A scripted beat can hand any square to anybody, which is the same repaint an
+	# army falling needs and for the same reason: neither is the one cell the
+	# capture path recolours.
+	if not receipt.fallen.is_empty() or command is MissionEventCommand:
+		_repaint_properties(game)
 	_battle.refresh_panel()
 	_battle.refresh_hud()
 	return receipt
@@ -184,6 +190,14 @@ func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:
 func _present_power(command: PowerCommand) -> void:
 	Sfx.play(&"fanfare")
 	await _battle.animator.show_power_banner(command.commander, command.team)
+
+
+## What a scripted beat says as it lands. Here rather than in the campaign layer
+## because it is the *command's* presentation, exactly as the activation card is
+## a fired power's — which is also what lets a replay speak the same words, the
+## recording re-issuing the beat through this same seam.
+func _present_mission_event(command: MissionEventCommand) -> void:
+	await _battle.animator.speak_lines(command.event.lines, _battle.commander_db)
 
 
 func _present_build(command: BuildCommand) -> void:

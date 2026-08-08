@@ -242,12 +242,17 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # when the player performs it, and a strip stuck on SELECT photographs just as
 # well as one that advanced.
 #
-# objective_panel is the one scenario that plays a campaign mission, and the only
-# way the in-battle objective card is reachable at all: it is down for every
-# skirmish, which is what keeps every other frame in this sweep byte-stable. It
-# names no board — the mission's own is not in the map catalogue, so the scenario
-# is launched the way the campaign hub launches one, through MatchConfig — and it
-# reads the open card back off its live labels for the reason commander_info does.
+# objective_panel and mission_event are the two scenarios that play a campaign
+# mission, and the only way the in-battle objective card and a scripted beat are
+# reachable at all: both are down for every skirmish, which is what keeps every
+# other frame in this sweep byte-stable. Neither names a board — the mission's own
+# is not in the map catalogue, so they are launched the way the campaign hub
+# launches one, through MatchConfig — and both read their open card back off its
+# live labels for the reason commander_info does.
+#
+# mission_event runs the same mission one step further on: it hands the player the
+# depot the mission's own beat waits for, fires through the shipped seam, and
+# photographs Ferrow's line over the raider that just landed on the road.
 #
 # commander_info is a check as well as a picture, and the only one whose check is
 # about its own layout. It was passing on a blank screen: the sweep's bar is a file
@@ -281,7 +286,7 @@ DEFAULT_MODES=(
 	power_range_readout
 	turn_banner_build_attempt outcome_mash_guard
 	powermenu capture_power victory aiturn ai_pause
-	mission_strip mission_strip_retired objective_panel
+	mission_strip mission_strip_retired objective_panel mission_event
 	powermenu+fog victory+fog ambush vanish preview_fog
 	power_charging power_ready power_ready_contrast power_active power_ai power_mirror
 	power_mapmenu power_banner power_targeting commander_info commander_victory side_victory

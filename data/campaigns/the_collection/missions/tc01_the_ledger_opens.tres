@@ -1,9 +1,14 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="9"]
 
 [sub_resource type="Resource" id="Objective_hold_the_customs_depot_two_days"]
 script = ExtResource("2")
@@ -41,6 +46,34 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "First entry in his forged book, and it's already a loss."
 
+[sub_resource type="Resource" id="Trigger_depot_taken"]
+script = ExtResource("6")
+cell = Vector2i(6, 4)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_collector"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(11, 4)
+
+[sub_resource type="Resource" id="Effect_collectors_raider"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_collector")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Ground taken is ground I can price, Commander. Let us see what holding it costs you."
+
+[sub_resource type="Resource" id="Event_ferrow_collects"]
+script = ExtResource("5")
+id = &"ferrow_collects"
+triggers = Array[Resource]([SubResource("Trigger_depot_taken")])
+effects = Array[Resource]([SubResource("Effect_collectors_raider")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc01_the_ledger_opens"
@@ -60,6 +93,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_customs_depot_two_days")])
 failures = Array[Resource]([SubResource("Failure_the_depot_was_seized_before_day_8")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_ferrow_collects")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

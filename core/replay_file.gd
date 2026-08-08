@@ -140,6 +140,8 @@ static func read(file_path: String) -> ReplayCodec.Replay:
 	replay.opening = head["opening"]
 	replay.label = String(head.get("label", ""))
 	replay.recorded = String(head.get("recorded", ""))
+	replay.campaign = StringName(String(head.get("campaign", "")))
+	replay.mission = StringName(String(head.get("mission", "")))
 	for i in range(1, lines.size()):
 		var entry := _parse_line(lines[i])
 		if entry.is_empty():

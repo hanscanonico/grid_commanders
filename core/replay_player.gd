@@ -24,11 +24,19 @@ var _at := 0
 ## whose elements GDScript refuses to narrow into a typed dictionary variable even
 ## with Variant values (a runtime check on the source dictionary's own type).
 var _applied: Dictionary = {}
+## The mission the header named, or null for a recording of a skirmish. Bound
+## once, because an event line names its beat by id and the ids are the mission's.
+var _mission: MissionDefinition
+var _mission_error := ""
 
 
-func _init(replay: ReplayCodec.Replay, unit_db: UnitDB) -> void:
+## `campaigns` is only consulted when the header names one, so a skirmish
+## recording opens without a `res://` scan; a caller with a registry already in
+## hand — a test, the analyser — passes it rather than paying for a second.
+func _init(replay: ReplayCodec.Replay, unit_db: UnitDB, campaigns: CampaignDB = null) -> void:
 	_replay = replay
 	_unit_db = unit_db
+	_bind_mission(campaigns)
 
 
 ## The board the match opened on, rebuilt through the same `SaveCodec.decode`
@@ -43,6 +51,28 @@ func opening(
 
 func label() -> String:
 	return _replay.label
+
+
+## Why the mission this recording names cannot be found, or "" — which is every
+## recording of a skirmish, and every one whose mission still ships. Asked before
+## a single command is handed out, because a mission that has been renamed or
+## retired takes every scripted beat in the file with it, and a playback that
+## opened anyway would stop at the first of them with a message about the board.
+func mission_error() -> String:
+	return _mission_error
+
+
+func _bind_mission(campaigns: CampaignDB) -> void:
+	if _replay.campaign == &"":
+		return
+	var db := campaigns if campaigns != null else CampaignDB.load_default()
+	var campaign := db.by_id(_replay.campaign)
+	if campaign == null:
+		_mission_error = "this build has no campaign '%s'" % _replay.campaign
+		return
+	_mission = campaign.mission(_replay.mission)
+	if _mission == null:
+		_mission_error = ("campaign '%s' has no mission '%s'" % [_replay.campaign, _replay.mission])
 
 
 ## How many commands the recording holds, and how many have been handed out.
@@ -69,7 +99,7 @@ func next_command(state: GameState) -> Command:
 		return null
 	var entry: Dictionary = _replay.entries[_at]
 	_at += 1
-	var command := ReplayCodec.command_from(state, _unit_db, entry)
+	var command := ReplayCodec.command_from(state, _unit_db, entry, _mission)
 	_applied = entry if command != null else {}
 	return command
 

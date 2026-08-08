@@ -57,6 +57,13 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # opening board), and all three go through BattleCampaign, which owns this
 # battle's whole campaign side. Battle still holds no mission field.
 #
+# 1415 -> 1396: CD3's scripted events wanted three lines here — the firing seam
+# in conclude_command, the opening board's own firing, and the speech card handed
+# to the animator — so scenes/battle/battle_recording.gd came out first. How this
+# match records itself (which slot, what the menu calls it, and now which mission
+# a recorded beat resolves against) is not flow, and the mission ids the header
+# gained would otherwise have been two more lines in _ready.
+#
 # main_menu.gd 1112 -> 1148: the Campaign route. The flow itself was moved out
 # first — MenuCampaignFlow owns the two panels and the walk between them, which
 # is 80 of the 116 lines it arrived as — and what is left is the button, the
@@ -64,7 +71,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # in is a different question from which board and how much fog, so the split is
 # the responsibility rather than the line count; nothing loose is left to move.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1415
+scenes/battle/battle.gd 1396
 scenes/menu/main_menu.gd 1148
 "
 

@@ -71,8 +71,36 @@ func _state() -> GameState:
 	return state
 
 
-func _begin(campaign: CampaignDefinition) -> MatchRequest:
-	return CampaignSession.begin(campaign, campaign.missions[0], CampaignState.begin(campaign))
+func _begin(campaign: CampaignDefinition, resumed: MissionProgress = null) -> MatchRequest:
+	return CampaignSession.begin(
+		campaign, campaign.missions[0], CampaignState.begin(campaign), resumed
+	)
+
+
+## `campaign` with one scripted beat on it, due from day one and handing the
+## enemy's city over.
+func _with_a_beat(campaign: CampaignDefinition, id: StringName = &"the_gate_opens") -> MissionEvent:
+	var trigger := DayReachedTrigger.new()
+	trigger.day = 1
+	var effect := SetOwnerEffect.new()
+	effect.team = 1
+	effect.cells = [Vector2i(1, 0)]
+	var event := MissionEvent.new()
+	event.id = id
+	event.triggers = [trigger]
+	event.effects = [effect]
+	campaign.missions[0].events.append(event)
+	return event
+
+
+## One beat fired the way the live seam fires it: the command applies to the
+## board and the session records what it did to the mission.
+func _fire(state: GameState, event: MissionEvent) -> MissionEventCommand:
+	var command := MissionEventCommand.new(event, 1)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	CampaignSession.record_event(command)
+	return command
 
 
 ## The fixture is real: armed, the session decides the board its objective is
@@ -97,6 +125,82 @@ func test_clear_drops_a_decided_verdict_with_everything_else() -> void:
 	assert_null(CampaignSession.outcome)
 	assert_eq(CampaignSession.max_stars(), 0)
 	assert_false(CampaignSession.decide(_state()))
+
+
+# --- the scripted beats (campaign-depth CD3) -----------------------------------
+
+
+func test_a_skirmish_is_due_no_beats_at_all() -> void:
+	assert_true(CampaignSession.due_events(_state()).is_empty())
+	assert_eq(CampaignSession.campaign_id(), &"", "and names no mission for a recording either")
+	assert_eq(CampaignSession.mission_id(), &"")
+
+
+## The whole of the once rule at this level: due, fired, recorded, and never due
+## again — which is what stops a relief column landing at every boundary of the
+## rest of the mission.
+func test_a_fired_beat_is_never_due_again() -> void:
+	var campaign := _campaign()
+	var event := _with_a_beat(campaign)
+	_begin(campaign)
+	var state := _state()
+	CampaignSession.open_board(state)
+	assert_eq(CampaignSession.due_events(state), [event], "day one is what this beat waits for")
+	_fire(state, event)
+	assert_true(CampaignSession.tally.has_fired(&"the_gate_opens"))
+	assert_true(CampaignSession.due_events(state).is_empty(), "and it has now happened")
+
+
+## The resume, which is the reason the fired set is a saved counter rather than
+## something derived from the board: the board does not remember having had a
+## column landed on it, so a mission picked up again would land it a second time.
+func test_a_beat_fired_before_a_save_does_not_fire_again_after_the_resume() -> void:
+	var campaign := _campaign()
+	var event := _with_a_beat(campaign)
+	_begin(campaign)
+	var state := _state()
+	CampaignSession.open_board(state)
+	_fire(state, event)
+	assert_true(CampaignSession.save_battle(SaveCodec.encode(state, [2] as Array[int])))
+
+	var resumed := CampaignProfile.load_in_progress(PROBE)
+	CampaignSession.clear()
+	_begin(campaign, resumed.tally)
+	CampaignSession.open_board(state)
+	assert_true(CampaignSession.tally.has_fired(&"the_gate_opens"), "the resume owes what it did")
+	assert_true(CampaignSession.due_events(state).is_empty(), "so the column does not land twice")
+
+
+## A beat that ends the mission is a `MissionRuntime` reason like any other
+## (campaign-depth D3): the session collects it and the verdict taken at the same
+## boundary reads it, precedence untouched.
+func test_a_beat_that_ends_the_mission_ends_it_in_its_own_words() -> void:
+	var campaign := _campaign()
+	campaign.missions[0].objectives.clear()
+	var ending := EndMissionEffect.new()
+	ending.success = true
+	ending.reason = "The relief column arrived."
+	var event := _with_a_beat(campaign)
+	event.effects = [ending]
+	_begin(campaign)
+	var state := _state()
+	assert_false(CampaignSession.decide(state), "with nothing left to satisfy, nothing ends it")
+	_fire(state, event)
+	assert_true(CampaignSession.decide(state))
+	assert_eq(CampaignSession.outcome.reason, "The relief column arrived.")
+
+
+## A beat is not due once the mission is over, however many boundaries the scene
+## still settles: a column landing on a decided board changes a match nobody is
+## playing.
+func test_a_decided_mission_is_due_no_further_beats() -> void:
+	var campaign := _campaign()
+	var event := _with_a_beat(campaign)
+	_begin(campaign)
+	var state := _state()
+	assert_true(CampaignSession.decide(state), "the fixture objective is met at the opening")
+	assert_true(CampaignSession.due_events(state).is_empty())
+	assert_ne(event, null)
 
 
 func test_save_battle_is_refused_outside_a_campaign() -> void:

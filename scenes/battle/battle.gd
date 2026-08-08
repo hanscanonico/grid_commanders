@@ -188,7 +188,8 @@ var replay_path := ""
 ## parks on the frozen board, where an ordinary pause parks under the map menu.
 var _stepping := false
 ## The recording this match is writing as it is played, or null while replaying
-## one. Closed on the way out; the pipeline does the observing.
+## one. Opened by BattleRecording and closed on the way out; the pipeline does the
+## observing.
 var _recorder: ReplayRecorder
 
 ## Owns the camera zoom level, its clamp against the view, and the zoom keys.
@@ -266,7 +267,8 @@ func _ready() -> void:
 	# leave a recording per scenario in the player's slots. The question is the
 	# command line's, so it is asked without building anything.
 	_capturing = BattleScenarioDriver.requested()
-	_command_pipeline = BattleCommandPipeline.new(self, _open_recording())
+	_recorder = BattleRecording.open(self, _replay == null and not _capturing)
+	_command_pipeline = BattleCommandPipeline.new(self, _recorder)
 	_outcome = _build_outcome()
 	_outcome.configure(request.watching, request.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
@@ -296,6 +298,7 @@ func _ready() -> void:
 		# frame. Every capture but the strip's own hides it (COM-12).
 		Settings.pin_hints(not _scenario_driver.wants_mission_strip())
 	animator.start_cursor_pulse()
+	await BattleCampaign.fire_due(self)  # the opening board: the one boundary with no command
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	camera.position = cursor.position
 	camera.reset_smoothing()
@@ -307,31 +310,6 @@ func _ready() -> void:
 		# already anchored to anyway (see BattleView.screen_pos_for_cell).
 		camera.position_smoothing_enabled = false
 		_scenario_driver.run()
-
-
-## The recorder this match writes itself through, or null when there is nothing to
-## record: a replay is already a recording, and a capture run's scenarios would
-## fill the player's slots with matches nobody played. The slot itself is claimed
-## by the first command rather than here, so a match nobody played evicts none of
-## the ten somebody did — see ReplayRecorder.
-func _open_recording() -> ReplayRecorder:
-	if _replay != null or _capturing:
-		return null
-	# Sortable, and that is the whole of why the slot is named by a clock: the
-	# directory then lists chronologically without reading a single file.
-	var started := Time.get_datetime_string_from_system()
-	var slot := started.replace(":", "-")
-	_recorder = ReplayRecorder.new(func() -> ReplayFile: return ReplayFile.open_slot(slot))
-	_recorder.begin(game, ai_teams, difficulty.id, _match_label(), started)
-	return _recorder
-
-
-## What the replay menu calls this match: the board, and who was at the table.
-func _match_label() -> String:
-	var sides := PackedStringArray()
-	for team in game.teams:
-		sides.append(view.identity.display_name(team))
-	return "%s · %s" % [MapCatalog.display_name(game.map_path), " vs ".join(sides)]
 
 
 ## Which key legend this state prints. A replay borrows `AI_TURN` and the PAUSED
@@ -383,7 +361,8 @@ func execute_command(command: Command, animate_path: bool = false) -> BattleComm
 func conclude_command(receipt: BattleCommandReceipt) -> void:
 	if not receipt.applied:
 		return
-	await _announce_fallen(receipt.fallen)
+	await announce_fallen(receipt.fallen)
+	await BattleCampaign.fire_due(self)
 	var mission_over := BattleCampaign.decide(self, receipt)
 	if receipt.turn_changed and not mission_over:
 		start_turn()
@@ -515,6 +494,7 @@ func _build_animator() -> BattleAnimator:
 	built.cursor = cursor
 	built.turn_banner = %TurnBanner
 	built.power_banner = %CommanderBanner
+	built.mission_speech = %MissionSpeech
 	built.cutscene = %Cutscene
 	built.cutscene.view = view
 	built.capture_cutscene = %CaptureCutscene
@@ -1191,13 +1171,14 @@ func _begin_turn() -> void:
 
 ## Says out loud that an army has left the match. Public information, fog or no
 ## fog — every side learns that a seat emptied, because the board they are playing
-## on just changed shape.
+## on just changed shape. Public because a scripted mission beat can empty a seat
+## too, and BattleCampaign announces that one the same way.
 ##
 ## Uses the same blocking beat every other banner does, so Instant clamps it and
 ## any press skips it; suppressed while `capturing`, like the cut-ins, so posed
 ## frames stay byte-stable. Awaited before the turn hands over, so the banner
 ## lands on the board that produced it rather than over the next player's.
-func _announce_fallen(fallen: Array[int]) -> void:
+func announce_fallen(fallen: Array[int]) -> void:
 	if fallen.is_empty() or animator.capturing:
 		return
 	var was := state

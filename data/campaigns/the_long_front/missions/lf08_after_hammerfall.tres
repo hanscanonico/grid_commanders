@@ -1,10 +1,16 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="11"]
 
 [sub_resource type="Resource" id="Objective_break_the_garrison"]
 script = ExtResource("5")
@@ -51,6 +57,39 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "Log it as ground recovered and move on. There'll be time to grieve it later — not today."
 
+[sub_resource type="Resource" id="Trigger_averyn_retaken"]
+script = ExtResource("7")
+cell = Vector2i(9, 5)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_bill_collector_armour"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(11, 4)
+
+[sub_resource type="Resource" id="Spawn_bill_collector_foot"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(11, 5)
+
+[sub_resource type="Resource" id="Effect_the_bill"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_bill_collector_armour"), SubResource("Spawn_bill_collector_foot")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "Take the ashes, Commander. I will bill you for the ground underneath them."
+
+[sub_resource type="Resource" id="Event_morn_bills_the_ground"]
+script = ExtResource("6")
+id = &"morn_bills_the_ground"
+triggers = Array[Resource]([SubResource("Trigger_averyn_retaken")])
+effects = Array[Resource]([SubResource("Effect_the_bill")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf08_after_hammerfall"
@@ -70,6 +109,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_break_the_garrison"), SubResource("Objective_retake_averyn")])
 failures = Array[Resource]([SubResource("Failure_day_8")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_morn_bills_the_ground")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

@@ -25,6 +25,11 @@ var outcome: MissionRuntime.Outcome
 ## campaign-depth D2's one writer.
 var tally: MissionProgress
 var _runtime: MissionRuntime
+## The ending a scripted beat declared, or null. A fact `MissionRuntime` takes
+## its own view of (campaign-depth D3) rather than a verdict, which is why it is
+## handed to `evaluate` instead of short-circuiting it — a scripted victory on the
+## turn a deadline expired is still a mission lost.
+var _ending: EndMissionEffect
 
 
 ## Stage a mission and return the launch it is, for `MatchConfig.stage`.
@@ -47,6 +52,7 @@ func begin(
 	outcome = null
 	tally = resumed_tally if resumed_tally != null else MissionProgress.new()
 	_runtime = MissionRuntime.new(p_mission)
+	_ending = null
 	if progress != null:
 		progress.active_mission = p_mission.id
 	return p_mission.to_request()
@@ -55,6 +61,47 @@ func begin(
 ## Is a campaign mission being played right now?
 func active() -> bool:
 	return mission != null
+
+
+## Which war and which mission this battle is, for a recording's header. Both
+## &"" outside a campaign, which is what leaves a skirmish's header unchanged.
+func campaign_id() -> StringName:
+	return campaign.id if campaign != null else &""
+
+
+func mission_id() -> StringName:
+	return mission.id if mission != null else &""
+
+
+## The scripted beats due on the board as it now stands, in the order the mission
+## lists them. Empty for every skirmish, and empty once the mission has been
+## decided — a beat landing after the verdict changes a board nobody is playing.
+##
+## The board is read **once per boundary**. Asking again after each beat would let
+## a repeating event fire itself forever inside one command, so a beat another
+## beat unlocks lands at the next boundary instead.
+func due_events(game: GameState) -> Array[MissionEvent]:
+	var due: Array[MissionEvent] = []
+	if mission == null or outcome != null:
+		return due
+	for event: MissionEvent in mission.events:
+		if event != null and event.is_due(game, mission.player_team, tally):
+			due.append(event)
+	return due
+
+
+## Note what a fired beat did to the *mission* — that it happened, the hidden
+## objectives it brought out, and the ending it declared. The board half is the
+## command's and is already applied; this is the tally's one writer again, and it
+## is called at the boundary the beat fired on so the verdict taken next sees it.
+func record_event(command: MissionEventCommand) -> void:
+	if mission == null:
+		return
+	tally.record_fired(command.event.id)
+	for objective_id: StringName in command.revealed:
+		tally.reveal(objective_id)
+	if command.ending != null:
+		_ending = command.ending
 
 
 ## Take the board the mission opens on as the tally's baseline, before a command
@@ -88,7 +135,7 @@ func decide(game: GameState) -> bool:
 	if _runtime == null or outcome != null:
 		return false
 	tally.observe(game, mission.player_team)
-	var verdict := _runtime.evaluate(game, tally)
+	var verdict := _runtime.evaluate(game, tally, _ending)
 	if not verdict.is_over():
 		return false
 	outcome = verdict
@@ -140,3 +187,4 @@ func clear() -> void:
 	outcome = null
 	tally = null
 	_runtime = null
+	_ending = null

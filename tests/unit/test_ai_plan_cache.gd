@@ -105,6 +105,18 @@ const PROBES := """
 2 i 29 0
 """
 
+## PROBES with two of its tanks named, so a scripted mission beat can reach them:
+## one a mission withdraws, one it hands to the other army.
+const SCRIPTED := """
+[terrain]
+..............................
+[units]
+1 t 4 0 withdrawn
+1 t 12 0 turncoat
+1 t 28 0
+2 i 29 0
+"""
+
 ## An infantry at the west end, a tank in the middle and a second tank far east,
 ## all marching on an enemy further east still. The infantry is nine tiles from
 ## the tank — outside every envelope in play — and the three steps it takes are
@@ -352,7 +364,56 @@ func test_a_threat_weighing_profile_keeps_nothing_until_its_map_exists() -> void
 	assert_eq(cache.plan_for(probe), kept, "with the turn's map built its contents are frozen")
 
 
+## Campaign-depth R7, and the reason this milestone owed a test rather than cache
+## code: a scripted beat is a board diff like any other. What the cache reads is
+## the board between two calls, never the Command that changed it, so a unit a
+## mission takes off the board and a unit a mission hands to the other army both
+## lose their plans without anything in `ai/` knowing what a mission is.
+func test_a_scripted_beat_keeps_no_plan_for_the_unit_it_moved() -> void:
+	var state := _state(SCRIPTED, Callable())
+	var context := AIPlanningContext.new(unit_db)
+	var doomed := state.unit_at(Vector2i(4, 0))
+	var far := state.unit_at(Vector2i(28, 0))
+	var cache := _holding(state, context, doomed, AIProfile.load_default())
+	var untouched := AIUnitPlan.new()
+	cache.keep(far, untouched)
+
+	var removal := RemoveUnitsEffect.new()
+	removal.tags = [&"withdrawn"]
+	_fire(state, [removal])
+	_resync(cache, context, state)
+	assert_null(cache.plan_for(doomed), "the unit the beat withdrew has no plan left to serve")
+	assert_eq(cache.plan_for(far), untouched, "and a withdrawal 24 tiles off is not this tank's")
+
+
+func test_a_scripted_defection_keeps_no_plan_for_the_unit_that_changed_sides() -> void:
+	var state := _state(SCRIPTED, Callable())
+	var context := AIPlanningContext.new(unit_db)
+	var turncoat := state.unit_at(Vector2i(12, 0))
+	var cache := _holding(state, context, turncoat, AIProfile.load_default())
+
+	var defection := DefectEffect.new()
+	defection.from_team = 1
+	defection.to_team = 2
+	defection.tags = [&"turncoat"]
+	_fire(state, [defection])
+	_resync(cache, context, state)
+	assert_eq(turncoat.team, 2, "the fixture's beat has to actually move it")
+	assert_null(cache.plan_for(turncoat), "a plan made for our army is not the enemy's to keep")
+
+
 # --- helpers -------------------------------------------------------------------
+
+
+## One scripted beat, applied the way the live scene applies one: a
+## `MissionEventCommand` validated and applied, and nothing else.
+func _fire(state: GameState, effects: Array[MissionEffect]) -> void:
+	var event := MissionEvent.new()
+	event.id = &"probe_beat"
+	event.effects = effects
+	var command := MissionEventCommand.new(event, 1)
+	assert_eq(command.validate(state), "", "the fixture's beat must be applicable")
+	command.apply(state)
 
 
 ## The commands both planners issued on `board`. The assertion is here rather

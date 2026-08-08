@@ -18,6 +18,22 @@ func before_each() -> void:
 	chart = Fixture.chart()
 
 
+## A one-beat mission for the event line to be resolved against. Built here
+## rather than loaded, so this file stays what it is: the codec on its own.
+func _mission() -> MissionDefinition:
+	var effect := SetOwnerEffect.new()
+	effect.team = 1
+	effect.cells = [Vector2i(0, 0)]
+	var event := MissionEvent.new()
+	event.id = &"the_gate_opens"
+	event.effects = [effect]
+	var mission := MissionDefinition.new()
+	mission.id = &"probe_one"
+	mission.player_team = 1
+	mission.events = [event]
+	return mission
+
+
 ## A command through the format and back, as JSON in between — which is where a
 ## Vector2i stops being one and every number becomes a double.
 func _round_trip(state: GameState, command: Command) -> Command:
@@ -153,7 +169,40 @@ func test_every_movement_command_round_trips() -> void:
 		assert_eq(rebuilt.get("path"), command.get("path"))
 
 
+## A scripted beat is the one command whose whole meaning is off the board: the
+## line names an event id, and the mission the header named is what turns it back
+## into a beat.
+func test_a_scripted_beat_names_its_event_and_is_rebuilt_from_the_mission() -> void:
+	var state := Fixture.state("[terrain]\nC.\n[units]\n1 i 1 0")
+	var mission := _mission()
+
+	var line := ReplayCodec.encode_command(state, MissionEventCommand.new(mission.events[0], 1))
+	assert_eq(line["c"], "event")
+	assert_eq(line["event"], "the_gate_opens")
+
+	var rebuilt := ReplayCodec.command_from(state, unit_db, line, mission) as MissionEventCommand
+	assert_not_null(rebuilt)
+	assert_eq(rebuilt.event, mission.events[0], "the id names the mission's own beat")
+	assert_eq(
+		rebuilt.team, mission.player_team, "and the seat it is authored from is the mission's"
+	)
+
+
 # --- lines this build refuses --------------------------------------------------
+
+
+## Loudly, and by name, both ways round: a beat the mission has lost, and a beat
+## on a recording that names no mission at all. Silently skipping either would
+## replay a match with the scripted half missing and then fail its own digest
+## with a message about the board.
+func test_a_scripted_beat_this_build_cannot_resolve_is_refused_by_name() -> void:
+	var state := Fixture.state("[terrain]\nC.\n[units]\n1 i 1 0")
+	var line := {"c": "event", "event": "a_beat_nobody_wrote"}
+	assert_null(ReplayCodec.command_from(state, unit_db, line, _mission()))
+	assert_push_error("has no event 'a_beat_nobody_wrote'")
+
+	assert_null(ReplayCodec.command_from(state, unit_db, line))
+	assert_push_error("no mission was named")
 
 
 func test_a_kind_this_build_does_not_know_is_refused() -> void:
@@ -212,8 +261,24 @@ func test_a_header_that_is_not_one_says_which_part_is_missing() -> void:
 ## disposable, so the line under it is the whole migration policy — an older
 ## format is refused, out loud, rather than read.
 func test_an_older_format_is_refused_rather_than_read() -> void:
-	assert_eq(ReplayCodec.FORMAT, 3)
+	assert_eq(ReplayCodec.FORMAT, 4)
 	assert_string_contains(ReplayCodec.header_error({"replay": 1, "opening": {}}), "format 1")
+
+
+## The mission pair, and the half of it that matters most: a skirmish header is
+## the line it has always been, so nothing about a match outside a campaign
+## changed shape when the ids arrived.
+func test_a_header_names_a_mission_only_when_there_is_one() -> void:
+	var state := Fixture.state("[terrain]\n..\n[units]\n1 i 0 0")
+	var opening := SaveCodec.encode(state, [2] as Array[int])
+	var skirmish := ReplayCodec.header(opening, "a label", "now")
+	assert_false(skirmish.has("campaign"), "a skirmish is a recording of no mission")
+	assert_false(skirmish.has("mission"))
+
+	var mission := ReplayCodec.header(opening, "a label", "now", &"six_marshals", &"sm02")
+	assert_eq(mission["campaign"], "six_marshals")
+	assert_eq(mission["mission"], "sm02")
+	assert_eq(ReplayCodec.header_error(mission), "")
 
 
 ## `header_error` reads every field's shape through `SaveSchema.is_shape` now

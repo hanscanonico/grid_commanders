@@ -53,6 +53,13 @@ extends Resource
 ## speed star.
 @export var par_day: int = 0
 
+@export_group("The script")
+## The beats that happen during the fight, in the order they are due: each waits
+## for its own conditions, speaks its own lines and changes the board through
+## `MissionEventCommand`. Empty is a mission nothing happens in, which is every
+## mission this vocabulary was written for.
+@export var events: Array[MissionEvent] = []
+
 @export_group("Story")
 ## What is said before the battle and after it is won, as lines with speakers —
 ## a campaign is a conversation between the generals fighting it. A line with no
@@ -77,6 +84,16 @@ func to_request() -> MatchRequest:
 	request.fog_enabled = fog_enabled
 	request.difficulty = difficulty
 	return request
+
+
+## The scripted beat with this id, or null. `CampaignDefinition.mission`'s shape,
+## and it exists for the same reason: a replay line names an event by id, because
+## a reference is not something a recording can carry.
+func event(event_id: StringName) -> MissionEvent:
+	for entry: MissionEvent in events:
+		if entry != null and entry.id == event_id:
+			return entry
+	return null
 
 
 ## Why this mission could never be played or won, or "". Checked at load so an
@@ -108,6 +125,56 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 		var error := objective.definition_error(map, player_team, unit_db)
 		if error != "":
 			return "mission '%s': %s" % [id, error]
+	var script_error := _events_error(map, unit_db)
+	if script_error != "":
+		return script_error
+	return _hidden_objectives_error()
+
+
+## Why this mission's scripted beats could not play, or "". Ids are unique
+## because the fired set records them: two events called the same thing are one
+## event that fires once.
+func _events_error(map: MapData, unit_db: UnitDB) -> String:
+	var seen: Dictionary[StringName, bool] = {}
+	for event: MissionEvent in events:
+		if event == null:
+			return "mission '%s' holds an empty event slot" % id
+		if seen.has(event.id):
+			return "mission '%s' has two events called '%s'" % [id, event.id]
+		seen[event.id] = true
+		var error := event.definition_error(map, player_team, unit_db)
+		if error != "":
+			return "mission '%s': %s" % [id, error]
+	return ""
+
+
+## Why this mission's hidden objectives could never come out of hiding, or "".
+##
+## Both halves are authoring slips with no other symptom: a hidden objective
+## nothing reveals is a mission that cannot be won, and a reveal naming nothing
+## is a beat that plays and changes nothing anybody can see.
+func _hidden_objectives_error() -> String:
+	var hidden_ids: Dictionary[StringName, bool] = {}
+	for objective: MissionObjective in objectives + failures + bonus_objectives:
+		if not objective.hidden:
+			continue
+		if objective.id == &"":
+			return "mission '%s' hides an objective that has no id" % id
+		hidden_ids[objective.id] = false
+	for event: MissionEvent in events:
+		for effect: MissionEffect in event.effects:
+			var revealed := effect.revealed_objective()
+			if revealed == &"":
+				continue
+			if not hidden_ids.has(revealed):
+				return (
+					"mission '%s': event '%s' reveals '%s', which is not a hidden objective of it"
+					% [id, event.id, revealed]
+				)
+			hidden_ids[revealed] = true
+	for objective_id: StringName in hidden_ids:
+		if not hidden_ids[objective_id]:
+			return "mission '%s' hides '%s' and no event reveals it" % [id, objective_id]
 	return ""
 
 
@@ -125,8 +192,16 @@ func difficulty_error(difficulty_db: DifficultyDB) -> String:
 ## Why a line of this mission's story could not be spoken, or "". Split from
 ## `definition_error` because it needs the roster and that one needs the board,
 ## and a caller holding only one of them should still be able to ask.
+##
+## An event's lines are held to the same bar as the briefing's — they are spoken
+## by the same drawer, so a speaker nobody has heard of is the same slip in both.
 func story_error(commander_db: CommanderDB) -> String:
-	for line: MissionLine in briefing + victory:
+	var spoken: Array[MissionLine] = briefing + victory
+	for event: MissionEvent in events:
+		if event == null:
+			return "mission '%s' holds an empty event slot" % id
+		spoken += event.lines
+	for line: MissionLine in spoken:
 		if line == null:
 			return "mission '%s' holds an empty story line" % id
 		var error := line.definition_error(commander_db)
