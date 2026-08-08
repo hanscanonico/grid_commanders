@@ -802,8 +802,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   names, floored at a duel (`MapData.DEFAULT_TEAMS`) — so contiguity is structural rather than
   breakable, and the many fixtures that name a single team keep playing the duel they always did
   (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
-  The save format is version 8: the roster arrived at 4, the grouping at 5, the fallen at 6 (the
-  plan's "save v4 carries `eliminated`" is superseded by that ordering), each army's home HQ at 7 —
+  The save format is version 9 (`core/save_codec.gd`'s header is the ledger of what arrived when;
+  the campaign-depth entry above owns 9's own field): the roster arrived at 4, the grouping at 5,
+  the fallen at 6 (the plan's "save v4 carries `eliminated`" is superseded by that ordering), each
+  army's home HQ at 7 —
   a save below v7 takes its home HQs from the map it names, which is exact because such a save
   always seated the board's full roster — and Second Wind eligibility at 8; a save below v8
   defaults every unit to ineligible rather than granting an unverifiable extra action. An older save decodes as
