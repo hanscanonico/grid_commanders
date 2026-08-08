@@ -11,7 +11,9 @@ extends MissionTrigger
 @export var tag: StringName = &""
 
 
-func is_met(state: GameState, _team: int, _progress: MissionProgress) -> bool:
+func is_met(
+	state: GameState, _team: int, _progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	return MissionObjective.tagged_unit(state, tag) == null
 
 

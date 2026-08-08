@@ -15,7 +15,9 @@ extends Node
 var campaign: CampaignDefinition
 ## The mission in play, or null outside one.
 var mission: MissionDefinition
-## The player's progress in `campaign`, or null outside one.
+## The player's progress in `campaign`, or null outside one. It is also the
+## consequence ledger a `Flag` trigger and a variant line read, which is why
+## `due_events` hands it over.
 var progress: CampaignState
 ## The verdict, once a mission has been decided. Read by the outcome screen.
 var outcome: MissionRuntime.Outcome
@@ -25,6 +27,10 @@ var outcome: MissionRuntime.Outcome
 ## campaign-depth D2's one writer.
 var tally: MissionProgress
 var _runtime: MissionRuntime
+## Whether the ledger took what this mission staged, answered by the write itself.
+## False until then, and false for a replay of a mission already cleared — which
+## stages its facts exactly as the first run did and writes none of them.
+var _committed := false
 ## The ending a scripted beat declared, or null. A fact `MissionRuntime` takes
 ## its own view of (campaign-depth D3) rather than a verdict, which is why it is
 ## handed to `evaluate` instead of short-circuiting it — a scripted victory on the
@@ -53,6 +59,7 @@ func begin(
 	tally = resumed_tally if resumed_tally != null else MissionProgress.new()
 	_runtime = MissionRuntime.new(p_mission)
 	_ending = null
+	_committed = false
 	if progress != null:
 		progress.active_mission = p_mission.id
 	return p_mission.to_request()
@@ -91,21 +98,27 @@ func due_events(game: GameState) -> Array[MissionEvent]:
 	if mission == null or outcome != null or game.winner != 0:
 		return due
 	for event: MissionEvent in mission.events:
-		if event != null and event.is_due(game, mission.player_team, tally):
+		if event != null and event.is_due(game, mission.player_team, tally, progress):
 			due.append(event)
 	return due
 
 
 ## Note what a fired beat did to the *mission* — that it happened, the hidden
-## objectives it brought out, and the ending it declared. The board half is the
-## command's and is already applied; this is the tally's one writer again, and it
-## is called at the boundary the beat fired on so the verdict taken next sees it.
+## objectives it brought out, the facts it wrote and the ending it declared. The
+## board half is the command's and is already applied; this is the tally's one
+## writer again, and it is called at the boundary the beat fired on so the
+## verdict taken next sees it.
+##
+## A fact waits in the tally until the mission is finished, which is what stops a
+## retried mission writing the ledger twice; `CampaignState.complete` takes it.
 func record_event(command: MissionEventCommand) -> void:
 	if mission == null:
 		return
 	tally.record_fired(command.event.id)
 	for objective_id: StringName in command.revealed:
 		tally.reveal(objective_id)
+	for fact: SetFlagEffect in command.written:
+		tally.stage_flag(fact.flag, fact.value, fact.mode == SetFlagEffect.Mode.ADD)
 	if command.ending != null:
 		_ending = command.ending
 
@@ -155,14 +168,40 @@ func decide(game: GameState) -> bool:
 ## is how a mission comes to be cleared on a board it was lost on. Silent outside
 ## a campaign, and silent before a verdict — the victory screen calls it on every
 ## match and only a mission has anything to write.
+##
+## The tally goes with the clear, because the facts this mission staged are the
+## ledger's only on a mission that was actually finished: a defeat is retried,
+## and the war remembers the attempt that stood.
 func record(day: int) -> void:
 	if outcome == null or progress == null or campaign == null or mission == null:
 		return
 	if outcome.status == MissionRuntime.Status.SUCCESS:
-		progress.complete(campaign, mission.id, outcome.stars, day)
+		_committed = progress.complete(campaign, mission.id, outcome.stars, day, tally)
 	else:
 		progress.active_mission = &""
 	CampaignProfile.save_progress(progress)
+
+
+## What this mission wrote to the war, in the words its own beats put on it — the
+## debrief's line about what changed.
+##
+## What was **committed**, never what was staged: empty until the ledger has
+## actually taken the facts, so a replay of a mission already cleared reports
+## nothing, its beats having changed a war that already happened. The debrief is
+## the one screen that tells a player their choices mattered, and a false entry
+## there is worse than no entry. Empty too for a beat that named no consequence.
+func recorded_notes() -> Array[String]:
+	var notes: Array[String] = []
+	if mission == null or not _committed:
+		return notes
+	for event: MissionEvent in mission.events:
+		if event == null or not tally.has_fired(event.id):
+			continue
+		for effect: MissionEffect in event.effects:
+			var fact := effect.written_flag() if effect != null else null
+			if fact != null and fact.note != "":
+				notes.append(fact.note)
+	return notes
 
 
 ## The most stars this mission could award, for the "★★☆" the debrief prints.
@@ -194,3 +233,4 @@ func clear() -> void:
 	tally = null
 	_runtime = null
 	_ending = null
+	_committed = false

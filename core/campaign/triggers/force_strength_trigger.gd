@@ -21,7 +21,9 @@ enum Bound {
 @export var count: int = 2
 
 
-func is_met(state: GameState, _team: int, _progress: MissionProgress) -> bool:
+func is_met(
+	state: GameState, _team: int, _progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	var strength := 0
 	for unit in state.units:
 		if state.allied(unit.team, team):

@@ -10,7 +10,8 @@ extends Control
 ##
 ## Presentation only. It decides no outcome — `MissionRuntime` did that and
 ## `CampaignSession` recorded it — and it shows what happened rather than
-## working it out.
+## working it out. That holds for the ledger too: which facts the mission wrote
+## and what they are called are handed over already settled.
 
 signal continued
 
@@ -33,8 +34,19 @@ func _ready() -> void:
 ## Opens on a finished mission. `next_title` is the mission this one unlocked,
 ## or "" at the end of a campaign or after a loss — the one forward-looking
 ## thing a debrief can say, and the reason to press on.
+##
+## `ledger` is the war as it now reads, for the victory lines that are only said
+## on one kind of run, and `recorded` is what this mission wrote to it in its own
+## beats' words — the debrief being the one screen that can say what changed.
+## Both are handed over rather than read off `CampaignSession`, which the caller
+## is about to clear.
 func begin(
-	mission: MissionDefinition, outcome: MissionRuntime.Outcome, max_stars: int, next_title: String
+	mission: MissionDefinition,
+	outcome: MissionRuntime.Outcome,
+	max_stars: int,
+	next_title: String,
+	ledger: CampaignState = null,
+	recorded: Array[String] = []
 ) -> void:
 	var won := outcome.status == MissionRuntime.Status.SUCCESS
 	_verdict.text = "MISSION COMPLETE" if won else "MISSION FAILED"
@@ -49,10 +61,12 @@ func begin(
 	# A loss has one narrator's sentence rather than dialogue: the generals who
 	# would have spoken are the ones it went badly for.
 	if won:
-		for line: MissionLine in mission.victory:
+		for line: MissionLine in MissionLine.spoken(mission.victory, ledger):
 			_body.add_child(MissionSpeech.render(line, _commanders))
 	elif mission.defeat != "":
 		_body.add_child(MissionSpeech.paragraph(mission.defeat))
+	for note: String in recorded:
+		_body.add_child(MissionSpeech.paragraph("RECORDED   %s" % note, true))
 	_unlocked.text = "NEXT   %s" % next_title.to_upper() if next_title != "" else ""
 	_unlocked.visible = next_title != ""
 	_continue_button.text = "Continue" if won else "Back to the hub"

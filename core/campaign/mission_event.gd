@@ -26,12 +26,15 @@ extends Resource
 
 
 ## Is this event due on the board as it now stands? Every trigger has to hold,
-## and a `once` event that has already fired is never due again.
-func is_due(state: GameState, team: int, progress: MissionProgress) -> bool:
+## and a `once` event that has already fired is never due again. `ledger` is the
+## campaign's, for the `Flag` trigger; null is a mission played outside a profile.
+func is_due(
+	state: GameState, team: int, progress: MissionProgress, ledger: CampaignState = null
+) -> bool:
 	if once and progress.has_fired(id):
 		return false
 	for trigger: MissionTrigger in triggers:
-		if trigger == null or not trigger.is_met(state, team, progress):
+		if trigger == null or not trigger.is_met(state, team, progress, ledger):
 			return false
 	return true
 
@@ -45,6 +48,29 @@ func spawned_tags() -> Array[StringName]:
 		if effect != null:
 			named.append_array(effect.spawned_tags())
 	return named
+
+
+## Every fact this beat reads the war for, gathered from its triggers — `Flag`
+## alone reads any. What `CampaignDefinition.ledger_error` holds against the facts
+## the campaign writes, a name nothing writes being a beat that never fires.
+func read_flags() -> Array[StringName]:
+	var read: Array[StringName] = []
+	for trigger: MissionTrigger in triggers:
+		var condition := trigger.read_condition() if trigger != null else null
+		if condition != null:
+			read.append(condition.flag)
+	return read
+
+
+## Every fact this beat writes to the war, gathered from its effects — `SetFlag`
+## alone writes any. The other half of the same question.
+func written_flags() -> Array[StringName]:
+	var written: Array[StringName] = []
+	for effect: MissionEffect in effects:
+		var fact := effect.written_flag() if effect != null else null
+		if fact != null:
+			written.append(fact.flag)
+	return written
 
 
 ## Why this event could never fire or could never be applied on this mission's

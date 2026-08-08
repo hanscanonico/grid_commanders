@@ -14,7 +14,9 @@ extends MissionTrigger
 @export var cells: Array[Vector2i] = []
 
 
-func is_met(state: GameState, _team: int, _progress: MissionProgress) -> bool:
+func is_met(
+	state: GameState, _team: int, _progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	var unit := MissionObjective.tagged_unit(state, tag)
 	if unit == null or unit.carrier != null:
 		return false

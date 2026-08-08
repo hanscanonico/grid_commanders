@@ -1173,7 +1173,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
   beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
   the army a mission hands the next one, interludes and optional missions, across all six wars.
-  Milestones CD1–CD8, **CD1–CD3 shipped**. It is the design of record for the campaign's *depth*;
+  Milestones CD1–CD8, **CD1–CD4 shipped**. It is the design of record for the campaign's *depth*;
   the **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
   data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
   read together. It retired exactly one clause of that entry — D2's "no evacuate/escort/convoy
@@ -1207,7 +1207,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   board, asked by `MapData` row by row as it parses and by `SaveCodec.validate` over a decoded unit
   list, because a save is the second door onto the board and a tag naming two units names neither.
   D5: **a flag chooses authored content, never a number** — `CampaignState.flags` is a ledger of
-  integers written only by a `SetFlag` effect or by mission completion, and it reaches the board
+  integers written by a `SetFlag` effect or by mission completion (CD4 settled *when*, below), and
+  it reaches the board
   only by picking which authored thing is used (a variant briefing line, a conditional starting
   unit, whether a mission opens); it may not hand a mission more funds or a weaker AI, or a campaign
   becomes a second, invisible balance surface. Nothing in `core/` or `ai/` reads one.
@@ -1284,14 +1285,58 @@ that must survive any change; the full rationale, milestones and risk registers 
   `MissionDefinition` refuses a hidden objective no event reveals, that being a mission that cannot
   be won and has no other symptom. A mission with nothing hidden is judged, and drawn, exactly as
   before.
-  `Flag` and `SetFlag` are **deliberately absent** — the ledger they read is CD4's, and a trigger
-  reading a ledger that does not exist is untestable; `DayBefore` was added in their place, because
+  `Flag` and `SetFlag` were held back to CD4 — a trigger reading a ledger that does not exist is
+  untestable; `DayBefore` was added in their place, because
   `ObjectiveMet` plus `DayBefore` is "did it, and did it fast", which is how a later ledger records
   the player being good rather than only recording damage. Six exemplar events ship, one per
   campaign, all in missions CD2 had already re-authored so they stack rather than spread; the other
   102 are CD7's. `battle.gd` **shrank** 1415 → 1396 by extracting `BattleRecording`, and its budget
   in `tools/check_scripts.sh` fell with it — the answer to a line budget is extraction, never a
   raise.
+  **CD4 shipped the consequence ledger on D5, and what a future session must not undo is below;
+  the plan's own "What CD4 settled" carries the rest.**
+  **A flag-conditional starting unit needed no new mechanism** — CD3 already fires beats on the
+  opening board, so "this board opens two defenders short because the bridge went down in mission
+  five" is an ordinary event with a `Flag` trigger and a `SpawnUnits` effect. That is the whole of
+  D5's board reach, and it is why a flag structurally cannot touch a number: the only thing a flag
+  does to a board is decide whether an *authored* beat fires.
+  **A flag is staged mid-mission and committed on the win**, which supersedes D5's "written by a
+  `SetFlag` effect" read literally: `SetFlagEffect` changes no board and `MissionEventCommand`
+  collects it, `CampaignSession.record_event` stages it into the tally, and
+  **`CampaignState.complete` is the ledger's one writer** — the same answer CD2 gave the tally, for
+  the same reason (a retry must not inherit an abandoned attempt's writes, or an `ADD` flag counts
+  twice per attempt). The author-facing rule is one sentence: *a mission reads the war as it stood
+  when it began, and writes to it when it is won.* A `Flag` trigger therefore reads the same way
+  every time a mission is played, which is what keeps a scripted opening deterministic.
+  **A replay of an already-cleared mission does not rewrite the ledger** — `complete` takes the
+  staged facts only on the first clear, found by test rather than by reasoning (an `ADD` flag read
+  2 after a replay); stars and best day still improve best-not-last, unchanged. `complete` returns
+  whether the ledger took, which is the only thing the debrief's `RECORDED` lines are printed off —
+  a screen claiming a change that did not happen is worse than one that says nothing.
+  **`cleared:` and `stars:` are derived, never stored** — `CampaignState.flag` answers them off
+  `records`, so there is no second copy to drift and a later mission asks after a cleared mission in
+  the same words it asks after an authored fact; `SetFlagEffect` refuses a derived name and
+  `CampaignSaveCodec` refuses a stored one.
+  **`FlagCondition` carries both bounds** (`at_least` **and** `at_most`), because a ledger with a
+  floor alone can record that something went wrong and never that the player was quick or careful,
+  so "the war carries between missions" would only ever mean "it gets worse".
+  **Variant `MissionLine`s are independently included, not alternatives** — `MissionLine.spoken`
+  is the one filter both the hub briefing and the debrief read through, every line whose condition
+  holds is said in authored order, and an either/or is two adjacent lines with opposite conditions;
+  a group construct would need a default and an all-failed fallback nobody wrote. A beat's own lines
+  may **not** be gated (`story_error`): a recording re-issues the beat and must speak the same
+  words, so a beat the war decides is a beat with a `Flag` trigger.
+  `MissionTrigger.is_met` grew a **defaulted** `ledger` parameter across all seven shipped triggers
+  — GDScript requires an override to match the base signature — and null is a mission played
+  outside a campaign profile, where every fact reads zero.
+  The campaign profile is **VERSION 3**, a section of its own rather than a key smuggled into 2,
+  because `validate` refuses a file no writer could have produced and a v2 profile carrying flags is
+  one; a v1 or v2 profile loads with an empty ledger.
+  `CampaignDefinition.ledger_error` is the one campaign-wide question a mission cannot ask about
+  itself — a fact no mission of the campaign writes, or a `cleared:` / `stars:` name for a mission
+  it does not run — and `make campaigns` is where it is asked, both slips being otherwise silent.
+  **No shipped mission authors a flag yet** — CD7 owns the 108 — so the variant lines and the
+  `RECORDED` rows are inert in shipped content, the way CD1–CD3's capabilities shipped inert.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'
@@ -1302,10 +1347,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   board deals, every objective names ground that exists, the tier is one that ships
   (`MissionDefinition.difficulty_error`, because `DifficultyDB.by_id` falls back to Normal
   silently — right for a save naming a retired tier, invisible for a typo in a mission file),
-  every story line's speaker is on the roster (`story_error`), the launch builds, and every
+  every story line's speaker is on the roster (`story_error`), the launch builds, every
   scripted effect is asked `board_error` against the board the mission **opens on** — the one
   question `definition_error` cannot ask, a map dealing every seat it names while a mission may
-  have closed some of them. The story is
+  have closed some of them — and the campaign is asked `ledger_error` for the facts its content
+  reads (CD4, above). The story is
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
   and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
@@ -1355,8 +1401,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   D5: **progress is one file per campaign** under `user://campaigns/`, temp+backup like
   `SaveGame`, so six wars advance independently and finishing one cannot corrupt another's record.
   The mid-mission board is `SaveCodec.encode`'s envelope embedded whole (`CampaignSaveCodec`
-  serialises no board of its own; its own format is **VERSION 2**, which arrived with CD2's mission
-  tally — the board save is deliberately untouched, this being mission bookkeeping rather than
+  serialises no board of its own; its own format is **VERSION 3** — 2 arrived with CD2's mission
+  tally, 3 with CD4's consequence ledger, and a profile below the current version loads with the
+  parts it never had empty — the board save is deliberately untouched throughout, this being
+  mission bookkeeping rather than
   board state, so a skirmish save is byte-unchanged) and the skirmish slot is never touched, so
   Continue keeps one unambiguous meaning; a damaged profile is read through a `JSON` instance
   rather than

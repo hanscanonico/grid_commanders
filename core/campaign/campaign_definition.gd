@@ -92,3 +92,41 @@ func definition_error() -> String:
 		if total != missions.size():
 			return "campaign '%s' blocks cover %d missions of %d" % [id, total, missions.size()]
 	return ""
+
+
+## Why this campaign's consequence ledger could never read the way its content
+## asks, or "". The campaign-wide question a mission cannot ask about itself, and
+## both slips it catches are otherwise **silent**: a fact nothing writes and a
+## `cleared:` / `stars:` name for a mission this campaign does not run each read
+## zero forever, so the variant line simply never speaks and the gated beat never
+## fires. `MissionDefinition._hidden_objectives_error`'s shape, at the width a
+## ledger has.
+##
+## A fact written **anywhere** in the campaign answers every read of it, whatever
+## route a player takes: a fact only an optional mission writes is one the reader
+## is meant to tolerate reading zero, and the failure this exists for is a typo
+## rather than a road not travelled. So it catches a name no mission writes at all,
+## and deliberately not a name written somewhere the player never went.
+func ledger_error() -> String:
+	var written: Dictionary[StringName, bool] = {}
+	for entry: MissionDefinition in missions:
+		if entry != null:
+			for flag: StringName in entry.written_flags():
+				written[flag] = true
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		for flag: StringName in entry.read_flags():
+			var about := CampaignState.derived_mission(flag)
+			if about != &"":
+				if mission(about) == null:
+					return (
+						"campaign '%s': mission '%s' reads '%s', and no mission of it is '%s'"
+						% [id, entry.id, flag, about]
+					)
+			elif not written.has(flag):
+				return (
+					"campaign '%s': mission '%s' reads '%s', which no mission of it writes"
+					% [id, entry.id, flag]
+				)
+	return ""

@@ -16,15 +16,30 @@ extends Resource
 ## a mission unwinnable.
 ##
 ## An event's triggers are a **conjunction** — every one of them must hold — and
-## that is what makes a seven-word vocabulary expressive: `ObjectiveMet` plus
-## `DayBefore` is "did it, and did it fast".
+## that is what makes a small vocabulary expressive: `ObjectiveMet` plus
+## `DayBefore` is "did it, and did it fast", and either of them plus `Flag` is
+## the same beat conditioned on how an earlier mission went.
 
 
 ## Does this condition hold on the board as it now stands? `team` is the
 ## mission's player team; a side-wide reading asks `state.allied`. `progress` is
-## the mission's tally, for the conditions no single board can answer.
-func is_met(_state: GameState, _team: int, _progress: MissionProgress) -> bool:
+## the mission's tally, for the conditions no single board can answer, and
+## `ledger` is the campaign's consequence ledger — which `Flag` alone reads,
+## being the one condition that reaches outside this mission. A null ledger is a
+## mission played outside a campaign profile, where every fact reads zero.
+func is_met(
+	_state: GameState, _team: int, _progress: MissionProgress, _ledger: CampaignState = null
+) -> bool:
 	return false
+
+
+## The band on the consequence ledger this condition reads, or null — `Flag` alone
+## answers with anything. Declared here for the reason `MissionEffect.written_flag`
+## is: the fact is the *war's* rather than the board's, and whether the campaign
+## ever writes the name it asks after is a question only the whole campaign can
+## answer (`CampaignDefinition.ledger_error`).
+func read_condition() -> FlagCondition:
+	return null
 
 
 ## Why this condition could never come true on this mission's board, or "".

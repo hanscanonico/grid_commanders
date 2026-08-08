@@ -1,7 +1,8 @@
 extends SceneTree
 ## Loads every shipped campaign and holds it to the bar a playable mission has
 ## to clear: the board parses, the seating is one the board deals, every
-## objective names ground that exists, and the whole thing can be launched.
+## objective names ground that exists, every fact its content reads is one the war
+## writes, and the whole thing can be launched.
 ##
 ## Authoring guard rather than a unit test — it walks real content, so it is a
 ## `tools/` script the content author runs. `make campaigns` is the entry point.
@@ -51,6 +52,11 @@ func _check_campaign(
 	if structural != "":
 		_fail(structural)
 		return
+	# The one check that needs the whole war at once: a flag a mission reads and no
+	# mission of it writes is a variant line nobody ever hears.
+	var ledger := campaign.ledger_error()
+	if ledger != "":
+		_fail(ledger)
 	print("%s — %s (%d missions)" % [campaign.id, campaign.title, campaign.mission_count()])
 	for mission: MissionDefinition in campaign.missions:
 		_missions += 1

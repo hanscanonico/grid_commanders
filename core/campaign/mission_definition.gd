@@ -96,6 +96,37 @@ func event(event_id: StringName) -> MissionEvent:
 	return null
 
 
+## Every fact this mission reads the war for: the conditions on its variant story
+## lines, and the `Flag` triggers on its beats. Its beats' lines carry none —
+## `story_error` refuses them there — so the story half is the briefing and the
+## victory dialogue.
+##
+## Gathered rather than judged here, because whether the campaign ever writes a
+## name is the one question a mission cannot ask about itself.
+func read_flags() -> Array[StringName]:
+	var read: Array[StringName] = []
+	for line: MissionLine in briefing + victory:
+		if line == null:
+			continue
+		for condition: FlagCondition in line.conditions():
+			read.append(condition.flag)
+	for event: MissionEvent in events:
+		if event != null:
+			read.append_array(event.read_flags())
+	return read
+
+
+## Every fact this mission's beats write to the war. The other half of the same
+## question, and the reason it is not `written_flag` singular: a mission writes the
+## war from as many beats as it has.
+func written_flags() -> Array[StringName]:
+	var written: Array[StringName] = []
+	for event: MissionEvent in events:
+		if event != null:
+			written.append_array(event.written_flags())
+	return written
+
+
 ## Why this mission could never be played or won, or "". Checked at load so an
 ## authoring slip — a board that does not seat the player, a relay that is not a
 ## property — is loud at the door instead of silent in the middle of an act.
@@ -228,16 +259,31 @@ func difficulty_error(difficulty_db: DifficultyDB) -> String:
 ##
 ## An event's lines are held to the same bar as the briefing's — they are spoken
 ## by the same drawer, so a speaker nobody has heard of is the same slip in both.
+## What a beat's lines may **not** carry is a ledger condition: a recording
+## re-issues the beat and has to speak the same words, so a beat the war decides
+## is a beat with a `Flag` trigger.
 func story_error(commander_db: CommanderDB) -> String:
-	var spoken: Array[MissionLine] = briefing + victory
+	var error := _lines_error(briefing + victory, commander_db, true)
+	if error != "":
+		return "mission '%s': %s" % [id, error]
 	for event: MissionEvent in events:
 		if event == null:
 			return "mission '%s' holds an empty event slot" % id
-		spoken += event.lines
-	for line: MissionLine in spoken:
+		error = _lines_error(event.lines, commander_db, false)
+		if error != "":
+			return "mission '%s': event '%s': %s" % [id, event.id, error]
+	return ""
+
+
+func _lines_error(
+	lines: Array[MissionLine], commander_db: CommanderDB, variants_allowed: bool
+) -> String:
+	for line: MissionLine in lines:
 		if line == null:
-			return "mission '%s' holds an empty story line" % id
+			return "an empty story line"
+		if line.is_conditional() and not variants_allowed:
+			return "a line the ledger gates; gate the beat with a Flag trigger instead"
 		var error := line.definition_error(commander_db)
 		if error != "":
-			return "mission '%s': %s" % [id, error]
+			return error
 	return ""
