@@ -1127,7 +1127,9 @@ that must survive any change; the full rationale, milestones and risk registers 
   commanders' charge and `rng_state`, and a resumed save records correctly), and the format owns
   only the command list; map + seed rebuilt through `create` is the rejected alternative, being a
   second opinion about what a match opens as. A line names its actor by the cell it acted from,
-  which is unambiguous because a carried unit can never act. D2: **the recorder observes at the two
+  which is unambiguous because a carried unit can never act. **The envelope is the opening, not the
+  header**: what a recording is *of* — CD3's campaign and mission ids, beside `label` and
+  `recorded` — rides in the header, and the campaign-depth entry below owns that decision. D2: **the recorder observes at the two
   brokers that already exist** — `BattleCommandPipeline.execute` and `BalanceMatchEngine.play`,
   each side of `apply` exactly as `BalanceMatchRecorder` is already handed a command; nothing under
   `core/` or `ai/` gains a hook, and `tools/check_scripts.sh` already enforces that the live broker
@@ -1171,7 +1173,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
   beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
   the army a mission hands the next one, interludes and optional missions, across all six wars.
-  Milestones CD1–CD8, **CD1–CD2 shipped**. It is the design of record for the campaign's *depth*;
+  Milestones CD1–CD8, **CD1–CD3 shipped**. It is the design of record for the campaign's *depth*;
   the **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
   data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
   read together. It retired exactly one clause of that entry — D2's "no evacuate/escort/convoy
@@ -1221,8 +1223,10 @@ that must survive any change; the full rationale, milestones and risk registers 
   **CD2 shipped the objective vocabulary and the in-battle card, and settled what the plan left
   open.**
   `DestroyUnit`, `ProtectUnit`, `ReachCell` and `DefeatTeam` are pure reads of one board;
-  **only `HoldCell` and `LossLimit` need the tally**, which is why `MissionProgress` is a pair of
-  counters rather than a general mission-state bag, and why `is_met` / `readout` /
+  **only `HoldCell` and `LossLimit` need the tally**, which is why `MissionProgress` is counters
+  rather than a general mission-state bag — CD3's fired beats and revealed objectives are keyed
+  counters like any other, which is why the profile format did not move — and why `is_met` /
+  `readout` /
   `definition_error` take their extra parameter **required, never defaulted** — a caller that forgot
   the tally would silently read "never held, never lost", a mission nobody can win. Losses are a
   **set difference** over the instance ids of our side's units between two boundaries, never
@@ -1242,6 +1246,47 @@ that must survive any change; the full rationale, milestones and risk registers 
   scenario deploys through the shipped `CampaignSession.begin` → `MatchConfig.stage` pair
   (`BattleMissionScenario`) rather than widening `--map=`, and clears the session after the frame so
   the next `menu_` scenario in the same process opens a menu rather than a campaign hub.
+  **CD3 shipped the event system on D1/D2/D3 as written; what a future session must not undo is
+  below, and the plan's own "What CD3 settled" carries the rest.**
+  A `MissionEvent` is triggers (a **conjunction**, so a small vocabulary stays expressive) plus
+  effects plus lines, and the two libraries are `core/campaign/triggers/` and
+  `core/campaign/effects/`, one question or one deed a file, on `MissionObjective`'s contract
+  verbatim. `BattleCampaign.fire_due` is the seam and it cannot re-enter: `conclude_command` calls
+  it and it never calls back, so a beat's own command settles inside the pipeline. The opening board
+  is the one boundary with no command behind it, and it is what `DayReached { day: 1 }` is written
+  against.
+  **The campaign and mission ids ride in the replay *header*, never in the opening** — the opening
+  stays `SaveCodec.encode` verbatim as the replay plan's D1 requires, a `MissionEvent` reference is
+  not something a file can carry, so an event line names its beat by id and playback resolves the
+  pair through `CampaignDB`; a skirmish header names neither and is byte-identical to before.
+  `ReplayCodec.FORMAT` is 4 and older recordings are refused outright (replay D3), and a recording
+  whose mission no longer resolves is refused **by name in `BattleSetup`** before a single command
+  replays, because a playback that runs correctly up to the moment the story happens is worse than
+  one that never starts.
+  Two rules were read off the shipped design rather than invented: a scripted removal **banks
+  nothing to either charge meter** (Hammerfall's D4 — charge is minted inside
+  `ChargeLedger.bank_losses` and nowhere else), and **a defection does not rout the army it
+  empties**, a rout being reached only through `remove_unit`. `SpawnUnits` **skips an occupied cell**
+  rather than clearing it, Hammerfall staying the only thing in the game that removes a unit without
+  a shot. A defecting unit takes its cargo, its capture progress and its turn (`acted = true`) with
+  it, each with its reason on the class.
+  **D8 is exceeded rather than met**: `MissionSpeechCard` reads *nothing* — its lines are handed
+  over by the command, the way `_present_power` is handed its commander — which is what makes a
+  replay speak the same words. **R7 needed no `ai/` code**: `AIPlanCache` already drops on a board
+  diff, so a scripted removal reads as a unit that left and a defection as one that changed team;
+  the milestone owed the tests and `tests/unit/test_ai_plan_cache.gd` carries them.
+  A hidden objective needs a stable save key, so `MissionObjective` gained `id` beside `hidden` and
+  `MissionRuntime._live` skips an unrevealed one wherever it walks a list; `MissionDefinition`
+  refuses a hidden objective no event reveals, that being a mission that cannot be won and has no
+  other symptom. A mission with nothing hidden is judged exactly as before.
+  `Flag` and `SetFlag` are **deliberately absent** — the ledger they read is CD4's, and a trigger
+  reading a ledger that does not exist is untestable; `DayBefore` was added in their place, because
+  `ObjectiveMet` plus `DayBefore` is "did it, and did it fast", which is how a later ledger records
+  the player being good rather than only recording damage. Six exemplar events ship, one per
+  campaign, all in missions CD2 had already re-authored so they stack rather than spread; the other
+  102 are CD7's. `battle.gd` **shrank** 1415 → 1396 by extracting `BattleRecording`, and its budget
+  in `tools/check_scripts.sh` fell with it — the answer to a line budget is extraction, never a
+  raise.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'
@@ -1252,13 +1297,18 @@ that must survive any change; the full rationale, milestones and risk registers 
   board deals, every objective names ground that exists, the tier is one that ships
   (`MissionDefinition.difficulty_error`, because `DifficultyDB.by_id` falls back to Normal
   silently — right for a save naming a retired tier, invisible for a typo in a mission file),
-  every story line's speaker is on the roster (`story_error`), the launch builds. The story is
+  every story line's speaker is on the roster (`story_error`), the launch builds, and every
+  scripted effect is asked `board_error` against the board the mission **opens on** — the one
+  question `definition_error` cannot ask, a map dealing every seat it names while a mission may
+  have closed some of them. The story is
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
   and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
-  sentence. `MissionSpeech` is the one drawer of a spoken line, because two screens say them —
-  the hub's briefing and `CampaignDebriefPanel`, the briefing's mirror, which plays the victory
-  dialogue or the defeat line on the way back from a battle before the hub. Five decisions:
+  sentence. `MissionSpeech` is the one drawer of a spoken line, because three surfaces say them —
+  the hub's briefing, `CampaignDebriefPanel` (the briefing's mirror, which plays the victory
+  dialogue or the defeat line on the way back from a battle before the hub) and, since CD3,
+  `MissionSpeechCard` over the board, so a general sounds the same mid-battle as between missions.
+  Five decisions:
   D1: **a mission states its match as `MatchRequest`'s own field list — seats and sides included —
   and `MissionDefinition.to_request()` is the one conversion.** The handoff's `player_team` /
   `ai_teams` pair cannot say "seats 1 and 3 play, and 1 stands with 3", which The Hollow Crown's
@@ -1278,16 +1328,21 @@ that must survive any change; the full rationale, milestones and risk registers 
   exit-zone, hold, named-unit and loss-limit verbs, and the CD entry above owns what they settled;
   the rest of this entry stands.
   D3: **`MissionRuntime`'s precedence is the class's whole point: losing outranks winning
-  throughout** — tactical defeat, then failure conditions, then tactical victory, then
-  objectives — so a deadline that expires on the same board its objective completes is a failure.
+  throughout** — tactical defeat, then failure conditions, then a scripted bad ending, then
+  tactical victory, then a scripted good ending, then objectives — so a deadline that expires on
+  the same board its objective completes is a failure. An `EndMission` effect is a **fact** taking
+  its place in that order, never a second verdict authority (campaign-depth D3), and a hidden
+  objective nobody has revealed is not judged at any step (`_live`).
   It is asked at the one seam the live scene already has — `Battle.conclude_command`, through
   `BattleCampaign`, the scene's whole campaign side (the mission capture's launch, the tally's
-  opening board, the verdict) — and it returns false for every skirmish, which is what leaves a
+  opening board, the due beats, the verdict) — and it returns false for every skirmish, which is
+  what leaves a
   match outside a campaign on the code it ran before campaigns existed: the sim gained no hook and
   every pre-existing test is untouched. `evaluate` takes the tally as a parameter and never writes
-  it; **`CampaignSession.decide` is `MissionProgress`' one writer** (campaign-depth D2) and
-  advances it *before* the verdict, because a condition asking how long the ridge has been ours is
-  about this board rather than the one before it.
+  it; **`CampaignSession` is `MissionProgress`' one writer** (campaign-depth D2) — `decide`
+  advances the counters *before* the verdict, because a condition asking how long the ridge has
+  been ours is about this board rather than the one before it, and `record_event` notes at that
+  same boundary what fired and what it revealed.
   D4: **`CampaignSession` is a second autoload beside `MatchConfig`, navigation intent only** —
   `MatchConfig` deliberately carries exactly one typed request and nothing else, and a battle
   outside a campaign must not have to know a campaign exists. `clear()` empties it whole, runtime
@@ -1346,7 +1401,7 @@ res://
 │  ├─ menu/     # main_menu.tscn — map and commander select, match options, campaign screens
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip,
-│              # the in-battle mission objective card
+│              # the in-battle mission objective card and scripted-beat speech card
 ├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, CampaignSession
 │              # (project.godot also registers _mcp_game_helper, the godot_ai editor
 │              # addon's runtime — it loads in every run today; keeping it out of export

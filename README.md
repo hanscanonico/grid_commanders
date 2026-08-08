@@ -756,6 +756,24 @@ reaching the zone reaches it for both of you, and an ally's casualty is on your 
 "break that army", which is about one army on purpose. Two units merged into one spend a unit, and
 a loss limit counts it as such.
 
+A mission can also **script what happens while you fight it**. A beat waits for conditions of its
+own — a day reached, a day not yet reached, ground held by a side, a named unit destroyed or
+arrived somewhere, a side worn down to (or built up to) so many units, an objective already
+satisfied — and every one of them has to hold at once, so "took the depot, and took it by day
+four" is one beat. When it comes due it says its piece and changes the board: reinforcements land,
+a garrison changes sides, a named column is withdrawn, a property changes hands, a purse or a
+Command Power meter is topped up, an objective held back until now comes into play, or the mission
+ends there and then. The words are spoken over the board by the generals themselves, exactly as a
+briefing's lines are, and any press moves them on.
+
+A beat is applied as **an ordinary command at a command boundary** — the same broker your own
+clicks go through — so it lands in the log, in a mid-mission save and in the recording like
+anything else, and a replay speaks the same words in the same place. Beats fire *before* the
+mission is judged, so a relief column arriving on the day the deadline expires is on the board the
+deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
+marked once fires once, and a mission picked back up from a save does not play it again. Six of
+the 108 missions carry one today — one per war — and the rest are still fought as they were.
+
 While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
 lists what wins, what loses and the bonuses, ticks each condition as it is satisfied and counts the
 ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It is up only inside a campaign mission;
@@ -781,7 +799,11 @@ it had lost, and a **Retry** starts both clean.
 if a board does not parse, a seating names a seat the board does not deal, an objective names
 ground or a unit the board does not have (or asks for more than that board could ever give), a
 mission asks for a difficulty tier that does not ship, a story
-line's speaker is not on the commander roster, or the launch does not build.
+line's speaker is not on the commander roster, or the launch does not build. A mission's script is
+held to the same bar: a beat that waits for nothing or does nothing, two beats with the same name,
+a trigger or an effect naming ground, a unit or a seat the board does not have, two units landing
+under one name, an objective held back that no beat ever brings into play — each fails at the door
+rather than as a beat that never fires in the middle of an act.
 
 ## Replays
 
@@ -814,6 +836,10 @@ a series of states. The opening line is a save envelope verbatim (so it carries 
 grouping, each commander's charge and the RNG state, and a match resumed from a save records
 correctly from wherever it was picked up); every line after it is one applied command, appended as
 it happens, so a crash costs the last line rather than the file. A twenty-day match is about 100 KB.
+A recording of a **campaign mission** names its war and its mission up top, because a scripted beat
+is recorded as the beat's own name and the mission is what that name means; one whose mission this
+build no longer ships is refused by name before it starts rather than stopping at the moment the
+story was about to happen. A recording of a skirmish names neither and is the file it always was.
 
 Each line also carries a **digest of the board that command left behind**, and playback stops at the
 first mismatch and names the command. That is the one thing a command log cannot do for itself:
