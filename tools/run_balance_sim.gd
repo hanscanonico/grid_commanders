@@ -288,11 +288,33 @@ func _build_jobs() -> Array[Job]:
 				against.tier = _sweep_tier
 				jobs.append_array(_pair(String(co.id), _map_name, subject, against))
 		"maps":
+			var skipped := 0
 			for path in MapCatalog.paths():
 				var name := path.get_file().trim_suffix(".txt")
-				if _harness.map_of(name) == null:
+				var map := _harness.map_of(name)
+				if map == null:
+					continue
+				var seats := map.player_count()
+				if seats > 2:
+					print(
+						(
+							(
+								"balance-sim: skipping %s — seats %d armies and the engine plays two "
+								+ "(asymmetric-board R4)"
+							)
+							% [name, seats]
+						)
+					)
+					skipped += 1
 					continue
 				jobs.append_array(_pair(name, name, red, blue))
+			if skipped > 0:
+				print(
+					(
+						"balance-sim: skipped %d multi-seat board(s) of %d shipped"
+						% [skipped, MapCatalog.paths().size()]
+					)
+				)
 		"tiers":
 			for pairing: Array in TIER_LADDER:
 				var high := BalanceSideSpec.new()

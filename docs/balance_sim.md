@@ -40,7 +40,7 @@ make balance-sim SIM="--map=scrimmage --red=cass_orlov:hard --blue=gideon_holt:e
 # sweep axis 1 — every commander (vs --blue) at one tier on one board
 make balance-sim SIM="--map=the_straits --sweep=commanders --tier=normal --seeds=4"
 
-# sweep axis 2 — map fairness: identical mirror on every shipped board
+# sweep axis 2 — map fairness: identical mirror on every duel board
 make balance-sim SIM="--sweep=maps --red=none:normal --blue=none:normal --seeds=6"
 
 # sweep axis 3 — the tier ladder, with doctrines allowed on both sides
@@ -286,16 +286,19 @@ The third is **derived, not chosen**: `(MAX_COMMANDS_PER_TURN + 1) × teams ×
 cannot truncate legitimate play at any horizon or roster, and a match that
 exceeds it has broken the invariant that a turn ends and a day advances.
 
-It replaced a flat 3 000, and the correction is measured. Over the 23 682
-matches of the first AI Arena search campaign (2026-08-05, 100-day horizon) the
-median match spent 400 commands and p99.9 spent 2 400 — but twelve reached 3 000,
-and **replayed with the cap lifted every one of the twelve ran to the day cap
+It replaced a flat 3 000, and the correction is measured. The AI Arena's first
+search attempt aborted on it: over 23 682 matches (100-day horizon) the median
+match spent 400 commands and p99.9 spent 2 400 — but twelve reached 3 000, and
+**replayed with the cap lifted every one of the twelve ran to the day cap
 instead**, at 3 052 to 5 226 commands, each a 60-to-87-unit army mopping up a
 last survivor on a property-rich board. Zero rejected commands anywhere. The cap
 was not detecting a runaway; it was truncating the longest honest games and
 failing the run for it. A second constant picked off that distribution would be
 the same mistake with a bigger number, since the ceiling moves with the board's
-economy and the run's horizon.
+economy and the run's horizon — and it was: the completed campaign that followed
+on the derived cap (`docs/ai_arena_results.md`, 2026-08-05, 92 016 matches) ran
+one match to 8 907 commands, past that 5 226, while the derived
+`command_ceiling` (60 802 at that horizon) was never approached.
 
 Both committed gates report **0 cap stalls** and never approached the old bound
 (the longest 20-day match measured spends about 300 commands), so the change is
@@ -671,12 +674,17 @@ Measured on the vendored Godot 4.7.1, headless, on an Apple-silicon laptop:
 | Run | Matches | Wall clock |
 |---|---|---|
 | One matchup, 2 seeds, 12-day cap | 4 | ~2 s |
-| Neutral mirror across all 12 boards, 3 seeds, 15-day cap | 36 | ~20 s |
+| Neutral mirror across all 13 duel boards, 3 seeds, 15-day cap | 39 | ~20 s |
 | One matchup, 6 seeds, 25-day cap | 12 | ~11 s |
 
 **The table predates AR1's plan cache (COM-154)**, which made a headless match
 several times cheaper without moving a single result — read it as an upper bound
 until a run re-measures it.
+
+`--sweep=maps` plays 13 of the 24 shipped boards: `BalanceMatchEngine` seats
+exactly two planners (the asymmetric-board plan's R4), so it skips the 11
+boards with more than two armies, printing one line naming each and a summary
+count, rather than building a match neither side can finish.
 
 Matches are tens to hundreds of milliseconds each; telemetry is reads and
 appends and does not measurably change that — and `planning_ms` lands in every
