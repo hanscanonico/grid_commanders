@@ -1,3 +1,4 @@
+class_name MainMenu
 extends Control
 ## Main menu: pick a map and match options, choose commanders on the dedicated
 ## selection page, then hand off to the battle scene by staging one MatchRequest.
@@ -1063,8 +1064,9 @@ func _chrome() -> Dictionary[String, Control]:
 ##
 ## Claimed only while the strip is on screen: a `--co-select` capture photographs
 ## the selection page over a hidden menu, and a control the picture does not show
-## is not one this frame promises anything about.
-func _seats_laid_out() -> bool:
+## is not one this frame promises anything about. Read back by
+## MenuCaptureDriver's capture gate; a capture-driver seam.
+func seats_laid_out() -> bool:
 	if not _seat_strip.is_visible_in_tree():
 		return true
 	var error := _seat_strip.layout_error()
@@ -1076,8 +1078,9 @@ func _seats_laid_out() -> bool:
 
 ## Semantic half of the COM-19 capture gate: layout alone cannot prove that the
 ## tutorial board leads, that a hot-seat setup has no operable AI difficulty, or
-## that the caption's budget holds for a board this frame does not show.
-func _setup_context_ready() -> bool:
+## that the caption's budget holds for a board this frame does not show. Read
+## back by MenuCaptureDriver's capture gate; a capture-driver seam.
+func setup_context_ready() -> bool:
 	var passed := true
 	var map := _map_at(_selected_map)
 	if map == null or not MapCatalog.teaches(map.source_path):

@@ -76,13 +76,13 @@ const POSED_REPLAY_LABELS: Array[String] = [
 	"Boot Camp · Player 1 vs CPU",
 ]
 
-var _menu: Control
+var _menu: MainMenu
 var _demo := ""
 var _shot_path := ""
 var _co_select := ""
 
 
-func _init(menu: Control) -> void:
+func _init(menu: MainMenu) -> void:
 	_menu = menu
 	_shot_path = ScreenshotUtil.requested()
 	_demo = CmdArgs.value(CmdArgs.user(), DEMO_ARG)
@@ -232,7 +232,7 @@ func capture(path: String, chrome_source: Callable) -> void:
 	if poses_setup_context():
 		for i in ScreenshotUtil.SETTLE_FRAMES:
 			await _menu.get_tree().process_frame
-		context_ok = bool(_menu.call("_setup_context_ready"))
+		context_ok = _menu.setup_context_ready()
 	var gate := _capture_gate.bind(chrome_source, context_ok)
 	await BattleCaptureBatch.finish_capture(_menu, path, gate)
 
@@ -247,7 +247,7 @@ func capture(path: String, chrome_source: Callable) -> void:
 ## it is the table it was dealt, the way the commander sheet is (COM-48, FP4).
 func _capture_gate(chrome_source: Callable, context_ok: bool) -> bool:
 	var fits := _fits(chrome_source.call())
-	var laid_out := bool(_menu.call("_seats_laid_out"))
+	var laid_out := _menu.seats_laid_out()
 	return fits and laid_out and context_ok
 
 
