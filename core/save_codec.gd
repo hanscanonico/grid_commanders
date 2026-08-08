@@ -19,15 +19,17 @@ extends RefCounted
 ## later edit of the map file it names: the board still derives the same answer, so
 ## carrying it is what lets a save whose board has since moved be *refused* rather
 ## than silently re-homed. Version 8 records whether an acted unit's last committed
-## action was not an attack, so a refresh power is exact across a mid-turn save. All
-## seven are purely additive, so older saves are still read
+## action was not an attack, so a refresh power is exact across a mid-turn save.
+## Version 9 carries the name a board gave a unit, so a mission that is about one
+## unit can still find it after a resume. All eight are purely additive, so older
+## saves are still read
 ## rather than rejected — a save with no commander block loads with both sides
 ## neutral, one with no dive flag loads with every boat on the surface, one with no
 ## roster loads as the duel it was, one with no grouping loads as the free-for-all
 ## it was, one with no casualty list loads with every army it names still standing,
-## and one with no home HQs takes them from the map it names. An older save with
-## no refresh flag treats every acted unit as ineligible. New saves are always
-## written at the current version.
+## and one with no home HQs takes them from the map it names. An older save with no
+## refresh flag treats every acted unit as ineligible, and one with no tags loads
+## with every unit unnamed. New saves are always written at the current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -38,9 +40,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 8
+const VERSION := 9
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 ## What a saved value is allowed to be. `NUMBER` rather than an integer because JSON
 ## has a single number type: a save read back off disk hands every whole number over
@@ -112,7 +114,11 @@ const KEY_RULES := {
 ## which can only ask once the unit count is known; this says no more than that it is a
 ## number. `acted` earns its place here as much as any of them: it is a flag the sim
 ## plays the resumed turn under, so a quoted one is a unit that cannot move.
-## `refreshable` arrived in version 8 and qualifies that action for Second Wind.
+## `refreshable` arrived in version 8 and qualifies that action for Second Wind, and
+## `tag` in version 9 is the name its board gave it — empty for most units, and the
+## only way a mission that is about one unit finds it again after a resume. What that
+## text may *say* is `UnitTag`'s, asked in `_unit_tags_error`; this says no more than
+## that it is text.
 const UNIT_KEY_RULES := {
 	"type": {"since": 1, "shape": Shape.STRING},
 	"team": {"since": 1, "shape": Shape.NUMBER},
@@ -125,6 +131,7 @@ const UNIT_KEY_RULES := {
 	"carrier": {"since": 1, "shape": Shape.NUMBER},
 	"dived": {"since": 3, "shape": Shape.BOOL},
 	"refreshable": {"since": 8, "shape": Shape.BOOL},
+	"tag": {"since": 9, "shape": Shape.STRING},
 }
 ## And per entry in the two cell lists, which are the same shape of thing: a cell and
 ## one number about it.
@@ -223,6 +230,7 @@ static func encode(
 					"acted": unit.acted,
 					"dived": unit.dived,
 					"refreshable": unit.refreshable,
+					"tag": String(unit.tag),
 					"carrier": state.units.find(unit.carrier),  # -1 when on the board
 				}
 			)
@@ -332,6 +340,7 @@ static func decode(
 
 	var dive_flags := version >= int(UNIT_KEY_RULES["dived"]["since"])
 	var refresh_flags := version >= int(UNIT_KEY_RULES["refreshable"]["since"])
+	var tags := version >= int(UNIT_KEY_RULES["tag"]["since"])
 	var carrier_indices: Array[int] = []
 	for entry in data["units"]:
 		var type := unit_db.by_id(StringName(String(entry.type)))
@@ -345,6 +354,8 @@ static func decode(
 		unit.acted = bool(entry.acted)
 		unit.dived = dive_flags and bool(entry["dived"])
 		unit.refreshable = refresh_flags and bool(entry["refreshable"])
+		if tags:
+			unit.tag = StringName(String(entry["tag"]))
 		state.units.append(unit)
 		carrier_indices.append(int(entry.get("carrier", NO_CARRIER)))
 
@@ -501,6 +512,9 @@ static func validate(data: Dictionary) -> String:
 	if error != "":
 		return error
 	error = _entries_error(data["units"], UNIT_KEY_RULES, version, "unit")
+	if error != "":
+		return error
+	error = _unit_tags_error(data, version)
 	if error != "":
 		return error
 	return _funds_error(data)
@@ -1094,6 +1108,28 @@ static func _rng_state_error(data: Dictionary) -> String:
 	if not String(data["rng_state"]).is_valid_int():
 		return "'rng_state' is malformed"
 	return ""
+
+
+## "" when the save's unit names are ones a board could have given, else why they
+## are not. `UnitTag`'s rule asked at the codec's own door: a save is the second way
+## a unit reaches the board, and one naming two units the same names neither — the
+## objective asking whether it still stands would have two answers, which is exactly
+## what the parser refuses before a mission can pick one.
+##
+## The entry pass above has already shaped every `tag` as text, so this only asks
+## what those strings say. Gated on the version that writes the field, like every
+## other read of it: below it no unit carries a name at all.
+static func _unit_tags_error(data: Dictionary, version: int) -> String:
+	if version < int(UNIT_KEY_RULES["tag"]["since"]):
+		return ""
+	var tags: Array[StringName] = []
+	for entry: Dictionary in data["units"] as Array:
+		var tag := StringName(String(entry["tag"]))
+		var error := UnitTag.name_error(tag)
+		if error != "":
+			return error
+		tags.append(tag)
+	return UnitTag.duplicate_error(tags)
 
 
 ## "" when the save carries a purse for every side that plays, and every purse is money.

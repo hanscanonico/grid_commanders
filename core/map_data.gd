@@ -15,7 +15,10 @@ extends RefCounted
 ##   [owners]
 ##   <team> <x> <y>       # team is 1-based; only property tiles may be owned
 ##   [units]
-##   <team> <symbol> <x> <y>   # starting units; symbols defined by UnitType
+##   <team> <symbol> <x> <y> [tag]   # starting units; symbols defined by UnitType.
+##                                   # the tag is optional and names that one unit for
+##                                   # a campaign mission's objectives and events: an
+##                                   # identifier, and unique on the board.
 ##
 ## [owners] and [units] must come after [terrain] (they need the bounds).
 ## [units] is optional: a board that omits it starts both sides with nothing but
@@ -64,7 +67,8 @@ var symmetric := false
 var grouping := ""
 ## Where this map was read from; empty for maps parsed straight from a string.
 var source_path := ""
-## Raw starting-unit entries: {team: int, symbol: String, cell: Vector2i}.
+## Raw starting-unit entries: {team: int, symbol: String, cell: Vector2i,
+## tag: StringName}. The tag is empty for a unit the board did not name.
 var starting_units: Array[Dictionary] = []
 var _terrain: Array[TerrainType] = []  # row-major, width * height entries
 var _owners: Dictionary[Vector2i, int] = {}  # missing key = neutral
@@ -228,8 +232,8 @@ func _set_owner_from_line(line: String) -> bool:
 
 func _append_unit_from_line(line: String) -> bool:
 	var parts := line.split(" ", false)
-	if parts.size() != 4:
-		push_error("MapData: bad unit line '%s' (expected: team symbol x y)" % line)
+	if parts.size() < 4 or parts.size() > 5:
+		push_error("MapData: bad unit line '%s' (expected: team symbol x y [tag])" % line)
 		return false
 	if not parts[2].is_valid_int() or not parts[3].is_valid_int():
 		push_error("MapData: unit cell must be integer coordinates in '%s'" % line)
@@ -242,8 +246,30 @@ func _append_unit_from_line(line: String) -> bool:
 	if not in_bounds(cell):
 		push_error("MapData: unit cell %s out of bounds" % cell)
 		return false
-	starting_units.append({"team": team, "symbol": parts[1], "cell": cell})
+	var tag: StringName = StringName(parts[4]) if parts.size() == 5 else &""
+	var tag_error := _tag_error(tag, line)
+	if tag_error != "":
+		push_error(tag_error)
+		return false
+	starting_units.append({"team": team, "symbol": parts[1], "cell": cell, "tag": tag})
 	return true
+
+
+## "" when `tag` is a name a mission may reach this unit by, else why it is not,
+## in this parser's voice. What makes a name legal is `UnitTag`'s and not this
+## file's, because a save carries the same field and the two must refuse the same
+## strings; the board is only the first place one can be refused, before anything
+## has picked it.
+func _tag_error(tag: StringName, line: String) -> String:
+	var error := UnitTag.name_error(tag)
+	if error == "":
+		var tags: Array[StringName] = [tag]
+		for entry: Dictionary in starting_units:
+			tags.append(entry.tag)
+		error = UnitTag.duplicate_error(tags)
+	if error == "":
+		return ""
+	return "MapData: %s in '%s'" % [error, line]
 
 
 ## Reads the roster off the board, once, at the end of `parse` — the last line may

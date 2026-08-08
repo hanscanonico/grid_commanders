@@ -28,6 +28,13 @@ var carrier: Unit = null
 ## Known and accepted: the proper answer is the trap behaviour a hidden unit has
 ## in Advance Wars, where moving into one halts you there, and that is deferred.
 var dived: bool = false
+## The name the board gave this unit, empty for every unit nobody named — the
+## optional fifth column of a map's [units] row, carried in the save. It is what
+## lets a campaign mission say "destroy Draeg's siege gun" about a unit that
+## moves. Inert data (campaign-depth plan D4): nothing in core/rules/, in ai/ or
+## in the damage chart reads it, so a named unit fights and is planned against
+## exactly like an unnamed one.
+var tag: StringName = &""
 
 
 static func create(p_type: UnitType, p_team: int, p_cell: Vector2i) -> Unit:

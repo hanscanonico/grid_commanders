@@ -235,6 +235,7 @@ func test_a_loaded_carrier_riding_in_another_is_rejected() -> void:
 				"acted": false,
 				"dived": false,  # a version 3 unit entry carries it, boat or not
 				"refreshable": false,
+				"tag": "",
 				"carrier": SaveCodec.NO_CARRIER,
 			}
 		)

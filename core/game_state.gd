@@ -168,7 +168,9 @@ static func create(
 				)
 			)
 			return null
-		state.units.append(Unit.create(type, entry.team, cell))
+		var unit := Unit.create(type, entry.team, cell)
+		unit.tag = entry.tag
+		state.units.append(unit)
 	for team: int in p_commanders:
 		# D1 once more: a vacant seat never enters the state, and a commander is state.
 		if not state.teams.has(team):
