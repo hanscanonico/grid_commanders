@@ -88,12 +88,38 @@ func on_power_activated(state: GameState, team: int, target: Vector2i = Vector2i
 	state.remove_units(doomed)
 
 
+## The board scan behind both `wants_power` and `power_target`, memoised for the
+## one call site that asks both back to back with nothing applied between them
+## (`AIController._plan_power`, plan D5's shape: one gate, one aim, one function).
+## `wants_power` is the only writer and never trusts a memo itself — it is asked
+## once a decision for as long as the meter sits full, and the board moves between
+## decisions, so it always rescans and re-stamps. `power_target` only ever reads
+## the memo back, and only when the key still matches what `wants_power` just
+## stamped; called any other way — every direct test in this suite calls it on its
+## own — it falls through to a fresh scan rather than risk a stale one. The key is
+## deliberately coarse (state identity, day, team, unit count): it is not asked to
+## detect every mutation, only to prove none happened since the write moments ago,
+## and a unit count drop after a scan is the one mutation firing itself can cause.
+var _blast_key: Array = []
+var _blast: Blast = null
+
+
+func _blast_cache_key(state: GameState, team: int) -> Array:
+	return [state.get_instance_id(), state.day, team, state.units.size()]
+
+
 func power_target(state: GameState, team: int) -> Vector2i:
+	var key := _blast_cache_key(state, team)
+	if _blast != null and _blast_key == key:
+		return _blast.cell
 	return _best_blast(state, team).cell
 
 
 func wants_power(state: GameState, team: int) -> bool:
-	return _best_blast(state, team).value >= hammer_want_value
+	var blast := _best_blast(state, team)
+	_blast_key = _blast_cache_key(state, team)
+	_blast = blast
+	return blast.value >= hammer_want_value
 
 
 ## The best square, walked in scan order over the board so a replan off one board
