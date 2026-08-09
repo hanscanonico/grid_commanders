@@ -62,7 +62,7 @@ day = 5
 [sub_resource type="Resource" id="Effect_the_hammer_is_banked"]
 script = ExtResource("8")
 team = 2
-points = 24000
+points = 3500
 
 [sub_resource type="Resource" id="Event_line_stand_clear"]
 script = ExtResource("3")
