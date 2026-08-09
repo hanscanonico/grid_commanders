@@ -890,10 +890,19 @@ events = [
           <span class="pl">MissionRuntime</span> reaches tactical victory before it reads the objective
           list, so a co-primary beside the enemy's home headquarters is decorative.
           <b>A gated mission closing a block</b> (<span class="pl">block_error</span>), CD6's stated
-          consequence turned into a refusal. And <b>a scripted column landing where an objective sends
-          the player</b>, over two new hooks on the contract <span class="pl">spawned_tags</span> already
-          has, because <span class="pl">SpawnUnits</span> skips an occupied cell and a
-          <span class="pl">once</span> beat is spent either way.
+          consequence turned into a refusal. And <b>a scripted column landing where its own beat's
+          triggers hold a unit</b>, over three new hooks on the contract
+          <span class="pl">spawned_tags</span> already has, because
+          <span class="pl">SpawnUnits</span> skips an occupied cell and a
+          <span class="pl">once</span> beat is spent either way. That last one refuses only the
+          <b>certain</b> void: a beat's triggers are a conjunction read at one boundary, so
+          <span class="pl">UnitReached</span> on a single cell and
+          <span class="pl">ObjectiveMet</span> on a slack-free <span class="pl">ReachCell</span> zone
+          pin that ground, while ownership is not occupancy and
+          <span class="pl">CaptureCell</span> / <span class="pl">HoldCell</span> /
+          <span class="pl">CellOwned</span> pin nothing — a reserve dropping onto the depot the
+          player is being <i>sent</i> to take is a good beat, and a gate that forbade it would teach
+          authors to route around the checks that are right.
           <b>Two of the five fired on shipped content and both were real</b>: five missions carried a
           co-primary the runtime could never judge (now each mission's bonus objective, where it is
           judged and earns its star), and two Hollow Crown interlude lines were conditioned on facts

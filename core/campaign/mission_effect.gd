@@ -59,8 +59,8 @@ func spawned_tags() -> Array[StringName]:
 
 ## The cells this effect puts units on, in the order it puts them — `SpawnUnits`
 ## alone answers with anything. Counted by `MissionDefinition` against the ground
-## the mission's own conditions send the player to, because a landing zone the
-## player is standing in is one the spawn skips and the beat is spent regardless.
+## its beat's own triggers hold a unit on, because a landing zone somebody is
+## standing in is one the spawn skips and the beat is spent regardless.
 func landing_cells() -> Array[Vector2i]:
 	var none: Array[Vector2i] = []
 	return none

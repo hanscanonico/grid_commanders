@@ -58,15 +58,14 @@ func is_live(progress: MissionProgress) -> bool:
 	return not hidden or (progress != null and progress.is_revealed(id))
 
 
-## The ground this condition sends the player to, or empty — the three that name
-## cells answer, and every count-and-day condition ignores it.
+## The ground one of our units must be **standing on** for this condition to
+## hold, or empty. Occupancy, never ownership: `CaptureCell` and `HoldCell` name
+## cells and answer with nothing here, because both stay satisfied long after the
+## unit that took the ground has walked off it.
 ##
 ## Declared here for the reason `MissionEffect.spawned_tags` is: what a mission
 ## may not do with that ground is the *mission's* question, not this class's.
-## `SpawnUnits` skips an occupied cell and a `once` beat is spent either way, so a
-## column authored to land where the player was told to stand speaks its line and
-## puts nothing on the board.
-func named_cells() -> Array[Vector2i]:
+func occupied_cells() -> Array[Vector2i]:
 	var none: Array[Vector2i] = []
 	return none
 

@@ -154,14 +154,26 @@ and every player the route sends past it loses the page.
 
 *Refused by* `CampaignDefinition.block_error`.
 
-### 6 · A landing zone the mission sends the player to
+### 6 · A landing zone the beat's own triggers hold a unit on
 
 `SpawnUnits` skips an occupied cell rather than clearing it, and a `once` beat is
 spent either way — so the column speaks its line, lands nothing, and never comes
 due again.
 
-*Refused by* `MissionDefinition.definition_error`, which holds every spawn cell
-against the ground the mission's own conditions name.
+*Refused by* `MissionDefinition.definition_error`, but only where the void is
+**certain**: a beat's triggers are a conjunction read at one boundary, so a
+`UnitReached` naming a single cell, or an `ObjectiveMet` watching a `ReachCell`
+zone with no slack in it, holds a unit on that square at the instant the beat
+fires. Landing there is a beat that can never do anything.
+
+Ownership is not occupancy, so `CaptureCell`, `HoldCell` and `CellOwned` pin
+nothing: ground stays ours long after the unit that took it walked off. Dropping
+a reserve onto the depot the player is being sent to take is a good beat and the
+gate lets it through — it lands whenever the player has not got there yet.
+
+*The caution the gate cannot give you:* if the beat is timed so the player is
+**likely** to be standing there, you have written the same dud with a better
+chance of firing. Ask when the trigger comes due and where the player is then.
 
 ## What the gate cannot see
 

@@ -57,17 +57,26 @@ func test_every_mission_plays_with_its_own_script_live() -> void:
 ## applied; this applies it, so an effect that validates and then falls over —
 ## a tag nothing carries, a seat nobody is playing — is caught by the same run
 ## that proves the mission plays.
+##
+## Each beat gets its **own** opening board, which is the state `check_campaigns`
+## asks the same question of. Sharing one board between a mission's beats would
+## make a first beat that decides the match refuse every beat after it, and the
+## fault reported would be authoring rather than the beat order this test never
+## claims to exercise — `_play` above is where beats meet one another.
 func test_every_beat_applies_to_the_board_its_mission_opens_on() -> void:
 	var authored := 0
 	var applied := 0
 	for campaign in db.all():
 		for mission: MissionDefinition in campaign.missions:
 			var where := "%s/%s" % [campaign.id, mission.id]
-			var built := BattleSetup.build(mission.to_request(), terrain_db, unit_db, commander_db)
-			if built == null:
-				continue
 			authored += mission.events.size()
 			for event: MissionEvent in mission.events:
+				var built := BattleSetup.build(
+					mission.to_request(), terrain_db, unit_db, commander_db
+				)
+				if built == null:
+					fail_test("%s: the mission would not build" % where)
+					continue
 				var command := MissionEventCommand.new(event, mission.player_team)
 				var error := command.validate(built.game)
 				if error != "":

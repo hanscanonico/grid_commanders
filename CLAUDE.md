@@ -1439,10 +1439,18 @@ that must survive any change; the full rationale, milestones and risk registers 
   needs a state);
   **a gated mission closing a block** (`CampaignDefinition.block_error`, CD6's stated consequence
   turned into a refusal);
-  and **a scripted arrival landing where an objective sends the player**
-  (`MissionDefinition.definition_error`, over `MissionObjective.named_cells` and
-  `MissionEffect.landing_cells` — the two new hooks, each on the contract `spawned_tags` already
-  has, because `SpawnUnits` skips an occupied cell and a `once` beat is spent either way). D9's own
+  and **a scripted arrival landing where its own beat's triggers hold a unit**
+  (`MissionDefinition.definition_error`, over `MissionTrigger.occupied_cells`,
+  `MissionObjective.occupied_cells` and `MissionEffect.landing_cells` — three new hooks, each on the
+  contract `spawned_tags` already has, because `SpawnUnits` skips an occupied cell and a `once` beat
+  is spent either way). That last one refuses only the **certain** void and the narrowing is the
+  decision: a beat's triggers are a conjunction read at one boundary, so a `UnitReached` naming a
+  single cell or an `ObjectiveMet` watching a slack-free `ReachCell` zone pins that ground at the
+  instant the beat fires, while **ownership is not occupancy** — `CaptureCell`, `HoldCell` and
+  `CellOwned` pin nothing, so a reserve dropping onto the depot the player is being *sent* to take
+  stays authorable, which it must, a gate that forbids good content teaching authors to route
+  around the checks that are right. Whether the player is *likely* to be standing there is not a
+  static fact and is `docs/campaign_authoring.md`'s caution instead. D9's own
   clause — every mission names at least one event — is a content bar rather than an impossibility,
   so it is held by the tool and the content test directly, the way the briefing/victory pair is.
   **Two of the five fired on shipped content and both were real**, which is the milestone paying

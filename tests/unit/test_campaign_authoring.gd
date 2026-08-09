@@ -22,6 +22,19 @@ Q.C.Q
 1 i 0 1
 2 i 4 1
 """
+## The same board with the player's unit named, so a `UnitReached` trigger has
+## somebody to wait for.
+const TAGGED_BOARD := """
+[terrain]
+Q.C.Q
+.....
+[owners]
+1 0 0
+2 4 0
+[units]
+1 i 0 1 courier
+2 i 4 1
+"""
 ## The same board with a third army on it, so felling one enemy leaves another.
 const THREE_SEAT_BOARD := """
 [terrain]
@@ -218,26 +231,88 @@ func test_a_headquarters_that_leaves_another_enemy_standing_ends_nothing() -> vo
 	assert_eq(mission.board_error(Fixture.state(THREE_SEAT_BOARD)), "")
 
 
-# --- a landing zone the mission sends the player to -------------------------
+# --- a landing zone the beat's own triggers pin ------------------------------
 
 
-func test_a_beat_may_not_land_a_column_where_an_objective_sends_us() -> void:
-	var mission := _mission()
-	mission.objectives.append(_capture(Vector2i(2, 0)))
+## A mission carrying one beat: a column landing on `cell`, waiting for whatever
+## it is handed. The board's own units stand on row 1, so row 0 is open ground.
+func _lands_on(mission: MissionDefinition, cell: Vector2i, trigger: MissionTrigger) -> void:
 	var spawn := MissionSpawn.new()
 	spawn.unit_type = Fixture.unit_db().by_id(&"infantry")
-	spawn.cell = Vector2i(2, 0)
+	spawn.cell = cell
 	var effect := SpawnUnitsEffect.new()
 	effect.team = 2
 	effect.units.append(spawn)
 	var event := MissionEvent.new()
 	event.id = &"the_column"
-	event.triggers.append(_on_day(3))
+	event.triggers.append(trigger)
 	event.effects.append(effect)
 	mission.events.append(event)
+
+
+func _reaches(tag: StringName, cells: Array[Vector2i]) -> UnitReachedTrigger:
+	var trigger := UnitReachedTrigger.new()
+	trigger.tag = tag
+	trigger.cells = cells
+	return trigger
+
+
+func _exit_zone(cells: Array[Vector2i], count: int) -> ReachCellObjective:
+	var objective := ReachCellObjective.new()
+	objective.cells = cells
+	objective.count = count
+	objective.text = "Get %d out." % count
+	return objective
+
+
+func _watching(objective: MissionObjective) -> ObjectiveMetTrigger:
+	var trigger := ObjectiveMetTrigger.new()
+	trigger.objective = objective
+	return trigger
+
+
+## The one square the trigger holds our courier on is the one square the column
+## can never take, so the beat speaks and lands nothing.
+func test_a_beat_may_not_land_on_the_square_its_own_trigger_pins() -> void:
+	var mission := _mission()
+	mission.objectives.append(_capture(Vector2i(4, 0)))
+	_lands_on(mission, Vector2i(2, 0), _reaches(&"courier", [Vector2i(2, 0)]))
+	var map := MapData.parse(TAGGED_BOARD, Fixture.terrain_db())
+	assert_string_contains(
+		mission.definition_error(map, Fixture.unit_db()), "where its own triggers hold a unit"
+	)
+
+
+## A zone with slack in it pins nothing: the courier is on one of the three and
+## the column takes whichever it is not.
+func test_a_beat_keyed_to_a_wider_zone_may_land_inside_it() -> void:
+	var mission := _mission()
+	mission.objectives.append(_capture(Vector2i(4, 0)))
+	var zone: Array[Vector2i] = [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
+	_lands_on(mission, Vector2i(2, 0), _reaches(&"courier", zone))
+	var map := MapData.parse(TAGGED_BOARD, Fixture.terrain_db())
+	assert_eq(mission.definition_error(map, Fixture.unit_db()), "")
+
+
+## An exit zone with no slack fills every square of itself, so the bridge across
+## to the objective library pins them all.
+func test_a_beat_watching_a_full_exit_zone_may_not_land_in_it() -> void:
+	var mission := _mission()
+	mission.objectives.append(_capture(Vector2i(4, 0)))
+	var zone: Array[Vector2i] = [Vector2i(1, 0), Vector2i(2, 0)]
+	_lands_on(mission, Vector2i(2, 0), _watching(_exit_zone(zone, 2)))
 	var map := MapData.parse(BOARD, Fixture.terrain_db())
 	assert_string_contains(
-		mission.definition_error(map, Fixture.unit_db()), "where an objective sends us"
+		mission.definition_error(map, Fixture.unit_db()), "where its own triggers hold a unit"
 	)
-	effect.units[0].cell = Vector2i(1, 1)
+
+
+## The beat this whole narrowing exists for: the reserve drops onto the depot the
+## player is being sent to take, and lands whenever they have not got there yet.
+## Ownership is not occupancy, so neither `CaptureCell` nor `HoldCell` pins ground.
+func test_a_beat_may_land_where_an_objective_merely_sends_us() -> void:
+	var mission := _mission()
+	mission.objectives.append(_capture(Vector2i(2, 0)))
+	_lands_on(mission, Vector2i(2, 0), _on_day(3))
+	var map := MapData.parse(BOARD, Fixture.terrain_db())
 	assert_eq(mission.definition_error(map, Fixture.unit_db()), "")

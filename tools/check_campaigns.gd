@@ -145,7 +145,7 @@ func _check_mission(
 	# match-ending one is ever judged.
 	var board := mission.board_error(state)
 	if board != "":
-		_fail("%s: %s" % [campaign.id, board])
+		_fail("%s: %s" % [where, board])
 	_check_events(where, mission, state)
 
 

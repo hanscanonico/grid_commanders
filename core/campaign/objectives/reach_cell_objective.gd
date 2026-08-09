@@ -27,7 +27,13 @@ func readout(state: GameState, team: int, _progress: MissionProgress) -> String:
 	return "%d/%d" % [_arrived(state, team), count]
 
 
-func named_cells() -> Array[Vector2i]:
+## Only a zone with no slack in it: `count` units across exactly `count` cells
+## fills every square, so each one is certainly occupied when the condition holds.
+## A wider zone leaves the choice to the player, and no cell of it is pinned.
+func occupied_cells() -> Array[Vector2i]:
+	if count < cells.size():
+		var none: Array[Vector2i] = []
+		return none
 	return cells.duplicate()
 
 

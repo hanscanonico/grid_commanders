@@ -296,25 +296,32 @@ func _events_error(map: MapData, unit_db: UnitDB) -> String:
 	return ""
 
 
-## Why a scripted arrival could be voided without a word, or "".
+## Why a scripted arrival is certain to be voided, or "".
 ##
 ## `SpawnUnits` skips an occupied cell rather than clearing it, and a `once` beat
-## is spent whether or not anything landed — so a column authored to arrive on
-## ground the mission's own conditions send the player to is one that speaks its
-## line, changes nothing, and never comes due again. The board's own units are
-## already refused by `SpawnUnitsEffect.definition_error`; this is the half only
-## the mission can see, because the objectives are the mission's.
+## is spent whether or not anything landed — so a column authored onto a square
+## the beat's **own triggers** hold a unit on speaks its line, changes nothing,
+## and never comes due again. `MissionEvent.occupied_cells` is what a conjunction
+## of conditions pins, so this refuses exactly the certainty.
+##
+## What it deliberately allows is ground the mission merely *sends* the player to
+## — a capture cell, a depot to hold, a wide exit zone. An enemy reserve dropping
+## onto the depot lands whenever the player has not got there yet, which is a beat
+## worth authoring; whether they will be standing there is not a static fact, so
+## the caution belongs in `docs/campaign_authoring.md` rather than in a refusal.
+## The board's own units are `SpawnUnitsEffect.definition_error`'s half.
 func _landing_ground_error() -> String:
-	var wanted: Dictionary[Vector2i, bool] = {}
-	for objective: MissionObjective in objectives + failures + bonus_objectives:
-		for cell: Vector2i in objective.named_cells():
-			wanted[cell] = true
 	for event: MissionEvent in events:
+		var pinned: Dictionary[Vector2i, bool] = {}
+		for cell: Vector2i in event.occupied_cells():
+			pinned[cell] = true
+		if pinned.is_empty():
+			continue
 		for effect: MissionEffect in event.effects:
 			for cell: Vector2i in effect.landing_cells():
-				if wanted.has(cell):
+				if pinned.has(cell):
 					return (
-						"mission '%s': event '%s' lands a unit on %s, where an objective sends us"
+						"mission '%s': event '%s' lands on %s, where its own triggers hold a unit"
 						% [id, event.id, cell]
 					)
 	return ""
