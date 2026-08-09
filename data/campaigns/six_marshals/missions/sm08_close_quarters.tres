@@ -14,6 +14,17 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="13"]
 
+; Measured, with the scripted beats live, before this mission's numbers were left
+; as authored. Sixteen seeds of the skirmish planner playing both sides: the three
+; hamlets are held on day 7 in eleven, on day 8 in four, and never in one, against
+; `last_day` 8 and `par_day` 6; the recon failure below fires in five, on days 4-6.
+; So the clock is cleared at the wire by the careless planner, and by hand a player
+; who builds on days one and two takes (9,2) and (5,1) by day 4 and (2,6) by day 5.
+; The planner is the weak instrument here, not the bound — it is the same one the
+; shipped campaign already fails sm13 and sm16 on — so day 7 is its pace rather
+; than the mission's difficulty, and the count, the deadline, the par and both
+; hunter spawns stand as authored.
+
 [sub_resource type="Resource" id="Objective_hold_three_of_the_four_hamlets"]
 script = ExtResource("2")
 text = "Hold three of the four hamlets."
