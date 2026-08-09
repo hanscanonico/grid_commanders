@@ -204,7 +204,7 @@ rescues it:
 
 Any check tight enough to refuse the real failure also refuses those, and a gate
 that forbids good content teaches authors to route around the checks that are
-right. The five above are worth more than a sixth that is sometimes wrong.
+right. The four above are worth more than a fifth that is sometimes wrong.
 
 The hand test:
 

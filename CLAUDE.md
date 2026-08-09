@@ -1452,7 +1452,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   is standing anywhere). Every narrowing tight enough to catch the failure also refused good
   content, so the check, its `MissionTrigger` / `MissionObjective` / `MissionEffect` cell hooks and
   its tests all came out and the judgement is a hand test in `docs/campaign_authoring.md`
-  instead. **A gate earns its authority by never being wrong**: a sixth check that refuses good
+  instead. **A gate earns its authority by never being wrong**: a fifth check that refuses good
   beats would have taught authors to distrust the four that fire correctly, so a case a machine
   cannot judge belongs in prose.
   **Two of the four fired on shipped content and both were real**, which is the milestone paying
