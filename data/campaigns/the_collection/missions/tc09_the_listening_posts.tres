@@ -1,9 +1,23 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="12"]
+
+[sub_resource type="Resource" id="Gate_witnesses_alive"]
+script = ExtResource("5")
+flag = &"witnesses_alive"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Objective_take_the_first_listening_post"]
 script = ExtResource("2")
@@ -50,12 +64,63 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Orlov's hunting blind now."
 
+[sub_resource type="Resource" id="Trigger_first_post_taken"]
+script = ExtResource("7")
+cell = Vector2i(6, 4)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_pay_chest"]
+script = ExtResource("9")
+team = 1
+amount = 4000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "First post, and its pay chest with it. That is the deficit closed."
+
+[sub_resource type="Resource" id="Event_the_pay_chest"]
+script = ExtResource("6")
+id = &"the_pay_chest"
+triggers = Array[Resource]([SubResource("Trigger_first_post_taken")])
+effects = Array[Resource]([SubResource("Effect_pay_chest")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_day_five"]
+script = ExtResource("8")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_wire_patrol"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(12, 6)
+
+[sub_resource type="Resource" id="Effect_wire_patrol"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_wire_patrol")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "The wire went quiet in one place, so I am walking down it. Slowly."
+
+[sub_resource type="Resource" id="Event_walking_the_wire"]
+script = ExtResource("6")
+id = &"walking_the_wire"
+triggers = Array[Resource]([SubResource("Trigger_day_five")])
+effects = Array[Resource]([SubResource("Effect_wire_patrol")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc09_the_listening_posts"
 title = "The Listening Posts"
 location = "The wire road, Meridian-Iron border"
 map_path = "res://maps/campaign/the_collection/tc09_the_listening_posts.txt"
+unlock_requires = SubResource("Gate_witnesses_alive")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -69,6 +134,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_the_first_listening_post"), SubResource("Objective_take_the_second_listening_post"), SubResource("Objective_take_the_third_listening_post")])
 failures = Array[Resource]([SubResource("Failure_the_wire_stayed_live_past_day_10")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_pay_chest"), SubResource("Event_walking_the_wire")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

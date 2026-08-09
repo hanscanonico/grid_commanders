@@ -1,14 +1,26 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="13"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="14"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="15"]
 
-[sub_resource type="Resource" id="Objective_take_the_foundry_that_opened_this_wa"]
-script = ExtResource("2")
-text = "Take the foundry that opened this war."
+[sub_resource type="Resource" id="Objective_take_and_hold_the_foundry"]
+script = ExtResource("5")
+text = "Take the foundry that opened this war, and still hold it two days later."
 cell = Vector2i(10, 6)
+days = 2
 
 [sub_resource type="Resource" id="Failure_the_foundry_stayed_ferrow_s_past_day"]
 script = ExtResource("3")
@@ -25,10 +37,28 @@ script = ExtResource("2")
 text = "Take the southern town for a bonus."
 cell = Vector2i(13, 10)
 
+[sub_resource type="Resource" id="Books_in_hand"]
+script = ExtResource("6")
+flag = &"forgery_proven"
+at_least = 2
+at_most = -1
+
+[sub_resource type="Resource" id="Bounty_paid"]
+script = ExtResource("6")
+flag = &"ferrow_bounty"
+at_least = 1
+at_most = -1
+
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "This is the foundry the forged ledger was written to protect. Ferrow's got nowhere left to fall back to."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "We have the courier's count and Vale's payment book. Every entry in that audit can be read back to the men holding it."
+requires = SubResource("Books_in_hand")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -50,6 +80,91 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Ferrow's collection is over. So is the Directorate's audit."
 
+[sub_resource type="Resource" id="Trigger_bounty_paid"]
+script = ExtResource("8")
+condition = SubResource("Bounty_paid")
+
+[sub_resource type="Resource" id="Trigger_day_four"]
+script = ExtResource("9")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_bought_armour"]
+script = ExtResource("12")
+unit_type = ExtResource("15")
+cell = Vector2i(19, 11)
+
+[sub_resource type="Resource" id="Spawn_bought_tank"]
+script = ExtResource("12")
+unit_type = ExtResource("14")
+cell = Vector2i(18, 11)
+
+[sub_resource type="Resource" id="Effect_bought_with_your_losses"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_bought_armour"), SubResource("Spawn_bought_tank")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Every unit you lost on the border bought a piece of this. Thank you for the funding."
+
+[sub_resource type="Resource" id="Event_paid_for_by_you"]
+script = ExtResource("7")
+id = &"paid_for_by_you"
+triggers = Array[Resource]([SubResource("Trigger_bounty_paid"), SubResource("Trigger_day_four")])
+effects = Array[Resource]([SubResource("Effect_bought_with_your_losses")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_foundry_taken"]
+script = ExtResource("10")
+cell = Vector2i(10, 6)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_counterattack"]
+script = ExtResource("12")
+unit_type = ExtResource("14")
+cell = Vector2i(15, 5)
+
+[sub_resource type="Resource" id="Effect_counterattack"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_counterattack")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Standing on it is not the same as owning it, Commander. Owning it means still being there tomorrow."
+
+[sub_resource type="Resource" id="Event_the_foundry_answers"]
+script = ExtResource("7")
+id = &"the_foundry_answers"
+triggers = Array[Resource]([SubResource("Trigger_foundry_taken")])
+effects = Array[Resource]([SubResource("Effect_counterattack")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_books_in_hand"]
+script = ExtResource("8")
+condition = SubResource("Books_in_hand")
+
+[sub_resource type="Resource" id="Effect_the_guard_stands_down"]
+script = ExtResource("13")
+tags = Array[StringName]([&"ledger_guard"])
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "Read it out. Every entry, every signature — his. His own men can hear it."
+
+[sub_resource type="Resource" id="Event_read_it_out"]
+script = ExtResource("7")
+id = &"read_it_out"
+triggers = Array[Resource]([SubResource("Trigger_books_in_hand"), SubResource("Trigger_foundry_taken")])
+effects = Array[Resource]([SubResource("Effect_the_guard_stands_down")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc18_closing_the_ledger"
@@ -66,10 +181,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_take_the_foundry_that_opened_this_wa")])
+objectives = Array[Resource]([SubResource("Objective_take_and_hold_the_foundry")])
 failures = Array[Resource]([SubResource("Failure_the_foundry_stayed_ferrow_s_past_day")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus"), SubResource("Bonus_take_the_southern_town_for_a_bonus")])
-par_day = 9
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+events = Array[Resource]([SubResource("Event_paid_for_by_you"), SubResource("Event_the_foundry_answers"), SubResource("Event_read_it_out")])
+par_day = 10
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The foundry held, and the forged debt just became a real one — ours."

@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Bounty_paid"]
+script = ExtResource("3")
+flag = &"ferrow_bounty"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Province_held"]
+script = ExtResource("3")
+flag = &"province_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Six weeks of collection, and the Directorate's audit ends the season with the same four columns it opened with: claimed, collateral, interest, and paid. Only the last column has anything in it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "The province never changed hands. Whatever that paper says it is owed, it has been answered town by town."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "And the auction closed with four of the five in our hands, which is a number the Directorate cannot argue with in writing."
+requires = SubResource("Province_held")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"dane_ferrow"
+text = "The raiders went home paid, Commander. That is the only entry I ever cared about, and you wrote it yourself."
+requires = SubResource("Bounty_paid")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "The Directorate has stopped pretending Ferrow is a debt collector. They have handed the war to the man who lends him the money."
+
+[resource]
+script = ExtResource("1")
+after_block = 0
+title = "The Audit Answered"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5")])

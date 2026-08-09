@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Books_taken"]
+script = ExtResource("3")
+flag = &"forgery_proven"
+at_least = 2
+at_most = -1
+
+[sub_resource type="Resource" id="Count_only"]
+script = ExtResource("3")
+flag = &"forgery_proven"
+at_least = 1
+at_most = 1
+
+[sub_resource type="Resource" id="Nothing_proven"]
+script = ExtResource("3")
+flag = &"forgery_proven"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Witnesses_talking"]
+script = ExtResource("3")
+flag = &"witnesses_alive"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Interest_drawn"]
+script = ExtResource("3")
+flag = &"vale_funded"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The counting house burned for a day and a night, and the occupation could not make payroll in the morning. From here the war stops being financed and starts being fought."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "We have the courier's running count and Vale's own payment book. Iron's marshals are reading the forgery to each other in their own handwriting."
+requires = SubResource("Books_taken")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "We have the courier's count and nothing to set beside it. One satchel is an accusation, not a proof."
+requires = SubResource("Count_only")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "And not one page of the thing in our hands. Everything we say about that audit, we say on our own word."
+requires = SubResource("Nothing_proven")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"ines_calder"
+text = "The auditor is alive and talking, which was never in the budget. Cheapest thing we bought all season."
+requires = SubResource("Witnesses_talking")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"konrad_vale"
+text = "The interest I drew at the blockade has already been spent, Commander. It is standing on the border, and it will not be sending you a statement."
+requires = SubResource("Interest_drawn")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "The Strangle is over. Now we cross, and everything the ledger took, we take back off his own ground."
+
+[resource]
+script = ExtResource("1")
+after_block = 1
+title = "The Books Close"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
