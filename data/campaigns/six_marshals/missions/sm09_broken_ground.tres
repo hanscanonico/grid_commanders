@@ -1,9 +1,20 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="14"]
+[ext_resource type="Resource" path="res://data/units/anti_air.tres" id="15"]
 
 [sub_resource type="Resource" id="Objective_hold_the_hills_until_day_7"]
 script = ExtResource("2")
@@ -14,6 +25,11 @@ day = 7
 script = ExtResource("3")
 text = "The line broke before day 7."
 last_day = 7
+
+[sub_resource type="Resource" id="Failure_nothing_he_can_count"]
+script = ExtResource("5")
+text = "Every unit intact is one Orlov doesn't count. Lose no more than three, to any cause."
+max_losses = 3
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -40,6 +56,104 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Orlov's patience finally ran out first."
 
+[sub_resource type="Resource" id="Trigger_first_blood"]
+script = ExtResource("7")
+team = 1
+bound = 0
+count = 3
+
+[sub_resource type="Resource" id="Spawn_scent"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(13, 2)
+
+[sub_resource type="Resource" id="Effect_scent"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_scent")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "Something of yours is bleeding into this ground, Commander. My people can follow that in the dark."
+
+[sub_resource type="Resource" id="Event_the_scent"]
+script = ExtResource("6")
+id = &"the_scent"
+triggers = Array[Resource]([SubResource("Trigger_first_blood")])
+effects = Array[Resource]([SubResource("Effect_scent")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Has_a_trophy"]
+script = ExtResource("10")
+flag = &"orlov_trophy"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_has_a_trophy"]
+script = ExtResource("9")
+condition = SubResource("Has_a_trophy")
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("8")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_came_back"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(13, 8)
+
+[sub_resource type="Resource" id="Effect_came_back"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_came_back")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "I already have one of yours. I came back for the rest."
+
+[sub_resource type="Resource" id="Event_i_keep_what_i_catch"]
+script = ExtResource("6")
+id = &"i_keep_what_i_catch"
+triggers = Array[Resource]([SubResource("Trigger_has_a_trophy"), SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_came_back")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_day_6"]
+script = ExtResource("8")
+day = 6
+
+[sub_resource type="Resource" id="Spawn_relief_guns"]
+script = ExtResource("12")
+unit_type = ExtResource("14")
+cell = Vector2i(1, 7)
+
+[sub_resource type="Resource" id="Spawn_relief_aa"]
+script = ExtResource("12")
+unit_type = ExtResource("15")
+cell = Vector2i(2, 7)
+
+[sub_resource type="Resource" id="Effect_relief"]
+script = ExtResource("11")
+team = 1
+units = Array[Resource]([SubResource("Spawn_relief_guns"), SubResource("Spawn_relief_aa")])
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Relief on the east track, a day early, and they brought the good guns."
+
+[sub_resource type="Resource" id="Event_the_relief_track"]
+script = ExtResource("6")
+id = &"the_relief_track"
+triggers = Array[Resource]([SubResource("Trigger_day_6")])
+effects = Array[Resource]([SubResource("Effect_relief")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm09_broken_ground"
@@ -57,8 +171,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_hills_until_day_7")])
-failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_7")])
+failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_7"), SubResource("Failure_nothing_he_can_count")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_scent"), SubResource("Event_i_keep_what_i_catch"), SubResource("Event_the_relief_track")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

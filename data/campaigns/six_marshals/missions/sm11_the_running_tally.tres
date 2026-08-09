@@ -1,14 +1,25 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="14"]
 
 [sub_resource type="Resource" id="Objective_hold_four_of_the_six_towns"]
 script = ExtResource("2")
 text = "Hold four of the six towns."
 count = 4
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_race_stayed_even_past_day_10"]
 script = ExtResource("3")
@@ -40,6 +51,76 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "She never got the long grind she was built for."
 
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("6")
+day = 5
+
+[sub_resource type="Resource" id="Effect_five_days_of_interest"]
+script = ExtResource("9")
+team = 2
+amount = 4000
+
+[sub_resource type="Resource" id="Spawn_tally_armour"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(17, 4)
+
+[sub_resource type="Resource" id="Spawn_tally_foot"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(18, 4)
+
+[sub_resource type="Resource" id="Effect_tally_column"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_tally_armour"), SubResource("Spawn_tally_foot")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "You are counting towns. I am counting turns — and I have had five of them."
+
+[sub_resource type="Resource" id="Event_counting_turns"]
+script = ExtResource("5")
+id = &"counting_turns"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_five_days_of_interest"), SubResource("Effect_tally_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Dug_in_at_the_depot"]
+script = ExtResource("8")
+flag = &"vance_dug_in"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_dug_in_at_the_depot"]
+script = ExtResource("7")
+condition = SubResource("Dug_in_at_the_depot")
+
+[sub_resource type="Resource" id="Spawn_compound_guns"]
+script = ExtResource("11")
+unit_type = ExtResource("14")
+cell = Vector2i(16, 7)
+
+[sub_resource type="Resource" id="Effect_compound_guns"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_compound_guns")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "The depot bought these guns, Commander. Compounding, still."
+
+[sub_resource type="Resource" id="Event_still_compounding"]
+script = ExtResource("5")
+id = &"still_compounding"
+triggers = Array[Resource]([SubResource("Trigger_dug_in_at_the_depot"), SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_compound_guns")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm11_the_running_tally"
@@ -59,6 +140,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_towns")])
 failures = Array[Resource]([SubResource("Failure_the_race_stayed_even_past_day_10")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_counting_turns"), SubResource("Event_still_compounding")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

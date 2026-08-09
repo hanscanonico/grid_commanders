@@ -1,19 +1,31 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_hold_four_of_the_six_scattered_towns"]
 script = ExtResource("2")
 text = "Hold four of the six scattered towns."
 count = 4
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_towns_stayed_split_past_day_11"]
 script = ExtResource("3")
 text = "The towns stayed split past day 11."
 last_day = 11
+
+[sub_resource type="Resource" id="Failure_never_bunched"]
+script = ExtResource("5")
+text = "Four corners, four columns, and none of them worth a charge. Lose no more than three units, to any cause."
+max_losses = 3
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -40,6 +52,60 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "He waited the whole match for a target that never stood still enough."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("7")
+day = 4
+
+[sub_resource type="Resource" id="Effect_charge_again"]
+script = ExtResource("10")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "The charge is ready again, Commander. Four corners, four columns — one of them will stand too close."
+
+[sub_resource type="Resource" id="Event_the_charge_is_ready_again"]
+script = ExtResource("6")
+id = &"the_charge_is_ready_again"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_charge_again")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Carried_from_the_field"]
+script = ExtResource("9")
+flag = &"morn_charged"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_carried_from_the_field"]
+script = ExtResource("8")
+condition = SubResource("Carried_from_the_field")
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Effect_the_carried_charge"]
+script = ExtResource("10")
+team = 2
+points = 6000
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "I have carried this charge since the wide field. It has been very patient."
+
+[sub_resource type="Resource" id="Event_still_carrying_it"]
+script = ExtResource("6")
+id = &"still_carrying_it"
+triggers = Array[Resource]([SubResource("Trigger_carried_from_the_field"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_carried_charge")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm17_scattered_ground"
@@ -57,8 +123,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_scattered_towns")])
-failures = Array[Resource]([SubResource("Failure_the_towns_stayed_split_past_day_11")])
+failures = Array[Resource]([SubResource("Failure_the_towns_stayed_split_past_day_11"), SubResource("Failure_never_bunched")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_charge_is_ready_again"), SubResource("Event_still_carrying_it")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

@@ -1,14 +1,23 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/missiles.tres" id="12"]
 
 [sub_resource type="Resource" id="Objective_hold_five_of_the_market_towns"]
 script = ExtResource("2")
-text = "Hold five of the market towns."
-count = 5
+text = "Hold four of the six market towns — the majority."
+count = 4
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_market_stayed_split_past_day_11"]
 script = ExtResource("3")
@@ -40,6 +49,61 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Vale's ledger shows the expense. It doesn't show the win."
 
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("6")
+day = 5
+
+[sub_resource type="Resource" id="Effect_interest"]
+script = ExtResource("9")
+team = 2
+amount = 5000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "Interest, Commander. It accrues whether you fight or not, and it has been five days."
+
+[sub_resource type="Resource" id="Event_interest_accrues"]
+script = ExtResource("5")
+id = &"interest_accrues"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_interest")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Factory_open"]
+script = ExtResource("8")
+flag = &"vale_factory"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_factory_open"]
+script = ExtResource("7")
+condition = SubResource("Factory_open")
+
+[sub_resource type="Resource" id="Spawn_crossroads_missiles"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(16, 7)
+
+[sub_resource type="Resource" id="Effect_crossroads_output"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_crossroads_missiles")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "And the crossroads has begun to pay for itself. You left me a factory, Commander; this is its first invoice."
+
+[sub_resource type="Resource" id="Event_the_crossroads_pays"]
+script = ExtResource("5")
+id = &"the_crossroads_pays"
+triggers = Array[Resource]([SubResource("Trigger_factory_open"), SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_crossroads_output")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm05_the_open_ledger"
@@ -59,6 +123,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_five_of_the_market_towns")])
 failures = Array[Resource]([SubResource("Failure_the_market_stayed_split_past_day_11")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_interest_accrues"), SubResource("Event_the_crossroads_pays")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

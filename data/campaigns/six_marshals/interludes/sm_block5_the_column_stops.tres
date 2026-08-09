@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Column_intact"]
+script = ExtResource("3")
+flag = &"draeg_column_intact"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Draeg's column stopped at the river and stayed stopped. He filed no complaint, requested no reinforcement, and turned it around himself."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "It came off your border in the order it went on. That is the only thing I ever promised anyone, Commander, and it is why the others are still afraid of me."
+requires = SubResource("Column_intact")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Five answered, and the succession comes down to the one who was never trying to win it. Radek Morn has spent this whole war charging a single strike."
+
+[resource]
+script = ExtResource("1")
+after_block = 4
+title = "The Column Stops"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])

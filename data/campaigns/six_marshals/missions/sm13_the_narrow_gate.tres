@@ -1,9 +1,18 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
 
 [sub_resource type="Resource" id="Objective_take_the_depot_before_draeg_s_column"]
 script = ExtResource("2")
@@ -14,6 +23,11 @@ cell = Vector2i(7, 4)
 script = ExtResource("3")
 text = "The gate fell to the column before day 9."
 last_day = 9
+
+[sub_resource type="Resource" id="Bonus_break_the_spear"]
+script = ExtResource("5")
+text = "Kill the tank at the head of Draeg's column."
+tag = &"draeg_spear"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -40,6 +54,62 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "Honest or not, an army that can't move is an army that loses."
 
+[sub_resource type="Resource" id="Trigger_spear_gone"]
+script = ExtResource("7")
+tag = &"draeg_spear"
+
+[sub_resource type="Resource" id="Effect_the_line_rallies"]
+script = ExtResource("9")
+team = 1
+points = 4000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"mara_voss"
+text = "Head of the column is gone. The rest of them are just tanks now — and the line knows it."
+
+[sub_resource type="Resource" id="Event_the_spear_breaks"]
+script = ExtResource("6")
+id = &"the_spear_breaks"
+triggers = Array[Resource]([SubResource("Trigger_spear_gone")])
+effects = Array[Resource]([SubResource("Effect_the_line_rallies")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_day_7"]
+script = ExtResource("8")
+day = 7
+
+[sub_resource type="Resource" id="Spawn_through_the_gate"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(13, 6)
+
+[sub_resource type="Resource" id="Effect_through_the_gate"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_through_the_gate")])
+
+[sub_resource type="Resource" id="Effect_draeg_column_intact"]
+script = ExtResource("12")
+flag = &"draeg_column_intact"
+mode = 0
+value = 1
+note = "Draeg's column came through the narrow gate whole, and it has not stopped since."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "A gate is a gate, Commander. My column is through it, and it is still a column."
+
+[sub_resource type="Resource" id="Event_the_column_is_through"]
+script = ExtResource("6")
+id = &"the_column_is_through"
+triggers = Array[Resource]([SubResource("Trigger_day_7")])
+effects = Array[Resource]([SubResource("Effect_through_the_gate"), SubResource("Effect_draeg_column_intact")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm13_the_narrow_gate"
@@ -58,7 +128,8 @@ fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_depot_before_draeg_s_column")])
 failures = Array[Resource]([SubResource("Failure_the_gate_fell_to_the_column_before_d")])
-bonus_objectives = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_spear")])
+events = Array[Resource]([SubResource("Event_the_spear_breaks"), SubResource("Event_the_column_is_through")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

@@ -2,6 +2,8 @@
 # Morn has fallen, and he means to win the succession with fear alone.
 # Teaching board: a wide fortress line — hold it dispersed, and no
 # single Hammerfall strike can decide the war.
+# Morn's artillery is named: the Directorate recalls his reserve mid-battle, and
+# a scripted withdrawal has to be able to say which guns left.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
 [terrain]
 ....................
@@ -32,6 +34,6 @@ MMMM..MMMMMMMM..MMMM
 1 r 1 5
 2 i 18 9
 2 t 17 9
-2 g 18 8
+2 g 18 8 morn_reserve
 2 a 17 8
 2 r 18 7

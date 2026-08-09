@@ -1,9 +1,14 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_take_the_crossroads_base_before_vale"]
 script = ExtResource("2")
@@ -45,6 +50,40 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "One marshal's economy, closed before it started."
 
+[sub_resource type="Resource" id="Trigger_day_6"]
+script = ExtResource("6")
+day = 6
+
+[sub_resource type="Resource" id="Trigger_still_nobodys"]
+script = ExtResource("7")
+cell = Vector2i(7, 4)
+holder = 2
+
+[sub_resource type="Resource" id="Effect_vale_takes_the_gate"]
+script = ExtResource("8")
+team = 2
+cells = Array[Vector2i]([Vector2i(7, 4)])
+
+[sub_resource type="Resource" id="Effect_vale_factory"]
+script = ExtResource("9")
+flag = &"vale_factory"
+mode = 0
+value = 1
+note = "Vale's crossroads factory opened on schedule, and it is still producing."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "Day six. The crossroads is finished, and it is mine. Ask your quartermaster what that costs you."
+
+[sub_resource type="Resource" id="Event_the_gate_finishes"]
+script = ExtResource("5")
+id = &"the_gate_finishes"
+triggers = Array[Resource]([SubResource("Trigger_day_6"), SubResource("Trigger_still_nobodys")])
+effects = Array[Resource]([SubResource("Effect_vale_takes_the_gate"), SubResource("Effect_vale_factory")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm04_the_foundry_gate"
@@ -64,6 +103,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_the_crossroads_base_before_vale")])
 failures = Array[Resource]([SubResource("Failure_vale_finished_fortifying_the_base")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_gate_finishes")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

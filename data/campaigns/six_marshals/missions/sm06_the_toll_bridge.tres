@@ -1,9 +1,21 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="10"]
+
+[sub_resource type="Resource" id="Opens_on_the_factory"]
+script = ExtResource("5")
+flag = &"vale_factory"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Objective_hold_the_west_bank_until_day_8"]
 script = ExtResource("2")
@@ -40,12 +52,64 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Vale finally found a fight his ledger couldn't win."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("7")
+day = 4
+
+[sub_resource type="Resource" id="Effect_buys_the_far_town"]
+script = ExtResource("9")
+team = 2
+cells = Array[Vector2i]([Vector2i(11, 10)])
+
+[sub_resource type="Resource" id="Effect_war_chest"]
+script = ExtResource("10")
+team = 2
+amount = 4000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "The far town signed on this morning, Commander. I did not have to cross the river to buy it — only to outbid you."
+
+[sub_resource type="Resource" id="Event_the_far_bank_is_bought"]
+script = ExtResource("6")
+id = &"the_far_bank_is_bought"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_buys_the_far_town"), SubResource("Effect_war_chest")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_his_column_thins"]
+script = ExtResource("8")
+team = 2
+bound = 0
+count = 3
+
+[sub_resource type="Resource" id="Effect_salvage"]
+script = ExtResource("10")
+team = 1
+amount = 4000
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "Premium hulls in the river, and the salvage is ours. His ledger will feel that one — reliably."
+
+[sub_resource type="Resource" id="Event_the_river_bill"]
+script = ExtResource("6")
+id = &"the_river_bill"
+triggers = Array[Resource]([SubResource("Trigger_his_column_thins")])
+effects = Array[Resource]([SubResource("Effect_salvage")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm06_the_toll_bridge"
 title = "The Toll Bridge"
 location = "The river crossing, Meridian-Iron border"
 map_path = "res://maps/campaign/six_marshals/sm06_the_toll_bridge.txt"
+unlock_requires = SubResource("Opens_on_the_factory")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -59,6 +123,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_west_bank_until_day_8")])
 failures = Array[Resource]([SubResource("Failure_the_bridges_fell_before_day_8")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_far_bank_is_bought"), SubResource("Event_the_river_bill")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

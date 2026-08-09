@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Trophy"]
+script = ExtResource("3")
+flag = &"orlov_trophy"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="No_trophy"]
+script = ExtResource("3")
+flag = &"orlov_trophy"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Orlov's hunters crossed back over the shattered hills without being ordered to. He does not commit to ground he cannot leave."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"cass_orlov"
+text = "Nothing sang, Commander. Three weeks on that frontier and nothing of yours ever sang. I have written you down as expensive."
+requires = SubResource("No_trophy")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"cass_orlov"
+text = "I leave with one of yours, Commander, and a reputation. Vance has already asked me where your weak ones stand."
+requires = SubResource("Trophy")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Three answered. Iona Vance is the fourth, and she is the one who does not need a mistake — only the days."
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "The Hunt Ends"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])

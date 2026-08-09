@@ -1,6 +1,8 @@
 # Six Marshals M15 — "The Last Span". Draeg's opening assault has one
 # bridge to cross. Teaching board: dig in behind the span with
 # anti-air and artillery until relief arrives — armour bunched on a bridge is armour that dies.
+# The tank at the head of the queue for the bridge is named, as it is in every
+# mission of Draeg's block.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
 [terrain]
 ........~.......
@@ -28,5 +30,5 @@
 1 r 2 3
 2 t 14 6
 2 T 13 6
-2 t 14 3
+2 t 14 3 draeg_van
 2 i 13 4

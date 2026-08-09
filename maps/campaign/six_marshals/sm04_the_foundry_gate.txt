@@ -15,11 +15,12 @@
 ......=..=...BQ.
 ......=..=......
 [owners]
-# team x y
+# team x y — the crossroads base at (7,4) is deliberately NOT listed: it is the
+# half-built factory both sides are racing for, so it opens neutral. Give it to
+# either army and the mission is decided before a shot.
 1 1 1
 2 14 8
 1 2 1
-1 7 4
 2 13 8
 [units]
 # team symbol x y

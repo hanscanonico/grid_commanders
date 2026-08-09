@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Dug_in"]
+script = ExtResource("3")
+flag = &"vance_dug_in"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Never_dug_in"]
+script = ExtResource("3")
+flag = &"vance_dug_in"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Vance withdrew across the crossing in good order, on a timetable she had written before the first shot. Nothing about her war was ever improvised."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"iona_vance"
+text = "You never let the sum start running, Commander. There is nothing in my report but a date and a border I did not move."
+requires = SubResource("Never_dug_in")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"iona_vance"
+text = "I am reporting my losses as an investment, Commander, and the Directorate's auditors will agree with me. Everything I spent on you compounds against whoever comes next."
+requires = SubResource("Dug_in")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Four answered. Draeg is fifth and he is the simplest of them: one column, one road, and every gun in it pointed the same way."
+
+[resource]
+script = ExtResource("1")
+after_block = 3
+title = "The Running Total"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
