@@ -1,18 +1,28 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="8"]
+
+[sub_resource type="Resource" id="Unlock_granary_burned"]
+script = ExtResource("8")
+flag = &"fw_granary_saved"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the crossroads base. It is the only way this army builds anything."
+text = "Take the magazine base. It is the only way this army builds anything."
 cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "Vale's garrison held the crossroads past day 8."
+text = "Vance's garrison held the magazine past day 8."
 last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -45,12 +55,35 @@ script = ExtResource("4")
 speaker = &"iona_vance"
 text = "A column lost defending nothing. I will revise the ration."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Effect_relay_signed_over"]
+script = ExtResource("7")
+team = 2
+cells = Array[Vector2i]([Vector2i(10, 2)])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"iona_vance"
+text = "The northern relay filed this morning. You may still take it; you will simply be taking it from me."
+
+[sub_resource type="Resource" id="Event_the_ration_is_revised"]
+script = ExtResource("5")
+id = &"the_ration_is_revised"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_relay_signed_over")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"fw05_powder_ration"
 title = "Powder Ration"
 location = "The magazine road, Kestrel Hills"
 map_path = "res://maps/campaign/the_furnace_winter/fw05_powder_ration.txt"
+unlock_requires = SubResource("Unlock_granary_burned")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -64,6 +97,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_ration_is_revised")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

@@ -1,10 +1,19 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="13"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="14"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -16,40 +25,107 @@ script = ExtResource("2")
 text = "Retake depot 2 of the fuel road."
 cell = Vector2i(13, 3)
 
-[sub_resource type="Resource" id="Failure_0"]
+[sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
+text = "Stand on depot 2 for two whole days. Hold it; don't chase her off it."
+cell = Vector2i(13, 3)
+days = 2
+
+[sub_resource type="Resource" id="Failure_0"]
+script = ExtResource("4")
 text = "The road stayed closed past day 10."
 last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("4")
-text = "Hold every property on the road at once."
+script = ExtResource("5")
+text = "Hold every property on the road at once — all six."
 count = 6
 
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"iona_vance"
 text = "The western depots mirror the eastern pair. I built them identically — economy of design."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"mara_voss"
 text = "Then we've already learned this fight once. I hold, I don't chase — we take both and stop."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"mara_voss"
 text = "Ten days, same as the east. Don't give her time to learn from her own mistake."
 
 [sub_resource type="Resource" id="Line_4"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"mara_voss"
 text = "Western road's open. Both pipelines answer to us now."
 
 [sub_resource type="Resource" id="Line_5"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"iona_vance"
 text = "The same lesson, twice. That is a cost I did not budget for."
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("8")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_the_same_column"]
+script = ExtResource("12")
+unit_type = ExtResource("14")
+cell = Vector2i(17, 3)
+
+[sub_resource type="Resource" id="Effect_the_same_column"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_the_same_column")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"iona_vance"
+text = "Identical design, identical response. I have sent the same column to the same junction — you may find it answers the same way."
+
+[sub_resource type="Resource" id="Event_the_same_column_again"]
+script = ExtResource("7")
+id = &"the_same_column_again"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_the_same_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_depot_1_ours"]
+script = ExtResource("9")
+cell = Vector2i(5, 3)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_depot_2_ours"]
+script = ExtResource("9")
+cell = Vector2i(13, 3)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_with_a_day_in_hand"]
+script = ExtResource("10")
+day = 9
+
+[sub_resource type="Resource" id="Effect_two_depots_open"]
+script = ExtResource("13")
+flag = &"fw_depots_open"
+mode = 1
+value = 2
+note = "The western fuel road was reopened with its depots still working."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"mara_voss"
+text = "Both depots ours and still standing on them. Log the western road open."
+
+[sub_resource type="Resource" id="Event_the_west_road_runs"]
+script = ExtResource("7")
+id = &"the_west_road_runs"
+triggers = Array[Resource]([SubResource("Trigger_depot_1_ours"), SubResource("Trigger_depot_2_ours"), SubResource("Trigger_with_a_day_in_hand")])
+effects = Array[Resource]([SubResource("Effect_two_depots_open")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -67,10 +143,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-par_day = 7
+events = Array[Resource]([SubResource("Event_the_same_column_again"), SubResource("Event_the_west_road_runs")])
+par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The western depots held, and the identical design taught us nothing in time."

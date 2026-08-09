@@ -1,10 +1,16 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -23,48 +29,117 @@ cell = Vector2i(17, 4)
 
 [sub_resource type="Resource" id="Objective_3"]
 script = ExtResource("3")
-text = "Hold every depot and both home properties at once."
-count = 6
+text = "Hold every depot and both home properties at once — five of the seven."
+count = 5
+
+[sub_resource type="Resource" id="Objective_4"]
+script = ExtResource("4")
+text = "Stand on the middle depot for a whole day. Hold what we take."
+cell = Vector2i(11, 4)
+days = 1
 
 [sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("4")
+script = ExtResource("5")
 text = "The road stayed closed past day 8."
 last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("3")
-text = "Hold every property on the road at once."
+text = "Hold every property on the road at once — all seven."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"konrad_vale"
 text = "I garrisoned the last mile myself, Ash. Past it is the foundry road, and I don't hand that over lightly."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"perrin_ash"
 text = "Three depots, eight days. Every one's the last thing standing between us and you."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"perrin_ash"
 text = "Clean approach, hold what we take. This is the Depots' last stretch."
 
 [sub_resource type="Resource" id="Line_4"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"perrin_ash"
 text = "Last mile's open. The foundry road runs clear ahead of us."
 
 [sub_resource type="Resource" id="Line_5"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"konrad_vale"
 text = "I withdrew east. First time all winter. Take a moment — you've earned it."
 
 [sub_resource type="Resource" id="Line_6"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"perrin_ash"
 text = "We will. Then we're coming for the furnace."
+
+[sub_resource type="Resource" id="Trigger_depot_1_ours"]
+script = ExtResource("8")
+cell = Vector2i(5, 4)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_depot_2_ours"]
+script = ExtResource("8")
+cell = Vector2i(11, 4)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_depot_3_ours"]
+script = ExtResource("8")
+cell = Vector2i(17, 4)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_rearguard_withdraws"]
+script = ExtResource("10")
+tags = Array[StringName]([&"vale_rearguard_a", &"vale_rearguard_b"])
+
+[sub_resource type="Resource" id="Effect_vale_withdrew"]
+script = ExtResource("11")
+flag = &"fw_vale_withdrew"
+mode = 0
+value = 1
+note = "Vale withdrew east off the last mile rather than burn what he could not keep."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "The last mile is yours and I will not burn it to keep it from you. Column, east. We do this properly at the furnace."
+
+[sub_resource type="Resource" id="Event_vale_withdraws_east"]
+script = ExtResource("7")
+id = &"vale_withdraws_east"
+triggers = Array[Resource]([SubResource("Trigger_depot_1_ours"), SubResource("Trigger_depot_2_ours"), SubResource("Trigger_depot_3_ours")])
+effects = Array[Resource]([SubResource("Effect_rearguard_withdraws"), SubResource("Effect_vale_withdrew")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_with_a_day_in_hand"]
+script = ExtResource("9")
+day = 7
+
+[sub_resource type="Resource" id="Effect_three_depots_open"]
+script = ExtResource("11")
+flag = &"fw_depots_open"
+mode = 1
+value = 3
+note = "The last mile was opened intact, and the foundry road runs on it."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"perrin_ash"
+text = "Three depots, a day still in hand, and not a pump smashed on the way through. Log the last mile open."
+
+[sub_resource type="Resource" id="Event_the_last_mile_runs"]
+script = ExtResource("7")
+id = &"the_last_mile_runs"
+triggers = Array[Resource]([SubResource("Trigger_depot_1_ours"), SubResource("Trigger_depot_2_ours"), SubResource("Trigger_depot_3_ours"), SubResource("Trigger_with_a_day_in_hand")])
+effects = Array[Resource]([SubResource("Effect_three_depots_open")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -82,10 +157,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Objective_3")])
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Objective_3"), SubResource("Objective_4")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-par_day = 5
+events = Array[Resource]([SubResource("Event_vale_withdraws_east"), SubResource("Event_the_last_mile_runs")])
+par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The last mile held, and the foundry road stayed exactly as far away as it started."

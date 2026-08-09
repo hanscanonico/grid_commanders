@@ -34,7 +34,7 @@
 2 i 15 10
 2 i 16 8
 2 m 15 9
-2 r 14 8
+2 r 14 8 ferrow_riders_a
 2 t 15 7
-2 t 14 9
+2 t 14 9 ferrow_riders_b
 2 a 16 6

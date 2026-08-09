@@ -26,5 +26,5 @@
 2 i 11 8
 2 i 11 7
 2 m 10 8
-2 r 12 6
-2 t 12 5
+2 r 12 6 vale_guard_b
+2 t 12 5 vale_guard_a

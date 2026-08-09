@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Cond_road_runs_whole"]
+script = ExtResource("3")
+flag = &"fw_depots_open"
+at_least = 10
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_ledger_clean"]
+script = ExtResource("3")
+flag = &"fw_bounty_paid"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_granary_saved"]
+script = ExtResource("3")
+flag = &"fw_granary_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The valves opened in the order they had been closed, which took eleven days and read, in the office that had shut them, as a single very long correction."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "The toll is over. That is the whole of the finding, and it is worth saying plainly because nobody on either side ever said the word war out loud."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "The fuel road runs east tonight, depot by depot, all the way back to the causeway. It will still be running in the spring."
+requires = SubResource("Cond_road_runs_whole")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "And Ferrow rode the entire winter without once finding our line a man short. He will tell you that is the only defeat he understands; he is not wrong."
+requires = SubResource("Cond_ledger_clean")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Milltown ate through the freeze on its own granary. Ask anybody down there which week of this mattered and they will name the first one."
+requires = SubResource("Cond_granary_saved")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"konrad_vale"
+text = "You have the furnace and the road to it, Commander, and you will find both cost more to keep open than they ever did to close. I signed for a winter without open war. You will be signing for whatever comes next."
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "The Furnace"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

@@ -26,9 +26,9 @@
 1 m 3 4
 1 r 2 4
 1 t 3 3
-2 i 19 3
+2 i 19 3 vale_rearguard_b
 2 i 19 5
-2 m 18 4
+2 m 18 4 vale_rearguard_a
 2 i 4 4
 2 r 7 3
 2 t 11 5

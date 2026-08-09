@@ -1,10 +1,16 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -18,7 +24,7 @@ last_day = 12
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Hold seven of the district's nine properties at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
@@ -30,6 +36,18 @@ text = "Two bases deep, Commander, and I open richer than you by design. Vale's 
 script = ExtResource("5")
 speaker = &"sera_lark"
 text = "Design or not, a headquarters is a headquarters. Take it and the gate stops being yours to close."
+
+[sub_resource type="Resource" id="Cond_vale_withdrew"]
+script = ExtResource("10")
+flag = &"fw_vale_withdrew"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("5")
+speaker = &"sera_lark"
+text = "He gave up the last mile without burning it. That was a man saving his stock for somewhere he means to stand."
+requires = SubResource("Cond_vale_withdrew")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -45,6 +63,33 @@ text = "Gate's down. Your forward command answers to us now."
 script = ExtResource("5")
 speaker = &"iona_vance"
 text = "Whatever richer opening he gave me, it bought one headquarters and no more."
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_second_base_armour"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(13, 10)
+
+[sub_resource type="Resource" id="Effect_second_base_opens"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_second_base_armour")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "The second base opened at dawn. It will open again tomorrow, and the day after."
+
+[sub_resource type="Resource" id="Event_the_second_base_opens"]
+script = ExtResource("6")
+id = &"the_second_base_opens"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_second_base_opens")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
 
 [resource]
 script = ExtResource("1")
@@ -65,7 +110,8 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_second_base_opens")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The gate held, and the foundry kept its richer defender through another winter."

@@ -1,0 +1,87 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=17 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Cond_road_runs_whole"]
+script = ExtResource("3")
+flag = &"fw_depots_open"
+at_least = 10
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_road_runs_short"]
+script = ExtResource("3")
+flag = &"fw_depots_open"
+at_least = 1
+at_most = 9
+
+[sub_resource type="Resource" id="Cond_road_runs_nowhere"]
+script = ExtResource("3")
+flag = &"fw_depots_open"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_ledger_clean"]
+script = ExtResource("3")
+flag = &"fw_bounty_paid"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_ledger_paid"]
+script = ExtResource("3")
+flag = &"fw_bounty_paid"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_vale_withdrew"]
+script = ExtResource("3")
+flag = &"fw_vale_withdrew"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Thirteen depots run from the causeway to the foundry gate. By the thaw the map office had stopped calling it a road and started calling it a ledger, and both sides were reading from it."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"perrin_ash"
+text = "Ten of the thirteen came out of this whole with their pumps still turning. That is a supply line, quartermaster — not a souvenir."
+requires = SubResource("Cond_road_runs_whole")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"perrin_ash"
+text = "We opened the road. A good part of it came out of the winter as scrap, so what runs east runs slowly, and the furnace will notice which."
+requires = SubResource("Cond_road_runs_short")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"perrin_ash"
+text = "We took every depot and left the road behind us in pieces. Whatever the furnace costs, we carry it in ourselves."
+requires = SubResource("Cond_road_runs_nowhere")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "And Ferrow's book stayed shut the whole way down it. Every column that went down that road was at full strength every time he looked, and a raider paid per kill cannot invoice for a line with no gap in it."
+requires = SubResource("Cond_ledger_clean")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Ferrow got paid. Not often and not well, but he has a column now that he did not have in the autumn, and we are the ones who bought it for him."
+requires = SubResource("Cond_ledger_paid")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"konrad_vale"
+text = "I withdrew east off the last mile rather than burn it. Note that I did not have to. Note also what is standing at the end of the road I left you."
+requires = SubResource("Cond_vale_withdrew")
+
+[resource]
+script = ExtResource("1")
+after_block = 1
+title = "The Depots"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
