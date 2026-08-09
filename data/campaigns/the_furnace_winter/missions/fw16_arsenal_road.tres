@@ -1,55 +1,128 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
+
+[sub_resource type="Resource" id="Unlock_ledger_still_empty"]
+script = ExtResource("12")
+flag = &"fw_bounty_paid"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take Vale's forward headquarters."
+text = "Take Ferrow's headquarters."
 cell = Vector2i(17, 10)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("3")
-text = "Hold five properties by the deadline."
-count = 5
+text = "Hold all four towns on the arsenal road at once. Leave nothing here to pay a raider from."
+count = 4
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("4")
-text = "The foundry kept running past day 11."
+text = "The arsenal kept running past day 11."
 last_day = 11
+
+[sub_resource type="Resource" id="Failure_1"]
+script = ExtResource("5")
+text = "More than three of our units left the line, however they went."
+max_losses = 3
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("3")
-text = "Hold every property on the board at once."
+text = "Hold seven of the district's nine properties at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"dane_ferrow"
 text = "Arsenal Road. My favourite ground, Wren — rich pickings for a raider paid per kill."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"sable_wren"
 text = "Vale's extra base. Same as always. We take your headquarters instead."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"sable_wren"
 text = "No arsenal, no raider gets paid."
 
 [sub_resource type="Resource" id="Line_4"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"sable_wren"
 text = "Arsenal's ours. Hunting season's closed."
 
 [sub_resource type="Resource" id="Line_5"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"dane_ferrow"
 text = "Rode out with an empty ledger. That's the only defeat I understand."
+
+[sub_resource type="Resource" id="Trigger_line_is_short"]
+script = ExtResource("8")
+team = 1
+bound = 0
+count = 5
+
+[sub_resource type="Resource" id="Effect_bounty_paid"]
+script = ExtResource("10")
+team = 2
+amount = 3000
+
+[sub_resource type="Resource" id="Effect_bounty_on_the_books"]
+script = ExtResource("11")
+flag = &"fw_bounty_paid"
+mode = 1
+value = 1
+note = "Ferrow collected on our column at least once this winter."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "First entry in the book all winter, and it took you until Arsenal Road. Invoice submitted."
+
+[sub_resource type="Resource" id="Event_invoice_submitted"]
+script = ExtResource("7")
+id = &"invoice_submitted"
+triggers = Array[Resource]([SubResource("Trigger_line_is_short")])
+effects = Array[Resource]([SubResource("Effect_bounty_paid"), SubResource("Effect_bounty_on_the_books")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_ferrow_is_worn_down"]
+script = ExtResource("8")
+team = 2
+bound = 0
+count = 3
+
+[sub_resource type="Resource" id="Effect_riders_ride_out"]
+script = ExtResource("9")
+tags = Array[StringName]([&"ferrow_riders_a", &"ferrow_riders_b"])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "Ledger's empty and the road's yours. I don't die for districts, Wren — I invoice for them."
+
+[sub_resource type="Resource" id="Event_rode_out_with_an_empty_ledger"]
+script = ExtResource("7")
+id = &"rode_out_with_an_empty_ledger"
+triggers = Array[Resource]([SubResource("Trigger_ferrow_is_worn_down")])
+effects = Array[Resource]([SubResource("Effect_riders_ride_out")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -57,6 +130,7 @@ id = &"fw16_arsenal_road"
 title = "Arsenal Road"
 location = "The arsenal district road"
 map_path = "res://maps/campaign/the_furnace_winter/fw16_arsenal_road.txt"
+unlock_requires = SubResource("Unlock_ledger_still_empty")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -68,8 +142,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
-failures = Array[Resource]([SubResource("Failure_0")])
+failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_1")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_invoice_submitted"), SubResource("Event_rode_out_with_an_empty_ledger")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

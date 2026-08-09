@@ -1,60 +1,161 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="13"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="14"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Retake depot 1 of the fuel road."
-cell = Vector2i(5, 3)
-
-[sub_resource type="Resource" id="Objective_1"]
-script = ExtResource("2")
-text = "Retake depot 2 of the fuel road."
-cell = Vector2i(11, 3)
-
-[sub_resource type="Resource" id="Objective_2"]
-script = ExtResource("2")
-text = "Retake depot 3 of the fuel road."
-cell = Vector2i(17, 3)
+text = "Hold both home properties and all three relays at once — five of the hill's seven."
+count = 5
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The road stayed closed past day 8."
+text = "The relays were not all ours at the end of day 8."
 last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("4")
-text = "Hold every property on the road at once."
+script = ExtResource("2")
+text = "Hold every property on the road at once — all seven."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+script = ExtResource("4")
 speaker = &"dane_ferrow"
 text = "Three relays, Flux. Dug in on all of them — figured you'd besiege one at a time."
 
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("4")
 speaker = &"orin_flux"
 text = "Wrong figure. We take them together or not at all — a single depot held back funds the other two."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("4")
 speaker = &"orin_flux"
 text = "Eight days. Your raiders are fast. A siege isn't."
 
 [sub_resource type="Resource" id="Line_4"]
-script = ExtResource("5")
+script = ExtResource("4")
 speaker = &"orin_flux"
 text = "All three relays answer to us. Nothing left on this hill to bounty."
 
 [sub_resource type="Resource" id="Line_5"]
-script = ExtResource("5")
+script = ExtResource("4")
 speaker = &"dane_ferrow"
 text = "Three depots short of a paycheck. Vale's going to hear about this."
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_rider_north"]
+script = ExtResource("11")
+unit_type = ExtResource("14")
+cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Spawn_rider_south"]
+script = ExtResource("11")
+unit_type = ExtResource("14")
+cell = Vector2i(13, 4)
+
+[sub_resource type="Resource" id="Effect_two_more_riders"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_rider_north"), SubResource("Spawn_rider_south")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Fast is the whole product, Flux. Two more riders on the hill — see if your three columns can be in three places."
+
+[sub_resource type="Resource" id="Event_two_more_riders"]
+script = ExtResource("5")
+id = &"two_more_riders"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_two_more_riders")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_column_is_short"]
+script = ExtResource("7")
+team = 1
+bound = 0
+count = 4
+
+[sub_resource type="Resource" id="Effect_bounty_paid"]
+script = ExtResource("12")
+team = 2
+amount = 3000
+
+[sub_resource type="Resource" id="Effect_bounty_on_the_books"]
+script = ExtResource("13")
+flag = &"fw_bounty_paid"
+mode = 1
+value = 1
+note = "Ferrow collected on our column at least once this winter."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "One of your three columns just stopped being a column. Invoice submitted."
+
+[sub_resource type="Resource" id="Event_invoice_submitted"]
+script = ExtResource("5")
+id = &"invoice_submitted"
+triggers = Array[Resource]([SubResource("Trigger_column_is_short")])
+effects = Array[Resource]([SubResource("Effect_bounty_paid"), SubResource("Effect_bounty_on_the_books")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_relay_1_ours"]
+script = ExtResource("8")
+cell = Vector2i(5, 3)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_relay_2_ours"]
+script = ExtResource("8")
+cell = Vector2i(11, 3)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_relay_3_ours"]
+script = ExtResource("8")
+cell = Vector2i(17, 3)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_with_a_day_in_hand"]
+script = ExtResource("9")
+day = 7
+
+[sub_resource type="Resource" id="Effect_three_depots_open"]
+script = ExtResource("13")
+flag = &"fw_depots_open"
+mode = 1
+value = 3
+note = "Signal Hill's three relays were opened together with their stores intact."
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Three relays, one morning, a day still on the clock. Nothing held back to fund anything. Log the hill open."
+
+[sub_resource type="Resource" id="Event_the_relays_answer"]
+script = ExtResource("5")
+id = &"the_relays_answer"
+triggers = Array[Resource]([SubResource("Trigger_relay_1_ours"), SubResource("Trigger_relay_2_ours"), SubResource("Trigger_relay_3_ours"), SubResource("Trigger_with_a_day_in_hand")])
+effects = Array[Resource]([SubResource("Effect_three_depots_open")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
 
 [resource]
 script = ExtResource("1")
@@ -72,9 +173,10 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
+objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Event_invoice_submitted"), SubResource("Event_the_relays_answer")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

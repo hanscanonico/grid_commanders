@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Cond_granary_saved"]
+script = ExtResource("3")
+flag = &"fw_granary_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_granary_burned"]
+script = ExtResource("3")
+flag = &"fw_granary_saved"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Cond_ice_road_open"]
+script = ExtResource("3")
+flag = &"fw_ice_road_open"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_kestrel_held"]
+script = ExtResource("3")
+flag = &"fw_kestrel_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Cond_kestrel_contested"]
+script = ExtResource("3")
+flag = &"fw_kestrel_held"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Six weeks in, the freeze had stopped being weather and started being policy. Every valve on our side of the armistice line answered to one office in the Iron capital, and the office answered to Konrad Vale."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Milltown is still eating, and it eats because we reached the granary before the match did. Count that first — the rest of this winter is arithmetic."
+requires = SubResource("Cond_granary_saved")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Milltown eats what we haul in for it. Ferrow struck his match and we took the base off him afterwards, which is not the same thing and everybody in that town knows it."
+requires = SubResource("Cond_granary_burned")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"tomas_reed"
+text = "The causeway is ours and holding. Whatever comes down off the northern ice this spring comes down it for us."
+requires = SubResource("Cond_ice_road_open")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"halden_marr"
+text = "And Vale walked off Kestrel Pass himself rather than pay for it. He has conceded ground exactly once this winter, and I intend to remind him of it at every depot from here to the foundry."
+requires = SubResource("Cond_kestrel_held")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"halden_marr"
+text = "Kestrel is still his in every way that matters. Vale has conceded nothing all winter, and he expects us to have noticed."
+requires = SubResource("Cond_kestrel_contested")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Three valves open and a supply directorate that has stopped pretending this is a pricing dispute. Next is the depot line — thirteen of them, end to end, and every one of them a closed gate with a garrison behind it."
+
+[resource]
+script = ExtResource("1")
+after_block = 0
+title = "The Freeze"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])

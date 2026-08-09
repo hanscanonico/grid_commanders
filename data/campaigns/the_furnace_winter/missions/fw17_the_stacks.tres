@@ -1,10 +1,15 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -13,43 +18,84 @@ cell = Vector2i(18, 11)
 
 [sub_resource type="Resource" id="Objective_1"]
 script = ExtResource("3")
-text = "Hold six properties by the deadline."
-count = 6
+text = "Hold all four of the stacks district's towns at once."
+count = 4
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("4")
+script = ExtResource("5")
 text = "The foundry kept running past day 11."
 last_day = 11
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("3")
-text = "Hold every property on the board at once."
+text = "Hold seven of the district's nine properties at once."
 count = 7
 
+[sub_resource type="Resource" id="Bonus_1"]
+script = ExtResource("4")
+text = "Sit on the stack yard itself for two whole days."
+cell = Vector2i(10, 11)
+days = 2
+
 [sub_resource type="Resource" id="Line_1"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"konrad_vale"
 text = "I'm done sending enforcers, quartermaster. The stacks are the furnace's own doorstep, and I'm standing on it."
 
+[sub_resource type="Resource" id="Cond_kestrel_held"]
+script = ExtResource("10")
+flag = &"fw_kestrel_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "You took my pass in the first month of the freeze. I have thought about it every week since, and I have not made the same arrangement twice."
+requires = SubResource("Cond_kestrel_held")
+
 [sub_resource type="Resource" id="Line_2"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"gideon_holt"
 text = "Richest opening we've faced all winter. Should've brought a bigger ledger yourself, Vale."
 
 [sub_resource type="Resource" id="Line_3"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"gideon_holt"
 text = "Take the headquarters, hold the district. Nowhere left for him to fall back to but the furnace floor."
 
 [sub_resource type="Resource" id="Line_4"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"gideon_holt"
 text = "Stacks are ours. You pulled back to the furnace floor with nothing behind you."
 
 [sub_resource type="Resource" id="Line_5"]
-script = ExtResource("5")
+script = ExtResource("6")
 speaker = &"konrad_vale"
 text = "One district left. It was always going to come down to that one."
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("8")
+day = 4
+
+[sub_resource type="Resource" id="Effect_signed_for_personally"]
+script = ExtResource("9")
+team = 2
+points = 14000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"konrad_vale"
+text = "I have signed for this district personally, quartermaster. Everything I have been holding back is now on the books."
+
+[sub_resource type="Resource" id="Event_signed_for_personally"]
+script = ExtResource("7")
+id = &"signed_for_personally"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_signed_for_personally")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
 
 [resource]
 script = ExtResource("1")
@@ -69,8 +115,9 @@ fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
 failures = Array[Resource]([SubResource("Failure_0")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_1")])
+events = Array[Resource]([SubResource("Event_signed_for_personally")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_6"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The stacks held for Vale, and the furnace's doorstep stayed exactly that — his."
