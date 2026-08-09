@@ -4,6 +4,8 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Draeg's lead company is named: losing it is what brings Meridian's second
+# company onto the ridge road.
 [terrain]
 .....................
 .....................
@@ -34,7 +36,7 @@
 1 i 3 3
 1 r 4 2
 2 i 18 3
-2 i 17 3
+2 i 17 3 draeg_column_lead
 2 r 16 2
 3 i 18 11
 3 i 17 10

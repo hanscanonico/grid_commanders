@@ -1,10 +1,15 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -20,6 +25,12 @@ last_day = 8
 script = ExtResource("4")
 text = "Hold every property on the board at once."
 count = 7
+
+[sub_resource type="Resource" id="Bonus_1"]
+script = ExtResource("4")
+text = "No checkpoint closes behind us: hold all three at once."
+count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
@@ -46,6 +57,61 @@ script = ExtResource("5")
 speaker = &"iona_vance"
 text = "Whatever I call myself now, it is not regent. Noted, for my own ledger."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("8")
+day = 3
+
+[sub_resource type="Resource" id="Effect_she_closes_the_middle"]
+script = ExtResource("10")
+team = 2
+cells = Array[Vector2i]([Vector2i(10, 3)])
+
+[sub_resource type="Resource" id="Condition_ledger_seized"]
+script = ExtResource("6")
+flag = &"vance_ledger_seized"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_ledger_seized"]
+script = ExtResource("9")
+condition = SubResource("Condition_ledger_seized")
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "You closed three of my entries at the watchtower, Wren. I have opened four more behind you."
+
+[sub_resource type="Resource" id="Event_four_more_entries"]
+script = ExtResource("7")
+id = &"four_more_entries"
+triggers = Array[Resource]([SubResource("Trigger_ledger_seized"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_she_closes_the_middle")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Condition_ledger_untouched"]
+script = ExtResource("6")
+flag = &"vance_ledger_seized"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Trigger_ledger_untouched"]
+script = ExtResource("9")
+condition = SubResource("Condition_ledger_untouched")
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Every checkpoint on this road is an entry in my book, Wren. You are welcome to audit it."
+
+[sub_resource type="Resource" id="Event_audit_it_then"]
+script = ExtResource("7")
+id = &"audit_it_then"
+triggers = Array[Resource]([SubResource("Trigger_ledger_untouched"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_she_closes_the_middle")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc15_the_regents_gate"
@@ -64,7 +130,8 @@ fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_1")])
+events = Array[Resource]([SubResource("Event_four_more_entries"), SubResource("Event_audit_it_then")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

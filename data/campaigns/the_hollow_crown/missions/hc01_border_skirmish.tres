@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -8,6 +8,11 @@
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -23,6 +28,11 @@ last_day = 10
 script = ExtResource("4")
 text = "Hold every property on the board at once."
 count = 6
+
+[sub_resource type="Resource" id="Bonus_1"]
+script = ExtResource("9")
+text = "Break the column he brought, not just the line it tested."
+tag = &"morn_vanguard"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
@@ -49,6 +59,33 @@ script = ExtResource("5")
 speaker = &"radek_morn"
 text = "It does. Enjoy the quiet, Commander — it is not going to last."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("10")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_the_road_behind"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(14, 2)
+
+[sub_resource type="Resource" id="Effect_the_road_behind"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_the_road_behind")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "I said more than a probing column, Commander. The rest of it is on the road behind me."
+
+[sub_resource type="Resource" id="Event_the_rest_of_the_column"]
+script = ExtResource("6")
+id = &"the_rest_of_the_column"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_the_road_behind")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [sub_resource type="Resource" id="Trigger_vanguard_gone"]
 script = ExtResource("7")
 tag = &"morn_vanguard"
@@ -59,7 +96,7 @@ flag = &"morn_bloodied"
 value = 1
 note = "Morn's vanguard was broken at the spring crossing."
 
-[sub_resource type="Resource" id="Event_line_1"]
+[sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"radek_morn"
 text = "My armour, in a morning. Whatever I take from this border next year, Commander, I will not be asking for it first."
@@ -70,7 +107,7 @@ id = &"the_vanguard_breaks"
 triggers = Array[Resource]([SubResource("Trigger_vanguard_gone")])
 effects = Array[Resource]([SubResource("Effect_morn_bloodied")])
 once = true
-lines = Array[Resource]([SubResource("Event_line_1")])
+lines = Array[Resource]([SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -90,8 +127,8 @@ fog_enabled = false
 difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_the_vanguard_breaks")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_1")])
+events = Array[Resource]([SubResource("Event_the_rest_of_the_column"), SubResource("Event_the_vanguard_breaks")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

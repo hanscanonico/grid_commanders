@@ -4,6 +4,8 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# The marshal himself stands with the eastern infantry: he walks with his column
+# rather than scouting ahead of it, and the mission is lost if he falls.
 [terrain]
 .....................
 .....................
@@ -33,9 +35,9 @@
 1 i 2 3
 1 i 3 3
 1 r 4 2
-2 i 18 3
+2 i 18 3 marshal_draeg
 2 i 17 3
-2 r 16 2 marshal_draeg
+2 r 16 2
 3 i 18 11
 3 i 17 10
 3 r 16 12

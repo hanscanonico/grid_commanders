@@ -4,6 +4,8 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Draeg's outrider is named: losing it is how thin his column turns out to be,
+# and what opens the ridge-road mission that asks you to carry him.
 [terrain]
 .....................
 .....................
@@ -35,7 +37,7 @@
 1 r 4 2
 2 i 18 3
 2 i 17 3
-2 r 16 2
+2 r 16 2 draeg_outrider
 3 i 18 11
 3 i 17 10
 3 r 16 12

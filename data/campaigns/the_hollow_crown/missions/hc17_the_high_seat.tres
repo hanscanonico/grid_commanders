@@ -1,10 +1,15 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/end_mission_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -46,6 +51,40 @@ script = ExtResource("5")
 speaker = &"dane_ferrow"
 text = "One claimant left, and he doesn't negotiate. Good luck, Holt — you'll want it."
 
+[sub_resource type="Resource" id="Condition_ledger_empty"]
+script = ExtResource("6")
+flag = &"ferrow_unpaid"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_ledger_empty"]
+script = ExtResource("8")
+condition = SubResource("Condition_ledger_empty")
+
+[sub_resource type="Resource" id="Trigger_column_spent"]
+script = ExtResource("9")
+team = 2
+bound = 0
+count = 3
+
+[sub_resource type="Resource" id="Effect_he_walks_away"]
+script = ExtResource("10")
+success = true
+reason = "Ferrow sold the high seat back rather than die on it."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"dane_ferrow"
+text = "Ambition's expensive, Holt, and my ledger's been empty since the customs fort. There's still money in walking away."
+
+[sub_resource type="Resource" id="Event_money_in_walking_away"]
+script = ExtResource("7")
+id = &"money_in_walking_away"
+triggers = Array[Resource]([SubResource("Trigger_ledger_empty"), SubResource("Trigger_column_spent")])
+effects = Array[Resource]([SubResource("Effect_he_walks_away")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc17_the_high_seat"
@@ -65,6 +104,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_money_in_walking_away")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

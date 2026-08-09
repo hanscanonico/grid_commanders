@@ -3,6 +3,8 @@
 # not reached this crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Two of Orlov's units are named because they are the ones that stop answering
+# him: the Directorate's collapse, seen from the far side of a border.
 [terrain]
 .......M.............
 .....................
@@ -24,7 +26,7 @@
 1 r 2 4
 1 t 3 3
 2 i 17 3
-2 i 17 5
+2 i 17 5 stray_column_a
 2 m 16 4
-2 r 17 4
+2 r 17 4 stray_column_b
 2 t 16 3
