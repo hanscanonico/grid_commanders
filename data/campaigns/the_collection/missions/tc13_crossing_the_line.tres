@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -26,8 +26,8 @@ last_day = 9
 
 [sub_resource type="Resource" id="Failure_the_crossing_was_not_clean"]
 script = ExtResource("5")
-text = "More than three units lost — the crossing was anything but clean."
-max_losses = 3
+text = "More than five units lost — the crossing was anything but clean."
+max_losses = 5
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -64,9 +64,9 @@ at_most = -1
 script = ExtResource("7")
 condition = SubResource("Forgery_provable")
 
-[sub_resource type="Resource" id="Trigger_day_two"]
+[sub_resource type="Resource" id="Trigger_day_five"]
 script = ExtResource("8")
-day = 2
+day = 5
 
 [sub_resource type="Resource" id="Effect_the_levy_walks"]
 script = ExtResource("10")
@@ -82,14 +82,10 @@ text = "Ferrow. The audit is a forgery and my men will not die for it. Neither w
 [sub_resource type="Resource" id="Event_the_border_levy"]
 script = ExtResource("6")
 id = &"the_border_levy"
-triggers = Array[Resource]([SubResource("Trigger_forgery_provable"), SubResource("Trigger_day_two")])
+triggers = Array[Resource]([SubResource("Trigger_forgery_provable"), SubResource("Trigger_day_five")])
 effects = Array[Resource]([SubResource("Effect_the_levy_walks")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
-
-[sub_resource type="Resource" id="Trigger_day_five"]
-script = ExtResource("8")
-day = 5
 
 [sub_resource type="Resource" id="Spawn_ferrows_own"]
 script = ExtResource("12")

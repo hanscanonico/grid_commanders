@@ -1,9 +1,6 @@
 # The Collection — Act III, M13 — "Crossing the Line". The war goes
 # to Iron's own soil at last. Ferrow, humiliated twice over, is dug
 # in personally to defend the border foundry. Teaching board: a mountain wall guards the crossing.
-# The border levy pickets the western pass, away from Ferrow's own cluster:
-# it changes sides on day two, and a defector standing among its old army is a
-# casualty the player never had a turn to prevent.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
 [terrain]
 ................
@@ -29,7 +26,7 @@ MMMM..MCMMM..MMM
 1 t 2 3
 1 r 1 4
 1 m 2 4
-2 i 4 7 border_levy
+2 i 14 7 border_levy
 2 t 13 7
 2 r 14 6
 2 m 13 6

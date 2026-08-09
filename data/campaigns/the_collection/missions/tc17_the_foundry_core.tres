@@ -27,8 +27,8 @@ last_day = 8
 
 [sub_resource type="Resource" id="Failure_the_line_bunched"]
 script = ExtResource("5")
-text = "More than eight units lost — the line was too tight in one place."
-max_losses = 8
+text = "More than six units lost — the line was too tight in one place."
+max_losses = 6
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
