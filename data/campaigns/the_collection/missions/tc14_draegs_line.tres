@@ -1,14 +1,27 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+
+[sub_resource type="Resource" id="Gate_forgery_provable"]
+script = ExtResource("5")
+flag = &"forgery_proven"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_four_towns"]
 script = ExtResource("2")
 text = "Hold three of the four towns."
 count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_sector_stayed_contested_past_day"]
 script = ExtResource("3")
@@ -40,12 +53,60 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "One marshal down without a shot fired. Vance won't be so easy."
 
+[sub_resource type="Resource" id="Trigger_day_three"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Effect_the_holdouts_walk"]
+script = ExtResource("9")
+from_team = 2
+to_team = 1
+tags = Array[StringName]([&"draeg_holdouts"])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "Vance can have the sector. She cannot have my men. They are walking, Commander — do not shoot them for it."
+
+[sub_resource type="Resource" id="Event_the_holdouts"]
+script = ExtResource("6")
+id = &"the_holdouts"
+triggers = Array[Resource]([SubResource("Trigger_day_three")])
+effects = Array[Resource]([SubResource("Effect_the_holdouts_walk")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_holdouts_behind_our_line"]
+script = ExtResource("8")
+tag = &"draeg_holdouts"
+cells = Array[Vector2i]([Vector2i(5, 2), Vector2i(5, 7), Vector2i(1, 4), Vector2i(1, 5)])
+
+[sub_resource type="Resource" id="Effect_veterans_spared"]
+script = ExtResource("10")
+flag = &"draeg_veterans_spared"
+value = 1
+note = "Draeg's holdouts walked out of the sector alive, behind our line."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"sera_lark"
+text = "Draeg's squad is behind our line and out of this war. That's one column nobody has to bury."
+
+[sub_resource type="Resource" id="Event_they_marched_home"]
+script = ExtResource("6")
+id = &"they_marched_home"
+triggers = Array[Resource]([SubResource("Trigger_holdouts_behind_our_line")])
+effects = Array[Resource]([SubResource("Effect_veterans_spared")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc14_draegs_line"
 title = "Draeg's Line"
 location = "The abandoned sector, Iron Dominion territory"
 map_path = "res://maps/campaign/the_collection/tc14_draegs_line.txt"
+unlock_requires = SubResource("Gate_forgery_provable")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -59,6 +120,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_towns")])
 failures = Array[Resource]([SubResource("Failure_the_sector_stayed_contested_past_day")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_holdouts"), SubResource("Event_they_marched_home")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

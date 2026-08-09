@@ -1,9 +1,19 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="14"]
 
 [sub_resource type="Resource" id="Objective_hold_the_foundry_core_until_day_8"]
 script = ExtResource("2")
@@ -14,6 +24,11 @@ day = 8
 script = ExtResource("3")
 text = "The core fell before day 8."
 last_day = 8
+
+[sub_resource type="Resource" id="Failure_the_line_bunched"]
+script = ExtResource("5")
+text = "More than four units lost — the line was too tight in one place."
+max_losses = 4
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -40,6 +55,75 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "One foundry from the end of this."
 
+[sub_resource type="Resource" id="Trigger_day_four"]
+script = ExtResource("7")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_last_wave"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(18, 3)
+
+[sub_resource type="Resource" id="Effect_last_wave"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_last_wave")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "I am not manoeuvring, Commander. I am arriving. Stand where you like."
+
+[sub_resource type="Resource" id="Event_the_last_wave"]
+script = ExtResource("6")
+id = &"the_last_wave"
+triggers = Array[Resource]([SubResource("Trigger_day_four")])
+effects = Array[Resource]([SubResource("Effect_last_wave")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Charge_banked"]
+script = ExtResource("9")
+flag = &"morn_charged"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_charge_banked"]
+script = ExtResource("8")
+condition = SubResource("Charge_banked")
+
+[sub_resource type="Resource" id="Trigger_day_five"]
+script = ExtResource("7")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_banked_armour"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(18, 7)
+
+[sub_resource type="Resource" id="Spawn_banked_scout"]
+script = ExtResource("11")
+unit_type = ExtResource("14")
+cell = Vector2i(17, 8)
+
+[sub_resource type="Resource" id="Effect_banked_column"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_banked_armour"), SubResource("Spawn_banked_scout")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "You gave me nine days at the chain. I have spent them here."
+
+[sub_resource type="Resource" id="Event_spent_them_here"]
+script = ExtResource("6")
+id = &"spent_them_here"
+triggers = Array[Resource]([SubResource("Trigger_charge_banked"), SubResource("Trigger_day_five")])
+effects = Array[Resource]([SubResource("Effect_banked_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc17_the_foundry_core"
@@ -57,8 +141,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_the_foundry_core_until_day_8")])
-failures = Array[Resource]([SubResource("Failure_the_core_fell_before_day_8")])
+failures = Array[Resource]([SubResource("Failure_the_core_fell_before_day_8"), SubResource("Failure_the_line_bunched")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_last_wave"), SubResource("Event_spent_them_here")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

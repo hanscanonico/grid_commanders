@@ -1,9 +1,17 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_take_the_counting_house_that_funds_t"]
 script = ExtResource("2")
@@ -20,10 +28,27 @@ script = ExtResource("2")
 text = "Take the northern town for a bonus."
 cell = Vector2i(5, 2)
 
+[sub_resource type="Resource" id="Bonus_destroy_the_paymaster"]
+script = ExtResource("5")
+text = "Destroy Vale's paymaster before he leaves with the books."
+tag = &"paymaster"
+
+[sub_resource type="Resource" id="Witnesses_talking"]
+script = ExtResource("6")
+flag = &"witnesses_alive"
+at_least = 1
+at_most = -1
+
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
 text = "The counting house is where Vale's occupation gets paid. Take it and the whole squeeze runs out of money at once."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("4")
+speaker = &"alina_ward"
+text = "The auditor's witnesses are still talking, too. Put her testimony next to Vale's payment book and the forgery stops being an accusation."
+requires = SubResource("Witnesses_talking")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -45,6 +70,55 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "The Strangle is over. Now we go and finish it properly."
 
+[sub_resource type="Resource" id="Trigger_paymaster_taken"]
+script = ExtResource("8")
+tag = &"paymaster"
+
+[sub_resource type="Resource" id="Trigger_before_the_books_move"]
+script = ExtResource("9")
+day = 7
+
+[sub_resource type="Resource" id="Effect_forgery_proven_twice"]
+script = ExtResource("11")
+flag = &"forgery_proven"
+value = 2
+note = "Vale's payment book was taken intact, in his own hand, against the forged audit."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"nia_rowan"
+text = "Books intact. Every payment Vale made against that audit, in his own hand."
+
+[sub_resource type="Resource" id="Event_the_books"]
+script = ExtResource("7")
+id = &"the_books"
+triggers = Array[Resource]([SubResource("Trigger_paymaster_taken"), SubResource("Trigger_before_the_books_move")])
+effects = Array[Resource]([SubResource("Effect_forgery_proven_twice")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_day_eight"]
+script = ExtResource("10")
+day = 8
+
+[sub_resource type="Resource" id="Effect_moved_the_money"]
+script = ExtResource("12")
+team = 2
+amount = 4000
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"konrad_vale"
+text = "The ledgers left for the interior an hour ago, Commander. You may still have the man who kept them."
+
+[sub_resource type="Resource" id="Event_the_ledgers_move"]
+script = ExtResource("7")
+id = &"the_ledgers_move"
+triggers = Array[Resource]([SubResource("Trigger_day_eight")])
+effects = Array[Resource]([SubResource("Effect_moved_the_money")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc12_the_counting_house"
@@ -63,8 +137,9 @@ fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_counting_house_that_funds_t")])
 failures = Array[Resource]([SubResource("Failure_the_counting_house_stayed_vale_s_pas")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus"), SubResource("Bonus_destroy_the_paymaster")])
+events = Array[Resource]([SubResource("Event_the_books"), SubResource("Event_the_ledgers_move")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The counting house held, and the squeeze that started in the border towns just got permanent."

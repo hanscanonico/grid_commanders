@@ -1,19 +1,33 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="12"]
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
 script = ExtResource("2")
 text = "Hold three of the five towns."
 count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_towns_stayed_lost_past_day_10"]
 script = ExtResource("3")
 text = "The towns stayed lost past day 10."
 last_day = 10
+
+[sub_resource type="Resource" id="Failure_the_auditor_s_escort_was_lost"]
+script = ExtResource("5")
+text = "The auditor's escort was destroyed."
+tag = &"witness_column"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -40,6 +54,58 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "The forged ledger is still exposed for it."
 
+[sub_resource type="Resource" id="Trigger_middle_town_taken"]
+script = ExtResource("7")
+cell = Vector2i(7, 5)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_hunter"]
+script = ExtResource("10")
+unit_type = ExtResource("12")
+cell = Vector2i(11, 5)
+
+[sub_resource type="Resource" id="Effect_hunter"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_hunter")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "You reached for the middle one. Now show me what you left behind you."
+
+[sub_resource type="Resource" id="Event_what_you_left_behind"]
+script = ExtResource("6")
+id = &"what_you_left_behind"
+triggers = Array[Resource]([SubResource("Trigger_middle_town_taken")])
+effects = Array[Resource]([SubResource("Effect_hunter")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_auditor_reaches_a_witness"]
+script = ExtResource("8")
+tag = &"witness_column"
+cells = Array[Vector2i]([Vector2i(10, 2), Vector2i(4, 8), Vector2i(10, 8)])
+
+[sub_resource type="Resource" id="Effect_witnesses_alive"]
+script = ExtResource("11")
+flag = &"witnesses_alive"
+value = 1
+note = "The auditor reached the occupied towns, and her witnesses are still talking."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"ines_calder"
+text = "Our escort is standing in one of his towns with the auditor's notes signed. Cheaper insurance than I expected."
+
+[sub_resource type="Resource" id="Event_the_auditor_gets_out"]
+script = ExtResource("6")
+id = &"the_auditor_gets_out"
+triggers = Array[Resource]([SubResource("Trigger_auditor_reaches_a_witness")])
+effects = Array[Resource]([SubResource("Effect_witnesses_alive")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc08_silencing_the_witness"
@@ -57,8 +123,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_five_towns")])
-failures = Array[Resource]([SubResource("Failure_the_towns_stayed_lost_past_day_10")])
+failures = Array[Resource]([SubResource("Failure_the_towns_stayed_lost_past_day_10"), SubResource("Failure_the_auditor_s_escort_was_lost")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_what_you_left_behind"), SubResource("Event_the_auditor_gets_out")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

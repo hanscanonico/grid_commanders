@@ -1,9 +1,18 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
 
 [sub_resource type="Resource" id="Objective_take_the_first_foundry_depot"]
 script = ExtResource("2")
@@ -24,6 +33,11 @@ cell = Vector2i(14, 5)
 script = ExtResource("3")
 text = "The chain stayed Iron's past day 11."
 last_day = 11
+
+[sub_resource type="Resource" id="Failure_the_column_bunched"]
+script = ExtResource("5")
+text = "More than four units lost — the column stopped being spread."
+max_losses = 4
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -50,6 +64,62 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "The production line stopped the moment the third depot fell."
 
+[sub_resource type="Resource" id="Trigger_middle_depot_taken"]
+script = ExtResource("7")
+cell = Vector2i(10, 4)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_line_replacement"]
+script = ExtResource("10")
+unit_type = ExtResource("13")
+cell = Vector2i(15, 4)
+
+[sub_resource type="Resource" id="Effect_line_replacement"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_line_replacement")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "One depot off the line, and the line replaced it the same afternoon. That is what output means, Commander."
+
+[sub_resource type="Resource" id="Event_the_line_replaces_it"]
+script = ExtResource("6")
+id = &"the_line_replaces_it"
+triggers = Array[Resource]([SubResource("Trigger_middle_depot_taken")])
+effects = Array[Resource]([SubResource("Effect_line_replacement")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_day_nine"]
+script = ExtResource("8")
+day = 9
+
+[sub_resource type="Resource" id="Effect_hammerfall_charge"]
+script = ExtResource("11")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Effect_morn_charged"]
+script = ExtResource("12")
+flag = &"morn_charged"
+value = 1
+note = "The foundry chain ran nine days, and Morn banked every one of them."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "Nine days, and the line is still running. So am I."
+
+[sub_resource type="Resource" id="Event_the_line_still_runs"]
+script = ExtResource("6")
+id = &"the_line_still_runs"
+triggers = Array[Resource]([SubResource("Trigger_day_nine")])
+effects = Array[Resource]([SubResource("Effect_hammerfall_charge"), SubResource("Effect_morn_charged")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"tc15_the_foundry_chain"
@@ -67,8 +137,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_first_foundry_depot"), SubResource("Objective_take_the_second_foundry_depot"), SubResource("Objective_take_the_third_foundry_depot")])
-failures = Array[Resource]([SubResource("Failure_the_chain_stayed_iron_s_past_day_11")])
+failures = Array[Resource]([SubResource("Failure_the_chain_stayed_iron_s_past_day_11"), SubResource("Failure_the_column_bunched")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_line_replaces_it"), SubResource("Event_the_line_still_runs")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

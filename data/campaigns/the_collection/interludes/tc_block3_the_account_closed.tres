@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Books_taken"]
+script = ExtResource("3")
+flag = &"forgery_proven"
+at_least = 2
+at_most = -1
+
+[sub_resource type="Resource" id="Veterans_spared"]
+script = ExtResource("3")
+flag = &"draeg_veterans_spared"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Charge_banked"]
+script = ExtResource("3")
+flag = &"morn_charged"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The account is closed. The Directorate withdrew its audit in a single line, without ever conceding that anything in it had been invented, and the border went back to where it had always been."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Every entry in that ledger is now filed beside the man who wrote it. It will outlast him, which is more than his war managed."
+requires = SubResource("Books_taken")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"radek_morn"
+text = "I carried a charge from the foundry chain to the core and spent it on a line that would not bunch. Note it down, Commander. I have."
+requires = SubResource("Charge_banked")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "My holdouts went home rather than into the ground. That is the one thing this war did that neither ledger recorded."
+requires = SubResource("Veterans_spared")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Cities as collateral, convoys as interest. In the end the only debt anybody could prove was the one he ran up himself."
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "The Account Closed"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5")])
