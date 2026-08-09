@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
 [ext_resource type="Resource" path="res://data/units/infantry.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_reach_city_hall"]
 script = ExtResource("2")
@@ -78,6 +79,25 @@ effects = Array[Resource]([SubResource("Effect_lent_men")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Trigger_opening"]
+script = ExtResource("6")
+day = 1
+
+[sub_resource type="Resource" id="Effect_evidence"]
+script = ExtResource("10")
+flag = &"qw_evidence"
+mode = 1
+value = 1
+note = "The governor's ledger went into evidence with a name still on it."
+
+[sub_resource type="Resource" id="Event_the_ledger_is_filed"]
+script = ExtResource("5")
+id = &"the_ledger_is_filed"
+triggers = Array[Resource]([SubResource("Trigger_opening")])
+effects = Array[Resource]([SubResource("Effect_evidence")])
+once = true
+lines = Array[Resource]([])
+
 [resource]
 script = ExtResource("1")
 id = &"qw04_the_governors_scandal"
@@ -97,7 +117,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_reach_city_hall")])
 failures = Array[Resource]([SubResource("Failure_day_5")])
 bonus_objectives = Array[Resource]([])
-events = Array[Resource]([SubResource("Event_the_governors_courage")])
+events = Array[Resource]([SubResource("Event_the_governors_courage"), SubResource("Event_the_ledger_is_filed")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

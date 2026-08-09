@@ -1,13 +1,43 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_take_orlovs_hq"]
 script = ExtResource("2")
 text = "Take Orlov's headquarters."
 cell = Vector2i(18, 9)
+
+[sub_resource type="Resource" id="Failure_day_14"]
+script = ExtResource("4")
+text = "The headquarters held past day 14."
+last_day = 14
+
+[sub_resource type="Resource" id="Draeg_unbloodied"]
+script = ExtResource("5")
+flag = &"qw_draeg_bloodied"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Draeg_bloodied"]
+script = ExtResource("5")
+flag = &"qw_draeg_bloodied"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Every_town_saved"]
+script = ExtResource("5")
+flag = &"qw_towns_saved"
+at_least = 10
+at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -24,6 +54,12 @@ script = ExtResource("3")
 speaker = &"cass_orlov"
 text = "Found, Commander Ash, but not finished. I've enjoyed watching you all learn to read my handwriting — genuinely."
 
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("3")
+speaker = &"cass_orlov"
+text = "Marshal Draeg's division holds the eastern wall for me. He at least understands an order."
+requires = SubResource("Draeg_bloodied")
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"perrin_ash"
@@ -39,10 +75,64 @@ script = ExtResource("3")
 speaker = &"orin_flux"
 text = "The headquarters falls, and every quiet annexation this war ran on stops being quiet or an annexation."
 
+[sub_resource type="Resource" id="Line_6b"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Ten towns still fly their own colours because somebody went back for the ones nobody was counting. That's the part of this the map will keep."
+requires = SubResource("Every_town_saved")
+
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("3")
 speaker = &"perrin_ash"
 text = "We don't find Orlov himself among the papers. Some wars end with a wall taken, not a man caught."
+
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("7")
+day = 2
+
+[sub_resource type="Resource" id="Trigger_draeg_stands_aside"]
+script = ExtResource("8")
+condition = SubResource("Draeg_unbloodied")
+
+[sub_resource type="Resource" id="Effect_regulars_stand_down"]
+script = ExtResource("9")
+tags = Array[StringName]([&"iron_regular_a", &"iron_regular_b"])
+
+[sub_resource type="Resource" id="Event_line_stand_down"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "My division was not raised to garrison a man's paperwork. We are standing down. What happens on that hill is his business, not ours."
+
+[sub_resource type="Resource" id="Event_the_regulars_stand_down"]
+script = ExtResource("6")
+id = &"the_regulars_stand_down"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_draeg_stands_aside")])
+effects = Array[Resource]([SubResource("Effect_regulars_stand_down")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_stand_down")])
+
+[sub_resource type="Resource" id="Trigger_draeg_bloodied"]
+script = ExtResource("8")
+condition = SubResource("Draeg_bloodied")
+
+[sub_resource type="Resource" id="Effect_the_wall_is_his"]
+script = ExtResource("10")
+flag = &"qw_draeg_wall"
+value = 1
+note = "Draeg's own regulars held Orlov's eastern wall to the end, because the march had made the war theirs."
+
+[sub_resource type="Resource" id="Event_line_the_wall"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "You broke my spearhead on the march, Commander Ash, and so you have the rest of me. My regulars hold that wall. Come and take it from them."
+
+[sub_resource type="Resource" id="Event_the_wall_is_held"]
+script = ExtResource("6")
+id = &"the_wall_is_held"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_draeg_bloodied")])
+effects = Array[Resource]([SubResource("Effect_the_wall_is_his")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_the_wall")])
 
 [resource]
 script = ExtResource("1")
@@ -61,9 +151,10 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_orlovs_hq")])
-failures = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_day_14")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_regulars_stand_down"), SubResource("Event_the_wall_is_held")])
 par_day = 9
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
-victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
+victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_6b"), SubResource("Line_7")])
 defeat = "The headquarters held, and the war Orlov never declared stays exactly as undeclared as he wanted it."

@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Handler_taken"]
+script = ExtResource("3")
+flag = &"qw_handler_taken"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Handler_at_large"]
+script = ExtResource("3")
+flag = &"qw_handler_taken"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Thornfield_held"]
+script = ExtResource("3")
+flag = &"qw_thornfield_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Six weeks, four towns and one garrison base that appeared on no map anyone had issued. Nobody declared anything. The map office simply started keeping a file."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "We took the handler on the east road with the safehouse ledgers still in the car. The file has a name in it now, and the name signs for all of it."
+requires = SubResource("Handler_taken")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "We have the safehouse files and a hole in them exactly where the name goes. One staff car out the east road, a day ahead of the column that came for it."
+requires = SubResource("Handler_at_large")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Thornfield held, for whatever a wood line and a picket are worth on a report. The border district counted the difference before the map office did."
+requires = SubResource("Thornfield_held")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"ivar_thorne"
+text = "So we have proved it. That is the smallest part of this — the towns are still flipping, and now he knows we can read his handwriting."
+
+[resource]
+script = ExtResource("1")
+after_block = 0
+title = "Prove It"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5")])

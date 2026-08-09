@@ -1,13 +1,25 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_retake_selwich"]
 script = ExtResource("2")
 text = "Retake Selwich."
 cell = Vector2i(6, 3)
+
+[sub_resource type="Resource" id="Failure_day_8"]
+script = ExtResource("4")
+text = "Selwich was a garrison town again past day 8."
+last_day = 8
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +51,52 @@ script = ExtResource("3")
 speaker = &"cassian_rook"
 text = "I don't like what that implies about the next town over. Neither should you."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_selwich_garrison"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(9, 3)
+
+[sub_resource type="Resource" id="Effect_garrison_selwich"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_selwich_garrison")])
+
+[sub_resource type="Resource" id="Event_line_garrison"]
+script = ExtResource("3")
+speaker = &"cass_orlov"
+text = "So the map office does read its mail. Garrison Selwich; it has stopped being free."
+
+[sub_resource type="Resource" id="Event_orlov_garrisons"]
+script = ExtResource("5")
+id = &"orlov_garrisons"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_garrison_selwich")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_garrison")])
+
+[sub_resource type="Resource" id="Trigger_opening"]
+script = ExtResource("6")
+day = 1
+
+[sub_resource type="Resource" id="Effect_evidence"]
+script = ExtResource("10")
+flag = &"qw_evidence"
+mode = 1
+value = 1
+note = "The map office has opened a file on Orlov's network."
+
+[sub_resource type="Resource" id="Event_the_file_opens"]
+script = ExtResource("5")
+id = &"the_file_opens"
+triggers = Array[Resource]([SubResource("Trigger_opening")])
+effects = Array[Resource]([SubResource("Effect_evidence")])
+once = true
+lines = Array[Resource]([])
+
 [resource]
 script = ExtResource("1")
 id = &"qw01_the_flipped_town"
@@ -56,8 +114,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_retake_selwich")])
-failures = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_day_8")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_orlov_garrisons"), SubResource("Event_the_file_opens")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

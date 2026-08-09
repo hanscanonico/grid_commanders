@@ -1,13 +1,24 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="7"]
 
 [sub_resource type="Resource" id="Objective_retake_the_pine_city"]
 script = ExtResource("2")
 text = "Find the column and retake the pine city."
 cell = Vector2i(7, 3)
+
+[sub_resource type="Resource" id="Objective_destroy_pine_column"]
+script = ExtResource("4")
+text = "Break the column that went to ground in the pines."
+id = &"destroy_pine_column"
+hidden = true
+tag = &"pine_column"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +50,27 @@ script = ExtResource("3")
 speaker = &"sable_wren"
 text = "I don't trust the quiet that follows. Orlov's people don't leave without a reason."
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("6")
+day = 2
+
+[sub_resource type="Resource" id="Effect_name_the_column"]
+script = ExtResource("7")
+objective_id = &"destroy_pine_column"
+
+[sub_resource type="Resource" id="Event_line_signals"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Signals just went quiet again — eastern tree line, two miles in. That's them."
+
+[sub_resource type="Resource" id="Event_signals_go_quiet"]
+script = ExtResource("5")
+id = &"signals_go_quiet"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_name_the_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_signals")])
+
 [resource]
 script = ExtResource("1")
 id = &"qw02_the_column_in_the_pines"
@@ -55,9 +87,10 @@ commanders = {
 }
 fog_enabled = true
 difficulty = &"easy"
-objectives = Array[Resource]([SubResource("Objective_retake_the_pine_city")])
+objectives = Array[Resource]([SubResource("Objective_retake_the_pine_city"), SubResource("Objective_destroy_pine_column")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_signals_go_quiet")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

@@ -1,24 +1,40 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="13"]
 
 [sub_resource type="Resource" id="Objective_take_millhollow"]
 script = ExtResource("2")
 text = "Take Millhollow before the cache moves."
 cell = Vector2i(9, 2)
 
-[sub_resource type="Resource" id="Failure_day_4"]
+[sub_resource type="Resource" id="Failure_day_6"]
 script = ExtResource("3")
-text = "The cache moved out past day 4."
-last_day = 4
+text = "The cache moved out past day 6."
+last_day = 6
+
+[sub_resource type="Resource" id="Bonus_break_the_convoy"]
+script = ExtResource("5")
+text = "Break the cache column before it clears the trees."
+id = &"destroy_cache_convoy"
+hidden = true
+tag = &"morn_cache_convoy"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Morn's forward supply cache moves at first light, Quill. One night in the trees to take it, or it's gone."
+text = "Morn's forward supply cache moves at the end of the week, Quill. Six days in the trees to take it, or it's gone."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -28,22 +44,77 @@ text = "Small force, small window — give me the odds and I'll tell you if I li
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Better than even, worse than comfortable. That's as precise as I can make it before dawn."
+text = "Better than even, worse than comfortable. That's as precise as I can make it from here."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Good enough odds to move on. Let's not give the sun a vote."
+text = "Good enough odds to move on. Let's not give the clock a vote."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Millhollow falls before dawn. The cache stays exactly where he left it, under new management."
+text = "Millhollow falls with the week not yet out. The cache stays exactly where he left it, under new management."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
 text = "I don't linger on a win like this one. A raid that stands still becomes a target."
+
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("7")
+day = 2
+
+[sub_resource type="Resource" id="Effect_name_the_convoy"]
+script = ExtResource("9")
+objective_id = &"destroy_cache_convoy"
+
+[sub_resource type="Resource" id="Spawn_barn_guard"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Effect_barn_guard"]
+script = ExtResource("10")
+team = 2
+units = Array[Resource]([SubResource("Spawn_barn_guard")])
+
+[sub_resource type="Resource" id="Event_line_first_light"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "It moves on my schedule, not on hers. Let them arrive to an empty barn."
+
+[sub_resource type="Resource" id="Event_the_cache_loads"]
+script = ExtResource("6")
+id = &"the_cache_loads"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_name_the_convoy"), SubResource("Effect_barn_guard")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_first_light")])
+
+[sub_resource type="Resource" id="Trigger_convoy_broken"]
+script = ExtResource("8")
+objective = SubResource("Bonus_break_the_convoy")
+
+[sub_resource type="Resource" id="Effect_columns_broken"]
+script = ExtResource("13")
+flag = &"qw_columns_broken"
+mode = 1
+value = 1
+note = "A raid column of Orlov's is off the board for good."
+
+[sub_resource type="Resource" id="Event_line_empty_barn"]
+script = ExtResource("4")
+speaker = &"lyra_quill"
+text = "The barn's empty and so is his column. Those were even odds, and I'll take them again."
+
+[sub_resource type="Resource" id="Event_the_convoy_breaks"]
+script = ExtResource("6")
+id = &"the_convoy_breaks"
+triggers = Array[Resource]([SubResource("Trigger_convoy_broken")])
+effects = Array[Resource]([SubResource("Effect_columns_broken")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_empty_barn")])
 
 [resource]
 script = ExtResource("1")
@@ -62,9 +133,10 @@ commanders = {
 fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_millhollow")])
-failures = Array[Resource]([SubResource("Failure_day_4")])
-bonus_objectives = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_day_6")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_convoy")])
+events = Array[Resource]([SubResource("Event_the_cache_loads"), SubResource("Event_the_convoy_breaks")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The convoy pulled out at first light with everything it came for, and Millhollow stayed an empty town on a map."
+defeat = "The convoy pulled out on the seventh morning with everything it came for, and Millhollow stayed an empty town on a map."

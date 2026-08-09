@@ -1,13 +1,25 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
 
 [sub_resource type="Resource" id="Objective_take_vances_base"]
 script = ExtResource("2")
 text = "Take Vance's forward base."
 cell = Vector2i(17, 7)
+
+[sub_resource type="Resource" id="Columns_broken"]
+script = ExtResource("5")
+flag = &"qw_columns_broken"
+at_least = 2
+at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -24,6 +36,12 @@ script = ExtResource("3")
 speaker = &"gideon_holt"
 text = "No fog to plan behind, no rumour to chase. Just her column and ours."
 
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Two of his raid columns are already off the board, for whatever that's worth out here. She's advancing anyway."
+requires = SubResource("Columns_broken")
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"alina_ward"
@@ -38,6 +56,38 @@ text = "Her base falls in a fight neither side had to hide from. We're holding g
 script = ExtResource("3")
 speaker = &"alina_ward"
 text = "Orlov wanted this fought in shadows because he didn't think we could win it in the light. Today says otherwise."
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_second_corps_road"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(2, 4)
+
+[sub_resource type="Resource" id="Spawn_second_corps_flank"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(2, 5)
+
+[sub_resource type="Resource" id="Effect_second_corps"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_second_corps_road"), SubResource("Spawn_second_corps_flank")])
+
+[sub_resource type="Resource" id="Event_line_second_corps"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "No more screens and no more hunches. Second Corps is on the road behind you — fight like it."
+
+[sub_resource type="Resource" id="Event_second_corps"]
+script = ExtResource("6")
+id = &"second_corps"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_second_corps")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_second_corps")])
 
 [resource]
 script = ExtResource("1")
@@ -58,7 +108,8 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_vances_base")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_second_corps")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Vance's base held, and the open war is not yet the alliance's to win outright."

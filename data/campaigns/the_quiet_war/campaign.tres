@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
 [ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw01_the_flipped_town.tres" id="2"]
@@ -19,6 +19,9 @@
 [ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw16_holding_the_line_in_the_open.tres" id="17"]
 [ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw17_the_last_outpost.tres" id="18"]
 [ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/missions/qw18_the_man_himself.tres" id="19"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/interludes/qw_block1_prove_it.tres" id="20"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/interludes/qw_block2_cut_the_network.tres" id="21"]
+[ext_resource type="Resource" path="res://data/campaigns/the_quiet_war/interludes/qw_block3_daylight.tres" id="22"]
 
 [resource]
 script = ExtResource("1")
@@ -29,3 +32,4 @@ antagonist = "The Iron Dominion"
 missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
 block_titles = Array[String](["Prove It", "Cut the Network", "Daylight"])
 block_lengths = Array[int]([6, 6, 6])
+interludes = Array[Resource]([ExtResource("20"), ExtResource("21"), ExtResource("22")])

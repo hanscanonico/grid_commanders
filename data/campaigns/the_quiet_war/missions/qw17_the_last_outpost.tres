@@ -1,13 +1,23 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="8"]
 
 [sub_resource type="Resource" id="Objective_take_the_outpost"]
 script = ExtResource("2")
 text = "Take Morn's last outpost."
 cell = Vector2i(17, 7)
+
+[sub_resource type="Resource" id="Network_blind"]
+script = ExtResource("5")
+flag = &"qw_network_blind"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -24,6 +34,12 @@ script = ExtResource("3")
 speaker = &"iris_colt"
 text = "You'll have more open road to work with than that counterattack doctrine of yours has ever seen."
 
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("3")
+speaker = &"iris_colt"
+text = "His relay's been dark since Wren cut it, and his rider never got out. Whatever he's holding back, he's holding it alone."
+requires = SubResource("Network_blind")
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"mara_voss"
@@ -38,6 +54,28 @@ text = "The outpost falls, and his column falls back with it. Orlov's own ground
 script = ExtResource("3")
 speaker = &"mara_voss"
 text = "My counterattack doctrine has never had this much open road to work with. I intend to enjoy it."
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("7")
+day = 5
+
+[sub_resource type="Resource" id="Effect_the_hammer_is_banked"]
+script = ExtResource("8")
+team = 2
+points = 3500
+
+[sub_resource type="Resource" id="Event_line_stand_clear"]
+script = ExtResource("3")
+speaker = &"radek_morn"
+text = "If I cannot hold the road I will remove it. Stand clear of the ridge."
+
+[sub_resource type="Resource" id="Event_morn_banks_the_hammer"]
+script = ExtResource("6")
+id = &"morn_banks_the_hammer"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_the_hammer_is_banked")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_stand_clear")])
 
 [resource]
 script = ExtResource("1")
@@ -58,7 +96,8 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_outpost")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_morn_banks_the_hammer")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The outpost held, and whatever Orlov built behind it stays exactly as hidden as it has always been."

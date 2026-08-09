@@ -37,7 +37,7 @@ MMMM..............MMMM
 2 r 15 8
 2 t 14 7
 2 t 13 8
-2 T 16 7
-2 T 17 8
+2 T 16 7 iron_regular_a
+2 T 17 8 iron_regular_b
 2 a 14 6
 2 g 13 7

@@ -1,13 +1,24 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="9"]
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
 text = "Take Vale's engineering works."
 cell = Vector2i(17, 7)
+
+[sub_resource type="Resource" id="Failure_day_12"]
+script = ExtResource("4")
+text = "The works were still Vale's past day 12."
+last_day = 12
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +50,33 @@ script = ExtResource("3")
 speaker = &"halden_marr"
 text = "My report needs no footnotes. Ground taken, ground held."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_wall_battery"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(16, 6)
+
+[sub_resource type="Resource" id="Effect_wall_battery"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_wall_battery")])
+
+[sub_resource type="Resource" id="Event_line_concrete"]
+script = ExtResource("3")
+speaker = &"konrad_vale"
+text = "The paperwork phase is over, Commander. What is left is concrete, and concrete does not negotiate."
+
+[sub_resource type="Resource" id="Event_concrete_does_not_negotiate"]
+script = ExtResource("5")
+id = &"concrete_does_not_negotiate"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_wall_battery")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_concrete")])
+
 [resource]
 script = ExtResource("1")
 id = &"qw15_the_engineering_works"
@@ -56,8 +94,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_works")])
-failures = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_day_12")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_concrete_does_not_negotiate")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

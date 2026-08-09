@@ -1,13 +1,28 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_hold_thornfield"]
 script = ExtResource("2")
-text = "Hold Thornfield until day 6."
-day = 6
+text = "Hold Thornfield for five days."
+cell = Vector2i(9, 2)
+days = 5
+
+[sub_resource type="Resource" id="Failure_the_picket"]
+script = ExtResource("4")
+text = "Rook's picket was overrun in the wood line."
+tag = &"rook_picket"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +54,65 @@ script = ExtResource("3")
 speaker = &"cassian_rook"
 text = "The woods were the real reinforcement. My picket just had to stand in them."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_vale_armour"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(13, 4)
+
+[sub_resource type="Resource" id="Effect_vale_presses"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_vale_armour")])
+
+[sub_resource type="Resource" id="Event_line_bluff"]
+script = ExtResource("3")
+speaker = &"konrad_vale"
+text = "The wood line is a bluff, Commander Rook. I am sending something that does not care what is standing in it."
+
+[sub_resource type="Resource" id="Event_vales_column_presses"]
+script = ExtResource("5")
+id = &"vales_column_presses"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_vale_presses")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_bluff")])
+
+[sub_resource type="Resource" id="Trigger_thornfield_still_ours"]
+script = ExtResource("11")
+cell = Vector2i(9, 2)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("6")
+day = 5
+
+[sub_resource type="Resource" id="Trigger_before_day_5"]
+script = ExtResource("12")
+day = 5
+
+[sub_resource type="Resource" id="Effect_thornfield_held"]
+script = ExtResource("10")
+flag = &"qw_thornfield_held"
+value = 1
+note = "Thornfield was still Rook's on the fifth morning, with Vale's armour already in the tree line."
+
+[sub_resource type="Resource" id="Event_line_fifth_morning"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Fifth morning, and the town is still ours with his armour already in the tree line. The district can put that in a report."
+
+[sub_resource type="Resource" id="Event_the_watch_stands"]
+script = ExtResource("5")
+id = &"the_watch_stands"
+triggers = Array[Resource]([SubResource("Trigger_thornfield_still_ours"), SubResource("Trigger_day_5"), SubResource("Trigger_before_day_5")])
+effects = Array[Resource]([SubResource("Effect_thornfield_held")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_fifth_morning")])
+
 [resource]
 script = ExtResource("1")
 id = &"qw05_the_watch_at_thornfield"
@@ -56,8 +130,9 @@ commanders = {
 fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_thornfield")])
-failures = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_the_picket")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_vales_column_presses"), SubResource("Event_the_watch_stands")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

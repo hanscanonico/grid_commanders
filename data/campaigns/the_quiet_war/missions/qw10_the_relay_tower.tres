@@ -1,9 +1,15 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_cut_the_relay"]
 script = ExtResource("2")
@@ -14,6 +20,13 @@ cell = Vector2i(9, 2)
 script = ExtResource("3")
 text = "The relay kept talking past day 4."
 last_day = 4
+
+[sub_resource type="Resource" id="Bonus_catch_the_rider"]
+script = ExtResource("5")
+text = "Catch the rider carrying the orders by hand."
+id = &"destroy_morn_courier"
+hidden = true
+tag = &"morn_courier"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -45,6 +58,69 @@ script = ExtResource("4")
 speaker = &"sable_wren"
 text = "Leave the antenna standing. A silent relay tells its own story to anyone still listening."
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("7")
+day = 2
+
+[sub_resource type="Resource" id="Effect_name_the_rider"]
+script = ExtResource("9")
+objective_id = &"destroy_morn_courier"
+
+[sub_resource type="Resource" id="Event_line_ride"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "If the line is going to be cut, send the orders by hand. Ride."
+
+[sub_resource type="Resource" id="Event_orders_by_hand"]
+script = ExtResource("6")
+id = &"orders_by_hand"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_name_the_rider")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_ride")])
+
+[sub_resource type="Resource" id="Trigger_rider_caught"]
+script = ExtResource("8")
+objective = SubResource("Bonus_catch_the_rider")
+
+[sub_resource type="Resource" id="Effect_network_blind"]
+script = ExtResource("10")
+flag = &"qw_network_blind"
+value = 1
+note = "The rider was caught with the orders still on him; the network is deaf as well as dark."
+
+[sub_resource type="Resource" id="Event_line_run_down"]
+script = ExtResource("4")
+speaker = &"sable_wren"
+text = "Run down in open ground with the orders still in his hand. Nothing east of here has been told anything."
+
+[sub_resource type="Resource" id="Event_the_rider_is_run_down"]
+script = ExtResource("6")
+id = &"the_rider_is_run_down"
+triggers = Array[Resource]([SubResource("Trigger_rider_caught")])
+effects = Array[Resource]([SubResource("Effect_network_blind")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_run_down")])
+
+[sub_resource type="Resource" id="Trigger_opening"]
+script = ExtResource("7")
+day = 1
+
+[sub_resource type="Resource" id="Effect_evidence"]
+script = ExtResource("10")
+flag = &"qw_evidence"
+mode = 1
+value = 1
+note = "A week of the relay's traffic was read off the tower before it went dark."
+
+[sub_resource type="Resource" id="Event_the_traffic_is_read"]
+script = ExtResource("6")
+id = &"the_traffic_is_read"
+triggers = Array[Resource]([SubResource("Trigger_opening")])
+effects = Array[Resource]([SubResource("Effect_evidence")])
+once = true
+lines = Array[Resource]([])
+
 [resource]
 script = ExtResource("1")
 id = &"qw10_the_relay_tower"
@@ -63,7 +139,8 @@ fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_cut_the_relay")])
 failures = Array[Resource]([SubResource("Failure_day_4")])
-bonus_objectives = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_catch_the_rider")])
+events = Array[Resource]([SubResource("Event_orders_by_hand"), SubResource("Event_the_rider_is_run_down"), SubResource("Event_the_traffic_is_read")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
