@@ -4,6 +4,8 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Two of Ferrow's outriders are named: they were Draeg's before they were his,
+# and on the ridge's last crossing they remember it.
 [terrain]
 .....................
 .....................
@@ -39,6 +41,6 @@
 3 i 18 11
 3 i 17 10
 3 r 16 12
-4 i 2 11
+4 i 2 11 ferrow_outrider_a
 4 i 3 10
-4 r 4 12
+4 r 4 12 ferrow_outrider_b

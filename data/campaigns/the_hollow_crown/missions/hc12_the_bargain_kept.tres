@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=16 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -6,6 +6,10 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -24,8 +28,9 @@ last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
-text = "Hold every property the alliance can reach."
-count = 5
+text = "Hold any three of the ridge road's cities at once."
+count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
@@ -57,6 +62,64 @@ script = ExtResource("6")
 speaker = &"orin_flux"
 text = "Together. Noted — we'll hold you to it."
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("8")
+day = 2
+
+[sub_resource type="Resource" id="Effect_marshal_kept"]
+script = ExtResource("9")
+flag = &"marshal_kept"
+mode = 1
+value = 1
+note = "One more crossing fought with the marshal's banner still on the field."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Last crossing, Commander, and my army is standing on it with yours. Whatever else the bargain was, it was not words."
+
+[sub_resource type="Resource" id="Event_the_last_crossing"]
+script = ExtResource("7")
+id = &"the_last_crossing"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_marshal_kept")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("8")
+day = 3
+
+[sub_resource type="Resource" id="Effect_the_outriders_change_banner"]
+script = ExtResource("10")
+from_team = 4
+to_team = 2
+tags = Array[StringName]([&"ferrow_outrider_a", &"ferrow_outrider_b"])
+
+[sub_resource type="Resource" id="Effect_alliance_debt"]
+script = ExtResource("9")
+flag = &"alliance_debt"
+value = 1
+note = "Two of Ferrow's outriders came back under Draeg's banner, and the bill is still open."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Ferrow's outriders were mine before they were his. They remember which marshal pays on time."
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "Two of them, Draeg. Bill me for the difference."
+
+[sub_resource type="Resource" id="Event_the_outriders_remember"]
+script = ExtResource("7")
+id = &"the_outriders_remember"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_outriders_change_banner"), SubResource("Effect_alliance_debt")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2"), SubResource("Event_line_3")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc12_the_bargain_kept"
@@ -78,6 +141,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_last_crossing"), SubResource("Event_the_outriders_remember")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

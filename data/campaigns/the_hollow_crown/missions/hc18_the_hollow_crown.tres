@@ -1,10 +1,20 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="14"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="15"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -56,6 +66,102 @@ script = ExtResource("5")
 speaker = &"cassian_rook"
 text = "We will. The fighting's over — what he does with the quiet is his to answer for now."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("8")
+day = 4
+
+[sub_resource type="Resource" id="Effect_crown_hollow"]
+script = ExtResource("12")
+flag = &"crown_hollow"
+value = 1
+note = "Draeg's divisions reached the fortress, and nobody gave them the order."
+
+[sub_resource type="Resource" id="Event_line_morn"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "Look at what has just arrived, Rook, and tell me again whose war this is."
+
+[sub_resource type="Resource" id="Condition_three_crossings"]
+script = ExtResource("6")
+flag = &"marshal_kept"
+at_least = 0
+at_most = 3
+
+[sub_resource type="Resource" id="Trigger_three_crossings"]
+script = ExtResource("9")
+condition = SubResource("Condition_three_crossings")
+
+[sub_resource type="Resource" id="Spawn_two_divisions_1"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(2, 6)
+
+[sub_resource type="Resource" id="Spawn_two_divisions_2"]
+script = ExtResource("11")
+unit_type = ExtResource("14")
+cell = Vector2i(3, 6)
+
+[sub_resource type="Resource" id="Effect_two_divisions"]
+script = ExtResource("10")
+team = 1
+units = Array[Resource]([SubResource("Spawn_two_divisions_1"), SubResource("Spawn_two_divisions_2")])
+
+[sub_resource type="Resource" id="Event_line_two"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "I keep my word, Commander. Two divisions on your flank — and not one of them under your orders."
+
+[sub_resource type="Resource" id="Event_two_divisions_arrive"]
+script = ExtResource("7")
+id = &"two_divisions_arrive"
+triggers = Array[Resource]([SubResource("Trigger_three_crossings"), SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_two_divisions"), SubResource("Effect_crown_hollow")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_two"), SubResource("Event_line_morn")])
+
+[sub_resource type="Resource" id="Condition_every_crossing"]
+script = ExtResource("6")
+flag = &"marshal_kept"
+at_least = 4
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_every_crossing"]
+script = ExtResource("9")
+condition = SubResource("Condition_every_crossing")
+
+[sub_resource type="Resource" id="Spawn_three_divisions_1"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(2, 6)
+
+[sub_resource type="Resource" id="Spawn_three_divisions_2"]
+script = ExtResource("11")
+unit_type = ExtResource("14")
+cell = Vector2i(3, 6)
+
+[sub_resource type="Resource" id="Spawn_three_divisions_3"]
+script = ExtResource("11")
+unit_type = ExtResource("15")
+cell = Vector2i(2, 7)
+
+[sub_resource type="Resource" id="Effect_three_divisions"]
+script = ExtResource("10")
+team = 1
+units = Array[Resource]([SubResource("Spawn_three_divisions_1"), SubResource("Spawn_three_divisions_2"), SubResource("Spawn_three_divisions_3")])
+
+[sub_resource type="Resource" id="Event_line_three"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "Every crossing you carried me over, Commander, I am paying back at once. Three divisions on your flank — and not one of them under your orders."
+
+[sub_resource type="Resource" id="Event_three_divisions_arrive"]
+script = ExtResource("7")
+id = &"three_divisions_arrive"
+triggers = Array[Resource]([SubResource("Trigger_every_crossing"), SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_three_divisions"), SubResource("Effect_crown_hollow")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_three"), SubResource("Event_line_morn")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc18_the_hollow_crown"
@@ -75,6 +181,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_two_divisions_arrive"), SubResource("Event_three_divisions_arrive")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

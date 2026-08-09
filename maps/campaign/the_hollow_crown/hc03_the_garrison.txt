@@ -3,6 +3,8 @@
 # not reached this crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Ferrow's recon carries the season's take: breaking it is what empties his
+# ledger, and an empty ledger is what he remembers in missions fourteen and seventeen.
 [terrain]
 .......M...........
 ....F.......F......
@@ -25,5 +27,5 @@
 2 i 15 2
 2 i 15 4
 2 m 14 3
-2 r 15 3
+2 r 15 3 ferrow_paychest
 2 t 14 2

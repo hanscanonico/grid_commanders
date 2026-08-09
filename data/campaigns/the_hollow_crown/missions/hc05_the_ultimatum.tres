@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -6,6 +6,11 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
 
 [sub_resource type="Resource" id="Unlock_unbloodied"]
 script = ExtResource("6")
@@ -53,6 +58,33 @@ script = ExtResource("5")
 speaker = &"radek_morn"
 text = "Withdrawn. Quieter than I arrived — something else needs my attention now."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("8")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_the_deadline_1"]
+script = ExtResource("10")
+unit_type = ExtResource("11")
+cell = Vector2i(18, 2)
+
+[sub_resource type="Resource" id="Effect_the_deadline"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_the_deadline_1")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "Half your eight days are spent, Marr, and my terms have not improved with keeping."
+
+[sub_resource type="Resource" id="Event_the_terms_expire"]
+script = ExtResource("7")
+id = &"the_terms_expire"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_the_deadline")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc05_the_ultimatum"
@@ -73,6 +105,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_terms_expire")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

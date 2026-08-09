@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="ColumnBroken"]
+script = ExtResource("3")
+flag = &"draeg_column_broken"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="ColumnWhole"]
+script = ExtResource("3")
+flag = &"draeg_column_broken"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="DebtOpen"]
+script = ExtResource("3")
+flag = &"alliance_debt"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Six months earlier the three border nations had been three separate wars. Somewhere along the ridge the bargain with an Iron marshal stopped being a bargain and started being a front."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "I keep accounts the same as Vance does, Commander. Mine are shorter, and mine are honest. This is what the ridge cost."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "Four crossings my column should not have come out of, and it came out of every one behind somebody else's guns. That debt is written down, and it is mine."
+requires = SubResource("ColumnBroken")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "Both armies crossed the ridge intact — mine as well as yours. Neither of us managed that alone last winter, and I am not going to pretend I managed it this time."
+requires = SubResource("ColumnWhole")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"dane_ferrow"
+text = "Two of my outriders under his banner, and he calls that a bargain kept. The bill is still open, Draeg. They always are."
+requires = SubResource("DebtOpen")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+text = "Past the last crossing the road runs straight for sixty miles, and there is nothing standing on it but the capital and whoever got there first."
+
+[resource]
+script = ExtResource("1")
+after_block = 1
+title = "The Bargain"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

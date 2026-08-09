@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="CrownHollow"]
+script = ExtResource("3")
+flag = &"crown_hollow"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="CarriedHim"]
+script = ExtResource("3")
+flag = &"marshal_kept"
+at_least = 4
+at_most = -1
+
+[sub_resource type="Resource" id="StoodWithHim"]
+script = ExtResource("3")
+flag = &"marshal_kept"
+at_least = 0
+at_most = 3
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The fortress fell, and there was nothing behind it. No crown, no Directorate, and no marshal left with a claim worth pressing — except the one who had spent the whole war at somebody else's shoulder."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Two of his divisions came up our flank at the fortress and not one of them was under my orders. Morn asked whose war it was. He asked it standing in front of the answer."
+requires = SubResource("CrownHollow")
+unless = SubResource("CarriedHim")
+
+[sub_resource type="Resource" id="Line_2b"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Three of his divisions came up our flank at the fortress and not one of them was under my orders. Morn asked whose war it was. He asked it standing in front of the answer."
+requires = SubResource("CrownHollow")
+unless = SubResource("StoodWithHim")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "I hold the capital because three border armies decided I was the least of six bad outcomes. I intend to go on being the least of them."
+requires = SubResource("StoodWithHim")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "You carried me over every crossing there was, Commander, including the one nobody made you fight. That does not buy me the seat. It buys you the right to ask what I do with it."
+requires = SubResource("CarriedHim")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Then we'll ask. Every spring, if we have to — the same way he used to test our line."
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+text = "There was no coronation. There was a marshal in an empty hall, three borders that had learned to fight beside one another, and a season of quiet nobody was willing to call peace."
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "The Empty Seat"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_2b"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

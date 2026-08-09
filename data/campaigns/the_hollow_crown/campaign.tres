@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
 [ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc01_border_skirmish.tres" id="2"]
@@ -20,6 +20,8 @@
 [ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc17_the_high_seat.tres" id="18"]
 [ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/missions/hc18_the_hollow_crown.tres" id="19"]
 [ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/interludes/hc_block1_the_crack.tres" id="20"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/interludes/hc_block2_the_bargain.tres" id="21"]
+[ext_resource type="Resource" path="res://data/campaigns/the_hollow_crown/interludes/hc_block3_the_empty_seat.tres" id="22"]
 
 [resource]
 script = ExtResource("1")
@@ -30,4 +32,4 @@ antagonist = "The rival marshals of the Iron Dominion"
 missions = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19")])
 block_titles = Array[String](["The Crack", "The Bargain", "The Crown"])
 block_lengths = Array[int]([6, 6, 6])
-interludes = Array[Resource]([ExtResource("20")])
+interludes = Array[Resource]([ExtResource("20"), ExtResource("21"), ExtResource("22")])

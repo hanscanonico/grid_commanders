@@ -1,10 +1,18 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="13"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -46,6 +54,81 @@ script = ExtResource("5")
 speaker = &"cass_orlov"
 text = "No. They were not. The walls are yours to look at now, Commander — make of that what you will."
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("8")
+day = 2
+
+[sub_resource type="Resource" id="Condition_column_whole"]
+script = ExtResource("6")
+flag = &"draeg_column_broken"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Trigger_column_whole"]
+script = ExtResource("9")
+condition = SubResource("Condition_column_whole")
+
+[sub_resource type="Resource" id="Spawn_two_companies_1"]
+script = ExtResource("11")
+unit_type = ExtResource("12")
+cell = Vector2i(2, 5)
+
+[sub_resource type="Resource" id="Spawn_two_companies_2"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(3, 5)
+
+[sub_resource type="Resource" id="Effect_two_companies"]
+script = ExtResource("10")
+team = 1
+units = Array[Resource]([SubResource("Spawn_two_companies_1"), SubResource("Spawn_two_companies_2")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "I said we reach the capital together. Two of mine are on your right, Commander, and not one of them under your orders."
+
+[sub_resource type="Resource" id="Event_the_marshal_pays_up"]
+script = ExtResource("7")
+id = &"the_marshal_pays_up"
+triggers = Array[Resource]([SubResource("Trigger_column_whole"), SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_two_companies")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Condition_column_broken"]
+script = ExtResource("6")
+flag = &"draeg_column_broken"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_column_broken"]
+script = ExtResource("9")
+condition = SubResource("Condition_column_broken")
+
+[sub_resource type="Resource" id="Spawn_one_company"]
+script = ExtResource("11")
+unit_type = ExtResource("13")
+cell = Vector2i(2, 5)
+
+[sub_resource type="Resource" id="Effect_one_company"]
+script = ExtResource("10")
+team = 1
+units = Array[Resource]([SubResource("Spawn_one_company")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "One company is what the ridge left me. It is still yours."
+
+[sub_resource type="Resource" id="Event_what_the_ridge_left_him"]
+script = ExtResource("7")
+id = &"what_the_ridge_left_him"
+triggers = Array[Resource]([SubResource("Trigger_column_broken"), SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_one_company")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc13_the_capital_road"
@@ -65,6 +148,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_marshal_pays_up"), SubResource("Event_what_the_ridge_left_him")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

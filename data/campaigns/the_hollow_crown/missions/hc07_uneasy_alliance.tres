@@ -1,10 +1,15 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -18,8 +23,9 @@ last_day = 12
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property the alliance can reach."
-count = 5
+text = "Hold any three of the ridge road's cities at once."
+count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
@@ -46,6 +52,33 @@ script = ExtResource("5")
 speaker = &"viktor_draeg"
 text = "An uneasy alliance held its first test. I keep my word, Commander — remember that."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_the_left_flank"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(16, 3)
+
+[sub_resource type="Resource" id="Effect_the_left_flank"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_the_left_flank")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "My left flank is yours, Commander. I do not offer it to anyone twice."
+
+[sub_resource type="Resource" id="Event_the_flank_is_offered"]
+script = ExtResource("6")
+id = &"the_flank_is_offered"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_left_flank")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc07_uneasy_alliance"
@@ -67,6 +100,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_flank_is_offered")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

@@ -4,6 +4,10 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Draeg holds the half of the depot road you are not on. Take the relay inside
+# five days and his column is what spent the crossing covering the rest of the
+# ridge, which is what opens the ridge-road mission that asks you to carry him.
+# Working the road's cities for the bonus star instead is what costs you it.
 [terrain]
 .....................
 .....................

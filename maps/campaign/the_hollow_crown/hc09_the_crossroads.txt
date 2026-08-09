@@ -4,6 +4,8 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Morn's lead recon and Vance's western infantry are named: the rivals' exception
+# lasts exactly as long as Morn's column does.
 [terrain]
 .....................
 .....................
@@ -38,7 +40,7 @@
 2 r 16 2
 3 i 18 11
 3 i 17 10
-3 r 16 12
+3 r 16 12 morn_lead
 4 i 2 11
-4 i 3 10
+4 i 3 10 vance_flank
 4 r 4 12

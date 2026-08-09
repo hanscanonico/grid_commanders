@@ -4,6 +4,8 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Ferrow's paychest and purse are named: how much of his column walks away from
+# the wall depends on whether you emptied his ledger at the customs fort.
 [terrain]
 .....................
 .....................
@@ -39,6 +41,6 @@
 3 i 18 11
 3 i 17 10
 3 r 16 12
-4 i 2 11
+4 i 2 11 ferrow_purse
 4 i 3 10
-4 r 4 12
+4 r 4 12 ferrow_paychest_wall

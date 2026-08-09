@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -6,6 +6,11 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="11"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -24,8 +29,9 @@ last_day = 12
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
-text = "Hold every property the alliance can reach."
-count = 5
+text = "Hold any three of the ridge road's cities at once."
+count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
@@ -52,6 +58,57 @@ script = ExtResource("6")
 speaker = &"viktor_draeg"
 text = "Ferrow and Vance retreat to lick two very different wounds. I do not forget who stood with me here."
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("8")
+day = 2
+
+[sub_resource type="Resource" id="Effect_marshal_kept"]
+script = ExtResource("10")
+flag = &"marshal_kept"
+mode = 1
+value = 1
+note = "One more crossing fought with the marshal's banner still on the field."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "The depot road is yours as far as the fork, Commander. What I have left is holding the other half of it."
+
+[sub_resource type="Resource" id="Event_the_road_is_shared"]
+script = ExtResource("7")
+id = &"the_road_is_shared"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_marshal_kept")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_relay_taken"]
+script = ExtResource("9")
+objective = SubResource("Objective_0")
+
+[sub_resource type="Resource" id="Trigger_inside_five_days"]
+script = ExtResource("11")
+day = 5
+
+[sub_resource type="Resource" id="Effect_draeg_column_broken"]
+script = ExtResource("10")
+flag = &"draeg_column_broken"
+value = 1
+note = "The relay fell inside five days, and it was Draeg's column that spent the crossing holding every other yard of the ridge."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"viktor_draeg"
+text = "Five days to the relay, Commander. My column held every other yard of the ridge to buy them for you, and there is not much of it left."
+
+[sub_resource type="Resource" id="Event_how_thin_the_column_is"]
+script = ExtResource("7")
+id = &"how_thin_the_column_is"
+triggers = Array[Resource]([SubResource("Trigger_relay_taken"), SubResource("Trigger_inside_five_days")])
+effects = Array[Resource]([SubResource("Effect_draeg_column_broken")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"hc08_shared_supply"
@@ -73,6 +130,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+events = Array[Resource]([SubResource("Event_the_road_is_shared"), SubResource("Event_how_thin_the_column_is")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
