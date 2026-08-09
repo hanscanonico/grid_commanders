@@ -9,7 +9,7 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
-[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
