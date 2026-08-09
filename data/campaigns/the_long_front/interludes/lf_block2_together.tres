@@ -47,13 +47,13 @@ requires = SubResource("Carrow_late")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Averyn's ground is back on our maps. Not the town — Morn saw to that — but the acres, and he does not get to keep them."
+text = "Averyn's ground was back on our maps inside the week. Not the town — Morn saw to that — but the acres, and he never got to garrison them."
 requires = SubResource("Averyn_held")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Averyn is still a garrison of his, standing on ashes. Log it and keep walking; there is a highland range in front of us."
+text = "Averyn's acres came back the slow way, after he had garrisoned the ashes and priced them. Log the cost and keep walking; there is a highland range in front of us."
 requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_6"]

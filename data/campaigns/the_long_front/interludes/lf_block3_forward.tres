@@ -83,7 +83,7 @@ requires = SubResource("Carrow_early")
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Averyn's acres are ours and its town is not. There is a stone going up on the ground we took back, and no plan to rebuild on it."
+text = "Averyn's acres came back inside the week and its town did not come back at all. There is a stone going up on the ground we took back, and no plan to rebuild on it."
 requires = SubResource("Averyn_held")
 
 [sub_resource type="Resource" id="Line_8"]

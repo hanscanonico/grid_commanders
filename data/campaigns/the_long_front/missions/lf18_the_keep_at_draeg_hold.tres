@@ -70,7 +70,7 @@ requires = SubResource("Averyn_held")
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Averyn's ground is still his, behind us. Whatever happens on this hill, that is the one thing we never took back."
+text = "Averyn's ground came back to us late, behind us, and Morn set the price on every acre of it. Whatever happens on this hill, that is the one bill we never got out from under."
 requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_2"]

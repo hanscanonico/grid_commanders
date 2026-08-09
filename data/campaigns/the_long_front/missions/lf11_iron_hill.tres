@@ -11,11 +11,11 @@
 [ext_resource type="Resource" path="res://data/units/md_tank.tres" id="9"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
 
-[sub_resource type="Resource" id="Gate_carrow_was_slow"]
+[sub_resource type="Resource" id="Gate_carrow_opened_the_east"]
 script = ExtResource("4")
 flag = &"carrow_early"
-at_least = 0
-at_most = 0
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Objective_hold_iron_hill"]
 script = ExtResource("2")
@@ -90,7 +90,7 @@ id = &"lf11_iron_hill"
 title = "Iron Hill"
 location = "The eastern rise, allied front"
 map_path = "res://maps/campaign/the_long_front/lf11_iron_hill.txt"
-unlock_requires = SubResource("Gate_carrow_was_slow")
+unlock_requires = SubResource("Gate_carrow_opened_the_east")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])

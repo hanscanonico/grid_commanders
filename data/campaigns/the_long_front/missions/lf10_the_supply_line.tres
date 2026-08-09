@@ -49,10 +49,10 @@ text = "Supply district still feeds the front. That's the whole of what this was
 script = ExtResource("5")
 day = 4
 
-[sub_resource type="Resource" id="Trigger_south_city_ours"]
+[sub_resource type="Resource" id="Trigger_south_city_his"]
 script = ExtResource("6")
 cell = Vector2i(9, 5)
-holder = 0
+holder = 1
 
 [sub_resource type="Resource" id="Effect_burn_the_south_city"]
 script = ExtResource("7")
@@ -64,7 +64,7 @@ script = ExtResource("8")
 flag = &"cities_burned"
 mode = 0
 value = 1
-note = "Ferrow burned the district's southern city out from under you."
+note = "Ferrow's raiders took the district's southern city and burned it behind them."
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
@@ -74,7 +74,7 @@ text = "I don't need your cities, quartermaster. I need them gone. That's one."
 [sub_resource type="Resource" id="Event_ferrow_burns_one"]
 script = ExtResource("4")
 id = &"ferrow_burns_one"
-triggers = Array[Resource]([SubResource("Trigger_day_4"), SubResource("Trigger_south_city_ours")])
+triggers = Array[Resource]([SubResource("Trigger_day_4"), SubResource("Trigger_south_city_his")])
 effects = Array[Resource]([SubResource("Effect_burn_the_south_city"), SubResource("Effect_cities_burned")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])

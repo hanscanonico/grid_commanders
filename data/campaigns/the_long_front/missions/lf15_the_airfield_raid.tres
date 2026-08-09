@@ -64,7 +64,7 @@ day = 5
 [sub_resource type="Resource" id="Spawn_interceptor"]
 script = ExtResource("9")
 unit_type = ExtResource("10")
-cell = Vector2i(12, 3)
+cell = Vector2i(13, 3)
 
 [sub_resource type="Resource" id="Effect_the_strip_is_live"]
 script = ExtResource("8")
