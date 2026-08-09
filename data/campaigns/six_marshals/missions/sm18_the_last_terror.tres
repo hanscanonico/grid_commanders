@@ -1,10 +1,23 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=72 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="15"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="16"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="17"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="18"]
 
 [sub_resource type="Resource" id="Objective_hold_the_heartland_line_until_day_9"]
 script = ExtResource("2")
@@ -15,6 +28,11 @@ day = 9
 script = ExtResource("3")
 text = "The line broke before day 9."
 last_day = 9
+
+[sub_resource type="Resource" id="Failure_nothing_worth_the_charge"]
+script = ExtResource("6")
+text = "Let his one great strike find nothing worth the charge. Lose no more than nine units, to any cause."
+max_losses = 9
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
 script = ExtResource("4")
@@ -51,6 +69,241 @@ script = ExtResource("5")
 speaker = &"gideon_holt"
 text = "Six marshals crossed the border. Six marshals were answered."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("8")
+day = 3
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("8")
+day = 4
+
+[sub_resource type="Resource" id="Trigger_day_6"]
+script = ExtResource("8")
+day = 6
+
+[sub_resource type="Resource" id="Effect_charge_the_hammer"]
+script = ExtResource("11")
+team = 2
+points = 8000
+
+[sub_resource type="Resource" id="Event_line_charge"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "The charge is ready, Commander, and this time there is nowhere behind you to spread into."
+
+[sub_resource type="Resource" id="Event_the_charge_is_ready"]
+script = ExtResource("7")
+id = &"the_charge_is_ready"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_charge_the_hammer")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_charge")])
+
+[sub_resource type="Resource" id="Effect_recall_the_reserve"]
+script = ExtResource("15")
+tags = Array[StringName]([&"morn_reserve"])
+
+[sub_resource type="Resource" id="Event_line_recall_1"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "…The Directorate has recalled my reserve. They have decided the succession without me."
+
+[sub_resource type="Resource" id="Event_line_recall_2"]
+script = ExtResource("5")
+speaker = &"alina_ward"
+text = "Then hold the line one more day, and let him find out what that feels like."
+
+[sub_resource type="Resource" id="Event_the_directorate_recalls_him"]
+script = ExtResource("7")
+id = &"the_directorate_recalls_him"
+triggers = Array[Resource]([SubResource("Trigger_day_6")])
+effects = Array[Resource]([SubResource("Effect_recall_the_reserve")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_recall_1"), SubResource("Event_line_recall_2")])
+
+[sub_resource type="Resource" id="Ferrow_was_paid"]
+script = ExtResource("10")
+flag = &"ferrow_paid"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_ferrow_was_paid"]
+script = ExtResource("9")
+condition = SubResource("Ferrow_was_paid")
+
+[sub_resource type="Resource" id="Effect_ferrows_cut"]
+script = ExtResource("12")
+team = 2
+amount = 3000
+
+[sub_resource type="Resource" id="Event_line_ferrow"]
+script = ExtResource("5")
+speaker = &"dane_ferrow"
+text = "I sold him what I took off you, Commander. Do not imagine I gave him a discount."
+
+[sub_resource type="Resource" id="Event_ferrow_sold_it_on"]
+script = ExtResource("7")
+id = &"ferrow_sold_it_on"
+triggers = Array[Resource]([SubResource("Trigger_ferrow_was_paid"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_ferrows_cut")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_ferrow")])
+
+[sub_resource type="Resource" id="Vale_kept_the_factory"]
+script = ExtResource("10")
+flag = &"vale_factory"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_vale_kept_the_factory"]
+script = ExtResource("9")
+condition = SubResource("Vale_kept_the_factory")
+
+[sub_resource type="Resource" id="Effect_the_crossroads_dividend"]
+script = ExtResource("12")
+team = 2
+amount = 4000
+
+[sub_resource type="Resource" id="Event_line_vale"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "My crossroads is still running, and it does not care which marshal it runs for."
+
+[sub_resource type="Resource" id="Event_the_crossroads_outlives_him"]
+script = ExtResource("7")
+id = &"the_crossroads_outlives_him"
+triggers = Array[Resource]([SubResource("Trigger_vale_kept_the_factory"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_crossroads_dividend")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_vale")])
+
+[sub_resource type="Resource" id="Orlov_has_a_trophy"]
+script = ExtResource("10")
+flag = &"orlov_trophy"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_orlov_has_a_trophy"]
+script = ExtResource("9")
+condition = SubResource("Orlov_has_a_trophy")
+
+[sub_resource type="Resource" id="Spawn_orlovs_hunter"]
+script = ExtResource("14")
+unit_type = ExtResource("16")
+cell = Vector2i(15, 8)
+
+[sub_resource type="Resource" id="Effect_orlovs_hunter"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_orlovs_hunter")])
+
+[sub_resource type="Resource" id="Event_line_orlov"]
+script = ExtResource("5")
+speaker = &"cass_orlov"
+text = "I keep what I catch, Commander. I lent him one of my people to show him how."
+
+[sub_resource type="Resource" id="Event_orlov_keeps_what_he_catches"]
+script = ExtResource("7")
+id = &"orlov_keeps_what_he_catches"
+triggers = Array[Resource]([SubResource("Trigger_orlov_has_a_trophy"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_orlovs_hunter")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_orlov")])
+
+[sub_resource type="Resource" id="Vance_dug_in"]
+script = ExtResource("10")
+flag = &"vance_dug_in"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_vance_dug_in"]
+script = ExtResource("9")
+condition = SubResource("Vance_dug_in")
+
+[sub_resource type="Resource" id="Spawn_vances_levy"]
+script = ExtResource("14")
+unit_type = ExtResource("17")
+cell = Vector2i(16, 8)
+
+[sub_resource type="Resource" id="Effect_vances_levy"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_vances_levy")])
+
+[sub_resource type="Resource" id="Event_line_vance"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "Compounding, still. The days you gave me at the depot are standing in front of you."
+
+[sub_resource type="Resource" id="Event_vance_still_compounding"]
+script = ExtResource("7")
+id = &"vance_still_compounding"
+triggers = Array[Resource]([SubResource("Trigger_vance_dug_in"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_vances_levy")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_vance")])
+
+[sub_resource type="Resource" id="Draegs_column_intact"]
+script = ExtResource("10")
+flag = &"draeg_column_intact"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_draegs_column_intact"]
+script = ExtResource("9")
+condition = SubResource("Draegs_column_intact")
+
+[sub_resource type="Resource" id="Spawn_draegs_hull"]
+script = ExtResource("14")
+unit_type = ExtResource("18")
+cell = Vector2i(16, 11)
+
+[sub_resource type="Resource" id="Effect_draegs_hull"]
+script = ExtResource("13")
+team = 2
+units = Array[Resource]([SubResource("Spawn_draegs_hull")])
+
+[sub_resource type="Resource" id="Event_line_draeg"]
+script = ExtResource("5")
+speaker = &"viktor_draeg"
+text = "My column keeps its word, Commander. Even to him."
+
+[sub_resource type="Resource" id="Event_draegs_column_keeps_its_word"]
+script = ExtResource("7")
+id = &"draegs_column_keeps_its_word"
+triggers = Array[Resource]([SubResource("Trigger_draegs_column_intact"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_draegs_hull")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_draeg")])
+
+[sub_resource type="Resource" id="Morn_never_spent_it"]
+script = ExtResource("10")
+flag = &"morn_charged"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_morn_never_spent_it"]
+script = ExtResource("9")
+condition = SubResource("Morn_never_spent_it")
+
+[sub_resource type="Resource" id="Effect_the_old_charge"]
+script = ExtResource("11")
+team = 2
+points = 6000
+
+[sub_resource type="Resource" id="Event_line_morn"]
+script = ExtResource("5")
+speaker = &"radek_morn"
+text = "I have been carrying this since the wide field, Commander. It was never for you. It was for whoever was still standing at the end."
+
+[sub_resource type="Resource" id="Event_morn_never_spent_it"]
+script = ExtResource("7")
+id = &"morn_never_spent_it"
+triggers = Array[Resource]([SubResource("Trigger_morn_never_spent_it"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_old_charge")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_morn")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm18_the_last_terror"
@@ -68,8 +321,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_the_heartland_line_until_day_9")])
-failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_9")])
+failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_9"), SubResource("Failure_nothing_worth_the_charge")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_town_for_a_bonus")])
+events = Array[Resource]([SubResource("Event_ferrow_sold_it_on"), SubResource("Event_the_crossroads_outlives_him"), SubResource("Event_orlov_keeps_what_he_catches"), SubResource("Event_vance_still_compounding"), SubResource("Event_draegs_column_keeps_its_word"), SubResource("Event_morn_never_spent_it"), SubResource("Event_the_charge_is_ready"), SubResource("Event_the_directorate_recalls_him")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

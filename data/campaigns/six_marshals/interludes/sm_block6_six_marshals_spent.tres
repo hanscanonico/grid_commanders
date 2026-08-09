@@ -1,0 +1,92 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Ferrow_paid"]
+script = ExtResource("3")
+flag = &"ferrow_paid"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Vale_factory"]
+script = ExtResource("3")
+flag = &"vale_factory"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Orlov_trophy"]
+script = ExtResource("3")
+flag = &"orlov_trophy"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Vance_dug_in"]
+script = ExtResource("3")
+flag = &"vance_dug_in"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Draeg_column"]
+script = ExtResource("3")
+flag = &"draeg_column_intact"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Morn_charged"]
+script = ExtResource("3")
+flag = &"morn_charged"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The Directorate never was choosing a successor. It was spending six marshals against one border to see which of them came back cheapest, and the border kept all six answers."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Ferrow went home paid, in wrecks off our own column."
+requires = SubResource("Ferrow_paid")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Vale's crossroads factory is still standing in our half of the map, still under contract to nobody."
+requires = SubResource("Vale_factory")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Orlov left with a trophy, and with a list of which of ours limps first."
+requires = SubResource("Orlov_trophy")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Vance filed her losses as an investment, and the auditors agreed with her."
+requires = SubResource("Vance_dug_in")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Draeg's column came off this border in the order it went on."
+requires = SubResource("Draeg_column")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "And Morn carried a charged Hammerfall out of the wide field and never found a target for it."
+requires = SubResource("Morn_charged")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Six wars, six answers, one border. Whoever they send next will have read all of them."
+
+[resource]
+script = ExtResource("1")
+after_block = 5
+title = "Six Marshals, Spent"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8")])

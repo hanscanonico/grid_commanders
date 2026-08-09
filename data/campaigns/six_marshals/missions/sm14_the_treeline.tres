@@ -1,19 +1,34 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_four_towns"]
 script = ExtResource("2")
 text = "Hold three of the four towns."
 count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_towns_stayed_split_past_day_10"]
 script = ExtResource("3")
 text = "The towns stayed split past day 10."
 last_day = 10
+
+[sub_resource type="Resource" id="Bonus_break_the_lead"]
+script = ExtResource("5")
+text = "Kill the tank leading Draeg's line into the woods."
+tag = &"draeg_lead"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -40,6 +55,70 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Fifteen percent harder means nothing at zero range in the open he never got."
 
+[sub_resource type="Resource" id="Trigger_lead_gone"]
+script = ExtResource("7")
+tag = &"draeg_lead"
+
+[sub_resource type="Resource" id="Spawn_next_hull"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(15, 8)
+
+[sub_resource type="Resource" id="Effect_next_hull"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_next_hull")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "One hull in your woods. I have more hulls than you have woods, Commander."
+
+[sub_resource type="Resource" id="Event_no_lane"]
+script = ExtResource("6")
+id = &"no_lane"
+triggers = Array[Resource]([SubResource("Trigger_lead_gone")])
+effects = Array[Resource]([SubResource("Effect_next_hull")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Column_through_the_gate"]
+script = ExtResource("10")
+flag = &"draeg_column_intact"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_column_through_the_gate"]
+script = ExtResource("9")
+condition = SubResource("Column_through_the_gate")
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("8")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_gate_column"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(15, 2)
+
+[sub_resource type="Resource" id="Effect_gate_column"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_gate_column")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"viktor_draeg"
+text = "The column you let through the gate. It is in your treeline now, and it kept its formation the whole way."
+
+[sub_resource type="Resource" id="Event_the_gate_column_arrives"]
+script = ExtResource("6")
+id = &"the_gate_column_arrives"
+triggers = Array[Resource]([SubResource("Trigger_column_through_the_gate"), SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_gate_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm14_the_treeline"
@@ -58,7 +137,8 @@ fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_towns")])
 failures = Array[Resource]([SubResource("Failure_the_towns_stayed_split_past_day_10")])
-bonus_objectives = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_lead")])
+events = Array[Resource]([SubResource("Event_no_lane"), SubResource("Event_the_gate_column_arrives")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

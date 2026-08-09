@@ -1,14 +1,36 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="13"]
+
+; Measured with the scripted beats live: sixteen seeds of the skirmish planner
+; playing both sides, against `last_day` 8 and `par_day` 6. The three hamlets are
+; held on day 7 in eleven seeds, on day 8 in four, and never in one, so the mission
+; is decided fifteen times in sixteen inside its own deadline and the one loss is
+; the clock. Par is not reached by the planner; by hand a player who builds on days
+; one and two takes (9,2) and (5,1) by day 4 and (2,6) by day 5.
+;
+; The clock is the whole of the difficulty here, and it is the only failure this
+; board carries. A second, escort failure on the recon was measured against the
+; same sixteen seeds and cost five of them on days 4-6 — before the capture race it
+; sat on top of could possibly finish — which is a mission decided by an errand
+; rather than by its own objective.
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_four_hamlets"]
 script = ExtResource("2")
 text = "Hold three of the four hamlets."
 count = 3
+terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_hamlets_stayed_split_past_day_8"]
 script = ExtResource("3")
@@ -40,6 +62,71 @@ script = ExtResource("4")
 speaker = &"gideon_holt"
 text = "Orlov never got the low-health kill he came hunting for."
 
+[sub_resource type="Resource" id="Trigger_far_hamlet_ours"]
+script = ExtResource("7")
+cell = Vector2i(6, 7)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_flanker"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(9, 5)
+
+[sub_resource type="Resource" id="Effect_flanker"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_flanker")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "You reached for the far one. Now show me what you left behind you."
+
+[sub_resource type="Resource" id="Event_what_you_left_behind"]
+script = ExtResource("6")
+id = &"what_you_left_behind"
+triggers = Array[Resource]([SubResource("Trigger_far_hamlet_ours")])
+effects = Array[Resource]([SubResource("Effect_flanker")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Has_a_trophy"]
+script = ExtResource("10")
+flag = &"orlov_trophy"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_has_a_trophy"]
+script = ExtResource("9")
+condition = SubResource("Has_a_trophy")
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("8")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_second_hunter"]
+script = ExtResource("12")
+unit_type = ExtResource("13")
+cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Effect_second_hunter"]
+script = ExtResource("11")
+team = 2
+units = Array[Resource]([SubResource("Spawn_second_hunter")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"cass_orlov"
+text = "I still have the one I took off the ridge, Commander. It taught me which of yours limps first."
+
+[sub_resource type="Resource" id="Event_the_trophy_talks"]
+script = ExtResource("6")
+id = &"the_trophy_talks"
+triggers = Array[Resource]([SubResource("Trigger_has_a_trophy"), SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_second_hunter")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm08_close_quarters"
@@ -59,6 +146,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_hamlets")])
 failures = Array[Resource]([SubResource("Failure_the_hamlets_stayed_split_past_day_8")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_what_you_left_behind"), SubResource("Event_the_trophy_talks")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

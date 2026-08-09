@@ -1,9 +1,14 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
 
 [sub_resource type="Resource" id="Objective_take_road_city"]
 script = ExtResource("2")
@@ -14,6 +19,11 @@ cell = Vector2i(5, 3)
 script = ExtResource("3")
 text = "The road stayed closed past day 8."
 last_day = 8
+
+[sub_resource type="Resource" id="Failure_the_toll"]
+script = ExtResource("5")
+text = "Ferrow was paid three times over. Lose no more than two units, to any cause."
+max_losses = 2
 
 [sub_resource type="Resource" id="Bonus_south_city"]
 script = ExtResource("2")
@@ -50,6 +60,37 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "He was paid in nothing. That is the only language he reads."
 
+[sub_resource type="Resource" id="Trigger_down_to_two"]
+script = ExtResource("7")
+team = 1
+bound = 0
+count = 2
+
+[sub_resource type="Resource" id="Effect_toll_funds"]
+script = ExtResource("8")
+team = 2
+amount = 4000
+
+[sub_resource type="Resource" id="Effect_ferrow_paid"]
+script = ExtResource("9")
+flag = &"ferrow_paid"
+mode = 0
+value = 1
+note = "Ferrow's raiders went home paid, in wrecks off our own column."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Two wrecks on the customs road. That is the toll, Commander, and it is paid — in your coin, into my column."
+
+[sub_resource type="Resource" id="Event_the_toll_is_paid"]
+script = ExtResource("6")
+id = &"the_toll_is_paid"
+triggers = Array[Resource]([SubResource("Trigger_down_to_two")])
+effects = Array[Resource]([SubResource("Effect_toll_funds"), SubResource("Effect_ferrow_paid")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"sm01_border_toll"
@@ -67,8 +108,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_road_city")])
-failures = Array[Resource]([SubResource("Failure_day_8")])
+failures = Array[Resource]([SubResource("Failure_day_8"), SubResource("Failure_the_toll")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_south_city")])
+events = Array[Resource]([SubResource("Event_the_toll_is_paid")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
