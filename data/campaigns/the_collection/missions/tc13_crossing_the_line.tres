@@ -9,7 +9,7 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="9"]
-[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
@@ -80,22 +80,20 @@ count = 1
 script = ExtResource("14")
 objective = SubResource("Column_on_the_crossing")
 
-[sub_resource type="Resource" id="Effect_the_levy_walks"]
+[sub_resource type="Resource" id="Effect_the_levy_goes_home"]
 script = ExtResource("10")
-from_team = 2
-to_team = 1
 tags = Array[StringName]([&"border_levy"])
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "Ferrow. The audit is a forgery and my men will not die for it. Neither will your border levy."
+text = "Ferrow. The audit is a forgery and my men will not die for it. Neither will your border levy — they have put their rifles down and walked home."
 
 [sub_resource type="Resource" id="Event_the_border_levy"]
 script = ExtResource("6")
 id = &"the_border_levy"
 triggers = Array[Resource]([SubResource("Trigger_forgery_provable"), SubResource("Trigger_column_on_the_crossing")])
-effects = Array[Resource]([SubResource("Effect_the_levy_walks")])
+effects = Array[Resource]([SubResource("Effect_the_levy_goes_home")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
