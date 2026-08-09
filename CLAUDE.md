@@ -1536,7 +1536,7 @@ res://
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip,
 │              # the in-battle mission objective card and scripted-beat speech card
-├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, CampaignSession
+├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, Music, CampaignSession
 │              # (project.godot also registers _mcp_game_helper, the godot_ai editor
 │              # addon's runtime — it loads in every run today; keeping it out of export
 │              # builds is an open decision, recorded here so the extra autoload is
@@ -1546,7 +1546,8 @@ res://
 ├─ maps/        # map scenes / map resources (campaign boards under maps/campaign/)
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
-│              # (tools/arena/), replay analyser (tools/replay/), art & sfx pipeline
+│              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
+│              # pipeline
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
 │              # commander matrix, the difficulty ladder, the arena, Bulwark's spread)
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)

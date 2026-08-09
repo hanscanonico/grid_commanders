@@ -246,6 +246,7 @@ func _ready() -> void:
 			# it out. Non-zero, like a capture that fails its own gate.
 			get_tree().quit(1)
 		return
+	Music.play(&"advance")
 	map = built.map
 	game = built.game
 	ai_teams = built.ai_teams

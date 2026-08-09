@@ -82,6 +82,7 @@ func enter_victory() -> void:
 	# mid-turn is still being animated then, and progress written before the
 	# player has seen the result is progress they cannot connect to anything.
 	CampaignSession.record(_battle.game)
+	Music.stop()  # the fanfare stands alone over the victory screen
 	Sfx.play(&"fanfare")
 	victory_screen.announce(_result_text(), _day_text(), _action_word())
 	_bind_victory_commander()
