@@ -52,9 +52,9 @@ script = ExtResource("4")
 speaker = &"alina_ward"
 text = "Every day we don't give her is a day her edge doesn't get to spend."
 
-[sub_resource type="Resource" id="Trigger_day_4"]
+[sub_resource type="Resource" id="Trigger_day_5"]
 script = ExtResource("6")
-day = 4
+day = 5
 
 [sub_resource type="Resource" id="Effect_compounded_funds"]
 script = ExtResource("7")
@@ -76,17 +76,17 @@ script = ExtResource("10")
 flag = &"vance_dug_in"
 mode = 0
 value = 1
-note = "Vance was given four days at the depot, and reported the cost of them as an investment."
+note = "Vance was given five days at the depot, and reported the cost of them as an investment."
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Day four. Three percent, four times over. You are already fighting a different army, Commander."
+text = "Day five. Three percent, five times over. You are already fighting a different army, Commander."
 
-[sub_resource type="Resource" id="Event_three_percent_four_times"]
+[sub_resource type="Resource" id="Event_three_percent_five_times"]
 script = ExtResource("5")
-id = &"three_percent_four_times"
-triggers = Array[Resource]([SubResource("Trigger_day_4")])
+id = &"three_percent_five_times"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
 effects = Array[Resource]([SubResource("Effect_compounded_funds"), SubResource("Effect_dug_in_armour"), SubResource("Effect_vance_dug_in")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
@@ -110,7 +110,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_forward_depot_before_vance_")])
 failures = Array[Resource]([SubResource("Failure_the_depot_stayed_contested_past_day_")])
 bonus_objectives = Array[Resource]([])
-events = Array[Resource]([SubResource("Event_three_percent_four_times")])
+events = Array[Resource]([SubResource("Event_three_percent_five_times")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
