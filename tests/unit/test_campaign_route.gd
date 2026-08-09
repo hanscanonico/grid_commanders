@@ -143,6 +143,37 @@ func test_a_campaign_with_a_skipped_optional_mission_reports_complete() -> void:
 	assert_false(state.is_cleared(&"two"))
 
 
+func test_a_war_counts_the_missions_it_can_still_offer() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].unlock_requires = _condition(HELD)
+	var state := CampaignState.begin(campaign)
+	assert_eq(state.offered_count(campaign), 3, "nothing has been walked past yet")
+	state.complete(campaign, &"one", 1, 3)
+	assert_eq(state.offered_count(campaign), 2, "and the road not taken leaves the total")
+
+
+## The picker is the other surface that says how far a war has got, and it has to
+## say the same thing the hub does: one campaign, one notion of finished.
+func test_the_campaign_list_reads_a_war_finished_off_the_route() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].unlock_requires = _condition(HELD)
+	var state := CampaignState.begin(campaign)
+	state.complete(campaign, &"one", 1, 3)
+	assert_string_contains(
+		CampaignPickerPanel.row_text(campaign, state), "1/2", "out of what is left to play"
+	)
+	state.complete(campaign, &"three", 1, 3)
+	assert_string_contains(
+		CampaignPickerPanel.row_text(campaign, state),
+		"complete",
+		"a war with nothing left to offer is finished on the list as well as in the route"
+	)
+
+
+func test_the_campaign_list_says_new_for_a_war_with_no_profile() -> void:
+	assert_string_contains(CampaignPickerPanel.row_text(_campaign(), null), "new")
+
+
 func test_a_campaign_is_unfinished_while_any_mission_it_opened_is() -> void:
 	var campaign := _campaign()
 	var state := CampaignState.begin(campaign)

@@ -137,7 +137,7 @@ func _fill(campaigns: Array[CampaignDefinition]) -> void:
 	_empty.visible = campaigns.is_empty()
 	for campaign in campaigns:
 		var button := Button.new()
-		button.text = _row_text(campaign)
+		button.text = row_text(campaign, CampaignProfile.load_progress(campaign.id))
 		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
 		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -149,19 +149,33 @@ func _fill(campaigns: Array[CampaignDefinition]) -> void:
 		_ids.append(campaign.id)
 
 
-## "The Six Marshals — 4/18 · 9 stars", or "— new" for one never opened. The
-## progress half is read off the campaign's own profile, so a row answers "which
-## one was I in?" without opening it.
-func _row_text(campaign: CampaignDefinition) -> String:
-	var progress := CampaignProfile.load_progress(campaign.id)
+## "The Six Marshals — 4/18 · 9 stars", or "— new" for a war with no profile, or
+## "— complete" for one with nothing left to offer.
+##
+## Both halves are the **route's** answers, never the list's: finished is
+## `is_complete` and the total is `offered_count`, the same two the hub's headline
+## reads. A row counting the whole list said "17/18" forever to a player the war
+## had no eighteenth mission for — the campaign finished on the hub and stayed
+## unfinished here, which is one campaign with two notions of done. It is the
+## offered total rather than the authored one on the same reasoning: a road the
+## route walked past can never be cleared, so counting it is counting to a number
+## nobody can reach.
+##
+## Static and argument-taking so the row can be read without a profile on disk and
+## without the page — `SeatStrip.normalised_sides`' shape, for its reason.
+static func row_text(campaign: CampaignDefinition, progress: CampaignState) -> String:
 	if progress == null:
 		return "%s   —   new" % campaign.title
-	var cleared := progress.records.size()
-	if cleared >= campaign.mission_count():
+	if progress.is_complete(campaign):
 		return "%s   —   complete · %d stars" % [campaign.title, progress.total_stars()]
 	return (
 		"%s   —   %d/%d · %d stars"
-		% [campaign.title, cleared, campaign.mission_count(), progress.total_stars()]
+		% [
+			campaign.title,
+			progress.records.size(),
+			progress.offered_count(campaign),
+			progress.total_stars()
+		]
 	)
 
 

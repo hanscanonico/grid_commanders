@@ -72,7 +72,7 @@ func begin(campaign: CampaignDefinition, progress: CampaignState) -> void:
 	# campaign that always reads unfinished.
 	_subtitle.text = (
 		"%d of %d cleared · %d stars"
-		% [progress.records.size(), _offered(), progress.total_stars()]
+		% [progress.records.size(), progress.offered_count(campaign), progress.total_stars()]
 	)
 	_fill_war()
 	_fill()
@@ -260,16 +260,6 @@ func _army_line() -> String:
 		var named := type.display_name if type != null else String(carried.unit_id)
 		standing.append("%s %d" % [named.to_upper(), carried.hp])
 	return " · ".join(standing)
-
-
-## How many missions this war is still able to offer: the ones the route has
-## already walked past cannot be played and do not belong in a total.
-func _offered() -> int:
-	var offered := 0
-	for mission: MissionDefinition in _campaign.missions:
-		if not _progress.is_skipped(_campaign, mission.id):
-			offered += 1
-	return offered
 
 
 # --- the list ----------------------------------------------------------------

@@ -23,6 +23,10 @@ var _interlude: CampaignInterludePanel
 ## then dropped. Held here because the session that named the mission is cleared
 ## as the debrief opens.
 var _pending: CampaignInterlude
+## The war the pending page is read against — the same `CampaignState` the debrief
+## spoke to rather than the profile re-read off disk, so the two pages of one beat
+## cannot disagree about how the block went when a progress write fails.
+var _pending_ledger: CampaignState
 ## The menu stack the panels are shown over, hidden while either is up.
 var _menu_root: Control
 ## Where a Back from the campaign list lands.
@@ -80,6 +84,7 @@ func resume() -> bool:
 	var stars := CampaignSession.max_stars()
 	var progress := CampaignSession.progress
 	_pending = _closing_interlude(campaign, mission, outcome)
+	_pending_ledger = progress
 	# The ledger has already settled — `CampaignSession.record` runs on the victory
 	# screen — so the debrief speaks against the war as it now stands, which is what
 	# a variant victory line is written against, and reports what that write took.
@@ -127,9 +132,9 @@ func _after_debrief() -> void:
 	if _pending == null:
 		_show_hub(_campaign)
 		return
-	var progress := CampaignProfile.load_progress(_campaign.id)
-	_interlude.begin(_pending, progress)
+	_interlude.begin(_pending, _pending_ledger)
 	_pending = null
+	_pending_ledger = null
 
 
 func _after_interlude() -> void:

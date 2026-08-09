@@ -1173,7 +1173,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
   beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
   the army a mission hands the next one, interludes and optional missions, across all six wars.
-  Milestones CD1–CD8, **CD1–CD5 shipped**. It is the design of record for the campaign's *depth*;
+  Milestones CD1–CD8, **CD1–CD6 shipped**. It is the design of record for the campaign's *depth*;
   the **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
   data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
   read together. It retired exactly one clause of that entry — D2's "no evacuate/escort/convoy
@@ -1376,6 +1376,44 @@ that must survive any change; the full rationale, milestones and risk registers 
   standing on a friendly property misses day-one repair — chosen over threading a roster into the
   sim's constructor for one day of one property's repair, deterministic either way, recorded rather
   than hidden.
+  **CD6 shipped interludes and optional missions on D7, and the route is the whole of it; the plan's
+  own "What CD6 settled" carries the rest.**
+  **`CampaignState.open_mission` is the ONE authority for what a war offers next** — the campaign's
+  order narrowed by what the war has recorded — and `CampaignDefinition.next_mission_id` is
+  **deleted** for being a second answer to it, which is exactly what that class's own header forbids
+  ("two sources for what comes after this is how a campaign ends up with a mission nothing
+  reaches"). Its one production caller, the debrief's NEXT line, moved onto the route, and three
+  readers now share that one walk.
+  **The route is derived and its answer is latched, and pure derivation is the wrong answer**:
+  `unlock_requires` is **not monotone in the ledger** — `at_most 0` is the ordinary shape of an
+  optional mission (the shipped one opens only if you did *not* bloody Morn's vanguard) while flags
+  only ever grow — so a freshly-asked gate would **close a mission the player is standing on** the
+  moment a later beat wrote that fact. `complete` latches the walk's answer into `unlocked`, which
+  nothing ever removes from, and `_opens` is the one line that is the invariant: already-unlocked
+  opens whatever the war now records. A naive latch alone cannot skip a closed mission, which is the
+  feature, so it is both or neither.
+  **The route is forward-only and that is enforced rather than assumed**: `route_error` fails
+  `make campaigns` for a gate with `at_least > 0` whose fact no **earlier** mission writes, so a
+  gate's value is settled before the route reaches it — which is what makes "derive fresh" and
+  "latch once" the same answer. A gate asking for a fact to be *absent* is the road not taken and is
+  deliberately unheld. Re-opening a mission behind the frontier was rejected: it drags the route
+  backwards into a state nothing in the fiction asked for.
+  **`is_complete` means the war has no mission left to offer** (`open_mission == &""`), and
+  `offered_count` is its denominator — the list less the roads walked past. **Every surface counting
+  progress reads those two**, the hub's headline and the campaign list's row alike, because one
+  campaign may have only one notion of finished: a picker counting the authored list read "17/18"
+  forever for a war whose eighteenth mission nobody could play.
+  **An interlude belongs to the mission that closes the block**, never to "the route left the
+  block" — `CampaignDefinition.closes_block`, and only on a win. Stated consequence: a future author
+  who gates a block's last mission and has it skipped never plays that block's page. Chosen because
+  every block closer in all three authoring specs is mandatory, and the route-based alternative
+  re-fires the page whenever a player replays any earlier mission of a finished block.
+  **The save format did not move** — still profile VERSION 4: a gated route is a pure function of
+  records and flags, both already saved, and it latches into `unlocked`, which already round-trips;
+  a pre-CD6 profile holding the optional mission open keeps it open by `_opens`' latch clause.
+  One mission was touched beyond the milestone's two artifacts and it was forced: an optional mission
+  needs a fact and a fact needs a writer or `route_error` refuses it, so `hc01` gained one tag and
+  one beat.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'

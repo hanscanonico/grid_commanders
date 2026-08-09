@@ -171,6 +171,20 @@ func is_skipped(campaign: CampaignDefinition, mission_id: StringName) -> bool:
 	return index < frontier
 
 
+## How many missions this war can still offer: the list, less the roads the route
+## has already walked past. The denominator every surface counting progress reads,
+## so the hub and the campaign list cannot disagree about how long a war is — and
+## the reason it is not `CampaignDefinition.mission_count`: a mission nobody can
+## play is one a total can never reach, and a count nobody can finish is a campaign
+## that always reads unfinished.
+func offered_count(campaign: CampaignDefinition) -> int:
+	var offered := 0
+	for entry: MissionDefinition in campaign.missions:
+		if entry != null and not is_skipped(campaign, entry.id):
+			offered += 1
+	return offered
+
+
 ## Where the route stands: one past the furthest mission cleared.
 func _reached(campaign: CampaignDefinition) -> int:
 	var reached := 0

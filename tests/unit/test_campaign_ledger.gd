@@ -331,6 +331,20 @@ func test_every_line_that_holds_is_said() -> void:
 	assert_eq(MissionLine.spoken(lines, ledger), lines)
 
 
+## The hub's strip is the war in the words the beats that wrote it used, so a fact
+## the ledger does not hold has no line — and an empty event slot is skipped the
+## way every other walk over a mission's script skips one, because the hub opens
+## on the play path where nothing has asked `story_error` about it.
+func test_the_war_so_far_is_read_off_the_facts_the_ledger_holds() -> void:
+	var campaign := _campaign()
+	campaign.missions[0].events.append(_beat(&"held", [_writes(HELD)] as Array[MissionEffect]))
+	campaign.missions[0].events.append(null)
+	var ledger := CampaignState.begin(campaign)
+	assert_eq(campaign.ledger_notes(ledger), [] as Array[String])
+	ledger.flags[HELD] = 1
+	assert_eq(campaign.ledger_notes(ledger), ["Greenwater held."] as Array[String])
+
+
 ## A recording re-issues a beat and has to speak the same words, so a beat the
 ## war decides is a beat with a `Flag` trigger rather than a gated line.
 func test_a_scripted_beat_may_not_gate_its_own_words() -> void:

@@ -92,6 +92,8 @@ func ledger_notes(ledger: CampaignState) -> Array[String]:
 		if entry == null:
 			continue
 		for event: MissionEvent in entry.events:
+			if event == null:
+				continue
 			for effect: MissionEffect in event.effects:
 				var fact := effect.written_flag() if effect != null else null
 				if fact == null or fact.note == "" or said.has(fact.flag):
