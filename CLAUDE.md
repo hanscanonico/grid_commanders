@@ -1546,7 +1546,8 @@ res://
 ├─ maps/        # map scenes / map resources (campaign boards under maps/campaign/)
 ├─ assets/      # sprites, audio, fonts  (+ LICENSES.md)
 ├─ tools/       # offline scripts: balance harness (tools/balance/), AI arena
-│              # (tools/arena/), replay analyser (tools/replay/), art & sfx pipeline
+│              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
+│              # pipeline
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
 │              # commander matrix, the difficulty ladder, the arena, Bulwark's spread)
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)

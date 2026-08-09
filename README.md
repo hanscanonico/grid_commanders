@@ -1014,12 +1014,14 @@ already failing would muddy both readings.
 - `autoload/` — singletons: the event bus, the one match request the menu (or a rematch) stages
   for the battle scene, the device preferences this machine keeps between launches (`Settings` —
   the game speed above, whether battles play the full-screen cut-ins, and which first-match hints
-  this player has retired), the sound-effect player, and the campaign session (`CampaignSession` —
-  which war and mission is being played, plus the few things that mission has tallied over the
+  this player has retired), the sound-effect player, the background-music player (`Music` — one
+  looping track at a time, stated by the scene that wants it), and the campaign session
+  (`CampaignSession` — which war and mission is being played, plus the few things that mission has
+  tallied over the
   boards it has been played on — days a square has been held, units lost, the facts its beats have
   written and the war has not taken yet — carried across the
   scene change; navigation intent only, it decides no rule and holds no board).
-- `tools/` — the art and sound build scripts: the headless ground-tile, sound, and portrait
+- `tools/` — the art and sound build scripts: the headless ground-tile, sound, music, and portrait
   generators, the unit-sprite paste step and the atlas audit, plus the PixVoxel atlas builder (see
   Assets below); and the offline balance
   toolchain under `tools/balance/`, whose shared match engine serves the commander-balance matrix
