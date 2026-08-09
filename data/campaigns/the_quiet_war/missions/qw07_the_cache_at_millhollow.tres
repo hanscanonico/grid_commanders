@@ -34,7 +34,7 @@ tag = &"morn_cache_convoy"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Morn's forward supply cache moves at first light, Quill. One night in the trees to take it, or it's gone."
+text = "Morn's forward supply cache moves at the end of the week, Quill. Six days in the trees to take it, or it's gone."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -54,7 +54,7 @@ text = "Good enough odds to move on. Let's not give the sun a vote."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Millhollow falls before dawn. The cache stays exactly where he left it, under new management."
+text = "Millhollow falls with the week not yet out. The cache stays exactly where he left it, under new management."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
@@ -82,7 +82,7 @@ units = Array[Resource]([SubResource("Spawn_barn_guard")])
 [sub_resource type="Resource" id="Event_line_first_light"]
 script = ExtResource("4")
 speaker = &"radek_morn"
-text = "It moves at first light, not dawn. Let them arrive to an empty barn."
+text = "It moves on my schedule, not on hers. Let them arrive to an empty barn."
 
 [sub_resource type="Resource" id="Event_the_cache_loads"]
 script = ExtResource("6")
@@ -139,4 +139,4 @@ events = Array[Resource]([SubResource("Event_the_cache_loads"), SubResource("Eve
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The convoy pulled out at first light with everything it came for, and Millhollow stayed an empty town on a map."
+defeat = "The convoy pulled out on the seventh morning with everything it came for, and Millhollow stayed an empty town on a map."
