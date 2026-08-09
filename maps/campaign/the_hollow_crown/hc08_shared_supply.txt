@@ -4,9 +4,9 @@
 # for anything on treads.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
-# Draeg's outrider is named: losing it is one of the two ways his column turns
-# out thin. The other is the alliance paying for the depot road at all, and
-# either opens the ridge-road mission that asks you to carry him.
+# Your own company on the depot road is named: it screens the half of the road
+# Draeg is not holding, so losing it is what stretches his column thin, and that
+# is what opens the ridge-road mission that asks you to carry him.
 [terrain]
 .....................
 .....................
@@ -35,10 +35,10 @@
 [units]
 1 i 2 3
 1 i 3 3
-1 r 4 2
+1 r 4 2 depot_road_screen
 2 i 18 3
 2 i 17 3
-2 r 16 2 draeg_outrider
+2 r 16 2
 3 i 18 11
 3 i 17 10
 3 r 16 12

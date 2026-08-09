@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,7 +11,6 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
-[ext_resource type="Resource" path="res://data/units/mech.tres" id="12"]
 
 [sub_resource type="Resource" id="Unlock_unbloodied"]
 script = ExtResource("6")
@@ -68,15 +67,10 @@ script = ExtResource("10")
 unit_type = ExtResource("11")
 cell = Vector2i(18, 2)
 
-[sub_resource type="Resource" id="Spawn_the_deadline_2"]
-script = ExtResource("10")
-unit_type = ExtResource("12")
-cell = Vector2i(18, 4)
-
 [sub_resource type="Resource" id="Effect_the_deadline"]
 script = ExtResource("9")
 team = 2
-units = Array[Resource]([SubResource("Spawn_the_deadline_1"), SubResource("Spawn_the_deadline_2")])
+units = Array[Resource]([SubResource("Spawn_the_deadline_1")])
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")

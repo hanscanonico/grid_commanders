@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -10,8 +10,6 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
-[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="11"]
-[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -83,50 +81,28 @@ effects = Array[Resource]([SubResource("Effect_marshal_kept")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Trigger_outrider_gone"]
+[sub_resource type="Resource" id="Trigger_road_screen_gone"]
 script = ExtResource("9")
-tag = &"draeg_outrider"
+tag = &"depot_road_screen"
 
 [sub_resource type="Resource" id="Effect_draeg_column_broken"]
 script = ExtResource("10")
 flag = &"draeg_column_broken"
 value = 1
-note = "Draeg's outrider was lost on the depot road, and his column showed how thin it is."
+note = "The depot road lost the company screening its western half, and Draeg's column stretched thin covering both."
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "That was my outrider. I told you the column was thin, Commander — now you have seen how thin."
+text = "Your company on the road is gone, Commander, and I am now holding both halves of it with one column. You will see how thin that is."
 
 [sub_resource type="Resource" id="Event_how_thin_the_column_is"]
 script = ExtResource("7")
 id = &"how_thin_the_column_is"
-triggers = Array[Resource]([SubResource("Trigger_outrider_gone")])
+triggers = Array[Resource]([SubResource("Trigger_road_screen_gone")])
 effects = Array[Resource]([SubResource("Effect_draeg_column_broken")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
-
-[sub_resource type="Resource" id="Cost_of_the_depot_road"]
-script = ExtResource("12")
-text = "The depot road was fought for company by company."
-max_losses = 0
-
-[sub_resource type="Resource" id="Trigger_the_road_cost_us"]
-script = ExtResource("11")
-objective = SubResource("Cost_of_the_depot_road")
-
-[sub_resource type="Resource" id="Event_line_3"]
-script = ExtResource("6")
-speaker = &"viktor_draeg"
-text = "That is one company neither of us gets back, Commander. Mine is the half of the road with nothing left behind it."
-
-[sub_resource type="Resource" id="Event_the_road_cost_us"]
-script = ExtResource("7")
-id = &"the_road_cost_us"
-triggers = Array[Resource]([SubResource("Trigger_the_road_cost_us")])
-effects = Array[Resource]([SubResource("Effect_draeg_column_broken")])
-once = true
-lines = Array[Resource]([SubResource("Event_line_3")])
 
 [resource]
 script = ExtResource("1")
@@ -149,7 +125,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_the_road_is_shared"), SubResource("Event_the_road_cost_us"), SubResource("Event_how_thin_the_column_is")])
+events = Array[Resource]([SubResource("Event_the_road_is_shared"), SubResource("Event_how_thin_the_column_is")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
