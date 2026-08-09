@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
@@ -31,6 +31,14 @@ script = ExtResource("2")
 speaker = &"cassian_rook"
 text = "Two of his divisions came up our flank at the fortress and not one of them was under my orders. Morn asked whose war it was. He asked it standing in front of the answer."
 requires = SubResource("CrownHollow")
+unless = SubResource("CarriedHim")
+
+[sub_resource type="Resource" id="Line_2b"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Three of his divisions came up our flank at the fortress and not one of them was under my orders. Morn asked whose war it was. He asked it standing in front of the answer."
+requires = SubResource("CrownHollow")
+unless = SubResource("StoodWithHim")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
@@ -57,4 +65,4 @@ text = "There was no coronation. There was a marshal in an empty hall, three bor
 script = ExtResource("1")
 after_block = 2
 title = "The Empty Seat"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_2b"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

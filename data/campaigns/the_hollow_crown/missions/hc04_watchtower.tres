@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
@@ -50,15 +50,33 @@ script = ExtResource("5")
 speaker = &"iona_vance"
 text = "For once the accounting favours you. I will remember the figures."
 
-[sub_resource type="Resource" id="Trigger_far_checkpoint_ours"]
+[sub_resource type="Resource" id="Trigger_middle_checkpoint_ours"]
 script = ExtResource("7")
-cell = Vector2i(13, 3)
+cell = Vector2i(9, 3)
 holder = 0
 
 [sub_resource type="Resource" id="Effect_the_strongbox"]
 script = ExtResource("8")
 team = 1
 amount = 4000
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("5")
+speaker = &"iona_vance"
+text = "The middle post kept the road's takings, Commander. Spend them faster than I collected them."
+
+[sub_resource type="Resource" id="Event_the_middle_checkpoint"]
+script = ExtResource("6")
+id = &"the_middle_checkpoint"
+triggers = Array[Resource]([SubResource("Trigger_middle_checkpoint_ours")])
+effects = Array[Resource]([SubResource("Effect_the_strongbox")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_far_checkpoint_ours"]
+script = ExtResource("7")
+cell = Vector2i(13, 3)
+holder = 0
 
 [sub_resource type="Resource" id="Effect_vance_ledger_seized"]
 script = ExtResource("9")
@@ -75,7 +93,7 @@ text = "Three entries closed in one column, Commander. I am revising the figures
 script = ExtResource("6")
 id = &"the_far_checkpoint"
 triggers = Array[Resource]([SubResource("Trigger_far_checkpoint_ours")])
-effects = Array[Resource]([SubResource("Effect_the_strongbox"), SubResource("Effect_vance_ledger_seized")])
+effects = Array[Resource]([SubResource("Effect_vance_ledger_seized")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
@@ -98,7 +116,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_the_far_checkpoint")])
+events = Array[Resource]([SubResource("Event_the_middle_checkpoint"), SubResource("Event_the_far_checkpoint")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

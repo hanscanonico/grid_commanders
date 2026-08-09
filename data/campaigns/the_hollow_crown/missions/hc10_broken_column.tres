@@ -38,7 +38,7 @@ last_day = 11
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
-text = "Hold all three cities north of the ridge."
+text = "Hold any three of the ridge road's cities at once."
 count = 3
 terrain_id = &"city"
 
