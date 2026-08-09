@@ -18,10 +18,13 @@ SSSSSSSSSSSSSSSS
 1 2 1
 2 14 7
 [units]
-# team symbol x y
+# team symbol x y [tag]
+# The coast watch is the fourth unit the briefing counts, and it carries no
+# weapon: west is inland, and the HQ is as far inland as this coast goes.
 1 i 3 2
 1 r 3 1
 1 t 4 3
+1 p 4 2 coast_watch
 2 i 11 6
 2 i 12 5
 2 r 10 6

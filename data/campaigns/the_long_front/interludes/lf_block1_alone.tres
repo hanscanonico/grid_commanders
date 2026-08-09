@@ -1,0 +1,92 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("3")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Column_lost"]
+script = ExtResource("3")
+flag = &"column_saved"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Watch_saved"]
+script = ExtResource("3")
+flag = &"coast_watch_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Watch_lost"]
+script = ExtResource("3")
+flag = &"coast_watch_saved"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Shrine_saved"]
+script = ExtResource("3")
+flag = &"shrine_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Shrine_lost"]
+script = ExtResource("3")
+flag = &"shrine_saved"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Three nations lost the same morning, six days apart, and each of them counted the loss in something different: a road, a harbour, a wood."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Meridian's ledger for the week. The customs column made the line behind Voss, wagon for wagon, and is billeted east of the Arden."
+requires = SubResource("Column_saved")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Meridian's ledger for the week. The customs column did not all make the line, and I am not writing down how much of it did."
+requires = SubResource("Column_lost")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Aurora's is shorter. The port is gone, the coast watch is inland with its lists, and I can still tell you where every name on them is."
+requires = SubResource("Watch_saved")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Aurora's is shorter. The port is gone, the coast watch went with the beach road, and there is nobody left who can tell me who else did."
+requires = SubResource("Watch_lost")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"ines_calder"
+text = "The League lost the Greenwood and kept the shrine's keepers. Carried out, every one — the wood will grow back and they would not have."
+requires = SubResource("Shrine_saved")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"ines_calder"
+text = "The League lost the Greenwood and the grove with it. The keepers were still in the shrine when the fighting reached it, and I will carry that."
+requires = SubResource("Shrine_lost")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "Three retreats, one road. There is a chokepoint at the narrows where all of them arrive, and after that there is nowhere left to arrive at separately."
+
+[resource]
+script = ExtResource("1")
+after_block = 0
+title = "Alone"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8")])

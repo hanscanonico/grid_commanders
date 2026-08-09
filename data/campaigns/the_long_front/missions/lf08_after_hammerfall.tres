@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
@@ -11,21 +11,24 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
 [ext_resource type="Resource" path="res://data/units/infantry.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="13"]
 
 [sub_resource type="Resource" id="Objective_break_the_garrison"]
 script = ExtResource("5")
 text = "Break the garrison Morn left holding the ashes."
 tag = &"ruin_garrison"
 
-[sub_resource type="Resource" id="Objective_retake_averyn"]
+[sub_resource type="Resource" id="Objective_hold_averyn"]
 script = ExtResource("2")
-text = "Retake Averyn."
+text = "Retake Averyn's ground and keep it two days."
 cell = Vector2i(9, 5)
+days = 2
 
-[sub_resource type="Resource" id="Failure_day_8"]
+[sub_resource type="Resource" id="Failure_day_9"]
 script = ExtResource("3")
-text = "Morn garrisoned the ruins past day 8."
-last_day = 8
+text = "Morn garrisoned the ruins past day 9."
+last_day = 9
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -90,6 +93,30 @@ effects = Array[Resource]([SubResource("Effect_the_bill")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Trigger_before_the_garrison"]
+script = ExtResource("13")
+day = 5
+
+[sub_resource type="Resource" id="Effect_averyn_held"]
+script = ExtResource("12")
+flag = &"averyn_held"
+mode = 0
+value = 1
+note = "Averyn's ground flew allied colours again before Morn could garrison the ashes."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "His engineers never got a spade into the ruins, Ward. The acres are back on our maps and they never became his garrison."
+
+[sub_resource type="Resource" id="Event_averyn_inside_the_week"]
+script = ExtResource("6")
+id = &"averyn_inside_the_week"
+triggers = Array[Resource]([SubResource("Trigger_averyn_retaken"), SubResource("Trigger_before_the_garrison")])
+effects = Array[Resource]([SubResource("Effect_averyn_held")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf08_after_hammerfall"
@@ -106,11 +133,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_break_the_garrison"), SubResource("Objective_retake_averyn")])
-failures = Array[Resource]([SubResource("Failure_day_8")])
+objectives = Array[Resource]([SubResource("Objective_break_the_garrison"), SubResource("Objective_hold_averyn")])
+failures = Array[Resource]([SubResource("Failure_day_9")])
 bonus_objectives = Array[Resource]([])
-events = Array[Resource]([SubResource("Event_morn_bills_the_ground")])
-par_day = 6
+events = Array[Resource]([SubResource("Event_morn_bills_the_ground"), SubResource("Event_averyn_inside_the_week")])
+par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Morn's garrison dug in before Holt reached the ruins, and Averyn stayed his."

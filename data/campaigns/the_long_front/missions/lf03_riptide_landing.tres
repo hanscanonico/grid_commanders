@@ -1,13 +1,29 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
 
 [sub_resource type="Resource" id="Objective_hold_the_coast"]
 script = ExtResource("2")
 text = "Hold the coast road until day 6."
 day = 6
+
+[sub_resource type="Resource" id="Failure_the_watch"]
+script = ExtResource("4")
+text = "The coast watch was caught on the beach road."
+tag = &"coast_watch"
+
+[sub_resource type="Resource" id="Bonus_watch_inland"]
+script = ExtResource("5")
+text = "Get the coast watch inland."
+cells = Array[Vector2i]([Vector2i(2, 1)])
+count = 1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +55,31 @@ script = ExtResource("3")
 speaker = &"cassian_rook"
 text = "Three units left standing. I'll call that a win worth having."
 
+[sub_resource type="Resource" id="Trigger_watch_inland"]
+script = ExtResource("7")
+tag = &"coast_watch"
+cells = Array[Vector2i]([Vector2i(2, 1)])
+
+[sub_resource type="Resource" id="Effect_watch_saved"]
+script = ExtResource("8")
+flag = &"coast_watch_saved"
+mode = 0
+value = 1
+note = "The Tidewatch coast watch got inland with its lists intact."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Watch is inland and counted, Rook. Every name on the list."
+
+[sub_resource type="Resource" id="Event_the_watch_is_inland"]
+script = ExtResource("6")
+id = &"the_watch_is_inland"
+triggers = Array[Resource]([SubResource("Trigger_watch_inland")])
+effects = Array[Resource]([SubResource("Effect_watch_saved")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf03_riptide_landing"
@@ -56,8 +97,9 @@ commanders = {
 fog_enabled = false
 difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_hold_the_coast")])
-failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_the_watch")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_watch_inland")])
+events = Array[Resource]([SubResource("Event_the_watch_is_inland")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

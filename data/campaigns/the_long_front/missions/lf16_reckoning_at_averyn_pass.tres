@@ -1,18 +1,56 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+
+[sub_resource type="Resource" id="Averyn_held"]
+script = ExtResource("4")
+flag = &"averyn_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Averyn_lost"]
+script = ExtResource("4")
+flag = &"averyn_held"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_take_the_garrison"]
 script = ExtResource("2")
 text = "Take Morn's garrison at the pass."
 cell = Vector2i(15, 3)
 
+[sub_resource type="Resource" id="Bonus_silence_the_battery"]
+script = ExtResource("5")
+text = "Silence the guns that ranged Averyn."
+id = &"silence_the_battery"
+hidden = true
+tag = &"hammer_battery"
+
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
 text = "The pass carries Averyn's name now. Morn's garrison shields it like the town he flattened were worth defending."
+
+[sub_resource type="Resource" id="Line_1a"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "We took the ground the town stood on back before he could garrison it, and we still hold it. This pass is the last of Averyn he has."
+requires = SubResource("Averyn_held")
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The ground the town stood on came back to us late, after he had garrisoned the ashes and billed us by the day for them. This pass is the rest of that bill."
+requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -39,6 +77,56 @@ script = ExtResource("3")
 speaker = &"tomas_reed"
 text = "I won't call it justice. I'll call it the next line on the map, and move the army onto it."
 
+[sub_resource type="Resource" id="Trigger_the_battery_is_seen"]
+script = ExtResource("7")
+day = 2
+
+[sub_resource type="Resource" id="Effect_reveal_the_battery"]
+script = ExtResource("9")
+objective_id = &"silence_the_battery"
+
+[sub_resource type="Resource" id="Event_line_holt"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "He's massing to shell the pass rather than hold it, Reed. Those are the guns that ranged Averyn."
+
+[sub_resource type="Resource" id="Event_line_reed"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "Now it's about the ashes. Move."
+
+[sub_resource type="Resource" id="Event_the_guns_that_ranged_averyn"]
+script = ExtResource("6")
+id = &"the_guns_that_ranged_averyn"
+triggers = Array[Resource]([SubResource("Trigger_the_battery_is_seen")])
+effects = Array[Resource]([SubResource("Effect_reveal_the_battery")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_holt"), SubResource("Event_line_reed")])
+
+[sub_resource type="Resource" id="Trigger_battery_dead"]
+script = ExtResource("8")
+tag = &"hammer_battery"
+
+[sub_resource type="Resource" id="Effect_battery_silenced"]
+script = ExtResource("10")
+flag = &"battery_silenced"
+mode = 0
+value = 1
+note = "The battery that ranged Averyn will not range anything else."
+
+[sub_resource type="Resource" id="Event_line_morn"]
+script = ExtResource("3")
+speaker = &"radek_morn"
+text = "A battery. You crossed a highland range for a battery."
+
+[sub_resource type="Resource" id="Event_the_battery_falls"]
+script = ExtResource("6")
+id = &"the_battery_falls"
+triggers = Array[Resource]([SubResource("Trigger_the_battery_is_seen"), SubResource("Trigger_battery_dead")])
+effects = Array[Resource]([SubResource("Effect_battery_silenced")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_morn")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf16_reckoning_at_averyn_pass"
@@ -57,8 +145,9 @@ fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_garrison")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_silence_the_battery")])
+events = Array[Resource]([SubResource("Event_the_guns_that_ranged_averyn"), SubResource("Event_the_battery_falls")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The garrison held the pass, and Morn's Command Power still has an army to shelter behind."

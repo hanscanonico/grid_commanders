@@ -1,8 +1,14 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="8"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="9"]
 
 [sub_resource type="Resource" id="Objective_take_the_camp"]
 script = ExtResource("2")
@@ -39,6 +45,44 @@ script = ExtResource("3")
 speaker = &"alina_ward"
 text = "I'm looking east, past the foothills, to where the highlands start. We've never fought there before."
 
+[sub_resource type="Resource" id="Trigger_road_city_ours"]
+script = ExtResource("5")
+cell = Vector2i(9, 5)
+holder = 0
+
+[sub_resource type="Resource" id="Spawn_forward_armour"]
+script = ExtResource("7")
+unit_type = ExtResource("8")
+cell = Vector2i(2, 3)
+
+[sub_resource type="Resource" id="Spawn_forward_foot"]
+script = ExtResource("7")
+unit_type = ExtResource("9")
+cell = Vector2i(3, 2)
+
+[sub_resource type="Resource" id="Effect_bring_the_line_forward"]
+script = ExtResource("6")
+team = 1
+units = Array[Resource]([SubResource("Spawn_forward_armour"), SubResource("Spawn_forward_foot")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Road city's ours. Bring the line forward — all of it, not a screen."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Six weeks of retreat, and the first order I've written that says advance."
+
+[sub_resource type="Resource" id="Event_the_line_moves"]
+script = ExtResource("4")
+id = &"the_line_moves"
+triggers = Array[Resource]([SubResource("Trigger_road_city_ours")])
+effects = Array[Resource]([SubResource("Effect_bring_the_line_forward")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf12_the_forward_camp"
@@ -58,6 +102,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_the_camp")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_line_moves")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

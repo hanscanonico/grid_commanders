@@ -1,13 +1,40 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="11"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="12"]
 
 [sub_resource type="Resource" id="Objective_hold_the_narrows"]
 script = ExtResource("2")
 text = "Hold the narrows until day 7."
 day = 7
+
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("4")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Watch_saved"]
+script = ExtResource("4")
+flag = &"coast_watch_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Shrine_saved"]
+script = ExtResource("4")
+flag = &"shrine_saved"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +66,124 @@ script = ExtResource("3")
 speaker = &"mara_voss"
 text = "We've got a base behind us now, and an alliance in front of us. Both are new — I intend to get used to them."
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("6")
+day = 2
+
+[sub_resource type="Resource" id="Trigger_column_saved"]
+script = ExtResource("7")
+condition = SubResource("Column_saved")
+
+[sub_resource type="Resource" id="Trigger_watch_saved"]
+script = ExtResource("7")
+condition = SubResource("Watch_saved")
+
+[sub_resource type="Resource" id="Trigger_shrine_saved"]
+script = ExtResource("7")
+condition = SubResource("Shrine_saved")
+
+[sub_resource type="Resource" id="Spawn_picket_foot"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(3, 2)
+
+[sub_resource type="Resource" id="Spawn_picket_scout"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(5, 2)
+
+[sub_resource type="Resource" id="Spawn_meridian_company"]
+script = ExtResource("9")
+unit_type = ExtResource("12")
+cell = Vector2i(4, 3)
+
+[sub_resource type="Resource" id="Spawn_aurora_company"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Spawn_league_company"]
+script = ExtResource("9")
+unit_type = ExtResource("12")
+cell = Vector2i(2, 4)
+
+[sub_resource type="Resource" id="Effect_the_line_forms"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_picket_foot"), SubResource("Spawn_picket_scout")])
+
+[sub_resource type="Resource" id="Effect_meridian"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_meridian_company")])
+
+[sub_resource type="Resource" id="Effect_aurora"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_aurora_company")])
+
+[sub_resource type="Resource" id="Effect_league"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_league_company")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "Aurora's picket is on your left flank, Voss. What's left of it, anyway."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "And the wardens are on your right. We are done falling back separately."
+
+[sub_resource type="Resource" id="Event_line_meridian"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The customs-road column reached the depots and put a company back on the line. They came looking for the officer who held that morning."
+
+[sub_resource type="Resource" id="Event_line_aurora"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "My coast watch made it inland, so Aurora knows who is still standing and where. One more company than I promised you."
+
+[sub_resource type="Resource" id="Event_line_league"]
+script = ExtResource("3")
+speaker = &"ines_calder"
+text = "The shrine's keepers came out of the wood alive, and the wardens who carried them are here. The League pays that debt in the field."
+
+[sub_resource type="Resource" id="Event_the_line_forms"]
+script = ExtResource("5")
+id = &"the_line_forms"
+triggers = Array[Resource]([SubResource("Trigger_day_2")])
+effects = Array[Resource]([SubResource("Effect_the_line_forms")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Event_meridian_stands"]
+script = ExtResource("5")
+id = &"meridian_stands"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_column_saved")])
+effects = Array[Resource]([SubResource("Effect_meridian")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_meridian")])
+
+[sub_resource type="Resource" id="Event_aurora_stands"]
+script = ExtResource("5")
+id = &"aurora_stands"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_watch_saved")])
+effects = Array[Resource]([SubResource("Effect_aurora")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_aurora")])
+
+[sub_resource type="Resource" id="Event_the_league_stands"]
+script = ExtResource("5")
+id = &"the_league_stands"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_shrine_saved")])
+effects = Array[Resource]([SubResource("Effect_league")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_league")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf07_the_narrows"
@@ -58,6 +203,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_narrows")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_line_forms"), SubResource("Event_meridian_stands"), SubResource("Event_aurora_stands"), SubResource("Event_the_league_stands")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

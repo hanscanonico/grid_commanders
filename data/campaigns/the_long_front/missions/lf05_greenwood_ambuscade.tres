@@ -1,8 +1,13 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="8"]
 
 [sub_resource type="Resource" id="Objective_hold_the_woods"]
 script = ExtResource("2")
@@ -39,6 +44,38 @@ script = ExtResource("3")
 speaker = &"ivar_thorne"
 text = "Fair trade. We fall back deeper into League ground anyway — there's more forest to lose."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("5")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_warden_north"]
+script = ExtResource("7")
+unit_type = ExtResource("8")
+cell = Vector2i(5, 2)
+
+[sub_resource type="Resource" id="Spawn_warden_east"]
+script = ExtResource("7")
+unit_type = ExtResource("8")
+cell = Vector2i(7, 2)
+
+[sub_resource type="Resource" id="Effect_the_wardens"]
+script = ExtResource("6")
+team = 1
+units = Array[Resource]([SubResource("Spawn_warden_north"), SubResource("Spawn_warden_east")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "The wardens know these trees better than the map does. They came when they heard the engines."
+
+[sub_resource type="Resource" id="Event_the_wardens_rise"]
+script = ExtResource("4")
+id = &"the_wardens_rise"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_wardens")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf05_greenwood_ambuscade"
@@ -58,6 +95,7 @@ difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_hold_the_woods")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_wardens_rise")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

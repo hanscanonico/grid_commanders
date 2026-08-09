@@ -1,13 +1,29 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="7"]
 
 [sub_resource type="Resource" id="Objective_hold_the_causeway"]
 script = ExtResource("2")
 text = "Hold the river line until day 6."
 day = 6
+
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("4")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Column_lost"]
+script = ExtResource("4")
+flag = &"column_saved"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -24,6 +40,18 @@ script = ExtResource("3")
 speaker = &"gideon_holt"
 text = "Every hour it costs him is an hour the column gains on the ridge road."
 
+[sub_resource type="Resource" id="Line_3a"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "The column you pulled off the customs road is already on that ridge, whole. It gains a mile for every hour the bridge holds."
+requires = SubResource("Column_saved")
+
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "What's left of the column is on that ridge road, and it's slower than it should be. We didn't get all of it off the customs line."
+requires = SubResource("Column_lost")
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"mara_voss"
@@ -38,6 +66,33 @@ text = "The bridge held long enough. His armour's still stacked on the wrong ban
 script = ExtResource("3")
 speaker = &"mara_voss"
 text = "It's a delay, not a victory. I know the difference — keep moving."
+
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("6")
+day = 3
+
+[sub_resource type="Resource" id="Effect_the_moment"]
+script = ExtResource("7")
+team = 1
+points = 5000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"gideon_holt"
+text = "Column's past the ridge fork. Three more days and they're behind the next line entirely."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then three more days is what the bridge costs him."
+
+[sub_resource type="Resource" id="Event_past_the_ridge_fork"]
+script = ExtResource("5")
+id = &"past_the_ridge_fork"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_moment")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1"), SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -58,9 +113,10 @@ difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_hold_the_causeway")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_past_the_ridge_fork")])
 par_day = 6
 carry_in = true
 carry_floor_hp = 50
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3a"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The causeway fell before the column cleared, and the river stopped being a defence at all."

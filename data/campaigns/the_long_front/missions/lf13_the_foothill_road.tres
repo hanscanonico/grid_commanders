@@ -1,13 +1,28 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
+[ext_resource type="Resource" path="res://data/units/apc.tres" id="12"]
 
 [sub_resource type="Resource" id="Objective_take_the_works"]
 script = ExtResource("2")
 text = "Take Vale's forward works."
 cell = Vector2i(16, 7)
+
+[sub_resource type="Resource" id="District_held"]
+script = ExtResource("4")
+flag = &"cities_burned"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -39,6 +54,65 @@ script = ExtResource("3")
 speaker = &"alina_ward"
 text = "Weigh that against six weeks of retreat. It's a fair trade, and it's only the first one."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Trigger_district_held"]
+script = ExtResource("7")
+condition = SubResource("District_held")
+
+[sub_resource type="Resource" id="Spawn_guns"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(3, 3)
+
+[sub_resource type="Resource" id="Spawn_escort"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(3, 4)
+
+[sub_resource type="Resource" id="Spawn_ammunition"]
+script = ExtResource("9")
+unit_type = ExtResource("12")
+cell = Vector2i(2, 4)
+
+[sub_resource type="Resource" id="Effect_the_guns"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_guns"), SubResource("Spawn_escort")])
+
+[sub_resource type="Resource" id="Effect_the_ammunition"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_ammunition")])
+
+[sub_resource type="Resource" id="Event_line_sol"]
+script = ExtResource("3")
+speaker = &"rhea_sol"
+text = "Three days, and I know why not. Bring the guns forward — we did not cross a border to look at a trench."
+
+[sub_resource type="Resource" id="Event_line_ward"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "The supply district held, so the depots are full. You get the artillery and the ammunition to keep it firing."
+
+[sub_resource type="Resource" id="Event_bring_the_guns_forward"]
+script = ExtResource("5")
+id = &"bring_the_guns_forward"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_the_guns")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_sol")])
+
+[sub_resource type="Resource" id="Event_the_depots_are_full"]
+script = ExtResource("5")
+id = &"the_depots_are_full"
+triggers = Array[Resource]([SubResource("Trigger_day_4"), SubResource("Trigger_district_held")])
+effects = Array[Resource]([SubResource("Effect_the_ammunition")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_ward")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf13_the_foothill_road"
@@ -58,6 +132,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_works")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_bring_the_guns_forward"), SubResource("Event_the_depots_are_full")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

@@ -1,8 +1,16 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="11"]
 
 [sub_resource type="Resource" id="Objective_take_carrow"]
 script = ExtResource("2")
@@ -39,6 +47,67 @@ script = ExtResource("3")
 speaker = &"orin_flux"
 text = "Marking it on the map. Already counting the properties beyond it."
 
+[sub_resource type="Resource" id="Trigger_carrow_ours"]
+script = ExtResource("5")
+cell = Vector2i(10, 3)
+holder = 0
+
+[sub_resource type="Resource" id="Trigger_inside_the_window"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Effect_carrow_early"]
+script = ExtResource("8")
+flag = &"carrow_early"
+mode = 0
+value = 1
+note = "Carrow fell inside the window, before Vale's second line closed."
+
+[sub_resource type="Resource" id="Event_line_window"]
+script = ExtResource("3")
+speaker = &"orin_flux"
+text = "Bridge is ours and the second line is still open earth. That is the window, Rook, and we are standing in it."
+
+[sub_resource type="Resource" id="Event_inside_the_window"]
+script = ExtResource("4")
+id = &"inside_the_window"
+triggers = Array[Resource]([SubResource("Trigger_carrow_ours"), SubResource("Trigger_inside_the_window")])
+effects = Array[Resource]([SubResource("Effect_carrow_early")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_window")])
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("7")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_engineer_north"]
+script = ExtResource("10")
+unit_type = ExtResource("11")
+cell = Vector2i(10, 2)
+
+[sub_resource type="Resource" id="Spawn_engineer_west"]
+script = ExtResource("10")
+unit_type = ExtResource("11")
+cell = Vector2i(9, 3)
+
+[sub_resource type="Resource" id="Effect_the_second_line"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_engineer_north"), SubResource("Spawn_engineer_west")])
+
+[sub_resource type="Resource" id="Event_line_vale"]
+script = ExtResource("3")
+speaker = &"konrad_vale"
+text = "Second line is closed, Commander. You were a day late and I was not."
+
+[sub_resource type="Resource" id="Event_the_window_closes"]
+script = ExtResource("4")
+id = &"the_window_closes"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_the_second_line")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_vale")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf09_the_bridge_at_carrow"
@@ -58,6 +127,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_carrow")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_inside_the_window"), SubResource("Event_the_window_closes")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

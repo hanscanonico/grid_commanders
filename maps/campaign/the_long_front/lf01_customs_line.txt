@@ -20,10 +20,14 @@ FF=====.........
 1 1 1
 2 15 7
 [units]
-# team symbol x y
+# team symbol x y [tag]
+# Four units between the border and the column, as the briefing says, plus the
+# column itself: the APC carries no weapon and is the thing the mission is for.
 1 i 2 2
 1 r 2 1
 1 t 3 4
+1 m 3 3
+1 p 4 3 refugee_column
 2 i 12 6
 2 i 13 5
 2 r 11 6

@@ -1,0 +1,109 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("3")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Column_lost"]
+script = ExtResource("3")
+flag = &"column_saved"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Watch_saved"]
+script = ExtResource("3")
+flag = &"coast_watch_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Shrine_saved"]
+script = ExtResource("3")
+flag = &"shrine_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Carrow_early"]
+script = ExtResource("3")
+flag = &"carrow_early"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Averyn_held"]
+script = ExtResource("3")
+flag = &"averyn_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Battery_silenced"]
+script = ExtResource("3")
+flag = &"battery_silenced"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Eighteen days from the customs road to the keep. The staff officers wrote it up as one campaign, which is the tidiest lie in the file: it was three retreats, one line and one advance, and the ledger of it is shorter than the war was."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "The column I bought that first morning for is billeted in a town nobody shelled. That is the entry I would keep if I could only keep one."
+requires = SubResource("Column_saved")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "The column I bought that first morning for did not all get behind the line. I fought eighteen days for the road it was on, and I know exactly what that is worth."
+requires = SubResource("Column_lost")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Aurora's coast watch went inland with its lists, so the Compact knows who came home. Whole nations have been rebuilt off worse paperwork."
+requires = SubResource("Watch_saved")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"ines_calder"
+text = "The Greenwood burned and the shrine's keepers did not. They are replanting the grove this season, which is the League's whole answer to the Dominion."
+requires = SubResource("Shrine_saved")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Carrow inside the window, which bought the east a week early. Every day past the bridge was a day the highlands had not prepared for."
+requires = SubResource("Carrow_early")
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Averyn's acres came back inside the week and its town did not come back at all. There is a stone going up on the ground we took back, and no plan to rebuild on it."
+requires = SubResource("Averyn_held")
+
+[sub_resource type="Resource" id="Line_8"]
+script = ExtResource("2")
+speaker = &"tomas_reed"
+text = "The battery that ranged Averyn fired its last round at the gate of Draeg Hold. I am aware that is not justice. It was available, and justice was not."
+requires = SubResource("Battery_silenced")
+
+[sub_resource type="Resource" id="Line_9"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Draeg said the uniform outlasts the officer who wears it, Voss. He was talking about himself, and he was not wrong about the uniform."
+
+[sub_resource type="Resource" id="Line_10"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "Then the uniform can wait behind a border it does not cross. I did not fight this front to sit behind his desk — I fought it so three nations could go home and find something still standing."
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "Forward"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7"), SubResource("Line_8"), SubResource("Line_9"), SubResource("Line_10")])

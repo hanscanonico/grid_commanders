@@ -1,8 +1,14 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="7"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="8"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="9"]
 
 [sub_resource type="Resource" id="Objective_hold_four_cities"]
 script = ExtResource("2")
@@ -40,6 +46,38 @@ script = ExtResource("3")
 speaker = &"halden_marr"
 text = "We dig in on ground that produces for the front instead of against it. Good trade for a bad coast to leave behind."
 
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("5")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_second_column_heavy"]
+script = ExtResource("7")
+unit_type = ExtResource("8")
+cell = Vector2i(15, 7)
+
+[sub_resource type="Resource" id="Spawn_second_column_escort"]
+script = ExtResource("7")
+unit_type = ExtResource("9")
+cell = Vector2i(17, 7)
+
+[sub_resource type="Resource" id="Effect_the_second_column"]
+script = ExtResource("6")
+team = 2
+units = Array[Resource]([SubResource("Spawn_second_column_heavy"), SubResource("Spawn_second_column_escort")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"iona_vance"
+text = "The first column bought me the passes. This one buys me the time to keep them."
+
+[sub_resource type="Resource" id="Event_the_second_column"]
+script = ExtResource("4")
+id = &"the_second_column"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_the_second_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf14_the_high_passes"
@@ -59,6 +97,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_four_cities")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

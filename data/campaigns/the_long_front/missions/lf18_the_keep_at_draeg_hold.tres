@@ -1,8 +1,55 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="12"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="13"]
+[ext_resource type="Resource" path="res://data/units/artillery.tres" id="14"]
+
+[sub_resource type="Resource" id="Averyn_held"]
+script = ExtResource("4")
+flag = &"averyn_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Averyn_lost"]
+script = ExtResource("4")
+flag = &"averyn_held"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Column_saved"]
+script = ExtResource("4")
+flag = &"column_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Watch_saved"]
+script = ExtResource("4")
+flag = &"coast_watch_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Shrine_saved"]
+script = ExtResource("4")
+flag = &"shrine_saved"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Battery_silenced"]
+script = ExtResource("4")
+flag = &"battery_silenced"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Objective_take_draeg_hq"]
 script = ExtResource("2")
@@ -13,6 +60,18 @@ cell = Vector2i(18, 9)
 script = ExtResource("3")
 speaker = &"alina_ward"
 text = "Every nation the spearhead put to flight in the opening week stands on this ground together, Voss. You bought that first morning with four units and a river."
+
+[sub_resource type="Resource" id="Line_1a"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Averyn's ground flies our colours behind us, too. Not the town — the ground. It was what there was left to take back."
+requires = SubResource("Averyn_held")
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Averyn's ground came back to us late, behind us, and Morn set the price on every acre of it. Whatever happens on this hill, that is the one bill we never got out from under."
+requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -44,6 +103,146 @@ script = ExtResource("3")
 speaker = &"alina_ward"
 text = "You're standing where his desk stood this morning, Voss. Don't sit down yet — there's a great deal still to rebuild."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("6")
+day = 3
+
+[sub_resource type="Resource" id="Trigger_column_saved"]
+script = ExtResource("7")
+condition = SubResource("Column_saved")
+
+[sub_resource type="Resource" id="Trigger_watch_saved"]
+script = ExtResource("7")
+condition = SubResource("Watch_saved")
+
+[sub_resource type="Resource" id="Trigger_shrine_saved"]
+script = ExtResource("7")
+condition = SubResource("Shrine_saved")
+
+[sub_resource type="Resource" id="Trigger_battery_silenced"]
+script = ExtResource("7")
+condition = SubResource("Battery_silenced")
+
+[sub_resource type="Resource" id="Spawn_vanguard"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(8, 1)
+
+[sub_resource type="Resource" id="Spawn_meridian_armour"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(9, 1)
+
+[sub_resource type="Resource" id="Spawn_aurora_company"]
+script = ExtResource("9")
+unit_type = ExtResource("12")
+cell = Vector2i(8, 2)
+
+[sub_resource type="Resource" id="Spawn_league_heavy"]
+script = ExtResource("9")
+unit_type = ExtResource("13")
+cell = Vector2i(7, 2)
+
+[sub_resource type="Resource" id="Spawn_pass_guns"]
+script = ExtResource("9")
+unit_type = ExtResource("14")
+cell = Vector2i(9, 3)
+
+[sub_resource type="Resource" id="Effect_the_allies_arrive"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_vanguard")])
+
+[sub_resource type="Resource" id="Effect_meridian"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_meridian_armour")])
+
+[sub_resource type="Resource" id="Effect_aurora"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_aurora_company")])
+
+[sub_resource type="Resource" id="Effect_league"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_league_heavy")])
+
+[sub_resource type="Resource" id="Effect_the_pass_guns"]
+script = ExtResource("8")
+team = 1
+units = Array[Resource]([SubResource("Spawn_pass_guns")])
+
+[sub_resource type="Resource" id="Event_line_ward"]
+script = ExtResource("3")
+speaker = &"alina_ward"
+text = "Meridian's on your left, Aurora's on your right, and the League is behind both. That is the whole of what eighteen days bought."
+
+[sub_resource type="Resource" id="Event_line_voss"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Then it was worth the road. Open the gate."
+
+[sub_resource type="Resource" id="Event_line_meridian"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "The column I held the customs road for is standing on this hill, General. I'd like you to see it."
+
+[sub_resource type="Resource" id="Event_line_aurora"]
+script = ExtResource("3")
+speaker = &"cassian_rook"
+text = "The coast watch I got off that beach kept every name on its lists. Aurora came looking for the officer who bought them the morning."
+
+[sub_resource type="Resource" id="Event_line_league"]
+script = ExtResource("3")
+speaker = &"ivar_thorne"
+text = "The shrine's keepers are alive because your line held the grove. The League does not send a company for less."
+
+[sub_resource type="Resource" id="Event_line_reed"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "Averyn's own battery, turned round and pointed at the gate. I have waited a long time to write that order."
+
+[sub_resource type="Resource" id="Event_the_allies_arrive"]
+script = ExtResource("5")
+id = &"the_allies_arrive"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_the_allies_arrive")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_ward"), SubResource("Event_line_voss")])
+
+[sub_resource type="Resource" id="Event_meridian_marches"]
+script = ExtResource("5")
+id = &"meridian_marches"
+triggers = Array[Resource]([SubResource("Trigger_day_3"), SubResource("Trigger_column_saved")])
+effects = Array[Resource]([SubResource("Effect_meridian")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_meridian")])
+
+[sub_resource type="Resource" id="Event_aurora_marches"]
+script = ExtResource("5")
+id = &"aurora_marches"
+triggers = Array[Resource]([SubResource("Trigger_day_3"), SubResource("Trigger_watch_saved")])
+effects = Array[Resource]([SubResource("Effect_aurora")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_aurora")])
+
+[sub_resource type="Resource" id="Event_the_league_marches"]
+script = ExtResource("5")
+id = &"the_league_marches"
+triggers = Array[Resource]([SubResource("Trigger_day_3"), SubResource("Trigger_shrine_saved")])
+effects = Array[Resource]([SubResource("Effect_league")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_league")])
+
+[sub_resource type="Resource" id="Event_the_captured_guns"]
+script = ExtResource("5")
+id = &"the_captured_guns"
+triggers = Array[Resource]([SubResource("Trigger_day_3"), SubResource("Trigger_battery_silenced")])
+effects = Array[Resource]([SubResource("Effect_the_pass_guns")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_reed")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf18_the_keep_at_draeg_hold"
@@ -63,7 +262,8 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_draeg_hq")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_allies_arrive"), SubResource("Event_meridian_marches"), SubResource("Event_aurora_marches"), SubResource("Event_the_league_marches"), SubResource("Event_the_captured_guns")])
 par_day = 9
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
 defeat = "The keep held, and the alliance that took eighteen days to build broke against the one wall it could not move."
