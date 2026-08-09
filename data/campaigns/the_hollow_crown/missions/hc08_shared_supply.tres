@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -8,8 +8,9 @@
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
-[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="11"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -81,25 +82,34 @@ effects = Array[Resource]([SubResource("Effect_marshal_kept")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Trigger_road_screen_gone"]
+[sub_resource type="Resource" id="Relay_taken"]
+script = ExtResource("2")
+text = "The relay is the alliance's."
+cell = Vector2i(10, 4)
+
+[sub_resource type="Resource" id="Trigger_relay_taken"]
 script = ExtResource("9")
-tag = &"depot_road_screen"
+objective = SubResource("Relay_taken")
+
+[sub_resource type="Resource" id="Trigger_inside_five_days"]
+script = ExtResource("11")
+day = 5
 
 [sub_resource type="Resource" id="Effect_draeg_column_broken"]
 script = ExtResource("10")
 flag = &"draeg_column_broken"
 value = 1
-note = "The depot road lost the company screening its western half, and Draeg's column stretched thin covering both."
+note = "The relay fell inside five days, and it was Draeg's column that spent the crossing holding every other yard of the ridge."
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Your company on the road is gone, Commander, and I am now holding both halves of it with one column. You will see how thin that is."
+text = "Five days to the relay, Commander. My column held every other yard of the ridge to buy them for you, and there is not much of it left."
 
 [sub_resource type="Resource" id="Event_how_thin_the_column_is"]
 script = ExtResource("7")
 id = &"how_thin_the_column_is"
-triggers = Array[Resource]([SubResource("Trigger_road_screen_gone")])
+triggers = Array[Resource]([SubResource("Trigger_relay_taken"), SubResource("Trigger_inside_five_days")])
 effects = Array[Resource]([SubResource("Effect_draeg_column_broken")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
