@@ -31,7 +31,7 @@ make verify          # the merge gate: check + lint + format-check + test + dete
 make smoke           # drive the demo scenarios (the battle scene, plus the menu ones); prove each still renders
 make test            # run the GUT unit test suite (headless)
 make check           # audit every .gd file: parse/types + architecture seams, plus the balance pool's self-check
-make campaigns       # the campaign content gate: walk all 108 authored missions (what it checks: see Campaigns below)
+make campaigns       # the campaign content gate (what it refuses: docs/campaign_authoring.md)
 make determinism     # replay one pinned balance match; byte-diff it against the committed golden
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
@@ -846,38 +846,12 @@ one skirmish save, and the hub is where a saved mission picks its board back up.
 has counted rides with the board: resuming one carries on with the days it had held and the units
 it had lost, and a **Retry** starts both clean.
 
-`make campaigns` is the authoring gate: it walks every mission of every campaign and fails loudly
-if a board does not parse, a seating names a seat the board does not deal, an objective names
-ground or a unit the board does not have (or asks for more than that board could ever give), a
-mission asks for a difficulty tier that does not ship, a story
-line's speaker is not on the commander roster, or the launch does not build. A mission's script is
-held to the same bar: a beat that waits for nothing or does nothing, two beats with the same name,
-a trigger or an effect naming ground, a unit or a seat the board does not have, two units landing
-under one name, an objective held back that no beat ever brings into play — each fails at the door
-rather than as a beat that never fires in the middle of an act. The ledger is checked across the
-whole war rather than one mission: a fact some mission reads and no mission of that campaign ever
-writes, or a cleared-mission name the campaign does not run, is a variant line nobody would ever
-hear, so it fails here too. So is the route: a mission that opens only once some fact has been
-written, when no mission *ahead of it* in the list writes that fact, is one the war would walk past
-every time, on every route, and nothing else would ever say so. The pages between the blocks are
-held to the bar their words earn — a page with nothing to say, a page after a block the war does not
-have, and two pages after the same block. The carried army is held to the same bar, every slip in it
-being an army that quietly never arrives: a mission that carries one in behind a mission that carries none
-out, a mission that carries one in onto a board with no slot to stand it in, a carry slot marked on
-another army's row, or a refit minimum no unit could ever be refit to.
-
-The newest checks it grew are for the traps that survive every one above, because each leaves the
-mission playable and only takes back what it promised. A mission that scripts nothing. A mission the
-board it opens on has **already** decided — the objective satisfied by the units it deals. An
-objective standing beside one that ends the match outright, the enemy's own headquarters, which is
-answered before the list is ever read and so leaves the rest of the card decorative. A mission that
-closes a chapter and opens on a condition, taking the chapter's page with it for anybody the war
-sends past. And a fact the war records the same way on every route, being read as though it could
-have gone otherwise — a variant line with one variant.
-`docs/campaign_authoring.md` is the authoring side of all of it: the vocabulary, its limits, what
-each war records, and the two traps the gate deliberately does not judge — whether a flag rewards
-the play it should, and whether a scripted column's landing ground will still be standing empty by
-the time the beat fires.
+`make campaigns` is the authoring gate. It walks every mission of every campaign and refuses, at the
+door, anything that would only show up as a mission quietly not doing what it promised — a board
+that does not build, a beat that never fires, a briefing line nobody could ever hear, a mission the
+board it opens on has already won. `docs/campaign_authoring.md` is the author's side of it: what the
+gate refuses in full, what a mission may say and what it may not, what each war records, and the two
+traps it deliberately leaves to a hand test.
 
 ## Replays
 

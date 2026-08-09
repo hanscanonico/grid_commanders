@@ -116,8 +116,9 @@
       <b>All of it is shipped.</b> All 108 missions carry a scripted beat, 57 of them write to their war's
       ledger, ten open only on a condition, seven kinds of primary objective and three kinds of failure are
       in use where <span class="pl">CaptureCell</span> and a deadline were the whole vocabulary — and
-      <span class="pl">make campaigns</span> now refuses the six authoring traps the retrofit review kept
-      finding. <span class="pl">docs/campaign_authoring.md</span> is the author's side of it.
+      <span class="pl">make campaigns</span> now refuses the authoring traps the retrofit review kept
+      finding that a machine can judge. <span class="pl">docs/campaign_authoring.md</span> is the author's
+      side of it, and the one place the gate's checks are listed.
     </p>
     <div class="mt-7 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
       <div class="bg-white/10 rounded p-3">
@@ -874,24 +875,19 @@ events = [
         <p class="mt-2 text-sm">
           <span class="pl">make campaigns</span> grown to D9 in full; a campaign soak test in
           <span class="pl">tests/unit/</span> covering every shipped mission;
-          <span class="pl">docs/campaign_authoring.md</span> — the vocabulary, the authoring rule, the
-          ledger's fact list per campaign, and how to add a mission. The plan's own milestone pass and the
+          <span class="pl">docs/campaign_authoring.md</span> — what the gate refuses, the vocabulary, the
+          authoring rule, the ledger's fact list per campaign, and how to add a mission. The plan's own milestone pass and the
           supersessions in §8 written into <span class="pl">CLAUDE.md</span>.
         </p>
         <p class="mt-2 text-sm dim">
-          <b>What CD8 settled: four checks, each for a trap that leaves no other mark.</b>
-          <b>A fact nothing can vary</b> (<span class="pl">CampaignDefinition.constant_fact_error</span>)
-          — a flag whose every writing beat waits only on the calendar, at a day the mission's own
-          <span class="pl">par_day</span> allows, and which some condition then reads, is a variant line
-          with one variant; a writer on a route-gated mission is left alone, which is
-          <span class="pl">ledger_error</span>'s rule at this width.
-          <b>A mission the board it opens on has already decided</b> and <b>an objective standing beside
-          one that ends the match</b> (both <span class="pl">MissionDefinition.board_error</span>) —
-          <span class="pl">MissionRuntime</span> reaches tactical victory before it reads the objective
-          list, so a co-primary beside the enemy's home headquarters is decorative.
-          And <b>a gated mission closing a block</b> (<span class="pl">block_error</span>), CD6's
-          stated consequence turned into a refusal.
-          <b>A fifth check was written, proven unsound and deleted</b>, which is this milestone's own
+          <b>What CD8 settled: the traps the retrofit review kept finding are refused wherever a
+          machine can judge them, and each refusal is a <span class="pl">core/</span> authority the
+          tool and <span class="pl">tests/unit/test_campaign_content.gd</span> both ask rather than a
+          rule spelled in <span class="pl">tools/check_campaigns.gd</span>.</b>
+          What the gate refuses is <b>listed once</b>, in
+          <span class="pl">docs/campaign_authoring.md</span>, which is the live inventory; this card is
+          the milestone's record and deliberately does not keep a second copy of it.
+          <b>One check was written, proven unsound and deleted</b>, which is this milestone's own
           rule working. A scripted column landing on ground the mission points at <i>is</i> a real
           trap — <span class="pl">SpawnUnits</span> skips an occupied cell, a
           <span class="pl">once</span> beat is spent either way and its dialogue plays regardless —
@@ -905,9 +901,9 @@ events = [
           narrowing tight enough to catch the failure also refused good content, so the check, its
           cell hooks and its tests came out and the judgement is a hand test in
           <span class="pl">docs/campaign_authoring.md</span> instead. <b>A gate earns its authority by
-          never being wrong</b>, and a fifth check that refuses good beats would have taught authors
-          to distrust the four that fire correctly.
-          <b>Two of the four fired on shipped content and both were real</b>: five missions carried a
+          never being wrong</b>, and a check that refuses good beats would have taught authors
+          to distrust the ones that fire correctly.
+          <b>Two of the shipped checks fired on shipped content and both were real</b>: five missions carried a
           co-primary the runtime could never judge (now each mission's bonus objective, where it is
           judged and earns its star), and two Hollow Crown interlude lines were conditioned on facts
           every route writes (the conditions are gone; the lines play as they always did).

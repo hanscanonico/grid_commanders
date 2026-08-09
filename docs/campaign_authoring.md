@@ -10,6 +10,52 @@ so a shipped campaign cannot drift past it. The rules a machine *cannot* check
 are in [What the gate cannot see](#what-the-gate-cannot-see), and they are the
 ones that cost the retrofit the most rounds.
 
+## What `make campaigns` refuses
+
+This is the inventory, and it is the only one: README and `CLAUDE.md` point here
+rather than keeping copies, because a list written in four places is re-measured
+in none.
+
+**The mission itself.** No such board, or a board that does not parse. A seating
+naming a seat the board does not deal, or giving one seat to both sides. A
+mission that can be neither won nor lost by objective, an empty objective slot,
+or an objective naming ground or a unit the board does not have — or asking for
+more than that board could ever give. A difficulty tier that does not ship. A story
+line whose speaker is not on the commander roster, or a seat cast as a commander
+who is not. A briefing with nothing to say when it is won. A launch that does not
+build.
+
+**The script.** A mission that scripts nothing — D9's own clause, a content bar
+rather than a definition one. A beat that waits for nothing or does nothing. Two
+beats under one name. A trigger or an effect naming ground, a unit or a seat the
+board does not have. Two units landing under one name. An objective held back
+that no beat ever reveals.
+
+**The board it opens on**, which the map alone cannot answer, a map dealing every
+seat it names while a mission may have closed some: a mission already over before
+the first command, and an objective standing beside one that ends the match
+outright — traps 3 and 4 below.
+
+**The whole war at once.** A fact some mission reads and no mission of that
+campaign writes, or a `cleared:` / `stars:` name the campaign does not run. A
+mission opening only once some fact is written when no mission *ahead of it*
+writes it. A fact every route writes the same way, read as though it could have
+gone otherwise — trap 1. A gated mission that closes a block — trap 5. An
+interlude with nothing to say, one after a block the war does not have, and two
+after the same block.
+
+**The carried army**, every slip in it being an army that quietly never arrives:
+a mission carrying one in behind a mission that carries none out, or onto a board
+with no slot to stand it in; a carry slot marked on another army's row; a refit
+minimum no unit could ever be refit to.
+
+Each question is a `core/` authority the tool and `tests/unit/test_campaign_content.gd`
+both ask rather than a rule spelled twice — `MissionDefinition.definition_error`
+and `board_error`, `MissionEffect.board_error`, and `CampaignDefinition`'s
+`ledger_error`, `carry_error`, `route_error`, `constant_fact_error` and
+`block_error`. Add a check by adding one of those, not by adding a branch to the
+tool.
+
 ## The shape of a mission
 
 A campaign is a directory under `data/campaigns/` — `campaign.tres` plus

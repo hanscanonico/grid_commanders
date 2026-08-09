@@ -329,9 +329,8 @@ music:
 # tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
 # the new PNGs register. These are committed art, so this only needs rerunning
 # when either generator changes or a commander is added.
-# Holds every shipped campaign to the bar a playable mission clears: the board
-# parses, the seating is one the board deals, every objective names ground that
-# exists, and the launch builds. Run it after authoring a mission.
+# Holds every shipped campaign to the bar a playable mission clears. Run it after
+# authoring a mission; what it refuses is listed in docs/campaign_authoring.md.
 campaigns:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/check_campaigns.gd

@@ -1,9 +1,9 @@
 extends SceneTree
-## Loads every shipped campaign and holds it to the bar a playable mission has
-## to clear: the board parses, the seating is one the board deals, every
-## objective names ground that exists, every fact its content reads is one the war
-## writes, every mission it lists can be opened by some route through it, and the
-## whole thing can be launched.
+## Loads every shipped campaign and holds it to the bar a playable mission has to
+## clear. Every question below is a `core/` authority's, asked here and by
+## `tests/unit/test_campaign_content.gd`; `docs/campaign_authoring.md` is the one
+## place they are listed, so add a refusal by adding an authority rather than a
+## branch here.
 ##
 ## Authoring guard rather than a unit test — it walks real content, so it is a
 ## `tools/` script the content author runs. `make campaigns` is the entry point.
