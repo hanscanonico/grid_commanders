@@ -1435,10 +1435,11 @@ that must survive any change; the full rationale, milestones and risk registers 
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
   and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
-  sentence. `MissionSpeech` is the one drawer of a spoken line, because three surfaces say them —
+  sentence. `MissionSpeech` is the one drawer of a spoken line, because four surfaces say them —
   the hub's briefing, `CampaignDebriefPanel` (the briefing's mirror, which plays the victory
-  dialogue or the defeat line on the way back from a battle before the hub) and, since CD3,
-  `MissionSpeechCard` over the board, so a general sounds the same mid-battle as between missions.
+  dialogue or the defeat line on the way back from a battle before the hub), since CD3
+  `MissionSpeechCard` over the board, and since CD6 `CampaignInterludePanel` between two blocks, so
+  a general sounds the same mid-battle as between missions.
   Five decisions:
   D1: **a mission states its match as `MatchRequest`'s own field list — seats and sides included —
   and `MissionDefinition.to_request()` is the one conversion.** The handoff's `player_team` /

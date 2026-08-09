@@ -739,12 +739,19 @@ each mission's own (`data/campaigns/<campaign>/missions/`), so an act can be a 2
 duel, and difficulty is always one of the shipped tiers — no mission carries tuned AI numbers of
 its own.
 
-Picking a war opens its **hub**: the mission list in play order under its block headers, locked rows
-greyed out, stars beside every cleared mission and a `cleared · stars` line up top. Picking a
-mission swaps the list for its **briefing** — the story, spoken by the generals themselves, each
-line under its speaker's name in their faction's colour, then the objectives, what fails it, the
-par day — and **Deploy** stages it through the same launch path a skirmish uses; the button reads
-**Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
+Picking a war opens its **hub**: the mission list in play order under its block headers, stars
+beside every cleared mission and a `cleared · stars` line up top — counted out of the missions this
+war can still offer you rather than out of the whole list, so a route that leaves one behind still
+finishes. A row you cannot start yet is greyed out and reads `locked`; one the war walked past
+without opening reads `not taken`, because a road you declined is not ground you have yet to reach.
+Under the title, once there is anything to say, a strip carries the war itself: what your run has put
+on the record, in the words of the beats that wrote it, and the condition of the veterans it is
+carrying.
+
+Picking a mission swaps the list for its **briefing** — the story, spoken by the generals
+themselves, each line under its speaker's name in their faction's colour, then the objectives, what
+fails it, the par day — and **Deploy** stages it through the same launch path a skirmish uses; the
+button reads **Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
 every objective at once (or by ordinary tactical victory) and lost by any failure condition — a
 deadline, a fallen ally, a loss limit spent — or by tactical defeat, and **losing outranks
 winning**: a deadline that expires on the very board that completed the objective is a failure.
@@ -771,8 +778,9 @@ clicks go through — so it lands in the log, in a mid-mission save and in the r
 anything else, and a replay speaks the same words in the same place. Beats fire *before* the
 mission is judged, so a relief column arriving on the day the deadline expires is on the board the
 deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
-marked once fires once, and a mission picked back up from a save does not play it again. Six of
-the 108 missions carry one today — one per war — and the rest are still fought as they were.
+marked once fires once, and a mission picked back up from a save does not play it again. Seven of
+the 108 missions carry one today — one per war, and a second in *The Hollow Crown*, which is the
+one that writes to the ledger below — and the rest are still fought as they were.
 
 **A war remembers.** A beat can write a fact to its campaign's ledger — Greenwater held, the
 courier lost, three marshals still standing — and a later mission reads it: a briefing line only
@@ -784,7 +792,19 @@ asked after in the same words, straight off your record. What a mission writes i
 is won**: it reads the war as it stood when it began, a lost or abandoned attempt banks nothing,
 and replaying a mission you have already cleared does not rewrite what later missions were briefed
 off — it can still improve your stars and your best day. When a win does move the war, the debrief
-says so on a `RECORDED` line in the beat's own words. No shipped mission writes a fact yet.
+says so on a `RECORDED` line in the beat's own words, and the hub's strip keeps saying it for the
+rest of the war. One shipped mission writes a fact today — breaking Morn's vanguard in *The Hollow
+Crown*'s opening skirmish — and it is what decides whether that war offers you its one optional
+mission.
+
+**A war has a route through it.** A mission can state how the war has to read for it to open at all,
+and the campaign walks its list forward to the first mission that does — so a fact you wrote four
+missions ago can hand you a mission another player never sees, or take one away. A mission the route
+went past is gone for that run rather than owed: it is not counted against you, and a war with
+nothing left to offer reads as finished even though a mission of it was never played. What has
+already opened stays open, so nothing you do later can shut a mission you are standing on. *The
+Hollow Crown*'s ultimatum is the one authored today — it is offered only to a commander who let
+Morn's vanguard walk away.
 
 **An army carries.** A war can hand one mission's survivors to the next — authored where the same
 general fights both, since an army only ever follows its own commander. The second board marks some
@@ -810,8 +830,10 @@ The victory screen reads
 for beating the par day, one per bonus objective — and its action button reads **Retry**, which
 re-arms the mission itself rather than rematching its finished board. Leaving the battle plays
 the **debrief** before the hub — what the generals say about what just happened on a win, the
-narrator's one line on a loss — with the stars earned and the mission the win unlocked. Clearing
-a mission unlocks the next; replaying one keeps the best stars and best day it ever earned.
+narrator's one line on a loss — with the stars earned and the mission the win opened. Winning the
+last mission of a block plays an **interlude** between the debrief and the hub: a page of the war
+between the acts, spoken by the generals exactly as a briefing is, and reading differently depending
+on how the block went. Replaying a mission keeps the best stars and best day it ever earned.
 
 Progress is one file per campaign under `user://campaigns/`, written through a temp and a backup
 like the skirmish save, so the six wars advance independently and finishing one cannot corrupt
@@ -832,8 +854,12 @@ under one name, an objective held back that no beat ever brings into play — ea
 rather than as a beat that never fires in the middle of an act. The ledger is checked across the
 whole war rather than one mission: a fact some mission reads and no mission of that campaign ever
 writes, or a cleared-mission name the campaign does not run, is a variant line nobody would ever
-hear, so it fails here too. The carried army is held to the same bar, every slip in it being an
-army that quietly never arrives: a mission that carries one in behind a mission that carries none
+hear, so it fails here too. So is the route: a mission that opens only once some fact has been
+written, when no mission *ahead of it* in the list writes that fact, is one the war would walk past
+every time, on every route, and nothing else would ever say so. The pages between the blocks are
+held to the bar their words earn — a page with nothing to say, a page after a block the war does not
+have, and two pages after the same block. The carried army is held to the same bar, every slip in it
+being an army that quietly never arrives: a mission that carries one in behind a mission that carries none
 out, a mission that carries one in onto a board with no slot to stand it in, a carry slot marked on
 another army's row, or a refit minimum no unit could ever be refit to.
 
@@ -978,7 +1004,8 @@ already failing would muddy both readings.
   with, so tuning its behaviour is a data edit rather than a code change — and the difficulty
   tiers in `data/difficulty/`, each of which is just a label plus one of those profiles, and the
   campaigns in `data/campaigns/` — one directory per war, `campaign.tres` plus its
-  `missions/*.tres`, discovered by `CampaignDB` rather than listed by hand).
+  `missions/*.tres` and any `interludes/*.tres`, discovered by `CampaignDB` rather than listed by
+  hand).
 - `maps/` — plain-text maps: an ASCII terrain grid, a *starting* property-ownership section, and
   an optional starting-units section; campaign boards live under `maps/campaign/<campaign>/`. `MapData` (core) is authoritative for terrain and is never
   mutated by play; runtime ownership, funds, and turn state live in `GameState`. The TileMapLayer is just paint.
