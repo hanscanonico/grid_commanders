@@ -1,9 +1,17 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_take_the_waystation"]
 script = ExtResource("2")
@@ -14,6 +22,12 @@ cell = Vector2i(9, 2)
 script = ExtResource("3")
 text = "The waystation stayed Ferrow's past day 4."
 last_day = 4
+
+[sub_resource type="Resource" id="Bonus_take_the_courier"]
+script = ExtResource("5")
+text = "Take the route book off Ferrow's courier."
+id = &"destroy_ferrow_courier"
+tag = &"ferrow_courier"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -45,6 +59,74 @@ script = ExtResource("4")
 speaker = &"orin_flux"
 text = "Marking the depot recovered. Starting to read the routes backward, toward whoever built them."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_depot_watch"]
+script = ExtResource("10")
+unit_type = ExtResource("11")
+cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Effect_depot_watch"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_depot_watch")])
+
+[sub_resource type="Resource" id="Event_line_double_the_watch"]
+script = ExtResource("4")
+speaker = &"dane_ferrow"
+text = "Somebody's been reading my routes. Double the depot watch and bill it to Vale."
+
+[sub_resource type="Resource" id="Event_the_garrison_learns"]
+script = ExtResource("6")
+id = &"the_garrison_learns"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_depot_watch")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_double_the_watch")])
+
+[sub_resource type="Resource" id="Trigger_courier_taken"]
+script = ExtResource("8")
+objective = SubResource("Bonus_take_the_courier")
+
+[sub_resource type="Resource" id="Effect_columns_broken"]
+script = ExtResource("12")
+flag = &"qw_columns_broken"
+mode = 1
+value = 1
+
+[sub_resource type="Resource" id="Event_line_route_book"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "Courier's down and the route book came off him intact. That's a month of his crossings, backwards."
+
+[sub_resource type="Resource" id="Event_the_route_book"]
+script = ExtResource("6")
+id = &"the_route_book"
+triggers = Array[Resource]([SubResource("Trigger_courier_taken")])
+effects = Array[Resource]([SubResource("Effect_columns_broken")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_route_book")])
+
+[sub_resource type="Resource" id="Trigger_opening"]
+script = ExtResource("7")
+day = 1
+
+[sub_resource type="Resource" id="Effect_evidence"]
+script = ExtResource("12")
+flag = &"qw_evidence"
+mode = 1
+value = 1
+
+[sub_resource type="Resource" id="Event_the_depot_is_marked"]
+script = ExtResource("6")
+id = &"the_depot_is_marked"
+triggers = Array[Resource]([SubResource("Trigger_opening")])
+effects = Array[Resource]([SubResource("Effect_evidence")])
+once = true
+lines = Array[Resource]([])
+
 [resource]
 script = ExtResource("1")
 id = &"qw08_the_waystation"
@@ -63,7 +145,8 @@ fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_the_waystation")])
 failures = Array[Resource]([SubResource("Failure_day_4")])
-bonus_objectives = Array[Resource]([])
+bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_courier")])
+events = Array[Resource]([SubResource("Event_the_garrison_learns"), SubResource("Event_the_route_book"), SubResource("Event_the_depot_is_marked")])
 par_day = 4
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

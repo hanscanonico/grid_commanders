@@ -27,6 +27,6 @@ FF========....C.....
 2 i 15 6
 2 i 16 5
 2 r 14 6
-2 t 19 5
-2 t 17 6
+2 t 19 5 draeg_spearhead
+2 t 17 6 draeg_escort
 2 a 16 6

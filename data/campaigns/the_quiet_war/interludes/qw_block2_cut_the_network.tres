@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Columns_broken"]
+script = ExtResource("3")
+flag = &"qw_columns_broken"
+at_least = 2
+at_most = -1
+
+[sub_resource type="Resource" id="Columns_intact"]
+script = ExtResource("3")
+flag = &"qw_columns_broken"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Network_blind"]
+script = ExtResource("3")
+flag = &"qw_network_blind"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Every_raid_town_saved"]
+script = ExtResource("3")
+flag = &"qw_towns_saved"
+at_least = 6
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "A cache, a depot, a relay and a forward base, in that order, and none of them on a map. The network came apart the way it was built: quietly, and in the wrong order for anyone trying to explain it afterwards."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"sera_lark"
+text = "Two of his raid columns are off the board for good. That is two months of crossings that will not be crossing."
+requires = SubResource("Columns_broken")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"sera_lark"
+text = "We took the ground and left the columns. Every route we closed, his raiders simply walked around."
+requires = SubResource("Columns_intact")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"ines_calder"
+text = "His relay is dark and his rider never rode. Whatever Morn does next, he does it on what he can see from where he is standing."
+requires = SubResource("Network_blind")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"nia_rowan"
+text = "Six towns still fly their own colours, and somebody went back for the three nobody was counting. That is the part I would put in the report."
+requires = SubResource("Every_raid_town_saved")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"radek_morn"
+text = "Quiet was Orlov's idea and I am done with it. The next column that crosses will not be looking for a town nobody notices."
+
+[resource]
+script = ExtResource("1")
+after_block = 1
+title = "Cut the Network"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

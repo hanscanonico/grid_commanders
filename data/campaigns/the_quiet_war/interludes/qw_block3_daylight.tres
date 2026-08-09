@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Draeg_stood_aside"]
+script = ExtResource("3")
+flag = &"qw_draeg_stands_aside"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Draeg_stayed"]
+script = ExtResource("3")
+flag = &"qw_draeg_stands_aside"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Every_town_saved"]
+script = ExtResource("3")
+flag = &"qw_towns_saved"
+at_least = 10
+at_most = -1
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The last act of the quiet war was fought in the open, in daylight, with both armies where anyone could count them. It is the only part of it the histories will agree on."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "I took my division out of his war on the day I could see what it was. There is no honour in it — only the fact that I stopped."
+requires = SubResource("Draeg_stood_aside")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"perrin_ash"
+text = "Draeg's regulars held that wall to the last man on it. Whatever else Orlov bought with his ledgers, he bought that."
+requires = SubResource("Draeg_stayed")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Ten towns still fly their own colours, counting the ones nobody was counting. The map office is going to be a long time filing this."
+requires = SubResource("Every_town_saved")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "We hold the hill and the papers, and not the man. Write it down as it happened — the next border he dissolves will be somebody else's, and they will want to know how this one read."
+
+[resource]
+script = ExtResource("1")
+after_block = 2
+title = "Daylight"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5")])

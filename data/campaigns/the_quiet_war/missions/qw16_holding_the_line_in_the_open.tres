@@ -1,13 +1,33 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="11"]
 
 [sub_resource type="Resource" id="Objective_hold_the_line"]
 script = ExtResource("2")
 text = "Hold the line until day 7."
 day = 7
+
+[sub_resource type="Resource" id="Objective_stand_where_you_started"]
+script = ExtResource("4")
+text = "Keep the anchor town for five days — stand exactly where you started."
+cell = Vector2i(6, 3)
+days = 5
+
+[sub_resource type="Resource" id="Thornfield_held"]
+script = ExtResource("5")
+flag = &"qw_thornfield_held"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -24,6 +44,12 @@ script = ExtResource("3")
 speaker = &"mara_voss"
 text = "I've held lines like that. It costs more in the open than it ever did in fog."
 
+[sub_resource type="Resource" id="Line_3b"]
+script = ExtResource("3")
+speaker = &"mara_voss"
+text = "Rook held a wood line with a picket once and the district still talks about it. Hold this one with an army."
+requires = SubResource("Thornfield_held")
+
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"iris_colt"
@@ -38,6 +64,38 @@ text = "Her push spends itself against a line that won't move. You're standing e
 script = ExtResource("3")
 speaker = &"iris_colt"
 text = "Second Wind found plenty of reasons to keep fighting today. I'll take that as a compliment."
+
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("7")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_reserve_heavy"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(16, 5)
+
+[sub_resource type="Resource" id="Spawn_reserve_tank"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(16, 6)
+
+[sub_resource type="Resource" id="Effect_her_whole_reserve"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_reserve_heavy"), SubResource("Spawn_reserve_tank")])
+
+[sub_resource type="Resource" id="Event_line_reserve"]
+script = ExtResource("3")
+speaker = &"iona_vance"
+text = "This is the whole of my reserve, Commander Colt. I am spending it on one line and I expect it to be enough."
+
+[sub_resource type="Resource" id="Event_her_whole_reserve"]
+script = ExtResource("6")
+id = &"her_whole_reserve"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_her_whole_reserve")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_reserve")])
 
 [resource]
 script = ExtResource("1")
@@ -55,10 +113,11 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_hold_the_line")])
+objectives = Array[Resource]([SubResource("Objective_hold_the_line"), SubResource("Objective_stand_where_you_started")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_her_whole_reserve")])
 par_day = 7
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_3b"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The line broke in the open, with nowhere to hide the reason why."

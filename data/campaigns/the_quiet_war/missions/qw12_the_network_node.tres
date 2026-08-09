@@ -1,9 +1,17 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
+[ext_resource type="Resource" path="res://data/units/recon.tres" id="11"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_take_the_node"]
 script = ExtResource("2")
@@ -15,10 +23,22 @@ script = ExtResource("3")
 text = "The node kept running past day 5."
 last_day = 5
 
+[sub_resource type="Resource" id="Relay_is_dark"]
+script = ExtResource("5")
+flag = &"qw_network_blind"
+at_least = 1
+at_most = -1
+
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"orin_flux"
 text = "Every cache, relay and raid column this act has cut all ran through one forward base, Lark. Close it before he stands up a second one somewhere harder to find."
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "His relay's been dark for a week. Whatever's in there hasn't been told we're coming."
+requires = SubResource("Relay_is_dark")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -45,6 +65,56 @@ script = ExtResource("4")
 speaker = &"sera_lark"
 text = "I don't think Morn's finished. I think he's about to stop being quiet about it."
 
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("7")
+day = 3
+
+[sub_resource type="Resource" id="Spawn_morn_armour"]
+script = ExtResource("9")
+unit_type = ExtResource("10")
+cell = Vector2i(10, 3)
+
+[sub_resource type="Resource" id="Spawn_morn_scout"]
+script = ExtResource("9")
+unit_type = ExtResource("11")
+cell = Vector2i(11, 3)
+
+[sub_resource type="Resource" id="Effect_morn_answers"]
+script = ExtResource("8")
+team = 2
+units = Array[Resource]([SubResource("Spawn_morn_armour"), SubResource("Spawn_morn_scout")])
+
+[sub_resource type="Resource" id="Event_line_done_being_a_rumour"]
+script = ExtResource("4")
+speaker = &"radek_morn"
+text = "Quiet was Orlov's idea, not mine. I am done being a rumour."
+
+[sub_resource type="Resource" id="Event_morn_stops_being_quiet"]
+script = ExtResource("6")
+id = &"morn_stops_being_quiet"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_morn_answers")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_done_being_a_rumour")])
+
+[sub_resource type="Resource" id="Trigger_opening"]
+script = ExtResource("7")
+day = 1
+
+[sub_resource type="Resource" id="Effect_evidence"]
+script = ExtResource("12")
+flag = &"qw_evidence"
+mode = 1
+value = 1
+
+[sub_resource type="Resource" id="Event_the_network_is_mapped"]
+script = ExtResource("6")
+id = &"the_network_is_mapped"
+triggers = Array[Resource]([SubResource("Trigger_opening")])
+effects = Array[Resource]([SubResource("Effect_evidence")])
+once = true
+lines = Array[Resource]([])
+
 [resource]
 script = ExtResource("1")
 id = &"qw12_the_network_node"
@@ -64,7 +134,8 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_node")])
 failures = Array[Resource]([SubResource("Failure_day_5")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_morn_stops_being_quiet"), SubResource("Event_the_network_is_mapped")])
 par_day = 5
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The node held, and rebuilt itself somewhere the next scout will have to find all over again."
