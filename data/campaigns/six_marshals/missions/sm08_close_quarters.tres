@@ -1,10 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/objectives/protect_unit_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
@@ -14,16 +13,18 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="13"]
 
-; Measured, with the scripted beats live, before this mission's numbers were left
-; as authored. Sixteen seeds of the skirmish planner playing both sides: the three
-; hamlets are held on day 7 in eleven, on day 8 in four, and never in one, against
-; `last_day` 8 and `par_day` 6; the recon failure below fires in five, on days 4-6.
-; So the clock is cleared at the wire by the careless planner, and by hand a player
-; who builds on days one and two takes (9,2) and (5,1) by day 4 and (2,6) by day 5.
-; The planner is the weak instrument here, not the bound — it is the same one the
-; shipped campaign already fails sm13 and sm16 on — so day 7 is its pace rather
-; than the mission's difficulty, and the count, the deadline, the par and both
-; hunter spawns stand as authored.
+; Measured with the scripted beats live: sixteen seeds of the skirmish planner
+; playing both sides, against `last_day` 8 and `par_day` 6. The three hamlets are
+; held on day 7 in eleven seeds, on day 8 in four, and never in one, so the mission
+; is decided fifteen times in sixteen inside its own deadline and the one loss is
+; the clock. Par is not reached by the planner; by hand a player who builds on days
+; one and two takes (9,2) and (5,1) by day 4 and (2,6) by day 5.
+;
+; The clock is the whole of the difficulty here, and it is the only failure this
+; board carries. A second, escort failure on the recon was measured against the
+; same sixteen seeds and cost five of them on days 4-6 — before the capture race it
+; sat on top of could possibly finish — which is a mission decided by an errand
+; rather than by its own objective.
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_four_hamlets"]
 script = ExtResource("2")
@@ -35,11 +36,6 @@ terrain_id = &"city"
 script = ExtResource("3")
 text = "The hamlets stayed split past day 8."
 last_day = 8
-
-[sub_resource type="Resource" id="Failure_the_van"]
-script = ExtResource("5")
-text = "Thorne's forward recon must come through this alive."
-tag = &"thorne_van"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -148,7 +144,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_hamlets")])
-failures = Array[Resource]([SubResource("Failure_the_hamlets_stayed_split_past_day_8"), SubResource("Failure_the_van")])
+failures = Array[Resource]([SubResource("Failure_the_hamlets_stayed_split_past_day_8")])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_what_you_left_behind"), SubResource("Event_the_trophy_talks")])
 par_day = 6

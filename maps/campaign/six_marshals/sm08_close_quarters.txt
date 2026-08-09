@@ -1,8 +1,8 @@
 # Six Marshals M8 — "Close Quarters". A small board and not much on
 # it. Teaching board: with everyone in everyone's range from turn one,
 # a wounded unit left forward is a free kill for Orlov the moment it drops to five.
-# Thorne's recon is named: Orlov hunts the wounded, so the mission is about the
-# one unit of ours he most wants and it has to be identifiable while it moves.
+# Thorne's recon carries a name because Orlov hunts the wounded and it is the
+# unit of ours he most wants; no condition rests on it, and the tag is inert.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  +bridge  C city  B base  Q HQ
 [terrain]
 ............
