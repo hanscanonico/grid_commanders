@@ -20,17 +20,17 @@ script = ExtResource("4")
 text = "The headquarters held past day 14."
 last_day = 14
 
-[sub_resource type="Resource" id="Draeg_stands_aside"]
+[sub_resource type="Resource" id="Draeg_unbloodied"]
 script = ExtResource("5")
-flag = &"qw_draeg_stands_aside"
-at_least = 1
-at_most = -1
-
-[sub_resource type="Resource" id="Draeg_still_his"]
-script = ExtResource("5")
-flag = &"qw_draeg_stands_aside"
+flag = &"qw_draeg_bloodied"
 at_least = 0
 at_most = 0
+
+[sub_resource type="Resource" id="Draeg_bloodied"]
+script = ExtResource("5")
+flag = &"qw_draeg_bloodied"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Every_town_saved"]
 script = ExtResource("5")
@@ -57,7 +57,7 @@ text = "Found, Commander Ash, but not finished. I've enjoyed watching you all le
 script = ExtResource("3")
 speaker = &"cass_orlov"
 text = "Marshal Draeg's division holds the eastern wall for me. He at least understands an order."
-requires = SubResource("Draeg_still_his")
+requires = SubResource("Draeg_bloodied")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -91,7 +91,7 @@ day = 2
 
 [sub_resource type="Resource" id="Trigger_draeg_stands_aside"]
 script = ExtResource("8")
-condition = SubResource("Draeg_stands_aside")
+condition = SubResource("Draeg_unbloodied")
 
 [sub_resource type="Resource" id="Effect_regulars_stand_down"]
 script = ExtResource("9")

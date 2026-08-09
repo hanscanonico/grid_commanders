@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
@@ -56,32 +56,47 @@ text = "My report reads the same as my map. Contested ground, contested no longe
 script = ExtResource("6")
 objective = SubResource("Objective_hold_four_cities")
 
-[sub_resource type="Resource" id="Trigger_division_intact"]
+[sub_resource type="Resource" id="Trigger_spearhead_gone"]
 script = ExtResource("7")
-team = 2
-bound = 1
-count = 2
+tag = &"draeg_spearhead"
+
+[sub_resource type="Resource" id="Trigger_escort_gone"]
+script = ExtResource("7")
+tag = &"draeg_escort"
+
+[sub_resource type="Resource" id="Effect_draeg_bloodied"]
+script = ExtResource("10")
+flag = &"qw_draeg_bloodied"
+value = 1
+note = "Marshal Draeg's own spearhead was broken on the march, and he took Orlov's war for his own."
+
+[sub_resource type="Resource" id="Event_line_vanguard"]
+script = ExtResource("3")
+speaker = &"viktor_draeg"
+text = "You came for my spearhead rather than the towns, Commander. Then this is my war after all, and I will finish it as one."
+
+[sub_resource type="Resource" id="Event_the_vanguard_breaks"]
+script = ExtResource("5")
+id = &"the_vanguard_breaks"
+triggers = Array[Resource]([SubResource("Trigger_spearhead_gone"), SubResource("Trigger_escort_gone")])
+effects = Array[Resource]([SubResource("Effect_draeg_bloodied")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_vanguard")])
 
 [sub_resource type="Resource" id="Effect_draeg_withdraws"]
 script = ExtResource("9")
 tags = Array[StringName]([&"draeg_spearhead", &"draeg_escort"])
 
-[sub_resource type="Resource" id="Effect_draeg_stands_aside"]
-script = ExtResource("10")
-flag = &"qw_draeg_stands_aside"
-value = 1
-note = "Marshal Draeg pulled his division out of Orlov's war rather than spend it on a ledger."
-
 [sub_resource type="Resource" id="Event_line_withdraw"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "You took them in daylight and you took them clean. I will not spend my division defending a ledger. Withdraw."
+text = "Four cities in daylight, with nothing hidden about how they were taken. Whatever I have left is not spending another hour on a ledger. Withdraw."
 
 [sub_resource type="Resource" id="Event_draeg_withdraws"]
 script = ExtResource("5")
 id = &"draeg_withdraws"
-triggers = Array[Resource]([SubResource("Trigger_cities_held"), SubResource("Trigger_division_intact")])
-effects = Array[Resource]([SubResource("Effect_draeg_withdraws"), SubResource("Effect_draeg_stands_aside")])
+triggers = Array[Resource]([SubResource("Trigger_cities_held")])
+effects = Array[Resource]([SubResource("Effect_draeg_withdraws")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_withdraw")])
 
@@ -94,6 +109,7 @@ script = ExtResource("10")
 flag = &"qw_towns_saved"
 mode = 1
 value = 4
+note = "Four more border cities came through the march still flying their own colours."
 
 [sub_resource type="Resource" id="Event_the_march_stands"]
 script = ExtResource("5")
@@ -122,7 +138,7 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_four_cities")])
 failures = Array[Resource]([SubResource("Failure_day_12")])
 bonus_objectives = Array[Resource]([])
-events = Array[Resource]([SubResource("Event_draeg_withdraws"), SubResource("Event_the_march_stands")])
+events = Array[Resource]([SubResource("Event_the_vanguard_breaks"), SubResource("Event_draeg_withdraws"), SubResource("Event_the_march_stands")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

@@ -6,15 +6,15 @@
 
 [sub_resource type="Resource" id="Draeg_stood_aside"]
 script = ExtResource("3")
-flag = &"qw_draeg_stands_aside"
-at_least = 1
-at_most = -1
+flag = &"qw_draeg_bloodied"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Draeg_stayed"]
 script = ExtResource("3")
-flag = &"qw_draeg_stands_aside"
-at_least = 0
-at_most = 0
+flag = &"qw_draeg_bloodied"
+at_least = 1
+at_most = -1
 
 [sub_resource type="Resource" id="Every_town_saved"]
 script = ExtResource("3")

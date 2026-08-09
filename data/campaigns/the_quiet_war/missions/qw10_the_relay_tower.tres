@@ -111,6 +111,7 @@ script = ExtResource("10")
 flag = &"qw_evidence"
 mode = 1
 value = 1
+note = "A week of the relay's traffic was read off the tower before it went dark."
 
 [sub_resource type="Resource" id="Event_the_traffic_is_read"]
 script = ExtResource("6")

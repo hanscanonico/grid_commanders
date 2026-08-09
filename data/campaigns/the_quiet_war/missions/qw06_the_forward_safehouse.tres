@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="10"]
@@ -59,10 +58,9 @@ script = ExtResource("3")
 speaker = &"ivar_thorne"
 text = "Not the end of his network. First time we've read its handwriting, though — that's worth the fight."
 
-[sub_resource type="Resource" id="Trigger_safehouse_ours"]
-script = ExtResource("7")
-cell = Vector2i(10, 3)
-holder = 0
+[sub_resource type="Resource" id="Trigger_day_3"]
+script = ExtResource("9")
+day = 3
 
 [sub_resource type="Resource" id="Effect_name_the_handler"]
 script = ExtResource("10")
@@ -71,12 +69,12 @@ objective_id = &"destroy_orlov_handler"
 [sub_resource type="Resource" id="Event_line_staff_car"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "One staff car out the east gate while the gate was still ours. That's the handler — he's the whole file."
+text = "A staff car just left the safehouse by the east road, ahead of us rather than behind. That's the handler — he's the whole file."
 
 [sub_resource type="Resource" id="Event_the_handler_runs"]
 script = ExtResource("6")
 id = &"the_handler_runs"
-triggers = Array[Resource]([SubResource("Trigger_safehouse_ours")])
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
 effects = Array[Resource]([SubResource("Effect_name_the_handler")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_staff_car")])

@@ -19,10 +19,10 @@ script = ExtResource("2")
 text = "Take Millhollow before the cache moves."
 cell = Vector2i(9, 2)
 
-[sub_resource type="Resource" id="Failure_day_4"]
+[sub_resource type="Resource" id="Failure_day_6"]
 script = ExtResource("3")
-text = "The cache moved out past day 4."
-last_day = 4
+text = "The cache moved out past day 6."
+last_day = 6
 
 [sub_resource type="Resource" id="Bonus_break_the_convoy"]
 script = ExtResource("5")
@@ -133,7 +133,7 @@ commanders = {
 fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_millhollow")])
-failures = Array[Resource]([SubResource("Failure_day_4")])
+failures = Array[Resource]([SubResource("Failure_day_6")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_convoy")])
 events = Array[Resource]([SubResource("Event_the_cache_loads"), SubResource("Event_the_convoy_breaks")])
 par_day = 4

@@ -35,7 +35,7 @@ requires = SubResource("Handler_taken")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "We have the safehouse files and a hole in them exactly where the name goes. One staff car out the east gate while the gate was still ours."
+text = "We have the safehouse files and a hole in them exactly where the name goes. One staff car out the east road, a day ahead of the column that came for it."
 requires = SubResource("Handler_at_large")
 
 [sub_resource type="Resource" id="Line_4"]

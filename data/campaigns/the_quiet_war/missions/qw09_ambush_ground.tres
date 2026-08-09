@@ -33,7 +33,7 @@ day = 4
 
 [sub_resource type="Resource" id="Failure_one_loss"]
 script = ExtResource("5")
-text = "Lose no more than one unit."
+text = "The column lost more in the wood than the wood was worth."
 max_losses = 1
 
 [sub_resource type="Resource" id="Line_1"]
@@ -107,6 +107,7 @@ script = ExtResource("13")
 flag = &"qw_columns_broken"
 mode = 1
 value = 1
+note = "Orlov's raiders sprang their trap on ground they could not hold, and a raid column is off the board."
 
 [sub_resource type="Resource" id="Event_the_trap_is_wasted"]
 script = ExtResource("7")

@@ -95,6 +95,7 @@ script = ExtResource("12")
 flag = &"qw_columns_broken"
 mode = 1
 value = 1
+note = "Ferrow's courier is down and his route book is ours; that column crosses nothing again."
 
 [sub_resource type="Resource" id="Event_line_route_book"]
 script = ExtResource("4")
@@ -118,6 +119,7 @@ script = ExtResource("12")
 flag = &"qw_evidence"
 mode = 1
 value = 1
+note = "The waystation's crossing manifests went into the map office's file."
 
 [sub_resource type="Resource" id="Event_the_depot_is_marked"]
 script = ExtResource("6")

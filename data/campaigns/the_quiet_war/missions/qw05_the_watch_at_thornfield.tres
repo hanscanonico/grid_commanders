@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="2"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_hold_thornfield"]
 script = ExtResource("2")
@@ -79,20 +81,24 @@ effects = Array[Resource]([SubResource("Effect_vale_presses")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_bluff")])
 
-[sub_resource type="Resource" id="Trigger_opening"]
-script = ExtResource("6")
-day = 1
+[sub_resource type="Resource" id="Trigger_thornfield_never_lost"]
+script = ExtResource("11")
+objective = SubResource("Objective_hold_thornfield")
+
+[sub_resource type="Resource" id="Trigger_before_day_6"]
+script = ExtResource("12")
+day = 6
 
 [sub_resource type="Resource" id="Effect_thornfield_held"]
 script = ExtResource("10")
 flag = &"qw_thornfield_held"
 value = 1
-note = "Thornfield held, and the border district counted the difference."
+note = "Thornfield never changed hands once, and the border district counted the difference."
 
 [sub_resource type="Resource" id="Event_the_watch_stands"]
 script = ExtResource("5")
 id = &"the_watch_stands"
-triggers = Array[Resource]([SubResource("Trigger_opening")])
+triggers = Array[Resource]([SubResource("Trigger_thornfield_never_lost"), SubResource("Trigger_before_day_6")])
 effects = Array[Resource]([SubResource("Effect_thornfield_held")])
 once = true
 lines = Array[Resource]([])

@@ -110,6 +110,7 @@ script = ExtResource("14")
 flag = &"qw_towns_saved"
 mode = 1
 value = 3
+note = "Three towns that had traded hands all month stopped trading them."
 
 [sub_resource type="Resource" id="Event_the_trading_stops"]
 script = ExtResource("7")
