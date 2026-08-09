@@ -866,7 +866,7 @@ being an army that quietly never arrives: a mission that carries one in behind a
 out, a mission that carries one in onto a board with no slot to stand it in, a carry slot marked on
 another army's row, or a refit minimum no unit could ever be refit to.
 
-The last five checks it grew are for the traps that survive every one above, because each leaves the
+The newest checks it grew are for the traps that survive every one above, because each leaves the
 mission playable and only takes back what it promised. A mission that scripts nothing. A mission the
 board it opens on has **already** decided — the objective satisfied by the units it deals. An
 objective standing beside one that ends the match outright, the enemy's own headquarters, which is

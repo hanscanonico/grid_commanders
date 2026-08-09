@@ -1493,7 +1493,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   reads (CD4, above) and `carry_error` for a mission that carries an army in behind one that carries
   none out (CD5, above; the per-mission half — a refit floor no unit could reach, a carry slot on
   another army's row, a mission carrying an army in onto a board with no slot — is
-  `MissionDefinition.definition_error`'s), plus CD8's five authoring checks (above) and
+  `MissionDefinition.definition_error`'s), plus CD8's four authoring checks (above) and
   `docs/campaign_authoring.md`, which is the author's side of all of it. The story is
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
