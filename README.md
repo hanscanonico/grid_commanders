@@ -872,11 +872,12 @@ board it opens on has **already** decided — the objective satisfied by the uni
 objective standing beside one that ends the match outright, the enemy's own headquarters, which is
 answered before the list is ever read and so leaves the rest of the card decorative. A mission that
 closes a chapter and opens on a condition, taking the chapter's page with it for anybody the war
-sends past. A scripted column authored to land on the very ground the mission is sending you to,
-which arrives to find you standing there and lands nothing. And a fact the war records the same way
-on every route, being read as though it could have gone otherwise — a variant line with one variant.
+sends past. And a fact the war records the same way on every route, being read as though it could
+have gone otherwise — a variant line with one variant.
 `docs/campaign_authoring.md` is the authoring side of all of it: the vocabulary, its limits, what
-each war records, and the one trap the gate cannot see for you.
+each war records, and the two traps the gate deliberately does not judge — whether a flag rewards
+the play it should, and whether a scripted column's landing ground will still be standing empty by
+the time the beat fires.
 
 ## Replays
 
