@@ -13,7 +13,7 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
 [ext_resource type="Resource" path="res://data/units/missiles.tres" id="12"]
 
-[sub_resource type="Resource" id="Objective_hold_five_of_the_market_towns"]
+[sub_resource type="Resource" id="Objective_hold_four_of_the_six_market_towns"]
 script = ExtResource("2")
 text = "Hold four of the six market towns — the majority."
 count = 4
@@ -42,7 +42,7 @@ text = "Take the majority before he prices you out of the race."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Five towns, ours. The market's closed before his premium army arrived to bid."
+text = "Four towns, ours. The market's closed before his premium army arrived to bid."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -120,7 +120,7 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_hold_five_of_the_market_towns")])
+objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_market_towns")])
 failures = Array[Resource]([SubResource("Failure_the_market_stayed_split_past_day_11")])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_interest_accrues"), SubResource("Event_the_crossroads_pays")])
