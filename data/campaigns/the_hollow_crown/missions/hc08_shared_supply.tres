@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -82,14 +82,9 @@ effects = Array[Resource]([SubResource("Effect_marshal_kept")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Relay_taken"]
-script = ExtResource("2")
-text = "The relay is the alliance's."
-cell = Vector2i(10, 4)
-
 [sub_resource type="Resource" id="Trigger_relay_taken"]
 script = ExtResource("9")
-objective = SubResource("Relay_taken")
+objective = SubResource("Objective_0")
 
 [sub_resource type="Resource" id="Trigger_inside_five_days"]
 script = ExtResource("11")
