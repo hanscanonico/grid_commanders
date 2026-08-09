@@ -44,12 +44,12 @@ text = "Small force, small window — give me the odds and I'll tell you if I li
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Better than even, worse than comfortable. That's as precise as I can make it before dawn."
+text = "Better than even, worse than comfortable. That's as precise as I can make it from here."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Good enough odds to move on. Let's not give the sun a vote."
+text = "Good enough odds to move on. Let's not give the clock a vote."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
