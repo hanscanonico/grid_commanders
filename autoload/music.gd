@@ -19,7 +19,7 @@ func _ready() -> void:
 		if ResourceLoader.exists(path):
 			var stream: AudioStreamWAV = load(path)
 			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-			stream.loop_end = stream.data.size() / 2  # 16-bit mono: two bytes a frame
+			stream.loop_end = roundi(stream.get_length() * stream.mix_rate)
 			_streams[track] = stream
 	_player = AudioStreamPlayer.new()
 	add_child(_player)

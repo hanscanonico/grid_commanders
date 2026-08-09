@@ -322,6 +322,7 @@ sfx:
 	$(GODOT) --headless --path . -s res://tools/generate_sfx.gd
 
 music:
+	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_music.gd
 
 # Regenerates the commander portraits (220x268 busts, drawn as SVG by

@@ -1536,7 +1536,7 @@ res://
 │  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip,
 │              # the in-battle mission objective card and scripted-beat speech card
-├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, CampaignSession
+├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, Music, CampaignSession
 │              # (project.godot also registers _mcp_game_helper, the godot_ai editor
 │              # addon's runtime — it loads in every run today; keeping it out of export
 │              # builds is an open decision, recorded here so the extra autoload is
