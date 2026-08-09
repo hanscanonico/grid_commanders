@@ -19,6 +19,11 @@ extends Resource
 ## The place, shown under the title on the briefing card. Flavour, not a key.
 @export var location: String = ""
 @export var map_path: String = ""
+## How the war has to read for this mission to open at all, or null for one every
+## player plays (campaign-depth D7). The campaign's order is still the list's —
+## this only says whether the route stops here or walks past. `at_most: 0` is the
+## other route of a fork; a floor is a mission an earlier one earned.
+@export var unlock_requires: FlagCondition
 
 @export_group("The table")
 ## The army the human plays. Every objective is read from this seat's side.
@@ -111,15 +116,17 @@ func event(event_id: StringName) -> MissionEvent:
 	return null
 
 
-## Every fact this mission reads the war for: the conditions on its variant story
-## lines, and the `Flag` triggers on its beats. Its beats' lines carry none —
-## `story_error` refuses them there — so the story half is the briefing and the
-## victory dialogue.
+## Every fact this mission reads the war for: the condition it opens on, the
+## conditions on its variant story lines, and the `Flag` triggers on its beats.
+## Its beats' lines carry none — `story_error` refuses them there — so the story
+## half is the briefing and the victory dialogue.
 ##
 ## Gathered rather than judged here, because whether the campaign ever writes a
 ## name is the one question a mission cannot ask about itself.
 func read_flags() -> Array[StringName]:
 	var read: Array[StringName] = []
+	if unlock_requires != null:
+		read.append(unlock_requires.flag)
 	for line: MissionLine in briefing + victory:
 		if line == null:
 			continue
@@ -150,19 +157,13 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 		return "mission has no id"
 	if map_path == "":
 		return "mission '%s' names no map" % id
-	var roster := seats if not seats.is_empty() else map.teams()
-	if not roster.has(player_team):
-		return (
-			"mission '%s' seats %s, which leaves out the player's team %d"
-			% [id, roster, player_team]
-		)
-	for team: int in ai_teams:
-		if not roster.has(team):
-			return (
-				"mission '%s' gives the computer team %d, off its seating %s" % [id, team, roster]
-			)
-	if ai_teams.has(player_team):
-		return "mission '%s' gives the player's team %d to the computer" % [id, player_team]
+	if unlock_requires != null:
+		var gate_error := unlock_requires.definition_error()
+		if gate_error != "":
+			return "mission '%s' opens on %s" % [id, gate_error]
+	var table_error := _table_error(map)
+	if table_error != "":
+		return table_error
 	if objectives.is_empty() and failures.is_empty():
 		return "mission '%s' can be neither won nor lost by objective" % id
 	for objective: MissionObjective in objectives + failures + bonus_objectives:
@@ -181,6 +182,26 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	if hidden_error != "":
 		return hidden_error
 	return _carry_error(map)
+
+
+## Why the board could not seat the table this mission states, or "". A seat the
+## board never deals and a seat given to both sides at once are the same slip in
+## two directions, so they are asked in one place.
+func _table_error(map: MapData) -> String:
+	var roster := seats if not seats.is_empty() else map.teams()
+	if not roster.has(player_team):
+		return (
+			"mission '%s' seats %s, which leaves out the player's team %d"
+			% [id, roster, player_team]
+		)
+	for team: int in ai_teams:
+		if not roster.has(team):
+			return (
+				"mission '%s' gives the computer team %d, off its seating %s" % [id, team, roster]
+			)
+	if ai_teams.has(player_team):
+		return "mission '%s' gives the player's team %d to the computer" % [id, player_team]
+	return ""
 
 
 ## Why this mission's scripted beats could not play, or "". Ids are unique
@@ -305,27 +326,13 @@ func difficulty_error(difficulty_db: DifficultyDB) -> String:
 ## re-issues the beat and has to speak the same words, so a beat the war decides
 ## is a beat with a `Flag` trigger.
 func story_error(commander_db: CommanderDB) -> String:
-	var error := _lines_error(briefing + victory, commander_db, true)
+	var error := MissionLine.list_error(briefing + victory, commander_db, true)
 	if error != "":
 		return "mission '%s': %s" % [id, error]
 	for event: MissionEvent in events:
 		if event == null:
 			return "mission '%s' holds an empty event slot" % id
-		error = _lines_error(event.lines, commander_db, false)
+		error = MissionLine.list_error(event.lines, commander_db, false)
 		if error != "":
 			return "mission '%s': event '%s': %s" % [id, event.id, error]
-	return ""
-
-
-func _lines_error(
-	lines: Array[MissionLine], commander_db: CommanderDB, variants_allowed: bool
-) -> String:
-	for line: MissionLine in lines:
-		if line == null:
-			return "an empty story line"
-		if line.is_conditional() and not variants_allowed:
-			return "a line the ledger gates; gate the beat with a Flag trigger instead"
-		var error := line.definition_error(commander_db)
-		if error != "":
-			return error
 	return ""

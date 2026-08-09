@@ -19,6 +19,9 @@ extends Resource
 ## states only how many missions it covers, so it can never name one that moved.
 @export var block_titles: Array[String] = []
 @export var block_lengths: Array[int] = []
+## The pages between the blocks, in no particular order — each names the block it
+## follows. A block with no interlude simply hands the player back to the hub.
+@export var interludes: Array[CampaignInterlude] = []
 
 
 func mission_count() -> int:
@@ -44,14 +47,6 @@ func first_mission_id() -> StringName:
 	return missions[0].id if not missions.is_empty() and missions[0] != null else &""
 
 
-## The mission after this one, or "" at the end of the campaign.
-func next_mission_id(mission_id: StringName) -> StringName:
-	var index := index_of(mission_id)
-	if index < 0 or index + 1 >= missions.size():
-		return &""
-	return missions[index + 1].id
-
-
 ## Which block a mission sits in, or -1. Read by the hub to group its path.
 func block_of(mission_id: StringName) -> int:
 	var index := index_of(mission_id)
@@ -63,6 +58,50 @@ func block_of(mission_id: StringName) -> int:
 		if index < seen:
 			return block
 	return -1
+
+
+## The block this mission is the last of, or -1 — where an interlude belongs.
+## The mission's place in the list rather than the route's, so a player who
+## replays a mission mid-block is not shown the page that closed it.
+func closes_block(mission_id: StringName) -> int:
+	var block := block_of(mission_id)
+	if block < 0:
+		return -1
+	var last := -1
+	for length in block_lengths.slice(0, block + 1):
+		last += length
+	return block if index_of(mission_id) == last else -1
+
+
+## The page that follows this block, or null.
+func interlude_after(block: int) -> CampaignInterlude:
+	for page: CampaignInterlude in interludes:
+		if page != null and page.after_block == block:
+			return page
+	return null
+
+
+## What the war has recorded, in the words the beats that wrote it put on those
+## facts — the hub's answer to "what has my war come to". Mission order, and one
+## line per fact: a `note` is the author's sentence about a flag, so a fact two
+## missions can write is still one thing that happened.
+func ledger_notes(ledger: CampaignState) -> Array[String]:
+	var notes: Array[String] = []
+	var said: Dictionary[StringName, bool] = {}
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		for event: MissionEvent in entry.events:
+			if event == null:
+				continue
+			for effect: MissionEffect in event.effects:
+				var fact := effect.written_flag() if effect != null else null
+				if fact == null or fact.note == "" or said.has(fact.flag):
+					continue
+				if ledger.flag(fact.flag) > 0:
+					said[fact.flag] = true
+					notes.append(fact.note)
+	return notes
 
 
 ## Why this campaign could never be played, or "". Structural only: a mission's
@@ -91,6 +130,25 @@ func definition_error() -> String:
 			total += length
 		if total != missions.size():
 			return "campaign '%s' blocks cover %d missions of %d" % [id, total, missions.size()]
+	return _interludes_error()
+
+
+## Why this campaign's between-block pages could not be placed, or "". A page
+## after a block the campaign does not have is one nothing ever opens, and two
+## after the same block are one page nobody chose between.
+func _interludes_error() -> String:
+	var placed: Dictionary[int, bool] = {}
+	for page: CampaignInterlude in interludes:
+		if page == null:
+			return "campaign '%s' holds an empty interlude slot" % id
+		if page.after_block < 0 or page.after_block >= block_titles.size():
+			return (
+				"campaign '%s' has an interlude after block %d, and it has %d"
+				% [id, page.after_block, block_titles.size()]
+			)
+		if placed.has(page.after_block):
+			return "campaign '%s' has two interludes after block %d" % [id, page.after_block]
+		placed[page.after_block] = true
 	return ""
 
 
@@ -126,25 +184,90 @@ func carry_error() -> String:
 ## rather than a road not travelled. So it catches a name no mission writes at all,
 ## and deliberately not a name written somewhere the player never went.
 func ledger_error() -> String:
+	var written := _written_flags()
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		for flag: StringName in entry.read_flags():
+			var error := _read_error("mission '%s'" % entry.id, flag, written)
+			if error != "":
+				return error
+	for page: CampaignInterlude in interludes:
+		if page == null:
+			continue
+		var where := "the interlude after block %d" % page.after_block
+		for flag: StringName in page.read_flags():
+			var error := _read_error(where, flag, written)
+			if error != "":
+				return error
+	return ""
+
+
+func _written_flags() -> Dictionary[StringName, bool]:
 	var written: Dictionary[StringName, bool] = {}
 	for entry: MissionDefinition in missions:
 		if entry != null:
 			for flag: StringName in entry.written_flags():
 				written[flag] = true
-	for entry: MissionDefinition in missions:
+	return written
+
+
+func _read_error(where: String, flag: StringName, written: Dictionary[StringName, bool]) -> String:
+	var about := CampaignState.derived_mission(flag)
+	if about != &"":
+		if mission(about) == null:
+			return (
+				"campaign '%s': %s reads '%s', and no mission of it is '%s'"
+				% [id, where, flag, about]
+			)
+	elif not written.has(flag):
+		return "campaign '%s': %s reads '%s', which no mission of it writes" % [id, where, flag]
+	return ""
+
+
+## Why a mission of this campaign could never open, or "" — campaign-depth D7's
+## own check, and the third question that needs the whole war at once.
+##
+## The route walks the list forward and stops at the first mission whose
+## condition holds, so a condition asking for a fact no **earlier** mission
+## writes is a mission the route passes every time, on every route. Silent
+## otherwise: the campaign simply plays without it and nothing says so.
+##
+## Only the floor is held to that. A condition asking for a fact to be *absent*
+## is the ordinary shape of the road not taken, and a fact only an optional
+## mission writes is a road the player may decline rather than an authoring slip
+## — which is `ledger_error`'s rule read at the width the route has.
+func route_error() -> String:
+	var behind: Dictionary[StringName, bool] = {}
+	for index in missions.size():
+		var entry := missions[index]
 		if entry == null:
 			continue
-		for flag: StringName in entry.read_flags():
-			var about := CampaignState.derived_mission(flag)
-			if about != &"":
-				if mission(about) == null:
-					return (
-						"campaign '%s': mission '%s' reads '%s', and no mission of it is '%s'"
-						% [id, entry.id, flag, about]
-					)
-			elif not written.has(flag):
-				return (
-					"campaign '%s': mission '%s' reads '%s', which no mission of it writes"
-					% [id, entry.id, flag]
-				)
+		var gate := entry.unlock_requires
+		if gate != null and gate.at_least > 0:
+			var error := _gate_error(entry.id, index, gate.flag, behind)
+			if error != "":
+				return error
+		for flag: StringName in entry.written_flags():
+			behind[flag] = true
 	return ""
+
+
+func _gate_error(
+	mission_id: StringName, index: int, flag: StringName, behind: Dictionary[StringName, bool]
+) -> String:
+	var about := CampaignState.derived_mission(flag)
+	if about != &"":
+		var at := index_of(about)
+		if at >= 0 and at < index:
+			return ""
+		return (
+			"campaign '%s': mission '%s' opens on '%s', which is not behind it"
+			% [id, mission_id, flag]
+		)
+	if behind.has(flag):
+		return ""
+	return (
+		"campaign '%s': mission '%s' opens on '%s', which no mission before it writes"
+		% [id, mission_id, flag]
+	)

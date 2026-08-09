@@ -42,6 +42,37 @@ func test_every_flag_a_campaign_reads_is_one_it_writes() -> void:
 		assert_eq(campaign.ledger_error(), "", "campaign '%s'" % campaign.id)
 
 
+## A mission whose condition no earlier mission can satisfy is one the route walks
+## past on every route through the war, with no other symptom (campaign-depth D7).
+func test_every_mission_a_campaign_lists_can_be_opened() -> void:
+	for campaign in db.all():
+		assert_eq(campaign.route_error(), "", "campaign '%s'" % campaign.id)
+
+
+func test_every_interlude_can_be_shown() -> void:
+	for campaign in db.all():
+		for page: CampaignInterlude in campaign.interludes:
+			assert_eq(page.definition_error(commander_db), "", "campaign '%s'" % campaign.id)
+
+
+## The one branch the shipped content authors, and the page it feeds: break Morn's
+## vanguard in the spring and he never sends the ultimatum mission five is, so the
+## route walks past it and the interlude that closes the act says which spring it
+## was.
+func test_the_shipped_branch_opens_and_closes_the_way_it_reads() -> void:
+	var campaign := db.by_id(&"the_hollow_crown")
+	assert_not_null(campaign)
+	assert_has(campaign.mission(&"hc01_border_skirmish").written_flags(), &"morn_bloodied")
+	var ultimatum := campaign.mission(&"hc05_the_ultimatum")
+	assert_not_null(ultimatum.unlock_requires, "the ultimatum is the optional mission")
+	assert_eq(ultimatum.unlock_requires.flag, &"morn_bloodied")
+	assert_eq(ultimatum.unlock_requires.at_most, 0, "it opens only while the vanguard stood")
+	assert_eq(campaign.closes_block(&"hc06_the_crack"), 0)
+	var page := campaign.interlude_after(0)
+	assert_not_null(page, "and the act it closes has a page")
+	assert_has(page.read_flags(), &"morn_bloodied")
+
+
 func test_every_mission_names_a_board_that_parses() -> void:
 	for campaign in db.all():
 		for mission: MissionDefinition in campaign.missions:

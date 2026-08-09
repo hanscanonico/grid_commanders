@@ -3,6 +3,8 @@
 # not reached this crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
+# Morn's armour is named: breaking it is what the war records about this spring,
+# and what decides whether he comes back with an ultimatum in mission five.
 [terrain]
 .......M.........
 ....F.....F......
@@ -26,4 +28,4 @@
 2 i 13 4
 2 m 12 3
 2 r 13 3
-2 t 12 2
+2 t 12 2 morn_vanguard

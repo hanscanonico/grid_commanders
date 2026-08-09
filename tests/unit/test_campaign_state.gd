@@ -5,6 +5,9 @@ extends GutTest
 ## replay must never cost a star already earned, a save must never be able to
 ## claim a mission is in progress without saying which, and a profile that
 ## outlives a renamed mission must lose that record rather than the whole run.
+##
+## Which mission a war opens next, and when it has run out of them, is the route's
+## and lives in `test_campaign_route.gd`.
 
 var campaign: CampaignDefinition
 
@@ -35,8 +38,6 @@ func _campaign(ids: Array) -> CampaignDefinition:
 
 func test_the_order_is_the_lists_order() -> void:
 	assert_eq(campaign.first_mission_id(), &"one")
-	assert_eq(campaign.next_mission_id(&"one"), &"two")
-	assert_eq(campaign.next_mission_id(&"three"), &"", "nothing follows the last one")
 	assert_eq(campaign.index_of(&"two"), 1)
 	assert_null(campaign.mission(&"nope"))
 
@@ -110,15 +111,6 @@ func test_a_mission_in_progress_is_where_a_returning_player_lands() -> void:
 	state.complete(campaign, &"one", 1, 3)
 	state.active_mission = &"two"
 	assert_eq(state.resume_point(campaign), &"two")
-
-
-func test_a_campaign_is_complete_only_when_every_mission_is() -> void:
-	var state := CampaignState.begin(campaign)
-	for id: StringName in [&"one", &"two"]:
-		state.complete(campaign, id, 1, 3)
-	assert_false(state.is_complete(campaign))
-	state.complete(campaign, &"three", 1, 3)
-	assert_true(state.is_complete(campaign))
 
 
 # --- the save envelope ------------------------------------------------------

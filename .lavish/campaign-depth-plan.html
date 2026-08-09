@@ -789,7 +789,8 @@ events = [
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-neutral pl">CD6</span>
           <h3 class="font-black text-lg">Interludes and optional missions</h3>
-          <span class="text-xs dim">D7</span>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
+          <span class="text-xs dim">D7 · the engine is complete</span>
         </div>
         <p class="mt-2 text-sm">
           <span class="pl">CampaignInterlude</span> (block-indexed narrative pages, variant by flag) shown
@@ -800,6 +801,29 @@ events = [
         <p class="mt-2 text-sm"><b>Gate:</b> a fixture campaign with a skipped optional mission reports
         complete; <span class="pl">make campaigns</span>' reachability check fails a deliberately
         unreachable mission.</p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD6 settled: unlocking latches, and what it latches is derived.</b> The question is
+          whether a mission's gate is stored once or re-asked. Pure derivation is <i>wrong here</i>, and
+          the reason is that <span class="pl">unlock_requires</span> <b>is not monotone in the ledger</b>:
+          <span class="pl">at_most: 0</span> is the ordinary shape of an optional mission — it is literally
+          the shipped one's — and flags only ever grow, so a re-asked gate would <b>close a mission the
+          player is standing on</b> the moment some later beat wrote the fact. A naive latch is wrong too,
+          being unable to skip. So <span class="pl">complete</span> latches the answer of a walk over the
+          list against the ledger as it then stands, and <span class="pl">_opens</span> is one line that
+          <i>is</i> the invariant — already-unlocked opens regardless of what the war now records — so the
+          derived answer can never contradict the latch.
+          <b>The route is forward-only, and that is enforced rather than assumed</b>: a gate whose fact no
+          <i>earlier</i> mission writes fails <span class="pl">make campaigns</span>, so a gate's value is
+          settled before the route reaches it and "derive fresh" and "latch once" become the same answer.
+          <b><span class="pl">next_mission_id</span> was deleted</b> — a diff that adds branching and
+          removes the what-comes-next helper reads backwards until you see that with gates it had become
+          the second source for an answer <span class="pl">open_mission</span> now owns, which is the
+          exact defect <span class="pl">CampaignDefinition</span>'s own header forbids. The save format did
+          not move: a gated route is a pure function of <span class="pl">records</span> and
+          <span class="pl">flags</span>.
+          <b>The hub fixes the surface it had rather than adding one</b>: a passed-over mission reads
+          "not taken" instead of "locked", and the headline counts what the war can still offer.
+        </p>
       </div>
 
       <div class="gc-ms p-4" style="border-top-color: var(--gc-amber)">
@@ -943,10 +967,17 @@ events = [
       </div>
       <div class="gc-risk p-4">
         <div class="gc-kicker" style="color:var(--gc-red)">R5 · Two save formats move in different milestones</div>
-        <p class="mt-2 text-sm">Board save v9 lands in CD1; campaign profile v2 in CD4; the profile embeds
-        the board save. A v1 profile holding a v8 battle must still resume. <b>Guard:</b> the two codecs are
-        already independent by design and each validates its own shape; CD4's gate names this case
-        explicitly.</p>
+        <p class="mt-2 text-sm">Board save v9 lands in CD1; the campaign profile moves separately; the
+        profile embeds the board save. A v1 profile holding a v8 battle must still resume. <b>Guard:</b>
+        the two codecs are already independent by design and each validates its own shape; CD4's gate
+        names this case explicitly.</p>
+        <p class="mt-2 text-sm dim"><b>What happened:</b> the profile moved <i>three</i> times, not once —
+        CD2 took it to 2 for the mission tally, CD4 to 3 for the ledger and CD5 to 4 for the roster, each
+        because the codec's own rule is that <span class="pl">validate</span> refuses a file no writer
+        could have produced and an older profile carrying a newer section is exactly that. CD6 moved it
+        no further: a gated route is a pure function of <span class="pl">records</span> and
+        <span class="pl">flags</span>, both already saved. The risk held — every bump kept older profiles
+        loading, and each is pinned by its own test.</p>
       </div>
       <div class="gc-risk p-4">
         <div class="gc-kicker" style="color:var(--gc-red)">R6 · Authoring volume</div>

@@ -42,6 +42,7 @@ const DEMO_CAMPAIGNS := "menu_campaigns"
 const DEMO_CAMPAIGN_HUB := "menu_campaign_hub"
 const DEMO_CAMPAIGN_BRIEF := "menu_campaign_brief"
 const DEMO_CAMPAIGN_DEBRIEF := "menu_campaign_debrief"
+const DEMO_CAMPAIGN_INTERLUDE := "menu_campaign_interlude"
 const DEMO_MODES: Array[String] = [
 	DEMO_WITH_SAVE,
 	DEMO_NO_SAVE,
@@ -51,6 +52,7 @@ const DEMO_MODES: Array[String] = [
 	DEMO_CAMPAIGN_HUB,
 	DEMO_CAMPAIGN_BRIEF,
 	DEMO_CAMPAIGN_DEBRIEF,
+	DEMO_CAMPAIGN_INTERLUDE,
 ]
 ## Dev captures of the selection page. Bare, it opens the page on seat 1;
 ## `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
@@ -141,6 +143,10 @@ func poses_campaign_brief() -> bool:
 
 func poses_campaign_debrief() -> bool:
 	return _demo == DEMO_CAMPAIGN_DEBRIEF
+
+
+func poses_campaign_interlude() -> bool:
+	return _demo == DEMO_CAMPAIGN_INTERLUDE
 
 
 ## True when `--co-select` asked for the selection page. An ordinary capture (no

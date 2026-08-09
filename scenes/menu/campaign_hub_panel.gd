@@ -11,8 +11,16 @@ extends Control
 ## the page does.
 ##
 ## Locking is read from the profile, never inferred from the list: a mission is
-## open because `CampaignState` says so. Missions are shown grouped under their
-## block titles, which is why `CampaignDefinition` carries them.
+## open because `CampaignState` says so, and one the route went past without
+## opening says so too — a road not taken reads differently from ground nobody
+## has reached. Missions are shown grouped under their block titles, which is why
+## `CampaignDefinition` carries them.
+##
+## The strip under the title is the war's own state: what the ledger has recorded,
+## in the words the beats that wrote it used, and what is left of the army the war
+## carries. Both are handed over already settled — the notes by
+## `CampaignDefinition.ledger_notes`, the army by `CampaignState.roster` — and a
+## war that has recorded nothing and carries nobody draws no strip at all.
 
 signal deployed(mission_id: StringName)
 signal cancelled
@@ -23,6 +31,7 @@ const _ROW_WIDTH := 420
 
 var _title: Label
 var _subtitle: Label
+var _war: VBoxContainer
 var _list_view: VBoxContainer
 var _rows: VBoxContainer
 var _brief_view: VBoxContainer
@@ -36,6 +45,7 @@ var _row_buttons: Array[Button] = []
 var _ids: Array[StringName] = []
 
 var _commanders := CommanderDB.load_default()
+var _units := UnitDB.load_default()
 var _campaign: CampaignDefinition
 var _progress: CampaignState
 var _showing: StringName = &""
@@ -57,10 +67,14 @@ func begin(campaign: CampaignDefinition, progress: CampaignState) -> void:
 	if progress.active_mission != &"" and not CampaignProfile.load_battle(campaign.id).is_empty():
 		_resume_mission = progress.active_mission
 	_title.text = campaign.title.to_upper()
+	# Out of the missions this war still offers, not out of the list: a road the
+	# route did not take can never be cleared, and a count nobody can finish is a
+	# campaign that always reads unfinished.
 	_subtitle.text = (
 		"%d of %d cleared · %d stars"
-		% [progress.records.size(), campaign.mission_count(), progress.total_stars()]
+		% [progress.records.size(), progress.offered_count(campaign), progress.total_stars()]
 	)
+	_fill_war()
 	_fill()
 	_show_list()
 	show()
@@ -117,6 +131,10 @@ func _build() -> void:
 
 	_subtitle = _note("")
 	main.add_child(_subtitle)
+
+	_war = VBoxContainer.new()
+	_war.add_theme_constant_override("separation", 1)
+	main.add_child(_war)
 
 	_list_view = VBoxContainer.new()
 	_list_view.add_theme_constant_override("separation", 5)
@@ -212,6 +230,38 @@ func _body_line(text: String, dim: bool = false) -> Label:
 	return MissionSpeech.paragraph(text, dim)
 
 
+# --- the war so far ----------------------------------------------------------
+
+
+## What this war has recorded and what it still has to fight with. Hidden whole
+## when there is neither, which is every campaign until a mission writes one — so
+## a war that has not started yet shows the list and nothing else.
+func _fill_war() -> void:
+	for child in _war.get_children():
+		child.queue_free()
+	var notes := _campaign.ledger_notes(_progress)
+	var army := _army_line()
+	_war.visible = not notes.is_empty() or army != ""
+	if not _war.visible:
+		return
+	_war.add_child(_note("THE WAR SO FAR"))
+	for note: String in notes:
+		_war.add_child(_note(note))
+	if army != "":
+		_war.add_child(_note("VETERANS   %s" % army))
+
+
+## The army the war carries, as condition and identity — "TANK 40 · RECON 55" —
+## or "" outside a chain, which is where most of a campaign is spent.
+func _army_line() -> String:
+	var standing: Array[String] = []
+	for carried: CarriedUnit in _progress.roster:
+		var type := _units.by_id(carried.unit_id)
+		var named := type.display_name if type != null else String(carried.unit_id)
+		standing.append("%s %d" % [named.to_upper(), carried.hp])
+	return " · ".join(standing)
+
+
 # --- the list ----------------------------------------------------------------
 
 
@@ -242,12 +292,14 @@ func _fill() -> void:
 		_ids.append(mission.id)
 
 
-## "03 · The Long Watch          ★★☆", or a locked row that says so. Stars are
-## drawn rather than counted in words because the row is scanned, not read.
+## "03 · The Long Watch          ★★☆", or a row the player cannot play that says
+## why. Stars are drawn rather than counted in words because the row is scanned,
+## not read.
 func _row_text(index: int, mission: MissionDefinition, open: bool) -> String:
 	var number := "%02d" % (index + 1)
 	if not open:
-		return "%s · %s   —   locked" % [number, mission.title]
+		var skipped := _progress.is_skipped(_campaign, mission.id)
+		return "%s · %s   —   %s" % [number, mission.title, "not taken" if skipped else "locked"]
 	if not _progress.is_cleared(mission.id):
 		return "%s · %s" % [number, mission.title]
 	var earned := _progress.stars_for(mission.id)

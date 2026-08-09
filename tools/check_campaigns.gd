@@ -2,7 +2,8 @@ extends SceneTree
 ## Loads every shipped campaign and holds it to the bar a playable mission has
 ## to clear: the board parses, the seating is one the board deals, every
 ## objective names ground that exists, every fact its content reads is one the war
-## writes, and the whole thing can be launched.
+## writes, every mission it lists can be opened by some route through it, and the
+## whole thing can be launched.
 ##
 ## Authoring guard rather than a unit test — it walks real content, so it is a
 ## `tools/` script the content author runs. `make campaigns` is the entry point.
@@ -62,6 +63,15 @@ func _check_campaign(
 	var chain := campaign.carry_error()
 	if chain != "":
 		_fail(chain)
+	# The third: a mission whose condition no earlier mission can satisfy is one
+	# the route walks past every time, on every route (campaign-depth D7).
+	var route := campaign.route_error()
+	if route != "":
+		_fail(route)
+	for page: CampaignInterlude in campaign.interludes:
+		var interlude := page.definition_error(commander_db)
+		if interlude != "":
+			_fail("%s: %s" % [campaign.id, interlude])
 	print("%s — %s (%d missions)" % [campaign.id, campaign.title, campaign.mission_count()])
 	for mission: MissionDefinition in campaign.missions:
 		_missions += 1
