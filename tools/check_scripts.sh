@@ -70,9 +70,13 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # collaborator, its two capture poses and the resume call. Which war a player is
 # in is a different question from which board and how much fog, so the split is
 # the responsibility rather than the line count; nothing loose is left to move.
+#
+# 1396 -> 1397, and main_menu.gd 1148 -> 1149: the music wire-in. A scene states
+# its theme in one line of _ready (Music.play) and the Music autoload owns
+# everything else; there is nothing to extract from a single call.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1396
-scenes/menu/main_menu.gd 1148
+scenes/battle/battle.gd 1397
+scenes/menu/main_menu.gd 1149
 "
 
 if [[ ! -x "$GODOT" ]]; then

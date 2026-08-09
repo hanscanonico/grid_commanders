@@ -122,6 +122,8 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 
+	Music.play(&"parade")
+
 	_terrain_db = TerrainDB.load_default()
 	_maps = MapCatalog.ordered(_terrain_db)
 	_difficulties = DifficultyDB.load_default().all()

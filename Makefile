@@ -321,6 +321,9 @@ sfx:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_sfx.gd
 
+music:
+	$(GODOT) --headless --path . -s res://tools/generate_music.gd
+
 # Regenerates the commander portraits (220x268 busts, drawn as SVG by
 # tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
 # the new PNGs register. These are committed art, so this only needs rerunning
@@ -355,7 +358,7 @@ gallery-screenshot: import
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	sprites-check unit-sprites-check ground sprites unit-sprites unit-placeholders \
-	sfx portraits import \
+	sfx music portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns
