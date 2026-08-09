@@ -22,8 +22,8 @@ last_day = 9
 
 [sub_resource type="Resource" id="Failure_keep_it_loose"]
 script = ExtResource("5")
-text = "Hammerfall takes whatever stands together. Lose no more than four units, to any cause."
-max_losses = 4
+text = "Hammerfall takes whatever stands together. Lose no more than eight units, to any cause."
+max_losses = 8
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")

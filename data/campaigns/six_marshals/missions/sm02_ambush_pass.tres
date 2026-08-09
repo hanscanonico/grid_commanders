@@ -18,8 +18,8 @@
 
 [sub_resource type="Resource" id="Objective_hold_the_pass_towns"]
 script = ExtResource("2")
-text = "Hold three of the four pass towns."
-count = 3
+text = "Hold two of the four pass towns."
+count = 2
 terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_passes_stayed_open_past_day_10"]
