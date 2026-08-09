@@ -1,8 +1,21 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="8"]
+[ext_resource type="Resource" path="res://data/units/md_tank.tres" id="9"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="10"]
+
+[sub_resource type="Resource" id="Gate_carrow_was_slow"]
+script = ExtResource("4")
+flag = &"carrow_early"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_hold_iron_hill"]
 script = ExtResource("2")
@@ -39,12 +52,45 @@ script = ExtResource("3")
 speaker = &"iris_colt"
 text = "Every unit that comes back off this line is one Second Wind found a reason to keep fighting."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("6")
+day = 4
+
+[sub_resource type="Resource" id="Spawn_heavy"]
+script = ExtResource("8")
+unit_type = ExtResource("9")
+cell = Vector2i(16, 5)
+
+[sub_resource type="Resource" id="Spawn_escort"]
+script = ExtResource("8")
+unit_type = ExtResource("10")
+cell = Vector2i(16, 6)
+
+[sub_resource type="Resource" id="Effect_the_second_column"]
+script = ExtResource("7")
+team = 2
+units = Array[Resource]([SubResource("Spawn_heavy"), SubResource("Spawn_escort")])
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"iona_vance"
+text = "The second column is on your line, Colt. Balance the books or be balanced."
+
+[sub_resource type="Resource" id="Event_the_second_column"]
+script = ExtResource("5")
+id = &"the_second_column"
+triggers = Array[Resource]([SubResource("Trigger_day_4")])
+effects = Array[Resource]([SubResource("Effect_the_second_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf11_iron_hill"
 title = "Iron Hill"
 location = "The eastern rise, allied front"
 map_path = "res://maps/campaign/the_long_front/lf11_iron_hill.txt"
+unlock_requires = SubResource("Gate_carrow_was_slow")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])
@@ -58,6 +104,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_iron_hill")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_the_second_column")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])

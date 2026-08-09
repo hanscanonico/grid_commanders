@@ -1,18 +1,52 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="8"]
+
+[sub_resource type="Resource" id="Battery_silenced"]
+script = ExtResource("4")
+flag = &"battery_silenced"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Battery_standing"]
+script = ExtResource("4")
+flag = &"battery_silenced"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_take_the_outpost"]
 script = ExtResource("2")
 text = "Take Orlov's outpost base."
 cell = Vector2i(16, 7)
 
+[sub_resource type="Resource" id="Failure_short_a_flank"]
+script = ExtResource("5")
+text = "Arrive with the flank whole: more than four units gone, from any cause, and the final push goes in short."
+max_losses = 4
+
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"tomas_reed"
 text = "Draeg's fortress is a day's march past this outpost. Orlov's holding it with everything the Dominion has left to spare."
+
+[sub_resource type="Resource" id="Line_1a"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "The pass battery is scrap, so nothing shells this approach while you clear it. That detour is paying for itself now."
+requires = SubResource("Battery_silenced")
+
+[sub_resource type="Resource" id="Line_1b"]
+script = ExtResource("3")
+speaker = &"tomas_reed"
+text = "Morn's battery came out of the pass with him and it ranges this hill. Don't bunch up on the open ground."
+requires = SubResource("Battery_standing")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -39,6 +73,30 @@ script = ExtResource("3")
 speaker = &"nia_rowan"
 text = "Sending word back down the line. The road to Draeg is open."
 
+[sub_resource type="Resource" id="Trigger_orlov_is_spent"]
+script = ExtResource("7")
+team = 2
+bound = 0
+count = 4
+
+[sub_resource type="Resource" id="Effect_the_last_of_the_purse"]
+script = ExtResource("8")
+team = 2
+amount = 8000
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"cass_orlov"
+text = "Everything the Dominion has left to spare is on this hill, Warden. When it is gone there is only the keep."
+
+[sub_resource type="Resource" id="Event_everything_left_to_spare"]
+script = ExtResource("6")
+id = &"everything_left_to_spare"
+triggers = Array[Resource]([SubResource("Trigger_orlov_is_spent")])
+effects = Array[Resource]([SubResource("Effect_the_last_of_the_purse")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf17_the_shadow_of_the_keep"
@@ -56,9 +114,10 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_outpost")])
-failures = Array[Resource]([])
+failures = Array[Resource]([SubResource("Failure_short_a_flank")])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_everything_left_to_spare")])
 par_day = 8
-briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
+briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
 defeat = "Orlov's outpost held, and the keep stayed exactly as far away as it has been for eighteen days."

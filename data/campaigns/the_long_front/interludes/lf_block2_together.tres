@@ -1,0 +1,73 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Carrow_early"]
+script = ExtResource("3")
+flag = &"carrow_early"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Carrow_late"]
+script = ExtResource("3")
+flag = &"carrow_early"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Averyn_held"]
+script = ExtResource("3")
+flag = &"averyn_held"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Averyn_lost"]
+script = ExtResource("3")
+flag = &"averyn_held"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "Six weeks of falling back ended at a chokepoint nobody had heard of, and the alliance spent the weeks after it learning what the front could take back."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Carrow went inside the window, before Vale's second line closed. The east came cheap, and cheap is a thing this war has not been."
+requires = SubResource("Carrow_early")
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"orin_flux"
+text = "Carrow went the hard way, through a second line that was finished before we reached it. The east is ours and we paid list price for it."
+requires = SubResource("Carrow_late")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Averyn's ground is back on our maps. Not the town — Morn saw to that — but the acres, and he does not get to keep them."
+requires = SubResource("Averyn_held")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"alina_ward"
+text = "Averyn is still a garrison of his, standing on ashes. Log it and keep walking; there is a highland range in front of us."
+requires = SubResource("Averyn_lost")
+
+[sub_resource type="Resource" id="Line_6"]
+script = ExtResource("2")
+speaker = &"gideon_holt"
+text = "Orlov's camp is the last ground the spearhead took, and we are standing on it. Past the foothills the maps stop being ours entirely."
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"mara_voss"
+text = "Then we go and make new ones. The front stops holding here and starts moving."
+
+[resource]
+script = ExtResource("1")
+after_block = 1
+title = "Together"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])

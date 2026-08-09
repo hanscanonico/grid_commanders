@@ -1,8 +1,13 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="6"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="7"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="8"]
 
 [sub_resource type="Resource" id="Objective_hold_three_cities"]
 script = ExtResource("2")
@@ -40,6 +45,40 @@ script = ExtResource("3")
 speaker = &"sable_wren"
 text = "Supply district still feeds the front. That's the whole of what this was for."
 
+[sub_resource type="Resource" id="Trigger_day_4"]
+script = ExtResource("5")
+day = 4
+
+[sub_resource type="Resource" id="Trigger_south_city_ours"]
+script = ExtResource("6")
+cell = Vector2i(9, 5)
+holder = 0
+
+[sub_resource type="Resource" id="Effect_burn_the_south_city"]
+script = ExtResource("7")
+team = 0
+cells = Array[Vector2i]([Vector2i(9, 5)])
+
+[sub_resource type="Resource" id="Effect_cities_burned"]
+script = ExtResource("8")
+flag = &"cities_burned"
+mode = 0
+value = 1
+note = "Ferrow burned the district's southern city out from under you."
+
+[sub_resource type="Resource" id="Event_line_1"]
+script = ExtResource("3")
+speaker = &"dane_ferrow"
+text = "I don't need your cities, quartermaster. I need them gone. That's one."
+
+[sub_resource type="Resource" id="Event_ferrow_burns_one"]
+script = ExtResource("4")
+id = &"ferrow_burns_one"
+triggers = Array[Resource]([SubResource("Trigger_day_4"), SubResource("Trigger_south_city_ours")])
+effects = Array[Resource]([SubResource("Effect_burn_the_south_city"), SubResource("Effect_cities_burned")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_1")])
+
 [resource]
 script = ExtResource("1")
 id = &"lf10_the_supply_line"
@@ -59,6 +98,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_three_cities")])
 failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
+events = Array[Resource]([SubResource("Event_ferrow_burns_one")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
