@@ -778,10 +778,9 @@ clicks go through — so it lands in the log, in a mid-mission save and in the r
 anything else, and a replay speaks the same words in the same place. Beats fire *before* the
 mission is judged, so a relief column arriving on the day the deadline expires is on the board the
 deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
-marked once fires once, and a mission picked back up from a save does not play it again.
-Twenty-three of the 108 missions carry one today — all eighteen of *The Hollow Crown*, the war
-that also writes to the ledger below, and one apiece in the other five — and the rest are still
-fought as they were.
+marked once fires once, and a mission picked back up from a save does not play it again. Seven of
+the 108 missions carry one today — one per war, and a second in *The Hollow Crown*, which is the
+one that writes to the ledger below — and the rest are still fought as they were.
 
 **A war remembers.** A beat can write a fact to its campaign's ledger — Greenwater held, the
 courier lost, three marshals still standing — and a later mission reads it: a briefing line only
@@ -794,10 +793,9 @@ is won**: it reads the war as it stood when it began, a lost or abandoned attemp
 and replaying a mission you have already cleared does not rewrite what later missions were briefed
 off — it can still improve your stars and your best day. When a win does move the war, the debrief
 says so on a `RECORDED` line in the beat's own words, and the hub's strip keeps saying it for the
-rest of the war. *The Hollow Crown* is the war that keeps one today: nine of its missions write
-eight facts between them — whether Morn's vanguard was bloodied, whether Ferrow's paychest was
-taken, how much of Draeg's column the ridge cost him — and two of those facts decide which
-missions that war offers you at all.
+rest of the war. One shipped mission writes a fact today — breaking Morn's vanguard in *The Hollow
+Crown*'s opening skirmish — and it is what decides whether that war offers you its one optional
+mission.
 
 **A war has a route through it.** A mission can state how the war has to read for it to open at all,
 and the campaign walks its list forward to the first mission that does — so a fact you wrote four
@@ -805,9 +803,8 @@ missions ago can hand you a mission another player never sees, or take one away.
 went past is gone for that run rather than owed: it is not counted against you, and a war with
 nothing left to offer reads as finished even though a mission of it was never played. What has
 already opened stays open, so nothing you do later can shut a mission you are standing on. *The
-Hollow Crown* authors the two shipped today — its ultimatum is offered only to a commander who let
-Morn's vanguard walk away, and its ridge-road counterattack only to one whose rush for the relay
-cost Draeg his column.
+Hollow Crown*'s ultimatum is the one authored today — it is offered only to a commander who let
+Morn's vanguard walk away.
 
 **An army carries.** A war can hand one mission's survivors to the next — authored where the same
 general fights both, since an army only ever follows its own commander. The second board marks some
