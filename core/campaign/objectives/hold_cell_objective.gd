@@ -26,6 +26,10 @@ func readout(_state: GameState, _team: int, progress: MissionProgress) -> String
 	return "%d/%d DAYS" % [progress.days_held(cell), days]
 
 
+func named_cells() -> Array[Vector2i]:
+	return [cell]
+
+
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if days <= 0:
 		return "hold objective asks for %d days" % days

@@ -100,7 +100,7 @@
 
   <!-- ══ HERO ══ -->
   <header class="gc-hero px-6 md:px-10 py-10">
-    <div class="gc-kicker opacity-80">Grid Commanders · campaign mode · design of record · rev 1 · 2026-08-07</div>
+    <div class="gc-kicker opacity-80">Grid Commanders · campaign mode · design of record · rev 1 · 2026-08-07 · <b>shipped: CD1–CD8</b></div>
     <h1 class="mt-3 text-3xl md:text-5xl font-black leading-tight">Campaign Depth</h1>
     <p class="mt-1 text-lg md:text-xl opacity-90 font-semibold">Six wars, not 108 battles.</p>
     <p class="mt-5 max-w-3xl opacity-90 leading-relaxed">
@@ -112,11 +112,18 @@
       a wider objective vocabulary, scripted mid-battle events, a consequence ledger, an army that
       carries its wounds, interludes and optional missions — then a retrofit pass over all 108.
     </p>
+    <p class="mt-3 max-w-3xl opacity-90 leading-relaxed">
+      <b>All of it is shipped.</b> All 108 missions carry a scripted beat, 57 of them write to their war's
+      ledger, ten open only on a condition, seven kinds of primary objective and three kinds of failure are
+      in use where <span class="pl">CaptureCell</span> and a deadline were the whole vocabulary — and
+      <span class="pl">make campaigns</span> now refuses the six authoring traps the retrofit review kept
+      finding. <span class="pl">docs/campaign_authoring.md</span> is the author's side of it.
+    </p>
     <div class="mt-7 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
       <div class="bg-white/10 rounded p-3">
         <div class="gc-kicker opacity-70">Milestones</div>
         <div class="text-2xl font-black">CD1–CD8</div>
-        <div class="text-xs opacity-70">playable at every one</div>
+        <div class="text-xs opacity-70">all shipped</div>
       </div>
       <div class="bg-white/10 rounded p-3">
         <div class="gc-kicker opacity-70">New verbs</div>
@@ -598,7 +605,7 @@ events = [
       <span class="gc-num">05</span>
       <h2 class="text-2xl font-black">Milestones</h2>
     </div>
-    <p class="mt-2 text-sm dim">Each one ships something playable. CD1–CD6 are engine and are inert until content uses them; CD7 is the content.</p>
+    <p class="mt-2 text-sm dim">Each one ships something playable. CD1–CD6 are engine and are inert until content uses them; CD7 is the content; CD8 is the gate that holds it. <b>All eight are shipped.</b></p>
 
     <div class="mt-5 space-y-4">
 
@@ -830,6 +837,7 @@ events = [
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-warning pl">CD7</span>
           <h3 class="font-black text-lg">The retrofit — all 108 missions</h3>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
           <span class="text-xs dim">six PRs, one per campaign, each independently shippable</span>
         </div>
         <p class="mt-2 text-sm">
@@ -840,12 +848,28 @@ events = [
         <p class="mt-2 text-sm"><b>Gate per campaign:</b> <span class="pl">make campaigns</span> green; a
         seeded soak playing every mission of that campaign to a verdict with no rejected command and no
         stall; the campaign played by hand end to end.</p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD7 settled: the vocabulary is actually used, and the shape is the measurement.</b>
+          All 108 missions carry a beat — 197 of them — and <b>57 write to their war's ledger</b>, where
+          CD4 shipped with none. Ten missions across five wars now open only on a condition, against the
+          one CD6 authored. Seven kinds of primary objective are in use
+          (<span class="pl">CaptureCell</span> 80, <span class="pl">OwnProperties</span> 21,
+          <span class="pl">SurviveUntilDay</span> 19, <span class="pl">HoldCell</span> 13,
+          <span class="pl">AllySurvives</span> 4, <span class="pl">ReachCell</span> 3,
+          <span class="pl">DestroyUnit</span> 2) against the 86-of-108 §1 diagnosed, and
+          <b>three kinds of failure where <span class="pl">DayDeadline</span> was the only one in the
+          game</b> (86 / 18 / 5). The carried army is still CD5's one chain, the roster only crossing
+          where the same general fights twice.
+          <b>Six independent authors hit the same authoring traps</b>, every one of them with a green
+          <span class="pl">make campaigns</span> — which is CD8's whole brief.
+        </p>
       </div>
 
       <div class="gc-ms p-4">
         <div class="flex flex-wrap items-baseline gap-3">
           <span class="badge badge-neutral pl">CD8</span>
           <h3 class="font-black text-lg">The gate and the record</h3>
+          <span class="badge badge-success badge-sm align-middle">shipped</span>
         </div>
         <p class="mt-2 text-sm">
           <span class="pl">make campaigns</span> grown to D9 in full; a campaign soak test in
@@ -853,6 +877,39 @@ events = [
           <span class="pl">docs/campaign_authoring.md</span> — the vocabulary, the authoring rule, the
           ledger's fact list per campaign, and how to add a mission. The plan's own milestone pass and the
           supersessions in §8 written into <span class="pl">CLAUDE.md</span>.
+        </p>
+        <p class="mt-2 text-sm dim">
+          <b>What CD8 settled: five checks, each for a trap that leaves no other mark.</b>
+          <b>A fact nothing can vary</b> (<span class="pl">CampaignDefinition.constant_fact_error</span>)
+          — a flag whose every writing beat waits only on the calendar, at a day the mission's own
+          <span class="pl">par_day</span> allows, and which some condition then reads, is a variant line
+          with one variant; a writer on a route-gated mission is left alone, which is
+          <span class="pl">ledger_error</span>'s rule at this width.
+          <b>A mission the board it opens on has already decided</b> and <b>an objective standing beside
+          one that ends the match</b> (both <span class="pl">MissionDefinition.board_error</span>) —
+          <span class="pl">MissionRuntime</span> reaches tactical victory before it reads the objective
+          list, so a co-primary beside the enemy's home headquarters is decorative.
+          <b>A gated mission closing a block</b> (<span class="pl">block_error</span>), CD6's stated
+          consequence turned into a refusal. And <b>a scripted column landing where an objective sends
+          the player</b>, over two new hooks on the contract <span class="pl">spawned_tags</span> already
+          has, because <span class="pl">SpawnUnits</span> skips an occupied cell and a
+          <span class="pl">once</span> beat is spent either way.
+          <b>Two of the five fired on shipped content and both were real</b>: five missions carried a
+          co-primary the runtime could never judge (now each mission's bonus objective, where it is
+          judged and earns its star), and two Hollow Crown interlude lines were conditioned on facts
+          every route writes (the conditions are gone; the lines play as they always did).
+          <b>Polarity is the trap the gate cannot see</b> — a flag's sign and its variability are
+          independent and only the second is in the file — so it ships as a hand test in
+          <span class="pl">docs/campaign_authoring.md</span>: <i>describe a player who sets this flag and
+          a player who does not, both doing something ordinary.</i>
+          <b>The soak asserts legality, never winnability</b>
+          (<span class="pl">tests/unit/test_campaign_soak.gd</span>): every mission played through
+          <span class="pl">BattleSetup.build(to_request())</span> and
+          <span class="pl">CampaignSession</span> itself, so the boundary order is
+          <span class="pl">BattleCampaign</span>'s rather than a second spelling of it, plus every one of
+          the 197 beats applied to the board its mission opens on — a planner-against-planner game only
+          brings about half of them. The scratch tool it replaces reported the same fact as
+          <span class="pl">never-decided=0</span> while firing no beat at all, and is deleted.
         </p>
       </div>
 
@@ -1076,7 +1133,8 @@ events = [
     <span class="pl">campaign-scenarios-plan.html</span> (the six premises), whose §5 it answers — both
     uncommitted design handoffs rather than files in the tree; the committed record of the campaign
     layer's architecture and decisions is <span class="pl">CLAUDE.md</span>'s “Campaign mode” entry.
-    Milestones CD1–CD8; CD1 is shipped, and each milestone's own card is where its badge says so.</p>
+    Milestones CD1–CD8, all shipped; each milestone's own card is where its badge says so, and the
+    supersessions this plan collected are in that same entry.</p>
   </footer>
 
 </div>

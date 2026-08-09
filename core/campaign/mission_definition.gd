@@ -181,7 +181,71 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	var hidden_error := _hidden_objectives_error()
 	if hidden_error != "":
 		return hidden_error
+	var landing_error := _landing_ground_error()
+	if landing_error != "":
+		return landing_error
 	return _carry_error(map)
+
+
+## Why this mission could not be played on the board it opens on, or "". The two
+## questions `definition_error` cannot ask, both of which need a state: a map
+## deals every seat it names while a match may have closed some, and a verdict is
+## `MissionRuntime`'s to give.
+##
+## Asked by the content gate with the board a mission actually opens on, which is
+## `MissionEffect.board_error`'s split at the width a whole mission has.
+func board_error(state: GameState) -> String:
+	var tally := MissionProgress.new()
+	tally.observe(state, player_team)
+	var opening := MissionRuntime.new(self).evaluate(state, tally)
+	if opening.is_over():
+		return "mission '%s' is already over on the board it opens on: %s" % [id, opening.reason]
+	return _decorative_objectives_error(state)
+
+
+## Why a primary of this mission could never be judged, or "".
+##
+## `MissionRuntime` reaches tactical victory before it walks the objective list,
+## so an objective whose own completion ends the match — the last hostile army's
+## home headquarters, or that army itself — leaves every objective beside it
+## decorative: the mission is won the instant it is met, with the others still
+## unticked on the card and no other symptom.
+func _decorative_objectives_error(state: GameState) -> String:
+	if objectives.size() < 2:
+		return ""
+	for objective: MissionObjective in objectives:
+		if _ends_the_match(objective, state):
+			return (
+				"mission '%s': '%s' ends the match, so the objectives beside it are never judged"
+				% [id, objective.text]
+			)
+	return ""
+
+
+## Whether satisfying this condition is itself a tactical victory. Which army an
+## objective can behead is `GameState.home_hq`'s answer and never the terrain's
+## (four-player-maps D3) — an HQ a survivor conquered fells nobody — and whether
+## that leaves anybody to fight is `GameState.allied`'s.
+func _ends_the_match(objective: MissionObjective, state: GameState) -> bool:
+	var felled := 0
+	if objective is CaptureCellObjective:
+		felled = _home_of(state, (objective as CaptureCellObjective).cell)
+	elif objective is DefeatTeamObjective:
+		felled = (objective as DefeatTeamObjective).team
+	if felled == 0 or state.allied(felled, player_team):
+		return false
+	for team in state.teams:
+		if team != felled and not state.allied(team, player_team):
+			return false
+	return true
+
+
+## The army this cell is the home headquarters of, or 0.
+static func _home_of(state: GameState, cell: Vector2i) -> int:
+	for team: int in state.home_hq:
+		if state.home_hq[team] == cell:
+			return team
+	return 0
 
 
 ## Why the board could not seat the table this mission states, or "". A seat the
@@ -229,6 +293,30 @@ func _events_error(map: MapData, unit_db: UnitDB) -> String:
 	var tag_error := UnitTag.duplicate_error(named)
 	if tag_error != "":
 		return "mission '%s': %s" % [id, tag_error]
+	return ""
+
+
+## Why a scripted arrival could be voided without a word, or "".
+##
+## `SpawnUnits` skips an occupied cell rather than clearing it, and a `once` beat
+## is spent whether or not anything landed — so a column authored to arrive on
+## ground the mission's own conditions send the player to is one that speaks its
+## line, changes nothing, and never comes due again. The board's own units are
+## already refused by `SpawnUnitsEffect.definition_error`; this is the half only
+## the mission can see, because the objectives are the mission's.
+func _landing_ground_error() -> String:
+	var wanted: Dictionary[Vector2i, bool] = {}
+	for objective: MissionObjective in objectives + failures + bonus_objectives:
+		for cell: Vector2i in objective.named_cells():
+			wanted[cell] = true
+	for event: MissionEvent in events:
+		for effect: MissionEffect in event.effects:
+			for cell: Vector2i in effect.landing_cells():
+				if wanted.has(cell):
+					return (
+						"mission '%s': event '%s' lands a unit on %s, where an objective sends us"
+						% [id, event.id, cell]
+					)
 	return ""
 
 

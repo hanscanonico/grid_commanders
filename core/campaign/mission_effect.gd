@@ -57,6 +57,15 @@ func spawned_tags() -> Array[StringName]:
 	return none
 
 
+## The cells this effect puts units on, in the order it puts them — `SpawnUnits`
+## alone answers with anything. Counted by `MissionDefinition` against the ground
+## the mission's own conditions send the player to, because a landing zone the
+## player is standing in is one the spawn skips and the beat is spent regardless.
+func landing_cells() -> Array[Vector2i]:
+	var none: Array[Vector2i] = []
+	return none
+
+
 ## The ending this effect declares, or null — `EndMission` alone answers, and it
 ## answers with itself. It is a fact `MissionRuntime` reads, never a second
 ## verdict authority: precedence stays that class's (D3).

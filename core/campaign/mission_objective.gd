@@ -58,6 +58,19 @@ func is_live(progress: MissionProgress) -> bool:
 	return not hidden or (progress != null and progress.is_revealed(id))
 
 
+## The ground this condition sends the player to, or empty — the three that name
+## cells answer, and every count-and-day condition ignores it.
+##
+## Declared here for the reason `MissionEffect.spawned_tags` is: what a mission
+## may not do with that ground is the *mission's* question, not this class's.
+## `SpawnUnits` skips an occupied cell and a `once` beat is spent either way, so a
+## column authored to land where the player was told to stand speaks its line and
+## puts nothing on the board.
+func named_cells() -> Array[Vector2i]:
+	var none: Array[Vector2i] = []
+	return none
+
+
 ## Why this objective could never be satisfied on this mission's board, or "".
 ## Called once when a mission loads so an authoring mistake — a cell that is not
 ## a property, a count no board can reach — fails visibly at the door rather

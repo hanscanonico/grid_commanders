@@ -14,6 +14,15 @@ extends RefCounted
 ## stated order that mission ends differently depending on which list happened
 ## to be checked first. Losing outranks winning throughout, because a mission
 ## the player survived by a hair should not also be a mission they lost by one.
+##
+## **Tactical victory outranks the objective list, which is what an author has to
+## know**: an objective whose own completion ends the match — the last hostile
+## army's home headquarters, or that army itself — is answered at step 4, before
+## a single objective is read, so every objective standing beside it is
+## decorative. A mission about the enemy's headquarters has exactly one primary
+## and states the rest as bonuses. `MissionDefinition.board_error` refuses the
+## other shape, because it has no symptom: the mission simply ends with its own
+## card half unticked.
 
 enum Status { RUNNING, SUCCESS, FAILURE }
 

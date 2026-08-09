@@ -753,9 +753,11 @@ Picking a mission swaps the list for its **briefing** — the story, spoken by t
 themselves, each line under its speaker's name in their faction's colour, then the objectives, what
 fails it, the par day — and **Deploy** stages it through the same launch path a skirmish uses; the
 button reads **Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
-every objective at once (or by ordinary tactical victory) and lost by any failure condition — a
-deadline, a fallen ally, a loss limit spent — or by tactical defeat, and **losing outranks
-winning**: a deadline that expires on the very board that completed the objective is a failure.
+every objective at once (or by ordinary tactical victory) and lost by any failure condition — or by
+tactical defeat, and **losing outranks winning**: a deadline that expires on the very board that
+completed the objective is a failure. The shipped missions are lost three ways where a deadline
+used to be the only one in the game: 86 of them run out of days, 18 spend a loss limit, and 5 lose
+somebody the board named and you were told to keep alive.
 A mission asks for more than the enemy's headquarters: take a cell or so many properties, hold out
 to a day, **hold** named ground for a run of whole days, get a number of units onto an **exit
 zone**, **destroy** or **keep alive** a unit the board names, break one named **army**, or finish
@@ -779,9 +781,8 @@ clicks go through — so it lands in the log, in a mid-mission save and in the r
 anything else, and a replay speaks the same words in the same place. Beats fire *before* the
 mission is judged, so a relief column arriving on the day the deadline expires is on the board the
 deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
-marked once fires once, and a mission picked back up from a save does not play it again. Seven of
-the 108 missions carry one today — one per war, and a second in *The Hollow Crown*, which is the
-one that writes to the ledger below — and the rest are still fought as they were.
+marked once fires once, and a mission picked back up from a save does not play it again. **Every
+one of the 108 missions carries at least one**, 197 beats in all.
 
 **A war remembers.** A beat can write a fact to its campaign's ledger — Greenwater held, the
 courier lost, three marshals still standing — and a later mission reads it: a briefing line only
@@ -794,18 +795,19 @@ is won**: it reads the war as it stood when it began, a lost or abandoned attemp
 and replaying a mission you have already cleared does not rewrite what later missions were briefed
 off — it can still improve your stars and your best day. When a win does move the war, the debrief
 says so on a `RECORDED` line in the beat's own words, and the hub's strip keeps saying it for the
-rest of the war. One shipped mission writes a fact today — breaking Morn's vanguard in *The Hollow
-Crown*'s opening skirmish — and it is what decides whether that war offers you its one optional
-mission.
+rest of the war. **Fifty-seven of the 108 missions write a fact**, every war keeping a handful of
+its own — whether Ferrow was ever paid, how much of the fuel road runs east, whether the marshal
+you fought beside is still standing.
 
 **A war has a route through it.** A mission can state how the war has to read for it to open at all,
 and the campaign walks its list forward to the first mission that does — so a fact you wrote four
 missions ago can hand you a mission another player never sees, or take one away. A mission the route
 went past is gone for that run rather than owed: it is not counted against you, and a war with
 nothing left to offer reads as finished even though a mission of it was never played. What has
-already opened stays open, so nothing you do later can shut a mission you are standing on. *The
-Hollow Crown*'s ultimatum is the one authored today — it is offered only to a commander who let
-Morn's vanguard walk away.
+already opened stays open, so nothing you do later can shut a mission you are standing on. **Ten
+missions across five of the six wars are authored this way** — *The Hollow Crown*'s ultimatum is
+offered only to a commander who let Morn's vanguard walk away, and *The Collection* holds two back
+— one for a commander who got the witness out, one for a commander who proved the forgery.
 
 **An army carries.** A war can hand one mission's survivors to the next — authored where the same
 general fights both, since an army only ever follows its own commander. The second board marks some
@@ -863,6 +865,18 @@ have, and two pages after the same block. The carried army is held to the same b
 being an army that quietly never arrives: a mission that carries one in behind a mission that carries none
 out, a mission that carries one in onto a board with no slot to stand it in, a carry slot marked on
 another army's row, or a refit minimum no unit could ever be refit to.
+
+The last five checks it grew are for the traps that survive every one above, because each leaves the
+mission playable and only takes back what it promised. A mission that scripts nothing. A mission the
+board it opens on has **already** decided — the objective satisfied by the units it deals. An
+objective standing beside one that ends the match outright, the enemy's own headquarters, which is
+answered before the list is ever read and so leaves the rest of the card decorative. A mission that
+closes a chapter and opens on a condition, taking the chapter's page with it for anybody the war
+sends past. A scripted column authored to land on the very ground the mission is sending you to,
+which arrives to find you standing there and lands nothing. And a fact the war records the same way
+on every route, being read as though it could have gone otherwise — a variant line with one variant.
+`docs/campaign_authoring.md` is the authoring side of all of it: the vocabulary, its limits, what
+each war records, and the one trap the gate cannot see for you.
 
 ## Replays
 

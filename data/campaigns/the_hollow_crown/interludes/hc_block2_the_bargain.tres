@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
@@ -15,12 +15,6 @@ script = ExtResource("3")
 flag = &"draeg_column_broken"
 at_least = 0
 at_most = 0
-
-[sub_resource type="Resource" id="DebtOpen"]
-script = ExtResource("3")
-flag = &"alliance_debt"
-at_least = 1
-at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
@@ -47,7 +41,6 @@ requires = SubResource("ColumnWhole")
 script = ExtResource("2")
 speaker = &"dane_ferrow"
 text = "Two of my outriders under his banner, and he calls that a bargain kept. The bill is still open, Draeg. They always are."
-requires = SubResource("DebtOpen")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")

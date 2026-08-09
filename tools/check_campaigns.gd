@@ -68,6 +68,16 @@ func _check_campaign(
 	var route := campaign.route_error()
 	if route != "":
 		_fail(route)
+	# The fourth: a fact every route writes the same way, which is a variant line
+	# with only one variant and a gated beat that fires for everybody.
+	var constant := campaign.constant_fact_error()
+	if constant != "":
+		_fail(constant)
+	# The fifth: a gated mission that closes a block takes the block's page with
+	# it for every player the route sends past it.
+	var block := campaign.block_error()
+	if block != "":
+		_fail(block)
 	for page: CampaignInterlude in campaign.interludes:
 		var interlude := page.definition_error(commander_db)
 		if interlude != "":
@@ -126,6 +136,16 @@ func _check_mission(
 		return
 	if not mission.briefing.is_empty() and mission.victory.is_empty():
 		_fail("%s: has a briefing but nothing to say when it is won" % where)
+	# D9's own clause: every mission carries a beat. A mission that scripts
+	# nothing is playable, so this is a content bar rather than a definition one.
+	if mission.events.is_empty():
+		_fail("%s: scripts nothing" % where)
+	# The board a mission opens on answers two things the map cannot: whether the
+	# mission is over before the first command, and whether an objective beside a
+	# match-ending one is ever judged.
+	var board := mission.board_error(state)
+	if board != "":
+		_fail("%s: %s" % [campaign.id, board])
 	_check_events(where, mission, state)
 
 
