@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -144,7 +144,7 @@ units = Array[Resource]([SubResource("Spawn_relief_guns"), SubResource("Spawn_re
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Relief on the east track, a day early, and they brought the good guns."
+text = "Relief on the west track, a day early, and they brought the good guns."
 
 [sub_resource type="Resource" id="Event_the_relief_track"]
 script = ExtResource("6")

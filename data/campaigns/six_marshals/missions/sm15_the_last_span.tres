@@ -1,11 +1,10 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
-[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="9"]
@@ -13,12 +12,6 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="11"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
 [ext_resource type="Resource" path="res://data/units/rockets.tres" id="13"]
-
-[sub_resource type="Resource" id="Opens_on_the_column"]
-script = ExtResource("6")
-flag = &"draeg_column_intact"
-at_least = 1
-at_most = -1
 
 [sub_resource type="Resource" id="Objective_hold_the_west_bank_until_day_7"]
 script = ExtResource("2")
@@ -125,7 +118,6 @@ id = &"sm15_the_last_span"
 title = "The Last Span"
 location = "The one bridge, Meridian-Iron border"
 map_path = "res://maps/campaign/six_marshals/sm15_the_last_span.txt"
-unlock_requires = SubResource("Opens_on_the_column")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])

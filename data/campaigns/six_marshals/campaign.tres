@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="CampaignDefinition" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_definition.gd" id="1"]
 [ext_resource type="Resource" path="res://data/campaigns/six_marshals/missions/sm01_border_toll.tres" id="2"]

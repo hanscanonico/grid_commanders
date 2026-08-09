@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
@@ -10,6 +10,13 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/grant_charge_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+
+; Ferrow is the one marshal whose flag is written twice. Every other block writes
+; its fact in the marshal's first mission and only reads it afterwards; here sm01
+; and sm03 both write `ferrow_paid`, and sm02 alone reads it. Deliberate: the fact
+; is "his raiders went home paid", and his third mission can charge that bill on a
+; war where his first one did not. SET is idempotent, so the second write records
+; the bad war rather than doubling it — an ADD here would be a bug.
 
 [sub_resource type="Resource" id="Objective_hold_the_timber_line_until_day_6"]
 script = ExtResource("2")
