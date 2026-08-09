@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
@@ -16,12 +16,6 @@ flag = &"morn_bloodied"
 at_least = 0
 at_most = 0
 
-[sub_resource type="Resource" id="Fallen"]
-script = ExtResource("3")
-flag = &"directorate_fallen"
-at_least = 1
-at_most = -1
-
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
 text = "The Directorate had governed the Iron Dominion for forty years. It took eleven days to stop existing, and no two border capitals agree on which of them it died."
@@ -29,7 +23,6 @@ text = "The Directorate had governed the Iron Dominion for forty years. It took 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 text = "Reed's staff logged the hour it reached the border: two Iron companies turned round mid-battle and walked off a field they were still winning. Nobody in the capital had told them to. Nobody in the capital was left to."
-requires = SubResource("Fallen")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")

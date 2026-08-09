@@ -225,6 +225,95 @@ func _read_error(where: String, flag: StringName, written: Dictionary[StringName
 	return ""
 
 
+## Why a fact this campaign records could never read two ways, or "" — the fourth
+## question that needs the whole war at once, and the one with no symptom on any
+## screen: a fact every route writes the same way is not a consequence, so the
+## condition reading it is not a choice. One side of a variant pair is content
+## nobody can reach; the other is a line that would have played anyway.
+##
+## A beat varies a fact when it waits for anything the player decides. What it
+## cannot vary is a beat waiting only on the calendar, at a day the mission's own
+## par allows — every player who takes par records it, and only one who beats par
+## does not. A beat on a **route-gated** mission is left alone for `ledger_error`'s
+## reason: a road the player may decline is the ordinary shape of a fact that
+## sometimes goes unwritten.
+func constant_fact_error() -> String:
+	var varying: Dictionary[StringName, bool] = {}
+	var written: Array[StringName] = []
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		var optional := entry.unlock_requires != null
+		for event: MissionEvent in entry.events:
+			if event == null:
+				continue
+			for flag: StringName in event.written_flags():
+				written.append(flag)
+				if optional or not _certain(event, entry):
+					varying[flag] = true
+	var read := _flag_readers()
+	for flag: StringName in written:
+		if varying.has(flag) or not read.has(flag):
+			continue
+		return (
+			"campaign '%s': '%s' reads the same on every route, and %s asks it as if it could differ"
+			% [id, flag, read[flag]]
+		)
+	return ""
+
+
+## Whether this beat fires for every player who takes the mission at par. Only
+## `DayReached` can be answered without a board, which is exactly the point: any
+## other condition is something the player did or did not do.
+static func _certain(event: MissionEvent, mission: MissionDefinition) -> bool:
+	if event.triggers.is_empty():
+		return false
+	for trigger: MissionTrigger in event.triggers:
+		if not (trigger is DayReachedTrigger):
+			return false
+		if (trigger as DayReachedTrigger).day > maxi(1, mission.par_day):
+			return false
+	return true
+
+
+## Every fact some condition of this campaign reads, and the first place reading
+## it — the half of `ledger_error`'s walk that names where, so a constant fact can
+## say which line believed it was a variant.
+func _flag_readers() -> Dictionary[StringName, String]:
+	var readers: Dictionary[StringName, String] = {}
+	for entry: MissionDefinition in missions:
+		if entry != null:
+			for flag: StringName in entry.read_flags():
+				if not readers.has(flag):
+					readers[flag] = "mission '%s'" % entry.id
+	for page: CampaignInterlude in interludes:
+		if page != null:
+			for flag: StringName in page.read_flags():
+				if not readers.has(flag):
+					readers[flag] = "the interlude after block %d" % page.after_block
+	return readers
+
+
+## Why a block of this campaign could close without its page, or "".
+##
+## `closes_block` names the block's last mission structurally, so an interlude is
+## shown by winning that one mission and by nothing else (campaign-depth CD6).
+## Gate it and a player the route sends past it never sees the page — the block
+## simply ends, with the war's own summary of it unspoken and nothing anywhere
+## saying so.
+func block_error() -> String:
+	for entry: MissionDefinition in missions:
+		if entry == null or entry.unlock_requires == null:
+			continue
+		var block := closes_block(entry.id)
+		if block >= 0 and interlude_after(block) != null:
+			return (
+				"campaign '%s': mission '%s' closes block %d and opens on a condition, so its page is optional"
+				% [id, entry.id, block]
+			)
+	return ""
+
+
 ## Why a mission of this campaign could never open, or "" — campaign-depth D7's
 ## own check, and the third question that needs the whole war at once.
 ##

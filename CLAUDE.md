@@ -1173,7 +1173,7 @@ that must survive any change; the full rationale, milestones and risk registers 
 - `campaign-depth-plan.html` — what the six shipped campaigns cannot yet say: mission variety
   beyond capture-the-HQ, scripted mid-battle events, a consequence ledger carried between missions,
   the army a mission hands the next one, interludes and optional missions, across all six wars.
-  Milestones CD1–CD8, **CD1–CD6 shipped**. It is the design of record for the campaign's *depth*;
+  Milestones CD1–CD8, **all shipped**. It is the design of record for the campaign's *depth*;
   the **Campaign mode** entry below stays the record of the campaign layer's own architecture (the
   data shape, `MissionRuntime`'s precedence, `CampaignSession`, the progress file), and the two are
   read together. It retired exactly one clause of that entry — D2's "no evacuate/escort/convoy
@@ -1336,8 +1336,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   `CampaignDefinition.ledger_error` is the one campaign-wide question a mission cannot ask about
   itself — a fact no mission of the campaign writes, or a `cleared:` / `stars:` name for a mission
   it does not run — and `make campaigns` is where it is asked, both slips being otherwise silent.
-  **No shipped mission authors a flag yet** — CD7 owns the 108 — so the variant lines and the
-  `RECORDED` rows are inert in shipped content, the way CD1–CD3's capabilities shipped inert.
+  CD4's own "no shipped mission authors a flag yet" is superseded by CD7, which wrote 57 of them;
+  the fact list per campaign is `docs/campaign_authoring.md`'s.
   **CD5 shipped the carried army on D6, scoped to the one chain the shipped content has; what a
   future session must not undo is below, and the plan's own "What CD5 settled" carries the rest.**
   **The scope is measured and it is one pair.** The campaigns rotate the player's commander almost
@@ -1404,16 +1404,57 @@ that must survive any change; the full rationale, milestones and risk registers 
   campaign may have only one notion of finished: a picker counting the authored list read "17/18"
   forever for a war whose eighteenth mission nobody could play.
   **An interlude belongs to the mission that closes the block**, never to "the route left the
-  block" — `CampaignDefinition.closes_block`, and only on a win. Stated consequence: a future author
-  who gates a block's last mission and has it skipped never plays that block's page. Chosen because
+  block" — `CampaignDefinition.closes_block`, and only on a win. Chosen because
   every block closer in all three authoring specs is mandatory, and the route-based alternative
-  re-fires the page whenever a player replays any earlier mission of a finished block.
+  re-fires the page whenever a player replays any earlier mission of a finished block. Its stated
+  consequence — an author who gates a block's last mission and has it skipped never plays that
+  block's page — is a *refusal* as of CD8 rather than a caveat (`CampaignDefinition.block_error`).
   **The save format did not move** — still profile VERSION 4: a gated route is a pure function of
   records and flags, both already saved, and it latches into `unlocked`, which already round-trips;
   a pre-CD6 profile holding the optional mission open keeps it open by `_opens`' latch clause.
   One mission was touched beyond the milestone's two artifacts and it was forced: an optional mission
   needs a fact and a fact needs a writer or `route_error` refuses it, so `hc01` gained one tag and
   one beat.
+  **CD7 retrofitted all 108 missions across six PRs, one per war, and the shipped shape is the
+  measurement**: every mission carries a beat (197 of them), **57 write a ledger fact**, ten
+  missions across five campaigns are route-gated where CD6 shipped one, and the vocabulary the plan
+  was written for is actually used — seven kinds of primary (`CaptureCell` 80, `OwnProperties` 21,
+  `SurviveUntilDay` 19, `HoldCell` 13, `AllySurvives` 4, `ReachCell` 3, `DestroyUnit` 2) against
+  the 86-of-108 `CaptureCell` the plan diagnosed, and **three kinds of failure where `DayDeadline`
+  was the only one in the game** (`DayDeadline` 86, `LossLimit` 18, `ProtectUnit` 5). The carried
+  army is still CD5's one chain: the roster only crosses where the same general fights twice.
+  **CD8 is the gate and the record, and the gate is the milestone.** The CD7 review found the same
+  authoring traps in campaign after campaign, by six independent authors, each of whom had a green
+  `make campaigns`. **`docs/campaign_authoring.md` is the single owner of what the gate refuses**
+  and of the traps it deliberately leaves to a hand test — do not restate the list here, in the
+  README or in the plan: it drifted in four surfaces inside this one milestone, and a count written
+  in four places is re-measured in none. What survives in this index are the three rules a future
+  session must not break:
+  **a check is a `core/` authority the tool and `tests/unit/test_campaign_content.gd` both ask**,
+  never a rule spelled in `tools/check_campaigns.gd`, so a new refusal is a new
+  `..._error` beside the shipped ones rather than a branch in the tool;
+  **a gate earns its authority by never being wrong**, so a case a machine cannot judge belongs in
+  prose — a check that refuses good content would teach authors to distrust the ones that fire
+  correctly, which is why a landing-zone check was written, proven unsound (occupancy at fire time
+  is not statically knowable, effects running in authored order) and **deleted** along with the
+  `MissionTrigger` / `MissionObjective` / `MissionEffect` cell hooks it needed;
+  and **the polarity of a fact is not in the file** — a flag's sign and its variability are
+  independent properties, so the gate can only ever prove the second.
+  **Two checks fired on shipped content and both were real**, which is the milestone paying for
+  itself: five missions listed a co-primary beside the enemy's home headquarters (`fw15`–`fw18`,
+  `hc18`) that `MissionRuntime` could never judge, and each is now that mission's **bonus**
+  objective, where it is judged and earns its star; and two Hollow Crown interlude lines were
+  conditioned on facts every route writes (`directorate_fallen`, `alliance_debt`), so the
+  conditions are gone and the lines play exactly as they always did. No other content moved.
+  **`tests/unit/test_campaign_soak.gd` is the soak and its two halves are deliberate**: every
+  mission played to a verdict with its script live, through `BattleSetup.build(to_request())` and
+  `CampaignSession` itself so the boundary order is `BattleCampaign`'s rather than a second
+  spelling of it; and every one of the 197 beats applied to the board its mission opens on, because
+  a planner-against-planner game only ever brings about half of them. It asserts **legality, never
+  winnability** — no command refused, no beat refused, no stall — and says so at the top, the
+  scratch tool it replaces having reported the same fact as `never-decided=0` while firing no beat
+  at all. ~30s of the suite's wall clock at a 12-day cap, which is the cap every shipped mission
+  already decides inside.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates
   four-army play and this entry supersedes it where they disagree) — six authored wars against the
   Iron Dominion, eighteen missions each, the player rotating through the other three factions'
@@ -1431,7 +1472,8 @@ that must survive any change; the full rationale, milestones and risk registers 
   reads (CD4, above) and `carry_error` for a mission that carries an army in behind one that carries
   none out (CD5, above; the per-mission half — a refit floor no unit could reach, a carry slot on
   another army's row, a mission carrying an army in onto a board with no slot — is
-  `MissionDefinition.definition_error`'s). The story is
+  `MissionDefinition.definition_error`'s), plus CD8's authoring checks — whose inventory is
+  `docs/campaign_authoring.md`'s, the author's side of all of it. The story is
   dialogue: a briefing or victory line is a `MissionLine` — `speaker` plus text, the speaker a
   **commander id** ("" = narration) because the roster already owns a general's name and colour
   and a name typed into 108 files is 108 places to drift; the defeat line stays one narrator's
@@ -1549,7 +1591,8 @@ res://
 │              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
 │              # pipeline
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
-│              # commander matrix, the difficulty ladder, the arena, Bulwark's spread)
+│              # commander matrix, the difficulty ladder, the arena, Bulwark's spread),
+│              # and how to author a campaign mission
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)
 ```
 

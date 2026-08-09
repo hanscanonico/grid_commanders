@@ -49,6 +49,21 @@ func test_every_mission_a_campaign_lists_can_be_opened() -> void:
 		assert_eq(campaign.route_error(), "", "campaign '%s'" % campaign.id)
 
 
+## A fact every route writes the same way is not a consequence: the condition
+## reading it is not a choice, so one side of a variant pair is content nobody
+## can reach and the other is a line that would have played anyway.
+func test_every_fact_a_campaign_conditions_content_on_can_read_two_ways() -> void:
+	for campaign in db.all():
+		assert_eq(campaign.constant_fact_error(), "", "campaign '%s'" % campaign.id)
+
+
+## An interlude is shown by winning the one mission that closes its block, so a
+## gate on that mission takes the page with it for everyone the route sends past.
+func test_no_gated_mission_closes_a_block() -> void:
+	for campaign in db.all():
+		assert_eq(campaign.block_error(), "", "campaign '%s'" % campaign.id)
+
+
 func test_every_interlude_can_be_shown() -> void:
 	for campaign in db.all():
 		for page: CampaignInterlude in campaign.interludes:
@@ -114,6 +129,32 @@ func test_every_mission_builds_the_match_it_states() -> void:
 					% [campaign.id, mission.id]
 				)
 			)
+
+
+## D9's own clause. A mission that scripts nothing is playable, which is why it
+## is held here rather than by `definition_error` — the bar is the content's.
+func test_every_mission_carries_a_beat() -> void:
+	for campaign in db.all():
+		for mission: MissionDefinition in campaign.missions:
+			assert_false(
+				mission.events.is_empty(), "%s/%s scripts nothing" % [campaign.id, mission.id]
+			)
+
+
+## Two questions only the board a mission opens on can answer: whether it is
+## already over before the first command, and whether an objective standing
+## beside a match-ending one is ever judged.
+func test_every_mission_is_still_being_played_on_the_board_it_opens_on() -> void:
+	for campaign in db.all():
+		for mission: MissionDefinition in campaign.missions:
+			var map := _map_of(mission)
+			if map == null:
+				continue
+			var seats: Array[int] = mission.seats.duplicate()
+			var state := GameState.create(map, unit_db, chart, {}, seats)
+			if state == null:
+				continue
+			assert_eq(mission.board_error(state), "", "%s/%s" % [campaign.id, mission.id])
 
 
 func test_every_seat_is_cast_from_the_shipped_roster() -> void:

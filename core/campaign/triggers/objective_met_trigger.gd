@@ -11,6 +11,14 @@ extends MissionTrigger
 ## get to play; a bonus, a would-be failure, or a condition the mission lists
 ## nowhere at all are all reachable and all evaluate the same way, an objective
 ## being a pure read of the board (D2).
+##
+## **It reads a tally-backed objective one boundary stale, so never watch one.**
+## `HoldCell` and `LossLimit` are counted by `MissionProgress`, and the tally is
+## advanced inside `CampaignSession.decide` — which runs *after* this boundary's
+## beats have already been offered and fired. A beat watching either of them
+## therefore sees the count as of the previous command and comes due a boundary
+## late at best, which on a mission that ends on the same board is never. Key such
+## a beat to something the board itself answers.
 
 @export var objective: MissionObjective
 
