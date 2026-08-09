@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -59,7 +59,7 @@ day = 4
 [sub_resource type="Resource" id="Effect_draeg_commits"]
 script = ExtResource("6")
 team = 2
-points = 13000
+points = 3500
 
 [sub_resource type="Resource" id="Event_line_daylight"]
 script = ExtResource("3")
