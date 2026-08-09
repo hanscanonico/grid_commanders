@@ -13,8 +13,8 @@
 
 [sub_resource type="Resource" id="Objective_hold_four_of_the_six_scattered_towns"]
 script = ExtResource("2")
-text = "Hold four of the six scattered towns."
-count = 4
+text = "Hold two of the six scattered towns."
+count = 2
 terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_towns_stayed_split_past_day_11"]
