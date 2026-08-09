@@ -58,18 +58,6 @@ func is_live(progress: MissionProgress) -> bool:
 	return not hidden or (progress != null and progress.is_revealed(id))
 
 
-## The ground one of our units must be **standing on** for this condition to
-## hold, or empty. Occupancy, never ownership: `CaptureCell` and `HoldCell` name
-## cells and answer with nothing here, because both stay satisfied long after the
-## unit that took the ground has walked off it.
-##
-## Declared here for the reason `MissionEffect.spawned_tags` is: what a mission
-## may not do with that ground is the *mission's* question, not this class's.
-func occupied_cells() -> Array[Vector2i]:
-	var none: Array[Vector2i] = []
-	return none
-
-
 ## Why this objective could never be satisfied on this mission's board, or "".
 ## Called once when a mission loads so an authoring mistake — a cell that is not
 ## a property, a count no board can reach — fails visibly at the door rather

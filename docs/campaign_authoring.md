@@ -102,8 +102,8 @@ retrofit at least one round.
 ## The six traps
 
 Every one of these was found in the retrofit, in several campaigns, by
-independent authors, and every one passed the gate as it then stood. Five are now
-refused by `make campaigns`; the sixth is the one a machine cannot see.
+independent authors, and every one passed the gate as it then stood. Four are now
+refused by `make campaigns`; two are the ones a machine cannot see.
 
 ### 1 · A fact nothing can vary
 
@@ -154,32 +154,27 @@ and every player the route sends past it loses the page.
 
 *Refused by* `CampaignDefinition.block_error`.
 
-### 6 · A landing zone the beat's own triggers hold a unit on
+### 6 · A landing zone the mission also points at
 
-`SpawnUnits` skips an occupied cell rather than clearing it, and a `once` beat is
-spent either way — so the column speaks its line, lands nothing, and never comes
-due again.
+`SpawnUnits` **skips an occupied cell** rather than clearing it, and a `once`
+beat is spent whether or not anything landed — while its dialogue plays either
+way. So a column authored onto a square somebody happens to be standing on
+speaks its line, puts nothing on the board, and never comes due again.
 
-*Refused by* `MissionDefinition.definition_error`, but only where the void is
-**certain**: a beat's triggers are a conjunction read at one boundary, so a
-`UnitReached` naming a single cell, or an `ObjectiveMet` watching a `ReachCell`
-zone with no slack in it, holds a unit on that square at the instant the beat
-fires. Landing there is a beat that can never do anything.
-
-Ownership is not occupancy, so `CaptureCell`, `HoldCell` and `CellOwned` pin
-nothing: ground stays ours long after the unit that took it walked off. Dropping
-a reserve onto the depot the player is being sent to take is a good beat and the
-gate lets it through — it lands whenever the player has not got there yet.
-
-*The caution the gate cannot give you:* if the beat is timed so the player is
-**likely** to be standing there, you have written the same dud with a better
-chance of firing. Ask when the trigger comes due and where the player is then.
+*Not refused by anything*, and the reason is in
+[What the gate cannot see](#what-the-gate-cannot-see). **Prefer a cell adjacent
+to the ground the mission points at, unless the beat's own effects guarantee the
+square is clear.**
 
 ## What the gate cannot see
 
-**Trap 2, and the judgement half of trap 1.** A flag's *sign* and its
-*variability* are independent: a fact can vary perfectly and still be wired
-backwards, and the gate only measures the second.
+Two judgements live here rather than in `make campaigns`, for the same reason:
+the file does not contain the fact the check would need.
+
+### Polarity (trap 2, and the judgement half of trap 1)
+
+A flag's *sign* and its *variability* are independent: a fact can vary perfectly
+and still be wired backwards, and the gate only measures the second.
 
 The hand test, applied to every flag before it ships:
 
@@ -191,6 +186,30 @@ have caught it — check it is not hiding behind a route gate. If you can descri
 both but the one who played *better* is the one who gets less content, it is
 trap 2, and the fix is to invert the condition rather than the beat: gate the
 reward on the good run.
+
+### Whether a landing zone is clear (trap 6)
+
+Occupancy at fire time is not statically knowable, and no narrowing of the check
+rescues it:
+
+- **A beat's effects run in authored order**, so a `RemoveUnits` earlier in the
+  same beat frees the square before the `SpawnUnits` reaches it. *The courier is
+  extracted and the relief column takes his square* is a good beat.
+- **`due_events` reads the board once per boundary**, so an earlier due beat can
+  free the square too.
+- **Ownership is not occupancy.** `CaptureCell`, `HoldCell` and `CellOwned` say
+  nothing about who is standing anywhere — ground stays ours long after the unit
+  that took it walked off — so a reserve dropping onto the depot the player is
+  being *sent* to take lands correctly whenever they have not got there yet.
+
+Any check tight enough to refuse the real failure also refuses those, and a gate
+that forbids good content teaches authors to route around the checks that are
+right. The five above are worth more than a sixth that is sometimes wrong.
+
+The hand test:
+
+> **Say when the trigger comes due, and say where the player is then.** If the
+> answer is "on that square", move the spawn one cell.
 
 ## The ledger, campaign by campaign
 

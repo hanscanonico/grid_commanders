@@ -50,17 +50,6 @@ func spawned_tags() -> Array[StringName]:
 	return named
 
 
-## Every square this beat's own conditions hold a unit on when it fires, gathered
-## from its triggers. They are a conjunction, so any one of them pinning a square
-## pins it for the whole beat.
-func occupied_cells() -> Array[Vector2i]:
-	var pinned: Array[Vector2i] = []
-	for trigger: MissionTrigger in triggers:
-		if trigger != null:
-			pinned.append_array(trigger.occupied_cells())
-	return pinned
-
-
 ## Every fact this beat reads the war for, gathered from its triggers — `Flag`
 ## alone reads any. What `CampaignDefinition.ledger_error` holds against the facts
 ## the campaign writes, a name nothing writes being a beat that never fires.

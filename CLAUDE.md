@@ -1425,7 +1425,7 @@ that must survive any change; the full rationale, milestones and risk registers 
   army is still CD5's one chain: the roster only crosses where the same general fights twice.
   **CD8 is the gate and the record, and the gate is the milestone.** The CD7 review found the same
   authoring traps in campaign after campaign, by six independent authors, each of whom had a green
-  `make campaigns` — so `tools/check_campaigns.gd` grew five checks, every one for a slip with no
+  `make campaigns` — so `tools/check_campaigns.gd` grew four checks, every one for a slip with no
   other symptom, and each is a `core/` authority the tool and
   `tests/unit/test_campaign_content.gd` both ask rather than a rule spelled twice:
   **a fact nothing can vary** (`CampaignDefinition.constant_fact_error` — a flag whose every
@@ -1437,33 +1437,36 @@ that must survive any change; the full rationale, milestones and risk registers 
   match-ending one** (both `MissionDefinition.board_error`, the split `MissionEffect.board_error`
   already has — a map deals every seat it names while a match may have closed some, and a verdict
   needs a state);
-  **a gated mission closing a block** (`CampaignDefinition.block_error`, CD6's stated consequence
-  turned into a refusal);
-  and **a scripted arrival landing where its own beat's triggers hold a unit**
-  (`MissionDefinition.definition_error`, over `MissionTrigger.occupied_cells`,
-  `MissionObjective.occupied_cells` and `MissionEffect.landing_cells` — three new hooks, each on the
-  contract `spawned_tags` already has, because `SpawnUnits` skips an occupied cell and a `once` beat
-  is spent either way). That last one refuses only the **certain** void and the narrowing is the
-  decision: a beat's triggers are a conjunction read at one boundary, so a `UnitReached` naming a
-  single cell or an `ObjectiveMet` watching a slack-free `ReachCell` zone pins that ground at the
-  instant the beat fires, while **ownership is not occupancy** — `CaptureCell`, `HoldCell` and
-  `CellOwned` pin nothing, so a reserve dropping onto the depot the player is being *sent* to take
-  stays authorable, which it must, a gate that forbids good content teaching authors to route
-  around the checks that are right. Whether the player is *likely* to be standing there is not a
-  static fact and is `docs/campaign_authoring.md`'s caution instead. D9's own
+  and **a gated mission closing a block** (`CampaignDefinition.block_error`, CD6's stated
+  consequence turned into a refusal). D9's own
   clause — every mission names at least one event — is a content bar rather than an impossibility,
   so it is held by the tool and the content test directly, the way the briefing/victory pair is.
-  **Two of the five fired on shipped content and both were real**, which is the milestone paying
+  **A fifth check was written, proven unsound and deleted, and that is the milestone's own rule
+  working**: a scripted arrival landing on ground the mission points at *is* a real trap —
+  `SpawnUnits` skips an occupied cell, a `once` beat is spent either way and its dialogue plays
+  regardless — but **occupancy at fire time is not statically knowable**, because a beat's effects
+  run in authored order (a `RemoveUnits` frees the square before the `SpawnUnits` reaches it, which
+  is the perfectly good *courier extracted, relief column takes his square* beat), because
+  `due_events` reads the board once per boundary so an earlier due beat can free it too, and
+  because ownership is not occupancy (`CaptureCell` / `HoldCell` / `CellOwned` say nothing about who
+  is standing anywhere). Every narrowing tight enough to catch the failure also refused good
+  content, so the check, its `MissionTrigger` / `MissionObjective` / `MissionEffect` cell hooks and
+  its tests all came out and the judgement is a hand test in `docs/campaign_authoring.md`
+  instead. **A gate earns its authority by never being wrong**: a sixth check that refuses good
+  beats would have taught authors to distrust the four that fire correctly, so a case a machine
+  cannot judge belongs in prose.
+  **Two of the four fired on shipped content and both were real**, which is the milestone paying
   for itself: five missions listed a co-primary beside the enemy's home headquarters
   (`fw15`–`fw18`, `hc18`) that `MissionRuntime` could never judge, and each is now that mission's
   **bonus** objective, where it is judged and earns its star; and two Hollow Crown interlude lines
   were conditioned on facts every route writes (`directorate_fallen`, `alliance_debt`), so the
   conditions are gone and the lines play exactly as they always did. No other content moved.
-  **Polarity is the trap the gate cannot see** and it is stated as a hand test instead — *describe
+  **Polarity is the other trap the gate cannot see** and it is stated as a hand test — *describe
   a player who sets this flag and a player who does not, both doing something ordinary* — because
   the sign and the variability of a fact are independent properties and only the second is in the
-  file. `docs/campaign_authoring.md` is where that, the vocabulary's own limits and the ledger's
-  fact list per campaign live, and it is the document to read before authoring the 109th mission.
+  file. `docs/campaign_authoring.md` is where both hand tests, the vocabulary's own limits and the
+  ledger's fact list per campaign live, and it is the document to read before authoring the 109th
+  mission.
   **`tests/unit/test_campaign_soak.gd` is the soak and its two halves are deliberate**: every
   mission played to a verdict with its script live, through `BattleSetup.build(to_request())` and
   `CampaignSession` itself so the boundary order is `BattleCampaign`'s rather than a second

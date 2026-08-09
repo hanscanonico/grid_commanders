@@ -29,13 +29,6 @@ func is_met(
 	return objective != null and objective.is_met(state, team, progress)
 
 
-func occupied_cells() -> Array[Vector2i]:
-	if objective == null:
-		var none: Array[Vector2i] = []
-		return none
-	return objective.occupied_cells()
-
-
 func definition_error(map: MapData, team: int, unit_db: UnitDB) -> String:
 	if objective == null:
 		return "objective-met trigger watches nothing"

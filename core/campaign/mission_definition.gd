@@ -181,9 +181,6 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	var hidden_error := _hidden_objectives_error()
 	if hidden_error != "":
 		return hidden_error
-	var landing_error := _landing_ground_error()
-	if landing_error != "":
-		return landing_error
 	return _carry_error(map)
 
 
@@ -293,37 +290,6 @@ func _events_error(map: MapData, unit_db: UnitDB) -> String:
 	var tag_error := UnitTag.duplicate_error(named)
 	if tag_error != "":
 		return "mission '%s': %s" % [id, tag_error]
-	return ""
-
-
-## Why a scripted arrival is certain to be voided, or "".
-##
-## `SpawnUnits` skips an occupied cell rather than clearing it, and a `once` beat
-## is spent whether or not anything landed — so a column authored onto a square
-## the beat's **own triggers** hold a unit on speaks its line, changes nothing,
-## and never comes due again. `MissionEvent.occupied_cells` is what a conjunction
-## of conditions pins, so this refuses exactly the certainty.
-##
-## What it deliberately allows is ground the mission merely *sends* the player to
-## — a capture cell, a depot to hold, a wide exit zone. An enemy reserve dropping
-## onto the depot lands whenever the player has not got there yet, which is a beat
-## worth authoring; whether they will be standing there is not a static fact, so
-## the caution belongs in `docs/campaign_authoring.md` rather than in a refusal.
-## The board's own units are `SpawnUnitsEffect.definition_error`'s half.
-func _landing_ground_error() -> String:
-	for event: MissionEvent in events:
-		var pinned: Dictionary[Vector2i, bool] = {}
-		for cell: Vector2i in event.occupied_cells():
-			pinned[cell] = true
-		if pinned.is_empty():
-			continue
-		for effect: MissionEffect in event.effects:
-			for cell: Vector2i in effect.landing_cells():
-				if pinned.has(cell):
-					return (
-						"mission '%s': event '%s' lands on %s, where its own triggers hold a unit"
-						% [id, event.id, cell]
-					)
 	return ""
 
 

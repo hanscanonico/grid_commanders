@@ -40,14 +40,6 @@ func spawned_tags() -> Array[StringName]:
 	return named
 
 
-func landing_cells() -> Array[Vector2i]:
-	var landing: Array[Vector2i] = []
-	for spawn: MissionSpawn in units:
-		if spawn != null:
-			landing.append(spawn.cell)
-	return landing
-
-
 func board_error(state: GameState, _team: int) -> String:
 	if not state.teams.has(team):
 		return "spawn lands units for army %d, which is not at this table" % team

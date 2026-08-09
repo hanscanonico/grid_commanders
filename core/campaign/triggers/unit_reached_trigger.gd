@@ -23,15 +23,6 @@ func is_met(
 	return cells.has(unit.cell)
 
 
-## One cell is a square the unit must be on; a wider zone is a square it must be
-## on one of, and which one only the board knows.
-func occupied_cells() -> Array[Vector2i]:
-	if cells.size() != 1:
-		var none: Array[Vector2i] = []
-		return none
-	return cells.duplicate()
-
-
 func definition_error(map: MapData, _team: int, _unit_db: UnitDB) -> String:
 	if tag == &"":
 		return "unit-reached trigger names no unit"

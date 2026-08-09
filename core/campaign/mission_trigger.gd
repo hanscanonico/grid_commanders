@@ -42,20 +42,6 @@ func read_condition() -> FlagCondition:
 	return null
 
 
-## The ground a unit is standing on whenever this condition holds, or empty. An
-## event's triggers are a conjunction read at one boundary, so a square any single
-## trigger pins is a square occupied at the instant the beat fires — which is the
-## only thing that makes a scripted arrival there *certainly* void rather than
-## merely at risk (`MissionDefinition._landing_ground_error`).
-##
-## Whose unit it is does not matter, `SpawnUnits` skipping a cell anybody stands
-## on. What does is that ownership is not occupancy: `CellOwned` stays silent
-## here, because ground can be ours with nobody left standing on it.
-func occupied_cells() -> Array[Vector2i]:
-	var none: Array[Vector2i] = []
-	return none
-
-
 ## Why this condition could never come true on this mission's board, or "".
 ## Called once when a mission loads, so an authoring mistake — a cell that is not
 ## a property, a unit this board never names — fails visibly at the door rather

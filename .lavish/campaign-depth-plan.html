@@ -879,7 +879,7 @@ events = [
           supersessions in §8 written into <span class="pl">CLAUDE.md</span>.
         </p>
         <p class="mt-2 text-sm dim">
-          <b>What CD8 settled: five checks, each for a trap that leaves no other mark.</b>
+          <b>What CD8 settled: four checks, each for a trap that leaves no other mark.</b>
           <b>A fact nothing can vary</b> (<span class="pl">CampaignDefinition.constant_fact_error</span>)
           — a flag whose every writing beat waits only on the calendar, at a day the mission's own
           <span class="pl">par_day</span> allows, and which some condition then reads, is a variant line
@@ -889,25 +889,29 @@ events = [
           one that ends the match</b> (both <span class="pl">MissionDefinition.board_error</span>) —
           <span class="pl">MissionRuntime</span> reaches tactical victory before it reads the objective
           list, so a co-primary beside the enemy's home headquarters is decorative.
-          <b>A gated mission closing a block</b> (<span class="pl">block_error</span>), CD6's stated
-          consequence turned into a refusal. And <b>a scripted column landing where its own beat's
-          triggers hold a unit</b>, over three new hooks on the contract
-          <span class="pl">spawned_tags</span> already has, because
-          <span class="pl">SpawnUnits</span> skips an occupied cell and a
-          <span class="pl">once</span> beat is spent either way. That last one refuses only the
-          <b>certain</b> void: a beat's triggers are a conjunction read at one boundary, so
-          <span class="pl">UnitReached</span> on a single cell and
-          <span class="pl">ObjectiveMet</span> on a slack-free <span class="pl">ReachCell</span> zone
-          pin that ground, while ownership is not occupancy and
+          And <b>a gated mission closing a block</b> (<span class="pl">block_error</span>), CD6's
+          stated consequence turned into a refusal.
+          <b>A fifth check was written, proven unsound and deleted</b>, which is this milestone's own
+          rule working. A scripted column landing on ground the mission points at <i>is</i> a real
+          trap — <span class="pl">SpawnUnits</span> skips an occupied cell, a
+          <span class="pl">once</span> beat is spent either way and its dialogue plays regardless —
+          but occupancy at fire time is not statically knowable: a beat's effects run in authored
+          order, so a <span class="pl">RemoveUnits</span> frees the square before the
+          <span class="pl">SpawnUnits</span> reaches it (<i>the courier is extracted and the relief
+          column takes his square</i>); <span class="pl">due_events</span> reads the board once per
+          boundary, so an earlier due beat can free it too; and ownership is not occupancy, so
           <span class="pl">CaptureCell</span> / <span class="pl">HoldCell</span> /
-          <span class="pl">CellOwned</span> pin nothing — a reserve dropping onto the depot the
-          player is being <i>sent</i> to take is a good beat, and a gate that forbade it would teach
-          authors to route around the checks that are right.
-          <b>Two of the five fired on shipped content and both were real</b>: five missions carried a
+          <span class="pl">CellOwned</span> say nothing about who is standing anywhere. Every
+          narrowing tight enough to catch the failure also refused good content, so the check, its
+          cell hooks and its tests came out and the judgement is a hand test in
+          <span class="pl">docs/campaign_authoring.md</span> instead. <b>A gate earns its authority by
+          never being wrong</b>, and a sixth check that refuses good beats would have taught authors
+          to distrust the four that fire correctly.
+          <b>Two of the four fired on shipped content and both were real</b>: five missions carried a
           co-primary the runtime could never judge (now each mission's bonus objective, where it is
           judged and earns its star), and two Hollow Crown interlude lines were conditioned on facts
           every route writes (the conditions are gone; the lines play as they always did).
-          <b>Polarity is the trap the gate cannot see</b> — a flag's sign and its variability are
+          <b>Polarity is the other trap the gate cannot see</b> — a flag's sign and its variability are
           independent and only the second is in the file — so it ships as a hand test in
           <span class="pl">docs/campaign_authoring.md</span>: <i>describe a player who sets this flag and
           a player who does not, both doing something ordinary.</i>
