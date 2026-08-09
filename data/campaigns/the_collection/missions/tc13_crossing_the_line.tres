@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -13,6 +13,8 @@
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
 [ext_resource type="Resource" path="res://data/units/tank.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/objectives/reach_cell_objective.gd" id="15"]
 
 [sub_resource type="Resource" id="Objective_take_the_border_foundry_and_open_the"]
 script = ExtResource("2")
@@ -68,6 +70,16 @@ condition = SubResource("Forgery_provable")
 script = ExtResource("8")
 day = 5
 
+[sub_resource type="Resource" id="Column_on_the_crossing"]
+script = ExtResource("15")
+text = "Our column is on the border crossing."
+cells = Array[Vector2i]([Vector2i(6, 5), Vector2i(7, 4), Vector2i(7, 5), Vector2i(7, 6), Vector2i(8, 5)])
+count = 1
+
+[sub_resource type="Resource" id="Trigger_column_on_the_crossing"]
+script = ExtResource("14")
+objective = SubResource("Column_on_the_crossing")
+
 [sub_resource type="Resource" id="Effect_the_levy_walks"]
 script = ExtResource("10")
 from_team = 2
@@ -82,7 +94,7 @@ text = "Ferrow. The audit is a forgery and my men will not die for it. Neither w
 [sub_resource type="Resource" id="Event_the_border_levy"]
 script = ExtResource("6")
 id = &"the_border_levy"
-triggers = Array[Resource]([SubResource("Trigger_forgery_provable"), SubResource("Trigger_day_five")])
+triggers = Array[Resource]([SubResource("Trigger_forgery_provable"), SubResource("Trigger_column_on_the_crossing")])
 effects = Array[Resource]([SubResource("Effect_the_levy_walks")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
