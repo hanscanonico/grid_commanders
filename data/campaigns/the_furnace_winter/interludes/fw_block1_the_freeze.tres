@@ -59,13 +59,13 @@ requires = SubResource("Cond_ice_road_open")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"halden_marr"
-text = "And Vale walked off Kestrel Pass himself rather than pay for it. He has conceded ground exactly once this winter, and I intend to remind him of it at every depot from here to the foundry."
+text = "And Kestrel was ours inside the week. Vale does not give up ground he has finished settling into, so we did not give him the time to settle."
 requires = SubResource("Cond_kestrel_held")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"halden_marr"
-text = "Kestrel is still his in every way that matters. Vale has conceded nothing all winter, and he expects us to have noticed."
+text = "We hold Kestrel, and it took us long enough that he had the pass properly garrisoned first. He conceded it on his own terms, in his own time, and he will want that noted."
 requires = SubResource("Cond_kestrel_contested")
 
 [sub_resource type="Resource" id="Line_7"]

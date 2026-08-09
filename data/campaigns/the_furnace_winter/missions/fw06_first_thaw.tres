@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="12"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("3")
@@ -76,13 +77,6 @@ day = 4
 script = ExtResource("10")
 tags = Array[StringName]([&"vale_guard_a", &"vale_guard_b"])
 
-[sub_resource type="Resource" id="Effect_kestrel_held"]
-script = ExtResource("11")
-flag = &"fw_kestrel_held"
-mode = 0
-value = 1
-note = "Vale withdrew from Kestrel Pass himself — the first ground he conceded all winter."
-
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
@@ -92,9 +86,33 @@ text = "You are still on my pass, and my column is still paying for it. I do not
 script = ExtResource("7")
 id = &"vale_withdraws_from_kestrel"
 triggers = Array[Resource]([SubResource("Trigger_pass_ours"), SubResource("Trigger_day_4")])
-effects = Array[Resource]([SubResource("Effect_guard_withdraws"), SubResource("Effect_kestrel_held")])
+effects = Array[Resource]([SubResource("Effect_guard_withdraws")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_before_he_is_ready"]
+script = ExtResource("12")
+day = 6
+
+[sub_resource type="Resource" id="Effect_kestrel_held"]
+script = ExtResource("11")
+flag = &"fw_kestrel_held"
+mode = 0
+value = 1
+note = "Kestrel Pass was taken inside the first week of the thaw, before Vale had settled his column onto it."
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"halden_marr"
+text = "Inside the week. He has not had time to make this pass expensive, and he is not getting another."
+
+[sub_resource type="Resource" id="Event_the_pass_taken_early"]
+script = ExtResource("7")
+id = &"the_pass_taken_early"
+triggers = Array[Resource]([SubResource("Trigger_pass_ours"), SubResource("Trigger_before_he_is_ready")])
+effects = Array[Resource]([SubResource("Effect_kestrel_held")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
 
 [resource]
 script = ExtResource("1")
@@ -115,7 +133,7 @@ difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_vale_withdraws_from_kestrel")])
+events = Array[Resource]([SubResource("Event_vale_withdraws_from_kestrel"), SubResource("Event_the_pass_taken_early")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])

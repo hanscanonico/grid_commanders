@@ -40,7 +40,7 @@ requires = SubResource("Cond_road_runs_whole")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "And Ferrow rode the entire winter without collecting once. He will tell you that is the only defeat he understands; he is not wrong."
+text = "And Ferrow rode the entire winter without once finding our line a man short. He will tell you that is the only defeat he understands; he is not wrong."
 requires = SubResource("Cond_ledger_clean")
 
 [sub_resource type="Resource" id="Line_5"]

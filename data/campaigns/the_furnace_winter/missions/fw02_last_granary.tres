@@ -21,8 +21,8 @@ cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "Milltown's last base was still Ferrow's at the end of day 7."
-last_day = 7
+text = "Milltown's last base was still Ferrow's at the end of day 10."
+last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")

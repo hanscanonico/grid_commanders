@@ -65,7 +65,7 @@ requires = SubResource("Cond_road_runs_nowhere")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "And Ferrow's book stayed shut the whole way down it. A raider paid per kill, riding the fuel road for a season, and not one invoice submitted."
+text = "And Ferrow's book stayed shut the whole way down it. Every column that went down that road was at full strength every time he looked, and a raider paid per kill cannot invoice for a line with no gap in it."
 requires = SubResource("Cond_ledger_clean")
 
 [sub_resource type="Resource" id="Line_6"]

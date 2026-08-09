@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -14,11 +14,32 @@
 [ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="12"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="13"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="14"]
+[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="15"]
 
 [sub_resource type="Resource" id="Objective_0"]
-script = ExtResource("2")
-text = "Hold both home properties and all three relays at once — five of the hill's seven."
-count = 5
+script = ExtResource("15")
+text = "Hold the western relay."
+cell = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="Objective_1"]
+script = ExtResource("15")
+text = "Hold the middle relay."
+cell = Vector2i(11, 3)
+
+[sub_resource type="Resource" id="Objective_2"]
+script = ExtResource("15")
+text = "Hold the eastern relay."
+cell = Vector2i(17, 3)
+
+[sub_resource type="Resource" id="Objective_3"]
+script = ExtResource("15")
+text = "Keep our own headquarters at the foot of the hill."
+cell = Vector2i(1, 2)
+
+[sub_resource type="Resource" id="Objective_4"]
+script = ExtResource("15")
+text = "Keep our own base at the foot of the hill."
+cell = Vector2i(1, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
@@ -103,12 +124,12 @@ script = ExtResource("13")
 flag = &"fw_bounty_paid"
 mode = 1
 value = 1
-note = "Ferrow collected on our column at least once this winter."
+note = "Ferrow caught our column under the strength it rode in with at least once this winter."
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "One of your three columns just stopped being a column. Invoice submitted."
+text = "Three columns rode onto this hill and I am counting fewer than three. Invoice submitted."
 
 [sub_resource type="Resource" id="Event_invoice_submitted"]
 script = ExtResource("5")
@@ -173,7 +194,7 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Objective_3"), SubResource("Objective_4")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Event_invoice_submitted"), SubResource("Event_the_relays_answer")])

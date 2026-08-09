@@ -27,14 +27,14 @@ cell = Vector2i(13, 3)
 
 [sub_resource type="Resource" id="Objective_2"]
 script = ExtResource("3")
-text = "Stand on depot 2 for three whole days. Hold it; don't chase her off it."
+text = "Stand on depot 2 for two whole days. Hold it; don't chase her off it."
 cell = Vector2i(13, 3)
-days = 3
+days = 2
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("4")
-text = "The road stayed closed past day 11."
-last_day = 11
+text = "The road stayed closed past day 10."
+last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
@@ -105,7 +105,7 @@ holder = 0
 
 [sub_resource type="Resource" id="Trigger_with_a_day_in_hand"]
 script = ExtResource("10")
-day = 10
+day = 9
 
 [sub_resource type="Resource" id="Effect_two_depots_open"]
 script = ExtResource("13")

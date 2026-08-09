@@ -26,8 +26,8 @@ last_day = 9
 
 [sub_resource type="Resource" id="Failure_1"]
 script = ExtResource("4")
-text = "More than two of our units left the column, however they went."
-max_losses = 2
+text = "More than one of our units left the column, however they went."
+max_losses = 1
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")

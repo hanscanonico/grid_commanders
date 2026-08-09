@@ -86,7 +86,7 @@ script = ExtResource("11")
 flag = &"fw_bounty_paid"
 mode = 1
 value = 1
-note = "Ferrow collected on our column at least once this winter."
+note = "Ferrow caught our column under the strength it rode in with at least once this winter."
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")

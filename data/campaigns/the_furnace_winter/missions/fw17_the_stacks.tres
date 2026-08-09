@@ -82,12 +82,12 @@ day = 4
 [sub_resource type="Resource" id="Effect_signed_for_personally"]
 script = ExtResource("9")
 team = 2
-points = 14000
+points = 9000
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "I have signed for this district personally, quartermaster. Everything I have been holding back is now on the books."
+text = "I have signed for this district personally, quartermaster. A great deal of what I have been holding back is now on the books."
 
 [sub_resource type="Resource" id="Event_signed_for_personally"]
 script = ExtResource("7")

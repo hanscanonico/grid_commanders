@@ -79,12 +79,12 @@ script = ExtResource("11")
 flag = &"fw_bounty_paid"
 mode = 1
 value = 1
-note = "Ferrow collected on our column at least once this winter."
+note = "Ferrow caught our column under the strength it rode in with at least once this winter."
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Two of yours paid for one of mine. That's the whole business model, Warden."
+text = "You are riding this row under strength, Warden, and a short line pays for a long one. That is the whole business model."
 
 [sub_resource type="Resource" id="Event_the_business_model"]
 script = ExtResource("7")
