@@ -36,8 +36,8 @@ last_day = 11
 
 [sub_resource type="Resource" id="Failure_the_column_bunched"]
 script = ExtResource("5")
-text = "More than four units lost — the column stopped being spread."
-max_losses = 4
+text = "More than eight units lost — the column stopped being spread."
+max_losses = 8
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")

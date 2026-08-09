@@ -55,12 +55,12 @@ day = 5
 [sub_resource type="Resource" id="Spawn_relief_tank"]
 script = ExtResource("10")
 unit_type = ExtResource("11")
-cell = Vector2i(1, 6)
+cell = Vector2i(0, 6)
 
 [sub_resource type="Resource" id="Spawn_relief_mech"]
 script = ExtResource("10")
 unit_type = ExtResource("12")
-cell = Vector2i(2, 6)
+cell = Vector2i(0, 5)
 
 [sub_resource type="Resource" id="Effect_relief_column"]
 script = ExtResource("9")

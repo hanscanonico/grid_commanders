@@ -114,7 +114,7 @@ points = 3000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Two more entries in the credit column. Thank you, Commander."
+text = "Down to two, and every wreck of them posts to the credit column. Thank you, Commander."
 
 [sub_resource type="Resource" id="Event_bounty_banked"]
 script = ExtResource("5")

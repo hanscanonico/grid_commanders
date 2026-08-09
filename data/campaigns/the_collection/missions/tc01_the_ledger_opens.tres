@@ -97,7 +97,7 @@ points = 3000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "There. Two entries in the credit column, and the depot has not even changed hands yet. Keep them coming."
+text = "There. Their column is down to two, and the depot has not even changed hands yet. Every wreck posts to the credit column. Keep them coming."
 
 [sub_resource type="Resource" id="Event_paid_off_the_kills"]
 script = ExtResource("5")
