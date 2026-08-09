@@ -86,6 +86,25 @@ static func spoken(lines: Array[MissionLine], ledger: CampaignState) -> Array[Mi
 	return said
 
 
+## Why one of these lines could not be spoken, or "". The one walk over a list of
+## them, because four things hold a list — a briefing, a debrief, a scripted beat
+## and an interlude — and `variants_allowed` is the single thing they differ on:
+## a beat's lines are re-issued by a recording and must speak the same words, so
+## a beat the war decides is a beat with a `Flag` trigger.
+static func list_error(
+	lines: Array[MissionLine], commander_db: CommanderDB, variants_allowed: bool
+) -> String:
+	for line: MissionLine in lines:
+		if line == null:
+			return "an empty story line"
+		if line.is_conditional() and not variants_allowed:
+			return "a line the ledger gates; gate the beat with a Flag trigger instead"
+		var error := line.definition_error(commander_db)
+		if error != "":
+			return error
+	return ""
+
+
 ## Why this line could not be spoken, or "". A speaker who is not on the roster
 ## is the failure worth catching: it prints as a blank name beside real dialogue,
 ## which looks like a rendering bug rather than a typo in a data file.

@@ -1,10 +1,17 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
+
+[sub_resource type="Resource" id="Unlock_unbloodied"]
+script = ExtResource("6")
+flag = &"morn_bloodied"
+at_least = 0
+at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -52,6 +59,7 @@ id = &"hc05_the_ultimatum"
 title = "The Ultimatum"
 location = "The border crossing, Meridian reach"
 map_path = "res://maps/campaign/the_hollow_crown/hc05_the_ultimatum.txt"
+unlock_requires = SubResource("Unlock_unbloodied")
 player_team = 1
 ai_teams = Array[int]([2])
 seats = Array[int]([])

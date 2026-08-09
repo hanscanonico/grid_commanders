@@ -7,9 +7,9 @@ extends RefCounted
 ## for tidiness: the menu is a *setup* page, and which mission of which campaign
 ## a player is in is a different question from which board and how much fog.
 ##
-## It owns the two panels and the walk between them, and nothing else. Staging is
-## still one `MatchRequest` through `MatchConfig`, exactly as the skirmish and
-## replay routes stage theirs, so a mission boots through the shipped path.
+## It owns the campaign's pages and the walk between them, and nothing else.
+## Staging is still one `MatchRequest` through `MatchConfig`, exactly as the
+## skirmish and replay routes stage theirs, so a mission boots the shipped path.
 
 ## The campaign whose hub is open, so a deploy knows which war its mission is
 ## from. Held here rather than asked of `CampaignSession`, which is not told
@@ -18,6 +18,11 @@ var _campaign: CampaignDefinition
 var _picker: CampaignPickerPanel
 var _hub: CampaignHubPanel
 var _debrief: CampaignDebriefPanel
+var _interlude: CampaignInterludePanel
+## The page a finished mission earned, shown once the debrief is done with and
+## then dropped. Held here because the session that named the mission is cleared
+## as the debrief opens.
+var _pending: CampaignInterlude
 ## The menu stack the panels are shown over, hidden while either is up.
 var _menu_root: Control
 ## Where a Back from the campaign list lands.
@@ -39,6 +44,9 @@ func _init(host: Node, menu_root: Control, on_closed: Callable, launch: Callable
 	_debrief = CampaignDebriefPanel.new()
 	host.add_child(_debrief)
 	_debrief.continued.connect(_after_debrief)
+	_interlude = CampaignInterludePanel.new()
+	host.add_child(_interlude)
+	_interlude.continued.connect(_after_interlude)
 	# Back out of a hub to the campaign list, not to the menu: the player chose a
 	# war and then chose not to fight this mission, which is one step back.
 	_hub.cancelled.connect(open)
@@ -70,6 +78,8 @@ func resume() -> bool:
 		return true
 	_menu_root.hide()
 	var stars := CampaignSession.max_stars()
+	var progress := CampaignSession.progress
+	_pending = _closing_interlude(campaign, mission, outcome)
 	# The ledger has already settled — `CampaignSession.record` runs on the victory
 	# screen — so the debrief speaks against the war as it now stands, which is what
 	# a variant victory line is written against, and reports what that write took.
@@ -77,8 +87,8 @@ func resume() -> bool:
 		mission,
 		outcome,
 		stars,
-		_next_title(campaign, mission, outcome),
-		CampaignSession.progress,
+		_next_title(campaign, progress, outcome),
+		progress,
 		CampaignSession.recorded_notes()
 	)
 	CampaignSession.clear()
@@ -87,19 +97,42 @@ func resume() -> bool:
 
 ## What the finished mission opened, for the debrief's one forward-looking line.
 ## Empty at the end of a campaign, and empty on a loss — nothing was unlocked.
-## Takes the outcome rather than reading the session, which the caller is about
-## to clear.
+## Asked of the route rather than of the list, so a mission the war closed is not
+## announced as the one coming next.
 func _next_title(
-	campaign: CampaignDefinition, mission: MissionDefinition, outcome: MissionRuntime.Outcome
+	campaign: CampaignDefinition, progress: CampaignState, outcome: MissionRuntime.Outcome
 ) -> String:
-	if outcome.status != MissionRuntime.Status.SUCCESS:
+	if outcome.status != MissionRuntime.Status.SUCCESS or progress == null:
 		return ""
-	var next := campaign.next_mission_id(mission.id)
-	var entry := campaign.mission(next) if next != &"" else null
+	var entry := campaign.mission(progress.open_mission(campaign))
 	return entry.title if entry != null else ""
 
 
+## The page this mission earned, or null: a block is closed by its last mission,
+## and only by winning it.
+func _closing_interlude(
+	campaign: CampaignDefinition, mission: MissionDefinition, outcome: MissionRuntime.Outcome
+) -> CampaignInterlude:
+	if outcome.status != MissionRuntime.Status.SUCCESS:
+		return null
+	var block := campaign.closes_block(mission.id)
+	return campaign.interlude_after(block) if block >= 0 else null
+
+
+## The debrief is done: the page between the blocks, if this mission closed one,
+## and the hub after it.
 func _after_debrief() -> void:
+	if _campaign == null:
+		return
+	if _pending == null:
+		_show_hub(_campaign)
+		return
+	var progress := CampaignProfile.load_progress(_campaign.id)
+	_interlude.begin(_pending, progress)
+	_pending = null
+
+
+func _after_interlude() -> void:
 	if _campaign != null:
 		_show_hub(_campaign)
 
@@ -114,8 +147,8 @@ func chrome_hub() -> Dictionary[String, Control]:
 
 ## Dev captures only: opens whichever campaign page this run asked for and hands
 ## back the chrome to measure it against, or an empty Callable when it asked for
-## none. One entry point because the three pages pose identically and the menu
-## should not carry three copies of that.
+## none. One entry point because the pages pose identically and the menu should
+## not carry a copy of that per page.
 func pose(driver: MenuCaptureDriver) -> Callable:
 	if driver.poses_campaigns():
 		open()
@@ -126,6 +159,9 @@ func pose(driver: MenuCaptureDriver) -> Callable:
 	if driver.poses_campaign_hub():
 		pose_hub(driver.poses_campaign_brief())
 		return chrome_hub
+	if driver.poses_campaign_interlude():
+		pose_interlude()
+		return chrome_interlude
 	return Callable()
 
 
@@ -133,19 +169,43 @@ func pose_debrief(won: bool) -> void:
 	var posed := CampaignDB.load_default().all()
 	if posed.is_empty():
 		return
-	var mission: MissionDefinition = posed[0].missions[0]
+	var campaign: CampaignDefinition = posed[0]
+	var mission: MissionDefinition = campaign.missions[0]
 	var runtime := MissionRuntime.new(mission)
 	var outcome := MissionRuntime.Outcome.new(
 		MissionRuntime.Status.SUCCESS if won else MissionRuntime.Status.FAILURE,
 		"" if won else "The road stayed closed past day 8.",
 		2 if won else 0
 	)
+	# The route is what names the mission this one opened, so the pose walks it: a
+	# fresh profile with this mission cleared is the war the debrief is speaking to.
+	var progress := CampaignState.begin(campaign)
+	progress.complete(campaign, mission.id, outcome.stars, 6)
 	_menu_root.hide()
-	_debrief.begin(mission, outcome, runtime.max_stars(), _next_title(posed[0], mission, outcome))
+	_debrief.begin(
+		mission, outcome, runtime.max_stars(), _next_title(campaign, progress, outcome), progress
+	)
 
 
 func chrome_debrief() -> Dictionary[String, Control]:
 	return _debrief.chrome()
+
+
+## Dev captures only: poses the first interlude the shipped content authors, on a
+## profile that has played nothing — so the picture is the page every player sees
+## rather than the one this machine's own war earned.
+func pose_interlude() -> void:
+	for campaign: CampaignDefinition in CampaignDB.load_default().all():
+		for page: CampaignInterlude in campaign.interludes:
+			if page == null:
+				continue
+			_menu_root.hide()
+			_interlude.begin(page, CampaignState.begin(campaign))
+			return
+
+
+func chrome_interlude() -> Dictionary[String, Control]:
+	return _interlude.chrome()
 
 
 ## Dev captures only: poses the hub — and optionally its first briefing — on a

@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
+[ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="Bloodied"]
+script = ExtResource("3")
+flag = &"morn_bloodied"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Unbloodied"]
+script = ExtResource("3")
+flag = &"morn_bloodied"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2")
+text = "The Directorate had governed the Iron Dominion for forty years. It took eleven days to stop existing, and no two border capitals agree on which of them it died."
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2")
+speaker = &"cassian_rook"
+text = "Six marshals, six armies, and no crown left for any of them to answer to. Every border we hold now borders a different war."
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2")
+speaker = &"radek_morn"
+text = "I came out of the spring a column lighter, Commander. Whatever I take from you next, I will not be asking for it first."
+requires = SubResource("Bloodied")
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2")
+speaker = &"radek_morn"
+text = "I came out of the spring with everything I marched in with, and an ultimatum that answered itself. Neither of us is short of practice now."
+requires = SubResource("Unbloodied")
+
+[sub_resource type="Resource" id="Line_5"]
+script = ExtResource("2")
+speaker = &"viktor_draeg"
+text = "There is one marshal at your border who does not want the throne, Commander. Only the winter, and somebody to survive it beside. I will be in touch."
+
+[resource]
+script = ExtResource("1")
+after_block = 0
+title = "The Crack"
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5")])

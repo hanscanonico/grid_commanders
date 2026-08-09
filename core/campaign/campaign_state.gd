@@ -10,6 +10,11 @@ extends RefCounted
 ## units is `roster`, and that is a record of condition rather than a board: a
 ## `CarriedUnit` has no cell, no fuel and no turn.
 ##
+## **Which mission the war offers next is the route's**, and the route is
+## `open_mission`: the campaign's order narrowed by what the war has recorded
+## (campaign-depth D7). Branching lives here rather than in the campaign, which
+## owns the order and nothing about a particular player's way through it.
+##
 ## **What a replay of a cleared mission does**, all three answers in one place:
 ## the ledger takes nothing and the carried army is not re-banked — first clear
 ## wins — while stars and best day take the best of any run. A star is a personal
@@ -24,7 +29,10 @@ const CLEARED := "cleared:"
 const STARS := "stars:"
 
 var campaign_id: StringName = &""
-## Mission ids the player may start, in no particular order.
+## Mission ids the player may start, in no particular order. Only ever added to:
+## `open_mission` decides which mission the route reaches next and `complete`
+## latches its answer here, so a mission that has been opened stays open whatever
+## the war goes on to record.
 var unlocked: Dictionary[StringName, bool] = {}
 ## `mission id -> best result`, present only for cleared missions.
 var records: Dictionary[StringName, MissionRecord] = {}
@@ -57,11 +65,11 @@ class MissionRecord:
 		best_day = p_best_day
 
 
-## A fresh profile: mission one unlocked, nothing cleared.
+## A fresh profile: the first mission the route opens, nothing cleared.
 static func begin(campaign: CampaignDefinition) -> CampaignState:
 	var state := CampaignState.new()
 	state.campaign_id = campaign.id
-	var first := campaign.first_mission_id()
+	var first := state.open_mission(campaign)
 	if first != &"":
 		state.unlocked[first] = true
 	return state
@@ -127,14 +135,67 @@ static func flag_name_error(name: StringName) -> String:
 	return "" if key.is_valid_ascii_identifier() else "'%s' is not an identifier" % key
 
 
+## The mission the route is waiting on: the first one this war opens that has not
+## been cleared, or "" when there is nothing left to offer (campaign-depth D7).
+##
+## **The route is derived and its answer is latched.** It is read fresh against
+## the ledger as it stands — which is what lets a mission the war closed be walked
+## past and the one after it open instead — and `complete` writes what it says
+## into `unlocked`, which nothing ever removes from. A mission already unlocked
+## therefore opens here whatever the war goes on to record, so conditions cannot
+## close a road the player is already standing on.
+##
+## It only ever moves forward, starting one past the furthest mission cleared:
+## everything behind that has been decided, and a fact written late must not
+## re-open ground the war has gone past. `CampaignDefinition.route_error` is what
+## stops that hiding an authoring slip — a mission opening on a fact no earlier
+## mission writes is refused at the door rather than silently skipped forever.
+func open_mission(campaign: CampaignDefinition) -> StringName:
+	for index in range(_reached(campaign), campaign.missions.size()):
+		var entry: MissionDefinition = campaign.missions[index]
+		if entry != null and _opens(entry):
+			return entry.id
+	return &""
+
+
+## Has the route already gone past this mission without opening it? A road not
+## taken, which the hub says differently from ground nobody has reached yet.
+func is_skipped(campaign: CampaignDefinition, mission_id: StringName) -> bool:
+	if is_unlocked(mission_id):
+		return false
+	var index := campaign.index_of(mission_id)
+	if index < 0:
+		return false
+	var waiting := open_mission(campaign)
+	var frontier := campaign.index_of(waiting) if waiting != &"" else campaign.missions.size()
+	return index < frontier
+
+
+## Where the route stands: one past the furthest mission cleared.
+func _reached(campaign: CampaignDefinition) -> int:
+	var reached := 0
+	for index in campaign.missions.size():
+		var entry: MissionDefinition = campaign.missions[index]
+		if entry != null and is_cleared(entry.id):
+			reached = index + 1
+	return reached
+
+
+func _opens(mission: MissionDefinition) -> bool:
+	if is_unlocked(mission.id) or mission.unlock_requires == null:
+		return true
+	return mission.unlock_requires.holds(self)
+
+
 ## Record a clear, open the next mission and take what this one wrote to the
 ## ledger.
 ##
 ## The record is replaced only where the new run is better, and the two halves
 ## are judged **separately**: a run can beat its predecessor on stars while
 ## taking longer, and a player who earns a third star on day 9 should not lose
-## the day-5 they already have. Unlocking is unconditional, because a mission
-## already open cannot be closed by a worse replay.
+## the day-5 they already have. Unlocking is one-way for the same reason: a
+## mission already open cannot be closed by a worse replay, which is why the
+## route's answer is latched into `unlocked` rather than asked again everywhere.
 ##
 ## **The ledger is written the first time a mission is finished and never again.**
 ## A replay is for stars; the war already happened, and later missions have
@@ -158,12 +219,14 @@ func complete(
 	else:
 		record.stars = maxi(record.stars, stars)
 		record.best_day = day if record.best_day <= 0 else mini(record.best_day, day)
-	var next := campaign.next_mission_id(mission_id)
-	if next != &"":
-		unlocked[next] = true
 	var took := tally != null and record == null
 	if took:
 		_take_staged_flags(tally)
+	# The route is read after the ledger has taken what this mission wrote,
+	# because a mission's own facts are what decide which one opens behind it.
+	var next := open_mission(campaign)
+	if next != &"":
+		unlocked[next] = true
 	active_mission = &""
 	return took
 
@@ -206,8 +269,8 @@ func resume_point(campaign: CampaignDefinition) -> StringName:
 	return furthest
 
 
+## Has the war run out of missions to offer? Only the ones the route actually
+## opened count (campaign-depth D7): one it walked past is a road not taken, and a
+## player who was never offered it has finished the campaign.
 func is_complete(campaign: CampaignDefinition) -> bool:
-	for entry: MissionDefinition in campaign.missions:
-		if not is_cleared(entry.id):
-			return false
-	return true
+	return open_mission(campaign) == &""
