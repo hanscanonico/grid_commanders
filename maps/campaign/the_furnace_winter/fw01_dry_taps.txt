@@ -1,6 +1,14 @@
 # The Furnace Winter, The Freeze — "Dry Taps".
 # Teaching board: the player owns only the HQ. Nothing is built until
 # the crossroads base at the centre is taken — capture-before-production.
+#
+# The row-4 road is the race, and the starting cells are what make it one: the
+# player's tank is 5 road tiles from the crossroads and Vale's is 9, so the
+# player takes the ground and then holds it the two turns a capture costs.
+# Do not put Vale's tank back on that road. From (10,4) it stands on the
+# objective on day 1, and an infantry does 5 damage to a tank, so the only
+# units that can capture have nowhere to walk and no way to shoot it off — the
+# player was routed by day 3 in every seed measured, at every AI tier.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
@@ -19,11 +27,12 @@
 2 10 7
 2 11 5
 [units]
-1 i 2 1
-1 i 2 2
+1 i 2 3
+1 i 3 3
 1 r 1 3
+1 t 1 4
 2 i 9 7
 2 i 9 6
 2 m 8 7
-2 r 10 5
-2 t 10 4
+2 r 11 6
+2 t 12 7
