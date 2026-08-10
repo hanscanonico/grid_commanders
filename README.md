@@ -422,8 +422,9 @@ for testing.
 On a controller, the D-pad or left stick moves focus and the grid cursor. The bottom face button
 (A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
 shoulder (RB / R1) zooms in and the left (LB / L1) zooms out, the left face button (X / Square)
-shows a unit's range, the left stick's click (button 7) raises and lowers the threat lens, and the
-top face button (Y / Triangle) fires a ready Command Power. The same
+shows a unit's range, the left stick's click (button 7) raises and lowers the threat lens, the
+Start button (Options / Menu, button 6) lowers and raises a campaign mission's card, and the top
+face button (Y / Triangle) fires a ready Command Power. The same
 face buttons confirm and back out of menus. One push of the stick is one step: the cursor and a
 menu highlight move a single cell or row per gesture, and the stick has to return to centre before
 it asks again.
@@ -828,8 +829,9 @@ ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It lists exactly the
 being judged on, so an objective a mission is holding back stays off the card until a beat brings it
 into play, and then appears there. `O` lowers the card and raises it again, so the ground under it
 is never covered for longer than you want it to be, and the `O · MISSION` chip is on the top bar
-only while a mission is being fought. The card is up only inside a campaign mission; a skirmish
-looks exactly as it always did.
+only while a mission is being fought. Lowering it lasts as long as the board you are on: every
+mission opens with the card up, its terms being the first thing a new board has to say. The card is
+up only inside a campaign mission; a skirmish looks exactly as it always did.
 
 The victory screen reads
 **Mission complete** or **Mission failed** with the reason, counts stars — one for finishing, one
