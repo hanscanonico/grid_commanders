@@ -9,6 +9,10 @@
 # objective on day 1, and an infantry does 5 damage to a tank, so the only
 # units that can capture have nowhere to walk and no way to shoot it off — the
 # player was routed by day 3 in every seed measured, at every AI tier.
+#
+# The day-3 picket lands at (7,5) rather than on the road beside the base: by
+# then the player's column is on row 4, and a spawn onto an occupied cell is
+# silently lost — docs/campaign_authoring.md, trap 6.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
