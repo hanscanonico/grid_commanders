@@ -585,6 +585,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		toggle_range()
 	elif event.is_action_pressed(&"show_threat"):
 		toggle_threat()
+	elif event.is_action_pressed(&"show_objectives"):
+		view.mission_panel.toggle(game)  # chrome the card owns; nothing here has state in it
 	elif event.is_action_pressed(&"fire_power"):
 		_fire_command_power()  # the shortcut the charged meter advertises
 	elif not dir.is_empty():

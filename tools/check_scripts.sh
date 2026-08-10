@@ -74,8 +74,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # battle.gd 1396 -> 1397: the music wire-in. A scene states its theme in one
 # line of _ready (Music.play) and the Music autoload owns everything else;
 # there is nothing to extract from a single call.
+# battle.gd 1397 -> 1399: O raises and lowers the campaign mission card. The two
+# lines are the branch in the input chain, beside T's and R's, and nothing else
+# here changed — the card owns whether it is up, the panel's own signal lights the
+# top bar's chip, and Battle holds no mission state to extract.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1397
+scenes/battle/battle.gd 1399
 scenes/menu/main_menu.gd 1148
 "
 

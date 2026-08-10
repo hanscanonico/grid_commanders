@@ -117,6 +117,17 @@ func run(mode: String) -> String:
 
 func _run_panel() -> String:
 	var panel := _battle.view.mission_panel
+	# O lowers the card and raises it again, walked here rather than only
+	# photographed: the card covers board, so a player has to be able to put it away,
+	# and a lowered card that never came back is the failure that leaves a mission
+	# unreadable. It ends up back where it started, which is what keeps the frame
+	# this scenario exists to capture byte-stable.
+	panel.toggle(_battle.game)
+	if panel.visible:
+		return "the objective panel stayed up after O lowered it"
+	panel.toggle(_battle.game)
+	if not panel.visible:
+		return "the objective panel did not come back up after a second O"
 	# The card measures and places itself a frame after its rows were added, like
 	# the teaching strip and the seat strip.
 	await _battle.get_tree().process_frame

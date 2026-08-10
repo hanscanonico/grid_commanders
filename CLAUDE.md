@@ -1247,6 +1247,18 @@ that must survive any change; the full rationale, milestones and risk registers 
   scenario deploys through the shipped `CampaignSession.begin` → `MatchConfig.stage` pair
   (`BattleMissionScenario`) rather than widening `--map=`, and clears the session after the frame so
   the next `menu_` scenario in the same process opens a menu rather than a campaign hub.
+  **The card is the one piece of chrome that covers board, so `O` lowers and raises it** (added
+  after CD2): a lens key like `T` and `R`, stated as a chip on the top bar
+  (`ControlHints.OBJECTIVES_CHIP`) rather than in the per-context legend, and unlike those two the
+  chip is off the bar entirely outside a campaign — a key that would do nothing is never
+  advertised, which is also what keeps every skirmish frame byte-identical. Whether the card is up
+  is the **panel's own** state, not `Battle`'s: `MissionObjectivesPanel.toggle` flips it and
+  `card_changed(available, up)` is what lights the chip, so `Battle` gains one branch in its input
+  chain and no mission state, and `BattleView` gains no public method (it sits at the
+  `max-public-methods` ceiling). Every mission opens with the card up — the terms are the first
+  thing a new board has to say — and it is deliberately not a device preference. `refresh` does
+  nothing beyond the chip while the card is down, so the card is redrawn on the way up rather than
+  merely shown.
   **CD3 shipped the event system on D1/D2/D3 as written; what a future session must not undo is
   below, and the plan's own "What CD3 settled" carries the rest.**
   A `MissionEvent` is triggers (a **conjunction**, so a small vocabulary stays expressive) plus

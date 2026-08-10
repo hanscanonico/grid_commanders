@@ -21,6 +21,7 @@ var _doctrine_label: Label
 var _funds_label: Label
 var _threat_label: Label
 var _range_label: Label
+var _objectives_label: Label
 var _keys_label: Label
 
 
@@ -81,6 +82,14 @@ func _build() -> void:
 	# and where can anything shoot me.
 	_range_label = UiTheme.hud_label(ControlHints.RANGE_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	row.add_child(_range_label)
+	# The mission card's chip, beside the two lenses because O is the same kind of
+	# key. Off the bar until a campaign mission says otherwise, so a skirmish's bar
+	# is laid out exactly as it was before this chip existed.
+	_objectives_label = UiTheme.hud_label(
+		ControlHints.OBJECTIVES_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3
+	)
+	_objectives_label.hide()
+	row.add_child(_objectives_label)
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that
@@ -126,6 +135,16 @@ func show_threat_lens(on: bool) -> void:
 ## The fire ring's chip, lit on the same terms as the threat lens's above.
 func show_range_lens(on: bool) -> void:
 	_light(_range_label, on)
+
+
+## The mission card's chip: on the bar only while there is a mission to describe,
+## and lit while its card is up. Two facts rather than one, because a lowered card
+## is exactly when the key most needs advertising — the chip is then the only thing
+## on screen saying the mission's terms are one press away.
+func show_objectives_lens(available: bool, on: bool) -> void:
+	if _objectives_label != null:
+		_objectives_label.visible = available
+		_light(_objectives_label, on)
 
 
 func _light(chip: Label, on: bool) -> void:

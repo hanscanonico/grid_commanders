@@ -148,12 +148,12 @@ func test_legends_are_ascii_only() -> void:
 ## to the same two rules by hand: each shares the bar's width with a legend that
 ## may already be running at MAX_CHARS, and each is printed in the same Silkscreen.
 func test_the_lens_chips_fit_beside_the_legend() -> void:
-	for chip in [ControlHints.THREAT_CHIP, ControlHints.RANGE_CHIP]:
+	for chip in ControlHints.CHIPS:
 		assert_lt(chip.length(), ControlHints.MAX_CHARS / 3, "chip too wide: %s" % chip)
 
 
 func test_the_lens_chips_are_ascii_only() -> void:
-	for chip in [ControlHints.THREAT_CHIP, ControlHints.RANGE_CHIP]:
+	for chip in ControlHints.CHIPS:
 		for i in chip.length():
 			assert_true(
 				chip.unicode_at(i) < 128 or chip.unicode_at(i) == 0x00B7, "non-ASCII: %s" % chip
