@@ -32,6 +32,10 @@ const STAT_BOLD_FONT_PATH := FONT_DIR + "/Silkscreen-Bold.ttf"
 ## OpenType 'wght' axis tag ('w'<<24 | 'g'<<16 | 'h'<<8 | 't'), so the variable
 ## display face can be asked for its bold instance without a second file.
 const _WGHT_TAG := 2003265652
+## OpenType 'liga' feature tag, same encoding. Pixelify Sans ships fi/fl/ff
+## ligatures whose merged glyphs are unreadable at pixel size ("first" rasterises
+## as "Arst"), so the display face is always served with them switched off.
+const _LIGA_TAG := 1818847073
 
 # --- shell palette: new tokens (no shipped authority), from tokens/colors.css ---
 const SLATE_900 := Color(0.13725, 0.15294, 0.16863)  # #23272b page backdrop
@@ -154,9 +158,10 @@ const SIZE_MICRO := 6  # Silkscreen micro-labels; 12 physical px, R1's floor
 
 enum ButtonVariant { PRIMARY, SECONDARY, GHOST }
 
-static var _display: FontFile
+static var _display_file: FontFile
 static var _stat: FontFile
 static var _stat_bold: FontFile
+static var _display: FontVariation
 static var _display_bold: FontVariation
 ## Roster (as written by `str`) -> the identity that roster resolves to. See
 ## `menu_identity_of`, which is the only reader and writer.
@@ -170,11 +175,12 @@ static var _identity_by_roster: Dictionary[String, SideIdentity] = {}
 static func display(bold := false) -> Font:
 	if bold:
 		if _display_bold == null:
-			_display_bold = FontVariation.new()
-			_display_bold.base_font = _display_face()
+			_display_bold = _no_ligatures(_display_face())
 			_display_bold.variation_opentype = {_WGHT_TAG: 700}
 		return _display_bold
-	return _display_face()
+	if _display == null:
+		_display = _no_ligatures(_display_face())
+	return _display
 
 
 ## Silkscreen — micro-labels, numerals, badges. `bold` loads the static bold cut.
@@ -189,9 +195,16 @@ static func stat(bold := false) -> Font:
 
 
 static func _display_face() -> FontFile:
-	if _display == null:
-		_display = _tuned(DISPLAY_FONT_PATH)
-	return _display
+	if _display_file == null:
+		_display_file = _tuned(DISPLAY_FONT_PATH)
+	return _display_file
+
+
+static func _no_ligatures(face: FontFile) -> FontVariation:
+	var variation := FontVariation.new()
+	variation.base_font = face
+	variation.opentype_features = {_LIGA_TAG: 0}
+	return variation
 
 
 ## Loads a face and switches off every source of blur: no antialiasing, no
