@@ -34,7 +34,10 @@ outright: it is the only form that works offline and in an export.
 
 - **Pixelify Sans** — display and UI chrome. Vendored as the single variable TTF
   (`PixelifySans-Variable.ttf`); `UiTheme` asks it for its 700-weight instance for
-  the wordmark and titles rather than carrying a second file.
+  the wordmark and titles rather than carrying a second file. It ships standard
+  `liga` ligatures whose merged glyphs are unreadable at pixel size, so `UiTheme`
+  serves the face with them switched off — its `_LIGA_TAG` comment owns the
+  reasoning. Silkscreen carries no such ligatures.
   - **Copyright:** 2021 The Pixelify Sans Project Authors — <https://github.com/eifetx/Pixelify-Sans>
 - **Silkscreen** — micro-labels, numerals, badges. The Regular and Bold cuts are
   vendored (`Silkscreen-Regular.ttf`, `Silkscreen-Bold.ttf`).
