@@ -43,7 +43,18 @@ const _WIDTH := 168
 const _MET := "✓"
 const _OPEN := "·"
 
+## Whether there is a mission to describe, and whether the player has its card up.
+## The top bar's chip is the one listener: the card covers board a player may need
+## to look at, so O lowers it, and a key with nothing on screen naming it is a key
+## nobody finds.
+signal card_changed(available: bool, up: bool)
+
 var _built := false
+## Whether the player has the card up. Not a device preference and not remembered
+## across missions: a mission's terms are the first thing a new board has to say, so
+## every one of them opens with the card up and the player lowers it when it is in
+## the way.
+var _up := true
 var _title_label: Label
 var _rows: VBoxContainer
 ## The words of each condition currently on the card, so `layout_error` measures
@@ -62,7 +73,9 @@ func _ready() -> void:
 func refresh(game: GameState) -> void:
 	if not _built:
 		return
-	visible = CampaignSession.active()
+	var available := CampaignSession.active()
+	visible = available and _up
+	card_changed.emit(available, _up)
 	if not visible:
 		return
 	var mission := CampaignSession.mission
@@ -75,6 +88,15 @@ func refresh(game: GameState) -> void:
 	_group("LOSE", mission.failures, game)
 	_group("BONUS", mission.bonus_objectives, game)
 	_place()
+
+
+## O raises and lowers the card. It is redrawn on the way up rather than merely
+## shown, because the board it describes has been played on while it was down —
+## `refresh` does nothing beyond the chip while the card is lowered, which is what
+## keeps a card nobody is looking at off every command's path.
+func toggle(game: GameState) -> void:
+	_up = not _up
+	refresh(game)
 
 
 ## Why the open card is not laid out, or "". The sweep's own bar is a file size,

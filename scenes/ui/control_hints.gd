@@ -41,6 +41,18 @@ const THREAT_CHIP := "T · THREAT"
 ## rotation that would still be missing it somewhere.
 const RANGE_CHIP := "R · RANGE"
 
+## The mission card's chip, on the same terms as the two lenses above: O raises and
+## lowers the campaign card in every board context, so it is a way of looking at the
+## board rather than a key that does something in one interaction. The bar prints it
+## only while a mission is being fought — a key that would do nothing must not be
+## advertised — which is the one thing it does not share with T and R.
+const OBJECTIVES_CHIP := "O · MISSION"
+
+## Every chip the top bar may print, so the two rules they are held to — each fits
+## beside a legend already running at MAX_CHARS, each is ASCII — are checked over
+## the set rather than over a list a new chip has to be remembered into.
+const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP]
+
 const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"
 const PREVIEW := &"preview"

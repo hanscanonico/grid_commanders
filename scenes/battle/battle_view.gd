@@ -115,6 +115,11 @@ func setup() -> void:
 	# Nothing is drawn yet: `refresh_hud` decides whether the strip shows, and it
 	# runs after a capture run has had its chance to pin the hints away.
 	mission_strip.setup(_human_teams(), MapCatalog.teaches(map.source_path))
+	# The card says whether there is a mission and whether its card is up; the top
+	# bar's chip is what that answer is for. Wired here rather than read back in
+	# refresh_hud, because O lowers the card between commands and a chip told only
+	# once a command has settled would light a press late.
+	mission_panel.card_changed.connect(hud_top.show_objectives_lens)
 	terrain_layer.tile_set = _build_tile_set()
 	# The terrain atlas is drawn at 4x the world grid (see TERRAIN_PX), so the
 	# layer is scaled back down to keep one cell = TILE. Overlays and the cursor
