@@ -57,7 +57,7 @@ day = 3
 [sub_resource type="Resource" id="Spawn_crossroads_picket"]
 script = ExtResource("8")
 unit_type = ExtResource("9")
-cell = Vector2i(7, 4)
+cell = Vector2i(7, 5)
 
 [sub_resource type="Resource" id="Effect_garrison_arrives"]
 script = ExtResource("7")
