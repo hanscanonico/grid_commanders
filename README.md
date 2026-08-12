@@ -7,8 +7,8 @@ relics with a glint) and **robots** (part-assembled mechs with a visor and
 panel seams) — plus an assembled spritesheet.
 
 Every sprite is deterministic from its seed: the seed is embedded in the
-filename, so any sprite you like can be regenerated at a different size or
-scale.
+default filename (unless `--name` replaces it), so any sprite you like can be
+regenerated at a different size or scale.
 
 ## Setup
 
@@ -41,7 +41,7 @@ python3 -m venv .venv
 | `-x / --scale` | nearest-neighbor upscale factor (default 8) |
 | `--seed` | master seed; sprite *i* uses `seed + i` (default random) |
 | `--hue` | base hue 0..1 for the whole batch (default random per sprite) |
-| `--faction` | comma list of faction palettes; each sprite is rendered once per faction (same seed → same shape, colors only). Known names: `neutral red blue iron verdant`, plus `all` and custom `label:RRGGBB` |
+| `--faction` | comma list of faction palettes; each sprite is rendered once per faction (same seed → same shape, colors only). Known names: `neutral red blue iron verdant`, plus `all` and custom `label:RRGGBB`. Mutually exclusive with `--hue` |
 | `--name` | fixed output name(s) instead of `<kind>_<seed>`; a comma list makes one sprite per name and each entry may pin its type as `name:kind` |
 | `--canvas` | center each sprite on an exact N×N transparent canvas (after scaling) |
 | `--outline` | fixed outline color `RRGGBB` (default: dark tint of the body hue) |
@@ -54,7 +54,9 @@ python3 -m venv .venv
 `--preset grid-commanders` bundles what `../grid_commanders`'s unit pipeline
 expects — 64×64 RGBA PNGs named `<unit>_<faction>.png`, one per atlas team row,
 with the game's faction body colors and outline (`--size 14 --scale 4
---canvas 64 --factions all --outline 14171c`, each overridable):
+--canvas 64 --factions all --outline 14171c`; explicit flags override the
+preset, though a flag passed explicitly at its built-in default reads as
+unset and takes the preset value):
 
 ```sh
 .venv/bin/python sprite_generator.py --preset grid-commanders \
