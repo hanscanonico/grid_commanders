@@ -25,6 +25,11 @@ Usage examples:
   python sprite_generator.py --kind creature -n 16
   python sprite_generator.py --size 24 --scale 10 --seed 1234
   python sprite_generator.py --kind ship --hue 0.58   # blue-ish ships
+
+  # 64x64 faction-colored unit sprites for ../grid_commanders (one file per
+  # faction row of its units atlas, named <unit>_<faction>.png):
+  python sprite_generator.py --preset grid-commanders \
+      --names hover_tank:robot,gunship:ship --seed 42
 """
 
 from __future__ import annotations
@@ -39,6 +44,18 @@ from pathlib import Path
 from PIL import Image
 
 KINDS = ("creature", "ship", "item", "robot")
+
+# Named faction palettes: the grid_commanders body colors, from that repo's
+# tools/generate_unit_placeholders.gd (atlas rows neutral/red/blue/iron/verdant).
+FACTIONS: dict[str, str] = {
+    "neutral": "8a9099",
+    "red": "d84a3c",
+    "blue": "3c64d8",
+    "iron": "4a5258",
+    "verdant": "2c8636",
+}
+# grid_commanders unit outline color (same source).
+GRID_COMMANDERS_OUTLINE = "14171c"
 
 
 # --------------------------------------------------------------------------- #
@@ -84,15 +101,24 @@ class Palette:
     seed_hue: float
 
 
-def make_palette(rng: random.Random, hue: float | None = None) -> Palette:
+def make_palette(rng: random.Random, hue: float | None = None,
+                 sat: float | None = None, val: float | None = None) -> Palette:
     h = rng.random() if hue is None else hue % 1.0
-    sat = rng.uniform(0.55, 0.85)
-    val = rng.uniform(0.62, 0.78)
-    body = make_ramp(h, sat, val)
+    s = rng.uniform(0.55, 0.85) if sat is None else sat
+    v = rng.uniform(0.62, 0.78) if val is None else val
+    body = make_ramp(h, s, v)
 
     # Accent: complementary-ish or analogous, biased bright so it pops.
     shift = rng.choice((0.5, 0.33, -0.33, 0.12, -0.12))
-    accent = make_ramp(h + shift, rng.uniform(0.6, 0.9), rng.uniform(0.7, 0.85))
+    a_s = rng.uniform(0.6, 0.9)
+    a_v = rng.uniform(0.7, 0.85)
+    # With a fixed (faction) body color, rein the accent in toward it so a
+    # muted gray body doesn't get a neon accent.
+    if sat is not None:
+        a_s = min(a_s, sat + 0.25)
+    if val is not None:
+        a_v = min(a_v, val + 0.3)
+    accent = make_ramp(h + shift, a_s, a_v)
     return Palette(body=body, accent=accent, seed_hue=h)
 
 
@@ -467,10 +493,18 @@ _DETAILERS = {
 }
 
 
-def generate_sprite(seed: int, kind: str, size: int, hue: float | None = None) -> Sprite:
+def generate_sprite(seed: int, kind: str, size: int, hue: float | None = None,
+                    sat: float | None = None, val: float | None = None,
+                    outline: tuple[int, int, int] | None = None) -> Sprite:
+    """One sprite. The same seed always yields the same shape and details, so
+    faction variants (same seed, different hue/sat/val) differ only in color."""
     rng = random.Random(seed)
     grid = generate_shape(rng, kind, size, size)
-    sp = Sprite(kind=kind, seed=seed, grid=grid, palette=make_palette(rng, hue))
+    sp = Sprite(kind=kind, seed=seed, grid=grid,
+                palette=make_palette(rng, hue, sat, val))
+    if outline is not None:
+        # Before the detailers: the robot seam paints in the outline color.
+        sp.palette.body.outline = outline
     sp.accents = _accent_blobs(rng, grid, count=rng.randint(1, 3))
     _DETAILERS[kind](rng, sp)
     return sp
@@ -542,6 +576,26 @@ def render(sp: Sprite, scale: int = 1, pad: int = 1) -> Image.Image:
     return img
 
 
+def on_canvas(img: Image.Image, size: int) -> Image.Image:
+    """Center the rendered sprite on an exact size x size transparent canvas
+    (what an atlas pipeline wants: every file the same, known dimensions)."""
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.paste(img, ((size - img.width) // 2, (size - img.height) // 2))
+    return out
+
+
+def parse_hex(spec: str) -> tuple[int, int, int]:
+    s = spec.lstrip("#")
+    if len(s) != 6 or any(c not in "0123456789abcdefABCDEF" for c in s):
+        raise ValueError(f"bad color {spec!r} (want RRGGBB)")
+    return int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)
+
+
+def _hex_to_hsv(spec: str) -> tuple[float, float, float]:
+    r, g, b = parse_hex(spec)
+    return colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+
+
 def make_sheet(images: list[Image.Image], columns: int, spacing: int = 4,
                bg: tuple[int, int, int, int] = (0, 0, 0, 0)) -> Image.Image:
     if not images:
@@ -580,39 +634,135 @@ def main() -> None:
                     help="base hue 0..1 (default: random per sprite)")
     ap.add_argument("-o", "--out", type=Path, default=Path("out"),
                     help="output directory")
+    ap.add_argument("--faction", "--factions", dest="factions", default=None,
+                    metavar="LIST",
+                    help="render each sprite once per faction palette: comma "
+                         f"list of {', '.join(FACTIONS)}, 'all', or custom "
+                         "label:RRGGBB; same seed = same shape, only colors "
+                         "change. Files get a _<faction> suffix")
+    ap.add_argument("--name", "--names", dest="names", default=None,
+                    metavar="LIST",
+                    help="output name(s) instead of <kind>_<seed>: a comma "
+                         "list generates one sprite per name (overrides "
+                         "--count); each entry may pin its type as name:kind")
+    ap.add_argument("--canvas", type=int, default=None, metavar="N",
+                    help="center each sprite on an exact NxN transparent "
+                         "canvas (after scaling), for atlas pipelines")
+    ap.add_argument("--outline", default=None, metavar="RRGGBB",
+                    help="fixed outline color (default: dark tint of the body "
+                         "hue)")
+    ap.add_argument("--preset", choices=("grid-commanders",), default=None,
+                    help="option bundle; grid-commanders = 64x64 unit sprites "
+                         "(--size 14 --scale 4 --canvas 64 --factions all "
+                         f"--outline {GRID_COMMANDERS_OUTLINE}), matching "
+                         "assets/sprites/units/<name>_<faction>.png")
     ap.add_argument("--no-sheet", action="store_true",
                     help="skip the combined spritesheet")
     ap.add_argument("--no-singles", action="store_true",
                     help="skip individual sprite PNGs")
     args = ap.parse_args()
 
+    if args.preset == "grid-commanders":
+        # Fill in only what the user left at its default.
+        for opt, value in (("size", 14), ("scale", 4), ("canvas", 64),
+                           ("factions", "all"),
+                           ("outline", GRID_COMMANDERS_OUTLINE)):
+            if getattr(args, opt) == ap.get_default(opt):
+                setattr(args, opt, value)
+
+    # --names: fixed file names, optional per-name kind, count from the list.
+    names: list[tuple[str, str | None]] | None = None
+    if args.names:
+        names = []
+        for tok in args.names.split(","):
+            tok = tok.strip()
+            name, _, kind = tok.partition(":")
+            if kind and kind not in KINDS:
+                ap.error(f"unknown kind {kind!r} in --names "
+                         f"(choose from {', '.join(KINDS)})")
+            if not name:
+                ap.error(f"empty name in --names entry {tok!r}")
+            names.append((name, kind or None))
+        if args.count not in (ap.get_default("count"), len(names)):
+            ap.error("--count conflicts with the number of --names")
+        args.count = len(names)
+
+    # --factions: (label, (h, s, v)) variants; None = one unconstrained pass.
+    factions: list[tuple[str, tuple[float, float, float]]] | None = None
+    if args.factions:
+        if args.hue is not None:
+            ap.error("--hue and --faction are mutually exclusive")
+        factions = []
+        for tok in args.factions.split(","):
+            tok = tok.strip()
+            if tok == "all":
+                factions.extend((n, _hex_to_hsv(hx)) for n, hx in FACTIONS.items())
+            elif tok in FACTIONS:
+                factions.append((tok, _hex_to_hsv(FACTIONS[tok])))
+            elif ":" in tok:
+                label, _, hx = tok.partition(":")
+                try:
+                    factions.append((label, _hex_to_hsv(hx)))
+                except ValueError as e:
+                    ap.error(str(e))
+            else:
+                ap.error(f"unknown faction {tok!r} (choose from "
+                         f"{', '.join(FACTIONS)}, 'all', or label:RRGGBB)")
+
+    outline: tuple[int, int, int] | None = None
+    if args.outline:
+        try:
+            outline = parse_hex(args.outline)
+        except ValueError as e:
+            ap.error(str(e))
+
     if args.count < 1:
         ap.error("--count must be positive")
     if args.size < 8:
         ap.error("--size must be at least 8")
+    if args.canvas is not None and (args.size + 2) * args.scale > args.canvas:
+        ap.error(f"--canvas {args.canvas} is smaller than the rendered sprite "
+                 f"({(args.size + 2) * args.scale}px incl. 1px outline pad); "
+                 "lower --size/--scale or raise --canvas")
     master = args.seed if args.seed is not None else random.randrange(1 << 30)
     args.out.mkdir(parents=True, exist_ok=True)
 
     picker = random.Random(master)
-    images = []
+    variants = factions if factions else [(None, None)]
+    rows: list[list[Image.Image]] = [[] for _ in variants]
     for i in range(args.count):
-        kind = picker.choice(KINDS) if args.kind == "mixed" else args.kind
-        sp = generate_sprite(master + i, kind, args.size, args.hue)
-        img = render(sp, scale=args.scale)
-        images.append(img)
-        if not args.no_singles:
-            img.save(args.out / f"{kind}_{sp.seed}.png")
+        name, name_kind = names[i] if names else (None, None)
+        kind = name_kind or (picker.choice(KINDS) if args.kind == "mixed"
+                             else args.kind)
+        for fi, (flabel, fhsv) in enumerate(variants):
+            hue, sat, val = fhsv if fhsv else (args.hue, None, None)
+            sp = generate_sprite(master + i, kind, args.size,
+                                 hue, sat, val, outline)
+            img = render(sp, scale=args.scale)
+            if args.canvas is not None:
+                img = on_canvas(img, args.canvas)
+            rows[fi].append(img)
+            if not args.no_singles:
+                stem = name if name else f"{kind}_{sp.seed}"
+                suffix = f"_{flabel}" if flabel else ""
+                img.save(args.out / f"{stem}{suffix}.png")
 
     if not args.no_sheet:
-        cols = max(1, round(math.sqrt(args.count)))
-        sheet = make_sheet(images, columns=cols, spacing=args.scale * 2)
+        # With factions the sheet reads like the game's atlas: one row per
+        # faction, one column per sprite.
+        cols = args.count if factions else max(1, round(math.sqrt(args.count)))
+        sheet = make_sheet([im for row in rows for im in row],
+                           columns=cols, spacing=args.scale * 2)
         sheet_path = args.out / f"sheet_{args.kind}_{master}.png"
         sheet.save(sheet_path)
         print(f"spritesheet: {sheet_path}")
 
-    print(f"generated {args.count} {args.kind} sprite(s) "
-          f"({args.size}x{args.size} @ x{args.scale}) in {args.out}/  "
-          f"[master seed {master}]")
+    n_files = args.count * len(variants)
+    per = f" x {len(variants)} factions" if factions else ""
+    print(f"generated {args.count} {args.kind} sprite(s){per} "
+          f"({n_files} file(s), {args.size}x{args.size} @ x{args.scale}"
+          f"{f', canvas {args.canvas}' if args.canvas else ''}) "
+          f"in {args.out}/  [master seed {master}]")
 
 
 if __name__ == "__main__":

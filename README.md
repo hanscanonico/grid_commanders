@@ -41,8 +41,32 @@ python3 -m venv .venv
 | `-x / --scale` | nearest-neighbor upscale factor (default 8) |
 | `--seed` | master seed; sprite *i* uses `seed + i` (default random) |
 | `--hue` | base hue 0..1 for the whole batch (default random per sprite) |
+| `--faction` | comma list of faction palettes; each sprite is rendered once per faction (same seed → same shape, colors only). Known names: `neutral red blue iron verdant`, plus `all` and custom `label:RRGGBB` |
+| `--name` | fixed output name(s) instead of `<kind>_<seed>`; a comma list makes one sprite per name and each entry may pin its type as `name:kind` |
+| `--canvas` | center each sprite on an exact N×N transparent canvas (after scaling) |
+| `--outline` | fixed outline color `RRGGBB` (default: dark tint of the body hue) |
+| `--preset` | option bundle (see below) |
 | `-o / --out` | output directory (default `out/`) |
 | `--no-sheet` / `--no-singles` | skip the spritesheet / the individual PNGs |
+
+## Generating assets for Grid Commanders
+
+`--preset grid-commanders` bundles what `../grid_commanders`'s unit pipeline
+expects — 64×64 RGBA PNGs named `<unit>_<faction>.png`, one per atlas team row,
+with the game's faction body colors and outline (`--size 14 --scale 4
+--canvas 64 --factions all --outline 14171c`, each overridable):
+
+```sh
+.venv/bin/python sprite_generator.py --preset grid-commanders \
+  --names hover_tank:robot,gunship:ship,drone:ship --seed 42
+```
+
+writes `hover_tank_neutral.png`, `hover_tank_red.png` … `drone_verdant.png`
+(3 units × 5 factions), plus a sheet laid out like the game's units atlas: one
+row per faction, one column per unit. Iterate on `--seed` until you like a
+shape, then drop the five PNGs into
+`../grid_commanders/assets/sprites/units/`, register the unit in
+`tools/paste_unit_sprites.gd`, and run `make tiles` there.
 
 ## How it works
 
