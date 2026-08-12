@@ -64,7 +64,7 @@ GRID_COMMANDERS_OUTLINE = "14171c"
 
 def _hsv_to_rgb(h: float, s: float, v: float) -> tuple[int, int, int]:
     r, g, b = colorsys.hsv_to_rgb(h % 1.0, max(0.0, min(1.0, s)), max(0.0, min(1.0, v)))
-    return int(r * 255), int(g * 255), int(b * 255)
+    return round(r * 255), round(g * 255), round(b * 255)
 
 
 @dataclass
@@ -683,6 +683,10 @@ def main() -> None:
             if not name:
                 ap.error(f"empty name in --names entry {tok!r}")
             names.append((name, kind or None))
+        name_list = [n for n, _ in names]
+        if len(set(name_list)) != len(name_list):
+            dupes = sorted({n for n in name_list if name_list.count(n) > 1})
+            ap.error(f"duplicate name(s) in --names: {', '.join(dupes)}")
         if args.count not in (ap.get_default("count"), len(names)):
             ap.error("--count conflicts with the number of --names")
         args.count = len(names)
@@ -708,6 +712,11 @@ def main() -> None:
             else:
                 ap.error(f"unknown faction {tok!r} (choose from "
                          f"{', '.join(FACTIONS)}, 'all', or label:RRGGBB)")
+        labels = [label for label, _ in factions]
+        if len(set(labels)) != len(labels):
+            dupes = sorted({lb for lb in labels if labels.count(lb) > 1})
+            ap.error("duplicate faction label(s): "
+                     + ", ".join(lb or "(empty)" for lb in dupes))
 
     outline: tuple[int, int, int] | None = None
     if args.outline:
