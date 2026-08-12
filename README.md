@@ -1,10 +1,11 @@
 # Sprite Generator
 
 Procedural pixel-art sprite generator built on Pillow. Produces transparent
-PNGs of four sprite types — **creatures** (symmetric blobs with faces),
+PNGs of five sprite types — **creatures** (symmetric blobs with faces),
 **ships** (fuselage + wings, cockpit and engine glow), **items** (gems and
-relics with a glint) and **robots** (part-assembled mechs with a visor and
-panel seams) — plus an assembled spritesheet.
+relics with a glint), **robots** (part-assembled mechs with a visor and
+panel seams) and **tanks** (top-down hulls with treads, an accent turret and
+a forward barrel) — plus an assembled spritesheet.
 
 Every sprite is deterministic from its seed: the seed is embedded in the
 default filename (unless `--name` replaces it), so any sprite you like can be
@@ -36,7 +37,7 @@ python3 -m venv .venv
 | Flag | Meaning |
 | --- | --- |
 | `-n / --count` | number of sprites (default 32) |
-| `-k / --kind` | `creature`, `ship`, `item`, `robot` or `mixed` (default) |
+| `-k / --kind` | `creature`, `ship`, `item`, `robot`, `tank` or `mixed` (default) |
 | `-s / --size` | grid size in pixels before scaling, min 8 (default 16) |
 | `-x / --scale` | nearest-neighbor upscale factor (default 8) |
 | `--seed` | master seed; sprite *i* uses `seed + i` (default random) |
@@ -60,7 +61,7 @@ unset and takes the preset value):
 
 ```sh
 .venv/bin/python sprite_generator.py --preset grid-commanders \
-  --names hover_tank:robot,gunship:ship,drone:ship --seed 42
+  --names hover_tank:tank,gunship:ship,drone:ship --seed 42
 ```
 
 writes `hover_tank_neutral.png`, `hover_tank_red.png` … `drone_verdant.png`
@@ -75,17 +76,17 @@ shape, then drop the five PNGs into
 1. **Shape** — random noise on a half-grid, weighted by a per-type density
    mask, mirrored for bilateral symmetry, smoothed with cellular-automata
    steps, reduced to the largest connected blob, then re-symmetrized and
-   centered. Robots skip the noise entirely and are assembled from jittered
-   rectangles (head, torso, arms, legs), which is what makes them read as
-   machines.
+   centered. Robots and tanks skip the noise entirely and are assembled from
+   jittered rectangles (head/torso/arms/legs, hull/treads/barrel), which is
+   what makes them read as machines.
 2. **Color** — a 5-tone ramp derived from one base hue with hue-shifting
    (shadows drift toward blue, highlights toward yellow), plus a contrasting
    accent ramp painted in small symmetric blobs.
 3. **Light** — directional shading from above, edge darkening, and a touch of
    seeded dithering.
 4. **Details** — eyes with guaranteed placement and a minimum gap so they read
-   as a face, cockpit glass, engine glow, gem glints, visors. Detail sizes
-   scale with sprite resolution.
+   as a face, cockpit glass, engine glow, gem glints, visors, tank turrets
+   and track links. Detail sizes scale with sprite resolution.
 5. **Finish** — 1px outline in a dark tint of the body color, nearest-neighbor
    upscale, optional spritesheet.
 
