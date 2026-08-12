@@ -175,6 +175,8 @@ def _robot_grid(rng: random.Random, w: int, h: int) -> list[list[int]]:
     for _ in range(rng.randint(1, 3)):
         nx0 = rng.choice((int(cx - torso_hw), int(cx - torso_hw) + 1))
         ny0 = rng.choice((ty0, ty1))
+        if ny0 == ty1 and ny0 + 1 < h and grid[ny0 + 1][nx0]:
+            continue
         grid[ny0][nx0] = 0
         grid[ny0][w - 1 - nx0] = 0
 
@@ -338,8 +340,8 @@ def _add_creature_eyes(rng: random.Random, sp: Sprite) -> None:
     h, w = len(grid), len(grid[0])
     white, pupil = (240, 240, 235), (25, 22, 30)
     es = max(1, round(w / 16))  # eye block size scales with resolution
-    # Keep at least an eye-width gap between the mirrored eye blocks.
-    max_x = (w - 3 * es) // 2
+    # Keep at least a 2px (or eye-width, if larger) gap between the blocks.
+    max_x = (w - 2 * es - max(2, es)) // 2
     face_rows = list(range(max(1, int(h * 0.18)), int(h * 0.6)))
     rng.shuffle(face_rows)
     all_rows = list(range(1, h - 1 - es))
@@ -376,7 +378,7 @@ def _add_creature_eyes(rng: random.Random, sp: Sprite) -> None:
                         if tall:
                             sp.detail[(ex + dx, y + dy)] = white
                             sp.detail[(ex + dx, y + es + dy)] = pupil
-                        else:
+                        elif _filled(grid, ex + dx, y + dy):
                             sp.detail[(ex + dx, y + dy)] = pupil
                         # Keep accent blobs off the eye so it reads cleanly.
                         sp.accents.discard((ex + dx, y + dy))
@@ -584,6 +586,8 @@ def main() -> None:
                     help="skip individual sprite PNGs")
     args = ap.parse_args()
 
+    if args.count < 1:
+        ap.error("--count must be positive")
     if args.size < 8:
         ap.error("--size must be at least 8")
     master = args.seed if args.seed is not None else random.randrange(1 << 30)
