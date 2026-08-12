@@ -144,12 +144,12 @@ def _robot_grid(rng: random.Random, w: int, h: int) -> list[list[int]]:
     torso_hw = rng.randint(max(2, w // 6), w // 3)          # half-width
     ty0 = rng.randint(int(h * 0.25), int(h * 0.35))
     ty1 = rng.randint(int(h * 0.6), int(h * 0.75))
-    stamp(int(cx - torso_hw), ty0, int(math.ceil(cx + torso_hw)), ty1)
+    stamp(int(cx - torso_hw), ty0, math.ceil(cx + torso_hw), ty1)
 
     # Head (narrower, sits on the torso; sometimes with an antenna)
     head_hw = max(1, torso_hw - rng.randint(1, 2))
     hy0 = max(1, ty0 - rng.randint(3, max(4, h // 4)))
-    stamp(int(cx - head_hw), hy0, int(math.ceil(cx + head_hw)), ty0 - 1)
+    stamp(int(cx - head_hw), hy0, math.ceil(cx + head_hw), ty0 - 1)
     if rng.random() < 0.5 and hy0 >= 2:
         ax = int(cx) if rng.random() < 0.5 else int(cx - head_hw)
         stamp(ax, hy0 - min(2, hy0), ax, hy0 - 1)
@@ -159,8 +159,8 @@ def _robot_grid(rng: random.Random, w: int, h: int) -> list[list[int]]:
     arm_w = rng.randint(1, 2)
     ay1 = rng.randint(ty0 + 2, ty1 + 1)
     stamp(int(cx - torso_hw) - arm_w, ty0, int(cx - torso_hw) - 1, ay1)
-    stamp(int(math.ceil(cx + torso_hw)) + 1, ty0,
-          int(math.ceil(cx + torso_hw)) + arm_w, ay1)
+    stamp(math.ceil(cx + torso_hw) + 1, ty0,
+          math.ceil(cx + torso_hw) + arm_w, ay1)
 
     # Legs (two stubby rects reaching the ground line)
     leg_w = rng.randint(1, 2)
