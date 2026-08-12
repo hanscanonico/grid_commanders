@@ -705,6 +705,8 @@ def main() -> None:
                 factions.append((tok, _hex_to_hsv(FACTIONS[tok])))
             elif ":" in tok:
                 label, _, hx = tok.partition(":")
+                if not label:
+                    ap.error(f"empty label in --faction entry {tok!r}")
                 try:
                     factions.append((label, _hex_to_hsv(hx)))
                 except ValueError as e:
