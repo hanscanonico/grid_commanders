@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Procedural pixel-art sprite generator.
 
-Generates game-ready sprites (creatures, ships, items, robots) as transparent
-PNGs using a classic pipeline:
+Generates game-ready sprites (creatures, ships, items, robots, tanks) as
+transparent PNGs using a classic pipeline:
 
   1. Shape   - random noise on a half-grid, shaped by a per-type density mask,
                mirrored for symmetry, smoothed with cellular-automata steps,
@@ -13,7 +13,8 @@ PNGs using a classic pipeline:
   3. Light   - directional shading (light from the top), edge darkening and a
                touch of dithering so surfaces read as volume.
   4. Details - per-type touches: eyes for creatures, a cockpit and engine glow
-               for ships, gem facets for items, panel lines for robots.
+               for ships, gem facets for items, panel lines for robots, an
+               accent turret and track links for tanks.
   5. Finish  - 1px outline in a dark tint of the body color, nearest-neighbor
                upscale, optional spritesheet assembly.
 
@@ -29,7 +30,7 @@ Usage examples:
   # 64x64 faction-colored unit sprites for ../grid_commanders (one file per
   # faction row of its units atlas, named <unit>_<faction>.png):
   python sprite_generator.py --preset grid-commanders \
-      --names hover_tank:robot,gunship:ship --seed 42
+      --names hover_tank:tank,gunship:ship --seed 42
 """
 
 from __future__ import annotations
@@ -43,7 +44,7 @@ from pathlib import Path
 
 from PIL import Image
 
-KINDS = ("creature", "ship", "item", "robot")
+KINDS = ("creature", "ship", "item", "robot", "tank")
 
 # Named faction palettes: the grid_commanders body colors, from that repo's
 # tools/generate_unit_placeholders.gd (atlas rows neutral/red/blue/iron/verdant).
@@ -149,7 +150,7 @@ def _density_mask(kind: str, w: int, h: int) -> list[list[float]]:
                 # Compact and centered - gems, orbs, relics.
                 d = math.hypot(nx, abs(ny))
                 m = max(0.0, 1.25 - d * 1.35)
-            else:  # robot (unused: robots are assembled from parts, not noise)
+            else:  # robot/tank (unused: both are assembled from parts, not noise)
                 m = 1.0
             mask[y][x] = max(0.0, min(1.0, m))
     return mask
@@ -205,6 +206,45 @@ def _robot_grid(rng: random.Random, w: int, h: int) -> list[list[int]]:
             continue
         grid[ny0][nx0] = 0
         grid[ny0][w - 1 - nx0] = 0
+
+    _mirror_x(grid)
+    return _largest_component(grid)
+
+
+def _tank_grid(rng: random.Random, w: int, h: int) -> list[list[int]]:
+    """Top-down tanks are assembled like robots: two tread columns flanking a
+    wide hull, with a barrel poking forward (up) past the front armor. The
+    turret lives inside the hull silhouette, so it is painted at detail time
+    rather than shaped here."""
+    grid = [[0] * w for _ in range(h)]
+    cx = (w - 1) / 2.0
+
+    def stamp(x0: int, y0: int, x1: int, y1: int) -> None:
+        for y in range(max(0, y0), min(h, y1 + 1)):
+            for x in range(max(0, x0), min(w, x1 + 1)):
+                grid[y][x] = 1
+
+    # Hull: a block filling the lower ~60%; the space above it is what the
+    # barrel sticks out into.
+    hull_hw = rng.randint(max(2, w // 5), max(2, w // 4))    # half-width
+    hy0 = rng.randint(int(h * 0.38), int(h * 0.48))
+    hy1 = rng.randint(int(h * 0.85), h - 2)
+    stamp(int(cx - hull_hw), hy0, math.ceil(cx + hull_hw), hy1)
+
+    # Treads: columns hugging the hull sides, sometimes overhanging the rear.
+    tread_w = rng.randint(1, max(1, w // 7))
+    ty1 = min(h - 2, hy1 + rng.randint(0, 1))
+    stamp(int(cx - hull_hw) - tread_w, hy0, int(cx - hull_hw) - 1, ty1)
+
+    # Barrel: center column(s) from the hull front toward the top edge.
+    by0 = rng.randint(1, max(1, int(h * 0.1)))
+    stamp(int(cx), by0, math.ceil(cx), hy0)
+
+    # Jitter: bevel the hull's front corners so it isn't a perfect box.
+    for _ in range(rng.randint(1, 2)):
+        nx0 = rng.choice((int(cx - hull_hw), int(cx - hull_hw) + 1))
+        grid[hy0][nx0] = 0
+        grid[hy0][w - 1 - nx0] = 0
 
     _mirror_x(grid)
     return _largest_component(grid)
@@ -283,6 +323,8 @@ def generate_shape(rng: random.Random, kind: str, w: int, h: int) -> list[list[i
     """Random symmetric silhouette; retries until the blob is a sensible size."""
     if kind == "robot":
         return _robot_grid(rng, w, h)
+    if kind == "tank":
+        return _tank_grid(rng, w, h)
 
     mask = _density_mask(kind, w, h)
     target_min = int(w * h * 0.17)
@@ -485,11 +527,47 @@ def _add_robot_panels(rng: random.Random, sp: Sprite) -> None:
             break
 
 
+def _add_tank_details(rng: random.Random, sp: Sprite) -> None:
+    grid = sp.grid
+    h, w = len(grid), len(grid[0])
+    counts = [sum(row) for row in grid]
+    widest = max(counts)
+    # Hull rows: wide enough to include the treads, excluding the barrel.
+    hull_rows = [y for y in range(h) if counts[y] >= widest * 0.55]
+
+    # Track links: stripe the outermost columns every other row so the
+    # sides read as treads instead of flat armor.
+    for y in hull_rows:
+        if y % 2 == 0:
+            xs = [x for x in range(w) if grid[y][x]]
+            sp.detail[(xs[0], y)] = sp.palette.body.outline
+            sp.detail[(xs[-1], y)] = sp.palette.body.outline
+
+    # Turret: an accent block sitting on the hull front so the barrel grows
+    # out of it, with a dark hatch in its middle. Random accent blobs would
+    # fight it - replace them. The barrel is accent too (it is turret gear).
+    sp.accents.clear()
+    tur_hw = max(1, round(w / 8))
+    ty_mid = hull_rows[0] + tur_hw
+    lo, hi = int((w - 1) / 2), math.ceil((w - 1) / 2)
+    for y in range(ty_mid - tur_hw, ty_mid + tur_hw + 1):
+        for x in range(lo - tur_hw, hi + tur_hw + 1):
+            if _filled(grid, x, y):
+                sp.accents.add((x, y))
+    for y in range(hull_rows[0]):
+        for x in range(lo - tur_hw, hi + tur_hw + 1):
+            if _filled(grid, x, y):
+                sp.accents.add((x, y))
+    for x in (lo, hi):
+        sp.detail[(x, ty_mid)] = sp.palette.body.outline
+
+
 _DETAILERS = {
     "creature": _add_creature_eyes,
     "ship": _add_ship_details,
     "item": _add_item_facets,
     "robot": _add_robot_panels,
+    "tank": _add_tank_details,
 }
 
 
