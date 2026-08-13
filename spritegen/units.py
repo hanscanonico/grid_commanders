@@ -52,15 +52,15 @@ def infantry() -> Model:
     # boots and legs, one leg a half-step forward
     m.box(3, 3, 4, 5, 0, 0, "tire")
     m.box(5, 6, 5, 6, 0, 0, "tire")
-    m.box(3, 3, 4, 5, 1, 2, "body_dk")
-    m.box(5, 6, 5, 6, 1, 2, "body_dk")
+    m.box(3, 3, 4, 5, 1, 2, "hull_dk")
+    m.box(5, 6, 5, 6, 1, 2, "hull_dk")
     # torso with belt line
-    m.box(2, 6, 3, 6, 3, 5, "body")
-    m.box(2, 6, 3, 6, 3, 3, "body_dk")
+    m.box(2, 6, 3, 6, 3, 5, "hull")
+    m.box(2, 6, 3, 6, 3, 3, "hull_dk")
     # backpack
     m.box(3, 5, 2, 2, 4, 6, "body_dk")
     # left arm at the side; right hand holds the rifle column
-    m.box(1, 1, 3, 5, 4, 5, "body")
+    m.box(1, 1, 3, 5, 4, 5, "hull")
     m.set(7, 6, 6, "skin")  # trigger hand
     # rifle shouldered above the torso line so it silhouettes clear of the
     # body instead of reading as a slab across the waist
@@ -69,8 +69,8 @@ def infantry() -> Model:
     m.set(7, 11, 6, "gunmetal_dk")
     # big head: full face under an overhanging dome helmet
     m.box(3, 5, 3, 6, 6, 7, "skin")
-    m.box(3, 5, 2, 2, 6, 7, "body_dk")  # nape strap
-    m.box(2, 6, 2, 6, 8, 9, "body")  # helmet
+    m.box(3, 5, 2, 2, 6, 7, "hull_dk")  # nape strap
+    m.box(2, 6, 2, 6, 8, 9, "hull")  # helmet
     for cx, cy in ((2, 2), (2, 6), (6, 2), (6, 6)):
         m.unset(cx, cy, 9)  # round the dome
     m.box(3, 5, 3, 5, 10, 10, "body")  # crown
@@ -83,24 +83,24 @@ def mech() -> Model:
     # wide armoured legs
     for x in (2, 6):
         m.box(x, x, 4, 5, 0, 0, "tire")
-        m.box(x, x, 4, 6, 1, 2, "body")
-        m.box(x, x, 4, 6, 3, 3, "body_dk")  # knee plate
+        m.box(x, x, 4, 6, 1, 2, "hull")
+        m.box(x, x, 4, 6, 3, 3, "hull_dk")  # knee plate
     # broad torso with a light chest plate
-    m.box(1, 7, 3, 6, 4, 8, "body")
-    m.box(2, 6, 6, 6, 5, 7, "body_lt")
-    m.box(1, 7, 3, 6, 4, 4, "body_dk")
+    m.box(1, 7, 3, 6, 4, 8, "hull")
+    m.box(2, 6, 6, 6, 5, 7, "hull_lt")
+    m.box(1, 7, 3, 6, 4, 4, "hull_dk")
     # ammo backpack with two spare-rocket tips
-    m.box(2, 6, 2, 2, 5, 8, "body_dk")
+    m.box(2, 6, 2, 2, 5, 8, "hull_dk")
     m.set(3, 2, 9, "steel")
     m.set(5, 2, 9, "steel")
-    # shoulder pads
-    m.box(0, 0, 3, 6, 7, 8, "body_dk")
-    m.box(8, 8, 3, 6, 7, 8, "body_dk")
+    # shoulder pads — the pure team accents
+    m.box(0, 0, 3, 6, 7, 8, "body")
+    m.box(8, 8, 3, 6, 7, 8, "body")
     # big helmet with a glass visor band across the face
     m.box(3, 5, 3, 6, 9, 9, "skin")
     m.box(3, 5, 6, 6, 10, 10, "glass")
-    m.box(3, 5, 3, 5, 10, 10, "body")
-    m.box(2, 6, 2, 6, 11, 12, "body")
+    m.box(3, 5, 3, 5, 10, 10, "hull")
+    m.box(2, 6, 2, 6, 11, 12, "hull")
     for cx, cy in ((2, 2), (2, 6), (6, 2), (6, 6)):
         m.unset(cx, cy, 12)  # round the dome
     # bazooka tube above the right shoulder, muzzle toward +y
@@ -109,7 +109,7 @@ def mech() -> Model:
     m.box(7, 8, 11, 11, 10, 10, "gunmetal_dk")
     m.set(7, 12, 10, "amber")  # loaded warhead tip
     m.set(8, 12, 10, "amber")
-    m.box(7, 7, 7, 7, 6, 9, "body")  # supporting arm
+    m.box(7, 7, 7, 7, 6, 9, "hull")  # supporting arm
     return m
 
 
@@ -119,7 +119,7 @@ def recon() -> Model:
     for x in (0, 8):
         _tire(m, x, 2)
         _tire(m, x, 10)
-    # hull bed in desaturated armour; the cab carries the team color
+    # hull bed in desaturated armour; a roof stripe carries the team color
     m.box(1, 8, 0, 13, 2, 3, "hull")
     # sloped hood toward the front
     m.box(1, 8, 14, 14, 2, 2, "hull")
@@ -129,12 +129,15 @@ def recon() -> Model:
     m.box(1, 8, 15, 15, 2, 2, "hull_dk")
     m.set(2, 15, 2, "amber")
     m.set(7, 15, 2, "amber")
-    # team-colored cabin with windshield and side glass, rounded roofline
-    m.box(2, 7, 3, 9, 4, 5, "body")
+    # livery cabin with windshield and side glass, rounded roofline; a pure
+    # team stripe survives on the roof front
+    m.box(2, 7, 3, 9, 4, 4, "hull")
+    m.box(2, 7, 3, 9, 5, 5, "hull")
+    m.box(3, 5, 8, 8, 5, 5, "body")
     m.chamfer(2, 7, 3, 9, 5, 5)
     m.box(3, 6, 9, 9, 4, 5, "glass")
     m.box(7, 7, 4, 7, 4, 4, "glass_dk")
-    m.box(2, 7, 3, 3, 4, 4, "body_dk")  # rear cabin plate
+    m.box(2, 7, 3, 3, 4, 4, "hull_dk")  # rear cabin plate
     # pintle MG on a rear roof ring mount (small_arms)
     m.box(4, 5, 4, 5, 6, 6, "gunmetal_dk")
     m.box(4, 4, 5, 5, 7, 7, "gunmetal_dk")
@@ -144,12 +147,12 @@ def recon() -> Model:
     m.box(3, 6, 0, 0, 3, 4, "tire")
     m.set(4, 0, 3, "hub")
     # antenna
-    m.box(2, 2, 1, 1, 4, 7, "steel")
+    m.box(2, 2, 1, 1, 4, 7, "hull")
     return m
 
 
 def tank() -> Model:
-    """MBT: treads, glacis, round turret, single cannon (cannon)."""
+    """MBT: the low one — flattened turret, hull-hugging long gun (cannon)."""
     m = Model()
     _track(m, 0, 2, 0, 13)
     _track(m, 9, 11, 0, 13)
@@ -161,21 +164,22 @@ def tank() -> Model:
     # rear deck vents and exhausts
     m.box(2, 9, 1, 1, 3, 3, "hull_dk")
     m.box(2, 9, 3, 3, 3, 3, "hull_dk")
-    m.box(0, 1, 0, 0, 2, 3, "gunmetal_dk")
-    # turret: octagonal ring under a team-colored rounded crown
-    m.box(3, 8, 4, 9, 4, 5, "hull")
-    m.chamfer(3, 8, 4, 9, 4, 5)
-    m.box(4, 7, 5, 8, 6, 6, "body")
-    m.chamfer(4, 7, 5, 8, 6, 6)
-    m.box(4, 5, 5, 6, 7, 7, "body_dk")  # commander cupola
-    m.set(6, 8, 6, "body_lt")  # loader hatch glint
-    m.box(4, 7, 4, 4, 6, 6, "hull_dk")  # stowage bustle
-    # mantlet and a long gun that owns the silhouette
-    m.box(4, 7, 10, 10, 4, 5, "hull_dk")
-    m.box(5, 6, 10, 17, 5, 5, "gunmetal")
-    m.box(5, 6, 13, 13, 5, 5, "gunmetal_dk")  # bore evacuator
-    m.box(4, 7, 17, 17, 5, 5, "gunmetal_dk")  # muzzle brake
-    m.box(5, 6, 18, 18, 5, 5, "bore")
+    m.box(0, 1, 0, 0, 2, 3, "hull_dk")
+    # flattened turret: one low ring under a team crown — the lowest
+    # profile of the land roster, so the barrel line reads alone
+    m.box(3, 8, 4, 9, 4, 4, "hull")
+    m.chamfer(3, 8, 4, 9, 4, 4)
+    m.box(4, 7, 5, 8, 5, 5, "body")
+    m.chamfer(4, 7, 5, 8, 5, 5)
+    m.box(4, 5, 5, 6, 6, 6, "body_dk")  # commander cupola
+    m.set(6, 8, 5, "body_lt")  # loader hatch glint
+    m.box(4, 7, 4, 4, 5, 5, "hull_dk")  # stowage bustle
+    # low mantlet and a gun grown two voxels — the unmistakable barrel line
+    m.box(4, 7, 10, 10, 4, 4, "hull_dk")
+    m.box(5, 6, 10, 19, 4, 4, "gunmetal")
+    m.box(5, 6, 14, 14, 4, 4, "gunmetal_dk")  # bore evacuator
+    m.box(4, 7, 19, 19, 4, 4, "gunmetal_dk")  # muzzle brake
+    m.box(5, 6, 20, 20, 4, 4, "bore")
     return m
 
 
@@ -194,16 +198,17 @@ def md_tank() -> Model:
     m.box(2, 10, 15, 15, 4, 4, "hull_lt")
     # rear engine deck and twin exhausts
     m.box(2, 10, 1, 2, 4, 4, "hull_dk")
-    m.box(1, 2, 0, 0, 3, 4, "gunmetal_dk")
-    m.box(10, 11, 0, 0, 3, 4, "gunmetal_dk")
-    # big turret, two tiers: armour ring, team-colored rounded crown
+    m.box(1, 2, 0, 0, 3, 4, "hull_dk")
+    m.box(10, 11, 0, 0, 3, 4, "hull_dk")
+    # big turret, two tiers: armour ring, rounded crown; the cupola and
+    # hatch carry the team color
     m.box(3, 9, 4, 11, 5, 6, "hull")
     m.chamfer(3, 9, 4, 11, 5, 6)
-    m.box(4, 8, 5, 10, 7, 7, "body")
+    m.box(4, 8, 5, 10, 7, 7, "hull")
     m.chamfer(4, 8, 5, 10, 7, 7)
     m.box(4, 8, 4, 4, 7, 7, "hull_dk")  # bustle rack
     m.box(4, 5, 5, 6, 8, 8, "body_dk")  # cupola
-    m.box(6, 7, 6, 7, 8, 8, "body_lt")  # hatch
+    m.box(6, 7, 6, 7, 8, 8, "body")  # hatch
     # wide mantlet, longer gun with thermal-sleeve rings
     m.box(4, 8, 12, 12, 5, 7, "hull_dk")
     m.box(5, 7, 13, 19, 6, 6, "gunmetal")
@@ -223,11 +228,13 @@ def anti_air() -> Model:
     m.box(0, 10, 1, 11, 2, 3, "hull")
     m.box(1, 9, 12, 12, 2, 3, "hull_lt")
     m.box(2, 8, 1, 1, 3, 3, "hull_dk")
-    # rotating battery box carries the team color, rounded top
-    m.box(2, 8, 3, 8, 4, 6, "body")
+    # rotating battery box in livery armour; its base band and a crown
+    # stripe carry the team color
+    m.box(2, 8, 3, 8, 4, 6, "hull")
     m.chamfer(2, 8, 3, 8, 6, 6)
+    m.box(3, 7, 8, 8, 6, 6, "body")  # crown stripe
     m.box(2, 8, 3, 8, 4, 4, "body_dk")
-    m.box(3, 7, 3, 3, 5, 6, "body_dk")  # ammo feed
+    m.box(3, 7, 3, 3, 5, 6, "hull_dk")  # ammo feed
     # twin flak tubes climbing steeply skyward — the class-defining pose
     for x in (3, 7):
         m.box(x, x, 9, 10, 6, 6, "gunmetal")
@@ -238,134 +245,149 @@ def anti_air() -> Model:
     # ranging light on the battery roof
     m.set(5, 8, 7, "amber")
     # search radar dish on a rear mast, big enough to read at map scale
-    m.box(8, 8, 4, 4, 7, 8, "steel")
-    m.box(7, 8, 3, 5, 9, 9, "steel")
-    m.box(7, 8, 4, 4, 10, 10, "steel")
+    m.box(8, 8, 4, 4, 7, 8, "hull")
+    m.box(7, 8, 3, 5, 9, 9, "hull_lt")
+    m.box(7, 8, 4, 4, 10, 10, "hull_lt")
     m.set(8, 4, 9, "gunmetal_dk")
     return m
 
 
 def artillery() -> Model:
-    """SPG: casemate hull, short howitzer at high elevation, recoil spade."""
+    """SPG: open casemate, howitzer erected past 60 degrees, recoil spade."""
     m = Model()
     _track(m, 0, 2, 0, 12)
     _track(m, 8, 10, 0, 12)
     m.box(0, 10, 1, 12, 2, 3, "hull")
     m.box(1, 9, 13, 13, 2, 2, "hull_lt")
-    # casemate rising toward the rear; team color on its upper tier
+    # open casemate: an armoured wall ring around the gun pit, no roof;
+    # the team color caps the walls
     m.box(1, 9, 2, 8, 4, 5, "hull")
-    m.box(2, 8, 2, 6, 6, 6, "body")
-    m.chamfer(2, 8, 2, 6, 6, 6)
-    m.box(1, 9, 2, 2, 4, 5, "hull_dk")  # rear plate
-    m.box(2, 8, 8, 8, 4, 5, "hull_dk")  # front casemate slope
-    m.set(3, 4, 7, "body_dk")  # top hatch
-    m.set(4, 4, 7, "body_dk")
-    # howitzer: fat tube climbing at ~45 degrees toward +y, longer and
-    # taller than any flat tank gun so the class reads at a glance
-    m.box(4, 6, 8, 9, 6, 6, "gunmetal_dk")  # cradle
-    m.box(4, 6, 9, 10, 7, 7, "gunmetal")
-    m.box(4, 6, 10, 11, 8, 8, "gunmetal")
-    m.box(4, 6, 11, 12, 9, 9, "gunmetal")
-    m.box(4, 6, 12, 13, 10, 10, "gunmetal")
-    m.box(4, 6, 13, 14, 11, 11, "gunmetal")
-    m.box(3, 7, 14, 14, 12, 12, "gunmetal_dk")  # double-baffle muzzle brake
-    m.box(3, 7, 15, 15, 12, 12, "gunmetal_dk")
-    m.box(4, 6, 16, 16, 12, 12, "bore")
+    m.clear(2, 8, 3, 7, 4, 5)
+    m.box(1, 1, 2, 8, 5, 5, "body_dk")  # wall caps
+    m.box(9, 9, 2, 8, 5, 5, "body_dk")
+    m.box(1, 9, 2, 2, 5, 5, "body")
+    m.box(2, 8, 8, 8, 5, 5, "body")
+    m.box(2, 8, 3, 7, 3, 3, "hull_dk")  # pit floor
+    # howitzer erected steeply out of the pit: the rising spike no other
+    # land unit carries — two z per y, well clear of the hull mass; the
+    # lower barrel wears a livery recoil sleeve, the muzzle stays steel
+    m.box(4, 6, 4, 6, 4, 5, "hull_dk")  # trunnion pedestal
+    for i in range(5):
+        paint = "hull_dk" if i < 2 else "gunmetal"
+        m.box(4, 6, 6 + i, 6 + i, 6 + 2 * i, 7 + 2 * i, paint)
+    m.box(3, 7, 11, 11, 15, 15, "gunmetal_dk")  # muzzle brake
+    m.box(4, 6, 11, 11, 16, 16, "bore")
     # recoil spade dug in at the rear
-    m.box(3, 7, 0, 0, 1, 2, "gunmetal_dk")
-    m.box(3, 7, 0, 0, 0, 0, "gunmetal")
+    m.box(3, 7, 0, 0, 1, 3, "hull_dk")  # spade arms
+    m.box(2, 8, -1, -1, 0, 2, "hull")  # blade
     return m
 
 
 def rockets() -> Model:
-    """Wheeled MLRS: six tires, cab forward, tilted pod of rocket tubes."""
+    """Wheeled MLRS: long eight-wheel carrier, low cab, one wide flat rack
+    pitched up over the tail — a tilted plane, never a turret."""
     m = Model()
-    for y in (1, 6, 11):
+    for y in (1, 5, 9, 13):
         _tire(m, 0, y)
         _tire(m, 8, y)
-    # chassis bed
-    m.box(1, 8, 0, 14, 2, 3, "hull")
-    # team-colored cab at the front with windshield, rounded roofline
-    m.box(2, 7, 10, 14, 4, 5, "body")
-    m.chamfer(2, 7, 10, 14, 5, 5)
-    m.box(3, 6, 14, 14, 4, 5, "glass")
-    m.box(7, 7, 11, 13, 4, 4, "glass_dk")
-    m.box(2, 7, 15, 15, 2, 3, "hull_dk")  # bumper
-    m.set(3, 15, 3, "amber")
-    m.set(6, 15, 3, "amber")
-    # launcher pod: a slab raked up toward the rear in three clean terraces,
-    # each terrace top showing a row of tube mouths
-    for k in range(3):
-        y1 = 8 - 3 * k
-        m.box(1, 8, max(1, y1 - 2), y1, 5 + k, 6 + k, "body_dk")
-        for x in (2, 4, 6):
-            m.set(x, y1, 6 + k, "bore")
-    m.box(1, 8, 7, 8, 4, 4, "hull_dk")  # pod underside toward the cab
-    m.box(1, 1, 1, 8, 5, 5, "gunmetal_dk")  # cradle rail
-    # elevation ram under the pod's front lip
-    m.box(4, 5, 8, 8, 4, 4, "gunmetal")
+    # long chassis bed
+    m.box(1, 8, 0, 16, 2, 3, "hull")
+    # low cab tucked at the front, one voxel of glass and a team roof patch
+    m.box(2, 7, 13, 16, 4, 4, "hull")
+    m.box(3, 6, 14, 15, 5, 5, "body")
+    m.box(3, 6, 16, 16, 4, 4, "glass")
+    m.box(7, 7, 14, 15, 4, 4, "glass_dk")
+    m.box(2, 7, 17, 17, 2, 3, "hull_dk")  # bumper
+    m.set(3, 17, 3, "amber")
+    m.set(6, 17, 3, "amber")
+    # the launcher: one full-width rectangular slab pitched up toward the
+    # rear, dark like a sealed tube pod; mouths open on the high end
+    for k in range(6):
+        y0 = 11 - 2 * k
+        m.box(1, 8, y0, y0 + 1, 4 + k, 5 + k, "hull_dk")
+        m.set(1, y0, 5 + k, "body_dk")  # livery rail down the pod edge
+        m.set(8, y0, 5 + k, "body_dk")
+    for x in (2, 4, 6):
+        m.set(x, 1, 10, "bore")
+        m.set(x, 2, 10, "bore")
+    # solid launch-frame wall carrying the slab's high end
+    m.box(2, 7, 1, 2, 4, 8, "hull_dk")
     return m
 
 
 def apc() -> Model:
-    """Tracked transport: tall hull, troop door, cargo rack — unarmed."""
+    """Tracked transport: the tall box — high flat-topped troop compartment
+    over a sloped glacis, no turret at all — unarmed."""
     m = Model()
     _track(m, 0, 2, 0, 12)
-    _track(m, 8, 10, 0, 12)
-    # tall box hull in desaturated armour
-    m.box(0, 10, 1, 12, 2, 5, "hull")
-    m.box(1, 9, 13, 13, 2, 4, "hull")
-    m.box(2, 8, 13, 13, 5, 5, "hull_lt")  # nose slope
-    m.box(2, 8, 14, 14, 2, 3, "hull_lt")
+    _track(m, 7, 9, 0, 12)
+    # tall narrow slab hull: the highest solid mass on the land roster,
+    # a track narrower than the gun tanks so the box reads upright
+    m.box(0, 9, 1, 12, 2, 6, "hull")
+    m.box(1, 8, 2, 12, 7, 7, "hull")  # inset roof, dead-flat top line
+    # sloped glacis nose stepping down to the bumper; the team stripe
+    # across it keeps a pure accent on an unshaded face
+    m.box(1, 8, 13, 13, 2, 5, "hull")
+    m.box(2, 7, 13, 13, 5, 5, "hull_lt")
+    m.box(3, 6, 13, 13, 5, 5, "body")
+    m.box(2, 7, 14, 14, 2, 3, "hull_lt")
     # driver visor slit and headlights
-    m.box(3, 5, 14, 14, 4, 4, "glass_dk")
-    m.set(2, 14, 4, "amber")
-    m.set(8, 14, 4, "amber")
-    # team-colored rounded roof: troop hatch and low cargo rail with a crate
-    m.box(1, 9, 2, 12, 6, 6, "body")
-    m.chamfer(1, 9, 2, 12, 6, 6)
-    m.box(3, 7, 8, 11, 6, 6, "body_dk")
-    m.box(2, 4, 3, 5, 7, 7, "wood")
-    m.box(8, 8, 3, 6, 7, 7, "body_dk")  # rail
-    # rear troop door
-    m.box(3, 7, 0, 0, 2, 5, "hull_dk")
-    m.set(5, 0, 3, "steel")  # door handle
+    m.box(3, 5, 14, 14, 3, 3, "glass_dk")
+    m.set(2, 14, 3, "amber")
+    m.set(7, 14, 3, "amber")
+    # livery roof: a broad team panel and hatch pair, painted flush so the
+    # top stays a slab
+    m.box(2, 7, 4, 10, 7, 7, "body")
+    m.box(3, 4, 8, 9, 7, 7, "body_dk")  # troop hatches
+    m.box(5, 6, 8, 9, 7, 7, "body_dk")
+    m.box(0, 0, 2, 11, 4, 4, "hull_dk")  # side stowage rail
+    m.box(9, 9, 2, 11, 4, 4, "hull_dk")
+    # rear troop door, full height
+    m.box(3, 6, 0, 0, 2, 6, "hull_dk")
+    m.set(5, 0, 4, "steel")  # door handle
     # tall comms whip — the APC keeps one; the gun tanks lost theirs
-    m.box(9, 9, 3, 3, 7, 9, "steel")
-    m.set(9, 3, 10, "amber")
+    m.box(8, 8, 3, 3, 8, 9, "hull_lt")
+    m.set(8, 3, 10, "amber")
     return m
 
 
 def missiles() -> Model:
-    """Wheeled SAM battery: three big canisters raked skyward (rocket)."""
+    """Wheeled SAM battery: two big rounds erected near-vertical over the
+    tail — thin steep spikes with daylight between — plus a radar dish."""
     m = Model()
-    for y in (1, 6, 11):
+    for y in (1, 8):
         _tire(m, 0, y)
         _tire(m, 8, y)
-    m.box(1, 8, 0, 14, 2, 3, "hull")
-    # team-colored cab forward, rounded roofline
-    m.box(2, 7, 11, 14, 4, 5, "body")
-    m.chamfer(2, 7, 11, 14, 5, 5)
-    m.box(3, 6, 14, 14, 4, 5, "glass")
-    m.box(7, 7, 12, 13, 4, 4, "glass_dk")
-    m.box(2, 7, 15, 15, 2, 3, "hull_dk")
-    m.set(3, 15, 3, "amber")
-    m.set(6, 15, 3, "amber")
-    # raked launch rack over the bed
-    m.box(1, 8, 1, 3, 4, 5, "hull_dk")
-    m.box(1, 8, 4, 6, 5, 6, "hull_dk")
-    m.box(1, 8, 7, 8, 6, 7, "hull_dk")
-    # three white missiles with amber seeker tips, lying on the rake
-    for x in (1, 4, 7):
-        m.set(x, 2, 6, "white")
-        m.set(x, 3, 6, "white")
-        m.set(x, 4, 7, "white")
-        m.set(x, 5, 7, "white")
-        m.set(x, 6, 8, "white")
-        m.set(x, 7, 8, "steel")
-        m.set(x, 8, 9, "amber")
-    # fire-control radar on the cab roof
-    m.box(4, 5, 12, 13, 6, 6, "steel")
+    # short four-wheel erector chassis
+    m.box(1, 8, 0, 11, 2, 3, "hull")
+    # livery cab forward, rounded roofline with a pure team patch
+    m.box(2, 7, 8, 11, 4, 4, "hull")
+    m.box(2, 7, 8, 11, 5, 5, "hull")
+    m.box(3, 5, 10, 10, 5, 5, "body")
+    m.chamfer(2, 7, 8, 11, 5, 5)
+    m.box(3, 6, 11, 11, 4, 5, "glass")
+    m.box(7, 7, 9, 10, 4, 4, "glass_dk")
+    m.box(2, 7, 12, 12, 2, 3, "hull_dk")
+    m.set(3, 12, 3, "amber")
+    m.set(6, 12, 3, "amber")
+    # erector pedestal over the tail axle
+    m.box(2, 7, 1, 4, 4, 5, "hull_dk")
+    m.box(2, 7, 1, 1, 6, 7, "hull_dk")  # raised launch-rail shoe
+    # two fat rounds climbing two z per y — steep solid spikes, a clear
+    # sky gap between them where the rockets truck is one joined slab;
+    # livery booster sleeves and a pure team band under white warheads
+    for x0 in (2, 6):
+        for i in range(5):
+            paint = ("hull", "hull", "body", "white", "white")[i]
+            m.box(x0, x0 + 1, 3 + i, 4 + i, 5 + 2 * i, 7 + 2 * i, paint)
+        m.set(x0, 9, 16, "amber")  # seeker tips
+        m.set(x0 + 1, 9, 16, "amber")
+    # fire-control dish on a rear mast, plate tilted up at the sky
+    m.box(4, 5, 0, 1, 4, 6, "hull")
+    m.box(3, 6, 0, 0, 7, 8, "hull_lt")
+    m.box(3, 6, 1, 1, 9, 9, "hull_lt")
+    m.set(4, 0, 9, "gunmetal_dk")
+    m.set(5, 0, 9, "gunmetal_dk")
     return m
 
 
@@ -389,18 +411,18 @@ def fighter() -> Model:
     # air intakes
     m.box(3, 3, 8, 11, 3, 4, "hull_dk")
     m.box(6, 6, 8, 11, 3, 4, "hull_dk")
-    # swept wings carry the team color (the mass the player reads from above)
+    # swept wings in hull livery (the mass the player reads from above)
     for i in range(1, 7):
         wy = 9 - i
-        m.box(4 - i, 4 - i, wy, wy + 4, 3, 3, "body")
-        m.box(5 + i, 5 + i, wy, wy + 4, 3, 3, "body")
+        m.box(4 - i, 4 - i, wy, wy + 4, 3, 3, "hull")
+        m.box(5 + i, 5 + i, wy, wy + 4, 3, 3, "hull")
     # wingtip missiles
     m.box(-2, -2, 3, 6, 3, 3, "white")
     m.box(11, 11, 3, 6, 3, 3, "white")
     m.set(-2, 7, 3, "amber")
     m.set(11, 7, 3, "amber")
-    # tailplane and twin canted fins
-    m.box(2, 7, 0, 2, 3, 3, "body")
+    # tailplane in livery; the twin canted fins keep the pure team accent
+    m.box(2, 7, 0, 2, 3, 3, "hull")
     m.box(3, 3, 0, 1, 4, 6, "body_dk")
     m.box(6, 6, 0, 1, 4, 6, "body_dk")
     # engine nozzles
@@ -420,14 +442,16 @@ def bomber() -> Model:
     m.box(5, 6, 20, 20, 3, 4, "hull_lt")  # nose cap
     # flight-deck glazing
     m.box(4, 7, 16, 17, 5, 5, "glass")
-    # team-colored straight wings with slight rearward rake; dark trailing
-    # edge so the big top surface doesn't read flat
+    # livery straight wings with slight rearward rake; dark trailing edge so
+    # the big top surface doesn't read flat, pure team color on the wingtips
     for i in range(1, 9):
         wy = 10 - (i + 1) // 2
-        m.box(4 - i, 4 - i, wy, wy + 5, 4, 4, "body")
-        m.box(7 + i, 7 + i, wy, wy + 5, 4, 4, "body")
-        m.set(4 - i, wy, 4, "body_dk")
-        m.set(7 + i, wy, 4, "body_dk")
+        wing = "body" if i == 8 else "hull"
+        edge = "body_dk" if i == 8 else "hull_dk"
+        m.box(4 - i, 4 - i, wy, wy + 5, 4, 4, wing)
+        m.box(7 + i, 7 + i, wy, wy + 5, 4, 4, wing)
+        m.set(4 - i, wy, 4, edge)
+        m.set(7 + i, wy, 4, edge)
     # four engine pods slung under the wings, mirrored about the fuselage
     # centre; the outer pair sits one step back, following the wing rake
     for x, fwd in ((-3, 0), (-1, 1), (12, 1), (14, 0)):
@@ -435,8 +459,8 @@ def bomber() -> Model:
         m.set(x, 13 + fwd, 3, "bore")
     # bomb-bay doors line on the belly sides
     m.box(7, 7, 6, 12, 3, 3, "hull_dk")
-    # tailplane and tall team-colored fin
-    m.box(1, 10, 0, 2, 4, 4, "body")
+    # tailplane in livery; the tall fin keeps the pure team accent
+    m.box(1, 10, 0, 2, 4, 4, "hull")
     m.box(5, 6, 0, 1, 5, 8, "body_dk")
     m.box(5, 6, 2, 2, 5, 6, "body_dk")
     # tail turret hint
@@ -447,9 +471,9 @@ def bomber() -> Model:
 def b_copter() -> Model:
     """Attack helicopter: chin gun, stub-wing rocket pods, tail rotor."""
     m = Model()
-    # fuselage: team color on the body, rounded nose
-    m.box(3, 5, 6, 14, 3, 5, "body")
-    m.box(3, 5, 14, 15, 3, 4, "body")
+    # fuselage in hull livery, rounded nose
+    m.box(3, 5, 6, 14, 3, 5, "hull")
+    m.box(3, 5, 14, 15, 3, 4, "hull")
     m.unset(3, 15, 3)
     m.unset(5, 15, 3)
     m.chamfer(3, 5, 6, 14, 5, 5)
@@ -463,8 +487,8 @@ def b_copter() -> Model:
     # stub wings with rocket pods
     m.box(1, 2, 9, 11, 4, 4, "hull_dk")
     m.box(6, 7, 9, 11, 4, 4, "hull_dk")
-    m.box(1, 1, 9, 12, 3, 3, "gunmetal")
-    m.box(7, 7, 9, 12, 3, 3, "gunmetal")
+    m.box(1, 1, 9, 12, 3, 3, "hull_dk")
+    m.box(7, 7, 9, 12, 3, 3, "hull_dk")
     m.set(1, 13, 3, "bore")
     m.set(7, 13, 3, "bore")
     # tail boom, fin and tail rotor
@@ -473,10 +497,10 @@ def b_copter() -> Model:
     m.box(5, 5, 0, 0, 5, 7, "rotor")
     m.set(5, 0, 6, "hub")
     # skids
-    m.box(2, 2, 8, 14, 1, 1, "gunmetal_dk")
-    m.box(6, 6, 8, 14, 1, 1, "gunmetal_dk")
+    m.box(2, 2, 8, 14, 1, 1, "hull_dk")
+    m.box(6, 6, 8, 14, 1, 1, "hull_dk")
     # main rotor: hub mast + four blades over the fuselage
-    m.box(4, 4, 10, 10, 7, 8, "gunmetal_dk")
+    m.box(4, 4, 10, 10, 7, 8, "hull_dk")
     m.box(4, 4, 5, 15, 9, 9, "rotor")
     m.box(-1, 9, 10, 10, 9, 9, "rotor")
     return m
@@ -485,10 +509,12 @@ def b_copter() -> Model:
 def t_copter() -> Model:
     """Tandem-rotor transport helicopter — unarmed."""
     m = Model()
-    # boxy hold, rounded top edges so it stops reading as a brick
-    m.box(3, 6, 2, 15, 3, 6, "body")
+    # boxy hold in hull livery, rounded top edges so it stops reading as a
+    # brick; the roof spine keeps a pure team stripe
+    m.box(3, 6, 2, 15, 3, 6, "hull")
     m.chamfer(3, 6, 2, 15, 6, 6)
-    m.box(3, 6, 15, 16, 3, 5, "body")
+    m.box(4, 5, 2, 15, 6, 6, "body")
+    m.box(3, 6, 15, 16, 3, 5, "hull")
     # cockpit glazing
     m.box(3, 6, 15, 16, 5, 5, "glass")
     m.box(3, 6, 17, 17, 3, 4, "glass_dk")
@@ -497,14 +523,14 @@ def t_copter() -> Model:
     m.box(6, 6, 2, 15, 3, 3, "hull_dk")
     # rear loading ramp
     m.box(3, 6, 1, 1, 3, 5, "hull_dk")
-    # fixed wheels
-    m.box(2, 2, 4, 5, 1, 2, "tire")
-    m.box(7, 7, 4, 5, 1, 2, "tire")
-    m.box(2, 2, 12, 13, 1, 2, "tire")
-    m.box(7, 7, 12, 13, 1, 2, "tire")
+    # fixed gear sponsons in dark livery
+    m.box(2, 2, 4, 5, 1, 2, "hull_dk")
+    m.box(7, 7, 4, 5, 1, 2, "hull_dk")
+    m.box(2, 2, 12, 13, 1, 2, "hull_dk")
+    m.box(7, 7, 12, 13, 1, 2, "hull_dk")
     # tandem rotor masts and overlapping blades
-    m.box(4, 5, 4, 4, 7, 8, "gunmetal_dk")
-    m.box(4, 5, 13, 13, 7, 8, "gunmetal_dk")
+    m.box(4, 5, 4, 4, 7, 8, "hull_dk")
+    m.box(4, 5, 13, 13, 7, 8, "hull_dk")
     m.box(4, 4, 0, 8, 9, 9, "rotor")
     m.box(-1, 9, 4, 4, 9, 9, "rotor")
     m.box(5, 5, 9, 17, 9, 9, "rotor")
@@ -518,150 +544,147 @@ def t_copter() -> Model:
 
 
 def battleship() -> Model:
-    """Dreadnought: two twin-gun turrets, midships tower, aft funnel (cannon)."""
+    """Dreadnought: the fleet's LONG one — a hull with a clear margin over
+    every other keel, turrets fore and aft, midships bridge mast (cannon)."""
     m = Model()
-    # naval-grey hull with tapered bow (+y) and stern; dark waterline
-    m.box(1, 6, 2, 20, 0, 1, "hull")
-    m.box(2, 5, 21, 22, 0, 1, "hull")
-    m.box(3, 4, 23, 23, 0, 1, "hull")
-    m.box(2, 5, 0, 1, 0, 1, "hull")
-    m.box(1, 6, 2, 20, 0, 0, "hull_dk")
-    m.box(2, 5, 21, 22, 0, 0, "hull_dk")
-    m.box(2, 5, 0, 1, 0, 0, "hull_dk")
-    # the deck is the faction's flag surface — pure team color read from above
-    m.box(2, 5, 2, 20, 2, 2, "body")
-    m.box(3, 4, 21, 22, 2, 2, "body")
-    m.box(3, 4, 0, 1, 2, 2, "body")
-    m.box(3, 4, 19, 20, 2, 2, "body_dk")  # bow capstan plate
-    # fore main turret: barbette + twin guns toward the bow
-    m.box(2, 5, 15, 17, 3, 3, "hull")
-    m.box(3, 4, 15, 17, 4, 4, "body_dk")
+    # long low naval-grey hull, tapered bow (+y) and stern; dark waterline.
+    # Narrow beam on purpose: length is the identity, so the slab stays
+    # 4 wide and spends the whole cell diagonal (sprite width 64, exactly).
+    m.box(2, 5, 2, 23, 0, 1, "hull")
+    m.box(3, 4, 24, 25, 0, 1, "hull")
+    m.box(3, 4, 26, 26, 0, 1, "hull")
+    m.box(3, 4, 0, 1, 0, 1, "hull")
+    m.box(2, 5, 2, 23, 0, 0, "hull_dk")
+    m.box(3, 4, 24, 26, 0, 0, "hull_dk")
+    m.box(3, 4, 0, 1, 0, 0, "hull_dk")
+    # deck in hull livery; the bow keeps the pure team flash
+    m.box(2, 5, 2, 23, 2, 2, "hull")
+    m.box(3, 4, 24, 25, 2, 2, "body")
+    m.box(3, 4, 0, 1, 2, 2, "hull")
+    # fore main turret: barbette + twin guns reaching up the long foredeck
+    m.box(2, 5, 16, 18, 3, 3, "hull")
+    m.box(3, 4, 16, 18, 4, 4, "hull_dk")
     for x in (3, 4):
-        m.box(x, x, 18, 21, 4, 4, "gunmetal")
-        m.set(x, 22, 4, "bore")
+        m.box(x, x, 19, 22, 4, 4, "gunmetal")
+        m.set(x, 23, 4, "bore")
     # aft turret facing the stern
-    m.box(2, 5, 4, 6, 3, 3, "hull")
-    m.box(3, 4, 4, 6, 4, 4, "body_dk")
+    m.box(2, 5, 3, 5, 3, 3, "hull")
+    m.box(3, 4, 3, 5, 4, 4, "body_dk")
     for x in (3, 4):
-        m.box(x, x, 1, 3, 4, 4, "gunmetal")
+        m.box(x, x, 1, 2, 4, 4, "gunmetal")
         m.set(x, 0, 4, "bore")
-    # superstructure tower midships, bridge glazing facing the bow
-    m.box(2, 5, 9, 13, 3, 5, "hull")
-    m.chamfer(2, 5, 9, 13, 5, 5)
+    # midships bridge with glazing toward the bow and a lattice mast — kept
+    # below the cruiser's tower on purpose; the cruiser owns "tallest"
+    m.box(2, 5, 10, 14, 3, 4, "hull")
+    m.chamfer(2, 5, 10, 14, 4, 4)
+    m.box(3, 4, 14, 14, 4, 4, "glass_dk")
+    m.box(3, 4, 11, 13, 5, 5, "hull")
     m.box(3, 4, 13, 13, 5, 5, "glass_dk")
-    m.box(3, 4, 10, 12, 6, 6, "hull")
-    m.box(3, 4, 12, 12, 6, 6, "glass_dk")
-    # compact funnel aft of the tower, tall lattice mast with radar above
-    m.box(3, 4, 8, 8, 6, 7, "hull_dk")
-    m.set(3, 8, 8, "bore")
-    m.set(4, 8, 8, "bore")
-    m.box(3, 3, 11, 11, 7, 9, "steel")
-    m.set(3, 11, 10, "gunmetal_dk")
+    m.box(3, 3, 12, 12, 6, 7, "steel")
+    m.set(3, 12, 8, "gunmetal_dk")
+    # lone funnel between bridge and aft turret — one more evenly spaced bump
+    m.box(3, 4, 7, 8, 3, 4, "hull_dk")
+    m.box(3, 4, 7, 8, 5, 5, "bore")
     return m
 
 
 def cruiser() -> Model:
-    """Escort cruiser: deck gun, AA autocannons, aft helipad (autocannon)."""
+    """Escort cruiser: the fleet's TOWER — one tall blocky superstructure
+    amidships on a beamy mid-length hull, flat helipad aft (autocannon)."""
     m = Model()
-    # naval-grey hull with dark waterline
-    m.box(1, 6, 2, 17, 0, 1, "hull")
-    m.box(2, 5, 18, 19, 0, 1, "hull")
-    m.box(3, 4, 20, 20, 0, 1, "hull")
+    # mid-length hull, a strake beamier than the battleship's; dark waterline
+    m.box(1, 6, 2, 15, 0, 1, "hull")
+    m.box(2, 5, 16, 17, 0, 1, "hull")
+    m.box(3, 4, 18, 18, 0, 1, "hull")
     m.box(2, 5, 0, 1, 0, 1, "hull")
-    m.box(1, 6, 2, 17, 0, 0, "hull_dk")
-    m.box(2, 5, 18, 19, 0, 0, "hull_dk")
+    m.box(1, 6, 2, 15, 0, 0, "hull_dk")
+    m.box(2, 5, 16, 17, 0, 0, "hull_dk")
+    m.box(3, 4, 18, 18, 0, 0, "hull_dk")
     m.box(2, 5, 0, 1, 0, 0, "hull_dk")
-    # deck in the faction color
-    m.box(2, 5, 2, 17, 2, 2, "body")
-    m.box(3, 4, 18, 19, 2, 2, "body")
-    m.box(3, 4, 0, 1, 2, 2, "body")
-    # forward AA mount: twin thin barrels raked up
-    m.box(3, 4, 14, 15, 3, 3, "body_dk")
+    # deck in hull livery; the bow cells keep the pure team flash
+    m.box(1, 6, 2, 15, 2, 2, "hull")
+    m.box(2, 5, 16, 17, 2, 2, "hull")
+    m.box(3, 4, 16, 17, 2, 2, "body")
+    m.box(2, 5, 0, 1, 2, 2, "hull")
+    # forward deck autocannon: twin thin barrels raked up over the bow
+    m.box(3, 4, 12, 13, 3, 3, "hull_dk")
     for x in (3, 4):
-        m.set(x, 16, 4, "gunmetal")
-        m.set(x, 17, 4, "gunmetal")
-        m.set(x, 18, 5, "gunmetal_dk")
-    # blocky bridge with glazing facing the bow; short mast (the battleship
-    # keeps the tall one — silhouettes differ at a glance)
-    m.box(2, 5, 8, 12, 3, 4, "hull")
-    m.chamfer(2, 5, 8, 12, 4, 4)
-    m.box(3, 4, 12, 12, 4, 4, "glass_dk")
-    m.box(3, 4, 9, 11, 5, 5, "hull")
-    m.box(3, 4, 11, 11, 5, 5, "glass_dk")
-    m.box(3, 3, 10, 10, 6, 6, "steel")  # mast
-    # second AA mount on the aft superstructure
-    m.box(4, 5, 8, 8, 5, 5, "gunmetal_dk")
-    # aft helipad: dark pad, light border dots, white H
-    m.box(2, 5, 2, 6, 3, 3, "body_dk")
-    m.set(3, 4, 3, "white")
-    m.set(4, 4, 3, "white")
-    # depth-charge rack at the stern
-    m.box(3, 4, 0, 0, 3, 3, "track")
+        m.box(x, x, 14, 15, 3, 3, "gunmetal")
+        m.set(x, 16, 4, "gunmetal_dk")
+    # the tower: one tall blocky superstructure amidships, clearly the
+    # tallest mass in the fleet; its band keeps the pure team accent
+    m.box(2, 5, 6, 10, 3, 6, "hull")
+    m.box(2, 5, 6, 10, 5, 5, "body")
+    m.chamfer(2, 5, 6, 10, 6, 6)
+    m.box(3, 4, 10, 10, 6, 6, "glass_dk")
+    m.box(3, 4, 7, 9, 7, 8, "hull")
+    m.box(3, 4, 9, 9, 7, 7, "glass_dk")
+    m.box(3, 3, 8, 8, 9, 10, "steel")
+    m.set(3, 8, 11, "gunmetal_dk")
+    # flat helipad aft, painted on the deck: dark pad, white H
+    m.box(2, 5, 1, 4, 2, 2, "hull_dk")
+    m.set(3, 2, 2, "white")
+    m.set(4, 2, 2, "white")
     return m
 
 
 def sub() -> Model:
-    """Attack submarine running surfaced: sail, periscopes, bow wake."""
+    """Attack submarine: the LOW one — decks awash, a sliver riding the
+    waterline under one prominent sail with dive planes and periscopes."""
     m = Model()
-    # cigar hull, rounded by stepped tapers; the sail carries the team color
-    m.box(2, 5, 2, 18, 1, 2, "hull")
-    m.box(3, 4, 19, 20, 1, 2, "hull")
-    m.box(3, 4, 21, 21, 1, 1, "hull")
-    m.box(3, 4, 0, 1, 1, 2, "hull")
-    m.box(2, 5, 4, 16, 3, 3, "hull")  # hull crown
-    m.box(3, 4, 17, 18, 3, 3, "hull")
-    # dark anti-fouling waterline
-    m.box(2, 5, 2, 18, 0, 0, "hull_dk")
-    m.box(3, 4, 0, 1, 0, 0, "hull_dk")
-    m.box(3, 4, 19, 21, 0, 0, "hull_dk")
-    # sail (conning tower) with dive planes and periscopes
-    m.box(3, 4, 9, 13, 4, 6, "body_dk")
-    m.box(3, 4, 9, 13, 6, 6, "body")
-    m.box(2, 2, 10, 12, 4, 4, "body_dk")
-    m.box(5, 5, 10, 12, 4, 4, "body_dk")
-    m.box(3, 3, 10, 10, 7, 8, "steel")
-    m.box(4, 4, 12, 12, 7, 7, "steel")
-    # deck hatch and towed-array fairing
-    m.set(3, 6, 4, "body_lt")
-    m.set(4, 16, 4, "body_lt")
-    # stern rudder tip
-    m.box(3, 4, 0, 0, 3, 4, "hull_dk")
-    # bow wake foam
-    m.set(2, 20, 0, "white")
-    m.set(5, 20, 0, "white")
-    m.set(3, 22, 0, "white")
-    m.set(4, 22, 0, "white")
+    # decks awash: one dark waterline row end to end, one livery deck row of
+    # freeboard that stops short of the tapered bow and stern — the sea
+    # cell's displacement shadow and foam do the rest of the "in the water"
+    m.box(3, 4, 0, 21, 0, 0, "hull_dk")
+    m.box(3, 4, 1, 19, 1, 1, "hull")
+    # deck hatches fore and aft of the sail
+    m.set(3, 16, 1, "body_lt")
+    m.set(4, 4, 1, "body_lt")
+    # the sail: one prominent conning tower, the silhouette's single fin;
+    # its top band keeps the pure team color
+    m.box(3, 4, 10, 13, 2, 4, "hull_dk")
+    m.box(3, 4, 10, 13, 5, 5, "body")
+    # dive planes off the sail flanks
+    m.box(2, 2, 11, 12, 2, 2, "hull_dk")
+    m.box(5, 5, 11, 12, 2, 2, "hull_dk")
+    # periscope and attack scope over the sail
+    m.box(3, 3, 11, 11, 6, 7, "steel")
+    m.set(4, 13, 6, "steel")
     return m
 
 
 def lander() -> Model:
-    """Landing craft: flat cargo well, blunt bow ramp, aft wheelhouse."""
+    """Landing craft: the SHORT FAT one — stubbiest, beamiest hull, raised
+    bow ramp, high cargo house aft. Unarmed."""
     m = Model()
-    # wide flat naval-grey hull
-    m.box(0, 8, 1, 16, 0, 1, "hull")
-    m.box(1, 7, 17, 17, 0, 1, "hull")
-    # gunwales around the cargo well
-    m.box(0, 8, 1, 16, 2, 2, "hull")
-    m.clear(1, 7, 2, 15, 2, 2)
-    # cargo well floor with tie-down lane
-    m.box(1, 7, 2, 15, 1, 1, "deck_dk")
-    m.box(3, 5, 3, 14, 1, 1, "deck")
-    m.box(4, 4, 3, 14, 1, 1, "hull_dk")
-    # blunt team-colored bow ramp, raised for sea travel — the identity patch
-    m.box(1, 7, 18, 18, 0, 3, "body")
-    m.box(1, 7, 18, 18, 4, 4, "body_dk")  # ramp lip
-    m.box(2, 6, 18, 18, 2, 3, "body_lt")  # ramp ribs
-    # aft wheelhouse
-    m.box(2, 6, 1, 4, 2, 4, "hull")
-    m.chamfer(2, 6, 1, 4, 4, 4)
-    m.box(3, 5, 4, 4, 4, 4, "glass_dk")
-    m.box(3, 5, 2, 3, 5, 5, "body")  # team-colored cabin roof
-    m.box(6, 6, 1, 1, 4, 6, "steel")  # exhaust stack
+    # short wide hull; dark waterline
+    m.box(0, 8, 1, 9, 0, 1, "hull")
+    m.box(1, 7, 10, 10, 0, 1, "hull")
+    m.box(1, 7, 0, 0, 0, 1, "hull")
+    m.box(0, 8, 1, 9, 0, 0, "hull_dk")
+    m.box(1, 7, 10, 10, 0, 0, "hull_dk")
+    m.box(1, 7, 0, 0, 0, 0, "hull_dk")
+    # gunwales around the forward cargo well
+    m.box(0, 8, 1, 9, 2, 2, "hull")
+    m.clear(1, 7, 2, 8, 2, 2)
+    # tie-down lanes on the well floor
+    m.box(2, 6, 5, 8, 1, 1, "hull_lt")
+    m.box(4, 4, 5, 8, 1, 1, "hull_dk")
+    # high cargo house aft — the tall half of the stubby-block silhouette
+    m.box(1, 7, 1, 4, 2, 5, "hull")
+    m.chamfer(1, 7, 1, 4, 5, 5)
+    m.box(2, 6, 4, 4, 4, 4, "glass_dk")
+    m.box(2, 6, 2, 3, 6, 6, "body")  # team-colored house roof
+    m.box(6, 6, 1, 1, 6, 7, "steel")  # exhaust stack
+    # blunt bow ramp raised for sea travel; lip and ribs keep the team accent
+    m.box(1, 7, 10, 10, 2, 4, "hull")
+    m.box(2, 6, 10, 10, 2, 3, "body_lt")  # ramp ribs
+    m.box(1, 7, 10, 10, 5, 5, "body_dk")  # ramp lip
     # bollards on the gunwale corners
-    m.set(0, 2, 3, "gunmetal_dk")
-    m.set(8, 2, 3, "gunmetal_dk")
-    m.set(0, 15, 3, "gunmetal_dk")
-    m.set(8, 15, 3, "gunmetal_dk")
+    m.set(0, 1, 3, "gunmetal_dk")
+    m.set(8, 1, 3, "gunmetal_dk")
+    m.set(0, 9, 3, "gunmetal_dk")
+    m.set(8, 9, 3, "gunmetal_dk")
     return m
 
 

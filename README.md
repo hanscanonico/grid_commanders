@@ -31,12 +31,21 @@ neutral's slate theme included. Weapon silhouettes follow each unit's
 unarmed). Property terrains (city, base, hq, airport, port) are tinted per
 row; every other terrain repeats one tile down its column.
 
-Team color follows a livery convention: vehicle chassis and ship hulls wear
-a desaturated faction tint (the `hull` ramp), while identity surfaces — tank
-turret crowns, truck cabs, aircraft wings, ship decks, building roofs — carry
-the pure faction color, so ownership reads from the top-down view without
-the whole sprite turning into a paint blob. Buildings are neutral concrete
-and stone under faction-colored roofs, caps and banners.
+Team color follows a livery convention: the majority mass — vehicle chassis,
+ship hulls and decks, aircraft fuselage and wings — wears a lightly
+desaturated faction tint (the `hull` ramp, 20% toward chassis grey), while
+identity accents — tank turret crowns, truck cabs, wingtips and tail fins,
+building roofs — carry the pure faction color. The 2026-08-13 sprite review
+set the balance: the livery has to stay loud enough that an army reads its
+faction at board zoom, so livery covers most of the sprite and the pure
+accents sit on top of it, not the other way around. **Iron is inverted**: its
+theme hue is a slate a step off the chassis grey, so a straight tint made an
+iron army identical to the neutral row and to any faction's acted grey-out —
+iron therefore fields light-steel hulls and keeps its dark slate on the
+accents, carrying its identity in value structure instead of hue. Buildings
+are neutral concrete and stone under faction-colored roofs, caps and banners.
+Only air units cast a drop shadow (ships sit in a displacement shadow with
+waterline foam; land units cast none) — the shadow is the airborne cue.
 
 ## Setup
 

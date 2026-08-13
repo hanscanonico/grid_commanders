@@ -204,8 +204,12 @@ def compose_cell(
 ) -> Image.Image:
     """Center a rendered sprite on a transparent atlas cell with its shadow.
 
-    kind: 'land' | 'sea' sit on the ground line with a tight contact shadow;
-    'air' hovers with a gap and a small detached shadow, like the pack art.
+    kind: 'land' sits on the ground line with no shadow at all — a baked
+    ellipse under ground units smears alpha over whatever terrain they stand
+    on and erases the game's one instant airborne cue, which is that only
+    air (and sea, as displacement) casts one (sprite review, 2026-08-13);
+    'air' hovers with a gap and a small detached shadow, like the pack art;
+    'sea' sits in the water on a displacement shadow with waterline foam.
     'prop' composes with no shadow (terrain tiles draw their own grounding).
     """
     out = Image.new("RGBA", (cell, cell), (0, 0, 0, 0))
@@ -227,14 +231,14 @@ def compose_cell(
         _shadow_ellipse(
             out, cell // 2 + dx, shadow_y + 1, shadow_rx, max(2, shadow_rx // 5), 52
         )
-    elif kind in ("land", "air"):
+    elif kind == "air":
         _shadow_ellipse(
             out,
             cell // 2 + dx,
             shadow_y,
             shadow_rx,
             max(2, shadow_rx // 3),
-            60 if kind == "land" else 44,
+            44,
         )
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":

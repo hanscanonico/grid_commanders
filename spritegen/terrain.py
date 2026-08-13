@@ -1,10 +1,12 @@
 """The 14 terrain tiles, drawn native at the 64px atlas cell.
 
-Ground colors and the darkened-edge grid convention mirror the game's
-tools/generate_tiles.gd so a regenerated atlas drops into the same map
-without shifting the world's palette; the detail on top (voxel trees,
-terraced mountains, foam, wear) is what this generator adds. Non-property
-tiles are identical on every faction row; property tiles compose a
+Ground colors mirror the game's tools/generate_tiles.gd so a regenerated
+atlas drops into the same map without shifting the world's palette; the
+detail on top (voxel trees, terraced mountains, foam, wear) is what this
+generator adds. Ground fills are seamless — repeated tiles butt with no
+border treatment (design review 2026-08-13: the old darkened-edge
+convention read as a seam grid over any open field). Non-property tiles
+are identical on every faction row; property tiles compose a
 faction-tinted voxel building onto their ground.
 """
 
@@ -32,17 +34,19 @@ ASPHALT = (111, 116, 124)  # 6f747c
 SNOW = (238, 238, 238)  # eeeeee
 
 
-def _ground(c: RGB, salt: int, grain: float = 0.05) -> Image.Image:
-    """Base tile: darkened(0.12) 4px grid edge + inner fill with 4px-block
-    grain (kept at 4px so it survives the game's 4:1 nearest downsample)."""
-    img = Image.new("RGBA", (CELL, CELL), (*darken(c, 0.12), 255))
+def _ground(c: RGB, salt: int, grain: float = 0.03) -> Image.Image:
+    """Base tile: edge-to-edge fill with 4px-block grain (kept at 4px so it
+    survives the game's 4:1 nearest downsample). No border treatment — the
+    border must be statistically indistinguishable from the interior so
+    repeated ground tiles butt seamlessly."""
+    img = Image.new("RGBA", (CELL, CELL), (*c, 255))
     px = img.load()
-    for by in range(4, 60, 4):
-        for bx in range(4, 60, 4):
+    for by in range(0, CELL, 4):
+        for bx in range(0, CELL, 4):
             n = (h01(bx, by, salt) - 0.5) * grain * 2
             t = lighten(c, n) if n > 0 else darken(c, -n)
-            for yy in range(by, min(by + 4, 60)):
-                for xx in range(bx, min(bx + 4, 60)):
+            for yy in range(by, by + 4):
+                for xx in range(bx, bx + 4):
                     px[xx, yy] = (*t, 255)
     return img
 
@@ -191,7 +195,7 @@ def mountain() -> Image.Image:
 
 
 def _water_base(deep: bool, salt: int) -> Image.Image:
-    return _ground(WATER_DARK if deep else WATER, salt, grain=0.045)
+    return _ground(WATER_DARK if deep else WATER, salt, grain=0.027)
 
 
 def river() -> Image.Image:
@@ -287,13 +291,13 @@ def reef(fac: Faction) -> Image.Image:
 
 def _grass_lot(fac: Faction, building: str, salt: int) -> Image.Image:
     t = _ground(GRASS, salt)
-    prop = render(buildings.BUILDINGS[building](), fac)
+    prop = render(buildings.model_for(building, fac), fac)
     _paste_prop(t, prop, 32, 61, shadow=False)
     return t
 
 
 def airport(fac: Faction) -> Image.Image:
-    t = _ground(ASPHALT, 10, grain=0.04)
+    t = _ground(ASPHALT, 10, grain=0.024)
     # runway strip across the lower apron
     _rect(t, 0, 44, 64, 16, lighten(ASPHALT, 0.08))
     _rect(t, 0, 44, 64, 1, lighten(ASPHALT, 0.25))
@@ -302,7 +306,7 @@ def airport(fac: Faction) -> Image.Image:
         _rect(t, sx, 51, 6, 2, SNOW)  # centreline dashes
     _rect(t, 2, 46, 2, 12, SNOW)  # threshold bars
     _rect(t, 6, 46, 2, 12, SNOW)
-    prop = render(buildings.airport(), fac)
+    prop = render(buildings.model_for("airport", fac), fac)
     _paste_prop(t, prop, 31, 46, shadow=False)
     return t
 
@@ -311,7 +315,7 @@ def port(fac: Faction) -> Image.Image:
     t = _water_base(True, 11)
     _rect(t, 4, 50, 12, 2, WATER)  # harbour ripples
     _rect(t, 44, 56, 14, 2, WATER)
-    prop = render(buildings.port(), fac)
+    prop = render(buildings.model_for("port", fac), fac)
     _paste_prop(t, prop, 32, 52, shadow=False)
     return t
 

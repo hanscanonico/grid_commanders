@@ -89,10 +89,23 @@ GLOSSY = {"glass", "glass_dk"}
 # The hull ramp: faction hue pulled toward a neutral chassis grey, so armour
 # reads as military hardware wearing team livery rather than a toy dipped in
 # paint. Models keep pure `body` for the identity accents (turret tops, wings,
-# cabs, decks) that must still shout the owner at map scale.
+# cabs, decks) that must still shout the owner at map scale. The pull is 20%:
+# at the original 50% a red hull averaged down to brick over terrain and the
+# faction read died at board zoom (sprite review, 2026-08-13) — 20% keeps the
+# livery-vs-accent split while the hull still carries the flag.
 _CHASSIS: RGB = (112, 115, 106)
 _CHASSIS_DK: RGB = (80, 83, 76)
 _CHASSIS_LT: RGB = (146, 150, 139)
+_HULL_PULL = 0.20
+
+# Iron's scheme is inverted: its theme hue sits a step off the chassis grey,
+# so a tinted hull makes an iron army indistinguishable from the neutral row
+# and from any faction's acted grey-out — three meanings, one appearance.
+# Iron therefore fields light-steel hulls and keeps its dark slate on the
+# identity accents: the dark-faction read comes from value structure, not hue.
+_IRON_HULL: RGB = (178, 184, 192)
+_IRON_HULL_DK: RGB = (142, 149, 158)
+_IRON_HULL_LT: RGB = (206, 212, 219)
 
 
 def resolve(material: str, faction: Faction) -> RGB:
@@ -104,11 +117,23 @@ def resolve(material: str, faction: Faction) -> RGB:
     if material == "body_lt":
         return faction.body_lt
     if material == "hull":
-        return mix(faction.body, _CHASSIS, 0.50)
+        return (
+            _IRON_HULL
+            if faction.key == "iron"
+            else mix(faction.body, _CHASSIS, _HULL_PULL)
+        )
     if material == "hull_dk":
-        return mix(faction.body_dk, _CHASSIS_DK, 0.50)
+        return (
+            _IRON_HULL_DK
+            if faction.key == "iron"
+            else mix(faction.body_dk, _CHASSIS_DK, _HULL_PULL)
+        )
     if material == "hull_lt":
-        return mix(faction.body_lt, _CHASSIS_LT, 0.45)
+        return (
+            _IRON_HULL_LT
+            if faction.key == "iron"
+            else mix(faction.body_lt, _CHASSIS_LT, _HULL_PULL)
+        )
     return MATERIALS[material]
 
 
@@ -133,22 +158,31 @@ def darken(c: RGB, t: float) -> RGB:
 
 
 # Shadows drift toward a cold blue rather than plain black — the one hue trick
-# the whole sheet leans on for its slightly stylised light.
+# the whole sheet leans on for its slightly stylised light. The mix is kept
+# mild: at 0.24 it drained the faction hue out of every right face and the
+# armies went grey at board zoom (sprite review, 2026-08-13).
 _SHADOW_TINT: RGB = (34, 48, 84)
+_SHADOW_MIX = 0.16
 
 
 def shade(c: RGB, face: str, gloss: bool = False) -> RGB:
     """The three dimetric face tones. Light comes from the top-left.
 
     The left (+y) face is the pure material color, as in the pack art —
-    it is the face the player mostly reads, so it must stay vivid.
+    it is the face the player mostly reads, so it must stay vivid. The top
+    face is always the lightest plane, and its lift is multiplicative with
+    only a whisper of white: a plain white mix drained the saturation out of
+    every sunlit face, and flat-decked vehicles are mostly sunlit face, so
+    whole armies rendered grey-topped (sprite review, 2026-08-13). Scaling
+    brightens while preserving chroma; the white mix is just the sheen.
     """
     if face == "top":
-        return lighten(c, 0.55 if gloss else 0.30)
+        k, w = (1.45, 0.20) if gloss else (1.30, 0.10)
+        return mix(tuple(clamp8(v * k) for v in c), (255, 255, 255), w)
     if face == "left":
         return lighten(c, 0.18) if gloss else c
     # right face: darkest, cold-shifted
-    return mix(darken(c, 0.36), _SHADOW_TINT, 0.24)
+    return mix(darken(c, 0.40), _SHADOW_TINT, _SHADOW_MIX)
 
 
 def h01(x: int, y: int, salt: int = 0) -> float:
