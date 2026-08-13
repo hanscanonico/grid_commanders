@@ -1,9 +1,12 @@
-"""Voxel props for terrain tiles: trees, reef rocks — and the five property
+"""Voxel props for terrain tiles: reef rocks — and the five property
 buildings (city, base, hq, airport, port), tinted per faction row.
 
 Buildings carry their own isometric base plate, the convention the game's
 compositor has always assumed (the lot IS the plate; no square of pavement
-behind a diamond footprint).
+behind a diamond footprint). Each building owns one mass identity the
+others don't (design review round 3: five near-identical grey lumps):
+city two towers, base a long sawtooth shed, hq a wide low fort, airport a
+hangar arch with a control tower, port a crane over a warehouse.
 """
 
 from __future__ import annotations
@@ -14,30 +17,6 @@ from .voxel import Model
 # ---------------------------------------------------------------------------
 # nature props
 # ---------------------------------------------------------------------------
-
-
-def tree(big: bool = True) -> Model:
-    """A rounded conifer-ish canopy over a stub trunk."""
-    m = Model()
-    if big:
-        m.box(3, 4, 3, 4, 0, 2, "trunk")
-        layers = ((1, 6, 3, 4), (2, 5, 5, 6), (3, 4, 7, 7))
-    else:
-        m.box(3, 4, 3, 4, 0, 1, "trunk")
-        layers = ((2, 5, 2, 3), (3, 4, 4, 5))
-    for lo, hi, z0, z1 in layers:
-        m.box(lo, hi, lo, hi, z0, z1, "leaf")
-        for cx, cy in ((lo, lo), (lo, hi), (hi, lo), (hi, hi)):
-            m.unset(cx, cy, z1)
-    # shade the skirt, light the crown
-    lo, hi, z0, z1 = layers[0]
-    for x in range(lo, hi + 1):
-        for y in range(lo, hi + 1):
-            if (x, y, z0) in m.vox and h01(x, y, 11) < 0.5:
-                m.set(x, y, z0, "leaf_dk")
-    lo, hi, z0, z1 = layers[-1]
-    m.box(lo, hi, lo, hi, z1, z1, "leaf_lt")
-    return m
 
 
 def rock_outcrop(size: int = 2) -> Model:
@@ -92,57 +71,54 @@ def _windows(
 
 
 def city() -> Model:
-    """A block of three grey towers whose roofs carry the owner's color."""
+    """Two grey towers of different heights on a compact plaza — the
+    tall-narrow silhouette of the set."""
     m = Model()
-    _pad(m, 0, 13, 0, 13)
-    # main tower, front-left: concrete walls, faction roof
-    m.box(1, 6, 6, 11, 1, 5, "concrete")
-    m.box(1, 6, 6, 11, 6, 6, "body")  # roof
-    m.box(2, 5, 7, 10, 7, 7, "body_dk")  # roof plant
-    _windows(m, "y", 2, 5, 11, 2, 5, 21)
-    _windows(m, "x", 7, 10, 6, 2, 5, 22)
-    # taller slab tower, back-right
-    m.box(8, 12, 1, 6, 1, 7, "concrete")
-    m.box(8, 12, 1, 6, 8, 8, "body")  # roof
-    m.box(9, 11, 2, 5, 9, 9, "body_dk")  # penthouse
-    m.chamfer(9, 11, 2, 5, 9, 9)
-    _windows(m, "y", 9, 11, 6, 2, 7, 23)
-    _windows(m, "x", 2, 5, 12, 2, 7, 24)
-    # low storefront, front-right: faction awning over grey walls
-    m.box(8, 12, 8, 12, 1, 3, "concrete")
-    m.box(8, 12, 8, 12, 4, 4, "body")  # awning roof
-    m.chamfer(8, 12, 8, 12, 4, 4)
-    m.box(9, 11, 12, 12, 1, 2, "glass_dk")  # shopfront glazing
-    # plaza detail
-    m.set(2, 3, 1, "leaf")  # planter
-    m.set(3, 3, 1, "leaf_dk")
+    _pad(m, 1, 12, 1, 12)
+    # tall slab tower, right: concrete walls, faction roof + penthouse
+    m.box(7, 11, 2, 6, 1, 7, "concrete")
+    m.box(7, 11, 2, 6, 8, 8, "body")  # roof
+    m.box(8, 10, 3, 5, 9, 9, "body_dk")  # penthouse
+    m.chamfer(8, 10, 3, 5, 9, 9)
+    _windows(m, "y", 8, 10, 6, 2, 7, 23)
+    _windows(m, "x", 3, 5, 11, 2, 7, 24)
+    # shorter tower, left: faction roof over grey walls
+    m.box(2, 6, 7, 11, 1, 4, "concrete")
+    m.box(2, 6, 7, 11, 5, 5, "body")  # roof
+    m.chamfer(2, 6, 7, 11, 5, 5)
+    _windows(m, "y", 3, 5, 11, 2, 4, 21)
+    _windows(m, "x", 8, 10, 6, 2, 4, 22)
+    # plaza planter at the front corner
+    m.set(11, 11, 1, "leaf")
+    m.set(12, 11, 1, "leaf_dk")
     return m
 
 
 def base() -> Model:
-    """A factory: grey shed under a faction sawtooth roof, chimney, crates."""
+    """A factory: a long grey shed under a faction sawtooth roof, chimney,
+    crates. The lot is a shallow full-width strip, so the silhouette reads
+    long and low — never the square diamond the hq owns."""
     m = Model()
-    _pad(m, 0, 13, 0, 13)
-    # main shed in industrial concrete
-    m.box(1, 11, 3, 12, 1, 3, "concrete_dk")
+    _pad(m, 0, 13, 5, 13)
+    # main shed in industrial concrete, running the full width
+    m.box(1, 12, 5, 12, 1, 3, "concrete_dk")
     # sawtooth roof: three north-lit ridges in the owner's color
     for k in range(3):
-        y0 = 10 - k * 3
-        m.box(1, 11, y0 - 1, y0, 4, 4, "body_dk")
-        m.box(1, 11, y0, y0, 5, 5, "body")
-        m.box(1, 11, y0 - 1, y0 - 1, 5, 5, "glass_dk")  # skylight band
+        y0 = 12 - k * 3
+        m.box(1, 12, y0 - 1, y0, 4, 4, "body_dk")
+        m.box(1, 12, y0, y0, 5, 5, "body")
+        m.box(1, 12, y0 - 1, y0 - 1, 5, 5, "glass_dk")  # skylight band
     # big vehicle door on the front face with hazard stripe
     m.box(3, 8, 12, 12, 1, 3, "gunmetal_dk")
     m.box(3, 8, 12, 12, 3, 3, "amber")
     m.box(5, 6, 12, 12, 1, 1, "bore")  # door gap
     # chimney at the rear corner
-    m.box(11, 12, 1, 2, 1, 6, "concrete_dk")
-    m.box(11, 12, 1, 2, 6, 6, "gunmetal")
-    m.set(11, 1, 7, "bore")
-    m.set(12, 2, 7, "bore")
-    # crates on the apron
-    m.box(12, 13, 8, 9, 1, 2, "wood")
-    m.box(1, 2, 0, 1, 1, 1, "wood")
+    m.box(12, 13, 5, 6, 1, 6, "concrete_dk")
+    m.box(12, 13, 5, 6, 6, 6, "gunmetal")
+    m.set(12, 5, 7, "bore")
+    m.set(13, 6, 7, "bore")
+    # crates on the front apron
+    m.box(0, 1, 12, 13, 1, 2, "wood")
     return m
 
 

@@ -204,11 +204,12 @@ def compose_cell(
 ) -> Image.Image:
     """Center a rendered sprite on a transparent atlas cell with its shadow.
 
-    kind: 'land' sits on the ground line with no shadow at all — a baked
-    ellipse under ground units smears alpha over whatever terrain they stand
-    on and erases the game's one instant airborne cue, which is that only
-    air (and sea, as displacement) casts one (sprite review, 2026-08-13);
-    'air' hovers with a gap and a small detached shadow, like the pack art;
+    Shadow policy (sprite review round 3): land units get a tight hard
+    dithered CONTACT shadow — without one they float over the tile — and
+    the airborne cue is the shadow's offset and the sky between unit and
+    shadow, not its presence: 'air' hovers over a larger dithered ellipse
+    displaced down-right. Dither, never blurred alpha — a gaussian smudge
+    is a grey stain at cut-in scale and breaks under nearest sampling.
     'sea' sits in the water on a displacement shadow with waterline foam.
     'prop' composes with no shadow (terrain tiles draw their own grounding).
     """
@@ -216,30 +217,22 @@ def compose_cell(
     w, h = sprite.size
     if kind == "air":
         bottom = bottom if bottom is not None else 44
-        shadow_y = 56
-        shadow_rx = max(5, int(w * 0.26))
     else:
         bottom = bottom if bottom is not None else 55
-        shadow_y = bottom - 2
-        shadow_rx = max(6, int(w * 0.42))
     x0 = (cell - w) // 2 + dx
     y0 = bottom - h
 
     if kind == "sea":
         # Ships sit IN the water: a flat displacement shading right under the
         # hull instead of a floating blob, then foam hugging the waterline.
-        _shadow_ellipse(
-            out, cell // 2 + dx, shadow_y + 1, shadow_rx, max(2, shadow_rx // 5), 52
-        )
+        rx = max(6, int(w * 0.42))
+        _shadow_ellipse(out, cell // 2 + dx, bottom - 1, rx, max(2, rx // 5), 52)
     elif kind == "air":
-        _shadow_ellipse(
-            out,
-            cell // 2 + dx,
-            shadow_y,
-            shadow_rx,
-            max(2, shadow_rx // 3),
-            44,
-        )
+        rx = max(6, int(w * 0.30))
+        _dither_ellipse(out, cell // 2 + dx + 4, 58, rx, max(2, rx // 3))
+    elif kind == "land":
+        rx = max(4, int(w * 0.34))
+        _dither_ellipse(out, cell // 2 + dx, bottom - 1, rx, max(2, rx // 4))
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
         _waterline_foam(out)
@@ -293,6 +286,27 @@ def _waterline_foam(img: Image.Image) -> None:
                 px[lo - k, yy] = (*foam, 235 - 60 * k)
             if hi + k < w:
                 px[hi + k, yy] = (*foam, 235 - 60 * k)
+
+
+def _dither_ellipse(img: Image.Image, cx: int, cy: int, rx: int, ry: int) -> None:
+    """A hard 50% checkerboard shadow: opaque dark pixels, no partial alpha.
+
+    Reads as half-tone from the board and stays crisp at cut-in scale, where
+    a blurred alpha ellipse becomes a grey stain; alternate pixels let the
+    terrain underneath show through, so the shadow tints without smearing.
+    """
+    px = img.load()
+    w, h = img.size
+    for yy in range(cy - ry, cy + ry + 1):
+        for xx in range(cx - rx, cx + rx + 1):
+            if not (0 <= xx < w and 0 <= yy < h):
+                continue
+            if (xx + yy) % 2:
+                continue
+            if ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 > 1.0:
+                continue
+            if px[xx, yy][3] == 0:
+                px[xx, yy] = (16, 18, 24, 255)
 
 
 def _shadow_ellipse(
