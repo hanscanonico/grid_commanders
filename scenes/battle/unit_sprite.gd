@@ -4,9 +4,10 @@ extends Sprite2D
 ## via refresh(); the battle scene tweens `position` only for move previews.
 
 const TILE := 16
-## The units atlas is drawn at 4x the world grid so the PixVoxel art keeps its
-## detail; the sprite is scaled back down to cover exactly one cell. Grid maths
-## everywhere else still speaks in TILE.
+## The units atlas is drawn at 4x the world grid so the generated art keeps
+## its detail; the sprite is scaled back down to cover exactly one cell. Grid
+## maths everywhere else still speaks in TILE. Must match sprite_generator's
+## cell size (its atlas contract).
 const SPRITE_PX := 64
 const SPRITE_SCALE := float(TILE) / float(SPRITE_PX)
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
