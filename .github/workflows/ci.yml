@@ -96,7 +96,9 @@ jobs:
               b = Image.open(snap).convert("RGBA")
               if a.size != b.size:
                   bad.append(f"size mismatch: {snap} {b.size} vs generated {a.size}")
-              elif ImageChops.difference(a, b).getbbox() is not None:
+              # alpha_only=False is required: on RGBA images getbbox() otherwise
+              # inspects only the alpha band, so color-only drift would pass.
+              elif ImageChops.difference(a, b).getbbox(alpha_only=False) is not None:
                   bad.append(f"pixel mismatch: {snap}")
           if bad:
               print("\n".join(bad))
