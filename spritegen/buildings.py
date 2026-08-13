@@ -66,19 +66,21 @@ def _pad(m: Model, x0: int, x1: int, y0: int, y1: int, mat: str = "concrete") ->
         m.set(x1, y, 0, mat + "_dk")
 
 
-def _windows(m: Model, face: str, x0: int, x1: int, y: int, z0: int, z1: int,
-             salt: int) -> None:
-    """A window grid on a wall: every other column/row, a few lit amber."""
-    if face == "y":  # +y wall: vary x
-        cols = range(x0, x1 + 1, 2)
-        for i, x in enumerate(cols):
-            for z in range(z0, z1 + 1, 2):
-                m.set(x, y, z, "amber" if h01(x, z, salt) < 0.28 else "glass_dk")
-    else:  # +x wall: vary y
-        cols = range(x0, x1 + 1, 2)
-        for y2 in cols:
-            for z in range(z0, z1 + 1, 2):
-                m.set(y, y2, z, "amber" if h01(y2, z, salt) < 0.28 else "glass_dk")
+def _windows(m: Model, face: str, along0: int, along1: int, wall: int,
+             z0: int, z1: int, salt: int) -> None:
+    """A window grid on a wall: every other column/row, a few lit amber.
+
+    `along0..along1` runs along the wall and `wall` is the wall's fixed
+    coordinate on the other axis — for face 'y' that means x along and y
+    fixed, for face 'x' the reverse.
+    """
+    for along in range(along0, along1 + 1, 2):
+        for z in range(z0, z1 + 1, 2):
+            mat = "amber" if h01(along, z, salt) < 0.28 else "glass_dk"
+            if face == "y":
+                m.set(along, wall, z, mat)
+            else:
+                m.set(wall, along, z, mat)
 
 
 def city() -> Model:

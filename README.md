@@ -79,12 +79,14 @@ python3 -m venv .venv
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context |
 | `autotiles/{roads,rivers,coast,shoals}.png` | 16-variant connection sheets (see below) |
+| `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S |
 
 The `autotiles/` sheets are the opt-in upgrade path beyond the fixed
 14-column terrain contract: roads and rivers as N/E/S/W connection sets (so
 they can turn and junction), both bridge orientations, coastline tiles for
 sea bordering land, and shoals surfed on whichever edges face water. Each
-sheet lays out masks 0-15 row-major (bit order N=1, E=2, S=4, W=8). The demo
+connection sheet lays out masks 0-15 row-major (bit order N=1, E=2, S=4,
+W=8); `bridges.png` carries its two decks side by side. The demo
 map composes from these, which is why its roads connect and its island has a
 shoreline; the atlases themselves are unchanged drop-ins.
 

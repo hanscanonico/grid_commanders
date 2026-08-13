@@ -262,14 +262,23 @@ def shoal_tile(edges: int) -> Image.Image:
     return t
 
 
-def variant_sheet(builder, cols: int = 4) -> Image.Image:
-    """All 16 masks of one builder on a labelled-by-position grid sheet."""
-    rows = (16 + cols - 1) // cols
+def sheet(tiles: list[Image.Image], cols: int) -> Image.Image:
+    """Lay tiles out row-major on the shared 2px-gutter contact sheet."""
+    rows = (len(tiles) + cols - 1) // cols
     img = Image.new("RGB", (cols * (CELL + 2) + 2, rows * (CELL + 2) + 2),
                     (52, 52, 60))
-    for mask in range(16):
-        tile = builder(mask).convert("RGB")
-        x = (mask % cols) * (CELL + 2) + 2
-        y = (mask // cols) * (CELL + 2) + 2
-        img.paste(tile, (x, y))
+    for i, tile in enumerate(tiles):
+        x = (i % cols) * (CELL + 2) + 2
+        y = (i // cols) * (CELL + 2) + 2
+        img.paste(tile.convert("RGB"), (x, y))
     return img
+
+
+def variant_sheet(builder, cols: int = 4) -> Image.Image:
+    """All 16 masks of one builder on a labelled-by-position grid sheet."""
+    return sheet([builder(mask) for mask in range(16)], cols)
+
+
+def bridge_sheet() -> Image.Image:
+    """Both deck orientations: E-W over a north-south river, then N-S."""
+    return sheet([bridge_tile(True), bridge_tile(False)], 2)

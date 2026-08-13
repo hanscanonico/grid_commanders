@@ -234,7 +234,7 @@ def compose_cell(
                         max(2, shadow_rx // 3), 60 if kind == "land" else 44)
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
-        _waterline_foam(out, bottom)
+        _waterline_foam(out)
     return out
 
 
@@ -255,19 +255,31 @@ def place_in_cell(cell_img: Image.Image, sprite: Image.Image, x0: int, y0: int) 
     cell_img.alpha_composite(sprite, (x0, y0))
 
 
-def _waterline_foam(img: Image.Image, bottom: int) -> None:
-    """Foam flecks just outside the hull along its waterline rows."""
+FOAM_ROWS = 4
+
+
+def _waterline_foam(img: Image.Image) -> None:
+    """Foam flecks just outside the hull along its real waterline rows.
+
+    The waterline is wherever the hull actually bottoms out, so the rows come
+    from the composed pixels rather than from the ground line the sprite was
+    placed against: `render` reserves a trailing empty row, and the dimetric
+    hull tapers to a narrow tip, so a fixed offset misses the wide part of
+    the wake. Flecks trail outward along the hull's last few rows, widest at
+    the bottom.
+    """
     px = img.load()
     w, h = img.size
     foam = (226, 240, 250)
-    for yy in (bottom - 2, bottom - 1):
-        if not (0 <= yy < h):
-            continue
+    spans = []
+    for yy in range(h):
         xs = [xx for xx in range(w) if px[xx, yy][3] == 255]
-        if not xs:
-            continue
-        lo, hi = min(xs), max(xs)
-        n = 2 if yy == bottom - 1 else 1
+        if xs:
+            spans.append((yy, min(xs), max(xs)))
+    if not spans:
+        return
+    for i, (yy, lo, hi) in enumerate(reversed(spans[-FOAM_ROWS:])):
+        n = 2 if i < 2 else 1
         for k in range(1, n + 1):
             if lo - k >= 0:
                 px[lo - k, yy] = (*foam, 235 - 60 * k)

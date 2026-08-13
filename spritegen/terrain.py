@@ -110,7 +110,7 @@ def woods(fac: Faction) -> Image.Image:
     return t
 
 
-def mountain(fac: Faction) -> Image.Image:
+def mountain() -> Image.Image:
     """A painted three-peak massif: light/dark faces split at each ridge,
     jagged dithered snow caps, altitude banding down to a talus skirt."""
     t = _ground(GRASS, 4)
@@ -307,7 +307,7 @@ def tile(tid: str, fac: Faction) -> Image.Image:
     if tid == "woods":
         return woods(fac)
     if tid == "mountain":
-        return mountain(fac)
+        return mountain()
     if tid == "river":
         return river()
     if tid == "city":
