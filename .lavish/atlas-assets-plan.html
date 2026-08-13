@@ -22,7 +22,7 @@
     --aurora: #3865d8;
     --iron: #4a5258;
     --verdant: #2c8636;
-    --neutral: #d6d9de;
+    --neutral: #606a71;
     --amber: #ebb33f;
     --zoom: 3;
   }
@@ -326,9 +326,10 @@
     <div class="q"><b>Q1 — Any unit or tile for another design pass?</b>
       <p>Every sprite is one small model function now. Annotate the card above (shape, weapon,
       stance, color balance) and it's a targeted edit.</p></div>
-    <div class="q"><b>Q2 — Neutral row styling.</b>
-      <p>Kept the pack's white/grey so neutral never reads as a team. Alternative: the UI's
-      slate-grey neutral theme. Preference?</p></div>
+    <div class="q"><b>Q2 — Neutral row styling. <i>Answered:</i> the UI's slate theme.</b>
+      <p>Neutral now uses <code>CommanderVisuals</code>' slate ramp like every other row, instead of
+      the pack's white/grey. See <code>.lavish/sprite-upgrade-review.html</code> section 4 for the
+      shipped ramps and the neutral-vs-iron tradeoff that choice carries.</p></div>
     <div class="q"><b>Q3 — Baked-in hover shadows for air units.</b>
       <p>Air units carry their detached drop shadow inside the cell, like the shipped art. If the
       game ever animates altitude, shadows should move to a separate layer instead.</p></div>

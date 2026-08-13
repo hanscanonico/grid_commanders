@@ -115,7 +115,7 @@
     <ul class="tight">
       <li><b>Livery, not paint-dip</b> — chassis and ship hulls wear a desaturated faction tint (<code>hull</code> ramp, 50% toward chassis grey); pure faction color stays on the identity surfaces: turret crowns, truck cabs, aircraft wings, ship decks, the lander&rsquo;s bow ramp.</li>
       <li><b>Class-defining weapons</b> — longer tank / md-tank cannons with muzzle brakes, the artillery howitzer climbs two steps higher, anti-air&rsquo;s quad tubes rake skyward under a bigger radar, the infantry rifle moved to shoulder height.</li>
-      <li><b>De-cubed</b> — <code>Model.chamfer</code>/<code>dome</code> cut corner columns: octagonal turrets and cabs, rounded bomber nose and copter holds.</li>
+      <li><b>De-cubed</b> — <code>Model.chamfer</code> cuts corner columns: octagonal turrets and cabs, rounded bomber nose and copter holds.</li>
       <li><b>Deeper shading</b> — stronger top/side contrast, ground-contact occlusion, and a vertical depth gradient on tall masses.</li>
       <li><b>Shadows</b> — ships sit in a flat displacement shadow with foam hugging the waterline; air units hover higher over a small detached shadow.</li>
       <li><b>Antenna diet</b> — gun tanks lost their whips; APC keeps a tall comms whip (amber tip), recon a short one, ship masts all differ.</li>
@@ -174,15 +174,17 @@
 
 <section>
   <h2>5 &middot; Autotiles — the opt-in upgrade path</h2>
-  <div class="sub">New <code>spritegen/autotile.py</code>: 16-variant N/E/S/W connection sets, exported under
-  <code>out/autotiles/</code>. The fixed 14-column terrain atlas is untouched (still a drop-in); these are
-  extra sheets the game can adopt so roads turn, rivers flow any direction, and sea meets land with a real
-  shoreline. The demo map above already composes from them. Sheets are masks 0&ndash;15 row-major (N=1 E=2 S=4 W=8).</div>
+  <div class="sub">New <code>spritegen/autotile.py</code>: 16-variant N/E/S/W connection sets plus both bridge
+  deck orientations, exported under <code>out/autotiles/</code>. The fixed 14-column terrain atlas is untouched
+  (still a drop-in); these are extra sheets the game can adopt so roads turn, rivers flow any direction, and sea
+  meets land with a real shoreline. The demo map above already composes from them. Connection sheets are masks
+  0&ndash;15 row-major (N=1 E=2 S=4 W=8).</div>
   <div class="grid4" style="margin-top:14px">
     <div class="shot after"><img src="assets/autotiles/roads.png" alt="road autotiles"><div class="cap">Roads</div></div>
     <div class="shot after"><img src="assets/autotiles/rivers.png" alt="river autotiles"><div class="cap">Rivers</div></div>
     <div class="shot after"><img src="assets/autotiles/coast.png" alt="coast autotiles"><div class="cap">Coast (sea vs land edges)</div></div>
     <div class="shot after"><img src="assets/autotiles/shoals.png" alt="shoal autotiles"><div class="cap">Shoals (surf per water edge)</div></div>
+    <div class="shot after"><img src="assets/autotiles/bridges.png" alt="bridge decks"><div class="cap">Bridges (E-W deck, then N-S)</div></div>
   </div>
 </section>
 
