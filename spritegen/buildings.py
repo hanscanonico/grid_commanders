@@ -11,7 +11,6 @@ from __future__ import annotations
 from .palette import h01
 from .voxel import Model
 
-
 # ---------------------------------------------------------------------------
 # nature props
 # ---------------------------------------------------------------------------
@@ -83,25 +82,27 @@ def _windows(m: Model, face: str, x0: int, x1: int, y: int, z0: int, z1: int,
 
 
 def city() -> Model:
-    """A block of three towers on a shared plaza."""
+    """A block of three grey towers whose roofs carry the owner's color."""
     m = Model()
     _pad(m, 0, 13, 0, 13)
-    # main tower, front-left
-    m.box(1, 6, 6, 11, 1, 9, "body")
-    m.box(1, 6, 6, 11, 9, 9, "body_dk")     # parapet
+    # main tower, front-left: concrete walls, faction roof
+    m.box(1, 6, 6, 11, 1, 8, "concrete")
+    m.box(1, 6, 6, 11, 9, 9, "body")        # roof
     m.box(2, 5, 7, 10, 10, 10, "body_dk")   # roof plant
     m.set(3, 8, 11, "gunmetal")             # AC unit
     _windows(m, "y", 2, 5, 11, 2, 8, 21)
     _windows(m, "x", 7, 10, 6, 2, 8, 22)
     # taller slab tower, back-right
-    m.box(8, 12, 1, 6, 1, 11, "body")
-    m.box(8, 12, 1, 6, 11, 11, "body_dk")
+    m.box(8, 12, 1, 6, 1, 10, "concrete")
+    m.box(8, 12, 1, 6, 11, 11, "body")      # roof
     m.box(9, 11, 2, 5, 12, 12, "body_lt")   # penthouse
+    m.chamfer(9, 11, 2, 5, 12, 12)
     _windows(m, "y", 9, 11, 6, 2, 10, 23)
     _windows(m, "x", 2, 5, 12, 2, 10, 24)
-    # low storefront, front-right
-    m.box(8, 12, 8, 12, 1, 3, "body_lt")
-    m.box(8, 12, 8, 12, 4, 4, "body_dk")
+    # low storefront, front-right: faction awning over grey walls
+    m.box(8, 12, 8, 12, 1, 3, "concrete")
+    m.box(8, 12, 8, 12, 4, 4, "body")       # awning roof
+    m.chamfer(8, 12, 8, 12, 4, 4)
     m.box(9, 11, 12, 12, 1, 2, "glass_dk")  # shopfront glazing
     # plaza detail
     m.set(2, 3, 1, "leaf")                   # planter
@@ -110,12 +111,12 @@ def city() -> Model:
 
 
 def base() -> Model:
-    """A factory: sawtooth-roof shed, chimney, big vehicle door, crates."""
+    """A factory: grey shed under a faction sawtooth roof, chimney, crates."""
     m = Model()
     _pad(m, 0, 13, 0, 13)
-    # main shed
-    m.box(1, 11, 3, 12, 1, 4, "body")
-    # sawtooth roof: three north-lit ridges
+    # main shed in industrial concrete
+    m.box(1, 11, 3, 12, 1, 4, "concrete_dk")
+    # sawtooth roof: three north-lit ridges in the owner's color
     for k in range(3):
         y0 = 10 - k * 3
         m.box(1, 11, y0 - 1, y0, 5, 5, "body_dk")
@@ -126,7 +127,7 @@ def base() -> Model:
     m.box(3, 8, 12, 12, 3, 3, "amber")
     m.box(5, 6, 12, 12, 1, 1, "bore")        # door gap
     # chimney at the rear corner
-    m.box(11, 12, 1, 2, 1, 8, "body_dk")
+    m.box(11, 12, 1, 2, 1, 8, "concrete_dk")
     m.box(11, 12, 1, 2, 8, 8, "gunmetal")
     m.set(11, 1, 9, "bore")
     m.set(12, 2, 9, "bore")
@@ -137,36 +138,37 @@ def base() -> Model:
 
 
 def hq() -> Model:
-    """A fortress: crenellated walls, corner towers, keep, faction banner."""
+    """A stone fortress; faction color on the tower caps, keep roof, banner."""
     m = Model()
     _pad(m, 0, 13, 0, 13, "concrete")
-    # curtain walls
-    m.box(1, 12, 1, 12, 1, 5, "body")
+    # curtain walls in castle stone
+    m.box(1, 12, 1, 12, 1, 5, "stone")
     m.clear(3, 10, 3, 10, 1, 5)              # hollow courtyard (hidden anyway)
     # crenellations along the front and right parapets
     for i in range(1, 13, 2):
-        m.set(i, 12, 6, "body")
-        m.set(12, i, 6, "body")
-        m.set(i, 1, 6, "body")
-        m.set(1, i, 6, "body")
-    # corner towers
+        m.set(i, 12, 6, "stone")
+        m.set(12, i, 6, "stone")
+        m.set(i, 1, 6, "stone")
+        m.set(1, i, 6, "stone")
+    # corner towers, capped in the owner's color
     for tx, ty in ((1, 1), (1, 11), (11, 1), (11, 11)):
-        m.box(tx, tx + 1, ty, ty + 1, 1, 7, "body")
+        m.box(tx, tx + 1, ty, ty + 1, 1, 6, "stone")
         m.box(tx, tx + 1, ty, ty + 1, 7, 7, "body_dk")
         m.set(tx, ty, 8, "body")
         m.set(tx + 1, ty + 1, 8, "body")
     # gatehouse: arched gate with a wooden door on the front wall
-    m.box(5, 8, 12, 12, 1, 4, "body_dk")
+    m.box(5, 8, 12, 12, 1, 4, "stone_dk")
     m.box(6, 7, 12, 12, 1, 3, "wood")
     m.set(6, 12, 4, "bore")
     m.set(7, 12, 4, "bore")
-    # central keep with banner mast
-    m.box(4, 9, 4, 9, 1, 8, "body")
+    # central stone keep under a faction roof, banner mast above
+    m.box(4, 9, 4, 9, 1, 7, "stone")
     m.box(4, 9, 4, 9, 8, 8, "body_dk")
     m.box(5, 8, 5, 8, 9, 9, "body")
+    m.chamfer(5, 8, 5, 8, 9, 9)
     _windows(m, "y", 5, 8, 9, 3, 7, 31)
     m.box(6, 6, 6, 6, 10, 13, "steel")
-    m.box(7, 8, 6, 6, 12, 13, "body_lt")     # banner
+    m.box(7, 8, 6, 6, 12, 13, "body")        # banner
     return m
 
 
@@ -175,13 +177,15 @@ def airport() -> Model:
     m = Model()
     # apron plate
     _pad(m, 0, 13, 3, 13, "concrete")
-    # hangar, doors facing the runway (front)
-    m.box(1, 8, 6, 13, 1, 4, "body")
-    m.box(1, 8, 7, 12, 5, 5, "body")         # arch tier 1
-    m.box(2, 7, 8, 11, 6, 6, "body_lt")      # arch crown
+    # hangar: concrete walls under a faction barrel roof, doors facing the
+    # runway (front)
+    m.box(1, 8, 6, 13, 1, 4, "concrete")
+    m.box(1, 8, 7, 12, 5, 5, "body")          # arch tier 1
+    m.box(2, 7, 8, 11, 6, 6, "body_lt")       # arch crown
+    m.chamfer(2, 7, 8, 11, 6, 6)
     m.box(2, 7, 13, 13, 1, 3, "gunmetal_dk")  # hangar door
     m.box(4, 5, 13, 13, 1, 3, "gunmetal")     # door seam
-    m.box(1, 8, 6, 6, 1, 4, "body_dk")        # rear wall
+    m.box(1, 8, 6, 6, 1, 4, "concrete_dk")    # rear wall
     # control tower with glass cab and radar
     m.box(10, 12, 4, 6, 1, 6, "concrete")
     m.box(9, 13, 3, 7, 7, 7, "concrete_dk")   # balcony ring
@@ -202,11 +206,11 @@ def port() -> Model:
     m.box(0, 13, 4, 13, 1, 1, "concrete")
     for x in range(0, 14, 3):
         m.set(x, 4, 0, "concrete_dk")         # pilings at the water edge
-    for x in range(0, 14):
+    for x in range(14):
         m.set(x, 4, 1, "concrete_dk")         # quay edge trim
-    # warehouse with a shallow gabled roof
-    m.box(1, 6, 7, 13, 2, 5, "body")
-    m.box(1, 6, 8, 12, 6, 6, "body_dk")
+    # warehouse: concrete walls under a shallow faction gabled roof
+    m.box(1, 6, 7, 13, 2, 5, "concrete")
+    m.box(1, 6, 8, 12, 6, 6, "body")
     m.box(1, 6, 10, 10, 7, 7, "body_lt")      # ridge
     m.box(3, 4, 13, 13, 2, 4, "gunmetal_dk")  # cargo door
     # gantry crane over the dockside
@@ -216,7 +220,7 @@ def port() -> Model:
     m.set(9, 5, 8, "gunmetal_dk")
     m.box(9, 10, 11, 12, 10, 11, "gunmetal_dk")  # cab + counterweight
     # container stack on the quay
-    m.box(11, 13, 6, 8, 2, 2, "body_lt")
+    m.box(11, 13, 6, 8, 2, 2, "body")
     m.box(11, 13, 6, 7, 3, 3, "amber")
     # bollards
     m.set(1, 5, 2, "gunmetal_dk")

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite Upgrade — before / after review</title>
+<style>
+  @font-face { font-family: "Silkscreen"; src: url(assets/Silkscreen-Regular.ttf); font-weight: 400; }
+  @font-face { font-family: "Silkscreen"; src: url(assets/Silkscreen-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: "Pixelify Sans"; src: url(assets/PixelifySans-Variable.ttf); font-weight: 400 700; }
+
+  :root {
+    --bg: #14171c;
+    --panel: #1d2127;
+    --panel-2: #232830;
+    --line: #333a44;
+    --ink: #e8e4d8;
+    --ink-dim: #a9a698;
+    --meridian: #db4a3b;
+    --aurora: #3865d8;
+    --iron: #4a5258;
+    --verdant: #2c8636;
+    --neutral: #606a71;
+    --amber: #ebb33f;
+  }
+  * { box-sizing: border-box; min-width: 0; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink);
+         font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  h1, h2 { font-family: "Silkscreen", monospace; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  h3 { font-family: "Pixelify Sans", sans-serif; font-size: 17px; margin: 0 0 8px; }
+  .sub { color: var(--ink-dim); max-width: 82ch; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; background: #10131a;
+         padding: 1px 5px; border-radius: 4px; color: #cfd6e4; }
+
+  header.page { border: 2px solid #000; background: linear-gradient(180deg, #232a33, #1a1f26);
+                border-radius: 10px; padding: 22px 24px; margin-bottom: 26px; box-shadow: 0 4px 0 #000; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .badge { font-family: "Silkscreen", monospace; font-size: 10px; padding: 5px 9px 4px;
+           border-radius: 5px; border: 1px solid #000; background: var(--panel-2); color: var(--ink); white-space: nowrap; }
+  .badge.ok { background: #1d3323; color: #8fe0a1; border-color: #0c1a10; }
+  .badge.warn { background: #38301a; color: var(--amber); border-color: #1a1508; }
+
+  section { margin: 34px 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+          padding: 18px 20px; margin-top: 14px; }
+  .shot { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+          padding: 12px; text-align: center; }
+  .shot img { image-rendering: pixelated; max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  .shot .cap { font-family: "Silkscreen", monospace; font-size: 10px; color: var(--ink-dim);
+               margin-top: 8px; text-transform: uppercase; letter-spacing: .04em; }
+  .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 14px; }
+  .stack { display: grid; gap: 14px; }
+  .before { outline: 2px solid #5a3030; outline-offset: -2px; }
+  .after  { outline: 2px solid #2f5a38; outline-offset: -2px; }
+  .before .cap { color: #d99; } .after .cap { color: #9d9; }
+
+  ul.tight { margin: 8px 0 0; padding-left: 20px; }
+  ul.tight li { margin: 5px 0; }
+  ul.tight b { color: var(--ink); }
+
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; font-size: 13.5px; }
+  th { font-family: "Silkscreen", monospace; font-size: 10px; background: var(--panel-2);
+       text-transform: uppercase; letter-spacing: .05em; }
+  .sw { display: inline-block; width: 30px; height: 16px; border: 1px solid #000;
+        border-radius: 3px; vertical-align: -3px; margin-right: 4px; }
+
+  .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 14px; }
+  .note { border-left: 3px solid var(--amber); background: #262316; padding: 12px 16px;
+          border-radius: 0 8px 8px 0; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Sprite upgrade — before / after</h1>
+  <div class="sub">The full improvement pass on the deterministic atlas generator: team-color livery,
+  class-defining silhouettes, deeper shading, grounded shadows, autotiled roads / rivers / coasts,
+  rounded (de-cubed) masses — and every faction ramp now mirrors
+  <code>commander_visuals.gd</code> exactly. Annotate anything you want changed.</div>
+  <div class="badges">
+    <span class="badge ok">DETERMINISTIC — 2 RUNS, IDENTICAL BYTES</span>
+    <span class="badge ok">ATLAS CONTRACT UNCHANGED 1152x320 / 896x320</span>
+    <span class="badge ok">EXACT COMMANDERVISUALS THEMES x5</span>
+    <span class="badge ok">RUFF CLEAN</span>
+    <span class="badge warn">AUTOTILES = NEW OPT-IN ASSET</span>
+  </div>
+</header>
+
+<section>
+  <h2>1 &middot; The map</h2>
+  <div class="sub">Same authored demo scene, both generations. The island now has a coastline,
+  the roads connect into a network, and the river flows north&ndash;south under the bridge.</div>
+  <div class="duo" style="margin-top:14px">
+    <div class="shot before"><img src="assets/before_preview_map.png" alt="demo map before"><div class="cap">Before</div></div>
+    <div class="shot after"><img src="assets/preview_map.png" alt="demo map after"><div class="cap">After</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>2 &middot; Units — meridian row, same columns</h2>
+  <div class="sub">infantry &middot; tank &middot; md&nbsp;tank &middot; artillery &middot; anti-air &middot; apc &middot; bomber &middot; battleship &middot; lander</div>
+  <div class="stack" style="margin-top:14px">
+    <div class="shot before"><img src="assets/before_units_row.png" style="width:min(100%, 1232px)" alt="units before"><div class="cap">Before — paint-dipped, cubic, stub guns</div></div>
+    <div class="shot after"><img src="assets/after_units_row.png" style="width:min(100%, 1232px)" alt="units after"><div class="cap">After — livery, octagonal turrets, real weapons</div></div>
+  </div>
+  <div class="card">
+    <h3>What changed on every unit</h3>
+    <ul class="tight">
+      <li><b>Livery, not paint-dip</b> — chassis and ship hulls wear a desaturated faction tint (<code>hull</code> ramp, 50% toward chassis grey); pure faction color stays on the identity surfaces: turret crowns, truck cabs, aircraft wings, ship decks, the lander&rsquo;s bow ramp.</li>
+      <li><b>Class-defining weapons</b> — longer tank / md-tank cannons with muzzle brakes, the artillery howitzer climbs two steps higher, anti-air&rsquo;s quad tubes rake skyward under a bigger radar, the infantry rifle moved to shoulder height.</li>
+      <li><b>De-cubed</b> — <code>Model.chamfer</code>/<code>dome</code> cut corner columns: octagonal turrets and cabs, rounded bomber nose and copter holds.</li>
+      <li><b>Deeper shading</b> — stronger top/side contrast, ground-contact occlusion, and a vertical depth gradient on tall masses.</li>
+      <li><b>Shadows</b> — ships sit in a flat displacement shadow with foam hugging the waterline; air units hover higher over a small detached shadow.</li>
+      <li><b>Antenna diet</b> — gun tanks lost their whips; APC keeps a tall comms whip (amber tip), recon a short one, ship masts all differ.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>3 &middot; Properties — the roof carries the flag</h2>
+  <div class="sub">city &middot; base &middot; hq &middot; airport &middot; port (meridian row). Walls went neutral concrete and stone;
+  ownership reads from faction-colored roofs, tower caps, awnings and banners — the classic convention.</div>
+  <div class="stack" style="margin-top:14px">
+    <div class="shot before"><img src="assets/before_props_row.png" style="width:min(100%, 728px)" alt="properties before"><div class="cap">Before — all-red masses</div></div>
+    <div class="shot after"><img src="assets/after_props_row.png" style="width:min(100%, 728px)" alt="properties after"><div class="cap">After — grey walls, faction roofs</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>4 &middot; Faction colors — now exactly the game&rsquo;s</h2>
+  <div class="sub">Every row&rsquo;s ramp is the <code>FactionTheme</code> (color / dark / light) from
+  <code>grid_commanders/scenes/common/commander_visuals.gd</code>, converted x255 — neutral&rsquo;s slate theme included.
+  Row order mirrors <code>SideIdentity._ROW_FOR_KEY</code>.</div>
+  <table>
+    <tr><th>Row</th><th>Faction</th><th>Color</th><th>Dark</th><th>Light</th></tr>
+    <tr><td>0</td><td>neutral — No Commander</td>
+        <td><span class="sw" style="background:#606a71"></span><code>#606a71</code></td>
+        <td><span class="sw" style="background:#3c444a"></span><code>#3c444a</code></td>
+        <td><span class="sw" style="background:#828c92"></span><code>#828c92</code></td></tr>
+    <tr><td>1</td><td>meridian — Meridian Coalition</td>
+        <td><span class="sw" style="background:#db4a3b"></span><code>#db4a3b</code></td>
+        <td><span class="sw" style="background:#a93631"></span><code>#a93631</code></td>
+        <td><span class="sw" style="background:#ef725f"></span><code>#ef725f</code></td></tr>
+    <tr><td>2</td><td>aurora — Aurora Compact</td>
+        <td><span class="sw" style="background:#3865d8"></span><code>#3865d8</code></td>
+        <td><span class="sw" style="background:#2b4ea8"></span><code>#2b4ea8</code></td>
+        <td><span class="sw" style="background:#6d8ce8"></span><code>#6d8ce8</code></td></tr>
+    <tr><td>3</td><td>iron — Iron Dominion</td>
+        <td><span class="sw" style="background:#4a5258"></span><code>#4a5258</code></td>
+        <td><span class="sw" style="background:#2f363b"></span><code>#2f363b</code></td>
+        <td><span class="sw" style="background:#6b747b"></span><code>#6b747b</code></td></tr>
+    <tr><td>4</td><td>verdant — Verdant League</td>
+        <td><span class="sw" style="background:#2c8636"></span><code>#2c8636</code></td>
+        <td><span class="sw" style="background:#1d6127"></span><code>#1d6127</code></td>
+        <td><span class="sw" style="background:#4fa85a"></span><code>#4fa85a</code></td></tr>
+  </table>
+  <div class="note"><b>Open question — neutral vs iron.</b> Both are slates now (neutral ~20% lighter).
+  For properties this is the classic &ldquo;unowned grey city&rdquo; and works; neutral never fields units in
+  real matches (team 0 owns only properties), and the game&rsquo;s own principle is &ldquo;faction first, never
+  colour alone&rdquo;. If you still want more separation on the unit rows, annotate here and I&rsquo;ll nudge
+  neutral lighter for units while keeping properties on the exact theme.</div>
+  <div class="stack" style="margin-top:14px">
+    <div class="shot after"><img src="assets/preview_units.png" alt="units atlas all factions"><div class="cap">Units atlas — 18 units x 5 faction rows (2x)</div></div>
+    <div class="shot after"><img src="assets/preview_terrain.png" alt="terrain atlas all factions"><div class="cap">Terrain atlas — 14 tiles x 5 rows (2x)</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>5 &middot; Autotiles — the opt-in upgrade path</h2>
+  <div class="sub">New <code>spritegen/autotile.py</code>: 16-variant N/E/S/W connection sets, exported under
+  <code>out/autotiles/</code>. The fixed 14-column terrain atlas is untouched (still a drop-in); these are
+  extra sheets the game can adopt so roads turn, rivers flow any direction, and sea meets land with a real
+  shoreline. The demo map above already composes from them. Sheets are masks 0&ndash;15 row-major (N=1 E=2 S=4 W=8).</div>
+  <div class="grid4" style="margin-top:14px">
+    <div class="shot after"><img src="assets/autotiles/roads.png" alt="road autotiles"><div class="cap">Roads</div></div>
+    <div class="shot after"><img src="assets/autotiles/rivers.png" alt="river autotiles"><div class="cap">Rivers</div></div>
+    <div class="shot after"><img src="assets/autotiles/coast.png" alt="coast autotiles"><div class="cap">Coast (sea vs land edges)</div></div>
+    <div class="shot after"><img src="assets/autotiles/shoals.png" alt="shoal autotiles"><div class="cap">Shoals (surf per water edge)</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>6 &middot; What to review</h2>
+  <div class="card">
+    <ul class="tight">
+      <li>Does the <b>livery balance</b> feel right — enough team color at map scale, or push accents further?</li>
+      <li><b>Neutral vs iron</b> unit rows (section 4&rsquo;s open question).</li>
+      <li>Any unit whose <b>silhouette</b> still doesn&rsquo;t read at 1x on <code>preview_map.png</code>?</li>
+      <li>Should the game <b>adopt the autotiles</b>? If yes, I&rsquo;ll plan the grid_commanders side (TileSet wiring in <code>BattleView</code>) next.</li>
+    </ul>
+    <div class="sub" style="margin-top:10px">Annotate any sprite or line above, or queue feedback — I&rsquo;m polling this session.</div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

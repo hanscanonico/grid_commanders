@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from PIL import Image
 
-from . import buildings, terrain
+from . import autotile, buildings, terrain
 from .palette import FACTIONS, Faction
 from .units import ATLAS_ORDER, UNITS
 from .voxel import compose_cell, render
@@ -91,21 +91,25 @@ def preview(atlas: Image.Image, zoom: int = 2) -> Image.Image:
 
 
 # A small authored scene proving the sheet works as a map: terrain ids per
-# cell, then units placed on top with mixed factions.
+# cell, then units placed on top with mixed factions. Roads, the river, the
+# bridge and every coastline resolve through the autotile variants, so the
+# preview shows the connected look the game gets if it adopts them.
 _DEMO_MAP = [
     "sea    sea    sea    sea    sea    sea    sea    sea    sea    sea",
-    "sea    reef   shoal  plains woods  plains city   road   port   sea",
-    "sea    shoal  plains road   road   road   road   road   hq     sea",
-    "sea    plains woods  road   mount  river  bridge road   city   sea",
-    "sea    base   road   road   plains river  bridge road   base   sea",
-    "sea    plains airport plains woods river  bridge plains plains sea",
+    "sea    reef   shoal  plains woods  plains river  city   port   sea",
+    "sea    shoal  plains road   road   road   bridge road   hq     sea",
+    "sea    plains woods  road   mount  road   river  road   city   sea",
+    "sea    base   road   road   plains woods  river  road   base   sea",
+    "sea    plains airport plains plains plains river  plains plains sea",
     "sea    sea    sea    sea    sea    sea    sea    sea    sea    sea",
 ]
 _DEMO_ALIAS = {"mount": "mountain"}
+# Tiles that read as open water (no coastline against them).
+_WATERY = frozenset({"sea", "reef", "river", "bridge", "port"})
 # (unit, faction row, col, row)
 _DEMO_UNITS = [
     ("infantry", 1, 3, 2), ("tank", 1, 4, 2), ("recon", 1, 2, 3),
-    ("mech", 2, 7, 2), ("md_tank", 2, 6, 4), ("artillery", 2, 7, 5),
+    ("mech", 2, 7, 2), ("md_tank", 2, 4, 4), ("artillery", 2, 7, 5),
     ("rockets", 1, 1, 4), ("apc", 2, 5, 1), ("anti_air", 1, 3, 5),
     ("missiles", 2, 8, 5), ("fighter", 1, 5, 3), ("bomber", 2, 2, 5),
     ("b_copter", 1, 6, 1), ("t_copter", 2, 4, 5), ("battleship", 1, 1, 6),
@@ -114,20 +118,65 @@ _DEMO_UNITS = [
 
 
 def build_demo() -> Image.Image:
-    rows = [r.split() for r in _DEMO_MAP]
+    rows = [[_DEMO_ALIAS.get(t, t) for t in r.split()] for r in _DEMO_MAP]
     h, w = len(rows), len(rows[0])
     img = Image.new("RGBA", (w * CELL, h * CELL))
-    fac_for_prop = {(6, 1): 2, (8, 1): 2, (8, 2): 2, (8, 3): 2, (8, 4): 2,
-                    (1, 4): 1, (2, 5): 1, (0, 0): 0}
+    fac_for_prop = {(7, 1): 2, (8, 1): 2, (8, 2): 2, (8, 3): 2, (8, 4): 2,
+                    (1, 4): 1, (2, 5): 1}
+
+    def at(x: int, y: int) -> str:
+        if 0 <= x < w and 0 <= y < h:
+            return rows[y][x]
+        return "sea"                       # off-map reads as open sea
+
+    def mask(x: int, y: int, joins: frozenset[str]) -> int:
+        m = 0
+        for bit, (dx, dy) in ((autotile.N, (0, -1)), (autotile.E, (1, 0)),
+                              (autotile.S, (0, 1)), (autotile.W, (-1, 0))):
+            if at(x + dx, y + dy) in joins:
+                m |= bit
+        return m
+
+    road_joins = frozenset({"road", "bridge"})
+    river_joins = frozenset({"river", "bridge", "sea"})
     for y, row in enumerate(rows):
         for x, tid in enumerate(row):
-            tid = _DEMO_ALIAS.get(tid, tid)
-            fac_row = fac_for_prop.get((x, y), 1 if x < 5 else 2)
-            if tid in terrain.PROPERTY:
-                fac = FACTIONS[fac_row]
+            if tid == "road":
+                tile = autotile.road_tile(mask(x, y, road_joins))
+            elif tid == "river":
+                tile = autotile.river_tile(mask(x, y, river_joins),
+                                           salt=x * 7 + y)
+            elif tid == "shoal":
+                tile = autotile.shoal_tile(mask(x, y, _WATERY))
+            elif tid == "bridge":
+                horiz = bool(mask(x, y, road_joins) & (autotile.E | autotile.W))
+                tile = autotile.bridge_tile(horiz)
+            elif tid == "sea":
+                # shoals carry their own surf, so the sea draws no coast
+                # against them — only against hard land
+                def hard_land(t: str) -> bool:
+                    return t not in _WATERY and t != "shoal"
+                edges = 0
+                corners = 0
+                for bit, (dx, dy) in ((autotile.N, (0, -1)),
+                                      (autotile.E, (1, 0)),
+                                      (autotile.S, (0, 1)),
+                                      (autotile.W, (-1, 0))):
+                    if hard_land(at(x + dx, y + dy)):
+                        edges |= bit
+                for bit, (dx, dy) in ((autotile.N, (1, -1)),
+                                      (autotile.E, (1, 1)),
+                                      (autotile.S, (-1, 1)),
+                                      (autotile.W, (-1, -1))):
+                    if hard_land(at(x + dx, y + dy)):
+                        corners |= bit
+                tile = autotile.coast_tile(edges, corners) \
+                    if edges or corners else terrain.tile("sea", FACTIONS[0])
             else:
-                fac = FACTIONS[0]
-            img.paste(terrain.tile(tid, fac).convert("RGBA"), (x * CELL, y * CELL))
+                fac_row = fac_for_prop.get((x, y), 1 if x < 5 else 2)
+                fac = FACTIONS[fac_row if tid in terrain.PROPERTY else 0]
+                tile = terrain.tile(tid, fac)
+            img.paste(tile.convert("RGBA"), (x * CELL, y * CELL))
     for uid, fac_row, x, y in _DEMO_UNITS:
         img.alpha_composite(unit_cell(uid, FACTIONS[fac_row]), (x * CELL, y * CELL))
     return img

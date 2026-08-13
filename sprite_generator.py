@@ -121,6 +121,17 @@ def main() -> None:
                 _write(atlas.building_cell(bid, fac),
                        args.out / "iso_buildings" / f"{bid}_{fac.team}.png")
 
+    print("building autotile variant sheets (roads, rivers, coast)")
+    from spritegen import autotile
+    _write(autotile.variant_sheet(autotile.road_tile),
+           args.out / "autotiles" / "roads.png")
+    _write(autotile.variant_sheet(autotile.river_tile),
+           args.out / "autotiles" / "rivers.png")
+    _write(autotile.variant_sheet(autotile.coast_tile),
+           args.out / "autotiles" / "coast.png")
+    _write(autotile.variant_sheet(autotile.shoal_tile),
+           args.out / "autotiles" / "shoals.png")
+
     print("rendering previews")
     _write(atlas.preview(units_atlas, 2), args.out / "preview_units.png")
     _write(atlas.preview(terrain_atlas.convert("RGBA"), 2),

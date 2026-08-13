@@ -22,10 +22,12 @@ class Faction:
     body_lt: RGB      # FactionTheme.color_light
 
 
-# Atlas row order. Unit art keeps the pack's convention of a white/grey neutral
-# row (a neutral unit must not read as a team), not the UI's neutral slate.
+# Atlas row order. Every row is the exact FactionTheme from the game's
+# commander_visuals.gd (color / color_dark / color_light, x255), neutral
+# included — the sprites and the UI chrome can never disagree about a
+# faction's color.
 FACTIONS: tuple[Faction, ...] = (
-    Faction("neutral", "neutral", (214, 217, 222), (158, 163, 172), (240, 242, 245)),
+    Faction("neutral", "neutral", (96, 106, 113), (60, 68, 74), (130, 140, 146)),
     Faction("meridian", "red", (219, 74, 59), (169, 54, 49), (239, 114, 95)),
     Faction("aurora", "blue", (56, 101, 216), (43, 78, 168), (109, 140, 232)),
     Faction("iron", "iron", (74, 82, 88), (47, 54, 59), (107, 116, 123)),
@@ -63,12 +65,23 @@ MATERIALS: dict[str, RGB] = {
     "rock_dk": (108, 106, 104),
     "snow": (238, 240, 244),
     "flame": (238, 120, 46),
+    "stone": (158, 154, 146),
+    "stone_dk": (122, 118, 111),
 }
 
 # Materials whose big top surfaces get a whisper of per-pixel dither texture.
-DITHERED = {"body", "body_dk", "body_lt", "deck", "leaf", "concrete", "asphalt"}
+DITHERED = {"body", "body_dk", "body_lt", "hull", "hull_dk", "hull_lt",
+            "deck", "leaf", "concrete", "asphalt", "stone"}
 # Materials rendered glossy: hot specular top, brighter left face.
 GLOSSY = {"glass", "glass_dk"}
+
+# The hull ramp: faction hue pulled toward a neutral chassis grey, so armour
+# reads as military hardware wearing team livery rather than a toy dipped in
+# paint. Models keep pure `body` for the identity accents (turret tops, wings,
+# cabs, decks) that must still shout the owner at map scale.
+_CHASSIS: RGB = (112, 115, 106)
+_CHASSIS_DK: RGB = (80, 83, 76)
+_CHASSIS_LT: RGB = (146, 150, 139)
 
 
 def resolve(material: str, faction: Faction) -> RGB:
@@ -79,11 +92,17 @@ def resolve(material: str, faction: Faction) -> RGB:
         return faction.body_dk
     if material == "body_lt":
         return faction.body_lt
+    if material == "hull":
+        return mix(faction.body, _CHASSIS, 0.50)
+    if material == "hull_dk":
+        return mix(faction.body_dk, _CHASSIS_DK, 0.50)
+    if material == "hull_lt":
+        return mix(faction.body_lt, _CHASSIS_LT, 0.45)
     return MATERIALS[material]
 
 
 def clamp8(v: float) -> int:
-    return max(0, min(255, int(round(v))))
+    return max(0, min(255, round(v)))
 
 
 def mix(a: RGB, b: RGB, t: float) -> RGB:
@@ -114,11 +133,11 @@ def shade(c: RGB, face: str, gloss: bool = False) -> RGB:
     it is the face the player mostly reads, so it must stay vivid.
     """
     if face == "top":
-        return lighten(c, 0.55 if gloss else 0.26)
+        return lighten(c, 0.55 if gloss else 0.30)
     if face == "left":
         return lighten(c, 0.18) if gloss else c
     # right face: darkest, cold-shifted
-    return mix(darken(c, 0.30), _SHADOW_TINT, 0.20)
+    return mix(darken(c, 0.36), _SHADOW_TINT, 0.24)
 
 
 def h01(x: int, y: int, salt: int = 0) -> float:

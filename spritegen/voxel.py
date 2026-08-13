@@ -19,9 +19,9 @@ from PIL import Image
 
 from .palette import (
     DITHERED,
-    Faction,
     GLOSSY,
     RGB,
+    Faction,
     darken,
     h01,
     lighten,
@@ -56,6 +56,21 @@ class Model:
                 for z in range(min(z0, z1), max(z0, z1) + 1):
                     self.vox.pop((x, y, z), None)
 
+    def chamfer(self, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> None:
+        """Knock the four corner columns off a box between z0..z1.
+
+        Turns a slab into an octagonal mass — the cheap trick that keeps
+        turrets, cabs and roofs from reading as pure cubes.
+        """
+        for z in range(min(z0, z1), max(z0, z1) + 1):
+            for cx, cy in ((x0, y0), (x0, y1), (x1, y0), (x1, y1)):
+                self.vox.pop((cx, cy, z), None)
+
+    def dome(self, x0: int, x1: int, y0: int, y1: int, z: int, m: str) -> None:
+        """A rounded cap layer: the box footprint inset with cut corners."""
+        self.box(x0, x1, y0, y1, z, z, m)
+        self.chamfer(x0, x1, y0, y1, z, z)
+
     def mirror_x(self, cx: float) -> None:
         """Copy every voxel across the x = cx plane (2*cx must be integral).
 
@@ -66,7 +81,7 @@ class Model:
         for (x, y, z), m in list(self.vox.items()):
             self.vox[(twice - x, y, z)] = m
 
-    def paste(self, other: "Model", dx: int = 0, dy: int = 0, dz: int = 0) -> None:
+    def paste(self, other: Model, dx: int = 0, dy: int = 0, dz: int = 0) -> None:
         for (x, y, z), m in other.vox.items():
             self.vox[(x + dx, y + dy, z + dz)] = m
 
@@ -97,6 +112,9 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     px = img.load()
     vox = model.vox
+    zmin = min(v[2] for v in vox)
+    zmax = max(v[2] for v in vox)
+    zspan = max(1, zmax - zmin)
     order = sorted(vox, key=lambda v: (v[0] + v[1], v[2]))
     for (x, y, z) in order:
         mat = vox[(x, y, z)]
@@ -127,6 +145,12 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
         # Side faces: darkened under an overhang one up and one out.
         ao_right = 0.78 if (x + 1, y, z + 1) in vox else 1.0
         ao_left = 0.82 if (x, y + 1, z + 1) in vox else 1.0
+        # Contact occlusion where the model meets the ground, and a soft
+        # vertical gradient so tall masses darken toward their base — the
+        # extra value step that keeps big flat sides from reading flat.
+        depth = (zmax - z) / zspan
+        grad_left = depth * 0.10 + (0.08 if z == zmin else 0.0)
+        grad_right = depth * 0.12 + (0.08 if z == zmin else 0.0)
 
         for face, pixels in faces.items():
             tone = shade(base, face, gloss)
@@ -134,10 +158,14 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
                 tone = mix(tone, (12, 16, 28), 1 - ao_top) if ao_top < 1.0 else tone
                 if rim:
                     tone = lighten(tone, 0.13)
-            elif face == "left" and ao_left < 1.0:
-                tone = mix(tone, (12, 16, 28), 1 - ao_left)
-            elif face == "right" and ao_right < 1.0:
-                tone = mix(tone, (12, 16, 28), 1 - ao_right)
+            elif face == "left":
+                shade_amt = (1 - ao_left) + grad_left
+                if shade_amt > 0:
+                    tone = mix(tone, (12, 16, 28), min(0.5, shade_amt))
+            elif face == "right":
+                shade_amt = (1 - ao_right) + grad_right
+                if shade_amt > 0:
+                    tone = mix(tone, (12, 16, 28), min(0.55, shade_amt))
             dither = mat in DITHERED and face == "top"
             for (ix, iy) in pixels:
                 c = tone
@@ -191,9 +219,9 @@ def compose_cell(
     out = Image.new("RGBA", (cell, cell), (0, 0, 0, 0))
     w, h = sprite.size
     if kind == "air":
-        bottom = bottom if bottom is not None else 46
-        shadow_y = 54
-        shadow_rx = max(6, int(w * 0.28))
+        bottom = bottom if bottom is not None else 44
+        shadow_y = 56
+        shadow_rx = max(5, int(w * 0.26))
     else:
         bottom = bottom if bottom is not None else 55
         shadow_y = bottom - 2
@@ -201,11 +229,38 @@ def compose_cell(
     x0 = (cell - w) // 2 + dx
     y0 = bottom - h
 
-    if kind in ("land", "sea", "air"):
-        _shadow_ellipse(out, cell // 2 + dx, shadow_y, shadow_rx, max(2, shadow_rx // 3),
-                        60 if kind != "air" else 52)
+    if kind == "sea":
+        # Ships sit IN the water: a flat displacement shading right under the
+        # hull instead of a floating blob, then foam hugging the waterline.
+        _shadow_ellipse(out, cell // 2 + dx, shadow_y + 1, shadow_rx,
+                        max(2, shadow_rx // 5), 52)
+    elif kind in ("land", "air"):
+        _shadow_ellipse(out, cell // 2 + dx, shadow_y, shadow_rx,
+                        max(2, shadow_rx // 3), 60 if kind == "land" else 44)
     out.alpha_composite(sprite, (x0, max(0, y0)))
+    if kind == "sea":
+        _waterline_foam(out, bottom)
     return out
+
+
+def _waterline_foam(img: Image.Image, bottom: int) -> None:
+    """Foam flecks just outside the hull along its waterline rows."""
+    px = img.load()
+    w, h = img.size
+    foam = (226, 240, 250)
+    for yy in (bottom - 2, bottom - 1):
+        if not (0 <= yy < h):
+            continue
+        xs = [xx for xx in range(w) if px[xx, yy][3] == 255]
+        if not xs:
+            continue
+        lo, hi = min(xs), max(xs)
+        n = 2 if yy == bottom - 1 else 1
+        for k in range(1, n + 1):
+            if lo - k >= 0:
+                px[lo - k, yy] = (*foam, 235 - 60 * k)
+            if hi + k < w:
+                px[hi + k, yy] = (*foam, 235 - 60 * k)
 
 
 def _shadow_ellipse(img: Image.Image, cx: int, cy: int, rx: int, ry: int, alpha: int) -> None:

@@ -96,6 +96,10 @@ def plains() -> Image.Image:
     for i, (sx, sy) in enumerate(spots):
         _rect(t, sx, sy, 3, 2, GRASS_DARK)
         _rect(t, sx + (i % 2), sy - 1, 1, 1, lighten(GRASS, 0.18))
+    # a couple of tiny wildflowers so big plains fields don't tile dead flat
+    for fx, fy in ((30, 36), (50, 40)):
+        _rect(t, fx, fy, 1, 1, SNOW)
+        _rect(t, fx + 1, fy, 1, 1, (235, 179, 63))
     return t
 
 
@@ -112,18 +116,20 @@ def woods(fac: Faction) -> Image.Image:
 
 
 def mountain(fac: Faction) -> Image.Image:
-    """A painted twin-peak massif: light/dark faces split at each ridge,
-    jagged snow caps, cracks, and a scree line at the foot."""
+    """A painted three-peak massif: light/dark faces split at each ridge,
+    jagged dithered snow caps, altitude banding down to a talus skirt."""
     t = _ground(GRASS, 4)
     px = t.load()
     base_y = 56
-    # (apex_x, apex_y, slope) — main summit and a lower right shoulder
-    peaks = ((26, 11, 1.15), (46, 27, 1.25))
-    rock_lt = (168, 163, 155)
-    rock_dk = (118, 114, 109)
+    # (apex_x, apex_y, slope) — summit, right shoulder, low left foothill
+    peaks = ((26, 10, 1.2), (46, 27, 1.3), (11, 36, 1.5))
+    rock_hi = (178, 173, 164)
+    rock_lt = (158, 154, 146)
+    rock_dk = (117, 113, 108)
+    rock_deep = (98, 95, 91)
     edge = (66, 63, 60)
-    snow_lt = (242, 244, 248)
-    snow_dk = (205, 212, 224)
+    snow_lt = (244, 246, 250)
+    snow_dk = (206, 212, 224)
     for x in range(4, 60):
         tops = [int(ay + s * abs(x - ax)) for ax, ay, s in peaks]
         y_top = min(tops)
@@ -132,28 +138,33 @@ def mountain(fac: Faction) -> Image.Image:
         owner = tops.index(y_top)
         ax, ay, _s = peaks[owner]
         lit = x <= ax
-        # jagged snow line per column
+        # jagged snow line per column; only the two tall peaks hold snow
         zig = (x * 7) % 3 + ((x // 3) % 2) * 3
-        snow_until = ay + 6 + zig
+        snow_until = ay + 6 + zig if owner < 2 else y_top
+        mid = (y_top + base_y) // 2
         for y in range(y_top, base_y):
             if y == y_top:
                 c = edge
             elif y < snow_until:
                 c = snow_lt if lit else snow_dk
+            elif y == snow_until and (x + y) % 2 == 0:
+                c = snow_dk if lit else mix(snow_dk, rock_dk, 0.5)  # melt dither
+            elif y >= base_y - 5:
+                c = rock_dk if lit else rock_deep      # talus skirt
+            elif y < mid:
+                c = rock_hi if lit else rock_dk        # sunlit high faces
             else:
                 c = rock_lt if lit else rock_dk
             px[x, y] = (*c, 255)
-        # dark outline down the silhouette flanks
-        if x in (4, 59):
-            continue
-    # ridge line below the main apex and a few cracks
-    for x, y0, ln in ((26, 18, 30), (18, 34, 10), (34, 30, 8), (46, 34, 16)):
+    # ridge lines below the apexes and a few cracks
+    for x, y0, ln in ((26, 17, 32), (18, 34, 10), (34, 30, 8), (46, 34, 16),
+                      (11, 41, 9)):
         for y in range(y0, min(base_y - 1, y0 + ln)):
-            if px[x, y][3] == 255 and px[x, y][:3] in (rock_lt, rock_dk):
+            if px[x, y][3] == 255 and px[x, y][:3] in (rock_hi, rock_lt, rock_dk):
                 px[x, y] = (*mix(rock_dk, edge, 0.5), 255)
     # contact shadow and scree at the foot
     for x in range(6, 58):
-        if px[x, base_y - 1][:3] in (rock_lt, rock_dk):
+        if px[x, base_y - 1][:3] in (rock_lt, rock_dk, rock_deep):
             px[x, base_y] = (*GRASS_DARK, 255)
     for sx, sy in ((8, 52), (52, 54), (14, 58), (46, 59)):
         _rect(t, sx, sy, 3, 2, GRASS_DARK)
@@ -190,11 +201,14 @@ def sea() -> Image.Image:
 
 def shoal() -> Image.Image:
     t = _ground(SAND, 7)
-    # water across the bottom, as in the old art, with a foam meeting line
+    # water across the bottom with a scalloped surf line — irregular foam
+    # clusters, not the uniform dashes that read as road markings
     _rect(t, 0, 40, 64, 24, WATER)
     _rect(t, 0, 40, 64, 2, SAND_DARK)      # wet sand lip
-    for sx in range(2, 64, 10):
-        _rect(t, sx, 42, 6, 2, SNOW)       # breaking foam
+    for k, sx in enumerate(range(0, 64, 8)):
+        wob = int(h01(sx, 0, 41) * 3)
+        _rect(t, sx, 41 + wob, 5 + (k % 2) * 2, 2, SNOW)
+        _rect(t, sx + 2, 43 + wob, 3, 1, mix(WATER, SNOW, 0.55))
     _rect(t, 8, 52, 14, 2, WATER_LIGHT)
     _rect(t, 40, 56, 12, 2, WATER_LIGHT)
     # dry-sand speckles and a shell

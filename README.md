@@ -23,13 +23,20 @@ sprites you edited.
 | Sea | battleship, cruiser, sub, lander (14-17) |
 | Terrain | road, plains, woods, mountain, river, city, base, hq, sea, airport, port, shoal, bridge, reef (0-13) |
 
-Rows follow `SideIdentity._ROW_FOR_KEY`: 0 neutral (white/grey, so a neutral
-unit never reads as a team), 1 meridian (red), 2 aurora (blue), 3 iron,
-4 verdant — with the faction colors taken from the game's
-`CommanderVisuals` themes. Weapon silhouettes follow each unit's
+Rows follow `SideIdentity._ROW_FOR_KEY`: 0 neutral, 1 meridian (red),
+2 aurora (blue), 3 iron, 4 verdant — every row's ramp is the exact
+`CommanderVisuals.FactionTheme` (color / dark / light) from the game's code,
+neutral's slate theme included. Weapon silhouettes follow each unit's
 `battle_style` (small arms, rocket, cannon, autocannon, bomb, torpedo,
 unarmed). Property terrains (city, base, hq, airport, port) are tinted per
 row; every other terrain repeats one tile down its column.
+
+Team color follows a livery convention: vehicle chassis and ship hulls wear
+a desaturated faction tint (the `hull` ramp), while identity surfaces — tank
+turret crowns, truck cabs, aircraft wings, ship decks, building roofs — carry
+the pure faction color, so ownership reads from the top-down view without
+the whole sprite turning into a paint blob. Buildings are neutral concrete
+and stone under faction-colored roofs, caps and banners.
 
 ## Setup
 
@@ -71,6 +78,15 @@ python3 -m venv .venv
 | `iso_buildings/<id>_<team>.png` | 25 property-building cells for `assets/sprites/iso_buildings` |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
 | `preview_map.png` | an authored little battle map proving the sheet in context |
+| `autotiles/{roads,rivers,coast,shoals}.png` | 16-variant connection sheets (see below) |
+
+The `autotiles/` sheets are the opt-in upgrade path beyond the fixed
+14-column terrain contract: roads and rivers as N/E/S/W connection sets (so
+they can turn and junction), both bridge orientations, coastline tiles for
+sea bordering land, and shoals surfed on whichever edges face water. Each
+sheet lays out masks 0-15 row-major (bit order N=1, E=2, S=4, W=8). The demo
+map composes from these, which is why its roads connect and its island has a
+shoreline; the atlases themselves are unchanged drop-ins.
 
 Note the game's `make tiles` rebuilds its atlases from its own PixVoxel
 pipeline and would overwrite installed atlases; the per-cell exports exist so
@@ -82,20 +98,27 @@ that pipeline's paste step can be pointed at this art instead.
    `x=(vx-vy)*2, y=(vx+vy)-vz*2`, each voxel a 4x4 cube sprite overlapping
    its neighbours by 2px (the classic 2px stair edge). Painter's-algorithm
    ordering, three face tones per material (pure color on the player-facing
-   left face), neighbour-aware ambient occlusion, rim light on unshadowed
-   front corners, hash dither on broad tops, then a 1px per-part outline —
-   each silhouette pixel is a dark tint of the part it borders.
+   left face), neighbour-aware ambient occlusion plus ground-contact
+   occlusion and a vertical depth gradient (tall masses darken toward their
+   base), rim light on unshadowed front corners, hash dither on broad tops,
+   then a 1px per-part outline — each silhouette pixel is a dark tint of the
+   part it borders. `Model.chamfer`/`Model.dome` cut corner columns so
+   turrets, cabs and roofs read as octagonal masses instead of cubes.
 2. **`spritegen/palette.py`** — faction ramps mirroring the game's
    `CommanderVisuals`, fixed materials (gunmetal, track, glass, skin, ...),
    shading math, and the deterministic hash noise.
 3. **`spritegen/units.py`** — 18 authored models, all facing +y
-   (screen lower-left) like the game's art. Land/sea units get a contact
-   shadow, air units hover over a detached one.
+   (screen lower-left) like the game's art. Land units get a contact
+   shadow, ships sit in a flat displacement shadow with foam hugging the
+   waterline, air units hover high over a small detached one.
 4. **`spritegen/buildings.py` / `spritegen/terrain.py`** — voxel property
    buildings and nature props composed onto 64px tile grounds that keep
    `tools/generate_tiles.gd`'s palette and darkened-edge grid convention.
-5. **`spritegen/atlas.py`** — assembles atlases, exports cells, renders the
-   preview sheets and the demo map.
+5. **`spritegen/autotile.py`** — the direction-aware road/river/bridge/
+   coast/shoal variants exported under `autotiles/`.
+6. **`spritegen/atlas.py`** — assembles atlases, exports cells, renders the
+   preview sheets and the demo map (which resolves roads, the river, the
+   bridge and every coastline through the autotile variants).
 
 Python 3.10+, no dependencies beyond Pillow. The old seed-driven generator
 (creatures/ships/items/robots/tanks) lives in git history before this
