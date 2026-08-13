@@ -11,6 +11,16 @@ const TILE := 16
 const SPRITE_PX := 64
 const SPRITE_SCALE := float(TILE) / float(SPRITE_PX)
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
+## Ambient animation frame B: the same army one beat later — rotors swept,
+## air and sea units riding a pixel higher while their shadows stay put.
+## Land cells are byte-identical between the sheets, so only what should
+## move ever moves.
+const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
+## Milliseconds per ambient beat.
+const AMBIENT_MS := 500
+## Captures pin the ambient clock at frame A the way they pin game speed
+## and the hint strip: a frame must not depend on when the shutter fired.
+static var ambient_frozen := false
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:
 ## with the generated liveries a desaturated unit collapsed into the iron and
 ## neutral rows — three meanings, one appearance (sprite review round 3). The
@@ -55,7 +65,11 @@ var atlas_row: int = -1:
 		if atlas_row == value:
 			return
 		atlas_row = value
-		texture = texture_for(unit.type, value)
+		texture = texture_for(unit.type, value, _frame)
+
+## Which ambient frame this sprite currently shows. Instance state so a
+## repaint (atlas_row, refresh) rebuilds the texture on the right sheet.
+var _frame: int = 0
 
 @onready var hp_label: Label = $HpLabel
 @onready var fuel_label: Label = $FuelLabel
@@ -94,11 +108,30 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 ## one line where that stopped being true. Static so menus can show the same
 ## artwork the board does without instancing a sprite; callers that draw it
 ## outside the world grid size it themselves.
-static func texture_for(type: UnitType, row: int) -> AtlasTexture:
+static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
 	var atlas := AtlasTexture.new()
-	atlas.atlas = load(UNITS_ATLAS_PATH)
+	atlas.atlas = load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH)
 	atlas.region = Rect2(type.atlas_col * SPRITE_PX, row * SPRITE_PX, SPRITE_PX, SPRITE_PX)
 	return atlas
+
+
+## The shared ambient beat. Wall-clock, not accumulated time: every sprite
+## on the board (and any future surface that animates) agrees on the frame
+## without a conductor, and pacing stays presentation-only by construction.
+static func ambient_frame() -> int:
+	if ambient_frozen:
+		return 0
+	return int(Time.get_ticks_msec() / AMBIENT_MS) % 2
+
+
+func _process(_delta: float) -> void:
+	var frame := ambient_frame()
+	if frame == _frame:
+		return
+	_frame = frame
+	var atlas := texture as AtlasTexture
+	if atlas != null:
+		atlas.atlas = load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH)
 
 
 func set_active_team(team: int) -> void:
