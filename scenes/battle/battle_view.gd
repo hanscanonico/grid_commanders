@@ -32,6 +32,15 @@ const TILE := 16
 const TERRAIN_PX := 64
 const ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
 const ATLAS_SOURCE_ID := 0
+## One generated sheet per autotile family; the key — a TerrainAutotiles.Family
+## value — doubles as the TileSet source id, with NONE (0) the base atlas above.
+const AUTOTILE_PATHS: Dictionary[int, String] = {
+	TerrainAutotiles.Family.ROADS: "res://assets/tiles/autotiles/roads.png",
+	TerrainAutotiles.Family.RIVERS: "res://assets/tiles/autotiles/rivers.png",
+	TerrainAutotiles.Family.COAST: "res://assets/tiles/autotiles/coast.png",
+	TerrainAutotiles.Family.SHOALS: "res://assets/tiles/autotiles/shoals.png",
+	TerrainAutotiles.Family.BRIDGES: "res://assets/tiles/autotiles/bridges.png",
+}
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
 
@@ -159,7 +168,28 @@ func _build_tile_set() -> TileSet:
 			for row in range(1, SideIdentity.FACTION_ROWS + 1):
 				atlas.create_tile(Vector2i(terrain.atlas_col, row))
 	tile_set.add_source(atlas, ATLAS_SOURCE_ID)
+	for family: int in AUTOTILE_PATHS:
+		tile_set.add_source(_autotile_source(family), family)
 	return tile_set
+
+
+## A source over one generated autotile sheet: 64px cells behind a 2px outer
+## margin with 2px separation — sprite_generator's contact-sheet contract. The
+## bridge sheet holds its two deck orientations; every other family holds all
+## 16 connection masks, laid out where TerrainAutotiles.atlas_coords says.
+func _autotile_source(family: int) -> TileSetAtlasSource:
+	var sheet := TileSetAtlasSource.new()
+	sheet.texture = load(AUTOTILE_PATHS[family])
+	sheet.margins = Vector2i(2, 2)
+	sheet.separation = Vector2i(2, 2)
+	sheet.texture_region_size = Vector2i(TERRAIN_PX, TERRAIN_PX)
+	if family == TerrainAutotiles.Family.BRIDGES:
+		sheet.create_tile(Vector2i(0, 0))
+		sheet.create_tile(Vector2i(1, 0))
+		return sheet
+	for variant in 16:
+		sheet.create_tile(TerrainAutotiles.atlas_coords(family, variant))
+	return sheet
 
 
 ## The fog gets its own tile rather than sharing BattleOverlays'.
@@ -185,6 +215,11 @@ func _paint_map() -> void:
 	for y in map.height:
 		for x in map.width:
 			var cell := Vector2i(x, y)
+			var family := TerrainAutotiles.family(map, cell)
+			if family != TerrainAutotiles.Family.NONE:
+				var mask := TerrainAutotiles.mask(map, cell)
+				terrain_layer.set_cell(cell, family, TerrainAutotiles.atlas_coords(family, mask))
+				continue
 			var terrain := map.terrain_at(cell)
 			var row := identity.atlas_row(game.owner_at(cell)) if terrain.team_tinted else 0
 			terrain_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i(terrain.atlas_col, row))
@@ -383,6 +418,10 @@ func refresh_fog() -> void:
 ## bar's tile card reads this instead of live truth on a hidden cell so its owner
 ## label names the same side the tile shows — never outing a capture out of sight.
 func _last_seen_owner(cell: Vector2i) -> int:
+	# An autotiled cell's atlas row is a mask variant, not a faction, and no
+	# autotiled terrain is a property — only the base source's rows name one.
+	if terrain_layer.get_cell_source_id(cell) != ATLAS_SOURCE_ID:
+		return MapData.NEUTRAL
 	var row: int = terrain_layer.get_cell_atlas_coords(cell).y
 	for team in game.teams:
 		if identity.atlas_row(team) == row:
