@@ -14,7 +14,7 @@ from PIL import Image
 
 from . import buildings
 from .palette import RGB, Faction, darken, h01, lighten, mix
-from .voxel import _shadow_ellipse, render
+from .voxel import _shadow_ellipse, place_in_cell, render
 
 CELL = 64
 
@@ -59,7 +59,7 @@ def _paste_prop(tile: Image.Image, prop: Image.Image, cx: int, bottom: int,
     if shadow:
         _shadow_ellipse(tile, cx, bottom - 2, max(6, int(prop.width * 0.38)),
                         max(2, prop.width // 8), 44)
-    tile.alpha_composite(prop, (cx - prop.width // 2, bottom - prop.height))
+    place_in_cell(tile, prop, cx - prop.width // 2, bottom - prop.height)
 
 
 # ---------------------------------------------------------------------------

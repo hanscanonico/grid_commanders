@@ -121,7 +121,7 @@ def main() -> None:
                 _write(atlas.building_cell(bid, fac),
                        args.out / "iso_buildings" / f"{bid}_{fac.team}.png")
 
-    print("building autotile variant sheets (roads, rivers, coast)")
+    print("building autotile sheets (roads, rivers, coast, shoals, bridges)")
     from spritegen import autotile
     _write(autotile.variant_sheet(autotile.road_tile),
            args.out / "autotiles" / "roads.png")

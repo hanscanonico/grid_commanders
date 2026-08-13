@@ -66,20 +66,6 @@ class Model:
             for cx, cy in ((x0, y0), (x0, y1), (x1, y0), (x1, y1)):
                 self.vox.pop((cx, cy, z), None)
 
-    def mirror_x(self, cx: float) -> None:
-        """Copy every voxel across the x = cx plane (2*cx must be integral).
-
-        Build one half of a symmetric hull, mirror, then place the asymmetric
-        details — the pattern every unit model uses.
-        """
-        twice = round(2 * cx)
-        for (x, y, z), m in list(self.vox.items()):
-            self.vox[(twice - x, y, z)] = m
-
-    def paste(self, other: Model, dx: int = 0, dy: int = 0, dz: int = 0) -> None:
-        for (x, y, z), m in other.vox.items():
-            self.vox[(x + dx, y + dy, z + dz)] = m
-
 
 def _face_pixels(sx: int, sy: int) -> dict[str, list[tuple[int, int]]]:
     """The 4x4 cube sprite at screen anchor (sx, sy): top / left / right."""
