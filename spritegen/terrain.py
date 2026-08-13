@@ -2,8 +2,8 @@
 
 Ground colors mirror the game's tools/generate_tiles.gd so a regenerated
 atlas drops into the same map without shifting the world's palette; the
-detail on top (voxel trees, terraced mountains, foam, wear) is what this
-generator adds. Ground fills are seamless — repeated tiles butt with no
+detail on top (painted canopies, terraced mountains, foam, wear) is what
+this generator adds. Ground fills are seamless — repeated tiles butt with no
 border treatment (design review 2026-08-13: the old darkened-edge
 convention read as a seam grid over any open field). Non-property tiles
 are identical on every faction row; property tiles compose a
@@ -15,12 +15,15 @@ from __future__ import annotations
 from PIL import Image
 
 from . import buildings
-from .palette import RGB, Faction, darken, h01, lighten, mix
-from .voxel import _shadow_ellipse, place_in_cell, render
+from .palette import RGB, FACTIONS, Faction, darken, h01, lighten, mix
+from .voxel import place_in_cell, render
 
 CELL = 64
 
-# generate_tiles.gd palette (hex constants), the map's established hues
+# generate_tiles.gd palette (hex constants), the map's established hues.
+# SAND and SNOW sit below the original hex values on purpose: terrain must
+# never outshine a unit (see VALUE_CEILING), and those two were the only
+# ground tones over the line.
 GRASS = (120, 200, 80)  # 78c850
 GRASS_DARK = (90, 166, 60)  # 5aa63c
 ROAD = (201, 184, 132)  # c9b884
@@ -28,10 +31,40 @@ ROAD_DARK = (168, 152, 104)  # a89868
 WATER = (63, 143, 220)  # 3f8fdc
 WATER_DARK = (42, 111, 191)  # 2a6fbf
 WATER_LIGHT = (124, 196, 240)  # 7cc4f0
-SAND = (224, 211, 164)  # e0d3a4
+SAND = (219, 206, 160)  # e0d3a4 pulled under the ceiling
 SAND_DARK = (196, 181, 133)  # c4b585
 ASPHALT = (111, 116, 124)  # 6f747c
-SNOW = (238, 238, 238)  # eeeeee
+SNOW = (202, 208, 216)  # cool foam/marking grey, capped (was eeeeee)
+
+# Woods canopy tones (design review round 3): the tile is a filled canopy
+# with its own value band — clearly darker than plains underfoot and than
+# verdant hull green (58, 130, 64), so a green unit standing in woods stays
+# separable from the tile it occupies.
+CANOPY = (36, 96, 44)
+CANOPY_DK = (24, 70, 33)
+CANOPY_LT = (82, 152, 74)
+TRUNK = (109, 76, 65)
+
+# Terrain value ceiling (design review round 3): the eye must go to units,
+# so no ground pixel may reach the unit sheet's top-face highlights (their
+# p99 luminance is ~0.97). Every non-property tile is passed through
+# _cap_value; the tones above are authored under the line so the cap is a
+# guarantee, not the look.
+VALUE_CEILING = 0.82
+
+
+def _cap_value(img: Image.Image) -> Image.Image:
+    """Scale any pixel brighter than VALUE_CEILING back down onto it."""
+    ceil = VALUE_CEILING * 255.0
+    px = img.load()
+    for yy in range(img.height):
+        for xx in range(img.width):
+            r, g, b, a = px[xx, yy]
+            lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            if lum > ceil:
+                k = ceil / lum
+                px[xx, yy] = (round(r * k), round(g * k), round(b * k), a)
+    return img
 
 
 def _ground(c: RGB, salt: int, grain: float = 0.03) -> Image.Image:
@@ -58,18 +91,7 @@ def _rect(img: Image.Image, x0: int, y0: int, w: int, h: int, c: RGB) -> None:
             px[xx, yy] = (*c, 255)
 
 
-def _paste_prop(
-    tile: Image.Image, prop: Image.Image, cx: int, bottom: int, shadow: bool = True
-) -> None:
-    if shadow:
-        _shadow_ellipse(
-            tile,
-            cx,
-            bottom - 2,
-            max(6, int(prop.width * 0.38)),
-            max(2, prop.width // 8),
-            44,
-        )
+def _paste_prop(tile: Image.Image, prop: Image.Image, cx: int, bottom: int) -> None:
     place_in_cell(tile, prop, cx - prop.width // 2, bottom - prop.height)
 
 
@@ -121,14 +143,65 @@ def plains() -> Image.Image:
     return t
 
 
-def woods(fac: Faction) -> Image.Image:
+# (crown x, crown y, radius) — clustered cover leaving two grass clearings,
+# so the tile reads as one occupied canopy rather than scattered props.
+_CROWNS = (
+    (8, 6, 9),
+    (26, 4, 10),
+    (45, 8, 10),
+    (60, 3, 8),
+    (4, 20, 9),
+    (19, 18, 10),
+    (36, 24, 10),
+    (58, 18, 9),
+    (10, 34, 10),
+    (27, 38, 9),
+    (61, 33, 8),
+    (5, 50, 9),
+    (22, 54, 10),
+    (42, 52, 10),
+    (59, 50, 9),
+    (34, 63, 8),
+    (52, 62, 8),
+)
+
+
+def woods() -> Image.Image:
+    """A filled canopy: crowns drawn back to front, each keeping its lit
+    top-left rim, over grass that shows only in the clearings and at the
+    fringe. The value drop against plains is the tile's read — cover, not
+    decoration — and trunks at the fringe say the cover is trees."""
     t = _ground(GRASS, 3)
-    big = render(buildings.tree(True), fac)
-    small = render(buildings.tree(False), fac)
-    _paste_prop(t, big, 22, 40)
-    _paste_prop(t, small, 45, 57)
-    # underbrush flecks
-    for sx, sy in ((8, 50), (52, 14), (12, 20)):
+    px = t.load()
+    covered = [[False] * CELL for _ in range(CELL)]
+    for cx, cy, r in sorted(_CROWNS, key=lambda c: c[1]):
+        rim = (r - 2) * (r - 2)
+        for yy in range(max(0, cy - r), min(CELL, cy + r + 1)):
+            for xx in range(max(0, cx - r), min(CELL, cx + r + 1)):
+                dx, dy = xx - cx, yy - cy
+                d = dx * dx + dy * dy
+                if d > r * r:
+                    continue
+                if d > rim:  # crown edge: lit toward the light, shaded away
+                    c = CANOPY_LT if dx + dy * 1.5 < 0 else CANOPY_DK
+                elif h01(xx, yy, 34) < 0.14:
+                    c = CANOPY_DK  # leaf clumps
+                else:
+                    n = (h01(xx, yy, 33) - 0.5) * 0.12
+                    c = lighten(CANOPY, n) if n > 0 else darken(CANOPY, -n)
+                px[xx, yy] = (*c, 255)
+                covered[yy][xx] = True
+    # contact shadow along the canopy's lower fringe
+    for x in range(CELL):
+        for y in range(CELL - 1):
+            if covered[y][x] and not covered[y + 1][x]:
+                px[x, y + 1] = (*GRASS_DARK, 255)
+    # trunks where the fringe meets the clearings
+    for tx, ty in ((46, 31), (12, 59)):
+        _rect(t, tx, ty, 2, 3, TRUNK)
+        _rect(t, tx, ty, 1, 3, darken(TRUNK, 0.25))
+    # a tuft in each clearing
+    for sx, sy in ((50, 38), (5, 61)):
         _rect(t, sx, sy, 3, 2, GRASS_DARK)
     return t
 
@@ -146,8 +219,10 @@ def mountain() -> Image.Image:
     rock_dk = (117, 113, 108)
     rock_deep = (98, 95, 91)
     edge = (66, 63, 60)
-    snow_lt = (244, 246, 250)
-    snow_dk = (206, 212, 224)
+    # cool light-grey snow, held under VALUE_CEILING: the caps were the
+    # brightest thing on the board, louder than any unit highlight (round 3)
+    snow_lt = (198, 206, 220)
+    snow_dk = (164, 176, 196)
     for x in range(4, 60):
         tops = [int(ay + s * abs(x - ax)) for ax, ay, s in peaks]
         y_top = min(tops)
@@ -198,27 +273,33 @@ def _water_base(deep: bool, salt: int) -> Image.Image:
     return _ground(WATER_DARK if deep else WATER, salt, grain=0.027)
 
 
+def _glints(t: Image.Image, base: RGB, light: RGB, salt: int) -> None:
+    """Three hash-placed flow glints: short, staggered, low-contrast.
+
+    The old four dashes sat on the same rows in every repeated tile, and a
+    stretch of water read as a lattice from across the room (round 3). The
+    hash spreads them with no shared row; nothing here aligns to a grid.
+    """
+    for i in range(3):
+        sx = 3 + int(h01(i, 0, salt) * 42)
+        sy = 4 + int(h01(i, 1, salt) * 55)
+        w = 7 + int(h01(i, 2, salt) * 7)
+        _rect(t, sx, sy, w, 1, mix(base, light, 0.55))
+        _rect(t, sx + 2 + i, sy + 1, max(3, w - 4), 1, mix(base, light, 0.3))
+
+
 def river() -> Image.Image:
     t = _water_base(False, 5)
-    # flow streaks, all horizontal like the old art but layered two-tone
-    for sx, sy, w in ((8, 14, 16), (36, 20, 16), (16, 38, 16), (44, 46, 12)):
-        _rect(t, sx, sy, w, 2, WATER_LIGHT)
-        _rect(t, sx + 2, sy + 2, w - 4, 1, mix(WATER, WATER_LIGHT, 0.5))
+    _glints(t, WATER, WATER_LIGHT, 78)
     # rounded pebble breaking the current
     _rect(t, 28, 54, 6, 3, mix(WATER, WATER_DARK, 0.7))
-    _rect(t, 29, 53, 4, 1, WATER_LIGHT)
+    _rect(t, 29, 53, 4, 1, mix(WATER, WATER_LIGHT, 0.55))
     return t
 
 
 def sea() -> Image.Image:
     t = _water_base(True, 6)
-    for sx, sy, w in ((8, 14, 16), (36, 22, 16), (14, 42, 16), (44, 50, 10)):
-        _rect(t, sx, sy, w, 2, WATER)
-        _rect(t, sx + 2, sy + 2, w - 4, 1, mix(WATER_DARK, WATER, 0.5))
-    # whitecap flecks
-    _rect(t, 48, 12, 6, 2, SNOW)
-    _rect(t, 50, 11, 2, 1, SNOW)
-    _rect(t, 20, 56, 5, 2, SNOW)
+    _glints(t, WATER_DARK, WATER, 73)
     return t
 
 
@@ -264,11 +345,12 @@ def bridge() -> Image.Image:
     return t
 
 
-def reef(fac: Faction) -> Image.Image:
+def reef() -> Image.Image:
     t = _water_base(True, 9)
     spots = ((14, 22, 3), (40, 16, 2), (22, 44, 2), (48, 46, 3))
     for sx, sy, size in spots:
-        rock = render(buildings.rock_outcrop(size), fac)
+        # rock materials are faction-independent; any row renders the same
+        rock = render(buildings.rock_outcrop(size), FACTIONS[0])
         # foam ring where the rock breaks the surface
         _rect(
             t,
@@ -278,7 +360,7 @@ def reef(fac: Faction) -> Image.Image:
             2,
             mix(WATER_DARK, SNOW, 0.55),
         )
-        _paste_prop(t, rock, sx, sy, shadow=False)
+        _paste_prop(t, rock, sx, sy)
     _rect(t, 8, 56, 10, 2, WATER)
     _rect(t, 52, 8, 8, 2, WATER)
     return t
@@ -292,7 +374,7 @@ def reef(fac: Faction) -> Image.Image:
 def _grass_lot(fac: Faction, building: str, salt: int) -> Image.Image:
     t = _ground(GRASS, salt)
     prop = render(buildings.model_for(building, fac), fac)
-    _paste_prop(t, prop, 32, 61, shadow=False)
+    _paste_prop(t, prop, 32, 61)
     return t
 
 
@@ -307,7 +389,7 @@ def airport(fac: Faction) -> Image.Image:
     _rect(t, 2, 46, 2, 12, SNOW)  # threshold bars
     _rect(t, 6, 46, 2, 12, SNOW)
     prop = render(buildings.model_for("airport", fac), fac)
-    _paste_prop(t, prop, 31, 46, shadow=False)
+    _paste_prop(t, prop, 31, 46)
     return t
 
 
@@ -316,7 +398,7 @@ def port(fac: Faction) -> Image.Image:
     _rect(t, 4, 50, 12, 2, WATER)  # harbour ripples
     _rect(t, 44, 56, 14, 2, WATER)
     prop = render(buildings.model_for("port", fac), fac)
-    _paste_prop(t, prop, 32, 52, shadow=False)
+    _paste_prop(t, prop, 32, 52)
     return t
 
 
@@ -343,35 +425,28 @@ TERRAIN_ORDER: tuple[str, ...] = (
 # Tiles whose art changes with the faction row (team-tinted properties).
 PROPERTY: frozenset[str] = frozenset({"city", "base", "hq", "airport", "port"})
 
+_PLAIN_TILES = {
+    "road": road,
+    "plains": plains,
+    "woods": woods,
+    "mountain": mountain,
+    "river": river,
+    "sea": sea,
+    "shoal": shoal,
+    "bridge": bridge,
+    "reef": reef,
+}
+_LOT_SALTS = {"city": 12, "base": 13, "hq": 14}
+
 
 def tile(tid: str, fac: Faction) -> Image.Image:
-    """One 64x64 RGBA tile. Non-property tiles ignore the faction."""
-    if tid == "road":
-        return road()
-    if tid == "plains":
-        return plains()
-    if tid == "woods":
-        return woods(fac)
-    if tid == "mountain":
-        return mountain()
-    if tid == "river":
-        return river()
-    if tid == "city":
-        return _grass_lot(fac, "city", 12)
-    if tid == "base":
-        return _grass_lot(fac, "base", 13)
-    if tid == "hq":
-        return _grass_lot(fac, "hq", 14)
-    if tid == "sea":
-        return sea()
-    if tid == "airport":
-        return airport(fac)
-    if tid == "port":
-        return port(fac)
-    if tid == "shoal":
-        return shoal()
-    if tid == "bridge":
-        return bridge()
-    if tid == "reef":
-        return reef(fac)
-    raise KeyError(tid)
+    """One 64x64 RGBA tile. Non-property tiles ignore the faction and pass
+    through the value cap; property grounds are authored under it and the
+    buildings on top are the units' asset class, not scenery."""
+    if tid in PROPERTY:
+        if tid == "airport":
+            return airport(fac)
+        if tid == "port":
+            return port(fac)
+        return _grass_lot(fac, tid, _LOT_SALTS[tid])
+    return _cap_value(_PLAIN_TILES[tid]())

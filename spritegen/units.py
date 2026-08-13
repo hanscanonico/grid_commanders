@@ -47,69 +47,85 @@ def _tire(m: Model, x: int, y: int, big: bool = False) -> None:
 
 
 def infantry() -> Model:
-    """Rifleman: chibi proportions — big helmet and face, rifle at the ready."""
+    """Rifleman: helmet dome over an open face, legs apart mid-stride, rifle
+    raised across the chest with the muzzle breaking the silhouette high to
+    the right — the opposite corner from the mech's tube."""
     m = Model()
-    # boots and legs, one leg a half-step forward
-    m.box(3, 3, 4, 5, 0, 0, "tire")
-    m.box(5, 6, 5, 6, 0, 0, "tire")
-    m.box(3, 3, 4, 5, 1, 2, "hull_dk")
-    m.box(5, 6, 5, 6, 1, 2, "hull_dk")
-    # torso with belt line
-    m.box(2, 6, 3, 6, 3, 5, "hull")
+    # mid-stride legs: left boot planted a full step forward, right boot
+    # trailing behind the hip line
+    m.box(2, 3, 6, 7, 0, 0, "tire")
+    m.box(5, 6, 2, 3, 0, 0, "tire")
+    m.box(2, 3, 6, 7, 1, 2, "hull_dk")
+    m.box(5, 6, 2, 3, 1, 2, "hull_dk")
+    # hips bridging the stride
     m.box(2, 6, 3, 6, 3, 3, "hull_dk")
+    # plain fatigue torso — the mech wears the plated chest, not the rifleman
+    m.box(2, 6, 3, 6, 4, 6, "hull")
     # backpack
     m.box(3, 5, 2, 2, 4, 6, "body_dk")
-    # left arm at the side; right hand holds the rifle column
-    m.box(1, 1, 3, 5, 4, 5, "hull")
-    m.set(7, 6, 6, "skin")  # trigger hand
-    # rifle shouldered above the torso line so it silhouettes clear of the
-    # body instead of reading as a slab across the waist
-    m.set(7, 5, 6, "wood")  # stock
-    m.box(7, 7, 6, 10, 6, 6, "gunmetal")
-    m.set(7, 11, 6, "gunmetal_dk")
-    # big head: full face under an overhanging dome helmet
-    m.box(3, 5, 3, 6, 6, 7, "skin")
-    m.box(3, 5, 2, 2, 6, 7, "hull_dk")  # nape strap
-    m.box(2, 6, 2, 6, 8, 9, "hull")  # helmet
-    for cx, cy in ((2, 2), (2, 6), (6, 2), (6, 6)):
-        m.unset(cx, cy, 9)  # round the dome
-    m.box(3, 5, 3, 5, 10, 10, "body")  # crown
+    # left arm at the side; right arm raised across the chest to the grip
+    m.box(1, 1, 3, 5, 4, 6, "hull")
+    m.box(7, 7, 4, 6, 4, 5, "hull")
+    # rifle at port arms, held a voxel clear of the torso so the barrel's
+    # diagonal reads against sky rather than across the chest
+    m.set(8, 6, 5, "wood")  # stock
+    m.set(8, 5, 6, "gunmetal")  # receiver
+    m.set(8, 4, 7, "gunmetal")
+    m.set(8, 3, 8, "gunmetal")
+    m.set(8, 2, 9, "gunmetal")
+    m.set(8, 1, 10, "gunmetal_dk")  # muzzle
+    # big open face under an overhanging dome helmet; the brim ring is a
+    # voxel wider than the torso so the dome breaks the column silhouette
+    m.box(3, 5, 4, 6, 7, 8, "skin")
+    m.box(3, 5, 3, 3, 7, 8, "hull_dk")  # nape guard
+    m.box(1, 7, 3, 6, 9, 9, "hull")  # brim
+    for cx, cy in ((1, 3), (1, 6), (7, 3), (7, 6)):
+        m.unset(cx, cy, 9)
+    m.box(2, 6, 3, 6, 10, 10, "hull")  # dome
+    for cx, cy in ((2, 3), (2, 6), (6, 3), (6, 6)):
+        m.unset(cx, cy, 10)
+    m.box(3, 5, 4, 5, 11, 11, "body")  # crown
     return m
 
 
 def mech() -> Model:
-    """Armoured trooper, shoulder bazooka riding above the helmet (rocket)."""
+    """Rocket trooper: planted wide stance, heavy pauldrons over a bulky
+    torso, and a fat launch tube climbing forward over the left shoulder —
+    taller, wider and squarer than the rifleman's stride (rocket)."""
     m = Model()
-    # wide armoured legs
-    for x in (2, 6):
-        m.box(x, x, 4, 5, 0, 0, "tire")
-        m.box(x, x, 4, 6, 1, 2, "hull")
-        m.box(x, x, 4, 6, 3, 3, "hull_dk")  # knee plate
-    # broad torso with a light chest plate
-    m.box(1, 7, 3, 6, 4, 8, "hull")
-    m.box(2, 6, 6, 6, 5, 7, "hull_lt")
-    m.box(1, 7, 3, 6, 4, 4, "hull_dk")
+    # wide planted stance, two-voxel-thick armoured legs
+    for x0 in (1, 6):
+        m.box(x0, x0 + 1, 4, 6, 0, 0, "tire")
+        m.box(x0, x0 + 1, 4, 6, 1, 2, "hull")
+        m.box(x0, x0 + 1, 4, 6, 3, 3, "hull_dk")  # knee plates
+    # belt line bridging the stance
+    m.box(1, 7, 4, 6, 4, 4, "hull_dk")
+    # bulky torso with a light chest plate
+    m.box(1, 7, 3, 6, 5, 8, "hull")
+    m.box(2, 6, 6, 6, 6, 8, "hull_lt")
     # ammo backpack with two spare-rocket tips
     m.box(2, 6, 2, 2, 5, 8, "hull_dk")
     m.set(3, 2, 9, "steel")
     m.set(5, 2, 9, "steel")
-    # shoulder pads — the pure team accents
-    m.box(0, 0, 3, 6, 7, 8, "body")
-    m.box(8, 8, 3, 6, 7, 8, "body")
+    # pauldrons — the pure team accents
+    m.box(0, 0, 3, 6, 7, 9, "body")
+    m.box(8, 8, 3, 6, 7, 9, "body")
     # big helmet with a glass visor band across the face
-    m.box(3, 5, 3, 6, 9, 9, "skin")
+    m.box(3, 5, 4, 6, 9, 9, "skin")
     m.box(3, 5, 6, 6, 10, 10, "glass")
     m.box(3, 5, 3, 5, 10, 10, "hull")
-    m.box(2, 6, 2, 6, 11, 12, "hull")
-    for cx, cy in ((2, 2), (2, 6), (6, 2), (6, 6)):
+    m.box(2, 6, 3, 6, 11, 12, "hull")
+    for cx, cy in ((2, 3), (2, 6), (6, 3), (6, 6)):
         m.unset(cx, cy, 12)  # round the dome
-    # bazooka tube above the right shoulder, muzzle toward +y
-    m.box(7, 8, 1, 11, 10, 10, "gunmetal")
-    m.box(7, 8, 1, 1, 10, 10, "bore")  # exhaust
-    m.box(7, 8, 11, 11, 10, 10, "gunmetal_dk")
-    m.set(7, 12, 10, "amber")  # loaded warhead tip
-    m.set(8, 12, 10, "amber")
-    m.box(7, 7, 7, 7, 6, 9, "hull")  # supporting arm
+    # fat launch tube seated on the left pauldron, climbing forward past the
+    # helmet crown, venturi exhaust hanging off the back
+    m.box(0, 1, 2, 2, 9, 10, "bore")  # exhaust
+    for i in range(5):
+        m.box(0, 1, 3 + i, 3 + i, 10 + i, 11 + i, "gunmetal")
+    m.box(0, 1, 8, 8, 15, 16, "gunmetal_dk")  # muzzle ring
+    m.set(0, 9, 16, "amber")  # loaded warhead tip
+    m.set(1, 9, 16, "amber")
+    m.box(1, 1, 5, 5, 9, 11, "hull")  # supporting arm
     return m
 
 
@@ -220,7 +236,8 @@ def md_tank() -> Model:
 
 
 def anti_air() -> Model:
-    """Tracked flak: quad autocannon battery angled up, search radar."""
+    """Tracked flak: twin long barrels raked past 60 degrees over the battery
+    box — the howitzer's climb, paired and thin — plus a search radar."""
     m = Model()
     _track(m, 0, 2, 0, 11)
     _track(m, 8, 10, 0, 11)
@@ -228,22 +245,24 @@ def anti_air() -> Model:
     m.box(0, 10, 1, 11, 2, 3, "hull")
     m.box(1, 9, 12, 12, 2, 3, "hull_lt")
     m.box(2, 8, 1, 1, 3, 3, "hull_dk")
-    # rotating battery box in livery armour; its base band and a crown
-    # stripe carry the team color
+    # rotating battery box in livery armour; its base band and a roof panel
+    # carry the team color
     m.box(2, 8, 3, 8, 4, 6, "hull")
     m.chamfer(2, 8, 3, 8, 6, 6)
-    m.box(3, 7, 8, 8, 6, 6, "body")  # crown stripe
+    m.box(3, 7, 4, 5, 6, 6, "body")  # roof panel
     m.box(2, 8, 3, 8, 4, 4, "body_dk")
     m.box(3, 7, 3, 3, 5, 6, "hull_dk")  # ammo feed
-    # twin flak tubes climbing steeply skyward — the class-defining pose
+    # elevating mount at the battery front: livery pedestal, gunmetal cradle
+    m.box(4, 6, 6, 8, 6, 7, "hull")
+    m.set(5, 7, 8, "amber")  # ranging light
+    # twin long barrels climbing two z per tile like the howitzer, but
+    # paired and one voxel thin — the raked lines ARE the identity
     for x in (3, 7):
-        m.box(x, x, 9, 10, 6, 6, "gunmetal")
-        m.box(x, x, 11, 11, 7, 7, "gunmetal")
-        m.box(x, x, 12, 12, 8, 8, "gunmetal")
-        m.set(x, 13, 9, "gunmetal_dk")
-        m.set(x, 14, 9, "bore")
-    # ranging light on the battery roof
-    m.set(5, 8, 7, "amber")
+        m.box(x, x, 8, 8, 6, 7, "gunmetal_dk")  # trunnion
+        for i in range(5):
+            m.box(x, x, 9 + i, 9 + i, 8 + 2 * i, 9 + 2 * i, "gunmetal")
+        m.set(x, 14, 17, "gunmetal_dk")  # muzzle
+        m.set(x, 14, 18, "bore")
     # search radar dish on a rear mast, big enough to read at map scale
     m.box(8, 8, 4, 4, 7, 8, "hull")
     m.box(7, 8, 3, 5, 9, 9, "hull_lt")

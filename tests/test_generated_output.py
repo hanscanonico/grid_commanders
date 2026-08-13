@@ -217,6 +217,11 @@ class RowSeparation(unittest.TestCase):
     numbers pin.
     """
 
+    # The dithered drop shadow is deliberately identical on every row, so it
+    # dilutes a row-mean toward every other row's; the gate measures armies,
+    # not their shadows.
+    SHADOW: tuple[int, int, int] = (16, 18, 24)
+
     def _row_mean(self, img, row: int) -> tuple[float, float, float]:
         px = img.load()
         tot = [0, 0, 0]
@@ -224,7 +229,7 @@ class RowSeparation(unittest.TestCase):
         for y in range(row * 64, row * 64 + 64):
             for x in range(img.width):
                 r, g, b, a = px[x, y]
-                if a > 200:
+                if a > 200 and (r, g, b) != self.SHADOW:
                     tot[0] += r
                     tot[1] += g
                     tot[2] += b

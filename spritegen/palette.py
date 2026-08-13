@@ -107,6 +107,13 @@ _IRON_HULL: RGB = (178, 184, 192)
 _IRON_HULL_DK: RGB = (142, 149, 158)
 _IRON_HULL_LT: RGB = (206, 212, 219)
 
+# Cyan glass is Aurora's alone (sprite review round 3): an untinted cyan
+# canopy on every row was the largest accent on some sprites and competed
+# with the faction read — a verdant copter was a green-and-blue unit. Every
+# other faction's canopies and bridge glass go warm grey-white.
+_CANOPY: RGB = (215, 211, 200)
+_CANOPY_DK: RGB = (174, 170, 158)
+
 
 def resolve(material: str, faction: Faction) -> RGB:
     """A model's material name -> concrete RGB for one faction row."""
@@ -116,6 +123,10 @@ def resolve(material: str, faction: Faction) -> RGB:
         return faction.body_dk
     if material == "body_lt":
         return faction.body_lt
+    if material == "glass":
+        return MATERIALS["glass"] if faction.key == "aurora" else _CANOPY
+    if material == "glass_dk":
+        return MATERIALS["glass_dk"] if faction.key == "aurora" else _CANOPY_DK
     if material == "hull":
         return (
             _IRON_HULL

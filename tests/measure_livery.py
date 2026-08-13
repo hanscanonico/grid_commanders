@@ -24,13 +24,18 @@ def saturation(rgb: tuple[int, int, int]) -> float:
     return 0.0 if hi == 0 else (hi - lo) / hi
 
 
+# The dithered drop shadow is identical on every row; readouts measure the
+# army, not its shadow (same exclusion as the RowSeparation gate).
+SHADOW = (16, 18, 24)
+
+
 def opaque(img) -> list[tuple[int, int, tuple[int, int, int]]]:
     px = img.convert("RGBA").load()
     out = []
     for y in range(img.height):
         for x in range(img.width):
             c = px[x, y]
-            if c[3] > 200:
+            if c[3] > 200 and c[:3] != SHADOW:
                 out.append((x, y, c[:3]))
     return out
 
