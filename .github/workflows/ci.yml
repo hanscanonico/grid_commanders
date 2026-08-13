@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -33,6 +36,9 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
+      - name: Run the generator contract tests
+        run: python -m unittest discover tests
+
       - name: Generate twice, assert byte determinism
         run: |
           python sprite_generator.py -o /tmp/gen_a
@@ -52,6 +58,7 @@ jobs:
 
           GEN = Path("/tmp/gen_a")
           ASSETS = Path(".lavish/assets")
+          EXPECTED = 35
           pairs = [
               (GEN / "units_atlas.png", ASSETS / "units_atlas.png"),
               (GEN / "terrain_atlas.png", ASSETS / "terrain_atlas.png"),
@@ -63,14 +70,27 @@ jobs:
               (GEN / "autotiles" / f"{n}.png", ASSETS / "autotiles" / f"{n}.png")
               for n in ("roads", "rivers", "coast", "shoals", "bridges")
           ]
+          # Enumerated from the committed side so a snapshot the generator no
+          # longer emits fails loudly instead of dropping out of the pair list.
           pairs += [
-              (p, ASSETS / "iso_buildings" / p.name)
-              for p in sorted((GEN / "iso_buildings").glob("*.png"))
+              (GEN / "iso_buildings" / p.name, p)
+              for p in sorted((ASSETS / "iso_buildings").glob("*.png"))
           ]
           bad = []
+          if len(pairs) != EXPECTED:
+              bad.append(f"expected {EXPECTED} snapshots to compare, found {len(pairs)}")
+          orphans = sorted(
+              p.name
+              for p in (GEN / "iso_buildings").glob("*.png")
+              if not (ASSETS / "iso_buildings" / p.name).exists()
+          )
+          bad += [f"generated cell has no committed snapshot: {n}" for n in orphans]
           for gen, snap in pairs:
               if not snap.exists():
                   bad.append(f"missing snapshot: {snap}")
+                  continue
+              if not gen.exists():
+                  bad.append(f"generator did not emit: {gen}")
                   continue
               a = Image.open(gen).convert("RGBA")
               b = Image.open(snap).convert("RGBA")
