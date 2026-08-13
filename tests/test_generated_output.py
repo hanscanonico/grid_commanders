@@ -272,18 +272,11 @@ class Silhouette(unittest.TestCase):
     silhouettes is the review's gate: any pair above 0.85 is one shape
     wearing two labels."""
 
-    # Named debt, not tolerance: these pairs fail the gate today and are
-    # the mass-table milestone's to fix (review items 1/2). A pair may be
-    # REMOVED from this set as models diverge; adding one is a regression.
-    KNOWN_CLONES: frozenset[frozenset[str]] = frozenset(
-        {
-            frozenset({"tank", "artillery"}),
-            frozenset({"tank", "apc"}),
-            frozenset({"artillery", "apc"}),
-            frozenset({"rockets", "missiles"}),
-            frozenset({"apc", "missiles"}),
-        }
-    )
+    # Named debt, not tolerance: a pair listed here fails the gate and is
+    # asserted to keep failing, so fixing one is a visible diff. The mass-table
+    # milestone (2026-08-14) emptied the original five clone pairs; adding a
+    # pair back is a regression.
+    KNOWN_CLONES: frozenset[frozenset[str]] = frozenset()
 
     def _silhouette(self, uid: str) -> set[tuple[int, int]]:
         cell = atlas.unit_cell(uid, faction_by_key("neutral")).convert("RGBA")
