@@ -43,8 +43,10 @@ def _preview_only(ids: list[str], team: str, zoom: int, out: Path) -> None:
         elif sid in terrain.TERRAIN_ORDER:
             cells.append(terrain.tile(sid, fac))
         else:
-            sys.exit(f"unknown id '{sid}' (units: {', '.join(ATLAS_ORDER)}; "
-                     f"terrain: {', '.join(terrain.TERRAIN_ORDER)})")
+            sys.exit(
+                f"unknown id '{sid}' (units: {', '.join(ATLAS_ORDER)}; "
+                f"terrain: {', '.join(terrain.TERRAIN_ORDER)})"
+            )
     sheet = Image.new("RGBA", (len(cells) * 66 + 2, 68), (52, 52, 60, 255))
     for i, c in enumerate(cells):
         sheet.alpha_composite(c.convert("RGBA"), (i * 66 + 2, 2))
@@ -69,9 +71,11 @@ def _install(src: Path, dest: Path) -> None:
         d.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(s, d)
     print(f"installed atlases + {len(pairs) - 2} cells into {dest}")
-    print("note: the game's `make tiles` regenerates atlases from its own "
-          "pipeline; the per-cell sprites keep tools/paste_unit_sprites.gd "
-          "working if you rebuild there.")
+    print(
+        "note: the game's `make tiles` regenerates atlases from its own "
+        "pipeline; the per-cell sprites keep tools/paste_unit_sprites.gd "
+        "working if you rebuild there."
+    )
 
 
 def main() -> None:
@@ -79,22 +83,35 @@ def main() -> None:
         description=__doc__.splitlines()[0],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    ap.add_argument("-o", "--out", type=Path, default=Path("out"),
-                    help="output directory")
-    ap.add_argument("--only", metavar="IDS",
-                    help="comma list of unit/terrain ids: render only a zoomed "
-                         "preview_only.png of those (fast iteration)")
-    ap.add_argument("--team", default="red",
-                    help="faction row for --only previews "
-                         "(neutral/red/blue/iron/verdant)")
-    ap.add_argument("--zoom", type=int, default=6,
-                    help="zoom factor for --only previews")
-    ap.add_argument("--no-cells", action="store_true",
-                    help="skip the per-cell PNG exports")
-    ap.add_argument("--install", nargs="?", const=Path("../grid_commanders"),
-                    type=Path, metavar="GAME_DIR",
-                    help="copy atlases and cells into a grid_commanders "
-                         "checkout (default ../grid_commanders)")
+    ap.add_argument(
+        "-o", "--out", type=Path, default=Path("out"), help="output directory"
+    )
+    ap.add_argument(
+        "--only",
+        metavar="IDS",
+        help="comma list of unit/terrain ids: render only a zoomed "
+        "preview_only.png of those (fast iteration)",
+    )
+    ap.add_argument(
+        "--team",
+        default="red",
+        help="faction row for --only previews (neutral/red/blue/iron/verdant)",
+    )
+    ap.add_argument(
+        "--zoom", type=int, default=6, help="zoom factor for --only previews"
+    )
+    ap.add_argument(
+        "--no-cells", action="store_true", help="skip the per-cell PNG exports"
+    )
+    ap.add_argument(
+        "--install",
+        nargs="?",
+        const=Path("../grid_commanders"),
+        type=Path,
+        metavar="GAME_DIR",
+        help="copy atlases and cells into a grid_commanders "
+        "checkout (default ../grid_commanders)",
+    )
     args = ap.parse_args()
 
     if args.only:
@@ -113,30 +130,44 @@ def main() -> None:
         print("exporting unit cells")
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
-                _write(atlas.unit_cell(uid, fac),
-                       args.out / "units" / f"{uid}_{fac.team}.png")
+                _write(
+                    atlas.unit_cell(uid, fac),
+                    args.out / "units" / f"{uid}_{fac.team}.png",
+                )
         print("exporting property-building cells")
         for bid in sorted(terrain.PROPERTY):
             for fac in FACTIONS:
-                _write(atlas.building_cell(bid, fac),
-                       args.out / "iso_buildings" / f"{bid}_{fac.team}.png")
+                _write(
+                    atlas.building_cell(bid, fac),
+                    args.out / "iso_buildings" / f"{bid}_{fac.team}.png",
+                )
 
     print("building autotile sheets (roads, rivers, coast, shoals, bridges)")
     from spritegen import autotile
-    _write(autotile.variant_sheet(autotile.road_tile),
-           args.out / "autotiles" / "roads.png")
-    _write(autotile.variant_sheet(autotile.river_tile),
-           args.out / "autotiles" / "rivers.png")
-    _write(autotile.variant_sheet(autotile.coast_tile),
-           args.out / "autotiles" / "coast.png")
-    _write(autotile.variant_sheet(autotile.shoal_tile),
-           args.out / "autotiles" / "shoals.png")
+
+    _write(
+        autotile.variant_sheet(autotile.road_tile), args.out / "autotiles" / "roads.png"
+    )
+    _write(
+        autotile.variant_sheet(autotile.river_tile),
+        args.out / "autotiles" / "rivers.png",
+    )
+    _write(
+        autotile.variant_sheet(autotile.coast_tile),
+        args.out / "autotiles" / "coast.png",
+    )
+    _write(
+        autotile.variant_sheet(autotile.shoal_tile),
+        args.out / "autotiles" / "shoals.png",
+    )
     _write(autotile.bridge_sheet(), args.out / "autotiles" / "bridges.png")
 
     print("rendering previews")
     _write(atlas.preview(units_atlas, 2), args.out / "preview_units.png")
-    _write(atlas.preview(terrain_atlas.convert("RGBA"), 2),
-           args.out / "preview_terrain.png")
+    _write(
+        atlas.preview(terrain_atlas.convert("RGBA"), 2),
+        args.out / "preview_terrain.png",
+    )
     _write(atlas.build_demo(), args.out / "preview_map.png")
 
     if args.install is not None:

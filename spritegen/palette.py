@@ -15,11 +15,11 @@ RGB = tuple[int, int, int]
 
 @dataclass(frozen=True)
 class Faction:
-    key: str          # atlas row key (side_identity.gd)
-    team: str         # per-unit PNG suffix (paste_unit_sprites.gd TEAM_ROWS)
-    body: RGB         # FactionTheme.color
-    body_dk: RGB      # FactionTheme.color_dark
-    body_lt: RGB      # FactionTheme.color_light
+    key: str  # atlas row key (side_identity.gd)
+    team: str  # per-unit PNG suffix (paste_unit_sprites.gd TEAM_ROWS)
+    body: RGB  # FactionTheme.color
+    body_dk: RGB  # FactionTheme.color_dark
+    body_lt: RGB  # FactionTheme.color_light
 
 
 # Atlas row order. Every row is the exact FactionTheme from the game's
@@ -70,8 +70,19 @@ MATERIALS: dict[str, RGB] = {
 }
 
 # Materials whose big top surfaces get a whisper of per-pixel dither texture.
-DITHERED = {"body", "body_dk", "body_lt", "hull", "hull_dk", "hull_lt",
-            "deck", "leaf", "concrete", "asphalt", "stone"}
+DITHERED = {
+    "body",
+    "body_dk",
+    "body_lt",
+    "hull",
+    "hull_dk",
+    "hull_lt",
+    "deck",
+    "leaf",
+    "concrete",
+    "asphalt",
+    "stone",
+}
 # Materials rendered glossy: hot specular top, brighter left face.
 GLOSSY = {"glass", "glass_dk"}
 

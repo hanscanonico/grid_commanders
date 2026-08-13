@@ -61,19 +61,19 @@ def infantry() -> Model:
     m.box(3, 5, 2, 2, 4, 6, "body_dk")
     # left arm at the side; right hand holds the rifle column
     m.box(1, 1, 3, 5, 4, 5, "body")
-    m.set(7, 6, 6, "skin")               # trigger hand
+    m.set(7, 6, 6, "skin")  # trigger hand
     # rifle shouldered above the torso line so it silhouettes clear of the
     # body instead of reading as a slab across the waist
-    m.set(7, 5, 6, "wood")               # stock
+    m.set(7, 5, 6, "wood")  # stock
     m.box(7, 7, 6, 10, 6, 6, "gunmetal")
     m.set(7, 11, 6, "gunmetal_dk")
     # big head: full face under an overhanging dome helmet
     m.box(3, 5, 3, 6, 6, 7, "skin")
-    m.box(3, 5, 2, 2, 6, 7, "body_dk")   # nape strap
-    m.box(2, 6, 2, 6, 8, 9, "body")      # helmet
+    m.box(3, 5, 2, 2, 6, 7, "body_dk")  # nape strap
+    m.box(2, 6, 2, 6, 8, 9, "body")  # helmet
     for cx, cy in ((2, 2), (2, 6), (6, 2), (6, 6)):
-        m.unset(cx, cy, 9)               # round the dome
-    m.box(3, 5, 3, 5, 10, 10, "body")    # crown
+        m.unset(cx, cy, 9)  # round the dome
+    m.box(3, 5, 3, 5, 10, 10, "body")  # crown
     return m
 
 
@@ -84,7 +84,7 @@ def mech() -> Model:
     for x in (2, 6):
         m.box(x, x, 4, 5, 0, 0, "tire")
         m.box(x, x, 4, 6, 1, 2, "body")
-        m.box(x, x, 4, 6, 3, 3, "body_dk")   # knee plate
+        m.box(x, x, 4, 6, 3, 3, "body_dk")  # knee plate
     # broad torso with a light chest plate
     m.box(1, 7, 3, 6, 4, 8, "body")
     m.box(2, 6, 6, 6, 5, 7, "body_lt")
@@ -102,14 +102,14 @@ def mech() -> Model:
     m.box(3, 5, 3, 5, 10, 10, "body")
     m.box(2, 6, 2, 6, 11, 12, "body")
     for cx, cy in ((2, 2), (2, 6), (6, 2), (6, 6)):
-        m.unset(cx, cy, 12)              # round the dome
+        m.unset(cx, cy, 12)  # round the dome
     # bazooka tube above the right shoulder, muzzle toward +y
     m.box(7, 8, 1, 11, 10, 10, "gunmetal")
-    m.box(7, 8, 1, 1, 10, 10, "bore")        # exhaust
+    m.box(7, 8, 1, 1, 10, 10, "bore")  # exhaust
     m.box(7, 8, 11, 11, 10, 10, "gunmetal_dk")
-    m.set(7, 12, 10, "amber")                # loaded warhead tip
+    m.set(7, 12, 10, "amber")  # loaded warhead tip
     m.set(8, 12, 10, "amber")
-    m.box(7, 7, 7, 7, 6, 9, "body")          # supporting arm
+    m.box(7, 7, 7, 7, 6, 9, "body")  # supporting arm
     return m
 
 
@@ -134,7 +134,7 @@ def recon() -> Model:
     m.chamfer(2, 7, 3, 9, 5, 5)
     m.box(3, 6, 9, 9, 4, 5, "glass")
     m.box(7, 7, 4, 7, 4, 4, "glass_dk")
-    m.box(2, 7, 3, 3, 4, 4, "body_dk")   # rear cabin plate
+    m.box(2, 7, 3, 3, 4, 4, "body_dk")  # rear cabin plate
     # pintle MG on a rear roof ring mount (small_arms)
     m.box(4, 5, 4, 5, 6, 6, "gunmetal_dk")
     m.box(4, 4, 5, 5, 7, 7, "gunmetal_dk")
@@ -156,8 +156,8 @@ def tank() -> Model:
     # hull in desaturated armour; the turret crown carries the team color
     m.box(0, 11, 1, 12, 2, 3, "hull")
     m.box(1, 10, 13, 13, 2, 3, "hull")
-    m.box(2, 9, 14, 14, 2, 2, "hull_lt")   # glacis lip
-    m.box(2, 9, 13, 13, 3, 3, "hull_lt")   # glacis top
+    m.box(2, 9, 14, 14, 2, 2, "hull_lt")  # glacis lip
+    m.box(2, 9, 13, 13, 3, 3, "hull_lt")  # glacis top
     # rear deck vents and exhausts
     m.box(2, 9, 1, 1, 3, 3, "hull_dk")
     m.box(2, 9, 3, 3, 3, 3, "hull_dk")
@@ -167,9 +167,9 @@ def tank() -> Model:
     m.chamfer(3, 8, 4, 9, 4, 5)
     m.box(4, 7, 5, 8, 6, 6, "body")
     m.chamfer(4, 7, 5, 8, 6, 6)
-    m.box(4, 5, 5, 6, 7, 7, "body_dk")     # commander cupola
-    m.set(6, 8, 6, "body_lt")              # loader hatch glint
-    m.box(4, 7, 4, 4, 6, 6, "hull_dk")     # stowage bustle
+    m.box(4, 5, 5, 6, 7, 7, "body_dk")  # commander cupola
+    m.set(6, 8, 6, "body_lt")  # loader hatch glint
+    m.box(4, 7, 4, 4, 6, 6, "hull_dk")  # stowage bustle
     # mantlet and a long gun that owns the silhouette
     m.box(4, 7, 10, 10, 4, 5, "hull_dk")
     m.box(5, 6, 10, 17, 5, 5, "gunmetal")
@@ -201,9 +201,9 @@ def md_tank() -> Model:
     m.chamfer(3, 9, 4, 11, 5, 6)
     m.box(4, 8, 5, 10, 7, 7, "body")
     m.chamfer(4, 8, 5, 10, 7, 7)
-    m.box(4, 8, 4, 4, 7, 7, "hull_dk")     # bustle rack
-    m.box(4, 5, 5, 6, 8, 8, "body_dk")     # cupola
-    m.box(6, 7, 6, 7, 8, 8, "body_lt")     # hatch
+    m.box(4, 8, 4, 4, 7, 7, "hull_dk")  # bustle rack
+    m.box(4, 5, 5, 6, 8, 8, "body_dk")  # cupola
+    m.box(6, 7, 6, 7, 8, 8, "body_lt")  # hatch
     # wide mantlet, longer gun with thermal-sleeve rings
     m.box(4, 8, 12, 12, 5, 7, "hull_dk")
     m.box(5, 7, 13, 19, 6, 6, "gunmetal")
@@ -227,7 +227,7 @@ def anti_air() -> Model:
     m.box(2, 8, 3, 8, 4, 6, "body")
     m.chamfer(2, 8, 3, 8, 6, 6)
     m.box(2, 8, 3, 8, 4, 4, "body_dk")
-    m.box(3, 7, 3, 3, 5, 6, "body_dk")   # ammo feed
+    m.box(3, 7, 3, 3, 5, 6, "body_dk")  # ammo feed
     # twin flak tubes climbing steeply skyward — the class-defining pose
     for x in (3, 7):
         m.box(x, x, 9, 10, 6, 6, "gunmetal")
@@ -256,13 +256,13 @@ def artillery() -> Model:
     m.box(1, 9, 2, 8, 4, 5, "hull")
     m.box(2, 8, 2, 6, 6, 6, "body")
     m.chamfer(2, 8, 2, 6, 6, 6)
-    m.box(1, 9, 2, 2, 4, 5, "hull_dk")   # rear plate
-    m.box(2, 8, 8, 8, 4, 5, "hull_dk")   # front casemate slope
-    m.set(3, 4, 7, "body_dk")            # top hatch
+    m.box(1, 9, 2, 2, 4, 5, "hull_dk")  # rear plate
+    m.box(2, 8, 8, 8, 4, 5, "hull_dk")  # front casemate slope
+    m.set(3, 4, 7, "body_dk")  # top hatch
     m.set(4, 4, 7, "body_dk")
     # howitzer: fat tube climbing at ~45 degrees toward +y, longer and
     # taller than any flat tank gun so the class reads at a glance
-    m.box(4, 6, 8, 9, 6, 6, "gunmetal_dk")   # cradle
+    m.box(4, 6, 8, 9, 6, 6, "gunmetal_dk")  # cradle
     m.box(4, 6, 9, 10, 7, 7, "gunmetal")
     m.box(4, 6, 10, 11, 8, 8, "gunmetal")
     m.box(4, 6, 11, 12, 9, 9, "gunmetal")
@@ -300,7 +300,7 @@ def rockets() -> Model:
         m.box(1, 8, max(1, y1 - 2), y1, 5 + k, 6 + k, "body_dk")
         for x in (2, 4, 6):
             m.set(x, y1, 6 + k, "bore")
-    m.box(1, 8, 7, 8, 4, 4, "hull_dk")     # pod underside toward the cab
+    m.box(1, 8, 7, 8, 4, 4, "hull_dk")  # pod underside toward the cab
     m.box(1, 1, 1, 8, 5, 5, "gunmetal_dk")  # cradle rail
     # elevation ram under the pod's front lip
     m.box(4, 5, 8, 8, 4, 4, "gunmetal")
@@ -315,7 +315,7 @@ def apc() -> Model:
     # tall box hull in desaturated armour
     m.box(0, 10, 1, 12, 2, 5, "hull")
     m.box(1, 9, 13, 13, 2, 4, "hull")
-    m.box(2, 8, 13, 13, 5, 5, "hull_lt")   # nose slope
+    m.box(2, 8, 13, 13, 5, 5, "hull_lt")  # nose slope
     m.box(2, 8, 14, 14, 2, 3, "hull_lt")
     # driver visor slit and headlights
     m.box(3, 5, 14, 14, 4, 4, "glass_dk")
@@ -326,10 +326,10 @@ def apc() -> Model:
     m.chamfer(1, 9, 2, 12, 6, 6)
     m.box(3, 7, 8, 11, 6, 6, "body_dk")
     m.box(2, 4, 3, 5, 7, 7, "wood")
-    m.box(8, 8, 3, 6, 7, 7, "body_dk")     # rail
+    m.box(8, 8, 3, 6, 7, 7, "body_dk")  # rail
     # rear troop door
     m.box(3, 7, 0, 0, 2, 5, "hull_dk")
-    m.set(5, 0, 3, "steel")                # door handle
+    m.set(5, 0, 3, "steel")  # door handle
     # tall comms whip — the APC keeps one; the gun tanks lost theirs
     m.box(9, 9, 3, 3, 7, 9, "steel")
     m.set(9, 3, 10, "amber")
@@ -380,7 +380,7 @@ def fighter() -> Model:
     # fuselage in desaturated airframe grey, nose toward +y
     m.box(4, 5, 0, 17, 3, 4, "hull")
     m.box(4, 5, 16, 18, 3, 3, "hull")
-    m.set(4, 19, 3, "hull_dk")           # radome tip
+    m.set(4, 19, 3, "hull_dk")  # radome tip
     m.set(5, 19, 3, "hull_dk")
     # canopy
     m.box(4, 5, 11, 13, 5, 5, "glass")
@@ -417,7 +417,7 @@ def bomber() -> Model:
     m.box(4, 7, 0, 19, 3, 5, "hull")
     m.box(4, 7, 18, 19, 3, 4, "hull")
     m.chamfer(4, 7, 0, 19, 5, 5)
-    m.box(5, 6, 20, 20, 3, 4, "hull_lt")   # nose cap
+    m.box(5, 6, 20, 20, 3, 4, "hull_lt")  # nose cap
     # flight-deck glazing
     m.box(4, 7, 16, 17, 5, 5, "glass")
     # team-colored straight wings with slight rearward rake; dark trailing
@@ -532,7 +532,7 @@ def battleship() -> Model:
     m.box(2, 5, 2, 20, 2, 2, "body")
     m.box(3, 4, 21, 22, 2, 2, "body")
     m.box(3, 4, 0, 1, 2, 2, "body")
-    m.box(3, 4, 19, 20, 2, 2, "body_dk")   # bow capstan plate
+    m.box(3, 4, 19, 20, 2, 2, "body_dk")  # bow capstan plate
     # fore main turret: barbette + twin guns toward the bow
     m.box(2, 5, 15, 17, 3, 3, "hull")
     m.box(3, 4, 15, 17, 4, 4, "body_dk")
@@ -588,7 +588,7 @@ def cruiser() -> Model:
     m.box(3, 4, 12, 12, 4, 4, "glass_dk")
     m.box(3, 4, 9, 11, 5, 5, "hull")
     m.box(3, 4, 11, 11, 5, 5, "glass_dk")
-    m.box(3, 3, 10, 10, 6, 6, "steel")     # mast
+    m.box(3, 3, 10, 10, 6, 6, "steel")  # mast
     # second AA mount on the aft superstructure
     m.box(4, 5, 8, 8, 5, 5, "gunmetal_dk")
     # aft helipad: dark pad, light border dots, white H
@@ -608,7 +608,7 @@ def sub() -> Model:
     m.box(3, 4, 19, 20, 1, 2, "hull")
     m.box(3, 4, 21, 21, 1, 1, "hull")
     m.box(3, 4, 0, 1, 1, 2, "hull")
-    m.box(2, 5, 4, 16, 3, 3, "hull")      # hull crown
+    m.box(2, 5, 4, 16, 3, 3, "hull")  # hull crown
     m.box(3, 4, 17, 18, 3, 3, "hull")
     # dark anti-fouling waterline
     m.box(2, 5, 2, 18, 0, 0, "hull_dk")
@@ -649,14 +649,14 @@ def lander() -> Model:
     m.box(4, 4, 3, 14, 1, 1, "hull_dk")
     # blunt team-colored bow ramp, raised for sea travel — the identity patch
     m.box(1, 7, 18, 18, 0, 3, "body")
-    m.box(1, 7, 18, 18, 4, 4, "body_dk")   # ramp lip
-    m.box(2, 6, 18, 18, 2, 3, "body_lt")   # ramp ribs
+    m.box(1, 7, 18, 18, 4, 4, "body_dk")  # ramp lip
+    m.box(2, 6, 18, 18, 2, 3, "body_lt")  # ramp ribs
     # aft wheelhouse
     m.box(2, 6, 1, 4, 2, 4, "hull")
     m.chamfer(2, 6, 1, 4, 4, 4)
     m.box(3, 5, 4, 4, 4, 4, "glass_dk")
-    m.box(3, 5, 2, 3, 5, 5, "body")        # team-colored cabin roof
-    m.box(6, 6, 1, 1, 4, 6, "steel")       # exhaust stack
+    m.box(3, 5, 2, 3, 5, 5, "body")  # team-colored cabin roof
+    m.box(6, 6, 1, 1, 4, 6, "steel")  # exhaust stack
     # bollards on the gunwale corners
     m.set(0, 2, 3, "gunmetal_dk")
     m.set(8, 2, 3, "gunmetal_dk")
@@ -692,7 +692,22 @@ UNITS: dict[str, tuple] = {
 
 # atlas_col -> unit id (contiguous 0..17), the order the sheet is assembled in
 ATLAS_ORDER: tuple[str, ...] = (
-    "infantry", "mech", "recon", "tank", "md_tank", "anti_air", "artillery",
-    "rockets", "apc", "fighter", "bomber", "b_copter", "t_copter", "missiles",
-    "battleship", "cruiser", "sub", "lander",
+    "infantry",
+    "mech",
+    "recon",
+    "tank",
+    "md_tank",
+    "anti_air",
+    "artillery",
+    "rockets",
+    "apc",
+    "fighter",
+    "bomber",
+    "b_copter",
+    "t_copter",
+    "missiles",
+    "battleship",
+    "cruiser",
+    "sub",
+    "lander",
 )

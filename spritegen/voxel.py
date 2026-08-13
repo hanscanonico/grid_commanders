@@ -70,10 +70,21 @@ class Model:
 def _face_pixels(sx: int, sy: int) -> dict[str, list[tuple[int, int]]]:
     """The 4x4 cube sprite at screen anchor (sx, sy): top / left / right."""
     return {
-        "top": [(sx + 1, sy), (sx + 2, sy), (sx, sy + 1), (sx + 1, sy + 1),
-                (sx + 2, sy + 1), (sx + 3, sy + 1)],
+        "top": [
+            (sx + 1, sy),
+            (sx + 2, sy),
+            (sx, sy + 1),
+            (sx + 1, sy + 1),
+            (sx + 2, sy + 1),
+            (sx + 3, sy + 1),
+        ],
         "left": [(sx, sy + 2), (sx + 1, sy + 2), (sx, sy + 3), (sx + 1, sy + 3)],
-        "right": [(sx + 2, sy + 2), (sx + 3, sy + 2), (sx + 2, sy + 3), (sx + 3, sy + 3)],
+        "right": [
+            (sx + 2, sy + 2),
+            (sx + 3, sy + 2),
+            (sx + 2, sy + 3),
+            (sx + 3, sy + 3),
+        ],
     }
 
 
@@ -83,7 +94,7 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
         return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
 
     anchors = {}
-    for (x, y, z) in model.vox:
+    for x, y, z in model.vox:
         anchors[(x, y, z)] = ((x - y) * 2, (x + y) - z * 2)
     minx = min(a[0] for a in anchors.values()) - 1
     miny = min(a[1] for a in anchors.values()) - 1
@@ -97,7 +108,7 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
     zmax = max(v[2] for v in vox)
     zspan = max(1, zmax - zmin)
     order = sorted(vox, key=lambda v: (v[0] + v[1], v[2]))
-    for (x, y, z) in order:
+    for x, y, z in order:
         mat = vox[(x, y, z)]
         base = resolve(mat, faction)
         gloss = mat in GLOSSY
@@ -148,7 +159,7 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
                 if shade_amt > 0:
                     tone = mix(tone, (12, 16, 28), min(0.55, shade_amt))
             dither = mat in DITHERED and face == "top"
-            for (ix, iy) in pixels:
+            for ix, iy in pixels:
                 c = tone
                 if dither:
                     n = (h01(ix, iy, 7) - 0.5) * 0.07
@@ -213,11 +224,18 @@ def compose_cell(
     if kind == "sea":
         # Ships sit IN the water: a flat displacement shading right under the
         # hull instead of a floating blob, then foam hugging the waterline.
-        _shadow_ellipse(out, cell // 2 + dx, shadow_y + 1, shadow_rx,
-                        max(2, shadow_rx // 5), 52)
+        _shadow_ellipse(
+            out, cell // 2 + dx, shadow_y + 1, shadow_rx, max(2, shadow_rx // 5), 52
+        )
     elif kind in ("land", "air"):
-        _shadow_ellipse(out, cell // 2 + dx, shadow_y, shadow_rx,
-                        max(2, shadow_rx // 3), 60 if kind == "land" else 44)
+        _shadow_ellipse(
+            out,
+            cell // 2 + dx,
+            shadow_y,
+            shadow_rx,
+            max(2, shadow_rx // 3),
+            60 if kind == "land" else 44,
+        )
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
         _waterline_foam(out)
@@ -273,7 +291,9 @@ def _waterline_foam(img: Image.Image) -> None:
                 px[hi + k, yy] = (*foam, 235 - 60 * k)
 
 
-def _shadow_ellipse(img: Image.Image, cx: int, cy: int, rx: int, ry: int, alpha: int) -> None:
+def _shadow_ellipse(
+    img: Image.Image, cx: int, cy: int, rx: int, ry: int, alpha: int
+) -> None:
     """Blend a soft dark ellipse over whatever is already in the image.
 
     Source-over, not a stamp: on the transparent unit cells this reduces to

@@ -36,8 +36,8 @@ from .terrain import (
 
 N, E, S, W = 1, 2, 4, 8
 
-_RLO, _RHI = 22, 42    # road band bounds (20px wide)
-_WLO, _WHI = 20, 44    # river channel bounds (24px wide)
+_RLO, _RHI = 22, 42  # road band bounds (20px wide)
+_WLO, _WHI = 20, 44  # river channel bounds (24px wide)
 
 
 def _fill_arms(img: Image.Image, mask: int, lo: int, hi: int, c) -> None:
@@ -138,16 +138,16 @@ def _bridge_h() -> Image.Image:
         _rect(t, 34, sy, 7, 4, mix(WATER, (10, 30, 60), 0.35))
     # deck, slightly wider than the road band it joins
     _rect(t, 0, 20, 64, 24, ROAD)
-    _rect(t, 0, 20, 64, 2, mix(ROAD, (255, 255, 255), 0.25))   # lit rail
-    _rect(t, 0, 42, 64, 2, ROAD_DARK)                          # shaded rail
+    _rect(t, 0, 20, 64, 2, mix(ROAD, (255, 255, 255), 0.25))  # lit rail
+    _rect(t, 0, 42, 64, 2, ROAD_DARK)  # shaded rail
     _rect(t, 0, 22, 64, 1, ROAD_DARK)
     for sx in range(2, 64, 8):
-        _rect(t, sx, 20, 2, 4, ROAD_DARK)                      # railing posts
+        _rect(t, sx, 20, 2, 4, ROAD_DARK)  # railing posts
         _rect(t, sx, 40, 2, 4, ROAD_DARK)
-    _rect(t, 12, 30, 9, 3, ROAD_DARK)                          # centre dashes
+    _rect(t, 12, 30, 9, 3, ROAD_DARK)  # centre dashes
     _rect(t, 43, 30, 9, 3, ROAD_DARK)
     for sx in (21, 43):
-        _rect(t, sx, 24, 1, 16, mix(ROAD, ROAD_DARK, 0.5))     # plank seams
+        _rect(t, sx, 24, 1, 16, mix(ROAD, ROAD_DARK, 0.5))  # plank seams
     return t
 
 
@@ -177,8 +177,7 @@ def coast_tile(edges: int, corners: int = 0) -> Image.Image:
                 wob = int(h01(sx, y_lip, 43) * 2)
                 y_foam = (5 + wob) if sand_at_low else (CELL - 7 - wob)
                 _rect(t, sx, y_foam, 5 + (k % 2) * 2, 1, SNOW)
-                _rect(t, sx + 2, y_foam + (1 if sand_at_low else -1), 3, 1,
-                      foam_mix)
+                _rect(t, sx + 2, y_foam + (1 if sand_at_low else -1), 3, 1, foam_mix)
         else:
             x_sand = 0 if sand_at_low else CELL - 4
             _rect(t, x_sand, 0, 4, CELL, SAND)
@@ -188,8 +187,7 @@ def coast_tile(edges: int, corners: int = 0) -> Image.Image:
                 wob = int(h01(x_lip, sy, 44) * 2)
                 x_foam = (5 + wob) if sand_at_low else (CELL - 7 - wob)
                 _rect(t, x_foam, sy, 1, 5 + (k % 2) * 2, SNOW)
-                _rect(t, x_foam + (1 if sand_at_low else -1), sy + 2, 1, 3,
-                      foam_mix)
+                _rect(t, x_foam + (1 if sand_at_low else -1), sy + 2, 1, 3, foam_mix)
 
     if edges & N:
         surf(True, True)
@@ -202,8 +200,7 @@ def coast_tile(edges: int, corners: int = 0) -> Image.Image:
 
     # diagonal-only land: a small sand nub in that corner, skipped when an
     # adjacent edge strip already reaches it
-    nubs = {N: (CELL - 6, 0), E: (CELL - 6, CELL - 6), S: (0, CELL - 6),
-            W: (0, 0)}
+    nubs = {N: (CELL - 6, 0), E: (CELL - 6, CELL - 6), S: (0, CELL - 6), W: (0, 0)}
     adjacent = {N: N | E, E: E | S, S: S | W, W: W | N}
     for bit, (cx, cy) in nubs.items():
         if corners & bit and not edges & adjacent[bit]:
@@ -234,8 +231,7 @@ def shoal_tile(edges: int) -> Image.Image:
                 wob = int(h01(sx, y_lip, 46) * 2)
                 y_f = (5 - wob) if water_at_low else (CELL - 7 + wob)
                 _rect(t, sx, y_f, 5 + (k % 2) * 2, 2, SNOW)
-                _rect(t, sx + 2, y_f + (-1 if water_at_low else 2), 3, 1,
-                      foam_mix)
+                _rect(t, sx + 2, y_f + (-1 if water_at_low else 2), 3, 1, foam_mix)
         else:
             x_w = 0 if water_at_low else CELL - 8
             _rect(t, x_w, 0, 8, CELL, WATER)
@@ -245,8 +241,7 @@ def shoal_tile(edges: int) -> Image.Image:
                 wob = int(h01(x_lip, sy, 47) * 2)
                 x_f = (5 - wob) if water_at_low else (CELL - 7 + wob)
                 _rect(t, x_f, sy, 2, 5 + (k % 2) * 2, SNOW)
-                _rect(t, x_f + (-1 if water_at_low else 2), sy + 2, 1, 3,
-                      foam_mix)
+                _rect(t, x_f + (-1 if water_at_low else 2), sy + 2, 1, 3, foam_mix)
 
     if edges & N:
         surf(True, True)
@@ -265,8 +260,7 @@ def shoal_tile(edges: int) -> Image.Image:
 def sheet(tiles: list[Image.Image], cols: int) -> Image.Image:
     """Lay tiles out row-major on the shared 2px-gutter contact sheet."""
     rows = (len(tiles) + cols - 1) // cols
-    img = Image.new("RGB", (cols * (CELL + 2) + 2, rows * (CELL + 2) + 2),
-                    (52, 52, 60))
+    img = Image.new("RGB", (cols * (CELL + 2) + 2, rows * (CELL + 2) + 2), (52, 52, 60))
     for i, tile in enumerate(tiles):
         x = (i % cols) * (CELL + 2) + 2
         y = (i // cols) * (CELL + 2) + 2

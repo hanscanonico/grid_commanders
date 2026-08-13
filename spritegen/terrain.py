@@ -19,17 +19,17 @@ from .voxel import _shadow_ellipse, place_in_cell, render
 CELL = 64
 
 # generate_tiles.gd palette (hex constants), the map's established hues
-GRASS = (120, 200, 80)        # 78c850
-GRASS_DARK = (90, 166, 60)    # 5aa63c
-ROAD = (201, 184, 132)        # c9b884
-ROAD_DARK = (168, 152, 104)   # a89868
-WATER = (63, 143, 220)        # 3f8fdc
-WATER_DARK = (42, 111, 191)   # 2a6fbf
+GRASS = (120, 200, 80)  # 78c850
+GRASS_DARK = (90, 166, 60)  # 5aa63c
+ROAD = (201, 184, 132)  # c9b884
+ROAD_DARK = (168, 152, 104)  # a89868
+WATER = (63, 143, 220)  # 3f8fdc
+WATER_DARK = (42, 111, 191)  # 2a6fbf
 WATER_LIGHT = (124, 196, 240)  # 7cc4f0
-SAND = (224, 211, 164)        # e0d3a4
-SAND_DARK = (196, 181, 133)   # c4b585
-ASPHALT = (111, 116, 124)     # 6f747c
-SNOW = (238, 238, 238)        # eeeeee
+SAND = (224, 211, 164)  # e0d3a4
+SAND_DARK = (196, 181, 133)  # c4b585
+ASPHALT = (111, 116, 124)  # 6f747c
+SNOW = (238, 238, 238)  # eeeeee
 
 
 def _ground(c: RGB, salt: int, grain: float = 0.05) -> Image.Image:
@@ -54,11 +54,18 @@ def _rect(img: Image.Image, x0: int, y0: int, w: int, h: int, c: RGB) -> None:
             px[xx, yy] = (*c, 255)
 
 
-def _paste_prop(tile: Image.Image, prop: Image.Image, cx: int, bottom: int,
-                shadow: bool = True) -> None:
+def _paste_prop(
+    tile: Image.Image, prop: Image.Image, cx: int, bottom: int, shadow: bool = True
+) -> None:
     if shadow:
-        _shadow_ellipse(tile, cx, bottom - 2, max(6, int(prop.width * 0.38)),
-                        max(2, prop.width // 8), 44)
+        _shadow_ellipse(
+            tile,
+            cx,
+            bottom - 2,
+            max(6, int(prop.width * 0.38)),
+            max(2, prop.width // 8),
+            44,
+        )
     place_in_cell(tile, prop, cx - prop.width // 2, bottom - prop.height)
 
 
@@ -86,8 +93,20 @@ def plains() -> Image.Image:
     t = _ground(GRASS, 2)
     # grass tufts: a dark check with a light blade, like the old speckles
     # but drawn as 3px clusters
-    spots = ((10, 12), (34, 8), (52, 22), (18, 30), (42, 38), (8, 44),
-             (28, 52), (54, 48), (24, 20), (46, 12), (14, 56), (38, 24))
+    spots = (
+        (10, 12),
+        (34, 8),
+        (52, 22),
+        (18, 30),
+        (42, 38),
+        (8, 44),
+        (28, 52),
+        (54, 48),
+        (24, 20),
+        (46, 12),
+        (14, 56),
+        (38, 24),
+    )
     for i, (sx, sy) in enumerate(spots):
         _rect(t, sx, sy, 3, 2, GRASS_DARK)
         _rect(t, sx + (i % 2), sy - 1, 1, 1, lighten(GRASS, 0.18))
@@ -145,15 +164,20 @@ def mountain() -> Image.Image:
             elif y == snow_until and (x + y) % 2 == 0:
                 c = snow_dk if lit else mix(snow_dk, rock_dk, 0.5)  # melt dither
             elif y >= base_y - 5:
-                c = rock_dk if lit else rock_deep      # talus skirt
+                c = rock_dk if lit else rock_deep  # talus skirt
             elif y < mid:
-                c = rock_hi if lit else rock_dk        # sunlit high faces
+                c = rock_hi if lit else rock_dk  # sunlit high faces
             else:
                 c = rock_lt if lit else rock_dk
             px[x, y] = (*c, 255)
     # ridge lines below the apexes and a few cracks
-    for x, y0, ln in ((26, 17, 32), (18, 34, 10), (34, 30, 8), (46, 34, 16),
-                      (11, 41, 9)):
+    for x, y0, ln in (
+        (26, 17, 32),
+        (18, 34, 10),
+        (34, 30, 8),
+        (46, 34, 16),
+        (11, 41, 9),
+    ):
         for y in range(y0, min(base_y - 1, y0 + ln)):
             if px[x, y][3] == 255 and px[x, y][:3] in (rock_hi, rock_lt, rock_dk):
                 px[x, y] = (*mix(rock_dk, edge, 0.5), 255)
@@ -173,7 +197,7 @@ def _water_base(deep: bool, salt: int) -> Image.Image:
 def river() -> Image.Image:
     t = _water_base(False, 5)
     # flow streaks, all horizontal like the old art but layered two-tone
-    for (sx, sy, w) in ((8, 14, 16), (36, 20, 16), (16, 38, 16), (44, 46, 12)):
+    for sx, sy, w in ((8, 14, 16), (36, 20, 16), (16, 38, 16), (44, 46, 12)):
         _rect(t, sx, sy, w, 2, WATER_LIGHT)
         _rect(t, sx + 2, sy + 2, w - 4, 1, mix(WATER, WATER_LIGHT, 0.5))
     # rounded pebble breaking the current
@@ -184,7 +208,7 @@ def river() -> Image.Image:
 
 def sea() -> Image.Image:
     t = _water_base(True, 6)
-    for (sx, sy, w) in ((8, 14, 16), (36, 22, 16), (14, 42, 16), (44, 50, 10)):
+    for sx, sy, w in ((8, 14, 16), (36, 22, 16), (14, 42, 16), (44, 50, 10)):
         _rect(t, sx, sy, w, 2, WATER)
         _rect(t, sx + 2, sy + 2, w - 4, 1, mix(WATER_DARK, WATER, 0.5))
     # whitecap flecks
@@ -199,7 +223,7 @@ def shoal() -> Image.Image:
     # water across the bottom with a scalloped surf line — irregular foam
     # clusters, not the uniform dashes that read as road markings
     _rect(t, 0, 40, 64, 24, WATER)
-    _rect(t, 0, 40, 64, 2, SAND_DARK)      # wet sand lip
+    _rect(t, 0, 40, 64, 2, SAND_DARK)  # wet sand lip
     for k, sx in enumerate(range(0, 64, 8)):
         wob = int(h01(sx, 0, 41) * 3)
         _rect(t, sx, 41 + wob, 5 + (k % 2) * 2, 2, SNOW)
@@ -220,8 +244,8 @@ def bridge() -> Image.Image:
         _rect(t, sx, 50, 10, 4, mix(WATER, (10, 30, 60), 0.35))
     # road deck carried over the water (same band as the old art)
     _rect(t, 0, 12, 64, 40, ROAD)
-    _rect(t, 0, 12, 64, 2, mix(ROAD, (255, 255, 255), 0.25))   # lit rail
-    _rect(t, 0, 50, 64, 2, ROAD_DARK)                          # shaded rail
+    _rect(t, 0, 12, 64, 2, mix(ROAD, (255, 255, 255), 0.25))  # lit rail
+    _rect(t, 0, 50, 64, 2, ROAD_DARK)  # shaded rail
     _rect(t, 0, 14, 64, 1, ROAD_DARK)
     # railing posts
     for sx in range(2, 64, 8):
@@ -242,8 +266,14 @@ def reef(fac: Faction) -> Image.Image:
     for sx, sy, size in spots:
         rock = render(buildings.rock_outcrop(size), fac)
         # foam ring where the rock breaks the surface
-        _rect(t, sx - rock.width // 2 - 2, sy - 2, rock.width + 4, 2,
-              mix(WATER_DARK, SNOW, 0.55))
+        _rect(
+            t,
+            sx - rock.width // 2 - 2,
+            sy - 2,
+            rock.width + 4,
+            2,
+            mix(WATER_DARK, SNOW, 0.55),
+        )
         _paste_prop(t, rock, sx, sy, shadow=False)
     _rect(t, 8, 56, 10, 2, WATER)
     _rect(t, 52, 8, 8, 2, WATER)
@@ -269,8 +299,8 @@ def airport(fac: Faction) -> Image.Image:
     _rect(t, 0, 44, 64, 1, lighten(ASPHALT, 0.25))
     _rect(t, 0, 59, 64, 1, darken(ASPHALT, 0.2))
     for sx in range(4, 64, 12):
-        _rect(t, sx, 51, 6, 2, SNOW)                     # centreline dashes
-    _rect(t, 2, 46, 2, 12, SNOW)                          # threshold bars
+        _rect(t, sx, 51, 6, 2, SNOW)  # centreline dashes
+    _rect(t, 2, 46, 2, 12, SNOW)  # threshold bars
     _rect(t, 6, 46, 2, 12, SNOW)
     prop = render(buildings.airport(), fac)
     _paste_prop(t, prop, 31, 46, shadow=False)
@@ -279,7 +309,7 @@ def airport(fac: Faction) -> Image.Image:
 
 def port(fac: Faction) -> Image.Image:
     t = _water_base(True, 11)
-    _rect(t, 4, 50, 12, 2, WATER)                         # harbour ripples
+    _rect(t, 4, 50, 12, 2, WATER)  # harbour ripples
     _rect(t, 44, 56, 14, 2, WATER)
     prop = render(buildings.port(), fac)
     _paste_prop(t, prop, 32, 52, shadow=False)
@@ -291,8 +321,20 @@ def port(fac: Faction) -> Image.Image:
 # ---------------------------------------------------------------------------
 
 TERRAIN_ORDER: tuple[str, ...] = (
-    "road", "plains", "woods", "mountain", "river", "city", "base", "hq",
-    "sea", "airport", "port", "shoal", "bridge", "reef",
+    "road",
+    "plains",
+    "woods",
+    "mountain",
+    "river",
+    "city",
+    "base",
+    "hq",
+    "sea",
+    "airport",
+    "port",
+    "shoal",
+    "bridge",
+    "reef",
 )
 # Tiles whose art changes with the faction row (team-tinted properties).
 PROPERTY: frozenset[str] = frozenset({"city", "base", "hq", "airport", "port"})

@@ -66,8 +66,16 @@ def _pad(m: Model, x0: int, x1: int, y0: int, y1: int, mat: str = "concrete") ->
         m.set(x1, y, 0, mat + "_dk")
 
 
-def _windows(m: Model, face: str, along0: int, along1: int, wall: int,
-             z0: int, z1: int, salt: int) -> None:
+def _windows(
+    m: Model,
+    face: str,
+    along0: int,
+    along1: int,
+    wall: int,
+    z0: int,
+    z1: int,
+    salt: int,
+) -> None:
     """A window grid on a wall: every other column/row, a few lit amber.
 
     `along0..along1` runs along the wall and `wall` is the wall's fixed
@@ -89,25 +97,25 @@ def city() -> Model:
     _pad(m, 0, 13, 0, 13)
     # main tower, front-left: concrete walls, faction roof
     m.box(1, 6, 6, 11, 1, 8, "concrete")
-    m.box(1, 6, 6, 11, 9, 9, "body")        # roof
-    m.box(2, 5, 7, 10, 10, 10, "body_dk")   # roof plant
-    m.set(3, 8, 11, "gunmetal")             # AC unit
+    m.box(1, 6, 6, 11, 9, 9, "body")  # roof
+    m.box(2, 5, 7, 10, 10, 10, "body_dk")  # roof plant
+    m.set(3, 8, 11, "gunmetal")  # AC unit
     _windows(m, "y", 2, 5, 11, 2, 8, 21)
     _windows(m, "x", 7, 10, 6, 2, 8, 22)
     # taller slab tower, back-right
     m.box(8, 12, 1, 6, 1, 10, "concrete")
-    m.box(8, 12, 1, 6, 11, 11, "body")      # roof
-    m.box(9, 11, 2, 5, 12, 12, "body_lt")   # penthouse
+    m.box(8, 12, 1, 6, 11, 11, "body")  # roof
+    m.box(9, 11, 2, 5, 12, 12, "body_lt")  # penthouse
     m.chamfer(9, 11, 2, 5, 12, 12)
     _windows(m, "y", 9, 11, 6, 2, 10, 23)
     _windows(m, "x", 2, 5, 12, 2, 10, 24)
     # low storefront, front-right: faction awning over grey walls
     m.box(8, 12, 8, 12, 1, 3, "concrete")
-    m.box(8, 12, 8, 12, 4, 4, "body")       # awning roof
+    m.box(8, 12, 8, 12, 4, 4, "body")  # awning roof
     m.chamfer(8, 12, 8, 12, 4, 4)
     m.box(9, 11, 12, 12, 1, 2, "glass_dk")  # shopfront glazing
     # plaza detail
-    m.set(2, 3, 1, "leaf")                   # planter
+    m.set(2, 3, 1, "leaf")  # planter
     m.set(3, 3, 1, "leaf_dk")
     return m
 
@@ -127,7 +135,7 @@ def base() -> Model:
     # big vehicle door on the front face with hazard stripe
     m.box(3, 8, 12, 12, 1, 3, "gunmetal_dk")
     m.box(3, 8, 12, 12, 3, 3, "amber")
-    m.box(5, 6, 12, 12, 1, 1, "bore")        # door gap
+    m.box(5, 6, 12, 12, 1, 1, "bore")  # door gap
     # chimney at the rear corner
     m.box(11, 12, 1, 2, 1, 8, "concrete_dk")
     m.box(11, 12, 1, 2, 8, 8, "gunmetal")
@@ -145,7 +153,7 @@ def hq() -> Model:
     _pad(m, 0, 13, 0, 13, "concrete")
     # curtain walls in castle stone
     m.box(1, 12, 1, 12, 1, 5, "stone")
-    m.clear(3, 10, 3, 10, 1, 5)              # hollow courtyard (hidden anyway)
+    m.clear(3, 10, 3, 10, 1, 5)  # hollow courtyard (hidden anyway)
     # crenellations along the front and right parapets
     for i in range(1, 13, 2):
         m.set(i, 12, 6, "stone")
@@ -170,7 +178,7 @@ def hq() -> Model:
     m.chamfer(5, 8, 5, 8, 9, 9)
     _windows(m, "y", 5, 8, 9, 3, 7, 31)
     m.box(6, 6, 6, 6, 10, 13, "steel")
-    m.box(7, 8, 6, 6, 12, 13, "body")        # banner
+    m.box(7, 8, 6, 6, 12, 13, "body")  # banner
     return m
 
 
@@ -182,18 +190,18 @@ def airport() -> Model:
     # hangar: concrete walls under a faction barrel roof, doors facing the
     # runway (front)
     m.box(1, 8, 6, 13, 1, 4, "concrete")
-    m.box(1, 8, 7, 12, 5, 5, "body")          # arch tier 1
-    m.box(2, 7, 8, 11, 6, 6, "body_lt")       # arch crown
+    m.box(1, 8, 7, 12, 5, 5, "body")  # arch tier 1
+    m.box(2, 7, 8, 11, 6, 6, "body_lt")  # arch crown
     m.chamfer(2, 7, 8, 11, 6, 6)
     m.box(2, 7, 13, 13, 1, 3, "gunmetal_dk")  # hangar door
-    m.box(4, 5, 13, 13, 1, 3, "gunmetal")     # door seam
-    m.box(1, 8, 6, 6, 1, 4, "concrete_dk")    # rear wall
+    m.box(4, 5, 13, 13, 1, 3, "gunmetal")  # door seam
+    m.box(1, 8, 6, 6, 1, 4, "concrete_dk")  # rear wall
     # control tower with glass cab and radar
     m.box(10, 12, 4, 6, 1, 6, "concrete")
-    m.box(9, 13, 3, 7, 7, 7, "concrete_dk")   # balcony ring
+    m.box(9, 13, 3, 7, 7, 7, "concrete_dk")  # balcony ring
     m.box(10, 12, 4, 6, 8, 8, "glass")
-    m.box(10, 12, 4, 6, 9, 9, "body_dk")      # cap
-    m.set(11, 5, 10, "steel")                 # radar mast
+    m.box(10, 12, 4, 6, 9, 9, "body_dk")  # cap
+    m.set(11, 5, 10, "steel")  # radar mast
     m.set(11, 5, 11, "gunmetal_dk")
     # windsock on the apron corner
     m.box(13, 13, 11, 11, 1, 4, "steel")
@@ -207,18 +215,18 @@ def port() -> Model:
     # quay deck standing on pilings
     m.box(0, 13, 4, 13, 1, 1, "concrete")
     for x in range(0, 14, 3):
-        m.set(x, 4, 0, "concrete_dk")         # pilings at the water edge
+        m.set(x, 4, 0, "concrete_dk")  # pilings at the water edge
     for x in range(14):
-        m.set(x, 4, 1, "concrete_dk")         # quay edge trim
+        m.set(x, 4, 1, "concrete_dk")  # quay edge trim
     # warehouse: concrete walls under a shallow faction gabled roof
     m.box(1, 6, 7, 13, 2, 5, "concrete")
     m.box(1, 6, 8, 12, 6, 6, "body")
-    m.box(1, 6, 10, 10, 7, 7, "body_lt")      # ridge
+    m.box(1, 6, 10, 10, 7, 7, "body_lt")  # ridge
     m.box(3, 4, 13, 13, 2, 4, "gunmetal_dk")  # cargo door
     # gantry crane over the dockside
     m.box(9, 10, 11, 12, 2, 9, "gunmetal")
-    m.box(9, 10, 4, 12, 10, 10, "gunmetal")   # jib reaching the water
-    m.set(9, 5, 9, "gunmetal_dk")             # cable
+    m.box(9, 10, 4, 12, 10, 10, "gunmetal")  # jib reaching the water
+    m.set(9, 5, 9, "gunmetal_dk")  # cable
     m.set(9, 5, 8, "gunmetal_dk")
     m.box(9, 10, 11, 12, 10, 11, "gunmetal_dk")  # cab + counterweight
     # container stack on the quay

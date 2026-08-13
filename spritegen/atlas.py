@@ -32,8 +32,9 @@ def unit_cell(uid: str, fac: Faction) -> Image.Image:
 
 
 def build_units_atlas() -> Image.Image:
-    atlas = Image.new("RGBA", (len(ATLAS_ORDER) * CELL, len(FACTIONS) * CELL),
-                      (0, 0, 0, 0))
+    atlas = Image.new(
+        "RGBA", (len(ATLAS_ORDER) * CELL, len(FACTIONS) * CELL), (0, 0, 0, 0)
+    )
     for row, fac in enumerate(FACTIONS):
         for col, uid in enumerate(ATLAS_ORDER):
             atlas.alpha_composite(unit_cell(uid, fac), (col * CELL, row * CELL))
@@ -41,8 +42,7 @@ def build_units_atlas() -> Image.Image:
 
 
 def build_terrain_atlas() -> Image.Image:
-    atlas = Image.new("RGBA", (len(terrain.TERRAIN_ORDER) * CELL,
-                               len(FACTIONS) * CELL))
+    atlas = Image.new("RGBA", (len(terrain.TERRAIN_ORDER) * CELL, len(FACTIONS) * CELL))
     for col, tid in enumerate(terrain.TERRAIN_ORDER):
         if tid in terrain.PROPERTY:
             for row, fac in enumerate(FACTIONS):
@@ -108,12 +108,24 @@ _DEMO_ALIAS = {"mount": "mountain"}
 _WATERY = frozenset({"sea", "reef", "river", "bridge", "port"})
 # (unit, faction row, col, row)
 _DEMO_UNITS = [
-    ("infantry", 1, 3, 2), ("tank", 1, 4, 2), ("recon", 1, 2, 3),
-    ("mech", 2, 7, 2), ("md_tank", 2, 4, 4), ("artillery", 2, 7, 5),
-    ("rockets", 1, 1, 4), ("apc", 2, 5, 1), ("anti_air", 1, 3, 5),
-    ("missiles", 2, 8, 5), ("fighter", 1, 5, 3), ("bomber", 2, 2, 5),
-    ("b_copter", 1, 6, 1), ("t_copter", 2, 4, 5), ("battleship", 1, 1, 6),
-    ("cruiser", 2, 8, 6), ("sub", 1, 3, 0), ("lander", 2, 6, 6),
+    ("infantry", 1, 3, 2),
+    ("tank", 1, 4, 2),
+    ("recon", 1, 2, 3),
+    ("mech", 2, 7, 2),
+    ("md_tank", 2, 4, 4),
+    ("artillery", 2, 7, 5),
+    ("rockets", 1, 1, 4),
+    ("apc", 2, 5, 1),
+    ("anti_air", 1, 3, 5),
+    ("missiles", 2, 8, 5),
+    ("fighter", 1, 5, 3),
+    ("bomber", 2, 2, 5),
+    ("b_copter", 1, 6, 1),
+    ("t_copter", 2, 4, 5),
+    ("battleship", 1, 1, 6),
+    ("cruiser", 2, 8, 6),
+    ("sub", 1, 3, 0),
+    ("lander", 2, 6, 6),
 ]
 
 
@@ -121,18 +133,29 @@ def build_demo() -> Image.Image:
     rows = [[_DEMO_ALIAS.get(t, t) for t in r.split()] for r in _DEMO_MAP]
     h, w = len(rows), len(rows[0])
     img = Image.new("RGBA", (w * CELL, h * CELL))
-    fac_for_prop = {(7, 1): 2, (8, 1): 2, (8, 2): 2, (8, 3): 2, (8, 4): 2,
-                    (1, 4): 1, (2, 5): 1}
+    fac_for_prop = {
+        (7, 1): 2,
+        (8, 1): 2,
+        (8, 2): 2,
+        (8, 3): 2,
+        (8, 4): 2,
+        (1, 4): 1,
+        (2, 5): 1,
+    }
 
     def at(x: int, y: int) -> str:
         if 0 <= x < w and 0 <= y < h:
             return rows[y][x]
-        return "sea"                       # off-map reads as open sea
+        return "sea"  # off-map reads as open sea
 
     def mask(x: int, y: int, joins: frozenset[str]) -> int:
         m = 0
-        for bit, (dx, dy) in ((autotile.N, (0, -1)), (autotile.E, (1, 0)),
-                              (autotile.S, (0, 1)), (autotile.W, (-1, 0))):
+        for bit, (dx, dy) in (
+            (autotile.N, (0, -1)),
+            (autotile.E, (1, 0)),
+            (autotile.S, (0, 1)),
+            (autotile.W, (-1, 0)),
+        ):
             if at(x + dx, y + dy) in joins:
                 m |= bit
         return m
@@ -144,8 +167,7 @@ def build_demo() -> Image.Image:
             if tid == "road":
                 tile = autotile.road_tile(mask(x, y, road_joins))
             elif tid == "river":
-                tile = autotile.river_tile(mask(x, y, river_joins),
-                                           salt=x * 7 + y)
+                tile = autotile.river_tile(mask(x, y, river_joins), salt=x * 7 + y)
             elif tid == "shoal":
                 tile = autotile.shoal_tile(mask(x, y, _WATERY))
             elif tid == "bridge":
@@ -156,22 +178,30 @@ def build_demo() -> Image.Image:
                 # against them — only against hard land
                 def hard_land(t: str) -> bool:
                     return t not in _WATERY and t != "shoal"
+
                 edges = 0
                 corners = 0
-                for bit, (dx, dy) in ((autotile.N, (0, -1)),
-                                      (autotile.E, (1, 0)),
-                                      (autotile.S, (0, 1)),
-                                      (autotile.W, (-1, 0))):
+                for bit, (dx, dy) in (
+                    (autotile.N, (0, -1)),
+                    (autotile.E, (1, 0)),
+                    (autotile.S, (0, 1)),
+                    (autotile.W, (-1, 0)),
+                ):
                     if hard_land(at(x + dx, y + dy)):
                         edges |= bit
-                for bit, (dx, dy) in ((autotile.N, (1, -1)),
-                                      (autotile.E, (1, 1)),
-                                      (autotile.S, (-1, 1)),
-                                      (autotile.W, (-1, -1))):
+                for bit, (dx, dy) in (
+                    (autotile.N, (1, -1)),
+                    (autotile.E, (1, 1)),
+                    (autotile.S, (-1, 1)),
+                    (autotile.W, (-1, -1)),
+                ):
                     if hard_land(at(x + dx, y + dy)):
                         corners |= bit
-                tile = autotile.coast_tile(edges, corners) \
-                    if edges or corners else terrain.tile("sea", FACTIONS[0])
+                tile = (
+                    autotile.coast_tile(edges, corners)
+                    if edges or corners
+                    else terrain.tile("sea", FACTIONS[0])
+                )
             else:
                 fac_row = fac_for_prop.get((x, y), 1 if x < 5 else 2)
                 fac = FACTIONS[fac_row if tid in terrain.PROPERTY else 0]
