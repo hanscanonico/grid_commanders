@@ -487,8 +487,13 @@ def bomber() -> Model:
     return m
 
 
-def b_copter() -> Model:
-    """Attack helicopter: chin gun, stub-wing rocket pods, tail rotor."""
+def b_copter(frame: int = 0) -> Model:
+    """Attack helicopter: chin gun, stub-wing rocket pods, tail rotor.
+
+    `frame` 1 is the ambient-animation pose: the same aircraft with its
+    rotor blades swept 45 degrees, so alternating the two frames spins the
+    disc. Nothing else may differ between frames.
+    """
     m = Model()
     # fuselage in hull livery, rounded nose
     m.box(3, 5, 6, 14, 3, 5, "hull")
@@ -518,15 +523,24 @@ def b_copter() -> Model:
     # skids
     m.box(2, 2, 8, 14, 1, 1, "hull_dk")
     m.box(6, 6, 8, 14, 1, 1, "hull_dk")
-    # main rotor: hub mast + four blades over the fuselage
+    # main rotor: hub mast + four blades over the fuselage (frame 1 sweeps
+    # the blades 45 degrees; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
-    m.box(4, 4, 5, 15, 9, 9, "rotor")
-    m.box(-1, 9, 10, 10, 9, 9, "rotor")
+    if frame == 0:
+        m.box(4, 4, 5, 15, 9, 9, "rotor")
+        m.box(-1, 9, 10, 10, 9, 9, "rotor")
+    else:
+        for d in range(-4, 5):
+            m.set(4 + d, 10 + d, 9, "rotor")
+            m.set(4 + d, 10 - d, 9, "rotor")
     return m
 
 
-def t_copter() -> Model:
-    """Tandem-rotor transport helicopter — unarmed."""
+def t_copter(frame: int = 0) -> Model:
+    """Tandem-rotor transport helicopter — unarmed.
+
+    `frame` 1 sweeps both rotor discs 45 degrees, as on b_copter.
+    """
     m = Model()
     # boxy hold in hull livery, rounded top edges so it stops reading as a
     # brick; the roof spine keeps a pure team stripe
@@ -550,10 +564,18 @@ def t_copter() -> Model:
     # tandem rotor masts and overlapping blades
     m.box(4, 5, 4, 4, 7, 8, "hull_dk")
     m.box(4, 5, 13, 13, 7, 8, "hull_dk")
-    m.box(4, 4, 0, 8, 9, 9, "rotor")
-    m.box(-1, 9, 4, 4, 9, 9, "rotor")
-    m.box(5, 5, 9, 17, 9, 9, "rotor")
-    m.box(0, 10, 13, 13, 9, 9, "rotor")
+    if frame == 0:
+        m.box(4, 4, 0, 8, 9, 9, "rotor")
+        m.box(-1, 9, 4, 4, 9, 9, "rotor")
+        m.box(5, 5, 9, 17, 9, 9, "rotor")
+        m.box(0, 10, 13, 13, 9, 9, "rotor")
+    else:
+        # One diagonal blade pair per disc, opposed between the discs: two
+        # full X sweeps overlap on the tandem hull and read as a different
+        # aircraft at 32px, while a two-blade mid-turn keeps the silhouette.
+        for d in range(-4, 5):
+            m.set(4 + d, 4 + d, 9, "rotor")
+            m.set(5 + d, 13 - d, 9, "rotor")
     return m
 
 
@@ -731,6 +753,17 @@ UNITS: dict[str, tuple] = {
     "sub": (sub, "sea"),
     "lander": (lander, "sea"),
 }
+
+# The two units whose model itself changes between ambient frames. Everything
+# else animates (or not) purely in composition — see atlas.unit_cell.
+_FRAMED = ("b_copter", "t_copter")
+
+
+def build_model(uid: str, frame: int = 0) -> Model:
+    """The one seam a frame number reaches a builder through."""
+    builder = UNITS[uid][0]
+    return builder(1) if frame == 1 and uid in _FRAMED else builder()
+
 
 # atlas_col -> unit id (contiguous 0..17), the order the sheet is assembled in
 ATLAS_ORDER: tuple[str, ...] = (

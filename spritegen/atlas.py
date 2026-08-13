@@ -20,24 +20,30 @@ from PIL import Image
 
 from . import autotile, buildings, terrain
 from .palette import FACTIONS, Faction
-from .units import ATLAS_ORDER, UNITS
+from .units import ATLAS_ORDER, UNITS, build_model
 from .voxel import compose_cell, place_in_cell, render
 
 CELL = 64
+# Ambient animation frame B: air and sea units ride one voxel-scale pixel
+# higher (their shadows stay put, so the bob reads as hover/swell), and the
+# copters' rotor discs sweep 45 degrees inside build_model. Land units are
+# byte-identical between frames — they are parked on the ground.
+_BOB_BOTTOM = {"air": 43, "sea": 54}
 
 
-def unit_cell(uid: str, fac: Faction) -> Image.Image:
-    builder, kind = UNITS[uid]
-    return compose_cell(render(builder(), fac), kind)
+def unit_cell(uid: str, fac: Faction, frame: int = 0) -> Image.Image:
+    kind = UNITS[uid][1]
+    bottom = _BOB_BOTTOM.get(kind) if frame == 1 else None
+    return compose_cell(render(build_model(uid, frame), fac), kind, bottom=bottom)
 
 
-def build_units_atlas() -> Image.Image:
+def build_units_atlas(frame: int = 0) -> Image.Image:
     atlas = Image.new(
         "RGBA", (len(ATLAS_ORDER) * CELL, len(FACTIONS) * CELL), (0, 0, 0, 0)
     )
     for row, fac in enumerate(FACTIONS):
         for col, uid in enumerate(ATLAS_ORDER):
-            atlas.alpha_composite(unit_cell(uid, fac), (col * CELL, row * CELL))
+            atlas.alpha_composite(unit_cell(uid, fac, frame), (col * CELL, row * CELL))
     return atlas
 
 

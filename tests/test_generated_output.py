@@ -271,6 +271,59 @@ class RowSeparation(unittest.TestCase):
                 self.assertGreater(statistics.median(sats), 0.45)
 
 
+class AmbientFrames(unittest.TestCase):
+    """Frame B is the same army breathing, never a different army."""
+
+    def test_frame_b_is_reproducible_and_distinct(self):
+        b1 = atlas.build_units_atlas(frame=1)
+        self.assertEqual(b1.tobytes(), atlas.build_units_atlas(frame=1).tobytes())
+        self.assertNotEqual(b1.tobytes(), atlas.build_units_atlas().tobytes())
+
+    def test_land_units_are_identical_between_frames(self):
+        red = faction_by_key("red")
+        for uid, (_, kind) in atlas.UNITS.items():
+            if kind != "land":
+                continue
+            with self.subTest(unit=uid):
+                self.assertEqual(
+                    atlas.unit_cell(uid, red).tobytes(),
+                    atlas.unit_cell(uid, red, frame=1).tobytes(),
+                )
+
+    def test_air_and_sea_units_move_between_frames(self):
+        red = faction_by_key("red")
+        for uid, (_, kind) in atlas.UNITS.items():
+            if kind == "land":
+                continue
+            with self.subTest(unit=uid):
+                self.assertNotEqual(
+                    atlas.unit_cell(uid, red).tobytes(),
+                    atlas.unit_cell(uid, red, frame=1).tobytes(),
+                )
+
+    def test_frame_b_still_reads_as_its_own_unit(self):
+        # A rotor sweep on a small aircraft legitimately moves a quarter of
+        # its 32px silhouette, so an absolute overlap bar would misfire.
+        # The real requirement: among every unit's frame A, the one a frame
+        # B most resembles must be its own — animation may move pixels, it
+        # may never move identity.
+        frame_a = {uid: self._sil(uid, 0) for uid in ATLAS_ORDER}
+        for uid in ATLAS_ORDER:
+            b = self._sil(uid, 1)
+            best = max(
+                ATLAS_ORDER,
+                key=lambda other: len(b & frame_a[other]) / len(b | frame_a[other]),
+            )
+            with self.subTest(unit=uid):
+                self.assertEqual(best, uid)
+
+    def _sil(self, uid: str, frame: int) -> set:
+        cell = atlas.unit_cell(uid, faction_by_key("neutral"), frame)
+        small = cell.convert("RGBA").resize((32, 32), Image.NEAREST)
+        px = small.load()
+        return {(x, y) for y in range(32) for x in range(32) if px[x, y][3] > 200}
+
+
 class Silhouette(unittest.TestCase):
     """Units must be tellable apart by mass at board zoom (32px), where
     colour and greebling are averaged away. Pairwise IoU of the 1-bit

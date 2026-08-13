@@ -8,6 +8,7 @@ the same bytes.
 
 Outputs (under --out, default ./out):
   units_atlas.png        1152x320 RGBA — drop-in for assets/tiles/units_atlas.png
+  units_atlas_b.png      ambient animation frame B (rotors swept, air/sea bobbed)
   terrain_atlas.png       896x320 RGB  — drop-in for assets/tiles/terrain_atlas.png
   units/<id>_<team>.png   64x64 RGBA cells for tools/paste_unit_sprites.gd
   iso_buildings/<id>_<team>.png  64x64 RGBA property buildings
@@ -59,6 +60,7 @@ def _install(src: Path, dest: Path) -> None:
 
     pairs = [
         (src / "units_atlas.png", dest / "assets/tiles/units_atlas.png"),
+        (src / "units_atlas_b.png", dest / "assets/tiles/units_atlas_b.png"),
         (src / "terrain_atlas.png", dest / "assets/tiles/terrain_atlas.png"),
     ]
     for cell in sorted((src / "units").glob("*.png")):
@@ -72,7 +74,7 @@ def _install(src: Path, dest: Path) -> None:
             sys.exit(f"missing {s} — run a full generation first")
         d.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(s, d)
-    print(f"installed atlases + {len(pairs) - 2} cells into {dest}")
+    print(f"installed atlases + {len(pairs) - 3} cells into {dest}")
 
 
 def main() -> None:
@@ -118,6 +120,9 @@ def main() -> None:
     print("building units atlas (18 units x 5 factions)")
     units_atlas = atlas.build_units_atlas()
     _write(units_atlas, args.out / "units_atlas.png")
+
+    print("building ambient frame B (rotors swept, air/sea bobbed)")
+    _write(atlas.build_units_atlas(frame=1), args.out / "units_atlas_b.png")
 
     print("building terrain atlas (14 terrains x 5 rows)")
     terrain_atlas = atlas.build_terrain_atlas()

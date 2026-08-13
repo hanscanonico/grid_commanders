@@ -58,9 +58,10 @@ jobs:
 
           GEN = Path("/tmp/gen_a")
           ASSETS = Path(".lavish/assets")
-          EXPECTED = 35
+          EXPECTED = 36
           pairs = [
               (GEN / "units_atlas.png", ASSETS / "units_atlas.png"),
+              (GEN / "units_atlas_b.png", ASSETS / "units_atlas_b.png"),
               (GEN / "terrain_atlas.png", ASSETS / "terrain_atlas.png"),
               (GEN / "preview_map.png", ASSETS / "preview_map.png"),
               (GEN / "preview_units.png", ASSETS / "preview_units.png"),
