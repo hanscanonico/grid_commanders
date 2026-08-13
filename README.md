@@ -102,7 +102,7 @@ that pipeline's paste step can be pointed at this art instead.
    occlusion and a vertical depth gradient (tall masses darken toward their
    base), rim light on unshadowed front corners, hash dither on broad tops,
    then a 1px per-part outline — each silhouette pixel is a dark tint of the
-   part it borders. `Model.chamfer`/`Model.dome` cut corner columns so
+   part it borders. `Model.chamfer` cuts corner columns so
    turrets, cabs and roofs read as octagonal masses instead of cubes.
 2. **`spritegen/palette.py`** — faction ramps mirroring the game's
    `CommanderVisuals`, fixed materials (gunmetal, track, glass, skin, ...),

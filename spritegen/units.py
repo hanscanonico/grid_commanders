@@ -428,13 +428,11 @@ def bomber() -> Model:
         m.box(7 + i, 7 + i, wy, wy + 5, 4, 4, "body")
         m.set(4 - i, wy, 4, "body_dk")
         m.set(7 + i, wy, 4, "body_dk")
-    # four engine pods slung under the wings
-    for x in (-3, -1):
-        m.box(x, x, 9 + (x % 2), 12 + (x % 2), 3, 3, "gunmetal")
-        m.set(x, 13 + (x % 2), 3, "bore")
-    for x in (12, 14):
-        m.box(x, x, 9 + (x % 2), 12 + (x % 2), 3, 3, "gunmetal")
-        m.set(x, 13 + (x % 2), 3, "bore")
+    # four engine pods slung under the wings, mirrored about the fuselage
+    # centre; the outer pair sits one step back, following the wing rake
+    for x, fwd in ((-3, 0), (-1, 1), (12, 1), (14, 0)):
+        m.box(x, x, 9 + fwd, 12 + fwd, 3, 3, "gunmetal")
+        m.set(x, 13 + fwd, 3, "bore")
     # bomb-bay doors line on the belly sides
     m.box(7, 7, 6, 12, 3, 3, "hull_dk")
     # tailplane and tall team-colored fin

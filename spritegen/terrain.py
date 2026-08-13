@@ -44,11 +44,6 @@ def _ground(c: RGB, salt: int, grain: float = 0.05) -> Image.Image:
             for yy in range(by, min(by + 4, 60)):
                 for xx in range(bx, min(bx + 4, 60)):
                     px[xx, yy] = (*t, 255)
-    # square off the inner region against the 4px edge
-    for yy in range(4, 60):
-        for xx in range(4, 60):
-            if px[xx, yy][3] == 0:
-                px[xx, yy] = (*c, 255)
     return img
 
 

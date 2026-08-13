@@ -21,7 +21,7 @@ from PIL import Image
 from . import autotile, buildings, terrain
 from .palette import FACTIONS, Faction
 from .units import ATLAS_ORDER, UNITS
-from .voxel import compose_cell, render
+from .voxel import compose_cell, place_in_cell, render
 
 CELL = 64
 
@@ -65,7 +65,7 @@ def building_cell(bid: str, fac: Faction) -> Image.Image:
         cx, bottom = 32, 52
     else:
         cx, bottom = 32, 61
-    out.alpha_composite(sprite, (cx - sprite.width // 2, bottom - sprite.height))
+    place_in_cell(out, sprite, cx - sprite.width // 2, bottom - sprite.height)
     return out
 
 

@@ -66,11 +66,6 @@ class Model:
             for cx, cy in ((x0, y0), (x0, y1), (x1, y0), (x1, y1)):
                 self.vox.pop((cx, cy, z), None)
 
-    def dome(self, x0: int, x1: int, y0: int, y1: int, z: int, m: str) -> None:
-        """A rounded cap layer: the box footprint inset with cut corners."""
-        self.box(x0, x1, y0, y1, z, z, m)
-        self.chamfer(x0, x1, y0, y1, z, z)
-
     def mirror_x(self, cx: float) -> None:
         """Copy every voxel across the x = cx plane (2*cx must be integral).
 
@@ -237,10 +232,27 @@ def compose_cell(
     elif kind in ("land", "air"):
         _shadow_ellipse(out, cell // 2 + dx, shadow_y, shadow_rx,
                         max(2, shadow_rx // 3), 60 if kind == "land" else 44)
-    out.alpha_composite(sprite, (x0, max(0, y0)))
+    place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
         _waterline_foam(out, bottom)
     return out
+
+
+def place_in_cell(cell_img: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
+    """Composite a sprite into a fixed-size cell, refusing to crop it.
+
+    Pillow clips a paste at the destination edge without complaining, which
+    turns a sprite that outgrew its cell into a silently trimmed barrel or
+    roof. Overflow is an authoring error, so it stops the build instead.
+    """
+    cw, ch = cell_img.size
+    sw, sh = sprite.size
+    if x0 < 0 or y0 < 0 or x0 + sw > cw or y0 + sh > ch:
+        raise ValueError(
+            f"sprite {sw}x{sh} placed at ({x0}, {y0}) does not fit the "
+            f"{cw}x{ch} cell — shorten the model or move it inward"
+        )
+    cell_img.alpha_composite(sprite, (x0, y0))
 
 
 def _waterline_foam(img: Image.Image, bottom: int) -> None:
@@ -264,6 +276,13 @@ def _waterline_foam(img: Image.Image, bottom: int) -> None:
 
 
 def _shadow_ellipse(img: Image.Image, cx: int, cy: int, rx: int, ry: int, alpha: int) -> None:
+    """Blend a soft dark ellipse over whatever is already in the image.
+
+    Source-over, not a stamp: on the transparent unit cells this reduces to
+    writing the shadow straight in, while on an opaque terrain tile the
+    tree/prop shadow tints the ground instead of punching a near-black slab
+    into it (the tile is later flattened to RGB, so the alpha would be lost).
+    """
     px = img.load()
     w, h = img.size
     for yy in range(cy - ry, cy + ry + 1):
@@ -271,6 +290,20 @@ def _shadow_ellipse(img: Image.Image, cx: int, cy: int, rx: int, ry: int, alpha:
             if not (0 <= xx < w and 0 <= yy < h):
                 continue
             d = ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2
-            if d <= 1.0:
-                a = alpha if d < 0.55 else int(alpha * 0.5)
+            if d > 1.0:
+                continue
+            a = alpha if d < 0.55 else int(alpha * 0.5)
+            dr, dg, db, da = px[xx, yy]
+            if da == 0:
                 px[xx, yy] = (16, 18, 24, a)
+                continue
+            keep = da * (255 - a) // 255
+            out_a = a + keep
+            if out_a == 0:
+                continue
+            px[xx, yy] = (
+                (16 * a + dr * keep) // out_a,
+                (18 * a + dg * keep) // out_a,
+                (24 * a + db * keep) // out_a,
+                out_a,
+            )
