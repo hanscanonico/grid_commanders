@@ -333,10 +333,10 @@ func _show_unit(
 	if unit == null:
 		return
 	_unit_icon.texture = UnitSprite.texture_for(unit.type, identity.atlas_row(unit.team))
-	# The board's own exhausted grey, borrowed rather than redefined: a unit that
-	# has acted looks the same in the bar as it does on the tile.
+	# The board's own exhausted scrim, borrowed rather than redefined: a unit
+	# that has acted looks the same in the bar as it does on the tile.
 	var waited := unit.acted and unit.team == active_team
-	_unit_icon.modulate = UnitSprite.ACTED_TINT if waited else Color.WHITE
+	_unit_icon.material = UnitSprite.acted_scrim() if waited else null
 	_unit_name.text = unit.type.display_name
 	_unit_sub.text = _order_line(unit, carrying, waited, allegiance, range_band)
 	_pips.set_hp(unit.displayed_hp())
