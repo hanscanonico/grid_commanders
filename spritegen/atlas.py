@@ -57,7 +57,9 @@ def build_terrain_atlas() -> Image.Image:
 def building_cell(bid: str, fac: Faction) -> Image.Image:
     """A property building alone on a transparent cell, placed exactly as the
     terrain tiles place it, for the game's iso_buildings compositor."""
-    sprite = render(buildings.BUILDINGS[bid](), fac)
+    # model_for, not BUILDINGS[bid]: the neutral row swaps hue-carrying
+    # materials for greys, and the exported cells must match the tiles.
+    sprite = render(buildings.model_for(bid, fac), fac)
     out = Image.new("RGBA", (CELL, CELL), (0, 0, 0, 0))
     if bid == "airport":
         cx, bottom = 31, 46

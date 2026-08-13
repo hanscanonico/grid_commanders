@@ -8,7 +8,7 @@ behind a diamond footprint).
 
 from __future__ import annotations
 
-from .palette import h01
+from .palette import Faction, h01
 from .voxel import Model
 
 # ---------------------------------------------------------------------------
@@ -96,19 +96,18 @@ def city() -> Model:
     m = Model()
     _pad(m, 0, 13, 0, 13)
     # main tower, front-left: concrete walls, faction roof
-    m.box(1, 6, 6, 11, 1, 8, "concrete")
-    m.box(1, 6, 6, 11, 9, 9, "body")  # roof
-    m.box(2, 5, 7, 10, 10, 10, "body_dk")  # roof plant
-    m.set(3, 8, 11, "gunmetal")  # AC unit
-    _windows(m, "y", 2, 5, 11, 2, 8, 21)
-    _windows(m, "x", 7, 10, 6, 2, 8, 22)
+    m.box(1, 6, 6, 11, 1, 5, "concrete")
+    m.box(1, 6, 6, 11, 6, 6, "body")  # roof
+    m.box(2, 5, 7, 10, 7, 7, "body_dk")  # roof plant
+    _windows(m, "y", 2, 5, 11, 2, 5, 21)
+    _windows(m, "x", 7, 10, 6, 2, 5, 22)
     # taller slab tower, back-right
-    m.box(8, 12, 1, 6, 1, 10, "concrete")
-    m.box(8, 12, 1, 6, 11, 11, "body")  # roof
-    m.box(9, 11, 2, 5, 12, 12, "body_lt")  # penthouse
-    m.chamfer(9, 11, 2, 5, 12, 12)
-    _windows(m, "y", 9, 11, 6, 2, 10, 23)
-    _windows(m, "x", 2, 5, 12, 2, 10, 24)
+    m.box(8, 12, 1, 6, 1, 7, "concrete")
+    m.box(8, 12, 1, 6, 8, 8, "body")  # roof
+    m.box(9, 11, 2, 5, 9, 9, "body_dk")  # penthouse
+    m.chamfer(9, 11, 2, 5, 9, 9)
+    _windows(m, "y", 9, 11, 6, 2, 7, 23)
+    _windows(m, "x", 2, 5, 12, 2, 7, 24)
     # low storefront, front-right: faction awning over grey walls
     m.box(8, 12, 8, 12, 1, 3, "concrete")
     m.box(8, 12, 8, 12, 4, 4, "body")  # awning roof
@@ -125,22 +124,22 @@ def base() -> Model:
     m = Model()
     _pad(m, 0, 13, 0, 13)
     # main shed in industrial concrete
-    m.box(1, 11, 3, 12, 1, 4, "concrete_dk")
+    m.box(1, 11, 3, 12, 1, 3, "concrete_dk")
     # sawtooth roof: three north-lit ridges in the owner's color
     for k in range(3):
         y0 = 10 - k * 3
-        m.box(1, 11, y0 - 1, y0, 5, 5, "body_dk")
-        m.box(1, 11, y0, y0, 6, 6, "body_lt")
-        m.box(1, 11, y0 - 1, y0 - 1, 6, 6, "glass_dk")  # skylight band
+        m.box(1, 11, y0 - 1, y0, 4, 4, "body_dk")
+        m.box(1, 11, y0, y0, 5, 5, "body")
+        m.box(1, 11, y0 - 1, y0 - 1, 5, 5, "glass_dk")  # skylight band
     # big vehicle door on the front face with hazard stripe
     m.box(3, 8, 12, 12, 1, 3, "gunmetal_dk")
     m.box(3, 8, 12, 12, 3, 3, "amber")
     m.box(5, 6, 12, 12, 1, 1, "bore")  # door gap
     # chimney at the rear corner
-    m.box(11, 12, 1, 2, 1, 8, "concrete_dk")
-    m.box(11, 12, 1, 2, 8, 8, "gunmetal")
-    m.set(11, 1, 9, "bore")
-    m.set(12, 2, 9, "bore")
+    m.box(11, 12, 1, 2, 1, 6, "concrete_dk")
+    m.box(11, 12, 1, 2, 6, 6, "gunmetal")
+    m.set(11, 1, 7, "bore")
+    m.set(12, 2, 7, "bore")
     # crates on the apron
     m.box(12, 13, 8, 9, 1, 2, "wood")
     m.box(1, 2, 0, 1, 1, 1, "wood")
@@ -152,33 +151,33 @@ def hq() -> Model:
     m = Model()
     _pad(m, 0, 13, 0, 13, "concrete")
     # curtain walls in castle stone
-    m.box(1, 12, 1, 12, 1, 5, "stone")
-    m.clear(3, 10, 3, 10, 1, 5)  # hollow courtyard (hidden anyway)
+    m.box(1, 12, 1, 12, 1, 4, "stone")
+    m.clear(3, 10, 3, 10, 1, 4)  # hollow courtyard (hidden anyway)
     # crenellations along the front and right parapets
     for i in range(1, 13, 2):
-        m.set(i, 12, 6, "stone")
-        m.set(12, i, 6, "stone")
-        m.set(i, 1, 6, "stone")
-        m.set(1, i, 6, "stone")
-    # corner towers, capped in the owner's color
+        m.set(i, 12, 5, "stone")
+        m.set(12, i, 5, "stone")
+        m.set(i, 1, 5, "stone")
+        m.set(1, i, 5, "stone")
+    # corner towers, capped in the owner's color at parapet height — the
+    # rear corner sets the sprite's top line, so the height budget goes to
+    # the central keep instead
     for tx, ty in ((1, 1), (1, 11), (11, 1), (11, 11)):
-        m.box(tx, tx + 1, ty, ty + 1, 1, 6, "stone")
-        m.box(tx, tx + 1, ty, ty + 1, 7, 7, "body_dk")
-        m.set(tx, ty, 8, "body")
-        m.set(tx + 1, ty + 1, 8, "body")
+        m.box(tx, tx + 1, ty, ty + 1, 1, 4, "stone")
+        m.box(tx, tx + 1, ty, ty + 1, 5, 5, "body")
     # gatehouse: arched gate with a wooden door on the front wall
     m.box(5, 8, 12, 12, 1, 4, "stone_dk")
     m.box(6, 7, 12, 12, 1, 3, "wood")
     m.set(6, 12, 4, "bore")
     m.set(7, 12, 4, "bore")
     # central stone keep under a faction roof, banner mast above
-    m.box(4, 9, 4, 9, 1, 7, "stone")
-    m.box(4, 9, 4, 9, 8, 8, "body_dk")
-    m.box(5, 8, 5, 8, 9, 9, "body")
-    m.chamfer(5, 8, 5, 8, 9, 9)
-    _windows(m, "y", 5, 8, 9, 3, 7, 31)
-    m.box(6, 6, 6, 6, 10, 13, "steel")
-    m.box(7, 8, 6, 6, 12, 13, "body")  # banner
+    m.box(4, 9, 4, 9, 1, 6, "stone")
+    m.box(4, 9, 4, 9, 7, 7, "body_dk")
+    m.box(5, 8, 5, 8, 8, 8, "body")
+    m.chamfer(5, 8, 5, 8, 8, 8)
+    _windows(m, "y", 5, 8, 9, 3, 6, 31)
+    m.box(6, 6, 6, 6, 9, 10, "steel")
+    m.box(7, 8, 6, 6, 9, 10, "body")  # banner
     return m
 
 
@@ -191,18 +190,17 @@ def airport() -> Model:
     # runway (front)
     m.box(1, 8, 6, 13, 1, 4, "concrete")
     m.box(1, 8, 7, 12, 5, 5, "body")  # arch tier 1
-    m.box(2, 7, 8, 11, 6, 6, "body_lt")  # arch crown
+    m.box(2, 7, 8, 11, 6, 6, "body")  # arch crown
     m.chamfer(2, 7, 8, 11, 6, 6)
     m.box(2, 7, 13, 13, 1, 3, "gunmetal_dk")  # hangar door
     m.box(4, 5, 13, 13, 1, 3, "gunmetal")  # door seam
     m.box(1, 8, 6, 6, 1, 4, "concrete_dk")  # rear wall
     # control tower with glass cab and radar
-    m.box(10, 12, 4, 6, 1, 6, "concrete")
-    m.box(9, 13, 3, 7, 7, 7, "concrete_dk")  # balcony ring
-    m.box(10, 12, 4, 6, 8, 8, "glass")
-    m.box(10, 12, 4, 6, 9, 9, "body_dk")  # cap
-    m.set(11, 5, 10, "steel")  # radar mast
-    m.set(11, 5, 11, "gunmetal_dk")
+    m.box(10, 12, 4, 6, 1, 4, "concrete")
+    m.box(9, 13, 3, 7, 5, 5, "concrete_dk")  # balcony ring
+    m.box(10, 12, 4, 6, 6, 6, "glass")
+    m.box(10, 12, 4, 6, 7, 7, "body_dk")  # cap
+    m.set(11, 5, 8, "gunmetal_dk")  # radar knob
     # windsock on the apron corner
     m.box(13, 13, 11, 11, 1, 4, "steel")
     m.set(13, 12, 4, "amber")
@@ -221,14 +219,14 @@ def port() -> Model:
     # warehouse: concrete walls under a shallow faction gabled roof
     m.box(1, 6, 7, 13, 2, 5, "concrete")
     m.box(1, 6, 8, 12, 6, 6, "body")
-    m.box(1, 6, 10, 10, 7, 7, "body_lt")  # ridge
+    m.box(1, 6, 10, 10, 7, 7, "body")  # ridge
     m.box(3, 4, 13, 13, 2, 4, "gunmetal_dk")  # cargo door
     # gantry crane over the dockside
-    m.box(9, 10, 11, 12, 2, 9, "gunmetal")
-    m.box(9, 10, 4, 12, 10, 10, "gunmetal")  # jib reaching the water
-    m.set(9, 5, 9, "gunmetal_dk")  # cable
-    m.set(9, 5, 8, "gunmetal_dk")
-    m.box(9, 10, 11, 12, 10, 11, "gunmetal_dk")  # cab + counterweight
+    m.box(9, 10, 11, 12, 2, 7, "gunmetal")
+    m.box(9, 10, 4, 12, 8, 8, "gunmetal")  # jib reaching the water
+    m.set(9, 5, 7, "gunmetal_dk")  # cable
+    m.set(9, 5, 6, "gunmetal_dk")
+    m.box(9, 10, 11, 12, 8, 9, "gunmetal_dk")  # cab + counterweight
     # container stack on the quay
     m.box(11, 13, 6, 8, 2, 2, "body")
     m.box(11, 13, 6, 7, 3, 3, "amber")
@@ -246,3 +244,31 @@ BUILDINGS = {
     "airport": airport,
     "port": port,
 }
+
+# The neutral row strips hue: an unowned property must not read as lit or
+# owned, so every hue-carrying material resolves to a grey of matching value
+# (design review 2026-08-13). Owned rows keep the accents untouched. `bore`
+# stays — the palette has no dark true grey and its few pixels read black.
+_NEUTRAL_GREYS = {
+    "amber": "white",  # lit windows, hazard stripe, windsock, container lid
+    "glass": "white",  # tower cab glazing
+    "glass_dk": "rock_dk",  # dark window glass, skylight band
+    "wood": "stone_dk",  # doors, crates
+    "leaf": "rock",  # plaza planter
+    "leaf_dk": "rock_dk",
+    "body": "stone_dk",  # roofs: the slate theme's cast still reads owned
+    "body_dk": "rock_dk",
+    "body_lt": "rock",
+    "steel": "rock",  # masts and poles: cool cast shows on shadow faces
+    "gunmetal": "rock",  # machinery, same pairing one step darker
+    "gunmetal_dk": "rock_dk",
+}
+
+
+def model_for(bid: str, fac: Faction) -> Model:
+    """The property building's model for one faction row."""
+    m = BUILDINGS[bid]()
+    if fac.key == "neutral":
+        for pos, mat in m.vox.items():
+            m.vox[pos] = _NEUTRAL_GREYS.get(mat, mat)
+    return m
