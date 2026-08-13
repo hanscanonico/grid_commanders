@@ -65,17 +65,14 @@ def _install(src: Path, dest: Path) -> None:
         pairs.append((cell, dest / "assets/sprites/units" / cell.name))
     for cell in sorted((src / "iso_buildings").glob("*.png")):
         pairs.append((cell, dest / "assets/sprites/iso_buildings" / cell.name))
+    for sheet in sorted((src / "autotiles").glob("*.png")):
+        pairs.append((sheet, dest / "assets/tiles/autotiles" / sheet.name))
     for s, d in pairs:
         if not s.exists():
             sys.exit(f"missing {s} — run a full generation first")
         d.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(s, d)
     print(f"installed atlases + {len(pairs) - 2} cells into {dest}")
-    print(
-        "note: the game's `make tiles` regenerates atlases from its own "
-        "pipeline; the per-cell sprites keep tools/paste_unit_sprites.gd "
-        "working if you rebuild there."
-    )
 
 
 def main() -> None:
