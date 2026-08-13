@@ -26,8 +26,9 @@ extends RefCounted
 signal fire_pressed
 
 const TILE := 16
-## Terrain atlas cells are 4x the world grid so the PixVoxel property buildings
-## keep their detail; TerrainLayer is scaled down to compensate.
+## Terrain atlas cells are 4x the world grid so the generated property
+## buildings keep their detail; TerrainLayer is scaled down to compensate.
+## Must match sprite_generator's cell size (its atlas contract).
 const TERRAIN_PX := 64
 const ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
 const ATLAS_SOURCE_ID := 0

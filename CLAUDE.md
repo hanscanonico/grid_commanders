@@ -130,9 +130,10 @@ plan is stated in full below and has no copy there.
   commander picks and is the single authority every surface reads — ask it, never re-derive a
   side's colour or name. Its fallbacks are load-bearing and total: a no-CO match is
   board-identical to before factions. The atlas-row order (`0 neutral, 1 meridian, 2 aurora,
-  3 iron, 4 verdant`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art pipeline
-  (`build_pixvoxel_atlases.sh`, `generate_tiles.gd`); rows 0–2 stay byte-for-byte the shipped
-  red/blue art. D5: **"Red"/"Blue" survive only as developer slot vocabulary** (the Balance Lab's
+  3 iron, 4 verdant`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art pipeline —
+  since 2026-08-14 the sibling `sprite_generator` repo, whose `FACTIONS` tuple mirrors it row for
+  row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
+  byte-for-byte" clause retired with the PixVoxel art it froze. D5: **"Red"/"Blue" survive only as developer slot vocabulary** (the Balance Lab's
   `--red`/`--blue` grammar, identifiers, comments) — never on a screen a player sees.
 - `tile-info-panel-plan.html` + `.lavish/hud/SPEC.md` — the tile info panel and the docked HUD
   (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code; `show_tile()` is the bottom
@@ -182,7 +183,8 @@ plan is stated in full below and has no copy there.
   are a presentation split of `points_before − points_after`, never a call back into
   `capture_strength`; the property flip is a `SideIdentity.atlas_row` swap. Deliberately does not
   tier-scale (structural parity with the combat sibling). Faction tinting for its buildings and
-  all art families has one authority — see `assets/LICENSES.md` "Design-system faction tints".
+  all art families has one authority — the generator's faction ramps, read from
+  `CommanderVisuals` (see `assets/LICENSES.md` "Board sprites — generated").
 - `power-quotes-plan.html` — Command Power quotes PQ1–PQ2, shipped. D1: a quote is presentation
   data — `power_quotes` is exported on `CommanderType`, the words live on each general's `.tres`,
   nothing in `core/` or `ai/` reads one. D2: rotation is by a per-team activation counter, never

@@ -15,9 +15,8 @@ extends RefCounted
 ## whose four faction themes it reads and never re-derives.
 
 ## Theme key -> the row the art pipeline draws that faction's units and property
-## buildings at. MUST match tools/build_pixvoxel_atlases.sh ROW_NAMES and
-## tools/generate_tiles.gd's row order: 0 neutral, 1 meridian(red),
-## 2 aurora(blue), 3 iron, 4 verdant.
+## buildings at. MUST match sprite_generator's FACTIONS row order:
+## 0 neutral, 1 meridian(red), 2 aurora(blue), 3 iron, 4 verdant.
 const _ROW_FOR_KEY := {
 	&"neutral": 0,
 	&"meridian": 1,
