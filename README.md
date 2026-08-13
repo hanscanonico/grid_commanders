@@ -125,3 +125,15 @@ that pipeline's paste step can be pointed at this art instead.
 Python 3.10+, no dependencies beyond Pillow. The old seed-driven generator
 (creatures/ships/items/robots/tanks) lives in git history before this
 rewrite.
+
+## Checks
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull
+request: `ruff check` and `ruff format --check` (ruff pinned in the workflow,
+style settings in `ruff.toml`), the contract tests
+(`python -m unittest discover tests`), two generator runs diffed against each
+other for byte determinism, and a pixel comparison of the committed
+`.lavish/assets` snapshots — atlases, previews, autotile sheets and
+`iso_buildings` cells — against fresh generator output. Change what the
+generator draws and those snapshots have to be regenerated in the same
+commit, or CI fails.
