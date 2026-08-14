@@ -221,12 +221,16 @@ func test_every_shipped_board_that_seats_more_than_a_duel_is_soaked_here() -> vo
 	for path in shipped:
 		if not soaked.has(path):
 			missing.append(path)
+	var stale: Array[String] = []
+	for path in soaked:
+		if not shipped.has(path):
+			stale.append(path)
 	var complaint := (
-		"the soaked roster has fallen behind maps/: %s seats more than a duel and is never"
-		+ " soaked — add it to SOAKED and give it a _soak line saying why that board is"
-		+ " worth soaking"
+		"the soaked roster and maps/ disagree — never soaked: [%s]; no longer seats more than a"
+		+ " duel: [%s]. Add a missing board to SOAKED with a _soak line saying why that board is"
+		+ " worth soaking, and drop a stale one from both"
 	)
-	assert_eq(shipped, soaked, complaint % ", ".join(missing))
+	assert_eq(shipped, soaked, complaint % [", ".join(missing), ", ".join(stale)])
 
 
 ## Plays the board out with `sides` applied and a planner per army. Fails on the
