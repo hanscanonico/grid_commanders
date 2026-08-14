@@ -767,6 +767,17 @@ drifting backdrop and blinking **PRESS START** pin still under a capture (the an
 precedent), so the pin's only effect on the frame is the **Speed** segment's highlight, and that
 should read as the tier a fresh install ships with.
 
+## Sound
+
+The pause menu's **Sound** row cycles **Full → Half → Quiet → Off**, banner-confirmed like the
+**Speed** row beside it. It is a device preference on the same terms: it lives in
+`user://settings.cfg`, never enters a match request or a save, and both sides of a hot-seat share
+it. The step is applied to the master bus, so music and effects come down together — the complaint
+it answers is "turn it down", not "mix it" — and **Off** mutes the bus outright rather than trusting
+a very low decibel to be inaudible. Every step lives in one table at the top of
+`autoload/settings.gd`. `--mute` silences one launch without writing anything, the same family as
+`--no-battle-anim`.
+
 ## Campaigns
 
 **Campaign** on the main menu opens six authored wars against the Iron Dominion — *The Six

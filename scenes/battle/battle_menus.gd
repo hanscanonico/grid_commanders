@@ -17,9 +17,9 @@ extends RefCounted
 ## production asks the terrain what it builds — exactly what BuildCommand checks.
 ##
 ## No scene tree and no sprite here, like the rest of the layers Battle delegates
-## to. The one autoload it reads is Settings, for the speed row's label, and that
-## is the same rule as everything above rather than an exception to it: whoever
-## owns the answer is who gets asked.
+## to. The one autoload it reads is Settings, for the two device-preference rows'
+## labels, and that is the same rule as everything above rather than an exception
+## to it: whoever owns the answer is who gets asked.
 
 const CANCEL := {"id": &"cancel", "label": "Cancel"}
 
@@ -120,10 +120,11 @@ static func build_actions(
 ## a button for the Command Power, and this keeps it reachable from the keyboard
 ## too, which the rest of the game already is.
 ##
-## The Speed row reads its label off Settings for the same reason every row above
-## asks its command: the tier the player is watching at has one owner, and a menu
-## that remembered its own copy would eventually show a speed the game is not
-## playing at. Choosing it cycles to the next tier — see Battle's map handler.
+## The Speed and Sound rows read their labels off Settings for the same reason
+## every row above asks its command: the tier the player is watching at and the
+## volume they are listening at each have one owner, and a menu that remembered
+## its own copy would eventually show a setting the game is not playing at.
+## Choosing either cycles it to its next step — see Battle's map handler.
 ##
 ## The two exit rows are the only way out of a running match that is not winning,
 ## losing or killing the application, so they are spelled out rather than folded
@@ -166,7 +167,8 @@ static func map_actions(
 		if co_state.is_ready():
 			actions.append({"id": &"power", "label": co_state.type.power_name})
 	actions.append({"id": &"commanders", "label": "Commanders"})
-	actions.append({"id": &"speed", "label": "Speed: %s" % Settings.speed.display_name})
+	actions.append({"id": &"speed", "label": Settings.speed_row_label()})
+	actions.append({"id": &"sound", "label": Settings.sound_row_label()})
 	var auto_eligible := game.current_team not in ai_teams or auto_tiers.has(game.current_team)
 	if savable and difficulty_db != null and auto_eligible:
 		var auto_label := "Off"

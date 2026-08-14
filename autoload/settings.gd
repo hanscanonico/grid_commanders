@@ -1,15 +1,16 @@
 extends Node
 ## Device preferences: what this machine likes, as opposed to what this match is.
-## Three of them today — how fast the battle's theatre plays out, whether a
-## resolved attack cuts to the full-screen battle animation at all, and which of
-## the first-match hints this player has already earned their way out of.
+## Four of them today — how fast the battle's theatre plays out, whether a
+## resolved attack cuts to the full-screen battle animation at all, how loud the
+## game is, and which of the first-match hints this player has already earned
+## their way out of.
 ##
 ## Deliberately not MatchConfig and deliberately not in the save file: resuming a
 ## three-day-old save should play at the speed you like *today* and watch battles
 ## the way you like *today*, and a hot-seat pair share one screen anyway. The
 ## hints belong here for the same reason and one more (UX recovery plan D1): a
 ## player who has learned to capture has learned it for good, and tying that to a
-## match would teach them again on every new one. All three are presentation only
+## match would teach them again on every new one. All four are presentation only
 ## — nothing here may ever change a rule, a number, or what the sim does, so two
 ## players' "same seed, same commands" keep meaning the same result. Nothing here
 ## is ever handed to core/ or ai/, so the sim cannot observe a preference it never
@@ -28,6 +29,7 @@ const BACKUP_SUFFIX := ".bak"
 const SECTION := "game"
 const SPEED_KEY := "speed"
 const BATTLE_ANIMATIONS_KEY := "battle_animations"
+const VOLUME_KEY := "volume"
 const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
@@ -37,6 +39,29 @@ const SPEED_ARG := "--speed="
 ## as un-persisted: how a capture run keeps `make screenshot` byte-stable without
 ## touching the stored preference.
 const NO_ANIM_ARG := "--no-battle-anim"
+## Silences the whole game for one launch, same family as --no-battle-anim and
+## just as un-persisted: how a capture or a scripted run stays quiet without
+## spending the player's own volume.
+const MUTE_ARG := "--mute"
+
+## How loud the game plays, quietest step last. The master bus is the whole
+## surface — music and effects come down together — because the complaint this
+## setting exists to answer is "turn it down", not "mix it". Off mutes the bus
+## outright rather than trusting a very low decibel to be inaudible, the explicit
+## branch GameSpeed's Instant tier is.
+const VOLUME_STEPS: Array[Dictionary] = [
+	{"id": &"full", "label": "Full", "db": 0.0},
+	{"id": &"half", "label": "Half", "db": -8.0},
+	{"id": &"quiet", "label": "Quiet", "db": -18.0},
+	{"id": &"off", "label": "Off", "db": -80.0},
+]
+## The loudest step, which is what a fresh install plays at and what an id naming
+## no step falls back to, and the silent one, which mutes rather than attenuates.
+const FULL_ID := &"full"
+const OFF_ID := &"off"
+## The bus every step is applied to. Index 0 is Master, which always exists, so
+## the game needs no bus layout resource of its own.
+const MASTER_BUS := 0
 ## Forgets every retired first-match hint and writes that back, so the next
 ## launch meets the mission strip exactly as a fresh install does. The one flag
 ## here that *does* touch the file, because that is the whole point of it: the
@@ -53,6 +78,11 @@ var speed: GameSpeed = GameSpeed.default_speed()
 ## to the on-map hit flash and shake, which is how combat looked before the
 ## cut-in existed — see BattleAnimator.animate_combat.
 var battle_animations := true
+
+## Which step of VOLUME_STEPS the game plays at. Never a stranger: a stored id
+## nothing answers to falls back to the loudest step, the same shape
+## GameSpeed.by_id answers an unknown tier with.
+var volume: StringName = FULL_ID
 
 ## Which first-match hints this player has already performed their way out of —
 ## `TutorialHints` ids, retired for good. MissionStrip reads it to pick what to
@@ -71,6 +101,7 @@ var _flag_wins := false
 func _ready() -> void:
 	_load()
 	_apply_cmdline()
+	_apply_volume()
 
 
 ## Changes the tier and writes it back. The only way the speed ever moves.
@@ -78,6 +109,75 @@ func set_speed(id: StringName) -> void:
 	speed = GameSpeed.by_id(id)
 	if _persistent:
 		_save()
+
+
+## Changes the volume, applies it to the master bus and writes it back. The only
+## way the volume ever moves. Mirrors set_speed, and like it a pinned or scripted
+## launch (see --mute) never touches the file.
+func set_volume(id: StringName) -> void:
+	volume = id if volume_index(id) >= 0 else FULL_ID
+	_apply_volume()
+	if _persistent:
+		_save()
+
+
+## Where `id` sits in VOLUME_STEPS; -1 when it names no step.
+static func volume_index(id: StringName) -> int:
+	for i in VOLUME_STEPS.size():
+		if VOLUME_STEPS[i]["id"] == id:
+			return i
+	return -1
+
+
+## What a step is called on screen. An unknown id reads as the loudest step, so a
+## menu built from a file this version cannot read still says something true of
+## what it is about to play.
+static func volume_label(id: StringName) -> String:
+	var i := volume_index(id)
+	return VOLUME_STEPS[maxi(i, 0)]["label"]
+
+
+static func volume_db(id: StringName) -> float:
+	var i := volume_index(id)
+	return VOLUME_STEPS[maxi(i, 0)]["db"]
+
+
+## The step after `id`, wrapping — what the in-battle Sound row cycles through,
+## the way GameSpeed.next serves the Speed row beside it.
+static func next_volume(id: StringName) -> StringName:
+	var i := volume_index(id)
+	return VOLUME_STEPS[wrapi(i + 1, 0, VOLUME_STEPS.size())]["id"]
+
+
+## What the pause menu's Speed row reads and what the banner confirming a change
+## says. One string with one owner, so a row and its own banner can never word
+## the same tier differently.
+func speed_row_label() -> String:
+	return "Speed: %s" % speed.display_name
+
+
+func sound_row_label() -> String:
+	return "Sound: %s" % volume_label(volume)
+
+
+## Cycles Slow -> Normal -> Quick -> Instant and persists, so the next animation
+## already obeys it, and answers with the row's new label — which is what the
+## banner then says, the setting being otherwise invisible until something moves.
+func cycle_speed() -> String:
+	set_speed(GameSpeed.next(speed.id).id)
+	return speed_row_label()
+
+
+## The same, one ladder over: Full -> Half -> Quiet -> Off, heard immediately
+## because set_volume applies the step it just took.
+func cycle_volume() -> String:
+	set_volume(next_volume(volume))
+	return sound_row_label()
+
+
+func _apply_volume() -> void:
+	AudioServer.set_bus_volume_db(MASTER_BUS, volume_db(volume))
+	AudioServer.set_bus_mute(MASTER_BUS, volume == OFF_ID)
 
 
 ## The setter the menu's checkbox is wired to. Mirrors set_speed: writes through
@@ -143,6 +243,12 @@ func _load() -> void:
 	var stored_anim: Variant = config.get_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
 	if stored_anim is bool:
 		battle_animations = stored_anim
+	# A String here for the reason the hint ids are: ConfigFile has no StringName.
+	# An id this version answers to nothing with falls back to the loudest step
+	# rather than muting a player who cannot see why.
+	var stored_volume: Variant = config.get_value(SECTION, VOLUME_KEY, "")
+	if stored_volume is String and volume_index(StringName(stored_volume)) >= 0:
+		volume = StringName(stored_volume)
 	# Stored as strings and read back as StringNames: ConfigFile has no
 	# StringName, and a hint id written by one version must still match the
 	# TutorialHints id in the next. An id nothing answers to any more is kept
@@ -160,6 +266,7 @@ func _save() -> void:
 		return
 	config.set_value(SECTION, SPEED_KEY, String(speed.id))
 	config.set_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
+	config.set_value(SECTION, VOLUME_KEY, String(volume))
 	var hints := PackedStringArray()
 	for id in retired_hints:
 		hints.append(String(id))
@@ -284,3 +391,8 @@ func _apply_cmdline() -> void:
 			# capture run cannot rewrite what the player chose.
 			_persistent = false
 			battle_animations = false
+		elif arg == MUTE_ARG:
+			# Same terms as --no-battle-anim. _ready applies the volume once this
+			# walk is over, so nothing here has to touch the bus itself.
+			_persistent = false
+			volume = OFF_ID
