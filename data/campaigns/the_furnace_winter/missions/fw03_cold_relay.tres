@@ -12,17 +12,17 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the crossroads base. It is the only way this army builds anything."
+text = "Take the relay base. In this whiteout it is the only ground that builds."
 cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "Vale's garrison held the crossroads past day 9."
+text = "Vance's checkpoint held the relay past day 9."
 last_day = 9
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Take the northern relay as well."
+text = "Find the northern relay in the whiteout and take it too."
 cell = Vector2i(10, 2)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -38,7 +38,7 @@ text = "The relay's still unclaimed. That's one signature we can outrun."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Her garrison outnumbers ours. We spend speed instead of shells."
+text = "Her garrison outnumbers ours and the blizzard blinds both sides. We spend speed instead of shells."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -91,7 +91,7 @@ commanders = {
 1: &"ines_calder",
 2: &"iona_vance"
 }
-fog_enabled = false
+fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])

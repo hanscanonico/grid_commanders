@@ -1,6 +1,7 @@
 # The Furnace Winter, The Depots — "Signal Hill".
-# Teaching board: a road spine with 3 garrisoned depots in sequence.
-# There is no convoy to escort — the depots hold still. Take them in order.
+# A road spine with 3 garrisoned relays, taken together or not at all.
+# Ferrow's paymaster (recon, tagged paymaster) rides behind the east relay:
+# the hidden bonus the middle relay's intercept reveals.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
@@ -31,3 +32,4 @@
 2 i 4 3
 2 r 7 2
 2 t 11 4
+2 r 15 2 paymaster

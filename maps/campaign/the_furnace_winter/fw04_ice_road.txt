@@ -1,19 +1,25 @@
 # The Furnace Winter, The Freeze — "Ice Road".
-# Teaching board: the player owns only the HQ. Nothing is built until
-# the crossroads base at the centre is taken — capture-before-production.
+# The convoy board: the frozen river splits the valley end to end and the
+# bridge causeway at (8,5) is the one crossing for wheels and treads — boots
+# wade the ice anywhere, which is what makes the far bank contestable before
+# the bridge is forced. The player's fuel sledge (apc, tagged fuel_sledge)
+# has to live: ProtectUnit failure. The flag beat fires when the sledge
+# itself stands on the east landing city at (11,6).
+# The day-4 ambush lands on the east bridgehead (9,5)/(9,4), off the bridge
+# square itself so a convoy mid-crossing cannot swallow the spawn (trap 6).
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-......M......
-.Q.FF........
-.=.FF....C...
-.=...........
-.=...........
-.=====B=====.
-...........C.
-...C....FF.=.
-..........BQ.
-......M......
+......M.~....
+.Q.FF...~....
+.=.FF...~.C..
+.=......~....
+.=......~....
+.=====B=+===.
+........~..C.
+...C.FF.~..=.
+........~.BQ.
+......M.~....
 [owners]
 1 1 1
 2 11 8
@@ -23,6 +29,7 @@
 1 i 2 1
 1 i 2 2
 1 r 1 3
+1 p 2 3 fuel_sledge
 2 i 9 8
 2 i 9 7
 2 m 8 8

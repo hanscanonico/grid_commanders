@@ -786,14 +786,15 @@ Under the title, once there is anything to say, a strip carries the war itself: 
 on the record, in the words of the beats that wrote it, and the condition of the veterans it is
 carrying.
 
-Picking a mission swaps the list for its **briefing** — the story, spoken by the generals
-themselves, each line under its speaker's name in their faction's colour, then the objectives, what
+Picking a mission swaps the list for its **briefing** — the board in miniature beside the enemy
+general it is fought against, the story, spoken by the generals themselves, each line beside its
+speaker's bust, under their name in their faction's colour, then the objectives, what
 fails it, the par day — and **Deploy** stages it through the same launch path a skirmish uses; the
 button reads **Resume** instead when that mission is the one you saved midway. A mission is won by satisfying
 every objective at once (or by ordinary tactical victory) and lost by any failure condition — or by
 tactical defeat, and **losing outranks winning**: a deadline that expires on the very board that
 completed the objective is a failure. The shipped missions are lost three ways where a deadline
-used to be the only one in the game: 86 of them run out of days, 18 spend a loss limit, and 5 lose
+used to be the only one in the game: 85 of them run out of days, 20 spend a loss limit, and 6 lose
 somebody the board named and you were told to keep alive.
 A mission asks for more than the enemy's headquarters: take a cell or so many properties, hold out
 to a day, **hold** named ground for a run of whole days, get a number of units onto an **exit
@@ -819,7 +820,7 @@ anything else, and a replay speaks the same words in the same place. Beats fire 
 mission is judged, so a relief column arriving on the day the deadline expires is on the board the
 deadline is judged against; losing still outranks winning, so that mission is still lost. A beat
 marked once fires once, and a mission picked back up from a save does not play it again. **Every
-one of the 108 missions carries at least one**, 197 beats in all.
+one of the 108 missions carries at least one**, 208 beats in all.
 
 **A war remembers.** A beat can write a fact to its campaign's ledger — Greenwater held, the
 courier lost, three marshals still standing — and a later mission reads it: a briefing line only
@@ -832,7 +833,7 @@ is won**: it reads the war as it stood when it began, a lost or abandoned attemp
 and replaying a mission you have already cleared does not rewrite what later missions were briefed
 off — it can still improve your stars and your best day. When a win does move the war, the debrief
 says so on a `RECORDED` line in the beat's own words, and the hub's strip keeps saying it for the
-rest of the war. **Fifty-seven of the 108 missions write a fact**, every war keeping a handful of
+rest of the war. **Fifty-eight of the 108 missions write a fact**, every war keeping a handful of
 its own — whether Ferrow was ever paid, how much of the fuel road runs east, whether the marshal
 you fought beside is still standing.
 
@@ -846,20 +847,21 @@ missions across five of the six wars are authored this way** — *The Hollow Cro
 offered only to a commander who let Morn's vanguard walk away, and *The Collection* holds two back
 — one for a commander who got the witness out, one for a commander who proved the forgery.
 
-**An army carries.** A war can hand one mission's survivors to the next — authored where the same
-general fights both, since an army only ever follows its own commander. The second board marks some
+**An army carries.** A war can hand one mission's survivors to the next. The second board marks some
 of its own starting units as slots those veterans stand in, at the HP and the name they came off the
 last board with, refit to whatever minimum that mission's author set. A slot the war has no unit of that type for keeps the fresh one
 the board authored, so every board still fields exactly the army it was balanced for — a wounded
 tank is a decision you have to make about it, never a tank you are missing. Nothing else crosses:
 what was riding inside a transport is banked as itself and arrives on its own feet. A lost mission
 banks nothing, so a **Retry** deploys the army the attempt began with, and replaying a mission you
-have already cleared does not re-deal what the ones after it opened on. One chain is authored today
-— the two *Long Front* missions Mara Voss fights in a row — and every other board opens at full
-strength as it always did.
+have already cleared does not re-deal what the ones after it opened on. Two chains are authored
+today — the two *Long Front* missions Mara Voss fights in a row, and the whole third act of *The
+Furnace Winter*, whose veteran column marches from the last mile to Vale's own furnace — and every
+other board opens at full strength as it always did.
 
 While you are fighting it, the mission's terms stay on the board: a card in the top-left corner
-lists what wins, what loses and the bonuses, ticks each condition as it is satisfied and counts the
+names the mission and where it is fought, lists what wins, what loses and the bonuses — the par
+day counted among them — ticks each condition as it is satisfied and counts the
 ones that count down — `DAY 4/8`, `2/3 DAYS`, `1/2 LOST`. It lists exactly the conditions you are
 being judged on, so an objective a mission is holding back stays off the card until a beat brings it
 into play, and then appears there. `O` lowers the card and raises it again, so the ground under it

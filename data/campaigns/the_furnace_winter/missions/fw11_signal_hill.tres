@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=46 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="13"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="14"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="16"]
+[ext_resource type="Script" path="res://core/campaign/effects/reveal_objective_effect.gd" id="17"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("15")
@@ -31,16 +33,6 @@ script = ExtResource("15")
 text = "Hold the eastern relay."
 cell = Vector2i(17, 3)
 
-[sub_resource type="Resource" id="Objective_3"]
-script = ExtResource("15")
-text = "Keep our own headquarters at the foot of the hill."
-cell = Vector2i(1, 2)
-
-[sub_resource type="Resource" id="Objective_4"]
-script = ExtResource("15")
-text = "Keep our own base at the foot of the hill."
-cell = Vector2i(1, 4)
-
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
 text = "The relays were not all ours at the end of day 8."
@@ -48,8 +40,15 @@ last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Hold every property on the road at once — all seven."
+text = "The whole hill at once — all seven properties."
 count = 7
+
+[sub_resource type="Resource" id="Bonus_paymaster"]
+script = ExtResource("16")
+id = &"the_paymaster"
+hidden = true
+text = "Ferrow's paymaster is on the hill road. Close the book."
+tag = &"paymaster"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -154,6 +153,23 @@ script = ExtResource("8")
 cell = Vector2i(17, 3)
 holder = 0
 
+[sub_resource type="Resource" id="Effect_reveal_paymaster"]
+script = ExtResource("17")
+objective_id = &"the_paymaster"
+
+[sub_resource type="Resource" id="Event_line_4"]
+script = ExtResource("4")
+speaker = &"orin_flux"
+text = "The middle relay's log is still warm. His pay schedule rides tonight — one rider, heavy satchel."
+
+[sub_resource type="Resource" id="Event_the_intercept"]
+script = ExtResource("5")
+id = &"the_intercept"
+triggers = Array[Resource]([SubResource("Trigger_relay_2_ours")])
+effects = Array[Resource]([SubResource("Effect_reveal_paymaster")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_4")])
+
 [sub_resource type="Resource" id="Trigger_with_a_day_in_hand"]
 script = ExtResource("9")
 day = 7
@@ -162,7 +178,7 @@ day = 7
 script = ExtResource("13")
 flag = &"fw_depots_open"
 mode = 1
-value = 3
+value = 2
 note = "Signal Hill's three relays were opened together with their stores intact."
 
 [sub_resource type="Resource" id="Event_line_3"]
@@ -194,10 +210,10 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Objective_3"), SubResource("Objective_4")])
+objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
 failures = Array[Resource]([SubResource("Failure_0")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Event_invoice_submitted"), SubResource("Event_the_relays_answer")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_paymaster")])
+events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Event_invoice_submitted"), SubResource("Event_the_intercept"), SubResource("Event_the_relays_answer")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

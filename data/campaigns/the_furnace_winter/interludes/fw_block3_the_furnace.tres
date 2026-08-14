@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="CampaignInterlude" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/campaign_interlude.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="2"]
@@ -49,6 +49,18 @@ speaker = &"gideon_holt"
 text = "Milltown ate through the freeze on its own granary. Ask anybody down there which week of this mattered and they will name the first one."
 requires = SubResource("Cond_granary_saved")
 
+[sub_resource type="Resource" id="Cond_siege_broken"]
+script = ExtResource("3")
+flag = &"fw_siege_broken"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Line_7"]
+script = ExtResource("2")
+speaker = &"nia_rowan"
+text = "The smelter yard held all eight days, and her siege gun never fired again after it. Every road east of here is quieter for that."
+requires = SubResource("Cond_siege_broken")
+
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"konrad_vale"
@@ -58,4 +70,4 @@ text = "You have the furnace and the road to it, Commander, and you will find bo
 script = ExtResource("1")
 after_block = 2
 title = "The Furnace"
-lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
+lines = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_7"), SubResource("Line_6")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -7,12 +7,11 @@
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="7"]
-[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_owner_effect.gd" id="10"]
-[ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="11"]
-[ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="12"]
-[ext_resource type="Resource" path="res://data/units/mech.tres" id="13"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_reached_trigger.gd" id="16"]
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -26,8 +25,13 @@ last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Take the northern relay as well."
+text = "Take the northern relay too — eyes on the whole valley."
 cell = Vector2i(9, 2)
+
+[sub_resource type="Resource" id="Bonus_torch"]
+script = ExtResource("14")
+text = "Put the torch squad down on the road."
+tag = &"the_match"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -42,7 +46,7 @@ text = "Cheaper for me. You're welcome to the ash, quartermaster."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "We've got an HQ and nothing else. Reach it before he strikes the match."
+text = "That mech on the road is his torch squad. Reach the base first — or put the squad down on the way."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -83,24 +87,15 @@ effects = Array[Resource]([SubResource("Effect_granary_saved")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
-[sub_resource type="Resource" id="Trigger_day_6"]
-script = ExtResource("8")
-day = 6
+[sub_resource type="Resource" id="Trigger_match_reaches"]
+script = ExtResource("16")
+tag = &"the_match"
+cells = Array[Vector2i]([Vector2i(6, 4)])
 
 [sub_resource type="Resource" id="Effect_torched"]
 script = ExtResource("10")
 team = 2
 cells = Array[Vector2i]([Vector2i(6, 4)])
-
-[sub_resource type="Resource" id="Spawn_torch_party"]
-script = ExtResource("12")
-unit_type = ExtResource("13")
-cell = Vector2i(5, 4)
-
-[sub_resource type="Resource" id="Effect_torch_party"]
-script = ExtResource("11")
-team = 2
-units = Array[Resource]([SubResource("Spawn_torch_party")])
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
@@ -110,10 +105,39 @@ text = "Torch it. If the quartermaster wants Milltown fed, he can pay me for the
 [sub_resource type="Resource" id="Event_he_strikes_the_match"]
 script = ExtResource("5")
 id = &"he_strikes_the_match"
-triggers = Array[Resource]([SubResource("Trigger_day_6")])
-effects = Array[Resource]([SubResource("Effect_torched"), SubResource("Effect_torch_party")])
+triggers = Array[Resource]([SubResource("Trigger_match_reaches")])
+effects = Array[Resource]([SubResource("Effect_torched")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_match_down"]
+script = ExtResource("15")
+tag = &"the_match"
+
+[sub_resource type="Resource" id="Trigger_yard_unburned"]
+script = ExtResource("6")
+cell = Vector2i(6, 4)
+holder = 2
+
+[sub_resource type="Resource" id="Effect_granary_saved_by_hunt"]
+script = ExtResource("9")
+flag = &"fw_granary_saved"
+mode = 0
+value = 1
+note = ""
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("4")
+speaker = &"gideon_holt"
+text = "Torch squad's down on the road, matches unstruck. Milltown sleeps tonight."
+
+[sub_resource type="Resource" id="Event_the_match_goes_down"]
+script = ExtResource("5")
+id = &"the_match_goes_down"
+triggers = Array[Resource]([SubResource("Trigger_match_down"), SubResource("Trigger_yard_unburned")])
+effects = Array[Resource]([SubResource("Effect_granary_saved_by_hunt")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
 
 [resource]
 script = ExtResource("1")
@@ -133,8 +157,8 @@ fog_enabled = false
 difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_the_match_never_struck"), SubResource("Event_he_strikes_the_match")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_torch")])
+events = Array[Resource]([SubResource("Event_the_match_never_struck"), SubResource("Event_he_strikes_the_match"), SubResource("Event_the_match_goes_down")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])

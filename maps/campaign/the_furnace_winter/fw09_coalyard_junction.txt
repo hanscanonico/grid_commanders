@@ -1,6 +1,7 @@
 # The Furnace Winter, The Depots — "Coalyard Junction".
-# Teaching board: a road spine with 2 garrisoned depots in sequence.
-# There is no convoy to escort — the depots hold still. Take them in order.
+# A road spine with 2 garrisoned depots — and Ferrow's two pay-riders on it,
+# tagged rider_a and rider_b: the bonus hunt, and the strongbox beat fires
+# when both are down.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
@@ -28,4 +29,5 @@
 2 i 17 4
 2 m 16 3
 2 i 4 3
-2 r 7 2
+2 r 7 2 rider_a
+2 r 11 4 rider_b

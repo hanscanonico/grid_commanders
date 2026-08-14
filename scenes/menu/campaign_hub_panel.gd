@@ -28,6 +28,9 @@ signal cancelled
 const _TITLE_SIZE := 15
 const _ROW_HEIGHT := 18
 const _ROW_WIDTH := 420
+## The picker's own thumbnail box, so a board reads the same size everywhere.
+const _THUMB := Vector2(132, 60)
+const _BUST := 44
 
 var _title: Label
 var _subtitle: Label
@@ -37,6 +40,7 @@ var _rows: VBoxContainer
 var _brief_view: VBoxContainer
 var _brief_title: Label
 var _brief_where: Label
+var _brief_picture: HBoxContainer
 var _brief_body: VBoxContainer
 var _deploy_button: Button
 var _back_button: Button
@@ -46,6 +50,7 @@ var _ids: Array[StringName] = []
 
 var _commanders := CommanderDB.load_default()
 var _units := UnitDB.load_default()
+var _terrain := TerrainDB.load_default()
 var _campaign: CampaignDefinition
 var _progress: CampaignState
 var _showing: StringName = &""
@@ -186,6 +191,11 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	_brief_where = _note("")
 	parent.add_child(_brief_where)
 
+	_brief_picture = HBoxContainer.new()
+	_brief_picture.add_theme_constant_override("separation", 10)
+	_brief_picture.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	parent.add_child(_brief_picture)
+
 	var frame := ScrollContainer.new()
 	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -279,12 +289,11 @@ func _fill() -> void:
 			_rows.add_child(_note(_campaign.block_titles[at].to_upper()))
 		var button := Button.new()
 		var open := _progress.is_unlocked(mission.id)
-		button.text = _row_text(index, mission, open)
 		button.disabled = not open
 		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
 		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.add_child(_row_face(index, mission, open))
 		var slot := _ids.size()
 		button.pressed.connect(func() -> void: _open_briefing(slot))
 		_rows.add_child(button)
@@ -292,20 +301,48 @@ func _fill() -> void:
 		_ids.append(mission.id)
 
 
-## "03 · The Long Watch          ★★☆", or a row the player cannot play that says
-## why. Stars are drawn rather than counted in words because the row is scanned,
-## not read.
-func _row_text(index: int, mission: MissionDefinition, open: bool) -> String:
-	var number := "%02d" % (index + 1)
+## The row as columns rather than a padded string: mark, number and title on the
+## left, the stars in a fixed right-hand cell so they line up down the page. The
+## four states read at a glance — cleared wears a green check and gold stars, an
+## open row shows the hollow stars still on offer, locked and not-taken dim to
+## their words. Children of a disabled button, so every child ignores the mouse.
+func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
+	var face := HBoxContainer.new()
+	face.set_anchors_preset(Control.PRESET_FULL_RECT)
+	face.offset_left = 6
+	face.offset_right = -6
+	face.add_theme_constant_override("separation", 6)
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var cleared := open and _progress.is_cleared(mission.id)
+	var skipped := not open and _progress.is_skipped(_campaign, mission.id)
+	var ink := UiTheme.INK if open else (UiTheme.INK_3 if skipped else UiTheme.NEUTRAL_LIGHT)
+	if cleared:
+		face.add_child(_row_cell("✓", UiTheme.CAPTURE))
+	var title := _row_cell("%02d · %s" % [index + 1, mission.title], ink)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.clip_text = true
+	face.add_child(title)
 	if not open:
-		var skipped := _progress.is_skipped(_campaign, mission.id)
-		return "%s · %s   —   %s" % [number, mission.title, "not taken" if skipped else "locked"]
-	if not _progress.is_cleared(mission.id):
-		return "%s · %s" % [number, mission.title]
-	var earned := _progress.stars_for(mission.id)
+		face.add_child(_row_cell("NOT TAKEN" if skipped else "LOCKED", UiTheme.INK_3))
+		return face
 	var most := MissionRuntime.new(mission).max_stars()
-	var stars := "★".repeat(earned) + "☆".repeat(maxi(0, most - earned))
-	return "%s · %s   %s" % [number, mission.title, stars]
+	var earned := _progress.stars_for(mission.id) if cleared else 0
+	if earned > 0:
+		face.add_child(_row_cell("★".repeat(earned), UiTheme.SELECT_GOLD))
+	if most - earned > 0:
+		face.add_child(_row_cell("☆".repeat(most - earned), UiTheme.INK_3))
+	return face
+
+
+func _row_cell(text: String, ink: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.display())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
+	label.add_theme_color_override("font_color", ink)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 
 # --- the briefing ------------------------------------------------------------
@@ -320,6 +357,7 @@ func _open_briefing(slot: int) -> void:
 	_showing = mission.id
 	_brief_title.text = mission.title.to_upper()
 	_brief_where.text = mission.location
+	_fill_picture(mission)
 	# The word has to name what pressing it does: the mission the profile is
 	# midway through picks its saved board back up rather than starting over.
 	_deploy_button.text = "Resume" if mission.id == _resume_mission else "Deploy"
@@ -342,6 +380,55 @@ func _open_briefing(slot: int) -> void:
 	if mission.par_day > 0:
 		_brief_body.add_child(_body_line("PAR STAR   Finish by day %d." % mission.par_day, true))
 	_show_briefing()
+
+
+## The briefing's picture: where the fight is, against whom. The board is drawn
+## by `MapThumbnail` — the picker's own miniature, never a second opinion — and
+## the face is the first enemy seat's commander, resolved by the authorities
+## every other surface uses.
+func _fill_picture(mission: MissionDefinition) -> void:
+	for child in _brief_picture.get_children():
+		_brief_picture.remove_child(child)
+		child.queue_free()
+	var map := MapData.load_from_file(mission.map_path, _terrain)
+	if map != null:
+		var thumb := MapThumbnail.new()
+		thumb.setup(map, UiTheme.menu_identity(map.player_count()), _THUMB)
+		thumb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_brief_picture.add_child(thumb)
+	var foe := _antagonist(mission)
+	if foe != null:
+		_brief_picture.add_child(_foe_card(foe))
+
+
+## The first hostile seat's commander. Hostility is read by side, the way every
+## objective reads it: an empty grouping is a free-for-all where every computer
+## seat is a foe, and a seat standing with the player is an ally, never the face
+## the briefing is set against.
+func _antagonist(mission: MissionDefinition) -> CommanderType:
+	for team: int in mission.ai_teams:
+		var allied: bool = (
+			mission.sides.has(team)
+			and mission.sides.has(mission.player_team)
+			and mission.sides[team] == mission.sides[mission.player_team]
+		)
+		if allied:
+			continue
+		var commander := _commanders.by_id(mission.commanders.get(team, &""))
+		if commander != null:
+			return commander
+	return null
+
+
+func _foe_card(commander: CommanderType) -> Control:
+	var card := VBoxContainer.new()
+	card.add_theme_constant_override("separation", 2)
+	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var bust := MissionSpeech.bust_of(commander, _BUST)
+	bust.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.add_child(bust)
+	card.add_child(_note("VS %s" % commander.display_name.to_upper()))
+	return card
 
 
 func _show_list() -> void:

@@ -99,9 +99,10 @@ func test_a_chain_with_a_hole_in_it_is_refused() -> void:
 	assert_eq(campaign.carry_error(), "")
 
 
-## The one chain the shipped content authors, and why it is that one: Voss holds
-## the customs line and falls back to the causeway with the same three units, and
-## nowhere else in the 108 do two missions in a row share a commander.
+## Voss's retreat, the chain this test pins: she holds the customs line and
+## falls back to the causeway with the same three units. The furnace act's
+## fw12 → fw18 veteran column is the other shipped chain, counted by the census
+## below.
 func test_the_shipped_chain_carries_the_army_it_says_it_does() -> void:
 	var campaign := CampaignDB.load_default().by_id(&"the_long_front")
 	assert_not_null(campaign)
@@ -114,8 +115,10 @@ func test_the_shipped_chain_carries_the_army_it_says_it_does() -> void:
 	assert_eq(slots, ["r", "t", "i"] as Array[String], "the three that came off the customs line")
 
 
-## Every other shipped board carries no slot at all, which is the state 106 of the
-## 108 missions are in: nothing to fill, so nothing to get wrong.
+## Every other shipped board carries no slot at all: nothing to fill, so nothing
+## to get wrong. Two chains exist on purpose — Voss's retreat (lf01 → lf02) and
+## The Furnace Winter's whole third act (fw12 → fw18), where the veteran column
+## that opened the last mile marches on the furnace mission by mission.
 func test_the_rest_of_the_shipped_content_carries_nothing() -> void:
 	var chained := 0
 	for campaign: CampaignDefinition in CampaignDB.load_default().all():
@@ -126,4 +129,4 @@ func test_the_rest_of_the_shipped_content_carries_nothing() -> void:
 				continue
 			var map := MapData.load_from_file(mission.map_path, Fixture.terrain_db())
 			assert_eq(_slots(map), [] as Array[String], "%s/%s" % [campaign.id, mission.id])
-	assert_eq(chained, 2, "the customs line and the causeway, and nothing else yet")
+	assert_eq(chained, 9, "the customs line and the causeway, and the furnace act's seven")

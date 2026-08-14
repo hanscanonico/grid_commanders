@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
 [ext_resource type="Script" path="res://core/campaign/triggers/force_strength_trigger.gd" id="8"]
-[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="9"]
+[ext_resource type="Script" path="res://core/campaign/effects/defect_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="12"]
@@ -32,8 +32,8 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("4")
-text = "The arsenal kept running past day 11."
-last_day = 11
+text = "The arsenal kept running past day 10."
+last_day = 10
 
 [sub_resource type="Resource" id="Failure_1"]
 script = ExtResource("5")
@@ -107,20 +107,22 @@ team = 2
 bound = 0
 count = 3
 
-[sub_resource type="Resource" id="Effect_riders_ride_out"]
+[sub_resource type="Resource" id="Effect_riders_change_employer"]
 script = ExtResource("9")
+from_team = 2
+to_team = 1
 tags = Array[StringName]([&"ferrow_riders_a", &"ferrow_riders_b"])
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Ledger's empty and the road's yours. I don't die for districts, Wren — I invoice for them."
+text = "Ledger's empty and the road's yours. I don't die for districts, Wren — and neither do my riders. Boys: new employer."
 
 [sub_resource type="Resource" id="Event_rode_out_with_an_empty_ledger"]
 script = ExtResource("7")
 id = &"rode_out_with_an_empty_ledger"
 triggers = Array[Resource]([SubResource("Trigger_ferrow_is_worn_down")])
-effects = Array[Resource]([SubResource("Effect_riders_ride_out")])
+effects = Array[Resource]([SubResource("Effect_riders_change_employer")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
 
@@ -146,6 +148,9 @@ failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_1")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_the_four_towns"), SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_invoice_submitted"), SubResource("Event_rode_out_with_an_empty_ledger")])
 par_day = 7
+carry_in = true
+carry_out = true
+carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
 defeat = "The arsenal stayed his hunting ground, and the deadline ran out with the ledger still open."

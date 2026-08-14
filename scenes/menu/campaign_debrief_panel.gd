@@ -16,14 +16,20 @@ extends Control
 signal continued
 
 const _TITLE_SIZE := 15
+## Between body and banner: the stars are the payoff, so they read bigger than
+## the verdict's supporting copy.
+const _STAR_SIZE := 12
+const _STAR_STAGGER := 0.18
+const _STAR_FADE := 0.25
 
 var _verdict: Label
 var _title: Label
-var _stars: Label
+var _stars: HBoxContainer
 var _body: VBoxContainer
 var _unlocked: Label
 var _continue_button: Button
 var _commanders := CommanderDB.load_default()
+var _star_tween: Tween
 
 
 func _ready() -> void:
@@ -46,25 +52,30 @@ func begin(
 	max_stars: int,
 	next_title: String,
 	ledger: CampaignState = null,
-	recorded: Array[String] = []
+	recorded: Array[String] = [],
+	animate: bool = true
 ) -> void:
 	var won := outcome.status == MissionRuntime.Status.SUCCESS
 	_verdict.text = "MISSION COMPLETE" if won else "MISSION FAILED"
 	_verdict.add_theme_color_override("font_color", UiTheme.CAPTURE if won else UiTheme.DANGER)
 	_title.text = mission.title.to_upper()
-	if won:
-		_stars.text = "★".repeat(outcome.stars) + "☆".repeat(maxi(0, max_stars - outcome.stars))
-	else:
-		_stars.text = outcome.reason
+	_fill_stars(outcome.stars if won else 0, max_stars, won and animate)
+	_stars.visible = won
 	for child in _body.get_children():
+		_body.remove_child(child)
 		child.queue_free()
 	# A loss has one narrator's sentence rather than dialogue: the generals who
-	# would have spoken are the ones it went badly for.
+	# would have spoken are the ones it went badly for. The condition that ended
+	# it leads, in its own words, where a long reason can wrap instead of running
+	# off the canvas.
 	if won:
 		for line: MissionLine in MissionLine.spoken(mission.victory, ledger):
 			_body.add_child(MissionSpeech.render(line, _commanders))
-	elif mission.defeat != "":
-		_body.add_child(MissionSpeech.paragraph(mission.defeat))
+	else:
+		if outcome.reason != "":
+			_body.add_child(MissionSpeech.paragraph(outcome.reason, true))
+		if mission.defeat != "":
+			_body.add_child(MissionSpeech.paragraph(mission.defeat))
 	for note: String in recorded:
 		_body.add_child(MissionSpeech.paragraph("RECORDED   %s" % note, true))
 	_unlocked.text = "NEXT   %s" % next_title.to_upper() if next_title != "" else ""
@@ -72,6 +83,35 @@ func begin(
 	_continue_button.text = "Continue" if won else "Back to the hub"
 	show()
 	_continue_button.grab_focus()
+
+
+## One label per star, the earned ones revealed one at a time — the payoff beat.
+## A posed capture takes the finished frame instead: a mid-fade star is a frame
+## the sweep cannot reproduce.
+func _fill_stars(earned: int, max_stars: int, animate: bool) -> void:
+	if _star_tween != null and _star_tween.is_valid():
+		_star_tween.kill()
+	_star_tween = null
+	for child in _stars.get_children():
+		_stars.remove_child(child)
+		child.queue_free()
+	for slot in maxi(max_stars, earned):
+		var star := Label.new()
+		var lit := slot < earned
+		star.text = "★" if lit else "☆"
+		star.add_theme_font_override("font", UiTheme.display())
+		star.add_theme_font_size_override("font_size", _STAR_SIZE)
+		star.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
+		_stars.add_child(star)
+		if lit and animate:
+			star.modulate.a = 0.0
+	if not animate:
+		return
+	_star_tween = create_tween()
+	for slot in earned:
+		var star: Label = _stars.get_child(slot)
+		_star_tween.tween_interval(_STAR_STAGGER)
+		_star_tween.tween_property(star, "modulate:a", 1.0, _STAR_FADE)
 
 
 func chrome() -> Dictionary[String, Control]:
@@ -112,10 +152,9 @@ func _build() -> void:
 	_title = _micro("")
 	main.add_child(_title)
 
-	_stars = Label.new()
-	_stars.add_theme_font_override("font", UiTheme.display())
-	_stars.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
-	_stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stars = HBoxContainer.new()
+	_stars.add_theme_constant_override("separation", 3)
+	_stars.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	main.add_child(_stars)
 
 	var frame := ScrollContainer.new()

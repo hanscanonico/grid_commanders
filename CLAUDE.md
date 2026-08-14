@@ -810,7 +810,7 @@ plan is stated in full below and has no copy there.
   with opposite conditions — and **a beat's own lines may not be gated**, a recording having to
   speak the same words. D6: **the carried army fills authored slots and never appends**, so every
   board still fields exactly the army it was balanced for; the short-roster fallback is the rule
-  rather than the edge, which is why 106 missions are untouched by construction —
+  rather than the edge, which is why 99 missions are untouched by construction —
   `CampaignRoster.deploy` only writes `hp` and `tag` onto units `create` already built. A veteran is
   identified across the gap **by its type**, claiming the first unclaimed slot for it (an object
   reference dies with the board, a cell means nothing on another map, an index breaks the moment a
@@ -862,8 +862,8 @@ plan is stated in full below and has no copy there.
   hidden objective needs a stable save key, so `MissionObjective` gained `id` beside `hidden`, and
   **`MissionObjective.is_live` is the one answer to whether a condition is being judged yet**: the
   panel asks that same authority rather than printing the authored lists, so a held-back failure
-  cannot name the trap. CD7 is the shape that vocabulary took across all 108 missions: 197 beats, 57
-  of them writing a ledger fact, ten route-gated missions, seven kinds of primary objective and
+  cannot name the trap. CD7 is the shape that vocabulary took across all 108 missions: 208 beats, 58
+  of the 108 writing a ledger fact, ten route-gated missions, seven kinds of primary objective and
   three kinds of failure. **CD8 is the gate, and `docs/campaign_authoring.md` is the single owner of
   what the gate refuses** and of the traps left to a hand test — do not restate that list here, in
   the README or in the plan: it drifted in four surfaces inside one milestone. Three rules survive
@@ -875,7 +875,7 @@ plan is stated in full below and has no copy there.
   flag varies, never its sign. Two checks fired on shipped content and both were real (five
   missions' unjudgeable co-primaries became bonus objectives, two interlude lines lost conditions
   every route writes). **`tests/unit/test_campaign_soak.gd` asserts legality, never winnability** —
-  every mission played to a verdict through `CampaignSession` itself, and every one of the 197 beats
+  every mission played to a verdict through `CampaignSession` itself, and every one of the 208 beats
   applied to the board its mission opens on, because a planner-against-planner game brings about
   half of them.
 - **Campaign mode** (no committed plan artifact — the campaign-mode design handoff predates

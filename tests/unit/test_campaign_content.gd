@@ -141,6 +141,38 @@ func test_every_mission_carries_a_beat() -> void:
 			)
 
 
+## A visible goal met before the first command is a free checkmark: fw11 shipped
+## with "keep our own headquarters/base" on ground the player already owned, and
+## `board_error` cannot see it — the mission is not *over*, two of its goals just
+## cost nothing. Two exemptions, each for what it is rather than where it is:
+## a hidden objective is not judged until an event reveals it, and an
+## `AllySurvivesObjective` is met exactly while the war is going well — "keep the
+## marshal in the field" opens true and is the one goal that can fall back false.
+func test_no_goal_is_met_before_the_first_command() -> void:
+	for campaign in db.all():
+		for mission: MissionDefinition in campaign.missions:
+			var map := _map_of(mission)
+			if map == null:
+				continue
+			var seats: Array[int] = mission.seats.duplicate()
+			var state := GameState.create(map, unit_db, chart, {}, seats)
+			if state == null:
+				continue
+			var tally := MissionProgress.new()
+			tally.observe(state, mission.player_team)
+			for list: Array in [mission.objectives, mission.bonus_objectives]:
+				for objective: MissionObjective in list:
+					if objective.hidden or objective is AllySurvivesObjective:
+						continue
+					assert_false(
+						objective.is_met(state, mission.player_team, tally),
+						(
+							"%s/%s: '%s' is met before the first command"
+							% [campaign.id, mission.id, objective.text]
+						)
+					)
+
+
 ## Two questions only the board a mission opens on can answer: whether it is
 ## already over before the first command, and whether an objective standing
 ## beside a match-ending one is ever judged.
