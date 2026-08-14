@@ -64,11 +64,16 @@ func _build() -> void:
 	row.add_child(_faction_label)
 	# The doctrine takes whatever width is left and clips rather than pushing the
 	# funds out of place: a fixed-height bar cannot wrap, and the number on the
-	# right has to sit still.
+	# right has to sit still. A cut line ends in an ellipsis, so it reads as a
+	# sentence that goes on rather than as one that stops mid-word, and it keeps
+	# HUD_CLIP_GAP clear of the funds however narrow the row leaves it — a cut edge
+	# butted up against the next group is what makes the two read as one word.
 	_doctrine_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
 	_doctrine_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_doctrine_label.clip_text = true
+	_doctrine_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	row.add_child(_doctrine_label)
+	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_CLIP_GAP))
 
 	row.add_child(UiTheme.hud_label("FUNDS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
 	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)

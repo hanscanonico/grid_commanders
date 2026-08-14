@@ -119,6 +119,13 @@ const HUD_GAP_SNUG := 4
 const HUD_GAP_WIDE := 5
 ## The faction colour square on the top bar (handoff 14px).
 const HUD_CHIP := 7
+## The clear space the top bar's doctrine line keeps to its right, on top of
+## HUD_GAP. The line is the one label on either bar that clips rather than sizes
+## to its text, so its right edge is a cut through a word rather than the end of
+## one, and the ordinary group gap after a cut reads as no gap at all — the funds
+## run straight on from a half glyph. A metric rather than a number in the bar,
+## like every other size here.
+const HUD_CLIP_GAP := 5
 ## A group divider's height, per bar: each keeps the inset it wants from its own
 ## fixed height, which is why there are two and not one.
 const HUD_TOP_RULE_H := HUD_TOP_H - 10
