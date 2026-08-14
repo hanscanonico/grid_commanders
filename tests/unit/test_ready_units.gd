@@ -26,6 +26,14 @@ func test_the_list_is_the_side_on_turn_in_reading_order() -> void:
 	)
 
 
+## A named army answers in the same order, so a caller asking about a turn it is
+## not standing in reads the list the guard will print when that turn opens.
+func test_a_named_army_answers_in_the_same_order() -> void:
+	var state := Fixture.state(BOARD)
+	assert_eq(_cells(ReadyUnits.of(state, 1)), _cells(ReadyUnits.of(state)))
+	assert_eq(_cells(ReadyUnits.of(state, 2)), [Vector2i(3, 1)])
+
+
 func test_a_unit_that_has_acted_leaves_the_list() -> void:
 	var state := Fixture.state(BOARD)
 	state.unit_at(Vector2i(2, 0)).acted = true

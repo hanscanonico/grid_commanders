@@ -9,14 +9,21 @@ extends RefCounted
 ## so the walk is checked without booting the battle, on the same terms
 ## `PathArrow.segments` and `SeatStrip.normalised_sides` are.
 
+## No army named, so the side on turn answers — which is every board caller,
+## `of` being asked about the turn in hand.
+const ON_TURN := 0
 
-## The side on turn's units that have not acted, in reading order. A carried
-## unit is none of them: it cannot act until it is dropped, and it is standing
-## in its carrier's cell rather than its own.
-static func of(game: GameState) -> Array[Unit]:
+
+## An army's units that have not acted, in reading order — the side on turn's
+## unless `team` names another, which is what lets a scenario driver ask about a
+## turn it is not standing in. A carried unit is none of them: it cannot act
+## until it is dropped, and it is standing in its carrier's cell rather than its
+## own.
+static func of(game: GameState, team: int = ON_TURN) -> Array[Unit]:
+	var asked := game.current_team if team == ON_TURN else team
 	var ready: Array[Unit] = []
 	for unit in game.units:
-		if unit.team == game.current_team and not unit.acted and unit.carrier == null:
+		if unit.team == asked and not unit.acted and unit.carrier == null:
 			ready.append(unit)
 	ready.sort_custom(func(a: Unit, b: Unit) -> bool: return precedes(a.cell, b.cell))
 	return ready

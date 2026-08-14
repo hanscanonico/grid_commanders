@@ -216,7 +216,7 @@ func _run_guard_safe_answers(starting_team: int) -> String:
 ## stages the state a player reaches by using each one; End Turn itself still
 ## travels through the live menu and command pipeline.
 func _run_spent_turn_bypass(starting_team: int) -> String:
-	for unit in _ready_units(starting_team):
+	for unit in ReadyUnits.of(_battle.game, starting_team):
 		unit.acted = true
 	await _open_end_turn()
 	var error := await _wait_for_team_change(starting_team)
@@ -337,7 +337,7 @@ func _wait_for_team_change(previous_team: int) -> String:
 
 
 func _expect_guard(guard: Control, team: int) -> String:
-	var ready := _ready_units(team)
+	var ready := ReadyUnits.of(_battle.game, team)
 	var copy := _control_text(guard)
 	var count_copy := "%d READY" % ready.size()
 	if not copy.contains(count_copy):
@@ -353,14 +353,6 @@ func _expect_guard(guard: Control, team: int) -> String:
 	if not _control_text(_battle.view.hud_top).contains(legend):
 		return "the top bar does not print the guard's own legend '%s'" % legend
 	return ""
-
-
-func _ready_units(team: int) -> Array[Unit]:
-	var ready: Array[Unit] = []
-	for unit in _battle.game.units:
-		if unit.team == team and not unit.acted and unit.carrier == null:
-			ready.append(unit)
-	return ready
 
 
 func _guard() -> EndTurnGuard:
