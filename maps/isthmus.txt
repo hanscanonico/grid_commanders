@@ -1,5 +1,5 @@
-# Two coasts pinched to a diagonal neck; the road through it is the short
-# crossing, guarded by the mountain and forest strung along it.
+# Two coasts pinched to a diagonal neck: the road through it is the short crossing.
+# The mountain and forest strung along that road are what guard it.
 # symmetric
 # Sea rings the whole board — one closed body of water, and it is what both
 # ports open onto: team 1's at (2, 5) into the bay it cuts inland on the west,
