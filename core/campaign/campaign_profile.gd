@@ -95,9 +95,12 @@ static func load_in_progress(campaign_id: StringName) -> InProgress:
 	return InProgress.new(CampaignSaveCodec.battle_of(data), CampaignSaveCodec.tally_of(data))
 
 
-## The profile as it sits on disk, or an empty dictionary. Silent, unlike
-## `load_progress`: a caller asking for one part of a profile is asking about a
-## mission in progress, and "there is none" is the ordinary answer.
+## The profile as it sits on disk *once the codec has accepted it*, or an empty
+## dictionary. A file `load_progress` would refuse holds no mission anybody may
+## resume either, so every reader here answers about the same profile that one
+## does. Silent throughout, unlike `load_progress`: a caller asking for one part
+## of a profile is asking about a mission in progress, "there is none" is the
+## ordinary answer, and a damaged file is said once by the reader that reports.
 static func _read(campaign_id: StringName) -> Dictionary:
 	var path := _slot_path(path_for(campaign_id))
 	if not FileAccess.file_exists(path):
@@ -105,7 +108,8 @@ static func _read(campaign_id: StringName) -> Dictionary:
 	var json := JSON.new()
 	if json.parse(FileAccess.get_file_as_string(path)) != OK or not json.data is Dictionary:
 		return {}
-	return json.data
+	var data: Dictionary = json.data
+	return {} if CampaignSaveCodec.validate(data) != "" else data
 
 
 ## Writes progress, leaving the previous profile untouched if anything fails.

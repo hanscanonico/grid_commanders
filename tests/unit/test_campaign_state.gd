@@ -175,6 +175,46 @@ func test_a_shapeless_save_is_refused() -> void:
 	)
 
 
+## Where a hand-edited profile lands first: every section is refused for being the
+## wrong *kind* of thing before anything reads inside it.
+func test_a_section_that_is_not_the_container_it_should_be_is_refused() -> void:
+	var state := CampaignState.begin(campaign)
+	state.active_mission = &"one"
+	for section: String in ["unlocked", "records", "flags", "roster", "battle"]:
+		var data := CampaignSaveCodec.encode(state, {"version": 8})
+		data[section] = "not a section"
+		assert_ne(CampaignSaveCodec.validate(data), "", "'%s' as text" % section)
+	var tally := CampaignSaveCodec.encode(state, {"version": 8})
+	tally["mission_progress"] = "not a set of counters"
+	assert_ne(CampaignSaveCodec.validate(tally), "", "and a tally is counters")
+
+
+func test_a_profile_keyed_by_something_that_is_not_a_name_is_refused() -> void:
+	var state := CampaignState.begin(campaign)
+	var data := CampaignSaveCodec.encode(state)
+	data["unlocked"] = [7]
+	assert_ne(CampaignSaveCodec.validate(data), "", "a mission id is text")
+	data = CampaignSaveCodec.encode(state)
+	data["records"] = {7: {"stars": 1, "best_day": 2}}
+	assert_ne(CampaignSaveCodec.validate(data), "", "and so is the key of a record")
+	data = CampaignSaveCodec.encode(state)
+	data["records"] = {"one": 3}
+	assert_ne(CampaignSaveCodec.validate(data), "", "a record is a result, not a number")
+	data = CampaignSaveCodec.encode(state)
+	data["records"] = {"one": {"stars": -1, "best_day": 2}}
+	assert_ne(CampaignSaveCodec.validate(data), "", "nobody earned fewer than no stars")
+	data = CampaignSaveCodec.encode(state)
+	data["flags"] = {7: 1}
+	assert_ne(CampaignSaveCodec.validate(data), "", "and a fact is named, never numbered")
+
+
+func test_a_profile_the_codec_refuses_decodes_to_nothing_and_says_why() -> void:
+	var data := CampaignSaveCodec.encode(CampaignState.begin(campaign))
+	data["flags"] = {"greenwater held": 1}
+	assert_null(CampaignSaveCodec.decode(data), "a refused profile is never half-loaded")
+	assert_push_error_count(1, "and the refusal is named in the log")
+
+
 func test_a_record_for_a_mission_the_campaign_no_longer_has_is_tolerated() -> void:
 	# A renamed mission should cost its own record, never the whole profile.
 	var state := CampaignState.begin(campaign)
