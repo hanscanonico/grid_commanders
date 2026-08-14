@@ -1,0 +1,65 @@
+# A fen across the whole middle, one causeway over it: the mechs wade, the tanks queue.
+# symmetric
+# Riverline's two bridges promoted to a front. `data/terrain/river.tres` moves
+# `foot` at 2 and `boot` at 1 and nothing else, so the fen is three rows deep
+# wall to wall -- five at both flanks, where it bulges into the bank -- and the
+# only ground a vehicle crosses is the two-cell causeway at x 10-11. A mech (2
+# move, 1 a step) wades the middle in two turns and the flanks in three; infantry
+# (3 move, 2 a step) takes three and five. Armour has no answer but the causeway,
+# and artillery has no need of one: it ranges 2-3, which is the fen's own depth,
+# so a gun parked on either bank covers the far bridgehead without ever crossing.
+# Mirrors on (x, y) -> (21 - x, 14 - y).
+# The two islets are the fen's only cover -- a plains spur off each bank at (14, 6)
+# and (7, 8), and a wooded hummock mid-stream at (5, 7) and (16, 7) that only
+# boots and rifles will ever stand on. A lateral road runs the length of each bank
+# so reserves shift between the causeway and the flanks faster than an assault
+# crosses, which is what stops the board being a single scrum at x 10.
+# Six neutral cities, three either side of the fen: the economy is fought for at
+# home while the fen is fought over, and neither side can win one and skip the
+# other. Do not widen the causeway. Two cells of frontage across 22 is the whole
+# design, and a third lane turns the fen into scenery.
+# Land only -- there is no sea here, and a river is not one: nothing sails a fen.
+# Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
+#          C city  B base  Q HQ
+[terrain]
+.....F.......C....F...
+..Q.B...C.......B.....
+...M.......F......M...
+...================...
+..F...C...==...C...C..
+~~~....F..==..F....~~~
+~~~~~~~~~~++~~.~~~~~~~
+~~~~~F~~~~++~~~~F~~~~~
+~~~~~~~.~~++~~~~~~~~~~
+~~~....F..==..F....~~~
+..C...C...==...C...F..
+...================...
+...M......F.......M...
+.....B.......C...B.Q..
+...F....C.......F.....
+[owners]
+1 13 0
+1 2 1
+1 4 1
+1 16 1
+1 19 4
+2 2 10
+2 5 13
+2 17 13
+2 19 13
+2 8 14
+[units]
+1 i 3 0
+1 i 7 1
+1 g 7 2
+1 m 9 2
+1 m 12 2
+1 r 5 3
+1 t 12 4
+2 t 9 10
+2 r 16 11
+2 m 9 12
+2 m 12 12
+2 g 14 12
+2 i 14 13
+2 i 18 14
