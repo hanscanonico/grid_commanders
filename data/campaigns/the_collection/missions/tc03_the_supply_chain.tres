@@ -28,7 +28,7 @@ cell = Vector2i(10, 5)
 
 [sub_resource type="Resource" id="Objective_take_the_third_depot"]
 script = ExtResource("2")
-text = "Take the east depot where the road runs out."
+text = "Take the east depot, the last one before his line."
 cell = Vector2i(14, 4)
 
 [sub_resource type="Resource" id="Failure_the_chain_was_broken_before_day_10"]

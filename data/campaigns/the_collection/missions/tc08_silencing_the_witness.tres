@@ -52,7 +52,7 @@ text = "The witnesses are still talking, and I brought home everything I marched
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "He came here to make four towns go quiet. He goes home having made them louder."
+text = "He came here to make five towns go quiet. He goes home having made them louder."
 
 [sub_resource type="Resource" id="Trigger_middle_town_taken"]
 script = ExtResource("7")
