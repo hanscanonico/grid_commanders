@@ -254,7 +254,7 @@ static func decode(
 		push_error("SaveCodec: %s" % link_error)
 		return null
 
-	return _decode_setup(data, state)
+	return _decode_setup(data, state, version)
 
 
 ## The one phase of `decode` that carries no error of its own: everything on `GameState`
@@ -352,7 +352,7 @@ static func _link_carriers(state: GameState, carrier_indices: Array[int]) -> Str
 ## The fourth and last phase: the match-setup facts that ride beside the state
 ## rather than inside it (`encode`'s own "sim state plus the match setup") — which
 ## computer seats and what tier they play at.
-static func _decode_setup(data: Dictionary, state: GameState) -> LoadedMatch:
+static func _decode_setup(data: Dictionary, state: GameState, version: int) -> LoadedMatch:
 	var result := LoadedMatch.new()
 	result.state = state
 	for team in data["ai_teams"]:
@@ -360,14 +360,16 @@ static func _decode_setup(data: Dictionary, state: GameState) -> LoadedMatch:
 	# Missing on every save written before difficulty existed; those matches were
 	# played against the shipped AI, which is exactly what Normal is.
 	result.difficulty = StringName(String(data.get("difficulty", String(Difficulty.DEFAULT_ID))))
-	# Missing on every save written before Auto existed; those matches had no seat
-	# a player had handed to the computer mid-match.
-	var saved_auto: Variant = data.get("auto_tiers", {})
-	if saved_auto is Dictionary:
-		for key: Variant in saved_auto as Dictionary:
-			result.auto_tiers[int(String(key))] = StringName(
-				String((saved_auto as Dictionary)[key])
-			)
+	# A version below the one that wrote the block has no such section to read: the
+	# match recorded no seat a player had handed to the computer, so whatever sits
+	# under that key is not one and `validate` shaped none of it.
+	if version >= int(SaveSchema.KEY_RULES["auto_tiers"]["since"]):
+		var saved_auto: Variant = data.get("auto_tiers", {})
+		if saved_auto is Dictionary:
+			for key: Variant in saved_auto as Dictionary:
+				result.auto_tiers[int(String(key))] = StringName(
+					String((saved_auto as Dictionary)[key])
+				)
 	return result
 
 

@@ -45,6 +45,34 @@ func test_a_save_without_auto_tiers_resumes_with_none() -> void:
 	assert_eq(loaded.auto_tiers.size(), 0)
 
 
+## A version that never wrote the block is not refused for carrying one — the age
+## rule shapes no such key — so the section is gated on the way in instead, or a
+## hand-edited old save could hand a human's army to the computer on resume.
+func test_a_save_older_than_auto_may_not_smuggle_a_seat_onto_it() -> void:
+	var data := _encoded()
+	data["version"] = 9
+	data["ai_teams"] = [2]
+	data["auto_tiers"] = {"1": "brutal"}
+	assert_eq(SaveCodec.validate(data), "", "version 9 knew no such key")
+	var loaded := _decode(data)
+	assert_not_null(loaded)
+	assert_true(loaded.auto_tiers.is_empty())
+
+
+## And a key that is not a number never reaches the state either — `int(String(key))`
+## would otherwise read it as team 0.
+func test_a_malformed_auto_key_never_reaches_the_state() -> void:
+	var data := _encoded()
+	data["version"] = 9
+	data["ai_teams"] = [2]
+	data["auto_tiers"] = {"one": "brutal"}
+	assert_eq(SaveCodec.validate(data), "", "version 9 knew no such key")
+	var loaded := _decode(data)
+	assert_not_null(loaded)
+	assert_true(loaded.auto_tiers.is_empty())
+	assert_false(loaded.auto_tiers.has(0))
+
+
 ## An Auto entry naming a team the save does not hand to the computer describes
 ## a match this save could not have recorded — Auto *is* an ai_teams entry a
 ## player toggled, never a second, independent list.
