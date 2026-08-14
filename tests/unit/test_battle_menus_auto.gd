@@ -10,8 +10,8 @@ func before_each() -> void:
 	difficulty_db = DifficultyDB.load_default()
 
 
-func _ids(rows: Array[Dictionary]) -> Array:
-	var ids: Array = []
+func _ids(rows: Array[Dictionary]) -> Array[StringName]:
+	var ids: Array[StringName] = []
 	for row in rows:
 		ids.append(row["id"])
 	return ids
@@ -33,6 +33,11 @@ func test_replay_drops_auto_with_the_save_rows() -> void:
 		ids.has(&"auto"), "a recording seats no computer, so there is no seat to hand over"
 	)
 	assert_false(ids.has(&"save"), "a replay drops the save rows")
+	assert_eq(
+		ids,
+		[&"commanders", &"speed", &"quit", &"cancel"] as Array[StringName],
+		"only the rows a recording cannot answer for go — the rest of the menu stays"
+	)
 
 
 func test_paused_computer_turn_keeps_auto_gated_on_the_seat() -> void:
