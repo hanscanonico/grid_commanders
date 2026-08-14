@@ -526,7 +526,8 @@ mouse, keyboard, or controller throughout.
   those go with it — every one but a submerged submarine, which is under the water rather than
   merely out of sight and so stays unshaded on a clear day too, until one of your units is
   standing beside it
-- `N` walks the cursor to the next unit on your side that has not acted yet, in reading order and
+- `N` walks the cursor to the next unit of the army in hand that has not acted yet — yours on your
+  turn, and an ally's units are their own to walk — in reading order and
   wrapping round, so the last ready unit on a board the size of `bulwark` is a press away rather
   than a pan. It moves the cursor and nothing else — selecting is still your confirm — and it is
   live only at rest: never with a unit in hand, where the cursor is planning a move, and never

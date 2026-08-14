@@ -453,10 +453,9 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   (the exact-set reading seated a one-army roster and moved turn rotation, upkeep and repair).
   The save format is version 10 (`core/save_codec.gd`'s header is the ledger of what arrived when;
   the campaign-depth entry above owns 9's own field, and 10 is the pause menu's Auto row recording
-  which seats a player has handed to the computer mid-match and at what tier): the roster arrived at
-  4, the grouping at 5,
-  the fallen at 6 (the plan's "save v4 carries `eliminated`" is superseded by that ordering), each
-  army's home HQ at 7 —
+  which seats a player has handed to the computer mid-match and at what tier): the roster arrived
+  at 4, the grouping at 5, the fallen at 6 (the plan's "save v4 carries `eliminated`" is superseded
+  by that ordering), each army's home HQ at 7 —
   a save below v7 takes its home HQs from the map it names, which is exact because such a save
   always seated the board's full roster — and Second Wind eligibility at 8; a save below v8
   defaults every unit to ineligible rather than granting an unverifiable extra action. An older save decodes as
