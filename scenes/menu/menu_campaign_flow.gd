@@ -188,7 +188,13 @@ func pose_debrief(won: bool) -> void:
 	progress.complete(campaign, mission.id, outcome.stars, 6)
 	_menu_root.hide()
 	_debrief.begin(
-		mission, outcome, runtime.max_stars(), _next_title(campaign, progress, outcome), progress
+		mission,
+		outcome,
+		runtime.max_stars(),
+		_next_title(campaign, progress, outcome),
+		progress,
+		[],
+		false
 	)
 
 
@@ -205,7 +211,7 @@ func pose_interlude() -> void:
 			if page == null:
 				continue
 			_menu_root.hide()
-			_interlude.begin(page, CampaignState.begin(campaign))
+			_interlude.begin(page, CampaignState.begin(campaign), false)
 			return
 
 

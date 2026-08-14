@@ -50,6 +50,7 @@ const _OPEN := "·"
 signal card_changed(available: bool, up: bool)
 
 var _built := false
+var _where_label: Label
 ## Whether the player has the card up. Not a device preference and not remembered
 ## across missions: a mission's terms are the first thing a new board has to say, so
 ## every one of them opens with the card up and the player lowers it when it is in
@@ -80,13 +81,15 @@ func refresh(game: GameState) -> void:
 		return
 	var mission := CampaignSession.mission
 	_title_label.text = mission.title
+	_where_label.text = mission.location
+	_where_label.visible = mission.location != ""
 	for child in _rows.get_children():
 		child.queue_free()
 		_rows.remove_child(child)
 	_row_labels.clear()
 	_group("WIN", mission.objectives, game)
 	_group("LOSE", mission.failures, game)
-	_group("BONUS", mission.bonus_objectives, game)
+	_bonus_group(mission, game)
 	_place()
 
 
@@ -137,6 +140,10 @@ func _build() -> void:
 	_title_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
 	head.add_child(_title_label)
 
+	_where_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_where_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(_where_label)
+
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 2)
 	_rows.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -158,6 +165,38 @@ func _group(heading: String, objectives: Array[MissionObjective], game: GameStat
 	_rows.add_child(UiTheme.hud_label(heading, UiTheme.SIZE_MICRO, UiTheme.INK_3))
 	for objective: MissionObjective in live:
 		_rows.add_child(_condition_row(objective, game))
+
+
+## The bonus stars, with the par day the runtime is also judging: the one
+## condition on the card that is not a `MissionObjective`, printed here because
+## the player is racing a clock nothing else on screen names. Its mark reads
+## like every other row's — lit while the star is still winnable — and its
+## readout is the count that decides it.
+func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
+	var live := _live(mission.bonus_objectives)
+	if live.is_empty() and mission.par_day <= 0:
+		return
+	_rows.add_child(UiTheme.hud_label("BONUS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	for objective: MissionObjective in live:
+		_rows.add_child(_condition_row(objective, game))
+	if mission.par_day <= 0:
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", _ROW_GAP)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var inside := game.day <= mission.par_day
+	row.add_child(
+		_first_line(_MET if inside else _OPEN, UiTheme.CAPTURE if inside else UiTheme.INK_3)
+	)
+	var words := UiTheme.hud_label(
+		"Finish by day %d." % mission.par_day, UiTheme.SIZE_MICRO, UiTheme.WHITE
+	)
+	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_row_labels.append(words)
+	row.add_child(words)
+	row.add_child(_first_line("day %d/%d" % [game.day, mission.par_day], UiTheme.AMMO))
+	_rows.add_child(row)
 
 
 ## The conditions this card may print: the ones the runtime is judging. An empty
