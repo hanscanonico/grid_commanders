@@ -14,6 +14,13 @@ extends GutTest
 ## a paragraph. Raising it is a writing decision, not a fix.
 const MAX_QUOTE_CHARS := 60
 
+## The other editorial ruler. Rotation is a per-team activation counter rather
+## than a roll (power-quotes plan D2), so a short list does not merely risk a
+## repeat — it repeats on a fixed beat, and a two-line general says the same
+## words every other power of every match. Three is where a general can be
+## fired as often as the charge allows and still sound like a person.
+const MIN_QUOTES := 3
+
 var commanders: CommanderDB
 
 
@@ -27,9 +34,13 @@ func test_every_powered_general_has_quotes() -> void:
 		if not commander.has_power():
 			continue
 		powered += 1
-		assert_false(
-			commander.power_quotes.is_empty(),
-			"%s has a Command Power but no power_quotes to speak on the banner" % commander.id
+		assert_gte(
+			commander.power_quotes.size(),
+			MIN_QUOTES,
+			(
+				"%s has a Command Power but only %d power_quotes, under the %d floor"
+				% [commander.id, commander.power_quotes.size(), MIN_QUOTES]
+			)
 		)
 	assert_gt(powered, 0, "no powered commanders loaded, so this would pass vacuously")
 
