@@ -13,7 +13,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the contested relay for the alliance."
+text = "Take the ridge relay before Draeg's army does it for you."
 cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -23,7 +23,7 @@ last_day = 12
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold any three of the ridge road's cities at once."
+text = "Hold three of the ridge road's towns at once."
 count = 3
 terrain_id = &"city"
 

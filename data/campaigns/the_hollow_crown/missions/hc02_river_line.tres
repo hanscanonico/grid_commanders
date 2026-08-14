@@ -13,7 +13,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Break the line and take their headquarters."
+text = "Orlov committed to this crossing. Take the ground he committed it to."
 cell = Vector2i(15, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -23,7 +23,7 @@ last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Leave Orlov nothing on this line — every property at once."
 count = 6
 
 [sub_resource type="Resource" id="Line_1"]
@@ -39,7 +39,7 @@ text = "No tricks up your sleeve, then. Almost restful, fighting a man who plays
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Meet his commitment with one of our own and take that headquarters."
+text = "Orlov hits hardest at the wounded, and short of our own base those two towns on the road are the only place we mend. Nothing of ours stays out in the open below half."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

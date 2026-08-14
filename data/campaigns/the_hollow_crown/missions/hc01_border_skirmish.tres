@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Break the line and take their headquarters."
+text = "Push Morn's column back and take the crossing post."
 cell = Vector2i(15, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -25,7 +25,7 @@ last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Own the whole crossing — every property at once."
 count = 6
 
 [sub_resource type="Resource" id="Line_1"]
@@ -41,7 +41,7 @@ text = "Noted for the record. The Directorate still stands, officially — nobod
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Hold the line. Push him back east of the crossing."
+text = "One road, two towns, woods either side of it. He is a shade better than us on every square, so take the ones he is not standing on yet."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

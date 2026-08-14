@@ -20,7 +20,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Break the line and take their headquarters."
+text = "Answer the ultimatum: take Morn's command post on the crossing."
 cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -30,7 +30,7 @@ last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Answer him completely — every property on the crossing at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
@@ -46,7 +46,7 @@ text = "Eight days to answer you with force instead of a courier."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"halden_marr"
-text = "Take his headquarters. That's the only answer he respects."
+text = "No coast on this crossing, Commander. Three towns strung on one road and nowhere to come in from the flank — we win it straight or not at all."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

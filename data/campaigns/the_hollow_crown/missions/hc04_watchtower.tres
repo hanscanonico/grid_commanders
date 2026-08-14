@@ -22,7 +22,7 @@ last_day = 9
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Every property on the watchtower road, ours at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
@@ -38,7 +38,7 @@ text = "Three checkpoints, nine days. You won't leave any undefended for a tenth
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"rhea_sol"
-text = "Take her headquarters and the whole ledger closes at once."
+text = "All three checkpoints ours in the same moment. That is the only entry that closes her ledger."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

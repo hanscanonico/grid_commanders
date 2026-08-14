@@ -16,7 +16,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Break the line and take their headquarters."
+text = "Take the roadhead. The capital road opens the moment it falls."
 cell = Vector2i(17, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -26,7 +26,7 @@ last_day = 9
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Every property on the capital road, ours at once."
 count = 6
 
 [sub_resource type="Resource" id="Line_1"]
@@ -42,7 +42,7 @@ text = "Your numbers are honest, same as ever. Ours have to be better today."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"perrin_ash"
-text = "Take the headquarters. The road opens the moment it falls."
+text = "From up here it is one road and two towns, Commander, with nothing to hide behind but those woods. He will mass on the road — do not meet him on it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Break the line and take their headquarters."
+text = "Take Orlov's command post while the Directorate burns behind it."
 cell = Vector2i(19, 3)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -22,7 +22,7 @@ last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold every property on the board at once."
+text = "Hold the whole interior road — every property at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
