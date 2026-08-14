@@ -458,7 +458,8 @@ On a controller, the D-pad or left stick moves focus and the grid cursor. The bo
 (A / Cross) confirms, the right face button (B / Circle) cancels or opens the map menu, the right
 shoulder (RB / R1) zooms in and the left (LB / L1) zooms out, the left face button (X / Square)
 shows a unit's range, the left stick's click (button 7) raises and lowers the threat lens, the
-Start button (Options / Menu, button 6) lowers and raises a campaign mission's card, and the top
+Start button (Options / Menu, button 6) lowers and raises a campaign mission's card, the Back
+button (Select / View / Share, button 4) jumps to the next unit that can still act, and the top
 face button (Y / Triangle) fires a ready Command Power. The same
 face buttons confirm and back out of menus. One push of the stick is one step: the cursor and a
 menu highlight move a single cell or row per gesture, and the stick has to return to centre before
@@ -525,6 +526,13 @@ mouse, keyboard, or controller throughout.
   those go with it — every one but a submerged submarine, which is under the water rather than
   merely out of sight and so stays unshaded on a clear day too, until one of your units is
   standing beside it
+- `N` walks the cursor to the next unit on your side that has not acted yet, in reading order and
+  wrapping round, so the last ready unit on a board the size of `bulwark` is a press away rather
+  than a pan. It moves the cursor and nothing else — selecting is still your confirm — and it is
+  live only at rest: never with a unit in hand, where the cursor is planning a move, and never
+  during a computer turn or a replay. A board with nothing left to act says *No unit ready.* in the
+  same chip a refused confirm uses. The End Turn guard's **Review units** walks the same list in the
+  same order, so the two can never disagree about who is still owed a turn
 - After a move, the action menu opens: **Fire** (offered only when an enemy the unit has a ready
   weapon for is in range from the destination), **Capture** (offered when a capture-capable
   unit ends on a property you don't own), **Drop** and **Supply** (see transports below),
@@ -588,6 +596,12 @@ mouse, keyboard, or controller throughout.
   one you could still resume. Resume it later with **Continue** on the main menu. When your Command
   Power is charged the menu lists it first, so it is reachable from the keyboard as well as from the
   HUD button
+- The same menu's **Auto** row hands *your own* seat to the computer for as long as you like: it
+  opens a submenu of **Off** and the four difficulty tiers, a banner confirms the change, and the
+  computer picks the turn up from where you left it. Taking it back is the same row's Off, reachable
+  while its Auto turn is paused. The row is offered only for a seat you may hand over — never a
+  genuine opponent's turn, and never over a replay, which seats no computer to hand anything to —
+  and which seats are on Auto, at which tier, survives **Save & Main Menu** and **Continue**
 - **End Turn** asks first when any of your units still standing on the board can act — a passenger
   riding a transport is not one of them: a panel names how many are ready and lists each with its
   tile — *Tank at (4,1)*, in the board's own zero-based cells — and offers **Review units**, the
@@ -610,7 +624,8 @@ mouse, keyboard, or controller throughout.
   over terrain. The **top bar** carries the day, the side in hand as a faction colour chip and
   name, that commander's doctrine, the funds, a `T · THREAT` chip, an `R · RANGE` chip and, only
   while a campaign mission is being fought, an `O · MISSION` chip — each dim while its lens is
-  down, red while it is up — and a one-line **key legend** that swaps with
+  down, red while it is up — then an `N · NEXT` chip, which has no lit state because a jump is not
+  a way of looking at the board — and a one-line **key legend** that swaps with
   the interaction — `ENTER · SELECT   ESC · MENU   +/- · ZOOM` at rest,
   `ENTER · FIRE   ESC · BACK` while targeting, and so on. The **bottom bar** carries, left to
   right: the commander's
@@ -635,8 +650,11 @@ mouse, keyboard, or controller throughout.
   Dominion eliminated* — over the board that felled it, before play hands over. In a duel that is
   the win, so the banner runs straight into the victory screen
 - Taking the enemy HQ or destroying every enemy unit ends the match on a victory screen naming
-  the winner and the day, with **Rematch** (same map, fog, commanders, and sides) and **Main Menu**.
-  It opens with neither action highlighted and ignores presses and clicks for half a second, so a
+  the winner and the day, with **Rematch** (same map, fog, commanders, and sides), **Watch Replay**
+  and **Main Menu**. Watch Replay plays back the match that just ended, and is offered only when
+  there is a recording to name: a playback, a capture run and a match nobody moved in wrote none,
+  and a finished campaign mission is watched from the Replays page instead.
+  It opens with no action highlighted and ignores presses and clicks for half a second, so a
   key still held from the last battle cannot restart the match; the first press after that only
   highlights an action, and a second one takes it. Armies that won together are named together —
   *Meridian Coalition & Aurora Compact win!* — and from two eliminations up the day line lists who
@@ -700,8 +718,9 @@ appears and the key is refused — it is not yours to press.
 **Quotes.** A power's activation card opens with the general speaking — a short in-character
 line above the power's name, beside their portrait. The lines are data like everything else
 about a general: `power_quotes` on their `.tres`, rotated in order across the match (never
-randomly, so a replay speaks the same words), each capped at 60 characters so it stays a spoken
-beat — `tests/unit/test_commander_quotes.gd` enforces both. The selection card shows the first
+randomly, so a replay speaks the same words), at least three lines to a general with a power so the
+rotation is a rotation rather than a refrain, each capped at 60 characters so it stays a spoken
+beat — `tests/unit/test_commander_quotes.gd` enforces all three. The selection card shows the first
 line as the general's signature. The AI's generals speak through the same banner.
 
 ## Fog of war
@@ -925,7 +944,8 @@ A recording plays back **in the battle scene**, through the same executor a play
 through — the same animations, cut-ins, banners, ambush cues and elimination cards. `Esc` pauses it
 at the next command boundary and opens the map menu, exactly as it does during a computer turn —
 without the two save rows, because a recording is a match already played and writing it to the one
-save slot would come back as a hot-seat game nobody was sitting at. While it is paused, `S` takes
+save slot would come back as a hot-seat game nobody was sitting at — and without the Auto row, since
+a playback seats no computer for it to hand a turn to. While it is paused, `S` takes
 one more command and stops again, and Enter lets it run. When it ends, the victory screen's first
 action reads **Restart** and plays the recording again rather than starting a match on its board.
 The board is drawn **omniscient** whatever fog the match was played under: the match is over, so
