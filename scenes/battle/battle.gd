@@ -202,8 +202,8 @@ var replay_path := ""
 var _stepping := false
 ## The recording this match is writing as it is played, or null while replaying
 ## one. Opened by BattleRecording and closed on the way out; the pipeline does the
-## observing.
-var _recorder: ReplayRecorder
+## observing, and BattleOutcome asks it whether there is a replay worth offering.
+var recorder: ReplayRecorder
 
 ## Owns the camera zoom level, its clamp against the view, and the zoom keys.
 var _zoom: BattleZoom
@@ -222,8 +222,8 @@ var _capturing := false
 var _outcome: BattleOutcome
 ## Owns every way out of a running match short of winning it — the save slot, the
 ## two map-menu exits and the confirmation the unsaved one asks for, and the
-## rematch the victory lockup offers. BattleOutcome's sibling; see BattleExit.
-var _exit: BattleExit
+## rematch and replay the lockup offers. BattleOutcome's sibling; see BattleExit.
+var exit: BattleExit
 ## Owns the pause menu's Auto row and its submenu: handing the seat on turn to
 ## the computer at a chosen tier, or taking it back. See BattleAuto.
 var _battle_auto: BattleAuto
@@ -235,7 +235,7 @@ func _ready() -> void:
 	commander_db = CommanderDB.load_default()
 	difficulty_db = DifficultyDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
-	_exit = BattleExit.new(self)
+	exit = BattleExit.new(self)
 	_battle_auto = BattleAuto.new(self)
 	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
@@ -287,8 +287,8 @@ func _ready() -> void:
 	# leave a recording per scenario in the player's slots. The question is the
 	# command line's, so it is asked without building anything.
 	_capturing = BattleScenarioDriver.requested()
-	_recorder = BattleRecording.open(self, _replay == null and not _capturing)
-	_command_pipeline = BattleCommandPipeline.new(self, _recorder)
+	recorder = BattleRecording.open(self, _replay == null and not _capturing)
+	_command_pipeline = BattleCommandPipeline.new(self, recorder)
 	_outcome = _build_outcome()
 	_outcome.configure(request.watching, request.days_cap)
 	action_menu.action_chosen.connect(_on_menu_action)
@@ -348,8 +348,8 @@ func _legend_for(value: State) -> String:
 
 
 func _exit_tree() -> void:
-	if _recorder != null:
-		_recorder.close()
+	if recorder != null:
+		recorder.close()
 
 
 ## Gives every team its planner. The tier is the one lever difficulty pulls —
@@ -538,7 +538,7 @@ func _build_animator() -> BattleAnimator:
 ## the node the way BattleAiRunner does, and is handed the victory lockup.
 func _build_outcome() -> BattleOutcome:
 	var built := BattleOutcome.new(self)
-	built.victory_screen = victory_screen
+	built.bind_screen(victory_screen)
 	return built
 
 
@@ -873,7 +873,7 @@ func _on_menu_action(action: StringName) -> void:
 		&"auto":
 			_battle_auto.handle_action(action)
 		&"abandon":
-			_exit.handle_confirm_action(action)
+			exit.handle_confirm_action(action)
 
 
 func _handle_unit_action(action: StringName) -> void:
@@ -960,16 +960,16 @@ func _handle_map_action(action: StringName) -> void:
 		_battle_auto.open_menu()
 		return
 	if action == &"save":
-		_exit.save_match()
+		exit.save_match()
 		return
 	if action == &"save_and_quit":
-		_exit.save_and_leave()
+		exit.save_and_leave()
 		return
 	if action == &"quit":
 		# The context is Battle's to set — it is what routes the rows that come back
 		# — and the confirmation itself is BattleExit's, like the leaving behind it.
 		_menu_context = &"abandon"
-		_exit.confirm_abandon()
+		exit.confirm_abandon()
 		return
 	if action != &"end_turn":
 		return
@@ -1095,12 +1095,12 @@ func enter_victory() -> void:
 
 func _request_rematch() -> void:
 	if _outcome.accepts_action(victory_screen.rematch_button):
-		_exit.rematch()
+		exit.rematch()
 
 
 func _request_main_menu() -> void:
 	if _outcome.accepts_action(victory_screen.menu_button):
-		_exit.to_main_menu()
+		exit.to_main_menu()
 
 
 ## A production property of ours standing empty. Which terrains those are is the

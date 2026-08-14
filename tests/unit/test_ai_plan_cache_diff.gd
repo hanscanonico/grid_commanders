@@ -70,6 +70,22 @@ func test_threat_weighing_profiles_play_command_for_command() -> void:
 			_assert_agrees_over_a_match(board[1], profile, "%s on %s" % [board[0], tier])
 
 
+## Brutal, the arena's searched champion, seated verbatim as a tier a player can
+## pick from the difficulty picker and switch to mid-match from the pause menu's
+## Auto submenu. It is here for a reason none of the runs above cover: it carries
+## sixteen dials off Normal *at once* — a live capture claim, cover and
+## condition off the AR6 shelf, both threat readings, cohesion, a priced
+## production property and the whole build block — where every run above turns
+## one or two on at a time, and the plan's D2 says a milestone that
+## adds a dial to the planner adds a run here. A cache exact only for the
+## combinations somebody remembered to diff is what that rule refuses.
+func test_the_searched_champion_plays_command_for_command() -> void:
+	var profile: AIProfile = load("res://data/ai/brutal.tres")
+	assert_not_null(profile, "the brutal profile must load")
+	for board: Array in PlanCacheDiff.boards():
+		_assert_agrees_over_a_match(board[1], profile, "%s on brutal" % board[0])
+
+
 ## The AI Arena's AR6 shelf, which no shipped tier carries either, so nothing
 ## above ever reaches the code these three gate. Each alone and then all three at
 ## once over a tier that also weighs a threat map, which is the profile AR5 will

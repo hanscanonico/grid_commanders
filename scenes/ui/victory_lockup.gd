@@ -1,7 +1,7 @@
 class_name VictoryLockup
 extends PanelContainer
 ## The screen a match ends on: the winning general fronting a cream card, who won,
-## the day it took and the standings, and the two ways out.
+## the day it took and the standings, and the ways out.
 ##
 ## The turn banner's card one size up — same paper, same ink outline, same hard
 ## shadow — with a faction band across the top when a commander won it, so the
@@ -9,19 +9,25 @@ extends PanelContainer
 ##
 ## Presentation only. Which words go on it are BattleOutcome's, and so is the
 ## input guard that keeps a buffered cut-in press from restarting the match: the
-## two buttons are public because that guard grabs and releases their focus and
+## buttons are public because that guard grabs and releases their focus and
 ## switches their hit-testing, which no signal can say.
 
 const _PAD_X := 16
 const _PAD_Y := 10
 const _PORTRAIT := 76
-## A floor both actions clear, so the stack is one column rather than two centred
+## A floor every action clears, so the stack is one column rather than centred
 ## buttons of whatever width their words happen to want — and so Rematch does not
-## change size when a playback renames it Restart.
-const _ACTION_W := 68
+## change size when a playback renames it Restart. Wide enough for the longest of
+## them, "Watch Replay", since a button that grew past the floor would be the
+## ragged column the floor exists to prevent.
+const _ACTION_W := 92
 
-## The two ways out, and BattleOutcome's to arm — see the class note above.
+## The ways out, and BattleOutcome's to arm — see the class note above. The middle
+## one is offered only when there is a recording to watch; `offer_replay` is what
+## says so, and it starts hidden because most of the runs that raise this card
+## (a playback, a captured frame) have none.
 var rematch_button: Button
+var watch_button: Button
 var menu_button: Button
 
 var _band: PanelContainer
@@ -81,6 +87,8 @@ func _build() -> void:
 	# does, and never in the winner's colour: the livery is the band's job, and a
 	# button that changed hue with the result would read as a different button.
 	rematch_button = _action(rows, UiTheme.ButtonVariant.PRIMARY, "")
+	watch_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "Watch Replay")
+	watch_button.hide()
 	menu_button = _action(rows, UiTheme.ButtonVariant.SECONDARY, "Main Menu")
 
 
@@ -100,6 +108,12 @@ func announce(title: String, sub: String, rematch_text: String) -> void:
 	_title.text = title
 	_sub.text = sub
 	rematch_button.text = rematch_text
+
+
+## Raises or drops the Watch Replay row. Whether there is a recording to offer is
+## BattleOutcome's answer, like every other word on this card.
+func offer_replay(available: bool) -> void:
+	watch_button.visible = available
 
 
 ## Fronts the card with the winning general. A side that played without one — and
