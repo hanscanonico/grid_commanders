@@ -33,7 +33,7 @@ static func render(line: MissionLine, commanders: CommanderDB) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", _BUST_GAP)
 	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	row.add_child(_bust_of(commander))
+	row.add_child(bust_of(commander))
 	row.add_child(copy)
 	return row
 
@@ -64,10 +64,11 @@ static func _name_of(commander: CommanderType, width: int) -> Label:
 
 
 ## A bust fitted into a faction-tinted field — the power banner's portrait
-## recipe at column scale.
-static func _bust_of(commander: CommanderType) -> Control:
+## recipe, at the column's scale by default and at whatever square a caller
+## names. The one recipe every surface's bust is drawn from.
+static func bust_of(commander: CommanderType, square: int = BUST) -> Control:
 	var field := Panel.new()
-	field.custom_minimum_size = Vector2(BUST, BUST)
+	field.custom_minimum_size = Vector2(square, square)
 	field.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	field.clip_contents = true
 	var tint := CommanderVisuals.theme_for(commander).color.darkened(0.6)

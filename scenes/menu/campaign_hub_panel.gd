@@ -401,10 +401,20 @@ func _fill_picture(mission: MissionDefinition) -> void:
 		_brief_picture.add_child(_foe_card(foe))
 
 
+## The first hostile seat's commander. Hostility is read by side, the way every
+## objective reads it: an empty grouping is a free-for-all where every computer
+## seat is a foe, and a seat standing with the player is an ally, never the face
+## the briefing is set against.
 func _antagonist(mission: MissionDefinition) -> CommanderType:
 	for team: int in mission.ai_teams:
-		var id: StringName = mission.commanders.get(team, &"")
-		var commander := _commanders.by_id(id)
+		var allied: bool = (
+			mission.sides.has(team)
+			and mission.sides.has(mission.player_team)
+			and mission.sides[team] == mission.sides[mission.player_team]
+		)
+		if allied:
+			continue
+		var commander := _commanders.by_id(mission.commanders.get(team, &""))
 		if commander != null:
 			return commander
 	return null
@@ -414,20 +424,9 @@ func _foe_card(commander: CommanderType) -> Control:
 	var card := VBoxContainer.new()
 	card.add_theme_constant_override("separation", 2)
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var field := Panel.new()
-	field.custom_minimum_size = Vector2(_BUST, _BUST)
-	field.clip_contents = true
-	field.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var tint := CommanderVisuals.theme_for(commander).color.darkened(0.6)
-	field.add_theme_stylebox_override("panel", UiTheme.flat(tint))
-	var portrait := TextureRect.new()
-	portrait.texture = CommanderVisuals.portrait_for(commander)
-	portrait.texture_filter = CommanderVisuals.ART_FILTER
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	field.add_child(portrait)
-	card.add_child(field)
+	var bust := MissionSpeech.bust_of(commander, _BUST)
+	bust.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.add_child(bust)
 	card.add_child(_note("VS %s" % commander.display_name.to_upper()))
 	return card
 

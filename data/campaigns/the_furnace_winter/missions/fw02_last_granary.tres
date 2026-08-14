@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -30,7 +30,7 @@ cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Bonus_torch"]
 script = ExtResource("14")
-text = "Put the torch squad down before it reaches the yard."
+text = "Put the torch squad down on the road."
 tag = &"the_match"
 
 [sub_resource type="Resource" id="Line_1"]
@@ -114,6 +114,11 @@ lines = Array[Resource]([SubResource("Event_line_2")])
 script = ExtResource("15")
 tag = &"the_match"
 
+[sub_resource type="Resource" id="Trigger_yard_unburned"]
+script = ExtResource("6")
+cell = Vector2i(6, 4)
+holder = 2
+
 [sub_resource type="Resource" id="Effect_granary_saved_by_hunt"]
 script = ExtResource("9")
 flag = &"fw_granary_saved"
@@ -129,7 +134,7 @@ text = "Torch squad's down on the road, matches unstruck. Milltown sleeps tonigh
 [sub_resource type="Resource" id="Event_the_match_goes_down"]
 script = ExtResource("5")
 id = &"the_match_goes_down"
-triggers = Array[Resource]([SubResource("Trigger_match_down")])
+triggers = Array[Resource]([SubResource("Trigger_match_down"), SubResource("Trigger_yard_unburned")])
 effects = Array[Resource]([SubResource("Effect_granary_saved_by_hunt")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_3")])
