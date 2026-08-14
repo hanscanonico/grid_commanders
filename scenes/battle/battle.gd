@@ -615,6 +615,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		toggle_range()
 	elif event.is_action_pressed(&"show_threat"):
 		toggle_threat()
+	elif event.is_action_pressed(&"next_unit") and state in [State.IDLE, State.PREVIEW]:
+		_cycle_ready_unit()  # never with a unit in hand: there the cursor is planning a move
 	elif event.is_action_pressed(&"show_objectives"):
 		view.mission_panel.toggle(game)  # chrome the card owns; nothing here has state in it
 	elif event.is_action_pressed(&"fire_power"):
@@ -976,7 +978,7 @@ func _handle_map_action(action: StringName) -> void:
 
 
 func _request_end_turn() -> void:
-	var ready := _ready_units()
+	var ready := ReadyUnits.of(game)
 	if not ready.is_empty():
 		state = State.CONFIRM
 		end_turn_guard.open(game.day, ready, view.identity.theme(game.current_team))
@@ -986,9 +988,7 @@ func _request_end_turn() -> void:
 
 func _review_ready_units() -> void:
 	state = State.IDLE
-	var ready := _ready_units()
-	if not ready.is_empty():
-		set_cursor_cell(ready[0].cell)
+	_cycle_ready_unit()  # Review walks the guard's list rather than pinning its first entry
 
 
 func _end_turn_anyway() -> void:
@@ -996,16 +996,16 @@ func _end_turn_anyway() -> void:
 	_commit_end_turn()
 
 
-func _ready_units() -> Array[Unit]:
-	var ready: Array[Unit] = []
-	for unit in game.units:
-		if unit.team == game.current_team and not unit.acted and unit.carrier == null:
-			ready.append(unit)
-	ready.sort_custom(
-		func(a: Unit, b: Unit) -> bool:
-			return a.cell.y < b.cell.y or (a.cell.y == b.cell.y and a.cell.x < b.cell.x)
-	)
-	return ready
+## Walks the cursor to the next unit that can still act — the whole of what N
+## does. It moves the cursor and nothing else: selecting stays the player's
+## confirm press, so no command is issued and nothing under `core/` learns it
+## happened. A board with none left says so rather than going quiet.
+func _cycle_ready_unit() -> void:
+	var unit := ReadyUnits.after(game, cursor_cell)
+	if unit == null:
+		_reject("No unit ready.", cursor_cell)
+		return
+	set_cursor_cell(unit.cell)
 
 
 func _commit_end_turn() -> void:

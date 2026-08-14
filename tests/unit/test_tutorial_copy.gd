@@ -152,6 +152,18 @@ func test_the_lens_chips_fit_beside_the_legend() -> void:
 		assert_lt(chip.length(), ControlHints.MAX_CHARS / 3, "chip too wide: %s" % chip)
 
 
+## CHIPS is the set the two rules above are checked over, so a chip the bar
+## prints and the array never heard of is a chip nothing holds to them.
+func test_every_named_chip_is_in_the_set() -> void:
+	for chip in [
+		ControlHints.THREAT_CHIP,
+		ControlHints.RANGE_CHIP,
+		ControlHints.OBJECTIVES_CHIP,
+		ControlHints.NEXT_CHIP
+	]:
+		assert_true(chip in ControlHints.CHIPS, "chip missing from CHIPS: %s" % chip)
+
+
 func test_the_lens_chips_are_ascii_only() -> void:
 	for chip in ControlHints.CHIPS:
 		for i in chip.length():
