@@ -44,6 +44,20 @@ func _init(battle: Battle) -> void:
 	_battle = battle
 
 
+## Takes the lockup and wires the one action that is wholly this class's and
+## BattleExit's: Watch Replay is offered off the recorder, guarded by the same
+## `accepts_action` window as the other two, and leaves through BattleExit — so
+## Battle holds no half of it, and its two buttons stay wired where they were.
+func bind_screen(screen: VictoryLockup) -> void:
+	victory_screen = screen
+	screen.watch_button.pressed.connect(_request_watch_replay)
+
+
+func _request_watch_replay() -> void:
+	if accepts_action(victory_screen.watch_button):
+		_battle.exit.watch_replay()
+
+
 ## Watch mode's flags, from the setup. Set once at build; normal play leaves the
 ## defaults, which is why a hot-seat or player-versus-AI match never grows a cap.
 func configure(watching: bool, days_cap: int) -> void:
@@ -85,12 +99,14 @@ func enter_victory() -> void:
 	Music.stop()  # the fanfare stands alone over the victory screen
 	Sfx.play(&"fanfare")
 	victory_screen.announce(_result_text(), _day_text(), _action_word())
+	victory_screen.offer_replay(_has_recording())
 	_bind_victory_commander()
 	victory_screen.show()
 	victory_screen.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_action_armed = false
 	_input_guard_until_ms = Time.get_ticks_msec() + INPUT_GUARD_MS
 	victory_screen.rematch_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	victory_screen.watch_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	victory_screen.menu_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_release_mouse_guard()
 	var focused := victory_screen.get_viewport().gui_get_focus_owner()
@@ -112,6 +128,13 @@ func _action_word() -> String:
 	return "Rematch"
 
 
+## Whether this match left a recording to watch, which is the recorder's own
+## answer and nobody else's: a playback and a capture run were handed none at all,
+## and a match nobody moved in claims no slot, so an empty path is the whole test.
+func _has_recording() -> bool:
+	return _battle.recorder != null and _battle.recorder.path() != ""
+
+
 func _release_mouse_guard() -> void:
 	await _battle.get_tree().create_timer(float(INPUT_GUARD_MS) / 1000.0).timeout
 	if not is_instance_valid(_battle):
@@ -119,6 +142,7 @@ func _release_mouse_guard() -> void:
 	if _battle.state != Battle.State.VICTORY:
 		return
 	victory_screen.rematch_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	victory_screen.watch_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	victory_screen.menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
 
 
