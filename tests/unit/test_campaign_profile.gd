@@ -90,6 +90,27 @@ func test_a_damaged_profile_reads_as_absent_rather_than_crashing() -> void:
 	assert_push_error_count(1, "the damaged file is named once, in the log")
 
 
+## The three readers answer off one file, so they have to agree about a damaged
+## one: a profile the codec refuses holds no mission anybody may resume either,
+## and the hub offers Resume off the battle rather than off the progress.
+func test_a_profile_the_codec_refuses_is_absent_to_every_reader() -> void:
+	var state := CampaignState.begin(campaign)
+	state.active_mission = &"one"
+	assert_true(CampaignProfile.save_progress(state, {"version": 8, "day": 3}))
+	var path := CampaignProfile.path_for(PROBE)
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	data["records"] = "not a set of records"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+	assert_null(CampaignProfile.load_progress(PROBE))
+	assert_push_error_count(1, "said once, by the reader that reports")
+	assert_eq(CampaignProfile.load_battle(PROBE), {}, "and there is no board to pick up")
+	var in_progress := CampaignProfile.load_in_progress(PROBE)
+	assert_eq(in_progress.battle, {})
+	assert_true(in_progress.tally.is_empty())
+
+
 func test_erase_takes_the_siblings_with_it() -> void:
 	var state := CampaignState.begin(campaign)
 	assert_true(CampaignProfile.save_progress(state))
