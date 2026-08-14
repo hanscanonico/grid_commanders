@@ -23,10 +23,17 @@ class BuiltMatch:
 	## The tier the computer plays at. Never null — DifficultyDB always answers —
 	## and the source of both the AI's profile and the id the save records.
 	var difficulty: Difficulty
-	## team -> Difficulty, when the sides play at *different* tiers. Only watch
-	## mode fills it; a normal match has one computer opponent at one tier, and
-	## `difficulty` above is that tier and the one the save records.
+	## team -> Difficulty, when the sides play at *different* tiers. Watch mode
+	## fills it, and a resumed save fills it for whatever it lists in
+	## `auto_tiers` below; a normal fresh match has one computer opponent at one
+	## tier, and `difficulty` above is that tier and the one the save records.
 	var per_team_difficulty: Dictionary[int, Difficulty] = {}
+	## team -> tier id, for seats a player had handed to the computer mid-match
+	## through the pause menu's Auto row — a subset of `ai_teams`, carried by a
+	## resumed save so Battle's own live copy (`Battle.auto_tiers`) starts where
+	## the save left it. Empty for a fresh match or a rematch: Auto always
+	## starts off, same as before Auto existed.
+	var auto_tiers: Dictionary[int, StringName] = {}
 	## Set only for `--replay=`: the recording this match is a playback of. Null for
 	## every match that is actually being played, which is what everything
 	## downstream asks it.
@@ -83,6 +90,7 @@ static func build(
 		result.ai_teams = loaded.ai_teams
 		result.difficulty = difficulty_db.by_id(loaded.difficulty)
 		result.map = result.game.map
+		_apply_auto_tiers(result, loaded, difficulty_db)
 		return result
 	var map_path := request.map_path
 	result.map = MapData.load_from_file(map_path, terrain_db)
@@ -201,7 +209,21 @@ static func _build_campaign_resume(
 	result.ai_teams = loaded.ai_teams
 	result.difficulty = difficulty_db.by_id(loaded.difficulty)
 	result.map = result.game.map
+	_apply_auto_tiers(result, loaded, difficulty_db)
 	return result
+
+
+## Carries a resumed save's Auto seats onto the match being built: `Battle`'s
+## own live copy (`Battle.auto_tiers`), and each team's planner tier folded
+## into `per_team_difficulty` so `Battle._build_planners` needs no change of
+## its own to honour it — it already reads
+## `per_team_difficulty.get(team, difficulty)`.
+static func _apply_auto_tiers(
+	result: BuiltMatch, loaded: SaveCodec.LoadedMatch, difficulty_db: DifficultyDB
+) -> void:
+	result.auto_tiers = loaded.auto_tiers
+	for team: int in loaded.auto_tiers:
+		result.per_team_difficulty[team] = difficulty_db.by_id(loaded.auto_tiers[team])
 
 
 ## A recorded match, opened on the board it was recorded from. Null when the file

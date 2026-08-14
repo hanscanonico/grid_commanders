@@ -36,7 +36,9 @@ func save_match() -> bool:
 	# be decided and recorded.
 	if CampaignSession.active():
 		return _save_mission(game)
-	if not SaveGame.save(game, _battle.ai_teams, SaveGame.SAVE_PATH, _battle.difficulty.id):
+	if not SaveGame.save(
+		game, _battle.ai_teams, SaveGame.SAVE_PATH, _battle.difficulty.id, _battle.auto_tiers
+	):
 		# SaveGame has already pushed the disk error; this is the player's half of
 		# it, and it says where they still are as well as what failed.
 		_battle.present_banner("Save failed — still in the match")
@@ -53,7 +55,9 @@ func save_match() -> bool:
 ## has. Named by the mission rather than the board, because that is what the hub
 ## offers to resume.
 func _save_mission(game: GameState) -> bool:
-	var envelope := SaveCodec.encode(game, _battle.ai_teams, _battle.difficulty.id)
+	var envelope := SaveCodec.encode(
+		game, _battle.ai_teams, _battle.difficulty.id, _battle.auto_tiers
+	)
 	if not CampaignSession.save_battle(envelope):
 		_battle.present_banner("Save failed — still in the match")
 		return false

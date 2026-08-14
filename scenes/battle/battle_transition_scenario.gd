@@ -241,7 +241,9 @@ func _run_ai_pause() -> String:
 ## than recomputed: what is under test is which menu Battle asked for, and the
 ## builder answers that question with itself.
 func _check_pause_rows() -> String:
-	var expected := BattleMenus.map_actions(_battle.game, false)
+	var expected := BattleMenus.map_actions(
+		_battle.game, false, true, _battle.ai_teams, _battle.auto_tiers, _battle.difficulty_db
+	)
 	for row: Dictionary in expected:
 		if row.id == &"power" or row.id == &"end_turn":
 			return "the pause menu offers '%s', which would act for the computer" % row.id

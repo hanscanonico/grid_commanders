@@ -37,6 +37,8 @@ func run() -> void:
 	# A pause asked for during the previous turn's last command is answered before
 	# this one spends a frame on itself; see Battle.pause_gate.
 	await _battle.pause_gate()
+	if _left_auto(game):
+		return
 	# Battle awaits the day banner itself before handing the turn over, so this is
 	# only the pacing padding that follows it, not a wait for the banner.
 	var start_delay := Settings.speed.start_delay_seconds()
@@ -44,6 +46,8 @@ func run() -> void:
 	for i in MAX_COMMANDS_PER_TURN:
 		if game.winner != 0:
 			_leave()
+			return
+		if _left_auto(game):
 			return
 		# Asked per command, not cached for the turn: an EndTurnCommand hands play
 		# to the other side mid-loop, and in watch mode that side has a planner of
@@ -78,6 +82,19 @@ func _think() -> void:
 		await _battle.get_tree().process_frame
 		return
 	await _battle.get_tree().create_timer(delay).timeout
+
+
+## True when the team on turn left `ai_teams` while this pause was held — the
+## player took their own Auto-controlled seat back through the pause menu's
+## Auto row. Checked at every `pause_gate()` return, board settled either way,
+## so the runner never plans a command for a team that just got handed back;
+## `state` is left at IDLE (`rest_state()`, `_paused` already cleared by
+## whatever called `Battle.resume_turn()` to wake this coroutine).
+func _left_auto(game: GameState) -> bool:
+	if game.current_team in _battle.ai_teams:
+		return false
+	_battle.state = _battle.rest_state()
+	return true
 
 
 ## Every bail-out from the loop lands here, so a planner bug can never leave the

@@ -62,6 +62,12 @@ func test_a_current_save_without_capture_progress_is_refused() -> void:
 	)
 
 
+func test_a_current_save_without_auto_tiers_is_refused() -> void:
+	assert_string_contains(
+		SaveCodec.validate(_without("auto_tiers", SaveCodec.VERSION)), "auto_tiers"
+	)
+
+
 func test_a_current_save_without_a_dive_flag_is_refused() -> void:
 	var data := _encoded()
 	(data["units"] as Array)[0].erase("dived")
@@ -122,6 +128,7 @@ func test_a_current_save_holding_the_wrong_kind_of_value_is_refused() -> void:
 		"rng_state": true,
 		"owners": {},
 		"units": "none",
+		"auto_tiers": "none",
 	}
 	for key: String in wrong:
 		var data := _encoded()

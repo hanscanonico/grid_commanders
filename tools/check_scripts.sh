@@ -82,8 +82,20 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # wall clock for a capture is one assignment beside the hint pin, for the same
 # reason; UnitSprite owns the beat, so there is nothing here to extract. The
 # raise records a merge that landed without it and left this gate red.
+#
+# battle.gd 1402 -> 1438: Auto mode, the pause menu's Auto row. The flow itself
+# came out first — scenes/battle/battle_auto.gd (BattleAuto) owns the submenu
+# and the two turn-handoff cases, the same split BattleExit and BattleAiRunner
+# already are. What is left in Battle is the two new fields the row reads
+# (`auto_tiers`, `difficulty_db`, each with the reason it lives here and not on
+# BuiltMatch or BattleSetup alone), `last_human_team` losing its underscore so
+# BattleAuto can write it the same way it already writes `ai_teams` and
+# `auto_tiers`, and one small public method, `start_ai_turn`, that BattleAuto
+# and `_begin_turn` now share — genuinely Battle's, since a collaborator
+# reaching past it into `_ai_runner` directly would be a second opinion on
+# state only Battle may hold. Nothing loose is left to move.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1402
+scenes/battle/battle.gd 1438
 scenes/menu/main_menu.gd 1148
 "
 

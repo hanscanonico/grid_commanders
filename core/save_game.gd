@@ -122,6 +122,8 @@ static func status(path: String = SAVE_PATH) -> Slot:
 
 ## `difficulty` trails `path` so every existing caller keeps working; a save
 ## written without one records Normal, which is the tier those matches played at.
+## `auto_tiers` trails it for the same reason, and defaults empty — no seat on
+## Auto — for the same reason.
 ##
 ## The payload lands in a sibling `.tmp` and is only swapped into `path` once the
 ## write has answered for itself: `FileAccess.open(…, WRITE)` truncates its target
@@ -132,7 +134,8 @@ static func save(
 	state: GameState,
 	ai_teams: Array[int],
 	path: String = SAVE_PATH,
-	difficulty: StringName = Difficulty.DEFAULT_ID
+	difficulty: StringName = Difficulty.DEFAULT_ID,
+	auto_tiers: Dictionary[int, StringName] = {}
 ) -> bool:
 	# Both derived from the caller's path, not from SAVE_PATH, so a test writing its own
 	# slot stages its own temp and backup beside it rather than beside the player's.
@@ -144,7 +147,9 @@ static func save(
 			"SaveGame: cannot write %s (error %d)" % [temp_path, FileAccess.get_open_error()]
 		)
 		return false
-	var payload := JSON.stringify(SAVE_CODEC_SCRIPT.encode(state, ai_teams, difficulty), "\t")
+	var payload := JSON.stringify(
+		SAVE_CODEC_SCRIPT.encode(state, ai_teams, difficulty, auto_tiers), "\t"
+	)
 	# Bytes, not characters: `store_string` writes UTF-8, so a single accented character
 	# in a map name would make a truncated file look the right length to a `length()`.
 	var expected_bytes := payload.to_utf8_buffer().size()
