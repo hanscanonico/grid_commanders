@@ -210,9 +210,9 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-four maps ship. The main menu leads with the teaching board and lists the rest smallest
+Twenty-five maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`,
-`timberline`, `arsenal`, `riverline`, `isthmus`, `jet_stream`, `windrose`, `crossfire`,
+`timberline`, `arsenal`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
 `first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
 `causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
 board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
@@ -273,6 +273,12 @@ worth naming is a pair against the odd one out. Every other shipped board is a d
 also the only board the first-match mission strip runs on — see **Controls** below. `jet_stream`
 and `the_straits` are the boards air and naval units were added for: the first puts an airfield
 behind each front, the second a port on each coast of one shared channel.
+
+The newer duels are each built around a single idea, and each one's header states it. `exclave`
+(20×14) puts every army's HQ in the *other* army's corner, walled into a mountain pocket with two
+one-cell doors and held by a detachment of three: your bases and cities are home, the crown you
+cannot lose is not, and the shortest march to a match-ending capture is the one your own infantry
+make on turn one.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
