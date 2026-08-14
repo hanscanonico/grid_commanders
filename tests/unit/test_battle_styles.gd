@@ -188,6 +188,44 @@ func test_every_shipped_style_names_a_projectile_the_cut_in_draws() -> void:
 		)
 
 
+## The same shape one layer down: a style names a sound, and `Sfx.NAMES` is the
+## hand-kept list of the ones the autoload loads. A name that is not on it is
+## never loaded and `play` skips it in silence, so the volley is permanently mute
+## with nothing in the log.
+##
+## Sfx is an autoload rather than a Node-free class, which is normally outside
+## what tests/ targets; it earns the exception exactly as Music does — see the
+## docstring on tests/unit/test_music.gd.
+func test_every_style_names_a_sound_sfx_loads() -> void:
+	assert_gt(styles.size(), 0, "no styles loaded, so this would pass vacuously")
+	for id: StringName in styles.ids():
+		assert_has(
+			Sfx.NAMES,
+			styles.by_id(id).sfx,
+			"style '%s' names sound '%s'" % [id, styles.by_id(id).sfx]
+		)
+
+
+## And from the other side: a wav the audio pipeline installed that nobody added
+## to the list is dead weight, loaded by nothing and reachable from nothing.
+##
+## Deliberately not the reverse — a name with no wav is the tolerance Sfx
+## documents, which is what lets a style ship ahead of its render.
+func test_every_shipped_sound_is_one_sfx_loads() -> void:
+	var dir := DirAccess.open(Sfx.SFX_DIR)
+	assert_not_null(dir, "cannot open %s" % Sfx.SFX_DIR)
+	if dir == null:
+		return
+	var found := 0
+	for file in dir.get_files():
+		# Each wav sits beside its .import sidecar, which is not a sound.
+		if not file.ends_with(".wav"):
+			continue
+		found += 1
+		assert_has(Sfx.NAMES, StringName(file.trim_suffix(".wav")), "%s is on disk" % file)
+	assert_gt(found, 0, "no sounds on disk, so this would pass vacuously")
+
+
 ## And a typo'd one is refused out loud rather than registered: an unregistered
 ## style stages unarmed, which is the DB's standing answer to a style it cannot
 ## honour.

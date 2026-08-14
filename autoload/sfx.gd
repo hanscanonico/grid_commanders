@@ -8,7 +8,9 @@ const SFX_DIR := "res://assets/sfx"
 ## names the sound its volley makes, and these are the ones that wanted a voice
 ## of their own rather than the generic `shot`. A style may name a sound that has
 ## not been generated yet: `play` skips a missing stream in silence, which is
-## what lets a new style ship before its wav does.
+## what lets a new style ship before its wav does. The other two directions are
+## linted in tests/unit/test_battle_styles.gd: every style names a sound on this
+## list, and every wav on disk is on it.
 const NAMES: Array[StringName] = [
 	&"select",
 	&"move",
