@@ -210,10 +210,10 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-eight maps ship. The main menu leads with the teaching board and lists the rest smallest
+Twenty-nine maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `powder_keg`, `foursquare`, `trident`, `compass`, `pinwheel`,
 `timberline`, `arsenal`, `blackwood`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
-`first_steps`, `the_straits`, `the_slough`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
+`first_steps`, `the_straits`, `tideflats`, `the_slough`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
 `causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
 board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
 count and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
@@ -290,6 +290,11 @@ quieter board then. `the_slough` (22×15) promotes `riverline`'s crossing rule t
 middle three rows are fen wall to wall — five at the flanks — and the only ground a vehicle crosses
 is a two-cell causeway. A mech wades the middle in two turns and infantry in three, so the armour
 queues while the boots go round it, and artillery ranges the far bridgehead without crossing at all.
+`tideflats` (20×16) is the second naval duel: two coasts with a tidal apron on each, joined by a
+single two-cell causeway — road down the beach, bridge over the deep water, road up the far side.
+Shoal costs every land class 1 and carries no defence at all, so the aprons are fast ground with
+nothing to hide behind, and everything that walks between the coasts does so inside a hull's reach.
+The sea runs right around the board, which is what keeps it one body all four docks open onto.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
