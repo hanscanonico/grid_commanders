@@ -148,7 +148,10 @@ static func build_actions(
 ## recording is a match already played: there is no turn to come back to, and
 ## writing it would spend the single save slot on a board the player can only
 ## watch — resumed, it would come up as a hot-seat match nobody is sitting at,
-## because a replay seats no computer.
+## because a replay seats no computer. The Auto row goes with them for the same
+## reason: a recording seats no computer, so there is no seat to hand over — the
+## commands are already written, and a planner handed one would think it owned a
+## turn the recording is playing.
 static func map_actions(
 	game: GameState,
 	commandable: bool = true,
@@ -165,7 +168,7 @@ static func map_actions(
 	actions.append({"id": &"commanders", "label": "Commanders"})
 	actions.append({"id": &"speed", "label": "Speed: %s" % Settings.speed.display_name})
 	var auto_eligible := game.current_team not in ai_teams or auto_tiers.has(game.current_team)
-	if difficulty_db != null and auto_eligible:
+	if savable and difficulty_db != null and auto_eligible:
 		var auto_label := "Off"
 		if auto_tiers.has(game.current_team):
 			auto_label = difficulty_db.by_id(auto_tiers[game.current_team]).display_name
