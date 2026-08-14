@@ -583,7 +583,7 @@ plan is stated in full below and has no copy there.
   plan's "contiguous from 1" as a *validated* rule is superseded: a roster is a **range** — seat 1
   up to the highest seat the board names, floored at a duel — so contiguity is structural rather
   than breakable, and the many single-team fixtures keep playing the duel they always did. The save
-  format is version 9 and **`core/save_codec.gd`'s header is the ledger of what arrived when**;
+  format is version 10 and **`core/save_codec.gd`'s header is the ledger of what arrived when**;
   `SaveCodec._teams_error` / `_sides_error` / `_eliminated_error` / `_home_hq_error` refuse a
   roster, grouping, casualty list or home-HQ list no seating could have produced *before* any
   per-side check is derived from it. `tests/unit/test_maps.gd`'s HQ and base lints hold each board
