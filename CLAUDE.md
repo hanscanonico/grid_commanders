@@ -1111,7 +1111,8 @@ Before a change is done, run `make verify` — the aggregate gate it chains, in 
 against its committed golden). `make format` rewrites files to satisfy `format-check`,
 and any gate also runs alone (`make lint`, `make test`, …). GDScript is tab-indented — let
 `gdformat` settle whitespace rather than hand-aligning, and a green `make verify` is the bar a
-change clears before it ships.
+change clears before it ships. `check`'s full-project run is where the Node-free, RNG-free and
+pacing-free rules above are enforced over `core/` and `ai/`, rather than only stated here.
 
 ## Running the game
 
