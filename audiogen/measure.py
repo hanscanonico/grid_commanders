@@ -61,3 +61,55 @@ def centroid_hz(x: np.ndarray) -> float:
     freqs = np.fft.rfftfreq(len(x), 1.0 / RATE)
     total = spec.sum()
     return float((freqs * spec).sum() / total) if total > 0 else 0.0
+
+
+# -- loop measurements -------------------------------------------------------
+# A music track loops the whole file (the game's LOOP_FORWARD contract), so
+# its one seam is last-sample -> first-sample. These read that seam the same
+# way edge_peak reads a one-shot's edges.
+
+
+def loop_step(x: np.ndarray) -> float:
+    """Amplitude jump across the seam, as if x[-1] were followed by x[0]."""
+    return float(abs(x[0] - x[-1]))
+
+
+def loop_slope(x: np.ndarray) -> float:
+    """Slope change across the seam — a kink clicks even when the step is 0."""
+    return float(abs((x[1] - x[0]) - (x[-1] - x[-2])))
+
+
+def typical_step(x: np.ndarray, percentile: float = 99.5) -> float:
+    """The track's own sample-to-sample motion (a high percentile of |diff|):
+    the yardstick a seam step must not exceed to stay inaudible in texture."""
+    return float(np.percentile(np.abs(np.diff(x)), percentile))
+
+
+def loop_rms_delta_db(x: np.ndarray, window: float = 0.25) -> float:
+    """|head RMS - tail RMS| in dB: a loop must not dip out or thump in.
+
+    The window is beat-scale on purpose: a pickup's last eighth is quieter
+    than the downbeat it lifts into, and that is music, not a dropout.
+    """
+    n = int(window * RATE)
+    return abs(rms_db(x[:n]) - rms_db(x[-n:]))
+
+
+def tempo_bpm(x: np.ndarray, lo: float = 95.0, hi: float = 170.0) -> float:
+    """Tempo read off the rendered audio: onset-strength autocorrelation.
+
+    The search window is one octave-free band chosen so both marches' true
+    tempos sit inside it while every half, double and dotted alias of either
+    falls outside — the peak inside the band can only be the beat.
+    """
+    hop = int(RATE * 0.005)
+    frames = len(x) // hop
+    env = np.sqrt(np.mean(x[: frames * hop].reshape(frames, hop) ** 2, axis=1))
+    onset = np.maximum(np.diff(env), 0.0)
+    lag_lo = int(round(60.0 / hi / 0.005))
+    lag_hi = int(round(60.0 / lo / 0.005))
+    strength = [
+        float(np.dot(onset[: len(onset) - lag], onset[lag:]))
+        for lag in range(lag_lo, lag_hi + 1)
+    ]
+    return 60.0 / ((lag_lo + int(np.argmax(strength))) * 0.005)

@@ -44,3 +44,4 @@ jobs:
           python audio_generator.py -o /tmp/gen_a --game .
           python audio_generator.py -o /tmp/gen_b --game .
           diff -r /tmp/gen_a/sfx /tmp/gen_b/sfx
+          diff -r /tmp/gen_a/music /tmp/gen_b/music

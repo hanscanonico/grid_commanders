@@ -3,10 +3,12 @@
 Deterministic sound pipeline for [`../grid_commanders`](../grid_commanders):
 it renders the game's complete sound-effect roster — the nine names
 `autoload/sfx.gd`'s `Sfx.NAMES` plays — as authored synthesis recipes over a
-small numpy DSP toolkit. The direction is 16-bit-era chiptune-plus: layered
-synthesis with punchy envelopes and filtered noise, built to sit beside the
-game's dimetric pixel art (whose pipeline this repo deliberately mirrors —
-see [`../sprite_generator`](../sprite_generator)).
+small numpy DSP toolkit, and its two looping music tracks — `autoload/
+music.gd`'s `Music.NAMES` — as authored song data played by a deterministic
+sequencer. The direction is 16-bit-era chiptune-plus: layered synthesis with
+punchy envelopes and filtered noise, built to sit beside the game's dimetric
+pixel art (whose pipeline this repo deliberately mirrors — see
+[`../sprite_generator`](../sprite_generator)).
 
 There is **no RNG outside per-sound seeds**: noise comes from seeded PCG64
 generators, so every run reproduces the same bytes on every platform.
@@ -18,21 +20,41 @@ Regenerating after an edit changes exactly the sounds you edited.
 | --- | --- | --- |
 | UI | select, move, capture, fanfare | −8…−5 dBFS |
 | Combat | shot, explosion, flak, rocket, torpedo | −4…−1.5 dBFS |
+| Music | parade, advance | −7…−6 dBFS |
 
 UI sits a step under combat by contract — a menu never barks louder than a
 battle — and the `Mix` gate holds the bands apart. Output is 44100 Hz mono
 16-bit (the shipped placeholders were 22050 Hz; Godot reimports transparently).
+
+## The music
+
+Two strictly original marches, composed as hand-written note data in
+`audiogen/music.py` — melodies note by note, harmony as a bar chart, drums
+as patterns plus authored fills — rendered by `audiogen/sequencer.py`, the
+voxel-model analogue for composition:
+
+- **parade** (main menu): a proud C-major march at 104 BPM, AABA over 32
+  bars (74 s). Oom-pah tuba, afterbeat horns, parade snare, singable lead;
+  the last bar's pickup lifts the loop back to its downbeat.
+- **advance** (battle): an A-minor quickstep at 132 BPM, ABAC over 32 bars
+  (58 s). Driving eighth-note bass, syncopated stabs, a thin urgent lead;
+  a descending E7 run resolves across the seam onto the loop's opening note.
+
+The game loops the whole file (`LOOP_FORWARD`), so each track is rendered as
+one seamless loop: every tail that rings past the end wraps back to beat
+zero, and the loop gates measure the seam.
 
 ## Usage
 
 ```sh
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
-# render everything + the A/B soundboard into ./out
+# render everything + the A/B boards into ./out
 .venv/bin/python audio_generator.py
 
-# audition: open out/soundboard.html — every sound, the game's current
-# take beside this run's, with the measurements
+# audition: open out/soundboard.html (effects) and out/musicboard.html
+# (music, both players loop) — the game's current take beside this run's,
+# with the measurements
 
 # install into a game checkout — the path is REQUIRED, never defaulted
 .venv/bin/python audio_generator.py --install /path/to/grid_commanders
@@ -46,25 +68,31 @@ in the game checkout.
 
 `.venv/bin/python -m unittest discover tests` — the merge bar:
 
-- **Contract** — the roster is `Sfx.NAMES` verbatim; every duration fits its
-  authored budget (a UI blip stays a blip).
+- **Contract** — the rosters are `Sfx.NAMES` and `Music.NAMES` verbatim;
+  every duration fits its authored budget (a UI blip stays a blip, a music
+  loop is 30–90 s).
 - **Determinism** — every render is byte-stable.
 - **Mix** — peaks sit at their authored per-sound level; UI under combat;
-  no clicks at the edges (first/last ~0.4 ms near-silent); no DC offset.
+  music RMS clearly under every combat peak (a battle track never buries
+  the shot it underscores); no clicks at the edges (first/last ~0.4 ms
+  near-silent); no DC offset.
+- **Loop** — the music seam is measured: end-to-start amplitude and slope
+  stay inside the track's own motion, the texture holds across the seam,
+  and the sequencer's tail-wrap invariant is pinned on a fixture. A click
+  at the loop point is a build failure.
 - **Distinctness** — pairwise spectral distance over log-band fingerprints:
-  no two effects may sound like the same event. The silhouette-IoU gate
-  with a Fourier transform.
+  no two effects may sound like the same event (the silhouette-IoU gate
+  with a Fourier transform). The two marches must also separate — spectrally
+  and in measured tempo, each of which must land on its authored BPM.
 
 The measurements live in `audiogen/measure.py`; the tests only assert over
 them, so the tool and the suite cannot disagree about what "loud" means.
 
 ## Adoption
 
-The game still generates its placeholders (`make sfx` →
-`tools/generate_sfx.gd`). The route-C switch — `make sfx` calling this repo —
-happens **after** human ears approve the soundboard, not before: the gates
-hold consistency and technical quality, but whether an explosion feels right
-is not measurable here.
-
-Music (`parade`, `advance`) is milestone 2: a deterministic sequencer playing
-authored song data, the voxel-model analogue for composition. Not started.
+The game still generates its placeholders (`make sfx` → `tools/
+generate_sfx.gd`, `make music` → `tools/generate_music.gd`). The route-C
+switch — those targets calling this repo — happens **after** human ears
+approve the soundboard and the musicboard, not before: the gates hold
+consistency and technical quality, but whether an explosion feels right or
+a march is worth humming is not measurable here.
