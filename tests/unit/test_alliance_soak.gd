@@ -77,6 +77,25 @@ const BULWARK := "res://maps/bulwark.txt"
 ## pairing the asymmetry was priced for, and the free-for-all is played after it
 ## for the same reason Bulwark's is.
 const COAL_AND_CROWN := "res://maps/coal_and_crown.txt"
+## The one statement of which shipped boards this file soaks. Every board above
+## is a member, and `_soak` refuses one that is missing, so the list cannot fall
+## behind the calls; the roster check below compares it against what `maps/`
+## actually seats, so it cannot fall behind the shelf either. A second
+## hand-written list would only move the drift somewhere less visible.
+const SOAKED: Array[String] = [
+	COMPASS,
+	FOURSQUARE,
+	HEARTLAND,
+	PINWHEEL,
+	TRIDENT,
+	CAUSEWAY,
+	CONFLUENCE,
+	MARCHLANDS,
+	WINDROSE,
+	ATOLL,
+	BULWARK,
+	COAL_AND_CROWN,
+]
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -179,6 +198,37 @@ func test_the_ai_plays_pinwheel_at_every_seating_its_corners_offer() -> void:
 	_soak("pinwheel three-way", {}, 635, PINWHEEL, [1, 2, 3] as Array[int])
 
 
+## Every shipped board that seats more than a duel is soaked here — asked of
+## `maps/` rather than of a comment, because a hand-kept roster rots quietly: the
+## next four-seat board can ship, pass every map lint and reach the menu without
+## an alliance ever being played on it. That is the bug class this file exists
+## for — a grouping that reached `MovementResolver` and not `MoveCommand.validate`
+## shows up as a planner proposing moves the rules refuse, which no static lint
+## sees.
+func test_every_shipped_board_that_seats_more_than_a_duel_is_soaked_here() -> void:
+	var shipped: Array[String] = []
+	for path in MapCatalog.paths():
+		var map := MapData.load_from_file(path, terrain_db)
+		assert_not_null(map, "%s should parse" % path)
+		if map != null and map.player_count() > 2:
+			shipped.append(path)
+	var soaked := SOAKED.duplicate()
+	# Plain Strings on both sides, sorted: never sort StringNames, which compare
+	# by interned pointer rather than by their text.
+	shipped.sort()
+	soaked.sort()
+	var missing: Array[String] = []
+	for path in shipped:
+		if not soaked.has(path):
+			missing.append(path)
+	var complaint := (
+		"the soaked roster has fallen behind maps/: %s seats more than a duel and is never"
+		+ " soaked — add it to SOAKED and give it a _soak line saying why that board is"
+		+ " worth soaking"
+	)
+	assert_eq(shipped, soaked, complaint % ", ".join(missing))
+
+
 ## Plays the board out with `sides` applied and a planner per army. Fails on the
 ## first command the rules turn down — which is the whole point — and on a run
 ## that never ends.
@@ -189,6 +239,9 @@ func _soak(
 	board: String = FIXTURE,
 	seats: Array[int] = []
 ) -> void:
+	if board != FIXTURE and not SOAKED.has(board):
+		fail_test("%s is soaked but missing from SOAKED, which the roster check reads" % board)
+		return
 	var map := MapData.load_from_file(board, terrain_db)
 	assert_not_null(map, "%s should parse" % board)
 	if map == null:
