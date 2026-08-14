@@ -1,0 +1,74 @@
+# Two coasts, a tidal apron on each and one causeway between: the guns own the gap.
+# symmetric
+# The sea runs right around the board and bites into the middle, so the two homes
+# are separate coasts joined by a single two-cell causeway at x 9-10 -- road down
+# the apron, bridge over the deep water, road up the far apron. Everything a side
+# marches has to walk it, and both aprons and the whole crossing sit inside a
+# battleship's reach from the open water either side of it. That is the board:
+# the ground war is a two-cell frontage and the fleet decides who can stand on it.
+# Mirrors on (x, y) -> (19 - x, 15 - y).
+# `data/terrain/shoal.tres` costs every land class exactly 1 and carries no
+# defence at all, so the aprons are fast ground with nothing to hide behind --
+# infantry works the beach in front of its own coast, and anything that parks
+# there is a target. `data/terrain/sea.tres` refuses every land class, so the
+# apron is a shore rather than a second road: what joins the two coasts is the
+# causeway alone, which is why the map lint's landmass count reads the same with
+# the beaches and without them.
+# The water is deliberately one body -- the frame joins the western and eastern
+# channels around both ends -- so a hull built at any of the four docks can sail
+# to any other without the transport the computer cannot plan (naval plan R1).
+# Two docks, two bases, an airfield and a cruiser apiece: the air is the one
+# domain the causeway does not bottleneck, and the eight neutral cities include
+# the four standing at the causeway heads, which is the ground both fleets are
+# really shooting at.
+# Symbols: . plains  F woods  = road  + bridge  C city  B base  Q HQ
+#          A airport  P port  S sea  _ shoal
+[terrain]
+SSSSSSSSSSSSSSSSSSSS
+S.....C........FP..S
+S.Q==B=======A.....S
+SC..F.........F...CS
+S.B...F.....F....C.S
+S..P.....CC........S
+SSSS_____==_____SSSS
+SSSSSSSSS++SSSSSSSSS
+SSSSSSSSS++SSSSSSSSS
+SSSS_____==_____SSSS
+S........CC.....P..S
+S.C....F.....F...B.S
+SC...F.........F..CS
+S.....A=======B==Q.S
+S..PF........C.....S
+SSSSSSSSSSSSSSSSSSSS
+[owners]
+1 6 1
+1 16 1
+1 2 2
+1 5 2
+1 13 2
+1 2 4
+1 17 4
+1 3 5
+2 16 10
+2 2 11
+2 17 11
+2 6 13
+2 14 13
+2 17 13
+2 3 14
+2 13 14
+[units]
+1 i 4 1
+1 i 8 1
+1 t 7 2
+1 m 2 3
+1 g 5 3
+1 r 11 4
+1 c 5 7
+2 c 14 8
+2 r 8 11
+2 g 14 12
+2 m 17 12
+2 t 12 13
+2 i 11 14
+2 i 15 14

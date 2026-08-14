@@ -1,0 +1,53 @@
+# A wood with two roads through it: under fog, everything not on them is a guess.
+# symmetric
+# The board fog was drawn for. `data/terrain/woods.tres` conceals, so a unit off
+# the road is invisible past an adjacent tile and an ambush on the move is the
+# ordinary way a march ends here -- which is what makes the recon's five tiles of
+# sight worth its 4000 rather than a luxury, and what makes a tank that drives
+# into the trees alone a tank nobody sees again. It plays perfectly well with fog
+# off; it is simply a different, quieter board then.
+# Two roads and no third: one runs north-west to south-east, the other north-east
+# to south-west, and they cross at the four road cells in the middle of row 6.
+# Woods cost treads 2 and tires 3 against a road's 1, so the roads are the only
+# ground armour can cover a board's width on, and the crossroads is the only
+# ground both of them touch. Mirrors on (x, y) -> (17 - x, 12 - y).
+# Fourteen properties on 234 cells, deliberately few: two bases a side and six
+# neutral cities -- two on the crossroads' own corners, two beside a road, and
+# two buried in the trees where nothing on tires gets there quickly. Do not thin
+# the woods to make the middle readable: the unreadable middle is the board.
+# Land only: a wood is a barrier wings and hulls would simply erase.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+.F.FFF.FFFF.FFF.F.
+BQ==FFFMFFFFFF==FF
+FFB==FFFFFFFF==FFF
+FFFF==FFF.FF==FFFF
+CFFFF==F..F==CFFFF
+FFFMFF==CF==FFMFFF
+F.FFCFF====FFCFF.F
+FFFMFF==FC==FFMFFF
+FFFFC==F..F==FFFFC
+FFFF==FF.FFF==FFFF
+FFF==FFFFFFFF==BFF
+FF==FFFFFFMFFF==QB
+.F.FFF.FFFF.FFF.F.
+[owners]
+1 0 1
+1 1 1
+1 2 2
+1 0 4
+2 17 8
+2 15 10
+2 16 11
+2 17 11
+[units]
+1 i 3 0
+1 r 2 1
+1 t 3 1
+1 m 0 2
+1 i 1 2
+2 i 16 10
+2 m 17 10
+2 t 14 11
+2 r 15 11
+2 i 14 12

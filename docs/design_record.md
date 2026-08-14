@@ -585,8 +585,13 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   had to show aircraft actually built), `maps/causeway.txt` (30×22, four island homes bridged to a
   neutral mid-sea chain — added after this plan by COM-134), `maps/confluence.txt` (32×24, two
   bases, an airport and a port to a seat, four tidal arms running into one central sea, and a
-  harbour island of neutral docks nothing walks to — added after this plan by COM-135) and
-  `maps/bulwark.txt` (49×32, the 3v1 board that is unfair on purpose — the
+  harbour island of neutral docks nothing walks to — added after this plan by COM-135),
+  `maps/coal_and_crown.txt` (24×16, the second board to declare a `# grouping` and the first 2v2
+  authored not level seat by seat: seats 1&2 north with three bases and two cities each, seats 3&4
+  south with one base and four cities each, twelve properties to a side either way, mirrored left
+  to right so allied seats are exact reflections — the missing factories paid for in broken ground
+  and one extra mech a southern seat, never in property, which is what keeps D3's ceiling clear)
+  and `maps/bulwark.txt` (49×32, the 3v1 board that is unfair on purpose — the
   `asymmetric-board-plan.html` entry below owns its facts, and it is the named exception to this
   entry's kind-for-kind parity and to D5) are the shipped
   boards that seat more than a duel; Compass was pulled forward into FP5 because without one the

@@ -1,0 +1,57 @@
+# Forty cells long and eight deep: there is no flank on the ground, only the air.
+# symmetric
+# The corridor. Mountain walls the top and bottom rows for twenty-eight of the
+# forty columns, so the fight happens in a six-row channel with a home at each
+# end and no way round either -- `data/terrain/mountain.tres` moves foot, boot
+# and air only, so a rifleman can work the shoulder and nothing on wheels or
+# treads ever will. What decides a corridor is reach and rotation: artillery
+# (2-3) and rockets (3-5) fire down the length of it from behind a screen, and
+# the screen has to be relieved before it breaks, because there is nowhere to
+# withdraw to except backwards. The one flank that exists is overhead, which is
+# what the airfield behind each home is for.
+# Two parallel highways run the length of the channel at y 2 and y 5 -- one
+# rotation of the other -- and the four rows between and around them are the
+# ground a unit rotates through. Eight neutral cities are strung along the
+# corridor in mirrored pairs, so every one of them is exactly as far from its
+# owner's home as its twin is from the other's.
+# Mirrors on (x, y) -> (39 - x, 7 - y). 320 cells, a tenth of Bulwark's 1568,
+# so the menu's backdrop is unaffected: this board is long, not large.
+# Do not open the mountain walls. A gap anywhere along them is a flank, and the
+# board's entire question is what an army does when it has not got one.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+#          A airport
+[terrain]
+......MMMMMMMMMMMMMMMMMMMMMMMMMMMM......
+.QB.=..F...C..F.........C..F.....F...C..
+....================================..C.
+.B.A=...F....C..F.....F......C...F.=....
+....=.F...C......F.....F..C....F...=A.B.
+.C..================================....
+..C...F.....F..C.........F..C...F..=.BQ.
+......MMMMMMMMMMMMMMMMMMMMMMMMMMMM......
+[owners]
+1 1 1
+1 2 1
+1 1 3
+1 3 3
+1 1 5
+1 2 6
+2 37 1
+2 38 2
+2 36 4
+2 38 4
+2 37 6
+2 38 6
+[units]
+1 i 3 1
+1 r 4 1
+1 i 2 2
+1 t 5 2
+1 m 0 3
+1 g 2 4
+2 g 37 3
+2 m 39 4
+2 t 34 5
+2 i 37 5
+2 r 35 6
+2 i 36 6
