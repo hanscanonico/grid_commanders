@@ -23,7 +23,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the contested relay for the alliance."
+text = "Take the eastern relay the broken column was walking to."
 cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Objective_1"]
@@ -38,7 +38,7 @@ last_day = 11
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
-text = "Hold any three of the ridge road's cities at once."
+text = "Hold three towns along the eastern approach at once."
 count = 3
 terrain_id = &"city"
 

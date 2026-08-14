@@ -18,7 +18,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Break the line and take their headquarters."
+text = "Take Morn's fortress and close the succession."
 cell = Vector2i(21, 3)
 
 [sub_resource type="Resource" id="Bonus_six_properties"]
@@ -33,7 +33,7 @@ last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("3")
-text = "Hold every property on the board at once."
+text = "Every property in the fortress, ours at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]

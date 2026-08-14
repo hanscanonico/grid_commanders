@@ -29,7 +29,7 @@ tag = &"marshal_draeg"
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("5")
-text = "Hold any three of the ridge road's cities at once."
+text = "Hold three of the siege works' towns at once."
 count = 3
 terrain_id = &"city"
 
