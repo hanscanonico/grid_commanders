@@ -13,7 +13,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the wall relay. There is nothing behind this wall but the crown."
+text = "Take the wall relay — the last garrison outside the capital."
 cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
