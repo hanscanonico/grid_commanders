@@ -44,7 +44,7 @@ text = "Crossing now. Clean approach, no hesitation — that foundry opens the w
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Take the border foundry and the whole province opens up behind it."
+text = "The foundry sits in a notch in the mountain wall, and we can walk onto it from our own side. Everything else on that row is rock — the two gaps and the foundry square itself are the only ground anything with tracks can cross."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

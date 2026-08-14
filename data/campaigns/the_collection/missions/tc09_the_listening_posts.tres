@@ -21,17 +21,17 @@ at_most = -1
 
 [sub_resource type="Resource" id="Objective_take_the_first_listening_post"]
 script = ExtResource("2")
-text = "Take the first listening post."
+text = "Take the near post on the road."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Objective_take_the_second_listening_post"]
 script = ExtResource("2")
-text = "Take the second listening post."
+text = "Take the post a square off the road."
 cell = Vector2i(10, 5)
 
 [sub_resource type="Resource" id="Objective_take_the_third_listening_post"]
 script = ExtResource("2")
-text = "Take the third listening post."
+text = "Take the far post at the border."
 cell = Vector2i(13, 4)
 
 [sub_resource type="Resource" id="Failure_the_wire_stayed_live_past_day_10"]
@@ -52,12 +52,12 @@ text = "We start this one behind on income — the odds favor speed over an even
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Move fast, not evenly."
+text = "He is sitting on the near post and on the one a square off the road. The far post is nobody's — so the fight is the first two, and the third is only a walk."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "All three posts, ours. The wire's cut, and the odds just flipped in our favor for once."
+text = "The wire is cut at all three. I never had better than even odds today — I simply refused to roll badly."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

@@ -16,7 +16,7 @@
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
 script = ExtResource("2")
-text = "Hold three of the five towns."
+text = "Hold three of the auction's five towns."
 count = 3
 terrain_id = &"city"
 
@@ -27,12 +27,12 @@ day = 7
 
 [sub_resource type="Resource" id="Failure_the_books_closed_before_day_9_with_t"]
 script = ExtResource("3")
-text = "The books closed before day 9 with the towns still split."
+text = "Day 9 passed with the towns still split, and the books closed on them."
 last_day = 9
 
 [sub_resource type="Resource" id="Bonus_hold_four_of_the_five"]
 script = ExtResource("2")
-text = "Hold four of the five towns for a bonus."
+text = "Hold four of the five — the auction outright."
 count = 4
 terrain_id = &"city"
 
@@ -44,17 +44,17 @@ text = "The forged audit \"auctions\" these towns to whoever holds them when it 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"halden_marr"
-text = "Weather's turning on the coast road — that favors whoever moves first. Let's be the ones who move first."
+text = "Nothing on this board touches water, so today I am just another commander. That suits the job — five towns, five walks, and whoever starts walking first owns them when the books close."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three of five, and the auction closes in our favor."
+text = "Four of the towns sit out at the corners and the fifth stands alone in the north between them. His last bidders walk in from the east on day six, so hold what you have rather than reaching for one more."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"halden_marr"
-text = "Three towns, ours, when the books closed. The auction's over before it started."
+text = "The books closed with us standing in three of them and his last bidders still walking in from the east."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

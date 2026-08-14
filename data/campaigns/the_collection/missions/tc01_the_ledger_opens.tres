@@ -21,7 +21,7 @@ days = 2
 
 [sub_resource type="Resource" id="Failure_the_depot_was_seized_before_day_8"]
 script = ExtResource("3")
-text = "The depot was seized before day 8."
+text = "Day 8 passed without two clear days on the depot."
 last_day = 8
 
 [sub_resource type="Resource" id="Line_1"]
@@ -37,7 +37,7 @@ text = "Then he doesn't get the kills. His raiders don't carry the armor to trad
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Hold the depot and the claim dies with it."
+text = "It is one road end to end, and the depot sits square in the middle of it. There is no cover out there but the four stands of trees — whatever he sends, you will watch it coming for two days first."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

@@ -41,7 +41,7 @@ text = "Draeg's sentiment is noted and irrelevant. I inherited his sector, thin 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Thin is thin. Hit it before she finishes reassigning it — three of the four towns, now."
+text = "Thin is thin. Two men in the whole sector and four towns nobody is standing on — I can be on two of them before she has finished reading the reassignment."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

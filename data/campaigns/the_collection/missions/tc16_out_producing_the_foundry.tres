@@ -57,17 +57,17 @@ requires = SubResource("Interest_denied")
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"sable_wren"
-text = "Outbuild her. Don't outfight her."
+text = "Every one of those foundries has trees against it. Sit in them, let her walk onto the property, and she pays twice for ground I never left."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three of five foundries. She'll grind for every one."
+text = "Four of the foundries are out at the corners with trees against them; the fifth is in the centre where her whole line can reach it. Take the cheap four and let her keep the expensive one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"sable_wren"
-text = "Three foundries. Iron builds for us now."
+text = "Three foundries, and I never came out of the trees to take one of them."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
