@@ -210,16 +210,17 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-nine maps ship. The main menu leads with the teaching board and lists the rest smallest
+Thirty maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `powder_keg`, `foursquare`, `trident`, `compass`, `pinwheel`,
 `timberline`, `arsenal`, `blackwood`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
-`first_steps`, `the_straits`, `tideflats`, `the_slough`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
+`first_steps`, `the_straits`, `tideflats`, `the_slough`, `marchlands`, `coal_and_crown`, `ironworks`,
+`atoll`, `steelworks`, `heartland`,
 `causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
 board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
 count and one-line pitch in a caption under the grid (the per-cell tooltip repeats them for a mouse).
 `foursquare`, `compass`, `pinwheel`, `windrose`, `marchlands`, `heartland`, `atoll`, `causeway`,
-`confluence` and `bulwark` seat **four armies**, and so offer the one-tap table presets in the seat
-strip.
+`confluence`, `coal_and_crown` and `bulwark` seat **four armies**, and so offer the one-tap table
+presets in the seat strip.
 `foursquare` is the smallest, 12×12 and the quickest full free-for-all in the roster: a seat in each
 corner in reading order — 1 NW, 2 NE, 3 SE, 4 SW — laid out under a quarter turn rather than the
 half turn `# symmetric` checks, so the two opposite pairs make a fair duel and every seat's nearest
@@ -248,6 +249,16 @@ the half turn.
 corners in the same reading order on a closed ring of land around one lagoon, a port each, and
 eight neutral cities on a central island no road reaches. The whole board turns onto itself under a
 quarter turn, which is what makes every seat's shore, dock and first city the same distance out.
+`coal_and_crown` at 24×16 is the second board written **for** a grouping rather than dealt one, and
+the first 2v2 that is deliberately not level seat by seat: seats 1 and 2 are the northern industry,
+three bases and two cities each; seats 3 and 4 the southern territory, one base and four cities
+each. Six properties a seat either way, so the sides open on twelve apiece and the same income, and
+what its `# grouping 1+2v3+4` tag claims — allied seats identical kind for kind, neither side
+out-owning the other's total — is exactly what the parity lint checks. The missing factories are
+paid for in board state and nothing else: broken ground in the south against the north's open
+plains, forward cities against a rear third base, and one extra mech to each southern seat. The
+middle two rows are the coalfield, four neutral bases and eight neutral cities laid out the same
+either side of the line.
 `heartland` at 28×20 opens the grand tier: a lattice of 48 neutral cities, **two bases** to each
 seat's one HQ, roads down the diagonals to a central crossroads, and woods for cover rather than a
 chokepoint anywhere — the economy scales with the area, so a board this size still escalates.
@@ -300,7 +311,8 @@ gained a port and a landing beach per side, `ironworks` and `crossfire` an airfi
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
 because each is built on a barrier that wings or hulls would simply erase — or, for `boot_camp`,
 because the five things it teaches are the land game's. `foursquare`, `compass`, `pinwheel`,
-`trident`, `marchlands`, `windrose`, `heartland` and `bulwark` carry no water either: the computer
+`trident`, `marchlands`, `windrose`, `heartland`, `coal_and_crown` and `bulwark` carry no water
+either: the computer
 cannot plan a ferry, so a board it may have to fight
 across in any grouping has to let every army reach every other on foot — which on `windrose` leaves
 the air as the one domain that ignores the board's walls. `atoll` is how a four-army

@@ -14,7 +14,8 @@ extends GutTest
 ## armies are what makes a 2v2 and a 3v1 expressible at all; the second replays
 ## them on `maps/compass.txt`, `maps/foursquare.txt`, `maps/heartland.txt`,
 ## `maps/pinwheel.txt`, `maps/windrose.txt`, `maps/atoll.txt`, `maps/causeway.txt`,
-## `maps/confluence.txt`, `maps/trident.txt` and `maps/marchlands.txt`, because a
+## `maps/confluence.txt`, `maps/trident.txt`, `maps/marchlands.txt` and
+## `maps/coal_and_crown.txt`, because a
 ## grouping that only ever ran on a fixture is a capability no player can pick.
 ## The menu's seat strip writes the same `sides`, but the groupings are set
 ## directly here so the soak never has to walk a menu to reach one.
@@ -70,6 +71,12 @@ const ATOLL := "res://maps/atoll.txt"
 ## is a dug-in army twice anyone's production, seats 1-3 are equal allies with
 ## nothing but their corners. See maps/bulwark.txt's header for the tally.
 const BULWARK := "res://maps/bulwark.txt"
+## The second board that declares a grouping, and the first 2v2 that is not level
+## seat by seat: seats 1 and 2 open on three bases each, seats 3 and 4 on one and
+## four cities. Equal side totals, different kinds — so its own `1+2v3+4` is the
+## pairing the asymmetry was priced for, and the free-for-all is played after it
+## for the same reason Bulwark's is.
+const COAL_AND_CROWN := "res://maps/coal_and_crown.txt"
 ## One doctrine per seat, in seat order, so a run is reproducible. Chosen for the
 ## hooks this milestone touched rather than for balance: Tomas Reed and Nia Rowan
 ## weigh their powers on takeable ground, Mara Voss and Orin Flux on whether a
@@ -153,6 +160,11 @@ func test_the_ai_plays_the_shipped_multi_army_boards_in_their_groupings() -> voi
 	# separately, in tools/run_bulwark_measure.gd).
 	_soak("bulwark 3v1", {1: 0, 2: 0, 3: 0, 4: 1}, 660, BULWARK)
 	_soak("bulwark free-for-all", {}, 661, BULWARK)
+	# Coal and Crown gets the same treatment as the other two boards written for a
+	# grouping: the pairing it declares first, then the free-for-all it is still
+	# legal to launch, which is where its two halves stop being sides at all.
+	_soak("coal and crown 2v2", {1: 0, 2: 0, 3: 1, 4: 1}, 665, COAL_AND_CROWN)
+	_soak("coal and crown ffa", {}, 666, COAL_AND_CROWN)
 
 
 ## Pinwheel, over the seatings its own layout promises: the four-army groupings,

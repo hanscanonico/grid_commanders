@@ -617,9 +617,12 @@ plan is stated in full below and has no copy there.
   `SeatStrip.layout_error` and `CommanderInfoSheet.layout_error` exist for the same reason: unsorted
   rows stack at the container's origin, so enclosure alone photographed the strip as bare panel.
   The boards seating more than a duel are `compass`, `foursquare`, `heartland`, `pinwheel`, `atoll`,
-  `trident`, `marchlands`, `windrose`, `causeway`, `confluence` and `bulwark` (whose facts are the
-  asymmetric-board entry's, and which is the named exception to this entry's kind-for-kind parity
-  and to D5). Three authoring rules govern them and only some have lints. **Every army has to be
+  `trident`, `marchlands`, `windrose`, `causeway`, `confluence`, `coal_and_crown` (24×16, the second
+  board to declare a `# grouping` and the first 2v2 authored *not* level seat by seat — three bases
+  and two cities to each northern seat against one base and four cities to each southern one, equal
+  side totals, the gap paid for in terrain and one extra mech rather than in property) and `bulwark`
+  (whose facts are the asymmetric-board entry's, and which is the named exception to this entry's
+  kind-for-kind parity and to D5). Three authoring rules govern them and only some have lints. **Every army has to be
   able to march on every other** — the AI cannot plan a ferry (naval R1) — which is why most carry
   no water at all; the three that do keep the sea **one body every port opens onto** by shape
   (Atoll's closed ring, Causeway's loopless tree off the board edge, Confluence's arms stopped short
