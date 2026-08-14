@@ -21,15 +21,19 @@ extends RefCounted
 ## than silently re-homed. Version 8 records whether an acted unit's last committed
 ## action was not an attack, so a refresh power is exact across a mid-turn save.
 ## Version 9 carries the name a board gave a unit, so a mission that is about one
-## unit can still find it after a resume. All eight are purely additive, so older
+## unit can still find it after a resume. Version 10 carries which seats a player
+## has handed to the computer mid-match through the pause menu's Auto row, and at
+## what tier, because that fact can now change after the match began instead of
+## only at setup. All nine are purely additive, so older
 ## saves are still read
 ## rather than rejected — a save with no commander block loads with both sides
 ## neutral, one with no dive flag loads with every boat on the surface, one with no
 ## roster loads as the duel it was, one with no grouping loads as the free-for-all
 ## it was, one with no casualty list loads with every army it names still standing,
 ## and one with no home HQs takes them from the map it names. An older save with no
-## refresh flag treats every acted unit as ineligible, and one with no tags loads
-## with every unit unnamed. New saves are always written at the current version.
+## refresh flag treats every acted unit as ineligible, one with no tags loads
+## with every unit unnamed, and one with no Auto tiers loads with no seat the
+## computer plays on Auto's behalf. New saves are always written at the current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -40,9 +44,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 9
+const VERSION := 10
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 ## The version-rule schema — `Shape`, `KEY_RULES` and its per-list siblings, and the
 ## generic readers over them (`is_shape`, `_entries_error` and friends) — moved to
@@ -77,6 +81,10 @@ class LoadedMatch:
 	## The tier the match was being played at. Normal for any save written before
 	## difficulty existed, which is the AI those saves actually recorded.
 	var difficulty: StringName = Difficulty.DEFAULT_ID
+	## Seats a player had handed to the computer mid-match, and the tier each was
+	## on — a subset of `ai_teams`, never the whole of it. Empty for any save
+	## written before Auto existed, which is the same match with no such seat.
+	var auto_tiers: Dictionary[int, StringName] = {}
 
 
 ## Just enough of a save to name it on a menu: which board, and how far in.
@@ -102,7 +110,10 @@ class Summary:
 ## `difficulty` is an id rather than the tier's numbers on purpose: retuning a
 ## tier should reach saved matches too, exactly as retuning a commander does.
 static func encode(
-	state: GameState, ai_teams: Array[int], difficulty: StringName = Difficulty.DEFAULT_ID
+	state: GameState,
+	ai_teams: Array[int],
+	difficulty: StringName = Difficulty.DEFAULT_ID,
+	auto_tiers: Dictionary[int, StringName] = {}
 ) -> Dictionary:
 	var carrier_indices := _unit_indices(state)
 	var units: Array = []
@@ -165,6 +176,7 @@ static func encode(
 		"rng_state": str(state.rng.state),  # int64 as string: JSON numbers are lossy
 		"ai_teams": ai_teams,
 		"difficulty": String(difficulty),
+		"auto_tiers": _encode_auto_tiers(auto_tiers),
 		"commanders": commanders,
 		"owners": owners,
 		"capture_progress": progress,
@@ -348,6 +360,14 @@ static func _decode_setup(data: Dictionary, state: GameState) -> LoadedMatch:
 	# Missing on every save written before difficulty existed; those matches were
 	# played against the shipped AI, which is exactly what Normal is.
 	result.difficulty = StringName(String(data.get("difficulty", String(Difficulty.DEFAULT_ID))))
+	# Missing on every save written before Auto existed; those matches had no seat
+	# a player had handed to the computer mid-match.
+	var saved_auto: Variant = data.get("auto_tiers", {})
+	if saved_auto is Dictionary:
+		for key: Variant in saved_auto as Dictionary:
+			result.auto_tiers[int(String(key))] = StringName(
+				String((saved_auto as Dictionary)[key])
+			)
 	return result
 
 
@@ -459,6 +479,7 @@ static func validate(data: Dictionary) -> String:
 		func() -> String: return _rng_state_error(data),
 		func() -> String: return _commander_block_error(data, version),
 		func() -> String: return _ai_teams_error(data),
+		func() -> String: return _auto_tiers_error(data),
 		func() -> String:
 			return SaveSchema._entries_error(
 				data["owners"], SaveSchema.OWNER_KEY_RULES, version, "owner"
@@ -729,6 +750,34 @@ static func _ai_teams_error(data: Dictionary) -> String:
 	return ""
 
 
+## "" when the save's Auto tiers name only teams the save itself hands to the
+## computer, each with a tier as text, else why they do not. A team not in the
+## save's own `ai_teams` cannot be on Auto — an Auto entry *is* a seat a
+## player toggled into `ai_teams` mid-match, so one naming anyone else
+## describes a match this save could not have recorded.
+##
+## Only the shape of the tier id, like `_difficulty_error`: an id nobody
+## recognises falls back to Normal by `DifficultyDB`'s own deliberate rule,
+## and a save must not be refused because a tier it once carried has since
+## been retired.
+##
+## Asked only of the version that writes it. Below that there is nothing to
+## be wrong: the save recorded no seat a human had handed to the computer
+## mid-match.
+static func _auto_tiers_error(data: Dictionary) -> String:
+	if _claimed_version(data) < int(SaveSchema.KEY_RULES["auto_tiers"]["since"]):
+		return ""
+	var saved: Dictionary = data["auto_tiers"]
+	var ai_teams: Array = data.get("ai_teams", [])
+	for key: Variant in saved:
+		var name := String(key)
+		if not name.is_valid_int() or not ai_teams.has(int(name)):
+			return "the save puts team %s on Auto, but does not hand it to the computer" % name
+		if not SaveSchema.is_shape(saved[key], SaveSchema.Shape.STRING):
+			return "the save's Auto tier for team %s is malformed" % name
+	return ""
+
+
 ## "" when the two sides the envelope names could hold what it gives them, else why they
 ## could not.
 ##
@@ -838,6 +887,18 @@ static func _encode_sides(sides: Dictionary[int, int]) -> Dictionary[String, int
 	var out: Dictionary[String, int] = {}
 	for team: int in sides:
 		out[str(team)] = sides[team]
+	return out
+
+
+## The Auto tiers as JSON writes them: tier ids keyed by army number as text,
+## the same shape `sides` and `funds` are. A match nobody has toggled Auto in
+## writes an empty dictionary, same as a save written before Auto existed.
+static func _encode_auto_tiers(
+	auto_tiers: Dictionary[int, StringName]
+) -> Dictionary[String, String]:
+	var out: Dictionary[String, String] = {}
+	for team: int in auto_tiers:
+		out[str(team)] = String(auto_tiers[team])
 	return out
 
 

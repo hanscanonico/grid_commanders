@@ -74,6 +74,7 @@ const KEY_RULES := {
 	"sides": {"since": 5, "shape": Shape.DICTIONARY},
 	"eliminated": {"since": 6, "shape": Shape.ARRAY},
 	"home_hq": {"since": 7, "shape": Shape.ARRAY},
+	"auto_tiers": {"since": 10, "shape": Shape.DICTIONARY},
 }
 ## The same, per unit entry: everything but the dive flag shipped with the format, and
 ## `dived` is version 3's whole reason for existing. What a `carrier` number may *be* —

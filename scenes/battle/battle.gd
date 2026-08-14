@@ -92,6 +92,11 @@ var game: GameState
 var planners: Dictionary[int, AIController] = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
+## Seats a player has handed to the computer mid-match through the pause menu's
+## Auto row, and at which tier — a subset of `ai_teams`, never the whole of it. A
+## genuine CPU opponent seated at setup is in `ai_teams` but never here, which is
+## what tells the Auto row apart from a real opponent's turn: see BattleMenus.
+var auto_tiers: Dictionary[int, StringName] = {}
 ## A pause the player asked for during a computer turn, not yet taken effect. The
 ## runner honours it at its next command boundary rather than the press doing it
 ## here, because a menu opened mid-command would be painted over by the banner or
@@ -106,12 +111,20 @@ var _paused := false
 ## the fogged handoff and the AI-turn viewer are both keyed to (four-players plan
 ## D7), because with mixed seats the device changes hands across intervening
 ## computer turns and "the seat before this one" stops meaning "the last person".
-var _last_human_team := 0
+## Public, like ai_teams and auto_tiers beside it, for BattleAuto to write when
+## Auto hands a seat back mid-turn — the same fact _begin_turn records when an
+## ordinary turn opens on a human.
+var last_human_team := 0
 ## The tier this match is being played at, as BattleSetup resolved it — from the
 ## menu, a `--difficulty=` flag, or the resumed save itself. Held here because
 ## the scene is what a save asks for it: it is the id SaveGame records, and the
 ## one a resumed match plays back at.
 var difficulty: Difficulty
+## Every tier the Auto submenu offers a name and a profile for. Loaded once in
+## _ready, the same way db/unit_db/commander_db are — BattleSetup.build keeps
+## its own instance for setup-time resolution, but nothing there is held past
+## boot, and the Auto row needs one for the life of the scene.
+var difficulty_db: DifficultyDB
 var cursor_cell := Vector2i.ZERO
 
 ## The interaction the player is in. The setter is the whole reason it has one:
@@ -211,14 +224,19 @@ var _outcome: BattleOutcome
 ## two map-menu exits and the confirmation the unsaved one asks for, and the
 ## rematch the victory lockup offers. BattleOutcome's sibling; see BattleExit.
 var _exit: BattleExit
+## Owns the pause menu's Auto row and its submenu: handing the seat on turn to
+## the computer at a chosen tier, or taking it back. See BattleAuto.
+var _battle_auto: BattleAuto
 
 
 func _ready() -> void:
 	db = TerrainDB.load_default()
 	unit_db = UnitDB.load_default()
 	commander_db = CommanderDB.load_default()
+	difficulty_db = DifficultyDB.load_default()
 	_ai_runner = BattleAiRunner.new(self)
 	_exit = BattleExit.new(self)
+	_battle_auto = BattleAuto.new(self)
 	BattleCampaign.stage()
 	# Which match this is, the request says and BattleSetup builds; from here the
 	# scene just runs it. The menu (or a rematch) stages a request; a run that
@@ -250,6 +268,7 @@ func _ready() -> void:
 	map = built.map
 	game = built.game
 	ai_teams = built.ai_teams
+	auto_tiers = built.auto_tiers.duplicate()
 	difficulty = built.difficulty
 	_replay = built.replay
 	replay_path = built.replay_path
@@ -424,6 +443,14 @@ func resume_turn() -> void:
 	_paused = false
 	state = State.AI_TURN
 	pause_lifted.emit()
+
+
+## Hands the current turn to the computer right now — _begin_turn's own AI
+## branch, and BattleAuto's when the Auto row hands off a turn that was, until
+## that press, the player's own. One path into AI_TURN for both.
+func start_ai_turn() -> void:
+	state = State.AI_TURN
+	_ai_runner.run()
 
 
 ## Where a closing menu, sheet or banner lands: the player's own board, or the
@@ -843,6 +870,8 @@ func _on_menu_action(action: StringName) -> void:
 			_handle_build_action(action)
 		&"map":
 			_handle_map_action(action)
+		&"auto":
+			_battle_auto.handle_action(action)
 		&"abandon":
 			_exit.handle_confirm_action(action)
 
@@ -923,6 +952,12 @@ func _handle_map_action(action: StringName) -> void:
 		# the setting is otherwise invisible until something moves.
 		Settings.set_speed(GameSpeed.next(Settings.speed.id).id)
 		present_banner("Speed: %s" % Settings.speed.display_name)
+		return
+	if action == &"auto":
+		# Its own submenu, the same shape "quit" opens "abandon" into below: the
+		# context is Battle's to set, the rows and the handoff are BattleAuto's.
+		_menu_context = &"auto"
+		_battle_auto.open_menu()
 		return
 	if action == &"save":
 		_exit.save_match()
@@ -1099,7 +1134,9 @@ func _open_map_menu() -> void:
 	# turn — the menu is the same, whose turn it is is not — and over a replay the
 	# two that write the save slot as well; see BattleMenus.map_actions.
 	action_menu.open(
-		BattleMenus.map_actions(game, not _paused, _replay == null),
+		BattleMenus.map_actions(
+			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db
+		),
 		view.screen_pos_for_cell(cursor_cell)
 	)
 
@@ -1164,10 +1201,9 @@ func _begin_turn() -> void:
 		_replay_runner.run()
 		return
 	if game.current_team in ai_teams:
-		state = State.AI_TURN
-		_ai_runner.run()
+		start_ai_turn()
 	else:
-		_last_human_team = game.current_team
+		last_human_team = game.current_team
 		# A pause asked for on the computer's last command has been answered by the
 		# turn itself; carrying it forward would stop the *next* computer turn on
 		# a press made two turns ago.
@@ -1206,7 +1242,7 @@ func announce_fallen(fallen: Array[int]) -> void:
 ## device still changes hands across intervening AI turns, and asking only "was
 ## the previous turn another person's" would hand player B a board still painted
 ## with player A's vision. Nobody having played yet counts as a change of hands —
-## `_last_human_team` is 0 there, which differs from any seat — so a fresh match
+## `last_human_team` is 0 there, which differs from any seat — so a fresh match
 ## gates on day one and a resumed save gates for whoever loaded it. The same
 ## player taking two turns in a row, everyone else having fallen, is not a
 ## handoff and is not asked for one.
@@ -1225,7 +1261,7 @@ func _needs_handoff() -> bool:
 			humans += 1
 	if humans <= 1:
 		return false
-	return _last_human_team != game.current_team
+	return last_human_team != game.current_team
 
 
 func _enter_handoff() -> void:
@@ -1257,8 +1293,8 @@ func leave_handoff() -> void:
 func _viewing_team() -> int:
 	if game.current_team not in ai_teams:
 		return game.current_team
-	if _last_human_team != 0 and _last_human_team not in ai_teams:
-		return _last_human_team
+	if last_human_team != 0 and last_human_team not in ai_teams:
+		return last_human_team
 	for team in game.teams:
 		if team not in ai_teams:
 			return team

@@ -45,8 +45,8 @@ func test_encode_decode_restores_the_match_without_touching_disk() -> void:
 ## every version ever written still has to load, since a save on someone's disk
 ## does not get upgraded when the game does.
 func test_encoded_save_declares_the_current_version() -> void:
-	assert_eq(int(_encoded()["version"]), 9)
-	assert_eq(SaveCodec.VERSION, 9)
+	assert_eq(int(_encoded()["version"]), 10)
+	assert_eq(SaveCodec.VERSION, 10)
 	assert_eq(SaveGame.VERSION, SaveCodec.VERSION, "the facade must report the codec's version")
 	for version in range(1, SaveCodec.VERSION + 1):
 		assert_has(

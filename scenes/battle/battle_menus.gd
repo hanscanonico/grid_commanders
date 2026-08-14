@@ -131,6 +131,14 @@ static func build_actions(
 ## save slot may be overwritten, and a row that decided that quietly would be
 ## wrong for half of them either way.
 ##
+## The Auto row is offered only for a seat the player themselves may hand to
+## the computer: a team not currently AI (their own live turn) or one already
+## on Auto (`auto_tiers` names it) — never a genuine CPU opponent's turn,
+## which is in `ai_teams` but never in `auto_tiers`. Its label mirrors the
+## Speed row's own reasoning: read fresh off `auto_tiers` rather than kept
+## anywhere else, so it can never show a tier the seat is not actually
+## playing at.
+##
 ## `commandable` is false when this opens over a turn that is not the player's —
 ## the pause they may take while the computer plays. The two rows that would *act*
 ## for the side on turn go with it; everything else stays, because the match, the
@@ -142,7 +150,12 @@ static func build_actions(
 ## watch — resumed, it would come up as a hot-seat match nobody is sitting at,
 ## because a replay seats no computer.
 static func map_actions(
-	game: GameState, commandable: bool = true, savable: bool = true
+	game: GameState,
+	commandable: bool = true,
+	savable: bool = true,
+	ai_teams: Array[int] = [],
+	auto_tiers: Dictionary = {},
+	difficulty_db: DifficultyDB = null
 ) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	if commandable:
@@ -151,12 +164,31 @@ static func map_actions(
 			actions.append({"id": &"power", "label": co_state.type.power_name})
 	actions.append({"id": &"commanders", "label": "Commanders"})
 	actions.append({"id": &"speed", "label": "Speed: %s" % Settings.speed.display_name})
+	var auto_eligible := game.current_team not in ai_teams or auto_tiers.has(game.current_team)
+	if difficulty_db != null and auto_eligible:
+		var auto_label := "Off"
+		if auto_tiers.has(game.current_team):
+			auto_label = difficulty_db.by_id(auto_tiers[game.current_team]).display_name
+		actions.append({"id": &"auto", "label": "Auto: %s" % auto_label})
 	if commandable:
 		actions.append({"id": &"end_turn", "label": "End Turn"})
 	if savable:
 		actions.append({"id": &"save", "label": "Save"})
 		actions.append({"id": &"save_and_quit", "label": "Save & Main Menu"})
 	actions.append({"id": &"quit", "label": "Main Menu Without Saving"})
+	actions.append(CANCEL)
+	return actions
+
+
+## Rows for the submenu the Auto row opens: hand this seat to the computer at
+## one of the four difficulty tiers, or take it back with Off. Off leads,
+## like the abandon confirmation's safe row, so a menu opened only to look
+## changes nothing under an accidental Enter.
+static func auto_actions(difficulty_db: DifficultyDB) -> Array[Dictionary]:
+	var actions: Array[Dictionary] = []
+	actions.append({"id": &"off", "label": "Off"})
+	for tier in difficulty_db.all():
+		actions.append({"id": tier.id, "label": tier.display_name})
 	actions.append(CANCEL)
 	return actions
 

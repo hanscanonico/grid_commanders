@@ -311,4 +311,15 @@ max-public-methods: 22
 # living in it, so the ledger above was a ratchet the file it was written for no
 # longer felt. The per-file budgets in tools/check_scripts.sh are the tight half,
 # and they run in `make check`; this stays the repo-wide outer bound.
-max-file-lines: 1415
+#
+# 1415 -> 1438, tracking battle.gd again: Auto mode, the pause menu's Auto row.
+# scenes/battle/battle_auto.gd (BattleAuto) came out first, the same split
+# BattleExit and BattleAiRunner already are, and carries the submenu and both
+# turn-handoff cases. What stayed is two fields the row reads (`auto_tiers`,
+# `difficulty_db`), `last_human_team` losing its underscore so BattleAuto can
+# write it the way it already writes `ai_teams` and `auto_tiers`, and one small
+# public method, `start_ai_turn`, that BattleAuto and `_begin_turn` now share —
+# genuinely Battle's, since a collaborator reaching past it into `_ai_runner`
+# directly would be a second opinion on state only Battle may hold. See
+# tools/check_scripts.sh's own entry for the same raise.
+max-file-lines: 1438
