@@ -210,8 +210,8 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-five maps ship. The main menu leads with the teaching board and lists the rest smallest
-first — `boot_camp`, `scrimmage`, `forge`, `foursquare`, `trident`, `compass`, `pinwheel`,
+Twenty-six maps ship. The main menu leads with the teaching board and lists the rest smallest
+first — `boot_camp`, `scrimmage`, `forge`, `powder_keg`, `foursquare`, `trident`, `compass`, `pinwheel`,
 `timberline`, `arsenal`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
 `first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
 `causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
@@ -278,7 +278,10 @@ The newer duels are each built around a single idea, and each one's header state
 (20×14) puts every army's HQ in the *other* army's corner, walled into a mountain pocket with two
 one-cell doors and held by a detachment of three: your bases and cities are home, the crown you
 cannot lose is not, and the shortest march to a match-ending capture is the one your own infantry
-make on turn one.
+make on turn one. `powder_keg` (14×10) is the roster's smallest economy: an HQ and one base a side,
+two neutral cities and nothing else, so three properties a seat pays 3000 a turn and the army you
+open with is very nearly the army you finish with — what grows over those days is the Command Power
+meter, which charges off damage rather than off income.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,

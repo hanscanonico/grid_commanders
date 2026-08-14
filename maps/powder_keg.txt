@@ -1,0 +1,52 @@
+# Six buildings, two armies and nowhere to go but forward: the charge is the economy.
+# symmetric
+# 14x10 and six properties in total -- an HQ and one base a side, two neutral
+# cities in the middle and nothing else. Three properties a seat is 3000 a turn,
+# so a tank is three days of saving and a Md Tank most of a week: the army that
+# opens the match is very nearly the army that finishes it, and what actually
+# grows over those days is the Command Power meter, which charges off damage
+# rather than off income. That is the board's whole point -- it is where a
+# commander's power is the reinforcement, and where banking it is the mistake.
+# Seven units a side and eight cells between the two forward tanks, so contact
+# lands on day two and the two central cities are contested from the first move.
+# Mirrors on (x, y) -> (13 - x, 9 - y). A staircase road runs from each base to
+# the middle and both meet at the cities, so the fast lane and the prize are the
+# same ground -- take it and you are standing in the open, in range of the gun
+# that came the other way.
+# Land only, and deliberately no woods worth hiding an army in: the mountain and
+# the four copses are cover for one unit each, not a flank.
+# Do not add a third property a side. The economy is the constraint the board is
+# built on, and a fourth building on each seat turns it into an ordinary duel
+# that happens to be small.
+# Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
+[terrain]
+....F....F....
+.QB=......F...
+...==....M....
+..F.==........
+.....=C...F...
+...F...C=.....
+........==.F..
+....M....==...
+...F......=BQ.
+....F....F....
+[owners]
+1 1 1
+1 2 1
+2 11 8
+2 12 8
+[units]
+1 m 1 0
+1 t 3 0
+1 r 4 1
+1 i 1 2
+1 i 2 2
+1 t 5 2
+1 g 1 3
+2 g 12 6
+2 t 8 7
+2 i 11 7
+2 i 12 7
+2 r 9 8
+2 t 10 9
+2 m 12 9
