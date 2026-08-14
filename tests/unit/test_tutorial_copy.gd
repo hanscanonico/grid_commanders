@@ -170,3 +170,24 @@ func test_the_lens_chips_are_ascii_only() -> void:
 			assert_true(
 				chip.unicode_at(i) < 128 or chip.unicode_at(i) == 0x00B7, "non-ASCII: %s" % chip
 			)
+
+
+## The legend promises "+/- · ZOOM" as permanent chrome, so every key a player
+## reads that as has to reach the action: unshifted "=", shifted "+", and both
+## keypad keys. The InputMap is hand-edited in project.godot, which is why the
+## promise is pinned here rather than left to a playtest.
+func test_every_key_the_zoom_legend_promises_reaches_its_action() -> void:
+	assert_true("+/-" in String(ControlHints.LEGENDS[ControlHints.IDLE]), "legend lost its zoom")
+	for keycode: Key in [KEY_EQUAL, KEY_KP_ADD]:
+		assert_true(_key(keycode).is_action_pressed(&"zoom_in"), "no zoom_in: %d" % keycode)
+	assert_true(_key(KEY_EQUAL, true).is_action_pressed(&"zoom_in"), "shift+= misses zoom_in")
+	for keycode: Key in [KEY_MINUS, KEY_KP_SUBTRACT]:
+		assert_true(_key(keycode).is_action_pressed(&"zoom_out"), "no zoom_out: %d" % keycode)
+
+
+func _key(keycode: Key, shift: bool = false) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = keycode
+	event.shift_pressed = shift
+	event.pressed = true
+	return event
