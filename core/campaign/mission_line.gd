@@ -91,9 +91,15 @@ static func spoken(lines: Array[MissionLine], ledger: CampaignState) -> Array[Mi
 ## and an interlude — and `variants_allowed` is the single thing they differ on:
 ## a beat's lines are re-issued by a recording and must speak the same words, so
 ## a beat the war decides is a beat with a `Flag` trigger.
+##
+## A list whose every member is gated is refused, because `spoken` filters the
+## set and there is deliberately no fallback member: on a route where none of the
+## conditions holds the page renders wordless, and the player presses Continue on
+## an empty briefing, debrief or interlude.
 static func list_error(
 	lines: Array[MissionLine], commander_db: CommanderDB, variants_allowed: bool
 ) -> String:
+	var always_said := false
 	for line: MissionLine in lines:
 		if line == null:
 			return "an empty story line"
@@ -102,6 +108,12 @@ static func list_error(
 		var error := line.definition_error(commander_db)
 		if error != "":
 			return error
+		always_said = always_said or not line.is_conditional()
+	if not lines.is_empty() and not always_said:
+		return (
+			"every line here is gated by the ledger; "
+			+ "one of them has to be the words every player hears"
+		)
 	return ""
 
 

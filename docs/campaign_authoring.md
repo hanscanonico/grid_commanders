@@ -22,8 +22,9 @@ mission that can be neither won nor lost by objective, an empty objective slot,
 or an objective naming ground or a unit the board does not have — or asking for
 more than that board could ever give. A difficulty tier that does not ship. A story
 line whose speaker is not on the commander roster, or a seat cast as a commander
-who is not. A briefing with nothing to say when it is won. A launch that does not
-build.
+who is not. A briefing with nothing to say when it is won. A briefing, debrief or
+interlude with no unconditional line — a page that can render empty. A launch that
+does not build.
 
 **The script.** A mission that scripts nothing — D9's own clause, a content bar
 rather than a definition one. A beat that waits for nothing or does nothing. Two

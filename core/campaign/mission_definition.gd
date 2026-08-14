@@ -386,8 +386,14 @@ func difficulty_error(difficulty_db: DifficultyDB) -> String:
 ## What a beat's lines may **not** carry is a ledger condition: a recording
 ## re-issues the beat and has to speak the same words, so a beat the war decides
 ## is a beat with a `Flag` trigger.
+##
+## The briefing and the debrief are asked one at a time rather than concatenated:
+## they are two pages, and a single call over both would let an all-gated debrief
+## pass on the strength of the briefing's unconditional line.
 func story_error(commander_db: CommanderDB) -> String:
-	var error := MissionLine.list_error(briefing + victory, commander_db, true)
+	var error := MissionLine.list_error(briefing, commander_db, true)
+	if error == "":
+		error = MissionLine.list_error(victory, commander_db, true)
 	if error != "":
 		return "mission '%s': %s" % [id, error]
 	for event: MissionEvent in events:

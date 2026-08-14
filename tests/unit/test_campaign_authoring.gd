@@ -216,3 +216,49 @@ func test_a_headquarters_that_leaves_another_enemy_standing_ends_nothing() -> vo
 	mission.objectives.append(_capture(Vector2i(4, 0)))
 	mission.objectives.append(_capture(Vector2i(2, 0)))
 	assert_eq(mission.board_error(Fixture.state(THREE_SEAT_BOARD)), "")
+
+
+# --- a page that can render with no words -----------------------------------
+
+
+func _line(text: String, condition: FlagCondition = null) -> MissionLine:
+	var line := MissionLine.of(&"", text)
+	line.requires = condition
+	return line
+
+
+func test_a_briefing_every_line_of_which_is_gated_is_refused() -> void:
+	var mission := _mission()
+	mission.briefing.append(_line("The relay held.", _condition(HELD)))
+	mission.briefing.append(_line("The relay fell.", _condition(HELD, 0, 0)))
+	assert_string_contains(
+		mission.story_error(Fixture.commander_db()), "one of them has to be the words"
+	)
+
+
+func test_a_briefing_with_one_line_every_player_hears_is_fine() -> void:
+	var mission := _mission()
+	mission.briefing.append(_line("Move on the relay at dawn."))
+	mission.briefing.append(_line("The relay held.", _condition(HELD)))
+	assert_eq(mission.story_error(Fixture.commander_db()), "")
+
+
+## The debrief is asked on its own, so an unconditional briefing cannot vouch for
+## a victory page that every route can leave empty.
+func test_an_all_gated_debrief_beside_a_plain_briefing_is_refused() -> void:
+	var mission := _mission()
+	mission.briefing.append(_line("Move on the relay at dawn."))
+	mission.victory.append(_line("And it held.", _condition(HELD)))
+	assert_string_contains(
+		mission.story_error(Fixture.commander_db()), "one of them has to be the words"
+	)
+
+
+func test_an_interlude_every_line_of_which_is_gated_is_refused() -> void:
+	var page := CampaignInterlude.new()
+	page.after_block = 0
+	page.title = "Spring"
+	page.lines.append(_line("The relay held.", _condition(HELD)))
+	assert_string_contains(
+		page.definition_error(Fixture.commander_db()), "one of them has to be the words"
+	)
