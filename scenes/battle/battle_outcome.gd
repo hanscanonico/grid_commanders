@@ -128,10 +128,22 @@ func _action_word() -> String:
 	return "Rematch"
 
 
-## Whether this match left a recording to watch, which is the recorder's own
-## answer and nobody else's: a playback and a capture run were handed none at all,
-## and a match nobody moved in claims no slot, so an empty path is the whole test.
+## Whether there is a recording to offer. Whether one was *written* is the
+## recorder's own answer and nobody else's: a playback and a capture run were
+## handed none at all, and a match nobody moved in claims no slot, so an empty
+## path is the whole test.
+##
+## A finished mission is the one match that wrote a recording and is not offered
+## it. Its session is still armed on this screen — the debrief is owed the words
+## it says about what just happened — and a playback started from here would boot
+## with that mission live: the war's army would be stood on the recorded opening
+## board a second time (`CampaignSession.deploy_army`), which is a board the
+## recording does not describe and a checkpoint that cannot match. Every other
+## route into a playback clears the session first, and the Replays page is where
+## a mission is watched back.
 func _has_recording() -> bool:
+	if CampaignSession.active():
+		return false
 	return _battle.recorder != null and _battle.recorder.path() != ""
 
 

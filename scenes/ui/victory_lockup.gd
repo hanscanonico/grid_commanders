@@ -1,7 +1,7 @@
 class_name VictoryLockup
 extends PanelContainer
 ## The screen a match ends on: the winning general fronting a cream card, who won,
-## the day it took and the standings, and the two ways out.
+## the day it took and the standings, and the ways out.
 ##
 ## The turn banner's card one size up — same paper, same ink outline, same hard
 ## shadow — with a faction band across the top when a commander won it, so the
@@ -110,9 +110,8 @@ func announce(title: String, sub: String, rematch_text: String) -> void:
 	rematch_button.text = rematch_text
 
 
-## Whether this match left a recording worth offering. BattleOutcome's answer:
-## a playback and a captured frame write none, and a match nobody moved in
-## claims no slot.
+## Raises or drops the Watch Replay row. Whether there is a recording to offer is
+## BattleOutcome's answer, like every other word on this card.
 func offer_replay(available: bool) -> void:
 	watch_button.visible = available
 
