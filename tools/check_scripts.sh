@@ -241,6 +241,37 @@ if (($# == 0)); then
 		failed=$((failed + 1))
 	fi
 
+	# The simulation/presentation split: nothing under core/ or ai/ may reach for
+	# a Node, a scene or the tree. The pattern matches only spellings that can
+	# mean nothing else — the bare word "Node" is prose in a dozen comments here,
+	# and a lint that cries wolf gets switched off.
+	layering="$(grep -rnE 'get_node\(|get_tree\(|\bSceneTree\b|\.tscn|res://scenes/|extends Node' core ai --include='*.gd' || true)"
+	if [[ -n "$layering" ]]; then
+		echo "check: core/ and ai/ are Node-free — the sim may not reach into the scene tree" >&2
+		printf '%s\n' "$layering" >&2
+		failed=$((failed + 1))
+	fi
+
+	# Determinism: combat luck is a seeded stream threaded through the sim, so a
+	# global roll is a match that cannot be replayed. Excluding a leading dot is
+	# what lets `rng.randf(...)` — the seeded stream, the correct call — through.
+	global_rng="$(grep -rnE '(^|[^.A-Za-z_])(randf|randf_range|randi|randi_range|randomize)\(' core ai --include='*.gd' || true)"
+	if [[ -n "$global_rng" ]]; then
+		echo "check: core/ and ai/ are RNG-free — roll a seeded rng, never the global one" >&2
+		printf '%s\n' "$global_rng" >&2
+		failed=$((failed + 1))
+	fi
+
+	# Pacing can never move an outcome, a save or a replay (game-speed plan, D1),
+	# so the sim may not import GameSpeed or read Settings. Requiring a word
+	# boundary keeps `ProjectSettings.` — a path, not a preference — silent.
+	pacing="$(grep -rnE '(^|[^A-Za-z_])(GameSpeed|Settings)\.' core ai --include='*.gd' || true)"
+	if [[ -n "$pacing" ]]; then
+		echo "check: core/ and ai/ may not read GameSpeed or Settings — pacing is presentation" >&2
+		printf '%s\n' "$pacing" >&2
+		failed=$((failed + 1))
+	fi
+
 	# The balance pool is Python, so `make test` never reaches it. Its two pure
 	# decisions — where a run may write, and what a resumed shard is keyed on —
 	# are pinned by its own self-check, which needs no engine.
