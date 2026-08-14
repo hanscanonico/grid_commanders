@@ -95,6 +95,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # reaching past it into `_ai_runner` directly would be a second opinion on
 # state only Battle may hold. Nothing loose is left to move.
 #
+# main_menu.gd 1148 -> 1150: the picker cell's army count. Two lines inside
+# _map_cell_name — the only place a cell's label is composed — saying "· 3P" or
+# "· 4P" on the boards that seat more than a duel, so a four-army board is
+# tellable from the list rather than one selection at a time. There is nothing
+# to extract from an append to a string the same function already builds.
+#
 # battle.gd 1438 -> 1437: the Sound row, which pays for itself. How a device
 # preference is worded is Settings' — it owns the preference — so `speed_row_label`
 # and `cycle_speed` and their volume twins moved there, the pause menu's two rows
@@ -102,7 +108,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # left with the branch and nothing else. The file is a line shorter than before.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1437
-scenes/menu/main_menu.gd 1148
+scenes/menu/main_menu.gd 1150
 "
 
 if [[ ! -x "$GODOT" ]]; then

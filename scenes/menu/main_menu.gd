@@ -806,6 +806,8 @@ func _map_cell_name(map: MapData, selected: bool) -> String:
 	var cell_name := MapCatalog.display_name(map.source_path)
 	if MapCatalog.teaches(map.source_path):
 		cell_name += " · Tutorial"
+	if map.player_count() > 2:
+		cell_name += " · %dP" % map.player_count()
 	if selected:
 		cell_name += " ✓"
 	return cell_name
