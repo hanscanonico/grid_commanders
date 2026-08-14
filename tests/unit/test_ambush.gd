@@ -248,15 +248,18 @@ func test_a_dive_bound_to_an_ambushed_move_is_aborted() -> void:
 
 
 func test_a_supply_bound_to_an_ambushed_move_is_aborted() -> void:
-	# The mech at (4, 0) is adjacent to the APC's intended cell (3, 0) and three
-	# tiles from the one it is stopped at, so a refill is what the abort costs
-	# rather than there being nobody to refill.
-	var state := _state("[terrain]\n..F..\n[units]\n1 p 0 0\n2 i 2 0\n1 m 4 0")
+	# Two thirsty mechs, one beside each cell: (4, 0) beside the APC's intended
+	# (3, 0), so the abort is what costs it its refill rather than there being
+	# nobody to refill; (1, 1) beside the cell the ambush stops the APC on, so a
+	# top-up that ran from where the APC actually ended up would show here.
+	var state := _state("[terrain]\n..F..\n.....\n[units]\n1 p 0 0\n2 i 2 0\n1 m 4 0\n1 m 1 1")
 	_vanish(state)
 	var apc := state.units[0]
-	var thirsty := state.units[2]
-	thirsty.fuel = 10
-	thirsty.ammo = 1
+	var intended := state.units[2]
+	var beside_the_ambush := state.units[3]
+	for mech in [intended, beside_the_ambush]:
+		mech.fuel = 10
+		mech.ammo = 1
 	var command := SupplyCommand.new(
 		apc, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
 	)
@@ -265,12 +268,17 @@ func test_a_supply_bound_to_an_ambushed_move_is_aborted() -> void:
 	assert_true(command.ambushed)
 	assert_eq(apc.cell, Vector2i(1, 0), "stopped before the cloaked enemy at (2, 0)")
 	assert_true(
-		command.friendlies_in_reach(state, Vector2i(3, 0)).has(thirsty),
-		"the mech would have been in reach from the cell the APC meant to stand on"
+		command.friendlies_in_reach(state, Vector2i(3, 0)).has(intended),
+		"the far mech would have been in reach from the cell the APC meant to stand on"
 	)
-	assert_true(command.friendlies_in_reach(state, apc.cell).is_empty(), "and is not from this one")
-	assert_eq(thirsty.fuel, 10, "so it is still short of fuel")
-	assert_eq(thirsty.ammo, 1, "and of ammo")
+	assert_true(
+		command.friendlies_in_reach(state, apc.cell).has(beside_the_ambush),
+		"and the near one is in reach from the cell it was stopped at"
+	)
+	assert_eq(intended.fuel, 10, "the intended mech is still short of fuel")
+	assert_eq(intended.ammo, 1, "and of ammo")
+	assert_eq(beside_the_ambush.fuel, 10, "and no free fuel was handed out where the APC stopped")
+	assert_eq(beside_the_ambush.ammo, 1, "nor free ammo")
 
 
 # --- a dived submarine, fog or no fog -----------------------------------------
