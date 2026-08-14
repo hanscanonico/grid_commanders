@@ -76,6 +76,15 @@ func _finish_reveal() -> void:
 		block.modulate.a = 1.0
 
 
+## One press, however it arrives — the Continue button or any key: mid-reveal it
+## completes the page, at rest it turns it.
+func _advance() -> void:
+	if _line_tween != null and _line_tween.is_valid():
+		_finish_reveal()
+	else:
+		_leave()
+
+
 func chrome() -> Dictionary[String, Control]:
 	return {"the interlude heading": _heading, "Continue": _continue_button}
 
@@ -85,10 +94,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if TransitionInput.is_press(event):
 		get_viewport().set_input_as_handled()
-		if _line_tween != null and _line_tween.is_valid():
-			_finish_reveal()
-		else:
-			_leave()
+		_advance()
 
 
 func _build() -> void:
@@ -137,7 +143,7 @@ func _build() -> void:
 	UiTheme.apply_button(_continue_button, UiTheme.ButtonVariant.PRIMARY, null, UiTheme.SIZE_BUTTON)
 	_continue_button.custom_minimum_size = Vector2(140, 20)
 	_continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_continue_button.pressed.connect(_leave)
+	_continue_button.pressed.connect(_advance)
 	main.add_child(_continue_button)
 
 

@@ -99,9 +99,10 @@ func test_a_chain_with_a_hole_in_it_is_refused() -> void:
 	assert_eq(campaign.carry_error(), "")
 
 
-## The one chain the shipped content authors, and why it is that one: Voss holds
-## the customs line and falls back to the causeway with the same three units, and
-## nowhere else in the 108 do two missions in a row share a commander.
+## Voss's retreat, the chain this test pins: she holds the customs line and
+## falls back to the causeway with the same three units. The furnace act's
+## fw12 → fw18 veteran column is the other shipped chain, counted by the census
+## below.
 func test_the_shipped_chain_carries_the_army_it_says_it_does() -> void:
 	var campaign := CampaignDB.load_default().by_id(&"the_long_front")
 	assert_not_null(campaign)
