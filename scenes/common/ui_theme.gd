@@ -365,6 +365,32 @@ static func hud_label(text: String, font_size: int, color: Color, display_face :
 	return label
 
 
+## A key chip on a docked bar: `hud_label`'s dress on a Button, so the chip that
+## advertises a key can also be pressed with the mouse. Every state's stylebox is
+## empty and every state's ink is the one colour it was asked for — the bar's
+## height is fixed and its row cannot move, so a chip that grew a frame under the
+## pointer would shift the readouts beside it, and a hover shade would fight the
+## lit/unlit colour that is the chip's whole readout.
+static func hud_chip(text: String, font_size: int, color: Color) -> Button:
+	var chip := Button.new()
+	chip.text = text
+	chip.focus_mode = Control.FOCUS_NONE
+	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	chip.add_theme_font_override("font", stat())
+	chip.add_theme_font_size_override("font_size", font_size)
+	for slot in ["normal", "hover", "pressed", "focus", "disabled"]:
+		chip.add_theme_stylebox_override(slot, StyleBoxEmpty.new())
+	hud_chip_ink(chip, color)
+	return chip
+
+
+## The one ink a chip wears, in every state it can be in. Its own function
+## because lighting a chip is the same statement as dressing it.
+static func hud_chip_ink(chip: Button, color: Color) -> void:
+	for slot in ["font_color", "font_hover_color", "font_pressed_color"]:
+		chip.add_theme_color_override(slot, color)
+
+
 ## The HP strip's colour rule, straight from the handoff: green above 6, amber
 ## through the middle, red at 3 or below. One place, so the pips in the bar and
 ## any later readout of the same number cannot disagree.
