@@ -94,8 +94,14 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # and `_begin_turn` now share — genuinely Battle's, since a collaborator
 # reaching past it into `_ai_runner` directly would be a second opinion on
 # state only Battle may hold. Nothing loose is left to move.
+#
+# battle.gd 1438 -> 1437: the Sound row, which pays for itself. How a device
+# preference is worded is Settings' — it owns the preference — so `speed_row_label`
+# and `cycle_speed` and their volume twins moved there, the pause menu's two rows
+# and the two banners confirming them now read one string apiece, and Battle is
+# left with the branch and nothing else. The file is a line shorter than before.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1438
+scenes/battle/battle.gd 1437
 scenes/menu/main_menu.gd 1148
 "
 

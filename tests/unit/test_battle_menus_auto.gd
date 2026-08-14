@@ -35,7 +35,7 @@ func test_replay_drops_auto_with_the_save_rows() -> void:
 	assert_false(ids.has(&"save"), "a replay drops the save rows")
 	assert_eq(
 		ids,
-		[&"commanders", &"speed", &"quit", &"cancel"] as Array[StringName],
+		[&"commanders", &"speed", &"sound", &"quit", &"cancel"] as Array[StringName],
 		"only the rows a recording cannot answer for go — the rest of the menu stays"
 	)
 
