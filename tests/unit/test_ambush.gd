@@ -171,6 +171,108 @@ func test_a_capture_bound_to_an_ambushed_move_is_aborted() -> void:
 	assert_false(state.capture_progress.has(Vector2i(2, 0)), "no capture was begun")
 
 
+## Every move-and-then command below is staged the same way: a cloaked enemy on
+## the woods at (2, 0), a path that walks past it, and the thing the command
+## meant to do on the far side. The move stops at (1, 0) and the second half is
+## the assertion.
+func test_a_join_bound_to_an_ambushed_move_is_aborted() -> void:
+	var state := _state("[terrain]\n..F.\n[units]\n1 i 0 0\n2 i 2 0\n1 i 3 0")
+	_vanish(state)
+	var mover := state.units[0]
+	var target := state.units[2]
+	target.hp = 50
+	var command := JoinCommand.new(
+		mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
+	)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_true(command.ambushed)
+	assert_eq(mover.cell, Vector2i(1, 0), "stopped before the cloaked enemy at (2, 0)")
+	assert_eq(state.units.size(), 3, "the two are still two units")
+	assert_eq(mover.hp, 100, "and neither gave up its HP")
+	assert_eq(target.hp, 50)
+	assert_eq(target.cell, Vector2i(3, 0), "the target never moved")
+	assert_false(target.acted, "nor was it exhausted by a merge that did not happen")
+
+
+func test_a_load_bound_to_an_ambushed_move_is_aborted() -> void:
+	var state := _state("[terrain]\n..F.\n[units]\n1 i 0 0\n2 i 2 0\n1 p 3 0")
+	_vanish(state)
+	var rider := state.units[0]
+	var command := LoadCommand.new(
+		rider, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
+	)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_true(command.ambushed)
+	assert_null(rider.carrier, "it did not board from a distance")
+	assert_eq(rider.cell, Vector2i(1, 0), "it stands on the cell the ambush stopped it at")
+
+
+func test_a_drop_bound_to_an_ambushed_move_is_aborted() -> void:
+	var state := _state("[terrain]\n..F.\n....\n[units]\n1 p 0 0\n2 i 2 0\n1 i 0 1")
+	_vanish(state)
+	var apc := state.units[0]
+	var rider := state.units[2]
+	rider.carrier = apc
+	rider.cell = apc.cell
+	var command := DropCommand.new(
+		apc,
+		Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]),
+		Vector2i(3, 1)
+	)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_true(command.ambushed)
+	assert_false(command.drop_blocked, "the drop never came up, so nothing blocked it")
+	assert_eq(apc.cell, Vector2i(1, 0), "the transport stopped short")
+	assert_eq(rider.carrier, apc, "its passenger is still cargo")
+	assert_eq(rider.cell, apc.cell, "riding where the transport stopped")
+	assert_null(state.unit_at(Vector2i(3, 1)), "and nothing was put down on the drop cell")
+
+
+## The one staged with a dived submarine rather than Vanish — a boat two tiles
+## off is hidden by being under the water, which is the other half of this file.
+func test_a_dive_bound_to_an_ambushed_move_is_aborted() -> void:
+	var state := _state("[terrain]\nSSSS\n[units]\n1 s 0 0\n2 s 2 0", false)
+	state.units[1].dived = true
+	var mover := state.units[0]
+	var command := DiveCommand.new(
+		mover, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]), true
+	)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_true(command.ambushed)
+	assert_eq(mover.cell, Vector2i(1, 0), "stopped before the submerged boat at (2, 0)")
+	assert_false(mover.dived, "the hatch is as it was")
+
+
+func test_a_supply_bound_to_an_ambushed_move_is_aborted() -> void:
+	# The mech at (4, 0) is adjacent to the APC's intended cell (3, 0) and three
+	# tiles from the one it is stopped at, so a refill is what the abort costs
+	# rather than there being nobody to refill.
+	var state := _state("[terrain]\n..F..\n[units]\n1 p 0 0\n2 i 2 0\n1 m 4 0")
+	_vanish(state)
+	var apc := state.units[0]
+	var thirsty := state.units[2]
+	thirsty.fuel = 10
+	thirsty.ammo = 1
+	var command := SupplyCommand.new(
+		apc, Fixture.path([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
+	)
+	assert_eq(command.validate(state), "")
+	command.apply(state)
+	assert_true(command.ambushed)
+	assert_eq(apc.cell, Vector2i(1, 0), "stopped before the cloaked enemy at (2, 0)")
+	assert_true(
+		command.friendlies_in_reach(state, Vector2i(3, 0)).has(thirsty),
+		"the mech would have been in reach from the cell the APC meant to stand on"
+	)
+	assert_true(command.friendlies_in_reach(state, apc.cell).is_empty(), "and is not from this one")
+	assert_eq(thirsty.fuel, 10, "so it is still short of fuel")
+	assert_eq(thirsty.ammo, 1, "and of ammo")
+
+
 # --- a dived submarine, fog or no fog -----------------------------------------
 
 
