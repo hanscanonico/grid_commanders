@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
 script = ExtResource("2")
-text = "Hold three of the five towns."
+text = "Take back three of the five witness towns."
 count = 3
 terrain_id = &"city"
 
@@ -42,17 +42,17 @@ text = "Then nothing wounded stands where he can reach it. That's the cheaper in
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Claw back three of five. Every town we hold is a witness he can't reach."
+text = "He has three, we have one, and the fifth is sitting unclaimed in the middle of the field. Take that one and he has to come out of his towns to answer it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Three towns, ours. The witnesses are still talking, and it cost less than I feared."
+text = "The witnesses are still talking, and I brought home everything I marched in with. Cheap is the only way I know how to win."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The forged ledger is still exposed for it."
+text = "He came here to make four towns go quiet. He goes home having made them louder."
 
 [sub_resource type="Resource" id="Trigger_middle_town_taken"]
 script = ExtResource("7")

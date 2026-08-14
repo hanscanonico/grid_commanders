@@ -50,7 +50,7 @@ text = "Funny thing about paper claims — they need boots on the ground to mean
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Hold three of the four and the claim has nothing behind it."
+text = "Four towns in two rows, a stand of woods at each end of both. The trees are the only cover on this field, so whoever sits in them buys the towns cheap."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

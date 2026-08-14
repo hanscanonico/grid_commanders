@@ -32,7 +32,7 @@ max_losses = 5
 
 [sub_resource type="Resource" id="Bonus_hold_the_central_relay"]
 script = ExtResource("4")
-text = "Hold the central relay for three whole days for a bonus."
+text = "Hold the relay in the middle of the province three whole days."
 cell = Vector2i(9, 6)
 days = 3
 
@@ -73,12 +73,12 @@ text = "I hold. I don't chase. Give me the majority of these towns and I'll make
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "Hold the majority of the towns and the whole forged claim collapses at once."
+text = "Four towns out at the corners with woods beside them, and two stacked in the middle of the province with the relay among them. The middle is the shorter walk for both of us."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"mara_voss"
-text = "Four towns, ours. The province stayed exactly what it always was — not his to take."
+text = "He never took a second square of this province. I stood on four towns and let him spend himself reaching for the fifth."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")

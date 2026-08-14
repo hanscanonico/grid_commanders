@@ -29,12 +29,12 @@ last_day = 12
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
 script = ExtResource("2")
-text = "Take the northern town for a bonus."
+text = "Take the town on our side of the mountain wall."
 cell = Vector2i(7, 2)
 
 [sub_resource type="Resource" id="Bonus_take_the_southern_town_for_a_bonus"]
 script = ExtResource("2")
-text = "Take the southern town for a bonus."
+text = "Take the town behind his wall, in his own back country."
 cell = Vector2i(13, 10)
 
 [sub_resource type="Resource" id="Books_in_hand"]

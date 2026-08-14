@@ -17,23 +17,23 @@
 
 [sub_resource type="Resource" id="Objective_hold_the_first_depot"]
 script = ExtResource("5")
-text = "Take the first depot and keep it three whole days."
+text = "Take the west depot on the road and keep it three whole days."
 cell = Vector2i(6, 4)
 days = 3
 
 [sub_resource type="Resource" id="Objective_take_the_second_depot"]
 script = ExtResource("2")
-text = "Take the second depot."
+text = "Take the depot a square south of the road."
 cell = Vector2i(10, 5)
 
 [sub_resource type="Resource" id="Objective_take_the_third_depot"]
 script = ExtResource("2")
-text = "Take the third depot."
+text = "Take the east depot where the road runs out."
 cell = Vector2i(14, 4)
 
 [sub_resource type="Resource" id="Failure_the_chain_was_broken_before_day_10"]
 script = ExtResource("3")
-text = "The chain was broken before day 10."
+text = "Day 10 passed with a depot in the chain still his."
 last_day = 10
 
 [sub_resource type="Resource" id="Failure_more_than_four_lost"]
@@ -49,17 +49,17 @@ text = "Three depots, three line items on the forged ledger. Ferrow means to tak
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "Six to ten days of exposure on each, depending how thin he spreads. Hold all three and none of that math works for him."
+text = "One road, no cover on it, three depots strung along it. That is artillery country — I can hold a depot I am not standing on."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Hold all three and the ledger's claim on this road is finished."
+text = "Two of the depots sit on the road itself, west and east. The middle one is a square south of it, off the highway — his sweep has to come off the road to reach that one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "All three depots held. The supply chain never left our hands, not for a day."
+text = "All three, and the middle one never came under fire at all — I had the road ranged before his sweep reached it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

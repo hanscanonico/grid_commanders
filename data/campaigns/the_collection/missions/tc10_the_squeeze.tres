@@ -15,12 +15,12 @@
 
 [sub_resource type="Resource" id="Objective_hold_the_hq_until_day_7"]
 script = ExtResource("2")
-text = "Hold the HQ until day 7."
+text = "Ride out the siege to day 7."
 day = 7
 
 [sub_resource type="Resource" id="Failure_the_hq_fell_before_day_7"]
 script = ExtResource("3")
-text = "The HQ fell before day 7."
+text = "Day 7 came and went with the siege still unbroken."
 last_day = 7
 
 [sub_resource type="Resource" id="Line_1"]
@@ -31,7 +31,7 @@ text = "Vale has three of the four towns and the income to match. This is the wo
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"ivar_thorne"
-text = "Good. I fight hardest with my back against something. Seven days — we hold."
+text = "Good. Every unit I own hits harder the worse it looks, and by day seven they will all look terrible. Hold, and let them get angry."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")

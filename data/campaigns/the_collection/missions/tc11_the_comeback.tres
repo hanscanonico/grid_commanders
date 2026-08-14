@@ -13,7 +13,7 @@
 
 [sub_resource type="Resource" id="Objective_hold_three_of_the_five_towns"]
 script = ExtResource("2")
-text = "Hold three of the five towns."
+text = "Win back three of the belt's five towns."
 count = 3
 terrain_id = &"city"
 
@@ -64,7 +64,7 @@ text = "From here, the occupation starts costing him more than it's worth."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Three towns, back in hand. The numbers are even again."
+text = "Three towns back, and from where I am standing I can count what he has left in the belt. Even is a position I know how to work from."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

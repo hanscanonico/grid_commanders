@@ -22,7 +22,7 @@ day = 8
 
 [sub_resource type="Resource" id="Failure_the_core_fell_before_day_8"]
 script = ExtResource("3")
-text = "The core fell before day 8."
+text = "Day 8 arrived with the core still contested."
 last_day = 8
 
 [sub_resource type="Resource" id="Failure_the_line_bunched"]
@@ -43,7 +43,7 @@ text = "Then nothing gets bunched, and nothing gets thrown at us worth the charg
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Spread the line, keep nothing bunched, and hold to day eight."
+text = "Four towns on this field, a long way apart, and almost nothing between them but open ground. There is nothing out there worth standing shoulder to shoulder for."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

@@ -16,17 +16,17 @@
 
 [sub_resource type="Resource" id="Objective_take_the_first_foundry_depot"]
 script = ExtResource("2")
-text = "Take the first foundry depot."
+text = "Take the west depot on the road."
 cell = Vector2i(6, 5)
 
 [sub_resource type="Resource" id="Objective_take_the_second_foundry_depot"]
 script = ExtResource("2")
-text = "Take the second foundry depot."
+text = "Take the depot a square north of the road."
 cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Objective_take_the_third_foundry_depot"]
 script = ExtResource("2")
-text = "Take the third foundry depot."
+text = "Take the east depot at the end of the chain."
 cell = Vector2i(14, 5)
 
 [sub_resource type="Resource" id="Failure_the_chain_stayed_iron_s_past_day_11"]

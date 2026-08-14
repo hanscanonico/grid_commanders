@@ -25,7 +25,7 @@ last_day = 11
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
 script = ExtResource("2")
-text = "Take the northern town for a bonus."
+text = "Take the northern town his garrison holds on our side of the field."
 cell = Vector2i(5, 2)
 
 [sub_resource type="Resource" id="Bonus_destroy_the_paymaster"]
