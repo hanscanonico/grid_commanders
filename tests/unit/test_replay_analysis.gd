@@ -140,6 +140,28 @@ func test_a_unit_that_did_capture_is_not_reported() -> void:
 	assert_eq(_count(report, "missed_capture"), 0)
 
 
+## A shot buys the turn: the detector prices ground not taken, and a unit that
+## fought instead made a trade this instrument cannot judge.
+func test_a_unit_that_fought_instead_is_not_a_missed_capture() -> void:
+	var state := _bare_state()
+	_stand(state, &"infantry", 1, Vector2i(2, 3))
+	_stand(state, &"infantry", 2, Vector2i(2, 4))  # adjacent, so the shot needs no walk
+	var entries: Array = [
+		{"c": "attack", "path": [[2, 3]], "target": [2, 4]},
+		{"c": "end_turn"},
+	]
+	assert_eq(_count(_run(state, entries), "missed_capture"), 0)
+
+
+## Only fighting buys it. A unit that walked and did nothing else is the miss the
+## detector exists for, so the exclusion may never be widened to `acted`.
+func test_a_unit_that_only_walked_is_still_a_missed_capture() -> void:
+	var state := _bare_state()
+	_stand(state, &"infantry", 1, Vector2i(2, 3))
+	var entries: Array = [{"c": "move", "path": [[2, 3], [3, 3]]}, {"c": "end_turn"}]
+	assert_eq(_count(_run(state, entries), "missed_capture"), 1)
+
+
 ## Three of its owner's turns, not three end-turns: the streak is per side, and a
 ## detector that counted rounds would report a unit twice as fast as it says.
 func test_idle_unit_needs_three_of_its_owners_turns() -> void:
@@ -211,3 +233,30 @@ func test_an_hq_something_can_get_back_to_is_not_undefended() -> void:
 	_stand(state, &"infantry", 2, Vector2i(1, 1))
 	_stand(state, &"infantry", 1, Vector2i(0, 1))  # standing on the doorstep
 	assert_eq(_count(_run(state, [{"c": "end_turn"}]), "undefended_hq"), 0)
+
+
+## The heaviest severity in the table, so a standing lapse said every turn would
+## fill the printed summary with one sentence. Latched like `banked_power`.
+func test_a_standing_undefended_hq_is_reported_once() -> void:
+	var state := _bare_state()
+	_stand(state, &"infantry", 2, Vector2i(1, 1))
+	_stand(state, &"infantry", 1, Vector2i(4, 1))  # too far to answer for either HQ
+	assert_eq(_count(_run(state, _idle_rounds(4)), "undefended_hq"), 1)
+
+
+## Cleared the moment the side can answer for the HQ again, so a second lapse is a
+## second finding.
+func test_an_hq_covered_and_then_exposed_again_is_reported_twice() -> void:
+	var state := _bare_state()
+	_stand(state, &"infantry", 2, Vector2i(1, 1))
+	_stand(state, &"infantry", 1, Vector2i(3, 1))
+	var entries: Array = [
+		{"c": "end_turn"},  # exposed: reported
+		{"c": "end_turn"},
+		{"c": "move", "path": [[3, 1], [2, 1]]},  # back in reach of home
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "move", "path": [[2, 1], [3, 1], [4, 1], [5, 1]]},  # and away again
+		{"c": "end_turn"},
+	]
+	assert_eq(_count(_run(state, entries), "undefended_hq"), 2)
