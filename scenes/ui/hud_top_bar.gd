@@ -13,15 +13,20 @@ extends PanelContainer
 ## them out. The doctrine is `CommanderType.doctrine_text` — the always-on
 ## passive — not `power_name`, which belongs beside the meter it charges
 ## (SPEC "Content — read it from COMMANDERS").
+##
+## The three lens chips are the one thing here a player can press. See
+## `_chip_button`: they answer the mouse with the key they already name, so a
+## board that is otherwise fully playable with the mouse no longer advertises
+## three affordances a mouse cannot reach.
 
 var _day_label: Label
 var _chip: Panel
 var _faction_label: Label
 var _doctrine_label: Label
 var _funds_label: Label
-var _threat_label: Label
-var _range_label: Label
-var _objectives_label: Label
+var _threat_chip: Button
+var _range_chip: Button
+var _objectives_chip: Button
 var _keys_label: Label
 
 
@@ -74,22 +79,20 @@ func _build() -> void:
 	# so it has to say both that T exists *and* whether the lens is currently up —
 	# which a legend line, swapped per context and already full, cannot do. The copy
 	# is still ControlHints'.
-	_threat_label = UiTheme.hud_label(ControlHints.THREAT_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
-	row.add_child(_threat_label)
+	_threat_chip = _chip_button(ControlHints.THREAT_CHIP, &"show_threat")
+	row.add_child(_threat_chip)
 	# The fire ring, the same way: R answers for whatever the cursor is on in every
 	# board context, so it is a lens rather than a legend entry. Beside T, and lit the
 	# same way, because the two are one pair of questions — where can this unit shoot,
 	# and where can anything shoot me.
-	_range_label = UiTheme.hud_label(ControlHints.RANGE_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3)
-	row.add_child(_range_label)
+	_range_chip = _chip_button(ControlHints.RANGE_CHIP, &"show_range")
+	row.add_child(_range_chip)
 	# The mission card's chip, beside the two lenses because O is the same kind of
 	# key. Off the bar until a campaign mission says otherwise, so a skirmish's bar
 	# is laid out exactly as it was before this chip existed.
-	_objectives_label = UiTheme.hud_label(
-		ControlHints.OBJECTIVES_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3
-	)
-	_objectives_label.hide()
-	row.add_child(_objectives_label)
+	_objectives_chip = _chip_button(ControlHints.OBJECTIVES_CHIP, &"show_objectives")
+	_objectives_chip.hide()
+	row.add_child(_objectives_chip)
 	# The next-ready-unit key, beside the lenses because N is stated once for the
 	# same reason they are. No field and no lit state: it never changes, so there is
 	# nothing here to hold on to. The doctrine label absorbs its width by expanding.
@@ -133,12 +136,12 @@ func show_turn(
 ## changes, so the chip reads as the same control in both states rather than as
 ## two different ones, and the bar's layout cannot shift when it is toggled.
 func show_threat_lens(on: bool) -> void:
-	_light(_threat_label, on)
+	_light(_threat_chip, on)
 
 
 ## The fire ring's chip, lit on the same terms as the threat lens's above.
 func show_range_lens(on: bool) -> void:
-	_light(_range_label, on)
+	_light(_range_chip, on)
 
 
 ## The mission card's chip: on the bar only while there is a mission to describe,
@@ -146,14 +149,36 @@ func show_range_lens(on: bool) -> void:
 ## is exactly when the key most needs advertising — the chip is then the only thing
 ## on screen saying the mission's terms are one press away.
 func show_objectives_lens(available: bool, on: bool) -> void:
-	if _objectives_label != null:
-		_objectives_label.visible = available
-		_light(_objectives_label, on)
+	if _objectives_chip != null:
+		_objectives_chip.visible = available
+		_light(_objectives_chip, on)
 
 
-func _light(chip: Label, on: bool) -> void:
+func _light(chip: Button, on: bool) -> void:
 	if chip != null:
-		chip.add_theme_color_override("font_color", UiTheme.DANGER if on else UiTheme.INK_3)
+		UiTheme.hud_chip_ink(chip, UiTheme.DANGER if on else UiTheme.INK_3)
+
+
+## A chip that answers the mouse as well as the key it names. Pressing it feeds
+## the board the very action the keyboard sends, so which states honour it and
+## what it then does are the key path's and cannot drift from it — the chips are
+## the one part of the board a mouse-only player could not reach at all.
+static func _chip_button(text: String, action: StringName) -> Button:
+	var chip := UiTheme.hud_chip(text, UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	chip.pressed.connect(_send_action.bind(action))
+	return chip
+
+
+## Pressed and released, the way the key itself arrives. Only the press does
+## anything today — every reader of these three asks `is_action_pressed` on the
+## event — but an action fed in and never let go stays held in `Input` for the
+## rest of the match, and that is a trap laid for the first line that polls one.
+static func _send_action(action: StringName) -> void:
+	for pressed in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = pressed
+		Input.parse_input_event(event)
 
 
 ## Swaps the key legend for the interaction the player is now in. Called on every
