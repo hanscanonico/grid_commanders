@@ -131,4 +131,4 @@ events = Array[Resource]([SubResource("Event_inside_the_window"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Vale's works held, and the crossing stayed his — a wall the allies will have to go around, not through."
+defeat = "Vale's second trench line closed with the alliance still short of the bridge, and Carrow stayed the one crossing east that nobody could use."

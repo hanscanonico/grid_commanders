@@ -48,7 +48,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Eighteen days from the customs road to the keep. The staff officers wrote it up as one campaign, which is the tidiest lie in the file: it was three retreats, one line and one advance, and the ledger of it is shorter than the war was."
+text = "Eleven weeks from the customs road to the keep. The staff officers wrote it up as one campaign, which is the tidiest lie in the file: it was three retreats, one line and one advance, and the ledger of it is shorter than the war was."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
@@ -59,7 +59,7 @@ requires = SubResource("Column_saved")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "The column I bought that first morning for did not all get behind the line. I fought eighteen days for the road it was on, and I know exactly what that is worth."
+text = "The column I bought that first morning for did not all get behind the line. I fought eleven weeks for the road it was on, and I know exactly what that is worth."
 requires = SubResource("Column_lost")
 
 [sub_resource type="Resource" id="Line_4"]

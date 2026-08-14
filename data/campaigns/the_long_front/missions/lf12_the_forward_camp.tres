@@ -73,7 +73,7 @@ text = "Road city's ours. Bring the line forward — all of it, not a screen."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Six weeks of retreat, and the first order I've written that says advance."
+text = "Six weeks I have written the word fall back. This is the first order that says the other thing."
 
 [sub_resource type="Resource" id="Event_the_line_moves"]
 script = ExtResource("4")
@@ -106,4 +106,4 @@ events = Array[Resource]([SubResource("Event_the_line_moves")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Orlov's camp held, and the allied line stayed where it has stood since the narrows."
+defeat = "Orlov's camp held, and the first order that said advance was filed unsent."

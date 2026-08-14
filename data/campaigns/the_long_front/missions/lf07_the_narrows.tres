@@ -54,7 +54,7 @@ text = "My picket bought a day at the seawall. I'll spend today the same way, on
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then hold what's yours and I'll hold what's mine. First time in a week that's actually true."
+text = "Then hold what's yours and I'll hold what's mine. First time in six weeks that's actually true."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
