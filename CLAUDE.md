@@ -260,6 +260,24 @@ plan is stated in full below and has no copy there.
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
   on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
   a pip.
+- **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
+  to the next unit on the side in hand that has not acted, so the last one is never hunted across
+  a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
+  still act and for the order they are walked in** — `of()` is the list the End Turn guard prints
+  and `after()` is the step through it, one reading order (`precedes`) stated once, because a walk
+  ordered differently from the list would skip a unit the guard just named and nothing on screen
+  would say so. Node-free statics, so the walk is checked without a scene
+  (`tests/unit/test_ready_units.gd`), which is also what let `Battle._ready_units` move out and pay
+  for the key inside that file's line budget. **It moves the cursor and nothing else**: selecting
+  stays the player's confirm press, so no command is issued and nothing under `core/` learns it
+  happened, and a board with nothing ready gets the ordinary `ActionFeedback` refusal rather than a
+  dead key. Live in `IDLE` and `PREVIEW` only — never with a unit in hand, where the cursor is
+  planning a move, and never over a computer turn, a replay or the guard. The guard's Review button
+  is the same call, so pressing it repeatedly walks the list instead of pinning its first entry.
+  Stated as a chip beside `T`, `R` and `O` (`ControlHints.NEXT_CHIP`) for the reason `R`'s is — the
+  same thing in every board context, and `IDLE`'s legend is already at `MAX_CHARS` — but with **no
+  lit state**, a jump not being a way of looking at the board. Every captured battle frame shifts:
+  the chip is permanent top-bar chrome.
 - `commander-doctrine-ai-plan.html` — each general's army, played by the computer, plays like
   that general: milestones CA1–CA4, all shipped. Half of it was already true and the plan's first
   job is saying so: the planners score through the same resolvers the rules run, so every combat

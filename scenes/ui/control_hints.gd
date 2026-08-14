@@ -48,10 +48,16 @@ const RANGE_CHIP := "R · RANGE"
 ## advertised — which is the one thing it does not share with T and R.
 const OBJECTIVES_CHIP := "O · MISSION"
 
+## The next-ready-unit key's chip, stated here for the same reason R's is: N does
+## the same thing in every board context it answers in, and IDLE's legend is
+## already exactly MAX_CHARS with nowhere to put it. It has no lit state — a jump
+## is not a way of looking at the board — so the bar prints it unlit throughout.
+const NEXT_CHIP := "N · NEXT"
+
 ## Every chip the top bar may print, so the two rules they are held to — each fits
 ## beside a legend already running at MAX_CHARS, each is ASCII — are checked over
 ## the set rather than over a list a new chip has to be remembered into.
-const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP]
+const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP]
 
 const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"

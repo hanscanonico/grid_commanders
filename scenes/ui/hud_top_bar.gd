@@ -90,6 +90,10 @@ func _build() -> void:
 	)
 	_objectives_label.hide()
 	row.add_child(_objectives_label)
+	# The next-ready-unit key, beside the lenses because N is stated once for the
+	# same reason they are. No field and no lit state: it never changes, so there is
+	# nothing here to hold on to. The doctrine label absorbs its width by expanding.
+	row.add_child(UiTheme.hud_label(ControlHints.NEXT_CHIP, UiTheme.SIZE_MICRO, UiTheme.INK_3))
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that
