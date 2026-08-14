@@ -78,8 +78,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # lines are the branch in the input chain, beside T's and R's, and nothing else
 # here changed — the card owns whether it is up, the panel's own signal lights the
 # top bar's chip, and Battle holds no mission state to extract.
+# battle.gd 1399 -> 1402: the ambient-beat capture pin. Freezing the two-frame
+# wall clock for a capture is one assignment beside the hint pin, for the same
+# reason; UnitSprite owns the beat, so there is nothing here to extract. The
+# raise records a merge that landed without it and left this gate red.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1399
+scenes/battle/battle.gd 1402
 scenes/menu/main_menu.gd 1148
 "
 
