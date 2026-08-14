@@ -210,9 +210,9 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Twenty-six maps ship. The main menu leads with the teaching board and lists the rest smallest
+Twenty-seven maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `powder_keg`, `foursquare`, `trident`, `compass`, `pinwheel`,
-`timberline`, `arsenal`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
+`timberline`, `arsenal`, `blackwood`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
 `first_steps`, `the_straits`, `marchlands`, `ironworks`, `atoll`, `steelworks`, `heartland`,
 `causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
 board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
@@ -281,7 +281,12 @@ cannot lose is not, and the shortest march to a match-ending capture is the one 
 make on turn one. `powder_keg` (14×10) is the roster's smallest economy: an HQ and one base a side,
 two neutral cities and nothing else, so three properties a seat pays 3000 a turn and the army you
 open with is very nearly the army you finish with — what grows over those days is the Command Power
-meter, which charges off damage rather than off income.
+meter, which charges off damage rather than off income. `blackwood` (18×13) is the board fog was
+drawn for: woods nearly wall to wall, exactly two roads — one running north-west to south-east, the
+other north-east to south-west, crossing in the middle — and fourteen properties. Off the roads
+nothing is visible past an adjacent tile, so the recon's five tiles of sight pay for themselves and
+an ambush on the move is the ordinary way a march ends. It plays with fog off; it is simply a
+quieter board then.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
