@@ -130,6 +130,10 @@ class Walk:
 	var loaded: Dictionary = {}
 	## team -> consecutive turns ended with a full meter unfired.
 	var banked: Dictionary = {}
+	## team -> whether its home HQ has already been reported as uncovered, and is
+	## still uncovered. Cleared the moment the side can answer for it again, so a
+	## second lapse is a second finding and a standing one is said once.
+	var hq_exposed: Dictionary = {}
 	## Units that issued a command during the turn being walked.
 	var acted: Dictionary = {}
 	## Units that captured something during it, and whether a power went off.
@@ -367,6 +371,11 @@ static func _check_power(walk: Walk, state: GameState, team: int) -> void:
 ## Is anything standing within a turn's reach of this side's home HQ that it
 ## cannot answer? Losing the home HQ takes the army out of the match, so this is
 ## the one finding that is about the whole side rather than a unit.
+##
+## Latched the way `banked_power` is, and for the same reason: one lapse is one
+## finding. This is the heaviest severity in the table, so an HQ left uncovered
+## for a dozen turns would otherwise fill the printed summary with a dozen copies
+## of one sentence and push every other kind off the page.
 static func _check_hq(walk: Walk, state: GameState, team: int) -> void:
 	var home: Variant = state.home_hq.get(team)
 	if home == null:
@@ -374,25 +383,33 @@ static func _check_hq(walk: Walk, state: GameState, team: int) -> void:
 	var hq: Vector2i = home
 	if state.owner_at(hq) != team:
 		return  # already lost; nothing left to warn about
+	var threat := _hq_threat(state, team, hq)
+	if threat == null or _can_contest(state, team, hq):
+		walk.hq_exposed[team] = false
+		return
+	if walk.hq_exposed.get(team, false):
+		return
+	walk.hq_exposed[team] = true
+	_add(
+		walk,
+		"undefended_hq",
+		state,
+		null,
+		"a %s can reach the home HQ at %s and nothing of ours can" % [threat.type.id, hq],
+		SEVERITY["undefended_hq"]
+	)
+
+
+## The first enemy that could stand on `team`'s home HQ this turn, or null.
+static func _hq_threat(state: GameState, team: int, hq: Vector2i) -> Unit:
 	for enemy in state.units:
 		if enemy.carrier != null or state.allied(enemy.team, team):
 			continue
 		if not enemy.type.can_capture:
 			continue
-		var reach := MovementResolver.reachable(state, enemy)
-		if not reach.can_stop_at(hq):
-			continue
-		if _can_contest(state, team, hq):
-			return
-		_add(
-			walk,
-			"undefended_hq",
-			state,
-			null,
-			"a %s can reach the home HQ at %s and nothing of ours can" % [enemy.type.id, hq],
-			SEVERITY["undefended_hq"]
-		)
-		return
+		if MovementResolver.reachable(state, enemy).can_stop_at(hq):
+			return enemy
+	return null
 
 
 static func _can_contest(state: GameState, team: int, hq: Vector2i) -> bool:
@@ -438,8 +455,14 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 	return not _takeable_within_reach(state, unit).is_empty()
 
 
+## Ground this footsoldier could have started taking and did not.
+##
+## A unit that fired buys its turn, the same `busy` reading `_check_oscillation`
+## takes: the detector prices ground not taken, and a unit that took a shot
+## instead made a trade this instrument cannot judge. A unit that merely *moved*
+## is still reported — that is the miss the detector exists for.
 static func _check_capture_chance(walk: Walk, state: GameState, unit: Unit) -> void:
-	if not unit.type.can_capture or walk.captured.has(unit):
+	if not unit.type.can_capture or walk.captured.has(unit) or walk.fought.has(unit):
 		return
 	var takeable := _takeable_within_reach(state, unit)
 	if takeable.is_empty():
