@@ -169,11 +169,16 @@ static func _chip_button(text: String, action: StringName) -> Button:
 	return chip
 
 
+## Pressed and released, the way the key itself arrives. Only the press does
+## anything today — every reader of these three asks `is_action_pressed` on the
+## event — but an action fed in and never let go stays held in `Input` for the
+## rest of the match, and that is a trap laid for the first line that polls one.
 static func _send_action(action: StringName) -> void:
-	var event := InputEventAction.new()
-	event.action = action
-	event.pressed = true
-	Input.parse_input_event(event)
+	for pressed in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = pressed
+		Input.parse_input_event(event)
 
 
 ## Swaps the key legend for the interaction the player is now in. Called on every
