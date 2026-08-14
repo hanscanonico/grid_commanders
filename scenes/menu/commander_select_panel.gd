@@ -37,6 +37,8 @@ var _db: CommanderDB
 ## faction key -> Array[CommanderType], the faction's members in name order.
 var _by_faction: Dictionary = {}
 var _faction_keys: Array[StringName] = []
+## Every non-neutral commander, flat, for the Random pick to draw from.
+var _random_pool: Array[CommanderType] = []
 
 var _slot := 0
 var _picks: Array[StringName] = []
@@ -63,6 +65,7 @@ var _summary_label: Label
 var _confirm_button: Button
 var _back_button: Button
 var _no_co_button: Button
+var _random_button: Button
 
 
 func _ready() -> void:
@@ -78,12 +81,14 @@ func _group_roster() -> void:
 	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
 		_faction_keys.append(theme.key)
 		_by_faction[theme.key] = [] as Array[CommanderType]
+	_random_pool.clear()
 	for commander in _db.all():
 		if commander.id == CommanderType.NEUTRAL_ID:
 			continue
 		var key := CommanderVisuals.key_for_faction(commander.faction)
 		if _by_faction.has(key):
 			_by_faction[key].append(commander)
+		_random_pool.append(commander)
 
 
 ## Opens the page for a fresh set of picks, one per seat the match fills.
@@ -151,6 +156,7 @@ func chrome() -> Dictionary[String, Control]:
 	var named: Dictionary[String, Control] = {
 		"the select page title": _title,
 		"No Commander": _no_co_button,
+		"Random": _random_button,
 		"Back": _back_button,
 		"Confirm Pick": _confirm_button,
 	}
@@ -286,6 +292,14 @@ func _build_right_column() -> VBoxContainer:
 	_no_co_button.focus_entered.connect(_preview_neutral)
 	_no_co_button.pressed.connect(_preview_neutral)
 	actions.add_child(_no_co_button)
+	_random_button = _action_button("Random")
+	# Same shape as "No Commander": browsing to it rolls the pick, confirming it
+	# locks like any other. A press re-rolls, so landing on Random more than once
+	# (Tab past it, or pressing it again) offers a fresh draw rather than the same
+	# name every time.
+	_random_button.focus_entered.connect(_preview_random)
+	_random_button.pressed.connect(_preview_random)
+	actions.add_child(_random_button)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(spacer)
@@ -436,6 +450,15 @@ func _preview(commander: CommanderType) -> void:
 
 func _preview_neutral() -> void:
 	_preview(CommanderType.neutral())
+
+
+## Draws one commander from the full roster, any faction, and previews it —
+## the tab row and mini row stay on whatever faction was already open, since
+## Random is a draw, not a browse to a tab.
+func _preview_random() -> void:
+	if _random_pool.is_empty():
+		return
+	_preview(_random_pool[randi() % _random_pool.size()])
 
 
 # --- confirm / back ----------------------------------------------------------
