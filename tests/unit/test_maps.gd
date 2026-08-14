@@ -62,6 +62,18 @@ const BASE := &"base"
 const PORT := &"port"
 const SHOAL := &"shoal"
 
+## A description is one whole sentence, so it ends like one. The check exists
+## because MapData takes the first comment line alone: a sentence carried onto a
+## second comment reaches the menu cut off mid-clause, which is how isthmus.txt
+## shipped "…is the short" for the length of the roster (COM-224).
+const DESCRIPTION_ENDINGS := [".", "!", "?"]
+## What the map picker's caption holds. main_menu.gd's `_caption_budget_holds`
+## already refuses a caption wrapping past `MAP_CAPTION_LINES`, but only with the
+## menu on screen; this is the same budget where the author of a board meets it.
+## The longest description shipped today is arsenal.txt's, at 100 characters, so
+## the bound is measured off the roster rather than picked.
+const DESCRIPTION_MAX_CHARS := 102
+
 const MapParity := preload("res://tests/helpers/map_parity.gd")
 
 var terrain_db: TerrainDB
@@ -402,6 +414,23 @@ func test_every_map_describes_itself_for_the_menu() -> void:
 			(
 				"%s: the first comment line is the map dropdown's tooltip, so it " % _name(map)
 				+ "has to be a one-line description of the board"
+			)
+		)
+		assert_true(
+			map.description.right(1) in DESCRIPTION_ENDINGS,
+			(
+				"%s: MapData reads the FIRST comment line and nothing more, so a " % _name(map)
+				+ "sentence wrapped over two comments reaches the menu as a fragment — "
+				+ "end the description on one line, and put the rest below it"
+			)
+		)
+		assert_lte(
+			map.description.length(),
+			DESCRIPTION_MAX_CHARS,
+			(
+				"%s: the picker's caption holds MAP_CAPTION_LINES lines, which " % _name(map)
+				+ "main_menu.gd checks at runtime — this is that budget, where an "
+				+ "author sees it without booting the menu"
 			)
 		)
 
