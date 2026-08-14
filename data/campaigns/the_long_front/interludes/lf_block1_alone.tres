@@ -42,7 +42,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Three nations lost the same morning, six days apart, and each of them counted the loss in something different: a road, a harbour, a wood."
+text = "Three nations lost the same morning and learned of each other six days late, and each of them counted the loss in something different: a road, a harbour, a wood."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")

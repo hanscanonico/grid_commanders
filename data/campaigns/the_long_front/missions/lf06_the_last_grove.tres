@@ -11,7 +11,7 @@
 
 [sub_resource type="Resource" id="Objective_hold_the_grove"]
 script = ExtResource("2")
-text = "Hold until day 6."
+text = "Hold the last grove until day 6."
 day = 6
 
 [sub_resource type="Resource" id="Bonus_shrine_city"]

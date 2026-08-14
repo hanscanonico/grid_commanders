@@ -81,7 +81,7 @@ text = "Then I'll finish what I started there. Take Draeg's headquarters — the
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "Eighteen days, Commander Voss. I confess I did not expect to see you standing on this side of the line."
+text = "Eleven weeks, Commander Voss. I confess I did not expect to see you standing on this side of the line."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -176,7 +176,7 @@ units = Array[Resource]([SubResource("Spawn_pass_guns")])
 [sub_resource type="Resource" id="Event_line_ward"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Meridian's on your left, Aurora's on your right, and the League is behind both. That is the whole of what eighteen days bought."
+text = "Meridian's on your left, Aurora's on your right, and the League is behind both. That is the whole of what eleven weeks bought."
 
 [sub_resource type="Resource" id="Event_line_voss"]
 script = ExtResource("3")
@@ -266,4 +266,4 @@ events = Array[Resource]([SubResource("Event_the_allies_arrive"), SubResource("E
 par_day = 9
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_7")])
-defeat = "The keep held, and the alliance that took eighteen days to build broke against the one wall it could not move."
+defeat = "The keep held, and the alliance that took eleven weeks to build broke against the one wall it could not move."

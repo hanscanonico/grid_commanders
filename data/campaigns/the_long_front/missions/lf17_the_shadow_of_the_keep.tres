@@ -28,7 +28,7 @@ cell = Vector2i(16, 7)
 
 [sub_resource type="Resource" id="Failure_short_a_flank"]
 script = ExtResource("5")
-text = "Arrive with a flank to push with: more than six units gone, from any cause, and there is nothing left to arrive with."
+text = "More than six units lost, from any cause — nothing left to arrive with."
 max_losses = 6
 
 [sub_resource type="Resource" id="Line_1"]
@@ -120,4 +120,4 @@ events = Array[Resource]([SubResource("Event_everything_left_to_spare")])
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1a"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Orlov's outpost held, and the keep stayed exactly as far away as it has been for eighteen days."
+defeat = "Orlov's outpost held, and the keep stayed exactly as far away as it has been for eleven weeks."

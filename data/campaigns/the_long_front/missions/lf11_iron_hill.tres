@@ -19,7 +19,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Objective_hold_iron_hill"]
 script = ExtResource("2")
-text = "Hold the line until day 7."
+text = "Hold Iron Hill until day 7."
 day = 7
 
 [sub_resource type="Resource" id="Line_1"]
