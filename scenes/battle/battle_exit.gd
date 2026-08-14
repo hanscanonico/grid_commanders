@@ -2,8 +2,8 @@ class_name BattleExit
 extends RefCounted
 ## Owns every way out of a running match that is not winning or losing it: writing
 ## the single save slot, going back to the main menu with or without doing so, the
-## confirmation the unsaved route asks for, and the rematch the victory lockup
-## offers.
+## confirmation the unsaved route asks for, and the rematch and replay the victory
+## lockup offers.
 ##
 ## BattleOutcome's sibling, and split out of Battle for the same reason: that class
 ## owns how a match *ends*, this owns how a player *leaves* one. Until COM-16 there
@@ -118,6 +118,16 @@ func to_main_menu() -> void:
 ## re-arms the runtime and clears the verdict, exactly as the hub's Deploy does.
 func rematch() -> void:
 	MatchConfig.stage(_rematch_request())
+	_battle.get_tree().reload_current_scene()
+
+
+## Watches the recording the match just wrote — `rematch()`'s sibling, and the
+## victory lockup's third way out. A recording states its own board, seating,
+## grouping and commanders in its opening envelope, so naming the file is the
+## whole request; whether there is one to name is BattleOutcome's question, asked
+## of the recorder before the button is offered at all.
+func watch_replay() -> void:
+	MatchConfig.stage(MatchRequest.from_replay(_battle.recorder.path()))
 	_battle.get_tree().reload_current_scene()
 
 

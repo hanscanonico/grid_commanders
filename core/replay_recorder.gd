@@ -97,6 +97,13 @@ func after_apply(state: GameState) -> void:
 	_seq += 1
 
 
+## Which file this match is recording into, empty while there is not one yet: a
+## recorder writing to memory has no file, and one with a sink has none until the
+## first command claims a slot — see the class note above.
+func path() -> String:
+	return _sink.path() if _sink != null else ""
+
+
 ## Lines recorded so far, when nothing is being written to. A recorder with a sink
 ## holds none — a thousand-match sweep must not pay for a log nobody reads back.
 func lines() -> Array[Dictionary]:
