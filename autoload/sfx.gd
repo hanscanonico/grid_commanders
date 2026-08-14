@@ -1,7 +1,7 @@
 extends Node
-## Fire-and-forget player for the generated sound effects:
-## Sfx.play(&"shot"). Missing streams are silently skipped so headless
-## runs and fresh checkouts (before `make sfx`) never break.
+## Fire-and-forget player for the sound effects:
+## Sfx.play(&"shot"). Missing streams are silently skipped so a headless
+## run or a stripped build never breaks.
 
 const SFX_DIR := "res://assets/sfx"
 ## The last three belong to the battle cut-in's weapon styles — a BattleStyle
