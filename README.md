@@ -210,10 +210,10 @@ harness.
 
 Run a single scene directly: `bin/Godot.app/Contents/MacOS/Godot --path . scenes/battle/battle.tscn`.
 
-Thirty maps ship. The main menu leads with the teaching board and lists the rest smallest
+Thirty-one maps ship. The main menu leads with the teaching board and lists the rest smallest
 first — `boot_camp`, `scrimmage`, `forge`, `powder_keg`, `foursquare`, `trident`, `compass`, `pinwheel`,
 `timberline`, `arsenal`, `blackwood`, `riverline`, `isthmus`, `exclave`, `jet_stream`, `windrose`, `crossfire`,
-`first_steps`, `the_straits`, `tideflats`, `the_slough`, `marchlands`, `coal_and_crown`, `ironworks`,
+`first_steps`, `meridian`, `the_straits`, `tideflats`, `the_slough`, `marchlands`, `coal_and_crown`, `ironworks`,
 `atoll`, `steelworks`, `heartland`,
 `causeway`, `confluence`, `bulwark` — so it opens on `boot_camp`, badged **Tutorial**, and prints the selected
 board's size, army count (a range, `2–4 armies`, on a board where seats can be closed), property
@@ -306,6 +306,12 @@ single two-cell causeway — road down the beach, bridge over the deep water, ro
 Shoal costs every land class 1 and carries no defence at all, so the aprons are fast ground with
 nothing to hide behind, and everything that walks between the coasts does so inside a hull's reach.
 The sea runs right around the board, which is what keeps it one body all four docks open onto.
+`meridian` (40×8) is the corridor: mountain walls the top and bottom rows for twenty-eight of the
+forty columns, so the fight happens in a six-row channel with a home at each end and no way round
+either. Reach and rotation decide it — artillery and rockets fire down the length of the channel
+from behind a screen that has to be relieved before it breaks — and the only flank that exists is
+overhead, which is what the airfield behind each home is for. At 320 cells it is long rather than
+large: `bulwark` keeps the largest-board title, and the menu's backdrop with it.
 Three of the older boards have since been retrofitted with the domains that suit them — `isthmus`
 gained a port and a landing beach per side, `ironworks` and `crossfire` an airfield each — while
 `boot_camp`, `first_steps`, `scrimmage`, `timberline` and `riverline` deliberately stay land-only,
