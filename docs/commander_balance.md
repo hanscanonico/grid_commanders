@@ -112,15 +112,78 @@ change and its rationale below.
 
 The runner and its five scenarios are verified (symmetry asserted, determinism
 byte-identical, hard invariants clean). The full batch was last run at
-twenty-two commanders on 2026-08-04 — results under *Measured for the
-four-commander expansion (MC5)* below; the 30-session human deck remains the
-manual release companion and is not represented as automated evidence here.
+twenty-two commanders on 2026-08-14 — **9,680 matches in 46 minutes**, results
+under *Measured after the Codebase Audit II baseline (2026-08-14)* below; the
+30-session human deck remains the manual release companion and is not
+represented as automated evidence here.
 
 The deck's three additions for this roster are deliberately contrastive:
 **Calder vs Vale** (cheap breadth against expensive quality), **Ferrow against a
 cash-poor opponent** (whether plunder and its counterplay read), and **Colt against
 a defensive commander** (whether a late refresh creates agency rather than a
 surprise extra turn). Each is played from both seats like the standing twelve.
+
+### Measured after the Codebase Audit II baseline (2026-08-14)
+
+The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
+scenarios × four seeds) in **46 minutes** on the development machine, at
+`025c5ca`. All 9,680 were decisive (0 draws), with **0 rejected commands and 0
+cap stalls** — the hard invariants are clean and no per-turn-cap warning fired,
+so the run is comparable to the batches above. First-seat bias was **+33.0 pp**
+(red side 66.5%), the standing banking item described in the N4 section rather
+than anything this baseline introduced. Terminations: 5,271 rout, 3,889
+`day_cap`, 520 `hq`.
+
+**This regen is a measurement, not a tune. No `.tres` number moved.** It exists
+because the MC5 and CA4 standings had been explicitly marked as predating the
+planner: the AI Judgement dials went live, the Codebase Audit II pass moved
+`data/ai/default.tres`, the balance levers moved into `data/rules.tres`, and
+several audit commits are outcome-moving on their face (shot selection through
+`AttackRange.ready_shot`, HQ capture pricing gated on the home-HQ authority,
+build reactivity reordered, Sable Wren's cover keyed on `conceals`, the supply
+tier's doctrine bias clamped as a sum). What follows is the post-audit baseline
+those sections told the reader to re-run for.
+
+Every commander outside the preferred 45–55% band, worst fixture being the board
+that carries the anomaly furthest:
+
+| Commander | Full matrix | Worst fixture | Reading |
+|---|---:|---|---|
+| Radek Morn | **89.4% WARN** | `holdings` 97.7% | Unmoved from MC5's 89.4%. Fires least of anyone (1.80 powers/match at 24,000) and leaves opponents **0.83** units against a field of 4.13 — the edge is the flat passive, not Hammerfall. Beats Vance 90%, Thorne 90%, Lark 85%. |
+| Iona Vance | **78.3% WARN** | `combined` 92.6% | MC5 measured 77.8%; +0.5 pp is inside the field's own drift. Holds 6.17 properties a match against a field of 4.48. |
+| Sera Lark | **64.9% WARN** | `ridge` 82.4% | MC5 measured 65.3%. Still the property race rather than the fight — 5.24 properties held while leaving 2.94 enemy units standing. |
+| Konrad Vale | **62.3% WARN** | `clash` 79.5% | Standing high name, and the split is the same shape NC7 recorded inverted: he is *in band* on `holdings` (47.2%), the economy fixture his doctrine is authored for, and out of band on the sparse boards. |
+| Ivar Thorne | 59.7% watch | `clash` 75.0% | Identical to MC5's 59.7%. |
+| Viktor Draeg | 59.1% watch | `channel` 66.5% | Standing high name; 62.2% at CA4, drifting down rather than up. |
+| Gideon Holt | 55.9% watch | `combined` 60.2% | Standing high name, barely outside; the flattest per-board spread on the roster (50.6–60.2%). |
+| Orin Flux | 43.3% watch | `holdings` 40.9% | New to the low set since AU2 re-pegged `scout_build_bias`; flat across boards, so the deficit is not fixture-owned. |
+| Lyra Quill | 41.7% watch | `clash` 36.9% | Advises nothing on purpose (forecasts are luck-free), so she measures the field getting stronger around her. |
+| Perrin Ash | 41.5% watch | `ridge` 35.2% | Domain-only doctrine, exactly neutral on the land-only boards — `ridge` is where that costs most. |
+| Halden Marr | 41.4% watch | `ridge` 35.2% | Ash's structural twin, and the two read within 0.1 pp of each other. |
+| Dane Ferrow | 40.9% watch | `clash` 29.0% | Was 48.5% at NC7. Plunder needs a treasury to steal from; `clash` resolves before one exists. |
+| Ines Calder | 40.2% watch | `clash` 26.7% | Was 49.3% at NC7 — the largest fall in the field. Cheap breadth is a `holdings` doctrine measured mostly on sparse boards. |
+| Mara Voss | 39.4% WARN | `channel` 33.0% | Was 49.3% at CA4. |
+| Cassian Rook | 38.1% WARN | `clash` 21.0% | Was 46.2% at CA4, and the widest per-board spread on the roster (21.0–56.8%). Redeployment buys ground, and `clash` has none to buy. |
+| Rhea Sol | 37.7% WARN | `holdings` 31.2% | Was 46.9% at CA4; the standing low name returns. |
+| Iris Colt | **23.1% WARN** | `clash` 5.1% | The written exception below, now measurably worse (26.4% at NC7). `holdings` 39.8% against `clash` 5.1% is the same diagnosis in sharper relief: sparse fixtures offer almost no eligible non-attack action for Second Wind to refresh. |
+
+In band and needing nothing: Cass Orlov 45.5%, Alina Ward 47.4%, Nia Rowan
+48.1%, Sable Wren 48.8%, Tomas Reed 53.5% — five of twenty-two.
+
+**What the shape says.** The spread is **23.1 – 89.4% (66 pp, 8 WARN)**, wider
+than any batch recorded in this document, and it is wide at both ends: the four
+MC5 generals sit unmoved at the top while six previously-centred names (Rook,
+Voss, Sol, Calder, Ferrow, Flux) fell into the low set. The MC5 four not moving
+while the field around them fell is the reading that matters — a planner that
+plays everyone better rewards a flat always-on modifier and a property race more
+than it rewards a power that has to be timed. Per the rule at the top of this
+document all seventeen are **review triggers**, and the tuning ladder (power
+cost, then power magnitude, then passives last, passives behind human
+confirmation) has not been walked here.
+
+**Owed:** a human-confirmed tuning pass. The levers MC5 named for Morn and Lark
+are unchanged and still the ones this baseline points at, and Iris Colt at 23.1%
+is now the roster's most urgent single name rather than a documented curiosity.
 
 ### Measured for the four-commander expansion (MC5)
 
@@ -312,6 +375,17 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-14 — the matrix is regenerated on the post-Audit-II baseline; no
+  number moved.** 9,680 matches at `025c5ca`, 46 minutes, hard invariants clean
+  (0 rejected, 0 cap stalls, 0 draws), first-seat bias +33.0 pp. This closes the
+  "re-run the matrix before quoting them" note the MC5, CA4 and 2026-08-05
+  entries all carry: those standings predated the live AI Judgement dials, the
+  Codebase Audit II planner work and the balance levers' move into
+  `data/rules.tres`, and this is what the roster measures with them in. The
+  result is a wider field, not a settled one — 23.1 – 89.4%, eight WARN — and
+  **no `data/commanders/*.tres` value was touched**, per the rule at the top of
+  this document that an out-of-band commander is a review trigger. The full
+  reading is in *Measured after the Codebase Audit II baseline* above.
 - **2026-08-05 — two build biases re-pegged to a list that grew, and Gideon
   Holt's depot numbers move into data** (codebase audit, AU2). Rockets joined
   every tier's `build_priority` at the tail, and a doctrine's `build_bias`
