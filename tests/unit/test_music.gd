@@ -8,11 +8,12 @@ extends GutTest
 ## a scene, and what a scene asks of it — `play` in `_ready`, `stop` at victory —
 ## is exactly what these tests are about.
 ##
-## The bars and the tempo each track was composed at (tools/generate_music.gd).
+## The bars and the tempo each track was composed at, in the sibling
+## audio_generator repo (`make audio` installs its renders).
 ## A loop is seamless only if the file is a whole number of beats long, so the
 ## length is pinned here rather than eyeballed.
-const TEMPOS := {&"parade": 112.0, &"advance": 144.0}
-const BARS := 8
+const TEMPOS := {&"parade": 104.0, &"advance": 132.0}
+const BARS := 32
 
 
 func after_each() -> void:
@@ -72,5 +73,5 @@ func test_stop_silences_the_track_and_lets_it_start_again() -> void:
 
 func test_a_missing_track_is_silently_skipped() -> void:
 	Music.play(&"parade")
-	Music.play(&"nothing_was_generated")  # a fresh checkout, before `make music`
+	Music.play(&"nothing_was_generated")  # a track no release ever shipped
 	assert_false(_player().playing, "an absent stream should leave the player silent")

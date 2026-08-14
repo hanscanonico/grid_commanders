@@ -36,8 +36,7 @@ make determinism     # replay one pinned balance match; byte-diff it against the
 make lint            # gdlint — style and smells (config: gdlintrc)
 make format          # gdformat — reformat in place; format-check only reports
 make tiles           # rebuild the art: generator atlases (SPRITEGEN=<path>), UI chrome, import
-make sfx             # regenerate the placeholder sound effects (headless)
-make music           # regenerate the two looping background music tracks (headless)
+make audio           # reinstall the sound effects + music from the sibling audio_generator repo
 make portraits       # regenerate the commander portraits + faction emblems
 make import          # (re)import assets headless
 make screenshot      # boot the battle scene, save screenshot.png, quit
@@ -1050,9 +1049,12 @@ atlases are its exact output; the per-cell PNGs under `assets/sprites/units` and
 copies. The UI chrome that has no home there — the range overlay, the cursor, the icon — is drawn
 by `tools/generate_tiles.gd`. The commander portraits and faction emblems are
 generated too (`make portraits`) — project-original vector art drawn to the "Heroic Commander
-Portraits" design handoff's spec, no third-party pixels. All sound is generated placeholder chiptune
-(`make sfx`), and so is the music: two project-original looping chiptune marches, `parade` for the
-menu and `advance` for the battle, composed by `make music`. Third-party asset licenses must be
+Portraits" design handoff's spec, no third-party pixels. All sound — the nine effects and two
+project-original looping marches, `parade` for the menu and `advance` for the battle — is composed
+and rendered deterministically in the sibling
+[audio_generator](https://github.com/hanscanonico/audio_generator) repo, gated there (determinism,
+loop-seam, loudness and distinctness measurements), and installed here as committed WAVs by
+`make audio`. Third-party asset licenses must be
 tracked in `assets/LICENSES.md`. No Nintendo assets or names may ever be used.
 
 `make tiles` rebuilds the art in three ordered steps: `atlases` regenerates both sheets in the

@@ -1,7 +1,7 @@
 extends Node
 ## Loops one background music track at a time: Music.play(&"parade").
-## Missing streams are silently skipped so headless runs and fresh checkouts
-## (before `make music`) never break — the Sfx contract. Asking for the track
+## Missing streams are silently skipped so a headless run or a stripped
+## build never breaks — the Sfx contract. Asking for the track
 ## already playing is a no-op, so a scene states its theme unconditionally in
 ## _ready and a rematch never restarts the music mid-phrase.
 

@@ -292,13 +292,18 @@ ui-art:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_tiles.gd
 
-sfx:
-	$(call require-godot)
-	$(GODOT) --headless --path . -s res://tools/generate_sfx.gd
+# The sound effects and the two music loops are composed and gated in the
+# sibling audio_generator repo (see assets/LICENSES.md) and installed here as
+# committed WAVs. Override AUDIOGEN when that checkout lives elsewhere — a
+# worktree's ../ is not the main checkout's.
+AUDIOGEN ?= ../audio_generator
 
-music:
-	$(call require-godot)
-	$(GODOT) --headless --path . -s res://tools/generate_music.gd
+audio:
+	@test -x "$(AUDIOGEN)/.venv/bin/python" || { \
+		echo "$@: no venv at $(AUDIOGEN) — see its README for setup," >&2; \
+		echo "$@: or pass AUDIOGEN=<path to an audio_generator checkout>" >&2; \
+		exit 1; }
+	cd "$(AUDIOGEN)" && .venv/bin/python audio_generator.py --install "$(CURDIR)"
 
 # Regenerates the commander portraits (220x268 busts, drawn as SVG by
 # tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
@@ -333,7 +338,7 @@ gallery-screenshot: import
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	sfx music portraits import \
+	audio portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns
