@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=43 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=51 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -159,18 +159,60 @@ mode = 0
 value = 1
 note = "The fuel road ran only half east, and the furnace was fought on what we carried in."
 
+[sub_resource type="Resource" id="Spawn_reserve_armour_a"]
+script = ExtResource("10")
+unit_type = ExtResource("13")
+cell = Vector2i(18, 10)
+
+[sub_resource type="Resource" id="Spawn_reserve_armour_b"]
+script = ExtResource("10")
+unit_type = ExtResource("13")
+cell = Vector2i(17, 7)
+
+[sub_resource type="Resource" id="Effect_reserve_armour"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_reserve_armour_a"), SubResource("Spawn_reserve_armour_b")])
+
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "The road behind you is still half mine, Commander. You will be fighting this one on what you carried in."
+text = "The road behind you is still half mine, Commander — and the fuel you never freed is in these tanks. You will fight this room on what you carried in."
 
 [sub_resource type="Resource" id="Event_the_road_runs_half"]
 script = ExtResource("6")
 id = &"the_road_runs_half"
 triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_the_road_is_half_his")])
-effects = Array[Resource]([SubResource("Effect_road_ran_half")])
+effects = Array[Resource]([SubResource("Effect_road_ran_half"), SubResource("Effect_reserve_armour")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("7")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_doorstep_sortie"]
+script = ExtResource("10")
+unit_type = ExtResource("13")
+cell = Vector2i(16, 7)
+
+[sub_resource type="Resource" id="Effect_doorstep_sortie"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_doorstep_sortie")])
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("5")
+speaker = &"konrad_vale"
+text = "I gave up the last mile to stand here with something left to spend. This is the stock I saved, Commander."
+
+[sub_resource type="Resource" id="Event_the_saved_stock"]
+script = ExtResource("6")
+id = &"the_saved_stock"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_doorstep_sortie")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
 
 [resource]
 script = ExtResource("1")
@@ -191,8 +233,10 @@ difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
 failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_seven_of_nine"), SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_the_road_runs_east"), SubResource("Event_the_road_runs_half")])
+events = Array[Resource]([SubResource("Event_the_road_runs_east"), SubResource("Event_the_road_runs_half"), SubResource("Event_the_saved_stock")])
 par_day = 6
+carry_in = true
+carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_7"), SubResource("Line_3")])
-victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_9"), SubResource("Line_5"), SubResource("Line_6"), SubResource("Line_8")])
+victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_9"), SubResource("Line_8"), SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The furnace kept running for Vale, and the coldest winter in memory goes on being the price of his ledger."

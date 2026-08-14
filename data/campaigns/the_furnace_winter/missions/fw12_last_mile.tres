@@ -125,7 +125,7 @@ day = 7
 script = ExtResource("11")
 flag = &"fw_depots_open"
 mode = 1
-value = 3
+value = 2
 note = "The last mile was opened intact, and the foundry road runs on it."
 
 [sub_resource type="Resource" id="Event_line_2"]
@@ -162,6 +162,7 @@ failures = Array[Resource]([SubResource("Failure_0")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_vale_withdraws_east"), SubResource("Event_the_last_mile_runs")])
 par_day = 6
+carry_out = true
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
 defeat = "The last mile held, and the foundry road stayed exactly as far away as it started."

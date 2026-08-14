@@ -1,57 +1,63 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=48 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="3"]
-[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="5"]
+[ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
+[ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="3"]
+[ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
+[ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="7"]
-[ext_resource type="Script" path="res://core/campaign/triggers/cell_owned_trigger.gd" id="8"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/spawn_units_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
-[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="11"]
-[ext_resource type="Resource" path="res://data/units/tank.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="12"]
+[ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="15"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="16"]
+[ext_resource type="Resource" path="res://data/units/infantry.tres" id="17"]
+[ext_resource type="Resource" path="res://data/units/mech.tres" id="18"]
 
-[sub_resource type="Resource" id="Objective_0"]
+[sub_resource type="Resource" id="Objective_survive"]
 script = ExtResource("2")
-text = "Take Vance's forward headquarters."
-cell = Vector2i(17, 10)
+text = "Hold out until the relief column is in the yard — day 8."
+day = 8
 
-[sub_resource type="Resource" id="Bonus_the_three_bases"]
+[sub_resource type="Resource" id="Objective_yard"]
 script = ExtResource("3")
+text = "Keep the smelter yard ours for six whole days."
+cell = Vector2i(9, 10)
+days = 6
+
+[sub_resource type="Resource" id="Failure_losses"]
+script = ExtResource("5")
+text = "You lose more than four units, to any cause. The yard crews can replace machines, not columns."
+max_losses = 4
+
+[sub_resource type="Resource" id="Bonus_starve"]
+script = ExtResource("4")
 text = "Hold all three of the yard's bases at once. Starve the smelters."
 count = 3
 terrain_id = &"base"
 
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("5")
-text = "The foundry kept running past day 11."
-last_day = 11
-
-[sub_resource type="Resource" id="Bonus_0"]
-script = ExtResource("3")
-text = "Hold seven of the district's nine properties at once."
-count = 7
-
-[sub_resource type="Resource" id="Bonus_1"]
-script = ExtResource("4")
-text = "Sit on the spine city for two whole days — the smelters' road in."
-cell = Vector2i(9, 10)
-days = 2
+[sub_resource type="Resource" id="Bonus_gun"]
+script = ExtResource("12")
+text = "Silence the siege gun shelling the approach."
+tag = &"siege_gun"
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "The smelters run day and night, Warden. My second base here is why."
+text = "You are standing in my smelter yard, Commander. I have costed its recovery down to the shell."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Then the base falls first. Hold ground, starve the smelters."
+text = "Then your books are about to disagree with my column. The yard came at a price — we're not returning it."
 
-[sub_resource type="Resource" id="Cond_road_is_ours"]
-script = ExtResource("11")
+[sub_resource type="Resource" id="Cond_depots_ten"]
+script = ExtResource("15")
 flag = &"fw_depots_open"
 at_least = 8
 at_most = -1
@@ -59,51 +65,138 @@ at_most = -1
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Most of the fuel road behind us is running our way now. Whatever her smelters burn, they're burning it slower than we can replace ours."
-requires = SubResource("Cond_road_is_ours")
+text = "The depot road runs almost whole behind us. Relief is loaded and rolling — we only have to still be here."
+requires = SubResource("Cond_depots_ten")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "She's fielded more than us since turn one. We out-produce her from what we take."
+text = "Eight days. Her gun shells the approach, her columns come in waves. We dig in and we count."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Smelter yard's ours, headquarters and all. The furnace runs on our schedule now."
+text = "Relief's in the yard and the smelters still answer to us. Held, all eight days of it."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "My extra base bought time. Not the district."
+text = "A recovery I costed to the shell, and the yard did not move. The error was mine to sign."
 
-[sub_resource type="Resource" id="Trigger_spine_city_ours"]
+[sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("8")
-cell = Vector2i(9, 10)
-holder = 0
+day = 3
 
-[sub_resource type="Resource" id="Spawn_smelter_escort"]
+[sub_resource type="Resource" id="Spawn_wave_one_tank"]
 script = ExtResource("10")
-unit_type = ExtResource("12")
-cell = Vector2i(14, 10)
+unit_type = ExtResource("16")
+cell = Vector2i(16, 9)
 
-[sub_resource type="Resource" id="Effect_smelter_escort"]
+[sub_resource type="Resource" id="Spawn_wave_one_foot"]
+script = ExtResource("10")
+unit_type = ExtResource("17")
+cell = Vector2i(15, 8)
+
+[sub_resource type="Resource" id="Effect_wave_one"]
 script = ExtResource("9")
 team = 2
-units = Array[Resource]([SubResource("Spawn_smelter_escort")])
+units = Array[Resource]([SubResource("Spawn_wave_one_tank"), SubResource("Spawn_wave_one_foot")])
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "The smelters do not stop because you are standing on the road to them. Clear it."
+text = "First instalment, Commander. The recovery is budgeted in waves."
 
-[sub_resource type="Resource" id="Event_the_smelters_do_not_stop"]
+[sub_resource type="Resource" id="Event_the_first_instalment"]
 script = ExtResource("7")
-id = &"the_smelters_do_not_stop"
-triggers = Array[Resource]([SubResource("Trigger_spine_city_ours")])
-effects = Array[Resource]([SubResource("Effect_smelter_escort")])
+id = &"the_first_instalment"
+triggers = Array[Resource]([SubResource("Trigger_day_3")])
+effects = Array[Resource]([SubResource("Effect_wave_one")])
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
+
+[sub_resource type="Resource" id="Trigger_day_5"]
+script = ExtResource("8")
+day = 5
+
+[sub_resource type="Resource" id="Spawn_wave_two_tank"]
+script = ExtResource("10")
+unit_type = ExtResource("16")
+cell = Vector2i(16, 7)
+
+[sub_resource type="Resource" id="Effect_wave_two"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_wave_two_tank")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"iona_vance"
+text = "Second instalment. I budget deeper than you dig, Commander."
+
+[sub_resource type="Resource" id="Event_the_second_instalment"]
+script = ExtResource("7")
+id = &"the_second_instalment"
+triggers = Array[Resource]([SubResource("Trigger_day_5")])
+effects = Array[Resource]([SubResource("Effect_wave_two")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Trigger_day_7"]
+script = ExtResource("8")
+day = 7
+
+[sub_resource type="Resource" id="Spawn_relief_tank"]
+script = ExtResource("10")
+unit_type = ExtResource("16")
+cell = Vector2i(2, 5)
+
+[sub_resource type="Resource" id="Spawn_relief_mech"]
+script = ExtResource("10")
+unit_type = ExtResource("18")
+cell = Vector2i(2, 6)
+
+[sub_resource type="Resource" id="Effect_relief"]
+script = ExtResource("9")
+team = 1
+units = Array[Resource]([SubResource("Spawn_relief_tank"), SubResource("Spawn_relief_mech")])
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("6")
+speaker = &"nia_rowan"
+text = "Lights on the ridge road — the relief column made it through the depots. One more day."
+
+[sub_resource type="Resource" id="Event_the_relief_column"]
+script = ExtResource("7")
+id = &"the_relief_column"
+triggers = Array[Resource]([SubResource("Trigger_day_7")])
+effects = Array[Resource]([SubResource("Effect_relief")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
+
+[sub_resource type="Resource" id="Trigger_gun_down"]
+script = ExtResource("13")
+tag = &"siege_gun"
+
+[sub_resource type="Resource" id="Effect_siege_broken"]
+script = ExtResource("11")
+flag = &"fw_siege_broken"
+mode = 0
+value = 1
+note = "Vance's siege gun was silenced in the smelter yard, and her batteries never shelled a road again."
+
+[sub_resource type="Resource" id="Event_line_4"]
+script = ExtResource("6")
+speaker = &"nia_rowan"
+text = "The gun's silent. Whatever she budgeted for shells, refund it."
+
+[sub_resource type="Resource" id="Event_the_gun_falls_silent"]
+script = ExtResource("7")
+id = &"the_gun_falls_silent"
+triggers = Array[Resource]([SubResource("Trigger_gun_down")])
+effects = Array[Resource]([SubResource("Effect_siege_broken")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_4")])
 
 [resource]
 script = ExtResource("1")
@@ -121,11 +214,14 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([SubResource("Failure_0")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_the_three_bases"), SubResource("Bonus_0"), SubResource("Bonus_1")])
-events = Array[Resource]([SubResource("Event_the_smelters_do_not_stop")])
-par_day = 7
+objectives = Array[Resource]([SubResource("Objective_survive"), SubResource("Objective_yard")])
+failures = Array[Resource]([SubResource("Failure_losses")])
+bonus_objectives = Array[Resource]([SubResource("Bonus_starve"), SubResource("Bonus_gun")])
+events = Array[Resource]([SubResource("Event_the_first_instalment"), SubResource("Event_the_second_instalment"), SubResource("Event_the_relief_column"), SubResource("Event_the_gun_falls_silent")])
+par_day = 8
+carry_in = true
+carry_out = true
+carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The smelters kept running for Vance, and the deadline ran out before we could stop them."
+defeat = "The yard went back onto her books, and the smelters fed Vale's furnace all spring."

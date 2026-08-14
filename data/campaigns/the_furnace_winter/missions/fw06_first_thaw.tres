@@ -31,7 +31,7 @@ last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
-text = "Take the northern relay as well."
+text = "Take the border relay above the pass — nothing crosses unseen."
 cell = Vector2i(11, 2)
 
 [sub_resource type="Resource" id="Line_1"]

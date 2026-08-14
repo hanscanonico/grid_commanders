@@ -1,19 +1,21 @@
 # The Furnace Winter, The Furnace — "Slag Row".
-# Teaching board: Iron's industrial heartland. The enemy fields an extra
-# base and a richer opening by doctrine — outproduce a richer enemy.
+# The hunt board: Ferrow's raiding column is the mission — the tank tagged
+# slag_rider_a and the recon tagged slag_rider_b are the primaries, not the
+# HQ. The infantry tagged unpaid_picket walks off on the unpaid-winter
+# branch. Player rows are carry slots for the act's veteran column.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
 ..................
 .Q.......C....C...
-.=.......=........
+.=.......=..M.....
 .B..FF...=........
-.=..FFM..=........
+.=..FFM..=....M...
 .=.......=........
 .===========FF===.
 .........=..FF..=.
-.........=..M...B.
-.........=......=.
+....MM...=..M...B.
+.....MM..=......=.
 ...C.....C.....BQ.
 ..................
 [owners]
@@ -25,16 +27,16 @@
 2 16 8
 2 14 1
 [units]
-1 i 2 1
-1 i 2 2
-1 m 2 3
-1 r 3 1
-1 t 2 4
-1 g 3 3
+1 i 2 1 ^
+1 i 2 2 ^
+1 m 2 3 ^
+1 r 3 1 ^
+1 t 2 4 ^
+1 g 3 3 ^
 2 i 14 10
-2 i 15 8
+2 i 15 8 unpaid_picket
 2 m 14 9
-2 r 13 8
-2 t 14 7
+2 r 13 8 slag_rider_b
+2 t 14 7 slag_rider_a
 2 t 13 9
 2 a 15 6

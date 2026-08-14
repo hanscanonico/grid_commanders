@@ -1,16 +1,18 @@
 # The Furnace Winter, The Depots — "Ashen Crossing".
-# Teaching board: a road spine with 3 garrisoned depots in sequence.
-# There is no convoy to escort — the depots hold still. Take them in order.
+# The crossing board: two frozen streams cut the road into three chambers,
+# one depot in each, with a bridge at (8,3) and (12,3). Wheels and treads
+# force the bridges; mechs and infantry wade the ice between them. Take the
+# depots chamber by chamber.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
-.......M.............
-....F....F....F......
-.Q.................Q.
-.====C====C====C====.
-.B.................B.
-......F....F....F....
-.............M.......
+.......M~...~........
+....F...~F..~.F......
+.Q......~...~......Q.
+.====C==+=C=+==C====.
+.B......~...~......B.
+......F.~..F~...F....
+........~...~M.......
 [owners]
 1 1 2
 1 1 4

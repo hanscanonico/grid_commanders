@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
-[ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
@@ -12,16 +11,27 @@
 [ext_resource type="Script" path="res://core/campaign/effects/mission_spawn.gd" id="10"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="11"]
 [ext_resource type="Resource" path="res://data/units/recon.tres" id="12"]
+[ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="13"]
+[ext_resource type="Script" path="res://core/campaign/triggers/flag_trigger.gd" id="14"]
+[ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="15"]
+[ext_resource type="Script" path="res://core/campaign/effects/remove_units_effect.gd" id="16"]
+[ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="17"]
+[ext_resource type="Resource" path="res://data/units/tank.tres" id="18"]
 
-[sub_resource type="Resource" id="Objective_0"]
-script = ExtResource("2")
-text = "Take Ferrow's headquarters on Slag Row."
-cell = Vector2i(16, 10)
+[sub_resource type="Resource" id="Objective_rider_a"]
+script = ExtResource("13")
+text = "Break the raiding column: destroy its armour."
+tag = &"slag_rider_a"
+
+[sub_resource type="Resource" id="Objective_rider_b"]
+script = ExtResource("13")
+text = "Break the raiding column: destroy its outrider."
+tag = &"slag_rider_b"
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The foundry kept running past day 12."
-last_day = 12
+text = "The column was still riding past day 10."
+last_day = 10
 
 [sub_resource type="Resource" id="Failure_1"]
 script = ExtResource("5")
@@ -30,7 +40,7 @@ max_losses = 3
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
-text = "Hold seven of the district's nine properties at once."
+text = "Strip the row: hold seven of its nine properties at once."
 count = 7
 
 [sub_resource type="Resource" id="Line_1"]
@@ -46,12 +56,12 @@ text = "Handed by Vale. Same doctrine, every enforcer richer than us. We've foug
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"ivar_thorne"
-text = "Break your headquarters and the bounty stops paying out of this district."
+text = "The column is the paycheck — the armour and the outrider. Run both down and this row stops being worth garrisoning."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
 speaker = &"ivar_thorne"
-text = "Slag Row's ours. Your bounty book just lost its richest page."
+text = "Column's broken on its own slag. Your bounty book just lost its richest page."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
@@ -94,6 +104,75 @@ effects = Array[Resource]([SubResource("Effect_bought_rider"), SubResource("Effe
 once = true
 lines = Array[Resource]([SubResource("Event_line_1")])
 
+[sub_resource type="Resource" id="Trigger_day_2"]
+script = ExtResource("17")
+day = 2
+
+[sub_resource type="Resource" id="Cond_bounty_paid"]
+script = ExtResource("15")
+flag = &"fw_bounty_paid"
+at_least = 1
+at_most = -1
+
+[sub_resource type="Resource" id="Trigger_was_paid"]
+script = ExtResource("14")
+condition = SubResource("Cond_bounty_paid")
+
+[sub_resource type="Resource" id="Spawn_bought_column_scout"]
+script = ExtResource("10")
+unit_type = ExtResource("12")
+cell = Vector2i(12, 10)
+
+[sub_resource type="Resource" id="Spawn_bought_column_armour"]
+script = ExtResource("10")
+unit_type = ExtResource("18")
+cell = Vector2i(15, 9)
+
+[sub_resource type="Resource" id="Effect_bought_column"]
+script = ExtResource("9")
+team = 2
+units = Array[Resource]([SubResource("Spawn_bought_column_scout"), SubResource("Spawn_bought_column_armour")])
+
+[sub_resource type="Resource" id="Event_line_2"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "Remember every invoice you let me collect this winter? This column is what they bought."
+
+[sub_resource type="Resource" id="Event_the_bought_column"]
+script = ExtResource("7")
+id = &"the_bought_column"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_was_paid")])
+effects = Array[Resource]([SubResource("Effect_bought_column")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_2")])
+
+[sub_resource type="Resource" id="Cond_never_paid"]
+script = ExtResource("15")
+flag = &"fw_bounty_paid"
+at_least = 0
+at_most = 0
+
+[sub_resource type="Resource" id="Trigger_never_paid"]
+script = ExtResource("14")
+condition = SubResource("Cond_never_paid")
+
+[sub_resource type="Resource" id="Effect_picket_walks"]
+script = ExtResource("16")
+tags = Array[StringName]([&"unpaid_picket"])
+
+[sub_resource type="Resource" id="Event_line_3"]
+script = ExtResource("6")
+speaker = &"dane_ferrow"
+text = "Post nine hasn't seen a coin all winter, so post nine walked. I don't blame them. I invoice."
+
+[sub_resource type="Resource" id="Event_the_unpaid_picket"]
+script = ExtResource("7")
+id = &"the_unpaid_picket"
+triggers = Array[Resource]([SubResource("Trigger_day_2"), SubResource("Trigger_never_paid")])
+effects = Array[Resource]([SubResource("Effect_picket_walks")])
+once = true
+lines = Array[Resource]([SubResource("Event_line_3")])
+
 [resource]
 script = ExtResource("1")
 id = &"fw14_slag_row"
@@ -110,11 +189,14 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0")])
+objectives = Array[Resource]([SubResource("Objective_rider_a"), SubResource("Objective_rider_b")])
 failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_1")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
-events = Array[Resource]([SubResource("Event_the_business_model")])
-par_day = 8
+events = Array[Resource]([SubResource("Event_the_business_model"), SubResource("Event_the_bought_column"), SubResource("Event_the_unpaid_picket")])
+par_day = 7
+carry_in = true
+carry_out = true
+carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Slag Row stayed his, and the bounty kept paying out of a headquarters we never took."
+defeat = "The column kept riding, and the bounty kept paying out of Slag Row."

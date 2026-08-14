@@ -113,7 +113,7 @@ note = "The ashen crossing was reopened end to end with its depots still working
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "Three for three, with a day to spare. Nobody had that priced. Log the crossing open."
+text = "Three chambers, three depots, both bridges standing. Nobody had that priced."
 
 [sub_resource type="Resource" id="Event_the_ashen_road_runs"]
 script = ExtResource("6")
