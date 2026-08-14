@@ -903,17 +903,19 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   it does not run — and `make campaigns` is where it is asked, both slips being otherwise silent.
   CD4's own "no shipped mission authors a flag yet" is superseded by CD7, which wrote 57 of them;
   the fact list per campaign is `docs/campaign_authoring.md`'s.
-  **CD5 shipped the carried army on D6, scoped to the one chain the shipped content has; what a
-  future session must not undo is below, and the plan's own "What CD5 settled" carries the rest.**
-  **The scope is measured and it is one pair.** The campaigns rotate the player's commander almost
-  every mission — the original brief — so a carried army has almost nowhere to go: across all 108,
-  exactly one consecutive pair shares a player commander (`lf01` → `lf02`, both Mara Voss), and that
-  is the one chain authored. `tests/unit/test_campaign_carry_authoring.gd` pins that the other 106
-  boards carry no slot and no carry flag, so CD7 inherits a clean field.
+  **CD5 shipped the carried army on D6, scoped to the one chain the shipped content then had; what
+  a future session must not undo is below, and the plan's own "What CD5 settled" carries the rest.**
+  **The scope was measured at one pair, and the Furnace Winter rework (2026-08-14) superseded the
+  premise, not the mechanism.** The campaigns rotate the player's commander almost every mission —
+  the original brief — so at CD5 exactly one consecutive pair shared a player commander (`lf01` →
+  `lf02`, both Mara Voss), and that was the one chain authored. The furnace war's third act now
+  chains `fw12` → `fw18` under a rotating cast — the column is the act's veteran army rather than
+  one general's — so `tests/unit/test_campaign_carry_authoring.gd` pins nine chained missions and
+  99 boards carrying no slot and no carry flag.
   **D6's short-roster fallback is the rule rather than the edge**, which is what makes the milestone
   safe: `CampaignRoster.deploy` only ever writes `hp` and `tag` onto units `GameState.create` has
   already built — it creates nothing, removes nothing, moves nothing and changes no type — so the
-  empty-roster case is a no-op loop and 106 missions are untouched by construction rather than by a
+  empty-roster case is a no-op loop and 99 missions are untouched by construction rather than by a
   branch. **A veteran is identified across the gap by its type**, claiming the first unclaimed slot
   the board authored for that type, order breaking ties only (board order for slots, bank order for
   veterans): an object reference dies with the board, a cell means nothing on a different map, and a
@@ -931,8 +933,7 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   `CampaignState.complete`'s first-clear answer governs the roster as well as the ledger, which is
   why `CampaignSession.record` is handed the finished **board** rather than only its day: what
   survived is on it. `carry_out = false` **clears** the roster rather than merely not adding to it —
-  the chain ends and the war forgets the army, which is what handing the front to another general
-  means. The campaign profile is **VERSION 4** for it, on the same rule the ledger's own section
+  the chain ends and the war forgets the army. The campaign profile is **VERSION 4** for it, on the same rule the ledger's own section
   followed (below); a v1–v3 profile opens with an empty roster and a v3 profile *holding* one is
   refused by name.
   **A resumed mission does not redeploy**: `BattleCampaign.open_board(game, fresh)` stands the army
@@ -981,13 +982,15 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   needs a fact and a fact needs a writer or `route_error` refuses it, so `hc01` gained one tag and
   one beat.
   **CD7 retrofitted all 108 missions across six PRs, one per war, and the shipped shape is the
-  measurement**: every mission carries a beat (197 of them), **57 write a ledger fact**, ten
-  missions across five campaigns are route-gated where CD6 shipped one, and the vocabulary the plan
-  was written for is actually used — seven kinds of primary (`CaptureCell` 80, `OwnProperties` 21,
-  `SurviveUntilDay` 19, `HoldCell` 13, `AllySurvives` 4, `ReachCell` 3, `DestroyUnit` 2) against
-  the 86-of-108 `CaptureCell` the plan diagnosed, and **three kinds of failure where `DayDeadline`
-  was the only one in the game** (`DayDeadline` 86, `LossLimit` 18, `ProtectUnit` 5). The carried
-  army is still CD5's one chain: the roster only crosses where the same general fights twice.
+  measurement** (re-measured 2026-08-14, after the Furnace Winter rework deepened that war): every
+  mission carries a beat (208 of them), **58 write a ledger fact**, ten missions across five
+  campaigns are route-gated where CD6 shipped one, and the vocabulary the plan was written for is
+  actually used — seven kinds of primary (`CaptureCell` 75, `OwnProperties` 21, `SurviveUntilDay`
+  20, `HoldCell` 14, `AllySurvives` 4, `ReachCell` 4, `DestroyUnit` 4) against the 86-of-108
+  `CaptureCell` the plan diagnosed, and **three kinds of failure where `DayDeadline` was the only
+  one in the game** (`DayDeadline` 85, `LossLimit` 20, `ProtectUnit` 6). The carried army has
+  outgrown CD5's one chain: the furnace war's third act marches one veteran column `fw12` → `fw18`,
+  and the CD5 entry above owns that supersession.
   **CD8 is the gate and the record, and the gate is the milestone.** The CD7 review found the same
   authoring traps in campaign after campaign, by six independent authors, each of whom had a green
   `make campaigns`. **`docs/campaign_authoring.md` is the single owner of what the gate refuses**
@@ -1007,14 +1010,15 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   independent properties, so the gate can only ever prove the second.
   **Two checks fired on shipped content and both were real**, which is the milestone paying for
   itself: five missions listed a co-primary beside the enemy's home headquarters (`fw15`–`fw18`,
-  `hc18`) that `MissionRuntime` could never judge, and each is now that mission's **bonus**
-  objective, where it is judged and earns its star; and two Hollow Crown interlude lines were
+  `hc18`) that `MissionRuntime` could never judge, and each became that mission's **bonus**
+  objective, where it is judged and earns its star (the Furnace Winter rework has since re-authored
+  the four fw boards' objectives wholesale); and two Hollow Crown interlude lines were
   conditioned on facts every route writes (`directorate_fallen`, `alliance_debt`), so the
   conditions are gone and the lines play exactly as they always did. No other content moved.
   **`tests/unit/test_campaign_soak.gd` is the soak and its two halves are deliberate**: every
   mission played to a verdict with its script live, through `BattleSetup.build(to_request())` and
   `CampaignSession` itself so the boundary order is `BattleCampaign`'s rather than a second
-  spelling of it; and every one of the 197 beats applied to the board its mission opens on, because
+  spelling of it; and every one of the 208 beats applied to the board its mission opens on, because
   a planner-against-planner game only ever brings about half of them. It asserts **legality, never
   winnability** — no command refused, no beat refused, no stall — and says so at the top, the
   scratch tool it replaces having reported the same fact as `never-decided=0` while firing no beat
