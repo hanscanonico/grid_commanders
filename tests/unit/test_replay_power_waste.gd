@@ -7,9 +7,10 @@ extends GutTest
 ## fixture helpers, the same as the four save-codec suites.
 ##
 ## The detector reads the *board*, never the log: a power buys a hit, ground, a
-## top-up or a cell out of normal reach, and any one of those and nothing is
-## said. Every case below is one of those four, or one of the three exclusions,
-## because a false positive here names a doctrine that was playing correctly.
+## top-up, a second action or a cell out of normal reach, and any one of those
+## and nothing is said. Every case below is one of those five, or one of the
+## three exclusions, because a false positive here names a doctrine that was
+## playing correctly.
 
 const BOARD := "res://maps/fixtures/analysis.txt"
 
@@ -102,7 +103,7 @@ func test_a_power_fired_into_an_empty_board_is_reported() -> void:
 	assert_string_contains(finding.detail, "Coordinated Push")
 
 
-# --- the four things a power can buy --------------------------------------------
+# --- the five things a power can buy ---------------------------------------------
 
 
 func test_a_power_followed_by_a_kill_is_not_reported() -> void:
@@ -141,6 +142,24 @@ func test_a_power_that_bought_a_cell_out_of_normal_reach_is_not_reported() -> vo
 	var walked := _charged_state(&"tomas_reed")
 	_stand(walked, &"infantry", 1, Vector2i(0, 1))
 	assert_eq(_count(_run(walked, within), "spent_power"), 1)
+
+
+## Second Wind buys a second action, and a refreshed unit's second walk always
+## lands inside a reach snapshotted from where it was already standing — so the
+## criterion counting cells cannot see it and it needs its own. The control is
+## the same activation with nobody moving afterwards, where the meter really did
+## buy nothing and the finding comes back.
+func test_a_power_that_bought_a_second_action_is_not_reported() -> void:
+	var spent := _charged_state(&"iris_colt")
+	_stand(spent, &"infantry", 1, Vector2i(0, 1))
+	var again: Array = [{"c": "move", "path": [[0, 1], [1, 1]]}]
+	again.append_array(_power_turn([{"c": "move", "path": [[1, 1], [2, 1]]}]))
+	assert_eq(_count(_run(spent, again), "spent_power"), 0)
+	var idle := _charged_state(&"iris_colt")
+	_stand(idle, &"infantry", 1, Vector2i(0, 1))
+	var stood: Array = [{"c": "move", "path": [[0, 1], [1, 1]]}]
+	stood.append_array(_power_turn())
+	assert_eq(_count(_run(idle, stood), "spent_power"), 1)
 
 
 # --- the three exclusions --------------------------------------------------------

@@ -299,6 +299,9 @@ func test_banked_power_counts_a_full_meter_nobody_fires() -> void:
 	assert_true(co_state.is_ready(), "the fixture must actually hold a charged power")
 	assert_eq(_count(_run(state, _idle_rounds(2)), "banked_power"), 0)
 	assert_eq(_count(_run(state, _idle_rounds(3)), "banked_power"), 1)
+	# One uninterrupted hold is one finding however long it runs: holding a meter
+	# all match is what a benefit-gated doctrine does on purpose.
+	assert_eq(_count(_run(state, _idle_rounds(9)), "banked_power"), 1)
 
 
 func test_a_power_that_goes_off_resets_the_count() -> void:
