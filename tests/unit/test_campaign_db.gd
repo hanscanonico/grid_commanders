@@ -52,3 +52,12 @@ func test_a_roster_without_the_flagship_keeps_the_order_it_loaded() -> void:
 func test_the_badge_and_the_order_read_the_same_key() -> void:
 	assert_true(CampaignDB.leads(CampaignDB.FLAGSHIP_ID), "the flagship leads")
 	assert_false(CampaignDB.leads(&"six_marshals"), "and nothing else does")
+	# The row the picker prints, not just the key behind it: the war that leads
+	# the list has to be the war that says to start there.
+	assert_string_contains(
+		CampaignPickerPanel.row_text(_campaign(CampaignDB.FLAGSHIP_ID), null), "START HERE"
+	)
+	assert_false(
+		CampaignPickerPanel.row_text(_campaign(&"six_marshals"), null).contains("START HERE"),
+		"and no other war wears the badge"
+	)
