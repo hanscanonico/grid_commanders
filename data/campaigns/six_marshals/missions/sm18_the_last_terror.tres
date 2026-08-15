@@ -26,7 +26,7 @@ day = 9
 
 [sub_resource type="Resource" id="Failure_the_line_broke_before_day_9"]
 script = ExtResource("3")
-text = "The line broke before day 9."
+text = "Day 9 came and went without the heartland line seeing it out."
 last_day = 9
 
 [sub_resource type="Resource" id="Failure_nothing_worth_the_charge"]
@@ -36,7 +36,7 @@ max_losses = 9
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]
 script = ExtResource("4")
-text = "Take the northern town for a bonus."
+text = "Take the western town behind the line as well."
 cell = Vector2i(6, 2)
 
 [sub_resource type="Resource" id="Line_1"]
@@ -52,7 +52,7 @@ text = "Fear doesn't need to win, Commander. It only needs you to hesitate once.
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Then we don't. Spread the line, hold the passes, and let his one great strike find nothing worth the charge."
+text = "Then we don't. Two passes through the mountain, two squares wide apiece, with eight squares of rock between them — hold each one and keep everything behind it spread."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

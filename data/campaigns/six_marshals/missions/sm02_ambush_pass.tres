@@ -55,7 +55,7 @@ text = "Let him commit to one gap, then close on him from the towns either side.
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Both gaps are ours. Ferrow's column broke off with nothing to show for the climb."
+text = "He got his lane and nothing at the end of it. The column broke off with nothing to show for the climb."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

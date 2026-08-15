@@ -23,7 +23,7 @@ day = 7
 
 [sub_resource type="Resource" id="Failure_the_line_broke_before_day_7"]
 script = ExtResource("3")
-text = "The line broke before day 7."
+text = "The hills were still not held when day 7 ran out."
 last_day = 7
 
 [sub_resource type="Resource" id="Failure_nothing_he_can_count"]

@@ -34,17 +34,17 @@ text = "Every extra turn her doctrine bites harder. Race for the towns — don't
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "Ground holds better than roads promise. Take what's ours and dig in before she catches up."
+text = "There is not a road on this board. Good — my people cross the trees quicker than her column crosses the grass."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four of six wins it. Speed beats her attrition; a stand-up fight does not."
+text = "Five of the six towns sit closer to our base than to hers; only the far eastern one is properly hers. She does not need to beat us there — she only needs the walk to take long enough."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "Four towns, ours, before Vance's army found its footing."
+text = "She never caught the column she was chasing. We were through the trees and standing on them while her line was still crossing the grass."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

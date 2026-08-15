@@ -19,7 +19,7 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_towns_stayed_split_past_day_11"]
 script = ExtResource("3")
-text = "The towns stayed split past day 11."
+text = "Day 11 closed with the six towns still divided between us."
 last_day = 11
 
 [sub_resource type="Resource" id="Failure_never_bunched"]
@@ -45,7 +45,7 @@ text = "Take two towns. Keep the columns apart the way the ground already wants 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"tomas_reed"
-text = "Two towns, ours, spread across the board and never once bunched for Morn to punish."
+text = "Two towns taken, and no two of my people ever within a charge of each other. The flags came down faster than he could find a target."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

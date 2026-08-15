@@ -43,7 +43,7 @@ text = "Then we don't give him a block to erase. Spread the advance — there's 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The relay's the prize. Keep it, and keep the army loose while we do."
+text = "The relay stands alone at the top of nineteen squares of open field — no cover near it, no second prize beside it. Whoever walks at it walks in the open, so walk at it in ones."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
