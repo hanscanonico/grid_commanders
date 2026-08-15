@@ -34,7 +34,7 @@ text = "Every extra turn her doctrine bites harder. Race for the towns — don't
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "There is not a road on this board. Good — my people cross the trees quicker than her column crosses the grass."
+text = "There is not a road on this board, and not a mountain either. Nobody here gets a lane the ground pays for — it comes down to who starts nearer the towns."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")

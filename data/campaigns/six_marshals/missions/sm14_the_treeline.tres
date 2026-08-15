@@ -43,7 +43,7 @@ text = "Broken ground. Good ground."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three of the towns are our side of the wood line and the fourth is his — he opens standing on it. The two loose ones are both west; take them early and he spends the rest of the match walking."
+text = "Three of the towns are our side of the wood line and the fourth is his — he opens already holding it. The two loose ones are both west; take them early and he spends the rest of the match walking."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
