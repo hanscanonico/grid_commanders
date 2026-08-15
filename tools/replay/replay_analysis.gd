@@ -505,8 +505,8 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 ## the board is not reported.
 ##
 ## Latched over the streak, the way `undefended_hq` is: a side that banks for five
-## turns is one thing that happened, not five, and said once a
-## turn it was more than half of everything the analyser printed. The finding is
+## turns is one thing that happened, not five, and said once a turn it was more
+## than half of everything the analyser printed. The finding is
 ## held open while the streak runs and released when it ends — or at the end of the
 ## recording, for a side still sitting on its purse when the match stopped, and
 ## dropped outright below `HOARD_TURNS`.

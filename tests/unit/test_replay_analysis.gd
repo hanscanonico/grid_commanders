@@ -304,6 +304,29 @@ func test_banked_power_counts_a_full_meter_nobody_fires() -> void:
 	assert_eq(_count(_run(state, _idle_rounds(9)), "banked_power"), 1)
 
 
+## Latched, not silenced: a hold that really breaks is a second finding. Firing
+## is the only way a meter comes down, so the break here is the whole cycle —
+## spent, then charged back up by what seat 2's bomber destroys.
+func test_banked_power_reports_again_after_the_hold_breaks() -> void:
+	var state := _bare_state()
+	state.set_commander(1, commander_db.by_id(&"sera_lark"))
+	var co_state := state.commander_state(1)
+	co_state.charge = co_state.type.power_cost
+	_stand(state, &"tank", 1, Vector2i(4, 1))
+	_stand(state, &"tank", 1, Vector2i(4, 3))
+	_stand(state, &"infantry", 1, Vector2i(0, 4))  # so the kills do not end the match
+	_stand(state, &"bomber", 2, Vector2i(4, 2))
+	var entries := _idle_rounds(3)
+	entries.append_array([{"c": "power", "target": [0, 0]}, {"c": "end_turn"}])
+	# Two runs at the armour: seat 1 banks what it loses, which refills the meter.
+	for target: Array in [[4, 1], [4, 3]]:
+		entries.append({"c": "attack", "path": [[4, 2]], "target": target})
+		entries.append({"c": "end_turn"})
+		entries.append({"c": "end_turn"})
+	entries.append_array(_idle_rounds(3))
+	assert_eq(_count(_run(state, entries), "banked_power"), 2)
+
+
 func test_a_power_that_goes_off_resets_the_count() -> void:
 	var state := _bare_state()
 	var db := CommanderDB.load_default()
