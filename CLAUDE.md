@@ -882,8 +882,11 @@ plan is stated in full below and has no copy there.
   **`O` lowers and raises the card** — a lens key like `T` and `R`, stated as a top-bar chip that is
   off the bar entirely outside a campaign, with the card's up/down state the **panel's own** rather
   than `Battle`'s; every mission opens with it up, deliberately not a device preference.
-  **The card says what to do and the board says where**: an objective that names ground is also
-  **marked on the board**. `MissionObjective.marker_cells` is the authored `@export` cells read
+  **The card says what to do and the board says where**: all 317 objective strings were rewritten to
+  one convention — the verb names the mechanic, a failure states the loss in the present, every
+  number is read from the resource's own field — which `docs/campaign_authoring.md` owns, while the
+  story keeps its voice (a `MissionLine` is where voice belongs). An objective that names ground is
+  also **marked on the board**. `MissionObjective.marker_cells` is the authored `@export` cells read
   straight back — no board, no state, no tally, which is what separates it from the cell hooks CD8
   deleted — `BattleCampaign.objective_cells` is the single collector (live via `is_live`, unmet,
   primary and bonus alike), `ObjectiveMarks` is a dumb drawer like `CapturePips`, and the mark is

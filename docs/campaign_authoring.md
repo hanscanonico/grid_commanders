@@ -89,6 +89,32 @@ Everything is counted across the player's **side** (`GameState.allied`), so an
 ally's capture advances the objective and an ally's casualty is on the bill. The
 one deliberate exception is `DefeatTeam`, which is about one army on purpose.
 
+#### How an objective is worded
+
+`text` is an instruction on a card a player reads mid-battle, not a line of the
+story — the story is in `MissionLine`, which is where the voice belongs. Three
+rules, and every shipped objective follows them:
+
+**The verb names the mechanic.** `Capture` a `CaptureCell`, `Hold … for N days` a
+`HoldCell`, `Move N units to …` a `ReachCell`, `Destroy` a `DestroyUnit`,
+`Survive until day N` a `SurviveUntilDay`. A `CaptureCell` written "Hold the
+eastern relay" or "Reach the shrine" tells the player the wrong mechanic, and
+those two really shipped. Where the player *already* owns the cell, `Keep` reads
+truer than `Capture` — the only two are Signal Hill's.
+
+**A failure states the loss, in the present.** "Time runs out at the end of day
+10", not "Vale's garrison held the crossroads past day 10": a `failures` entry is
+a thing the player must stop, and past tense reads as something already lost on
+day 1.
+
+**Every number comes from the resource's own field**, spelled in digits so it
+matches the readout beside it (`DAY 1/10`, `2/3 DAYS`). Prose that counts by hand
+drifts the first time a mission is retuned, and then the card lies about what the
+runtime checks.
+
+One condition, one sentence, no trailing aside: "why" belongs to the briefing.
+Where the ground is, the board says — see below.
+
 #### What the board marks
 
 An objective that names ground is **marked on the board** as well as printed on
