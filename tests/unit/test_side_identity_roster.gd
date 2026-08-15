@@ -99,3 +99,23 @@ func test_every_side_draws_in_its_own_atlas_row() -> void:
 			assert_false(rows.has(row), "row %d is worn twice in %s" % [row, factions])
 			rows[row] = true
 		assert_eq(rows.size(), 4, "four sides, four rows: %s" % [factions])
+
+
+## Every general on the roster belongs to one of the four tabs the selection page
+## deals. `CommanderVisuals.key_for_faction` answers neutral for a faction it was
+## never taught, and the select page draws its Random pick from the whole roster:
+## a general whose `.tres` spelled its faction wrong would still be drawable and
+## would land on no tab at all, which is the ticket COM-227 closed reopening
+## itself quietly.
+func test_every_general_belongs_to_a_faction_tab() -> void:
+	var tabs: Array[StringName] = []
+	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
+		tabs.append(theme.key)
+	for commander in Fixture.commander_db().all():
+		if commander.id == CommanderType.NEUTRAL_ID:
+			continue
+		var key := CommanderVisuals.key_for_faction(commander.faction)
+		assert_true(
+			tabs.has(key),
+			"%s names faction '%s', which is on no tab" % [commander.id, commander.faction]
+		)

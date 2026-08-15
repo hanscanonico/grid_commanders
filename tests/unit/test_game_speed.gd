@@ -39,16 +39,6 @@ func test_a_stored_slow_preference_resolves_to_normal() -> void:
 	)
 
 
-func test_cycling_wraps_through_every_tier() -> void:
-	var id: StringName = GameSpeed.DEFAULT_ID
-	var walked: Array[StringName] = []
-	for _i in GameSpeed.ordered().size():
-		walked.append(id)
-		id = GameSpeed.next(id).id
-	assert_eq(walked.size(), GameSpeed.ordered().size(), "the walk visits every tier once")
-	assert_eq(id, GameSpeed.DEFAULT_ID, "and comes back round to where it started")
-
-
 func test_the_cut_in_clock_runs_at_the_authored_pace_on_the_default_tier() -> void:
 	assert_eq(
 		GameSpeed.default_speed().cutscene_rate(),

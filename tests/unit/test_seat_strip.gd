@@ -55,9 +55,9 @@ func test_packing_preserves_who_stands_with_whom() -> void:
 	assert_ne(settled[0], settled[1], "and the pairs are still opposed")
 
 
-## A board below the closable threshold builds no Empty button, so a closed seat
-## surviving the shrink would be unreachable state: every one reopens, to the
-## computer, matching the strip's own seat defaults.
+## Every Empty button on a board below the closable threshold is dead, so a closed
+## seat surviving the shrink would be state nothing on screen could undo: every one
+## reopens, to the computer, matching the strip's own seat defaults.
 func test_a_shrink_to_an_unclosable_board_reopens_every_closed_seat() -> void:
 	assert_eq(
 		SeatStrip.reopened_seats([HUMAN, EMPTY] as Array[int], false), [HUMAN, CPU] as Array[int]

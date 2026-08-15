@@ -8,17 +8,41 @@ extends Control
 ## Draws, and does nothing else — the sibling of CutsceneSide. Every value it
 ## renders is written onto it by CaptureCutscene, which owns the clock; the stage
 ## never reads the simulation, never advances time, and never decides an outcome.
-## The property is the board's own art (plan D2): the terrain atlas cell for the
-## property's column, in the owner's team row, swapped to the capturer's row at
-## the flip. The squad is the board's own unit art, blown up, never redrawn.
+## The squad is the board's own unit art, blown up, never redrawn (plan D2).
+##
+## The property is that plan's one recorded departure, taken here for the reason
+## CutsceneScenery states: an atlas cell is a square of ground with the building
+## drawn on it, so blitting the cell brought its opaque plate along and stood the
+## property on a hard-edged green rectangle (COM-231). The shape is drawn instead
+## and its colour sampled off that same cell — in the owner's team row, swapped to
+## the capturer's at the flip — so the flip is the colour changing under a shape
+## that keeps standing, and nothing about it is re-derived here.
 
 const PLATE_TOP_H := 26
 const PLATE_BOT_H := 20
 ## Share of the arena the grass plane fills, up from the bottom.
 const GROUND_RATIO := 0.42
-## How big the property is drawn. The board cell is 64 px; here it fills a good
-## third of the frame so the flip is the thing the eye lands on.
+## How tall the property's tallest shape stands. The board cell is 64 px; here it
+## fills a good third of the frame so the flip is the thing the eye lands on.
 const PROP_PX := 132.0
+## The blocks the property is built out of, back to front: an x offset and a
+## height, both shares of PROP_PX, with `y` the depth — 1.0 stands on the squad's
+## own line and 0.0 sits furthest back. One tower reads as a wall at this size;
+## three at three depths read as a place, the same reason CutsceneSide stands four.
+const PROP_BLOCKS: Array[Vector3] = [
+	Vector3(-0.30, 0.0, 0.60),
+	Vector3(0.30, 0.45, 0.74),
+	Vector3(0.0, 1.0, 1.0),
+]
+## How far back a block sits per unit of depth, as a share of PROP_PX.
+const PROP_DEPTH_PX := 0.14
+## The part of the atlas cell this cut-in takes the property's colour from: the
+## roof band, where the board paints a property's owner. CutsceneSide averages the
+## whole object instead, which is right for scenery a fight happens in front of —
+## but here the property is the only thing on the stage and the flip is what the
+## frame is *for*, and the object average carries enough grey wall and grass either
+## side of the roof to leave two factions the same olive.
+const ROOF_WINDOW := Rect2i(16, 24, 34, 16)
 ## Where the property's base sits, as a share of the arena, and how high off the
 ## bottom its feet rest.
 const PROP_CENTER := 0.66
@@ -181,26 +205,58 @@ func _horizon(arena: Rect2) -> float:
 # --- the property ------------------------------------------------------------
 
 
-## The property, drawn from the board's own atlas cell, squashing on each mash and
-## flashing white as it flips to the capturer's colours.
+## The property: the cut-in's own scenery shapes in the colour of the board's
+## cell, squashing on each mash and whiting out as it flips to the capturer's.
+## The squash is a transform about the base, so a shape drawn in its own
+## coordinates is squashed rather than each shape knowing about the mash.
 func _draw_property(arena: Rect2) -> void:
 	var base := _prop_base(arena)
+	CutsceneScenery.draw_contact_shadow(self, base, PROP_PX * 0.46, 0.34)
+	if not terrain.stands_in_cutin():
+		_draw_paved_property(base)
+		return
+	var tint := CutsceneScenery.cell_tint(prop_col, _atlas_row(), ROOF_WINDOW)
+	draw_set_transform(base, 0.0, Vector2(1.0 + squash * 0.4, 1.0 - squash))
+	for block in PROP_BLOCKS:
+		# Distance drains contrast here as it does on the ground bands, so the
+		# blocks behind sit back rather than crowding the one in front.
+		var lit := lerpf(0.86, 1.0, block.y)
+		var shade := Color(tint.r * lit, tint.g * lit, tint.b * lit, 1.0)
+		CutsceneScenery.draw_shape(
+			self,
+			terrain.cutin_scenery,
+			Vector2(PROP_PX * block.x, -PROP_PX * PROP_DEPTH_PX * (1.0 - block.y)),
+			PROP_PX * block.z,
+			shade.lerp(Color.WHITE, brightness)
+		)
+	draw_set_transform(Vector2.ZERO)
+
+
+## A property whose art is a surface rather than an object — no terrain that ships
+## can be captured from one, but the stage draws whatever the board hands it, and
+## a paving cell tiles rather than stands (TerrainType.stands_in_cutin).
+func _draw_paved_property(base: Vector2) -> void:
 	var w := PROP_PX * (1.0 + squash * 0.4)
 	var h := PROP_PX * (1.0 - squash)
-	# Contact shadow, on the ground whatever the building is doing above it.
-	draw_set_transform(base + Vector2(0.0, -3.0), 0.0, Vector2(1.0, 0.3))
-	draw_circle(Vector2.ZERO, PROP_PX * 0.5, Color(CutscenePalette.GROUND_SHADOW, 0.34))
-	draw_set_transform(Vector2.ZERO)
-	var atlas := _terrain_atlas()
-	var row := row_after if flipped else row_before
 	var source := Rect2(
 		prop_col * BattleView.TERRAIN_PX,
-		row * BattleView.TERRAIN_PX,
+		_atlas_row() * BattleView.TERRAIN_PX,
 		BattleView.TERRAIN_PX,
 		BattleView.TERRAIN_PX
 	)
 	var tint := Color(1.0, 1.0, 1.0).lerp(Color(3.0, 3.0, 3.0), brightness)
-	draw_texture_rect_region(atlas, Rect2(base.x - w * 0.5, base.y - h, w, h), source, tint)
+	draw_texture_rect_region(
+		_terrain_atlas(), Rect2(base.x - w * 0.5, base.y - h, w, h), source, tint
+	)
+
+
+## The atlas row the property is drawn from: the owner's faction row, swapped to
+## the capturer's at the flip, and the untinted row on terrain that wears nobody's
+## colours — CutsceneSide._atlas_row's rule, asked here for the same reason.
+func _atlas_row() -> int:
+	if not terrain.team_tinted:
+		return SideIdentity.NEUTRAL_ROW
+	return row_after if flipped else row_before
 
 
 func _prop_base(arena: Rect2) -> Vector2:

@@ -148,16 +148,6 @@ static func ids() -> PackedStringArray:
 	return known
 
 
-## The tier after `wanted` in menu order, wrapping — what the in-battle Speed
-## row cycles through.
-static func next(wanted: StringName) -> GameSpeed:
-	var all := ordered()
-	for i in all.size():
-		if all[i].id == wanted:
-			return all[wrapi(i + 1, 0, all.size())]
-	return default_speed()
-
-
 # --- the durations a tier answers with ---------------------------------------
 
 
