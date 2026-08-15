@@ -156,7 +156,7 @@ func chrome_hub() -> Dictionary[String, Control]:
 ## not carry a copy of that per page.
 func pose(driver: MenuCaptureDriver) -> Callable:
 	if driver.poses_campaigns():
-		open()
+		pose_picker()
 		return chrome_picker
 	if driver.poses_campaign_debrief():
 		pose_debrief(true)
@@ -168,6 +168,18 @@ func pose(driver: MenuCaptureDriver) -> Callable:
 		pose_interlude()
 		return chrome_interlude
 	return Callable()
+
+
+## Dev captures only: the war list on a fresh profile for every campaign, the way
+## `pose_hub` poses its own — the rows carry how far each war has got, so an
+## `open()` here would photograph how much of the game this machine has played.
+func pose_picker() -> void:
+	_menu_root.hide()
+	var campaigns := CampaignDB.load_default().all()
+	var fresh: Dictionary[StringName, CampaignState] = {}
+	for campaign in campaigns:
+		fresh[campaign.id] = CampaignState.begin(campaign)
+	_picker.begin(campaigns, fresh)
 
 
 func pose_debrief(won: bool) -> void:

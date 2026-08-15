@@ -34,9 +34,14 @@ func _ready() -> void:
 
 ## Opens the page on a roster of campaigns. Handed in rather than read here for
 ## `ReplayPickerPanel.begin`'s reason: a photographed frame must not depend on
-## what the machine that took it happens to have on disk.
-func begin(campaigns: Array[CampaignDefinition]) -> void:
-	_fill(campaigns)
+## what the machine that took it happens to have on disk. `posed` is the same
+## rule applied to the other half of a row — a capture hands in the war it wants
+## photographed, and every campaign it does not name is read off the profile as
+## a player's opening is.
+func begin(
+	campaigns: Array[CampaignDefinition], posed: Dictionary[StringName, CampaignState] = {}
+) -> void:
+	_fill(campaigns, posed)
 	show()
 	if _row_buttons.is_empty():
 		_back_button.grab_focus()
@@ -129,7 +134,9 @@ func _note(text: String) -> Label:
 	return label
 
 
-func _fill(campaigns: Array[CampaignDefinition]) -> void:
+func _fill(
+	campaigns: Array[CampaignDefinition], posed: Dictionary[StringName, CampaignState]
+) -> void:
 	for button in _row_buttons:
 		button.queue_free()
 	_row_buttons.clear()
@@ -137,7 +144,12 @@ func _fill(campaigns: Array[CampaignDefinition]) -> void:
 	_empty.visible = campaigns.is_empty()
 	for campaign in campaigns:
 		var button := Button.new()
-		button.text = row_text(campaign, CampaignProfile.load_progress(campaign.id))
+		var progress: CampaignState = (
+			posed[campaign.id]
+			if posed.has(campaign.id)
+			else CampaignProfile.load_progress(campaign.id)
+		)
+		button.text = row_text(campaign, progress)
 		var variant := (
 			UiTheme.ButtonVariant.PRIMARY
 			if CampaignDB.leads(campaign.id)
