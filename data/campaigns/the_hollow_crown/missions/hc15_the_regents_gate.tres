@@ -18,7 +18,7 @@ cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The gatehouse held past day 8, and the regent kept his proof."
+text = "The gatehouse held past day 8, and the regent kept her proof."
 last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
