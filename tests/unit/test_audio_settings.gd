@@ -35,9 +35,25 @@ func test_cycling_wraps_through_every_step() -> void:
 	var walked: Array[StringName] = []
 	for _i in Settings.VOLUME_STEPS.size():
 		walked.append(id)
-		id = Settings.next_volume(id)
+		id = Settings.stepped_volume(id, 1)
 	assert_eq(walked.size(), Settings.VOLUME_STEPS.size(), "the walk visits every step once")
 	assert_eq(id, Settings.FULL_ID, "and comes back round to where it started")
+
+
+func test_stepping_back_is_the_exact_inverse_of_stepping_on() -> void:
+	for step: Dictionary in Settings.VOLUME_STEPS:
+		var id: StringName = step["id"]
+		assert_eq(
+			Settings.stepped_volume(Settings.stepped_volume(id, 1), -1),
+			id,
+			"left undoes right on the volume ladder"
+		)
+	for tier in GameSpeed.ordered():
+		assert_eq(
+			Settings.stepped_speed(Settings.stepped_speed(tier.id, 1), -1),
+			tier.id,
+			"and on the speed ladder beside it"
+		)
 
 
 func test_off_is_the_mute_floor_and_full_is_untouched() -> void:
@@ -67,3 +83,17 @@ func test_the_map_menu_offers_one_sound_row_reading_off_settings() -> void:
 		"Sound: %s" % Settings.volume_label(Settings.volume),
 		"the row reads the volume off its owner"
 	)
+
+
+func test_every_value_row_is_offered_once_and_declares_how_it_steps() -> void:
+	var rows := BattleMenus.map_actions(Fixture.state("[terrain]\nB."))
+	var ids := _ids(rows)
+	for row: StringName in Settings.VALUE_ROWS:
+		assert_eq(ids.count(row), 1, "exactly one %s row" % row)
+	for entry in rows:
+		var cycles: bool = entry.get("cycle", Callable()).is_valid()
+		assert_eq(
+			cycles,
+			entry["id"] in Settings.VALUE_ROWS,
+			"%s cycles with left/right exactly when it carries a value" % entry["id"]
+		)

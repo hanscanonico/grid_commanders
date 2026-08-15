@@ -22,12 +22,23 @@ const ROW_ACTIONS: Dictionary = {
 	&"cursor_up": -1,
 	&"cursor_down": 1,
 }
+## Which way each direction action steps the armed row's own value (COM-229).
+## A row carries one by handing over a `cycle` callable that takes the step and
+## answers with the row's new label; a row that hands over none has no value to
+## step, so left and right stay unclaimed there and keep whatever they meant to
+## whoever opened the menu. The menu never reads the setting itself — it asks the
+## row, the same way every row above is gated by the authority that owns it.
+const VALUE_ACTIONS: Dictionary = {
+	&"cursor_left": -1,
+	&"cursor_right": 1,
+}
 
 @onready var rows: VBoxContainer = %MenuRows
 
 var _ids: Array[StringName] = []
 var _labels: Array[String] = []
 var _disabled: Array[bool] = []
+var _cycles: Array[Callable] = []
 var _index := 0
 ## One highlight step per directional gesture; see DirectionalInput.
 var _dirs := DirectionalInput.new()
@@ -37,10 +48,11 @@ func _ready() -> void:
 	add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
 
 
-## actions: [{id: StringName, label: String, disabled?: bool, icon?: Texture2D}, ...]
+## actions: [{id, label, disabled?: bool, icon?: Texture2D, cycle?: Callable}, ...]
 ## At least one entry must be enabled (menus always include Cancel).
 ## `icon` draws to the left of the label; rows that omit it in an illustrated
-## menu get a spacer so every label still starts in the same column.
+## menu get a spacer so every label still starts in the same column. `cycle` makes
+## the row a value row — see VALUE_ACTIONS.
 func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 	for child in rows.get_children():
 		rows.remove_child(child)
@@ -48,6 +60,7 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 	_ids.clear()
 	_labels.clear()
 	_disabled.clear()
+	_cycles.clear()
 	var spacer := _spacer_icon(actions)
 	for entry: Dictionary in actions:
 		var button := Button.new()
@@ -63,6 +76,7 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		_ids.append(id)
 		_labels.append(entry.label)
 		_disabled.append(is_disabled)
+		_cycles.append(entry.get("cycle", Callable()))
 	_index = -1
 	_step_index(1)
 	_update_labels()
@@ -82,12 +96,16 @@ func close() -> void:
 ## the chosen row then does is not the input layer's business. An unrecognised
 ## event still falls through unclaimed.
 func _unhandled_input(event: InputEvent) -> void:
-	var dir := _dirs.step(event, ROW_ACTIONS.keys())
+	var dir := _dirs.step(event, ROW_ACTIONS.keys() + VALUE_ACTIONS.keys())
 	if not visible:
 		return
-	if not dir.is_empty():
+	if ROW_ACTIONS.has(dir):
 		get_viewport().set_input_as_handled()
 		_step_index(ROW_ACTIONS[dir])
+		_update_labels()
+	elif VALUE_ACTIONS.has(dir) and _cycles[_index].is_valid():
+		get_viewport().set_input_as_handled()
+		_labels[_index] = _cycles[_index].call(VALUE_ACTIONS[dir])
 		_update_labels()
 	elif event.is_action_pressed(&"confirm"):
 		get_viewport().set_input_as_handled()

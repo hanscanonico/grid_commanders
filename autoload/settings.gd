@@ -1,16 +1,16 @@
 extends Node
 ## Device preferences: what this machine likes, as opposed to what this match is.
-## Four of them today — how fast the battle's theatre plays out, whether a
+## Five of them today — how fast the battle's theatre plays out, whether a
 ## resolved attack cuts to the full-screen battle animation at all, how loud the
-## game is, and which of the first-match hints this player has already earned
-## their way out of.
+## game is, whether ending the day stops to confirm when units can still act, and
+## which of the first-match hints this player has already earned their way out of.
 ##
 ## Deliberately not MatchConfig and deliberately not in the save file: resuming a
 ## three-day-old save should play at the speed you like *today* and watch battles
 ## the way you like *today*, and a hot-seat pair share one screen anyway. The
 ## hints belong here for the same reason and one more (UX recovery plan D1): a
 ## player who has learned to capture has learned it for good, and tying that to a
-## match would teach them again on every new one. All four are presentation only
+## match would teach them again on every new one. All five are presentation only
 ## — nothing here may ever change a rule, a number, or what the sim does, so two
 ## players' "same seed, same commands" keep meaning the same result. Nothing here
 ## is ever handed to core/ or ai/, so the sim cannot observe a preference it never
@@ -30,6 +30,7 @@ const SECTION := "game"
 const SPEED_KEY := "speed"
 const BATTLE_ANIMATIONS_KEY := "battle_animations"
 const VOLUME_KEY := "volume"
+const END_TURN_CONFIRM_KEY := "end_turn_confirm"
 const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
@@ -69,6 +70,15 @@ const MASTER_BUS := 0
 ## needs a way back to the start that a relaunch does not undo.
 const RESET_HINTS_ARG := "--reset-hints"
 
+## The pause menu's value rows, in the order they are offered. Named here rather
+## than in the menu that draws them because the values are this file's: a row
+## reads its label off `row_label` and steps through `cycle_row`, so the label, the
+## ladder and the stored preference are one thing and cannot drift apart.
+const SPEED_ROW := &"speed"
+const SOUND_ROW := &"sound"
+const END_TURN_ROW := &"end_turn_confirm"
+const VALUE_ROWS: Array[StringName] = [SPEED_ROW, SOUND_ROW, END_TURN_ROW]
+
 ## How fast moves and battles play out on screen. Never null. Callers read it at
 ## the moment they animate rather than caching it, so a mid-match change takes
 ## effect on the very next animation.
@@ -83,6 +93,13 @@ var battle_animations := true
 ## nothing answers to falls back to the loudest step, the same shape
 ## GameSpeed.by_id answers an unknown tier with.
 var volume: StringName = FULL_ID
+
+## Whether ending the day stops to confirm while units can still act. On is what
+## the game has always done — EndTurnGuard names what the day would discard —
+## and off ends the day on the first press, for a player who reads their own
+## board. Presentation only like everything else here: nothing under core/ or
+## ai/ learns it exists, and ReadyUnits still answers who is ready either way.
+var end_turn_confirm := true
 
 ## Which first-match hints this player has already performed their way out of —
 ## `TutorialHints` ids, retired for good. MissionStrip reads it to pick what to
@@ -142,37 +159,50 @@ static func volume_db(id: StringName) -> float:
 	return VOLUME_STEPS[maxi(i, 0)]["db"]
 
 
-## The step after `id`, wrapping — what the in-battle Sound row cycles through,
-## the way GameSpeed.next serves the Speed row beside it.
-static func next_volume(id: StringName) -> StringName:
-	var i := volume_index(id)
-	return VOLUME_STEPS[wrapi(i + 1, 0, VOLUME_STEPS.size())]["id"]
+## The step `step` places along VOLUME_STEPS from `id`, wrapping. Signed rather
+## than a plain "next" because the pause menu walks it both ways, and one piece
+## of arithmetic is what makes left the exact inverse of right.
+static func stepped_volume(id: StringName, step: int) -> StringName:
+	var i := maxi(volume_index(id), 0)
+	return VOLUME_STEPS[wrapi(i + step, 0, VOLUME_STEPS.size())]["id"]
 
 
-## What the pause menu's Speed row reads and what the banner confirming a change
-## says. One string with one owner, so a row and its own banner can never word
-## the same tier differently.
-func speed_row_label() -> String:
-	return "Speed: %s" % speed.display_name
+## The same, over GameSpeed's own tier order — which stays that class's, read
+## here rather than re-stated.
+static func stepped_speed(id: StringName, step: int) -> StringName:
+	var ids := GameSpeed.ids()
+	var i := maxi(ids.find(String(id)), 0)
+	return StringName(ids[wrapi(i + step, 0, ids.size())])
 
 
-func sound_row_label() -> String:
-	return "Sound: %s" % volume_label(volume)
+## What a value row reads on the pause menu at its current setting, and what the
+## banner confirming a change says. One string with one owner, so a row and its
+## own banner can never word the same setting differently.
+func row_label(row: StringName) -> String:
+	match row:
+		SPEED_ROW:
+			return "Speed: %s" % speed.display_name
+		SOUND_ROW:
+			return "Sound: %s" % volume_label(volume)
+		END_TURN_ROW:
+			return "End-turn check: %s" % ("On" if end_turn_confirm else "Off")
+	push_error("Settings: %s names no value row" % row)
+	return ""
 
 
-## Cycles Slow -> Normal -> Quick -> Instant and persists, so the next animation
-## already obeys it, and answers with the row's new label — which is what the
-## banner then says, the setting being otherwise invisible until something moves.
-func cycle_speed() -> String:
-	set_speed(GameSpeed.next(speed.id).id)
-	return speed_row_label()
-
-
-## The same, one ladder over: Full -> Half -> Quiet -> Off, heard immediately
-## because set_volume applies the step it just took.
-func cycle_volume() -> String:
-	set_volume(next_volume(volume))
-	return sound_row_label()
+## Steps a value row along its own ladder, persists it and answers with the row's
+## new label — the setting being otherwise invisible until something moves. `step`
+## is +1 for the next value and -1 for the one before; a two-state row takes
+## either as the other one.
+func cycle_row(row: StringName, step: int = 1) -> String:
+	match row:
+		SPEED_ROW:
+			set_speed(stepped_speed(speed.id, step))
+		SOUND_ROW:
+			set_volume(stepped_volume(volume, step))
+		END_TURN_ROW:
+			set_end_turn_confirm(not end_turn_confirm)
+	return row_label(row)
 
 
 func _apply_volume() -> void:
@@ -186,6 +216,14 @@ func _apply_volume() -> void:
 ## _apply_cmdline) never touches the file.
 func set_battle_animations(enabled: bool) -> void:
 	battle_animations = enabled
+	if _persistent:
+		_save()
+
+
+## The setter the End-turn check row is wired to. Mirrors set_battle_animations,
+## down to a pinned or scripted launch leaving the file alone.
+func set_end_turn_confirm(enabled: bool) -> void:
+	end_turn_confirm = enabled
 	if _persistent:
 		_save()
 
@@ -249,6 +287,9 @@ func _load() -> void:
 	var stored_volume: Variant = config.get_value(SECTION, VOLUME_KEY, "")
 	if stored_volume is String and volume_index(StringName(stored_volume)) >= 0:
 		volume = StringName(stored_volume)
+	var stored_confirm: Variant = config.get_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
+	if stored_confirm is bool:
+		end_turn_confirm = stored_confirm
 	# Stored as strings and read back as StringNames: ConfigFile has no
 	# StringName, and a hint id written by one version must still match the
 	# TutorialHints id in the next. An id nothing answers to any more is kept
@@ -267,6 +308,7 @@ func _save() -> void:
 	config.set_value(SECTION, SPEED_KEY, String(speed.id))
 	config.set_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
 	config.set_value(SECTION, VOLUME_KEY, String(volume))
+	config.set_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
 	var hints := PackedStringArray()
 	for id in retired_hints:
 		hints.append(String(id))
