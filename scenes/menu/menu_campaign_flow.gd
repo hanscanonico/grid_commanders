@@ -267,8 +267,11 @@ func pose_hub_deep() -> void:
 		return
 	var campaign: CampaignDefinition = posed[0]
 	var progress := CampaignState.begin(campaign)
-	for i in mini(POSED_CLEARED_MISSIONS, campaign.missions.size()):
-		progress.complete(campaign, campaign.missions[i].id, POSED_STARS, POSED_DAY)
+	for _cleared in POSED_CLEARED_MISSIONS:
+		var next := progress.open_mission(campaign)
+		if next == &"":
+			break
+		progress.complete(campaign, next, POSED_STARS, POSED_DAY)
 	_campaign = campaign
 	_menu_root.hide()
 	_hub.begin(campaign, progress)
