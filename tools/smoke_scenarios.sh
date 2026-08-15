@@ -233,7 +233,7 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # selects the first board on the shelf that deals more than a duel: the picker's
 # `· NP` suffix and a four-row seat strip are otherwise in no frame at all.
 #
-# The five campaign menu scenarios are the same argument for the six authored
+# The campaign menu scenarios are the same argument for the six authored
 # wars, which had no frame anywhere: `menu_campaigns` is the war picker,
 # `menu_campaign_hub` its mission list, `menu_campaign_brief` that hub with the
 # open mission's briefing up, and `menu_campaign_debrief` and
@@ -243,6 +243,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # frame may depend on — and each measures its own page's chrome against the
 # frame before it writes, as the rest of the menu family does: a panel whose
 # rows stacked at the container's origin writes a perfectly healthy PNG.
+# `menu_campaign_deep` is the sixth, and the only frame in the sweep where the
+# hub's list is scrolled: it walks the flagship war forward past the twelve rows
+# that fit the page, so the open mission is one the list has to scroll to, which
+# makes it the regression frame for that list's follow_focus.
 #
 # The mission_strip pair is COM-12's, and since COM-122 both run on the tutorial
 # board — the only one the strip teaches on. Every other scenario runs with the
@@ -320,7 +324,7 @@ DEFAULT_MODES=(
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
 	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_replays
 	menu_campaigns menu_campaign_hub menu_campaign_brief menu_campaign_debrief
-	menu_campaign_interlude
+	menu_campaign_interlude menu_campaign_deep
 )
 
 if [[ ! -x "$GODOT" ]]; then

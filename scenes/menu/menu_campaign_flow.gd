@@ -11,6 +11,14 @@ extends RefCounted
 ## Staging is still one `MatchRequest` through `MatchConfig`, exactly as the
 ## skirmish and replay routes stage theirs, so a mission boots the shipped path.
 
+## How far `pose_hub_deep` walks a war, and what each mission cost it. Thirteen is
+## the first count whose open mission the list has to *scroll* to reach — twelve
+## rows fit the page, so a shorter walk photographs a list that never moved and
+## would read the same with `follow_focus` off.
+const POSED_CLEARED_MISSIONS := 13
+const POSED_STARS := 2
+const POSED_DAY := 5
+
 ## The campaign whose hub is open, so a deploy knows which war its mission is
 ## from. Held here rather than asked of `CampaignSession`, which is not told
 ## anything until the launch itself.
@@ -164,6 +172,9 @@ func pose(driver: MenuCaptureDriver) -> Callable:
 	if driver.poses_campaign_hub():
 		pose_hub(driver.poses_campaign_brief())
 		return chrome_hub
+	if driver.poses_campaign_deep():
+		pose_hub_deep()
+		return chrome_hub
 	if driver.poses_campaign_interlude():
 		pose_interlude()
 		return chrome_interlude
@@ -243,6 +254,24 @@ func pose_hub(open_briefing: bool) -> void:
 	_hub.begin(posed[0], CampaignState.begin(posed[0]))
 	if open_briefing:
 		_hub.debug_open_first()
+
+
+## Dev captures only: the same hub a war is deep into, which is the one frame its
+## list is scrolled in. The progress is walked forward the way a player walks it —
+## a fresh ledger, then one `complete` per mission — so the route, the unlocks and
+## the counts are the ones a real profile would hold, and nothing is written to
+## disk or read off this machine's own wars.
+func pose_hub_deep() -> void:
+	var posed := CampaignDB.load_default().all()
+	if posed.is_empty():
+		return
+	var campaign: CampaignDefinition = posed[0]
+	var progress := CampaignState.begin(campaign)
+	for i in mini(POSED_CLEARED_MISSIONS, campaign.missions.size()):
+		progress.complete(campaign, campaign.missions[i].id, POSED_STARS, POSED_DAY)
+	_campaign = campaign
+	_menu_root.hide()
+	_hub.begin(campaign, progress)
 
 
 ## Opens a campaign's hub on whatever the player has already done in it. A
