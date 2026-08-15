@@ -17,10 +17,10 @@ extends RefCounted
 ## production asks the terrain what it builds — exactly what BuildCommand checks.
 ##
 ## No scene tree and no sprite here, like the rest of the layers Battle delegates
-## to. The one autoload it reads is Settings, for the device-preference rows'
-## labels and the ladders they step along, and that is the same rule as
-## everything above rather than an exception to it: whoever owns the answer is
-## who gets asked.
+## to. The two autoloads it reads are Settings, for the device-preference rows'
+## labels and the ladders they step along, and CampaignSession, for whether there
+## is a briefing to re-read at all — and that is the same rule as everything above
+## rather than an exception to it: whoever owns the answer is who gets asked.
 
 const CANCEL := {"id": &"cancel", "label": "Cancel"}
 
@@ -156,7 +156,13 @@ static func build_actions(
 ## because a replay seats no computer. The Auto row goes with them for the same
 ## reason: a recording seats no computer, so there is no seat to hand over — the
 ## commands are already written, and a planner handed one would think it owned a
-## turn the recording is playing.
+## turn the recording is playing. The Briefing row goes with them too: a mission's
+## words belong to the mission being played, and a recording is watched from
+## outside the war it was recorded in.
+##
+## Briefing is offered only inside a campaign, asked of CampaignSession, because
+## outside one there is nothing to re-read. It stays on a paused computer turn —
+## reading the orders is not acting on them, which is what `commandable` drops.
 static func map_actions(
 	game: GameState,
 	commandable: bool = true,
@@ -171,6 +177,8 @@ static func map_actions(
 		if co_state.is_ready():
 			actions.append({"id": &"power", "label": co_state.type.power_name})
 	actions.append({"id": &"commanders", "label": "Commanders"})
+	if savable and CampaignSession.active():
+		actions.append({"id": &"briefing", "label": "Briefing"})
 	for row: StringName in Settings.VALUE_ROWS:
 		actions.append(
 			{

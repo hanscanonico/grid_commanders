@@ -129,8 +129,14 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # chips' fog gate going to BattleOverlays, which owns the transient paint and was
 # already handed the drawer: Battle was filtering a table it then handed straight
 # over, and CapturePips stays as dumb as it was.
+#
+# battle.gd 1420 -> 1423: the pause menu's Briefing row, and the extraction came
+# first as this file's convention asks. Which words a re-read says and what the
+# board does while they are up is BattleCampaign.say_briefing's, holding the card
+# until it is dismissed is BattleAnimator's, and what is left here is the three
+# lines of the dispatch branch itself.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1420
+scenes/battle/battle.gd 1423
 scenes/menu/main_menu.gd 1121
 "
 

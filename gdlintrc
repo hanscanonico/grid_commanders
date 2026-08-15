@@ -331,4 +331,7 @@ max-public-methods: 22
 #
 # 1429 -> 1420, tracking battle.gd down again: the mission's objective marks paid
 # for themselves. See the same entry in tools/check_scripts.sh.
-max-file-lines: 1420
+#
+# 1420 -> 1423, tracking battle.gd up: the pause menu's Briefing row, whose flow
+# went to BattleCampaign first. See the same entry in tools/check_scripts.sh.
+max-file-lines: 1423
