@@ -117,28 +117,38 @@ func test_hoarding_is_money_left_on_an_idle_factory() -> void:
 ## that marks production up leaves money on the table that buys nothing, and a
 ## detector reading the sticker price would send the reader after a build order
 ## that was already doing the only thing it could.
+## The same 1100 opens the streak on day one at the sticker price and only on day
+## two under Vale, whose 20% leaves it short of the board's one 1000 build. The
+## streak's first day is what the case reads, because income carries any purse
+## past any price if the walk is given enough turns — an absence of findings would
+## be reporting the floor rather than the rule.
 func test_a_purse_short_of_a_marked_up_price_is_not_hoarding() -> void:
-	var short := _bare_state()
-	short.set_commander(1, commander_db.by_id(&"konrad_vale"))
-	short.funds[1] = 1100
-	short.funds[2] = 0
-	assert_eq(_for_team(_run(short, _idle_rounds(3)), "hoarding", 1).size(), 0)
-	var enough := _bare_state()
-	enough.set_commander(1, commander_db.by_id(&"konrad_vale"))
-	enough.funds[1] = 1200
-	enough.funds[2] = 0
-	var report := _run(enough, _idle_rounds(3))
-	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
-	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
-	assert_gte(finding.magnitude, 1200)
-	assert_string_contains(finding.detail, str(finding.magnitude))
+	var marked_up := _bare_state()
+	marked_up.set_commander(1, commander_db.by_id(&"konrad_vale"))
+	marked_up.funds[1] = 1100
+	marked_up.funds[2] = 0
+	var short_report := _for_team(_run(marked_up, _idle_rounds(4)), "hoarding", 1)
+	assert_eq(short_report.size(), 1)
+	assert_eq(short_report[0].day, 2, "day one's purse bought nothing at Vale's price")
+	assert_string_contains(short_report[0].detail, "1200")
+	var sticker := _bare_state()
+	sticker.funds[1] = 1100
+	sticker.funds[2] = 0
+	var open_report := _for_team(_run(sticker, _idle_rounds(4)), "hoarding", 1)
+	assert_eq(open_report.size(), 1)
+	assert_eq(open_report[0].day, 1, "the same purse covers the price nobody marks up")
+	assert_string_contains(open_report[0].detail, "1000")
 
 
-func test_a_purse_too_small_for_anything_is_not_hoarding() -> void:
+## A purse under everything on the board is not a turn spent hoarding, so the
+## streak opens on the first turn income has carried it over the cheapest build.
+func test_a_purse_too_small_for_anything_does_not_open_a_streak() -> void:
 	var state := _bare_state()
 	state.funds[1] = 100
 	state.funds[2] = 100
-	assert_eq(_count(_run(state, [{"c": "end_turn"}]), "hoarding"), 0)
+	var report := _for_team(_run(state, _idle_rounds(4)), "hoarding", 1)
+	assert_eq(report.size(), 1)
+	assert_eq(report[0].day, 2, "day one's 100 buys nothing at all")
 
 
 ## One streak, one finding. Said every turn it was more than half of everything
