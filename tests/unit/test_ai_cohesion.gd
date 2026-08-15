@@ -125,6 +125,29 @@ func test_cohesion_holds_a_fast_unit_back_with_its_slower_company() -> void:
 	)
 
 
+## The radius is what "company" means, and nothing else read it: every test
+## around this one fixes cohesion_tiles and leaves the radius wherever the
+## profile put it, so a tier that quietly moved it shipped green.
+##
+## Same board, same weight, two radii. The penalty is free inside the radius and
+## linear outside it, so the *narrow* one is the tight leash — the tank finishes
+## the day beside the mech — and the wider one buys the tank two tiles of slack
+## it spends walking east.
+func test_cohesion_radius_decides_who_counts_as_company() -> void:
+	var narrow := _march(COLUMN, _profile_at(2.0, 1), 1)
+	assert_eq(narrow["t"], 0, "inside a radius of 1 the tank has to finish beside the mech")
+
+	var wide := _march(COLUMN, _profile_at(2.0, 3), 1)
+	assert_eq(wide["t"], 2, "a radius of 3 is two tiles of slack, and the tank spends them")
+
+
+## `_profile` with the cohesion radius named too, which only this test varies.
+func _profile_at(cohesion_tiles: float, cohesion_radius: int) -> AIProfile:
+	var profile := _profile(cohesion_tiles)
+	profile.cohesion_radius = cohesion_radius
+	return profile
+
+
 ## The R1 worry answered with the board rather than with prose: a term that pulls
 ## units toward each other could stall the army in place. It does not, because
 ## the goal term still pulls forward — the equilibrium is a column advancing at

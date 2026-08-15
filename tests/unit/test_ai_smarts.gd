@@ -15,6 +15,14 @@ extends GutTest
 
 const ARTILLERY_RING_BOARD := "[terrain]\n..........\n[units]\n1 t 0 0\n2 g 9 0"
 
+## A shot barely worth taking, offered from a cell an artillery has ranged. The
+## mountain column is what makes the artillery a pure threat: our tank can reach
+## neither of the two cells adjacent to it, so the gun is something to be shot at
+## from and never something to shoot, and the only target on the board is the
+## infantry beside us — wounded to 5 HP in the test, so the kill is worth 80 to a
+## planner that wants 40.
+const RANGED_SHOT_BOARD := "[terrain]\n..M.\n..M.\n[units]\n1 t 0 0\n2 i 1 0\n2 g 3 0"
+
 var terrain_db: TerrainDB
 var unit_db: UnitDB
 var chart: DamageChart
@@ -30,6 +38,12 @@ func before_each() -> void:
 
 func _profile() -> AIProfile:
 	return AIProfile.new()  # every capability off; the Normal baseline
+
+
+## The tier as shipped, for the two tests that pin a configuration rather than a
+## capability.
+func _hard_profile() -> AIProfile:
+	return load("res://data/ai/hard.tres")
 
 
 # --- S1 · threat awareness ----------------------------------------------------
@@ -75,7 +89,7 @@ func test_advance_threat_tiles_keeps_a_tank_out_of_the_artillery_ring() -> void:
 ## shipped a weight that could not move a unit by a single tile, and every
 ## capability test passed anyway because each chose its own number.
 func test_the_shipped_difficult_profile_refuses_the_artillery_ring() -> void:
-	var hard: AIProfile = load("res://data/ai/hard.tres")
+	var hard := _hard_profile()
 	assert_not_null(hard, "data/ai/hard.tres should load")
 	var state := Fixture.state(ARTILLERY_RING_BOARD)
 	var move := AIController.new(unit_db, hard).plan_next_command(state)
@@ -182,6 +196,44 @@ func test_threat_aversion_still_takes_a_worthwhile_attack() -> void:
 	assert_true(command is AttackCommand, "a profitable shot survives the threat discount")
 	assert_eq((command as AttackCommand).target_cell, Vector2i(1, 0))
 	assert_eq(command.validate(state), "")
+
+
+## And the other half of that guard, which nothing pinned: threat_aversion at
+## 0.0 must take a shot the same board refuses at the dial's shipped Difficult
+## value. Every other test in this suite exercises the dial at one weight only,
+## so a tier that shipped it at zero would read as a passing suite.
+##
+## Three profiles because the claim is two: 0.0 against 0.1 pins the
+## *capability*, and data/ai/hard.tres pins the *configuration* — the same split
+## the artillery-ring pair above makes, in one function because this file is at
+## the lint's public-method ceiling.
+func test_threat_aversion_at_zero_takes_the_shot_the_wary_profile_refuses() -> void:
+	var blind_state := _ranged_shot_state()
+	var blind := AIController.new(unit_db, _profile()).plan_next_command(blind_state)
+	assert_true(blind is AttackCommand, "expected the kill, got %s" % blind)
+	assert_eq((blind as AttackCommand).target_cell, Vector2i(1, 0))
+	assert_eq(blind.validate(blind_state), "")
+
+	var wary_profile := _profile()
+	wary_profile.threat_aversion = 0.1  # data/ai/hard.tres as shipped
+	var wary := AIController.new(unit_db, wary_profile).plan_next_command(_ranged_shot_state())
+	assert_false(wary is AttackCommand, "the ranged cell prices the kill out, got %s" % wary)
+
+	var shipped := AIController.new(unit_db, _hard_profile()).plan_next_command(
+		_ranged_shot_state()
+	)
+	assert_false(
+		shipped is AttackCommand, "Difficult as shipped must refuse it too, got %s" % shipped
+	)
+
+
+## RANGED_SHOT_BOARD with the target wounded to where the kill is worth just over
+## the planner's min_useful_score, which is what leaves the threat penalty room
+## to decide.
+func _ranged_shot_state() -> GameState:
+	var state := Fixture.state(RANGED_SHOT_BOARD)
+	state.units_of(2)[0].hp = 5
+	return state
 
 
 ## The threat map reads the board through the same authorities as everything
