@@ -25,7 +25,7 @@ last_day = 6
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Vance is the fifth marshal, and the hardest kind — every fight she's in, she's a little stronger than the chart says."
+text = "Vance is the fourth marshal, and the hardest kind — every fight she's in, she's a little stronger than the chart says."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
