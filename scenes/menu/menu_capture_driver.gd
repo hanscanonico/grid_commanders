@@ -23,6 +23,10 @@ extends RefCounted
 ## can be undone or not. It measures the caption on every board for the same
 ## reason: the reserved lines must hold for a board this frame does not show.
 ##
+## `--demo=menu_four_seats` selects a board that deals more than a duel, which is
+## the one frame the picker's `· NP` suffix and a four-row seat strip can be seen
+## in — the boards the other menu modes photograph all seat two.
+##
 ## Second, the gate. An overflowing menu renders a perfectly good picture, so a
 ## smoke scenario that only proved a frame was written would have sailed straight
 ## past COM-5 — where a save's presence pushed the title off the top of the
@@ -37,6 +41,7 @@ const DEMO_ARG := "--demo"
 const DEMO_WITH_SAVE := "menu_with_save"
 const DEMO_NO_SAVE := "menu_no_save"
 const DEMO_SETUP_CONTEXT := "menu_setup_context"
+const DEMO_FOUR_SEATS := "menu_four_seats"
 const DEMO_REPLAYS := "menu_replays"
 const DEMO_CAMPAIGNS := "menu_campaigns"
 const DEMO_CAMPAIGN_HUB := "menu_campaign_hub"
@@ -47,6 +52,7 @@ const DEMO_MODES: Array[String] = [
 	DEMO_WITH_SAVE,
 	DEMO_NO_SAVE,
 	DEMO_SETUP_CONTEXT,
+	DEMO_FOUR_SEATS,
 	DEMO_REPLAYS,
 	DEMO_CAMPAIGNS,
 	DEMO_CAMPAIGN_HUB,
@@ -124,6 +130,10 @@ func poses_setup_context() -> bool:
 	return _demo == DEMO_SETUP_CONTEXT
 
 
+func poses_four_seats() -> bool:
+	return _demo == DEMO_FOUR_SEATS
+
+
 func poses_replays() -> bool:
 	return _demo == DEMO_REPLAYS
 
@@ -188,6 +198,18 @@ func posed_replays() -> Array[ReplayFile.Summary]:
 		summary.recorded = "2026-08-0%dT19:06:48" % (i + 1)
 		posed.append(summary)
 	return posed
+
+
+## Which board `menu_four_seats` selects: the first on the shelf that deals more
+## than a duel, or -1 when none does. Read off the shelf it is handed, the way
+## `posed_slot` is handed it — a board named here would be one more place the
+## roster has to be kept in step with.
+func four_seat_map(maps: Array[MapData]) -> int:
+	for i in maps.size():
+		if maps[i].player_count() > SeatStrip.MIN_FILLED:
+			return i
+	push_error("main menu: no board deals more than %d armies" % SeatStrip.MIN_FILLED)
+	return -1
 
 
 ## The slot the current mode poses: a resumable match on `menu_with_save`, and an

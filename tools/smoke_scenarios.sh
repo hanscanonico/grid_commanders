@@ -228,7 +228,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # happens to have played is not something a frame may depend on.
 # `menu_setup_context` additionally poses an all-human table and proves the
 # tutorial board leads, static facts/help, and disabled AI difficulty — a table
-# with no computer at it has none to tune — before photographing them.
+# with no computer at it has none to tune — before photographing them. It opens
+# on the tutorial board, as every other menu mode does, so `menu_four_seats`
+# selects the first board on the shelf that deals more than a duel: the picker's
+# `· NP` suffix and a four-row seat strip are otherwise in no frame at all.
 #
 # The mission_strip pair is COM-12's, and since COM-122 both run on the tutorial
 # board — the only one the strip teaches on. Every other scenario runs with the
@@ -304,7 +307,7 @@ DEFAULT_MODES=(
 	cutin_volley cutin_volley:tank:mech cutin_volley:mech:tank
 	cutin_volley:bomber:tank cutin_volley:sub:cruiser cutin_volley:anti_air:infantry
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
-	menu_with_save menu_no_save menu_setup_context menu_replays
+	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_replays
 )
 
 if [[ ! -x "$GODOT" ]]; then

@@ -106,9 +106,16 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # and `cycle_speed` and their volume twins moved there, the pause menu's two rows
 # and the two banners confirming them now read one string apiece, and Battle is
 # left with the branch and nothing else. The file is a line shorter than before.
+#
+# main_menu.gd 1150 -> 1159: the `menu_four_seats` capture, the one frame that
+# shows a board's "· 4P" mark and a four-row seat strip. Which board that is is
+# the capture driver's answer, handed the shelf the way `posed_slot` is handed
+# it, so what is left here is the pose itself and `_show_map` — the
+# select-then-settle dance `--menu-map` already did inline, now shared by both
+# rather than written twice.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1437
-scenes/menu/main_menu.gd 1150
+scenes/menu/main_menu.gd 1159
 "
 
 if [[ ! -x "$GODOT" ]]; then

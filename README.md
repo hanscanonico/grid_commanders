@@ -125,12 +125,13 @@ that photograph a screen the battle scene never draws:
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
 make smoke MODES="menu_setup_context" # an all-human table: every option's help line, AI difficulty dimmed
+make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, its four seat rows
 make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 ```
 
-All four pose what they photograph, so a capture neither reads nor writes the running machine's
-`user://save.json` or its recordings, and all four are tests as well as pictures: each measures the
-named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first three
+All five pose what they photograph, so a capture neither reads nor writes the running machine's
+`user://save.json` or its recordings, and all five are tests as well as pictures: each measures the
+named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first four
 measure the whole centered menu column, its map caption, every option-help line, every seat row *and*
 its primary actions; `menu_replays` photographs its own page over a hidden menu, so it measures that
 page's title, first row and Back instead — the menu's geometry is not what that picture claims. The column is the
