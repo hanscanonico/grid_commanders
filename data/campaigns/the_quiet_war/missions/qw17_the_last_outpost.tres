@@ -53,7 +53,7 @@ text = "The outpost falls, and his column falls back with it. Orlov's own ground
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "My counterattack doctrine has never had this much open road to work with. I intend to enjoy it."
+text = "He promised to take the road with him rather than lose it. He lost it, and every counter he threw at me on the way paid for the next mile."
 
 [sub_resource type="Resource" id="Trigger_day_5"]
 script = ExtResource("7")
