@@ -25,6 +25,12 @@ extends PanelContainer
 ## board it describes, and swallows the pointer so a click on it cannot fall
 ## through to a cell rendered behind it.
 
+## The two corners under the top bar the card may sit in. It opens in the left one
+## and steps aside to the right one while the cursor is under it, because the fight
+## being in the top-left is exactly when hiding the card is the wrong answer.
+const _DOCK_LEFT := 0
+const _DOCK_RIGHT := 1
+
 ## How far the card sits from the top bar and the left edge, and how far its rows
 ## sit inside it.
 const _MARGIN := 4
@@ -56,6 +62,9 @@ var _where_label: Label
 ## every one of them opens with the card up and the player lowers it when it is in
 ## the way.
 var _up := true
+## Which corner the card is currently parked in. Presentation and nothing else:
+## not a preference, not remembered across missions, and the player never sets it.
+var _dock := _DOCK_LEFT
 var _title_label: Label
 var _rows: VBoxContainer
 ## The words of each condition currently on the card, so `layout_error` measures
@@ -100,6 +109,52 @@ func refresh(game: GameState) -> void:
 func toggle(game: GameState) -> void:
 	_up = not _up
 	refresh(game)
+
+
+## Steps the card out of the cursor's way, called from `BattleView.move_cursor_to`
+## — the seam the board cursor already reports through, so nothing polls. The
+## common case is a dock that did not change and costs one geometry read.
+func follow_cursor(
+	cell: Vector2i, cell_size: int, board_origin: Vector2, viewport: Vector2
+) -> void:
+	if not visible:
+		return
+	var dock := dock_for(cell, cell_size, board_origin, viewport, size, _dock)
+	if dock == _dock:
+		return
+	_dock = dock
+	_place()
+
+
+## Which corner the card belongs in with the cursor on `cell`. Geometry only: it
+## reads no mission and no session, so where the card sits can never depend on what
+## it says. Static and argument-taking so the rule is checked without a scene, the
+## shape `SeatStrip.normalised_sides` and `TransitionInput` are.
+##
+## The card dodges to the right corner while the cursor is under its left one, and
+## comes home once the cursor is under neither — so a cursor still working the
+## top-left keeps the card away, and one that follows it into the right corner
+## sends it home rather than being covered there.
+static func dock_for(
+	cursor_cell: Vector2i,
+	cell_size: int,
+	board_origin: Vector2,
+	viewport: Vector2,
+	card_size: Vector2,
+	current_dock: int
+) -> int:
+	var cursor := Rect2(
+		board_origin + Vector2(cursor_cell) * float(cell_size), Vector2.ONE * float(cell_size)
+	)
+	var covers_left := cursor.intersects(
+		Rect2(_dock_position(_DOCK_LEFT, viewport, card_size), card_size)
+	)
+	var covers_right := cursor.intersects(
+		Rect2(_dock_position(_DOCK_RIGHT, viewport, card_size), card_size)
+	)
+	if current_dock == _DOCK_LEFT:
+		return _DOCK_RIGHT if covers_left and not covers_right else _DOCK_LEFT
+	return _DOCK_LEFT if not covers_left else _DOCK_RIGHT
 
 
 ## Why the open card is not laid out, or "". The sweep's own bar is a file size,
@@ -245,15 +300,23 @@ func _first_line(text: String, color: Color) -> Label:
 	return label
 
 
-## Parks the card under the top bar in the left corner. Measured a frame late for
-## the reason MissionStrip measures itself: a PanelContainer's size is only valid
-## once its labels have been laid out, and these change with every command.
+## Parks the card under the top bar, in whichever corner `_dock` names. Measured a
+## frame late for the reason MissionStrip measures itself: a PanelContainer's size
+## is only valid once its labels have been laid out, and these change with every
+## command.
 func _place() -> void:
 	await get_tree().process_frame
 	if not visible:
 		return
 	reset_size()
-	position = Vector2(_MARGIN, UiTheme.HUD_TOP_H + _MARGIN)
+	position = _dock_position(_dock, get_viewport_rect().size, size)
+
+
+## Where a card of this size sits in either corner — the one statement of both,
+## so the dodge decision and the placement can never disagree about the footprint.
+static func _dock_position(dock: int, viewport: Vector2, card_size: Vector2) -> Vector2:
+	var x := viewport.x - card_size.x - _MARGIN if dock == _DOCK_RIGHT else float(_MARGIN)
+	return Vector2(x, UiTheme.HUD_TOP_H + _MARGIN)
 
 
 ## The docked bars' slate with the ink outline and hard shadow every floating

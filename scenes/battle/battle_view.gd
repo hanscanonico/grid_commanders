@@ -590,6 +590,11 @@ func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) ->
 func move_cursor_to(cell: Vector2i) -> void:
 	cursor.position = cell_center(cell)
 	camera.position = cursor.position
+	# The mission card parks in a board corner, so a cursor walking under it would
+	# be working blind; it steps aside from here rather than polling for the cell.
+	mission_panel.follow_cursor(
+		cell, roundi(TILE * camera.zoom.x), _board_origin_on_screen(), _viewport_size()
+	)
 
 
 ## The cell the cursor is standing on, read back off the sprite the view owns.
@@ -680,6 +685,13 @@ func _viewport_size() -> Vector2:
 ## call in a match and the camera is never re-framed mid-turn.
 func _board_viewport_size() -> Vector2:
 	return _viewport_size() - Vector2(0, UiTheme.HUD_BARS_H)
+
+
+## Where the board's first cell lands on screen, in the same transform
+## `screen_pos_for_cell` uses and without its tooltip nudge — the anchor a screen
+## rect for any cell is measured from.
+func _board_origin_on_screen() -> Vector2:
+	return -_screen_center() * camera.zoom + _viewport_size() / 2.0
 
 
 func screen_pos_for_cell(cell: Vector2i) -> Vector2:
