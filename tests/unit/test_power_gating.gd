@@ -172,8 +172,9 @@ func test_redeployment_fires_exactly_for_ground_the_bonus_puts_in_reach() -> voi
 # --- Nia Rowan and Orin Flux -------------------------------------------------
 
 
-## Ghost March takes the default's fight *or* ground worth walking onto, since
-## a commander with no combat modifier should not wait on a combat trigger.
+## Ghost March drops the default's fight and fires for ground worth walking
+## onto, since a commander with no combat modifier buys nothing on the turn a
+## shot is already reachable.
 func test_ghost_march_also_fires_for_reachable_ground() -> void:
 	var state := _state("[terrain]\n.C..\n[units]\n1 i 0 0", &"nia_rowan")
 	assert_false(CommanderType.neutral().wants_power(state, 1), "no enemy: the default holds")
@@ -213,3 +214,34 @@ func test_the_planner_never_fires_an_empty_meter() -> void:
 	var state := _state("[terrain]\n........\n[units]\n1 g 0 0\n2 t 5 0", &"mara_voss")
 	var command := AIController.new(unit_db).plan_next_command(state)
 	assert_false(command is PowerCommand)
+
+
+## Records that the hook was reached. A power-less commander must never get
+## this far, so being asked at all is the failure.
+class ProbeCommander:
+	extends CommanderType
+
+	var asked := false
+
+	func wants_power(_state: GameState, _team: int) -> bool:
+		asked = true
+		return true
+
+
+## The byte-stability guarantee, pinned. `make determinism` and
+## `make difficulty-check` seat no commanders, so both are unmoved by any
+## `wants_power` change — but only because `power_cost` of 0 makes `has_power()`
+## false, which stops `PowerCommand.validate` and `_plan_power` before the hook
+## is ever asked. One guard-clause reorder would end that silently, and both
+## goldens would then drift on unrelated commits.
+func test_a_power_less_commander_is_never_asked_whether_to_fire() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n2 i 2 0", &"alina_ward")
+	assert_true(_wants(state), "the board is one the default would fire on")
+	var probe := ProbeCommander.new()
+	state.set_commander(1, probe)
+	state.add_charge(1, 1000)
+	var command := AIController.new(unit_db).plan_next_command(state)
+	assert_false(probe.asked, "the hook was reached past a commander with no power")
+	assert_false(command is PowerCommand, "got %s" % command)
+	assert_false(CommanderType.neutral().has_power(), "a neutral commander has no power")
+	assert_false(CommanderState.create(null).is_ready(), "and a meter that is never ready")

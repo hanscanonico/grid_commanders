@@ -18,10 +18,11 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 	return bonus
 
 
-## Forced March buys ground rather than damage, so a property her capture units
-## can reach counts as much as an enemy they can — otherwise a doctrine measured
-## only in fights banks a full meter while walking across an empty map. The
-## ground is measured with the march's own movement, because a property one step
-## beyond reach is exactly what firing fixes.
+## Forced March buys a tile and no damage at all, so it fires for ground alone,
+## like Cassian Rook's Redeployment: the offensive default reads "a shot is
+## already reachable", and a shot already reachable is the one turn the extra
+## tile changes nothing about. The ground is measured with the march's own
+## movement, because a property one step beyond reach is exactly what firing
+## fixes.
 func wants_power(state: GameState, team: int) -> bool:
-	return super(state, team) or _can_reach_capture(state, team, march_move_bonus)
+	return _can_reach_capture(state, team, march_move_bonus)

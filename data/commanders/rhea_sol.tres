@@ -18,3 +18,4 @@ indirect_defense_pct = -10
 saturation_attack_pct = 20
 saturation_range_bonus = 1
 indirect_build_bias = -2
+saturation_want_guns = 1

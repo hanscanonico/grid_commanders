@@ -100,3 +100,29 @@ func test_the_power_expires_with_the_turn() -> void:
 	assert_eq(_damage(state, state.units[0], state.units[1]), 69)
 	EndTurnCommand.new().apply(state)
 	assert_eq(_damage(state, state.units[0], state.units[1]), 60, "back to the passive alone")
+
+
+# --- when the computer spends the meter --------------------------------------
+
+
+func _wants(state: GameState) -> bool:
+	return state.commander_of(1).wants_power(state, 1)
+
+
+## Both halves of Breakthrough are treads-only, so an army with none of them
+## fires it for nothing. The neutral default would have spent it here.
+func test_breakthrough_holds_for_an_infantry_army() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 i 0 0\n2 i 2 0")
+	assert_true(CommanderType.neutral().wants_power(state, 1), "there is a fight to have")
+	assert_false(_wants(state), "but no armour to break through with")
+
+
+func test_breakthrough_fires_with_a_tank_still_to_move() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 i 0 0\n1 t 0 1\n2 i 2 0")
+	assert_true(_wants(state))
+
+
+func test_a_tank_that_has_already_acted_does_not_open_it() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 i 0 0\n1 t 0 1\n2 i 2 0")
+	state.units[1].acted = true
+	assert_false(_wants(state), "a spent tread collects neither the move nor the pierce")

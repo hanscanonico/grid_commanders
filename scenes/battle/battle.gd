@@ -505,6 +505,7 @@ func _build_overlays() -> BattleOverlays:
 	built.threat_layer = $ThreatOverlay
 	built.path_arrow = $PathArrow
 	built.capture_pips = $CapturePips
+	built.objective_marks = $ObjectiveMarks
 	return built
 
 
@@ -1301,24 +1302,14 @@ func _viewing_team() -> int:
 func refresh_fog() -> void:
 	perspective.refresh(_viewing_team(), state == State.HANDOFF)
 	view.refresh_fog()
-	# Both overlays below are drawn from whoever is now looking, so they ride the
-	# one pass that already reruns after every committed command and turn change
-	# rather than growing refresh paths of their own. A blackout empties them
-	# without a special case: that viewer can see no cell and no unit.
-	_refresh_capture_pips()
+	# Every mark below rides this one pass rather than growing a refresh path of
+	# its own: it already reruns after every committed command and turn change,
+	# which is exactly when what is seen — and what the mission still wants —
+	# changes. A blackout empties the fogged ones without a special case: that
+	# viewer can see no cell and no unit.
+	overlays.show_capture_pips(game.capture_progress, perspective)
 	_refresh_threat()
-
-
-## The capture chips, rebuilt from the sim's own progress table and put through
-## the same fog gate the board is: a capture the viewer has not scouted stays as
-## unannounced as the ownership flip that will follow it. A presentation split of
-## a number the sim already holds — never a call back into capture_strength.
-func _refresh_capture_pips() -> void:
-	var pips: Dictionary[Vector2i, int] = {}
-	for cell: Vector2i in game.capture_progress:
-		if perspective.can_see_cell(cell):
-			pips[cell] = game.capture_progress[cell]
-	overlays.show_capture_pips(pips)
+	BattleCampaign.refresh_marks(self)
 
 
 func refresh_hud() -> void:

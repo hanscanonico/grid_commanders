@@ -89,6 +89,16 @@ Everything is counted across the player's **side** (`GameState.allied`), so an
 ally's capture advances the objective and an ally's casualty is on the bill. The
 one deliberate exception is `DefeatTeam`, which is about one army on purpose.
 
+#### What the board marks
+
+An objective that names ground is **marked on the board** as well as printed on
+the card: `MissionObjective.marker_cells` reads the cells you authored straight
+back — `CaptureCell` and `HoldCell` their `cell`, `ReachCell` every cell of its
+zone — and nothing else you write is involved. An objective about a count, a day
+or an army names no ground and is marked nowhere. So the words never have to
+carry a location the player would otherwise hunt for, and there is nothing extra
+to author: place the cell correctly and the mark follows.
+
 ### Triggers — what a beat waits for
 
 `DayReached`, `DayBefore`, `CellOwned`, `UnitDestroyed`, `UnitReached`,

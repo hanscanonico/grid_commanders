@@ -21,6 +21,16 @@ extends CommanderType
 ## move-and-fire — so the pull orders the cheap end of the list and leaves the
 ## top of it alone.
 @export var indirect_build_bias: int = -2
+## How many siege guns make a saturation. Below this the power buys a single
+## unit's tile of range for a full meter, which is not what "saturation" means.
+@export var saturation_want_guns: int = 1
+
+
+## The base read — a fight to have this turn — plus the guns the power is for.
+## Keyed on being indirect like the rest of the doctrine, so a future siege unit
+## inherits the gate without an edit.
+func wants_power(state: GameState, team: int) -> bool:
+	return _ready_guns(state, team) >= saturation_want_guns and super(state, team)
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:
@@ -48,3 +58,11 @@ func range_bonus(state: GameState, unit: Unit) -> int:
 ## future siege unit inherits the preference without an edit.
 func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
 	return indirect_build_bias if AttackRange.is_indirect_type(unit_type) else 0
+
+
+func _ready_guns(state: GameState, team: int) -> int:
+	var guns := 0
+	for unit in state.units_of(team):
+		if unit.carrier == null and not unit.acted and AttackRange.is_indirect(unit):
+			guns += 1
+	return guns

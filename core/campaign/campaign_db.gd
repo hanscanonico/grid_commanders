@@ -10,6 +10,12 @@ extends RefCounted
 
 const CAMPAIGN_DIR := "res://data/campaigns"
 const CAMPAIGN_FILE := "campaign.tres"
+## The war pinned to item zero in `load_default()`. The picker reads this same key
+## for its START HERE badge, so which campaign leads and which one says so cannot
+## drift apart — `MapCatalog.TUTORIAL_MAP_PATH`'s shape, for its reason. A pin
+## rather than an assumption: a build this campaign is missing from loads the rest
+## alphabetically instead of refusing.
+const FLAGSHIP_ID := &"the_furnace_winter"
 
 var _by_id: Dictionary[StringName, CampaignDefinition] = {}
 var _order: Array[StringName] = []
@@ -30,7 +36,25 @@ static func load_default() -> CampaignDB:
 		var campaign: CampaignDefinition = load(path)
 		if campaign != null:
 			db.register(campaign)
+	db.pin_flagship()
 	return db
+
+
+## Moves the flagship to the head of the order, leaving the rest as they loaded.
+## Its own call site is `load_default`; it is public so a hand-built roster can be
+## ordered the way the shipped one is.
+func pin_flagship() -> void:
+	var at := _order.find(FLAGSHIP_ID)
+	if at <= 0:
+		return
+	_order.remove_at(at)
+	_order.insert(0, FLAGSHIP_ID)
+
+
+## Whether a campaign is the one the picker leads with and badges START HERE. The
+## one answer to that question, so the order and the badge read the same key.
+static func leads(campaign_id: StringName) -> bool:
+	return campaign_id == FLAGSHIP_ID
 
 
 func register(campaign: CampaignDefinition) -> void:
@@ -55,7 +79,8 @@ func has(campaign_id: StringName) -> bool:
 	return _by_id.has(campaign_id)
 
 
-## Every campaign, in directory order, which is alphabetical by id.
+## Every campaign, the flagship first and the rest in directory order, which is
+## alphabetical by id.
 func all() -> Array[CampaignDefinition]:
 	var result: Array[CampaignDefinition] = []
 	for campaign_id in _order:
