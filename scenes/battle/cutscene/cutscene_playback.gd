@@ -47,6 +47,15 @@ var accent := Color.WHITE
 ## The clock every visual is a function of, and the end it runs to.
 var t := 0.0
 var total := 0.0
+## How fast that clock runs against real time, taken from the speed tier when the
+## playthrough begins. The shell is the one place a tier reaches a cut-in: the
+## directors own beat sheets and know nothing about the setting, so scaling here
+## keeps both of them obeying it and neither of them deciding it.
+##
+## Read once at `begin` rather than every frame because a cut-in blocks the flow
+## it could be changed from — a run holds the rate it opened at, so `t` advances
+## monotonically at one pace.
+var rate := 1.0
 ## True between `begin` and `end`. A posed still never sets it, which is what
 ## keeps `pose_at` from ever emitting `finished`.
 var playing := false
@@ -136,6 +145,7 @@ func layout() -> void:
 ## flinch this then eases back out.
 func begin(total_in: float, board: BattleView) -> void:
 	total = total_in
+	rate = Settings.speed.cutscene_rate()
 	_board = board
 	_punch_from = board.punch_zoom
 	t = 0.0
@@ -148,14 +158,17 @@ func begin(total_in: float, board: BattleView) -> void:
 ## clock runs and no sound plays, which is what makes a posed frame byte-stable.
 func pose(total_in: float, at: float) -> void:
 	total = total_in
+	rate = 1.0
 	_board = null
 	t = clampf(at, 0.0, total)
 
 
-## Advances the clock and reports whether this frame reached the end. True
-## exactly once per playthrough, which is what makes the exit single.
+## Advances the clock at the tier's rate and reports whether this frame reached
+## the end. True exactly once per playthrough, which is what makes the exit
+## single. Skipping still sets `t = total` outright, so any press at any tier
+## lands on the final tableau.
 func advance(delta: float) -> bool:
-	t = minf(t + delta, total)
+	t = minf(t + delta * rate, total)
 	return t >= total
 
 

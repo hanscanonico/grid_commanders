@@ -32,7 +32,8 @@ signal finished
 ## design handoff's 4.6 s reference, because captures are the most frequent
 ## ceremony in the game (plan R1). Fixed constants scaled by the streak pacing the
 ## animator sets, exactly as CombatCutscene's are — the two cut-ins keep one clock
-## shape, and neither reads GameSpeed for its beat lengths.
+## shape, and neither reads GameSpeed: these seconds are the default tier's, and
+## CutscenePlayback is the one place a tier scales them.
 const WIPE_IN := 0.22
 const PLATES := 0.22
 const MARCH := 0.34

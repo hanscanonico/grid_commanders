@@ -31,7 +31,8 @@ signal finished
 
 ## Beat budgets, in seconds. A clean kill runs ~1.8 s and a full exchange with a
 ## counter ~2.3 s, which is the tempo the plan's beat sheet asks for: long enough
-## to read, short enough to sit through two hundred times.
+## to read, short enough to sit through two hundred times. Those seconds are the
+## default speed tier's; CutscenePlayback is the one place a tier scales them.
 const WIPE_IN := 0.20
 const PLATES := 0.22
 const ANTICIPATION := 0.16

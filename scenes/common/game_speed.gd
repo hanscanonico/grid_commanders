@@ -1,6 +1,6 @@
 class_name GameSpeed
 extends RefCounted
-## How fast the battle's theatre plays out on screen: one of four tiers, picked
+## How fast the battle's theatre plays out on screen: one of three tiers, picked
 ## on the main menu and switchable mid-match.
 ##
 ## Presentation pacing and nothing else. No file under core/ or ai/ imports this
@@ -15,9 +15,10 @@ extends RefCounted
 ## the moment they animate rather than caching it at scene load, so a speed
 ## changed from the in-battle menu lands on the very next move.
 
-## The tier a fresh install plays at: movement at twice the duration the game
-## shipped with, which is the complaint this setting exists to fix. Quick is that
-## original feel, one dropdown away.
+## The tier a fresh install plays at, and the gentlest one there is: playtest
+## said the old Normal still read as hurried and the old Slow was what people
+## meant by normal, so the tiers moved down a rung (COM-226). Quick is the pace
+## Normal used to be, one dropdown away.
 const DEFAULT_ID := &"normal"
 ## Captures and scripted scenario runs *of the board* pin this tier instead of
 ## reading the device preference: a screenshot must not depend on which machine
@@ -38,8 +39,9 @@ const CAPTURE_ID := &"instant"
 ## fresh install has. The tier a fresh install plays at is the honest frame.
 const MENU_CAPTURE_ID := DEFAULT_ID
 
-## The durations the game shipped with, before any tier scaled them. Quick is
-## these values exactly — which is what makes it "today's game, bit for bit".
+## The durations the game shipped with, before any tier scaled them. No tier
+## plays them unscaled any more: the gentlest is three times these and the
+## briskest twice, which is what the retier below moved.
 const BASE_MOVE_STEP_SECONDS := 0.06
 const BASE_FLASH_IN_SECONDS := 0.08
 const BASE_FLASH_OUT_SECONDS := 0.12
@@ -63,15 +65,19 @@ const START_DELAY_PADDING := 0.1
 ## outright instead of shortening them (an explicit branch, in the tradition of
 ## BattleAnimator's `capturing` flag, not a zero multiplied through the maths).
 ##
-## This is the whole tuning surface: retuning a tier after playtest is one line.
+## This is the whole tuning surface: retuning a tier after playtest is one line,
+## and COM-226 is that retune — Normal took the old Slow's numbers, Quick took
+## the old Normal's, and Slow was dropped rather than left as a fourth rung
+## nobody was picking. A `slow` stored in `user://settings.cfg` by an older
+## build needs no migration code: `by_id` answers a stranger with the default,
+## which is now the tier carrying exactly the numbers that preference asked for.
 const TIERS: Array[Dictionary] = [
-	{"id": &"slow", "display_name": "Slow", "anim": 3.0, "pace": 1.5, "instant": false},
-	{"id": &"normal", "display_name": "Normal", "anim": 2.0, "pace": 1.0, "instant": false},
-	{"id": &"quick", "display_name": "Quick", "anim": 1.0, "pace": 1.0, "instant": false},
+	{"id": &"normal", "display_name": "Normal", "anim": 3.0, "pace": 1.5, "instant": false},
+	{"id": &"quick", "display_name": "Quick", "anim": 2.0, "pace": 1.0, "instant": false},
 	{"id": &"instant", "display_name": "Instant", "anim": 0.0, "pace": 0.0, "instant": true},
 ]
 
-## Built once from TIERS by `ordered()`; the four tiers are immutable, so every
+## Built once from TIERS by `ordered()`; the tiers are immutable, so every
 ## caller shares the same instances and `by_id(x) == by_id(x)` holds.
 static var _ordered: Array[GameSpeed] = []
 
@@ -169,6 +175,21 @@ func flash_out_seconds() -> float:
 
 func death_fade_seconds() -> float:
 	return BASE_DEATH_FADE_SECONDS * anim_scale
+
+
+## How fast the cut-in clock runs, as a multiplier on delta — the one duration a
+## tier states as a rate rather than as seconds, because a cut-in's beat sheet is
+## already written in seconds and `anim_scale` applied to it outright would
+## stretch a two-second exchange to six. The sheets are authored at the default
+## tier, so that tier plays them unchanged and every other tier is a ratio of it.
+##
+## Instant never reaches a cut-in — BattleAnimator._cut_in_applies gates the tier
+## out and plays the on-map path instead — so it answers 1.0 rather than dividing
+## by its zero scale, keeping Instant an explicit branch rather than a limit.
+func cutscene_rate() -> float:
+	if instant or anim_scale <= 0.0:
+		return 1.0
+	return default_speed().anim_scale / anim_scale
 
 
 ## Zero under Instant, where BattleAiRunner awaits a single frame instead so the

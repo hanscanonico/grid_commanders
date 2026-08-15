@@ -43,7 +43,9 @@ const CUT_IN_STREAK_SPEED := 0.11
 const CUT_IN_STREAK_TAIL := 0.22
 ## The board's flinch as the frame is taken over: a short zoom toward the cell
 ## that is about to be struck. The cursor is already parked there by both call
-## sites, and the camera follows the cursor, so there is nothing to pan.
+## sites, and the camera follows the cursor, so there is nothing to pan. Its
+## length is the cut-in's first beat in all but name, so it runs on the cut-in's
+## clock rate — the seconds below are the default tier's, like the beat sheets'.
 const PUNCH_ZOOM := 1.14
 const PUNCH_SECONDS := 0.11
 
@@ -224,9 +226,10 @@ func _pace_cut_in() -> void:
 ## about leaves both at the resting level for as long as the flinch lasts.
 func _punch_board() -> void:
 	var tween := node.create_tween()
+	var seconds := PUNCH_SECONDS / Settings.speed.cutscene_rate()
 	(
 		tween
-		. tween_property(view, "punch_zoom", PUNCH_ZOOM, PUNCH_SECONDS)
+		. tween_property(view, "punch_zoom", PUNCH_ZOOM, seconds)
 		. set_trans(Tween.TRANS_CUBIC)
 		. set_ease(Tween.EASE_OUT)
 	)
