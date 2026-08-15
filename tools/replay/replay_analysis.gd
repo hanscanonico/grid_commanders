@@ -141,6 +141,15 @@ class Hoard:
 		)
 
 
+## Where a capturer stood when its turn opened and the property ground it could
+## have started taking from there. The cell is carried with the ground because the
+## finding is read on the board being handed over, where the unit has since walked:
+## a line naming only where it ended would state a reach nobody can check.
+class Opening:
+	var cell := Vector2i.ZERO
+	var takeable: Array[Vector2i] = []
+
+
 ## Everything carried across turns while the walk runs. A plain object rather than
 ## a pile of locals threaded through eight detectors.
 class Walk:
@@ -150,10 +159,9 @@ class Walk:
 	var unit_db: UnitDB
 	## Unit -> consecutive turns of its owner's it has ended without acting.
 	var idle: Dictionary = {}
-	## Unit -> the properties it could have started taking when the turn *opened*,
-	## which is the only board that question has an answer on: by the end of the turn
-	## the unit has moved and its budget is spent, so a reach measured there is a
-	## reading of next turn.
+	## Unit -> the `Opening` its turn began on, which is the only board the capture
+	## question has an answer on: by the end of the turn the unit has moved and its
+	## budget is spent, so a reach measured there is a reading of next turn.
 	var openings: Dictionary = {}
 	## team -> the hoarding streak it is in the middle of, or absent.
 	var hoard: Dictionary = {}
@@ -353,8 +361,12 @@ static func _open_turn(walk: Walk, state: GameState) -> void:
 		if unit.carrier != null or not unit.type.can_capture:
 			continue
 		var takeable := _takeable_within_reach(state, unit)
-		if not takeable.is_empty():
-			walk.openings[unit] = takeable
+		if takeable.is_empty():
+			continue
+		var opening := Opening.new()
+		opening.cell = unit.cell
+		opening.takeable = takeable
+		walk.openings[unit] = opening
 
 
 # --- end of turn ---------------------------------------------------------------
@@ -553,15 +565,18 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 static func _check_capture_chance(walk: Walk, state: GameState, unit: Unit) -> void:
 	if not unit.type.can_capture or walk.captured.has(unit) or walk.fought.has(unit):
 		return
-	var takeable: Array = walk.openings.get(unit, [])
-	if takeable.is_empty():
+	var opening: Opening = walk.openings.get(unit)
+	if opening == null:
 		return
 	_add(
 		walk,
 		"missed_capture",
 		state,
 		unit,
-		"could have started on the property at %s" % takeable[0],
+		(
+			"opened the turn at %s and could have started on the property at %s"
+			% [opening.cell, opening.takeable[0]]
+		),
 		SEVERITY["missed_capture"]
 	)
 

@@ -217,7 +217,11 @@ func test_a_unit_that_only_walked_is_still_a_missed_capture() -> void:
 	var state := _bare_state()
 	_stand(state, &"infantry", 1, Vector2i(2, 3))
 	var entries: Array = [{"c": "move", "path": [[2, 3], [3, 3]]}, {"c": "end_turn"}]
-	assert_eq(_count(_run(state, entries), "missed_capture"), 1)
+	var report := _run(state, entries)
+	assert_eq(_count(report, "missed_capture"), 1)
+	# The unit is standing at (3, 3) by the time the finding is made, so the line has
+	# to name the cell the reach was measured from or the reader cannot check it.
+	assert_string_contains(_first(report, "missed_capture").detail, "(2, 3)")
 
 
 ## The reach is the one the turn *opened* with. A capturer marching toward ground
