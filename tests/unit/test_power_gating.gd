@@ -172,8 +172,9 @@ func test_redeployment_fires_exactly_for_ground_the_bonus_puts_in_reach() -> voi
 # --- Nia Rowan and Orin Flux -------------------------------------------------
 
 
-## Ghost March takes the default's fight *or* ground worth walking onto, since
-## a commander with no combat modifier should not wait on a combat trigger.
+## Ghost March drops the default's fight and fires for ground worth walking
+## onto, since a commander with no combat modifier buys nothing on the turn a
+## shot is already reachable.
 func test_ghost_march_also_fires_for_reachable_ground() -> void:
 	var state := _state("[terrain]\n.C..\n[units]\n1 i 0 0", &"nia_rowan")
 	assert_false(CommanderType.neutral().wants_power(state, 1), "no enemy: the default holds")

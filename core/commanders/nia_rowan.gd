@@ -40,12 +40,22 @@ func sees_into_cover(state: GameState, unit: Unit) -> bool:
 	return _marching(state, unit)
 
 
-## Ghost March buys ground and sight rather than damage, so a property she can
-## take counts as much as an enemy she can reach — otherwise a commander with no
-## combat modifier at all banks a full meter while walking across an empty map.
-## The ground is measured with the march's own movement, which is the point of it.
+## Ghost March buys ground and sight and no damage, so — like Cassian Rook's
+## Redeployment — the offensive default is the wrong read: a shot already in
+## reach is the one turn none of the three effects changes. Ground first,
+## measured with the march's own movement, which is the point of it.
+##
+## The other two effects are worth exactly nothing with the lights on, so a clear
+## match leaves only the tile and the ground branch above has already answered
+## for that. With fog up, closing on an enemy is a scouting reason to fire, asked
+## over her whole army rather than only the units still to act: sight lasts the
+## turn and a unit that has already shot still sees.
 func wants_power(state: GameState, team: int) -> bool:
-	return super(state, team) or _can_reach_capture(state, team, march_move_bonus)
+	if _can_reach_capture(state, team, march_move_bonus):
+		return true
+	if not state.fog_enabled:
+		return false
+	return _can_strike_an_opponent(state, team, false)
 
 
 func _marching(state: GameState, unit: Unit) -> bool:
