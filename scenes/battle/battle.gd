@@ -357,7 +357,7 @@ func _exit_tree() -> void:
 ## the match's tier, so nothing can reach a turn with nobody to plan it.
 func planner_for(team: int) -> AIController:
 	if not planners.has(team):
-		planners[team] = AIController.new(unit_db)
+		planners[team] = AIController.new(unit_db, difficulty.profile())
 	return planners[team]
 
 
