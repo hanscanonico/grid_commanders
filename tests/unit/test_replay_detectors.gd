@@ -72,6 +72,15 @@ func _count(report: ReplayAnalysis.Report, kind: String) -> int:
 	return int(report.counts().get(kind, 0))
 
 
+## The first finding of a kind. Asked for by name rather than by index because a
+## board that trips one detector usually trips another.
+func _first(report: ReplayAnalysis.Report, kind: String) -> ReplayAnalysis.Finding:
+	for finding in report.findings:
+		if finding.kind == kind:
+			return finding
+	return null
+
+
 # --- per-command detectors -----------------------------------------------------
 
 
@@ -99,19 +108,41 @@ func test_a_move_inside_fire_it_was_already_in_is_not_reported() -> void:
 func test_worse_shot_names_the_better_target_in_range() -> void:
 	var state := _bare_state()
 	_stand(state, &"tank", 1, Vector2i(3, 1))
-	_stand(state, &"tank", 2, Vector2i(4, 1))  # the hard target it shot
-	_stand(state, &"infantry", 2, Vector2i(2, 1))  # the soft one beside it
-	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [4, 1]}])
+	_stand(state, &"infantry", 2, Vector2i(2, 1))  # the cheap one it shot
+	_stand(state, &"artillery", 2, Vector2i(4, 1))  # worth far more, and it cannot answer
+	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [2, 1]}])
 	assert_eq(_count(report, "worse_shot"), 1)
-	assert_string_contains(report.findings[0].detail, "infantry")
+	assert_string_contains(_first(report, "worse_shot").detail, "artillery")
 
 
 func test_the_best_shot_available_is_not_a_finding() -> void:
 	var state := _bare_state()
 	_stand(state, &"tank", 1, Vector2i(3, 1))
-	_stand(state, &"tank", 2, Vector2i(4, 1))
 	_stand(state, &"infantry", 2, Vector2i(2, 1))
-	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [2, 1]}])
+	_stand(state, &"artillery", 2, Vector2i(4, 1))
+	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [4, 1]}])
+	assert_eq(_count(report, "worse_shot"), 0)
+
+
+## The exchange is priced in funds, and that is the whole of what makes this
+## detector agree with the planner it is reading. A quarter of an md tank is worth
+## several infantry outright, so a reading in raw HP percentages calls the heavy
+## shot the worse one every time it is offered — which is what every large finding
+## on a real recorded match turned out to be.
+func test_the_dearer_target_survives_a_shot_the_hp_reading_would_flag() -> void:
+	var state := _bare_state()
+	var tank := _stand(state, &"tank", 1, Vector2i(3, 1))
+	var heavy := _stand(state, &"md_tank", 2, Vector2i(4, 1))
+	heavy.hp = 20  # what is left of it is still worth more than a whole infantry
+	var soft := _stand(state, &"infantry", 2, Vector2i(2, 1))
+	var hard_shot := CombatResolver.forecast(state, tank, Vector2i(3, 1), heavy)
+	var soft_shot := CombatResolver.forecast(state, tank, Vector2i(3, 1), soft)
+	assert_lt(
+		hard_shot.attack_damage - hard_shot.counter_damage,
+		soft_shot.attack_damage - soft_shot.counter_damage,
+		"the fixture must be the worse shot in HP terms, or it proves nothing"
+	)
+	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [4, 1]}])
 	assert_eq(_count(report, "worse_shot"), 0)
 
 

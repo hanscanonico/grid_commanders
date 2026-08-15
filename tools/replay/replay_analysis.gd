@@ -110,6 +110,37 @@ class Report:
 		}
 
 
+## A run of consecutive turns one side ended with a factory it could have built
+## from. Held open while it lasts and reported once when it ends, because the
+## reader is being told about the streak rather than about each of its turns.
+class Hoard:
+	var day := 0
+	var turns := 0
+	var peak := 0
+	## The cheapest thing on the board at the turn the purse peaked, so the detail
+	## line's two numbers are a reading of the same board.
+	var cheapest := 0
+
+	func note(p_day: int, purse: int, p_cheapest: int) -> void:
+		if turns == 0:
+			day = p_day
+		turns += 1
+		if purse > peak:
+			peak = purse
+			cheapest = p_cheapest
+
+	func detail() -> String:
+		if turns == 1:
+			return (
+				"ended the turn on %d funds with an idle factory that builds from %d"
+				% [peak, cheapest]
+			)
+		return (
+			"held an idle factory for %d turns, peaking at %d funds against a %d build"
+			% [turns, peak, cheapest]
+		)
+
+
 ## Everything carried across turns while the walk runs. A plain object rather than
 ## a pile of locals threaded through eight detectors.
 class Walk:
@@ -119,6 +150,13 @@ class Walk:
 	var unit_db: UnitDB
 	## Unit -> consecutive turns of its owner's it has ended without acting.
 	var idle: Dictionary = {}
+	## Unit -> the properties it could have started taking when the turn *opened*,
+	## which is the only board that question has an answer on: by the end of the turn
+	## the unit has moved and its budget is spent, so a reach measured there is a
+	## reading of next turn.
+	var openings: Dictionary = {}
+	## team -> the hoarding streak it is in the middle of, or absent.
+	var hoard: Dictionary = {}
 	## Unit -> the cells it has stood on at the end of its owner's last two turns.
 	var tracks: Dictionary = {}
 	## Unit -> consecutive turns of its owner's it has ended without firing or
@@ -166,6 +204,7 @@ static func run(
 	var walk := Walk.new()
 	walk.report = report
 	walk.unit_db = unit_db
+	_open_turn(walk, state)
 
 	while not player.finished():
 		var command := player.next_command(state)
@@ -192,6 +231,8 @@ static func run(
 			walk.fought = {}
 			walk.dropped = {}
 			walk.fired_power = false
+			_open_turn(walk, state)
+	_close_hoards(walk)
 	report.days = state.day
 	report.winner = state.winner
 	report.findings.sort_custom(_by_weight)
@@ -230,9 +271,10 @@ static func _before_apply(walk: Walk, state: GameState, command: Command) -> voi
 
 ## Was there a better target from the cell this shot was fired from?
 ##
-## "Better" is the exchange the forecast already prices — damage dealt less damage
-## taken back — because that is the same reading the planner scores with, so a
-## finding is about the board and not about a second opinion on combat.
+## "Better" is the exchange the forecast prices, read in funds — what the damage
+## dealt is worth less what the counter costs — because that is the currency the
+## planner chooses a target in, so a finding is about the board and not about a
+## second opinion on what a shot is for.
 static func _check_shot(walk: Walk, state: GameState, attack: AttackCommand) -> void:
 	var from: Vector2i = attack.path[attack.path.size() - 1]
 	var target := state.unit_at(attack.target_cell)
@@ -262,7 +304,7 @@ static func _check_shot(walk: Walk, state: GameState, attack: AttackCommand) -> 
 		state,
 		attack.unit,
 		(
-			"shot the %s (net %d) with the %s in range from the same cell for net %d"
+			"shot the %s (net %d funds) with the %s in range from the same cell for net %d"
 			% [target.type.id, taken, best_target.type.id, best]
 		),
 		best - taken
@@ -298,6 +340,23 @@ static func _check_landing(walk: Walk, state: GameState, command: Command, actor
 	)
 
 
+# --- start of turn -------------------------------------------------------------
+
+
+## What the side on turn could reach before it spent anything. Only the capture
+## question needs it, and it can only be asked here: a unit's movement allowance
+## is gone by the end of its turn, so the same reach taken at the handover names
+## the ground it will take next turn and blames it for not having taken it yet.
+static func _open_turn(walk: Walk, state: GameState) -> void:
+	walk.openings = {}
+	for unit in state.units_of(state.current_team):
+		if unit.carrier != null or not unit.type.can_capture:
+			continue
+		var takeable := _takeable_within_reach(state, unit)
+		if not takeable.is_empty():
+			walk.openings[unit] = takeable
+
+
 # --- end of turn ---------------------------------------------------------------
 
 
@@ -321,8 +380,26 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 ## reads — the terrain's move classes and what this side is actually charged, so
 ## a doctrine's price percentage moves the finding with it — and a property that
 ## builds nothing this side can afford is not reported.
+##
+## Latched over the streak, the way `banked_power` and `undefended_hq` are: a side
+## that banks for five turns is one thing that happened, not five, and said once a
+## turn it was more than half of everything the analyser printed. The finding is
+## held open while the streak runs and released when it ends — or at the end of the
+## recording, for a side still sitting on its purse when the match stopped.
 static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 	var purse := int(state.funds.get(team, 0))
+	var cheapest := _cheapest_build(walk, state, team, purse)
+	if cheapest < 0:
+		_release_hoard(walk, team)
+		return
+	var streak: Hoard = walk.hoard.get(team, Hoard.new())
+	streak.note(state.day, purse, cheapest)
+	walk.hoard[team] = streak
+
+
+## The cheapest unit an idle property of `team`'s could have built out of `purse`,
+## or -1 when nothing on the board could have.
+static func _cheapest_build(walk: Walk, state: GameState, team: int, purse: int) -> int:
 	var cheapest := -1
 	for cell in state.properties_of(team):
 		if state.unit_at(cell) != null:
@@ -336,16 +413,23 @@ static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 			var price := UnitPricing.cost_for(state, team, type)
 			if price <= purse and (cheapest < 0 or price < cheapest):
 				cheapest = price
-	if cheapest < 0:
+	return cheapest
+
+
+static func _release_hoard(walk: Walk, team: int) -> void:
+	var streak: Hoard = walk.hoard.get(team)
+	if streak == null:
 		return
-	_add(
-		walk,
-		"hoarding",
-		state,
-		null,
-		"ended the turn on %d funds with an idle factory that builds from %d" % [purse, cheapest],
-		purse
-	)
+	walk.hoard.erase(team)
+	_add_at(walk, "hoarding", streak.day, team, null, streak.detail(), streak.peak)
+
+
+## Every streak still open when the recording ran out.
+static func _close_hoards(walk: Walk) -> void:
+	var teams: Array = walk.hoard.keys()
+	teams.sort()
+	for team: int in teams:
+		_release_hoard(walk, team)
 
 
 static func _check_power(walk: Walk, state: GameState, team: int) -> void:
@@ -461,10 +545,15 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 ## takes: the detector prices ground not taken, and a unit that took a shot
 ## instead made a trade this instrument cannot judge. A unit that merely *moved*
 ## is still reported — that is the miss the detector exists for.
+##
+## What was in reach is `_open_turn`'s answer, never a fresh one from here: this
+## runs on the board being handed over, where the unit is standing at the end of
+## its walk with its budget spent, so ground measured here is ground it can take
+## *next* turn.
 static func _check_capture_chance(walk: Walk, state: GameState, unit: Unit) -> void:
 	if not unit.type.can_capture or walk.captured.has(unit) or walk.fought.has(unit):
 		return
-	var takeable := _takeable_within_reach(state, unit)
+	var takeable: Array = walk.openings.get(unit, [])
 	if takeable.is_empty():
 		return
 	_add(
@@ -523,13 +612,23 @@ static func _check_oscillation(walk: Walk, state: GameState, unit: Unit) -> void
 # --- shared readings -----------------------------------------------------------
 
 
-## What this exchange is worth to the attacker: damage dealt less damage taken
-## back, both in the forecast's own percentages.
+## What this exchange is worth to the attacker, **in funds**: the value of the
+## damage dealt less the value of the counter taken back.
+##
+## The currency is the point. A unit's HP is worth its cost by the hundredth —
+## the board's own rate, since `TurnRules._repair` sells missing HP back at it —
+## so a quarter of a 16,000 md tank outbids two thirds of a 1,000 infantry, and a
+## detector reading raw HP percentages would report the first as the worse shot
+## every time it was offered. That is the same shape the planner scores an attack
+## in, without its dials: `kill_bonus`, `counter_weight` and `condition_weight`
+## are opinions about the game and this instrument only asks it for prices.
 static func _exchange(state: GameState, attacker: Unit, from: Vector2i, target: Unit) -> int:
 	var shot := CombatResolver.forecast(state, attacker, from, target)
 	if not shot.can_attack:
 		return 0
-	return shot.attack_damage - maxi(shot.counter_damage, 0)
+	var dealt := mini(shot.attack_damage, target.hp) * target.type.cost
+	var taken := mini(maxi(shot.counter_damage, 0), attacker.hp) * attacker.type.cost
+	return (dealt - taken) / 100
 
 
 ## Everything the board could put on `unit` if it stopped at `cell` this turn.
@@ -572,10 +671,19 @@ static func _takeable_within_reach(state: GameState, unit: Unit) -> Array[Vector
 static func _add(
 	walk: Walk, kind: String, state: GameState, unit: Unit, detail: String, magnitude: int
 ) -> void:
+	_add_at(walk, kind, state.day, state.current_team, unit, detail, magnitude)
+
+
+## A finding whose day and team are stated rather than read off the board, which a
+## latched detector needs: a streak is released on the turn it ends or after the
+## recording has run out, and either way it is about where it began.
+static func _add_at(
+	walk: Walk, kind: String, day: int, team: int, unit: Unit, detail: String, magnitude: int
+) -> void:
 	var finding := Finding.new()
 	finding.kind = kind
-	finding.day = state.day
-	finding.team = state.current_team
+	finding.day = day
+	finding.team = team
 	finding.detail = detail
 	finding.severity = int(SEVERITY.get(kind, 1))
 	finding.magnitude = magnitude
