@@ -63,6 +63,7 @@ const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"
 const PREVIEW := &"preview"
 const MENU := &"menu"
+const VALUE_MENU := &"value_menu"
 const TARGETING := &"targeting"
 const DROP_TARGETING := &"drop_targeting"
 const POWER_TARGETING := &"power_targeting"
@@ -84,6 +85,12 @@ const LEGENDS: Dictionary = {
 	UNIT_SELECTED: "ENTER · MOVE   ESC · BACK",
 	PREVIEW: "ESC · BACK",
 	MENU: "UP/DOWN · PICK   ENTER · OK   ESC · BACK",
+	# A menu carrying rows left and right step in place — the pause menu's device
+	# settings. Its own words rather than an addition to MENU's, because the board's
+	# action menus have no value to step and would be advertising a dead key. ESC is
+	# the entry that gives way, as it does in END_TURN_GUARD below: a menu with value
+	# rows carries a Cancel row of its own, and no other line here can be spared.
+	VALUE_MENU: "UP/DN · PICK   L/R · CHANGE   ENTER · OK",
 	TARGETING: "ENTER · FIRE   ESC · BACK",
 	DROP_TARGETING: "ENTER · DROP   ESC · BACK",
 	# An aimed Command Power. Its own word rather than the attack's FIRE, because

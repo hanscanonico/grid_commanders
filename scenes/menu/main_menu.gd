@@ -34,6 +34,8 @@ const BACKDROP_SPAN := Vector2(680, 400)
 ## selection; the height may not (UX-recovery D2), so the panel is as tall on the
 ## longest description as on the shortest.
 const MAP_CAPTION_LINES := 2
+## The picker card's frame inset, read by its stylebox and by the content over it.
+const CARD_PAD := 4
 
 ## Everything the select page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
@@ -493,12 +495,14 @@ func _build_map_picker() -> Control:
 
 
 ## One picker cell: a focusable button holding a live thumbnail and the board's
-## name. The thumbnail is a truthful miniature — real terrain, real property
-## colours — of the board this cell launches (plan D5).
+## name, and as tall as the two of them plus the frame, so a square board's
+## picture no longer crosses it. The thumbnail is a truthful miniature — real
+## terrain, real property colours — of the board this cell launches (plan D5).
 func _make_map_cell(index: int, map: MapData) -> Button:
-	const THUMB := Vector2(132, 60)
+	const THUMB := Vector2(132.0 - 2 * CARD_PAD, 60)
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(THUMB.x, THUMB.y + 14)
+	var name_height := UiTheme.display().get_height(UiTheme.SIZE_BODY)
+	button.custom_minimum_size = THUMB + Vector2(2 * CARD_PAD, 2 * CARD_PAD + name_height + 1)
 	# The cell is a single control describing itself, so it is its own trigger —
 	# the micro-label rule guards *group* controls, where hovering to reach a
 	# segment would fire an explanation of the group.
@@ -511,7 +515,9 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 1)
-	content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content.set_anchors_and_offsets_preset(
+		Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, CARD_PAD
+	)
 	button.add_child(content)
 
 	var thumb := MapThumbnail.new()
@@ -766,15 +772,12 @@ func _style_map_cell(cell: Button, name_label: Label, index: int, selected: bool
 		box.set_border_width_all(UiTheme.PANEL_BORDER)
 		UiTheme.hard_shadow(box)
 	cell.add_theme_stylebox_override("normal", box)
-	cell.add_theme_stylebox_override("hover", box if selected else _cell_hover_box())
+	var hover := box if selected else _map_cell_box(UiTheme.HOVER_WASH)
+	cell.add_theme_stylebox_override("hover", hover)
 	cell.add_theme_stylebox_override("pressed", box)
 	cell.add_theme_stylebox_override("focus", UiTheme.focus_box())
 	name_label.text = (_map_cell_name(_maps[index], selected))
 	name_label.add_theme_color_override("font_color", UiTheme.INK if selected else UiTheme.NEUTRAL)
-
-
-func _cell_hover_box() -> StyleBoxFlat:
-	return _map_cell_box(UiTheme.HOVER_WASH)
 
 
 ## The map picker cell's shared frame: a flat fill, a whisker of rounding and the
@@ -783,10 +786,7 @@ func _cell_hover_box() -> StyleBoxFlat:
 func _map_cell_box(fill: Color) -> StyleBoxFlat:
 	var box := UiTheme.flat(fill)
 	box.set_corner_radius_all(UiTheme.RADIUS)
-	box.content_margin_left = 4
-	box.content_margin_right = 4
-	box.content_margin_top = 4
-	box.content_margin_bottom = 4
+	box.set_content_margin_all(CARD_PAD)
 	return box
 
 

@@ -48,6 +48,7 @@ const DEMO_CAMPAIGN_HUB := "menu_campaign_hub"
 const DEMO_CAMPAIGN_BRIEF := "menu_campaign_brief"
 const DEMO_CAMPAIGN_DEBRIEF := "menu_campaign_debrief"
 const DEMO_CAMPAIGN_INTERLUDE := "menu_campaign_interlude"
+const DEMO_CAMPAIGN_DEEP := "menu_campaign_deep"
 const DEMO_MODES: Array[String] = [
 	DEMO_WITH_SAVE,
 	DEMO_NO_SAVE,
@@ -59,6 +60,7 @@ const DEMO_MODES: Array[String] = [
 	DEMO_CAMPAIGN_BRIEF,
 	DEMO_CAMPAIGN_DEBRIEF,
 	DEMO_CAMPAIGN_INTERLUDE,
+	DEMO_CAMPAIGN_DEEP,
 ]
 ## Dev captures of the selection page. Bare, it opens the page on seat 1;
 ## `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
@@ -157,6 +159,13 @@ func poses_campaign_debrief() -> bool:
 
 func poses_campaign_interlude() -> bool:
 	return _demo == DEMO_CAMPAIGN_INTERLUDE
+
+
+## The hub pose a war is most of the way through: the one frame the list is
+## scrolled in, so the row the keyboard lands on is a row the page had to move to
+## show.
+func poses_campaign_deep() -> bool:
+	return _demo == DEMO_CAMPAIGN_DEEP
 
 
 ## True when `--co-select` asked for the selection page. An ordinary capture (no

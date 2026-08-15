@@ -115,6 +115,34 @@ static func objective_cells(game: GameState) -> Array[Vector2i]:
 	return cells
 
 
+## The words this mission opened with, for the pause menu to say again. Empty for
+## a skirmish, so the row that asks for them is offered nowhere else.
+##
+## Read through `MissionLine.spoken` against the ledger, which is the same walk
+## the hub's briefing card makes: a briefing that reads differently after a
+## different mission five has to read that way here too (campaign-depth D5), and a
+## second walk over the conditions is a second answer to what was said.
+static func briefing_lines() -> Array[MissionLine]:
+	if not CampaignSession.active():
+		return []
+	return MissionLine.spoken(CampaignSession.mission.briefing, CampaignSession.progress)
+
+
+## Says those words again over the board, at the player's asking from the pause
+## menu. Presentation from end to end: no command is issued, nothing under `core/`
+## learns it happened, and a skirmish never gets here, its menu offering no such
+## row.
+##
+## ANIMATING for as long as the card is up, because the board behind it is the
+## player's own and a briefing they stopped to read must not also be a board they
+## can act on. `rest_state()` is what hands it back, so a briefing read from a
+## paused computer turn returns to that paused turn.
+static func say_briefing(battle: Battle) -> void:
+	battle.state = Battle.State.ANIMATING
+	await battle.animator.speak_until_dismissed(briefing_lines(), battle.commander_db)
+	battle.state = battle.rest_state()
+
+
 ## Whether the mission just ended, and false for every skirmish — which is what
 ## leaves a match outside a campaign unchanged. Its answer outranks the receipt's
 ## own winner, and it is asked after the fallen-army banner and before the turn

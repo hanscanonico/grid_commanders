@@ -61,3 +61,18 @@ func test_the_badge_and_the_order_read_the_same_key() -> void:
 		CampaignPickerPanel.row_text(_campaign(&"six_marshals"), null).contains("START HERE"),
 		"and no other war wears the badge"
 	)
+
+
+## The picker's card reads three authored things off every war. A campaign that
+## leaves any of them empty is a row with a hole in it, and nothing else asks.
+func test_every_war_carries_the_card_the_picker_prints() -> void:
+	var terrain := TerrainDB.load_default()
+	for campaign in CampaignDB.load_default().all():
+		assert_false(campaign.premise.is_empty(), "%s states a premise" % campaign.id)
+		assert_false(campaign.antagonist.is_empty(), "%s names an antagonist" % campaign.id)
+		assert_false(campaign.missions.is_empty(), "%s has a first mission" % campaign.id)
+		var first := campaign.missions[0]
+		assert_not_null(
+			MapData.load_from_file(first.map_path, terrain),
+			"%s opens on a board the thumbnail can draw" % campaign.id
+		)

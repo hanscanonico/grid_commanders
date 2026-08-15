@@ -89,3 +89,11 @@ func test_a_full_seating_is_left_alone() -> void:
 			SeatStrip.reopened_seats([HUMAN, CPU, CPU] as Array[int], closable),
 			[HUMAN, CPU, CPU] as Array[int]
 		)
+
+
+## The preset row is dead on every board that seats fewer than four, and the row
+## says so once (COM-233): a board with a live preset has no reason to give.
+func test_a_board_that_seats_fewer_than_four_refuses_the_whole_preset_row() -> void:
+	assert_eq(SeatStrip.preset_refusal(SeatStrip.PRESET_SEATS), "")
+	for dealt in range(SeatStrip.MIN_FILLED, SeatStrip.PRESET_SEATS):
+		assert_ne(SeatStrip.preset_refusal(dealt), "", "%d seats offers no preset" % dealt)

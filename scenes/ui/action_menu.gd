@@ -89,6 +89,14 @@ func close() -> void:
 	hide()
 
 
+## Whether the menu on screen carries a value row. The key legend asks this rather
+## than asking which menu was opened, so left and right are advertised exactly
+## where a row answers to them. A closed menu carries nothing: its rows are the
+## last menu's until the next open replaces them.
+func has_value_rows() -> bool:
+	return visible and _cycles.any(func(cycle: Callable) -> bool: return cycle.is_valid())
+
+
 ## Every recognised action claims the event *before* it runs, not after: a row may
 ## now leave the match, and the scene change frees the viewport out from under this
 ## handler, so a trailing set_input_as_handled() would be called on nothing. The
