@@ -1,6 +1,6 @@
 # The Hollow Crown — "The High Seat".
-# A standard two-army front. No allies here yet — the succession war has
-# not reached this crossing.
+# The Directorate hall, capital interior: three towns on one road, with a
+# band of open ground north of it to cross. Two armies, no allies.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]

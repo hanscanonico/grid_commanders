@@ -1,6 +1,6 @@
-# The Hollow Crown — "The Hollow Crown".
-# A standard two-army front. No allies here yet — the succession war has
-# not reached this crossing.
+# The Hollow Crown, finale — Marshal Morn's fortress at the capital's heart.
+# The widest of the capital boards: three towns on one road, HQ facing HQ,
+# two bands of open ground to cross. Two armies, no allies.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
