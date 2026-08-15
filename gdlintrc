@@ -328,4 +328,7 @@ max-public-methods: 22
 #
 # 1437 -> 1429, tracking battle.gd down again: per-seat difficulty (COM-225) gave
 # `_build_planners` back to BattleSetup, which was already choosing the profiles.
-max-file-lines: 1429
+#
+# 1429 -> 1420, tracking battle.gd down again: the mission's objective marks paid
+# for themselves. See the same entry in tools/check_scripts.sh.
+max-file-lines: 1420

@@ -167,3 +167,32 @@ func test_ally_survives_refuses_an_army_the_board_never_seats() -> void:
 	assert_ne(objective.definition_error(map, 1, unit_db), "")
 	objective.team = 2
 	assert_eq(objective.definition_error(map, 1, unit_db), "")
+
+
+# --- the squares the board marks --------------------------------------------
+
+
+func test_the_cell_objectives_report_the_ground_they_name() -> void:
+	# What the board rings is the objective's own authored cell, so the mark and
+	# the words can never point at different squares.
+	var capture := CaptureCellObjective.new()
+	capture.cell = Vector2i(1, 0)
+	assert_eq(capture.marker_cells(), [Vector2i(1, 0)], "the capture target")
+	var hold := HoldCellObjective.new()
+	hold.cell = Vector2i(2, 0)
+	assert_eq(hold.marker_cells(), [Vector2i(2, 0)], "the ground to hold")
+	var reach := ReachCellObjective.new()
+	reach.cells = [Vector2i(0, 0), Vector2i(3, 0)]
+	assert_eq(reach.marker_cells(), reach.cells, "every cell of the exit zone")
+
+
+func test_an_objective_about_a_count_names_no_ground() -> void:
+	# A property count, a deadline and a survival clause are about the whole
+	# board, so marking a square for them would point the player at nothing.
+	for objective: MissionObjective in [
+		OwnPropertiesObjective.new(),
+		DayDeadlineObjective.new(),
+		SurviveUntilDayObjective.new(),
+		LossLimitObjective.new(),
+	]:
+		assert_eq(objective.marker_cells(), [], "%s marks nothing" % objective.get_class())

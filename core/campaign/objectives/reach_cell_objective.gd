@@ -27,6 +27,10 @@ func readout(state: GameState, team: int, _progress: MissionProgress) -> String:
 	return "%d/%d" % [_arrived(state, team), count]
 
 
+func marker_cells() -> Array[Vector2i]:
+	return cells
+
+
 func definition_error(map: MapData, _team: int, unit_db: UnitDB) -> String:
 	if count <= 0:
 		return "reach objective asks for %d units" % count

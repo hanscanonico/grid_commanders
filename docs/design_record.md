@@ -821,6 +821,25 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   thing a new board has to say — and it is deliberately not a device preference. `refresh` does
   nothing beyond the chip while the card is down, so the card is redrawn on the way up rather than
   merely shown.
+  **The card says what to do and the board says where** (added after CD7, and the complement to the
+  toggle above). A cell objective printed the ground's *name* and the player then had to hunt for
+  the square, so the mark is the card's other half rather than a second statement of it.
+  It is `MissionObjective.marker_cells`, a fourth **presentation** hook beside
+  `readout`: authored `@export` cells read straight back, needing no board, no state and no tally,
+  which is what separates it from the cell hooks CD8 deleted — those had to answer where an *effect*
+  would land at fire time, which is not statically knowable and was unsound as a gate. This one only
+  repeats in pixels the question the mission already asks in words.
+  `BattleCampaign.objective_cells` is the single collector — **live** (via `is_live`, the same
+  authority the card prints through, so a held-back objective is no more marked than it is named)
+  and **unmet**, primary and bonus alike, because a ring on ground already taken is one the player
+  learns to ignore — and `ObjectiveMarks` is the drawer, dumb like `CapturePips` and reading no
+  mission. Deliberately **unfogged**: what a mission is about is public — the briefing says it, the
+  card says it — so hiding the square would withhold the one thing the player was *told* rather than
+  something they must discover. Fog costs you what is standing there, never what you were sent to
+  take. The mark is a corner badge at the tile's top-right (the last free corner: `CapturePips` has
+  the top-left and `UnitSprite` hangs HP and fuel along the bottom) and is drawn small on purpose —
+  the first cut covered the very building it was pointing at, which is the mistake the capture chip
+  had already been redrawn once to avoid.
   **CD3 shipped the event system on D1/D2/D3 as written; what a future session must not undo is
   below, and the plan's own "What CD3 settled" carries the rest.**
   A `MissionEvent` is triggers (a **conjunction**, so a small vocabulary stays expressive) plus

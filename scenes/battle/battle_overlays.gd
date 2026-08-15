@@ -36,6 +36,10 @@ var attack_layer: TileMapLayer
 var threat_layer: TileMapLayer
 var path_arrow: PathArrow
 var capture_pips: CapturePips
+## The mission's targets. Transient like the rest of this class only in that a
+## campaign raises it and a skirmish never does; within a mission it stands until
+## the objective it marks is met.
+var objective_marks: ObjectiveMarks
 
 
 ## Builds the tile sets and paints the layers from OverlayPalette. Call once,
@@ -71,10 +75,23 @@ func trace_path(path: Array[Vector2i]) -> void:
 	path_arrow.set_path(path)
 
 
-## Pins the capture chips, keyed by cell to the points each property still owes.
-## The caller has already put them through the fog gate.
-func show_capture_pips(pips: Dictionary[Vector2i, int]) -> void:
+## Pins the capture chips: the sim's own progress table, keyed by cell to the
+## points each property still owes, put through the same fog gate the board is —
+## a capture the viewer has not scouted stays as unannounced as the ownership flip
+## that will follow it. A presentation split of a number the sim already holds,
+## and `CapturePips` stays dumb: never a call back into capture_strength.
+func show_capture_pips(progress: Dictionary[Vector2i, int], perspective: BattlePerspective) -> void:
+	var pips: Dictionary[Vector2i, int] = {}
+	for cell: Vector2i in progress:
+		if perspective.can_see_cell(cell):
+			pips[cell] = progress[cell]
 	capture_pips.set_pips(pips)
+
+
+## Rings the squares this mission's live objectives name. Empty for a skirmish
+## and for every objective that is about a count rather than a place.
+func show_objective_marks(cells: Array[Vector2i]) -> void:
+	objective_marks.set_cells(cells)
 
 
 func _paint(layer: TileMapLayer, cells: Array[Vector2i]) -> void:
