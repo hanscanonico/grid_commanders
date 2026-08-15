@@ -15,7 +15,9 @@ export const meta = {
 //   reviewNote extra context for the reviewer (what to independently verify)
 //   trailers   commit-trailer block for this session (Co-Authored-By + Claude-Session)
 //   footer     PR-body footer for this session (generated-with + session link)
-const input = args && args.tasks ? args : { tasks: args }
+// Some harness routes deliver args as a JSON string rather than a parsed value.
+const raw = typeof args === 'string' ? JSON.parse(args) : args
+const input = raw && raw.tasks ? raw : { tasks: raw }
 if (!Array.isArray(input.tasks) || input.tasks.length === 0) {
 	throw new Error('improve: pass args = { tasks: [{ slug, task }, ...] }')
 }
