@@ -325,6 +325,27 @@ if (($# == 0)); then
 		printf '%s\n' "$search_check" >&2
 		failed=$((failed + 1))
 	fi
+
+	# A detector with no fixture is a detector nobody can trust: a false positive
+	# sends the reader looking at a doctrine that was playing correctly. Every
+	# finding kind the analyser can report is a key of ReplayAnalysis.SEVERITY, so
+	# that constant is the roster a new detector joins and this is what holds it to
+	# naming itself in a suite.
+	finding_kinds="$(
+		sed -n '/^const SEVERITY/,/^}/p' tools/replay/replay_analysis.gd |
+			grep -oE '^[[:space:]]*"[^"]+"' | tr -d '[:blank:]"'
+	)"
+	if [[ -z "$finding_kinds" ]]; then
+		echo "check: read no finding kinds from ReplayAnalysis.SEVERITY — has it moved?" >&2
+		failed=$((failed + 1))
+	fi
+	while read -r kind; do
+		[[ -z "$kind" ]] && continue
+		if ! grep -q "\"$kind\"" tests/unit/test_replay_*.gd; then
+			echo "check: finding kind '$kind' has no fixture in tests/unit/test_replay_*.gd" >&2
+			failed=$((failed + 1))
+		fi
+	done <<<"$finding_kinds"
 fi
 
 if ((failed > 0)); then
