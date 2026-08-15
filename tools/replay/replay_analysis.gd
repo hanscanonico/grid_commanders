@@ -554,10 +554,10 @@ static func _check_power(walk: Walk, state: GameState, team: int) -> void:
 ## so the most wasted activation there is was the one thing the instrument could
 ## not see.
 ##
-## Judged here and only here, which is also the last-turn exclusion: a recording
-## that stops before the side hands the board over never reaches this, and the
-## turn the meter was meant to buy may be off the end of the file. `Report.stopped`
-## is what tells the reader that happened.
+## Judged on the board the side hands over, and only there: a recording that
+## stops mid-turn never reaches this, because the turn the meter was meant to buy
+## may be off the end of the file. `Report.stopped` is what tells the reader that
+## happened.
 static func _check_spent_power(walk: Walk, state: GameState) -> void:
 	var spend := walk.spend
 	if spend == null or _power_bought_something(walk, state, spend):

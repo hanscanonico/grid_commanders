@@ -172,7 +172,7 @@ func test_hammerfall_that_cleared_a_square_is_not_reported() -> void:
 ## Judged on the board the side hands over, so a recording that stops before it
 ## does says nothing: the turn the meter was meant to buy may be off the end of
 ## the file, and `Report.stopped` is what tells the reader that.
-func test_a_power_on_the_last_recorded_turn_is_not_reported() -> void:
+func test_a_power_on_an_unfinished_final_turn_is_not_reported() -> void:
 	var state := _charged_state(&"alina_ward")
 	assert_eq(_count(_run(state, [{"c": "power", "target": [0, 0]}]), "spent_power"), 0)
 
