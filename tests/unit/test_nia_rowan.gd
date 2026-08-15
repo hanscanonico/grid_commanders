@@ -142,3 +142,19 @@ func test_the_gate_counts_the_move_the_power_would_grant() -> void:
 	var state := _state("[terrain]\n....C\n[units]\n1 i 0 0")
 	assert_false(MovementResolver.reachable(state, state.units[0]).has(Vector2i(4, 0)))
 	assert_true(state.commander_of(1).wants_power(state, 1))
+
+
+## Two thirds of Ghost March is sight, and sight is worth nothing with the lights
+## on — so a fight in reach and no ground to take is not a reason to fire.
+func test_ghost_march_refuses_a_pure_fight_with_the_lights_on() -> void:
+	var map_text := "[terrain]\n.....\n[units]\n1 t 0 0\n2 t 2 0"
+	var neutral := _state(map_text, false)
+	assert_true(neutral.commander_of(1).wants_power(neutral, 1), "the offensive default fires")
+	var state := _state(map_text)
+	assert_false(state.commander_of(1).wants_power(state, 1), "Rowan holds")
+
+
+func test_ghost_march_still_fires_to_scout_a_fogged_enemy() -> void:
+	var state := _state("[terrain]\n.....\n[units]\n1 t 0 0\n2 t 2 0")
+	state.fog_enabled = true
+	assert_true(state.commander_of(1).wants_power(state, 1))

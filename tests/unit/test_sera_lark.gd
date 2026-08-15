@@ -110,3 +110,13 @@ func test_the_gate_counts_the_move_the_march_would_grant() -> void:
 func test_the_gate_stays_quiet_with_nothing_to_reach_and_nobody_to_fight() -> void:
 	var state := _state("[terrain]\n.....\n[units]\n1 i 0 0")
 	assert_false(state.commander_of(1).wants_power(state, 1))
+
+
+## Forced March grants no damage, so a fight already in reach is no reason to
+## spend the meter: the tile it buys changes nothing about that shot.
+func test_forced_march_refuses_a_pure_fight() -> void:
+	var map_text := "[terrain]\n.....\n[units]\n1 t 0 0\n2 t 2 0"
+	var neutral := _state(map_text, false)
+	assert_true(neutral.commander_of(1).wants_power(neutral, 1), "the offensive default fires")
+	var state := _state(map_text)
+	assert_false(state.commander_of(1).wants_power(state, 1), "Lark holds")
