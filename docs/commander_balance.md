@@ -375,6 +375,42 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-15 — Signal Jam stops stripping supplies and starts stripping
+  movement.** The 43.3 % reading above came with the note that the deficit is
+  flat across boards, and the diagnosis is the power rather than a fixture: 10
+  fuel off pools of 50–99 that are spent two or three a turn, and one shell off
+  six to nine, are not a turn either side plans around, and the third half —
+  −1 enemy vision — only bites in fog and buys little against a planner whose
+  targeting is omniscient-except-hidden. So the one-shot strip is **deleted**
+  and the jam is now two ongoing debuffs: **−1 enemy movement** beside the
+  −1 vision it already carried, for the same 11,000 and the same ROUND
+  duration. A movement point is the one currency both a human and the planner
+  spend, the planner reading the same `MovementResolver.move_budget` the board
+  does.
+
+  The hook is `CommanderType.enemy_move_bonus`, the second cross-table hook and
+  a verbatim mirror of `enemy_vision_bonus` — asked of every hostile commander,
+  `team` passed rather than recovered — read in `move_budget`'s own
+  hostile-commander loop, which is the loop `Vision._sight_of` already runs.
+  The budget is floored at one point before the fuel cap (slowed, never frozen;
+  an empty tank still stays put), and nothing but a jam can reach that floor,
+  so every commander-less and unjammed budget is the arithmetic it always was.
+  `make verify` is green, determinism golden reproduced.
+
+  Measured as a same-seed A/B rather than argued, `orin_flux:normal` against
+  `none:normal`, 40 paired seeds (n=80) a fixture:
+
+  | fixture | old power | new power | Δ |
+  |---|---:|---:|---:|
+  | `holdings` | 51.2 % | 61.2 % | **+10.0** |
+  | `ridge` | 56.2 % | 57.5 % | +1.3 |
+  | `clash` | 46.2 % | 45.0 % | −1.2 |
+
+  `holdings` — his worst board in the matrix above at 40.9 % — moves furthest,
+  and `clash` is flat because it resolves before the meter matters. This is a
+  duel against a neutral, so it is not on the full matrix's scale; the delta is
+  the reading, not the level. **The standings above now predate this change for
+  Orin Flux**: re-run the matrix before quoting his row.
 - **2026-08-14 — the matrix is regenerated on the post-Audit-II baseline; no
   number moved.** 9,680 matches at `025c5ca`, 46 minutes, hard invariants clean
   (0 rejected, 0 cap stalls, 0 draws), first-seat bias +33.0 pp. This closes the

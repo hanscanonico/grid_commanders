@@ -239,9 +239,9 @@ func test_a_capture_power_does_not_march_on_an_allys_ground() -> void:
 
 
 ## Signal Jam is the one power that reaches across the table, and both of its
-## halves have to agree on where the table ends. The ongoing debuff asks the
-## authority through Vision; the one-shot strip has to ask it too.
-func test_a_jamming_power_drains_a_rival_and_leaves_an_ally_alone() -> void:
+## halves have to agree on where the table ends. Sight asks the authority through
+## Vision's hostile loop; movement has to ask it too, through move_budget's.
+func test_a_jamming_power_slows_a_rival_and_leaves_an_ally_alone() -> void:
 	const BOARD := "[terrain]\n====\n[units]\n1 r 0 0\n2 t 2 0\n3 t 3 0"
 	var orin: OrinFlux = load("res://data/commanders/orin_flux.tres")
 	var jam := func(state: GameState) -> void:
@@ -253,18 +253,14 @@ func test_a_jamming_power_drains_a_rival_and_leaves_an_ally_alone() -> void:
 	var allies := _state(BOARD, [1, 3])
 	var rival := allies.units[1]
 	var ally := allies.units[2]
-	var full_fuel := ally.fuel
-	var full_ammo := ally.ammo
+	var full_move := ally.type.move_points
 	jam.call(allies)
-	assert_eq(rival.fuel, full_fuel - orin.jam_fuel_loss, "a rival loses fuel")
-	assert_eq(rival.ammo, full_ammo - orin.jam_ammo_loss, "and a shell")
-	assert_eq(ally.fuel, full_fuel, "an ally keeps its fuel")
-	assert_eq(ally.ammo, full_ammo, "and its shells")
+	assert_eq(MovementResolver.move_budget(allies, rival), full_move - 1, "a rival is slowed")
+	assert_eq(MovementResolver.move_budget(allies, ally), full_move, "an ally keeps its points")
 	# The twin: with nobody allied, the same third army is jammed like any other.
 	var rivals := _state(BOARD)
 	jam.call(rivals)
-	assert_eq(rivals.units[2].fuel, full_fuel - orin.jam_fuel_loss, "fuel goes")
-	assert_eq(rivals.units[2].ammo, full_ammo - orin.jam_ammo_loss, "and so does a shell")
+	assert_eq(MovementResolver.move_budget(rivals, rivals.units[2]), full_move - 1, "a point goes")
 
 
 # --- deliberately not shared -------------------------------------------------

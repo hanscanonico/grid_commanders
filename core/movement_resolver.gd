@@ -56,9 +56,15 @@ class MoveRange:
 		return path
 
 
-## How far `unit` may travel this turn: its type's movement points plus whatever
-## its commander's doctrine adds, capped by fuel — an empty tank keeps a unit
-## where it stands however generous the doctrine.
+## How far `unit` may travel this turn: its type's movement points, plus whatever
+## its commander's doctrine adds, less whatever every hostile commander jams
+## away, capped by fuel — an empty tank keeps a unit where it stands however
+## generous the doctrine, and the fuel cap applies last so no floor here can
+## conjure a step out of an empty tank.
+##
+## Floored at one point before that cap: a jammed unit is slowed, never frozen,
+## the same shape as Vision's floor at zero. Nothing but a jam can reach the
+## floor, so the neutral budget is the arithmetic it always was.
 ##
 ## `extra` is a hypothetical allowance on top, for asking "how far would this
 ## unit get with one more point?" without touching match state. The AI weighs a
@@ -67,7 +73,9 @@ class MoveRange:
 ## Fuel still caps the total: no allowance conjures range out of an empty tank.
 static func move_budget(state: GameState, unit: Unit, extra: int = 0) -> int:
 	var bonus := state.commander_of(unit.team).move_bonus(state, unit)
-	return mini(unit.type.move_points + bonus + extra, unit.fuel)
+	for team in state.enemies_of(unit.team):
+		bonus += state.commander_of(team).enemy_move_bonus(state, team, unit)
+	return mini(maxi(1, unit.type.move_points + bonus + extra), unit.fuel)
 
 
 ## What one step onto `terrain` actually costs `unit`, after its commander's

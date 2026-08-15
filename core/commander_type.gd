@@ -154,6 +154,18 @@ func move_bonus(_state: GameState, _unit: Unit) -> int:
 	return 0
 
 
+## Movement points this commander strips from an *enemy* unit (Orin Flux's
+## Signal Jam). The second of the two hooks that reach across the table, and it
+## reads exactly like `enemy_vision_bonus`: asked of every commander hostile to
+## the unit, `team` passed rather than recovered so two armies playing the same
+## general each answer for their own meter.
+##
+## MovementResolver.move_budget floors the total at one point — a jammed unit is
+## slowed, never frozen — the same shape as vision's floor at zero.
+func enemy_move_bonus(_state: GameState, _team: int, _unit: Unit) -> int:
+	return 0
+
+
 ## What one step onto `terrain` costs `unit`; `base` is the terrain's own cost
 ## for that movement class. Called from the Dijkstra flood fill *and* from the
 ## fuel spend in GameState.advance_unit, so a discount never leaves fuel
@@ -242,7 +254,7 @@ func kill_bounty_pct(_state: GameState, _team: int, _victim: Unit) -> int:
 
 
 ## One-shot effects fired the instant the power activates: refills, heals, the
-## enemy debuffs Signal Jam applies, the square a meteor lands on. Anything that
+## square a meteor lands on. Anything that
 ## lasts for the duration of the power belongs in the hooks above, gated on
 ## _is_active(), not here.
 ##
