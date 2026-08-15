@@ -4,8 +4,12 @@ extends RefCounted
 ## reach a firing position and shoot a given board cell, this records that the
 ## cell is threatened by that unit; a caller then asks "if my unit stood here,
 ## what damage answers it?" and gets a luck-free forecast summed over those
-## enemies. This is the one thing Difficult weighs that Normal and Easy do not:
-## it lets a unit refuse to end its move in a kill zone.
+## enemies. What it buys the planner is a unit that can refuse to end its move in
+## a kill zone. It is not a Difficult-only smart: the three dials that read it
+## (threat_aversion, advance_threat_tiles, withdraw_weight) are as usable to make
+## a tier timid as to make it careful, and any tier weighing one of them above
+## zero builds this map. Which tier carries which value is the tier files'
+## (data/ai/*.tres) and docs/difficulty_check.md's — not this comment's.
 ##
 ## Node-free like the rest of ai/. Reuses the single authorities and re-derives
 ## no rules: MovementResolver for each enemy's reach, AttackRange for its firing
@@ -41,6 +45,16 @@ var _by_cell: Dictionary[Vector2i, Array] = {}
 ## Builds the map for `team` from the enemies it can see. The caller passes the
 ## visible-enemy list (already filtered through Vision) so this stays ignorant of
 ## the fog rules — it never widens what the AI is allowed to know.
+##
+## Each enemy's reach is filled with that enemy's own sight (MOVER_SIGHT, the
+## default `firing_cells` passes down), never with the planning team's, because
+## the question is "what will this enemy attempt" and it will attempt it with
+## the knowledge it has. Keyed to the planner's team the fill would be walled by
+## our own units the enemy has not spotted, and the map would under-report the
+## reach the enemy actually plans through — where over-reporting is the safe
+## direction for a heuristic that only ever makes a unit more careful. Fog-only
+## either way: with fog off `MovementResolver.reachable` never computes
+## visibility at all, so the key is inert.
 static func build(state: GameState, enemies: Array[Unit]) -> ThreatMap:
 	var map := ThreatMap.new()
 	for enemy in enemies:
