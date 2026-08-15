@@ -46,6 +46,28 @@ func test_shoal_reef_and_port_each_grant_the_shore_star() -> void:
 		assert_eq(state.commander_of(1).star_bonus(state, fight), 1, symbol)
 
 
+func test_the_shore_power_holds_on_a_land_only_board() -> void:
+	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
+	assert_true(_state(map_text, false).commander_of(1).wants_power(_state(map_text, false), 1))
+	var marr := _state(map_text)
+	assert_false(marr.commander_of(1).wants_power(marr, 1))
+
+
+func test_the_shore_power_fires_for_a_hull() -> void:
+	var state := _state("[terrain]\n..S\n[units]\n1 t 0 0\n2 i 1 0\n1 c 2 0")
+	assert_true(state.commander_of(1).wants_power(state, 1))
+
+
+func test_the_shore_power_fires_for_a_unit_standing_on_a_shoal() -> void:
+	var state := _state("[terrain]\n_.\n[units]\n1 t 0 0\n2 i 1 0")
+	assert_true(state.commander_of(1).wants_power(state, 1))
+
+
+func test_the_shore_power_fires_for_a_shoal_one_march_away() -> void:
+	var state := _state("[terrain]\n..\n._\n[units]\n1 t 0 0\n2 i 1 0")
+	assert_true(state.commander_of(1).wants_power(state, 1))
+
+
 func test_land_only_combat_is_bit_identical_to_neutral() -> void:
 	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
 	var marr := _state(map_text)

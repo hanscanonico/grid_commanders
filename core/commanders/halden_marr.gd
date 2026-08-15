@@ -13,6 +13,10 @@ extends CommanderType
 @export var shore_power_attack_pct: int = 10
 @export var shore_power_star_bonus: int = 1
 @export var shore_power_move_bonus: int = 2
+## Tiles of march the gate lets a land unit spend beyond its budget to reach the
+## coast: the shore bonuses are worth firing for ground the army can actually
+## stand on this turn.
+@export var shore_reach_move: int = 0
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:
@@ -38,6 +42,33 @@ func star_bonus(state: GameState, fight: Engagement) -> int:
 	if _is_active(state, fight.defender.team):
 		bonus += shore_power_star_bonus
 	return bonus
+
+
+## Every effect of Make for the Shore is keyed on a hull or on shore ground, so
+## an army with neither fires a full meter for exactly nothing — forever, on a
+## land-only board. The offensive default still has to hold: the power is
+## OWNER_TURN and each of its bonuses lands inside this turn's exchanges.
+func wants_power(state: GameState, team: int) -> bool:
+	return _can_use_the_shore(state, team) and super(state, team)
+
+
+## A hull to speed up, a unit already standing on the coast, or one that can be
+## standing on it before the turn ends. The walk goes through MovementResolver
+## like _can_reach_capture does, so the movement budget keeps one owner and fuel
+## still caps it.
+func _can_use_the_shore(state: GameState, team: int) -> bool:
+	for unit in state.units_of(team):
+		if unit.carrier != null:
+			continue
+		if unit.type.domain == UnitType.SEA or _is_shore(state, unit.cell):
+			return true
+		if unit.acted:
+			continue
+		var reach := MovementResolver.reachable(state, unit, shore_reach_move)
+		for cell in reach.cells():
+			if reach.can_stop_at(cell) and _is_shore(state, cell):
+				return true
+	return false
 
 
 func _is_shore(state: GameState, cell: Vector2i) -> bool:
