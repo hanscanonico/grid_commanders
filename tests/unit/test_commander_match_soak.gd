@@ -32,8 +32,10 @@ const COMMAND_CAP := 2000
 ##   unit through an F tile;
 ## - shoal under each side's starting recon, so a doctrine that only counts
 ##   units standing on shore ground has one from turn one;
-## - an airport each, and a b-copter starting on its own airport, so an air-only
-##   gate opens on day one instead of waiting on the production planner;
+## - a mirrored pair of airports with a b-copter parked on each, so an air-only
+##   gate opens on day one instead of waiting on the production planner. They
+##   stay neutral, which costs the copters nothing: 99 fuel outlasts eight days,
+##   so neither ever needs the refit an owned airport would give it;
 ## - an artillery each, so an indirect-only gate has an indirect unit the same
 ##   way;
 ## - both armies inside each other's reach on day one, which is what opens the
