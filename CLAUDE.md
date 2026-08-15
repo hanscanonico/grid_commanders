@@ -122,8 +122,15 @@ plan is stated in full below and has no copy there.
   `user://settings.cfg`, never the `MatchRequest` a launch is staged as and never a save. Standing
   invariant: **nothing under `core/` or `ai/` may import `GameSpeed` or read `Settings`** — pacing
   can never move an outcome, a save or a replay. Instant is an explicit branch, not an animation
-  scale of zero. The GS3 subjective retune is **not done** — tier numbers are still the plan's
-  starting values.
+  scale of zero. **The GS3 subjective retune landed from playtest (COM-226/230)**: the tiers are
+  **Normal / Quick / Instant**, Normal carrying the old Slow's numbers, Quick the old Normal's and
+  Slow dropped — a stored `slow` needs no migration, since `GameSpeed.by_id` answers a stranger with
+  the default and the default is now the tier holding the numbers that preference asked for. COM-230
+  is the other half: **the cut-in clock obeys the tier, and `CutscenePlayback` is the one place it
+  does** — the two directors own beat sheets only, those sheets are authored in seconds at the
+  default tier, and `GameSpeed.cutscene_rate()` states a tier as a *rate* on that clock rather than
+  as `anim_scale` on the sheet, which would stretch a two-second exchange to six. Skip stays
+  `t = total` at any rate, and Instant never reaches a cut-in at all.
 - `faction-identity-plan.html` — armies wear their commander's faction, FI1–FI3 shipped. D1:
   **identity is presentation-only** — the sim keeps its team ints; `scenes/common/side_identity.gd`
   (`SideIdentity`) resolves `team → {theme, display name, atlas row}` once per match from the

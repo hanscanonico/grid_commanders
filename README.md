@@ -348,7 +348,7 @@ change: defeat is only ever checked when a unit dies, and the AI's planner alrea
 production when it has nothing to move.
 
 Command-line flags still override the menu so demos and tools can skip it: `--map=crossfire`,
-`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=slow`, `--seats=1,3` (which of the board's seats
+`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=quick`, `--seats=1,3` (which of the board's seats
 play — an unnamed seat stays empty: its units never enter and its properties open neutral),
 `--co=alina_ward,viktor_draeg` (one id per playing seat in seat order; any of them may be left blank
 for no commander) and `--sides=1+3v2+4` (armies joined by `+` stand together, groups separated by
@@ -756,18 +756,19 @@ vision.
 
 ## Game speed
 
-Pick **Slow**, **Normal**, **Quick** or **Instant** in the menu, or from the `Speed:` row on the
-in-battle map menu (the one that opens on empty ground), which cycles through the four and takes
+Pick **Normal**, **Quick** or **Instant** in the menu, or from the `Speed:` row on the
+in-battle map menu (the one that opens on empty ground), which cycles through the three and takes
 effect on the very next animation. It scales how fast moves and battles *play out on screen* and
 nothing else: **no outcome, save, replay or seeded roll can change with it**, because no file under
-`core/` or `ai/` is ever handed the setting.
+`core/` or `ai/` is ever handed the setting. The full-screen cut-ins follow it too: their beat
+sheets are written at Normal's pace and Quick runs the same clock half again as fast, with a press
+still cutting one short at any tier.
 
-- **Slow** — 0.18 s a tile; every step of a path is individually readable.
-- **Normal** — 0.12 s a tile. The default.
-- **Quick** — 0.06 s a tile, the pacing the game shipped with before the setting existed.
-- **Instant** — no tweens. Units appear at their destinations, casualties vanish, sounds still fire,
-  banners tighten to half a second, and the AI runs one command per frame so the board still
-  repaints. For grinding out the late game.
+- **Normal** — 0.18 s a tile; every step of a path is individually readable. The default.
+- **Quick** — 0.12 s a tile, and cut-ins a third shorter.
+- **Instant** — no tweens and no cut-ins. Units appear at their destinations, casualties vanish,
+  sounds still fire, banners tighten to half a second, and the AI runs one command per frame so the
+  board still repaints. For grinding out the late game.
 
 It is a **device preference**, not match state: it lives in `user://settings.cfg` (beside the save's
 `user://save.json`), never enters the match request or a save file, and both sides of a hot-seat
