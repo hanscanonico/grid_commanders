@@ -65,6 +65,11 @@ const _TIER_CHIP_PAD := 6.0
 ## The roster every preset is written for. A smaller board can express only one of
 ## them, so there the row is built and dead rather than absent.
 const PRESET_SEATS := 4
+## How far back a preset row with nothing live on it is faded, over the disabled
+## dress its buttons already wear. A size this file owns for the reason the segment
+## height is: it is the fade of one row of this strip and not a shell token, and
+## `UiTheme` has no recipe for a group that is dead whole.
+const _DEAD_ROW_TINT := Color(1.0, 1.0, 1.0, 0.6)
 ## The one-tap tables, each of them a seating *and* a grouping — the two facts a
 ## row would otherwise take four taps to say between them. Offered only on a board
 ## that seats four, because they are the only rosters where more than one of
@@ -81,7 +86,10 @@ const PRESET_SEATS := 4
 ##
 ## The row is built on every board and greyed where the board deals fewer than
 ## four seats, for the reason the Empty button is (COM-224): a row that vanishes
-## restacks everything under it and makes the duel panel a different screen.
+## restacks everything under it and makes the duel panel a different screen. Where
+## *every* preset is refused the row greys **as a unit** and says why once
+## (`preset_refusal`) — five dead buttons under a live heading read as five choices
+## the board turned down, one of them "Duel" on a board that is already a duel.
 const PRESETS: Array[Dictionary] = [
 	{
 		"label": "Free-for-all",
@@ -122,6 +130,9 @@ var _who: Array[int] = []
 var _side: Array[int] = []
 var _rows: GridContainer
 var _presets: HBoxContainer
+## The line under a dead preset row, hidden while the row is live — so a board that
+## offers a preset lays out exactly as it did before this label existed.
+var _preset_reason: Label
 ## Per seat, parallel to `_seats`: how to repaint that row's two segments without
 ## rebuilding the strip. A rebuild frees the very button whose `pressed` is
 ## running — which on a preset press left a keyboard player with no focus owner —
@@ -257,6 +268,16 @@ func refusal() -> String:
 	if seats().size() < MIN_FILLED:
 		return "Seat at least two armies"
 	return "Give at least two sides somebody to fight"
+
+
+## Why the preset row is dead on a board of `seats_dealt`, or "" while any preset
+## is live. The presets are written for a four-seat table, so a smaller board
+## refuses all five at once — one reason for the row, the way Difficulty dims with
+## one reason and not one per tier (COM-19). Static and pure on
+## `normalised_sides`' terms, so the copy and the rule it states are checked
+## without a scene.
+static func preset_refusal(seats_dealt: int) -> String:
+	return "" if seats_dealt >= PRESET_SEATS else "Presets need four seats"
 
 
 ## How many seats the board dealt.
@@ -461,6 +482,8 @@ func _rebuild() -> void:
 	_presets = HBoxContainer.new()
 	_presets.add_theme_constant_override("separation", 4)
 	add_child(_presets)
+	_preset_reason = UiKit.help_label("")
+	add_child(_preset_reason)
 	_refresh_presets()
 	_settle_seats()  # the Empty buttons only exist to be greyed once they are built
 
@@ -629,9 +652,20 @@ func _refresh_presets() -> void:
 		_presets.remove_child(child)
 		child.queue_free()
 	# Only a four-seat board has more than one table worth a shortcut; every other
-	# board gets the same row, inert, so nothing under it moves.
-	var offered := _seats.size() >= PRESET_SEATS
-	_presets.add_child(UiKit.micro_label("TABLE"))
+	# board gets the same row, dead whole and answered by one line under it.
+	var reason := preset_refusal(_seats.size())
+	var offered := reason.is_empty()
+	# One fade over the whole row rather than five disabled boxes side by side: the
+	# heading, the buttons and their frames go back together, which is what makes the
+	# reason under them read as the row's and not as the last button's.
+	_presets.modulate = Color.WHITE if offered else _DEAD_ROW_TINT
+	var heading := UiKit.micro_label("TABLE")
+	if not offered:
+		# The heading dims with the buttons under it, and each of them promises the
+		# row's one reason rather than its own table: a lit label over five greyed
+		# choices is what made the row read as five refusals.
+		heading.add_theme_color_override("font_color", UiTheme.NEUTRAL)
+	_presets.add_child(heading)
 	for preset: Dictionary in PRESETS:
 		var button := Button.new()
 		button.text = String(preset["label"])
@@ -639,9 +673,13 @@ func _refresh_presets() -> void:
 		# seat/side segments it sets in one tap, at the same density.
 		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_SEGMENT)
 		button.disabled = not offered
-		Tooltip.attach(button, String(preset["help"]), "", Tooltip.Side.BOTTOM)
+		Tooltip.attach(
+			button, String(preset["help"]) if offered else reason, "", Tooltip.Side.BOTTOM
+		)
 		button.pressed.connect(func() -> void: _apply_preset(preset))
 		_presets.add_child(button)
+	_preset_reason.text = reason.to_upper()
+	_preset_reason.visible = not offered
 
 
 ## Repaints in place rather than rebuilding: a preset is applied from the `pressed`
