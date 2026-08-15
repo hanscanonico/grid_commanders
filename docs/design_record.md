@@ -824,7 +824,18 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   **The card says what to do and the board says where** (added after CD7, and the complement to the
   toggle above). A cell objective printed the ground's *name* and the player then had to hunt for
   the square, so the mark is the card's other half rather than a second statement of it.
-  It is `MissionObjective.marker_cells`, a fourth **presentation** hook beside
+  The words were the first half. The conditions had been authored as prose in the campaign's own
+  voice, and it cost the card its job: 71 of the 86 deadlines narrated the loss in the **past
+  tense** ("Vale's garrison held the crossroads past day 10", read on day 1), verbs named the wrong
+  mechanic (a `CaptureCell` reading "Hold the eastern relay", another "Reach the elder shrine"), and
+  numbers were spelled in words beside a readout that prints digits. All 317 objective strings
+  across the six campaigns were rewritten to one rule — **the verb names the mechanic, a failure
+  states the loss in the present, and every number is read from the resource's own field** — and
+  `docs/campaign_authoring.md` is the owner of that convention. The story keeps its voice untouched,
+  because a `MissionLine` is where the voice belongs; an objective is an instruction. Two objectives
+  that sit inside an `ObjectiveMetTrigger` rather than on the card were deliberately left as
+  authored — nothing prints them.
+  The board's half is `MissionObjective.marker_cells`, a fourth **presentation** hook beside
   `readout`: authored `@export` cells read straight back, needing no board, no state and no tally,
   which is what separates it from the cell hooks CD8 deleted — those had to answer where an *effect*
   would land at fire time, which is not statically knowable and was unsound as a gate. This one only
