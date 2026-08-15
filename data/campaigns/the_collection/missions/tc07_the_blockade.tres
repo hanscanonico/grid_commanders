@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -19,11 +18,6 @@
 script = ExtResource("2")
 text = "Take the blockade town Vale is funding from."
 cell = Vector2i(9, 3)
-
-[sub_resource type="Resource" id="Failure_the_blockade_held_past_day_9"]
-script = ExtResource("3")
-text = "The blockade held past day 9."
-last_day = 9
 
 [sub_resource type="Resource" id="Bonus_keep_our_own_town_four_days"]
 script = ExtResource("5")
@@ -148,7 +142,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_the_blockade_town_vale_is_fundi")])
-failures = Array[Resource]([SubResource("Failure_the_blockade_held_past_day_9")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_keep_our_own_town_four_days")])
 events = Array[Resource]([SubResource("Event_another_line_item"), SubResource("Event_interest_accrues")])
 par_day = 6

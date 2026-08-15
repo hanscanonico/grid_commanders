@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
@@ -19,11 +18,6 @@ script = ExtResource("2")
 text = "Hold three of the four named towns."
 count = 3
 terrain_id = &"city"
-
-[sub_resource type="Resource" id="Failure_the_audit_s_claim_went_unanswered_pa"]
-script = ExtResource("3")
-text = "The audit's claim went unanswered past day 9."
-last_day = 9
 
 [sub_resource type="Resource" id="Paid_already"]
 script = ExtResource("12")
@@ -141,7 +135,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_three_of_the_four_named_towns")])
-failures = Array[Resource]([SubResource("Failure_the_audit_s_claim_went_unanswered_pa")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_collectors"), SubResource("Event_bounty_banked")])
 par_day = 6

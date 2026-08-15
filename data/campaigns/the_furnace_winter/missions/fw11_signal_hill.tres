@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=50 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=48 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
@@ -32,11 +31,6 @@ cell = Vector2i(11, 3)
 script = ExtResource("15")
 text = "Hold the eastern relay."
 cell = Vector2i(17, 3)
-
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("3")
-text = "The relays were not all ours at the end of day 8."
-last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("2")
@@ -211,7 +205,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
-failures = Array[Resource]([SubResource("Failure_0")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_paymaster")])
 events = Array[Resource]([SubResource("Event_two_more_riders"), SubResource("Event_invoice_submitted"), SubResource("Event_the_intercept"), SubResource("Event_the_relays_answer")])
 par_day = 5

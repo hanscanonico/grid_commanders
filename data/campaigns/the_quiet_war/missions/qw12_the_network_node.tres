@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -17,11 +16,6 @@
 script = ExtResource("2")
 text = "Take Morn's forward base."
 cell = Vector2i(9, 2)
-
-[sub_resource type="Resource" id="Failure_day_7"]
-script = ExtResource("3")
-text = "The node kept running past day 7."
-last_day = 7
 
 [sub_resource type="Resource" id="Relay_is_dark"]
 script = ExtResource("5")
@@ -133,7 +127,7 @@ commanders = {
 fog_enabled = true
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_node")])
-failures = Array[Resource]([SubResource("Failure_day_7")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_morn_stops_being_quiet"), SubResource("Event_the_network_is_mapped")])
 par_day = 5

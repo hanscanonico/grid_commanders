@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -18,11 +17,6 @@
 script = ExtResource("2")
 text = "Take the depot before Draeg's column breaks through the gate."
 cell = Vector2i(7, 4)
-
-[sub_resource type="Resource" id="Failure_the_gate_fell_to_the_column_before_d"]
-script = ExtResource("3")
-text = "The gate fell to the column before day 9."
-last_day = 9
 
 [sub_resource type="Resource" id="Bonus_break_the_spear"]
 script = ExtResource("5")
@@ -127,7 +121,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_take_the_depot_before_draeg_s_column")])
-failures = Array[Resource]([SubResource("Failure_the_gate_fell_to_the_column_before_d")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_break_the_spear")])
 events = Array[Resource]([SubResource("Event_the_spear_breaks"), SubResource("Event_the_column_is_through")])
 par_day = 6

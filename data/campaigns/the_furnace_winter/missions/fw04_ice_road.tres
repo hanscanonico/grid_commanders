@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=37 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="7"]
@@ -25,11 +24,6 @@ script = ExtResource("14")
 text = "Get a unit through to the east landing."
 cells = Array[Vector2i]([Vector2i(11, 6)])
 count = 1
-
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("3")
-text = "The convoy was still on the west bank at the end of day 9."
-last_day = 9
 
 [sub_resource type="Resource" id="Failure_sledge"]
 script = ExtResource("15")
@@ -140,7 +134,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_landing")])
-failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_sledge")])
+failures = Array[Resource]([SubResource("Failure_sledge")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_bridge_ambush"), SubResource("Event_the_first_convoy")])
 par_day = 6

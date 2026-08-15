@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/defeat_team_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -21,11 +20,6 @@ script = ExtResource("2")
 text = "Hold two of the four pass towns."
 count = 2
 terrain_id = &"city"
-
-[sub_resource type="Resource" id="Failure_the_passes_stayed_open_past_day_10"]
-script = ExtResource("3")
-text = "The passes stayed open past day 10."
-last_day = 10
 
 [sub_resource type="Resource" id="Failure_the_bounty"]
 script = ExtResource("11")
@@ -168,7 +162,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_pass_towns")])
-failures = Array[Resource]([SubResource("Failure_the_passes_stayed_open_past_day_10"), SubResource("Failure_the_bounty")])
+failures = Array[Resource]([SubResource("Failure_the_bounty")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_break_ferrows_column_outright")])
 events = Array[Resource]([SubResource("Event_he_commits"), SubResource("Event_the_climb_pays"), SubResource("Event_bought_on_the_border")])
 par_day = 7

@@ -200,13 +200,14 @@ func test_every_seat_is_cast_from_the_shipped_roster() -> void:
 				)
 
 
-## A deadline in `objectives` is a mission won by running out of time. The two
-## lists read in opposite directions, so the mistake is invisible in the file
-## and total on the board.
+## `objectives` and `bonus_objectives` both read "satisfied = good", and a
+## deadline's truth is "the day has passed" — so in the first it is a mission won
+## by running out of time and in the second a star paid for being slow. It
+## belongs in `failures` alone.
 func test_no_deadline_is_filed_as_a_goal() -> void:
 	for campaign in db.all():
 		for mission: MissionDefinition in campaign.missions:
-			for objective: MissionObjective in mission.objectives:
+			for objective: MissionObjective in mission.objectives + mission.bonus_objectives:
 				assert_false(
 					objective is DayDeadlineObjective,
 					"%s/%s files a deadline as a goal" % [campaign.id, mission.id]
