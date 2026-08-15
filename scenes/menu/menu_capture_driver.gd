@@ -23,6 +23,13 @@ extends RefCounted
 ## it can be undone or not. It measures the caption on every board for the same
 ## reason: the reserved lines must hold for a board this frame does not show.
 ##
+## `--demo=menu_commander_select` opens the selection page the way `--co-select`
+## does, and is that page's place in the sweep: as it opens, on the seat the flow
+## opens on and the card the first tab focuses. It browses nowhere and presses
+## nothing, because Random draws with the global RNG and a frame the sweep
+## compares bytes of may not depend on a draw. The `--co-select` forms below stay
+## the hand-run way to photograph another seat or another general.
+##
 ## `--demo=menu_four_seats` selects a board that deals more than a duel, which is
 ## the one frame the picker's `· NP` suffix and a four-row seat strip can be seen
 ## in — the boards the other menu modes photograph all seat two.
@@ -49,6 +56,7 @@ const DEMO_CAMPAIGN_BRIEF := "menu_campaign_brief"
 const DEMO_CAMPAIGN_DEBRIEF := "menu_campaign_debrief"
 const DEMO_CAMPAIGN_INTERLUDE := "menu_campaign_interlude"
 const DEMO_CAMPAIGN_DEEP := "menu_campaign_deep"
+const DEMO_COMMANDER_SELECT := "menu_commander_select"
 const DEMO_MODES: Array[String] = [
 	DEMO_WITH_SAVE,
 	DEMO_NO_SAVE,
@@ -61,6 +69,7 @@ const DEMO_MODES: Array[String] = [
 	DEMO_CAMPAIGN_DEBRIEF,
 	DEMO_CAMPAIGN_INTERLUDE,
 	DEMO_CAMPAIGN_DEEP,
+	DEMO_COMMANDER_SELECT,
 ]
 ## Dev captures of the selection page. Bare, it opens the page on seat 1;
 ## `--co-select=<n>` (`blue` for seat 2, the old spelling) walks to that seat, and
@@ -168,10 +177,10 @@ func poses_campaign_deep() -> bool:
 	return _demo == DEMO_CAMPAIGN_DEEP
 
 
-## True when `--co-select` asked for the selection page. An ordinary capture (no
-## such flag) photographs the menu itself.
+## True when `--co-select` or `menu_commander_select` asked for the selection
+## page. An ordinary capture (neither) photographs the menu itself.
 func poses_selection() -> bool:
-	return _co_select != ""
+	return _co_select != "" or _demo == DEMO_COMMANDER_SELECT
 
 
 ## Which seat a selection capture walks to, or 0 to stay on the one it opens on.
