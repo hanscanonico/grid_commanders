@@ -51,6 +51,20 @@ func test_the_board_moves_the_range() -> void:
 	assert_ne(here, there)
 
 
+func test_the_seed_formula_is_pinned_by_value() -> void:
+	# These are the seeds every committed report in docs/ was measured with, and
+	# they come out of `hash()`, which this repo distrusts across engine versions
+	# everywhere else it appears. Nothing else in the suite can see the value:
+	# the determinism gate pins its own seed on purpose. If this fails after an
+	# engine upgrade the honest answer is to re-measure the reports — not to edit
+	# the numbers here.
+	assert_eq(BalanceMatchSchedule.seed_at("scrimmage", 0), 1797)
+	assert_eq(BalanceMatchSchedule.seed_at("scrimmage", 1), 1798)
+	assert_eq(BalanceMatchSchedule.seed_at("ironworks", 0), 1139)
+	assert_eq(BalanceMatchSchedule.seed_at("ironworks", 1), 1140)
+	assert_eq(BalanceMatchSchedule.seed_at("clash", 0), 1136)
+
+
 func test_a_pinned_seed_is_the_whole_range() -> void:
 	var slots: Array = BalanceMatchSchedule.slots(MAP, 8, 0, false, 4242)
 	assert_eq(_seeds(slots), [4242] as Array[int], "the row being replayed, and nothing else")
