@@ -13,7 +13,10 @@ extends RefCounted
 ## W=8, and the bridge sheet's two cells are the E-W deck then the N-S deck.
 ## Mask 0 on the road and river sheets is their E-W fallback bar; the coast
 ## sheet's mask 0 is plain open sea, which is why open water stays on the base
-## atlas (Family.NONE) exactly as the generator's own demo composes it.
+## atlas (Family.NONE) exactly as the generator's own demo composes it. The
+## woods sheet's mask 15 is the base tile the same way: a wood with wood on
+## every side keeps the full-bleed canopy that lets a forest butt seamlessly,
+## and only a wood's fringe leaves the atlas for a scalloped tree line.
 ##
 ## An off-board neighbour counts as the cell's own terrain, so the board rim
 ## grows no shoreline and an edge road runs off the map the way the darkened
@@ -21,12 +24,13 @@ extends RefCounted
 
 ## NONE doubles as BattleView's base-atlas source id (0); the other values are
 ## the TileSet source ids the sheets are registered under.
-enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, BRIDGES }
+enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, WOODS, BRIDGES }
 
 const BIT_N := 1
 const BIT_E := 2
 const BIT_S := 4
 const BIT_W := 8
+const _ALL_EDGES := BIT_N | BIT_E | BIT_S | BIT_W
 
 ## What a road reads as continuing into.
 const _ROAD_JOINS: Array[StringName] = [&"road", &"bridge"]
@@ -39,6 +43,9 @@ const _SEA_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"shoal", &"br
 ## What a shoal surfs against: the same water minus shoal itself, so a run of
 ## beach breaks no surf on its own sand (the generator demo's _WATERY).
 const _SHOAL_WATER: Array[StringName] = [&"sea", &"river", &"reef", &"bridge", &"port"]
+## What a wood's canopy runs on into. Only more wood: everything else is ground
+## the tree line has to end against.
+const _WOODS_JOINS: Array[StringName] = [&"woods"]
 
 const _STEPS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 const _STEP_BITS: Array[int] = [BIT_N, BIT_E, BIT_S, BIT_W]
@@ -59,6 +66,10 @@ static func family(map: MapData, cell: Vector2i) -> Family:
 			# Open water keeps the base tile; only a sea cell with land on an
 			# edge draws from the coast sheet.
 			return Family.COAST if mask(map, cell) != 0 else Family.NONE
+		&"woods":
+			# A wood walled in by wood keeps the base tile; only a fringe cell
+			# draws its tree line from the woods sheet.
+			return Family.NONE if mask(map, cell) == _ALL_EDGES else Family.WOODS
 	return Family.NONE
 
 
@@ -78,6 +89,8 @@ static func mask(map: MapData, cell: Vector2i) -> int:
 			return _land_mask(map, cell)
 		&"shoal":
 			return _joins_mask(map, cell, _SHOAL_WATER)
+		&"woods":
+			return _joins_mask(map, cell, _WOODS_JOINS)
 	return 0
 
 
