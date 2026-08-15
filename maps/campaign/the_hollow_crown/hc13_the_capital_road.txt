@@ -1,6 +1,6 @@
 # The Hollow Crown — "The Capital Road".
-# A standard two-army front. No allies here yet — the succession war has
-# not reached this crossing.
+# The last open road to the capital: HQ facing HQ down one paved line with
+# two towns on it, two woods above it and two below. Two armies, no allies.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
