@@ -113,9 +113,17 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # handed it, so what is left here is the pose itself and `_show_map` — the
 # select-then-settle dance `--menu-map` already did inline, now shared by both
 # rather than written twice.
+#
+# battle.gd 1437 -> 1429 and main_menu.gd 1159 -> 1121: per-seat difficulty
+# (COM-225), which both files pay for by giving work back to the collaborator
+# that owns it. Building a planner is choosing a profile, which is all a tier is,
+# so `_build_planners` moved into BattleSetup beside `per_team_difficulty` and
+# Battle takes the dictionary it hands back; and how well the computer plays is
+# per seat now, so the panel's one Difficulty segment is the seat strip's chip and
+# the menu keeps no tier state at all.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1437
-scenes/menu/main_menu.gd 1159
+scenes/battle/battle.gd 1429
+scenes/menu/main_menu.gd 1121
 "
 
 if [[ ! -x "$GODOT" ]]; then

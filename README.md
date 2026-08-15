@@ -124,7 +124,7 @@ that photograph a screen the battle scene never draws:
 ```sh
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
-make smoke MODES="menu_setup_context" # an all-human table: every option's help line, AI difficulty dimmed
+make smoke MODES="menu_setup_context" # an all-human table: every option's help line, every tier chip dead
 make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, a seat row per army
 make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 ```
@@ -144,8 +144,8 @@ asked whether it is the table it was dealt.
 
 `menu_setup_context` adds the half a picture cannot prove: that the tutorial board leads the picker
 and its description is printed, that no option-help line is empty, that the reserved caption holds
-for *every* shipped board and not just the one on screen, and that AI difficulty follows the table —
-it seats a computer and unseats it again, because a dimmed control photographs the same whether it
+for *every* shipped board and not just the one on screen, and that a seat's tier follows who is in it
+— it seats a computer and unseats it again, because a dimmed control photographs the same whether it
 can be undone or not.
 
 The cut-ins — combat and its capture sibling — have their own family of modes, because they are
@@ -348,7 +348,8 @@ change: defeat is only ever checked when a unit dies, and the AI's planner alrea
 production when it has nothing to move.
 
 Command-line flags still override the menu so demos and tools can skip it: `--map=crossfire`,
-`--hotseat`, `--fog`, `--difficulty=hard`, `--speed=quick`, `--seats=1,3` (which of the board's seats
+`--hotseat`, `--fog`, `--difficulty=hard` (or `--difficulty=2:hard,4:easy`, one tier per computer
+seat), `--speed=quick`, `--seats=1,3` (which of the board's seats
 play — an unnamed seat stays empty: its units never enter and its properties open neutral),
 `--co=alina_ward,viktor_draeg` (one id per playing seat in seat order; any of them may be left blank
 for no commander) and `--sides=1+3v2+4` (armies joined by `+` stand together, groups separated by
@@ -1005,14 +1006,17 @@ a replay cannot diverge, because the decisions are in the file.
 
 ## Difficulty
 
-Pick **Easy**, **Normal**, **Difficult** or **Brutal** in the menu, or pass
+Pick **Easy**, **Normal**, **Difficult** or **Brutal** **per seat** — each CPU row of the setup
+panel's seat strip carries a chip that cycles the tiers — or pass
 `--difficulty=easy|normal|hard|brutal`.
 It steers exactly one thing: which `AIProfile` the computer plans with. **No tier is handed an
 advantage** — income, dice, the damage formula, and what the AI is allowed to see (the standing
 board-wide sight described under Fog of war) are identical at Easy and at Difficult, so a harder
-opponent is only ever a better-judging one. It is match-wide — every CPU seat plans at the same tier,
-never one per seat — so it is inert at a table with nobody but people at it, and a save records the
-tier it was played at.
+opponent is only ever a better-judging one. Each computer seat plans at its own tier, so a four-army
+board can be one Easy opponent and two Difficult ones; a chip is dead on a row the computer is not
+playing, and a save records the tiers it was played at. `--difficulty=hard` still means every CPU
+seat, and `--difficulty=2:hard,4:easy` names seats — the two may be written together
+(`--difficulty=easy,2:brutal`: everyone Easy, seat 2 Brutal).
 
 - **Easy** — timid by design. It over-weights danger, retreats early, refuses good trades, passes
   up marginal plays, under-staffs property races, finishes poorly, and never fields an md tank.

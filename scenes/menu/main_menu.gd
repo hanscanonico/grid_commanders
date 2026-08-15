@@ -63,7 +63,6 @@ var _seat_refusal: Label
 ## Who sits where and who stands with whom (plan D6). The one authority on both,
 ## asked at launch rather than mirrored into menu state.
 var _seat_strip: SeatStrip
-var _difficulty_buttons: Array[Button] = []
 var _setup_help_labels: Array[Label] = []
 var _continue_button: Button
 ## The Silkscreen line under Continue naming what it resumes — "DAY 4 · SCRIMMAGE".
@@ -97,9 +96,9 @@ var _terrain_db: TerrainDB
 ## the press is the only place that is found out, so the refusal is kept for the
 ## caption refresh to read back.
 var _continue_refusal := ""
-## The difficulty tiers in menu order, gentlest first, and the one in hand.
+## The difficulty tiers in menu order, gentlest first — handed to the seat strip,
+## which is where a tier is chosen (COM-225).
 var _difficulties: Array[Difficulty] = []
-var _difficulty_index := 0
 var _speed_tiers: Array[GameSpeed] = []
 ## Dev-only, built on every boot because it is what reads the command line; it
 ## poses nothing and gates nothing on an ordinary run.
@@ -539,16 +538,19 @@ func _make_map_cell(index: int, map: MapData) -> Button:
 	return button
 
 
-## The seat strip: who plays each army the board deals, and who stands with whom.
-## Built with this panel's own segment builder so a seat row is the same control
-## the difficulty and speed rows are — see SeatStrip, which owns the state.
+## The seat strip: who plays each army the board deals, how well the computer
+## plays it, and who stands with whom. Built with this panel's own segment builder
+## so a seat row is the same control the speed row is — see SeatStrip, which owns
+## the state.
 func _build_seats_row() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
 	# No section label: each row already says which seat it is, and the panel's
 	# height budget is real (see `_chrome`).
+	if _difficulties.is_empty():
+		push_error("main menu: no difficulty tiers found in %s" % DifficultyDB.DIFFICULTY_DIR)
 	_seat_strip = SeatStrip.new()
-	_seat_strip.configure(UiTheme.menu_identity().theme(1).color)
+	_seat_strip.configure(UiTheme.menu_identity().theme(1).color, _difficulties)
 	col.add_child(_seat_strip)
 	# No help line: the grouping buttons name themselves, each segment carries the
 	# sentence as a tip, and the panel's height is fixed — a line spent here is a
@@ -560,34 +562,10 @@ func _build_choices_row() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 
-	if _difficulties.is_empty():
-		push_error("main menu: no difficulty tiers found in %s" % DifficultyDB.DIFFICULTY_DIR)
-	var diff_labels := PackedStringArray()
-	var diff_selected := 0
-	for i in _difficulties.size():
-		diff_labels.append(_difficulties[i].display_name)
-		if _difficulties[i].id == Difficulty.DEFAULT_ID:
-			diff_selected = i
-	_difficulty_index = diff_selected
+	# No Difficulty segment: how well the computer plays is per seat now (COM-225)
+	# and the seat strip is the one control that says it. Two controls writing one
+	# fact is the drift a single authority exists to prevent.
 	var meridian := UiTheme.menu_identity().theme(1)
-	# Kept shorter than the line it replaced: a help line's own text is its minimum
-	# width, so a longer sentence here widens the whole centred column past the
-	# 640px frame — which `_chrome` refuses to photograph.
-	var diff_detail := "Every CPU seat · judgement; never cheats"
-	var difficulty := UiKit.segment(
-		"Difficulty",
-		diff_labels,
-		diff_selected,
-		meridian.color,
-		"How well the computer plays, at every CPU seat at the table",
-		diff_detail,
-		_on_difficulty_selected,
-		_difficulty_buttons
-	)
-	difficulty.add_child(_option_help(diff_detail))
-	difficulty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(difficulty)
-
 	var speed_labels := PackedStringArray()
 	var speed_selected := 0
 	for i in _speed_tiers.size():
@@ -871,11 +849,6 @@ func _map_at(index: int) -> MapData:
 	return _maps[index]
 
 
-func _on_difficulty_selected(index: int) -> void:
-	if index >= 0 and index < _difficulties.size():
-		_difficulty_index = index
-
-
 ## Speed is the odd one out: a device preference, not a match option, so a tap
 ## writes Settings.set_speed immediately and never rides MatchConfig (game-speed
 ## plan D1). The same setting applies to the next match and to a resumed save.
@@ -894,24 +867,11 @@ func _on_animations_toggled(pressed: bool) -> void:
 	Settings.set_battle_animations(pressed)
 
 
-func _selected_difficulty() -> StringName:
-	if _difficulty_index < 0 or _difficulty_index >= _difficulties.size():
-		return Difficulty.DEFAULT_ID
-	return _difficulties[_difficulty_index].id
-
-
-## Re-dresses the panel for the seats now at the table. Difficulty tunes the
-## computer, so a table with nobody but people at it has none to tune and the
-## tiers go inert — the same rule the two mode buttons carried, asked of the
-## seats instead of of a mode flag (COM-19, generalised by plan D6).
-##
-## The one writer of both, so the tiers can never be left stranded behind a table
-## nobody is sitting at any more, and Start can never offer a match the sim would
-## resolve before anyone moved.
+## Re-dresses the panel for the seats now at the table. Which tier each seat plays
+## at is the strip's own (a chip per row, dead where the computer is not playing
+## that seat — COM-19's rule per seat), so what is left here is Start and the
+## footer.
 func _refresh_seats() -> void:
-	var all_human := _seat_strip.ai_teams().is_empty()
-	for button in _difficulty_buttons:
-		button.disabled = all_human
 	_start_button.disabled = not _seat_strip.valid()
 	_seat_refusal.text = _seat_strip.refusal().to_upper()
 	_seat_refusal.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
@@ -1036,11 +996,12 @@ func _start(ai_teams: Array[int], load_save: bool, commanders: Dictionary) -> vo
 		map.source_path if map != null else MatchRequest.DEFAULT_MAP_PATH,
 		ai_teams,
 		_fog_on,
-		_selected_difficulty(),
+		Difficulty.DEFAULT_ID,
 		commanders,
 		load_save,
 		_seat_strip.sides(),
-		_seat_strip.seats()
+		_seat_strip.seats(),
+		_seat_strip.seat_difficulty()
 	)
 	MatchConfig.stage(request)
 	get_tree().change_scene_to_file(BATTLE_SCENE)
@@ -1115,26 +1076,27 @@ func setup_context_ready() -> bool:
 
 
 ## Who is at the table is state, so the gate walks it rather than photographing
-## one side of it: a table of nothing but people has no computer to tune and its
-## Difficulty goes inert, and seating one computer brings the tiers back. The
-## posed all-human table is restored before the frame is written.
+## one side of it: a seat nobody but a person is in has no computer to tune and its
+## tier chip goes inert, and seating a computer there brings it back. The posed
+## all-human table is restored before the frame is written.
 func _difficulty_follows_mode() -> bool:
 	var passed := true
 	if not _seat_strip.ai_teams().is_empty():
 		push_error("main menu setup context: the all-human table is not the posed state")
 		passed = false
-	_seat_strip.set_human(_seat_strip.seat_count() - 1, false)
+	var last := _seat_strip.seat_count() - 1
+	_seat_strip.set_human(last, false)
+	if not _seat_strip.tier_operable(last):
+		push_error("main menu setup context: the tier stays disabled with a CPU seated")
+		passed = false
+	if _seat_strip.seat_difficulty().is_empty():
+		push_error("main menu setup context: a CPU seat names no tier")
+		passed = false
+	_seat_strip.set_human(last, true)
+	if _seat_strip.tier_operable(last):
+		push_error("main menu setup context: the tier remains operable with nobody to tune")
+		passed = false
 	_refresh_seats()
-	for button in _difficulty_buttons:
-		if button.disabled:
-			push_error("main menu setup context: difficulty stays disabled with a CPU seated")
-			passed = false
-	_seat_strip.set_human(_seat_strip.seat_count() - 1, true)
-	_refresh_seats()
-	for button in _difficulty_buttons:
-		if not button.disabled:
-			push_error("main menu setup context: difficulty remains operable with nobody to tune")
-			passed = false
 	return passed
 
 

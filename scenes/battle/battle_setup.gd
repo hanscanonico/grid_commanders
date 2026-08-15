@@ -23,17 +23,30 @@ class BuiltMatch:
 	## The tier the computer plays at. Never null — DifficultyDB always answers —
 	## and the source of both the AI's profile and the id the save records.
 	var difficulty: Difficulty
-	## team -> Difficulty, when the sides play at *different* tiers. Watch mode
-	## fills it, and a resumed save fills it for whatever it lists in
-	## `auto_tiers` below; a normal fresh match has one computer opponent at one
-	## tier, and `difficulty` above is that tier and the one the save records.
+	## team -> Difficulty, when the sides play at *different* tiers. The seat
+	## strip's per-seat picks fill it, so does watch mode, and so does a resumed
+	## save for whatever it lists in `seat_difficulty` and `auto_tiers` below; a
+	## match that tuned no seat of its own plays every computer seat at
+	## `difficulty` above, which is the tier the save records.
 	var per_team_difficulty: Dictionary[int, Difficulty] = {}
+	## team -> tier id, for the computer seats the *launch* gave a tier of their
+	## own (COM-225) — the ids behind `per_team_difficulty`, kept because they are
+	## what a save records and what a rematch is derived from. Narrowed to the
+	## seats the computer actually took, so nothing in it is inert.
+	var seat_difficulty: Dictionary[int, StringName] = {}
 	## team -> tier id, for seats a player had handed to the computer mid-match
 	## through the pause menu's Auto row — a subset of `ai_teams`, carried by a
 	## resumed save so Battle's own live copy (`Battle.auto_tiers`) starts where
 	## the save left it. Empty for a fresh match or a rematch: Auto always
 	## starts off, same as before Auto existed.
 	var auto_tiers: Dictionary[int, StringName] = {}
+	## team -> the planner that plays it, one AIController per seat at that seat's
+	## own tier. Built here rather than by the scene because a tier is only an
+	## AIProfile (difficulty plan D2/D3), so choosing the profile is the last step
+	## of choosing the match — and every team gets its own controller even when the
+	## tiers match, since a controller caches a threat map for the turn it is
+	## planning and two teams sharing one would be reading each other's.
+	var planners: Dictionary[int, AIController] = {}
 	## Set only for `--replay=`: the recording this match is a playback of. Null for
 	## every match that is actually being played, which is what everything
 	## downstream asks it.
@@ -90,7 +103,9 @@ static func build(
 		result.ai_teams = loaded.ai_teams
 		result.difficulty = difficulty_db.by_id(loaded.difficulty)
 		result.map = result.game.map
+		_apply_seat_tiers(result, loaded.seat_tiers, difficulty_db)
 		_apply_auto_tiers(result, loaded, difficulty_db)
+		_seat_planners(result, unit_db)
 		return result
 	var map_path := request.map_path
 	result.map = MapData.load_from_file(map_path, terrain_db)
@@ -103,6 +118,10 @@ static func build(
 	if result.map == null:
 		push_error("battle: failed to load %s; there is no match to play" % map_path)
 		return null
+	# The launch's per-seat tiers go on before the side specs do, so a Lab
+	# `--red=<co>:<tier>` still wins for the seat it names: that grammar states one
+	# seat outright, where these are the match's own tier for each of them.
+	_apply_seat_tiers(result, _typed_tiers(request.seat_difficulty), difficulty_db)
 	# Commanders resolved *before* the state is built, so the opening side's day-1
 	# begin_turn runs against its real doctrine (a supply radius, a repair discount)
 	# rather than the neutral one it would see if commanders were set afterward.
@@ -174,6 +193,11 @@ static func build(
 		result.game.rng.seed = request.seed_value
 	else:
 		result.game.rng.randomize()
+	# Narrowed to the computer's seats for the reason `ai_teams` was: a tier is what
+	# a planner weighs its moves with, so a tier for a seat nobody plans tunes
+	# nobody — and this list is what the save records and what a rematch replays.
+	result.seat_difficulty = _computer_tiers(result)
+	_seat_planners(result, unit_db)
 	return result
 
 
@@ -209,7 +233,9 @@ static func _build_campaign_resume(
 	result.ai_teams = loaded.ai_teams
 	result.difficulty = difficulty_db.by_id(loaded.difficulty)
 	result.map = result.game.map
+	_apply_seat_tiers(result, loaded.seat_tiers, difficulty_db)
 	_apply_auto_tiers(result, loaded, difficulty_db)
+	_seat_planners(result, unit_db)
 	return result
 
 
@@ -224,6 +250,35 @@ static func _apply_auto_tiers(
 	result.auto_tiers = loaded.auto_tiers
 	for team: int in loaded.auto_tiers:
 		result.per_team_difficulty[team] = difficulty_db.by_id(loaded.auto_tiers[team])
+
+
+## The per-seat tiers this match was launched (or saved) with, resolved into
+## `per_team_difficulty` the same way the Auto seats above are. Assigned rather
+## than merged, so a resumed save's seats replace whatever the request said: a
+## save brings its own tiers exactly as it brings its own board.
+static func _apply_seat_tiers(
+	result: BuiltMatch, tiers: Dictionary[int, StringName], difficulty_db: DifficultyDB
+) -> void:
+	result.seat_difficulty = tiers.duplicate()
+	for team: int in tiers:
+		result.per_team_difficulty[team] = difficulty_db.by_id(tiers[team])
+
+
+## `result.seat_difficulty` kept to the seats the computer actually took.
+static func _computer_tiers(result: BuiltMatch) -> Dictionary[int, StringName]:
+	var played: Dictionary[int, StringName] = {}
+	for team: int in result.seat_difficulty:
+		if result.ai_teams.has(team):
+			played[team] = result.seat_difficulty[team]
+	return played
+
+
+## One planner per army, each at its own seat's tier — `per_team_difficulty` where
+## the match named one and the match's own tier everywhere else.
+static func _seat_planners(result: BuiltMatch, unit_db: UnitDB) -> void:
+	for team in result.game.teams:
+		var tier: Difficulty = result.per_team_difficulty.get(team, result.difficulty)
+		result.planners[team] = AIController.new(unit_db, tier.profile())
 
 
 ## A recorded match, opened on the board it was recorded from. Null when the file
@@ -267,6 +322,7 @@ static func _build_replay(
 	result.game = loaded.state
 	result.map = loaded.state.map
 	result.difficulty = difficulty_db.by_id(loaded.difficulty)
+	_seat_planners(result, unit_db)
 	return result
 
 
@@ -275,6 +331,16 @@ static func _build_replay(
 ## coerce a plain `Dictionary`, however int-keyed, into a `Dictionary[int, int]`
 ## variable or property in one step — only a fresh typed dictionary built key by
 ## key does.
+## `request.seat_difficulty` (untyped: it is `MatchRequest`'s own grammar, shared
+## with `--difficulty=2:hard`) in the typed shape a save and a `BuiltMatch` carry,
+## for the reason `_typed_sides` below exists.
+static func _typed_tiers(picked: Dictionary) -> Dictionary[int, StringName]:
+	var tiers: Dictionary[int, StringName] = {}
+	for team: int in picked:
+		tiers[team] = StringName(picked[team])
+	return tiers
+
+
 static func _typed_sides(grouped: Dictionary) -> Dictionary[int, int]:
 	var sides: Dictionary[int, int] = {}
 	for team: int in grouped:

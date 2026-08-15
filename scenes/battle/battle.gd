@@ -84,11 +84,11 @@ var unit_db: UnitDB
 var commander_db: CommanderDB
 var map: MapData
 var game: GameState
-## team -> AIController. One planner per team rather than one for the scene:
-## a normal match gives both entries the same tier's planner and nothing changes,
-## while watch mode (balance plan BS3) can put a different commander *and* a
-## different tier on each side and have each plan with its own profile and its
-## own per-turn threat map.
+## team -> AIController, built by BattleSetup at each seat's own tier. One planner
+## per team rather than one for the scene: a match on one tier gives every entry
+## the same profile and nothing changes, while a per-seat tier, watch mode or the
+## Auto row can put a different profile on each and have each plan with its own
+## per-turn threat map.
 var planners: Dictionary[int, AIController] = {}
 ## Teams played by the computer. Blue by default; `--hotseat` clears it.
 var ai_teams: Array[int] = [2]
@@ -97,6 +97,10 @@ var ai_teams: Array[int] = [2]
 ## genuine CPU opponent seated at setup is in `ai_teams` but never here, which is
 ## what tells the Auto row apart from a real opponent's turn: see BattleMenus.
 var auto_tiers: Dictionary[int, StringName] = {}
+## The tier each computer seat was launched at, where that is not the match's own
+## `difficulty` below (COM-225) — the ids behind the planners, kept because they
+## are what a save records and what a rematch replays.
+var seat_difficulty: Dictionary[int, StringName] = {}
 ## A pause the player asked for during a computer turn, not yet taken effect. The
 ## runner honours it at its next command boundary rather than the press doing it
 ## here, because a menu opened mid-command would be painted over by the banner or
@@ -269,13 +273,14 @@ func _ready() -> void:
 	game = built.game
 	ai_teams = built.ai_teams
 	auto_tiers = built.auto_tiers.duplicate()
+	seat_difficulty = built.seat_difficulty.duplicate()
 	difficulty = built.difficulty
+	planners = built.planners
 	_replay = built.replay
 	replay_path = built.replay_path
 	if _replay != null:
 		_replay_runner = BattleReplayRunner.new(self, _replay)
 	BattleCampaign.open_board(game, request.campaign_resume == &"")
-	_build_planners(built)
 	perspective = BattlePerspective.new(game, _replay != null)
 	view = _build_view()
 	view.setup()
@@ -350,18 +355,6 @@ func _legend_for(value: State) -> String:
 func _exit_tree() -> void:
 	if recorder != null:
 		recorder.close()
-
-
-## Gives every team its planner. The tier is the one lever difficulty pulls —
-## which AIProfile weighs the moves, never the economy, vision, damage or luck
-## (difficulty plan D2/D3) — so a per-side tier is a per-side profile and nothing
-## more. Each team gets its own AIController even when the tiers match, because a
-## controller caches a threat map for the turn it is planning and two teams
-## sharing one would be reading each other's.
-func _build_planners(built: BattleSetup.BuiltMatch) -> void:
-	for team in built.game.teams:
-		var tier: Difficulty = built.per_team_difficulty.get(team, built.difficulty)
-		planners[team] = AIController.new(unit_db, tier.profile())
 
 
 ## The planner for a team. Never null: a team the setup did not name still gets

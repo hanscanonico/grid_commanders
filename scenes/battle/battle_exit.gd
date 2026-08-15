@@ -37,7 +37,12 @@ func save_match() -> bool:
 	if CampaignSession.active():
 		return _save_mission(game)
 	if not SaveGame.save(
-		game, _battle.ai_teams, SaveGame.SAVE_PATH, _battle.difficulty.id, _battle.auto_tiers
+		game,
+		_battle.ai_teams,
+		SaveGame.SAVE_PATH,
+		_battle.difficulty.id,
+		_battle.auto_tiers,
+		_battle.seat_difficulty
 	):
 		# SaveGame has already pushed the disk error; this is the player's half of
 		# it, and it says where they still are as well as what failed.
@@ -56,7 +61,7 @@ func save_match() -> bool:
 ## offers to resume.
 func _save_mission(game: GameState) -> bool:
 	var envelope := SaveCodec.encode(
-		game, _battle.ai_teams, _battle.difficulty.id, _battle.auto_tiers
+		game, _battle.ai_teams, _battle.difficulty.id, _battle.auto_tiers, _battle.seat_difficulty
 	)
 	if not CampaignSession.save_battle(envelope):
 		_battle.present_banner("Save failed — still in the match")
@@ -138,4 +143,6 @@ func _rematch_request() -> MatchRequest:
 		return CampaignSession.begin(
 			CampaignSession.campaign, CampaignSession.mission, CampaignSession.progress
 		)
-	return MatchRequest.from_match(_battle.game, _battle.ai_teams, _battle.difficulty.id)
+	return MatchRequest.from_match(
+		_battle.game, _battle.ai_teams, _battle.difficulty.id, _battle.seat_difficulty
+	)

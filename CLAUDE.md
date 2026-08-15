@@ -641,7 +641,18 @@ plan is stated in full below and has no copy there.
   dropped to the free-for-all rather than half-applied — while the computer's seats are narrowed to
   the filled table *silently*, nothing a player types being able to reach `ai_teams`. Whether a
   grouping leaves anybody hostile is the *board's* answer, asked of `GameState.enemies_of` once a
-  roster is loaded. Difficulty stays match-wide, asked of the seats rather than of a mode.
+  roster is loaded. **"Difficulty stays match-wide" is superseded (COM-225): a tier is per seat, and
+  the strip is where it is said** — a chip on every row, live only while the computer plays that seat,
+  which is the same rule ("asked of the seats, never of a mode") read one seat at a time; the panel's
+  one Difficulty segment is gone, two controls writing one fact being the drift a single authority
+  exists to prevent. `MatchRequest.seat_difficulty` (team -> tier id) carries it through all four
+  adapters with the scalar `difficulty` as the fallback for a seat it does not name, so
+  `--difficulty=hard` still means every computer seat and `--difficulty=2:hard` names one;
+  `BattleSetup` resolves a profile per seat into `per_team_difficulty` and hands back the planners
+  themselves, and save v11's `seat_tiers` is what a resume and a rematch replay. **The difficulty
+  lock does not bend**: a tier is still only an `AIProfile` and a label, so per-seat difficulty is
+  per-seat profile selection and nothing else, and `DIFFICULTY_PAIRINGS` and both balance reports are
+  untouched.
   `SeatStrip.layout_error` and `CommanderInfoSheet.layout_error` exist for the same reason: unsorted
   rows stack at the container's origin, so enclosure alone photographed the strip as bare panel.
   The boards seating more than a duel are `compass`, `foursquare`, `heartland`, `pinwheel`, `atoll`,

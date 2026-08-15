@@ -91,3 +91,17 @@ func test_an_auto_tier_that_is_not_text_is_refused() -> void:
 	data["ai_teams"] = [2]
 	data["auto_tiers"] = {"2": 7}
 	assert_string_contains(SaveCodec.validate(data), "Auto tier for team 2")
+
+
+## Through a file rather than a dictionary, which is the only place the defect
+## showed: JSON has one number type, so a reloaded save's `ai_teams` is
+## `[2.0]` — and the roster check read that as naming nobody, refusing every
+## save written while a seat was on Auto (COM-225).
+func test_an_auto_tier_survives_a_trip_through_the_disk() -> void:
+	var path := "user://test_save_codec_auto.json"
+	var auto_tiers: Dictionary[int, StringName] = {2: &"brutal"}
+	assert_true(SaveGame.save(_first_steps_state(), [2] as Array[int], path, &"normal", auto_tiers))
+	var loaded := SaveGame.load_game(Fixture.terrain_db(), Fixture.unit_db(), Fixture.chart(), path)
+	assert_not_null(loaded, "a save written on an Auto turn has to load again")
+	assert_eq(loaded.auto_tiers, auto_tiers)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
