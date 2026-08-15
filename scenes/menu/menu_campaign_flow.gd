@@ -204,22 +204,25 @@ func pose_debrief(won: bool) -> void:
 	var mission: MissionDefinition = campaign.missions[0]
 	# One earned and one missed, so the frame photographs the shape a real
 	# mission's awards take rather than the padded fallback — which is why the
-	# posed max is the array's own size and not the mission's.
+	# posed max is the array's own size and not the mission's. The posed day is
+	# past this mission's own par, so the missed star and the scoreboard beside it
+	# tell the same story.
+	var late_day := mission.par_day + 2
 	var awards: Array[MissionRuntime.Award] = [
 		MissionRuntime.Award.new("Mission complete", true),
-		MissionRuntime.Award.new("Finish by day 8", false),
+		MissionRuntime.Award.new("Finish by day %d" % mission.par_day, false),
 	]
 	var outcome := MissionRuntime.Outcome.new(
 		MissionRuntime.Status.SUCCESS if won else MissionRuntime.Status.FAILURE,
-		"" if won else "The road stayed closed past day 8.",
+		"" if won else "The road stayed closed past day %d." % mission.par_day,
 		1 if won else 0,
 		awards if won else ([] as Array[MissionRuntime.Award]),
-		6 if won else 0
+		late_day if won else 0
 	)
 	# The route is what names the mission this one opened, so the pose walks it: a
 	# fresh profile with this mission cleared is the war the debrief is speaking to.
 	var progress := CampaignState.begin(campaign)
-	progress.complete(campaign, mission.id, outcome.stars, 6)
+	progress.complete(campaign, mission.id, outcome.stars, late_day)
 	_menu_root.hide()
 	_debrief.begin(
 		mission,

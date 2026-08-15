@@ -61,7 +61,9 @@ func begin(
 	_verdict.text = "MISSION COMPLETE" if won else "MISSION FAILED"
 	_verdict.add_theme_color_override("font_color", UiTheme.CAPTURE if won else UiTheme.DANGER)
 	_title.text = mission.title.to_upper()
-	_fill_stars(outcome.awards if won else [], max_stars, won and animate)
+	_fill_stars(
+		outcome.awards if won else ([] as Array[MissionRuntime.Award]), max_stars, won and animate
+	)
 	_stars.visible = won
 	_scoreboard.text = _scoreboard_text(mission, outcome, ledger, losses)
 	_scoreboard.visible = won
