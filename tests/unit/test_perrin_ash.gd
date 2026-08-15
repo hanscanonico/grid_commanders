@@ -55,6 +55,33 @@ func test_air_superiority_fires_with_a_copter_in_the_army() -> void:
 	assert_true(state.commander_of(1).wants_power(state, 1), "an aircraft is a reason to fire")
 
 
+func _retuned_domain(state: GameState, domain: StringName) -> PerrinAsh:
+	var co: PerrinAsh = state.commander_of(1).duplicate()  # never the shared DB resource
+	co.superiority_domain = domain
+	state.set_commander(1, co)
+	return co
+
+
+func test_the_gate_follows_the_configured_superiority_domain() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	var co := _retuned_domain(state, UnitType.LAND)
+	assert_true(co.wants_power(state, 1), "the army is all of the domain the power now covers")
+
+
+func test_the_power_bonus_follows_the_configured_superiority_domain() -> void:
+	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0\n1 h 2 0")
+	var co := _retuned_domain(state, UnitType.LAND)
+	var enemy := state.units[1]
+	var tank := Engagement.create(state.units[0], Vector2i.ZERO, 10, enemy, Vector2i(1, 0), 10)
+	var copter := Engagement.create(state.units[2], Vector2i(2, 0), 10, enemy, Vector2i(1, 0), 10)
+	state.add_charge(1, co.power_cost)
+	PowerCommand.new().apply(state)
+	assert_eq(co.attack_bonus(state, tank), co.superiority_attack_pct, "the covered domain gains")
+	assert_eq(
+		co.attack_bonus(state, copter), co.air_attack_pct, "the air passive, and nothing more"
+	)
+
+
 func test_an_aircraft_that_has_acted_still_wants_the_round_power() -> void:
 	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0\n1 h 2 0")
 	state.units[2].acted = true

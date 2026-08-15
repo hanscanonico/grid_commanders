@@ -4,18 +4,20 @@ extends CommanderType
 ## Air Superiority stays up through the opposing turn, covering both the strike
 ## and the flight home that make air warfare distinct.
 
+## The always-on half is "his air units", so it stays keyed to AIR whatever the
+## power reaches.
 @export var air_attack_pct: int = 10
 @export var superiority_attack_pct: int = 10
-## The domain Air Superiority actually reaches. A ground-only army gains nothing
-## from it, so the meter is worth more banked than spent.
+## The domain Air Superiority actually reaches, for the bonus and for the
+## wants_power gate alike. A ground-only army gains nothing from it, so the meter
+## is worth more banked than spent.
 @export var superiority_domain: StringName = UnitType.AIR
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:
-	if fight.attacker.type.domain != UnitType.AIR:
-		return 0
-	var bonus := air_attack_pct
-	if _is_active(state, fight.attacker.team):
+	var domain: StringName = fight.attacker.type.domain
+	var bonus := air_attack_pct if domain == UnitType.AIR else 0
+	if domain == superiority_domain and _is_active(state, fight.attacker.team):
 		bonus += superiority_attack_pct
 	return bonus
 
