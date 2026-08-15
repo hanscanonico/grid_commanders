@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the granary base before Ferrow's torch squad reaches it."
+text = "Take the granary base. It is the last food Milltown has this winter."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
