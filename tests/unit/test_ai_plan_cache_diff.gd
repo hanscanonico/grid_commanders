@@ -112,6 +112,33 @@ func test_the_arena_shelf_dials_play_command_for_command() -> void:
 			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
 
 
+## The AI Economy block, which shipped inert on every tier and so is reached by
+## nothing above: two pricing dials that make ground worth more for what it
+## produces — on the capture itself and, through the goal, from as far away as a
+## unit can want one — and two roster dials read off how much of the board is
+## still unowned and what the enemy has built, neither of them a fact any
+## envelope around a unit bounds. All four on a profile that carries nothing
+## else, then all four over a tier that also weighs a threat map, which is how a
+## tier would carry them.
+##
+## The roster pair is what makes both profiles play a different game from the
+## runs above: the pricing pair was measured to move no command on these three
+## fixtures at any value tried, so what these runs hold for it is that it is live
+## rather than a match of its own.
+func test_the_economy_dials_play_command_for_command() -> void:
+	var economy := AIProfile.new()
+	var whole_block: AIProfile = HARD_TIER.duplicate()
+	for profile: AIProfile in [economy, whole_block]:
+		profile.production_capture_multiplier = 2.0
+		profile.capture_goal_value_tiles = 2.0
+		profile.capture_units_per_property = 0.5
+		profile.build_reactivity = 0.5
+	var profiles := {&"the economy alone": economy, &"the whole economy on hard": whole_block}
+	for dial: StringName in profiles:
+		for board: Array in PlanCacheDiff.boards():
+			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
+
+
 ## A shipped board, at the width the Balance Lab plays on. The three fixtures
 ## above are small enough to keep the suite quick and they all agreed while the
 ## diff was still dropping half its invalidations on the floor: an army only

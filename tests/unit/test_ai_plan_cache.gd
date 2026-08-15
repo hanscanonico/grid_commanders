@@ -117,6 +117,41 @@ const SCRIPTED := """
 2 i 29 0
 """
 
+## An APC at the west end and a tank nine tiles east of it. Nine is one tile
+## past everything the truck's own envelope buys (six of movement, no weapon and
+## the flat tile beyond it) plus a neutral commander's supply radius, and exactly
+## on the edge of Gideon Holt's two.
+const SUPPLY_LINE := """
+[terrain]
+..........
+[units]
+1 p 0 0
+1 t 9 0
+"""
+
+## A base at the west end, a tank twenty tiles east of it and a copter at the far
+## end — both marching, and both far outside the envelope of anything happening
+## at the base.
+const COLUMN_AND_A_BASE := """
+[terrain]
+B...............................
+[owners]
+1 0 0
+[units]
+1 t 20 0
+1 h 31 0
+"""
+
+## An infantry standing on a neutral city in the west and a tank thirty-one tiles
+## east of it, further out than any envelope on the board reaches.
+const CITY_AND_A_DISTANT_TANK := """
+[terrain]
+C...............................
+[units]
+1 i 0 0
+1 t 31 0
+"""
+
 ## An infantry at the west end, a tank in the middle and a second tank far east,
 ## all marching on an enemy further east still. The infantry is nine tiles from
 ## the tank — outside every envelope in play — and the three steps it takes are
@@ -196,6 +231,66 @@ func test_a_friendly_marching_out_of_sight_moves_the_column() -> void:
 	var played := _agreeing_commands(LONG_COLUMN, profile, 3, "long column")
 	assert_string_contains(played[0], "infantry", "the infantry marches first")
 	assert_string_contains(played[1], "tank", "and the tank answers for where it stopped")
+
+
+## The supply radius, which is the commander's rather than one tile: a plan is
+## priced on who a top-up would reach, so the truck's envelope has to carry that
+## reach or Holt's second tile keeps a plan the refill has already moved.
+func test_holts_supply_unit_is_rescored_by_a_refill_two_tiles_out() -> void:
+	var holt := CommanderDB.load_default().by_id(&"gideon_holt")
+	assert_not_null(holt)
+	assert_null(
+		_supply_plan_after_a_refill({1: holt}), "his trucks are priced on ground two tiles out"
+	)
+
+
+## The sibling half, and what keeps the widening from being applied to everybody:
+## the same board with nobody seated drops nothing, because a neutral truck's
+## reach stops one tile short of that same refill.
+func test_a_neutral_supply_unit_keeps_its_plan_over_the_same_refill() -> void:
+	assert_not_null(_supply_plan_after_a_refill({}), "one tile of reach does not price that cell")
+
+
+## The column, from the one direction a walk cannot reach it: a unit a base has
+## just put on the board never moved, and it is still new company for its own
+## domain wherever it stands.
+func test_a_freshly_built_unit_moves_its_own_domains_column() -> void:
+	var state := _seated(COLUMN_AND_A_BASE, {})
+	var context := AIPlanningContext.new(unit_db)
+	var marcher := state.unit_at(Vector2i(20, 0))
+	var flyer := state.unit_at(Vector2i(31, 0))
+	var cache := AIPlanCache.new(AIProfile.new())
+	context.begin(state)
+	cache.sync(context)
+	cache.keep(marcher, _marching_plan())
+	cache.keep(flyer, _marching_plan())
+
+	state.funds[1] = 100000
+	var build := BuildCommand.new(1, unit_db.by_id(&"infantry"), Vector2i(0, 0))
+	assert_eq(build.validate(state), "", "the fixture must be able to buy an infantry")
+	build.apply(state)
+	_resync(cache, context, state)
+	assert_true(cache.advance_is_stale(marcher), "a new infantry is company the land column keeps")
+	assert_false(cache.advance_is_stale(flyer), "and the air column is not the land one")
+
+
+## Ground changing hands re-prices every goal and every refit on the board, so it
+## is the whole cache rather than an envelope: this tank is thirty-one tiles from
+## the city and nothing else about the board moved.
+func test_a_property_changing_hands_keeps_nothing() -> void:
+	var state := _seated(CITY_AND_A_DISTANT_TANK, {})
+	var context := AIPlanningContext.new(unit_db)
+	var probe := state.unit_at(Vector2i(31, 0))
+	var cache := _holding(state, context, probe, AIProfile.new())
+
+	var city := Vector2i(0, 0)
+	state.capture_progress[city] = 10
+	var capture := CaptureCommand.new(state.unit_at(city), [city])
+	assert_eq(capture.validate(state), "", "the fixture's infantry must be able to finish the city")
+	capture.apply(state)
+	assert_eq(state.owner_at(city), 1, "and the capture must actually flip it")
+	_resync(cache, context, state)
+	assert_null(cache.plan_for(probe), "ground changing hands is a fact about the whole board")
 
 
 ## The cache is not vacuously empty. A milestone that only ever cleared would
@@ -425,6 +520,37 @@ func _agreeing_commands(
 	var played := diff.steps(board, profile, count, prepare)
 	assert_eq(played.divergence, "", hint)
 	return played.commands
+
+
+## The truck's plan after the tank nine tiles east of it spends a round — the one
+## fact a supply plan is priced on, on a square nothing else touches.
+func _supply_plan_after_a_refill(commanders: Dictionary) -> AIUnitPlan:
+	var state := _seated(SUPPLY_LINE, commanders)
+	var context := AIPlanningContext.new(unit_db)
+	var truck := state.unit_at(Vector2i(0, 0))
+	assert_true(
+		truck.type.can_resupply, "the fixture's truck must be the one that carries supplies"
+	)
+	var cache := _holding(state, context, truck, AIProfile.new())
+	var thirsty := state.unit_at(Vector2i(9, 0))
+	thirsty.ammo -= 1
+	_resync(cache, context, state)
+	return cache.plan_for(truck)
+
+
+func _seated(board: String, commanders: Dictionary) -> GameState:
+	var state := GameState.create(MapData.parse(board, terrain_db), unit_db, chart, commanders)
+	assert_not_null(state, "the fixture board must build a match")
+	return state
+
+
+## A plan whose command is the advance on the enemy, which is the only half of a
+## plan cohesion shapes.
+static func _marching_plan() -> AIUnitPlan:
+	var plan := AIUnitPlan.new()
+	plan.advances = true
+	plan.keeps_formation = true
+	return plan
 
 
 func _state(board: String, prepare := Callable()) -> GameState:
