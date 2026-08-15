@@ -802,7 +802,7 @@ plan is stated in full below and has no copy there.
   out loud (`MatchRequest.replay_requested` is the fact `BattleSetup` reads), never quietly played
   as an ordinary match on the default board. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
   match, recorded and re-issued, reproducing every checkpoint and an identical final board. The
-  analyser's nine detectors each have a fixture that fires them exactly once
+  analyser's ten detectors each have a fixture that fires them exactly once
   (`tests/unit/test_replay_analysis.gd` over `maps/fixtures/analysis.txt`), because a false positive
   costs more than a miss — it sends the reader looking at a doctrine that was playing correctly.
   `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was

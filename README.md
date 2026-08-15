@@ -982,10 +982,12 @@ make replay-report REPLAY=<file>        # add ARGS="--team=2" for one side
 ```
 
 It re-issues every command offline and reports what the sides left on the table, ranked, into
-`reports/replay/<name>/findings.md` and `.json`. Nine detectors: `walk_into_fire` (a move out of
+`reports/replay/<name>/findings.md` and `.json`. Ten detectors: `walk_into_fire` (a move out of
 safety into ground the enemy can kill it on), `worse_shot` (a better target was in range from the
-same cell), `hoarding` (funds left on an idle factory), `missed_capture`, `idle_unit`,
-`banked_power`, `stranded_transport`, `oscillation` and `undefended_hq`.
+same cell), `hoarding` (funds left on an idle factory), `spent_power` (a Command Power fired on a
+turn that then hit nothing, took no ground, repaired nothing and reached nowhere new),
+`missed_capture`, `idle_unit`, `banked_power`, `stranded_transport`, `oscillation` and
+`undefended_hq`.
 
 Every counterfactual comes from the **rules** — `AttackRange`, `MovementResolver`,
 `CombatResolver.forecast_at`, the same authorities the planner scores through — and never from the
@@ -995,8 +997,9 @@ worth. That is what makes a finding a fact about the *game* rather than about on
 AI, and it is why the report survives the planner being rewritten.
 
 It is **evidence, not a gate**, and deliberately out of `make verify`: several detectors fire on a
-doctrine playing exactly as intended — Sable Wren sitting in woods is an `idle_unit`, and a
-commander whose power wants a particular board is a `banked_power`.
+doctrine playing exactly as intended — Sable Wren sitting in woods is an `idle_unit`, a
+commander whose power wants a particular board is a `banked_power`, and a `spent_power` is a report
+on what the board did after the meter went, never a claim that firing was the wrong call.
 
 The Balance Lab writes them too. `make balance-sim SIM="… --replays"` puts one file per match in a
 `replays/` directory beside its report, named by the same match id the CSV rows carry, so a
