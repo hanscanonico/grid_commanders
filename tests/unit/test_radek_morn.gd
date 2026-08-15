@@ -325,8 +325,10 @@ func test_a_match_with_morn_at_the_table_fires_the_hammer() -> void:
 			return
 		if command is PowerCommand and state.current_team == 1:
 			hammers += 1
-			assert_true(
-				map.in_bounds((command as PowerCommand).target), "the computer aimed off the board"
+			assert_eq(
+				(command as PowerCommand).target,
+				state.commander_of(1).power_target(state, 1),
+				"the command carries a different cell from the one the doctrine aimed at"
 			)
 		command.apply(state)
 		commands += 1
