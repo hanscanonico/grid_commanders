@@ -170,3 +170,15 @@ func test_a_second_unclaimed_property_still_fires() -> void:
 	var report := _run(state, entries)
 	assert_eq(_count(report, "missed_capture"), 1)
 	assert_string_contains(_first(report, "missed_capture").detail, "(5, 2)")
+
+
+## Only a *sibling*'s claim strikes a cell off. A unit standing on the property it
+## walked onto and did not take is the miss the detector exists for, so its own
+## occupancy may never excuse it.
+func test_standing_on_the_property_it_did_not_take_still_fires() -> void:
+	var state := _bare_state()
+	_stand(state, &"infantry", 1, Vector2i(2, 3))
+	var entries: Array = [{"c": "move", "path": [[2, 3], [2, 2]]}, {"c": "end_turn"}]
+	var report := _run(state, entries)
+	assert_eq(_count(report, "missed_capture"), 1)
+	assert_string_contains(_first(report, "missed_capture").detail, "(2, 2)")

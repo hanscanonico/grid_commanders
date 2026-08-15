@@ -559,8 +559,9 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 
 ## Ground this side attended to during the turn: the property cells one of its
 ## units took or started taking, and the cells its units are standing on as the
-## turn is handed over. Each maps to the unit that claimed it, so a unit is never
-## told it missed ground it is itself standing on.
+## turn is handed over. Each maps to the unit that claimed it, so a unit's own
+## occupancy never excuses it: ground it walked onto and did not take is the miss
+## the detector exists for, and only a *sibling*'s claim strikes a cell off.
 ##
 ## Capturing is a **side**-level decision and this is what says so. Two
 ## footsoldiers opening beside the same neutral city is the side playing
