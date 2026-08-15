@@ -12,11 +12,13 @@ extends VBoxContainer
 ## `seats()`, `ai_teams()` and `sides()`. It decides none of them for itself and
 ## knows nothing about maps, saves or launching.
 ##
-## A seat's third state is **Empty** (open-seats plan D4), and it is offered only
-## while closing that seat would leave at least two filled — so a duel board never
-## shows one and the last two seats of any board cannot close. That rule is what
-## keeps a two-army board's setup screen the screen it always was: with nothing to
-## offer, nothing is built, so the row is the pair of buttons it has always been.
+## A seat's third state is **Empty** (open-seats plan D4), and closing one is
+## allowed only while at least two seats would stay filled — so a duel board's
+## seats never close and neither do the last two of any board. The **rule** is that;
+## its **presentation** is that every board builds the same row and greys what it
+## refuses (COM-224). A control that appears and disappears with the board made the
+## panel a different screen per map, and a dead button says "not on this board"
+## where an absent one says nothing at all.
 ##
 ## The defaults are the old one-click paths: every seat open, seat 1 human, every
 ## other seat the computer's, and every army its own side. A duel therefore sets up
@@ -45,6 +47,9 @@ const MIN_FILLED := GameState.MIN_SEATS
 ## does own — the colour and the widget shape both come from `UiKit` (`configure`
 ## and `_seat_row`).
 const _SEAT_SEGMENT_HEIGHT := 16
+## The roster every preset is written for. A smaller board can express only one of
+## them, so there the row is built and dead rather than absent.
+const PRESET_SEATS := 4
 ## The one-tap tables, each of them a seating *and* a grouping — the two facts a
 ## row would otherwise take four taps to say between them. Offered only on a board
 ## that seats four, because they are the only rosters where more than one of
@@ -58,6 +63,10 @@ const _SEAT_SEGMENT_HEIGHT := 16
 ## pairs, not two survivors packed onto one side. Duel fills the opposite-seat
 ## pair, which §4's authoring convention makes the fair one on every four-seat
 ## board, and Three-way drops the last seat.
+##
+## The row is built on every board and greyed where the board deals fewer than
+## four seats, for the reason the Empty button is (COM-224): a row that vanishes
+## restacks everything under it and makes the duel panel a different screen.
 const PRESETS: Array[Dictionary] = [
 	{
 		"label": "Free-for-all",
@@ -104,14 +113,15 @@ var _presets: HBoxContainer
 ## so every in-place change repaints through these instead.
 var _who_restyle: Array[Callable] = []
 var _side_restyle: Array[Callable] = []
-## Per seat: the Empty button, when the board is wide enough to have built one.
-## Held so the "closing this would leave too few" rule can grey it in place, for
-## the same reason the restyles exist — the strip is never rebuilt under a press.
+## Per seat: the Empty button. Held so the "closing this would leave too few" rule
+## can grey it in place, for the same reason the restyles exist — the strip is
+## never rebuilt under a press.
 var _empty_buttons: Array[Button] = []
-## Per seat: the side-badge run, hidden while that seat is closed. An empty seat
-## brings no army, so it stands on no side — and a lit badge on a closed row said
-## the opposite in the one place the eye goes to check.
-var _side_segments: Array[Control] = []
+## Per seat: that row's side badges, one entry per letter in SIDE_LABELS. Held so
+## the letters the board does not seat, and every letter of a closed row, can be
+## greyed rather than removed: an empty seat brings no army and stands on no side,
+## and a lit badge there said the opposite in the one place the eye goes to check.
+var _side_buttons: Array[Array] = []
 var _accent: Color = Color.WHITE
 
 
@@ -316,9 +326,9 @@ static func normalised_sides(sides_in: Array[int], count: int) -> Array[int]:
 ## The seating `who_in` becomes once the roster has shrunk under it: closed seats
 ## reopened to the computer — the default everywhere past seat 1 — until the table
 ## is a match again, and every one of them reopened when the board is not
-## `closable`, because such a board builds no Empty button at all and a seat
-## closed there would be unreachable state: invisible, impossible to reopen, and
-## greying Start with nothing on screen explaining why. Static and pure on the
+## `closable`, because such a board's Empty buttons are all dead and a seat closed
+## there would be state nothing on screen could undo: greying Start with the one
+## control that would answer for it refusing the press. Static and pure on the
 ## same terms as `normalised_sides`, so the shrink path is checked without a
 ## scene (CLAUDE.md, Testing).
 static func reopened_seats(who_in: Array[int], closable: bool) -> Array[int]:
@@ -366,10 +376,14 @@ func _settle_seats() -> void:
 		if filled[i] < _side_restyle.size():
 			_side_restyle[filled[i]].call(settled[i])
 	for i in _empty_buttons.size():
-		if _empty_buttons[i] != null:
-			_empty_buttons[i].disabled = not can_close(i)
-	for i in _side_segments.size():
-		_side_segments[i].visible = _who[i] != Seat.EMPTY
+		_empty_buttons[i].disabled = not can_close(i)
+	for i in _side_buttons.size():
+		var stands := _who[i] != Seat.EMPTY
+		if not stands:
+			_side_restyle[i].call(-1)  # no letter lit: a closed seat is on no side
+		for letter in _side_buttons[i].size():
+			var badge: Button = _side_buttons[i][letter]
+			badge.disabled = not stands or letter >= _seats.size()
 
 
 func _rebuild() -> void:
@@ -379,7 +393,7 @@ func _rebuild() -> void:
 	_who_restyle.clear()
 	_side_restyle.clear()
 	_empty_buttons.clear()
-	_side_segments.clear()
+	_side_buttons.clear()
 	add_theme_constant_override("separation", 3)
 	# Two seats to a line: a duel is one row, the height the panel already had, and
 	# a four-army board costs one extra line rather than three. The setup panel
@@ -408,10 +422,11 @@ func _rebuild() -> void:
 ## button still looks exactly like a difficulty button without the caption it has
 ## no room for.
 ##
-## The Empty choice is built only on a board where some seat could ever close —
-## which is every board seating more than the two a match needs. A duel board's row
-## is therefore the Human/CPU pair it has always been, down to the pixel, rather
-## than a third button that could only ever be grey.
+## Every choice is built on every board and greyed where that board refuses it
+## (COM-224): Empty on a table already at its minimum, and the letters of a side
+## the board does not seat. So a row is the same control at the same widths
+## whatever the map deals, and how many rows there are is the only thing a board
+## changes about this strip.
 func _seat_row(index: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
@@ -419,9 +434,8 @@ func _seat_row(index: int) -> Control:
 	var name_label := UiKit.micro_label("P%d" % _seats[index])
 	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name_label)
-	var offered := SEAT_LABELS.size() if _closable() else SEAT_LABELS.size() - 1
 	var choices := PackedStringArray()
-	for label: String in SEAT_LABELS.slice(0, offered):
+	for label: String in SEAT_LABELS:
 		choices.append(label)
 	var who_buttons: Array[Button] = []
 	var who := UiKit.segment(
@@ -441,12 +455,13 @@ func _seat_row(index: int) -> Control:
 	# single letters and can spare the room.
 	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	who.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	who.size_flags_stretch_ratio = 2.0 if _closable() else 1.0
+	who.size_flags_stretch_ratio = 2.0
 	row.add_child(who)
-	_empty_buttons.append(who_buttons[Seat.EMPTY] if _closable() else null)
+	_empty_buttons.append(who_buttons[Seat.EMPTY])
 	var badges := PackedStringArray()
-	for label: String in SIDE_LABELS.slice(0, maxi(2, _seats.size())):
+	for label: String in SIDE_LABELS:
 		badges.append(label)
+	var side_buttons: Array[Button] = []
 	var side := UiKit.segment(
 		"",
 		badges,
@@ -455,19 +470,21 @@ func _seat_row(index: int) -> Control:
 		"",
 		"",
 		func(choice: int) -> void: _set_side(index, choice),
-		[],
+		side_buttons,
 		_side_restyle,
 		_SEAT_SEGMENT_HEIGHT
 	)
 	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(side)
-	_side_segments.append(side)
+	_side_buttons.append(side_buttons)
 	return row
 
 
 ## Whether this board could ever offer a seat to close: only one seating more than
-## the minimum table can, because the last two seats never close.
+## the minimum table can, because the last two seats never close. What it decides
+## is the *state* a shrinking roster settles into (`reopened_seats`), never whether
+## a button is built — every board builds all three.
 func _closable() -> bool:
 	return _seats.size() > MIN_FILLED
 
@@ -476,9 +493,9 @@ func _refresh_presets() -> void:
 	for child in _presets.get_children():
 		_presets.remove_child(child)
 		child.queue_free()
-	# Only a four-seat board has more than one table worth a shortcut.
-	if _seats.size() < 4:
-		return
+	# Only a four-seat board has more than one table worth a shortcut; every other
+	# board gets the same row, inert, so nothing under it moves.
+	var offered := _seats.size() >= PRESET_SEATS
 	_presets.add_child(UiKit.micro_label("TABLE"))
 	for preset: Dictionary in PRESETS:
 		var button := Button.new()
@@ -486,6 +503,7 @@ func _refresh_presets() -> void:
 		# The segmented control's own size: a preset row sits directly under the
 		# seat/side segments it sets in one tap, at the same density.
 		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_SEGMENT)
+		button.disabled = not offered
 		Tooltip.attach(button, String(preset["help"]), "", Tooltip.Side.BOTTOM)
 		button.pressed.connect(func() -> void: _apply_preset(preset))
 		_presets.add_child(button)

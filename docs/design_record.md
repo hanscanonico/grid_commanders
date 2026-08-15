@@ -535,9 +535,12 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   table, who plays each army and who stands with whom** — it takes the board's roster and hands
   back `seats()`, `ai_teams()` and `sides()`, and the two mode buttons it replaced are gone, so no
   menu state mirrors any of those facts. A seat's third state is **Empty** (open-seats D4), offered
-  only while closing it leaves at least two seats filled — so a duel board never builds the button
-  and its setup screen stays pixel-identical, and the last two filled seats of any board cannot
-  close. A closed seat wears no side badge: it brings no army, so it stands on no side, and the
+  only while closing it leaves at least two seats filled — so no seat of a duel board ever closes
+  and neither do the last two filled seats of any board. **That rule's presentation clause is
+  superseded** (COM-224): the refusal is unchanged, but every board now builds the same panel — all
+  three seat states, all four side letters and the TABLE presets row — and greys what the board
+  refuses, rather than a duel board building fewer controls and reading as a different screen.
+  A closed seat wears no *lit* side badge: it brings no army, so it stands on no side, and the
   sides re-pack over the filled seats (`normalised_sides` / `reopened_seats`, both static and pure
   so the shrink path is checked without a scene). The presets are tables — Duel and Three-way
   joined the row — each setting a seating *and* a grouping (Duel fills the opposite pair 1+3, the
