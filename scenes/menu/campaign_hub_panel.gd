@@ -36,12 +36,14 @@ var _title: Label
 var _subtitle: Label
 var _war: VBoxContainer
 var _list_view: VBoxContainer
+var _list_scroll: ScrollContainer
 var _rows: VBoxContainer
 var _brief_view: VBoxContainer
 var _brief_title: Label
 var _brief_where: Label
 var _brief_picture: HBoxContainer
 var _brief_body: VBoxContainer
+var _brief_terms: VBoxContainer
 var _deploy_button: Button
 var _back_button: Button
 var _brief_back: Button
@@ -162,15 +164,18 @@ func _build() -> void:
 
 
 func _build_list(parent: VBoxContainer) -> void:
-	var frame := ScrollContainer.new()
-	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(frame)
+	_list_scroll = ScrollContainer.new()
+	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# Without it the list stays where it was while the keyboard walks off the page,
+	# so from mission eleven on Enter deploys a mission nobody can see.
+	_list_scroll.follow_focus = true
+	_list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(_list_scroll)
 
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 2)
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_child(_rows)
+	_list_scroll.add_child(_rows)
 
 	_back_button = Button.new()
 	_back_button.text = "Back"
@@ -193,18 +198,25 @@ func _build_briefing(parent: VBoxContainer) -> void:
 
 	_brief_picture = HBoxContainer.new()
 	_brief_picture.add_theme_constant_override("separation", 10)
-	_brief_picture.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	parent.add_child(_brief_picture)
+	_brief_picture.alignment = BoxContainer.ALIGNMENT_CENTER
+	parent.add_child(_column(_brief_picture))
 
 	var frame := ScrollContainer.new()
 	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	frame.follow_focus = true
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(frame)
+	parent.add_child(_column(frame))
 
 	_brief_body = VBoxContainer.new()
 	_brief_body.add_theme_constant_override("separation", 4)
 	_brief_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.add_child(_brief_body)
+
+	# The terms sit outside the scroll, between the dialogue and Deploy: what the
+	# player is agreeing to has to be on the page at the moment they agree to it.
+	_brief_terms = VBoxContainer.new()
+	_brief_terms.add_theme_constant_override("separation", 2)
+	parent.add_child(_column(_brief_terms))
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
@@ -224,6 +236,15 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	_brief_back.custom_minimum_size = Vector2(90, 20)
 	_brief_back.pressed.connect(_show_list)
 	buttons.add_child(_brief_back)
+
+
+## Pins a briefing row to the one reading column `MissionSpeech` already lays
+## dialogue out in, so the picture, the words and the terms cannot disagree about
+## where the page's edges are and nothing shifts between two missions.
+func _column(control: Control) -> Control:
+	control.custom_minimum_size.x = MissionSpeech.WIDTH
+	control.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	return control
 
 
 func _note(text: String) -> Label:
@@ -367,19 +388,35 @@ func _open_briefing(slot: int) -> void:
 	# different opening after a different mission five gets it (campaign-depth D5).
 	for line: MissionLine in MissionLine.spoken(mission.briefing, _progress):
 		_brief_body.add_child(MissionSpeech.render(line, _commanders))
-	_brief_body.add_child(_body_line(""))
+	_fill_terms(mission)
+	_show_briefing()
+
+
+## What the mission is won and lost on, drawn where scrolling cannot take it
+## away. Hidden whole when a mission states none, so the page keeps its shape.
+func _fill_terms(mission: MissionDefinition) -> void:
+	for child in _brief_terms.get_children():
+		child.queue_free()
+	var terms: Array[String] = []
 	for objective in mission.objectives:
 		if objective != null and objective.text != "":
-			_brief_body.add_child(_body_line("OBJECTIVE   %s" % objective.text, true))
+			terms.append("OBJECTIVE   %s" % objective.text)
 	for failure in mission.failures:
 		if failure != null and failure.text != "":
-			_brief_body.add_child(_body_line("FAILURE   %s" % failure.text, true))
+			terms.append("FAILURE   %s" % failure.text)
 	for bonus in mission.bonus_objectives:
 		if bonus != null and bonus.text != "":
-			_brief_body.add_child(_body_line("BONUS STAR   %s" % bonus.text, true))
+			terms.append("BONUS STAR   %s" % bonus.text)
 	if mission.par_day > 0:
-		_brief_body.add_child(_body_line("PAR STAR   Finish by day %d." % mission.par_day, true))
-	_show_briefing()
+		terms.append("PAR STAR   Finish by day %d." % mission.par_day)
+	_brief_terms.visible = not terms.is_empty()
+	if not _brief_terms.visible:
+		return
+	# The dialogue is cut off wherever the scroll happens to end, so the terms need
+	# a line of their own to read as the page rather than as more of it.
+	_brief_terms.add_child(_column(UiKit.rule()))
+	for term in terms:
+		_brief_terms.add_child(_body_line(term, true))
 
 
 ## The briefing's picture: where the fight is, against whom. The board is drawn
@@ -452,13 +489,21 @@ func _show_briefing() -> void:
 func _focus_first_open() -> void:
 	for index in _row_buttons.size():
 		if not _row_buttons[index].disabled and not _progress.is_cleared(_ids[index]):
-			_row_buttons[index].grab_focus()
+			_focus_row(_row_buttons[index])
 			return
 	for button in _row_buttons:
 		if not button.disabled:
-			button.grab_focus()
+			_focus_row(button)
 			return
 	_back_button.grab_focus()
+
+
+## The rows are dealt and focused in one go, so the list has not been laid out
+## when the focus lands and `follow_focus` would scroll to a row still sitting at
+## the container's origin. Deferred, the scroll runs on the settled page.
+func _focus_row(button: Button) -> void:
+	button.grab_focus()
+	_list_scroll.ensure_control_visible.call_deferred(button)
 
 
 func _deploy() -> void:
