@@ -163,7 +163,7 @@ func _fill(
 		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_child(_row_face(campaign, progress))
+		button.add_child(_row_face(campaign, progress, button.get_theme_color(&"font_color")))
 		var index := _ids.size()
 		button.pressed.connect(func() -> void: _pick(index))
 		_rows.add_child(button)
@@ -176,8 +176,11 @@ func _fill(
 ## three (where it is fought, who it is against, what it is about). The board is
 ## the first mission's, drawn by `MapThumbnail`, so the miniature is a truthful
 ## picture of the war's opening ground rather than a second opinion about it.
-## Children of a button, so every one of them ignores the mouse.
-func _row_face(campaign: CampaignDefinition, progress: CampaignState) -> Control:
+## Children of a button, so every one of them ignores the mouse — and the headline
+## is set in `ink`, the button's own resolved label colour, because a card that
+## picked its own would read white on the cream rows and dark on the flagship's
+## red. `UiTheme.apply_button` is still the one authority for that colour.
+func _row_face(campaign: CampaignDefinition, progress: CampaignState, ink: Color) -> Control:
 	var face := HBoxContainer.new()
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)
 	face.offset_left = 6
@@ -192,7 +195,7 @@ func _row_face(campaign: CampaignDefinition, progress: CampaignState) -> Control
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	words.add_child(_headline(row_text(campaign, progress)))
+	words.add_child(_headline(row_text(campaign, progress), ink))
 	if not campaign.antagonist.is_empty():
 		words.add_child(_micro(campaign.antagonist.to_upper(), UiTheme.INK_3, 1))
 	if not campaign.premise.is_empty():
@@ -215,11 +218,12 @@ func _thumbnail(campaign: CampaignDefinition) -> MapThumbnail:
 	return thumb
 
 
-func _headline(text: String) -> Label:
+func _headline(text: String, ink: Color) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.display())
 	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
+	label.add_theme_color_override("font_color", ink)
 	label.clip_text = true
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
