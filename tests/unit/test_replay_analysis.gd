@@ -2,8 +2,9 @@ extends GutTest
 ## The analyser's end-of-turn detectors, one board apiece. The per-command ones and
 ## the report itself are test_replay_detectors.gd — the seam this file's section
 ## comments already drew, split when the one file crossed the gdlintrc
-## max-public-methods ceiling. Both carry their own copy of the fixture helpers,
-## the same as the four save-codec suites.
+## max-public-methods ceiling. `missed_capture` is test_replay_capture_chance.gd,
+## split off the same ceiling once it grew a family of cases. All three carry their
+## own copy of the fixture helpers, the same as the four save-codec suites.
 ##
 ## Each case stands exactly the units its detector is about and hands the walk a
 ## recording made by hand, so a finding here can only come from the thing the test
@@ -181,63 +182,6 @@ func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 		{"c": "end_turn"},
 	]
 	assert_eq(_for_team(_run(state, entries), "hoarding", 1).size(), 2)
-
-
-func test_missed_capture_is_ground_a_footsoldier_could_have_stood_on() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 1, Vector2i(2, 3))  # one step off the neutral city at (2, 2)
-	var report := _run(state, [{"c": "end_turn"}])
-	assert_eq(_count(report, "missed_capture"), 1)
-	assert_string_contains(_first(report, "missed_capture").detail, "(2, 2)")
-
-
-func test_a_unit_that_did_capture_is_not_reported() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 1, Vector2i(2, 3))
-	var report := _run(state, [{"c": "capture", "path": [[2, 3], [2, 2]]}, {"c": "end_turn"}])
-	assert_eq(_count(report, "missed_capture"), 0)
-
-
-## A shot buys the turn: the detector prices ground not taken, and a unit that
-## fought instead made a trade this instrument cannot judge.
-func test_a_unit_that_fought_instead_is_not_a_missed_capture() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 1, Vector2i(2, 3))
-	_stand(state, &"infantry", 2, Vector2i(2, 4))  # adjacent, so the shot needs no walk
-	var entries: Array = [
-		{"c": "attack", "path": [[2, 3]], "target": [2, 4]},
-		{"c": "end_turn"},
-	]
-	assert_eq(_count(_run(state, entries), "missed_capture"), 0)
-
-
-## Only fighting buys it. A unit that walked and did nothing else is the miss the
-## detector exists for, so the exclusion may never be widened to `acted`.
-func test_a_unit_that_only_walked_is_still_a_missed_capture() -> void:
-	var state := _bare_state()
-	_stand(state, &"infantry", 1, Vector2i(2, 3))
-	var entries: Array = [{"c": "move", "path": [[2, 3], [3, 3]]}, {"c": "end_turn"}]
-	var report := _run(state, entries)
-	assert_eq(_count(report, "missed_capture"), 1)
-	# The unit is standing at (3, 3) by the time the finding is made, so the line has
-	# to name the cell the reach was measured from or the reader cannot check it.
-	assert_string_contains(_first(report, "missed_capture").detail, "(2, 3)")
-
-
-## The reach is the one the turn *opened* with. A capturer marching toward ground
-## it could not have stood on this turn is doing exactly what it should, and the
-## board it hands over — where it has moved and its budget is gone — answers a
-## question about next turn.
-func test_ground_the_walk_only_brought_into_reach_is_not_a_missed_capture() -> void:
-	var state := _bare_state()
-	# Four tiles from the neutral city at (2, 2) on three movement, and it spends
-	# the whole walk closing to one step short of it.
-	_stand(state, &"infantry", 1, Vector2i(0, 4))
-	var entries: Array = [
-		{"c": "move", "path": [[0, 4], [1, 4], [1, 3], [2, 3]]},
-		{"c": "end_turn"},
-	]
-	assert_eq(_count(_run(state, entries), "missed_capture"), 0)
 
 
 ## Three of its owner's turns, not three end-turns: the streak is per side, and a
