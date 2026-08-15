@@ -280,7 +280,7 @@ func set_seat(index: int, who: int) -> void:
 
 ## Whether the seat at `index` may be closed: only while at least `MIN_FILLED`
 ## armies would be left at the table. False for every seat of a duel board, which
-## is why one is never offered an Empty button at all.
+## is why every Empty button on one is built dead.
 func can_close(index: int) -> bool:
 	if index < 0 or index >= _who.size():
 		return false
