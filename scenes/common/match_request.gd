@@ -46,6 +46,16 @@ var fog_enabled := false
 ## `BattleSetup` — this object stays free of the databases so it can be built
 ## before they are loaded.
 var difficulty: StringName = Difficulty.DEFAULT_ID
+## team -> tier id, for computer seats playing at a tier of their own (COM-225).
+## A seat with no entry plays at `difficulty` above, so an empty mapping is the
+## match-wide tier every launch had before a seat could be tuned on its own — and
+## `--difficulty=hard` still means every computer seat.
+##
+## States and does not vet, like `seats` and `sides` beside it: whether these are
+## seats the board deals, and whether the computer is even playing them, are
+## questions about a map no flag can see. `BattleSetup` narrows it to the seats
+## the computer actually took, the same way it narrows `ai_teams`.
+var seat_difficulty: Dictionary = {}
 ## team -> commander id. A team with no entry plays without a commander, which is
 ## the default and reproduces the pre-commander game exactly.
 var commanders: Dictionary = {}
@@ -116,7 +126,8 @@ static func from_menu(
 	commanders_in: Dictionary,
 	resume_in: bool,
 	sides_in: Dictionary = {},
-	seats_in: Array[int] = []
+	seats_in: Array[int] = [],
+	seat_difficulty_in: Dictionary = {}
 ) -> MatchRequest:
 	var request := MatchRequest.new()
 	request.map_path = map_path_in
@@ -127,6 +138,7 @@ static func from_menu(
 	request.resume = resume_in
 	request.sides = sides_in.duplicate()
 	request.seats = seats_in.duplicate()
+	request.seat_difficulty = seat_difficulty_in.duplicate()
 	return request
 
 
@@ -135,13 +147,19 @@ static func from_menu(
 ## whatever the menu last chose. Never a resume: the point is to play this board
 ## again from day one, not to reload the disk.
 static func from_match(
-	game: GameState, ai_teams_in: Array[int], difficulty_in: StringName
+	game: GameState,
+	ai_teams_in: Array[int],
+	difficulty_in: StringName,
+	seat_difficulty_in: Dictionary = {}
 ) -> MatchRequest:
 	var request := MatchRequest.new()
 	request.map_path = game.map_path
 	request.ai_teams = ai_teams_in.duplicate()
 	request.fog_enabled = game.fog_enabled
 	request.difficulty = difficulty_in
+	# The tiers the seats were actually played at, so a rematch is that match again
+	# rather than the same board with everyone back on one tier.
+	request.seat_difficulty = seat_difficulty_in.duplicate()
 	request.sides = game.sides.duplicate()  # a rematch keeps the grouping it was played under
 	# And the seating, off the live roster: a rematch of a reduced match is *that*
 	# match again, not the full board it was played on a corner of.
@@ -196,7 +214,15 @@ func apply_cmdline(args: PackedStringArray) -> void:
 	if CmdArgs.has(args, "--co"):
 		commanders = parse_co_flag(CmdArgs.value(args, "--co"), filled_roster())
 	if CmdArgs.has(args, "--difficulty"):
-		difficulty = StringName(CmdArgs.value(args, "--difficulty").strip_edges())
+		var tiers := parse_difficulty_flag(CmdArgs.value(args, "--difficulty"))
+		if tiers.has("default"):
+			# A match-wide tier means *every* computer seat, so it drops the picks the
+			# menu made rather than losing to them — a flag overrides the menu here as
+			# it does everywhere else on this line. The seats named in the same flag go
+			# on afterwards, whichever order they were written in.
+			difficulty = tiers["default"]
+			seat_difficulty.clear()
+		seat_difficulty.merge(tiers["seats"], true)
 	if CmdArgs.has(args, "--red"):
 		side_specs[GameState.TEAMS[0]] = CmdArgs.value(args, "--red")
 	if CmdArgs.has(args, "--blue"):
@@ -221,6 +247,41 @@ func apply_cmdline(args: PackedStringArray) -> void:
 		# board was until a map could seat more (four-players plan D1).
 		ai_teams = MapData.DEFAULT_TEAMS.duplicate()
 		watching = true
+
+
+## `--difficulty=hard`, `--difficulty=2:hard,4:easy`, or both at once
+## (`--difficulty=easy,2:brutal`). An entry with no `<seat>:` in front of it is the
+## match-wide tier every computer seat plays at, which is what the flag has always
+## meant and what every scenario, doc and report still says; an entry that names a
+## seat tunes that one seat over it (COM-225).
+##
+## Hands back the seats under `"seats"`, and the match-wide tier under `"default"`
+## **only when one was written** — `--difficulty=` with nothing after it names the
+## empty tier on purpose (it clears a tier the menu picked, exactly as `--co=`
+## clears its commanders), and a flag that only tunes seats must leave the match's
+## own tier where it found it.
+##
+## Parses and nothing else, like `parse_sides_flag` and `parse_seats_flag` beside
+## it: whether a seat is one the board deals, and whether a tier id is one that
+## ships, are questions this cannot see the answer to — `DifficultyDB.by_id`
+## deliberately falls back to Normal for a tier that has been retired.
+static func parse_difficulty_flag(value: String) -> Dictionary:
+	var per_seat: Dictionary = {}
+	var parsed: Dictionary = {"seats": per_seat}
+	for entry: String in value.split(","):
+		var text := entry.strip_edges()
+		var colon := text.find(":")
+		if colon < 0:
+			parsed["default"] = StringName(text)
+			continue
+		var seat := text.substr(0, colon).strip_edges()
+		if not seat.is_valid_int():
+			push_error(
+				"battle: --difficulty=%s names no seat before ':'; ignoring '%s'" % [value, text]
+			)
+			continue
+		per_seat[int(seat)] = StringName(text.substr(colon + 1).strip_edges())
+	return parsed
 
 
 ## `--sides=1+3v2+4`: armies joined by `+` stand together, groups separated by `v`

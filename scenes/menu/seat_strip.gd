@@ -2,15 +2,23 @@ class_name SeatStrip
 extends VBoxContainer
 ## Who sits at the table and who stands with whom (COM-48, four-players plan D6).
 ##
-## One row per seat the board deals — who plays it and a side badge — plus the
-## one-tap groupings on a board that seats four. It replaces the two mode buttons
-## the menu used to be able to express a match with, which between them said only
-## "one of you" or "two of you" and nothing at all about sides.
+## One row per seat the board deals — who plays it, how well the computer plays it
+## and a side badge — plus the one-tap groupings on a board that seats four. It
+## replaces the two mode buttons the menu used to be able to express a match with,
+## which between them said only "one of you" or "two of you" and nothing at all
+## about sides.
 ##
 ## How many rows there are is the **board's** answer and how they group is the
-## **match's** (plan D1), so this takes a roster and hands back three facts:
-## `seats()`, `ai_teams()` and `sides()`. It decides none of them for itself and
-## knows nothing about maps, saves or launching.
+## **match's** (plan D1), so this takes a roster and hands back four facts:
+## `seats()`, `ai_teams()`, `sides()` and `seat_difficulty()`. It decides none of
+## them for itself and knows nothing about maps, saves or launching.
+##
+## The tier is per seat rather than per match (COM-225): a four-army board can now
+## be one Easy opponent and two Difficult ones, which is what the panel's single
+## Difficulty segment could not say. That segment is gone — two controls writing
+## one fact is the drift a single authority exists to prevent — and the tier a seat
+## carries is only ever which `AIProfile` weighs its moves, never a cheat
+## (difficulty plan D2).
 ##
 ## A seat's third state is **Empty** (open-seats plan D4), and closing one is
 ## allowed only while at least two seats would stay filled — so a duel board's
@@ -47,6 +55,13 @@ const MIN_FILLED := GameState.MIN_SEATS
 ## does own — the colour and the widget shape both come from `UiKit` (`configure`
 ## and `_seat_row`).
 const _SEAT_SEGMENT_HEIGHT := 16
+## The air either side of a tier chip's word, over `UiTheme.segment_box`'s own 2px
+## margins — so the longest tier name fits inside the chip rather than being
+## clipped by it. Its own constant beside the height for the same reason that one
+## is: it is a size this file owns, because the chip is measured rather than
+## stretched (`_widest_tier`), and every pixel it takes comes off "Human" beside
+## it.
+const _TIER_CHIP_PAD := 6.0
 ## The roster every preset is written for. A smaller board can express only one of
 ## them, so there the row is built and dead rather than absent.
 const PRESET_SEATS := 4
@@ -122,14 +137,24 @@ var _empty_buttons: Array[Button] = []
 ## greyed rather than removed: an empty seat brings no army and stands on no side,
 ## and a lit badge there said the opposite in the one place the eye goes to check.
 var _side_buttons: Array[Array] = []
+## The tiers a seat cycles through, gentlest first, and per seat the one it is on.
+## Read off `DifficultyDB` by the caller rather than typed in here, so the chip can
+## never offer a tier that does not ship.
+var _tiers: Array[Difficulty] = []
+var _tier: Array[int] = []
+## Per seat: the tier chip. Held so it can be relabelled on a press and greyed for
+## a seat the computer is not playing, the same way the Empty button is.
+var _tier_buttons: Array[Button] = []
 var _accent: Color = Color.WHITE
 
 
-## Sets the seat rows' accent, the one thing about them the strip does not read
-## off `UiKit` or `UiTheme` itself — a seat button's colour is the match's faction,
-## which only the caller (the menu) knows.
-func configure(accent: Color) -> void:
+## Sets the seat rows' accent and the tiers their chips cycle through — the two
+## things about a row the strip does not read off `UiKit` or `UiTheme` itself. A
+## seat button's colour is the match's faction and the tiers are `DifficultyDB`'s,
+## and only the caller (the menu) holds either.
+func configure(accent: Color, tiers: Array[Difficulty] = []) -> void:
 	_accent = accent
+	_tiers = tiers
 
 
 ## Deals the strip for a board that seats `count` armies, keeping each seat's
@@ -148,7 +173,9 @@ func set_roster(count: int) -> void:
 		# the board deals starts open — closing one is always something asked for.
 		_who.append(Seat.HUMAN if _who.is_empty() else Seat.CPU)
 		_side.append(_side.size())
+		_tier.append(_default_tier())
 	_who.resize(count)
+	_tier.resize(count)
 	_who = reopened_seats(_who, _closable())
 	_side = normalised_sides(_side, count)
 	_rebuild()
@@ -172,6 +199,27 @@ func ai_teams() -> Array[int]:
 		if _who[i] == Seat.CPU:
 			computers.append(_seats[i])
 	return computers
+
+
+## team -> tier id, over the seats the **computer** plays — what
+## `MatchRequest.seat_difficulty` takes. A human or closed seat brings no planner,
+## so it names no tier: the chip on such a row is dead and its value is whatever
+## the seat last carried, which is a state to keep and not a match fact to state.
+func seat_difficulty() -> Dictionary:
+	var tiers: Dictionary = {}
+	for i in _seats.size():
+		if _who[i] == Seat.CPU and _tier[i] < _tiers.size():
+			tiers[_seats[i]] = _tiers[_tier[i]].id
+	return tiers
+
+
+## Whether the tier chip on the seat at `index` is live — true exactly while the
+## computer plays that seat. The generalisation of "Difficulty is dimmed while no
+## computer is seated" (COM-19) to a table where each seat answers for itself, and
+## public because the setup-context capture walks the table rather than
+## photographing one arrangement of it.
+func tier_operable(index: int) -> bool:
+	return index >= 0 and index < _who.size() and _who[index] == Seat.CPU
 
 
 ## team -> side id, or **empty for a free-for-all**. Empty rather than one side
@@ -377,6 +425,8 @@ func _settle_seats() -> void:
 			_side_restyle[filled[i]].call(settled[i])
 	for i in _empty_buttons.size():
 		_empty_buttons[i].disabled = not can_close(i)
+	for i in _tier_buttons.size():
+		_tier_buttons[i].disabled = not tier_operable(i)
 	for i in _side_buttons.size():
 		var stands := _who[i] != Seat.EMPTY
 		if not stands:
@@ -394,6 +444,7 @@ func _rebuild() -> void:
 	_side_restyle.clear()
 	_empty_buttons.clear()
 	_side_buttons.clear()
+	_tier_buttons.clear()
 	add_theme_constant_override("separation", 3)
 	# Two seats to a line: a duel is one row, the height the panel already had, and
 	# a four-army board costs one extra line rather than three. The setup panel
@@ -429,7 +480,7 @@ func _rebuild() -> void:
 ## changes about this strip.
 func _seat_row(index: int) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", 2)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var name_label := UiKit.micro_label("P%d" % _seats[index])
 	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -458,6 +509,7 @@ func _seat_row(index: int) -> Control:
 	who.size_flags_stretch_ratio = 2.0
 	row.add_child(who)
 	_empty_buttons.append(who_buttons[Seat.EMPTY])
+	row.add_child(_tier_chip(index))
 	var badges := PackedStringArray()
 	for label: String in SIDE_LABELS:
 		badges.append(label)
@@ -476,9 +528,92 @@ func _seat_row(index: int) -> Control:
 	)
 	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# The badges are single letters where the seat's words are five, so the row's
+	# spare width goes to the words: a run of four letters reads at this share and
+	# "Human" does not survive an even split.
+	side.size_flags_stretch_ratio = 0.8
 	row.add_child(side)
 	_side_buttons.append(side_buttons)
 	return row
+
+
+## How well the computer plays this seat: one chip, cycling through the tiers
+## gentlest-first and showing the one in hand. A chip rather than a segment
+## because four tier names to a row do not fit the panel's fixed frame — and it is
+## the same button `UiKit.style_segment` dresses the seat and side runs with, so a
+## row still reads as one control per fact.
+##
+## Sized to the longest tier name rather than sharing the row's stretch, because
+## every pixel it takes past that comes off "Human" and "Empty" beside it — a row
+## that let it expand clipped both to three letters.
+##
+## Built on every row of every board and greyed where the computer is not playing
+## that seat (COM-224, and the COM-19 rule the panel's one Difficulty segment used
+## to carry): a chip that vanished with the seat's owner would restack the row.
+func _tier_chip(index: int) -> Button:
+	var chip := Button.new()
+	chip.clip_text = true
+	chip.custom_minimum_size = Vector2(_widest_tier(), _SEAT_SEGMENT_HEIGHT)
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	chip.add_theme_font_override("font", UiTheme.display())
+	chip.add_theme_font_size_override("font_size", UiTheme.SIZE_SEGMENT)
+	chip.text = _tier_label(index)
+	UiKit.style_segment(chip, true, false, _accent)
+	Tooltip.attach(
+		chip,
+		"How well the computer plays this seat",
+		"Tap to cycle · a tier never cheats",
+		Tooltip.Side.BOTTOM
+	)
+	chip.pressed.connect(_cycle_tier.bind(index))
+	_tier_buttons.append(chip)
+	return chip
+
+
+## How wide a chip has to be for the longest tier name to fit inside it, measured
+## in the font it is drawn in rather than guessed at — the roster of tiers is
+## data, so a fifth one with a longer name widens the chip by itself.
+func _widest_tier() -> float:
+	var widest := 0.0
+	for tier in _tiers:
+		widest = maxf(
+			widest,
+			(
+				UiTheme
+				. display()
+				. get_string_size(
+					tier.display_name, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_SEGMENT
+				)
+				. x
+			)
+		)
+	return widest + _TIER_CHIP_PAD
+
+
+## The tier the seat at `index` is on, as the chip prints it.
+func _tier_label(index: int) -> String:
+	if _tiers.is_empty() or index >= _tier.size():
+		return ""
+	return _tiers[_tier[index] % _tiers.size()].display_name
+
+
+## Which tier a fresh seat opens on: the shipped default, wherever it sits in the
+## menu order, so a table nobody tunes is the match every launch played before a
+## seat could carry a tier of its own.
+func _default_tier() -> int:
+	for i in _tiers.size():
+		if _tiers[i].id == Difficulty.DEFAULT_ID:
+			return i
+	return 0
+
+
+func _cycle_tier(index: int) -> void:
+	if _tiers.is_empty() or index >= _tier.size():
+		return
+	_tier[index] = (_tier[index] + 1) % _tiers.size()
+	_tier_buttons[index].text = _tier_label(index)
+	changed.emit()
 
 
 ## Whether this board could ever offer a seat to close: only one seating more than

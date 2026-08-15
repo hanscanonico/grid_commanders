@@ -94,7 +94,7 @@ static func action_button(
 ## of these to a line and have no room for a caption over either (SeatStrip's
 ## `_seat_row`). `button_sink` and `restyle_sink` collect the buttons and the
 ## repaint closure a caller needs to reach in from outside a press: greying one
-## button (`_difficulty_buttons`) or moving the highlight from a sibling control
+## button (the seat strip's Empty) or moving the highlight from a sibling control
 ## (a seat strip preset) rather than the segment's own. `height` is the segment
 ## buttons' minimum height; the seat strip's rows are denser than a stand-alone
 ## group and pass 16 against this default of 18.
@@ -157,8 +157,8 @@ static func segment(
 
 
 ## One segment of a segmented row, in every state. Public because the seat strip
-## dresses its own rows with it, so a seat row is the same control the difficulty
-## and speed rows are.
+## dresses its own rows and its tier chips with it, so a seat row is the same
+## control the speed row is.
 static func style_segment(seg: Button, active: bool, divided: bool, accent: Color) -> void:
 	var normal := UiTheme.segment_box(active, accent)
 	if divided:

@@ -18,9 +18,9 @@ extends RefCounted
 ##
 ## `--demo=menu_setup_context` poses the hot-seat setup without leaving the menu.
 ## Its gate also proves that the tutorial board leads, its description is printed, every
-## help line has copy, and AI difficulty follows the mode — it walks the mode back
-## to one player and out again, because "disabled" photographs the same whether it
-## can be undone or not. It measures the caption on every board for the same
+## help line has copy, and a seat's tier chip follows who is in it — it seats a
+## computer and unseats it again, because "disabled" photographs the same whether
+## it can be undone or not. It measures the caption on every board for the same
 ## reason: the reserved lines must hold for a board this frame does not show.
 ##
 ## `--demo=menu_four_seats` selects a board that deals more than a duel, which is

@@ -24,7 +24,8 @@ extends RefCounted
 ## unit can still find it after a resume. Version 10 carries which seats a player
 ## has handed to the computer mid-match through the pause menu's Auto row, and at
 ## what tier, because that fact can now change after the match began instead of
-## only at setup. All nine are purely additive, so older
+## only at setup. Version 11 carries the tier each computer seat was launched at,
+## because difficulty stopped being one match-wide setting. All ten are purely additive, so older
 ## saves are still read
 ## rather than rejected — a save with no commander block loads with both sides
 ## neutral, one with no dive flag loads with every boat on the surface, one with no
@@ -33,7 +34,8 @@ extends RefCounted
 ## and one with no home HQs takes them from the map it names. An older save with no
 ## refresh flag treats every acted unit as ineligible, one with no tags loads
 ## with every unit unnamed, and one with no Auto tiers loads with no seat the
-## computer plays on Auto's behalf. New saves are always written at the current version.
+## computer plays on Auto's behalf, and one with no seat tiers resumes with every computer
+## seat on the one tier it records. New saves are always written at the current version.
 ##
 ## Which is why the version number is load-bearing rather than decorative: it is what
 ## separates a save that is *old* from one that is *damaged*. Every additive field is
@@ -44,9 +46,9 @@ extends RefCounted
 ## encode/decode pair here and SaveGame keeps choosing between them; the facade
 ## and its callers do not change.
 
-const VERSION := 10
+const VERSION := 11
 ## Every version this codec can still read, oldest first.
-const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const READABLE_VERSIONS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 ## The version-rule schema — `Shape`, `KEY_RULES` and its per-list siblings, and the
 ## generic readers over them (`is_shape`, `_entries_error` and friends) — moved to
@@ -85,6 +87,12 @@ class LoadedMatch:
 	## on — a subset of `ai_teams`, never the whole of it. Empty for any save
 	## written before Auto existed, which is the same match with no such seat.
 	var auto_tiers: Dictionary[int, StringName] = {}
+	## The tier each computer seat was launched at, where that is not the match's
+	## own `difficulty` above — a subset of `ai_teams` like the Auto seats, and
+	## kept apart from them because a seat the computer has always played is not a
+	## seat a player handed over. Empty for any save written before a seat could
+	## carry a tier of its own, which is the same match on one tier.
+	var seat_tiers: Dictionary[int, StringName] = {}
 
 
 ## Just enough of a save to name it on a menu: which board, and how far in.
@@ -113,7 +121,8 @@ static func encode(
 	state: GameState,
 	ai_teams: Array[int],
 	difficulty: StringName = Difficulty.DEFAULT_ID,
-	auto_tiers: Dictionary[int, StringName] = {}
+	auto_tiers: Dictionary[int, StringName] = {},
+	seat_tiers: Dictionary[int, StringName] = {}
 ) -> Dictionary:
 	var carrier_indices := _unit_indices(state)
 	var units: Array = []
@@ -176,7 +185,8 @@ static func encode(
 		"rng_state": str(state.rng.state),  # int64 as string: JSON numbers are lossy
 		"ai_teams": ai_teams,
 		"difficulty": String(difficulty),
-		"auto_tiers": _encode_auto_tiers(auto_tiers),
+		"auto_tiers": _encode_tiers(auto_tiers),
+		"seat_tiers": _encode_tiers(seat_tiers),
 		"commanders": commanders,
 		"owners": owners,
 		"capture_progress": progress,
@@ -364,12 +374,9 @@ static func _decode_setup(data: Dictionary, state: GameState, version: int) -> L
 	# match recorded no seat a player had handed to the computer, so whatever sits
 	# under that key is not one and `validate` shaped none of it.
 	if version >= int(SaveSchema.KEY_RULES["auto_tiers"]["since"]):
-		var saved_auto: Variant = data.get("auto_tiers", {})
-		if saved_auto is Dictionary:
-			for key: Variant in saved_auto as Dictionary:
-				result.auto_tiers[int(String(key))] = StringName(
-					String((saved_auto as Dictionary)[key])
-				)
+		result.auto_tiers = _decode_tiers(data.get("auto_tiers", {}))
+	if version >= int(SaveSchema.KEY_RULES["seat_tiers"]["since"]):
+		result.seat_tiers = _decode_tiers(data.get("seat_tiers", {}))
 	return result
 
 
@@ -482,6 +489,7 @@ static func validate(data: Dictionary) -> String:
 		func() -> String: return _commander_block_error(data, version),
 		func() -> String: return _ai_teams_error(data),
 		func() -> String: return _auto_tiers_error(data),
+		func() -> String: return _seat_tiers_error(data),
 		func() -> String:
 			return SaveSchema._entries_error(
 				data["owners"], SaveSchema.OWNER_KEY_RULES, version, "owner"
@@ -767,16 +775,51 @@ static func _ai_teams_error(data: Dictionary) -> String:
 ## be wrong: the save recorded no seat a human had handed to the computer
 ## mid-match.
 static func _auto_tiers_error(data: Dictionary) -> String:
-	if _claimed_version(data) < int(SaveSchema.KEY_RULES["auto_tiers"]["since"]):
+	return _tier_block_error(
+		data,
+		"auto_tiers",
+		"the save puts team %s on Auto, but does not hand it to the computer",
+		"the save's Auto tier for team %s is malformed"
+	)
+
+
+## The same question of version 11's per-seat tiers, and the same answer: a tier
+## for a seat the save does not hand to the computer tunes a planner that never
+## plans, so it describes a match this save could not have recorded.
+static func _seat_tiers_error(data: Dictionary) -> String:
+	return _tier_block_error(
+		data,
+		"seat_tiers",
+		"the save gives team %s a tier of its own, but does not hand it to the computer",
+		"the save's seat tier for team %s is malformed"
+	)
+
+
+## The shared reading of a team -> tier id block: every key an army the save
+## itself hands to the computer, every value text. `misplaced` and `malformed`
+## are the two things that can be wrong with one, in the words of the block being
+## read.
+##
+## The roster is compared as integers rather than asked of the parsed array,
+## because JSON has one number type: a save that has been through a file carries
+## `[2.0, 3.0]`, and `Array.has(3)` on those is false — which refused every save
+## written while a seat was on Auto (COM-225 found it; a dictionary in memory
+## never showed it).
+static func _tier_block_error(
+	data: Dictionary, key: String, misplaced: String, malformed: String
+) -> String:
+	if _claimed_version(data) < int(SaveSchema.KEY_RULES[key]["since"]):
 		return ""
-	var saved: Dictionary = data["auto_tiers"]
-	var ai_teams: Array = data.get("ai_teams", [])
-	for key: Variant in saved:
-		var name := String(key)
-		if not name.is_valid_int() or not ai_teams.has(int(name)):
-			return "the save puts team %s on Auto, but does not hand it to the computer" % name
-		if not SaveSchema.is_shape(saved[key], SaveSchema.Shape.STRING):
-			return "the save's Auto tier for team %s is malformed" % name
+	var saved: Dictionary = data[key]
+	var computers: Dictionary = {}
+	for team: Variant in data.get("ai_teams", []):
+		computers[int(team)] = true
+	for entry: Variant in saved:
+		var name := String(entry)
+		if not name.is_valid_int() or not computers.has(int(name)):
+			return misplaced % name
+		if not SaveSchema.is_shape(saved[entry], SaveSchema.Shape.STRING):
+			return malformed % name
 	return ""
 
 
@@ -892,16 +935,27 @@ static func _encode_sides(sides: Dictionary[int, int]) -> Dictionary[String, int
 	return out
 
 
-## The Auto tiers as JSON writes them: tier ids keyed by army number as text,
-## the same shape `sides` and `funds` are. A match nobody has toggled Auto in
-## writes an empty dictionary, same as a save written before Auto existed.
-static func _encode_auto_tiers(
-	auto_tiers: Dictionary[int, StringName]
-) -> Dictionary[String, String]:
+## A team -> tier block as JSON writes it: tier ids keyed by army number as text,
+## the same shape `sides` and `funds` are. A match with no such seat writes an
+## empty dictionary, same as a save written before the block existed.
+static func _encode_tiers(tiers: Dictionary[int, StringName]) -> Dictionary[String, String]:
 	var out: Dictionary[String, String] = {}
-	for team: int in auto_tiers:
-		out[str(team)] = String(auto_tiers[team])
+	for team: int in tiers:
+		out[str(team)] = String(tiers[team])
 	return out
+
+
+## One back, keyed to army numbers. A key that is not a number is dropped rather
+## than read as team 0, which is what `int()` on a word would make of it.
+static func _decode_tiers(saved: Variant) -> Dictionary[int, StringName]:
+	var tiers: Dictionary[int, StringName] = {}
+	if not saved is Dictionary:
+		return tiers
+	for key: Variant in saved as Dictionary:
+		var name := String(key)
+		if name.is_valid_int():
+			tiers[int(name)] = StringName(String((saved as Dictionary)[key]))
+	return tiers
 
 
 ## The grouping a save recorded, keyed back to army numbers. Empty for a save
