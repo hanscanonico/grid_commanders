@@ -112,8 +112,8 @@ change and its rationale below.
 
 The runner and its five scenarios are verified (symmetry asserted, determinism
 byte-identical, hard invariants clean). The full batch was last run at
-twenty-two commanders on 2026-08-14 — **9,680 matches in 46 minutes**, results
-under *Measured after the Codebase Audit II baseline (2026-08-14)* below; the
+twenty-two commanders on 2026-08-15 — **9,680 matches in 33 minutes**, results
+under *Measured after the power-gate pass (2026-08-15)* below; the
 30-session human deck remains the manual release companion and is not
 represented as automated evidence here.
 
@@ -122,6 +122,141 @@ The deck's three additions for this roster are deliberately contrastive:
 cash-poor opponent** (whether plunder and its counterplay read), and **Colt against
 a defensive commander** (whether a late refresh creates agency rather than a
 surprise extra turn). Each is played from both seats like the standing twelve.
+
+### Measured after the power-gate pass (2026-08-15)
+
+The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
+scenarios × four seeds) in **33 minutes** on the development machine, at
+`225fe71`. **0 rejected commands and 0 cap stalls** — the hard invariants are
+clean, so the run is comparable to every batch above. 9,679 were decisive and
+one mirror ended a true tie (the first draw any full batch has recorded; a
+mirror tying on properties, units and funds alike is what the scoring rule at
+the top of this document says stays a draw, not a defect). First-seat bias was
+**+32.6 pp** (red 66.3%), the standing banking item. Terminations: 5,248 rout,
+3,903 `day_cap`, 529 `hq`.
+
+**This regen is a measurement, not a tune. No `data/` file was touched in the
+change that carries it.** It exists because seven commanders' `wants_power`
+gates moved after the 2026-08-14 baseline was taken — Draeg (#210), Ferrow
+(#212), Lark and Rowan (#214), Marr (#216), Sol (#217), Ash (#218) — each
+merged on a focused measurement rather than a full matrix, plus Orin Flux's
+Signal Jam rework (#205), whose changelog entry below already said the
+standings predated it. One `wants_power` is one of the two things a doctrine
+does, so the full matrix is what the pass owes.
+
+**The seven gates, and what the batch says each one did.** `held` is seats that
+filled a meter and never spent it; `lag` is the mean `first_fired −
+first_ready`, in days, over the seats that did fire.
+
+| Commander | 2026-08-14 | now | Δ | powers/match | held | lag |
+|---|---:|---:|---:|---:|---:|---:|
+| Viktor Draeg | 59.1% | **61.2% WARN** | +2.1 | 4.28 | 37 / 877 | 0.92 |
+| Sera Lark | 64.9% | **63.9% WARN** | −1.0 | 3.95 | 78 / 880 | 0.30 |
+| Nia Rowan | 48.1% | 45.9% ok | −2.2 | 3.46 | 116 / 880 | 1.15 |
+| Perrin Ash | 41.5% | 41.7% watch | +0.2 | 0.56 | **732 / 880** | 4.62 |
+| Dane Ferrow | 40.9% | 41.4% watch | +0.5 | 5.49 | 0 / 880 | 0.29 |
+| Halden Marr | 41.4% | 41.1% watch | −0.3 | 2.35 | **528 / 880** | 0.00 |
+| Rhea Sol | 37.7% | **37.4% WARN** | −0.3 | 1.19 | **646 / 880** | 6.01 |
+
+Six of the seven moved less than the field's own drift, and the pass is
+therefore what it was argued as: **the gates delete firings that bought
+nothing, and deleting them is close to free in win rate.** The one exception is
+Draeg at +2.1 pp, which crossed him from `watch` into `WARN` — armour is on
+every board, so his gate withholds a meter rather than banking it forever, and
+holding it for the turn a tread can use it is worth points.
+
+**Where powers went to zero, and why that is the gate rather than a stall.**
+Two commanders have scenario cells at exactly zero fires, both structurally:
+
+| | clash | ridge | holdings | combined | channel |
+|---|---:|---:|---:|---:|---:|
+| Perrin Ash | **0** | **0** | **0** | 493 | **0** |
+| Halden Marr | **0** | **0** | **0** | 1,437 | 633 |
+
+Air Superiority buffs AIR attackers and Make for the Shore keys every effect on
+a hull or on shore ground, so on a board with neither the power is a **provable
+no-op** — `test_land_only_combat_is_bit_identical_to_neutral` already pinned
+that for Ash. A zero there is the meter being held instead of thrown away, and
+it costs nothing measurable: both read within 0.3 pp of their pre-gate numbers.
+Ash fires only on `combined`, the one board with an airfield; Marr fires on
+`combined` and `channel`, the two with water. Rhea Sol has no structural zero
+but the same shape by degree — 851 of her 1,044 fires are on `holdings`, 3 on
+`clash` — because nobody builds her a gun on the sparse boards.
+
+Nobody else's power stopped: every ungated commander's zero-power seats are
+unchanged in character, and the widened commander soak (#211) keeps its
+per-commander `fired > 0` assertion.
+
+**The rest of the leaderboard**, every name outside the preferred 45–55% band,
+with movement against the 2026-08-14 reading:
+
+| Commander | Full matrix | Δ | Worst fixture | Reading |
+|---|---:|---:|---|---|
+| Radek Morn | **90.0% WARN** | +0.6 | `channel` 78.4% | Unmoved. Still fires least of anyone (1.80/match at 24,000) — the edge is the flat passive, as MC5 said. |
+| Iona Vance | **78.6% WARN** | +0.3 | `channel` 65.9% | Unmoved. |
+| Sera Lark | **63.9% WARN** | −1.0 | `channel` 53.4% | Gated (#214); see above. |
+| Konrad Vale | **62.5% WARN** | +0.2 | `holdings` 47.7% | Unmoved, and the split stays inverted — in band on the economy fixture his doctrine is authored for. |
+| Viktor Draeg | **61.2% WARN** | +2.1 | `ridge` 56.8% | Gated (#210), and the one gate that moved a win rate. New WARN. |
+| Ivar Thorne | 59.2% watch | −0.5 | `holdings` 42.6% | Unmoved. |
+| Gideon Holt | 55.6% watch | −0.3 | `channel` 49.4% | Unmoved; still the flattest spread on the roster. |
+| Cass Orlov | 44.7% watch | −0.8 | `ridge` 36.9% | Slipped out of band by drift, not by a change. |
+| Lyra Quill | 41.9% watch | +0.2 | `clash` 35.8% | Advises nothing on purpose. |
+| Perrin Ash | 41.7% watch | +0.2 | `ridge` 34.1% | Gated (#218); domain-only, exactly neutral on land. |
+| Dane Ferrow | 41.4% watch | +0.5 | `clash` **27.8%** | Gated (#212); `clash` is the carried trigger below. |
+| Halden Marr | 41.1% watch | −0.3 | `ridge` 34.1% | Gated (#216); Ash's structural twin, still within 0.6 pp of her. |
+| Ines Calder | 40.1% watch | −0.1 | `clash` 23.9% | Unmoved. |
+| Mara Voss | 39.5% WARN | +0.1 | `channel` 33.0% | Unmoved. |
+| Cassian Rook | 37.6% WARN | −0.5 | `clash` 21.0% | Unmoved; the gate shape the two march powers now share is his. |
+| Rhea Sol | **37.4% WARN** | −0.3 | `holdings` 28.4% | Gated (#217); see the trigger below. |
+| Iris Colt | **22.8% WARN** | −0.3 | `clash` 4.5% | The written exception, still the roster's most urgent single name. |
+
+In band and needing nothing: Orin Flux 45.2% (**+1.9**, and back in band — the
+Signal Jam rework's predicted direction, at full-matrix scale for the first
+time), Nia Rowan 45.9%, Alina Ward 47.4%, Sable Wren 48.4%, Tomas Reed 53.6% —
+five of twenty-two, the same count as the last batch with one name swapped
+(Orlov out, Flux in).
+
+**What the shape says.** The spread is **22.8 – 90.0% (67.2 pp, 9 WARN)**, a
+hair wider than the 66 pp the last batch read, and the extra WARN is Draeg
+moving up rather than anyone falling. The top of the field is untouched by this
+pass — the four MC5 generals are within 1.0 pp of where they stood — which is
+the expected result: a `wants_power` gate cannot reach a doctrine whose edge is
+an always-on passive. Every out-of-band name is a **review trigger** per the
+rule at the top of this document, and the tuning ladder has not been walked
+here.
+
+**Reproduction anchor.** `make commander-balance BAL="--commanders=rhea_sol,alina_ward --seeds=2"`
+reproduces PR #217's reviewed slice exactly on this tree — Sol 42.5% watch, 41
+powers over 40 seats, 7 of 40 seats firing at all, hold lag 2.57 days, 0
+rejected, 0 cap stalls — so the numbers above are the same instrument those PRs
+were merged on.
+
+**Carried review triggers.** These are the owed human tuning pass's, not this
+regen's; nothing below was changed here.
+
+- **Lark and Rowan's zero-fire matches** (#214). Both march powers now fire for
+  ground only, so a board with nothing left to take banks the meter: 78 of 880
+  seats for Lark and 116 for Rowan, concentrated on `channel` (78 and 104).
+  That is the banked-meter direction the Wren stall taught the roster to watch,
+  and the question the pass owns is whether the floor should be a cheaper
+  meter rather than a looser gate.
+- **Ferrow's `clash` figure** (#212). 27.8%, his worst cell and down from 29.0%
+  — plunder still needs a treasury and `clash` still resolves before one
+  exists, which the gate correctly refuses to fire into but cannot fix. His two
+  thresholds, `collect_want_hp = 6` and `collect_want_funds = 1000`, are
+  reasoned defaults never measured against alternatives; too low and he banks
+  through a healthy slugging match, too high and the gate is decorative.
+- **Rhea Sol** (#217). 37.4% with 646 of 880 seats holding a full meter all
+  match: the planner rarely buys her a gun, so the gate is nearly always shut.
+  **`indirect_build_bias` is the next lever, not the power** — a saturation
+  power with nothing to saturate is an economy problem wearing a power's
+  clothes.
+- **Ash and Marr's hold-forever cliff** (#218, #216). On a board with no
+  aircraft (Ash) or no water (Marr) the meter is held for the whole match by
+  design, and no "fire anyway after N days" escape hatch exists. That is
+  deliberate — the power is provably worth zero there — but it means both
+  generals' doctrines are a single always-on modifier on three of the five
+  fixtures, which is what their 41% aggregates are measuring.
 
 ### Measured after the Codebase Audit II baseline (2026-08-14)
 
@@ -375,6 +510,17 @@ this change.
 
 ### Balance changelog
 
+- **2026-08-15 — the matrix is regenerated after the power-gate pass; no number
+  moved.** 9,680 matches at `225fe71`, 33 minutes, hard invariants clean (0
+  rejected, 0 cap stalls, 1 mirror draw), first-seat bias +32.6 pp. It closes
+  the "re-run the matrix" note the Signal Jam entry below carries and answers
+  for the seven `wants_power` gates merged since the 2026-08-14 baseline
+  (Draeg, Ferrow, Lark, Rowan, Marr, Sol, Ash). Six of the seven moved less
+  than the field's own drift; Draeg moved +2.1 pp and is a new WARN. **No
+  `data/` value was touched**, per the rule at the top of this document that an
+  out-of-band commander is a review trigger. The full reading, including the
+  power telemetry and the four carried triggers the human tuning pass owns, is
+  in *Measured after the power-gate pass* above.
 - **2026-08-15 — Signal Jam stops stripping supplies and starts stripping
   movement.** The 43.3 % reading above came with the note that the deficit is
   flat across boards, and the diagnosis is the power rather than a fixture: 10
