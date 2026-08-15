@@ -231,8 +231,8 @@ class ProbeCommander:
 ## The byte-stability guarantee, pinned. `make determinism` and
 ## `make difficulty-check` seat no commanders, so both are unmoved by any
 ## `wants_power` change — but only because `power_cost` of 0 makes `has_power()`
-## false, which stops `PowerCommand.validate` and `_plan_power` before the hook
-## is ever asked. One guard-clause reorder would end that silently, and both
+## false, so `CommanderState.is_ready()` stops `_plan_power` before the hook is
+## ever asked. One guard-clause reorder would end that silently, and both
 ## goldens would then drift on unrelated commits.
 func test_a_power_less_commander_is_never_asked_whether_to_fire() -> void:
 	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n2 i 2 0", &"alina_ward")

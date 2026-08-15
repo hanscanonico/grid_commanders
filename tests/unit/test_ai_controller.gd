@@ -216,3 +216,55 @@ func test_planning_without_a_damage_chart_asks_the_chart_nothing() -> void:
 	var command := ai.plan_next_command(state)
 	assert_false(command is DiveCommand, "nothing known to be dangerous is worth hiding from")
 	assert_eq(command.validate(state), "")
+
+
+# --- an aimed Command Power ---------------------------------------------------
+
+
+## A power that names one cell. The doctrine answers `power_target` and the
+## planner is the only thing that asks it (more-commanders D5).
+class AimingProbe:
+	extends CommanderType
+
+	var aim: Vector2i = Vector2i.ZERO
+
+	func _init() -> void:
+		power_cost = 1
+
+	func aims_power() -> bool:
+		return true
+
+	func power_target(_state: GameState, _team: int) -> Vector2i:
+		return aim
+
+	func wants_power(_state: GameState, _team: int) -> bool:
+		return true
+
+
+func _aiming_state(aim: Vector2i) -> GameState:
+	var state := Fixture.state("[terrain]\n........\n........\n[units]\n1 t 0 0\n2 i 5 0")
+	var probe := AimingProbe.new()
+	probe.aim = aim
+	state.set_commander(1, probe)
+	state.add_charge(1, probe.power_cost)
+	return state
+
+
+## The aim reaches the command. `PowerCommand.target` defaults to (0, 0), which
+## is in bounds on every board, so anything weaker than this equality still
+## passes with the aiming branch deleted and every meteor landing in the corner.
+func test_the_planner_carries_the_doctrine_aim_onto_the_command() -> void:
+	var state := _aiming_state(Vector2i(5, 1))
+	var command := ai.plan_next_command(state)
+	assert_true(command is PowerCommand, "expected the power, got %s" % command)
+	assert_eq((command as PowerCommand).target, Vector2i(5, 1))
+	assert_eq(command.validate(state), "")
+
+
+## An aim the board refuses is refused here rather than handed on: validation
+## runs after the aim is written, so the planner never emits a command the rules
+## reject — which the balance engine reads as an end of turn.
+func test_the_planner_refuses_an_aim_off_the_board() -> void:
+	var state := _aiming_state(Vector2i(99, 99))
+	var command := ai.plan_next_command(state)
+	assert_false(command is PowerCommand, "got %s" % command)

@@ -52,14 +52,21 @@ func plan_next_command(state: GameState) -> Command:
 ## asks a different board question. Where an aimed power lands is doctrine-owned
 ## for the same reason and asked here for one more (plan D5): a meteor is not a
 ## unit, so the planner that scores moves for units never sees it.
+## The aim is written before the one validation, so what is checked is the
+## command that is returned: a doctrine that aims off the board is refused here
+## rather than handed on as a command the rules would reject. The meter is asked
+## of `CommanderState.is_ready()` first, so a commander with no power or an empty
+## meter is never asked whether it wants to fire.
 func _plan_power(state: GameState, timing: CommanderType.Timing) -> Command:
-	var command := PowerCommand.new()
-	if command.validate(state) != "":
-		return null
 	var team := state.current_team
+	if not state.commander_state(team).is_ready():
+		return null
 	var commander := state.commander_of(team)
 	if commander.power_timing != timing or not commander.wants_power(state, team):
 		return null
+	var command := PowerCommand.new()
 	if commander.aims_power():
 		command.target = commander.power_target(state, team)
+	if command.validate(state) != "":
+		return null
 	return command
