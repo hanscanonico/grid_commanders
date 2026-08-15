@@ -113,36 +113,30 @@ func test_the_arena_shelf_dials_play_command_for_command() -> void:
 
 
 ## The AI Economy block, which shipped inert on every tier and so is reached by
-## nothing above. Its two pricing dials make a property worth more than the
-## ground under it — on the capture itself and, through the goal, from as far
-## away as a unit can want one — and its two roster dials read how much of the
-## board is still unowned, which is a fact no envelope around a unit bounds.
-## Each pair alone, then all four at once, which is how a tier would carry them.
-func test_the_economy_pricing_dials_play_command_for_command() -> void:
-	var pricing := AIProfile.new()
-	pricing.production_capture_multiplier = 2.0
-	pricing.capture_goal_value_tiles = 2.0
+## nothing above: two pricing dials that make ground worth more for what it
+## produces — on the capture itself and, through the goal, from as far away as a
+## unit can want one — and two roster dials read off how much of the board is
+## still unowned and what the enemy has built, neither of them a fact any
+## envelope around a unit bounds. All four on a profile that carries nothing
+## else, then all four over a tier that also weighs a threat map, which is how a
+## tier would carry them.
+##
+## The roster pair is what makes both profiles play a different game from the
+## runs above: the pricing pair was measured to move no command on these three
+## fixtures at any value tried, so what these runs hold for it is that it is live
+## rather than a match of its own.
+func test_the_economy_dials_play_command_for_command() -> void:
+	var economy := AIProfile.new()
 	var whole_block: AIProfile = HARD_TIER.duplicate()
-	whole_block.production_capture_multiplier = 2.0
-	whole_block.capture_goal_value_tiles = 2.0
-	whole_block.capture_units_per_property = 0.5
-	whole_block.build_reactivity = 0.5
-	var profiles := {&"the pricing pair": pricing, &"the whole economy on hard": whole_block}
+	for profile: AIProfile in [economy, whole_block]:
+		profile.production_capture_multiplier = 2.0
+		profile.capture_goal_value_tiles = 2.0
+		profile.capture_units_per_property = 0.5
+		profile.build_reactivity = 0.5
+	var profiles := {&"the economy alone": economy, &"the whole economy on hard": whole_block}
 	for dial: StringName in profiles:
 		for board: Array in PlanCacheDiff.boards():
 			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
-
-
-## The roster half of the same block, on a profile that carries nothing else: how
-## many capturers a tier wants scales with what is left to take, and how fast the
-## build list answers the enemy's army is read off the board rather than off any
-## one unit.
-func test_the_economy_roster_dials_play_command_for_command() -> void:
-	var profile := AIProfile.new()
-	profile.capture_units_per_property = 0.5
-	profile.build_reactivity = 0.5
-	for board: Array in PlanCacheDiff.boards():
-		_assert_agrees_over_a_match(board[1], profile, "%s on the economy roster" % board[0])
 
 
 ## A shipped board, at the width the Balance Lab plays on. The three fixtures
