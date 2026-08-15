@@ -184,6 +184,8 @@ class Walk:
 	var acted: Dictionary = {}
 	## Units that captured something during it, and whether a power went off.
 	var captured: Dictionary = {}
+	## The property cells the side on turn started or finished taking during it.
+	var captured_cells: Dictionary = {}
 	## Units that fired during it.
 	var fought: Dictionary = {}
 	var fired_power := false
@@ -236,6 +238,7 @@ static func run(
 		if command is EndTurnCommand:
 			walk.acted = {}
 			walk.captured = {}
+			walk.captured_cells = {}
 			walk.fought = {}
 			walk.dropped = {}
 			walk.fired_power = false
@@ -267,7 +270,9 @@ static func _before_apply(walk: Walk, state: GameState, command: Command) -> voi
 	if command is PowerCommand:
 		walk.fired_power = true
 	if command is CaptureCommand:
-		walk.captured[(command as CaptureCommand).unit] = true
+		var capture := command as CaptureCommand
+		walk.captured[capture.unit] = true
+		walk.captured_cells[capture.path[capture.path.size() - 1]] = true
 	if command is DropCommand:
 		walk.dropped[(command as DropCommand).unit] = true
 	if command is AttackCommand:
@@ -379,11 +384,12 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 	_check_hoarding(walk, state, team)
 	_check_power(walk, state, team)
 	_check_hq(walk, state, team)
+	var claimed := _claimed_ground(walk, state, team)
 	for unit in state.units_of(team):
 		if unit.carrier != null:
 			continue
 		_check_idle(walk, state, unit)
-		_check_capture_chance(walk, state, unit)
+		_check_capture_chance(walk, state, unit, claimed)
 		_check_transport(walk, state, unit)
 		_check_oscillation(walk, state, unit)
 
@@ -551,6 +557,26 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 	return not _takeable_within_reach(state, unit).is_empty()
 
 
+## Ground this side attended to during the turn: the property cells one of its
+## units took or started taking, and the cells its units are standing on as the
+## turn is handed over. Each maps to the unit that claimed it, so a unit's own
+## occupancy never excuses it: ground it walked onto and did not take is the miss
+## the detector exists for, and only a *sibling*'s claim strikes a cell off.
+##
+## Capturing is a **side**-level decision and this is what says so. Two
+## footsoldiers opening beside the same neutral city is the side playing
+## correctly: one takes it and the other goes elsewhere, and a per-unit
+## counterfactual blames the second for the first having got there.
+static func _claimed_ground(walk: Walk, state: GameState, team: int) -> Dictionary:
+	var claimed: Dictionary = {}
+	for unit in state.units:
+		if unit.carrier == null and state.allied(unit.team, team):
+			claimed[unit.cell] = unit
+	for cell: Vector2i in walk.captured_cells:
+		claimed[cell] = null
+	return claimed
+
+
 ## Ground this footsoldier could have started taking and did not.
 ##
 ## A unit that fired buys its turn, the same `busy` reading `_check_oscillation`
@@ -561,24 +587,31 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 ## What was in reach is `_open_turn`'s answer, never a fresh one from here: this
 ## runs on the board being handed over, where the unit is standing at the end of
 ## its walk with its budget spent, so ground measured here is ground it can take
-## *next* turn.
-static func _check_capture_chance(walk: Walk, state: GameState, unit: Unit) -> void:
+## *next* turn. Ground the side claimed is struck off that answer first, and a
+## unit with nothing left on its list missed nothing.
+static func _check_capture_chance(
+	walk: Walk, state: GameState, unit: Unit, claimed: Dictionary
+) -> void:
 	if not unit.type.can_capture or walk.captured.has(unit) or walk.fought.has(unit):
 		return
 	var opening: Opening = walk.openings.get(unit)
 	if opening == null:
 		return
-	_add(
-		walk,
-		"missed_capture",
-		state,
-		unit,
-		(
-			"opened the turn at %s and could have started on the property at %s"
-			% [opening.cell, opening.takeable[0]]
-		),
-		SEVERITY["missed_capture"]
-	)
+	for cell in opening.takeable:
+		if claimed.has(cell) and claimed[cell] != unit:
+			continue
+		_add(
+			walk,
+			"missed_capture",
+			state,
+			unit,
+			(
+				"opened the turn at %s and could have started on the property at %s"
+				% [opening.cell, cell]
+			),
+			SEVERITY["missed_capture"]
+		)
+		return
 
 
 static func _check_transport(walk: Walk, state: GameState, unit: Unit) -> void:
