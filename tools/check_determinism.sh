@@ -52,10 +52,10 @@ STRIPPED_ARTIFACTS=(timeline.csv)
 # columns those are; this is that list, spelled where the gate can read it.
 TIMELINE_STRIPPED_COLUMNS=(planning_ms)
 
-# Emits $1 without its TIMELINE_STRIPPED_COLUMNS fields, and fails naming the
-# column when the header does not carry one: a renamed column must be loud,
-# because silently stripping nothing would diff the wall clock and silently
-# stripping the wrong index would hide a real move.
+# Writes $1 to $2 without its TIMELINE_STRIPPED_COLUMNS fields, and fails
+# naming the column when the header does not carry one: a renamed column must be
+# loud, because silently stripping nothing would diff the wall clock and
+# silently stripping the wrong index would hide a real move.
 #
 # Cutting fields with awk -F, is safe because no timeline field can hold a
 # comma — the unit tallies join with ';' (BalanceMatchRecorder._tally_text).
@@ -112,11 +112,13 @@ fi
 
 if ((refresh)); then
 	mkdir -p "$GOLDEN_DIR"
-	for file in "${ARTIFACTS[@]}"; do
-		cp "$OUT_DIR/$file" "$GOLDEN_DIR/$file"
-	done
+	# Stripped first: a stale column list must fail before any golden is
+	# rewritten, or a refresh leaves half the pin ahead of the other half.
 	for file in "${STRIPPED_ARTIFACTS[@]}"; do
 		strip_columns "$OUT_DIR/$file" "$GOLDEN_DIR/$file" || exit 1
+	done
+	for file in "${ARTIFACTS[@]}"; do
+		cp "$OUT_DIR/$file" "$GOLDEN_DIR/$file"
 	done
 	echo "determinism: refreshed the golden (${ARTIFACTS[*]} ${STRIPPED_ARTIFACTS[*]})"
 	exit 0
