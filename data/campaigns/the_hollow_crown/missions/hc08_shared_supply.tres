@@ -24,7 +24,7 @@ team = 2
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("4")
-text = "The rivals held the field past day 12."
+text = "The depot road stayed the rivals' past day 12."
 last_day = 12
 
 [sub_resource type="Resource" id="Bonus_0"]

@@ -21,7 +21,7 @@ cell = Vector2i(17, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The line held past day 9."
+text = "The roadhead held, and the capital road stayed shut past day 9."
 last_day = 9
 
 [sub_resource type="Resource" id="Bonus_0"]

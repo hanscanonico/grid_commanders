@@ -23,12 +23,12 @@ cell = Vector2i(21, 3)
 
 [sub_resource type="Resource" id="Bonus_six_properties"]
 script = ExtResource("3")
-text = "Hold six properties by the deadline."
+text = "Six of the fortress's properties, ours when it falls."
 count = 6
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("4")
-text = "The line held past day 10."
+text = "Morn's fortress stood past day 10, and the succession closed around him."
 last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
