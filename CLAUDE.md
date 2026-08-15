@@ -312,9 +312,14 @@ plan is stated in full below and has no copy there.
   The plan's Rook clause ("no good fight this turn") is superseded by the shipped gate:
   Redeployment fires for ground its movement can buy, *regardless* of the fight, because the
   commander match soak showed an army in constant contact otherwise banks the meter all match —
-  the banked-meter failure the toolkit exists to avoid. Three generals advise nothing on purpose
-  (Orlov, Quill, Rowan): forecasts already play them right, and a silent doctrine is the seam
-  working, not missing. `core/commander_type.gd` carries the repo's one `max-public-methods`
+  the banked-meter failure the toolkit exists to avoid. **Which generals advise nothing is
+  `tests/unit/test_commander_ai_advice.gd`'s to say, never this entry's** — its `ADVICE_COVERAGE`
+  records a yes-or-no per hook for every commander on the roster, with a one-line reason for each
+  silent one, so a general cannot be seated without answering and a silent doctrine can never be
+  read as a forgotten one. Orlov, Quill and Rowan were the first three: forecasts already play them
+  right, and a silent doctrine is the seam working, not missing. `retreat_hp_delta` is **internal
+  HP** (10 = one displayed pip), the scale `AIProfile.retreat_hp` is on, pinned in that same file.
+  `core/commander_type.gd` carries the repo's one `max-public-methods`
   ignore — its width is the hook contract twenty-two subclasses override, so the split the ratchet
   usually buys would be the mirror hook tree the commanders plan's D1 rejects; the ceiling stays
   21 for every facade-shaped class. D5: `make difficulty-check` stays byte-stable (it seats no
