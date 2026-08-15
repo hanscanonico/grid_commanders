@@ -1114,6 +1114,9 @@ Follow the official Godot GDScript style guide. Key points:
   directly rather than booting the scene. `BattleMenus` is the same shape one layer up — which rows a menu offers is
   content, gated by the same command authorities the rows would run, not scene plumbing — so
   `test_unit_pricing.gd` reads a build row's price and disabled state straight off it.
+  `BattleCampaign.objective_cells` joins them on the same terms: a static, pure read over
+  `CampaignSession` and a `GameState` with no `Node` in it, so `test_objective_marks.gd` pins which
+  objectives put a mark on the board without staging a battle.
   `TutorialHints` and `ControlHints` are Node-free copy registries for the same reason `GameSpeed`
   is: which mission step is next and which key legend a context prints are each a pure function of
   state the suite can hand them without a scene, so `test_tutorial_copy.gd` holds both to their
