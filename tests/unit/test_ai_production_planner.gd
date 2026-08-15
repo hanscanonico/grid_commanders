@@ -130,9 +130,9 @@ func test_each_copy_owned_costs_exactly_duplicate_priority_cost_places() -> void
 
 # --- _worth_waiting_for: the three branches of the banking rule ---------------
 
-## A base, five owned properties for income, and a capture roster already full.
-## Funds of 7000 buy the list's tank today; two turns of that income reach the
-## md tank the list prefers.
+## A base, five owned properties for 5000 a turn, and a capture roster already
+## full, so the only question left is the list's 7000 tank against its 16000
+## md tank. Each test below picks the funds its own claim needs.
 const BANKING_BOARD := """
 [terrain]
 BCCCC
@@ -157,25 +157,30 @@ func _banking_profile(save_up_turns: int) -> AIProfile:
 	return profile
 
 
-func _banking_plan(save_up_turns: int) -> Command:
+func _banking_plan(save_up_turns: int, funds: int) -> Command:
 	var context := _context(BANKING_BOARD)
-	context.state.funds[context.team] = 7000
+	context.state.funds[context.team] = funds
 	assert_eq(TurnRules.income_for(context.state, context.team), 5000, "the board's income")
 	return AIProductionPlanner.new(_banking_profile(save_up_turns)).plan(context)
 
 
-## Zero is the documented "spend it all" setting, and it is an early return
-## rather than a budget that happens to reach nothing.
+## Zero is the documented "spend it all" setting. The funds are picked so that
+## banking even one turn would reach the md tank — 12000 + 5000 clears its
+## 16000 — so nothing but the zero itself can be what buys today.
 func test_no_banking_spends_the_treasury_today() -> void:
-	var command := _banking_plan(0)
+	var command := _banking_plan(0, 12000)
 	assert_true(command is BuildCommand, "expected a build, got %s" % command)
 	assert_eq((command as BuildCommand).unit_type.id, &"tank")
 
 
-## The budget itself: 7000 buys a tank now, and 7000 plus two turns of 5000
-## reaches the 16000 md tank the list ranks above it, so the planner waits.
+## The budget itself: 7000 buys a tank now, one turn of 5000 still falls short
+## of the 16000 md tank the list ranks above it, and two turns reach it — so the
+## planner waits on exactly the arithmetic the field names.
 func test_a_better_unit_inside_the_banked_budget_holds_the_purchase() -> void:
-	assert_null(_banking_plan(2), "the md tank is two turns of income away and outranks the tank")
+	assert_true(
+		_banking_plan(1, 7000) is BuildCommand, "one turn of income leaves the md tank out of reach"
+	)
+	assert_null(_banking_plan(2, 7000), "two turns of income reach it, and it outranks the tank")
 
 
 ## The same board and the same wait, with the sky urgent. Only the ordering of
