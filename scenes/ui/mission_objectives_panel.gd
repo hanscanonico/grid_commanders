@@ -43,11 +43,12 @@ const _ROW_GAP := 4
 ## of it on the next — chrome that jumps between boards is chrome the player
 ## stops reading past.
 const _WIDTH := 168
-## What a satisfied condition wears, and what one still open does. A failure
-## reads the same way round: its mark lights when it has fired, which is the last
-## thing the panel ever draws before the mission ends.
+## The card's three marks, and they mean one thing each: ✓ met, · open, ✗ lost.
+## A failure reads the same way round as a condition: its mark lights when it has
+## fired, which is the last thing the panel ever draws before the mission ends.
 const _MET := "✓"
 const _OPEN := "·"
+const _LOST := "✗"
 
 ## Whether there is a mission to describe, and whether the player has its card up.
 ## The top bar's chip is the one listener: the card covers board a player may need
@@ -224,9 +225,9 @@ func _group(heading: String, objectives: Array[MissionObjective], game: GameStat
 
 ## The bonus stars, with the par day the runtime is also judging: the one
 ## condition on the card that is not a `MissionObjective`, printed here because
-## the player is racing a clock nothing else on screen names. Its mark reads
-## like every other row's — lit while the star is still winnable — and its
-## readout is the count that decides it.
+## the player is racing a clock nothing else on screen names. A clock still
+## running is open rather than satisfied, so it wears `_OPEN` in the amber its
+## readout beside it already uses, and `_LOST` once par has gone by.
 func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
 	var live := _live(mission.bonus_objectives)
 	if live.is_empty() and mission.par_day <= 0:
@@ -241,7 +242,7 @@ func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var inside := game.day <= mission.par_day
 	row.add_child(
-		_first_line(_MET if inside else _OPEN, UiTheme.CAPTURE if inside else UiTheme.INK_3)
+		_first_line(_OPEN if inside else _LOST, UiTheme.AMMO if inside else UiTheme.INK_3)
 	)
 	var words := UiTheme.hud_label(
 		"Finish by day %d." % mission.par_day, UiTheme.SIZE_MICRO, UiTheme.WHITE
