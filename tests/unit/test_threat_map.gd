@@ -6,8 +6,11 @@ extends GutTest
 ## keep passing while any of them quietly breaks.
 
 
-## A transport carries no weapon, so it has no firing ring to walk and nothing to
-## be afraid of. build() drops it on max_range before it ever asks the resolver.
+## A transport carries no weapon, so there is nothing to be afraid of. Two gates
+## say so and the map is only observable through the second: `build` drops it on
+## max_range before it ever walks a ring, and `incoming_damage` would price it at
+## nothing anyway through `AttackRange.can_fire`. What is pinned here is the
+## answer both give — removing either leaves it standing.
 func test_an_unarmed_transport_threatens_nothing() -> void:
 	var state := Fixture.state("[terrain]\n.....\n[units]\n1 i 0 0\n2 p 4 0")
 	var infantry := state.units_of(1)[0]
@@ -21,10 +24,11 @@ func test_an_unarmed_transport_threatens_nothing() -> void:
 
 
 ## Artillery carries one stocked weapon and no infinite-ammo secondary, so a dry
-## one has nothing to shoot with and leaves the map entirely rather than being
-## priced at zero. The same board with the shells still aboard is the control:
-## the gate is the ammo, not the geometry.
-func test_a_dry_enemy_with_no_secondary_drops_out_of_the_map() -> void:
+## one has nothing to shoot with and threatens nobody — `build` skipping it and
+## `can_fire` refusing it agree, the same pair as the transport above. The board
+## with the shells still aboard is the control: the gate is the ammo, not the
+## geometry.
+func test_a_dry_enemy_with_no_secondary_threatens_nothing() -> void:
 	var board := "[terrain]\n.......\n[units]\n1 i 0 0\n2 g 3 0"
 
 	var stocked := Fixture.state(board)

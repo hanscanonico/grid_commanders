@@ -52,9 +52,11 @@ var _by_cell: Dictionary[Vector2i, Array] = {}
 ## the knowledge it has. Keyed to the planner's team the fill would be walled by
 ## our own units the enemy has not spotted, and the map would under-report the
 ## reach the enemy actually plans through — where over-reporting is the safe
-## direction for a heuristic that only ever makes a unit more careful. Fog-only
-## either way: with fog off `MovementResolver.reachable` never computes
-## visibility at all, so the key is inert.
+## direction for a heuristic that only ever makes a unit more careful. Mostly a
+## fog question: with fog off `MovementResolver.reachable` computes no visible
+## set at all, and what the key still decides there is the doctrine-hidden — a
+## dived submarine or a vanished unit hides on a clear day too, so the enemy
+## plans through one of ours it cannot see either way round.
 static func build(state: GameState, enemies: Array[Unit]) -> ThreatMap:
 	var map := ThreatMap.new()
 	for enemy in enemies:
