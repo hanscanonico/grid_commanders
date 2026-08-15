@@ -23,6 +23,9 @@ extends RefCounted
 const IDLE_TURNS := 3
 const BANKED_TURNS := 3
 const STRANDED_TURNS := 3
+## A side is allowed to save up a couple of turns for something better than the
+## cheapest thing on the board, so a one- or two-turn hoard is ordinary play.
+const HOARD_TURNS := 3
 
 ## What a finding is worth, before its own arithmetic scales it. Ranking is only
 ## ever "read this one first" — the numbers are a sort key, not a currency.
@@ -134,11 +137,6 @@ class Hoard:
 			cheapest = p_cheapest
 
 	func detail() -> String:
-		if turns == 1:
-			return (
-				"ended the turn on %d funds having built nothing, against a %d build"
-				% [peak, cheapest]
-			)
 		return (
 			"built nothing for %d turns, peaking at %d funds against a %d build"
 			% [turns, peak, cheapest]
@@ -479,7 +477,8 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 ## that banks for five turns is one thing that happened, not five, and said once a
 ## turn it was more than half of everything the analyser printed. The finding is
 ## held open while the streak runs and released when it ends — or at the end of the
-## recording, for a side still sitting on its purse when the match stopped.
+## recording, for a side still sitting on its purse when the match stopped, and
+## dropped outright below `HOARD_TURNS`.
 static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 	if walk.built:
 		_release_hoard(walk, team)
@@ -518,6 +517,8 @@ static func _release_hoard(walk: Walk, team: int) -> void:
 	if streak == null:
 		return
 	walk.hoard.erase(team)
+	if streak.turns < HOARD_TURNS:
+		return
 	_add_at(walk, "hoarding", streak.day, team, null, streak.detail(), streak.peak)
 
 
@@ -662,15 +663,17 @@ static func _check_idle(walk: Walk, state: GameState, unit: Unit) -> void:
 	)
 
 
-## Something worth doing: an enemy it could bring under fire, or ground it could
-## take. Asked of the rules, so a unit with nothing to do is not reported for
-## having nothing to do.
+## Something worth doing: an enemy it could actually shoot, or ground it could
+## take. The shot is `AttackRange.ready_shot`'s answer rather than a loaded weapon
+## over an occupied cell, so an infantry that can only reach a fighter has nothing
+## to do and is not reported for having nothing to do.
 static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
-	if AttackRange.has_ready_weapon(state, unit):
-		for cell in AttackRange.threat_cells(state, unit):
-			var other := state.unit_at(cell)
-			if other != null and not state.allied(other.team, unit.team):
-				return true
+	for cell in AttackRange.threat_cells(state, unit):
+		var other := state.unit_at(cell)
+		if other == null or state.allied(other.team, unit.team):
+			continue
+		if AttackRange.ready_shot(state, unit, other) != null:
+			return true
 	return not _takeable_within_reach(state, unit).is_empty()
 
 

@@ -103,11 +103,14 @@ func _idle_rounds(turns: int) -> Array:
 func test_hoarding_is_money_left_on_an_idle_factory() -> void:
 	var state := _bare_state()
 	state.funds[1] = 9000
-	# Seat 2 owns nothing it could spend on, so only seat 1 can be reported.
+	# Seat 2 opens broke, but its own properties earn over the three turns the floor
+	# asks for, so the case reads seat 1 rather than the whole report.
 	state.funds[2] = 0
-	var report := _run(state, [{"c": "end_turn"}])
-	assert_eq(_count(report, "hoarding"), 1)
-	assert_string_contains(_first(report, "hoarding").detail, "9000")
+	var report := _run(state, _idle_rounds(3))
+	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_gte(finding.magnitude, 9000)
+	assert_string_contains(finding.detail, str(finding.magnitude))
 
 
 ## The purse is measured against what this side is actually charged. A doctrine
@@ -119,14 +122,16 @@ func test_a_purse_short_of_a_marked_up_price_is_not_hoarding() -> void:
 	short.set_commander(1, commander_db.by_id(&"konrad_vale"))
 	short.funds[1] = 1100
 	short.funds[2] = 0
-	assert_eq(_count(_run(short, [{"c": "end_turn"}]), "hoarding"), 0)
+	assert_eq(_for_team(_run(short, _idle_rounds(3)), "hoarding", 1).size(), 0)
 	var enough := _bare_state()
 	enough.set_commander(1, commander_db.by_id(&"konrad_vale"))
 	enough.funds[1] = 1200
 	enough.funds[2] = 0
-	var report := _run(enough, [{"c": "end_turn"}])
-	assert_eq(_count(report, "hoarding"), 1)
-	assert_string_contains(_first(report, "hoarding").detail, "1200")
+	var report := _run(enough, _idle_rounds(3))
+	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_gte(finding.magnitude, 1200)
+	assert_string_contains(finding.detail, str(finding.magnitude))
 
 
 func test_a_purse_too_small_for_anything_is_not_hoarding() -> void:
@@ -165,6 +170,17 @@ func test_a_hoard_carries_the_peak_of_the_streak() -> void:
 	assert_string_contains(finding.detail, str(finding.magnitude))
 
 
+## A side is allowed to save up for something better than the cheapest thing on
+## the board, so a short hoard is the production planner playing as written. It was
+## about half of everything the analyser printed on real recordings, nearly all of
+## it one and two turn streaks.
+func test_a_two_turn_hoard_is_the_planner_saving_up() -> void:
+	var state := _bare_state()
+	state.funds[1] = 9000
+	state.funds[2] = 0
+	assert_eq(_count(_run(state, _idle_rounds(2)), "hoarding"), 0)
+
+
 ## A streak that ends is released there, and a later one is a second finding.
 func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 	var state := _bare_state()
@@ -173,11 +189,19 @@ func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 	var entries: Array = [
 		{"c": "end_turn"},  # day 1: the streak opens
 		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
 		# A turn the side spent something on is not a hoarding turn: the streak ends.
 		{"c": "build", "cell": [1, 0], "unit": "infantry"},
 		{"c": "end_turn"},
 		{"c": "end_turn"},
 		{"c": "move", "path": [[1, 0], [2, 0]]},  # off the base, and it is idle again
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
 		{"c": "end_turn"},
 		{"c": "end_turn"},
 	]
@@ -235,6 +259,18 @@ func test_idle_unit_needs_three_of_its_owners_turns() -> void:
 	# Two, one per side: each infantry has the other in reach, so both are idle and
 	# both are reported. What the case is about is the third turn, not the count.
 	assert_eq(_count(_run(state, _idle_rounds(3)), "idle_unit"), 2, "three is nobody playing")
+
+
+## Something in reach is not something to do. An infantry has no shot at a fighter
+## at all — the damage chart has no row for it — so a detector reading a loaded
+## weapon over an occupied cell reports a unit that was out of answers.
+func test_a_unit_that_cannot_engage_what_is_in_reach_is_not_idle() -> void:
+	var state := _bare_state()
+	# The far corner, so no property is within the infantry's walk and the fighter
+	# is the only thing it could be reported for.
+	_stand(state, &"infantry", 1, Vector2i(0, 4))
+	_stand(state, &"fighter", 2, Vector2i(1, 4))
+	assert_eq(_for_team(_run(state, _idle_rounds(4)), "idle_unit", 1).size(), 0)
 
 
 func test_a_unit_with_nothing_in_reach_is_not_idle() -> void:
