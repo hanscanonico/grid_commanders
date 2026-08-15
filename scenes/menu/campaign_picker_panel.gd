@@ -16,9 +16,14 @@ signal picked(campaign_id: StringName)
 signal cancelled
 
 const _TITLE_SIZE := 15
-const _ROW_HEIGHT := 22
-const _ROW_WIDTH := 400
+## Six cards, the page's chrome and no scrollbar inside 360px: the card is as tall
+## as its four lines of type and no taller, because a war the player has to scroll
+## to is a war the picker did not offer.
+const _ROW_HEIGHT := 40
+const _ROW_WIDTH := 460
+const _THUMB := Vector2(88, 36)
 
+var _terrain := TerrainDB.load_default()
 var _title: Label
 var _rows: VBoxContainer
 var _empty: Label
@@ -149,7 +154,6 @@ func _fill(
 			if posed.has(campaign.id)
 			else CampaignProfile.load_progress(campaign.id)
 		)
-		button.text = row_text(campaign, progress)
 		var variant := (
 			UiTheme.ButtonVariant.PRIMARY
 			if CampaignDB.leads(campaign.id)
@@ -159,11 +163,85 @@ func _fill(
 		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.add_child(_row_face(campaign, progress))
 		var index := _ids.size()
 		button.pressed.connect(func() -> void: _pick(index))
 		_rows.add_child(button)
 		_row_buttons.append(button)
 		_ids.append(campaign.id)
+
+
+## The row as a card rather than a line of text — `CampaignHubPanel._row_face`'s
+## shape, for its reason: a button's own `text` can say one thing, and a war has
+## three (where it is fought, who it is against, what it is about). The board is
+## the first mission's, drawn by `MapThumbnail`, so the miniature is a truthful
+## picture of the war's opening ground rather than a second opinion about it.
+## Children of a button, so every one of them ignores the mouse.
+func _row_face(campaign: CampaignDefinition, progress: CampaignState) -> Control:
+	var face := HBoxContainer.new()
+	face.set_anchors_preset(Control.PRESET_FULL_RECT)
+	face.offset_left = 6
+	face.offset_right = -6
+	face.add_theme_constant_override("separation", 6)
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var thumb := _thumbnail(campaign)
+	if thumb != null:
+		face.add_child(thumb)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	words.add_child(_headline(row_text(campaign, progress)))
+	if not campaign.antagonist.is_empty():
+		words.add_child(_micro(campaign.antagonist.to_upper(), UiTheme.INK_3, 1))
+	if not campaign.premise.is_empty():
+		words.add_child(_micro(campaign.premise, UiTheme.NEUTRAL_LIGHT, 2))
+	face.add_child(words)
+	return face
+
+
+## The war's opening ground. A board that will not load costs the row its picture
+## and nothing else — the picker still has to offer the war.
+func _thumbnail(campaign: CampaignDefinition) -> MapThumbnail:
+	if campaign.missions.is_empty():
+		return null
+	var map := MapData.load_from_file(campaign.missions[0].map_path, _terrain)
+	if map == null:
+		return null
+	var thumb := MapThumbnail.new()
+	thumb.setup(map, UiTheme.menu_identity(map.player_count()), _THUMB)
+	thumb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return thumb
+
+
+func _headline(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.display())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_BUTTON)
+	label.clip_text = true
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+
+## A wrapped, clipped line is measured off its own font: a `Label` that both wraps
+## and clips reports a 1x1 minimum, so left to itself it lays out invisible, and
+## `get_line_height()` answers for the default theme until the label is in a tree.
+## With no line spacing a line is exactly the font's height.
+func _micro(text: String, ink: Color, lines: int) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.stat())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_color_override("font_color", ink)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
+	label.max_lines_visible = lines
+	label.add_theme_constant_override("line_spacing", 0)
+	label.custom_minimum_size.y = UiTheme.stat().get_height(UiTheme.SIZE_MICRO) * lines
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 
 ## "The Six Marshals — 4/18 · 9 stars", or "— new" for a war with no profile, or
