@@ -200,6 +200,16 @@ func test_every_key_the_zoom_legend_promises_reaches_its_action() -> void:
 		assert_true(_key(keycode).is_action_pressed(&"zoom_out"), "no zoom_out: %d" % keycode)
 
 
+## A mouse player selects, moves and picks menu rows with the mouse, so backing
+## out has to be a mouse gesture too. Pinned here for the reason above: the
+## binding is hand-edited in project.godot.
+func test_right_click_reaches_cancel() -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	assert_true(event.is_action_pressed(&"cancel"), "right-click misses cancel")
+
+
 func _key(keycode: Key, shift: bool = false) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.keycode = keycode
