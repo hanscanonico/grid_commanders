@@ -29,7 +29,7 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Objective_hold_the_middle_town"]
 script = ExtResource("4")
-text = "Hold the middle town for three days — long enough for it to matter."
+text = "Hold the far town, the one out east toward his raiders, for three days."
 cell = Vector2i(9, 2)
 days = 3
 

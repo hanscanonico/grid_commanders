@@ -67,7 +67,7 @@ units = Array[Resource]([SubResource("Spawn_wall_battery")])
 [sub_resource type="Resource" id="Event_line_concrete"]
 script = ExtResource("3")
 speaker = &"konrad_vale"
-text = "The paperwork phase is over, Commander. What is left is concrete, and concrete does not negotiate."
+text = "There is nothing left to file, Commander. What is left is concrete and a battery behind it, and concrete does not negotiate."
 
 [sub_resource type="Resource" id="Event_concrete_does_not_negotiate"]
 script = ExtResource("5")

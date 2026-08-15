@@ -78,7 +78,7 @@ text = "The headquarters falls, and every quiet annexation this war ran on stops
 [sub_resource type="Resource" id="Line_6b"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Ten towns still fly their own colours because somebody went back for the ones nobody was counting. That's the part of this the map will keep."
+text = "Ten of the towns in his ledger never became Iron ground. He annexed them on paper and the paper never once reached the map."
 requires = SubResource("Every_town_saved")
 
 [sub_resource type="Resource" id="Line_7"]
