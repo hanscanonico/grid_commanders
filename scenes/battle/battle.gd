@@ -340,16 +340,12 @@ func _ready() -> void:
 		_scenario_driver.run()
 
 
-## Which key legend this state prints. A replay borrows `AI_TURN` and the PAUSED
-## it can be interrupted into — somebody else is playing and you are watching — so
-## only the words differ, and a paused replay names one key a paused turn cannot:
-## the step.
-func _legend_for(value: State) -> String:
-	if _replay != null and value == State.AI_TURN:
-		return ControlHints.REPLAY
-	if _replay != null and value == State.PAUSED:
-		return ControlHints.REPLAY_PAUSED
-	return STATE_CONTEXT.get(value, ControlHints.IDLE)
+## Which key legend context this state prints. The table above is the mapping;
+## what a recording and an open menu do to it is BattleLegend's.
+func _legend_for(value: State) -> StringName:
+	return BattleLegend.context_for(
+		STATE_CONTEXT.get(value, ControlHints.IDLE), _replay != null, action_menu.has_value_rows()
+	)
 
 
 func _exit_tree() -> void:
@@ -1118,19 +1114,23 @@ func _open_build_menu(cell: Vector2i) -> void:
 
 func _open_map_menu() -> void:
 	_menu_context = &"map"
-	state = State.MENU
 	# Its first row is the Command Power, which is one of the two routes the charged
 	# meter in the bottom bar advertises (F is the other). Nothing floats over the
 	# board any more, so the menu only has to clamp inside the band between the bars.
 	# Opened over a paused computer turn it drops the rows that would act for that
 	# turn — the menu is the same, whose turn it is is not — and over a replay the
 	# two that write the save slot as well; see BattleMenus.map_actions.
+	#
+	# Opened before the state is set: the legend that setter prints asks the menu
+	# whether its rows answer to left and right, and this is the menu that carries
+	# the device settings they step.
 	action_menu.open(
 		BattleMenus.map_actions(
 			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db
 		),
 		view.screen_pos_for_cell(cursor_cell)
 	)
+	state = State.MENU
 
 
 ## Opens the both-sides commander reference over the board. A modal, like the

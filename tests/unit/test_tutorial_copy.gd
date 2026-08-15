@@ -144,6 +144,21 @@ func test_legends_are_ascii_only() -> void:
 			)
 
 
+## The one thing the value-menu legend exists to say. Its sibling MENU is what the
+## board's action menus print, where left and right mean nothing, so the two are
+## held apart here: an L/R that leaked into MENU would advertise a dead key on
+## every menu in the game.
+func test_only_the_value_menu_legend_names_left_and_right() -> void:
+	assert_true(
+		"L/R" in String(ControlHints.LEGENDS[ControlHints.VALUE_MENU]), "no L/R in the value menu"
+	)
+	assert_eq(
+		String(ControlHints.LEGENDS[ControlHints.MENU]),
+		"UP/DOWN · PICK   ENTER · OK   ESC · BACK",
+		"the action menu's legend moved"
+	)
+
+
 ## The lens chips stand beside the legend rather than inside it, so they are held
 ## to the same two rules by hand: each shares the bar's width with a legend that
 ## may already be running at MAX_CHARS, and each is printed in the same Silkscreen.
