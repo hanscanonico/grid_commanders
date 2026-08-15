@@ -55,6 +55,7 @@ func test_neutral_hooks_return_the_pre_commander_rules() -> void:
 	assert_eq(co.luck_min(state, fight), 0)
 	assert_eq(co.luck_max(state, fight), 9)
 	assert_eq(co.move_bonus(state, tank), 0)
+	assert_eq(co.enemy_move_bonus(state, 2, tank), 0)
 	assert_eq(co.range_bonus(state, tank), 0)
 	assert_eq(co.vision_bonus(state, tank), 0)
 	assert_eq(co.enemy_vision_bonus(state, 2, tank), 0)

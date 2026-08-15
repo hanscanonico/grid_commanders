@@ -78,16 +78,33 @@ func test_his_scouts_see_further() -> void:
 	assert_false(Vision.visible_cells(neutral, 1).has(Vector2i(5, 1)), "an ordinary one does not")
 
 
-func test_signal_jam_strips_enemy_fuel_and_ammo() -> void:
+func test_signal_jam_slows_the_enemy() -> void:
 	var state := _state("[terrain]\n===\n[units]\n1 r 0 0\n2 t 2 0", &"orin_flux")
 	var enemy := state.units[1]
 	var friendly := state.units[0]
-	var friendly_fuel := friendly.fuel
-	enemy.ammo = 5
+	assert_eq(MovementResolver.move_budget(state, enemy), enemy.type.move_points)
 	assert_eq(Fixture.fire_power(state, 1), "")
-	assert_eq(enemy.fuel, enemy.type.max_fuel - 10, "10 fuel gone")
-	assert_eq(enemy.ammo, 4, "and one shell")
-	assert_eq(friendly.fuel, friendly_fuel, "his own army is untouched")
+	assert_eq(
+		MovementResolver.move_budget(state, enemy), enemy.type.move_points - 1, "a point gone"
+	)
+	assert_eq(
+		MovementResolver.move_budget(state, friendly),
+		friendly.type.move_points,
+		"his own army is untouched"
+	)
+
+
+## Slowed, never frozen: the floor in move_budget is what stops a jam parking a
+## one-point unit, and it may not reach around the fuel cap to do it.
+func test_signal_jam_leaves_a_slow_unit_one_step() -> void:
+	var state := _state("[terrain]\n===\n[units]\n1 r 0 0\n2 t 2 0", &"orin_flux")
+	var enemy := state.units[1]
+	assert_eq(Fixture.fire_power(state, 1), "")
+	enemy.type = enemy.type.duplicate()  # never the shared DB resource
+	enemy.type.move_points = 1
+	assert_eq(MovementResolver.move_budget(state, enemy), 1, "still one step")
+	enemy.fuel = 0
+	assert_eq(MovementResolver.move_budget(state, enemy), 0, "but an empty tank stays put")
 
 
 func test_signal_jam_shortens_enemy_vision() -> void:
