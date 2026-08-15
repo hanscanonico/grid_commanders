@@ -121,8 +121,16 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # Battle takes the dictionary it hands back; and how well the computer plays is
 # per seat now, so the panel's one Difficulty segment is the seat strip's chip and
 # the menu keeps no tier state at all.
+#
+# battle.gd 1429 -> 1420: the mission's objective marks, which pay for themselves.
+# What stayed here is the wiring — the node handed to the overlays and one call on
+# the fog pass — because which squares are marked is BattleCampaign's answer and
+# how they are drawn is ObjectiveMarks'. The two lines that bought are the capture
+# chips' fog gate going to BattleOverlays, which owns the transient paint and was
+# already handed the drawer: Battle was filtering a table it then handed straight
+# over, and CapturePips stays as dumb as it was.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1429
+scenes/battle/battle.gd 1420
 scenes/menu/main_menu.gd 1121
 "
 

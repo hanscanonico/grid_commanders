@@ -260,8 +260,10 @@ plan is stated in full below and has no copy there.
   D4: **the two board marks are drawn, and every number in them was handed over.** `PathArrow`
   splits into a pure `segments(path)` (checked by `tests/unit/test_path_arrow.gd`, no scene) and a
   `_draw` that only paints what it returns; `CapturePips` is dumb like `UnitSprite` and never calls
-  back into `capture_strength` — Battle puts `GameState.capture_progress` through the same fog gate
-  the board uses and hands the result over. Both wear outlined marks rather than filled panels: the
+  back into `capture_strength` — `BattleOverlays.show_capture_pips` puts `GameState.capture_progress`
+  through the same fog gate the board uses and hands the result over (the gate sat in `Battle` until
+  the objective marks paid for themselves by giving it to the class that owns the paint). Both wear
+  outlined marks rather than filled panels: the
   handoff's ink chip is trim on its 44px tile and covers the building being captured on this
   board's 16. Every captured battle frame shifts, because the threat chip is permanent top-bar
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
@@ -879,7 +881,13 @@ plan is stated in full below and has no copy there.
   Instant opt-out and does not hide the panel in the one scenario that exists to photograph it.
   **`O` lowers and raises the card** — a lens key like `T` and `R`, stated as a top-bar chip that is
   off the bar entirely outside a campaign, with the card's up/down state the **panel's own** rather
-  than `Battle`'s; every mission opens with it up, deliberately not a device preference. CD2's
+  than `Battle`'s; every mission opens with it up, deliberately not a device preference.
+  **The card says what to do and the board says where**: an objective that names ground is also
+  **marked on the board**. `MissionObjective.marker_cells` is the authored `@export` cells read
+  straight back — no board, no state, no tally, which is what separates it from the cell hooks CD8
+  deleted — `BattleCampaign.objective_cells` is the single collector (live via `is_live`, unmet,
+  primary and bonus alike), `ObjectiveMarks` is a dumb drawer like `CapturePips`, and the mark is
+  deliberately **unfogged**, because what a mission is about is public. CD2's
   vocabulary settled that **only `HoldCell` and `LossLimit` need the tally**, which is why
   `MissionProgress` is counters, and why `is_met` / `readout` / `definition_error` take it
   **required, never defaulted** — a caller that forgot it would silently read a mission nobody can

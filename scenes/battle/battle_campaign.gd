@@ -76,6 +76,45 @@ static func fire_due(battle: Battle) -> void:
 		await battle.announce_fallen(receipt.fallen)
 
 
+## Repaints the mission's marks. Rides the fog pass, which is the one that already
+## reruns after every committed command and turn change — and what the mission
+## still wants changes exactly there, when ground turns over or a beat reveals an
+## objective.
+static func refresh_marks(battle: Battle) -> void:
+	battle.overlays.show_objective_marks(objective_cells(battle.game))
+
+
+## Every square this mission still wants, for the board to ring. Empty for a
+## skirmish, so a match outside a campaign paints nothing.
+##
+## Live objectives only, asked of `is_live` — the same authority the card prints
+## through, so a held-back objective is no more marked on the board than it is
+## named on the card — and **unmet** ones only, because a target already taken is
+## a ring the player has to learn to ignore. Primary and bonus alike: a bonus is
+## ground you have to find as much as the main goal is. Failures name no ground.
+##
+## Deliberately unfogged. What the mission is about is public — the briefing says
+## it, the card says it — so hiding the square behind ground nobody has scouted
+## would withhold the one thing the player was told, not a thing they must
+## discover. The same reading fog gets everywhere else: it costs you what is
+## *standing* there, never what you were told to go and take.
+static func objective_cells(game: GameState) -> Array[Vector2i]:
+	if not CampaignSession.active():
+		return []
+	var mission := CampaignSession.mission
+	var tally := CampaignSession.tally
+	var cells: Array[Vector2i] = []
+	for objective: MissionObjective in mission.objectives + mission.bonus_objectives:
+		if objective == null or not objective.is_live(tally):
+			continue
+		if objective.is_met(game, mission.player_team, tally):
+			continue
+		for cell in objective.marker_cells():
+			if not cells.has(cell):
+				cells.append(cell)
+	return cells
+
+
 ## Whether the mission just ended, and false for every skirmish — which is what
 ## leaves a match outside a campaign unchanged. Its answer outranks the receipt's
 ## own winner, and it is asked after the fallen-army banner and before the turn

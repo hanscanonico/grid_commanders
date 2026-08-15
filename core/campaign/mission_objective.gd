@@ -51,6 +51,20 @@ func readout(_state: GameState, _team: int, _progress: MissionProgress) -> Strin
 	return ""
 
 
+## The squares this condition is about, for the board to mark. Empty for every
+## objective that names no ground — a count of properties, a deadline, a marshal
+## who has to live — and those are marked nowhere rather than marked wrongly.
+##
+## Authored data read straight back: the cells are `@export`s a designer typed,
+## so this needs no board, no state and no tally and can never be a second
+## opinion about anything. That is what separates it from the cell hooks CD8
+## deleted, which had to answer where an *effect* would land at fire time — not
+## statically knowable, and unsound as a gate. This one only repeats the question
+## the mission already asks in words.
+func marker_cells() -> Array[Vector2i]:
+	return []
+
+
 ## Is this condition being judged yet? False only for a hidden objective no event
 ## has revealed, and `MissionRuntime` skips those wherever it walks a list: an
 ## unrevealed objective can be neither required, nor lost by, nor earn a star.
