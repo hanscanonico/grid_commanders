@@ -221,7 +221,7 @@ func _ready() -> void:
 
 ## Dev captures only: selects a board and applies a grouping preset, so the seat
 ## strip can be photographed at more seats than the default board deals. Not on
-## any play path — a run with neither flag does nothing here.
+## any play path — a run that asks for none of them does nothing here.
 ##
 ## A miss on either flag is said out loud rather than posed quietly: the capture
 ## would then be taken on the default board in the default grouping and look
@@ -229,16 +229,20 @@ func _ready() -> void:
 ## `apply_cmdline`'s `--map` both refuse for the same reason — a typo has to be
 ## visible in the output or the shot proves the wrong thing.
 func _pose_seats(args: PackedStringArray) -> void:
+	# `menu_four_seats` asks for the same thing by mode rather than by board: the
+	# picker's `· NP` mark and a strip of more than two rows, which every other
+	# menu scenario's tutorial board says neither of.
+	if _capture_driver.poses_four_seats():
+		await _show_map(_capture_driver.four_seat_map(_maps))
 	var wanted := CmdArgs.value(args, "--menu-map")
 	if wanted != "":
 		var path := MapCatalog.resolve(wanted)
-		var found := false
+		var found := -1
 		for i in _maps.size():
 			if _maps[i].source_path == path:
-				_select_map(i)
-				found = true
+				found = i
 				break
-		if not found:
+		if found < 0:
 			var shown := _map_at(_selected_map)
 			push_error(
 				(
@@ -250,12 +254,7 @@ func _pose_seats(args: PackedStringArray) -> void:
 					]
 				)
 			)
-		# The picker scrolls the selection into view, which needs a laid-out tree —
-		# a capture on the same frame photographs the board it was showing before.
-		await get_tree().process_frame
-		if _selected_map < _map_cells.size():
-			_map_scroll.ensure_control_visible(_map_cells[_selected_map])
-		await get_tree().process_frame
+		await _show_map(found)
 	if not CmdArgs.has(args, "--menu-preset"):
 		return
 	var wanted_preset := CmdArgs.value(args, "--menu-preset")
@@ -275,6 +274,17 @@ func _pose_seats(args: PackedStringArray) -> void:
 		return
 	_seat_strip.apply_preset_at(preset)
 	_refresh_seats()
+
+
+## Dev captures only: selects a board and waits for the picker to settle on it.
+## The picker scrolls the selection into view, which needs a laid-out tree — a
+## capture on the same frame photographs the board it was showing before.
+func _show_map(index: int) -> void:
+	_select_map(index)
+	await get_tree().process_frame
+	if _selected_map < _map_cells.size():
+		_map_scroll.ensure_control_visible(_map_cells[_selected_map])
+	await get_tree().process_frame
 
 
 # --- layout ------------------------------------------------------------------
