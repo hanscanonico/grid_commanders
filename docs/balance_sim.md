@@ -674,17 +674,21 @@ Measured on the vendored Godot 4.7.1, headless, on an Apple-silicon laptop:
 | Run | Matches | Wall clock |
 |---|---|---|
 | One matchup, 2 seeds, 12-day cap | 4 | ~2 s |
-| Neutral mirror across all 13 duel boards, 3 seeds, 15-day cap | 39 | ~20 s |
+| Neutral mirror across all 19 duel boards, 3 seeds, 15-day cap | 57 | ~20 s |
 | One matchup, 6 seeds, 25-day cap | 12 | ~11 s |
 
 **The table predates AR1's plan cache (COM-154)**, which made a headless match
 several times cheaper without moving a single result — read it as an upper bound
-until a run re-measures it.
+until a run re-measures it. The middle row's wall clock predates the shelf
+growing to its current duel count as well: only its match count has been brought
+forward.
 
-`--sweep=maps` plays 13 of the 24 shipped boards: `BalanceMatchEngine` seats
-exactly two planners (the asymmetric-board plan's R4), so it skips the 11
-boards with more than two armies, printing one line naming each and a summary
-count, rather than building a match neither side can finish.
+`--sweep=maps` plays every shipped board `MapCatalog.paths()` lists that seats a
+duel — 19 of 31 today — and skips the rest, naming each and printing the tally:
+`BalanceMatchEngine` seats exactly two planners (the asymmetric-board plan's R4),
+so a board with more than two armies is a match neither side can finish. The run
+prints the live count, so it is the authority and the figure here is a reader's
+estimate for sizing one.
 
 Matches are tens to hundreds of milliseconds each; telemetry is reads and
 appends and does not measurably change that — and `planning_ms` lands in every
