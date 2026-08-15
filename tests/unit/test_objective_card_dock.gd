@@ -58,3 +58,14 @@ func test_dodged_card_goes_home_rather_than_cover_the_cursor() -> void:
 ## And a cursor in the right corner is no reason to leave the left one.
 func test_card_at_home_ignores_the_far_corner() -> void:
 	assert_eq(_dock(_right_cell(), LEFT), LEFT)
+
+
+## On a window too narrow to hold both corners apart the two footprints overlap,
+## and a cursor in the overlap is under the card wherever it sits. There the dock
+## it is already in wins, so the card cannot be handed back and forth between two
+## corners that are both covered.
+func test_overlapping_corners_hold_whichever_dock_the_card_is_in() -> void:
+	var narrow := Vector2(200, 150)
+	var both := Vector2i(2, 1)
+	assert_eq(MissionObjectivesPanel.dock_for(both, CELL, _origin, narrow, CARD, LEFT), LEFT)
+	assert_eq(MissionObjectivesPanel.dock_for(both, CELL, _origin, narrow, CARD, RIGHT), RIGHT)
