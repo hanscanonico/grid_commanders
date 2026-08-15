@@ -44,6 +44,22 @@ func move_bonus(state: GameState, unit: Unit) -> int:
 	return breakthrough_move_bonus if unit.type.move_class == breakthrough_class else 0
 
 
+## Both halves of Breakthrough are keyed on `breakthrough_class`, so an army
+## with none of it left fires the power for nothing.
+func wants_power(state: GameState, team: int) -> bool:
+	return _has_ready_armour(state, team) and super(state, team)
+
+
+## Keyed on the same movement class both halves of Breakthrough are, so nothing
+## restates the class. Ready-only: the power lasts this turn alone, and a tread
+## that has already spent its turn collects neither the move nor the pierce.
+func _has_ready_armour(state: GameState, team: int) -> bool:
+	for unit in state.units_of(team):
+		if unit.carrier == null and not unit.acted and unit.type.move_class == breakthrough_class:
+			return true
+	return false
+
+
 ## Production advice: he pays for armour at the bottom of the roster, so the
 ## planner buys what he paid for and skips what his doctrine discounts.
 func build_bias(_state: GameState, _team: int, unit_type: UnitType) -> int:
