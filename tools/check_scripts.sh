@@ -108,9 +108,9 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # left with the branch and nothing else. The file is a line shorter than before.
 #
 # main_menu.gd 1150 -> 1159: the `menu_four_seats` capture, the one frame that
-# shows a board's "· 4P" mark and a four-row seat strip. Which board that is is
-# the capture driver's answer, handed the shelf the way `posed_slot` is handed
-# it, so what is left here is the pose itself and `_show_map` — the
+# shows a board's "· NP" mark and a seat strip past two rows. Which board that
+# is is the capture driver's answer, handed the shelf the way `posed_slot` is
+# handed it, so what is left here is the pose itself and `_show_map` — the
 # select-then-settle dance `--menu-map` already did inline, now shared by both
 # rather than written twice.
 FILE_BUDGETS="

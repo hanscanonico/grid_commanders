@@ -125,7 +125,7 @@ that photograph a screen the battle scene never draws:
 make smoke MODES="menu_with_save"     # Continue live, on a long-named board at DAY 128
 make smoke MODES="menu_no_save"       # the same layout with an empty slot, Continue greyed out
 make smoke MODES="menu_setup_context" # an all-human table: every option's help line, AI difficulty dimmed
-make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, its four seat rows
+make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, a seat row per army
 make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
 ```
 

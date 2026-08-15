@@ -221,7 +221,7 @@ func _ready() -> void:
 
 ## Dev captures only: selects a board and applies a grouping preset, so the seat
 ## strip can be photographed at more seats than the default board deals. Not on
-## any play path — a run in neither of those modes does nothing here.
+## any play path — a run that asks for none of them does nothing here.
 ##
 ## A miss on either flag is said out loud rather than posed quietly: the capture
 ## would then be taken on the default board in the default grouping and look
