@@ -18,7 +18,7 @@ cell = Vector2i(15, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The line held past day 10."
+text = "Orlov's crossing was still his when day 10 ran out."
 last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
@@ -82,7 +82,7 @@ lines = Array[Resource]([SubResource("Event_line_1")])
 [resource]
 script = ExtResource("1")
 id = &"hc02_river_line"
-title = "River Line"
+title = "The Committed Ground"
 location = "The Verdant frontier, southern reach"
 map_path = "res://maps/campaign/the_hollow_crown/hc02_river_line.txt"
 player_team = 1
@@ -102,4 +102,4 @@ events = Array[Resource]([SubResource("Event_he_does_not_un_commit")])
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The numbers favoured Orlov today, and the river line stayed his."
+defeat = "The numbers favoured Orlov today, and the crossing stayed his."

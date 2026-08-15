@@ -18,7 +18,7 @@ cell = Vector2i(10, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The rivals held the field past day 10."
+text = "The outer wall was still the garrison's past day 10."
 last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]

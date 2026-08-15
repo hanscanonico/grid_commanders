@@ -20,7 +20,7 @@ cell = Vector2i(15, 2)
 
 [sub_resource type="Resource" id="Failure_0"]
 script = ExtResource("3")
-text = "The line held past day 10."
+text = "Morn's column kept the north crossing past day 10."
 last_day = 10
 
 [sub_resource type="Resource" id="Bonus_0"]
