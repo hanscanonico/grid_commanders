@@ -216,7 +216,12 @@ func apply_cmdline(args: PackedStringArray) -> void:
 	if CmdArgs.has(args, "--difficulty"):
 		var tiers := parse_difficulty_flag(CmdArgs.value(args, "--difficulty"))
 		if tiers.has("default"):
+			# A match-wide tier means *every* computer seat, so it drops the picks the
+			# menu made rather than losing to them — a flag overrides the menu here as
+			# it does everywhere else on this line. The seats named in the same flag go
+			# on afterwards, whichever order they were written in.
 			difficulty = tiers["default"]
+			seat_difficulty.clear()
 		seat_difficulty.merge(tiers["seats"], true)
 	if CmdArgs.has(args, "--red"):
 		side_specs[GameState.TEAMS[0]] = CmdArgs.value(args, "--red")

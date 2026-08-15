@@ -64,6 +64,28 @@ func test_an_empty_difficulty_flag_still_clears_the_tier() -> void:
 	assert_eq(request.difficulty, &"")
 
 
+## The flag overrides the menu, which is what every other flag on that line does
+## and what the README promises: a match-wide tier drops the strip's picks rather
+## than losing to them, seat by seat, on a launch that passed through the menu.
+func test_a_match_wide_flag_overrides_the_tiers_the_menu_picked() -> void:
+	var request := MatchRequest.from_menu(
+		FOUR_ARMY_BOARD, [2, 3] as Array[int], false, &"normal", {}, false, {}, [], {2: &"easy"}
+	)
+	request.apply_cmdline(Fixture.args(["--difficulty=hard"]))
+	assert_eq(request.difficulty, &"hard")
+	assert_true(request.seat_difficulty.is_empty(), "and no seat is left behind on Easy")
+
+
+## Written together, the seat still wins over the table — in either order, since
+## the flag is read whole rather than left to right.
+func test_a_seat_named_after_a_match_wide_tier_survives_it() -> void:
+	var request := MatchRequest.new()
+	request.seat_difficulty = {4: &"easy"}
+	request.apply_cmdline(Fixture.args(["--difficulty=2:brutal,hard"]))
+	assert_eq(request.difficulty, &"hard")
+	assert_eq(request.seat_difficulty, {2: &"brutal"}, "the flag's own seats, and only those")
+
+
 func test_an_entry_naming_no_seat_is_refused_out_loud() -> void:
 	var request := MatchRequest.new()
 	request.apply_cmdline(Fixture.args(["--difficulty=red:hard"]))

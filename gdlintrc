@@ -325,4 +325,7 @@ max-public-methods: 22
 #
 # 1438 -> 1437, tracking battle.gd down: the Sound row. See the same entry in
 # tools/check_scripts.sh for what the file shed to pay for it.
-max-file-lines: 1437
+#
+# 1437 -> 1429, tracking battle.gd down again: per-seat difficulty (COM-225) gave
+# `_build_planners` back to BattleSetup, which was already choosing the profiles.
+max-file-lines: 1429

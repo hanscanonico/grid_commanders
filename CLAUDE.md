@@ -645,9 +645,11 @@ plan is stated in full below and has no copy there.
   the strip is where it is said** — a chip on every row, live only while the computer plays that seat,
   which is the same rule ("asked of the seats, never of a mode") read one seat at a time; the panel's
   one Difficulty segment is gone, two controls writing one fact being the drift a single authority
-  exists to prevent. `MatchRequest.seat_difficulty` (team -> tier id) carries it through all four
-  adapters with the scalar `difficulty` as the fallback for a seat it does not name, so
-  `--difficulty=hard` still means every computer seat and `--difficulty=2:hard` names one;
+  exists to prevent. `MatchRequest.seat_difficulty` (team -> tier id) carries it through the three
+  adapters that state a live match — `from_replay` states none of it, a recording's opening envelope
+  being the whole request — with the scalar `difficulty` as the fallback for a seat it does not name,
+  so `--difficulty=hard` still means every computer seat (dropping the strip's picks, the way a flag
+  overrides the menu everywhere else) and `--difficulty=2:hard` names one;
   `BattleSetup` resolves a profile per seat into `per_team_difficulty` and hands back the planners
   themselves, and save v11's `seat_tiers` is what a resume and a rematch replay. **The difficulty
   lock does not bend**: a tier is still only an `AIProfile` and a label, so per-seat difficulty is
