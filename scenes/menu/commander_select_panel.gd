@@ -329,12 +329,19 @@ func _action_button(text: String) -> Button:
 ## Switches the active faction and previews its first member. Does not move focus,
 ## so arrowing Left/Right across the tab row browses factions cleanly.
 func _set_faction(index: int) -> void:
+	_show_faction(index)
+	if not _members().is_empty():
+		_preview(_members()[0])
+
+
+## Opens a faction's tab and roster without choosing anybody from it — the half of
+## `_set_faction` a caller that already knows which member it wants needs, so the
+## drawn card is previewed once instead of after the first member flashes in it.
+func _show_faction(index: int) -> void:
 	_faction_index = index
 	for i in _tab_buttons.size():
 		_style_tab(_tab_buttons[i], i == index)
 	_rebuild_minis()
-	if not _members().is_empty():
-		_preview(_members()[0])
 
 
 ## A mouse click on a tab switches faction and drops focus onto the first peer,
@@ -452,13 +459,21 @@ func _preview_neutral() -> void:
 	_preview(CommanderType.neutral())
 
 
-## Draws one commander from the full roster, any faction, and previews it —
-## the tab row and mini row stay on whatever faction was already open, since
-## Random is a draw, not a browse to a tab.
+## Draws one commander from the full roster, any faction, and presents it: the
+## tab, the roster row and the marked card all land on the draw, so the page says
+## the same thing the card and the summary do (COM-227). The draw itself is
+## unchanged — uniform over every faction, and a second press re-rolls.
+##
+## Focus stays on Random rather than following the draw onto its portrait, which
+## is what keeps that re-roll one keystroke away.
 func _preview_random() -> void:
 	if _random_pool.is_empty():
 		return
-	_preview(_random_pool[randi() % _random_pool.size()])
+	var drawn: CommanderType = _random_pool[randi() % _random_pool.size()]
+	var index := _faction_keys.find(CommanderVisuals.key_for_faction(drawn.faction))
+	if index >= 0:
+		_show_faction(index)
+	_preview(drawn)
 
 
 # --- confirm / back ----------------------------------------------------------
