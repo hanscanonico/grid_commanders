@@ -42,3 +42,23 @@ func test_air_attack_reaches_twenty_while_the_power_runs() -> void:
 func test_land_only_combat_is_bit_identical_to_neutral() -> void:
 	var map_text := "[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0"
 	assert_eq(_damage(_state(map_text)), _damage(_state(map_text, false)))
+
+
+func test_air_superiority_holds_with_no_aircraft() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 i 1 0")
+	assert_true(CommanderType.neutral().wants_power(state, 1), "contact: the default fires here")
+	assert_false(state.commander_of(1).wants_power(state, 1), "no aircraft, nothing to cover")
+
+
+func test_air_superiority_fires_with_a_copter_in_the_army() -> void:
+	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0\n1 h 2 0")
+	assert_true(state.commander_of(1).wants_power(state, 1), "an aircraft is a reason to fire")
+
+
+func test_an_aircraft_that_has_acted_still_wants_the_round_power() -> void:
+	var state := _state("[terrain]\n...\n[units]\n1 t 0 0\n2 i 1 0\n1 h 2 0")
+	state.units[2].acted = true
+	assert_true(
+		state.commander_of(1).wants_power(state, 1),
+		"the cover is up through the opposing turn, so a spent flight still counters harder"
+	)
