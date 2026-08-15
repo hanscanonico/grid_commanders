@@ -41,7 +41,7 @@ const STEPS: Array[Dictionary] = [
 	{
 		"id": &"capture",
 		"label": "CAPTURE",
-		"body": "Walk a foot unit onto a city or HQ and choose Capture.",
+		"body": "Move Infantry or a Mech onto a city or HQ, then Capture.",
 	},
 	{
 		"id": &"build",
@@ -51,7 +51,7 @@ const STEPS: Array[Dictionary] = [
 	{
 		"id": &"end_turn",
 		"label": "END TURN",
-		"body": "Press ESC on open ground for the field menu, then End Turn.",
+		"body": "Press ESC on open ground for the map menu, then End Turn.",
 	},
 ]
 
