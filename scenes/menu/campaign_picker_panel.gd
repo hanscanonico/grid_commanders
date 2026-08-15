@@ -138,7 +138,12 @@ func _fill(campaigns: Array[CampaignDefinition]) -> void:
 	for campaign in campaigns:
 		var button := Button.new()
 		button.text = row_text(campaign, CampaignProfile.load_progress(campaign.id))
-		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
+		var variant := (
+			UiTheme.ButtonVariant.PRIMARY
+			if CampaignDB.leads(campaign.id)
+			else UiTheme.ButtonVariant.SECONDARY
+		)
+		UiTheme.apply_button(button, variant, null, UiTheme.SIZE_BUTTON)
 		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -164,6 +169,16 @@ func _fill(campaigns: Array[CampaignDefinition]) -> void:
 ## Static and argument-taking so the row can be read without a profile on disk and
 ## without the page — `SeatStrip.normalised_sides`' shape, for its reason.
 static func row_text(campaign: CampaignDefinition, progress: CampaignState) -> String:
+	return _standing(campaign, progress) + _badge(campaign)
+
+
+## The flagship's mark, from `CampaignDB`'s own key rather than the row's position,
+## so the war that leads the list is the war that says to start there.
+static func _badge(campaign: CampaignDefinition) -> String:
+	return "   ·   START HERE" if CampaignDB.leads(campaign.id) else ""
+
+
+static func _standing(campaign: CampaignDefinition, progress: CampaignState) -> String:
 	if progress == null:
 		return "%s   —   new" % campaign.title
 	if progress.is_complete(campaign):
