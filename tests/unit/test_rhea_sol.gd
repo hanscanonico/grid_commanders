@@ -136,6 +136,28 @@ func test_the_power_expires_with_the_turn() -> void:
 	assert_eq(AttackRange.maximum(state, state.units[0]), 3)
 
 
+# --- when she spends the meter ------------------------------------------------
+
+
+## Both halves of Grid Saturation are indirect-only, so an army with no gun in
+## it buys nothing with a full meter.
+func test_saturation_holds_for_an_army_of_direct_units() -> void:
+	var state := _state("[terrain]\n....\n[units]\n1 t 0 0\n2 i 2 0")
+	assert_true(CommanderType.neutral().wants_power(state, 1), "contact: the default fires here")
+	assert_false(state.commander_of(1).wants_power(state, 1), "no gun to saturate with")
+
+
+func test_saturation_fires_with_an_artillery_in_the_line() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 t 0 0\n1 g 0 1\n2 i 2 0")
+	assert_true(state.commander_of(1).wants_power(state, 1))
+
+
+func test_a_gun_that_has_already_fired_does_not_open_the_gate() -> void:
+	var state := _state("[terrain]\n....\n....\n[units]\n1 t 0 0\n1 g 0 1\n2 i 2 0")
+	state.unit_at(Vector2i(0, 1)).acted = true
+	assert_false(state.commander_of(1).wants_power(state, 1), "a spent gun saturates nothing")
+
+
 # --- production advice -------------------------------------------------------
 
 
