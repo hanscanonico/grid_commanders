@@ -3,11 +3,6 @@ extends CommanderType
 ## Iron Dominion. Ferrow gets paid for wrecks: each kill steals from the victim
 ## rather than minting funds, and Collect doubles that same transfer for a turn.
 
-## Displayed HP a unit at full health shows. `Unit.hp` counts the internal 0-100,
-## so this is what a threshold written in pips is multiplied up by.
-const FULL_HP := 10
-const HP_PER_PIP := Unit.MAX_HP / FULL_HP
-
 @export var bounty_pct: int = 10
 @export var defense_pct: int = -10
 ## Displayed HP at or below which a target is worth doubling the rate for. A kill
@@ -45,12 +40,14 @@ func _has_a_payday(state: GameState, team: int) -> bool:
 	for victim in state.units:
 		if state.allied(victim.team, team) or victim.carrier != null:
 			continue
-		if victim.hp > collect_want_hp * HP_PER_PIP:
+		if victim.displayed_hp() > collect_want_hp:
 			continue
-		if int(state.funds.get(victim.team, 0)) < collect_want_funds:
+		if state.funds.get(victim.team, 0) < collect_want_funds:
 			continue
 		if not Vision.is_hidden_from(state, team, victim):
 			paydays.append(victim.cell)
+	if paydays.is_empty():
+		return false
 	var shooters: Array[int] = [team]
 	for unit in state.units:
 		if not _is_striker(state, team, unit, shooters, true):
