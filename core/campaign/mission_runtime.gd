@@ -27,6 +27,18 @@ extends RefCounted
 enum Status { RUNNING, SUCCESS, FAILURE }
 
 
+## One star, named — so the debrief can say what it was for and what was missed.
+class Award:
+	extends RefCounted
+
+	var text: String = ""
+	var earned: bool = false
+
+	func _init(p_text: String = "", p_earned: bool = false) -> void:
+		text = p_text
+		earned = p_earned
+
+
 ## The verdict on one board, with the reason kept so the debrief can say it.
 class Outcome:
 	extends RefCounted
@@ -36,15 +48,23 @@ class Outcome:
 	var reason: String = ""
 	## Stars earned, once the mission is over. Always 0 on a failure.
 	var stars: int = 0
+	## What each star was for, earned or missed. Empty on a failure.
+	var awards: Array[MissionRuntime.Award] = []
+	## The day the mission ended on, for the debrief's scoreboard. 0 unless won.
+	var day: int = 0
 
 	func _init(
 		p_status: MissionRuntime.Status = MissionRuntime.Status.RUNNING,
 		p_reason: String = "",
-		p_stars: int = 0
+		p_stars: int = 0,
+		p_awards: Array[MissionRuntime.Award] = [],
+		p_day: int = 0
 	) -> void:
 		status = p_status
 		reason = p_reason
 		stars = p_stars
+		awards = p_awards
+		day = p_day
 
 	func is_over() -> bool:
 		return status != MissionRuntime.Status.RUNNING
@@ -94,12 +114,22 @@ func evaluate(
 	if ended != null and not ended.success:
 		return Outcome.new(Status.FAILURE, ended.reason)
 	if state.winner != 0 and state.allied(state.winner, team):
-		return Outcome.new(Status.SUCCESS, "The enemy army was broken.", _stars(state, progress))
+		return _won("The enemy army was broken.", state, progress)
 	if ended != null and ended.success:
-		return Outcome.new(Status.SUCCESS, ended.reason, _stars(state, progress))
+		return _won(ended.reason, state, progress)
 	if _objectives_met(state, progress):
-		return Outcome.new(Status.SUCCESS, _mission_summary(), _stars(state, progress))
+		return _won(_mission_summary(), state, progress)
 	return Outcome.new()
+
+
+## A mission won, with its stars named and counted.
+func _won(reason: String, state: GameState, progress: MissionProgress) -> Outcome:
+	var awards := _awards(state, progress)
+	var stars := 0
+	for award: Award in awards:
+		if award.earned:
+			stars += 1
+	return Outcome.new(Status.SUCCESS, reason, stars, awards, state.day)
 
 
 ## Whether every required objective is satisfied. A mission with no objectives
@@ -129,16 +159,18 @@ static func _live(
 
 
 ## One star for finishing, one for finishing inside par, one for every bonus
-## objective standing at the end. Deliberately countable by the player: no
-## hidden score, and each star names the thing it was for.
-func _stars(state: GameState, progress: MissionProgress) -> int:
-	var stars := 1
-	if _mission.par_day > 0 and state.day <= _mission.par_day:
-		stars += 1
+## objective standing at the end — each of them named, earned or missed, in the
+## order `max_stars` counts them, so the debrief can say what it scored and what
+## it did not.
+func _awards(state: GameState, progress: MissionProgress) -> Array[Award]:
+	var awards: Array[Award] = [Award.new("Mission complete", true)]
+	if _mission.par_day > 0:
+		awards.append(
+			Award.new("Finish by day %d" % _mission.par_day, state.day <= _mission.par_day)
+		)
 	for bonus: MissionObjective in _live(_mission.bonus_objectives, progress):
-		if bonus.is_met(state, _mission.player_team, progress):
-			stars += 1
-	return stars
+		awards.append(Award.new(bonus.text, bonus.is_met(state, _mission.player_team, progress)))
+	return awards
 
 
 ## The most specific thing we can say about why the mission was won, which is

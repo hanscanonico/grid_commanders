@@ -211,4 +211,44 @@ func test_a_failed_mission_earns_nothing() -> void:
 	var runtime := MissionRuntime.new(mission)
 	state.set_owner(Vector2i(1, 0), 1)
 	state.day = 7
-	assert_eq(runtime.evaluate(state, _tally).stars, 0)
+	var outcome := runtime.evaluate(state, _tally)
+	assert_eq(outcome.stars, 0)
+	assert_eq(outcome.awards.size(), 0, "a failure names no star")
+
+
+func _award_texts(outcome: MissionRuntime.Outcome) -> Array[String]:
+	var texts: Array[String] = []
+	for award: MissionRuntime.Award in outcome.awards:
+		texts.append(award.text)
+	return texts
+
+
+func test_each_star_is_named_and_says_whether_it_was_earned() -> void:
+	var state := _state()
+	var mission := _mission([_capture(Vector2i(1, 0))])
+	mission.par_day = 4
+	var runtime := MissionRuntime.new(mission)
+	state.set_owner(Vector2i(1, 0), 1)
+	state.day = 4
+	var inside := runtime.evaluate(state, _tally)
+	assert_eq(_award_texts(inside), ["Mission complete", "Finish by day 4"])
+	assert_true(inside.awards[1].earned, "day 4 is inside par 4")
+	assert_eq(inside.stars, 2)
+	assert_eq(inside.day, 4, "the debrief's scoreboard reads the day off the outcome")
+	state.day = 5
+	var late := runtime.evaluate(state, _tally)
+	assert_false(late.awards[1].earned)
+	assert_eq(late.stars, 1, "the missed star is still named")
+	assert_eq(_award_texts(late), ["Mission complete", "Finish by day 4"])
+
+
+func test_every_star_a_mission_offers_is_named() -> void:
+	var state := _state()
+	var mission := _mission([_capture(Vector2i(1, 0))])
+	mission.par_day = 4
+	mission.bonus_objectives.append(_capture(Vector2i(2, 0), "Hold the depot"))
+	var runtime := MissionRuntime.new(mission)
+	state.set_owner(Vector2i(1, 0), 1)
+	var outcome := runtime.evaluate(state, _tally)
+	assert_eq(outcome.awards.size(), runtime.max_stars())
+	assert_eq(outcome.awards[2].text, "Hold the depot")
