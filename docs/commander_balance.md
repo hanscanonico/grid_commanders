@@ -129,9 +129,10 @@ The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
 scenarios × four seeds) in **33 minutes** on the development machine, at
 `225fe71`. **0 rejected commands and 0 cap stalls** — the hard invariants are
 clean, so the run is comparable to every batch above. 9,679 were decisive and
-one mirror ended a true tie (the first draw any full batch has recorded; a
-mirror tying on properties, units and funds alike is what the scoring rule at
-the top of this document says stays a draw, not a defect). First-seat bias was
+one match ended a true tie — Ferrow against Ward on `ridge`, seed 1008, level at
+the day cap on properties, units and funds alike, which is what the scoring rule
+at the top of this document says stays a draw rather than a defect. It is the
+first draw any full batch has recorded, and notably not a mirror. First-seat bias was
 **+32.6 pp** (red 66.3%), the standing banking item. Terminations: 5,248 rout,
 3,903 `day_cap`, 529 `hq`.
 
@@ -192,13 +193,13 @@ with movement against the 2026-08-14 reading:
 
 | Commander | Full matrix | Δ | Worst fixture | Reading |
 |---|---:|---:|---|---|
-| Radek Morn | **90.0% WARN** | +0.6 | `channel` 78.4% | Unmoved. Still fires least of anyone (1.80/match at 24,000) — the edge is the flat passive, as MC5 said. |
+| Radek Morn | **90.0% WARN** | +0.6 | `channel` 78.4% | Unmoved. Still the least-fired meter of any ungated commander (1.80/match at 24,000; only the gated Ash and Sol fire less) — the edge is the flat passive, as MC5 said. |
 | Iona Vance | **78.6% WARN** | +0.3 | `channel` 65.9% | Unmoved. |
 | Sera Lark | **63.9% WARN** | −1.0 | `channel` 53.4% | Gated (#214); see above. |
 | Konrad Vale | **62.5% WARN** | +0.2 | `holdings` 47.7% | Unmoved, and the split stays inverted — in band on the economy fixture his doctrine is authored for. |
 | Viktor Draeg | **61.2% WARN** | +2.1 | `ridge` 56.8% | Gated (#210), and the one gate that moved a win rate. New WARN. |
 | Ivar Thorne | 59.2% watch | −0.5 | `holdings` 42.6% | Unmoved. |
-| Gideon Holt | 55.6% watch | −0.3 | `channel` 49.4% | Unmoved; still the flattest spread on the roster. |
+| Gideon Holt | 55.6% watch | −0.3 | `channel` 49.4% | Unmoved; 10.2 pp across the five boards, second-flattest behind Draeg's 9.1. |
 | Cass Orlov | 44.7% watch | −0.8 | `ridge` 36.9% | Slipped out of band by drift, not by a change. |
 | Lyra Quill | 41.9% watch | +0.2 | `clash` 35.8% | Advises nothing on purpose. |
 | Perrin Ash | 41.7% watch | +0.2 | `ridge` 34.1% | Gated (#218); domain-only, exactly neutral on land. |
@@ -512,7 +513,7 @@ this change.
 
 - **2026-08-15 — the matrix is regenerated after the power-gate pass; no number
   moved.** 9,680 matches at `225fe71`, 33 minutes, hard invariants clean (0
-  rejected, 0 cap stalls, 1 mirror draw), first-seat bias +32.6 pp. It closes
+  rejected, 0 cap stalls, 1 draw), first-seat bias +32.6 pp. It closes
   the "re-run the matrix" note the Signal Jam entry below carries and answers
   for the seven `wants_power` gates merged since the 2026-08-14 baseline
   (Draeg, Ferrow, Lark, Rowan, Marr, Sol, Ash). Six of the seven moved less
