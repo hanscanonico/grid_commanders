@@ -15,3 +15,5 @@ power_cost = 10000
 power_duration = 0
 bounty_pct = 10
 defense_pct = -10
+collect_want_hp = 6
+collect_want_funds = 1000

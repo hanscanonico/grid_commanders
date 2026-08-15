@@ -93,6 +93,45 @@ func test_collect_doubles_the_rate_and_defence_stays_soft() -> void:
 	assert_eq(state.funds[1], 3200)
 
 
+func test_collect_holds_against_a_broke_opponent() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
+	state.units[1].hp = 30
+	state.funds[2] = 0
+	assert_true(CommanderType.neutral().wants_power(state, 1), "contact: the default fires here")
+	assert_false(state.commander_of(1).wants_power(state, 1), "a bounty cannot be paid from 0")
+
+
+func test_collect_holds_against_a_full_health_line() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
+	state.funds[2] = 9000
+	assert_true(CommanderType.neutral().wants_power(state, 1), "contact: the default fires here")
+	assert_false(state.commander_of(1).wants_power(state, 1), "nobody here dies this turn")
+
+
+func test_collect_fires_for_a_wounded_solvent_target_in_reach() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 T 1 0")
+	state.units[1].hp = 30
+	state.funds[2] = 9000
+	assert_true(state.commander_of(1).wants_power(state, 1), "a payday in reach")
+
+
+func test_collect_ignores_a_wounded_target_nobody_can_reach() -> void:
+	var state := _state("[terrain]\n%s\n[units]\n1 t 0 0\n2 T 19 0" % ".".repeat(20))
+	state.units[1].hp = 30
+	state.funds[2] = 9000
+	assert_false(state.commander_of(1).wants_power(state, 1), "nineteen tiles is not a payday")
+
+
+func test_collect_holds_when_the_payday_is_out_of_reach_of_the_contact() -> void:
+	var state := _state("[terrain]\n%s\n[units]\n1 t 0 0\n2 T 1 0\n2 T 19 0" % ".".repeat(20))
+	state.units[2].hp = 30
+	state.funds[2] = 9000
+	assert_true(CommanderType.neutral().wants_power(state, 1), "contact: the default fires here")
+	assert_false(
+		state.commander_of(1).wants_power(state, 1), "the wounded one is nineteen tiles away"
+	)
+
+
 func test_same_seed_replays_the_same_treasuries() -> void:
 	assert_eq(_played_funds(), _played_funds())
 
