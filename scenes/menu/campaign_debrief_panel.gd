@@ -24,7 +24,8 @@ const _STAR_FADE := 0.25
 
 var _verdict: Label
 var _title: Label
-var _stars: HBoxContainer
+var _stars: VBoxContainer
+var _scoreboard: Label
 var _body: VBoxContainer
 var _unlocked: Label
 var _continue_button: Button
@@ -53,14 +54,19 @@ func begin(
 	next_title: String,
 	ledger: CampaignState = null,
 	recorded: Array[String] = [],
+	losses: int = 0,
 	animate: bool = true
 ) -> void:
 	var won := outcome.status == MissionRuntime.Status.SUCCESS
 	_verdict.text = "MISSION COMPLETE" if won else "MISSION FAILED"
 	_verdict.add_theme_color_override("font_color", UiTheme.CAPTURE if won else UiTheme.DANGER)
 	_title.text = mission.title.to_upper()
-	_fill_stars(outcome.stars if won else 0, max_stars, won and animate)
+	_fill_stars(
+		outcome.awards if won else ([] as Array[MissionRuntime.Award]), max_stars, won and animate
+	)
 	_stars.visible = won
+	_scoreboard.text = _scoreboard_text(mission, outcome, ledger, losses)
+	_scoreboard.visible = won
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
@@ -85,33 +91,73 @@ func begin(
 	_continue_button.grab_focus()
 
 
-## One label per star, the earned ones revealed one at a time — the payoff beat.
-## A posed capture takes the finished frame instead: a mid-fade star is a frame
-## the sweep cannot reproduce.
-func _fill_stars(earned: int, max_stars: int, animate: bool) -> void:
+## One row per star, each naming what it was for, the earned ones revealed one at
+## a time — the payoff beat. A posed capture takes the finished frame instead: a
+## mid-fade star is a frame the sweep cannot reproduce.
+##
+## The awards are handed over already judged; padding with anonymous rows is a
+## guard against a caller that knows fewer stars than the mission offers.
+func _fill_stars(awards: Array[MissionRuntime.Award], max_stars: int, animate: bool) -> void:
 	if _star_tween != null and _star_tween.is_valid():
 		_star_tween.kill()
 	_star_tween = null
 	for child in _stars.get_children():
 		_stars.remove_child(child)
 		child.queue_free()
-	for slot in maxi(max_stars, earned):
-		var star := Label.new()
-		var lit := slot < earned
-		star.text = "★" if lit else "☆"
-		star.add_theme_font_override("font", UiTheme.display())
-		star.add_theme_font_size_override("font_size", _STAR_SIZE)
-		star.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
-		_stars.add_child(star)
-		if lit and animate:
-			star.modulate.a = 0.0
+	var earned: Array[Control] = []
+	for award: MissionRuntime.Award in awards:
+		var row := _star_row(award.text, award.earned)
+		_stars.add_child(row)
+		if award.earned:
+			earned.append(row)
+	for _slot in maxi(0, max_stars - awards.size()):
+		_stars.add_child(_star_row("", false))
 	if not animate:
 		return
+	for row: Control in earned:
+		row.modulate.a = 0.0
 	_star_tween = create_tween()
-	for slot in earned:
-		var star: Label = _stars.get_child(slot)
+	for row: Control in earned:
 		_star_tween.tween_interval(_STAR_STAGGER)
-		_star_tween.tween_property(star, "modulate:a", 1.0, _STAR_FADE)
+		_star_tween.tween_property(row, "modulate:a", 1.0, _STAR_FADE)
+
+
+func _star_row(text: String, lit: bool) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var glyph := Label.new()
+	glyph.text = "★" if lit else "☆"
+	glyph.add_theme_font_override("font", UiTheme.display())
+	glyph.add_theme_font_size_override("font_size", _STAR_SIZE)
+	glyph.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
+	row.add_child(glyph)
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.stat())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	return row
+
+
+## The one line of numbers: how long it took against par, what it cost, and what
+## it hands the next mission. Read off the ledger the caller handed over, which
+## `CampaignSession.record` has already written the banked roster onto.
+func _scoreboard_text(
+	mission: MissionDefinition, outcome: MissionRuntime.Outcome, ledger: CampaignState, losses: int
+) -> String:
+	var parts: Array[String] = []
+	if mission.par_day > 0:
+		parts.append("DAY %d / PAR %d" % [outcome.day, mission.par_day])
+	else:
+		parts.append("DAY %d" % outcome.day)
+	parts.append("LOST %d" % losses)
+	var veterans := ledger.roster.size() if ledger != null else 0
+	if veterans > 0:
+		parts.append("VETERANS %d" % veterans)
+	return "   ·   ".join(parts)
 
 
 func chrome() -> Dictionary[String, Control]:
@@ -152,10 +198,13 @@ func _build() -> void:
 	_title = _micro("")
 	main.add_child(_title)
 
-	_stars = HBoxContainer.new()
-	_stars.add_theme_constant_override("separation", 3)
+	_stars = VBoxContainer.new()
+	_stars.add_theme_constant_override("separation", 2)
 	_stars.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	main.add_child(_stars)
+
+	_scoreboard = _micro("")
+	main.add_child(_scoreboard)
 
 	var frame := ScrollContainer.new()
 	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
