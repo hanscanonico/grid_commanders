@@ -938,6 +938,9 @@ func _handle_map_action(action: StringName) -> void:
 	if action == &"commanders":
 		_open_commander_info()
 		return
+	if action == &"briefing":
+		await BattleCampaign.say_briefing(self)
+		return
 	if action in Settings.VALUE_ROWS:
 		present_banner(Settings.cycle_row(action))
 		return

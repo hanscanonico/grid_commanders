@@ -405,6 +405,29 @@ func _finish_power_banner() -> void:
 func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	if lines.is_empty():
 		return
+	_raise_speech(lines, commanders)
+	if capturing:
+		return
+	_speech_tween = node.create_tween()
+	_speech_tween.tween_interval(Settings.speed.power_banner_seconds())
+	_speech_tween.tween_callback(_finish_speech)
+	await speech_finished
+
+
+## The same card, held until the player puts it down: the briefing re-read from
+## the pause menu. Untimed because it was asked for rather than delivered —
+## a beat's card interrupts a turn and has to give it back, while this one is the
+## thing the player stopped to look at, and orders are read at reading speed.
+func speak_until_dismissed(lines: Array[MissionLine], commanders: CommanderDB) -> void:
+	if lines.is_empty():
+		return
+	_raise_speech(lines, commanders)
+	if capturing:
+		return
+	await speech_finished
+
+
+func _raise_speech(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	if _speech_tween != null and _speech_tween.is_valid():
 		_speech_tween.kill()
 	mission_speech.announce(lines, commanders)
@@ -413,12 +436,6 @@ func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	# given, and a PanelContainer's size is a layout pass behind them.
 	mission_speech.reset_size()
 	mission_speech.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	if capturing:
-		return
-	_speech_tween = node.create_tween()
-	_speech_tween.tween_interval(Settings.speed.power_banner_seconds())
-	_speech_tween.tween_callback(_finish_speech)
-	await speech_finished
 
 
 func hide_speech() -> void:
