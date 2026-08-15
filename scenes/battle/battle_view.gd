@@ -39,6 +39,7 @@ const AUTOTILE_PATHS: Dictionary[int, String] = {
 	TerrainAutotiles.Family.RIVERS: "res://assets/tiles/autotiles/rivers.png",
 	TerrainAutotiles.Family.COAST: "res://assets/tiles/autotiles/coast.png",
 	TerrainAutotiles.Family.SHOALS: "res://assets/tiles/autotiles/shoals.png",
+	TerrainAutotiles.Family.WOODS: "res://assets/tiles/autotiles/woods.png",
 	TerrainAutotiles.Family.BRIDGES: "res://assets/tiles/autotiles/bridges.png",
 }
 

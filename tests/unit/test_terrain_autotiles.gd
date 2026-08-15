@@ -128,6 +128,36 @@ func test_a_shoal_surfs_against_the_sea_but_not_its_own_run() -> void:
 	assert_eq(_mask(rows, Vector2i(1, 1)), N)
 
 
+# --- woods -------------------------------------------------------------------
+
+
+func test_a_wood_joins_only_more_wood() -> void:
+	var rows: Array[String] = [".F.", "=FF", ".M."]
+	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.WOODS)
+	# The road west and the mountain south are ground the tree line ends against.
+	assert_eq(_mask(rows, Vector2i(1, 1)), N | E)
+
+
+func test_a_lone_wood_wears_the_variant_with_no_side_continued() -> void:
+	var rows: Array[String] = ["...", ".F.", "..."]
+	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.WOODS)
+	assert_eq(_mask(rows, Vector2i(1, 1)), 0)
+
+
+func test_a_wood_walled_in_by_wood_keeps_the_base_atlas_tile() -> void:
+	var rows: Array[String] = [".F.", "FFF", ".F."]
+	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.NONE)
+	assert_eq(_mask(rows, Vector2i(1, 1)), N | E | S | W)
+
+
+## Off-board reads as the cell's own terrain, so a wood on the rim grows no
+## tree line against the backdrop — the same rule the roads and the sea obey.
+func test_a_wood_on_the_board_rim_reads_the_off_board_side_as_more_wood() -> void:
+	var rows: Array[String] = ["FF", "F."]
+	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.NONE)
+	assert_eq(_mask(rows, Vector2i(0, 0)), N | E | S | W)
+
+
 # --- the sheet grid ----------------------------------------------------------
 
 
