@@ -15,7 +15,7 @@
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
-text = "Take the crossroads base. It is the only way this army builds anything."
+text = "Take the granary base. It is the last food Milltown has this winter."
 cell = Vector2i(6, 4)
 
 [sub_resource type="Resource" id="Failure_0"]
@@ -72,7 +72,7 @@ script = ExtResource("9")
 flag = &"fw_granary_saved"
 mode = 0
 value = 1
-note = "Milltown's granary base was taken whole, before Ferrow could strike his match."
+note = "Milltown's granary came through the freeze — Ferrow's match never reached it."
 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
@@ -124,7 +124,7 @@ script = ExtResource("9")
 flag = &"fw_granary_saved"
 mode = 0
 value = 1
-note = ""
+note = "The torch squad went down on the road with its matches unstruck."
 
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
