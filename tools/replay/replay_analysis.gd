@@ -34,6 +34,10 @@ const SEVERITY := {
 	"missed_capture": 35,
 	"idle_unit": 30,
 	"banked_power": 25,
+	## Deliberately under the banked meter's: the two are opposite readings of the
+	## same charge, and spending it at the wrong moment costs less than never
+	## spending it at all.
+	"spent_power": 20,
 	"stranded_transport": 20,
 	"oscillation": 10,
 }
@@ -150,6 +154,35 @@ class Opening:
 	var takeable: Array[Vector2i] = []
 
 
+## The board a Command Power was fired into, kept so the rest of the turn can be
+## read against it. Taken before the power applies, which is the only board that
+## says what the meter bought: afterwards the heal, the blast and the extra
+## movement are already part of it.
+class Spend:
+	var day := 0
+	var team := 0
+	var commander := ""
+	var power := ""
+	var cost := 0
+	## Total HP standing in every army hostile to the firing side. A census rather
+	## than a list of shots, because Hammerfall takes units off the board with no
+	## `AttackCommand` behind them.
+	var enemy_hp := 0
+	## Unit -> [hp, fuel, ammo] as the meter was spent.
+	var condition: Dictionary = {}
+	## Unit -> the cells it could have stopped on **without** the power.
+	var reach: Dictionary = {}
+
+	func detail() -> String:
+		return (
+			(
+				"%s spent %s on day %d: nothing was hit, no ground changed hands, "
+				+ "nothing was repaired and no unit went anywhere it could not already reach"
+			)
+			% [commander, power, day]
+		)
+
+
 ## Everything carried across turns while the walk runs. A plain object rather than
 ## a pile of locals threaded through eight detectors.
 class Walk:
@@ -176,6 +209,9 @@ class Walk:
 	var loaded: Dictionary = {}
 	## team -> consecutive turns ended with a full meter unfired.
 	var banked: Dictionary = {}
+	## The board this turn's Command Power was fired into, or null — no power, or a
+	## ROUND one, which buys the opponent's turn rather than this one.
+	var spend: Spend = null
 	## team -> whether its home HQ has already been reported as uncovered, and is
 	## still uncovered. Cleared the moment the side can answer for it again, so a
 	## second lapse is a second finding and a standing one is said once.
@@ -244,6 +280,7 @@ static func run(
 			walk.fought = {}
 			walk.dropped = {}
 			walk.fired_power = false
+			walk.spend = null
 			walk.built = false
 			_open_turn(walk, state)
 	_close_hoards(walk)
@@ -272,6 +309,7 @@ static func _before_apply(walk: Walk, state: GameState, command: Command) -> voi
 		walk.acted[actor] = true
 	if command is PowerCommand:
 		walk.fired_power = true
+		walk.spend = _snapshot_power(state)
 	if command is BuildCommand:
 		walk.built = true
 	if command is CaptureCommand:
@@ -285,6 +323,31 @@ static func _before_apply(walk: Walk, state: GameState, command: Command) -> voi
 		_check_shot(walk, state, command as AttackCommand)
 	elif actor != null and command.get("path") is Array:
 		_check_landing(walk, state, command, actor)
+
+
+## The board the meter was spent into, or null for a power there is nothing to
+## judge. A ROUND power is the whole of that exclusion: it buys the *opponent's*
+## turn, so the owner's turn produces nothing by construction and reporting it
+## would name a defensive doctrine playing exactly as written.
+static func _snapshot_power(state: GameState) -> Spend:
+	var team := state.current_team
+	var commander := state.commander_state(team).type
+	if commander.power_duration == CommanderType.Duration.ROUND:
+		return null
+	var spend := Spend.new()
+	spend.day = state.day
+	spend.team = team
+	spend.commander = commander.display_name
+	spend.power = commander.power_name
+	spend.cost = commander.power_cost
+	spend.enemy_hp = _hostile_hp(state, team)
+	for unit in state.units:
+		if not state.allied(unit.team, team):
+			continue
+		spend.condition[unit] = [unit.hp, unit.fuel, unit.ammo]
+		if unit.carrier == null:
+			spend.reach[unit] = _stoppable_cells(state, unit)
+	return spend
 
 
 ## Was there a better target from the cell this shot was fired from?
@@ -388,6 +451,7 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 	var team := state.current_team
 	_check_hoarding(walk, state, team)
 	_check_power(walk, state, team)
+	_check_spent_power(walk, state)
 	_check_hq(walk, state, team)
 	var claimed := _claimed_ground(walk, state, team)
 	for unit in state.units_of(team):
@@ -483,6 +547,44 @@ static func _check_power(walk: Walk, state: GameState, team: int) -> void:
 		"%s has held a charged Command Power for %d turns" % [co_state.type.id, streak],
 		streak
 	)
+
+
+## A Command Power fired into a board it could not move. `banked_power` reports
+## the opposite mistake and firing zeroes its streak whatever the power achieved,
+## so the most wasted activation there is was the one thing the instrument could
+## not see.
+##
+## Judged here and only here, which is also the last-turn exclusion: a recording
+## that stops before the side hands the board over never reaches this, and the
+## turn the meter was meant to buy may be off the end of the file. `Report.stopped`
+## is what tells the reader that happened.
+static func _check_spent_power(walk: Walk, state: GameState) -> void:
+	var spend := walk.spend
+	if spend == null or _power_bought_something(walk, state, spend):
+		return
+	_add_at(walk, "spent_power", spend.day, spend.team, null, spend.detail(), spend.cost)
+
+
+## The four things a power can buy, read off the committed board rather than off
+## what was issued: an enemy hurt, ground changed hands, an army topped up, or a
+## unit standing where its own legs could not have carried it. Any one of them
+## and the meter did something.
+static func _power_bought_something(walk: Walk, state: GameState, spend: Spend) -> bool:
+	if _hostile_hp(state, spend.team) < spend.enemy_hp:
+		return true
+	if not walk.captured_cells.is_empty():
+		return true
+	for unit in state.units:
+		var opened: Variant = spend.condition.get(unit)
+		if opened == null:
+			continue
+		var was: Array = opened
+		if unit.hp > int(was[0]) or unit.fuel > int(was[1]) or unit.ammo > int(was[2]):
+			return true
+		var reach: Variant = spend.reach.get(unit)
+		if unit.carrier == null and reach != null and not (reach as Dictionary).has(unit.cell):
+			return true
+	return false
 
 
 ## Is anything standing within a turn's reach of this side's home HQ that it
@@ -710,6 +812,25 @@ static func _incoming_damage(state: GameState, unit: Unit, cell: Vector2i) -> in
 			total += CombatResolver.forecast_at(state, enemy, from, unit, cell).attack_damage
 			break
 	return total
+
+
+## How much army every side hostile to `team` has standing, in HP.
+static func _hostile_hp(state: GameState, team: int) -> int:
+	var total := 0
+	for unit in state.units:
+		if not state.allied(unit.team, team):
+			total += unit.hp
+	return total
+
+
+## Every cell this unit could end its move on, as a set.
+static func _stoppable_cells(state: GameState, unit: Unit) -> Dictionary:
+	var found: Dictionary = {}
+	var reach := MovementResolver.reachable(state, unit)
+	for cell in reach.cells():
+		if reach.can_stop_at(cell):
+			found[cell] = true
+	return found
 
 
 ## Properties this unit could stand on and start taking this turn.
