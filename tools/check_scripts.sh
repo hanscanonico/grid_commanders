@@ -333,7 +333,7 @@ if (($# == 0)); then
 	# naming itself in a suite.
 	finding_kinds="$(
 		sed -n '/^const SEVERITY/,/^}/p' tools/replay/replay_analysis.gd |
-			grep -oE '^[[:space:]]*"[a-z_]+"' | tr -d '[:blank:]"'
+			grep -oE '^[[:space:]]*"[^"]+"' | tr -d '[:blank:]"'
 	)"
 	if [[ -z "$finding_kinds" ]]; then
 		echo "check: read no finding kinds from ReplayAnalysis.SEVERITY — has it moved?" >&2
