@@ -272,10 +272,9 @@ func refusal() -> String:
 
 ## Why the preset row is dead on a board of `seats_dealt`, or "" while any preset
 ## is live. The presets are written for a four-seat table, so a smaller board
-## refuses all five at once — one reason for the row, the way Difficulty dims with
-## one reason and not one per tier (COM-19). Static and pure on
-## `normalised_sides`' terms, so the copy and the rule it states are checked
-## without a scene.
+## refuses all five at once, so the row answers once rather than five times
+## (COM-233). Static and pure on `normalised_sides`' terms, so the copy and the
+## rule it states are checked without a scene.
 static func preset_refusal(seats_dealt: int) -> String:
 	return "" if seats_dealt >= PRESET_SEATS else "Presets need four seats"
 
@@ -661,9 +660,8 @@ func _refresh_presets() -> void:
 	_presets.modulate = Color.WHITE if offered else _DEAD_ROW_TINT
 	var heading := UiKit.micro_label("TABLE")
 	if not offered:
-		# The heading dims with the buttons under it, and each of them promises the
-		# row's one reason rather than its own table: a lit label over five greyed
-		# choices is what made the row read as five refusals.
+		# Set in the reason line's own ink, so the dead row reads as heading, buttons
+		# and answer together rather than as a live heading over five refusals.
 		heading.add_theme_color_override("font_color", UiTheme.NEUTRAL)
 	_presets.add_child(heading)
 	for preset: Dictionary in PRESETS:
