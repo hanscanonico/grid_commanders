@@ -160,7 +160,7 @@ func sound_row_label() -> String:
 	return "Sound: %s" % volume_label(volume)
 
 
-## Cycles Slow -> Normal -> Quick -> Instant and persists, so the next animation
+## Cycles Normal -> Quick -> Instant and persists, so the next animation
 ## already obeys it, and answers with the row's new label — which is what the
 ## banner then says, the setting being otherwise invisible until something moves.
 func cycle_speed() -> String:
