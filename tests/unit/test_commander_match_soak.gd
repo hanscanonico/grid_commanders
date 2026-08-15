@@ -30,6 +30,14 @@ const COMMAND_CAP := 2000
 ##   nobody in cover and so refuses to fire — on crossfire.txt no unit starts on
 ##   woods, which left Sable Wren passing only if the AI happened to route a
 ##   unit through an F tile;
+## - shoal under each side's starting recon, so a doctrine that only counts
+##   units standing on shore ground has one from turn one;
+## - a mirrored pair of airports with a b-copter parked on each, so an air-only
+##   gate opens on day one instead of waiting on the production planner. They
+##   stay neutral, which costs the copters nothing: 99 fuel outlasts eight days,
+##   so neither ever needs the refit an owned airport would give it;
+## - an artillery each, so an indirect-only gate has an indirect unit the same
+##   way;
 ## - both armies inside each other's reach on day one, which is what opens the
 ##   offensive gates, banks meters through trading, and wears units down far
 ##   enough for Open the Depots.
@@ -40,11 +48,11 @@ const MAP := """
 [terrain]
 ............
 .Q.C...F....
-.B..F.......
+.B._F.......
 .....F......
-............
+..A......A..
 ......F.....
-.......F..B.
+.......F_.B.
 ....F...C.Q.
 ............
 [owners]
@@ -57,10 +65,14 @@ const MAP := """
 1 m 5 3
 1 t 4 3
 1 r 3 2
+1 h 2 4
+1 g 5 2
 2 i 7 6
 2 m 6 5
 2 t 7 5
 2 r 8 6
+2 h 9 4
+2 g 6 6
 """
 
 var terrain_db: TerrainDB
@@ -102,6 +114,42 @@ func test_no_pairing_ever_plans_a_command_the_rules_reject() -> void:
 				+ "wants_power gate regressed — test_power_gating.gd checks each "
 				+ "gate directly and will say which — or MAP above no longer "
 				+ "sets up the situation that gate waits for."
+			)
+		)
+
+
+## The fixture claims a half turn above, and every gate it opens is claimed for
+## both sides at once — so a hand edit that mirrors only one of them would leave
+## one commander passing on an advantage the other never had.
+func test_the_soak_board_is_rotationally_symmetric() -> void:
+	var map := MapData.parse(MAP, terrain_db)
+	assert_not_null(map, "the soak fixture should parse")
+	for y in map.height:
+		for x in map.width:
+			var cell := Vector2i(x, y)
+			var twin := map.mirrored(cell)
+			assert_eq(
+				map.terrain_at(cell).id,
+				map.terrain_at(twin).id,
+				"terrain at %s and its mirror %s should match" % [cell, twin]
+			)
+	for row in map.starting_units:
+		var twin_team: int = 2 if int(row["team"]) == 1 else 1
+		var twin_cell: Vector2i = map.mirrored(row["cell"])
+		var found := false
+		for other in map.starting_units:
+			if (
+				int(other["team"]) == twin_team
+				and other["cell"] == twin_cell
+				and other["symbol"] == row["symbol"]
+			):
+				found = true
+				break
+		assert_true(
+			found,
+			(
+				"team %d's %s at %s has no mirror at %s"
+				% [int(row["team"]), row["symbol"], row["cell"], twin_cell]
 			)
 		)
 
