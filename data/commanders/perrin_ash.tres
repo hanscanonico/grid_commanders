@@ -15,3 +15,4 @@ power_cost = 9000
 power_duration = 1
 air_attack_pct = 10
 superiority_attack_pct = 10
+superiority_domain = &"air"
