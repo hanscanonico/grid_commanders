@@ -17,9 +17,10 @@ extends RefCounted
 ## production asks the terrain what it builds — exactly what BuildCommand checks.
 ##
 ## No scene tree and no sprite here, like the rest of the layers Battle delegates
-## to. The one autoload it reads is Settings, for the two device-preference rows'
-## labels, and that is the same rule as everything above rather than an exception
-## to it: whoever owns the answer is who gets asked.
+## to. The one autoload it reads is Settings, for the device-preference rows'
+## labels and the ladders they step along, and that is the same rule as
+## everything above rather than an exception to it: whoever owns the answer is
+## who gets asked.
 
 const CANCEL := {"id": &"cancel", "label": "Cancel"}
 
@@ -120,11 +121,14 @@ static func build_actions(
 ## a button for the Command Power, and this keeps it reachable from the keyboard
 ## too, which the rest of the game already is.
 ##
-## The Speed and Sound rows read their labels off Settings for the same reason
-## every row above asks its command: the tier the player is watching at and the
-## volume they are listening at each have one owner, and a menu that remembered
-## its own copy would eventually show a setting the game is not playing at.
-## Choosing either cycles it to its next step — see Battle's map handler.
+## The device-preference rows read their labels off Settings for the same reason
+## every row above asks its command: the tier the player is watching at, the
+## volume they are listening at and whether they want the end-of-day check each
+## have one owner, and a menu that remembered its own copy would eventually show
+## a setting the game is not playing at. Which rows there are is Settings' too —
+## a new preference is a new entry in its table, not a line here. Enter cycles
+## one to its next step (see Battle's map handler); left and right walk it either
+## way in place, which is what the `cycle` callable is for.
 ##
 ## The two exit rows are the only way out of a running match that is not winning,
 ## losing or killing the application, so they are spelled out rather than folded
@@ -167,8 +171,14 @@ static func map_actions(
 		if co_state.is_ready():
 			actions.append({"id": &"power", "label": co_state.type.power_name})
 	actions.append({"id": &"commanders", "label": "Commanders"})
-	actions.append({"id": &"speed", "label": Settings.speed_row_label()})
-	actions.append({"id": &"sound", "label": Settings.sound_row_label()})
+	for row: StringName in Settings.VALUE_ROWS:
+		actions.append(
+			{
+				"id": row,
+				"label": Settings.row_label(row),
+				"cycle": func(step: int) -> String: return Settings.cycle_row(row, step),
+			}
+		)
 	var auto_eligible := game.current_team not in ai_teams or auto_tiers.has(game.current_team)
 	if savable and difficulty_db != null and auto_eligible:
 		var auto_label := "Off"

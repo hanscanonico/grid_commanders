@@ -948,11 +948,8 @@ func _handle_map_action(action: StringName) -> void:
 	if action == &"commanders":
 		_open_commander_info()
 		return
-	if action == &"speed":
-		present_banner(Settings.cycle_speed())
-		return
-	if action == &"sound":
-		present_banner(Settings.cycle_volume())
+	if action in Settings.VALUE_ROWS:
+		present_banner(Settings.cycle_row(action))
 		return
 	if action == &"auto":
 		# Its own submenu, the same shape "quit" opens "abandon" into below: the
@@ -979,7 +976,9 @@ func _handle_map_action(action: StringName) -> void:
 
 func _request_end_turn() -> void:
 	var ready := ReadyUnits.of(game)
-	if not ready.is_empty():
+	# Whether the guard opens at all is a device preference (COM-124); who is ready
+	# is ReadyUnits' answer either way, which is what N and Review still walk.
+	if Settings.end_turn_confirm and not ready.is_empty():
 		state = State.CONFIRM
 		end_turn_guard.open(game.day, ready, view.identity.theme(game.current_team))
 		return
