@@ -78,6 +78,16 @@ func _first(report: ReplayAnalysis.Report, kind: String) -> ReplayAnalysis.Findi
 	return null
 
 
+## Every finding of a kind one side earned. A streak detector counts per side, and
+## a board with two purses on it has two of them.
+func _for_team(report: ReplayAnalysis.Report, kind: String, team: int) -> Array:
+	var found: Array = []
+	for finding in report.findings:
+		if finding.kind == kind and finding.team == team:
+			found.append(finding)
+	return found
+
+
 ## `turns` full rounds of both sides doing nothing but ending their turn.
 func _idle_rounds(turns: int) -> Array:
 	var entries: Array = []
@@ -125,6 +135,54 @@ func test_a_purse_too_small_for_anything_is_not_hoarding() -> void:
 	assert_eq(_count(_run(state, [{"c": "end_turn"}]), "hoarding"), 0)
 
 
+## One streak, one finding. Said every turn it was more than half of everything
+## the analyser printed on a real match, and five copies of one sentence tell the
+## reader nothing the first did not.
+##
+## Seat 2 is counted separately and only reported once it has earned its way into
+## a purse of its own, which is why every case here reads one side.
+func test_a_standing_hoard_is_reported_once_for_the_whole_streak() -> void:
+	var state := _bare_state()
+	state.funds[1] = 9000
+	state.funds[2] = 0
+	var report := _run(state, _idle_rounds(5))
+	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_string_contains(finding.detail, "5 turns")
+	assert_eq(finding.day, 1, "the finding is about where the streak began")
+
+
+## Peak funds, not the funds it happened to end on: what the streak cost the side
+## is the most it ever had sitting idle. Seat 1's two properties earn every turn,
+## so the purse the walk sees only climbs away from the one it opened with.
+func test_a_hoard_carries_the_peak_of_the_streak() -> void:
+	var state := _bare_state()
+	state.funds[1] = 9000
+	state.funds[2] = 0
+	var finding: ReplayAnalysis.Finding = _for_team(_run(state, _idle_rounds(3)), "hoarding", 1)[0]
+	assert_gt(finding.magnitude, 9000, "the fixture must actually grow the purse")
+	assert_string_contains(finding.detail, str(finding.magnitude))
+
+
+## A streak that ends is released there, and a later one is a second finding.
+func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
+	var state := _bare_state()
+	state.funds[1] = 9000
+	state.funds[2] = 0
+	var entries: Array = [
+		{"c": "end_turn"},  # day 1: the streak opens
+		{"c": "end_turn"},
+		# A unit standing on the base is a base that builds nothing: the streak ends.
+		{"c": "build", "cell": [1, 0], "unit": "infantry"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "move", "path": [[1, 0], [2, 0]]},  # off the base, and it is idle again
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+	]
+	assert_eq(_for_team(_run(state, entries), "hoarding", 1).size(), 2)
+
+
 func test_missed_capture_is_ground_a_footsoldier_could_have_stood_on() -> void:
 	var state := _bare_state()
 	_stand(state, &"infantry", 1, Vector2i(2, 3))  # one step off the neutral city at (2, 2)
@@ -159,7 +217,27 @@ func test_a_unit_that_only_walked_is_still_a_missed_capture() -> void:
 	var state := _bare_state()
 	_stand(state, &"infantry", 1, Vector2i(2, 3))
 	var entries: Array = [{"c": "move", "path": [[2, 3], [3, 3]]}, {"c": "end_turn"}]
-	assert_eq(_count(_run(state, entries), "missed_capture"), 1)
+	var report := _run(state, entries)
+	assert_eq(_count(report, "missed_capture"), 1)
+	# The unit is standing at (3, 3) by the time the finding is made, so the line has
+	# to name the cell the reach was measured from or the reader cannot check it.
+	assert_string_contains(_first(report, "missed_capture").detail, "(2, 3)")
+
+
+## The reach is the one the turn *opened* with. A capturer marching toward ground
+## it could not have stood on this turn is doing exactly what it should, and the
+## board it hands over — where it has moved and its budget is gone — answers a
+## question about next turn.
+func test_ground_the_walk_only_brought_into_reach_is_not_a_missed_capture() -> void:
+	var state := _bare_state()
+	# Four tiles from the neutral city at (2, 2) on three movement, and it spends
+	# the whole walk closing to one step short of it.
+	_stand(state, &"infantry", 1, Vector2i(0, 4))
+	var entries: Array = [
+		{"c": "move", "path": [[0, 4], [1, 4], [1, 3], [2, 3]]},
+		{"c": "end_turn"},
+	]
+	assert_eq(_count(_run(state, entries), "missed_capture"), 0)
 
 
 ## Three of its owner's turns, not three end-turns: the streak is per side, and a
