@@ -112,6 +112,39 @@ func test_the_arena_shelf_dials_play_command_for_command() -> void:
 			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
 
 
+## The AI Economy block, which shipped inert on every tier and so is reached by
+## nothing above. Its two pricing dials make a property worth more than the
+## ground under it — on the capture itself and, through the goal, from as far
+## away as a unit can want one — and its two roster dials read how much of the
+## board is still unowned, which is a fact no envelope around a unit bounds.
+## Each pair alone, then all four at once, which is how a tier would carry them.
+func test_the_economy_pricing_dials_play_command_for_command() -> void:
+	var pricing := AIProfile.new()
+	pricing.production_capture_multiplier = 2.0
+	pricing.capture_goal_value_tiles = 2.0
+	var whole_block: AIProfile = HARD_TIER.duplicate()
+	whole_block.production_capture_multiplier = 2.0
+	whole_block.capture_goal_value_tiles = 2.0
+	whole_block.capture_units_per_property = 0.5
+	whole_block.build_reactivity = 0.5
+	var profiles := {&"the pricing pair": pricing, &"the whole economy on hard": whole_block}
+	for dial: StringName in profiles:
+		for board: Array in PlanCacheDiff.boards():
+			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
+
+
+## The roster half of the same block, on a profile that carries nothing else: how
+## many capturers a tier wants scales with what is left to take, and how fast the
+## build list answers the enemy's army is read off the board rather than off any
+## one unit.
+func test_the_economy_roster_dials_play_command_for_command() -> void:
+	var profile := AIProfile.new()
+	profile.capture_units_per_property = 0.5
+	profile.build_reactivity = 0.5
+	for board: Array in PlanCacheDiff.boards():
+		_assert_agrees_over_a_match(board[1], profile, "%s on the economy roster" % board[0])
+
+
 ## A shipped board, at the width the Balance Lab plays on. The three fixtures
 ## above are small enough to keep the suite quick and they all agreed while the
 ## diff was still dropping half its invalidations on the floor: an army only
