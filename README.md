@@ -127,14 +127,21 @@ make smoke MODES="menu_no_save"       # the same layout with an empty slot, Cont
 make smoke MODES="menu_setup_context" # an all-human table: every option's help line, every tier chip dead
 make smoke MODES="menu_four_seats"    # a board that deals more than a duel: its · NP mark, a seat row per army
 make smoke MODES="menu_replays"       # the recordings page, over a posed list of three
+make smoke MODES="menu_campaigns"     # the war picker, every campaign on a fresh profile
+make smoke MODES="menu_campaign_hub"  # one war's mission list, first mission open and the rest locked
+make smoke MODES="menu_campaign_brief"    # that hub with the open mission's briefing up
+make smoke MODES="menu_campaign_debrief"  # the page a won mission comes back through
+make smoke MODES="menu_campaign_interlude" # the page between two blocks of a war
 ```
 
-All five pose what they photograph, so a capture neither reads nor writes the running machine's
-`user://save.json` or its recordings, and all five are tests as well as pictures: each measures the
+All ten pose what they photograph, so a capture neither reads nor writes the running machine's
+`user://save.json`, its recordings or its campaign profiles, and all ten are tests as well as
+pictures: each measures the
 named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first four
 measure the whole centered menu column, its map caption, every option-help line, every seat row *and*
-its primary actions; `menu_replays` photographs its own page over a hidden menu, so it measures that
-page's title, first row and Back instead — the menu's geometry is not what that picture claims. The column is the
+its primary actions; `menu_replays` and the five campaign pages photograph their own page over a
+hidden menu, so each measures that page's own heading, first row and button instead — the menu's
+geometry is not what those pictures claim. The column is the
 load-bearing witness — a too-tall one is centered into an offset that runs off both ends at once, so
 no single child is reliable — and the first two exist to hold the rule that a save's presence may
 never change the layout budget, which is what broke when Continue first pushed the title and **Quit**
