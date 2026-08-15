@@ -110,8 +110,8 @@ class Report:
 		}
 
 
-## A run of consecutive turns one side ended with a factory it could have built
-## from. Held open while it lasts and reported once when it ends, because the
+## A run of consecutive turns one side ended having bought nothing it could
+## afford. Held open while it lasts and reported once when it ends, because the
 ## reader is being told about the streak rather than about each of its turns.
 class Hoard:
 	var day := 0
@@ -132,11 +132,11 @@ class Hoard:
 	func detail() -> String:
 		if turns == 1:
 			return (
-				"ended the turn on %d funds with an idle factory that builds from %d"
+				"ended the turn on %d funds having built nothing, against a %d build"
 				% [peak, cheapest]
 			)
 		return (
-			"held an idle factory for %d turns, peaking at %d funds against a %d build"
+			"built nothing for %d turns, peaking at %d funds against a %d build"
 			% [turns, peak, cheapest]
 		)
 
@@ -189,6 +189,8 @@ class Walk:
 	## Units that fired during it.
 	var fought: Dictionary = {}
 	var fired_power := false
+	## Whether the side on turn bought anything during it.
+	var built := false
 	var dropped: Dictionary = {}
 
 
@@ -242,6 +244,7 @@ static func run(
 			walk.fought = {}
 			walk.dropped = {}
 			walk.fired_power = false
+			walk.built = false
 			_open_turn(walk, state)
 	_close_hoards(walk)
 	report.days = state.day
@@ -269,6 +272,8 @@ static func _before_apply(walk: Walk, state: GameState, command: Command) -> voi
 		walk.acted[actor] = true
 	if command is PowerCommand:
 		walk.fired_power = true
+	if command is BuildCommand:
+		walk.built = true
 	if command is CaptureCommand:
 		var capture := command as CaptureCommand
 		walk.captured[capture.unit] = true
@@ -394,10 +399,17 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 		_check_oscillation(walk, state, unit)
 
 
-## Money left on an idle factory. Read through the same two facts `BuildCommand`
-## reads — the terrain's move classes and what this side is actually charged, so
-## a doctrine's price percentage moves the finding with it — and a property that
-## builds nothing this side can afford is not reported.
+## A side that spent nothing on a turn it could have spent. The question is
+## **refusal to buy**, never spare capacity: a side holding five bases always has
+## a free one, so "some property stood idle" is arithmetic rather than judgement
+## and saturated on every multi-property board it was measured on. A turn
+## qualifies only when the side issued no `BuildCommand` at all while its purse
+## covered the cheapest thing one of its free properties builds.
+##
+## Affordability is read through the same two facts `BuildCommand` reads — the
+## terrain's move classes and what this side is actually charged, so a doctrine's
+## price percentage moves the finding with it — and a purse short of everything on
+## the board is not reported.
 ##
 ## Latched over the streak, the way `banked_power` and `undefended_hq` are: a side
 ## that banks for five turns is one thing that happened, not five, and said once a
@@ -405,6 +417,9 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 ## held open while the streak runs and released when it ends — or at the end of the
 ## recording, for a side still sitting on its purse when the match stopped.
 static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
+	if walk.built:
+		_release_hoard(walk, team)
+		return
 	var purse := int(state.funds.get(team, 0))
 	var cheapest := _cheapest_build(walk, state, team, purse)
 	if cheapest < 0:

@@ -173,7 +173,7 @@ func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 	var entries: Array = [
 		{"c": "end_turn"},  # day 1: the streak opens
 		{"c": "end_turn"},
-		# A unit standing on the base is a base that builds nothing: the streak ends.
+		# A turn the side spent something on is not a hoarding turn: the streak ends.
 		{"c": "build", "cell": [1, 0], "unit": "infantry"},
 		{"c": "end_turn"},
 		{"c": "end_turn"},
@@ -182,6 +182,47 @@ func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 		{"c": "end_turn"},
 	]
 	assert_eq(_for_team(_run(state, entries), "hoarding", 1).size(), 2)
+
+
+## The case the detector exists for: a growing purse and nothing bought out of it,
+## turn after turn. Both numbers the reader needs are in the one line — how long it
+## went on and the most that sat there while it did.
+func test_a_rich_side_that_buys_nothing_is_the_reported_case() -> void:
+	var state := _bare_state()
+	state.funds[1] = 13000
+	state.funds[2] = 0
+	var report := _run(state, _idle_rounds(4))
+	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_string_contains(finding.detail, "4 turns")
+	assert_string_contains(finding.detail, str(finding.magnitude))
+	assert_gte(finding.magnitude, 13000)
+
+
+## Spare capacity is not refusal to spend. A side holding more production than it
+## can fill every turn always has a free property, so a detector reading "something
+## stood idle" reports the sides that were buying hardest — which is what it did on
+## every multi-base board it was measured on. Seat 1 buys every turn here and the
+## far base is free and affordable throughout.
+func test_a_side_that_builds_every_turn_is_not_hoarding() -> void:
+	var state := _bare_state()
+	state.funds[1] = 50000
+	state.funds[2] = 0
+	state.set_owner(Vector2i(6, 4), 1)
+	var entries: Array = [
+		{"c": "build", "cell": [1, 0], "unit": "infantry"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+	]
+	var walked: Array = [[1, 0]]
+	for step in 3:
+		walked.append([2 + step, 0])
+		entries.append({"c": "move", "path": walked.duplicate()})
+		entries.append({"c": "build", "cell": [1, 0], "unit": "infantry"})
+		entries.append({"c": "end_turn"})
+		entries.append({"c": "end_turn"})
+	var report := _run(state, entries)
+	assert_eq(_for_team(report, "hoarding", 1).size(), 0)
 
 
 ## Three of its owner's turns, not three end-turns: the streak is per side, and a
