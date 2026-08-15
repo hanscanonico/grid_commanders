@@ -50,7 +50,7 @@ text = "Then we bleed on our terms, not his. Rotate the wounded out before he ev
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three of the four hamlets wins it. Keep the hurt behind the line."
+text = "Four hamlets and four squares of trees, and nothing else on twelve squares of board. Whatever gets hurt goes into the trees — there is no back to send it to."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

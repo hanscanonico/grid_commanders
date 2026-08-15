@@ -25,7 +25,7 @@ day = 6
 
 [sub_resource type="Resource" id="Failure_the_line_broke_before_day_6"]
 script = ExtResource("3")
-text = "The line broke before day 6."
+text = "Day 6 passed with the watch still unfinished."
 last_day = 6
 
 [sub_resource type="Resource" id="Failure_the_count"]
@@ -35,7 +35,7 @@ max_losses = 3
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_camp_for_a_bonus"]
 script = ExtResource("4")
-text = "Take the northern camp for a bonus."
+text = "Take the northern camp as well."
 cell = Vector2i(6, 2)
 
 [sub_resource type="Resource" id="Line_1"]

@@ -37,12 +37,12 @@ text = "Six towns on the board, income for the taking. Every one we hold is one 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Take the majority before he prices you out of the race."
+text = "Four of the six sit closer to our base than to his — the western pair and the middle pair, that one by a single tile. Walk at those four and the majority is arithmetic."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Four towns, ours. The market's closed before his premium army arrived to bid."
+text = "The market closed while he was still pricing his first bid. We never out-shot him, Commander — we out-numbered him, town by town."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

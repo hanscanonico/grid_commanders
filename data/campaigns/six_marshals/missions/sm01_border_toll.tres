@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_take_road_city"]
 script = ExtResource("2")
-text = "Take the customs city on the road."
+text = "Take the customs city north of the road."
 cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Failure_day_8"]

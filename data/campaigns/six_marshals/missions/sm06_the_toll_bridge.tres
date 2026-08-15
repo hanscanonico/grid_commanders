@@ -33,7 +33,7 @@ text = "Two lanes, one outcome — every attack that funnels through them is a b
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Hold the bank. Every attack he makes here he pays double for."
+text = "Two crossings, and they sit one square apart in the same gap. He cannot widen that — everything he owns comes at us in single file."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
