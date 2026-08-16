@@ -218,6 +218,13 @@ func _run_demo(mode: String) -> void:
 		if await BattleCutsceneScenario.new(_battle).run(mode):
 			_failed = true
 		return
+	# The campaign family is asked of its own class for the same reason: the modes
+	# that play a mission are BattleMissionScenario's list, not a second copy here.
+	if mode in BattleMissionScenario.MODES:
+		var mission_error := await BattleMissionScenario.new(_battle).run(mode)
+		if mission_error != "":
+			_fail(mission_error)
+		return
 	match mode:
 		"attack", "resolve":
 			_battle.confirm_at(Vector2i(8, 8))  # select the red tank
@@ -299,10 +306,6 @@ func _run_demo(mode: String) -> void:
 			await _stage_power_targeting()  # the aimed power, mid-aim
 		MISSION_STRIP_MODE, MISSION_STRIP_RETIRED:
 			await _stage_mission_strip(mode)
-		BattleMissionScenario.MODE, BattleMissionScenario.EVENT_MODE, BattleMissionScenario.DEFECT_MODE:
-			var mission_error := await BattleMissionScenario.new(_battle).run(mode)
-			if mission_error != "":
-				_fail(mission_error)
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
 		"commander_victory", "victory", "side_victory":
