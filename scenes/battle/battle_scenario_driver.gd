@@ -70,6 +70,12 @@ const MISSION_STRIP_RETIRED := MISSION_STRIP_MODE + "_retired"
 const PREVIEW_FOG_FROM := Vector2i(15, 10)
 const PREVIEW_FOG_TO := Vector2i(10, 8)
 
+## One general per faction, so the commander sheet's scroll probe poses the 2x2 a
+## four-army board deals — the layout whose cards clip to their portrait band.
+const FOUR_ARMY_PROBE_COMMANDERS: Array[StringName] = [
+	&"rhea_sol", &"viktor_draeg", &"mara_voss", &"cass_orlov"
+]
+
 var _battle: Battle
 var _shot_path := ""
 var _select_cell := NO_CELL
@@ -869,14 +875,55 @@ func _stage_commander_info() -> void:
 	_battle.game.set_commander(1, _battle.commander_db.by_id(&"rhea_sol"))
 	_battle.game.set_commander(2, _battle.commander_db.by_id(&"viktor_draeg"))
 	_battle.view.restage_identity()  # the board behind the sheet wears both factions
+	await _open_commander_sheet()
+	var sheet := _battle.commander_info_sheet
+	var flaw := sheet.layout_error(_battle.game.teams.size())
+	if flaw != "":
+		_fail(flaw)
+	await _check_sheet_scrolls(sheet)
+	# Closed and reopened through the same route, so the frame this scenario
+	# photographs is the authored pair rather than the probe's four.
+	await _press_key(KEY_ESCAPE)
+	await _open_commander_sheet()
+
+
+## The one route a player reaches the sheet by: the map menu over open ground.
+func _open_commander_sheet() -> void:
 	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> map menu
 	await _until_state(Battle.State.MENU)
 	_battle.action_menu.choose(&"commanders")
 	await _until_state(Battle.State.INFO)
 	await _settle_layout()  # the grid sizes its columns a frame after the sheet opens
-	var flaw := _battle.commander_info_sheet.layout_error(_battle.game.teams.size())
-	if flaw != "":
-		_fail(flaw)
+
+
+## A real DOWN key through the open sheet, on the four-army roster whose cards
+## clip to their portrait band — the case the key exists for, posed on the sheet
+## rather than on a four-seat board, since what is proved here is the sheet's own
+## input path. It has to be a key and not a named action: what breaks this is
+## focus navigation eating ui_down before CommanderInfoSheet's _unhandled_input,
+## which no frame would show.
+func _check_sheet_scrolls(sheet: CommanderInfoSheet) -> void:
+	var picks: Dictionary = {}
+	for team in [1, 2, 3, 4]:
+		picks[team] = _battle.commander_db.by_id(FOUR_ARMY_PROBE_COMMANDERS[team - 1])
+	sheet.open(picks)
+	await _settle_layout()
+	var before := sheet.scroll_offset()
+	await _press_key(KEY_DOWN)
+	if sheet.scroll_offset() <= before:
+		_fail("the commander sheet did not scroll on DOWN (offset stayed %d)" % before)
+
+
+## One press and its release, resolved to an action by the InputMap rather than
+## named as one — so what a check proves is the whole chain from the keycode down.
+## Released as well as pressed, or a held-direction repeat would keep stepping.
+func _press_key(keycode: Key) -> void:
+	for pressed in [true, false]:
+		var event := InputEventKey.new()
+		event.keycode = keycode
+		event.pressed = pressed
+		Input.parse_input_event(event)
+		await _battle.get_tree().process_frame
 
 
 ## Culls Blue to one nearly-dead unit and kills it through the ordinary
