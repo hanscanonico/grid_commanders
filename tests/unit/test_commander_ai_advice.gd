@@ -9,10 +9,15 @@ extends GutTest
 ## each hook must be able to move the decision it is wired to.
 ##
 ## It is also the roster's advice inventory (ADVICE_COVERAGE below) and the
-## purity gate the doctrine plan's D4 states in prose. `wants_power` is
-## deliberately outside that gate: RadekMorn memoises its board scan on the
-## instance so `power_target` cannot aim somewhere `wants_power` did not want,
-## which is documented on his `_blast` cache and is not a purity defect.
+## purity gate the doctrine plan's D4 states in prose. What D4 asks for is
+## OBSERVATIONAL purity — the same board answers the same way — rather than a
+## commander that stores nothing: two doctrines memoise on the instance under a
+## key any relevant board change moves, which is what keeps that true.
+## RadekMorn's `_blast` cache is the older one, and is deliberately outside the
+## gate entirely so `power_target` cannot aim somewhere `wants_power` did not
+## want; MaraVoss's `_reach` memo is inside it, keyed to Morn's shape, and
+## `test_mara_voss.gd::test_stand_advice_re_reads_reach_on_a_later_turn` is
+## where that key is held to invalidating.
 
 
 ## Prefers standing in woods, strongly enough to give up five tiles for it.
@@ -375,8 +380,10 @@ func test_every_silent_doctrine_records_why() -> void:
 
 
 ## Every hook, asked twice on one board: the same answer both times and the board
-## untouched between them. Advice that cached, counted or nudged anything would
-## make a replan off the same board disagree with itself.
+## untouched between them, so a replan off one board cannot disagree with itself.
+## An unkeyed memo is out of this case's reach by construction — an unchanged
+## board is what a stale memo answers correctly — so the invalidating half is
+## `test_mara_voss.gd::test_stand_advice_re_reads_reach_on_a_later_turn`.
 func test_advice_is_pure() -> void:
 	var state := Fixture.state("[terrain]\nCF.\n...\n[owners]\n1 0 0\n[units]\n1 t 1 0\n2 i 2 1")
 	var tank := state.units[0]

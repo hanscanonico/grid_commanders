@@ -40,10 +40,11 @@ reason (`docs/ai_arena.md`).
 
 Both sides are `none-normal` — no commander, Normal tier — which is the Lab's
 default seating and what makes this a reading of the *planner* rather than of a
-doctrine. The Lab's default day cap is 21, so most of these matches are
-undecided at the horizon rather than routed; that is a fact about the pool, not
-a defect, and it is why the per-100-commands column is the one to compare
-across boards.
+doctrine. The Lab's default day cap is 20 — a match that runs the cap out reads
+21 in the days column, the loop exiting on the day it refused to play — so most
+of these matches are undecided at the horizon rather than routed; that is a fact
+about the pool, not a defect, and it is why the per-100-commands column is the
+one to compare across boards.
 
 ## What it measured
 
