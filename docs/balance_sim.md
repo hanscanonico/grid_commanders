@@ -264,8 +264,10 @@ a window and remembering.
 **Watch mode honours `--days=` too** (default 20, the Lab's default). Most rows
 terminate `day_cap` — a rule-based AI rarely races to an HQ — and those are
 scored on the same `BalanceMatchEngine.tiebreak` the harness uses, so a capped
-row can be watched to the same line as a decisive one. The cap is watch mode's
-alone: a hot-seat or player-versus-AI match still runs until somebody wins.
+row can be watched to the same line as a decisive one. The cap belongs to a match
+nobody is playing: watch mode, and a spectated match whose every seat the seat
+strip gave to the computer — that one on a 100-day horizon unless `--days=` names
+another. A hot-seat or player-versus-AI match still runs until somebody wins.
 
 One alignment detail rides along: the scene's per-turn command cap and the
 harness's now come from one constant (`BalanceMatchEngine.MAX_COMMANDS_PER_TURN`),

@@ -79,6 +79,20 @@ func test_days_caps_a_watched_match_and_never_goes_below_one() -> void:
 	assert_eq(zero.days_cap, 1)
 
 
+## Which horizon an unset launch is scored on is the scene's, and it can only pick
+## one if "no `--days=`" is distinguishable from a cap that happens to equal the
+## default — so the sentinel has to be a value the flag can never produce.
+func test_days_is_unset_until_a_flag_writes_one() -> void:
+	var untouched := MatchRequest.new()
+	assert_eq(untouched.days_cap, MatchRequest.DAYS_UNSET, "no flag, no horizon")
+	var other := MatchRequest.new()
+	other.apply_cmdline(Fixture.args(["--map=first_steps"]))
+	assert_eq(other.days_cap, MatchRequest.DAYS_UNSET, "and other flags leave it alone")
+	var sentinel := MatchRequest.new()
+	sentinel.apply_cmdline(Fixture.args(["--days=%d" % MatchRequest.DAYS_UNSET]))
+	assert_ne(sentinel.days_cap, MatchRequest.DAYS_UNSET, "the flag can never write the sentinel")
+
+
 func test_difficulty_is_carried_as_an_id_for_the_database_to_resolve() -> void:
 	var request := MatchRequest.new()
 	request.apply_cmdline(Fixture.args(["--difficulty=  hard  "]))

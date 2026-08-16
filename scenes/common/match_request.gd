@@ -35,6 +35,9 @@ extends RefCounted
 ## byte-identical captures (COM-122).
 const DEFAULT_MAP_PATH := "res://maps/first_steps.txt"
 
+## `days_cap` for a launch that wrote no `--days=`.
+const DAYS_UNSET := 0
+
 ## The board. A path, already resolved: `--map=` accepts a catalog *name*, and
 ## resolving it is the CLI adapter's job so everything downstream sees a path.
 var map_path := DEFAULT_MAP_PATH
@@ -90,10 +93,16 @@ var replay_requested := false
 ## spec. The scene prints its result and exits when the match ends, so a watched
 ## run can be diffed against the CSV row it was launched from.
 var watching := false
-## Watch mode only: the day after which a match nobody has won is scored on the
-## harness's own tiebreak. `--days=`, matching the Lab's flag. Normal play ignores
-## it entirely — a hot-seat or player-vs-AI match has no day limit.
-var days_cap := BalanceMatchEngine.DEFAULT_DAYS
+## The day after which a match nobody has won is scored on the harness's own
+## tiebreak. `--days=`, matching the Lab's flag; `DAYS_UNSET` when the launch named
+## no horizon, which the flag can never produce because it clamps to 1 — the same
+## shape `seed_value`'s negative sentinel has, and for the same reason.
+##
+## Which day an unset launch is capped on is the scene's answer, not this object's
+## (`BattleOutcome`): the Lab's own default for a watched row, a longer spectator
+## horizon for an all-computer match. A match with a human seat has no day limit at
+## all.
+var days_cap := DAYS_UNSET
 ## team -> the raw `--red=<co>:<tier>` / `--blue=` spec, kept unparsed because the
 ## Lab's own parser needs the commander and difficulty databases. `BattleSetup`
 ## resolves them, so a spec means the same thing in the window as in the report.
