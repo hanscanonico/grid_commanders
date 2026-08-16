@@ -582,7 +582,8 @@ func _fail(message: String) -> void:
 	_failed = true
 
 
-## What a scenario class hands back: its complaint, or "" for a clean run.
+## Reports whatever a scenario class handed back, which is its complaint or ""
+## for a clean run — the shape every `run()` dispatch arm above shares.
 func _fail_if(error: String) -> void:
 	if error != "":
 		_fail(error)
@@ -774,8 +775,8 @@ func _stage_menu_after_build_menu() -> void:
 	# hang off to the side of the two words under it.
 	var unit_menu := _battle.action_menu.get_global_rect().size
 	if unit_menu.x >= build_menu.x or unit_menu.y >= build_menu.y:
-		var both := [unit_menu, build_menu]
-		_fail("the two-row unit menu measures %s, no smaller than the build menu's %s" % both)
+		var sizes := [unit_menu, build_menu]
+		_fail("the two-row unit menu measures %s, no smaller than the build menu's %s" % sizes)
 
 
 ## A control built in code measures and places itself a frame after its children
