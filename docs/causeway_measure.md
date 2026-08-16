@@ -14,6 +14,13 @@ and a land-first `build_priority`, where Normal's list leads with
 `md_tank, bomber, battleship, fighter, sub, cruiser` — the most navy-heavy of the
 tiers — on a board whose four corner islands are joined by bridges.
 
+**What was already known.** Three readings, all at Normal, all pointing the same
+way: the two live matches above, plus PR #289's own smoke of the new grammar —
+the free-for-all, seeds 1 and 2, both still running at a 60-day horizon with
+nothing rejected and no stall. This run plays those same two seeds out to 160
+days and they are undecided there too, so the smoke is superseded by the rows
+below rather than contradicted by them.
+
 **The answer is no.** Tier does not close the gap, in either direction, and the
 free-for-all does not close at all.
 
