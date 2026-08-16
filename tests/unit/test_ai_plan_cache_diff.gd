@@ -24,11 +24,92 @@ const PlanCacheDiff := preload("res://tests/helpers/plan_cache_diff.gd")
 ## that means to change it duplicates it first.
 const HARD_TIER := preload("res://data/ai/hard.tres")
 
+## Every numeric dial `AIProfile` carries, against the run below that plays it at a
+## value the planner can feel. This is what turns the rule in this file's header
+## from a sentence into a gate: a dial added to the planner and to no run here
+## fails the coverage check by name.
+##
+## A run "carries" a dial when its profile is off that dial's inert value, which is
+## not always zero — `production_capture_multiplier` is inert at 1.0 and
+## `doctrine_weight` is inert with no commander seated, so both name the run that
+## actually moves them rather than the first tier that mentions them.
+const COVERED := {
+	&"kill_bonus": "the shipped profile",
+	&"counter_weight": "the shipped profile",
+	&"capture_score": "the shipped profile",
+	&"hq_capture_multiplier": "the shipped profile",
+	&"capture_progress_bonus": "the shipped profile",
+	&"step_cost_penalty": "the shipped profile",
+	&"retreat_hp": "the shipped profile",
+	&"min_useful_score": "the shipped profile",
+	&"advance_score": "the shipped profile",
+	&"capture_unit_target": "the shipped profile",
+	&"air_answer_target": "the shipped profile",
+	&"supply_unit_target": "the shipped profile",
+	&"supply_weight": "the shipped profile",
+	&"duplicate_priority_cost": "the shipped profile",
+	&"save_up_turns": "the shipped profile",
+	&"dive_score": "the shipped profile",
+	&"refuel_margin_turns": "the shipped profile",
+	&"defend_weight": "the shipped profile",
+	&"cohesion_tiles": "the shipped profile",
+	&"cohesion_radius": "the shipped profile",
+	&"threat_aversion": "the threat-weighing tiers",
+	&"advance_threat_tiles": "the threat-weighing tiers",
+	&"withdraw_weight": "the live withdrawal",
+	&"capture_claim_depth": "the live capture claim",
+	&"focus_fire_bonus": "live focus fire",
+	&"cover_tiles": "the arena shelf",
+	&"condition_weight": "the arena shelf",
+	&"join_weight": "the arena shelf",
+	&"build_reactivity": "the economy dials",
+	&"capture_units_per_property": "the economy dials",
+	&"production_capture_multiplier": "the economy dials",
+	&"capture_goal_value_tiles": "the economy dials",
+	&"doctrine_weight": "commanders seated",
+}
+
+## Dials no run needs, each with the reason — the escape hatch that keeps the
+## check above honest rather than a chore. Empty today: every dial the planner
+## reads is played by something in this file, and a dial that genuinely cannot
+## reach a cached `AIUnitPlan` belongs here with the sentence saying why.
+const EXCLUDED := {}
+
 var diff: PlanCacheDiff
 
 
 func before_each() -> void:
 	diff = PlanCacheDiff.new()
+
+
+## The header's rule, enforced: a dial the cache is only exact for because nothing
+## turns it on is the silent divergence this file exists to refuse, and until this
+## walk existed two shipped dials had been through the gap. The same shape
+## `test_arena_blocks.gd` uses to catch a weight that fell off the search shelf.
+func test_every_dial_is_diffed_or_excluded_with_a_reason() -> void:
+	for property: Dictionary in AIProfile.new().get_property_list():
+		if not (int(property["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var type := int(property["type"])
+		if type != TYPE_INT and type != TYPE_FLOAT:
+			continue  # build_priority and air_answer_ids: orders, not values
+		var field := StringName(property["name"])
+		assert_true(
+			COVERED.has(field) or EXCLUDED.has(field),
+			"%s is a planner dial no run here plays and no reason excuses" % field
+		)
+
+
+## The ledger read the other way, so a retired dial takes its entry with it rather
+## than leaving a run claiming to prove something nobody weighs any more.
+func test_the_ledger_names_no_dial_the_profile_has_dropped() -> void:
+	var shape := AIProfile.new()
+	for field: StringName in COVERED:
+		var value: Variant = shape.get(field)
+		assert_true(
+			typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT,
+			"%s is a number AIProfile carries" % field
+		)
 
 
 func test_the_shipped_profile_plays_every_board_command_for_command() -> void:
