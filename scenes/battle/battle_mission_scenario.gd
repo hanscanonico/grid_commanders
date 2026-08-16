@@ -1,10 +1,11 @@
 class_name BattleMissionScenario
 extends RefCounted
-## The three captures that play a campaign mission: the in-battle objective card
-## (campaign-depth CD2), a scripted beat landing on the board and a scripted beat
-## changing a unit's allegiance (CD3). All three are down for every skirmish,
-## which is what keeps the rest of the sweep byte-stable and why these scenarios
-## are the only way any of them is reachable.
+## The four captures that play a campaign mission: the in-battle objective card
+## (campaign-depth CD2), a scripted beat landing on the board, a scripted beat
+## changing a unit's allegiance (CD3) and the pause menu opened over a mission,
+## where the Briefing row lives. All four are down for every skirmish, which is
+## what keeps the rest of the sweep byte-stable and why these scenarios are the
+## only way any of them is reachable.
 ##
 ## It is two halves at two moments. `stage` runs before Battle has built
 ## anything, because a mission's board is not in the map catalogue and no
@@ -23,6 +24,10 @@ extends RefCounted
 const MODE := "objective_panel"
 const EVENT_MODE := "mission_event"
 const DEFECT_MODE := "mission_defection"
+const MAP_MENU_MODE := "campaign_mapmenu"
+## What this class owns, read by `stage` and by the driver's dispatch, so neither
+## can learn of a mission scenario the other has not.
+const MODES: Array[String] = [MODE, EVENT_MODE, DEFECT_MODE, MAP_MENU_MODE]
 ## The Collection's opening mission, because CD2 re-authored it onto `HoldCell`:
 ## the card then carries a new verb, its running readout, and the deadline that
 ## ends it, rather than a lone "take the depot". CD3 hung its exemplar beat on
@@ -33,6 +38,9 @@ const MISSION := &"tc01_the_ledger_opens"
 ## changes hands.
 const DEPOT := Vector2i(6, 4)
 const EVENT := &"ferrow_collects"
+## Open ground on that same board, where a confirm selects nothing and so opens
+## the map menu — the `mapmenu` scenario's press, made on a mission.
+const OPEN_GROUND := Vector2i(7, 1)
 ## The Long Front's exemplar mission, for the defection frame: its board is the
 ## one that already names a unit of the army a beat would take it from — Morn's
 ## garrison in the ruins, which the mission's own `DestroyUnit` reads.
@@ -61,7 +69,7 @@ static func stage() -> void:
 	if not BattleScenarioDriver.requested():
 		return
 	var demo := BattleScenarioDriver.boot_demo()
-	if demo not in [MODE, EVENT_MODE, DEFECT_MODE]:
+	if demo not in MODES:
 		return
 	var defecting := demo == DEFECT_MODE
 	var campaign_id := DEFECT_CAMPAIGN if defecting else CAMPAIGN
@@ -112,7 +120,26 @@ func run(mode: String) -> String:
 		return await _run_event()
 	if mode == DEFECT_MODE:
 		return _run_defection()
+	if mode == MAP_MENU_MODE:
+		return await _run_map_menu()
 	return await _run_panel()
+
+
+## The pause menu, opened over a mission rather than over a skirmish, which is
+## the only board its Briefing row is offered on. The press is `mapmenu`'s — a
+## confirm on ground holding nothing to select — and the rows are read back off
+## the authority that builds them, because a menu missing the row, or carrying it
+## somewhere else, photographs perfectly well.
+func _run_map_menu() -> String:
+	_battle.confirm_at(OPEN_GROUND)
+	await BattleScenarioDriver.until_state_of(_battle, Battle.State.MENU)
+	var ids: Array[StringName] = []
+	for row in BattleMenus.map_actions(_battle.game):
+		ids.append(row["id"])
+	var at := ids.find(&"briefing")
+	if at < 1 or ids[at - 1] != &"commanders":
+		return "the map menu offers no Briefing row after Commanders: %s" % [ids]
+	return _in_band("map menu", _battle.action_menu)
 
 
 func _run_panel() -> String:
