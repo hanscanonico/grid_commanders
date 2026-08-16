@@ -133,14 +133,16 @@ make smoke MODES="menu_campaign_brief"    # that hub with the open mission's bri
 make smoke MODES="menu_campaign_debrief"  # the page a won mission comes back through
 make smoke MODES="menu_campaign_interlude" # the page between two blocks of a war
 make smoke MODES="menu_campaign_deep"      # that hub deep into a war: the one frame its list is scrolled
+make smoke MODES="menu_commander_select"   # the page Start opens: faction tabs, the roster grid, the seat chips
 ```
 
-All eleven pose what they photograph, so a capture neither reads nor writes the running machine's
-`user://save.json`, its recordings or its campaign profiles, and all eleven are tests as well as
+All twelve pose what they photograph, so a capture neither reads nor writes the running machine's
+`user://save.json`, its recordings or its campaign profiles, and all twelve are tests as well as
 pictures: each measures the
 named chrome against the 640×360 logical frame and fails the run if any of it leaves. The first four
 measure the whole centered menu column, its map caption, every option-help line, every seat row *and*
-its primary actions; `menu_replays` and the six campaign pages photograph their own page over a
+its primary actions; `menu_replays`, the six campaign pages and `menu_commander_select` photograph
+their own page over a
 hidden menu, so each measures that page's own heading, first row and button instead — the menu's
 geometry is not what those pictures claim. The column is the
 load-bearing witness — a too-tall one is centered into an offset that runs off both ends at once, so
