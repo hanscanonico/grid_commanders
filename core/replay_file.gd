@@ -57,10 +57,6 @@ func path() -> String:
 	return _path
 
 
-func is_open() -> bool:
-	return _file != null
-
-
 ## Opens a recording at `file_path`, replacing anything already there. Null (with
 ## a pushed error) when the directory cannot be made or the file cannot be opened
 ## — a recording that cannot start says so once, here, rather than at every
