@@ -304,7 +304,8 @@ plan is stated in full below and has no copy there.
   match fact, not a difficulty smart — and 0 skips the hooks entirely, restoring the
   doctrine-blind planner byte for byte, which is how the difficulty lock survives. D4: advice
   reads only what the planner already reads (enemies through `Vision.is_hidden_from`), is pure,
-  integer and RNG-free, and **never reads the damage chart** — the forecasts already carry every
+  integer and RNG-free — pure to the board and the caller, an instance being free to memoise under
+  a key any relevant board change moves — and **never reads the damage chart** — the forecasts already carry every
   combat hook, so advice that re-priced one would count the same doctrine twice; Lyra Quill's
   luck floor stays unpriced by the same rule from the other side, because forecasts are
   deliberately luck-free. Wren valuing cover more as Vanish banks is what broke the Vanish stall

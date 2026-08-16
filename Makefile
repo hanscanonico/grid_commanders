@@ -215,6 +215,7 @@ replay: import
 # report what the sides left on the table — a unit that stood still, funds never
 # spent, a Command Power banked to the end, a tank walked into three guns.
 #   make replay-report REPLAY=<file> [ARGS="--team=2"]
+#   make replay-report REPLAY=<dir>   # surveys every .jsonl in it: survey.md + survey.json
 # Every counterfactual comes from the rules, never from the planner, so a finding
 # is about the game rather than about one revision of ai/. It is evidence and not
 # a gate — several detectors fire on a doctrine playing exactly as intended — so
