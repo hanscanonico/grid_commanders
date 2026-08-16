@@ -16,12 +16,23 @@ signal picked(campaign_id: StringName)
 signal cancelled
 
 const _TITLE_SIZE := 15
-## Six cards, the page's chrome and no scrollbar inside 360px: the card is as tall
-## as its four lines of type and no taller, because a war the player has to scroll
-## to is a war the picker did not offer.
-const _ROW_HEIGHT := 40
+## Six cards, the page's chrome and no scrollbar inside 360px. The card is its three
+## lines of type — 40px, measured off their own fonts — plus a margin above and
+## below, because a card whose last line sat on its own border read as clipped copy;
+## the two separations below are what pays for that margin, the page offering 261px
+## of frame at the old spacing and 269 at this one against the six cards' 268. A war
+## the player has to scroll to is a war the picker did not offer, so all four numbers
+## are measured rather than guessed.
+const _ROW_HEIGHT := 43
 const _ROW_WIDTH := 460
 const _THUMB := Vector2(88, 36)
+const _PAGE_SEPARATION := 4
+const _CARD_SEPARATION := 2
+## The card's two micro lines are the button's own ink, faded — full ink is the
+## headline's. Both stay clear of `apply_button`'s 0.6 disabled fade, which is what
+## a card picking a grey of its own read as on the flagship's red.
+const _ANTAGONIST_FADE := 0.85
+const _PREMISE_FADE := 0.7
 
 var _terrain := TerrainDB.load_default()
 var _title: Label
@@ -88,7 +99,7 @@ func _build() -> void:
 	add_child(margin)
 
 	var main := VBoxContainer.new()
-	main.add_theme_constant_override("separation", 6)
+	main.add_theme_constant_override("separation", _PAGE_SEPARATION)
 	margin.add_child(main)
 
 	_title = Label.new()
@@ -109,7 +120,7 @@ func _build() -> void:
 	main.add_child(frame)
 
 	_rows = VBoxContainer.new()
-	_rows.add_theme_constant_override("separation", 3)
+	_rows.add_theme_constant_override("separation", _CARD_SEPARATION)
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	frame.add_child(_rows)
 
@@ -176,10 +187,11 @@ func _fill(
 ## three (where it is fought, who it is against, what it is about). The board is
 ## the first mission's, drawn by `MapThumbnail`, so the miniature is a truthful
 ## picture of the war's opening ground rather than a second opinion about it.
-## Children of a button, so every one of them ignores the mouse — and the headline
-## is set in `ink`, the button's own resolved label colour, because a card that
-## picked its own would read white on the cream rows and dark on the flagship's
-## red. `UiTheme.apply_button` is still the one authority for that colour.
+## Children of a button, so every one of them ignores the mouse — and all three
+## lines are set in `ink`, the button's own resolved label colour, the two micro
+## ones faded off it, because a card that picked its own would read white on the
+## cream rows and dark on the flagship's red. `UiTheme.apply_button` is still the
+## one authority for that colour.
 func _row_face(campaign: CampaignDefinition, progress: CampaignState, ink: Color) -> Control:
 	var face := HBoxContainer.new()
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -197,9 +209,9 @@ func _row_face(campaign: CampaignDefinition, progress: CampaignState, ink: Color
 	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	words.add_child(_headline(row_text(campaign, progress), ink))
 	if not campaign.antagonist.is_empty():
-		words.add_child(_micro(campaign.antagonist.to_upper(), UiTheme.INK_3, 1))
+		words.add_child(_micro(campaign.antagonist.to_upper(), _faded(ink, _ANTAGONIST_FADE), 1))
 	if not campaign.premise.is_empty():
-		words.add_child(_micro(campaign.premise, UiTheme.NEUTRAL_LIGHT, 2))
+		words.add_child(_micro(campaign.premise, _faded(ink, _PREMISE_FADE), 2))
 	face.add_child(words)
 	return face
 
@@ -229,10 +241,18 @@ func _headline(text: String, ink: Color) -> Label:
 	return label
 
 
+## The card's ink, faded — never a grey of its own, so the fade is right on cream
+## and on the flagship's red by construction.
+static func _faded(ink: Color, amount: float) -> Color:
+	return Color(ink, ink.a * amount)
+
+
 ## A wrapped, clipped line is measured off its own font: a `Label` that both wraps
 ## and clips reports a 1x1 minimum, so left to itself it lays out invisible, and
 ## `get_line_height()` answers for the default theme until the label is in a tree.
-## With no line spacing a line is exactly the font's height.
+## With no line spacing a line is exactly the font's height. The cut is advertised
+## on the last line that fits: a premise is a teaser, and one that stops mid-clause
+## with no ellipsis reads as broken copy instead.
 func _micro(text: String, ink: Color, lines: int) -> Label:
 	var label := Label.new()
 	label.text = text
@@ -241,6 +261,7 @@ func _micro(text: String, ink: Color, lines: int) -> Label:
 	label.add_theme_color_override("font_color", ink)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.max_lines_visible = lines
 	label.add_theme_constant_override("line_spacing", 0)
 	label.custom_minimum_size.y = UiTheme.stat().get_height(UiTheme.SIZE_MICRO) * lines
