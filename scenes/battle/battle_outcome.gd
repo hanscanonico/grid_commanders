@@ -198,7 +198,7 @@ func accepts_action(button: Button) -> bool:
 ## Dominion win!" when a side won together — or "Draw" for the one case with no
 ## winner: a watched match that hit the day cap with every tiebreak level.
 ##
-## With exactly one human side at the table it is the viewer's own verdict
+## With exactly one human side at the table it is that side's own verdict
 ## instead, the way a mission's already is: a solo player should not have to work
 ## out from a faction name whether that was them. The faction is not lost — it
 ## moves to the line below.
@@ -215,30 +215,34 @@ func _result_text() -> String:
 		)
 	if _result_winner == 0:
 		return "Draw"
-	if _one_human_side():
-		var viewer := _battle.perspective.viewing_team()
-		return "Victory!" if _battle.game.allied(viewer, _result_winner) else "Defeat"
+	var human := _human_team()
+	if human != 0:
+		return "Victory!" if _battle.game.allied(human, _result_winner) else "Defeat"
 	return "%s!" % _winner_sentence()
 
 
-## Whether one side of this match, and only one, is played by people. Only then
-## does "did *you* win?" have a single answer: a hot-seat match has two players
-## owed opposite verdicts and a watched or replayed one has none at all.
+## The seat the people at the table play, and 0 when "did *you* win?" has no
+## single answer: a hot-seat match has two players owed opposite verdicts and a
+## watched or replayed one has none at all. Any seat of the one human side will
+## do — they share a verdict — so this is its lowest.
 ##
-## Read off the staged seating rather than the live `ai_teams`, so a seat handed
-## to the computer through the Auto row cannot reword the result mid-match.
-func _one_human_side() -> bool:
+## Read off the staged seating rather than the live `ai_teams` or the live
+## viewer, both of which the Auto row moves: handing a seat to the computer
+## mid-match must not reword the result, and a player who put their *own* seat on
+## Auto is watching through the seat on turn, which at the end of the match is the
+## winner's — so the viewer would call every outcome a victory.
+func _human_team() -> int:
 	var game := _battle.game
 	var humans: Array[int] = []
 	for team: int in game.teams:
 		if team not in _seated_ai:
 			humans.append(team)
 	if humans.is_empty():
-		return false
+		return 0
 	for team: int in humans:
 		if not game.allied(humans[0], team):
-			return false
-	return true
+			return 0
+	return humans[0]
 
 
 ## Who won, in words: "Verdant League wins", or "Meridian Coalition & Iron
@@ -266,7 +270,7 @@ func _winner_sentence() -> String:
 
 
 ## The line under the lockup: the day it took, who won where the title above said
-## only whether the viewer did, and on a longer match who fell on the way.
+## only whether the player did, and on a longer match who fell on the way.
 func _day_text() -> String:
 	var day := "Day %d" % _battle.game.day
 	var outcome := CampaignSession.outcome
@@ -279,7 +283,7 @@ func _day_text() -> String:
 		var stars := "★".repeat(outcome.stars) + "☆".repeat(maxi(0, most - outcome.stars))
 		return "%s  ·  %s" % [day, stars]
 	var clauses := PackedStringArray([day])
-	if _result_winner != 0 and _one_human_side():
+	if _result_winner != 0 and _human_team() != 0:
 		clauses.append(_winner_sentence())
 	var standings := _standings_text()
 	if standings != "":
