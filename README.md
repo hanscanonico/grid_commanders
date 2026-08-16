@@ -389,7 +389,7 @@ Any Godot 4.7+ works too — open the project folder in the editor.
 
 ## Main menu
 
-The game boots to the menu: pick a map, set the **seats**, pick a **Difficulty** and a **Speed**,
+The game boots to the menu: pick a map, set the **seats**, pick a **Speed**,
 toggle **Fog of war** and **Battle animations** (the full-screen combat and capture cut-ins — a saved
 preference, on by default),
 then press **Start**, which opens the **commander selection page**; **Continue** skips selection and
@@ -418,11 +418,12 @@ grouping together (**Duel** seats the opposite pair, 1 and 3). **Start** greys o
 fewer than two armies are seated or the badges leave nobody with anyone to fight.
 
 Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
-count, property count and pitch beneath the grid, and **Difficulty**, **Speed**, **Fog of war** and
-**Battle animations** each carry a permanent one-line explanation. **Difficulty** is match-wide — it
-tunes every CPU seat at the table, never one of them — and greys out the moment there is no computer
-seated at all, coming back as soon as one is. Each setting's dotted-underlined label — **Speed**,
-**Difficulty**, **Fog of war**, **Battle animations** — still elaborates in a tip anchored to it, on
+count, property count and pitch beneath the grid, and **Speed**, **Fog of war** and
+**Battle animations** each carry a permanent one-line explanation. How well the computer plays is
+not a match-wide setting: each row of the seat strip carries a tier chip that cycles
+**Easy** / **Normal** / **Difficult** / **Brutal** and goes inert on a row the computer is not
+playing (see Difficulty below). Each setting's dotted-underlined label — **Speed**,
+**Fog of war**, **Battle animations** — still elaborates in a tip anchored to it, on
 hover or on keyboard focus, and so do the map cells and the line under **Continue**; leaving, tabbing
 away or pressing Escape dismisses one.
 
@@ -503,7 +504,11 @@ mouse, keyboard, or controller throughout.
 - A confirm the board refuses says why, in a chip beside the cursor that fades on its own and never
   blocks play: *Already acted.* on one of yours that has spent its day, *Ready next day.* on one you
   built this turn, *Occupied.* on a destination in range held by a friendly unit the mover can
-  neither load into nor join, and *CPU turn.* while the computer is playing
+  neither load into nor join, *Out of reach.* on a cell the mover cannot get to, *No target there.*
+  on a square holding nothing to shoot, *Cannot unload there.* on ground the cargo cannot step onto,
+  and *CPU turn.* while the computer is playing. The Fire key answers the same way rather than dying
+  quietly — *Power charging: 4/9.* and its five siblings, all of them
+  `scenes/battle/battle_power.gd`'s
 - Cancel *while the computer is playing* pauses it, and the top bar says so before you press it
   (`CPU PLAYING   ESC · PAUSE`). The turn stops at its next command rather than mid-animation, so
   the press is answered by a *Pausing…* chip and the board settles a beat later under the same map
@@ -727,7 +732,7 @@ what was standing there.
 
 The AI charges and fires powers too, on its own commander's judgement of the right moment. Its
 meter is shown while it plays, reading `READY · AI` where yours offers the shortcut: no Fire button
-appears and the key is refused — it is not yours to press.
+appears and the key is refused out loud (*The computer has this seat.*) — it is not yours to press.
 
 **Quotes.** A power's activation card opens with the general speaking — a short in-character
 line above the power's name, beside their portrait. The lines are data like everything else
@@ -839,8 +844,11 @@ button reads **Resume** instead when that mission is the one you saved midway. A
 every objective at once (or by ordinary tactical victory) and lost by any failure condition — or by
 tactical defeat, and **losing outranks winning**: a deadline that expires on the very board that
 completed the objective is a failure. The shipped missions are lost three ways where a deadline
-used to be the only one in the game: 85 of them run out of days, 20 spend a loss limit, and 6 lose
-somebody the board named and you were told to keep alive.
+used to be the only one in the game: some run out of days, some spend a loss limit, and some lose
+somebody the board named and you were told to keep alive. The deadline stays only where a
+time-shaped primary makes the clock the mission's own subject — on an ordinary capture the par day
+carries the pressure without taking the match away — so it is no longer the default it once was
+(24 missions today, against a loss limit's 20 and a protected unit's 6).
 A mission asks for more than the enemy's headquarters: take a cell or so many properties, hold out
 to a day, **hold** named ground for a run of whole days, get a number of units onto an **exit
 zone**, **destroy** or **keep alive** a unit the board names, break one named **army**, or finish
