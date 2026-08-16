@@ -420,7 +420,8 @@ func _allied_seats(sides: Dictionary[int, int]) -> Array[int]:
 
 ## Mean and median over the matches that resolved — an undecided match has no
 ## length to average, only a horizon it outlived, so counting it as `days_cap`
-## would report the horizon as a measurement.
+## would report the horizon as a measurement. A run that decided nothing reports
+## 0.0, which `decided` beside it is what tells apart from a real average.
 func _mean(days: Array[int]) -> float:
 	if days.is_empty():
 		return 0.0
