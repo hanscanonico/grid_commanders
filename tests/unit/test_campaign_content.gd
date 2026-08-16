@@ -131,51 +131,22 @@ func test_every_mission_builds_the_match_it_states() -> void:
 			)
 
 
-## D9's own clause. A mission that scripts nothing is playable, which is why it
-## is held here rather than by `definition_error` — the bar is the content's.
-func test_every_mission_carries_a_beat() -> void:
+## The bars a mission clears by being content somebody meant to write rather than
+## by being playable: D9's own clause (a mission that scripts nothing plays
+## perfectly well), a briefing with nothing to say when it is won, a seat cast
+## off the roster, and the deadline pair — one filed as a goal, and a par past
+## the mission's own clock.
+func test_every_mission_is_content_somebody_authored() -> void:
 	for campaign in db.all():
 		for mission: MissionDefinition in campaign.missions:
-			assert_false(
-				mission.events.is_empty(), "%s/%s scripts nothing" % [campaign.id, mission.id]
-			)
+			assert_eq(mission.content_error(commander_db), "", "%s/%s" % [campaign.id, mission.id])
 
 
-## A visible goal met before the first command is a free checkmark: fw11 shipped
-## with "keep our own headquarters/base" on ground the player already owned, and
-## `board_error` cannot see it — the mission is not *over*, two of its goals just
-## cost nothing. Two exemptions, each for what it is rather than where it is:
-## a hidden objective is not judged until an event reveals it, and an
-## `AllySurvivesObjective` is met exactly while the war is going well — "keep the
-## marshal in the field" opens true and is the one goal that can fall back false.
-func test_no_goal_is_met_before_the_first_command() -> void:
-	for campaign in db.all():
-		for mission: MissionDefinition in campaign.missions:
-			var map := _map_of(mission)
-			if map == null:
-				continue
-			var seats: Array[int] = mission.seats.duplicate()
-			var state := GameState.create(map, unit_db, chart, {}, seats)
-			if state == null:
-				continue
-			var tally := MissionProgress.new()
-			tally.observe(state, mission.player_team)
-			for list: Array in [mission.objectives, mission.bonus_objectives]:
-				for objective: MissionObjective in list:
-					if objective.hidden or objective is AllySurvivesObjective:
-						continue
-					assert_false(
-						objective.is_met(state, mission.player_team, tally),
-						(
-							"%s/%s: '%s' is met before the first command"
-							% [campaign.id, mission.id, objective.text]
-						)
-					)
-
-
-## Two questions only the board a mission opens on can answer: whether it is
-## already over before the first command, and whether an objective standing
-## beside a match-ending one is ever judged.
+## Three questions only the board a mission opens on can answer: whether it is
+## already over before the first command, whether an objective standing beside a
+## match-ending one is ever judged, and whether a visible goal was met at deploy —
+## fw11 shipped with "keep our own headquarters/base" on ground the player
+## already owned.
 func test_every_mission_is_still_being_played_on_the_board_it_opens_on() -> void:
 	for campaign in db.all():
 		for mission: MissionDefinition in campaign.missions:
@@ -187,60 +158,6 @@ func test_every_mission_is_still_being_played_on_the_board_it_opens_on() -> void
 			if state == null:
 				continue
 			assert_eq(mission.board_error(state), "", "%s/%s" % [campaign.id, mission.id])
-
-
-func test_every_seat_is_cast_from_the_shipped_roster() -> void:
-	for campaign in db.all():
-		for mission: MissionDefinition in campaign.missions:
-			for team: int in mission.commanders:
-				var id: StringName = mission.commanders[team]
-				assert_true(
-					commander_db.has(id),
-					"%s/%s seats '%s', who is not on the roster" % [campaign.id, mission.id, id]
-				)
-
-
-## `objectives` and `bonus_objectives` both read "satisfied = good", and a
-## deadline's truth is "the day has passed" — so in the first it is a mission won
-## by running out of time and in the second a star paid for being slow. It
-## belongs in `failures` alone.
-func test_no_deadline_is_filed_as_a_goal() -> void:
-	for campaign in db.all():
-		for mission: MissionDefinition in campaign.missions:
-			for objective: MissionObjective in mission.objectives + mission.bonus_objectives:
-				assert_false(
-					objective is DayDeadlineObjective,
-					"%s/%s files a deadline as a goal" % [campaign.id, mission.id]
-				)
-
-
-func test_every_mission_that_speaks_says_something_when_it_is_won() -> void:
-	for campaign in db.all():
-		for mission: MissionDefinition in campaign.missions:
-			if mission.briefing.is_empty():
-				continue
-			assert_false(
-				mission.victory.is_empty(),
-				"%s/%s briefs the player and then says nothing" % [campaign.id, mission.id]
-			)
-
-
-## Par has to be reachable inside the clock, or the speed star is unearnable.
-func test_par_falls_inside_the_missions_own_deadline() -> void:
-	for campaign in db.all():
-		for mission: MissionDefinition in campaign.missions:
-			if mission.par_day <= 0:
-				continue
-			for failure: MissionObjective in mission.failures:
-				if failure is DayDeadlineObjective:
-					assert_lte(
-						mission.par_day,
-						(failure as DayDeadlineObjective).last_day,
-						(
-							"%s/%s: par %d is past its own deadline"
-							% [campaign.id, mission.id, mission.par_day]
-						)
-					)
 
 
 ## A speaker who is not on the roster prints as a blank name beside real
@@ -256,20 +173,7 @@ func test_every_spoken_line_names_a_general_who_exists() -> void:
 ## campaign of them is the thing that was wrong.
 func test_most_of_a_campaigns_briefing_is_spoken() -> void:
 	for campaign in db.all():
-		var spoken := 0
-		var total := 0
-		for mission: MissionDefinition in campaign.missions:
-			for line: MissionLine in mission.briefing + mission.victory:
-				total += 1
-				if not line.is_narration():
-					spoken += 1
-		if total == 0:
-			continue
-		assert_gt(
-			float(spoken) / float(total),
-			0.5,
-			"%s: only %d of %d story lines have a speaker" % [campaign.id, spoken, total]
-		)
+		assert_eq(campaign.speech_error(), "", "campaign '%s'" % campaign.id)
 
 
 ## `DifficultyDB.by_id` falls back to Normal for an unknown id — right for a save

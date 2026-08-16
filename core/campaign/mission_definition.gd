@@ -184,10 +184,11 @@ func definition_error(map: MapData, unit_db: UnitDB) -> String:
 	return _carry_error(map)
 
 
-## Why this mission could not be played on the board it opens on, or "". The two
-## questions `definition_error` cannot ask, both of which need a state: a map
-## deals every seat it names while a match may have closed some, and a verdict is
-## `MissionRuntime`'s to give.
+## Why this mission could not be played on the board it opens on, or "". The
+## questions `definition_error` cannot ask, all of which need a state: a map
+## deals every seat it names while a match may have closed some, a verdict is
+## `MissionRuntime`'s to give, and whether a goal is already met is the opening
+## board's answer.
 ##
 ## Asked by the content gate with the board a mission actually opens on, which is
 ## `MissionEffect.board_error`'s split at the width a whole mission has.
@@ -197,7 +198,10 @@ func board_error(state: GameState) -> String:
 	var opening := MissionRuntime.new(self).evaluate(state, tally)
 	if opening.is_over():
 		return "mission '%s' is already over on the board it opens on: %s" % [id, opening.reason]
-	return _decorative_objectives_error(state)
+	var decorative := _decorative_objectives_error(state)
+	if decorative != "":
+		return decorative
+	return _free_goals_error(state, tally)
 
 
 ## Why a primary of this mission could never be judged, or "".
@@ -216,6 +220,25 @@ func _decorative_objectives_error(state: GameState) -> String:
 				"mission '%s': '%s' ends the match, so the objectives beside it are never judged"
 				% [id, objective.text]
 			)
+	return ""
+
+
+## Why a goal of this mission costs nothing, or "". A visible goal already met on
+## the opening board is a free checkmark — fw11 shipped with "keep our own
+## headquarters" on ground the player already owned — and the verdict above cannot
+## see it: the mission is not *over*, two of its goals just cost nothing.
+##
+## Two exemptions, each for what the objective is rather than where it is: a
+## hidden objective is not judged until an event reveals it, and an
+## `AllySurvivesObjective` is met exactly while the war is going well — "keep the
+## marshal in the field" opens true and is the one goal that can fall back false.
+func _free_goals_error(state: GameState, tally: MissionProgress) -> String:
+	for list: Array in [objectives, bonus_objectives]:
+		for objective: MissionObjective in list:
+			if objective.hidden or objective is AllySurvivesObjective:
+				continue
+			if objective.is_met(state, player_team, tally):
+				return "mission '%s': '%s' is met before the first command" % [id, objective.text]
 	return ""
 
 
@@ -363,6 +386,44 @@ func _carry_error(map: MapData) -> String:
 		slots += 1
 	if carry_in and slots == 0:
 		return "mission '%s' carries an army in and its board has no carry slot" % id
+	return ""
+
+
+## Why this mission is not content anybody authored, or "". Split from
+## `definition_error` because every bar here is a mission that plays perfectly
+## well: it can be launched, won and lost, and it is still not a mission somebody
+## meant to write. D9's own clause is the first of them.
+##
+## The deadline pair is one rule read from both ends. `objectives` and
+## `bonus_objectives` both read "satisfied = good" while a deadline's truth is
+## "the day has passed", so in the first it is a mission won by running out of
+## time and in the second a star paid for being slow — it belongs in `failures`
+## alone. And where one is authored, `par_day` has to fall inside it or the speed
+## star is unearnable.
+func content_error(commander_db: CommanderDB) -> String:
+	if events.is_empty():
+		return "mission '%s' scripts nothing" % id
+	if not briefing.is_empty() and victory.is_empty():
+		return "mission '%s' has a briefing but nothing to say when it is won" % id
+	for team: int in commanders:
+		var commander_id: StringName = commanders[team]
+		if not commander_db.has(commander_id):
+			return (
+				"mission '%s': seat %d is cast as '%s', who is not on the roster"
+				% [id, team, commander_id]
+			)
+	for objective: MissionObjective in objectives + bonus_objectives:
+		if objective is DayDeadlineObjective:
+			return "mission '%s' files a deadline as a goal" % id
+	return _par_error()
+
+
+func _par_error() -> String:
+	if par_day <= 0:
+		return ""
+	for failure: MissionObjective in failures:
+		if failure is DayDeadlineObjective and par_day > (failure as DayDeadlineObjective).last_day:
+			return "mission '%s': par %d is past its own deadline" % [id, par_day]
 	return ""
 
 

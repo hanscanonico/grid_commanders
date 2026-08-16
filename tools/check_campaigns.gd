@@ -78,6 +78,11 @@ func _check_campaign(
 	var block := campaign.block_error()
 	if block != "":
 		_fail(block)
+	# The sixth: a war told in narration is the dialogue pass undone, and no one
+	# mission's narrator line is the fault.
+	var speech := campaign.speech_error()
+	if speech != "":
+		_fail(speech)
 	for page: CampaignInterlude in campaign.interludes:
 		var interlude := page.definition_error(commander_db)
 		if interlude != "":
@@ -115,15 +120,11 @@ func _check_mission(
 	var story := mission.story_error(commander_db)
 	if story != "":
 		_fail("%s: %s" % [where, story])
-	for team: int in mission.commanders:
-		var commander_id: StringName = mission.commanders[team]
-		if not commander_db.has(commander_id):
-			_fail(
-				(
-					"%s: seat %d is cast as '%s', who is not on the roster"
-					% [where, team, commander_id]
-				)
-			)
+	# The bars a mission clears by being content somebody meant to write rather
+	# than by being playable — D9's own clause among them.
+	var content := mission.content_error(commander_db)
+	if content != "":
+		_fail("%s: %s" % [where, content])
 	# The launch has to actually build, which is the only check that proves the
 	# seating, the grouping and the board agree with one another.
 	var seats: Array[int] = mission.seats.duplicate()
@@ -134,15 +135,9 @@ func _check_mission(
 		# seating here instead sent an author looking at the wrong line.
 		_fail("%s: the board would not build (see the GameState error above)" % where)
 		return
-	if not mission.briefing.is_empty() and mission.victory.is_empty():
-		_fail("%s: has a briefing but nothing to say when it is won" % where)
-	# D9's own clause: every mission carries a beat. A mission that scripts
-	# nothing is playable, so this is a content bar rather than a definition one.
-	if mission.events.is_empty():
-		_fail("%s: scripts nothing" % where)
-	# The board a mission opens on answers two things the map cannot: whether the
-	# mission is over before the first command, and whether an objective beside a
-	# match-ending one is ever judged.
+	# The board a mission opens on answers three things the map cannot: whether the
+	# mission is over before the first command, whether an objective beside a
+	# match-ending one is ever judged, and whether a goal cost anything at all.
 	var board := mission.board_error(state)
 	if board != "":
 		_fail("%s: %s" % [where, board])
