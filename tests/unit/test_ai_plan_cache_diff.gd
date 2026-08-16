@@ -83,9 +83,10 @@ func before_each() -> void:
 
 
 ## The header's rule, enforced: a dial the cache is only exact for because nothing
-## turns it on is the silent divergence this file exists to refuse, and until this
-## walk existed two shipped dials had been through the gap. The same shape
-## `test_arena_blocks.gd` uses to catch a weight that fell off the search shelf.
+## turns it on is the silent divergence this file exists to refuse, and two shipped
+## dials had been through the gap until the economy run below caught up with them.
+## The same shape `test_arena_blocks.gd` uses to catch a weight that fell off the
+## search shelf.
 func test_every_dial_is_diffed_or_excluded_with_a_reason() -> void:
 	for property: Dictionary in AIProfile.new().get_property_list():
 		if not (int(property["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE):
@@ -104,12 +105,13 @@ func test_every_dial_is_diffed_or_excluded_with_a_reason() -> void:
 ## than leaving a run claiming to prove something nobody weighs any more.
 func test_the_ledger_names_no_dial_the_profile_has_dropped() -> void:
 	var shape := AIProfile.new()
-	for field: StringName in COVERED:
-		var value: Variant = shape.get(field)
-		assert_true(
-			typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT,
-			"%s is a number AIProfile carries" % field
-		)
+	for ledger: Dictionary in [COVERED, EXCLUDED]:
+		for field: StringName in ledger:
+			var value: Variant = shape.get(field)
+			assert_true(
+				typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT,
+				"%s is a number AIProfile carries" % field
+			)
 
 
 func test_the_shipped_profile_plays_every_board_command_for_command() -> void:
