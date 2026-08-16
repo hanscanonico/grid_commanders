@@ -823,9 +823,12 @@ plan is stated in full below and has no copy there.
   positive costs more than a miss — it sends the reader looking at a doctrine that was playing
   correctly. By the same rule, **a counterfactual is held to what the judged side could see**:
   every detector that weighs an enemy asks `Vision.is_hidden_from` first, so no finding ever
-  accuses a side over a unit the rules hid from it. `abandoned_capture` is the one detector with a fixture and **no** real sighting: three
-  recordings hold 21 partial captures and zero abandonments, so it ships as a watch on a failure the
-  architecture allows rather than on one the shipped planner commits.
+  accuses a side over a unit the rules hid from it. `abandoned_capture` has its first real
+  sightings (2026-08-16): the first three recordings held 21 partial captures and zero
+  abandonments, but a live 4-army Causeway match shows two — a mech and an infantry relaying off
+  the same property on consecutive days, the relay `capture_claim_depth = 0` permits — so it now
+  watches a failure the shipped planner has been seen to commit; enabling the claim dial is a
+  measured retune, not a bugfix.
   `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was
   survivable**, since a unit already inside the same fire did not walk into anything and reporting
   it buries the moves that did. `oscillation` carries the same shape from the other side: it says
