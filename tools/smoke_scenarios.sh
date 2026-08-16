@@ -226,6 +226,10 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # `menu_replays` opens the recordings page over a posed list, for the reason
 # `menu_with_save` poses a save: how many matches the machine running the sweep
 # happens to have played is not something a frame may depend on.
+# `menu_commander_select` is the page Start opens, which no frame held either:
+# the faction tabs, the roster grid and the seat chips. It photographs the page
+# as it opens rather than driving it, because Random draws with the global RNG
+# and this sweep's frames are compared byte for byte.
 # `menu_setup_context` additionally poses an all-human table and proves the
 # tutorial board leads, static facts/help, and disabled AI difficulty — a table
 # with no computer at it has none to tune — before photographing them. It opens
@@ -324,7 +328,7 @@ DEFAULT_MODES=(
 	capture_cutin capture_cutin_partial capture_cutin_skip capture_cutin_iron_commander
 	menu_with_save menu_no_save menu_setup_context menu_four_seats menu_replays
 	menu_campaigns menu_campaign_hub menu_campaign_brief menu_campaign_debrief
-	menu_campaign_interlude menu_campaign_deep
+	menu_campaign_interlude menu_campaign_deep menu_commander_select
 )
 
 if [[ ! -x "$GODOT" ]]; then
