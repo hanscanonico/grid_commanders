@@ -124,6 +124,46 @@ func test_the_best_shot_available_is_not_a_finding() -> void:
 	assert_eq(_count(report, "worse_shot"), 0)
 
 
+## A kill is worth only the HP that was left, so a healthy dearer target outbids
+## every finishing blow in funds — which had the detector accusing the planner of
+## the one thing it was doing right, on 24 of the 27 findings two recorded
+## matches held.
+func test_a_kill_is_not_displaced_by_a_richer_shot_that_only_chips() -> void:
+	var state := _bare_state()
+	_stand(state, &"tank", 1, Vector2i(3, 1))
+	var dying := _stand(state, &"infantry", 2, Vector2i(2, 1))
+	dying.hp = 10  # what the tank finished
+	_stand(state, &"artillery", 2, Vector2i(4, 1))  # worth far more, and it survives
+	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [2, 1]}])
+	assert_eq(_count(report, "worse_shot"), 0)
+
+
+## The rule protects a kill and never argues for one: what a kill is worth past
+## the funds it collects is the planner's own dial, so a cheap one left in range
+## is not evidence of anything.
+func test_a_kill_worth_less_than_the_shot_taken_is_not_a_finding() -> void:
+	var state := _bare_state()
+	_stand(state, &"tank", 1, Vector2i(3, 1))
+	var dying := _stand(state, &"infantry", 2, Vector2i(2, 1))
+	dying.hp = 10
+	_stand(state, &"artillery", 2, Vector2i(4, 1))
+	assert_eq(
+		_count(_run(state, [{"c": "attack", "path": [[3, 1]], "target": [4, 1]}]), "worse_shot"), 0
+	)
+
+
+## A kill that is also the richer shot is still the shot that was there to take.
+func test_a_richer_kill_in_range_is_the_better_shot() -> void:
+	var state := _bare_state()
+	_stand(state, &"tank", 1, Vector2i(3, 1))
+	_stand(state, &"infantry", 2, Vector2i(2, 1))  # the cheap one it shot
+	var gun := _stand(state, &"artillery", 2, Vector2i(4, 1))
+	gun.hp = 30  # dearer even at a third, and the tank finishes it
+	var report := _run(state, [{"c": "attack", "path": [[3, 1]], "target": [2, 1]}])
+	assert_eq(_count(report, "worse_shot"), 1)
+	assert_string_contains(_first(report, "worse_shot").detail, "kill")
+
+
 ## The exchange is priced in funds, and that is the whole of what makes this
 ## detector agree with the planner it is reading. A quarter of an md tank is worth
 ## several infantry outright, so a reading in raw HP percentages calls the heavy

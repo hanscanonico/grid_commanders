@@ -149,6 +149,31 @@ class Hoard:
 		)
 
 
+## A run of consecutive turns one side ended holding a charged Command Power it
+## never fired. Held open and released the same way a `Hoard` is, so the number
+## the reader is given is the length of the hold rather than the length it had
+## reached the first turn it was worth saying anything about.
+class Bank:
+	var day := 0
+	var turns := 0
+	var commander := ""
+
+	func note(p_day: int, p_commander: String) -> void:
+		if turns == 0:
+			day = p_day
+			commander = p_commander
+		turns += 1
+
+	func detail() -> String:
+		return "%s has held a charged Command Power for %d turns" % [commander, turns]
+
+
+## What one shot was worth, in the two currencies `_check_shot` reads it in.
+class Trade:
+	var funds := 0
+	var lethal := false
+
+
 ## Where a capturer stood when its turn opened and the property ground it could
 ## have started taking from there. The cell is carried with the ground because the
 ## finding is read on the board being handed over, where the unit has since walked:
@@ -251,10 +276,9 @@ class Walk:
 	var quiet: Dictionary = {}
 	## Unit -> consecutive turns it has held cargo without dropping any.
 	var loaded: Dictionary = {}
-	## team -> consecutive turns ended with a full meter unfired.
+	## team -> the run of turns ended with a full meter unfired it is in the middle
+	## of, or absent.
 	var banked: Dictionary = {}
-	## team -> whether the hold it is in the middle of has already been reported.
-	var banked_reported: Dictionary = {}
 	## The board this turn's Command Power was fired into, or null — no power, or a
 	## ROUND one, which buys the opponent's turn rather than this one.
 	var spend: Spend = null
@@ -330,6 +354,7 @@ static func run(
 			walk.built = false
 			_open_turn(walk, state)
 	_close_hoards(walk)
+	_close_banks(walk)
 	report.days = state.day
 	report.winner = state.winner
 	report.findings.sort_custom(_by_weight)
@@ -402,6 +427,15 @@ static func _snapshot_power(state: GameState) -> Spend:
 ## dealt is worth less what the counter costs — because that is the currency the
 ## planner chooses a target in, so a finding is about the board and not about a
 ## second opinion on what a shot is for.
+##
+## Lethality amends that reading in one direction: a shot that takes a unit off
+## the board is never displaced by one that only chips a dearer one. Read in
+## funds alone, every finishing blow the planner landed was a finding — a kill is
+## worth only the HP that was left, so a healthy target always outbids it. It
+## does not accuse in the other direction: a kill left in range still has to be
+## the richer shot to be reported, because what a kill is worth *beyond* those
+## funds is the planner's own dial and this instrument does not hold an opinion
+## about it.
 static func _check_shot(walk: Walk, state: GameState, attack: AttackCommand) -> void:
 	var from: Vector2i = attack.path[attack.path.size() - 1]
 	var target := state.unit_at(attack.target_cell)
@@ -422,7 +456,7 @@ static func _check_shot(walk: Walk, state: GameState, attack: AttackCommand) -> 
 		if AttackRange.ready_shot(state, attack.unit, other) == null:
 			continue
 		var value := _exchange(state, attack.unit, from, other)
-		if value > best:
+		if _outranks(value, best):
 			best = value
 			best_target = other
 	if best_target == null:
@@ -433,11 +467,25 @@ static func _check_shot(walk: Walk, state: GameState, attack: AttackCommand) -> 
 		state,
 		attack.unit,
 		(
-			"shot the %s (net %d funds) with the %s in range from the same cell for net %d"
-			% [target.type.id, taken, best_target.type.id, best]
+			"shot the %s (net %d funds) with the %s in range from the same cell %s"
+			% [target.type.id, taken.funds, best_target.type.id, _reading(best)]
 		),
-		best - taken
+		best.funds - taken.funds
 	)
+
+
+## Is `candidate` the shot that should have been taken over `held`? Never at the
+## cost of a kill, and otherwise on the funds the two are priced in.
+static func _outranks(candidate: Trade, held: Trade) -> bool:
+	if held.lethal and not candidate.lethal:
+		return false
+	return candidate.funds > held.funds
+
+
+static func _reading(trade: Trade) -> String:
+	if trade.lethal:
+		return "for a kill at net %d" % trade.funds
+	return "for net %d" % trade.funds
 
 
 ## Did this move walk into a killing ground it was standing outside of?
@@ -601,30 +649,37 @@ static func _close_hoards(walk: Walk) -> void:
 
 ## A meter that sat full while its owner had turns to spend it.
 ##
-## Latched the way `undefended_hq` is: one uninterrupted hold is one finding, and
-## the streak is re-armed only when it actually breaks — the power going off, or
-## the meter dropping below ready. A doctrine that holds a charged power all
-## match is now the common case rather than the edge, so re-arming on the report
-## printed the same sentence every third turn for the whole recording.
+## Held open and released like a `Hoard`: one uninterrupted hold is one finding,
+## said when it actually breaks — the power going off, or the meter dropping
+## below ready — so the length reported is the length it ran to rather than the
+## `BANKED_TURNS` it had reached the first turn it was worth reporting. A hold
+## the recording ends inside is released by `_close_banks`.
 static func _check_power(walk: Walk, state: GameState, team: int) -> void:
 	var co_state := state.commander_state(team)
 	if walk.fired_power or not co_state.is_ready():
-		walk.banked[team] = 0
-		walk.banked_reported[team] = false
+		_release_bank(walk, team)
 		return
-	var streak := int(walk.banked.get(team, 0)) + 1
+	var streak: Bank = walk.banked.get(team, Bank.new())
+	streak.note(state.day, String(co_state.type.id))
 	walk.banked[team] = streak
-	if streak < BANKED_TURNS or walk.banked_reported.get(team, false):
+
+
+static func _release_bank(walk: Walk, team: int) -> void:
+	var streak: Bank = walk.banked.get(team)
+	if streak == null:
 		return
-	walk.banked_reported[team] = true
-	_add(
-		walk,
-		"banked_power",
-		state,
-		null,
-		"%s has held a charged Command Power for %d turns" % [co_state.type.id, streak],
-		streak
-	)
+	walk.banked.erase(team)
+	if streak.turns < BANKED_TURNS:
+		return
+	_add_at(walk, "banked_power", streak.day, team, null, streak.detail(), streak.turns)
+
+
+## Every hold still open when the recording ran out.
+static func _close_banks(walk: Walk) -> void:
+	var teams: Array = walk.banked.keys()
+	teams.sort()
+	for team: int in teams:
+		_release_bank(walk, team)
 
 
 ## A Command Power fired into a board it could not move. `banked_power` reports
@@ -903,8 +958,10 @@ static func _check_oscillation(walk: Walk, state: GameState, unit: Unit) -> void
 # --- shared readings -----------------------------------------------------------
 
 
-## What this exchange is worth to the attacker, **in funds**: the value of the
-## damage dealt less the value of the counter taken back.
+## What this exchange is worth to the attacker: the value of the damage dealt
+## less the value of the counter taken back, **in funds**, and whether the shot
+## finishes the target. Two facts off one forecast, because the caller weighs
+## both and the rules are asked once for both.
 ##
 ## The currency is the point. A unit's HP is worth its cost by the hundredth —
 ## the board's own rate, since `TurnRules._repair` sells missing HP back at it —
@@ -913,13 +970,16 @@ static func _check_oscillation(walk: Walk, state: GameState, unit: Unit) -> void
 ## every time it was offered. That is the same shape the planner scores an attack
 ## in, without its dials: `kill_bonus`, `counter_weight` and `condition_weight`
 ## are opinions about the game and this instrument only asks it for prices.
-static func _exchange(state: GameState, attacker: Unit, from: Vector2i, target: Unit) -> int:
+static func _exchange(state: GameState, attacker: Unit, from: Vector2i, target: Unit) -> Trade:
+	var trade := Trade.new()
 	var shot := CombatResolver.forecast(state, attacker, from, target)
 	if not shot.can_attack:
-		return 0
+		return trade
 	var dealt := mini(shot.attack_damage, target.hp) * target.type.cost
 	var taken := mini(maxi(shot.counter_damage, 0), attacker.hp) * attacker.type.cost
-	return (dealt - taken) / 100
+	trade.funds = (dealt - taken) / 100
+	trade.lethal = shot.attack_damage >= target.hp
+	return trade
 
 
 ## Everything the board could put on `unit` if it stopped at `cell` this turn.

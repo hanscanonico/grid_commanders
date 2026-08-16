@@ -298,10 +298,16 @@ func test_banked_power_counts_a_full_meter_nobody_fires() -> void:
 	co_state.charge = co_state.type.power_cost
 	assert_true(co_state.is_ready(), "the fixture must actually hold a charged power")
 	assert_eq(_count(_run(state, _idle_rounds(2)), "banked_power"), 0)
-	assert_eq(_count(_run(state, _idle_rounds(3)), "banked_power"), 1)
+	var short_hold := _run(state, _idle_rounds(3))
+	assert_eq(_count(short_hold, "banked_power"), 1)
+	assert_eq(_first(short_hold, "banked_power").magnitude, 3)
 	# One uninterrupted hold is one finding however long it runs: holding a meter
-	# all match is what a benefit-gated doctrine does on purpose.
-	assert_eq(_count(_run(state, _idle_rounds(9)), "banked_power"), 1)
+	# all match is what a benefit-gated doctrine does on purpose. The number it
+	# reports is the length it ran to, released here by the recording ending.
+	var long_hold := _run(state, _idle_rounds(9))
+	assert_eq(_count(long_hold, "banked_power"), 1)
+	assert_eq(_first(long_hold, "banked_power").magnitude, 9)
+	assert_string_contains(_first(long_hold, "banked_power").detail, "for 9 turns")
 
 
 ## Latched, not silenced: a hold that really breaks is a second finding. Firing
