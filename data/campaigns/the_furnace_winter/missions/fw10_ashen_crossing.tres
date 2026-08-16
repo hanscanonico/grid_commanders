@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -9,6 +9,11 @@
 [ext_resource type="Script" path="res://core/campaign/triggers/day_before_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/effects/grant_funds_effect.gd" id="9"]
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="10"]
+
+[sub_resource type="Resource" id="Objective_hq"]
+script = ExtResource("2")
+text = "Capture Vance's headquarters."
+cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -48,12 +53,12 @@ text = "Nine days for three checkpoints. Don't stop to hold what's already taken
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "All three open. The odds on that chain holding were never good."
+text = "The crossing's open. The odds on that chain holding were never good."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Every link broken. I will not space them the same way twice."
+text = "The chain didn't hold. I will not space them the same way twice."
 
 [sub_resource type="Resource" id="Trigger_far_depot_ours"]
 script = ExtResource("7")
@@ -133,9 +138,9 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"hard"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2")])
+objectives = Array[Resource]([SubResource("Objective_hq")])
 failures = Array[Resource]([])
-bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
+bonus_objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Objective_2"), SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_far_depots_books"), SubResource("Event_the_ashen_road_runs")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])

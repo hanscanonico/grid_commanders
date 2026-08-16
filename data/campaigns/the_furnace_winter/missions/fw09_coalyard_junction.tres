@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
@@ -13,6 +13,11 @@
 [ext_resource type="Script" path="res://core/campaign/effects/set_flag_effect.gd" id="12"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="13"]
 [ext_resource type="Script" path="res://core/campaign/triggers/unit_destroyed_trigger.gd" id="14"]
+
+[sub_resource type="Resource" id="Objective_hq"]
+script = ExtResource("2")
+text = "Capture Ferrow's headquarters."
+cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Objective_0"]
 script = ExtResource("2")
@@ -171,9 +176,9 @@ commanders = {
 }
 fog_enabled = false
 difficulty = &"normal"
-objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1")])
+objectives = Array[Resource]([SubResource("Objective_hq")])
 failures = Array[Resource]([SubResource("Failure_1")])
-bonus_objectives = Array[Resource]([SubResource("Bonus_rider_a"), SubResource("Bonus_rider_b")])
+bonus_objectives = Array[Resource]([SubResource("Objective_0"), SubResource("Objective_1"), SubResource("Bonus_rider_a"), SubResource("Bonus_rider_b")])
 events = Array[Resource]([SubResource("Event_invoice_submitted"), SubResource("Event_the_strongbox"), SubResource("Event_the_coalyard_runs")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
