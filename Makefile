@@ -107,6 +107,19 @@ bulwark-measure:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_bulwark_measure.gd -- $(BULWARK)
 
+# The same instrument pointed at any four-army board and any tier — the win
+# spread, and how long a match takes to get there (mean_day / median_day /
+# decided_pct), which the two-sided balance reports cannot read at all. Name the
+# board's grouping in the `--sides=` grammar, or `ffa` for the free-for-all
+# every four-seat board's seat strip offers. A measurement, not a gate, exactly
+# as bulwark-measure is. Examples:
+#   make board-measure BOARD="--map=causeway --grouping=ffa --seeds=20"
+#   make board-measure BOARD="--map=compass --grouping=1+3v2+4 --tier=hard"
+BOARD ?=
+board-measure:
+	$(call require-godot)
+	$(GODOT) --headless --path . -s res://tools/run_bulwark_measure.gd -- $(BOARD)
+
 # The Balance Lab: the general instrument the two presets above are special
 # cases of. Any shipped map, any commander at any tier per side, N seeded
 # matches with both seats swapped, and a turn-by-turn timeline of how each one
@@ -341,5 +354,5 @@ gallery-screenshot: import
 	atlases ui-art \
 	audio portraits import \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
-	balance-sim balance-pool bulwark-measure ai-arena arena-report arena-anchors arena-search \
+	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns
