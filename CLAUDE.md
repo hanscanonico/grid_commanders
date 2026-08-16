@@ -820,7 +820,9 @@ plan is stated in full below and has no copy there.
   analyser's eleven detectors each have a fixture that fires them exactly once
   (the `tests/unit/test_replay_*.gd` suites over `maps/fixtures/analysis.txt`), because a false
   positive costs more than a miss — it sends the reader looking at a doctrine that was playing
-  correctly. `abandoned_capture` is the one detector with a fixture and **no** real sighting: three
+  correctly. By the same rule, **a counterfactual is held to what the judged side could see**:
+  every detector that weighs an enemy asks `Vision.is_hidden_from` first, so no finding ever
+  accuses a side over a unit the rules hid from it. `abandoned_capture` is the one detector with a fixture and **no** real sighting: three
   recordings hold 21 partial captures and zero abandonments, so it ships as a watch on a failure the
   architecture allows rather than on one the shipped planner commits.
   `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was
