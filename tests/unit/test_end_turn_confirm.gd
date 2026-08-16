@@ -63,8 +63,17 @@ func test_the_speed_row_steps_its_own_ladder_both_ways() -> void:
 
 func test_the_end_turn_row_takes_either_direction_as_the_other_value() -> void:
 	var fresh: Variant = _pinned_settings()
-	assert_eq(fresh.cycle_row(Settings.END_TURN_ROW, -1), "End-turn check: Off")
-	assert_eq(fresh.cycle_row(Settings.END_TURN_ROW, -1), "End-turn check: On")
+	assert_eq(
+		fresh.cycle_row(Settings.END_TURN_ROW, -1),
+		"End-turn check: Off",
+		"a left press on a two-state row lands on the other state"
+	)
+	assert_false(fresh.end_turn_confirm, "and the row moved the setting, not only the label")
+	assert_eq(
+		fresh.cycle_row(Settings.END_TURN_ROW, -1),
+		"End-turn check: On",
+		"and the same press again lands back"
+	)
 
 
 ## The one row here that reaches outside the instance: every step it takes is
