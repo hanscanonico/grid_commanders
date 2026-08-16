@@ -16,7 +16,7 @@
 
 [sub_resource type="Resource" id="Objective_hq"]
 script = ExtResource("2")
-text = "Capture Ferrow's headquarters at the end of the spur."
+text = "Capture Ferrow's headquarters."
 cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Objective_0"]

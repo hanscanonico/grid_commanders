@@ -12,7 +12,7 @@
 
 [sub_resource type="Resource" id="Objective_hq"]
 script = ExtResource("2")
-text = "Capture Vance's headquarters past the last chamber."
+text = "Capture Vance's headquarters."
 cell = Vector2i(19, 2)
 
 [sub_resource type="Resource" id="Objective_0"]
@@ -53,12 +53,12 @@ text = "Nine days for three checkpoints. Don't stop to hold what's already taken
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "All three open. The odds on that chain holding were never good."
+text = "The crossing's open. The odds on that chain holding were never good."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Every link broken. I will not space them the same way twice."
+text = "The chain didn't hold. I will not space them the same way twice."
 
 [sub_resource type="Resource" id="Trigger_far_depot_ours"]
 script = ExtResource("7")

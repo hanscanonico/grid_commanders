@@ -19,7 +19,7 @@
 
 [sub_resource type="Resource" id="Objective_hq"]
 script = ExtResource("15")
-text = "Capture Ferrow's headquarters at the head of the hill road."
+text = "Capture Ferrow's headquarters."
 cell = Vector2i(21, 2)
 
 [sub_resource type="Resource" id="Objective_0"]
@@ -67,12 +67,12 @@ text = "Eight days. Your raiders are fast. A siege isn't."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "All three relays answer to us. Nothing left on this hill to bounty."
+text = "The hill answers to us. Nothing left on it to bounty."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Three depots short of a paycheck. Vale's going to hear about this."
+text = "A whole hill short of a paycheck. Vale's going to hear about this."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("6")
