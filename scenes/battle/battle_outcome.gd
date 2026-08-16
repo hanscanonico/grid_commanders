@@ -20,6 +20,12 @@ extends RefCounted
 ## Fixed rather than tier-scaled: this is an input safety window, not theatre.
 const INPUT_GUARD_MS := 500
 
+## The horizon a spectated match is scored on when nobody has won it — the arena's
+## own 100 days, deliberately not the Lab's 20: a watched row is a measurement of a
+## match that was already played, a spectated one is a game somebody is watching.
+## Used only where the launch named no `--days=` of its own.
+const SPECTATOR_DAYS := 100
+
 var _battle: Battle
 var victory_screen: VictoryLockup
 
@@ -27,10 +33,11 @@ var victory_screen: VictoryLockup
 ## match came from a Balance Lab spec. Makes the scene announce its result and
 ## exit, which is what turns BS3's replay-fidelity check into a diff.
 var _watching := false
-## Watch mode's day cap, from `--days=`. Read **only** while `_watching`: normal
-## play has no day limit and must not grow one, so a hot-seat or player-vs-AI
-## match is untouched by this.
-var _watch_days_cap := BalanceMatchEngine.DEFAULT_DAYS
+## The day this match is scored on if nobody has won it: `--days=` when the launch
+## wrote one, otherwise the Lab's default for a watched row and `SPECTATOR_DAYS`
+## for a spectated one. Read **only** for a match no person is playing, so a
+## hot-seat or player-vs-AI match is untouched by this and has no day limit.
+var _days_cap := BalanceMatchEngine.DEFAULT_DAYS
 ## The team the victory lockup and the watch line report. `game.winner` for a
 ## match the board decided; a watched match stopped by the day cap is scored on
 ## BalanceMatchEngine.tiebreak instead — the harness's own authority, so the
@@ -64,28 +71,47 @@ func _request_watch_replay() -> void:
 
 
 ## Watch mode's flags and the staged seating, from the setup. Set once at build;
-## normal play leaves the watch defaults, which is why a hot-seat or
-## player-versus-AI match never grows a cap.
+## a launch that named no `--days=` is given the horizon its kind of match is
+## scored on, and a match with a human seat never reads either.
 func configure(watching: bool, days_cap: int, seated_ai: Array[int]) -> void:
 	_watching = watching
-	_watch_days_cap = days_cap
 	_seated_ai = seated_ai.duplicate()
+	_days_cap = days_cap
+	if days_cap == MatchRequest.DAYS_UNSET:
+		_days_cap = BalanceMatchEngine.DEFAULT_DAYS if watching else SPECTATOR_DAYS
 
 
-## Watch mode only (balance plan BS3), and true when it ended the match here. The
-## harness plays while `day <= days_cap` and scores what is left on the board, so
-## most of its rows terminate `day_cap`; without the same seam a watched replay of
-## one would run forever and never print the line the fidelity check diffs. It is
-## scored on the harness's own tiebreak and held beside the sim rather than
-## written into `game.winner`, because the board did not decide this one. Gated on
-## `_watching`: a hot-seat or player-versus-AI match has no day limit and must not
-## grow one.
+## The horizon for a match nobody is playing, and true when it ended the match
+## here. The harness plays while `day <= days_cap` and scores what is left on the
+## board, so most of its rows terminate `day_cap`; without the same seam a watched
+## replay of one would run forever and never print the line the fidelity check
+## diffs (balance plan BS3). A spectated match — every seat given to the computer
+## on the seat strip — has the same defect and no CSV row to end it, so it gets
+## the same seam on `SPECTATOR_DAYS`. Either way the result is scored on the
+## harness's own tiebreak and held beside the sim rather than written into
+## `game.winner`, because the board did not decide this one.
+##
+## A match with a human seat has no day limit and must not grow one.
 func end_watch_on_day_cap() -> bool:
 	var game := _battle.game
-	if not _watching or game.winner != 0 or game.day <= _watch_days_cap:
+	if not _watching and not _all_seats_ai():
+		return false
+	if game.winner != 0 or game.day <= _days_cap:
 		return false
 	_result_winner = BalanceMatchEngine.tiebreak(game)
 	enter_victory()
+	return true
+
+
+## Whether nobody at this table is a person. Asked of the match's own roster —
+## `teams`, which elimination never shrinks — against the *staged* seating, for the
+## reason `_human_team` reads that one: a seat handed to the computer mid-match
+## through the Auto row is still a game somebody is playing, and must not grow a
+## horizon under them. A playback seats no computer at all, so it is never this.
+func _all_seats_ai() -> bool:
+	for team: int in _battle.game.teams:
+		if team not in _seated_ai:
+			return false
 	return true
 
 
