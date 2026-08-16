@@ -17,6 +17,10 @@ extends CommanderType
 ## coast: the shore bonuses are worth firing for ground the army can actually
 ## stand on this turn.
 @export var shore_reach_move: int = 0
+## Tiles of progress a quiet move gives up to stand on the coast — the everyday
+## preference, and the stronger one once Make for the Shore is banked or running.
+@export var shore_stand_tiles: int = 1
+@export var shore_ready_stand_tiles: int = 2
 
 
 func attack_bonus(state: GameState, fight: Engagement) -> int:
@@ -50,6 +54,21 @@ func star_bonus(state: GameState, fight: Engagement) -> int:
 ## OWNER_TURN and each of its bonuses lands inside this turn's exchanges.
 func wants_power(state: GameState, team: int) -> bool:
 	return _can_use_the_shore(state, team) and super(state, team)
+
+
+## Ground advice: his army defends better on the coast, so a quiet move prefers
+## to end there — mildly while the meter fills, more strongly once Make for the
+## Shore is banked or up. The strong case is the other half of the gate above:
+## with no hull and nobody near the coast it refuses to fire, and without this
+## the planner had no reason to walk anyone onto a beach. Preference only, never
+## priced off the shore star — the forecasts already carry that.
+func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
+	if not _is_shore(state, cell):
+		return 0
+	var co_state := state.commander_state(unit.team)
+	if co_state.power_active or co_state.is_ready():
+		return shore_ready_stand_tiles
+	return shore_stand_tiles
 
 
 ## A hull to speed up, a unit already standing on the coast, or one that can be
