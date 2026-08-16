@@ -295,6 +295,32 @@ to do.
 worktree at `d9e7336`. No `.tres` was shipped changed: `data/ai/default.tres` is
 byte-identical to `main`, and no commander file was touched.
 
+#### Voss's advice at three times the seeds (2026-08-16)
+
+The trigger above, taken. `make commander-balance BAL="--commanders=mara_voss --neutral --seeds=36"`
+at both dial positions — 360 non-mirror games each against the no-commander
+planner, three times Arm A's sample, read with Arm A's own arithmetic (her win
+rate over the non-mirror games, which is side-normalized by construction since
+the schedule plays both seatings).
+
+| Arm | Voss win rate | n |
+|---|---:|---:|
+| advice on (`doctrine_weight = 1.0`) | 55.3% | 360 |
+| advice off (`0.0`) | 56.4% | 360 |
+
+**Δ = −1.1 pp, standard error 3.7 pp: flat at 0.3 SE.** The same games read
+paired (both arms play identical scenario/seed/seating triples; 63 flipped to a
+win with advice, 67 flipped away) give 0.35 SE, the same answer. **Arm A's −7.5
+does not reproduce, and no lever is under suspicion** — `stand_value` is not
+named and nothing was retuned. Read as a band rather than a point, ±2 SE spans
+−8.5 to +6.3 pp, so this is "cannot be separated from zero" and not "proved
+harmless": what it rules out is acting on the −7.5. Both runs are 0 rejected
+commands and 0 cap stalls, 540 matches each, all decisive (no draw; a `day_cap`
+match is still decided on the board); first-side bias +43.9 pp on and +32.8 pp
+off, the standing banking item. `reports/` is gitignored, so both sides were
+generated in one worktree at `3634442`; `data/ai/default.tres` was reverted and
+`data/` is byte-clean.
+
 ### Measured after the power-gate pass (2026-08-15)
 
 The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
