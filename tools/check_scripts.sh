@@ -28,12 +28,12 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # Per-file line budgets, tighter than gdlintrc's repo-wide max-file-lines.
 #
 # gdlint takes one ceiling for the whole project, so the longest file sets
-# everybody's — and the longest is the dev-only scenario driver. That left
-# scenes/battle/battle.gd, the production file the ratchet was raised for in the
-# first place, free to grow into its slack without tripping anything. A file
-# listed here is held to its own length instead. scenes/menu/main_menu.gd joined
-# it when COM-97 moved the widget kit out to UiKit: it stopped being the ceiling
-# and would otherwise have inherited the driver's 271 lines of slack.
+# everybody's and every shorter file gets that file's slack for free. The
+# ceiling has been the dev-only scenario driver's and is scenes/battle/battle.gd's
+# again today; either way, a file listed here is held to its own length instead.
+# scenes/menu/main_menu.gd joined it when COM-97 moved the widget kit out to
+# UiKit: it stopped being the ceiling and would otherwise have inherited the
+# driver's 271 lines of slack.
 #
 # Same rule as the gdlintrc ledger: the number is the file's current length, so
 # adding to it means moving something out first, and it comes down whenever the
@@ -135,9 +135,31 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # board does while they are up is BattleCampaign.say_briefing's, holding the card
 # until it is dismissed is BattleAnimator's, and what is left here is the three
 # lines of the dispatch branch itself.
+# Three more files enter at their current length, for the reason the two above
+# are here: each is comfortably under the ceiling, so today nothing at all would
+# say if it doubled.
+#
+# core/save_codec.gd 1332: the second door onto the board, where a silent bug is
+# a corrupted or wrongly accepted save rather than a wrong pixel. Its header is
+# the format's version ledger, so a version bump legitimately buys lines here —
+# the budget moves with it, and the commit says which version it was.
+#
+# ai/ai_unit_action_planner.gd 1074: every scored candidate competes for one
+# AIUnitPlan, which is why combat, capture, dive, join, supply and withdrawal
+# live together — but a new capability is a new `_consider_*`, and the plans it
+# answers to say each one arrives as a scored candidate rather than as a branch
+# grown inside an existing one.
+#
+# scenes/battle/battle_scenario_driver.gd 985: dev-only, and held to its length
+# because it held the ceiling once already and paid COM-94's cut-in split to get
+# out of it. A scenario belongs in its own Battle*Scenario class, and what stays
+# here is the dispatch arm that reaches it.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1423
 scenes/menu/main_menu.gd 1121
+core/save_codec.gd 1332
+ai/ai_unit_action_planner.gd 1074
+scenes/battle/battle_scenario_driver.gd 985
 "
 
 if [[ ! -x "$GODOT" ]]; then
