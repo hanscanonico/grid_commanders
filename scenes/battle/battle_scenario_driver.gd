@@ -227,9 +227,7 @@ func _run_demo(mode: String) -> void:
 	# The campaign family is asked of its own class for the same reason: the modes
 	# that play a mission are BattleMissionScenario's list, not a second copy here.
 	if mode in BattleMissionScenario.MODES:
-		var mission_error := await BattleMissionScenario.new(_battle).run(mode)
-		if mission_error != "":
-			_fail(mission_error)
+		_fail_if(await BattleMissionScenario.new(_battle).run(mode))
 		return
 	match mode:
 		"attack", "resolve":
@@ -275,13 +273,9 @@ func _run_demo(mode: String) -> void:
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
 		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units", "power_range_readout":
-			var error := await BattleFeedbackScenario.new(_battle).run(mode)
-			if error != "":
-				_fail(error)
+			_fail_if(await BattleFeedbackScenario.new(_battle).run(mode))
 		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff", "ai_pause":
-			var transition_error := await BattleTransitionScenario.new(_battle).run(mode)
-			if transition_error != "":
-				_fail(transition_error)
+			_fail_if(await BattleTransitionScenario.new(_battle).run(mode))
 		"powermenu":
 			await _run_power_menu_demo()
 		CAPTURE_POWER_MODE:
@@ -289,9 +283,7 @@ func _run_demo(mode: String) -> void:
 		"ambush", "vanish":
 			_run_vanish_demo(mode)
 		"field_overlays":
-			var overlay_error := await BattleOverlayScenario.new(_battle).run()
-			if overlay_error != "":
-				_fail(overlay_error)
+			_fail_if(await BattleOverlayScenario.new(_battle).run())
 		"preview_fog":
 			await _stage_preview_fog()
 		"power_charging":
@@ -315,9 +307,7 @@ func _run_demo(mode: String) -> void:
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
 		"commander_victory", "victory", "side_victory":
-			var victory_error := await BattleVictoryScenario.new(_battle).run(mode)
-			if victory_error != "":
-				_fail(victory_error)
+			_fail_if(await BattleVictoryScenario.new(_battle).run(mode))
 		"aiturn":
 			# hand the turn to the Blue AI and wait until it plays back to Red
 			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
@@ -592,6 +582,12 @@ func _fail(message: String) -> void:
 	_failed = true
 
 
+## What a scenario class hands back: its complaint, or "" for a clean run.
+func _fail_if(error: String) -> void:
+	if error != "":
+		_fail(error)
+
+
 ## Parks the cursor on open ground and lets the HUD settle before the capture. The
 ## docked bars never cover a tile, so where it rests is only about what the bottom
 ## bar is describing, not about dodging chrome.
@@ -778,12 +774,8 @@ func _stage_menu_after_build_menu() -> void:
 	# hang off to the side of the two words under it.
 	var unit_menu := _battle.action_menu.get_global_rect().size
 	if unit_menu.x >= build_menu.x or unit_menu.y >= build_menu.y:
-		_fail(
-			(
-				"the two-row unit menu measures %s, no smaller than the build menu's %s"
-				% [unit_menu, build_menu]
-			)
-		)
+		var both := [unit_menu, build_menu]
+		_fail("the two-row unit menu measures %s, no smaller than the build menu's %s" % both)
 
 
 ## A control built in code measures and places itself a frame after its children
