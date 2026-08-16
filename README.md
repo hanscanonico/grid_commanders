@@ -507,8 +507,8 @@ mouse, keyboard, or controller throughout.
   neither load into nor join, *Out of reach.* on a cell the mover cannot get to, *No target there.*
   on a square holding nothing to shoot, *Cannot unload there.* on ground the cargo cannot step onto,
   and *CPU turn.* while the computer is playing. The Fire key answers the same way rather than dying
-  quietly — *Power charging: 4/9.* and its five siblings, all of them
-  `scenes/battle/battle_power.gd`'s
+  quietly — *Power charging: 3800/12000.*, in the meter's own numbers, and its five siblings, all of
+  them `scenes/battle/battle_power.gd`'s
 - Cancel *while the computer is playing* pauses it, and the top bar says so before you press it
   (`CPU PLAYING   ESC · PAUSE`). The turn stops at its next command rather than mid-animation, so
   the press is answered by a *Pausing…* chip and the board settles a beat later under the same map
