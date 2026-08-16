@@ -380,7 +380,7 @@ func _block_summary(block: int) -> Button:
 	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var title := _campaign.block_titles[block].to_upper()
 	var length: int = _campaign.block_lengths[block]
-	face.add_child(_row_cell("%s   ·   0/%d   ·   LOCKED" % [title, length], UiTheme.INK_3))
+	face.add_child(_row_cell("%s   ·   0/%d   ·   LOCKED" % [title, length], UiTheme.NEUTRAL_LIGHT))
 	button.add_child(face)
 	return button
 
