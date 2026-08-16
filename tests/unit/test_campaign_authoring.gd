@@ -262,3 +262,138 @@ func test_an_interlude_every_line_of_which_is_gated_is_refused() -> void:
 	assert_string_contains(
 		page.definition_error(Fixture.commander_db()), "one of them has to be the words"
 	)
+
+
+# --- content somebody meant to write ----------------------------------------
+#
+# One test per authority rather than per bar: this file sits at the repo's
+# max-public-methods ceiling, and a bar that stopped firing still names itself in
+# the assert that catches it.
+
+
+func _deadline(last_day: int) -> DayDeadlineObjective:
+	var deadline := DayDeadlineObjective.new()
+	deadline.last_day = last_day
+	return deadline
+
+
+## A mission that clears every content bar, which each assert below then breaks
+## exactly one of.
+func _authored() -> MissionDefinition:
+	var mission := _mission()
+	_writes(mission, HELD, _on_day(1))
+	mission.commanders = {1: &"tomas_reed"}
+	mission.briefing.append(_line("Move on the relay at dawn."))
+	mission.victory.append(_line("And it held."))
+	mission.par_day = 4
+	mission.failures.append(_deadline(6))
+	return mission
+
+
+func test_a_mission_somebody_authored_clears_every_content_bar() -> void:
+	assert_eq(_authored().content_error(Fixture.commander_db()), "")
+	var on_the_last_day := _authored()
+	on_the_last_day.par_day = 6
+	assert_eq(
+		on_the_last_day.content_error(Fixture.commander_db()),
+		"",
+		"par on the deadline's own last day is still earnable"
+	)
+
+
+func test_every_content_bar_names_what_the_mission_is_missing() -> void:
+	var db := Fixture.commander_db()
+	var unscripted := _authored()
+	unscripted.events.clear()
+	assert_string_contains(unscripted.content_error(db), "scripts nothing")
+	var silent := _authored()
+	silent.victory.clear()
+	assert_string_contains(silent.content_error(db), "nothing to say when it is won")
+	var miscast := _authored()
+	miscast.commanders = {2: &"nobody_at_all"}
+	assert_string_contains(miscast.content_error(db), "not on the roster")
+	var deadline_as_goal := _authored()
+	deadline_as_goal.objectives.append(_deadline(6))
+	assert_string_contains(deadline_as_goal.content_error(db), "files a deadline as a goal")
+	var deadline_as_star := _authored()
+	deadline_as_star.bonus_objectives.append(_deadline(6))
+	assert_string_contains(
+		deadline_as_star.content_error(db), "files a deadline as a goal", "a bonus reads the same"
+	)
+	var slow_par := _authored()
+	slow_par.par_day = 9
+	assert_string_contains(slow_par.content_error(db), "past its own deadline")
+
+
+# --- a goal that costs nothing ----------------------------------------------
+
+
+func _own(count: int) -> OwnPropertiesObjective:
+	var objective := OwnPropertiesObjective.new()
+	objective.count = count
+	objective.text = "Hold %d properties." % count
+	return objective
+
+
+## The player opens holding their own headquarters, so a one-property goal is a
+## free checkmark — on either list, and with the mission not over either way.
+func test_a_goal_already_met_at_deploy_is_refused() -> void:
+	var primary := _mission()
+	primary.objectives.append(_capture(Vector2i(2, 0)))
+	primary.objectives.append(_own(1))
+	assert_string_contains(
+		primary.board_error(Fixture.state(BOARD)), "is met before the first command"
+	)
+	var bonus := _mission()
+	bonus.objectives.append(_capture(Vector2i(2, 0)))
+	bonus.bonus_objectives.append(_own(1))
+	assert_string_contains(
+		bonus.board_error(Fixture.state(BOARD)), "is met before the first command", "a star too"
+	)
+
+
+## The two goals that open true by design: a hidden one is not judged until a
+## beat reveals it, and "keep the marshal in the field" is the one goal that can
+## fall back false.
+func test_a_goal_that_opens_true_by_design_is_left_alone() -> void:
+	var hidden := _mission()
+	hidden.objectives.append(_capture(Vector2i(2, 0)))
+	var prize := _own(1)
+	prize.hidden = true
+	prize.id = &"the_quiet_prize"
+	hidden.bonus_objectives.append(prize)
+	assert_eq(hidden.board_error(Fixture.state(BOARD)), "")
+	var escort := _mission()
+	escort.objectives.append(_capture(Vector2i(2, 0)))
+	var ally := AllySurvivesObjective.new()
+	ally.team = 2
+	ally.text = "Keep the marshal in the field."
+	escort.objectives.append(ally)
+	assert_eq(escort.board_error(Fixture.state(BOARD)), "")
+
+
+# --- a war told in narration -------------------------------------------------
+
+
+func _speaks(mission: MissionDefinition, speaker: StringName, lines: int) -> void:
+	for i in lines:
+		var line := _line("Line %d." % i)
+		line.speaker = speaker
+		mission.briefing.append(line)
+
+
+func test_a_campaign_more_narrated_than_spoken_is_refused() -> void:
+	var campaign := _campaign()
+	_speaks(campaign.missions[0], &"tomas_reed", 1)
+	_speaks(campaign.missions[1], &"", 2)
+	assert_string_contains(campaign.speech_error(), "only 1 of 3 story lines have a speaker")
+
+
+## And a war with no story lines at all is a ratio with no denominator rather
+## than a war told in narration.
+func test_a_campaign_mostly_spoken_is_fine() -> void:
+	var campaign := _campaign()
+	_speaks(campaign.missions[0], &"tomas_reed", 2)
+	_speaks(campaign.missions[1], &"", 1)
+	assert_eq(campaign.speech_error(), "")
+	assert_eq(_campaign().speech_error(), "", "and a war that says nothing is not judged")
