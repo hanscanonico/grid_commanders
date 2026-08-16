@@ -19,6 +19,15 @@ const WOUNDED_PAIR := "[terrain]\n..........\n[units]\n1 t 0 0\n1 t 2 0\n2 t 9 0
 ## The same board with an APC beside a tank that has fired itself dry.
 const DRY_TANK := "[terrain]\n..........\n[units]\n1 p 0 0\n1 t 1 0\n2 t 9 0"
 
+## An APC between two dry tanks it can only refill one of this turn: the nearer
+## one is a wreck, the further one whole. Which it walks to is the whole question
+## condition_weight answers.
+const TWO_DRY_TANKS := "[terrain]\n................\n[units]\n1 t 0 0\n1 p 5 0\n1 t 8 0\n2 t 15 0"
+
+## One md tank, alone, so `_supply_value` can be asked what a rack is worth
+## without a second unit's shortfall in the total.
+const LONE_MD_TANK := "[terrain]\n..\n[units]\n1 T 0 0"
+
 ## A base, a capture roster already at its floor, and an armoured column big
 ## enough that duplicate_priority_cost has pushed the list's one entry past its
 ## own tail. What production buys here says what it wants.
@@ -192,6 +201,52 @@ func test_a_part_spent_land_tank_is_not_worth_supplying() -> void:
 	state.units_of(1)[1].fuel = 4  # ammo untouched: fuel alone is on the ballot
 	var command := _plan(state, profile)
 	assert_false(command is SupplyCommand, "a land unit low on fuel is parked, not stranded")
+
+
+## A refill is priced through the planner's one valuation, so with
+## condition_weight live a wounded friendly is worth less to top up than a whole
+## one — the same discount the shot, the counter and the withdrawal competing
+## with it in that AIUnitPlan already carry.
+func _supplied_cell(condition_weight: float) -> Vector2i:
+	var profile := _profile()
+	profile.supply_weight = LIVE
+	profile.condition_weight = condition_weight
+	var state := _dry(Fixture.state(TWO_DRY_TANKS))
+	state.unit_at(Vector2i(8, 0)).hp = 30
+	var command := _plan(state, profile)
+	assert_true(command is SupplyCommand, "expected a supply, got %s" % _describe(command))
+	if not (command is SupplyCommand):
+		return Vector2i(-1, -1)
+	assert_eq(command.validate(state), "", "the planned supply must be legal")
+	return (command as SupplyCommand).path[-1]
+
+
+## Off, a refill is priced at roster cost whatever state the friendly is in, so
+## the nearer tank wins on the walk alone.
+func test_supply_at_condition_zero_refills_the_nearer_wreck() -> void:
+	assert_eq(_supplied_cell(0.0), Vector2i(7, 0))
+
+
+## Live, three tenths of a tank is worth three tenths of a rack, and that is
+## short of the whole tank two tiles further on.
+func test_supply_with_condition_live_walks_past_the_wreck_to_the_whole_tank() -> void:
+	assert_eq(_supplied_cell(1.0), Vector2i(1, 0))
+
+
+## Ammo is graded, not a yes-or-no: half a rack missing is half the unit's value,
+## which is the term every case above exercises only at its empty end.
+func test_a_half_empty_rack_is_worth_half_the_unit() -> void:
+	var planner := AIUnitActionPlanner.new(_profile())
+	var state := Fixture.state(LONE_MD_TANK)
+	var army := state.units_of(1)
+	var md_tank := army[0]
+	assert_eq(md_tank.type.max_ammo, 8, "the case needs a rack that halves exactly")
+
+	md_tank.ammo = 4
+	assert_eq(planner._supply_value(army), 8000.0, "half a rack, half the md tank")
+
+	md_tank.ammo = 0
+	assert_eq(planner._supply_value(army), 16000.0, "empty, the whole md tank")
 
 
 # --- buying the truck ---------------------------------------------------------

@@ -170,8 +170,9 @@ func _attack_score(unit: Unit, enemy: Unit, forecast: CombatSnapshot.Forecast) -
 
 ## What `unit` is worth as a thing to have, in funds. The one valuation in this
 ## file: what a shot is worth taking, what the counter costs, what a threatened
-## cell risks and what stepping out of one saves are each this number times the
-## HP that changes hands.
+## cell risks, what stepping out of one saves and what refilling a friendly is
+## worth are each this number times the HP — or the shortfall — that changes
+## hands.
 ##
 ## `condition_weight` interpolates it toward what is left of the unit over its
 ## defined range of 0 to 1, and that far end is the board's own rate rather than
@@ -664,8 +665,10 @@ func _consider_supply(
 	plan.command = SupplyCommand.new(unit, reachable.path_to(best_cell))
 
 
-## What refilling these friendlies is worth: each one's cost against the pool it
+## What refilling these friendlies is worth: each one's value against the pool it
 ## is emptiest in, so a top-up is never worth more than the unit it tops up.
+## The value is `_unit_value`'s, so a refill prices a friendly exactly as the
+## shot, the counter and the withdrawal competing with it in the same plan do.
 ##
 ## Ammo is graded — half a rack is half of what that unit can put out — while
 ## fuel is the yes-or-no `running_dry` already answers, the one authority for a
@@ -681,7 +684,7 @@ func _supply_value(friendlies: Array[Unit]) -> float:
 			short = float(friendly.type.max_ammo - friendly.ammo) / float(friendly.type.max_ammo)
 		if friendly.running_dry(profile.refuel_margin_turns):
 			short = 1.0
-		value += float(friendly.type.cost) * short
+		value += _unit_value(friendly) * short
 	return value
 
 

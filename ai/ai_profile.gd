@@ -324,12 +324,13 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # (naval plan R1), so a transport it could fill is a transport it would strand.
 
 ## What refilling the friendlies an APC can reach is worth, as a fraction of each
-## one's cost times the shortfall in the pool it is emptiest in. 0 skips it.
+## one's value times the shortfall in the pool it is emptiest in. 0 skips it.
 ##
 ## Denominated in VALUE — the currency _attack_score and _consider_captures are
 ## already in, so a top-up competes with a shot and a capture in one AIUnitPlan
-## without a conversion — and capped per unit at that unit's whole cost, since a
-## refill can never be worth more than the thing it refills. Only what the AI can
+## without a conversion — and capped per unit at that unit's whole value, read
+## through the planner's one _unit_value, since a refill can never be worth more
+## than the thing it refills. Only what the AI can
 ## *field* limits how often this fires: build_priority names no transport, so it
 ## reaches an APC a board deals.
 @export var supply_weight: float = 0.25
