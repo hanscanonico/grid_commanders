@@ -110,6 +110,12 @@ func announce(title: String, sub: String, rematch_text: String) -> void:
 	rematch_button.text = rematch_text
 
 
+## The verdict the card is currently saying, so a capture scenario can read the
+## words back rather than trust the picture.
+func title_text() -> String:
+	return _title.text
+
+
 ## Raises or drops the Watch Replay row. Whether there is a recording to offer is
 ## BattleOutcome's answer, like every other word on this card.
 func offer_replay(available: bool) -> void:

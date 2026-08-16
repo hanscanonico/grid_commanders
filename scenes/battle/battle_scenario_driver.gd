@@ -312,7 +312,9 @@ func _run_demo(mode: String) -> void:
 		"commander_info":
 			await _stage_commander_info()  # both-sides reference from the map menu
 		"commander_victory", "victory", "side_victory":
-			await BattleVictoryScenario.new(_battle).run(mode)
+			var victory_error := await BattleVictoryScenario.new(_battle).run(mode)
+			if victory_error != "":
+				_fail(victory_error)
 		"aiturn":
 			# hand the turn to the Blue AI and wait until it plays back to Red
 			await BattleFeedbackScenario.new(_battle).end_turn_anyway()
