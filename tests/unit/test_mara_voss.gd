@@ -118,6 +118,18 @@ func test_stand_advice_is_quiet_out_of_contact() -> void:
 	assert_eq(state.commander_of(1).stand_value(state, state.units[0], Vector2i(1, 0)), 0)
 
 
+## The reach behind the advice is memoised per scan, so the pin is that a later
+## turn re-asks it: a tank out of fuel walks nowhere and stops being a threat.
+func test_stand_advice_re_reads_reach_on_a_later_turn() -> void:
+	var state := _state("[terrain]\n.F=.......\n[units]\n1 t 0 0\n2 t 6 0")
+	var co := state.commander_of(1)
+	assert_eq(co.stand_value(state, state.units[0], Vector2i(1, 0)), 2, "in contact")
+	EndTurnCommand.new().apply(state)
+	EndTurnCommand.new().apply(state)
+	state.units[1].fuel = 0
+	assert_eq(co.stand_value(state, state.units[0], Vector2i(1, 0)), 0, "stranded")
+
+
 ## Indirect units sit the advice out, like both halves of her combat doctrine.
 func test_stand_advice_sits_out_for_indirect_units() -> void:
 	var state := _state("[terrain]\n.F........\n[units]\n1 g 0 0\n2 t 6 0")

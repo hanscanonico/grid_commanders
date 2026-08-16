@@ -70,6 +70,35 @@ func _enemy_can_reach(state: GameState, team: int, cell: Vector2i) -> bool:
 	for unit in state.units:
 		if not _is_striker(state, team, unit, opponents, false):
 			continue
-		if Grid.manhattan(unit.cell, cell) <= AttackRange.strike_reach(state, unit):
+		if Grid.manhattan(unit.cell, cell) <= _strike_reach(state, team, unit):
 			return true
 	return false
+
+
+## How far a shooter reaches is a fact about the shooter alone, so it is resolved
+## once a scan and read back per candidate cell rather than once per (cell,
+## shooter) pair — `AttackRange.strike_reach` walks the mover's budget through
+## every hostile commander, and `stand_value` asks the whole opponent set again on
+## every tile an advancing unit weighs.
+##
+## The key is Radek Morn's shape and is coarse for his reason (state identity,
+## day, team, unit count): it is not asked to detect every mutation, only that
+## none happened since the stamp. One army's turn is exactly the window a
+## shooter's reach cannot move in — fuel burns and a doctrine's move bonus turns
+## on only on the owner's own turn — and a memo another question stamped is
+## dropped rather than trusted. Who counts as a shooter stays live on purpose:
+## `_is_striker` reads visibility, and a dived submarine is unhidden by *our* own
+## units closing with it mid-turn.
+var _reach_key: Array = []
+var _reach: Dictionary[int, int] = {}
+
+
+func _strike_reach(state: GameState, team: int, unit: Unit) -> int:
+	var key: Array = [state.get_instance_id(), state.day, team, state.units.size()]
+	if _reach_key != key:
+		_reach_key = key
+		_reach = {}
+	var id := unit.get_instance_id()
+	if not _reach.has(id):
+		_reach[id] = AttackRange.strike_reach(state, unit)
+	return _reach[id]
