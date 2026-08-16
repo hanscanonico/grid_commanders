@@ -26,7 +26,7 @@ signal deployed(mission_id: StringName)
 signal cancelled
 
 const _TITLE_SIZE := 15
-const _ROW_HEIGHT := 18
+const _ROW_HEIGHT := 26
 const _ROW_WIDTH := 420
 ## The picker's own thumbnail box, so a board reads the same size everywhere.
 const _THUMB := Vector2(132, 60)
@@ -95,8 +95,18 @@ func chrome() -> Dictionary[String, Control]:
 	else:
 		named["Back"] = _back_button
 		if not _row_buttons.is_empty():
-			named["the first mission row"] = _row_buttons[0]
+			named["the mission row in hand"] = _shown_row()
 	return named
+
+
+## The row the list is actually showing, which is the row focus landed on. A
+## half-played war scrolls its earlier missions above the viewport on purpose, so
+## row zero witnesses nothing about whether the page fits its frame.
+func _shown_row() -> Button:
+	for button in _row_buttons:
+		if button.has_focus():
+			return button
+	return _row_buttons[0]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -327,6 +337,10 @@ func _fill() -> void:
 ## four states read at a glance — cleared wears a green check and gold stars, an
 ## open row shows the hollow stars still on offer, locked and not-taken dim to
 ## their words. Children of a disabled button, so every child ignores the mouse.
+##
+## Only an open row carries its second line and its fog chip: what the fight is
+## and where it is are the mission's own facts to give away, and a road nobody
+## has reached must not leak them.
 func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	var face := HBoxContainer.new()
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -339,13 +353,25 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	var ink := UiTheme.INK if open else (UiTheme.INK_3 if skipped else UiTheme.NEUTRAL_LIGHT)
 	if cleared:
 		face.add_child(_row_cell("✓", UiTheme.CAPTURE))
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var title := _row_cell("%02d · %s" % [index + 1, mission.title], ink)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.clip_text = true
-	face.add_child(title)
+	words.add_child(title)
+	if open:
+		var record: CampaignState.MissionRecord = _progress.records.get(mission.id)
+		var detail := row_detail(mission, _commanders, record)
+		if detail != "":
+			words.add_child(_row_detail(detail))
+	face.add_child(words)
 	if not open:
 		face.add_child(_row_cell("NOT TAKEN" if skipped else "LOCKED", UiTheme.INK_3))
 		return face
+	if mission.fog_enabled:
+		face.add_child(_row_cell("FOG", UiTheme.AMMO))
 	var most := MissionRuntime.new(mission).max_stars()
 	var earned := _progress.stars_for(mission.id) if cleared else 0
 	if earned > 0:
@@ -353,6 +379,39 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	if most - earned > 0:
 		face.add_child(_row_cell("☆".repeat(most - earned), UiTheme.INK_3))
 	return face
+
+
+## A row's second line: where the fight is, who it is against, the day it is
+## rated on and the day this player already reached. Every part is omitted when
+## the mission does not state it, so a row says only what it has.
+##
+## Static and argument-taking so it can be read without the page and without a
+## profile on disk — `CampaignPickerPanel.row_text`'s shape, for its reason.
+static func row_detail(
+	mission: MissionDefinition, commanders: CommanderDB, record: CampaignState.MissionRecord
+) -> String:
+	var parts: Array[String] = []
+	if mission.location != "":
+		parts.append(mission.location.to_upper())
+	var foe := _antagonist(mission, commanders)
+	if foe != null:
+		parts.append("VS %s" % foe.display_name.to_upper())
+	if mission.par_day > 0:
+		parts.append("PAR %d" % mission.par_day)
+	if record != null and record.best_day > 0:
+		parts.append("BEST %d" % record.best_day)
+	return "   ·   ".join(parts)
+
+
+func _row_detail(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", UiTheme.stat())
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_color_override("font_color", UiTheme.INK_3)
+	label.clip_text = true
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 
 func _row_cell(text: String, ink: Color) -> Label:
@@ -439,7 +498,7 @@ func _fill_picture(mission: MissionDefinition) -> void:
 		thumb.setup(map, UiTheme.menu_identity(map.player_count()), _THUMB)
 		thumb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		_brief_picture.add_child(thumb)
-	var foe := _antagonist(mission)
+	var foe := _antagonist(mission, _commanders)
 	if foe != null:
 		_brief_picture.add_child(_foe_card(foe))
 
@@ -448,7 +507,7 @@ func _fill_picture(mission: MissionDefinition) -> void:
 ## objective reads it: an empty grouping is a free-for-all where every computer
 ## seat is a foe, and a seat standing with the player is an ally, never the face
 ## the briefing is set against.
-func _antagonist(mission: MissionDefinition) -> CommanderType:
+static func _antagonist(mission: MissionDefinition, commanders: CommanderDB) -> CommanderType:
 	for team: int in mission.ai_teams:
 		var allied: bool = (
 			mission.sides.has(team)
@@ -457,7 +516,7 @@ func _antagonist(mission: MissionDefinition) -> CommanderType:
 		)
 		if allied:
 			continue
-		var commander := _commanders.by_id(mission.commanders.get(team, &""))
+		var commander := commanders.by_id(mission.commanders.get(team, &""))
 		if commander != null:
 			return commander
 	return null
