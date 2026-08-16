@@ -39,7 +39,7 @@ func wants_power(state: GameState, team: int) -> bool:
 	for unit in state.units_of(team):
 		if unit.carrier != null or not unit.acted or not unit.refreshable:
 			continue
-		if _can_open_fire(state, team, unit) or _can_take_ground(state, team, unit):
+		if _can_open_fire(state, team, unit) or _unit_can_reach_capture(state, team, unit):
 			return true
 	return false
 
@@ -58,23 +58,5 @@ func _can_open_fire(state: GameState, team: int, unit: Unit) -> bool:
 		if not covered.has(target.cell) or Vision.is_hidden_from(state, team, target):
 			continue
 		if AttackRange.can_fire(state, unit, target):
-			return true
-	return false
-
-
-## _can_reach_capture asked of one unit that has already acted. The base class's
-## own version skips exactly those units — the right question about an army whose
-## turn is still to come, and the wrong one about the army Second Wind revives.
-func _can_take_ground(state: GameState, team: int, unit: Unit) -> bool:
-	if not unit.type.can_capture:
-		return false
-	var reach := MovementResolver.reachable(state, unit)
-	for cell in reach.cells():
-		if not reach.can_stop_at(cell):
-			continue
-		var terrain := state.map.terrain_at(cell)
-		if terrain == null or not terrain.is_property:
-			continue
-		if not state.allied(state.owner_at(cell), team):
 			return true
 	return false

@@ -451,19 +451,31 @@ func _is_striker(
 ## spent is the failure worth avoiding.
 func _can_reach_capture(state: GameState, team: int, extra_move: int = 0) -> bool:
 	for unit in state.units_of(team):
-		if unit.acted or unit.carrier != null or not unit.type.can_capture:
+		if unit.acted:
 			continue
-		var reach := MovementResolver.reachable(state, unit, extra_move)
-		for cell in reach.cells():
-			if not reach.can_stop_at(cell):
-				continue
-			var terrain := state.map.terrain_at(cell)
-			if terrain == null or not terrain.is_property:
-				continue
-			# Through the allegiance authority, not `!= team`: an ally's ground is
-			# already the side's and `CaptureCommand` turns the attempt down, so a
-			# doctrine measuring it would spend a full meter on a march the rules
-			# refuse.
-			if not state.allied(state.owner_at(cell), team):
-				return true
+		if _unit_can_reach_capture(state, team, unit, extra_move):
+			return true
+	return false
+
+
+## The same question about one unit, so a doctrine weighing an army that has
+## already acted — Iris Colt's Second Wind revives exactly those — asks the walk
+## above rather than spelling a second one. Whose turn it still is stays the
+## caller's judgement; everything else about takeable ground is here.
+func _unit_can_reach_capture(state: GameState, team: int, unit: Unit, extra_move: int = 0) -> bool:
+	if unit.carrier != null or not unit.type.can_capture:
+		return false
+	var reach := MovementResolver.reachable(state, unit, extra_move)
+	for cell in reach.cells():
+		if not reach.can_stop_at(cell):
+			continue
+		var terrain := state.map.terrain_at(cell)
+		if terrain == null or not terrain.is_property:
+			continue
+		# Through the allegiance authority, not `!= team`: an ally's ground is
+		# already the side's and `CaptureCommand` turns the attempt down, so a
+		# doctrine measuring it would spend a full meter on a march the rules
+		# refuse.
+		if not state.allied(state.owner_at(cell), team):
+			return true
 	return false
