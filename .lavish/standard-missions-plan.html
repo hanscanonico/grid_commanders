@@ -36,7 +36,7 @@ body {
     repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
 }
 .gc-kicker { letter-spacing:.18em; text-transform:uppercase; font:700 .75rem/1.4 ui-monospace, monospace; }
-.gc-num { display:inline-grid; place-items:center; width:2rem; height:2rem;
+.gc-num { display:inline-grid; place-items:center; width:2rem; height:2rem; flex:none;
   font:800 .8rem/1 ui-monospace, monospace; color:white; background:var(--gc-water-dark); border-radius:.25rem; }
 .pl { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .hot { color: var(--gc-red); font-weight:700; }
@@ -59,8 +59,9 @@ table.gc-t th { text-align:left; background:var(--gc-water-dark); color:white; p
 table.gc-t td { padding:.45rem .7rem; border-top:1px solid rgba(23,40,56,.12); vertical-align:top; }
 table.gc-t tr:nth-child(even) td { background: rgba(23,40,56,.025); }
 tr.camprow td { background: var(--gc-road) !important; font-size:.85rem; }
-.tag { display:inline-block; padding:.1rem .45rem; border-radius:.2rem; color:white;
+.tag { display:inline-block; flex:none; padding:.1rem .45rem; border-radius:.2rem; color:white;
   font:800 .68rem/1.5 ui-monospace, monospace; }
+.bar { flex:none; }
 .t-A0 { background: var(--gc-verdant); } .t-A { background: var(--gc-water-dark); }
 .t-B { background: var(--gc-amber); } .t-C { background: var(--gc-iron); }
 .t-S { background: rgba(23,40,56,.25); color: var(--gc-ink); }
@@ -256,11 +257,11 @@ h2 { scroll-margin-top:1rem; }
     <div class="gc-kicker text-base-content/60">Result</div>
     <p class="mt-2 text-lg leading-relaxed"><b>70 of 108 (65%) become standard missions</b>,
       38 stay special. The genre ratio without deleting the variety that was paid for.</p>
-    <div class="mt-4 grid grid-cols-1 gap-2 max-w-2xl"><div class='flex items-center gap-3'><span class='tag t-A0'>A0</span><div class='bar ' style='width:55.6%'></div><span class='pl text-sm'>15</span><span class='text-sm dim'>Already standard</span></div>
-<div class='flex items-center gap-3'><span class='tag t-A'>A</span><div class='bar ' style='width:122.2%'></div><span class='pl text-sm'>33</span><span class='text-sm dim'>Convert — no board edit</span></div>
-<div class='flex items-center gap-3'><span class='tag t-B'>B</span><div class='bar ' style='width:74.1%'></div><span class='pl text-sm'>20</span><span class='text-sm dim'>Convert — board needs a base pair</span></div>
-<div class='flex items-center gap-3'><span class='tag t-C'>C</span><div class='bar ' style='width:7.4%'></div><span class='pl text-sm'>2</span><span class='text-sm dim'>Standard-adjacent — kill the marshal</span></div>
-<div class='flex items-center gap-3'><span class='tag t-S'>S</span><div class='bar alt' style='width:140.7%'></div><span class='pl text-sm'>38</span><span class='text-sm dim'>Stays special</span></div></div>
+    <div class="mt-4 grid grid-cols-1 gap-2 max-w-2xl"><div class='flex items-center gap-3'><span class='tag t-A0'>A0</span><div class='bar ' style='width:24.5%'></div><span class='pl text-sm'>15</span><span class='text-sm dim'>Already standard</span></div>
+<div class='flex items-center gap-3'><span class='tag t-A'>A</span><div class='bar ' style='width:53.8%'></div><span class='pl text-sm'>33</span><span class='text-sm dim'>Convert — no board edit</span></div>
+<div class='flex items-center gap-3'><span class='tag t-B'>B</span><div class='bar ' style='width:32.6%'></div><span class='pl text-sm'>20</span><span class='text-sm dim'>Convert — board needs a base pair</span></div>
+<div class='flex items-center gap-3'><span class='tag t-C'>C</span><div class='bar ' style='width:3.3%'></div><span class='pl text-sm'>2</span><span class='text-sm dim'>Standard-adjacent — kill the marshal</span></div>
+<div class='flex items-center gap-3'><span class='tag t-S'>S</span><div class='bar alt' style='width:62.0%'></div><span class='pl text-sm'>38</span><span class='text-sm dim'>Stays special</span></div></div>
   </div>
 </section>
 
