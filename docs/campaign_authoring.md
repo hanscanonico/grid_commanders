@@ -23,8 +23,9 @@ or an objective naming ground or a unit the board does not have — or asking fo
 more than that board could ever give. A difficulty tier that does not ship. A story
 line whose speaker is not on the commander roster, or a seat cast as a commander
 who is not. A briefing with nothing to say when it is won. A briefing, debrief or
-interlude with no unconditional line — a page that can render empty. A launch that
-does not build.
+interlude with no unconditional line — a page that can render empty. A deadline
+filed in `objectives` or `bonus_objectives` rather than in `failures`, and a
+`par_day` falling past the mission's own deadline. A launch that does not build.
 
 **The script.** A mission that scripts nothing — D9's own clause, a content bar
 rather than a definition one. A beat that waits for nothing or does nothing. Two
@@ -34,11 +35,16 @@ that no beat ever reveals.
 
 **The board it opens on**, which the map alone cannot answer, a map dealing every
 seat it names while a mission may have closed some: a mission already over before
-the first command, and an objective standing beside one that ends the match
-outright — traps 3 and 4 below.
+the first command, an objective standing beside one that ends the match
+outright — traps 3 and 4 below — and a visible goal already satisfied at deploy,
+which costs nothing without the mission being over. A hidden objective and an
+`AllySurvives` are exempt: the first is not judged until a beat reveals it, the
+second is met exactly while the war is going well.
 
-**The whole war at once.** A fact some mission reads and no mission of that
-campaign writes, or a `cleared:` / `stars:` name the campaign does not run. A
+**The whole war at once.** A campaign whose story is more narration than
+dialogue — over half its briefing and victory lines with no speaker. A fact some
+mission reads and no mission of that campaign writes, or a `cleared:` / `stars:`
+name the campaign does not run. A
 mission opening only once some fact is written when no mission *ahead of it*
 writes it. A fact every route writes the same way, read as though it could have
 gone otherwise — trap 1. A gated mission that closes a block — trap 5. An
@@ -51,10 +57,11 @@ with no slot to stand it in; a carry slot marked on another army's row; a refit
 minimum no unit could ever be refit to.
 
 Each question is a `core/` authority the tool and `tests/unit/test_campaign_content.gd`
-both ask rather than a rule spelled twice — `MissionDefinition.definition_error`
-and `board_error`, `MissionEffect.board_error`, and `CampaignDefinition`'s
-`ledger_error`, `carry_error`, `route_error`, `constant_fact_error` and
-`block_error`. Add a check by adding one of those, not by adding a branch to the
+both ask rather than a rule spelled twice — `MissionDefinition.definition_error`,
+`board_error`, `content_error`, `difficulty_error` and `story_error`,
+`MissionEffect.board_error`, and `CampaignDefinition`'s `ledger_error`,
+`carry_error`, `route_error`, `constant_fact_error`, `block_error` and
+`speech_error`. Add a check by adding one of those, not by adding a branch to the
 tool.
 
 ## The shape of a mission

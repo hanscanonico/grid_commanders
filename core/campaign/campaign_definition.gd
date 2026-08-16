@@ -314,6 +314,28 @@ func block_error() -> String:
 	return ""
 
 
+## Why this campaign's story reads as narration rather than as a conversation, or
+## "". A briefing nobody speaks is the narration the dialogue pass exists to
+## replace — counted rather than forbidden, because a narrator's line is
+## legitimate and an entire campaign of them is the thing that was wrong.
+##
+## Campaign-wide because that is the width the judgement has: no single mission's
+## narration is a fault.
+func speech_error() -> String:
+	var spoken := 0
+	var total := 0
+	for entry: MissionDefinition in missions:
+		if entry == null:
+			continue
+		for line: MissionLine in entry.briefing + entry.victory:
+			total += 1
+			if not line.is_narration():
+				spoken += 1
+	if total == 0 or float(spoken) / float(total) > 0.5:
+		return ""
+	return "campaign '%s': only %d of %d story lines have a speaker" % [id, spoken, total]
+
+
 ## Why a mission of this campaign could never open, or "" — campaign-depth D7's
 ## own check, and the third question that needs the whole war at once.
 ##
