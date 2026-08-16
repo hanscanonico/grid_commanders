@@ -90,3 +90,24 @@ func test_crossfire_map_builds_a_state() -> void:
 	assert_eq(state.units_of(2).size(), 4)
 	assert_eq(map.owner_at(Vector2i(2, 1)), 1)
 	assert_eq(map.terrain_at(Vector2i(17, 13)).id, &"hq")
+
+
+func test_create_pins_the_rng_stream() -> void:
+	var source := "[terrain]\n....\n....\n[units]\n1 i 0 0\n2 t 3 1"
+	var first := GameState.create(MapData.parse(source, terrain_db), unit_db)
+	var second := GameState.create(MapData.parse(source, terrain_db), unit_db)
+	assert_eq(first.rng.seed, GameState.DEFAULT_RNG_SEED)
+	assert_eq(first.rng.randi(), second.rng.randi())
+
+
+func test_seeding_after_create_still_re_seeds() -> void:
+	var source := "[terrain]\n....\n....\n[units]\n1 i 0 0\n2 t 3 1"
+	var pinned := GameState.create(MapData.parse(source, terrain_db), unit_db)
+	var other := GameState.create(MapData.parse(source, terrain_db), unit_db)
+	other.rng.seed = GameState.DEFAULT_RNG_SEED + 1
+	assert_ne(pinned.rng.randi(), other.rng.randi())
+	var rewound := GameState.create(MapData.parse(source, terrain_db), unit_db)
+	rewound.rng.randi()
+	rewound.rng.seed = GameState.DEFAULT_RNG_SEED
+	var fresh := GameState.create(MapData.parse(source, terrain_db), unit_db)
+	assert_eq(rewound.rng.randi(), fresh.rng.randi())

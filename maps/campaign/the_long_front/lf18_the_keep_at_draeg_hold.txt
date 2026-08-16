@@ -1,7 +1,7 @@
 # The Long Front 18 — "The Keep at Draeg Hold". Every nation the Dominion
 # put to flight in the opening week stands on this ground together. Mara
 # Voss, who bought the first morning of this war with four units and a
-# river crossing, leads the army that ends it.
+# customs road, leads the army that ends it.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base
 #          A airport  Q HQ
 [terrain]

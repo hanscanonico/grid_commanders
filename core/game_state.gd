@@ -23,6 +23,9 @@ const INCOME_PER_PROPERTY := 1000
 ## The smallest roster a seating may leave. Below it there is no match: one army
 ## has already won and none has nobody to play. See `create`.
 const MIN_SEATS := 2
+## The stream every state opens on. Its value means nothing; what it buys is that
+## an unseeded state cannot exist. See `rng`.
+const DEFAULT_RNG_SEED := 1701
 
 var map: MapData
 ## The armies this match seats, in turn order. Seeded by `create` from the map,
@@ -49,8 +52,13 @@ var damage_chart: DamageChart
 ## hand (a save being decoded, a movement fixture) plays with the same
 ## numbers a match started from `create` does.
 var rules_config: RulesConfig = RulesConfig.load_default()
-## Match RNG (combat luck). Set `rng.seed` explicitly for deterministic
-## tests and replays; the battle scene randomizes it.
+## Match RNG (combat luck). Deterministic out of `create`, which pins
+## `DEFAULT_RNG_SEED` — Godot's constructor otherwise seeds from the engine's own
+## entropy, and a state nobody remembered to seed then draws luck nobody can
+## reproduce. Every launch overrides it (BattleSetup pins the requested seed or
+## randomizes; the Lab, the Bulwark measure and the demo driver pin their own),
+## and a save restores `rng.state`. A test wanting a different stream assigns
+## `rng.seed` itself, which fully re-seeds.
 var rng := RandomNumberGenerator.new()
 
 var current_team: int = 1
@@ -139,6 +147,7 @@ static func create(
 	p_rules_config: RulesConfig = null
 ) -> GameState:
 	var state := GameState.new()
+	state.rng.seed = DEFAULT_RNG_SEED
 	state.map = p_map
 	state.damage_chart = p_damage_chart
 	if p_rules_config != null:

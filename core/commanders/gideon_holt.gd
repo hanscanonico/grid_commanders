@@ -18,8 +18,9 @@ extends CommanderType
 ## tops up the whole side at once, so firing it for a single scratched unit
 ## wastes most of it.
 @export var depot_want_units: int = 2
-## Displayed-HP points added to the planner's retreat line: repairs cost him
-## 80%, so the trip home pays off at a wound everyone else fights on with.
+## Internal HP added to the planner's retreat line — 10 is one displayed pip —
+## so repairs costing him 80% pay the trip home off at a wound everyone else
+## fights on with.
 @export var retreat_bonus_hp: int = 15
 
 

@@ -40,11 +40,54 @@ OUT_DIR="reports/determinism"
 SIM_ARGS=(--map=clash --seed=1000 --days=20 --no-commands "--out=$OUT_DIR")
 
 # The artifacts of that run that are a pure function of (map, seed, side specs).
-# timeline.csv is not one of them and report.html re-renders it: both carry
-# planning_ms, the planner's wall clock — BalanceMatchRecorder's
-# NONDETERMINISTIC_COLUMNS is the authority on which column that is. The
-# timeline's numbers still reach the diff, because summary.json aggregates them.
 ARTIFACTS=(matches.csv summary.json)
+
+# Artifacts that are that function once their wall-clock columns are cut. The
+# timeline is per turn, so it is what catches a change that moves the middle of
+# the match and still lands on the same winner, day and end-state totals.
+# report.html stays out of both lists because it re-renders these same numbers.
+STRIPPED_ARTIFACTS=(timeline.csv)
+
+# BalanceMatchRecorder's NONDETERMINISTIC_COLUMNS is the authority on which
+# columns those are; this is that list, spelled where the gate can read it.
+TIMELINE_STRIPPED_COLUMNS=(planning_ms)
+
+# Writes $1 to $2 without its TIMELINE_STRIPPED_COLUMNS fields, and fails
+# naming the column when the header does not carry one: a renamed column must be
+# loud, because silently stripping nothing would diff the wall clock and
+# silently stripping the wrong index would hide a real move.
+#
+# Cutting fields with awk -F, is safe because no timeline field can hold a
+# comma — the unit tallies join with ';' (BalanceMatchRecorder._tally_text).
+strip_columns() {
+	local src="$1" dest="$2"
+	local column index
+	local -a cut=()
+	for column in "${TIMELINE_STRIPPED_COLUMNS[@]}"; do
+		index="$(awk -F, -v want="$column" 'NR == 1 { for (i = 1; i <= NF; i++) if ($i == want) { print i; exit } }' "$src")"
+		if [[ -z $index ]]; then
+			echo "determinism: $src has no '$column' column — TIMELINE_STRIPPED_COLUMNS is stale" >&2
+			return 1
+		fi
+		cut+=("$index")
+	done
+	awk -F, -v cutlist="$(
+		IFS=,
+		echo "${cut[*]}"
+	)" '
+		BEGIN { n = split(cutlist, c, ","); for (i = 1; i <= n; i++) skip[c[i]] = 1 }
+		{
+			out = ""
+			sep = ""
+			for (i = 1; i <= NF; i++) {
+				if (i in skip) continue
+				out = out sep $i
+				sep = FS
+			}
+			print out
+		}
+	' "$src" >"$dest"
+}
 
 refresh=0
 if [[ ${1:-} == "--refresh" ]]; then
@@ -69,21 +112,36 @@ fi
 
 if ((refresh)); then
 	mkdir -p "$GOLDEN_DIR"
+	# Stripped first: a stale column list must fail before any golden is
+	# rewritten, or a refresh leaves half the pin ahead of the other half.
+	for file in "${STRIPPED_ARTIFACTS[@]}"; do
+		strip_columns "$OUT_DIR/$file" "$GOLDEN_DIR/$file" || exit 1
+	done
 	for file in "${ARTIFACTS[@]}"; do
 		cp "$OUT_DIR/$file" "$GOLDEN_DIR/$file"
 	done
-	echo "determinism: refreshed the golden (${ARTIFACTS[*]})"
+	echo "determinism: refreshed the golden (${ARTIFACTS[*]} ${STRIPPED_ARTIFACTS[*]})"
 	exit 0
 fi
 
 moved=0
-for file in "${ARTIFACTS[@]}"; do
-	if [[ ! -f "$GOLDEN_DIR/$file" ]]; then
-		echo "determinism: no golden $file — regenerate with 'make determinism REFRESH=1'" >&2
+
+# $1 is the golden's name, $2 the played side to hold it to.
+diff_golden() {
+	if [[ ! -f "$GOLDEN_DIR/$1" ]]; then
+		echo "determinism: no golden $1 — regenerate with 'make determinism REFRESH=1'" >&2
 		moved=$((moved + 1))
-	elif ! diff -u "$GOLDEN_DIR/$file" "$OUT_DIR/$file"; then
+	elif ! diff -u "$GOLDEN_DIR/$1" "$2"; then
 		moved=$((moved + 1))
 	fi
+}
+
+for file in "${ARTIFACTS[@]}"; do
+	diff_golden "$file" "$OUT_DIR/$file"
+done
+for file in "${STRIPPED_ARTIFACTS[@]}"; do
+	strip_columns "$OUT_DIR/$file" "$OUT_DIR/stripped-$file" || exit 1
+	diff_golden "$file" "$OUT_DIR/stripped-$file"
 done
 
 if ((moved > 0)); then
@@ -92,4 +150,4 @@ if ((moved > 0)); then
 	exit 1
 fi
 
-echo "determinism: golden reproduced (${ARTIFACTS[*]})"
+echo "determinism: golden reproduced (${ARTIFACTS[*]} ${STRIPPED_ARTIFACTS[*]})"

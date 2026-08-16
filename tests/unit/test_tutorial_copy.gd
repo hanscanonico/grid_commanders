@@ -18,6 +18,13 @@ func _all() -> Array[StringName]:
 	return TutorialHints.ids()
 
 
+func _body(id: StringName) -> String:
+	for step: Dictionary in TutorialHints.STEPS:
+		if step.id == id:
+			return String(step.body)
+	return ""
+
+
 # --- the step script ----------------------------------------------------------
 
 
@@ -61,6 +68,31 @@ func test_later_labels_exclude_the_current_and_the_retired() -> void:
 func test_later_labels_are_empty_on_the_last_step() -> void:
 	var retired: Array[StringName] = [&"select", &"move", &"capture", &"build"]
 	assert_eq(TutorialHints.later_labels(retired).size(), 0)
+
+
+# --- the strip's vocabulary ---------------------------------------------------
+
+
+func test_the_strip_speaks_display_names_not_data_keys() -> void:
+	# The capture hint used to say "a foot unit": a move_class id, which reads
+	# against the game's own data as excluding the Mech, and the Mech captures.
+	# Both halves are read off the roster, so a new capturer or a renamed move
+	# class fails here rather than on a first-time player's board.
+	var capture := _body(&"capture")
+	for type: UnitType in Fixture.unit_db().all():
+		if type.can_capture:
+			assert_true(
+				capture.contains(type.display_name), "capture hint omits %s" % type.display_name
+			)
+	for step: Dictionary in TutorialHints.STEPS:
+		for word in String(step.body).to_lower().split(" ", false):
+			var bare := String(word).lstrip(".,").rstrip(".,")
+			for type: UnitType in Fixture.unit_db().all():
+				assert_ne(
+					bare,
+					String(type.move_class),
+					"step %s names a move class: %s" % [step.id, bare]
+				)
 
 
 # --- the editorial ruler ------------------------------------------------------
@@ -198,6 +230,16 @@ func test_every_key_the_zoom_legend_promises_reaches_its_action() -> void:
 	assert_true(_key(KEY_EQUAL, true).is_action_pressed(&"zoom_in"), "shift+= misses zoom_in")
 	for keycode: Key in [KEY_MINUS, KEY_KP_SUBTRACT]:
 		assert_true(_key(keycode).is_action_pressed(&"zoom_out"), "no zoom_out: %d" % keycode)
+
+
+## A mouse player selects, moves and picks menu rows with the mouse, so backing
+## out has to be a mouse gesture too. Pinned here for the reason above: the
+## binding is hand-edited in project.godot.
+func test_right_click_reaches_cancel() -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	assert_true(event.is_action_pressed(&"cancel"), "right-click misses cancel")
 
 
 func _key(keycode: Key, shift: bool = false) -> InputEventKey:

@@ -136,14 +136,18 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## on — a tier may retune the strength, never gate the behaviour.
 @export var doctrine_weight: float = 1.0
 
-# --- Difficult-tier capabilities ---------------------------------------------
+# --- Ranking capabilities -----------------------------------------------------
 #
 # Each gates a planner smart the base AI lacks. Every default is 0, which skips
 # the capability entirely: at 0 the code that reads it never runs, and it never
-# draws from the RNG stream. Which tier carries which value is a balance fact
-# with one authority, docs/difficulty_check.md — do not restate it here. These
-# change how the planner *ranks* its own candidate moves — never a combat
-# number, which stays owned by CombatResolver.
+# draws from the RNG stream. These change how the planner *ranks* its own
+# candidate moves — never a combat number, which stays owned by CombatResolver.
+#
+# Not a Difficult-only block, whatever the shape of a capability suggests: a
+# dial here is as usable to make a tier play badly as to make it play well, so
+# every tier has a reason to reach for one. Which tier carries which value is a
+# balance fact with one authority, the tier files under data/ai/ read beside
+# docs/difficulty_check.md — do not restate it here.
 
 ## How heavily a destination's expected incoming damage next turn discounts an
 ## *attack's* score, as a fraction of the exposed unit's cost. >0 builds a
@@ -184,9 +188,9 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 
 # --- Judgement capabilities ---------------------------------------------------
 #
-# The AI Judgement plan's dials, and unlike the block above these are *not* a
-# tier's smarts: noticing an enemy taking your ground and moving as an army are
-# basic competence, which is why they are not gated to one tier.
+# The AI Judgement plan's dials. Noticing an enemy taking your ground and moving
+# as an army are basic competence rather than a tier's smarts, which is why
+# these were never written as one tier's block.
 #
 # 0 still skips a capability entirely — that is the code property, and the
 # per-capability suites under tests/unit/ build explicit profiles to prove it.
@@ -200,7 +204,10 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # stopped an artillery short of maximum standoff. That was a defect in how the
 # refuge was priced and AR6d fixed it — a refuge is now ranked by the weapon it
 # costs as well as the fire it dodges (tests/unit/test_ai_withdrawal.gd). The
-# dial still ships at 0, but now for want of a measurement rather than a fix.
+# measurement has since been taken: the arena's first search campaign priced the
+# repaired dial and found it worthless, which data/ai/brutal.tres's own header
+# records. It ships at 0 everywhere as a measured result rather than a pending
+# question, and a re-try means a fresh campaign, not a hand-picked value.
 
 ## What removing an enemy from ground our own side holds is worth, as a multiple
 ## of what taking that ground would be worth to us. The price list is the capture
@@ -333,10 +340,11 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 # any setting of the dials above. Same contract as the three blocks before it —
 # 0 skips the code, and the defaults here track data/ai/default.tres.
 #
-# This block ships unmeasured on purpose. What would price it is a search over
-# the whole shelf (AR5), which is not built, so no tier carries a value yet:
-# focus_fire_bonus is the precedent for a capability that sits in the tree at 0
-# until something measures it, one edit away from being tried.
+# The shelf shipped unmeasured on purpose and has since been priced: AR5's
+# search campaign ran over it, cover_tiles and condition_weight earned places in
+# the vector data/ai/brutal.tres seats and join_weight measured worthless and
+# stayed benched beside focus_fire_bonus. docs/ai_arena_results.md is the
+# measurement and the tier files are where the values live — not this comment.
 
 ## How many tiles of walking a unit will give up for one defence star of the
 ## ground it stops on. 0 skips it entirely.
@@ -351,6 +359,14 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## The scale to keep in view is a mountain's four stars against a road's none:
 ## much above 1.0 the cover outweighs four tiles of advance, which parks an army
 ## on the high ground and leaves it there.
+##
+## Read with step_cost_penalty, because the attack path spends this through it:
+## `_cover_score` is `step_cost_penalty * cover_tiles(...)`, so a tier pricing a
+## tile at nothing prices cover at nothing there while the advance path, which
+## counts tiles directly, still pays. That is what a tier shipping
+## step_cost_penalty = 0.0 alongside a live cover_tiles buys, and it is
+## consistent rather than broken — cover bought out of a walk costs nothing when
+## the walk is free.
 @export var cover_tiles: float = 0.0
 ## How much of a unit's price is its condition: 0 values every unit at its
 ## roster cost however little of it is left, 1 values it at cost x hp/100, and

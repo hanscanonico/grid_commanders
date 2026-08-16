@@ -23,6 +23,9 @@ extends RefCounted
 const IDLE_TURNS := 3
 const BANKED_TURNS := 3
 const STRANDED_TURNS := 3
+## A side is allowed to save up a couple of turns for something better than the
+## cheapest thing on the board, so a one- or two-turn hoard is ordinary play.
+const HOARD_TURNS := 3
 
 ## What a finding is worth, before its own arithmetic scales it. Ranking is only
 ## ever "read this one first" — the numbers are a sort key, not a currency.
@@ -134,11 +137,6 @@ class Hoard:
 			cheapest = p_cheapest
 
 	func detail() -> String:
-		if turns == 1:
-			return (
-				"ended the turn on %d funds having built nothing, against a %d build"
-				% [peak, cheapest]
-			)
 		return (
 			"built nothing for %d turns, peaking at %d funds against a %d build"
 			% [turns, peak, cheapest]
@@ -152,6 +150,34 @@ class Hoard:
 class Opening:
 	var cell := Vector2i.ZERO
 	var takeable: Array[Vector2i] = []
+
+
+## One unit as the meter was spent, so what the turn did with it can be read off
+## the board it is handed over on.
+class Condition:
+	var hp := 0
+	var fuel := 0
+	var ammo := 0
+	## Whether the unit had already committed its action when the power fired. A
+	## refresh power is the only thing that can hand it a second one, so nothing
+	## else in the roster can be credited by `acted_again`.
+	var acted := false
+	var cell := Vector2i.ZERO
+
+	static func of(unit: Unit) -> Condition:
+		var was := Condition.new()
+		was.hp = unit.hp
+		was.fuel = unit.fuel
+		was.ammo = unit.ammo
+		was.acted = unit.acted
+		was.cell = unit.cell
+		return was
+
+	func topped_up(unit: Unit) -> bool:
+		return unit.hp > hp or unit.fuel > fuel or unit.ammo > ammo
+
+	func acted_again(unit: Unit) -> bool:
+		return acted and unit.cell != cell
 
 
 ## The board a Command Power was fired into, kept so the rest of the turn can be
@@ -168,7 +194,7 @@ class Spend:
 	## than a list of shots, because Hammerfall takes units off the board with no
 	## `AttackCommand` behind them.
 	var enemy_hp := 0
-	## Unit -> [hp, fuel, ammo] as the meter was spent.
+	## Unit -> the `Condition` it was in as the meter was spent.
 	var condition: Dictionary = {}
 	## Unit -> the cells it could have stopped on **without** the power.
 	var reach: Dictionary = {}
@@ -176,8 +202,9 @@ class Spend:
 	func detail() -> String:
 		return (
 			(
-				"%s spent %s on day %d: nothing was hit, no ground changed hands, "
-				+ "nothing was repaired and no unit went anywhere it could not already reach"
+				"%s spent %s on day %d: nothing was hit, no ground changed hands, nothing "
+				+ "was repaired, nothing acted twice and no unit went anywhere it could "
+				+ "not already reach"
 			)
 			% [commander, power, day]
 		)
@@ -209,6 +236,8 @@ class Walk:
 	var loaded: Dictionary = {}
 	## team -> consecutive turns ended with a full meter unfired.
 	var banked: Dictionary = {}
+	## team -> whether the hold it is in the middle of has already been reported.
+	var banked_reported: Dictionary = {}
 	## The board this turn's Command Power was fired into, or null — no power, or a
 	## ROUND one, which buys the opponent's turn rather than this one.
 	var spend: Spend = null
@@ -344,7 +373,7 @@ static func _snapshot_power(state: GameState) -> Spend:
 	for unit in state.units:
 		if not state.allied(unit.team, team):
 			continue
-		spend.condition[unit] = [unit.hp, unit.fuel, unit.ammo]
+		spend.condition[unit] = Condition.of(unit)
 		if unit.carrier == null:
 			spend.reach[unit] = _stoppable_cells(state, unit)
 	return spend
@@ -475,11 +504,12 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 ## price percentage moves the finding with it — and a purse short of everything on
 ## the board is not reported.
 ##
-## Latched over the streak, the way `banked_power` and `undefended_hq` are: a side
-## that banks for five turns is one thing that happened, not five, and said once a
-## turn it was more than half of everything the analyser printed. The finding is
+## Latched over the streak, the way `undefended_hq` is: a side that banks for five
+## turns is one thing that happened, not five, and said once a turn it was more
+## than half of everything the analyser printed. The finding is
 ## held open while the streak runs and released when it ends — or at the end of the
-## recording, for a side still sitting on its purse when the match stopped.
+## recording, for a side still sitting on its purse when the match stopped, and
+## dropped outright below `HOARD_TURNS`.
 static func _check_hoarding(walk: Walk, state: GameState, team: int) -> void:
 	if walk.built:
 		_release_hoard(walk, team)
@@ -518,6 +548,8 @@ static func _release_hoard(walk: Walk, team: int) -> void:
 	if streak == null:
 		return
 	walk.hoard.erase(team)
+	if streak.turns < HOARD_TURNS:
+		return
 	_add_at(walk, "hoarding", streak.day, team, null, streak.detail(), streak.peak)
 
 
@@ -529,16 +561,24 @@ static func _close_hoards(walk: Walk) -> void:
 		_release_hoard(walk, team)
 
 
+## A meter that sat full while its owner had turns to spend it.
+##
+## Latched the way `undefended_hq` is: one uninterrupted hold is one finding, and
+## the streak is re-armed only when it actually breaks — the power going off, or
+## the meter dropping below ready. A doctrine that holds a charged power all
+## match is now the common case rather than the edge, so re-arming on the report
+## printed the same sentence every third turn for the whole recording.
 static func _check_power(walk: Walk, state: GameState, team: int) -> void:
 	var co_state := state.commander_state(team)
 	if walk.fired_power or not co_state.is_ready():
 		walk.banked[team] = 0
+		walk.banked_reported[team] = false
 		return
 	var streak := int(walk.banked.get(team, 0)) + 1
 	walk.banked[team] = streak
-	if streak < BANKED_TURNS:
+	if streak < BANKED_TURNS or walk.banked_reported.get(team, false):
 		return
-	walk.banked[team] = 0  # reported; start counting again rather than repeat every turn
+	walk.banked_reported[team] = true
 	_add(
 		walk,
 		"banked_power",
@@ -565,21 +605,26 @@ static func _check_spent_power(walk: Walk, state: GameState) -> void:
 	_add_at(walk, "spent_power", spend.day, spend.team, null, spend.detail(), spend.cost)
 
 
-## The four things a power can buy, read off the committed board rather than off
-## what was issued: an enemy hurt, ground changed hands, an army topped up, or a
-## unit standing where its own legs could not have carried it. Any one of them
-## and the meter did something.
+## The five things a power can buy, read off the committed board rather than off
+## what was issued: an enemy hurt, ground changed hands, an army topped up, a
+## second action out of a unit that had already spent its one, or a unit standing
+## where its own legs could not have carried it. Any one of them and the meter
+## did something.
+##
+## The second action is Second Wind's alone, and it needs its own criterion
+## because a refreshed unit walks out of a reach snapshotted from where it was
+## already standing — so the whole of what that power buys is invisible to the
+## other four.
 static func _power_bought_something(walk: Walk, state: GameState, spend: Spend) -> bool:
 	if _hostile_hp(state, spend.team) < spend.enemy_hp:
 		return true
 	if not walk.captured_cells.is_empty():
 		return true
 	for unit in state.units:
-		var opened: Variant = spend.condition.get(unit)
-		if opened == null:
+		var was: Condition = spend.condition.get(unit)
+		if was == null:
 			continue
-		var was: Array = opened
-		if unit.hp > int(was[0]) or unit.fuel > int(was[1]) or unit.ammo > int(was[2]):
+		if was.topped_up(unit) or was.acted_again(unit):
 			return true
 		var reach: Variant = spend.reach.get(unit)
 		if unit.carrier == null and reach != null and not (reach as Dictionary).has(unit.cell):
@@ -591,9 +636,9 @@ static func _power_bought_something(walk: Walk, state: GameState, spend: Spend) 
 ## cannot answer? Losing the home HQ takes the army out of the match, so this is
 ## the one finding that is about the whole side rather than a unit.
 ##
-## Latched the way `banked_power` is, and for the same reason: one lapse is one
-## finding. This is the heaviest severity in the table, so an HQ left uncovered
-## for a dozen turns would otherwise fill the printed summary with a dozen copies
+## Latched, and the precedent the other two streak findings follow: one lapse is
+## one finding. This is the heaviest severity in the table, so an HQ left
+## uncovered for a dozen turns would otherwise fill the summary with a dozen copies
 ## of one sentence and push every other kind off the page.
 static func _check_hq(walk: Walk, state: GameState, team: int) -> void:
 	var home: Variant = state.home_hq.get(team)
@@ -662,15 +707,17 @@ static func _check_idle(walk: Walk, state: GameState, unit: Unit) -> void:
 	)
 
 
-## Something worth doing: an enemy it could bring under fire, or ground it could
-## take. Asked of the rules, so a unit with nothing to do is not reported for
-## having nothing to do.
+## Something worth doing: an enemy it could actually shoot, or ground it could
+## take. The shot is `AttackRange.ready_shot`'s answer rather than a loaded weapon
+## over an occupied cell, so an infantry that can only reach a fighter has nothing
+## to do and is not reported for having nothing to do.
 static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
-	if AttackRange.has_ready_weapon(state, unit):
-		for cell in AttackRange.threat_cells(state, unit):
-			var other := state.unit_at(cell)
-			if other != null and not state.allied(other.team, unit.team):
-				return true
+	for cell in AttackRange.threat_cells(state, unit):
+		var other := state.unit_at(cell)
+		if other == null or state.allied(other.team, unit.team):
+			continue
+		if AttackRange.ready_shot(state, unit, other) != null:
+			return true
 	return not _takeable_within_reach(state, unit).is_empty()
 
 

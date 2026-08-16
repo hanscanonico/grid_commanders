@@ -22,7 +22,7 @@ cell = Vector2i(21, 3)
 
 [sub_resource type="Resource" id="Bonus_six_properties"]
 script = ExtResource("3")
-text = "Hold six properties."
+text = "Six of the fortress's properties, ours when it falls."
 count = 6
 
 [sub_resource type="Resource" id="Bonus_0"]

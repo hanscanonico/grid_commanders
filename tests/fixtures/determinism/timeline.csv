@@ -1,0 +1,28 @@
+match_id,day,team,commander,tier,funds_start,income,plunder,plunder_off_turn,spent,funds_end,built,built_value,killed,lost,killed_value,lost_value,merged,forfeited,unit_count,army_value,properties,captures,power_charge,power_fired,commands
+clash#none-normal_vs_none-normal#s1000,1,1,none,normal,2000,2000,0,0,1000,1000,infantry,1000,,,0,0,0,0,5,14550,2,0,0,0,6
+clash#none-normal_vs_none-normal#s1000,1,2,none,normal,2000,2000,0,0,1000,1000,infantry,1000,mech,,3000,0,0,0,5,9430,2,0,0,0,6
+clash#none-normal_vs_none-normal#s1000,2,1,none,normal,3000,2000,0,0,1000,2000,infantry,1000,mech;recon,,7000,0,0,0,5,7460,3,1,0,0,6
+clash#none-normal_vs_none-normal#s1000,2,2,none,normal,3000,2000,0,0,1000,2000,infantry,1000,tank,,7000,0,0,0,4,9370,2,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,3,1,none,normal,5000,3000,0,0,0,5000,,0,,,0,0,0,0,4,2920,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,3,2,none,normal,4000,2000,0,0,0,4000,,0,infantry,,1000,0,0,0,4,8480,3,1,0,0,5
+clash#none-normal_vs_none-normal#s1000,4,1,none,normal,8000,3000,0,0,1000,7000,infantry,1000,infantry,,1000,0,0,0,4,3040,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,4,2,none,normal,7000,3000,0,0,1000,6000,infantry,1000,,,0,0,0,0,4,8420,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,5,1,none,normal,9200,2200,0,0,7000,2200,tank,7000,,,0,0,0,0,5,9260,3,0,0,0,6
+clash#none-normal_vs_none-normal#s1000,5,2,none,normal,9000,3000,0,0,0,9000,,0,infantry x2;recon,,6000,0,0,0,4,8100,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,6,1,none,normal,5200,3000,0,0,1000,4200,infantry,1000,infantry,,1000,0,0,0,3,7880,3,0,0,0,4
+clash#none-normal_vs_none-normal#s1000,6,2,none,normal,12000,3000,0,0,1000,11000,infantry,1000,,,0,0,0,0,4,4130,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,7,1,none,normal,6080,1880,0,0,1000,5080,infantry,1000,tank,,7000,0,0,0,4,9140,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,7,2,none,normal,14000,3000,0,0,0,14000,,0,infantry,,1000,0,0,0,3,2730,3,0,0,0,4
+clash#none-normal_vs_none-normal#s1000,8,1,none,normal,8080,3000,0,0,1000,7080,infantry,1000,infantry,,1000,0,0,0,4,9730,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,8,2,none,normal,17000,3000,0,0,1000,16000,infantry,1000,,,0,0,0,0,3,2130,3,0,0,0,4
+clash#none-normal_vs_none-normal#s1000,9,1,none,normal,10080,3000,0,0,0,10080,,0,infantry,,1000,0,0,0,4,8730,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,9,2,none,normal,19000,3000,0,0,1000,18000,infantry,1000,,,0,0,0,0,3,2040,3,0,0,0,4
+clash#none-normal_vs_none-normal#s1000,10,1,none,normal,13080,3000,0,0,0,13080,,0,infantry x2,,2000,0,0,0,4,8230,3,0,0,0,5
+clash#none-normal_vs_none-normal#s1000,10,2,none,normal,21000,3000,0,0,1000,20000,infantry,1000,,,0,0,0,0,2,1730,3,0,0,0,3
+clash#none-normal_vs_none-normal#s1000,11,1,none,normal,16080,3000,0,0,16000,80,md_tank,16000,infantry,,1000,0,0,0,5,23680,3,0,0,0,6
+clash#none-normal_vs_none-normal#s1000,11,2,none,normal,23000,3000,0,0,1000,22000,infantry,1000,infantry,,1000,0,0,0,2,2000,3,0,0,0,3
+clash#none-normal_vs_none-normal#s1000,12,1,none,normal,2880,2800,0,0,1000,1880,infantry,1000,,,0,0,0,0,5,23730,3,0,0,0,6
+clash#none-normal_vs_none-normal#s1000,12,2,none,normal,25000,3000,0,0,0,25000,,0,,,0,0,0,0,2,950,3,0,0,0,3
+clash#none-normal_vs_none-normal#s1000,13,1,none,normal,4680,2800,0,0,0,4680,,0,infantry,,1000,0,0,0,5,23500,3,0,0,0,6
+clash#none-normal_vs_none-normal#s1000,13,2,none,normal,27800,2800,0,0,0,27800,,0,,,0,0,0,0,1,310,3,0,0,0,2
+clash#none-normal_vs_none-normal#s1000,14,1,none,normal,7680,3000,0,0,0,7680,,0,infantry,,1000,0,0,0,5,23240,3,0,0,0,2

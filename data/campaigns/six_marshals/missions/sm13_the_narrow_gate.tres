@@ -26,7 +26,7 @@ tag = &"draeg_spear"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The sixth marshal isn't the terror. Viktor Draeg is worse in a simpler way — his tanks hit fifteen percent harder than the chart admits, and shrug off a point of your cover besides."
+text = "The fifth marshal isn't the terror. Viktor Draeg is worse in a simpler way — his tanks hit fifteen percent harder than the chart admits, and when his meter fills they walk through a point of your cover besides."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")

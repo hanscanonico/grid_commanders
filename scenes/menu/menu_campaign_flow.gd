@@ -91,6 +91,8 @@ func resume() -> bool:
 	_menu_root.hide()
 	var stars := CampaignSession.max_stars()
 	var progress := CampaignSession.progress
+	# Read before the clear below, which takes the tally with it.
+	var losses := CampaignSession.tally.losses() if CampaignSession.tally != null else 0
 	_pending = _closing_interlude(campaign, mission, outcome)
 	_pending_ledger = progress
 	# The ledger has already settled — `CampaignSession.record` runs on the victory
@@ -102,7 +104,8 @@ func resume() -> bool:
 		stars,
 		_next_title(campaign, progress, outcome),
 		progress,
-		CampaignSession.recorded_notes()
+		CampaignSession.recorded_notes(),
+		losses
 	)
 	CampaignSession.clear()
 	return true
@@ -199,24 +202,36 @@ func pose_debrief(won: bool) -> void:
 		return
 	var campaign: CampaignDefinition = posed[0]
 	var mission: MissionDefinition = campaign.missions[0]
-	var runtime := MissionRuntime.new(mission)
+	# One earned and one missed, so the frame photographs the shape a real
+	# mission's awards take rather than the padded fallback — which is why the
+	# posed max is the array's own size and not the mission's. The posed day is
+	# past this mission's own par, so the missed star and the scoreboard beside it
+	# tell the same story.
+	var late_day := mission.par_day + 2
+	var awards: Array[MissionRuntime.Award] = [
+		MissionRuntime.Award.new("Mission complete", true),
+		MissionRuntime.Award.new("Finish by day %d" % mission.par_day, false),
+	]
 	var outcome := MissionRuntime.Outcome.new(
 		MissionRuntime.Status.SUCCESS if won else MissionRuntime.Status.FAILURE,
-		"" if won else "The road stayed closed past day 8.",
-		2 if won else 0
+		"" if won else "The road stayed closed past day %d." % mission.par_day,
+		1 if won else 0,
+		awards if won else ([] as Array[MissionRuntime.Award]),
+		late_day if won else 0
 	)
 	# The route is what names the mission this one opened, so the pose walks it: a
 	# fresh profile with this mission cleared is the war the debrief is speaking to.
 	var progress := CampaignState.begin(campaign)
-	progress.complete(campaign, mission.id, outcome.stars, 6)
+	progress.complete(campaign, mission.id, outcome.stars, late_day)
 	_menu_root.hide()
 	_debrief.begin(
 		mission,
 		outcome,
-		runtime.max_stars(),
+		awards.size(),
 		_next_title(campaign, progress, outcome),
 		progress,
 		[],
+		2,
 		false
 	)
 

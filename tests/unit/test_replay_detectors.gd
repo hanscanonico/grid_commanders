@@ -227,7 +227,18 @@ func test_findings_rank_by_kind_before_size() -> void:
 	state.funds[1] = 9000
 	_stand(state, &"infantry", 2, Vector2i(1, 1))  # threatens seat 1's home HQ
 	_stand(state, &"infantry", 1, Vector2i(7, 1))
-	var report := _run(state, [{"c": "end_turn"}])
+	# Three of seat 1's turns, so the purse clears the hoarding floor.
+	var report := _run(
+		state,
+		[
+			{"c": "end_turn"},
+			{"c": "end_turn"},
+			{"c": "end_turn"},
+			{"c": "end_turn"},
+			{"c": "end_turn"},
+			{"c": "end_turn"},
+		]
+	)
 	assert_gt(report.findings.size(), 1)
 	assert_eq(
 		report.findings[0].kind,

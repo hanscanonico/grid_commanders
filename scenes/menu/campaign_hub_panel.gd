@@ -394,18 +394,24 @@ func _open_briefing(slot: int) -> void:
 
 ## What the mission is won and lost on, drawn where scrolling cannot take it
 ## away. Hidden whole when a mission states none, so the page keeps its shape.
+##
+## A held-back condition is not one of the terms: `is_live` is the one answer to
+## whether an objective is being judged yet, asked here with no tally because a
+## briefing is read before the mission opens and nothing has been revealed. The
+## in-battle card asks the same authority, so the two surfaces cannot disagree
+## about which conditions the player has been told.
 func _fill_terms(mission: MissionDefinition) -> void:
 	for child in _brief_terms.get_children():
 		child.queue_free()
 	var terms: Array[String] = []
 	for objective in mission.objectives:
-		if objective != null and objective.text != "":
+		if objective != null and objective.text != "" and objective.is_live(null):
 			terms.append("OBJECTIVE   %s" % objective.text)
 	for failure in mission.failures:
-		if failure != null and failure.text != "":
+		if failure != null and failure.text != "" and failure.is_live(null):
 			terms.append("FAILURE   %s" % failure.text)
 	for bonus in mission.bonus_objectives:
-		if bonus != null and bonus.text != "":
+		if bonus != null and bonus.text != "" and bonus.is_live(null):
 			terms.append("BONUS STAR   %s" % bonus.text)
 	if mission.par_day > 0:
 		terms.append("PAR STAR   Finish by day %d." % mission.par_day)

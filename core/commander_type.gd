@@ -333,8 +333,10 @@ func build_bias(_state: GameState, _team: int, _unit_type: UnitType) -> int:
 	return 0
 
 
-## Displayed-HP points added to the planner's retreat threshold for `unit`, so
-## a doctrine that repairs cheaply can rotate its wounded home earlier.
+## Internal HP added to the planner's retreat threshold for `unit` — 10 is one
+## displayed pip — so a doctrine that repairs cheaply can rotate its wounded
+## home earlier. The scale is the profile's own: the delta lands on
+## `AIProfile.retreat_hp`, which is measured on `Unit.MAX_HP` = 100.
 func retreat_hp_delta(_state: GameState, _unit: Unit) -> int:
 	return 0
 

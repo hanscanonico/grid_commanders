@@ -103,37 +103,52 @@ func _idle_rounds(turns: int) -> Array:
 func test_hoarding_is_money_left_on_an_idle_factory() -> void:
 	var state := _bare_state()
 	state.funds[1] = 9000
-	# Seat 2 owns nothing it could spend on, so only seat 1 can be reported.
+	# Seat 2 opens broke, but its own properties earn over the three turns the floor
+	# asks for, so the case reads seat 1 rather than the whole report.
 	state.funds[2] = 0
-	var report := _run(state, [{"c": "end_turn"}])
-	assert_eq(_count(report, "hoarding"), 1)
-	assert_string_contains(_first(report, "hoarding").detail, "9000")
+	var report := _run(state, _idle_rounds(3))
+	assert_eq(_for_team(report, "hoarding", 1).size(), 1)
+	var finding: ReplayAnalysis.Finding = _for_team(report, "hoarding", 1)[0]
+	assert_gte(finding.magnitude, 9000)
+	assert_string_contains(finding.detail, str(finding.magnitude))
 
 
 ## The purse is measured against what this side is actually charged. A doctrine
 ## that marks production up leaves money on the table that buys nothing, and a
 ## detector reading the sticker price would send the reader after a build order
 ## that was already doing the only thing it could.
+## The same 1100 opens the streak on day one at the sticker price and only on day
+## two under Vale, whose 20% leaves it short of the board's one 1000 build. The
+## streak's first day is what the case reads, because income carries any purse
+## past any price if the walk is given enough turns — an absence of findings would
+## be reporting the floor rather than the rule.
 func test_a_purse_short_of_a_marked_up_price_is_not_hoarding() -> void:
-	var short := _bare_state()
-	short.set_commander(1, commander_db.by_id(&"konrad_vale"))
-	short.funds[1] = 1100
-	short.funds[2] = 0
-	assert_eq(_count(_run(short, [{"c": "end_turn"}]), "hoarding"), 0)
-	var enough := _bare_state()
-	enough.set_commander(1, commander_db.by_id(&"konrad_vale"))
-	enough.funds[1] = 1200
-	enough.funds[2] = 0
-	var report := _run(enough, [{"c": "end_turn"}])
-	assert_eq(_count(report, "hoarding"), 1)
-	assert_string_contains(_first(report, "hoarding").detail, "1200")
+	var marked_up := _bare_state()
+	marked_up.set_commander(1, commander_db.by_id(&"konrad_vale"))
+	marked_up.funds[1] = 1100
+	marked_up.funds[2] = 0
+	var short_report := _for_team(_run(marked_up, _idle_rounds(4)), "hoarding", 1)
+	assert_eq(short_report.size(), 1)
+	assert_eq(short_report[0].day, 2, "day one's purse bought nothing at Vale's price")
+	assert_string_contains(short_report[0].detail, "1200")
+	var sticker := _bare_state()
+	sticker.funds[1] = 1100
+	sticker.funds[2] = 0
+	var open_report := _for_team(_run(sticker, _idle_rounds(4)), "hoarding", 1)
+	assert_eq(open_report.size(), 1)
+	assert_eq(open_report[0].day, 1, "the same purse covers the price nobody marks up")
+	assert_string_contains(open_report[0].detail, "1000")
 
 
-func test_a_purse_too_small_for_anything_is_not_hoarding() -> void:
+## A purse under everything on the board is not a turn spent hoarding, so the
+## streak opens on the first turn income has carried it over the cheapest build.
+func test_a_purse_too_small_for_anything_does_not_open_a_streak() -> void:
 	var state := _bare_state()
 	state.funds[1] = 100
 	state.funds[2] = 100
-	assert_eq(_count(_run(state, [{"c": "end_turn"}]), "hoarding"), 0)
+	var report := _for_team(_run(state, _idle_rounds(4)), "hoarding", 1)
+	assert_eq(report.size(), 1)
+	assert_eq(report[0].day, 2, "day one's 100 buys nothing at all")
 
 
 ## One streak, one finding. Said every turn it was more than half of everything
@@ -165,6 +180,17 @@ func test_a_hoard_carries_the_peak_of_the_streak() -> void:
 	assert_string_contains(finding.detail, str(finding.magnitude))
 
 
+## A side is allowed to save up for something better than the cheapest thing on
+## the board, so a short hoard is the production planner playing as written. It was
+## about half of everything the analyser printed on real recordings, nearly all of
+## it one and two turn streaks.
+func test_a_two_turn_hoard_is_the_planner_saving_up() -> void:
+	var state := _bare_state()
+	state.funds[1] = 9000
+	state.funds[2] = 0
+	assert_eq(_count(_run(state, _idle_rounds(2)), "hoarding"), 0)
+
+
 ## A streak that ends is released there, and a later one is a second finding.
 func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 	var state := _bare_state()
@@ -173,11 +199,19 @@ func test_a_hoard_that_ends_and_starts_again_is_reported_twice() -> void:
 	var entries: Array = [
 		{"c": "end_turn"},  # day 1: the streak opens
 		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
 		# A turn the side spent something on is not a hoarding turn: the streak ends.
 		{"c": "build", "cell": [1, 0], "unit": "infantry"},
 		{"c": "end_turn"},
 		{"c": "end_turn"},
 		{"c": "move", "path": [[1, 0], [2, 0]]},  # off the base, and it is idle again
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
+		{"c": "end_turn"},
 		{"c": "end_turn"},
 		{"c": "end_turn"},
 	]
@@ -237,6 +271,18 @@ func test_idle_unit_needs_three_of_its_owners_turns() -> void:
 	assert_eq(_count(_run(state, _idle_rounds(3)), "idle_unit"), 2, "three is nobody playing")
 
 
+## Something in reach is not something to do. An infantry has no shot at a fighter
+## at all — the damage chart has no row for it — so a detector reading a loaded
+## weapon over an occupied cell reports a unit that was out of answers.
+func test_a_unit_that_cannot_engage_what_is_in_reach_is_not_idle() -> void:
+	var state := _bare_state()
+	# The far corner, so no property is within the infantry's walk and the fighter
+	# is the only thing it could be reported for.
+	_stand(state, &"infantry", 1, Vector2i(0, 4))
+	_stand(state, &"fighter", 2, Vector2i(1, 4))
+	assert_eq(_for_team(_run(state, _idle_rounds(4)), "idle_unit", 1).size(), 0)
+
+
 func test_a_unit_with_nothing_in_reach_is_not_idle() -> void:
 	var state := _bare_state()
 	# A lone tank: it cannot capture, and there is no enemy anywhere to shoot.
@@ -253,6 +299,32 @@ func test_banked_power_counts_a_full_meter_nobody_fires() -> void:
 	assert_true(co_state.is_ready(), "the fixture must actually hold a charged power")
 	assert_eq(_count(_run(state, _idle_rounds(2)), "banked_power"), 0)
 	assert_eq(_count(_run(state, _idle_rounds(3)), "banked_power"), 1)
+	# One uninterrupted hold is one finding however long it runs: holding a meter
+	# all match is what a benefit-gated doctrine does on purpose.
+	assert_eq(_count(_run(state, _idle_rounds(9)), "banked_power"), 1)
+
+
+## Latched, not silenced: a hold that really breaks is a second finding. Firing
+## is the only way a meter comes down, so the break here is the whole cycle —
+## spent, then charged back up by what seat 2's bomber destroys.
+func test_banked_power_reports_again_after_the_hold_breaks() -> void:
+	var state := _bare_state()
+	state.set_commander(1, commander_db.by_id(&"sera_lark"))
+	var co_state := state.commander_state(1)
+	co_state.charge = co_state.type.power_cost
+	_stand(state, &"tank", 1, Vector2i(4, 1))
+	_stand(state, &"tank", 1, Vector2i(4, 3))
+	_stand(state, &"infantry", 1, Vector2i(0, 4))  # so the kills do not end the match
+	_stand(state, &"bomber", 2, Vector2i(4, 2))
+	var entries := _idle_rounds(3)
+	entries.append_array([{"c": "power", "target": [0, 0]}, {"c": "end_turn"}])
+	# Two runs at the armour: seat 1 banks what it loses, which refills the meter.
+	for target: Array in [[4, 1], [4, 3]]:
+		entries.append({"c": "attack", "path": [[4, 2]], "target": target})
+		entries.append({"c": "end_turn"})
+		entries.append({"c": "end_turn"})
+	entries.append_array(_idle_rounds(3))
+	assert_eq(_count(_run(state, entries), "banked_power"), 2)
 
 
 func test_a_power_that_goes_off_resets_the_count() -> void:

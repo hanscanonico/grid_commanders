@@ -1,4 +1,4 @@
-# The Hollow Crown — "River Line".
+# The Hollow Crown — "The Committed Ground".
 # A standard two-army front. No allies here yet — the succession war has
 # not reached this crossing.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
