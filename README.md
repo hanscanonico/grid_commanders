@@ -54,6 +54,7 @@ make arena-search SEARCH="--block=all --dry-run"   # search a block of planner d
 make balance-watch        # watch a Balance Lab match play out live, both sides AI
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
+make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/replay_survey.md)
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
@@ -1011,6 +1012,12 @@ It is **evidence, not a gate**, and deliberately out of `make verify`: several d
 doctrine playing exactly as intended — Sable Wren sitting in woods is an `idle_unit`, a
 commander whose power wants a particular board is a `banked_power`, and a `spent_power` is a report
 on what the board did after the meter went, never a claim that firing was the wrong call.
+
+Point `REPLAY=` at a **directory** instead and the same command surveys it: every `.jsonl` in it is
+read, and the reports are folded into per-kind rates — count, share, findings per 100 commands, per
+match, and the unit types each kind is usually about — plus one row per recording and a loud count of
+anything that stopped early. It writes `survey.md` and `survey.json`. One report is an anecdote; a
+survey is a number, and `docs/replay_survey.md` is the committed one.
 
 The Balance Lab writes them too. `make balance-sim SIM="… --replays"` puts one file per match in a
 `replays/` directory beside its report, named by the same match id the CSV rows carry, so a
