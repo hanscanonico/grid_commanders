@@ -50,8 +50,10 @@ func star_bonus(state: GameState, fight: Engagement) -> int:
 
 ## Every effect of Make for the Shore is keyed on a hull or on shore ground, so
 ## an army with neither fires a full meter for exactly nothing — forever, on a
-## land-only board. The offensive default still has to hold: the power is
-## OWNER_TURN and each of its bonuses lands inside this turn's exchanges.
+## land-only board. The power is OWNER_TURN and every bonus lands inside this
+## turn's exchanges, so the offensive default the base gate states is here too —
+## folded into the walk below rather than asked of `super()` beside it, because
+## the unit taking a bonus and the unit spending it have to be the same one.
 func wants_power(state: GameState, team: int) -> bool:
 	return _can_use_the_shore(state, team)
 
