@@ -306,18 +306,45 @@ func _army_line() -> String:
 # --- the list ----------------------------------------------------------------
 
 
+## Which blocks the list deals mission by mission. A block is expanded when any
+## of its missions is open — the block the route is on and every one behind it —
+## and collapsed to a single summary row otherwise, so a war reads as a route
+## rather than as two dozen grey bars. Block 0 is always expanded, so a fresh
+## profile opens on its first missions rather than on nothing at all.
+##
+## Static and argument-taking, so the shape of a war is read without the page.
+static func expanded_blocks(
+	campaign: CampaignDefinition, progress: CampaignState
+) -> Dictionary[int, bool]:
+	var expanded: Dictionary[int, bool] = {0: true}
+	for mission: MissionDefinition in campaign.missions:
+		if mission == null or not progress.is_unlocked(mission.id):
+			continue
+		var block := campaign.block_of(mission.id)
+		if block >= 0:
+			expanded[block] = true
+	return expanded
+
+
 func _fill() -> void:
 	for child in _rows.get_children():
 		child.queue_free()
 	_row_buttons.clear()
 	_ids.clear()
+	var expanded := expanded_blocks(_campaign, _progress)
 	var block := -1
 	for index in _campaign.missions.size():
 		var mission: MissionDefinition = _campaign.missions[index]
 		var at := _campaign.block_of(mission.id)
-		if at != block and at >= 0 and at < _campaign.block_titles.size():
+		var titled := at >= 0 and at < _campaign.block_titles.size()
+		var collapsed: bool = titled and not expanded.get(at, false)
+		if at != block and titled:
 			block = at
-			_rows.add_child(_note(_campaign.block_titles[at].to_upper()))
+			_rows.add_child(
+				_block_summary(at) if collapsed else _note(_campaign.block_titles[at].to_upper())
+			)
+		if collapsed:
+			continue
 		var button := Button.new()
 		var open := _progress.is_unlocked(mission.id)
 		button.disabled = not open
@@ -330,6 +357,32 @@ func _fill() -> void:
 		_rows.add_child(button)
 		_row_buttons.append(button)
 		_ids.append(mission.id)
+
+
+## A block nobody has reached, in one row: its title, how long it is and the one
+## word that matters. Appended to the rows and to neither `_ids` nor
+## `_row_buttons` — the two stay index-parallel, and a summary row names no
+## mission to focus or deploy.
+##
+## The count is the block's AUTHORED length, deliberately not a route count:
+## `CampaignState.offered_count` stays the route's answer, and this row is about
+## the shape of the war rather than about what is left of it.
+func _block_summary(block: int) -> Button:
+	var button := Button.new()
+	button.disabled = true
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
+	button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var face := HBoxContainer.new()
+	face.set_anchors_preset(Control.PRESET_FULL_RECT)
+	face.offset_left = 6
+	face.offset_right = -6
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var title := _campaign.block_titles[block].to_upper()
+	var length: int = _campaign.block_lengths[block]
+	face.add_child(_row_cell("%s   ·   0/%d   ·   LOCKED" % [title, length], UiTheme.INK_3))
+	button.add_child(face)
+	return button
 
 
 ## The row as columns rather than a padded string: mark, number and title on the

@@ -47,3 +47,52 @@ func test_an_ally_is_never_the_face_the_row_is_set_against() -> void:
 	mission.sides = {1: 1, 2: 1}
 	var line := CampaignHubPanel.row_detail(mission, _commanders, null)
 	assert_false(line.contains("VS"), "a seat standing with the player is no antagonist")
+
+
+## Three blocks of two, so the route can stand in the first, the middle or past
+## the end and the answer differs at each.
+func _war() -> CampaignDefinition:
+	var campaign := CampaignDefinition.new()
+	campaign.id = &"war"
+	campaign.block_titles = ["Ferrow", "Vale", "Morn"]
+	campaign.block_lengths = [2, 2, 2]
+	for index in 6:
+		var mission := MissionDefinition.new()
+		mission.id = StringName("m%d" % index)
+		mission.title = "Mission %d" % index
+		campaign.missions.append(mission)
+	return campaign
+
+
+func _progress(open: Array[StringName]) -> CampaignState:
+	var state := CampaignState.new()
+	state.campaign_id = &"war"
+	for id in open:
+		state.unlocked[id] = true
+	return state
+
+
+func test_a_fresh_war_expands_its_first_block_only() -> void:
+	var expanded := CampaignHubPanel.expanded_blocks(_war(), _progress([&"m0"]))
+	assert_eq(expanded.size(), 1, "one block dealt in full")
+	assert_true(expanded.get(0, false), "the block the route opens on")
+
+
+func test_a_war_with_nothing_unlocked_still_expands_the_first_block() -> void:
+	var expanded := CampaignHubPanel.expanded_blocks(_war(), _progress([]))
+	assert_true(expanded.get(0, false), "a fresh profile is never all-collapsed")
+
+
+func test_a_route_in_the_second_block_expands_it_and_everything_behind() -> void:
+	var expanded := CampaignHubPanel.expanded_blocks(
+		_war(), _progress([&"m0", &"m1", &"m2", &"m3"])
+	)
+	assert_true(expanded.get(0, false), "a cleared block stays open")
+	assert_true(expanded.get(1, false), "the block the route stands in")
+	assert_false(expanded.get(2, false), "ground nobody has reached collapses")
+
+
+func test_a_finished_war_expands_every_block() -> void:
+	var open: Array[StringName] = [&"m0", &"m1", &"m2", &"m3", &"m4", &"m5"]
+	var expanded := CampaignHubPanel.expanded_blocks(_war(), _progress(open))
+	assert_eq(expanded.size(), 3, "nothing is left to collapse")
