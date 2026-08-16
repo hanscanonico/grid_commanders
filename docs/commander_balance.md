@@ -196,6 +196,105 @@ Calder's 42.1% here is a three-commander slice against Ward and Vale, not the
 roster-wide 40.1% / clash 23.9% of the 2026-08-15 batch below; her standing low-outlier
 review is that batch's and is untouched by this reading.
 
+### CA4 re-asked: is doctrine advice still worth its weight? (2026-08-16)
+
+The doctrine plan's CA4 acceptance question — *no commander's advice made the AI
+worse with that commander than the neutral planner was* — was answered once, on
+2026-07-31, against a planner that has since gained the AI Judgement dials, the
+Audit II pass, per-seat difficulty and the `wants_power` benefit gates. Nothing
+in the tree re-asks it, so this is the re-take. **Nothing was retuned; every name
+below is a review trigger.**
+
+The roster of advisers is `tests/unit/test_commander_ai_advice.gd`'s
+`ADVICE_COVERAGE`, which is the authority for who advises and who is silent. It
+reads **twelve** here, not the eleven of the CA4 batch: `halden_marr` gained a
+`stand_value` earlier the same day (see *Marr's shore stand advice* above), so he
+is measured as an adviser for the first time.
+
+The lever is `doctrine_weight` in `data/ai/default.tres`, played at its shipped
+`1.0` and then at `0.0`, which skips the three advisory hooks entirely (plan D2).
+The dial was reverted at the end of the run and `data/` is byte-clean.
+
+#### Arm A — against the no-commander planner (the controlled reading)
+
+`make commander-balance BAL="--commanders=<one> --neutral --seeds=12"`, once per
+adviser, 120 non-mirror games each. This is the arm that answers CA4 as it is
+written: the opponent seats no commander, so the dial cannot move that side and
+the whole delta is the adviser's own advice.
+
+| Commander | advice on | advice off | Δ |
+|---|---:|---:|---:|
+| Mara Voss | 50.0% | 57.5% | **−7.5** |
+| Rhea Sol | 47.5% | 50.0% | −2.5 |
+| Gideon Holt | 65.8% | 66.7% | −0.8 |
+| Alina Ward | 55.0% | 55.8% | −0.8 |
+| Konrad Vale | 76.7% | 76.7% | 0.0 |
+| Halden Marr | 51.7% | 50.8% | +0.8 |
+| Ines Calder | 57.5% | 56.7% | +0.8 |
+| Orin Flux | 57.5% | 55.0% | +2.5 |
+| Tomas Reed | 60.0% | 55.0% | +5.0 |
+| Cassian Rook | 47.5% | 41.7% | +5.8 |
+| Sable Wren | 60.0% | 50.0% | +10.0 |
+| Viktor Draeg | 72.5% | 58.3% | **+14.2** |
+
+**CA4 still passes, and the one name below zero is inside the noise.** At 120
+games a side the standard error on a difference is about 6.5 pp, so Mara Voss's
+−7.5 is roughly one standard error and Rhea Sol, Holt and Ward are a fraction of
+one. Only Draeg (+14.2, ≈2.2 SE) and Wren (+10.0, ≈1.5 SE) are separated from
+zero at all. **Mara Voss is the review trigger this run produces** — her
+`stand_value` is the only advice that has never measured positive against the
+neutral planner, and she is a `watch` row on the standing matrix as well. It is a
+trigger for a *measurement* at more seeds, not for an edit.
+
+#### Arm B — the twelve advisers against each other
+
+`make commander-balance BAL="--commanders=<all twelve> --seeds=2"`, 1,440 matches
+per arm.
+
+| Commander | advice on | advice off | Δ |
+|---|---:|---:|---:|
+| Gideon Holt | 57.5% watch | 65.8% WARN | −8.3 |
+| Rhea Sol | 36.2% WARN | 40.8% watch | −4.6 |
+| Konrad Vale | 65.0% WARN | 69.2% WARN | −4.2 |
+| Alina Ward | 48.3% ok | 51.2% ok | −2.9 |
+| Tomas Reed | 55.4% watch | 56.7% watch | −1.2 |
+| Orin Flux | 51.7% ok | 52.1% ok | −0.4 |
+| Mara Voss | 42.9% watch | 42.9% watch | 0.0 |
+| Cassian Rook | 39.2% WARN | 38.8% WARN | +0.4 |
+| Halden Marr | 43.8% watch | 42.9% watch | +0.8 |
+| Ines Calder | 44.2% watch | 41.7% watch | +2.5 |
+| Sable Wren | 52.1% ok | 44.2% watch | +7.9 |
+| Viktor Draeg | 63.8% WARN | 52.5% ok | +11.2 |
+
+**Read this arm as a ranking and never as a verdict.** Turning the dial off
+removes advice from *both* seats of every game, and every commander in the field
+is an adviser, so the field is closed and the twelve deltas sum to zero by
+construction (they sum to +1.2 here, the three draws). A negative row means only
+that advice helped that commander **less than it helped the field on average** —
+it is not the CA4 question, which is Arm A's. That is why Gideon Holt reads −8.3
+here and −0.8 against the neutral planner: what moved was Draeg and Wren taking
+games off everybody, not Holt's repair gate turning harmful.
+
+Neither arm is comparable to the full-matrix numbers in the section below: this
+is a twelve-name field on five scenarios at two seeds, not the roster of
+twenty-two at four.
+
+#### Invariants and provenance
+
+All four runs (two arms × two dial positions, 5,760 matches) are **0 rejected
+commands and 0 cap stalls**. Arm B: 1,440 matches, 1,440 decisive with advice on
+and 1,437 decisive with three draws with it off; first-seat bias +32.1 pp on and
++37.3 pp off, both the standing banking item and outside this document's ±5 pp
+threshold as they have been since banking shipped. Terminations moved a little
+toward the day cap with advice on (680 rout / 672 `day_cap` / 88 `hq`, against
+703 / 650 / 87 off) and powers fired more often (11,751 against 11,115), which is
+Wren's staged Vanish and the other timing doctrines doing what they were written
+to do.
+
+`reports/` is gitignored, so both sides of every arm were generated in the same
+worktree at `d9e7336`. No `.tres` was shipped changed: `data/ai/default.tres` is
+byte-identical to `main`, and no commander file was touched.
+
 ### Measured after the power-gate pass (2026-08-15)
 
 The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
