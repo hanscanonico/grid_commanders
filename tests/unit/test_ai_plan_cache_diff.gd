@@ -69,6 +69,9 @@ const COVERED := {
 	&"spend_ceiling_turns": "the banking dials",
 	&"bank_scope": "the banking dials",
 	&"bank_rank_margin": "the banking dials",
+	&"goal_engageability": "the anti-milling dials",
+	&"capture_threat_aversion": "the anti-milling dials",
+	&"standoff_band_tolerance": "the anti-milling dials",
 	&"doctrine_weight": "commanders seated",
 }
 
@@ -238,6 +241,24 @@ func test_the_banking_dials_play_command_for_command() -> void:
 		profile.bank_scope = AIProfile.BANK_SCOPE_FACILITY
 		profile.bank_rank_margin = 4
 	var profiles := {&"banking alone": banking, &"the banking dials on hard": whole_block}
+	for dial: StringName in profiles:
+		for board: Array in PlanCacheDiff.boards():
+			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
+
+
+## The three dials against the milling, all shipped inert. Two of them move what
+## a plan is scored against rather than only what it scores: the engageable
+## filter re-aims the fallback advance, which is the half of a plan the cache
+## keeps and re-derives apart, and the capture's threat term makes a fourth
+## reader of the map whose moment of building the cache has to know about.
+func test_the_anti_milling_dials_play_command_for_command() -> void:
+	var milling := AIProfile.new()
+	var whole_block: AIProfile = HARD_TIER.duplicate()
+	for profile: AIProfile in [milling, whole_block]:
+		profile.goal_engageability = 1.0
+		profile.capture_threat_aversion = 1.0
+		profile.standoff_band_tolerance = 1
+	var profiles := {&"milling alone": milling, &"the milling dials on hard": whole_block}
 	for dial: StringName in profiles:
 		for board: Array in PlanCacheDiff.boards():
 			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])

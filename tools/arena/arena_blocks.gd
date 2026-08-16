@@ -223,6 +223,23 @@ const EXCLUDED := {
 		"the third banking dial, unmeasured with the other two — and denominated in places"
 		+ " on the build list, so it only means anything beside duplicate_priority_cost."
 	),
+	&"goal_engageability":
+	(
+		"a flag rather than a magnitude — an enemy is engageable or it is not — and what it"
+		+ " fixes is a fleet aimed at land, which the naval boards the pools exclude are"
+		+ " where it happens (naval R1)."
+	),
+	&"capture_threat_aversion":
+	(
+		"the fourth reader of one ThreatMap, so a lattice that stepped it alone would credit"
+		+ " it with what threat_aversion, advance_threat_tiles and withdraw_weight already"
+		+ " price. It moves with them or not at all — and it ships unmeasured."
+	),
+	&"standoff_band_tolerance":
+	(
+		"a flag rather than a magnitude: any value above 0 flattens the band and there is"
+		+ " nothing between the two settings for a lattice to step along."
+	),
 }
 
 ## Asked for a field's type and existence rather than declared beside the range,

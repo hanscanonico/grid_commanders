@@ -151,6 +151,13 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # answers to say each one arrives as a scored candidate rather than as a branch
 # grown inside an existing one.
 #
+# 1074 -> 1099 for the three dials against the milling, which are deliberately
+# *not* three new candidates: an engageable goal, a capture priced against the
+# fire it walks into and a flat rank inside a firing band are each one term
+# inside a judgement this file already makes, and a fourth `_consider_*` for any
+# of them would be a second opinion competing with the one it belongs to. What
+# each costs is a branch and its reason.
+#
 # scenes/battle/battle_scenario_driver.gd 985: dev-only, and held to its length
 # because it held the ceiling once already and paid COM-94's cut-in split to get
 # out of it. A scenario belongs in its own Battle*Scenario class, and what stays
@@ -164,7 +171,7 @@ FILE_BUDGETS="
 scenes/battle/battle.gd 1423
 scenes/menu/main_menu.gd 1121
 core/save_codec.gd 1332
-ai/ai_unit_action_planner.gd 1074
+ai/ai_unit_action_planner.gd 1099
 scenes/battle/battle_scenario_driver.gd 990
 "
 

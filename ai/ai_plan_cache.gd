@@ -115,8 +115,8 @@ func _may_keep(context: AIPlanningContext) -> bool:
 	return not _weighs_threat() or context.threat_map_built()
 
 
-## The three dials that build a threat map, and the reason this is stated twice:
-## each of them gates its own read in AIUnitActionPlanner, and a fourth one added
+## The four dials that build a threat map, and the reason this is stated twice:
+## each of them gates its own read in AIUnitActionPlanner, and a fifth one added
 ## there has to be added here too or the cache would keep plans made before the
 ## map existed.
 ##
@@ -135,6 +135,7 @@ func _weighs_threat() -> bool:
 		profile.threat_aversion > 0.0
 		or profile.advance_threat_tiles > 0.0
 		or profile.withdraw_weight > 0.0
+		or profile.capture_threat_aversion > 0.0
 	)
 
 
