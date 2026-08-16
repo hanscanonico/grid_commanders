@@ -64,6 +64,15 @@ func _run_rejected_confirms() -> String:
 	if error != "":
 		return error
 
+	_battle.confirm_at(Vector2i(10, 5))  # nowhere near the blue reach
+	error = _expect_reason(feedback, "Out of reach.")
+	if error != "":
+		return error
+	await _press(&"fire_power")  # the Fire key with a unit in hand
+	error = _expect_reason(feedback, BattlePower.MID_ACTION)
+	if error != "":
+		return error
+
 	# Back out the selection the way a player would before handing the turn over:
 	# a human selection left live under the CPU-turn chip is a board the game
 	# cannot reach, and this mode's frame is photographed exactly there.
@@ -71,9 +80,87 @@ func _run_rejected_confirms() -> String:
 	if _battle.state != Battle.State.IDLE:
 		return "cancel did not clear the selection before the CPU turn"
 
+	error = await _run_no_target_confirm()
+	if error != "":
+		return error
+	error = await _run_bad_unload_confirm()
+	if error != "":
+		return error
+	error = await _run_power_key_refusals()
+	if error != "":
+		return error
+
 	_battle.state = Battle.State.AI_TURN
 	_battle.confirm_at(_battle.cursor_cell)
 	return _expect_reason(feedback, "CPU turn.")
+
+
+## Aiming a shot and confirming on ground no target stands on. The two tanks in
+## frontline contact are what makes Fire an offered row from a standing start.
+func _run_no_target_confirm() -> String:
+	_battle.confirm_at(Vector2i(8, 8))  # the red tank
+	_battle.confirm_at(Vector2i(8, 8))  # stand still, and open its orders
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"fire")
+	await _until_state(Battle.State.TARGETING)
+	_battle.confirm_at(Vector2i(8, 6))
+	var error := _expect_reason(_battle.action_feedback, "No target there.")
+	if error != "":
+		return error
+	await _press(&"cancel")  # back to the orders
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"cancel")
+	await _press(&"cancel")
+	return await _expect_rest("aiming")
+
+
+## Unloading onto ground the transport cannot reach. The infantry boards the APC
+## beside it first, a drop row being the only way into DROP_TARGETING.
+func _run_bad_unload_confirm() -> String:
+	_battle.confirm_at(Vector2i(4, 3))  # the infantry
+	_battle.confirm_at(Vector2i(3, 3))  # onto the APC: a Load destination
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"load")
+	await _until_state(Battle.State.IDLE)
+
+	_battle.confirm_at(Vector2i(3, 3))  # the loaded APC
+	_battle.confirm_at(Vector2i(3, 3))
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"drop_0")
+	await _until_state(Battle.State.DROP_TARGETING)
+	_battle.confirm_at(Vector2i(10, 5))
+	var error := _expect_reason(_battle.action_feedback, "Cannot unload there.")
+	if error != "":
+		return error
+	await _press(&"cancel")  # back to the orders
+	await _until_state(Battle.State.MENU)
+	_battle.action_menu.choose(&"cancel")
+	await _press(&"cancel")
+	return await _expect_rest("unloading")
+
+
+## The Fire key on a meter that cannot fire. The bar hides its Fire button until
+## the meter fills, so this key is the only route to either refusal.
+func _run_power_key_refusals() -> String:
+	await _press(&"fire_power")
+	var error := _expect_reason(_battle.action_feedback, BattlePower.NO_POWER)
+	if error != "":
+		return error
+
+	var sol := _battle.commander_db.by_id(&"rhea_sol")
+	_battle.game.set_commander(1, sol)
+	await _press(&"fire_power")
+	error = _expect_reason(_battle.action_feedback, BattlePower.CHARGING % [0, sol.power_cost])
+	# The board this mode photographs seats no commander; put it back.
+	_battle.game.set_commander(1, null)
+	return error
+
+
+func _expect_rest(after: String) -> String:
+	await _battle.get_tree().process_frame
+	if _battle.state != Battle.State.IDLE:
+		return "backing out of %s left the board in state %d" % [after, _battle.state]
+	return ""
 
 
 func _run_enemy_range_preview() -> String:
