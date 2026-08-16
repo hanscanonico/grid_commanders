@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
@@ -22,11 +21,6 @@ at_most = 0
 script = ExtResource("2")
 text = "Answer the ultimatum: take Morn's command post on the crossing."
 cell = Vector2i(19, 2)
-
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("3")
-text = "Morn's command post stood past day 8, the ultimatum unanswered."
-last_day = 8
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
@@ -103,7 +97,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([SubResource("Failure_0")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_terms_expire")])
 par_day = 5

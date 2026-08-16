@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/flag_condition.gd" id="6"]
@@ -18,11 +17,6 @@
 script = ExtResource("2")
 text = "Take the roadhead. The capital road opens the moment it falls."
 cell = Vector2i(17, 2)
-
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("3")
-text = "The roadhead held, and the capital road stayed shut past day 9."
-last_day = 9
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
@@ -146,7 +140,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([SubResource("Failure_0")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_marshal_pays_up"), SubResource("Event_what_the_ridge_left_him")])
 par_day = 6

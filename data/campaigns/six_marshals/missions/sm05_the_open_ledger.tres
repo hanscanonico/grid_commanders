@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=30 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
@@ -18,11 +17,6 @@ script = ExtResource("2")
 text = "Hold four of the six market towns — the majority."
 count = 4
 terrain_id = &"city"
-
-[sub_resource type="Resource" id="Failure_the_market_stayed_split_past_day_11"]
-script = ExtResource("3")
-text = "The market stayed split past day 11."
-last_day = 11
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -121,7 +115,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_four_of_the_six_market_towns")])
-failures = Array[Resource]([SubResource("Failure_the_market_stayed_split_past_day_11")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_interest_accrues"), SubResource("Event_the_crossroads_pays")])
 par_day = 8

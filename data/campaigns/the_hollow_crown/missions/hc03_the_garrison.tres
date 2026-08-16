@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/own_properties_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="6"]
@@ -14,11 +13,6 @@
 script = ExtResource("2")
 text = "Take the customs fort and end Ferrow's season here."
 cell = Vector2i(17, 2)
-
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("3")
-text = "The customs fort was still Ferrow's on the tenth day."
-last_day = 9
 
 [sub_resource type="Resource" id="Bonus_0"]
 script = ExtResource("4")
@@ -95,7 +89,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([SubResource("Failure_0")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0"), SubResource("Bonus_1")])
 events = Array[Resource]([SubResource("Event_the_paychest_burns")])
 par_day = 6

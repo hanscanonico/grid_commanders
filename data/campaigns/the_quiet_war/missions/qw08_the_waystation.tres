@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -17,11 +16,6 @@
 script = ExtResource("2")
 text = "Take the waystation."
 cell = Vector2i(9, 2)
-
-[sub_resource type="Resource" id="Failure_day_4"]
-script = ExtResource("3")
-text = "The waystation stayed Ferrow's past day 4."
-last_day = 4
 
 [sub_resource type="Resource" id="Bonus_take_the_courier"]
 script = ExtResource("5")
@@ -146,7 +140,7 @@ commanders = {
 fog_enabled = true
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_take_the_waystation")])
-failures = Array[Resource]([SubResource("Failure_day_4")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_courier")])
 events = Array[Resource]([SubResource("Event_the_garrison_learns"), SubResource("Event_the_route_book"), SubResource("Event_the_depot_is_marked")])
 par_day = 4

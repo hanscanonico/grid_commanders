@@ -1,10 +1,9 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/destroy_unit_objective.gd" id="4"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
 [ext_resource type="Script" path="res://core/campaign/triggers/objective_met_trigger.gd" id="8"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="9"]
@@ -22,11 +21,6 @@ text = "Stop the handler before he clears the east road."
 id = &"destroy_orlov_handler"
 hidden = true
 tag = &"orlov_handler"
-
-[sub_resource type="Resource" id="Failure_day_10"]
-script = ExtResource("5")
-text = "The safehouse burned its files past day 10."
-last_day = 10
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
@@ -138,7 +132,7 @@ commanders = {
 fog_enabled = true
 difficulty = &"easy"
 objectives = Array[Resource]([SubResource("Objective_take_the_safehouse")])
-failures = Array[Resource]([SubResource("Failure_day_10")])
+failures = Array[Resource]([])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_handler")])
 events = Array[Resource]([SubResource("Event_the_handler_runs"), SubResource("Event_the_handler_taken"), SubResource("Event_the_files_are_read")])
 par_day = 6

@@ -81,7 +81,7 @@ what happens while it is fought.
 | `DefeatTeam` | one named army is gone | board |
 | `AllySurvives` | a named ally is still in the war | board |
 | `SurviveUntilDay` | the day has arrived | board |
-| `DayDeadline` | the day has passed — **a failure, never a goal** | board |
+| `DayDeadline` | the day has passed — **a failure, never a goal and never a bonus** | board |
 | `HoldCell` | named ground has been ours for N whole days | tally |
 | `LossLimit` | we have lost more than N units | tally |
 
@@ -391,8 +391,16 @@ gated — which is the shape trap 1's check is written to allow.
    `commanders`, `fog_enabled`, `difficulty` (a tier that ships).
 4. **Pick the primary.** If it is the enemy's home headquarters, it is the *only*
    primary. Everything else the briefing asks for is a bonus.
-5. **Pick the failure.** A deadline goes in `failures`, never in `objectives`, and
-   `par_day` has to fall inside it.
+5. **Pick the failure.** `par_day` is the pressure — it pays the speed star on
+   every mission and costs nobody the battle. A deadline is a *failure*, and a
+   failure needs a reason, so it belongs only where a time-shaped primary
+   (`SurviveUntilDay`, `HoldCell`, `AllySurvives`, `ProtectUnit`) makes the clock
+   the mission's own subject; on an ordinary capture or rout it is a second
+   statement of the same pressure that takes the match away. Where one is
+   authored it goes in `failures` — never in `objectives`, and never in
+   `bonus_objectives` either, since its truth is "the day has passed" and both
+   goal lists read "satisfied = good", so as a bonus it would pay a star for
+   being slow. `par_day` has to fall inside it.
 6. **Author the beat.** One beat minimum, per D9. Its trigger is something the
    board can answer; its line is the sentence the briefing already promised; its
    effect is the smallest true board fact.

@@ -21,9 +21,9 @@ extends GutTest
 ## earlier mission wrote. Those are the second test's, which applies every beat of
 ## every mission to the board it opens on.
 
-## Days played per mission. Every shipped mission reaches a verdict inside it, so
-## raising it buys nothing; the suite's wall clock is what stops it being a full
-## match each.
+## Days played per mission. A mission that has not reached a verdict by then is
+## left undecided rather than failed, so raising it buys reach at the cost of the
+## suite's wall clock, which is what stops it being a full match each.
 const DAYS := 12
 ## The one seed, so a failure is reproducible. The planner is RNG-free; this is
 ## the combat luck.

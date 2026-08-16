@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=24 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/triggers/day_reached_trigger.gd" id="6"]
@@ -20,11 +19,6 @@ at_most = 0
 script = ExtResource("2")
 text = "Take the magazine base — the only base this raid will ever have."
 cell = Vector2i(7, 4)
-
-[sub_resource type="Resource" id="Failure_0"]
-script = ExtResource("3")
-text = "Vance's garrison held the magazine past day 8."
-last_day = 8
 
 [sub_resource type="Resource" id="Failure_ration"]
 script = ExtResource("9")
@@ -101,7 +95,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_0")])
-failures = Array[Resource]([SubResource("Failure_0"), SubResource("Failure_ration")])
+failures = Array[Resource]([SubResource("Failure_ration")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_0")])
 events = Array[Resource]([SubResource("Event_the_ration_is_revised")])
 par_day = 4
