@@ -28,9 +28,6 @@ const SCROLL_ACTIONS: Dictionary = {
 	&"cursor_down": 1,
 	&"ui_down": 1,
 }
-## One gesture moves every card by a line of body copy. Cards are read side by
-## side, so they scroll together and one offset describes the whole sheet.
-const SCROLL_STEP := UiTheme.SIZE_BODY + 4
 
 var _built := false
 ## The card grid; columns are rebuilt per match, because how many there are is the
@@ -265,11 +262,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Steps every card a line at a time, so the doctrine and Command Power copy
-## below the fold is reachable without a mouse. ScrollContainer clamps the value,
-## so a card that already fits — or an edge — simply does not move.
+## below the fold is reachable without a mouse. The line is measured off the very
+## font that copy is set in — as the end-turn guard steps by its list's line
+## height — rather than spelled as a number that would drift when the card is
+## redressed. Cards are read side by side, so they step together and one offset
+## describes the whole sheet. ScrollContainer clamps the value, so a card that
+## already fits — or an edge — simply does not move.
 func _scroll_cards(delta: int) -> void:
+	var step := maxi(int(UiTheme.display().get_height(UiTheme.SIZE_BODY)), 1)
 	for frame in _frames:
-		frame.scroll_vertical += delta * SCROLL_STEP
+		frame.scroll_vertical += delta * step
 
 
 func _shortcut_input(event: InputEvent) -> void:

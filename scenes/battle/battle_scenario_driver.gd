@@ -908,6 +908,11 @@ func _check_sheet_scrolls(sheet: CommanderInfoSheet) -> void:
 		picks[team] = _battle.commander_db.by_id(FOUR_ARMY_PROBE_COMMANDERS[team - 1])
 	sheet.open(picks)
 	await _settle_layout()
+	# The 2x2 is where the footer row is likeliest to crowd the cards, so it is
+	# measured here as well as on the pair this scenario photographs.
+	var flaw := sheet.layout_error(picks.size())
+	if flaw != "":
+		_fail(flaw)
 	var before := sheet.scroll_offset()
 	await _press_key(KEY_DOWN)
 	if sheet.scroll_offset() <= before:
