@@ -295,7 +295,7 @@ func _ready() -> void:
 	recorder = BattleRecording.open(self, _replay == null and not _capturing)
 	_command_pipeline = BattleCommandPipeline.new(self, recorder)
 	_outcome = _build_outcome()
-	_outcome.configure(request.watching, request.days_cap)
+	_outcome.configure(request.watching, request.days_cap, ai_teams)
 	action_menu.action_chosen.connect(_on_menu_action)
 	end_turn_guard.review_requested.connect(_review_ready_units)
 	end_turn_guard.end_requested.connect(_end_turn_anyway)

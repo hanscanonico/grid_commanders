@@ -36,6 +36,11 @@ var _watch_days_cap := BalanceMatchEngine.DEFAULT_DAYS
 ## BalanceMatchEngine.tiebreak instead — the harness's own authority, so the
 ## window and the CSV row agree — and that scored winner is not sim state.
 var _result_winner := 0
+## The computer's seats as the match was *staged*, which is what the verdict
+## wording is gated on. Never the live `ai_teams`: handing a seat to the computer
+## mid-match through the Auto row must not change what the end card calls the
+## result.
+var _seated_ai: Array[int] = []
 var _input_guard_until_ms := 0
 var _action_armed := false
 
@@ -58,11 +63,13 @@ func _request_watch_replay() -> void:
 		_battle.exit.watch_replay()
 
 
-## Watch mode's flags, from the setup. Set once at build; normal play leaves the
-## defaults, which is why a hot-seat or player-versus-AI match never grows a cap.
-func configure(watching: bool, days_cap: int) -> void:
+## Watch mode's flags and the staged seating, from the setup. Set once at build;
+## normal play leaves the watch defaults, which is why a hot-seat or
+## player-versus-AI match never grows a cap.
+func configure(watching: bool, days_cap: int, seated_ai: Array[int]) -> void:
 	_watching = watching
 	_watch_days_cap = days_cap
+	_seated_ai = seated_ai.duplicate()
 
 
 ## Watch mode only (balance plan BS3), and true when it ended the match here. The
@@ -191,10 +198,10 @@ func accepts_action(button: Button) -> bool:
 ## Dominion win!" when a side won together — or "Draw" for the one case with no
 ## winner: a watched match that hit the day cap with every tiebreak level.
 ##
-## Reads `winners()` rather than the scalar, because a victory that belongs to a
-## side has to name the side; the scalar is still what the lockup is *keyed* to,
-## so a duel prints exactly the sentence it always did. A scored day-cap win has
-## no elimination behind it and names its one team.
+## With exactly one human side at the table it is that side's own verdict
+## instead, the way a mission's already is: a solo player should not have to work
+## out from a faction name whether that was them. The faction is not lost — it
+## moves to the line below.
 func _result_text() -> String:
 	# A mission says whether *it* was completed, not who was left standing: its
 	# verdict already accounts for a tactical victory, and "Mission complete" is
@@ -208,9 +215,47 @@ func _result_text() -> String:
 		)
 	if _result_winner == 0:
 		return "Draw"
+	var human := _human_team()
+	if human != 0:
+		return "Victory!" if _battle.game.allied(human, _result_winner) else "Defeat"
+	return "%s!" % _winner_sentence()
+
+
+## The seat the people at the table play, and 0 when "did *you* win?" has no
+## single answer: a hot-seat match has two players owed opposite verdicts and a
+## watched or replayed one has none at all. Any seat of the one human side will
+## do — they share a verdict — so this is its lowest.
+##
+## Read off the staged seating rather than the live `ai_teams` or the live
+## viewer, both of which the Auto row moves: handing a seat to the computer
+## mid-match must not reword the result, and a player who put their *own* seat on
+## Auto is watching through the seat on turn, which at the end of the match is the
+## winner's — so the viewer would call every outcome a victory.
+func _human_team() -> int:
+	var game := _battle.game
+	var humans: Array[int] = []
+	for team: int in game.teams:
+		if team not in _seated_ai:
+			humans.append(team)
+	if humans.is_empty():
+		return 0
+	for team: int in humans:
+		if not game.allied(humans[0], team):
+			return 0
+	return humans[0]
+
+
+## Who won, in words: "Verdant League wins", or "Meridian Coalition & Iron
+## Dominion win" when a side won together.
+##
+## Reads `winners()` rather than the scalar, because a victory that belongs to a
+## side has to name the side; the scalar is still what the lockup is *keyed* to,
+## so a duel prints exactly the sentence it always did. A scored day-cap win has
+## no elimination behind it and names its one team.
+func _winner_sentence() -> String:
 	var side := _battle.game.winners()
 	if side.size() <= 1:
-		return "%s wins!" % _battle.view.identity.display_name(_result_winner)
+		return "%s wins" % _battle.view.identity.display_name(_result_winner)
 	# Distinct names, because two allies may share a faction — a mirror keeps both
 	# sides named for it and leans on the livery to tell them apart (SideIdentity).
 	# "Meridian Coalition & Meridian Coalition win!" is not a sentence.
@@ -220,12 +265,12 @@ func _result_text() -> String:
 		if not names.has(name):
 			names.append(name)
 	if names.size() == 1:
-		return "%s wins!" % names[0]
-	return "%s win!" % " & ".join(names)
+		return "%s wins" % names[0]
+	return "%s win" % " & ".join(names)
 
 
-## The line under the lockup: the day it took, and on a longer match who fell on
-## the way.
+## The line under the lockup: the day it took, who won where the title above said
+## only whether the player did, and on a longer match who fell on the way.
 func _day_text() -> String:
 	var day := "Day %d" % _battle.game.day
 	var outcome := CampaignSession.outcome
@@ -237,8 +282,13 @@ func _day_text() -> String:
 		var most := CampaignSession.max_stars()
 		var stars := "★".repeat(outcome.stars) + "☆".repeat(maxi(0, most - outcome.stars))
 		return "%s  ·  %s" % [day, stars]
+	var clauses := PackedStringArray([day])
+	if _result_winner != 0 and _human_team() != 0:
+		clauses.append(_winner_sentence())
 	var standings := _standings_text()
-	return day if standings == "" else "%s  ·  %s" % [day, standings]
+	if standings != "":
+		clauses.append(standings)
+	return "  ·  ".join(clauses)
 
 
 ## Who fell, in the order they fell — the standings half of the line above. Read

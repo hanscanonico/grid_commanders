@@ -14,20 +14,36 @@ func _init(battle: Battle) -> void:
 	_battle = battle
 
 
-func run(mode: String) -> void:
+## Empty when the pose came out right, like every other scenario class: the driver
+## fails the sweep on whatever is returned.
+func run(mode: String) -> String:
 	if mode == "side_victory":
-		await _run_side_victory()
-		return
-	await _run_duel_victory(mode == "commander_victory")
+		return await _run_side_victory()
+	return await _run_duel_victory(mode == "commander_victory")
 
 
 ## The staged rout, dressed for a capture: `with_commander` gives Red a general
 ## first, so the victory lockup is fronted by a portrait.
-func _run_duel_victory(with_commander: bool) -> void:
+func _run_duel_victory(with_commander: bool) -> String:
 	if with_commander:
 		_battle.game.set_commander(1, _battle.commander_db.by_id(&"viktor_draeg"))
 		_battle.view.restage_identity()  # so the win lockup reads the winner's faction, not First Army
 	await BattleScenarioDriver.stage_rout(_battle)
+	return _verdict_error()
+
+
+## Reads the lockup's own words back against the rules, because the frame this
+## pose exists to photograph cannot tell "Victory!" from "Defeat" on its own. A
+## duel against the computer is one human side, so the card carries the viewer's
+## verdict rather than the winner's name.
+func _verdict_error() -> String:
+	var game := _battle.game
+	var won := game.allied(_battle.perspective.viewing_team(), game.winner)
+	var wanted := "Victory!" if won else "Defeat"
+	var said := _battle.victory_screen.title_text()
+	if said == wanted:
+		return ""
+	return 'victory lockup reads "%s"; the viewer\'s verdict is "%s"' % [said, wanted]
 
 
 ## A 2v2 won together: the outcome frame that only exists once a victory can
@@ -39,11 +55,10 @@ func _run_duel_victory(with_commander: bool) -> void:
 ## the same `sides`, and a capture should not depend on walking a menu to reach
 ## it. The two losing armies are eliminated through the sim's own `eliminate`, so the
 ## banner, the standings line and the neutralised ground are the real ones.
-func _run_side_victory() -> void:
+func _run_side_victory() -> String:
 	var game := _battle.game
 	if game.teams.size() < 4:
-		push_error("side_victory needs a four-army board; got %d seats" % game.teams.size())
-		return
+		return "side_victory needs a four-army board; got %d seats" % game.teams.size()
 	game.sides = {1: 0, 3: 0, 2: 1, 4: 1}
 	# One commander per faction, so the four liveries behind the lockup are the
 	# four the atlas ships rather than two plus two borrowed classics.
@@ -64,3 +79,4 @@ func _run_side_victory() -> void:
 	# Synchronous, so there is no transition to wait on — only the one frame the
 	# lockup needs to have drawn before the shutter opens.
 	await _battle.get_tree().process_frame
+	return ""
