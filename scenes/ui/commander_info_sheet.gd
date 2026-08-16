@@ -18,6 +18,17 @@ extends Control
 
 signal closed
 
+## Scrolling the cards is the sheet's own, exactly as the end-turn guard's list is
+## its own: a direction reaches here as the board's action or as Godot's built-in
+## one, so both are answered and DirectionalInput collapses the pair one gesture
+## fires into a single line.
+const SCROLL_ACTIONS: Dictionary = {
+	&"cursor_up": -1,
+	&"ui_up": -1,
+	&"cursor_down": 1,
+	&"ui_down": 1,
+}
+
 var _built := false
 ## The card grid; columns are rebuilt per match, because how many there are is the
 ## board's answer and not this scene's.
@@ -26,6 +37,8 @@ var _cards: GridContainer
 ## which is what `layout_error` measures the shown slice against.
 var _frames: Array[ScrollContainer] = []
 var _close_button: Button
+## One scroll line per directional gesture; see DirectionalInput.
+var _dirs := DirectionalInput.new()
 
 
 func _ready() -> void:
@@ -138,6 +151,17 @@ func _build() -> void:
 	_close_button.pressed.connect(_emit_close)
 	rows.add_child(_close_button)
 
+	# The sheet's veil covers the top bar, so the board's key legend is not on
+	# screen while it is up — which is why the other full-screen pages carry a
+	# footer of their own, in this same recipe.
+	var footer := Label.new()
+	footer.text = "UP/DOWN  SCROLL      ESC  CLOSE      MOUSE OK"
+	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footer.add_theme_font_override("font", UiTheme.stat())
+	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
+	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	rows.add_child(footer)
+
 	_built = true
 
 
@@ -177,6 +201,11 @@ func _titled_card(parent: Node, identity: SideIdentity, team: int) -> CommanderC
 	var frame := ScrollContainer.new()
 	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Neither the frame nor its bar may take focus, or an arrow key is spent on
+	# focus navigation before _unhandled_input ever sees it and the cards never
+	# move — the same pairing the end-turn guard's list needs.
+	frame.focus_mode = Control.FOCUS_NONE
+	frame.get_v_scroll_bar().focus_mode = Control.FOCUS_NONE
 	column.add_child(frame)
 
 	# READING_WIDTH, the width the select page asks for, and not a pixel more: it is
@@ -215,6 +244,34 @@ func layout_error(expected_cards: int) -> String:
 				% [shown, CommanderCard.PORTRAIT_H]
 			)
 	return ""
+
+
+## How far down the cards are scrolled, in pixels — one number for the sheet,
+## because every card steps together. The scenario driver's read that a key
+## really reached here.
+func scroll_offset() -> int:
+	return 0 if _frames.is_empty() else _frames[0].scroll_vertical
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var scrolled := _dirs.step(event, SCROLL_ACTIONS.keys())
+	if not visible or scrolled.is_empty():
+		return
+	get_viewport().set_input_as_handled()
+	_scroll_cards(SCROLL_ACTIONS[scrolled])
+
+
+## Steps every card a line at a time, so the doctrine and Command Power copy
+## below the fold is reachable without a mouse. The line is measured off the very
+## font that copy is set in — as the end-turn guard steps by its list's line
+## height — rather than spelled as a number that would drift when the card is
+## redressed. Cards are read side by side, so they step together and one offset
+## describes the whole sheet. ScrollContainer clamps the value, so a card that
+## already fits — or an edge — simply does not move.
+func _scroll_cards(delta: int) -> void:
+	var step := maxi(int(UiTheme.display().get_height(UiTheme.SIZE_BODY)), 1)
+	for frame in _frames:
+		frame.scroll_vertical += delta * step
 
 
 func _shortcut_input(event: InputEvent) -> void:
