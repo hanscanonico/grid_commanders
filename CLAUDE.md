@@ -809,9 +809,12 @@ plan is stated in full below and has no copy there.
   out loud (`MatchRequest.replay_requested` is the fact `BattleSetup` reads), never quietly played
   as an ordinary match on the default board. The merge bar is `tests/unit/test_replay_fidelity.gd`: a seeded headless
   match, recorded and re-issued, reproducing every checkpoint and an identical final board. The
-  analyser's ten detectors each have a fixture that fires them exactly once
-  (`tests/unit/test_replay_analysis.gd` over `maps/fixtures/analysis.txt`), because a false positive
-  costs more than a miss — it sends the reader looking at a doctrine that was playing correctly.
+  analyser's eleven detectors each have a fixture that fires them exactly once
+  (the `tests/unit/test_replay_*.gd` suites over `maps/fixtures/analysis.txt`), because a false
+  positive costs more than a miss — it sends the reader looking at a doctrine that was playing
+  correctly. `abandoned_capture` is the one detector with a fixture and **no** real sighting: three
+  recordings hold 21 partial captures and zero abandonments, so it ships as a watch on a failure the
+  architecture allows rather than on one the shipped planner commits.
   `walk_into_fire` carries the shape that rule takes: it fires only when **staying put was
   survivable**, since a unit already inside the same fire did not walk into anything and reporting
   it buries the moves that did. `oscillation` carries the same shape from the other side: it says

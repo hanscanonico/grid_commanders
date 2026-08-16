@@ -990,11 +990,12 @@ make replay-report REPLAY=<file>        # add ARGS="--team=2" for one side
 ```
 
 It re-issues every command offline and reports what the sides left on the table, ranked, into
-`reports/replay/<name>/findings.md` and `.json`. Ten detectors: `walk_into_fire` (a move out of
+`reports/replay/<name>/findings.md` and `.json`. Eleven detectors: `walk_into_fire` (a move out of
 safety into ground the enemy can kill it on), `worse_shot` (a better target was in range from the
 same cell), `hoarding` (funds left on an idle factory), `spent_power` (a Command Power fired on a
 turn that then hit nothing, took no ground, repaired nothing and reached nowhere new),
-`missed_capture`, `idle_unit`, `banked_power`, `stranded_transport`, `oscillation` and
+`abandoned_capture` (a property left half-taken by the unit that started it, throwing the points
+back), `missed_capture`, `idle_unit`, `banked_power`, `stranded_transport`, `oscillation` and
 `undefended_hq`.
 
 Every counterfactual comes from the **rules** — `AttackRange`, `MovementResolver`,

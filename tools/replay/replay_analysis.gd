@@ -842,7 +842,8 @@ static func _check_abandoned_capture(walk: Walk, state: GameState, unit: Unit) -
 		return
 	if state.allied(state.owner_at(partial.cell), unit.team):
 		return
-	var owed := state.rules_config.capture_points
+	var total := state.rules_config.capture_points
+	var spent := total - partial.points_left
 	_add(
 		walk,
 		"abandoned_capture",
@@ -850,9 +851,9 @@ static func _check_abandoned_capture(walk: Walk, state: GameState, unit: Unit) -
 		unit,
 		(
 			"left the property at %s with %d of %d capture points already spent"
-			% [partial.cell, owed - partial.points_left, owed]
+			% [partial.cell, spent, total]
 		),
-		owed - partial.points_left
+		spent
 	)
 
 
