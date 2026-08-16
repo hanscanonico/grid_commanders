@@ -22,8 +22,59 @@ func on_power_activated(state: GameState, team: int, _target: Vector2i = Vector2
 			unit.refreshable = false
 
 
+## Fire only when some refreshed unit's second action can produce something the
+## rules recognise: a shot it can actually take, or ground it can actually take.
+##
+## The loose "any refreshable unit" gate this replaces was true on essentially
+## every full meter, because Colt fires AFTER_ACTIONS — by then the planner has
+## already spent every unit, so the condition only asked whether the army had
+## moved. One analysed match fired 43 times and bought nothing 24 of them.
+##
+## A second *advance* is deliberately refused, even though the power grants one:
+## a unit the planner had nothing better for than a walk is exactly what those 24
+## firings bought, and a full meter is worth more than a second walk. The failure
+## this errs toward is now banking rather than over-firing, and the analyser's
+## banked_power is what would measure it.
 func wants_power(state: GameState, team: int) -> bool:
 	for unit in state.units_of(team):
-		if unit.carrier == null and unit.acted and unit.refreshable:
+		if unit.carrier != null or not unit.acted or not unit.refreshable:
+			continue
+		if _can_open_fire(state, team, unit) or _can_take_ground(state, team, unit):
+			return true
+	return false
+
+
+## True when this unit could bring a visible enemy under fire once refreshed.
+## AttackRange.threat_cells is the union over every cell it can fire from, so
+## "walk into range and shoot" is one question to one authority; can_fire is the
+## same authority on whether the weapon can touch that target at all.
+func _can_open_fire(state: GameState, team: int, unit: Unit) -> bool:
+	var covered: Dictionary[Vector2i, bool] = {}
+	for cell in AttackRange.threat_cells(state, unit):
+		covered[cell] = true
+	for target in state.units:
+		if state.allied(target.team, team) or target.carrier != null:
+			continue
+		if not covered.has(target.cell) or Vision.is_hidden_from(state, team, target):
+			continue
+		if AttackRange.can_fire(state, unit, target):
+			return true
+	return false
+
+
+## _can_reach_capture asked of one unit that has already acted. The base class's
+## own version skips exactly those units — the right question about an army whose
+## turn is still to come, and the wrong one about the army Second Wind revives.
+func _can_take_ground(state: GameState, team: int, unit: Unit) -> bool:
+	if not unit.type.can_capture:
+		return false
+	var reach := MovementResolver.reachable(state, unit)
+	for cell in reach.cells():
+		if not reach.can_stop_at(cell):
+			continue
+		var terrain := state.map.terrain_at(cell)
+		if terrain == null or not terrain.is_property:
+			continue
+		if not state.allied(state.owner_at(cell), team):
 			return true
 	return false
