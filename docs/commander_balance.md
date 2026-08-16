@@ -151,6 +151,51 @@ the coast he was already holding nothing (0 held seats, before and after), becau
 cliff recorded under #216/#218 stands untouched; what this change buys is play on
 the boards his doctrine is for.
 
+### Calder's cheap-breadth bias and the recon (2026-08-16)
+
+`InesCalder.build_bias` returns `cheap_build_bias = -3` for every type at or under
+`cheap_cost_ceiling = 5000`, which is a **price** and not a list: infantry, mech,
+recon and APC. The recon is on no `build_priority` tier, so a negative bias puts it
+on that list's tail (`_build_rank`) at 2009, while her second mech sits at 2010 —
+from her second cheap purchase onward she fields scouts. Nobody decided that, and
+`AIProfile.build_priority`'s docstring recorded the opposite ("Orin Flux and Cassian
+Rook … and nobody else does"). Pinned by
+`tests/unit/test_ines_calder.gd::test_four_thousand_buys_calder_a_recon`: on a funded
+base with the capture roster filled and one mech fielded, 4,000 in the bank buys her
+a recon and buys the neutral commander nothing.
+
+Two arms, both measured with
+`make commander-balance BAL="--commanders=ines_calder,alina_ward,konrad_vale --scenarios=clash,ridge,combined,holdings,channel --seeds=<n>"`:
+
+- **as-is** — the shipped ceiling.
+- **narrowed** — an explicit `_is_cheap_breadth` predicate on the subclass, the
+  ceiling **and** `can_capture`, so the bias reaches infantry and mech only. The
+  ceiling itself was left alone: `KonradVale` mirrors its shape.
+
+| Seeds | Calder seats | arm | Ines Calder | Alina Ward | Konrad Vale | first-side bias |
+|---|---:|---|---:|---:|---:|---:|
+| 8 | 240 | as-is | 40.4% watch | 47.1% | 62.5% | +52.5 pp |
+| 8 | 240 | narrowed | 38.3% WARN | 47.5% | 64.2% | +46.7 pp |
+| 16 | 480 | as-is | **42.1% watch** | 45.8% | 62.1% | +49.6 pp |
+| 16 | 480 | narrowed | **39.8% WARN** | 46.2% | 64.0% | +43.3 pp |
+
+All four runs are 0 rejected and 0 cap stalls. The spec's own `clash,holdings
+--seeds=2` slice (24 seats) reads 37.5% for both arms — the same headline off
+different games, which is why it was widened.
+
+**The as-is arm ships and the record is corrected instead.** Narrowing costs Calder
+2.1 pp at 240 seats and 2.3 pp at 480, the same sign at both sample sizes and enough
+to drop her from `watch` to `WARN`. It is about one standard error, so this is not
+evidence that the accident *helps* — it is evidence that removing it does not help,
+and the repo's bar is that a doctrine number moves on a measurement rather than on
+an argument. `ai/ai_profile.gd` now names Calder as the third commander to field a
+recon and says she reaches it by cost rather than by name, so the mechanism and the
+roster agree.
+
+Calder's 42.1% here is a three-commander slice against Ward and Vale, not the
+roster-wide 40.1% / clash 23.9% of the 2026-08-15 batch below; her standing low-outlier
+review is that batch's and is untouched by this reading.
+
 ### Measured after the power-gate pass (2026-08-15)
 
 The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
