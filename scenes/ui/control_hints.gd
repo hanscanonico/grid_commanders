@@ -80,16 +80,25 @@ const END_TURN_GUARD := &"end_turn_guard"
 ## Context -> the keys that do something in it. IDLE carries the zoom keys
 ## because that is the only context with room for them and the only one a player
 ## sits in long enough to want them.
+##
+## The vertical pair is spelled "UP/DN" wherever it appears, checked by the suite.
+## It used to be "UP/DOWN" in two of the four legends that name it and "UP/DN" in
+## the other two, so opening the pause menu over the board's action menu respelled
+## the same key one keypress apart. The abbreviation is the spelling that fits:
+## MAX_CHARS is what forced it on the two crowded legends, and a rule only some
+## lines can keep is not a rule.
 const LEGENDS: Dictionary = {
 	IDLE: "ENTER · SELECT   ESC · MENU   +/- · ZOOM",
 	UNIT_SELECTED: "ENTER · MOVE   ESC · BACK",
 	PREVIEW: "ESC · BACK",
-	MENU: "UP/DOWN · PICK   ENTER · OK   ESC · BACK",
+	MENU: "UP/DN · PICK   ENTER · OK   ESC · BACK",
 	# A menu carrying rows left and right step in place — the pause menu's device
 	# settings. Its own words rather than an addition to MENU's, because the board's
 	# action menus have no value to step and would be advertising a dead key. ESC is
 	# the entry that gives way, as it does in END_TURN_GUARD below: a menu with value
-	# rows carries a Cancel row of its own, and no other line here can be spared.
+	# rows carries a Cancel row of its own, and no other line here can be spared —
+	# all four entries are 53 characters against a 40-character bar, and ENTER is
+	# what every row that is not a value row is taken with.
 	VALUE_MENU: "UP/DN · PICK   L/R · CHANGE   ENTER · OK",
 	TARGETING: "ENTER · FIRE   ESC · BACK",
 	DROP_TARGETING: "ENTER · DROP   ESC · BACK",
@@ -110,7 +119,7 @@ const LEGENDS: Dictionary = {
 	REPLAY_PAUSED: "ENTER · RESUME  S · STEP  ESC · MENU",
 	PAUSED: "PAUSED   ENTER · RESUME   ESC · MENU",
 	HANDOFF: "ENTER · READY",
-	VICTORY: "UP/DOWN · PICK   ENTER · OK",
+	VICTORY: "UP/DN · PICK   ENTER · OK",
 	INFO: "ESC · CLOSE",
 	# The one context whose two arrow axes do different things: the ready-unit
 	# list scrolls under up/down while the two actions sit side by side.

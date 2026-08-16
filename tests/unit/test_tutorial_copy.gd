@@ -176,17 +176,24 @@ func test_legends_are_ascii_only() -> void:
 			)
 
 
-## The one thing the value-menu legend exists to say. Its sibling MENU is what the
-## board's action menus print, where left and right mean nothing, so the two are
-## held apart here: an L/R that leaked into MENU would advertise a dead key on
-## every menu in the game.
-func test_only_the_value_menu_legend_names_left_and_right() -> void:
+## How the legends name their keys, held over the family rather than per line.
+## The value menu is the only one where left and right do anything, so an L/R that
+## leaked into MENU would advertise a dead key on every menu in the game; and the
+## vertical pair is spelled "UP/DN" everywhere, because it read "UP/DOWN" in two of
+## the four legends that name it and "UP/DN" in the other two — the pause menu
+## respelling the key the action menu underneath it had just named. MAX_CHARS is
+## what settles which spelling wins: the two crowded legends cannot carry the long
+## one at all. MENU's exact words stay pinned so a change to them is deliberate.
+func test_the_legends_name_a_key_one_way() -> void:
 	assert_true(
 		"L/R" in String(ControlHints.LEGENDS[ControlHints.VALUE_MENU]), "no L/R in the value menu"
 	)
+	for context: StringName in ControlHints.LEGENDS:
+		var legend: String = ControlHints.LEGENDS[context]
+		assert_false("UP/DOWN" in legend, "%s legend spells the pair long: %s" % [context, legend])
 	assert_eq(
 		String(ControlHints.LEGENDS[ControlHints.MENU]),
-		"UP/DOWN · PICK   ENTER · OK   ESC · BACK",
+		"UP/DN · PICK   ENTER · OK   ESC · BACK",
 		"the action menu's legend moved"
 	)
 

@@ -155,12 +155,17 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # because it held the ceiling once already and paid COM-94's cut-in split to get
 # out of it. A scenario belongs in its own Battle*Scenario class, and what stays
 # here is the dispatch arm that reaches it.
+# battle_scenario_driver.gd 985 -> 990: the victory verdict's driven read-back.
+# #271 measured the budget in its own worktree while #272 grew the file in a
+# sibling one, so the two merged red; the raise records the merge that landed
+# without it. The five lines are the read-back's dispatch, owned here like every
+# scenario's.
 FILE_BUDGETS="
 scenes/battle/battle.gd 1423
 scenes/menu/main_menu.gd 1121
 core/save_codec.gd 1332
 ai/ai_unit_action_planner.gd 1074
-scenes/battle/battle_scenario_driver.gd 985
+scenes/battle/battle_scenario_driver.gd 990
 "
 
 if [[ ! -x "$GODOT" ]]; then
