@@ -238,14 +238,15 @@ func test_supply_with_condition_live_walks_past_the_wreck_to_the_whole_tank() ->
 func test_a_half_empty_rack_is_worth_half_the_unit() -> void:
 	var planner := AIUnitActionPlanner.new(_profile())
 	var state := Fixture.state(LONE_MD_TANK)
-	var md_tank := state.units_of(1)
-	assert_eq(md_tank[0].type.max_ammo, 8, "the case needs a rack that halves exactly")
+	var army := state.units_of(1)
+	var md_tank := army[0]
+	assert_eq(md_tank.type.max_ammo, 8, "the case needs a rack that halves exactly")
 
-	md_tank[0].ammo = 4
-	assert_eq(planner._supply_value(md_tank), 8000.0, "half a rack, half the md tank")
+	md_tank.ammo = 4
+	assert_eq(planner._supply_value(army), 8000.0, "half a rack, half the md tank")
 
-	md_tank[0].ammo = 0
-	assert_eq(planner._supply_value(md_tank), 16000.0, "empty, the whole md tank")
+	md_tank.ammo = 0
+	assert_eq(planner._supply_value(army), 16000.0, "empty, the whole md tank")
 
 
 # --- buying the truck ---------------------------------------------------------
