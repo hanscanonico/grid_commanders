@@ -96,6 +96,7 @@ func plan(context: AIPlanningContext) -> Command:
 	var best_choice: UnitType = null
 	var best_rank := RANK_NONE
 	var facilities: Array[TerrainType] = []
+	var per_facility := profile.bank_scope == AIProfile.BANK_SCOPE_FACILITY
 	for cell in context.owned_properties:
 		var terrain := state.map.terrain_at(cell)
 		if terrain.builds.is_empty() or state.unit_at(cell) != null:
@@ -105,13 +106,19 @@ func plan(context: AIPlanningContext) -> Command:
 		if choice == null:
 			continue
 		var rank := _build_rank(choice, wants)
-		if rank < best_rank:
-			best_rank = rank
-			best_choice = choice
-			best_cell = cell
+		if rank >= best_rank:
+			continue
+		if per_facility and _banks_alone(context, terrain, wants, funds, rank, prices):
+			continue
+		best_rank = rank
+		best_choice = choice
+		best_cell = cell
 	if best_choice == null:
 		return null
-	if _worth_waiting_for(context, facilities, wants, funds, best_rank, prices):
+	if (
+		not per_facility
+		and _worth_waiting_for(context, facilities, wants, funds, best_rank, prices)
+	):
 		return null
 	return BuildCommand.new(context.team, best_choice, best_cell)
 
@@ -166,6 +173,19 @@ func _pick_build(
 	return best
 
 
+## Whether this one facility should bank instead of building `rank` — the same
+## question `plan` asks board-wide, narrowed to what this facility can produce.
+func _banks_alone(
+	context: AIPlanningContext,
+	terrain: TerrainType,
+	wants: BuildWants,
+	funds: int,
+	rank: int,
+	prices: Dictionary[StringName, int]
+) -> bool:
+	return _worth_waiting_for(context, [terrain] as Array[TerrainType], wants, funds, rank, prices)
+
+
 ## True when the team should bank instead of buying `best_rank`.
 func _worth_waiting_for(
 	context: AIPlanningContext,
@@ -177,13 +197,17 @@ func _worth_waiting_for(
 ) -> bool:
 	if best_rank < RANK_PRIORITY or profile.save_up_turns <= 0:
 		return false
-	var budget := funds + TurnRules.income_for(context.state, context.team) * profile.save_up_turns
+	var income := TurnRules.income_for(context.state, context.team)
+	var ceiling := profile.spend_ceiling_turns
+	if ceiling > 0.0 and float(funds) > float(income) * ceiling:
+		return false
+	var budget := funds + income * profile.save_up_turns
 	for terrain in facilities:
 		for unit_type in context.unit_types:
 			var price: int = prices[unit_type.id]
 			if not terrain.can_build(unit_type.move_class) or price > budget:
 				continue
-			if _build_rank(unit_type, wants) < best_rank:
+			if _build_rank(unit_type, wants) + profile.bank_rank_margin < best_rank:
 				return true
 	return false
 

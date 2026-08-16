@@ -542,3 +542,18 @@ func test_the_production_dials_at_their_inert_values_plan_like_the_shipped_profi
 			_rows_after_a_day(board, shipped),
 			"zeroed and shipped should walk the same board the same way"
 		)
+
+
+## D1's inert pin for the three banking dials, which land beside AE3's pair and
+## ship the same way: every tier carries them at the value that skips the code, so
+## the banking rule every committed balance number was measured under is the one
+## the game still plays. What they do once a tier seats one is
+## tests/unit/test_ai_production_cadence.gd's.
+func test_the_banking_dials_ship_inert_on_every_tier() -> void:
+	for tier in ["default", "easy", "hard", "brutal"]:
+		var profile: AIProfile = load("res://data/ai/%s.tres" % tier)
+		assert_eq(profile.spend_ceiling_turns, 0.0, "%s: the spend ceiling never asks" % tier)
+		assert_eq(
+			profile.bank_scope, AIProfile.BANK_SCOPE_BOARD, "%s: one answer for the board" % tier
+		)
+		assert_eq(profile.bank_rank_margin, 0, "%s: one place is still worth banking for" % tier)

@@ -16,6 +16,11 @@ extends Resource
 ## Node-free like the rest of ai/ and core/, so it is usable from tests.
 
 const DEFAULT_PATH := "res://data/ai/default.tres"
+## bank_scope: one banking answer decides the whole board — the shipped planner.
+const BANK_SCOPE_BOARD := 0
+## bank_scope: every facility answers for itself, so what a port is saving for
+## cannot silence a land base.
+const BANK_SCOPE_FACILITY := 1
 
 ## Multiplier on an attack's value when the shot would finish the target off.
 ## The other correction to the valuation condition_weight prices, so the two
@@ -316,6 +321,36 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ## factory because it is valuable must then score it as valuable when it arrives,
 ## or it turns around on the doorstep.
 @export var capture_goal_value_tiles: float = 0.0
+## How many turns of income the treasury may exceed before the banking rule stops
+## applying: past that ceiling the team buys the best thing it can reach today
+## instead of waiting for something better. 0 never asks and is the shipped
+## planner.
+##
+## Denominated in TURNS OF INCOME rather than in funds, because what makes a
+## treasury a hoard is how long it took to fill: the same 20 000 is one turn's
+## takings on a rich board and four on a poor one. It is a ceiling on the wait
+## and not a second budget — the purchase itself is still whatever `_pick_build`
+## already ranked best.
+@export var spend_ceiling_turns: float = 0.0
+## Whose banking answer a facility obeys: BANK_SCOPE_BOARD asks once for every
+## empty facility together, which is the shipped planner; BANK_SCOPE_FACILITY
+## asks each one about what it alone can produce.
+##
+## Board-wide, the most expensive thing any facility could eventually build
+## silences all of them — a port saving for a hull stops two land bases that have
+## the money for tanks today. Per facility, each one waits only for something it
+## could build itself.
+@export var bank_scope: int = BANK_SCOPE_BOARD
+## How many places better than today's purchase the unit worth waiting for has to
+## rank before the team banks for it. 0 banks for a one-place improvement, which
+## is the shipped planner.
+##
+## Denominated in PLACES on the build list, the currency `_build_rank` answers in.
+## That list is dense and one copy already fielded costs `duplicate_priority_cost`
+## places, so a margin below that value is inside the noise a single purchase
+## makes: it takes about that much before the wait is buying a genuinely better
+## unit rather than the same list re-sorted.
+@export var bank_rank_margin: int = 0
 
 # --- Logistics capabilities ---------------------------------------------------
 #
