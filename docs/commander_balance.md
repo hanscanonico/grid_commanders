@@ -311,12 +311,15 @@ the schedule plays both seatings).
 **Δ = −1.1 pp, standard error 3.7 pp: flat at 0.3 SE.** The same games read
 paired (both arms play identical scenario/seed/seating triples; 63 flipped to a
 win with advice, 67 flipped away) give 0.35 SE, the same answer. **Arm A's −7.5
-was noise, and no lever is under suspicion** — `stand_value` is not named and
-nothing was retuned. Both runs are 0 rejected commands and 0 cap stalls, 540
-matches each, all decisive; first-side bias +43.9 pp on and +32.8 pp off, the
-standing banking item. `reports/` is gitignored, so both sides were generated in
-one worktree at `3634442`; `data/ai/default.tres` was reverted and `data/` is
-byte-clean.
+does not reproduce, and no lever is under suspicion** — `stand_value` is not
+named and nothing was retuned. Read as a band rather than a point, ±2 SE spans
+−8.5 to +6.3 pp, so this is "cannot be separated from zero" and not "proved
+harmless": what it rules out is acting on the −7.5. Both runs are 0 rejected
+commands and 0 cap stalls, 540 matches each, all decisive (no draw; a `day_cap`
+match is still decided on the board); first-side bias +43.9 pp on and +32.8 pp
+off, the standing banking item. `reports/` is gitignored, so both sides were
+generated in one worktree at `3634442`; `data/ai/default.tres` was reverted and
+`data/` is byte-clean.
 
 ### Measured after the power-gate pass (2026-08-15)
 
