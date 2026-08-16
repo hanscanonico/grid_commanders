@@ -534,7 +534,8 @@ func refresh_panel(cell: Vector2i) -> void:
 		hovered,
 		carrying,
 		_allegiance_of(hovered),
-		_range_band_of(hovered)
+		_range_band_of(hovered),
+		_cover_stars_of(hovered, cell)
 	)
 
 
@@ -559,6 +560,16 @@ func _range_band_of(unit: Unit) -> Vector2i:
 	if unit == null:
 		return Vector2i.ZERO
 	return AttackRange.band(game, unit)
+
+
+## The cover this unit actually fights with on this tile, which is not always the
+## tile's own: an aircraft flies over the ground and gets none of it. Asked of the
+## same authority the damage formula and the AI planner ask, so the bar can never
+## promise defence the shot then refuses.
+func _cover_stars_of(unit: Unit, cell: Vector2i) -> int:
+	if unit == null:
+		return 0
+	return CombatResolver.cover_stars(game, unit, cell)
 
 
 ## Shows the attack/counter forecast beside a cell. A null forecast — nothing

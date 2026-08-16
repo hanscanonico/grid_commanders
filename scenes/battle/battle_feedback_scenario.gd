@@ -244,7 +244,40 @@ func _run_power_range_readout() -> String:
 	_battle.refresh_panel()
 	if AttackRange.maximum(_battle.game, gun) <= plain:
 		return "Grid Saturation left the gun's range at %d, so there is nothing to read" % plain
-	return _expect_printed_range(gun, "with Grid Saturation running")
+	error = _expect_printed_range(gun, "with Grid Saturation running")
+	if error != "":
+		return error
+
+	var cover_error := _expect_no_cover()
+	# The copter is flown in for that read-back alone; the frame this mode is
+	# photographed on is the gun's.
+	_battle.set_cursor_cell(cell)
+	_battle.refresh_panel()
+	return cover_error
+
+
+## The other thing the bar can promise and the formula then refuse: a copter on a
+## mountain stands on four stars and fights with none. Read back against
+## CombatResolver, the authority the damage formula itself asks.
+func _expect_no_cover() -> String:
+	var cell := Vector2i(3, 6)  # mountain on the default board
+	var terrain := _battle.map.terrain_at(cell)
+	if terrain.defense_stars <= 0:
+		return "%s gives no cover to lose, so there is nothing to read" % cell
+	var copter := Unit.create(_battle.unit_db.by_id(&"b_copter"), 1, cell)
+	_battle.game.units.append(copter)
+	_battle.view.sync_sprites()
+	_battle.set_cursor_cell(cell)
+	_battle.refresh_panel()
+	var line := _battle.view.unit_order_line()
+	var cover := CombatResolver.cover_stars(_battle.game, copter, cell)
+	_battle.game.remove_unit(copter)
+	_battle.view.sync_sprites()
+	if cover != 0:
+		return "the copter takes cover on %s, so the bar is right to stay quiet" % cell
+	if "NO COVER" in line:
+		return ""
+	return "the bar reads '%s' for a copter on %d-star ground" % [line, terrain.defense_stars]
 
 
 ## The bar has to print the ring AttackRange answers with, doctrine included.

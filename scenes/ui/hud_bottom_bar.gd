@@ -297,6 +297,9 @@ func show_commander(
 ## resolved by BattleView, never the pair printed on the unit type. A doctrine may
 ## widen it (Rhea Sol's Grid Saturation), and a bar reading the type would print a
 ## range the fire ring and AttackCommand both disagree with.
+##
+## `cover_stars` is what this unit really fights with on this tile — CombatResolver's
+## answer, resolved by BattleView — which is not the tile's own for an aircraft.
 func show_tile(
 	terrain: TerrainType,
 	owner_team: int,
@@ -305,11 +308,14 @@ func show_tile(
 	unit: Unit = null,
 	carrying: String = "",
 	allegiance: String = "",
-	range_band: Vector2i = Vector2i.ZERO
+	range_band: Vector2i = Vector2i.ZERO,
+	cover_stars: int = 0
 ) -> void:
 	if not _built:
 		return
-	_show_unit(unit, carrying, active_team, allegiance, range_band)
+	_show_unit(
+		unit, carrying, active_team, allegiance, range_band, cover_stars, terrain.defense_stars
+	)
 	_show_terrain(terrain, owner_team, capture_left)
 
 
@@ -323,7 +329,13 @@ func unit_order_line() -> String:
 
 
 func _show_unit(
-	unit: Unit, carrying: String, active_team: int, allegiance: String, range_band: Vector2i
+	unit: Unit,
+	carrying: String,
+	active_team: int,
+	allegiance: String,
+	range_band: Vector2i,
+	cover_stars: int,
+	tile_stars: int
 ) -> void:
 	# The block itself stays in the row — it is the expanding child holding the
 	# terrain chip against the right edge — so an empty tile blanks its contents
@@ -338,7 +350,9 @@ func _show_unit(
 	var waited := unit.acted and unit.team == active_team
 	_unit_icon.material = UnitSprite.acted_scrim() if waited else null
 	_unit_name.text = unit.type.display_name
-	_unit_sub.text = _order_line(unit, carrying, waited, allegiance, range_band)
+	_unit_sub.text = _order_line(
+		unit, carrying, waited, allegiance, range_band, cover_stars, tile_stars
+	)
 	_pips.set_hp(unit.displayed_hp())
 	_fuel_label.text = "FUEL %d/%d" % [unit.fuel, unit.type.max_fuel]
 	_ammo_label.visible = unit.type.max_ammo > 0
@@ -353,7 +367,13 @@ func _show_unit(
 ## terrain speaks, so naming it here is what lets the bar drop the move-cost row
 ## the old panel carried.
 func _order_line(
-	unit: Unit, carrying: String, waited: bool, allegiance: String, range_band: Vector2i
+	unit: Unit,
+	carrying: String,
+	waited: bool,
+	allegiance: String,
+	range_band: Vector2i,
+	cover_stars: int,
+	tile_stars: int
 ) -> String:
 	var parts := PackedStringArray()
 	# Whose it is, before what it is: with four armies on the board a colour alone
@@ -364,6 +384,10 @@ func _order_line(
 	parts.append(String(CLASS_LABELS.get(unit.type.move_class, "")).to_upper())
 	if range_band.x > 1:
 		parts.append("RNG %d-%d" % [range_band.x, range_band.y])
+	# The terrain chip still reads the tile's own stars, because the tile really
+	# has them; this says the unit standing there does not get them.
+	if cover_stars == 0 and tile_stars > 0:
+		parts.append("NO COVER")
 	if unit.dived:
 		parts.append("DIVED")
 	if unit.running_dry():
