@@ -237,14 +237,14 @@ the whole delta is the adviser's own advice.
 | Sable Wren | 60.0% | 50.0% | +10.0 |
 | Viktor Draeg | 72.5% | 58.3% | **+14.2** |
 
-**CA4 still passes, and the one name below zero is inside the noise.** At 120
+**CA4 still passes: the four names below zero are all inside the noise.** At 120
 games a side the standard error on a difference is about 6.5 pp, so Mara Voss's
 −7.5 is roughly one standard error and Rhea Sol, Holt and Ward are a fraction of
 one. Only Draeg (+14.2, ≈2.2 SE) and Wren (+10.0, ≈1.5 SE) are separated from
 zero at all. **Mara Voss is the review trigger this run produces** — her
-`stand_value` is the only advice that has never measured positive against the
-neutral planner, and she is a `watch` row on the standing matrix as well. It is a
-trigger for a *measurement* at more seeds, not for an edit.
+`stand_value` is the only negative as large as its own error bar, it is flat in
+Arm B as well, and she is a `watch` row on the standing matrix. It is a trigger
+for a *measurement* at more seeds, not for an edit.
 
 #### Arm B — the twelve advisers against each other
 
