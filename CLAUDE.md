@@ -305,10 +305,10 @@ plan is stated in full below and has no copy there.
   doctrine-blind planner byte for byte, which is how the difficulty lock survives. D4: advice
   reads only what the planner already reads (enemies through `Vision.is_hidden_from`), is pure,
   integer and RNG-free — pure to the board and the caller, an instance being free to memoise under
-  a key any relevant board change moves — and **never reads the damage chart** — the forecasts already carry every
-  combat hook, so advice that re-priced one would count the same doctrine twice; Lyra Quill's
-  luck floor stays unpriced by the same rule from the other side, because forecasts are
-  deliberately luck-free. Wren valuing cover more as Vanish banks is what broke the Vanish stall
+  a key any relevant board change moves — and **never reads the damage chart** — the forecasts
+  already carry every combat hook, so advice that re-priced one would count the same doctrine
+  twice; Lyra Quill's luck floor stays unpriced by the same rule from the other side, because
+  forecasts are deliberately luck-free. Wren valuing cover more as Vanish banks is what broke the Vanish stall
   (full meter, nobody in woods, forever — `test_sable_wren.gd` pins the stage-then-fire turn).
   The plan's Rook clause ("no good fight this turn") is superseded by the shipped gate:
   Redeployment fires for ground its movement can buy, *regardless* of the fight, because the
