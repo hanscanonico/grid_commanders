@@ -22,7 +22,7 @@ cell = Vector2i(7, 4)
 
 [sub_resource type="Resource" id="Failure_ration"]
 script = ExtResource("9")
-text = "You lose more than two units, to any cause. Powder is the ration."
+text = "More than two of ours lost, to any cause. Powder is the ration."
 max_losses = 2
 
 [sub_resource type="Resource" id="Bonus_0"]
