@@ -225,9 +225,10 @@ const EXCLUDED := {
 	),
 	&"goal_engageability":
 	(
-		"a flag rather than a magnitude — an enemy is engageable or it is not — and what it"
-		+ " fixes is a fleet aimed at land, which the naval boards the pools exclude are"
-		+ " where it happens (naval R1)."
+		"a flag rather than a magnitude — an enemy is engageable or it is not, with nothing"
+		+ " between the two settings for a lattice to step. It ships unmeasured, and the"
+		+ " pools would be the wrong ruler besides: no board in them holds a drop of water,"
+		+ " so the fleet aimed at land it was diagnosed on cannot happen there."
 	),
 	&"capture_threat_aversion":
 	(
