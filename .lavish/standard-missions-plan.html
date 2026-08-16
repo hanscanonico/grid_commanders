@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en" data-theme="retro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Commanders — Standard Missions: beating the other side, as the default</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+:where(.grid, .flex) > * { min-width: 0; }
+:where(p, h1, h2, h3, h4, li, dd, td, th, .badge) { overflow-wrap: anywhere; }
+:root {
+  --gc-water:#2779b9; --gc-water-dark:#155383; --gc-grass:#86c95a; --gc-road:#d8c49a;
+  --gc-ink:#172838; --gc-red:#d94d3f; --gc-blue:#3276c6; --gc-iron:#6d6f7e;
+  --gc-verdant:#4e9a5c; --gc-amber:#e0a03c;
+}
+html { scroll-behavior: smooth; }
+body {
+  color: var(--gc-ink); background-color: var(--gc-water);
+  background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size: 32px 32px, 32px 32px;
+}
+.gc-shell {
+  width: min(1240px, calc(100% - 1.25rem)); margin: 0 auto;
+  border-inline: 6px solid rgba(255,255,255,.16);
+  background: color-mix(in srgb, var(--color-base-200) 94%, white 6%);
+  box-shadow: 0 0 0 2px var(--gc-water-dark), 0 24px 80px rgba(7,34,55,.35);
+}
+.gc-hero {
+  position: relative; overflow: hidden; color: white;
+  background: linear-gradient(120deg, rgba(10,33,55,.96), rgba(19,64,97,.92)),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px),
+    repeating-linear-gradient(90deg, transparent 0 31px, rgba(255,255,255,.07) 31px 32px);
+}
+.gc-kicker { letter-spacing:.18em; text-transform:uppercase; font:700 .75rem/1.4 ui-monospace, monospace; }
+.gc-num { display:inline-grid; place-items:center; width:2rem; height:2rem;
+  font:800 .8rem/1 ui-monospace, monospace; color:white; background:var(--gc-water-dark); border-radius:.25rem; }
+.pl { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.hot { color: var(--gc-red); font-weight:700; }
+.ok { color: var(--gc-verdant); font-weight:700; }
+.dim { opacity:.68; }
+.gc-card { background:white; border:2px solid rgba(23,40,56,.14); border-bottom-width:4px; border-radius:.35rem; }
+.gc-dec { background:white; border:2px solid rgba(23,40,56,.14); border-left:6px solid var(--gc-water-dark); border-radius:.3rem; }
+.gc-dec.waiver { border-left-color: var(--gc-amber); }
+.gc-risk { background:white; border:2px solid rgba(217,77,63,.28); border-left:6px solid var(--gc-red); border-radius:.3rem; }
+.gc-ms { background:white; border:2px solid rgba(23,40,56,.14); border-top:5px solid var(--gc-grass); border-radius:.3rem; }
+code, .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(23,40,56,.07); padding:.05em .3em; border-radius:.2em; font-size:.92em; }
+pre.code { display:block; padding:.85rem 1rem; overflow-x:auto; line-height:1.5;
+  background:#0f2436; color:#cfe4f5; border-radius:.3rem; font-size:.8rem; }
+pre.code .k { color:#86c95a; } pre.code .c { color:#7c93a7; font-style:italic; } pre.code .s { color:#e0a03c; }
+table.gc-t { width:100%; border-collapse:collapse; font-size:.85rem; background:white; }
+table.gc-t th { text-align:left; background:var(--gc-water-dark); color:white; padding:.5rem .7rem;
+  font:700 .7rem/1.3 ui-monospace, monospace; letter-spacing:.06em; text-transform:uppercase;
+  position:sticky; top:0; z-index:2; }
+table.gc-t td { padding:.45rem .7rem; border-top:1px solid rgba(23,40,56,.12); vertical-align:top; }
+table.gc-t tr:nth-child(even) td { background: rgba(23,40,56,.025); }
+tr.camprow td { background: var(--gc-road) !important; font-size:.85rem; }
+.tag { display:inline-block; padding:.1rem .45rem; border-radius:.2rem; color:white;
+  font:800 .68rem/1.5 ui-monospace, monospace; }
+.t-A0 { background: var(--gc-verdant); } .t-A { background: var(--gc-water-dark); }
+.t-B { background: var(--gc-amber); } .t-C { background: var(--gc-iron); }
+.t-S { background: rgba(23,40,56,.25); color: var(--gc-ink); }
+.fog { display:inline-block; margin-left:.3rem; padding:0 .3rem; border-radius:.2rem;
+  background: rgba(23,40,56,.12); font:700 .62rem/1.6 ui-monospace, monospace; }
+.bar { height:1.1rem; background:var(--gc-water-dark); border-radius:2px; }
+.bar.alt { background: var(--gc-iron); }
+h2 { scroll-margin-top:1rem; }
+.toc a { text-decoration:none; } .toc a:hover { text-decoration:underline; }
+.scroller { max-height: 78vh; overflow:auto; border:2px solid rgba(23,40,56,.14); border-radius:.3rem; }
+.filt { cursor:pointer; }
+</style>
+</head>
+<body class="py-6">
+<div class="gc-shell">
+
+<header class="gc-hero px-6 md:px-10 py-10">
+  <div class="gc-kicker opacity-80">Grid Commanders · campaign mode · design of record · rev 1 · 2026-08-15 · <b>proposed — nothing shipped</b></div>
+  <h1 class="mt-3 text-3xl md:text-5xl font-black leading-tight">Standard Missions</h1>
+  <p class="mt-1 text-lg md:text-xl opacity-90 font-semibold">Beating the other side, as the default — not the exception.</p>
+  <p class="mt-5 max-w-3xl opacity-90 leading-relaxed">
+    Every one of the 108 missions is <em>already</em> winnable by routing the enemy army or taking their
+    home headquarters — <span class="pl">MissionRuntime</span> answers tactical victory at step 4, above
+    the objective list. But only <b>15 of 108</b> actually <em>ask</em> for it. The rest ask for a named
+    city, a property count, or a survival clock, and <b>85 of 108</b> carry a hard day deadline that makes
+    the ordinary win unreachable in practice. The campaign reads as 108 errands rather than as a war.
+  </p>
+  <p class="mt-3 max-w-3xl opacity-90 leading-relaxed">
+    This plan makes the genre-standard mission the default. It converts <b>53</b> missions to an
+    enemy-HQ primary, demotes <b>61</b> deadlines from failure to pressure, and leaves <b>38</b>
+    deliberately special — the defenses, the escorts and the escapes that earn their verb. It is
+    <b>content only</b>: no file under <span class="pl">core/</span> or <span class="pl">ai/</span> changes,
+    and no rule, objective class or verdict order moves.
+  </p>
+  <div class="mt-7 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
+    <div class="bg-white/10 rounded p-3"><div class="gc-kicker opacity-70">Standard today</div>
+      <div class="text-2xl font-black">15 / 108</div><div class="text-xs opacity-70">14%</div></div>
+    <div class="bg-white/10 rounded p-3"><div class="gc-kicker opacity-70">Standard after</div>
+      <div class="text-2xl font-black">70 / 108</div><div class="text-xs opacity-70">65%</div></div>
+    <div class="bg-white/10 rounded p-3"><div class="gc-kicker opacity-70">Deadlines dropped</div>
+      <div class="text-2xl font-black">61</div><div class="text-xs opacity-70">of 85 · 24 stay</div></div>
+    <div class="bg-white/10 rounded p-3"><div class="gc-kicker opacity-70">core/ changes</div>
+      <div class="text-2xl font-black">0</div><div class="text-xs opacity-70">content and boards only</div></div>
+  </div>
+</header>
+
+<nav class="toc px-6 md:px-10 py-5 bg-base-300/40 border-y-2 border-base-300">
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-1 text-sm">
+    <a href="#s1">1 · The finding</a>
+    <a href="#s2">2 · What "standard" already means</a>
+    <a href="#s3">3 · The five classes</a>
+    <a href="#s4">4 · Locked decisions</a>
+    <a href="#s5">5 · Milestones SM1–SM5</a>
+    <a href="#s6">6 · The 108-mission table</a>
+    <a href="#s7">7 · Risks</a>
+    <a href="#s8">8 · Gates</a>
+  </div>
+</nav>
+
+<main class="px-6 md:px-10 py-8 space-y-12">
+
+<!-- 1 -->
+<section id="s1" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 1</div>
+  <h2 class="text-2xl md:text-3xl font-black">The finding</h2>
+  <p class="max-w-3xl leading-relaxed">
+    The campaign-depth plan diagnosed "86 of 108 primaries are <span class="pl">CaptureCell</span>" and
+    fixed it by widening the vocabulary. It worked — eleven objective types are in use where two were.
+    But the pass over-corrected in one specific way: it treated the ordinary
+    <em>beat-the-other-side</em> mission as one flavour among eleven, when in this genre it is the
+    baseline the other ten are measured against. Advance Wars is essentially 100% rout-or-HQ, and its
+    variety lives in the <em>boards</em>. Ours lives in the objective cards, and the boards underneath
+    them all get played the same cautious way, because a deadline is counting.
+  </p>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="gc-card p-5">
+      <div class="gc-kicker text-base-content/60">Primary objectives today</div>
+      <table class="gc-t mt-3">
+        <tr><th>Primary shape</th><th>Missions</th></tr>
+        <tr><td><b>capture the enemy HQ</b> — the standard mission</td><td class="pl">15</td></tr>
+        <tr><td>capture a named city / property</td><td class="pl">32</td></tr>
+        <tr><td>own N properties</td><td class="pl">16</td></tr>
+        <tr><td>survive until day N</td><td class="pl">15</td></tr>
+        <tr><td>hold a cell</td><td class="pl">4</td></tr>
+        <tr><td>multi-objective combinations</td><td class="pl">26</td></tr>
+      </table>
+      <p class="mt-3 text-sm dim">Zero missions ask for a pure rout. The one
+        <span class="pl">DefeatTeamObjective</span> in the tree is a bonus, never a primary.</p>
+    </div>
+    <div class="gc-card p-5">
+      <div class="gc-kicker text-base-content/60">The deadline is the real blocker</div>
+      <p class="mt-3 leading-relaxed text-sm">
+        <b>85 of 108</b> missions carry a <span class="pl">DayDeadlineObjective</span> in
+        <span class="pl">failures</span>. The median deadline sits <b>3 days</b> past
+        <span class="pl">par_day</span> — and <b>all 108 missions already set <span class="pl">par_day</span></b>,
+        which <span class="pl">MissionRuntime</span> already turns into a speed star.
+      </p>
+      <p class="mt-3 leading-relaxed text-sm">
+        So the clock is stated <em>twice</em>: once as a star the player chases, once as a loss three days
+        behind it. On a capture-a-city mission with a day-10 deadline, "just beat them" is legal and
+        practically impossible — which is why re-labelling objectives without touching deadlines would
+        change nothing about how the missions play.
+      </p>
+      <p class="mt-3 leading-relaxed text-sm dim">
+        Deadline days in use: 4 (×2), 5, 6 (×3), 7 (×4), 8 (×16), 9 (×18), 10 (×27), 11 (×8), 12 (×5), 14.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 2</div>
+  <h2 class="text-2xl md:text-3xl font-black">What "standard" already means, and why this is content only</h2>
+  <p class="max-w-3xl leading-relaxed">
+    <span class="pl">MissionRuntime</span>'s precedence puts tactical victory at <b>step 4</b>, above the
+    objective list, with a comment that already states this plan's whole premise:
+  </p>
+  <pre class="code"><span class="c">## **Tactical victory outranks the objective list, which is what an author has to</span>
+<span class="c">## know**: an objective whose own completion ends the match — the last hostile</span>
+<span class="c">## army's home headquarters, or that army itself — is answered at step 4, before</span>
+<span class="c">## a single objective is read, so every objective standing beside it is</span>
+<span class="c">## decorative. A mission about the enemy's headquarters has exactly one primary</span>
+<span class="c">## and states the rest as bonuses.</span></pre>
+  <p class="max-w-3xl leading-relaxed">
+    Two consequences settle the shape of the work. First, <b>nothing under
+    <span class="pl">core/</span> needs to change</b>: routing the enemy already wins every mission, so
+    this plan edits what a mission <em>asks for</em>, never what it <em>allows</em>. Second,
+    <b>an enemy-HQ primary must stand alone</b> — <span class="pl">MissionDefinition.board_error</span>
+    already refuses the other shape — so every converted mission's old primary becomes a
+    <span class="pl">bonus_objective</span>, which is also where its star goes.
+  </p>
+  <p class="max-w-3xl leading-relaxed">
+    That second point is a quiet win: 51 of 108 missions currently offer <b>zero</b> bonus objectives, so
+    the conversion hands most of them their first one for free, and the star count per mission rises
+    without a single new authored idea.
+  </p>
+</section>
+
+<!-- 3 -->
+<section id="s3" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 3</div>
+  <h2 class="text-2xl md:text-3xl font-black">The five classes</h2>
+  <p class="max-w-3xl leading-relaxed">
+    Every mission falls into exactly one class, decided by two facts read off its own board: does it have
+    a two-sided production economy, and is its primary time-shaped?
+  </p>
+  <div class="space-y-3">
+    <div class="gc-dec p-5">
+      <div class="flex items-center gap-3"><span class="tag t-A0">A0</span>
+        <b class="text-lg">Already standard — 15 missions</b></div>
+      <p class="mt-2 leading-relaxed">Primary is already the enemy HQ, stated alone. Untouched by SM1–SM3;
+        they only lose their deadline in SM2.</p>
+    </div>
+    <div class="gc-dec p-5">
+      <div class="flex items-center gap-3"><span class="tag t-A">A</span>
+        <b class="text-lg">Convert, no board edit — 33 missions</b></div>
+      <p class="mt-2 leading-relaxed">Primary is capture-a-city or own-N-properties, and the board already
+        gives both sides a base. The enemy HQ is reachable and the economy can sustain a real fight, so the
+        conversion is a <span class="pl">.tres</span> edit and nothing else: the old primary moves down into
+        <span class="pl">bonus_objectives</span> and a
+        <span class="pl">CaptureCellObjective</span> naming the enemy HQ takes its place.</p>
+    </div>
+    <div class="gc-dec waiver p-5">
+      <div class="flex items-center gap-3"><span class="tag t-B">B</span>
+        <b class="text-lg">Convert, board needs a base pair — 20 missions</b></div>
+      <p class="mt-2 leading-relaxed">Same primary shape, but the board gives fewer than two sides a base —
+        23 boards have no base at all. A rout mission with no production is a one-punch skirmish, so these
+        need a <b>symmetric base pair</b> added before conversion. Per the map-retrofit rule, that is a
+        <b>conversion of existing land cells</b>, never a carve: a plains or road cell becomes a base, no
+        cell becomes sea, no coastline moves, and land stays passable to every land class — which is what
+        keeps saves that name these boards loadable.</p>
+      <p class="mt-2 leading-relaxed dim">17 of the 20 currently ask for a city; 3 ask for a property count.</p>
+    </div>
+    <div class="gc-dec p-5">
+      <div class="flex items-center gap-3"><span class="tag t-C">C</span>
+        <b class="text-lg">Standard-adjacent, left alone — 2 missions</b></div>
+      <p class="mt-2 leading-relaxed">Primary is <span class="pl">DestroyUnitObjective</span> — kill the
+        named marshal. This is the genre's "defeat boss", which reads as beating the other side and counts
+        toward the headline number without an edit. <span class="pl">Slag Row</span> and
+        <span class="pl">The Column in the Pines</span>.</p>
+    </div>
+    <div class="gc-dec p-5">
+      <div class="flex items-center gap-3"><span class="tag t-S">S</span>
+        <b class="text-lg">Stays special — 38 missions</b></div>
+      <p class="mt-2 leading-relaxed">Primary is time-shaped or positional: survive to day N (15 alone),
+        hold a cell, protect a unit, keep an ally alive, reach a cell. These are the missions the
+        campaign-depth vocabulary was built for and the ones a reviewer would miss if they went. They
+        <b>keep their deadlines</b> — on a defense the clock <em>is</em> the mission.</p>
+    </div>
+  </div>
+  <div class="gc-card p-5">
+    <div class="gc-kicker text-base-content/60">Result</div>
+    <p class="mt-2 text-lg leading-relaxed"><b>70 of 108 (65%) become standard missions</b>,
+      38 stay special. The genre ratio without deleting the variety that was paid for.</p>
+    <div class="mt-4 grid grid-cols-1 gap-2 max-w-2xl"><div class='flex items-center gap-3'><span class='tag t-A0'>A0</span><div class='bar ' style='width:55.6%'></div><span class='pl text-sm'>15</span><span class='text-sm dim'>Already standard</span></div>
+<div class='flex items-center gap-3'><span class='tag t-A'>A</span><div class='bar ' style='width:122.2%'></div><span class='pl text-sm'>33</span><span class='text-sm dim'>Convert — no board edit</span></div>
+<div class='flex items-center gap-3'><span class='tag t-B'>B</span><div class='bar ' style='width:74.1%'></div><span class='pl text-sm'>20</span><span class='text-sm dim'>Convert — board needs a base pair</span></div>
+<div class='flex items-center gap-3'><span class='tag t-C'>C</span><div class='bar ' style='width:7.4%'></div><span class='pl text-sm'>2</span><span class='text-sm dim'>Standard-adjacent — kill the marshal</span></div>
+<div class='flex items-center gap-3'><span class='tag t-S'>S</span><div class='bar alt' style='width:140.7%'></div><span class='pl text-sm'>38</span><span class='text-sm dim'>Stays special</span></div></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 4</div>
+  <h2 class="text-2xl md:text-3xl font-black">Locked decisions</h2>
+
+  <div class="gc-dec p-5"><div class="flex gap-3"><span class="gc-num">D1</span>
+    <div><b class="text-lg">This plan changes what a mission asks, never what it allows.</b>
+    <p class="mt-2 leading-relaxed">Tactical victory is already available on all 108 boards and already
+      outranks the objective list. No objective class, no verdict order, no rule and no file under
+      <span class="pl">core/</span> or <span class="pl">ai/</span> is touched. The rejected alternative is a
+      new <span class="pl">RoutEnemyObjective</span>: it would be a second authority for a verdict
+      <span class="pl">MissionRuntime</span> step 4 already reaches, and every one of its instances would
+      be decorative by that class's own comment.</p></div></div></div>
+
+  <div class="gc-dec p-5"><div class="flex gap-3"><span class="gc-num">D2</span>
+    <div><b class="text-lg">A converted mission states the enemy HQ alone; the old primary becomes a bonus.</b>
+    <p class="mt-2 leading-relaxed">Forced by <span class="pl">MissionDefinition.board_error</span>, which
+      already refuses an HQ primary standing beside another. The demotion is not a consolation — it is where
+      the mission's star goes, and it is why 51 missions gain their first bonus objective. Deleting the old
+      primary outright is the rejected alternative: the authored line is the mission's flavour and its
+      star, and both survive the move.</p></div></div></div>
+
+  <div class="gc-dec p-5"><div class="flex gap-3"><span class="gc-num">D3</span>
+    <div><b class="text-lg"><span class="pl">par_day</span> is the pressure; <span class="pl">day_deadline</span>
+      is a failure, and a failure needs a reason.</b>
+    <p class="mt-2 leading-relaxed">All 108 missions already set <span class="pl">par_day</span>, and
+      <span class="pl">MissionRuntime</span> already pays a star for beating it. A deadline therefore stays
+      <b>only where a time-shaped primary makes the clock the mission's own subject</b> — a defense, a
+      hold, an escort. Everywhere else it is a second statement of the same pressure with a loss attached,
+      and it goes. <b>61 drop, 24 stay, 23 never had one.</b> Where a converted mission's
+      authored briefing names the clock, the line moves to the bonus objective's text rather than being
+      cut.</p></div></div></div>
+
+  <div class="gc-dec waiver p-5"><div class="flex gap-3"><span class="gc-num">D4</span>
+    <div><b class="text-lg">A board retrofit converts cells; it never carves.</b>
+    <p class="mt-2 leading-relaxed">The map-retrofit plan's standing rule, applied to class B: a base is
+      added by converting an existing plains or road cell, symmetrically for both sides, at a distance from
+      each HQ that is equal within one tile. No cell becomes sea, no coastline is redrawn, land stays
+      passable to every land class — because a save stores its board by <span class="pl">map_path</span>
+      and reloads the edited file from <span class="pl">res://</span>. The rejected alternative is
+      authoring new boards for these 20 missions: their terrain is the mission's identity and the
+      authored dialogue names it.</p></div></div></div>
+
+  <div class="gc-dec p-5"><div class="flex gap-3"><span class="gc-num">D5</span>
+    <div><b class="text-lg">Difficulty is not retuned to compensate.</b>
+    <p class="mt-2 leading-relaxed">A mission that becomes a full fight is a longer mission, not a harder
+      one — the tier stays whatever it shipped (14 easy / 46 normal / 48 hard). If SM5's play-through finds
+      a converted mission unwinnable, the answer is its <span class="pl">par_day</span> or its board's
+      starting army, never its <span class="pl">AIProfile</span> tier: a campaign that ships its own AI
+      numbers is balancing the planner through the back door, which the campaign-mode entry already
+      forbids.</p></div></div></div>
+
+  <div class="gc-dec p-5"><div class="flex gap-3"><span class="gc-num">D6</span>
+    <div><b class="text-lg">The Long Front is exempt by design.</b>
+    <p class="mt-2 leading-relaxed">Nine of its eighteen missions are survive-shaped and eight of its boards
+      carry no production at all — it is the campaign that already reads as a fighting retreat, and it is
+      the one whose objective spread the other five should be measured against rather than converted
+      toward. It contributes 9 standard missions of 18 after SM3 and that is its ceiling.</p></div></div></div>
+</section>
+
+<!-- 5 -->
+<section id="s5" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 5</div>
+  <h2 class="text-2xl md:text-3xl font-black">Milestones</h2>
+
+  <div class="gc-ms p-5">
+    <div class="flex items-center gap-3"><span class="gc-num">SM1</span>
+      <b class="text-lg">Convert the 33 class-A missions — one PR per campaign</b></div>
+    <p class="mt-3 leading-relaxed">For each: add a <span class="pl">CaptureCellObjective</span> naming the
+      enemy home HQ as the sole primary, move the old primary into
+      <span class="pl">bonus_objectives</span> with its authored text intact, leave failures alone for now.
+      Six PRs, split by campaign, because the campaign is the unit a reviewer can read end to end.
+      <b>Gate:</b> <span class="pl">make campaigns</span> plus
+      <span class="pl">tests/unit/test_campaign_content.gd</span>.</p>
+    <p class="mt-2 leading-relaxed dim">Six Marshals 11 · The Collection 12 · Hollow Crown 4 ·
+      Furnace Winter 3 · Quiet War 3 · Long Front 0.</p>
+  </div>
+
+  <div class="gc-ms p-5">
+    <div class="flex items-center gap-3"><span class="gc-num">SM2</span>
+      <b class="text-lg">Demote 61 deadlines from failure to pressure</b></div>
+    <p class="mt-3 leading-relaxed">Delete the <span class="pl">DayDeadlineObjective</span> from
+      <span class="pl">failures</span> on every mission whose primary is not time-shaped. Where the deadline
+      day carried authored meaning, restate it as a <span class="pl">DayDeadlineObjective</span> in
+      <span class="pl">bonus_objectives</span> — the same class, judged as a star rather than a loss.
+      <b>This milestone is independent of SM1</b> and could ship first; the order below runs it second only
+      because a converted mission is the clearest place to see the change.</p>
+    <p class="mt-2 leading-relaxed dim">Deliverable beyond the edits: a note in
+      <span class="pl">docs/campaign_authoring.md</span> stating D3, so the next author does not reach for a
+      deadline by reflex.</p>
+  </div>
+
+  <div class="gc-ms p-5">
+    <div class="flex items-center gap-3"><span class="gc-num">SM3</span>
+      <b class="text-lg">Retrofit the 20 class-B boards with a base pair, then convert them</b></div>
+    <p class="mt-3 leading-relaxed">Per D4: convert one plains or road cell near each side's HQ into a base,
+      equal within a tile, then run SM1's edit on the mission. The board's header comment gains a line
+      recording that the pair was added and why. <b>Gate:</b> <span class="pl">make campaigns</span>,
+      <span class="pl">tests/unit/test_maps.gd</span>, and the mission played to a verdict in
+      <span class="pl">test_campaign_soak.gd</span>.</p>
+    <p class="mt-2 leading-relaxed dim">Long Front 8 · Quiet War 7 · Furnace Winter 4 · Six Marshals 1.
+      Highest-risk milestone: it is the only one that touches a board.</p>
+  </div>
+
+  <div class="gc-ms p-5">
+    <div class="flex items-center gap-3"><span class="gc-num">SM4</span>
+      <b class="text-lg">Hollow Crown's verb spread</b></div>
+    <p class="mt-3 leading-relaxed">Before this plan, all 18 of its missions carried
+      <span class="pl">own_properties</span> + a deadline and 16 also carried
+      <span class="pl">capture_cell</span> — every mission the same shape. After SM1–SM3 it reads 13
+      standard / 5 special, which fixes the monotony in one direction. This milestone spends the freed bonus
+      slots on variety instead: the property counts and city captures demoted in SM1 become the war's bonus
+      texture, and two of its five specials are re-pointed at verbs the war never uses.</p>
+  </div>
+
+  <div class="gc-ms p-5">
+    <div class="flex items-center gap-3"><span class="gc-num">SM5</span>
+      <b class="text-lg">Play it and record the reading</b></div>
+    <p class="mt-3 leading-relaxed">The soak asserts legality, never winnability — so the acceptance for
+      this plan is a human play-through of one converted mission per campaign plus every class-B board,
+      recorded in a new <span class="pl">docs/campaign_missions.md</span> alongside the final per-class
+      counts. The one number that decides the plan succeeded: a converted mission should take
+      <b>longer than its old deadline</b> and still feel finishable.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 6</div>
+  <h2 class="text-2xl md:text-3xl font-black">The 108-mission table</h2>
+  <p class="max-w-3xl leading-relaxed">Every mission, its board, what it asks today, what it asks after,
+    and what happens to its deadline. Filter by class:</p>
+  <div class="flex flex-wrap gap-2">
+    <button class="btn btn-sm filt" data-f="all">All (108)</button>
+    <button class="btn btn-sm filt" data-f="A0">A0 · already (15)</button>
+    <button class="btn btn-sm filt" data-f="A">A · convert (33)</button>
+    <button class="btn btn-sm filt" data-f="B">B · retrofit (20)</button>
+    <button class="btn btn-sm filt" data-f="C">C · adjacent (2)</button>
+    <button class="btn btn-sm filt" data-f="S">S · special (38)</button>
+  </div>
+  <div class="scroller">
+  <table class="gc-t">
+    <thead><tr>
+      <th>#</th><th>Mission</th><th>Board</th><th>Asks today</th><th>Asks after</th>
+      <th>Deadline</th><th>par</th><th>Class</th>
+    </tr></thead>
+    <tbody id="tb">
+<tr class='camprow'><td colspan='8'><b>The Six Marshals</b> <span class='dim'>· 12 standard of 18 (0 already · 11 convert · 1 retrofit · 0 adjacent) · 6 stay special</span></td></tr>
+<tr data-v='B' data-c='six_marshals'><td class='pl dim'>sm01</td><td><b>Border Toll</b></td><td class='pl'>15x9<br><span class='dim'>0 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm02</td><td><b>Ambush Pass</b></td><td class='pl'>16x11<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='six_marshals'><td class='pl dim'>sm03</td><td><b>The Long Watch</b></td><td class='pl'>15x10<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 6 · keep</b></td><td class='pl'>5</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm04</td><td><b>The Foundry Gate</b></td><td class='pl'>16x10<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm05</td><td><b>The Open Ledger</b></td><td class='pl'>18x11<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='six_marshals'><td class='pl dim'>sm06</td><td><b>The Toll Bridge</b></td><td class='pl'>16x12<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 8 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm07</td><td><b>The Watchtower</b></td><td class='pl'>15x11<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm08</td><td><b>Close Quarters</b></td><td class='pl'>12x9<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='six_marshals'><td class='pl dim'>sm09</td><td><b>Broken Ground</b></td><td class='pl'>16x11<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 7 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm10</td><td><b>First Blood</b></td><td class='pl'>13x9<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 6 → drop</span></td><td class='pl'>4</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm11</td><td><b>The Running Tally</b></td><td class='pl'>20x12<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='six_marshals'><td class='pl dim'>sm12</td><td><b>The Narrow Crossing</b></td><td class='pl'>15x10<br><span class='dim'>2 bases</span></td><td>survive to day N + reach a cell</td><td>survive to day N + reach a cell</td><td><b>day 8 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm13</td><td><b>The Narrow Gate</b></td><td class='pl'>16x11<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm14</td><td><b>The Treeline</b></td><td class='pl'>17x11<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='six_marshals'><td class='pl dim'>sm15</td><td><b>The Last Span</b></td><td class='pl'>16x11<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 7 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm16</td><td><b>The Wide Field</b></td><td class='pl'>19x12<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='six_marshals'><td class='pl dim'>sm17</td><td><b>Scattered Ground</b></td><td class='pl'>19x13<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='six_marshals'><td class='pl dim'>sm18</td><td><b>The Last Terror</b></td><td class='pl'>20x13<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 9 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr class='camprow'><td colspan='8'><b>The Hollow Crown</b> <span class='dim'>· 13 standard of 18 (9 already · 4 convert · 0 retrofit · 0 adjacent) · 5 stay special</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc01</td><td><b>Border Skirmish</b></td><td class='pl'>17x7<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc02</td><td><b>River Line</b></td><td class='pl'>17x7<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc03</td><td><b>The Garrison</b></td><td class='pl'>19x7<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A' data-c='the_hollow_crown'><td class='pl dim'>hc04</td><td><b>Watchtower</b></td><td class='pl'>19x7<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc05</td><td><b>The Ultimatum</b></td><td class='pl'>21x7<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc06</td><td><b>The Crack</b></td><td class='pl'>21x8<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A' data-c='the_hollow_crown'><td class='pl dim'>hc07</td><td><b>Uneasy Alliance</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 12 → drop</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_hollow_crown'><td class='pl dim'>hc08</td><td><b>Shared Supply</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city + ally survives</td><td>capture a city + ally survives</td><td><b>day 12 · keep</b></td><td class='pl'>8</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='the_hollow_crown'><td class='pl dim'>hc09</td><td><b>The Crossroads</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_hollow_crown'><td class='pl dim'>hc10</td><td><b>Broken Column</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city + ally survives</td><td>capture a city + ally survives</td><td><b>day 11 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_hollow_crown'><td class='pl dim'>hc11</td><td><b>Two Fronts</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city + ally survives</td><td>capture a city + ally survives</td><td><b>day 10 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_hollow_crown'><td class='pl dim'>hc12</td><td><b>The Bargain Kept</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city + ally survives</td><td>capture a city + ally survives</td><td><b>day 10 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc13</td><td><b>The Capital Road</b></td><td class='pl'>19x7<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A' data-c='the_hollow_crown'><td class='pl dim'>hc14</td><td><b>Last Garrison</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc15</td><td><b>The Regent&#x27;s Gate</b></td><td class='pl'>21x7<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='S' data-c='the_hollow_crown'><td class='pl dim'>hc16</td><td><b>Siege Lines</b></td><td class='pl'>21x15<br><span class='dim'>4 bases</span></td><td>hold a cell</td><td>hold a cell</td><td><b>day 10 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc17</td><td><b>The High Seat</b></td><td class='pl'>21x8<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A0' data-c='the_hollow_crown'><td class='pl dim'>hc18</td><td><b>The Hollow Crown</b></td><td class='pl'>23x9<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr class='camprow'><td colspan='8'><b>The Collection</b> <span class='dim'>· 12 standard of 18 (0 already · 12 convert · 0 retrofit · 0 adjacent) · 6 stay special</span></td></tr>
+<tr data-v='S' data-c='the_collection'><td class='pl dim'>tc01</td><td><b>The Ledger Opens</b></td><td class='pl'>14x10<br><span class='dim'>2 bases</span></td><td>hold a cell</td><td>hold a cell</td><td><b>day 8 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc02</td><td><b>Named in the Audit</b></td><td class='pl'>16x10<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_collection'><td class='pl dim'>tc03</td><td><b>The Supply Chain</b></td><td class='pl'>20x10<br><span class='dim'>2 bases</span></td><td>hold a cell + capture a city + capture a city</td><td>hold a cell + capture a city + capture a city</td><td><b>day 10 · keep</b></td><td class='pl'>8</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_collection'><td class='pl dim'>tc04</td><td><b>The Garrison Auction</b></td><td class='pl'>15x11<br><span class='dim'>2 bases</span></td><td>own N properties + survive to day N</td><td>own N properties + survive to day N</td><td><b>day 9 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc05</td><td><b>The Tally Post</b></td><td class='pl'>17x11<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc06</td><td><b>The Seized Province</b></td><td class='pl'>20x12<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc07</td><td><b>The Blockade</b></td><td class='pl'>16x10<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc08</td><td><b>Silencing the Witness</b></td><td class='pl'>15x11<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc09</td><td><b>The Listening Posts</b></td><td class='pl'>18x10<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city + capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_collection'><td class='pl dim'>tc10</td><td><b>The Squeeze</b></td><td class='pl'>15x10<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 7 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc11</td><td><b>The Comeback</b></td><td class='pl'>17x11<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc12</td><td><b>The Counting House</b></td><td class='pl'>18x12<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc13</td><td><b>Crossing the Line</b></td><td class='pl'>16x11<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc14</td><td><b>Draeg&#x27;s Line</b></td><td class='pl'>15x10<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc15</td><td><b>The Foundry Chain</b></td><td class='pl'>20x11<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city + capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 11 → drop</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_collection'><td class='pl dim'>tc16</td><td><b>Out-Producing the Foundry</b></td><td class='pl'>18x12<br><span class='dim'>2 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_collection'><td class='pl dim'>tc17</td><td><b>The Foundry Core</b></td><td class='pl'>19x12<br><span class='dim'>2 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><b>day 8 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_collection'><td class='pl dim'>tc18</td><td><b>Closing the Ledger</b></td><td class='pl'>21x13<br><span class='dim'>2 bases</span></td><td>hold a cell</td><td>hold a cell</td><td><b>day 12 · keep</b></td><td class='pl'>10</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr class='camprow'><td colspan='8'><b>The Furnace Winter</b> <span class='dim'>· 12 standard of 18 (4 already · 3 convert · 4 retrofit · 1 adjacent) · 6 stay special</span></td></tr>
+<tr data-v='B' data-c='the_furnace_winter'><td class='pl dim'>fw01</td><td><b>Dry Taps</b></td><td class='pl'>13x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>6</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_furnace_winter'><td class='pl dim'>fw02</td><td><b>Last Granary</b></td><td class='pl'>13x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>5</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_furnace_winter'><td class='pl dim'>fw03</td><td><b>Cold Relay</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>5</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='S' data-c='the_furnace_winter'><td class='pl dim'>fw04</td><td><b>Ice Road</b></td><td class='pl'>13x10<br><span class='dim'>1 base</span></td><td>capture a city + reach a cell</td><td>capture a city + reach a cell</td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='B' data-c='the_furnace_winter'><td class='pl dim'>fw05</td><td><b>Powder Ration</b></td><td class='pl'>14x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>4</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='S' data-c='the_furnace_winter'><td class='pl dim'>fw06</td><td><b>First Thaw</b></td><td class='pl'>15x10<br><span class='dim'>1 base</span></td><td>own N properties + hold a cell</td><td>own N properties + hold a cell</td><td><b>day 10 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_furnace_winter'><td class='pl dim'>fw07</td><td><b>Pipeline East</b></td><td class='pl'>19x7<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city + hold a cell</td><td>capture a city + capture a city + hold a cell</td><td><b>day 10 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_furnace_winter'><td class='pl dim'>fw08</td><td><b>Pipeline West</b></td><td class='pl'>19x7<br><span class='dim'>2 bases</span></td><td>hold a cell + capture a city</td><td>hold a cell + capture a city</td><td><b>day 10 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='the_furnace_winter'><td class='pl dim'>fw09</td><td><b>Coalyard Junction</b></td><td class='pl'>21x7<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_furnace_winter'><td class='pl dim'>fw10</td><td><b>Ashen Crossing</b></td><td class='pl'>21x7<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city + capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 9 → drop</span></td><td class='pl'>6</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A' data-c='the_furnace_winter'><td class='pl dim'>fw11</td><td><b>Signal Hill</b></td><td class='pl'>23x7<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city + capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_furnace_winter'><td class='pl dim'>fw12</td><td><b>Last Mile</b></td><td class='pl'>23x8<br><span class='dim'>2 bases</span></td><td>capture a city + capture a city + capture a city + own N properties + hold a cell</td><td>capture a city + capture a city + capture a city + own N properties + hold a cell</td><td><b>day 8 · keep</b></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A0' data-c='the_furnace_winter'><td class='pl dim'>fw13</td><td><b>Foundry Gate</b></td><td class='pl'>18x12<br><span class='dim'>3 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='C' data-c='the_furnace_winter'><td class='pl dim'>fw14</td><td><b>Slag Row</b></td><td class='pl'>18x12<br><span class='dim'>3 bases</span></td><td>destroy a named unit + destroy a named unit</td><td>destroy a named unit <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-adj'>C</span></td></tr>
+<tr data-v='S' data-c='the_furnace_winter'><td class='pl dim'>fw15</td><td><b>Smelter Yard</b></td><td class='pl'>19x12<br><span class='dim'>3 bases</span></td><td>survive to day N + hold a cell</td><td>survive to day N + hold a cell</td><td><span class='dim'>—</span></td><td class='pl'>8</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A0' data-c='the_furnace_winter'><td class='pl dim'>fw16</td><td><b>Arsenal Road</b></td><td class='pl'>19x12<br><span class='dim'>3 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A0' data-c='the_furnace_winter'><td class='pl dim'>fw17</td><td><b>The Stacks</b> <span class='fog'>fog</span></td><td class='pl'>20x13<br><span class='dim'>3 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>7</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr data-v='A0' data-c='the_furnace_winter'><td class='pl dim'>fw18</td><td><b>Vale&#x27;s Furnace</b></td><td class='pl'>21x13<br><span class='dim'>3 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>6</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr class='camprow'><td colspan='8'><b>The Quiet War</b> <span class='dim'>· 12 standard of 18 (1 already · 3 convert · 7 retrofit · 1 adjacent) · 6 stay special</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw01</td><td><b>The Flipped Town</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>5</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='C' data-c='the_quiet_war'><td class='pl dim'>qw02</td><td><b>The Column in the Pines</b> <span class='fog'>fog</span></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>capture a city + destroy a named unit</td><td>destroy a named unit <span class='dim'>(unchanged)</span></td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-adj'>C</span></td></tr>
+<tr data-v='S' data-c='the_quiet_war'><td class='pl dim'>qw03</td><td><b>Quiet Ground</b> <span class='fog'>fog</span></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>own N properties + hold a cell</td><td>own N properties + hold a cell</td><td><b>day 10 · keep</b></td><td class='pl'>8</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_quiet_war'><td class='pl dim'>qw04</td><td><b>The Governor&#x27;s Scandal</b> <span class='fog'>fog</span></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>reach a cell</td><td>reach a cell</td><td><span class='hot'>day 5 → drop</span></td><td class='pl'>5</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_quiet_war'><td class='pl dim'>qw05</td><td><b>The Watch at Thornfield</b> <span class='fog'>fog</span></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>hold a cell</td><td>hold a cell</td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw06</td><td><b>The Forward Safehouse</b> <span class='fog'>fog</span></td><td class='pl'>18x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 10 → drop</span></td><td class='pl'>6</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw07</td><td><b>The Cache at Millhollow</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>0 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 6 → drop</span></td><td class='pl'>4</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw08</td><td><b>The Waystation</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 4 → drop</span></td><td class='pl'>4</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='S' data-c='the_quiet_war'><td class='pl dim'>qw09</td><td><b>Ambush Ground</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>0 bases</span></td><td>reach a cell + survive to day N</td><td>reach a cell + survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>4</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw10</td><td><b>The Relay Tower</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>0 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 4 → drop</span></td><td class='pl'>4</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='S' data-c='the_quiet_war'><td class='pl dim'>qw11</td><td><b>The Raid Points</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>0 bases</span></td><td>own N properties + hold a cell</td><td>own N properties + hold a cell</td><td><b>day 10 · keep</b></td><td class='pl'>8</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw12</td><td><b>The Network Node</b> <span class='fog'>fog</span></td><td class='pl'>14x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 7 → drop</span></td><td class='pl'>5</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='A' data-c='the_quiet_war'><td class='pl dim'>qw13</td><td><b>The Open Field</b></td><td class='pl'>20x10<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='B' data-c='the_quiet_war'><td class='pl dim'>qw14</td><td><b>The Daylight March</b></td><td class='pl'>20x9<br><span class='dim'>0 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 12 → drop</span></td><td class='pl'>7</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='A' data-c='the_quiet_war'><td class='pl dim'>qw15</td><td><b>The Engineering Works</b></td><td class='pl'>20x10<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 12 → drop</span></td><td class='pl'>7</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='S' data-c='the_quiet_war'><td class='pl dim'>qw16</td><td><b>Holding the Line in the Open</b></td><td class='pl'>18x9<br><span class='dim'>0 bases</span></td><td>survive to day N + hold a cell</td><td>survive to day N + hold a cell</td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='A' data-c='the_quiet_war'><td class='pl dim'>qw17</td><td><b>The Last Outpost</b></td><td class='pl'>20x10<br><span class='dim'>2 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>8</td><td><span class='tag t-conv'>A</span></td></tr>
+<tr data-v='A0' data-c='the_quiet_war'><td class='pl dim'>qw18</td><td><b>The Man Himself</b></td><td class='pl'>22x11<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='hot'>day 14 → drop</span></td><td class='pl'>9</td><td><span class='tag t-ok'>A0</span></td></tr>
+<tr class='camprow'><td colspan='8'><b>The Long Front</b> <span class='dim'>· 9 standard of 18 (1 already · 0 convert · 8 retrofit · 0 adjacent) · 9 stay special</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf01</td><td><b>Customs Line</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf02</td><td><b>The Last Causeway</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf03</td><td><b>Riptide Landing</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf04</td><td><b>Seawall Retreat</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>5</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf05</td><td><b>Greenwood Ambuscade</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf06</td><td><b>The Last Grove</b></td><td class='pl'>16x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf07</td><td><b>The Narrows</b></td><td class='pl'>18x10<br><span class='dim'>1 base</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf08</td><td><b>After Hammerfall</b></td><td class='pl'>18x10<br><span class='dim'>0 bases</span></td><td>destroy a named unit + hold a cell</td><td>destroy a named unit + hold a cell</td><td><b>day 9 · keep</b></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf09</td><td><b>The Bridge at Carrow</b></td><td class='pl'>18x10<br><span class='dim'>0 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>6</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf10</td><td><b>The Supply Line</b></td><td class='pl'>18x10<br><span class='dim'>0 bases</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='S' data-c='the_long_front'><td class='pl dim'>lf11</td><td><b>Iron Hill</b></td><td class='pl'>18x9<br><span class='dim'>0 bases</span></td><td>survive to day N</td><td>survive to day N</td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-keep'>S</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf12</td><td><b>The Forward Camp</b></td><td class='pl'>18x10<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf13</td><td><b>The Foothill Road</b></td><td class='pl'>20x10<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>8</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf14</td><td><b>The High Passes</b></td><td class='pl'>20x10<br><span class='dim'>1 base</span></td><td>own N properties</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>8</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf15</td><td><b>The Airfield Raid</b></td><td class='pl'>20x9<br><span class='dim'>0 bases</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='hot'>day 8 → drop</span></td><td class='pl'>7</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf16</td><td><b>Reckoning at Averyn Pass</b></td><td class='pl'>20x9<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>7</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='B' data-c='the_long_front'><td class='pl dim'>lf17</td><td><b>The Shadow of the Keep</b></td><td class='pl'>20x10<br><span class='dim'>1 base</span></td><td>capture a city</td><td><b>capture enemy HQ</b> <span class='dim'>· old primary → bonus</span></td><td><span class='dim'>—</span></td><td class='pl'>8</td><td><span class='tag t-retro'>B</span></td></tr>
+<tr data-v='A0' data-c='the_long_front'><td class='pl dim'>lf18</td><td><b>The Keep at Draeg Hold</b></td><td class='pl'>22x11<br><span class='dim'>2 bases</span></td><td>capture enemy HQ</td><td>capture enemy HQ <span class='dim'>(unchanged)</span></td><td><span class='dim'>—</span></td><td class='pl'>9</td><td><span class='tag t-ok'>A0</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 7</div>
+  <h2 class="text-2xl md:text-3xl font-black">Risks</h2>
+
+  <div class="gc-risk p-5"><b>R1 · A converted mission is longer, and 54 boards are under ~170 cells.</b>
+    <p class="mt-2 leading-relaxed">Half the campaign boards are small. A rout mission on a 15×9 board is
+      over in six days, which is fine; the risk runs the other way, on boards where removing the deadline
+      lets a cautious player grind a stalemate. <b>Mitigation:</b> <span class="pl">par_day</span> stays
+      and still pays a star, and SM5 measures the actual day counts rather than predicting them.</p></div>
+
+  <div class="gc-risk p-5"><b>R2 · Authored dialogue names the old objective.</b>
+    <p class="mt-2 leading-relaxed">273 authored lines, and a briefing that says "take the crossing post"
+      is wrong if the crossing post is now a bonus. <b>Mitigation:</b> the demoted objective keeps its own
+      text, so the card still names it — but SM1's per-campaign PR must read every briefing line in that
+      campaign, which is why the split is by campaign rather than by class.</p></div>
+
+  <div class="gc-risk p-5"><b>R3 · Class B's base pair changes a balanced board.</b>
+    <p class="mt-2 leading-relaxed">Adding production to a board authored without it is the largest change
+      in the plan, and 23 of these boards were deliberately production-free — the production-maps plan's D3
+      shows that is sometimes a decision rather than an omission. <b>Mitigation:</b> SM3 is last of the
+      three edit milestones and separable; if a board's comment says the absence is deliberate, that
+      mission drops to class S rather than getting a base.</p></div>
+
+  <div class="gc-risk p-5"><b>R4 · Deadlines were load-bearing for a scripted beat.</b>
+    <p class="mt-2 leading-relaxed">416 events, 84 of them on a <span class="pl">DayReached</span> trigger.
+      Removing a day-10 failure from a mission whose day-9 reinforcement wave assumed the player was nearly
+      out of time changes what that wave means. <b>Mitigation:</b> SM2 checks every dropped deadline against
+      that mission's own <span class="pl">DayReached</span> triggers and flags any beat scheduled within two
+      days of it for a read.</p></div>
+
+  <div class="gc-risk p-5"><b>R5 · The headline number is the goal, and goals get gamed.</b>
+    <p class="mt-2 leading-relaxed">70/108 is a measurement, not a target — a class-S mission converted
+      to make the ratio look better is exactly the variety this plan claims to preserve being spent on its
+      own scoreboard. <b>Mitigation:</b> the class is decided by the two board facts in section 3, and D6
+      names the campaign that is exempt.</p></div>
+</section>
+
+<!-- 8 -->
+<section id="s8" class="space-y-4">
+  <div class="gc-kicker text-base-content/60">Section 8</div>
+  <h2 class="text-2xl md:text-3xl font-black">Gates</h2>
+  <div class="gc-card p-5">
+    <table class="gc-t">
+      <tr><th>Gate</th><th>What it holds</th><th>Milestones</th></tr>
+      <tr><td class="pl">make campaigns</td><td>Every objective names ground that exists; every effect is
+        legal on the board its mission opens on; the HQ-primary-stands-alone rule</td><td>SM1, SM3, SM4</td></tr>
+      <tr><td class="pl">test_campaign_content.gd</td><td>The same authorities, in the suite</td><td>all</td></tr>
+      <tr><td class="pl">test_campaign_soak.gd</td><td>Every mission plays to a verdict; every beat applies to
+        the board its mission opens on</td><td>SM1–SM4</td></tr>
+      <tr><td class="pl">test_maps.gd</td><td>HQ and base lints, per board's own roster</td><td>SM3</td></tr>
+      <tr><td class="pl">make verify</td><td>The aggregate gate</td><td>all</td></tr>
+      <tr><td class="dim">not a gate</td><td><span class="pl">make commander-balance</span> and
+        <span class="pl">make difficulty-check</span> are structurally blind to campaign content — the Lab
+        plays two sides on skirmish boards. Their staying byte-identical is expected and proves
+        nothing here.</td><td>—</td></tr>
+    </table>
+  </div>
+  <p class="max-w-3xl leading-relaxed dim">Acceptance for the plan as a whole is SM5's recorded
+    play-through, not a green suite: the suite can only say the missions are legal, and the question this
+    plan asks is whether they are <em>fights</em>.</p>
+</section>
+
+</main>
+
+<footer class="px-6 md:px-10 py-8 bg-base-300/40 border-t-2 border-base-300 text-sm dim">
+  Grid Commanders · Standard Missions · rev 1 · 2026-08-15 · proposed, nothing shipped ·
+  measured off 108 missions and 108 boards in the tree at <span class="pl">main</span>.
+</footer>
+
+</div>
+<script>
+document.querySelectorAll('.filt').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var f = b.dataset.f;
+    document.querySelectorAll('#tb tr').forEach(function (r) {
+      if (r.classList.contains('camprow')) { r.style.display = ''; return; }
+      r.style.display = (f === 'all' || r.dataset.v === f) ? '' : 'none';
+    });
+  });
+});
+</script>
+</body>
+</html>
