@@ -229,6 +229,88 @@ func test_an_urgent_tier_never_banks() -> void:
 	)
 
 
+# --- the three dials that bound the wait --------------------------------------
+#
+# Each ships inert, and inert is the banking rule above, unchanged. What they
+# bound is how long that rule may hold the purse shut: how full it may get, whose
+# want may shut it, and how much better the awaited unit has to be.
+
+
+func _tuned_banking_plan(funds: int, dial: String, value: Variant) -> Command:
+	var context := _context(BANKING_BOARD)
+	context.state.funds[context.team] = funds
+	var profile := _banking_profile(2)
+	profile.set(dial, value)
+	return AIProductionPlanner.new(profile).plan(context)
+
+
+## 7000 with 5000 a turn coming in: the same board and funds the budget test
+## banks on, so only the ceiling can be what spends them.
+func test_the_spend_ceiling_stops_the_wait_once_the_treasury_is_full() -> void:
+	assert_null(
+		_tuned_banking_plan(7000, "spend_ceiling_turns", 0.0), "0 never asks and the wait holds"
+	)
+	assert_null(
+		_tuned_banking_plan(7000, "spend_ceiling_turns", 2.0),
+		"7000 is inside two turns of income, so the wait still holds"
+	)
+	var command := _tuned_banking_plan(7000, "spend_ceiling_turns", 1.0)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq((command as BuildCommand).unit_type.id, &"tank", "past the ceiling it buys today")
+
+
+## A base and a port, and only the port can ever build the list's first entry.
+## Board-wide that want shuts the base too, though no hull will ever come out of
+## it.
+const PORT_AND_BASE_BOARD := """
+[terrain]
+BPCCCC
+S.....
+[owners]
+1 0 0
+1 1 0
+1 2 0
+1 3 0
+1 4 0
+1 5 0
+[units]
+1 i 2 1
+1 i 3 1
+1 i 4 1
+"""
+
+
+func _port_and_base_plan(scope: int) -> Command:
+	var context := _context(PORT_AND_BASE_BOARD)
+	context.state.funds[context.team] = 16000
+	assert_eq(TurnRules.income_for(context.state, context.team), 6000, "the board's income")
+	var profile := AIProfile.new()
+	profile.build_priority = ([&"battleship", &"tank"] as Array[StringName])
+	profile.save_up_turns = 2
+	profile.bank_scope = scope
+	return AIProductionPlanner.new(profile).plan(context)
+
+
+func test_per_facility_banking_lets_a_base_build_while_the_port_saves() -> void:
+	assert_null(
+		_port_and_base_plan(AIProfile.BANK_SCOPE_BOARD),
+		"board-wide, the 28000 hull the port is saving for silences the base as well"
+	)
+	var command := _port_and_base_plan(AIProfile.BANK_SCOPE_FACILITY)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq((command as BuildCommand).cell, Vector2i(0, 0), "the base, which builds no hulls")
+	assert_eq((command as BuildCommand).unit_type.id, &"tank")
+
+
+## The md tank the board banks for sits exactly one place above the tank it can
+## afford, so a margin of one is the whole difference between waiting and buying.
+func test_the_rank_margin_refuses_to_bank_for_a_one_place_upgrade() -> void:
+	assert_null(_tuned_banking_plan(7000, "bank_rank_margin", 0), "0 banks for one place")
+	var command := _tuned_banking_plan(7000, "bank_rank_margin", 1)
+	assert_true(command is BuildCommand, "expected a build, got %s" % command)
+	assert_eq((command as BuildCommand).unit_type.id, &"tank")
+
+
 # --- the any-capture-unit floor, and where it stops ---------------------------
 
 

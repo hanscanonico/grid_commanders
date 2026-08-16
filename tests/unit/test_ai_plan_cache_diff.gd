@@ -66,6 +66,9 @@ const COVERED := {
 	&"capture_units_per_property": "the economy dials",
 	&"production_capture_multiplier": "the economy dials",
 	&"capture_goal_value_tiles": "the economy dials",
+	&"spend_ceiling_turns": "the banking dials",
+	&"bank_scope": "the banking dials",
+	&"bank_rank_margin": "the banking dials",
 	&"doctrine_weight": "commanders seated",
 }
 
@@ -217,6 +220,24 @@ func test_the_economy_dials_play_command_for_command() -> void:
 		profile.capture_units_per_property = 0.5
 		profile.build_reactivity = 0.5
 	var profiles := {&"the economy alone": economy, &"the whole economy on hard": whole_block}
+	for dial: StringName in profiles:
+		for board: Array in PlanCacheDiff.boards():
+			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])
+
+
+## The three banking dials, which bound how long production may hold the purse
+## shut and which every tier ships inert. They decide whether a turn spends at
+## all, so a match played with them live buys different units on different days
+## from every run above — and what each unit plan is scored against is the board
+## those purchases made.
+func test_the_banking_dials_play_command_for_command() -> void:
+	var banking := AIProfile.new()
+	var whole_block: AIProfile = HARD_TIER.duplicate()
+	for profile: AIProfile in [banking, whole_block]:
+		profile.spend_ceiling_turns = 2.0
+		profile.bank_scope = AIProfile.BANK_SCOPE_FACILITY
+		profile.bank_rank_margin = 4
+	var profiles := {&"banking alone": banking, &"the banking dials on hard": whole_block}
 	for dial: StringName in profiles:
 		for board: Array in PlanCacheDiff.boards():
 			_assert_agrees_over_a_match(board[1], profiles[dial], "%s, %s" % [board[0], dial])

@@ -207,6 +207,22 @@ const EXCLUDED := {
 		"landed with COM-65 beside supply_weight and is equally unsearched — it moves with"
 		+ " the weight it only matters under, in the same second campaign."
 	),
+	&"spend_ceiling_turns":
+	(
+		"one of the three banking dials, all shipped inert and none yet measured — they"
+		+ " answer one question between them and a search that stepped one alone would"
+		+ " credit it with what its siblings were already doing."
+	),
+	&"bank_scope":
+	(
+		"a mode rather than a magnitude: board-wide or per facility, with nothing between"
+		+ " them for a lattice to step along."
+	),
+	&"bank_rank_margin":
+	(
+		"the third banking dial, unmeasured with the other two — and denominated in places"
+		+ " on the build list, so it only means anything beside duplicate_priority_cost."
+	),
 }
 
 ## Asked for a field's type and existence rather than declared beside the range,
