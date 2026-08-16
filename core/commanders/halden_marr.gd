@@ -56,10 +56,6 @@ func wants_power(state: GameState, team: int) -> bool:
 	return _can_use_the_shore(state, team) and super(state, team)
 
 
-## A hull to speed up, a unit already standing on the coast, or one that can be
-## standing on it before the turn ends. The walk goes through MovementResolver
-## like _can_reach_capture does, so the movement budget keeps one owner and fuel
-## still caps it.
 ## Ground advice: his army defends better on the coast, so a quiet move prefers
 ## to end there — mildly while the meter fills, more strongly once Make for the
 ## Shore is banked or up. The strong case is the other half of the gate above:
@@ -75,6 +71,10 @@ func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 	return shore_stand_tiles
 
 
+## A hull to speed up, a unit already standing on the coast, or one that can be
+## standing on it before the turn ends. The walk goes through MovementResolver
+## like _can_reach_capture does, so the movement budget keeps one owner and fuel
+## still caps it.
 func _can_use_the_shore(state: GameState, team: int) -> bool:
 	for unit in state.units_of(team):
 		if unit.carrier != null:
