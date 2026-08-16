@@ -9,6 +9,11 @@ extends RefCounted
 ## the same authorities the planner scores through; that is what makes a finding
 ## here a fact about the *game* rather than about one revision of `ai/` (plan D6).
 ##
+## A counterfactual is also held to what the side could see. `Vision.is_hidden_from`
+## — Sable Wren's Vanish and a submerged submarine, the planner's one deliberate
+## blindness — is asked wherever a finding weighs an enemy, so no side is ever told
+## it should have shot, feared or guarded against a unit the rules hid from it.
+##
 ## Nothing under `ai/` gained a why-hook and no report claims to know what the
 ## computer was thinking. A finding says what happened, what was available
 ## instead, and roughly what the difference was worth. The judgement stays with
@@ -398,6 +403,8 @@ static func _check_shot(walk: Walk, state: GameState, attack: AttackCommand) -> 
 			continue
 		if state.allied(other.team, attack.unit.team):
 			continue
+		if Vision.is_hidden_from(state, attack.unit.team, other):
+			continue
 		if not AttackRange.covers(state, attack.unit, from, other.cell):
 			continue
 		if AttackRange.ready_shot(state, attack.unit, other) == null:
@@ -665,9 +672,16 @@ static func _check_hq(walk: Walk, state: GameState, team: int) -> void:
 
 
 ## The first enemy that could stand on `team`'s home HQ this turn, or null.
+##
+## A hidden enemy is not one of them, though a reader might want warning of it:
+## the finding's own sentence ("nothing of ours can reach it") is an accusation,
+## and accusing a side over a unit the rules hid from it is the false positive
+## this instrument cannot afford.
 static func _hq_threat(state: GameState, team: int, hq: Vector2i) -> Unit:
 	for enemy in state.units:
 		if enemy.carrier != null or state.allied(enemy.team, team):
+			continue
+		if Vision.is_hidden_from(state, team, enemy):
 			continue
 		if not enemy.type.can_capture:
 			continue
@@ -715,6 +729,8 @@ static func _has_something_to_do(state: GameState, unit: Unit) -> bool:
 	for cell in AttackRange.threat_cells(state, unit):
 		var other := state.unit_at(cell)
 		if other == null or state.allied(other.team, unit.team):
+			continue
+		if Vision.is_hidden_from(state, unit.team, other):
 			continue
 		if AttackRange.ready_shot(state, unit, other) != null:
 			return true
@@ -850,6 +866,8 @@ static func _incoming_damage(state: GameState, unit: Unit, cell: Vector2i) -> in
 	var total := 0
 	for enemy in state.units:
 		if enemy.carrier != null or state.allied(enemy.team, unit.team):
+			continue
+		if Vision.is_hidden_from(state, unit.team, enemy):
 			continue
 		if AttackRange.ready_shot(state, enemy, unit) == null:
 			continue

@@ -1,0 +1,29 @@
+# Replay-analyser fixture: woods within a footsoldier's reach of each seat's HQ.
+# symmetric
+#
+# The board the vision guard is checked on. Sable Wren's Vanish hides only a unit
+# standing in cover, so a test asking whether a finding is withheld needs woods
+# where the finding would otherwise be raised: beside the HQ an infantry
+# threatens, and within a walk of the cell a move lands on. analysis.txt has no
+# cover at all, and adding some there would move the boards every other analyser
+# suite is pinned to.
+#
+# A fixture, not a shipped map: it is under maps/fixtures/ so MapCatalog.paths()
+# never sees it, which keeps it out of the menu and the per-map soak — while the
+# playability lints in tests/unit/test_maps.gd discover it through
+# MapCatalog.fixture_paths() and run on it like any other board. Its starting
+# units are a placeholder: every test clears them and stands its own.
+[terrain]
+QB......
+F.......
+........
+.......F
+......BQ
+[owners]
+1 0 0
+1 1 0
+2 7 4
+2 6 4
+[units]
+1 i 2 2
+2 i 5 2
