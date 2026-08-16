@@ -209,9 +209,11 @@ const EXCLUDED := {
 	),
 	&"spend_ceiling_turns":
 	(
-		"one of the three banking dials, all shipped inert and none yet measured — they"
-		+ " answer one question between them and a search that stepped one alone would"
-		+ " credit it with what its siblings were already doing."
+		"one of the three banking dials — they answer one question between them and a"
+		+ " search that stepped one alone would credit it with what its siblings were"
+		+ " already doing. Seated at 3.0 on Normal, Difficult and Brutal by"
+		+ " docs/causeway_measure.md's V4, which measured the triple on one four-army"
+		+ " board rather than searching it; the other two stay inert and unmeasured."
 	),
 	&"bank_scope":
 	(
@@ -226,9 +228,10 @@ const EXCLUDED := {
 	&"goal_engageability":
 	(
 		"a flag rather than a magnitude — an enemy is engageable or it is not, with nothing"
-		+ " between the two settings for a lattice to step. It ships unmeasured, and the"
-		+ " pools would be the wrong ruler besides: no board in them holds a drop of water,"
-		+ " so the fleet aimed at land it was diagnosed on cannot happen there."
+		+ " between the two settings for a lattice to step. Seated at 1.0 on Normal,"
+		+ " Difficult and Brutal by docs/causeway_measure.md's V4, and the pools are the"
+		+ " wrong ruler for it besides: no board in them holds a drop of water, so the"
+		+ " fleet aimed at land it was diagnosed on cannot happen there."
 	),
 	&"capture_threat_aversion":
 	(

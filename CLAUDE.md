@@ -369,8 +369,13 @@ plan is stated in full below and has no copy there.
   front of it: enough infantry to race for the board, capture goals that fan out across it, and a
   price on the ground that builds tanks. AE1–AE3 shipped, **AE4 (the probe band) outstanding**. It
   inherits the AI Judgement boundaries verbatim — D1: **every dial ships inert and inert skips the
-  code**, merge bar both balance reports byte-identical with no accepted departure; D2: **this plan
-  owns capabilities, BL2 owns the tier numbers**; D7: nothing under `core/` and no telemetry, every
+  code**, merge bar both balance reports byte-identical with no accepted departure. **D1's inert
+  half is superseded for one dial as of 2026-08-16**: `capture_units_per_property` went live at
+  0.15 on Normal, Difficult and Brutal (Easy stays 0) with `goal_engageability` and
+  `spend_ceiling_turns`, the three of them being `docs/causeway_measure.md`'s V4 — measured
+  together, and no dial of the three carries the effect alone. Inert still skips the code, and what
+  the seating cost the ladder and the commander matrix is `docs/difficulty_check.md` §4e's. D2:
+  **this plan owns capabilities, BL2 owns the tier numbers**; D7: nothing under `core/` and no telemetry, every
   read through an authority that already exists (`MapData.property_cells`,
   `GameState.properties_of` / `allied` / `home_hq`, `TerrainType.builds`, `UnitPricing.cost_for`).
   D5: **the capture roster scales with what is left to take, floored at what the tier already

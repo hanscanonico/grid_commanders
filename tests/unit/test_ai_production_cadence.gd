@@ -11,7 +11,9 @@ extends GutTest
 ## So this suite is a characterisation, not a judgement: the shipped cadence is
 ## recorded exactly as it is, and each of the three banking dials is then shown
 ## to break the silence. When a tier seats one of them the golden below moves,
-## and moving it is the deliberate act this file exists to make visible.
+## and moving it is the deliberate act this file exists to make visible — the
+## spend ceiling was seated at 3.0 (docs/causeway_measure.md) and this board's
+## golden did not move, which is itself the reading.
 
 ## Causeway-shaped: two bases and a port for the expensive want to hide behind,
 ## five cities to pay for it (8 properties, 8000 a turn), and empty ground to
@@ -149,11 +151,13 @@ func test_the_rank_margin_ends_the_freeze() -> void:
 	assert_gte(cadence["lowest_funds"], 1000, "the planner was never too poor to buy anything")
 
 
-## D1's inert half, read as cadence: all three dials at their shipped values plan
-## the same eight turns as the shipped profile, purchase for purchase.
-func test_the_dials_at_their_inert_values_keep_the_shipped_cadence() -> void:
+## What the seated ceiling costs this board: nothing. It ships at 3.0
+## (docs/causeway_measure.md's V4) and zeroing it plans the same eight turns,
+## purchase for purchase — this freeze needs a ceiling of 2.0 to break, which is
+## the test above, and 3.0 is a looser one than that.
+func test_the_dials_at_their_shipped_values_keep_the_shipped_cadence() -> void:
 	var shipped := AIProfile.load_default()
-	assert_eq(shipped.spend_ceiling_turns, 0.0, "the ceiling ships inert")
+	assert_eq(shipped.spend_ceiling_turns, 3.0, "the seated ceiling")
 	assert_eq(shipped.bank_scope, AIProfile.BANK_SCOPE_BOARD, "the scope ships board-wide")
 	assert_eq(shipped.bank_rank_margin, 0, "the margin ships inert")
 	var zeroed: AIProfile = AIProfile.load_default().duplicate()

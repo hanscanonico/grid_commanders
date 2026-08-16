@@ -5,19 +5,20 @@ measured, and what the measurement currently says. This is the committed record 
 difficulty plan's **DF4 — Prove the ordering, then tune**; the generated
 CSV/JSON reports are not committed (they live under `reports/`, gitignored).
 
-**Standing verdict: the gate FAILS, knowingly.** Measured 2026-08-04 at 15
-seeds (§4d): Normal takes **70.0%** from Easy — which meets the bar — and
-Difficult **55.0%** from Normal, against a required 70%. Zero rejected commands
-and zero cap stalls, so the planner and the rules still agree — what is gone is
-the *gap* between tiers, not the correctness of any of them. Those two figures
-were taken before this branch merged `origin/main` and have not been re-read
-since — see §4d's staleness note for what moved under them.
+**Standing verdict: the gate FAILS, knowingly.** Re-read 2026-08-16 at **30
+seeds** (§4e), which is the current reading of the shipped tree: Normal takes
+**76.7%** from Easy — which meets the bar — and Difficult **53.3%** from Normal,
+against a required 70%. Zero rejected commands and zero cap stalls, so the
+planner and the rules still agree — what is gone is the *gap* between tiers, not
+the correctness of any of them. §4d's 70.0% / 55.0% is superseded and was
+already stale as a description of the tree; §4e also records why the 15-seed
+standing invocation should not be read alone near the middle rung.
 
 §4c's 68.3% / 53.3% is superseded and should not be quoted: it was taken before
 the AI Arena and AI Economy slices, and a control re-run at this branch's merge
 base already read 70.0% / 50.0% without any of AU2's work. The failing leg is now
 one rather than two, and it fails on `scrimmage` — the map that actually resolves
-on the board — at 36.7%.
+on the board — which §4e reads at 48.3% on the shipped tree.
 
 This was accepted rather than tuned away, and the reasoning is short. The
 capabilities that closed the gap — noticing an enemy taking your ground, and
@@ -757,6 +758,107 @@ doubles Normal's per-turn time" is no longer a reading of the shipped tiers.)
 
 Zero rejected commands and zero cap stalls in both runs, so the planner and the
 rules still agree across every new command type.
+
+## 4e. Seating Causeway's V4, and what it cost the ladder (2026-08-16)
+
+Three dials that had shipped inert went live on **Normal, Difficult and Brutal**
+— Easy keeps all three at 0:
+
+```
+capture_units_per_property = 0.15
+goal_engageability         = 1.0
+spend_ceiling_turns        = 3.0
+```
+
+They are `docs/causeway_measure.md`'s recommended vector V4, which took
+Causeway's `1+3v2+4` from **1 of 8 decided to 5 of 8** at 25% fewer commands per
+match. That document is the before-picture and is not edited by this pass; what
+follows is what the seating cost the two duel instruments this file owns.
+
+### Attribution: no dial carries it alone
+
+The measurement's own open question — which of the three does the work — was
+taken first, same instrument, same cell (`--map=causeway --grouping=1+3v2+4
+--tier=normal --seeds=8 --days=160`), each dial alone on `data/ai/default.tres`:
+
+| Cell | Dials | decided | median day |
+|---|---|---|---|
+| V0 | none (baseline) | 1 / 8 | 101 |
+| A1 | `capture_units_per_property` 0.15 | 2 / 8 | 144.5 |
+| A2 | `goal_engageability` 1.0 | 3 / 8 | 90 |
+| A3 | `spend_ceiling_turns` 3.0 | 2 / 8 | 106.5 |
+| V3 | A1 + A2 (from the causeway doc) | 3 / 8 | 97 |
+| A2+A3 | `goal_engageability` + `spend_ceiling_turns` | **1 / 8** | 67 |
+| V4 | all three | **5 / 8** | 107 |
+
+V0, V3 and V4 are the causeway document's committed rows; A1, A2, A3 and the one
+pair cell are this pass's. The V4 anchor was re-run alone at seed 1 in this
+worktree and reproduced its row exactly — side 2+4, day 107, 6 491 commands — so
+the instrument and the tree agree with the document.
+
+**No single dial reaches 4 of 8 and neither measured pair does**, so the smallest
+set within one of V4's five is the triple, and the triple is what was seated.
+The one pair worth running was `goal_engageability` + `spend_ceiling_turns` — the
+strongest single plus the increment V3 → V4 — and it read *worse than either dial
+alone*. At eight seeds that is a direction and not a magnitude; what it rules out
+is a two-dial seating, not the possibility that the triple's five is partly luck.
+
+### The ladder, before and after
+
+Read at the standing invocation, `make difficulty-check DIFF="--seeds=15"`, on
+this machine, both sides generated:
+
+| Pairing | Before (branch point) | After (seated) |
+|---|---|---|
+| Normal over Easy | 75.0% (45/60) | 71.7% (43/60) |
+| Difficult over Normal | 53.3% (32/60) | **46.7%** (28/60) |
+
+46.7% is an **order inversion** at that width, so the pass re-read both trees at
+double the sample rather than shipping the shape:
+
+| Pairing | Before, 30 seeds | After, 30 seeds |
+|---|---|---|
+| Normal over Easy | 75.0% (90/120) | 76.7% (92/120) |
+| Difficult over Normal | 56.7% (68/120) | **53.3%** (64/120) |
+
+**The inversion did not stand.** At 240 matches the order holds — Difficult still
+takes the pairing — and the seating costs it 3.4 pp. At 120 matches a 6.6 pp
+swing is about one standard error of a proportion near 50%, which is the reading
+to keep: *the 15-seed preset cannot resolve the sign of this leg*, and a colour
+from it near the middle rung is not a result. The gate still FAILS on the
+Difficult leg exactly as the standing verdict says, from 56.7% rather than 53.3%.
+
+Where the 30-seed change is: Difficult-over-Normal moves **+5.0 pp on
+`scrimmage`** (43.3% → 48.3%), the map that resolves on the board, and **−11.7 pp
+on `ironworks`** (70.0% → 58.3%), the map §4/§4d record as resolving nothing
+inside the cap and scoring every match by the day-cap tiebreak. So the loss is on
+the tiebreak board and the gain is on the board that plays; that is the shape §5
+already names, and it is the reason this was shipped rather than reverted. Zero
+rejected commands and zero cap stalls in all four runs.
+
+### The commander matrix
+
+The narrow preset `AIProfile.save_up_turns`' own comment cites,
+`make commander-balance BAL="--scenarios=clash,ridge --seeds=3"` (2 904 matches),
+before and after:
+
+- First-side bias **+30.4 pp → +30.2 pp** — unmoved, and REVIEW in both.
+- Thirteen commanders outside the band before and thirteen after; the spread
+  narrows at both ends (11.4–90.2 → 12.5–83.3).
+- The largest movers: Cassian Rook +14.8 (31.4 → 46.2), Dane Ferrow +8.7,
+  Viktor Draeg +7.9, Radek Morn −6.9 (90.2 → 83.3), Mara Voss −7.6, Sable Wren
+  −5.3.
+
+Nobody's band changed direction and no commander crossed from WARN to ok or back
+at either extreme. **The committed full matrix `docs/commander_balance.md` is
+stale as of this pass** — it is an overnight-scale instrument and regenerating it
+is a review trigger of its own, not this measurement's.
+
+### The confirmation
+
+The seated tree, no temporary edits, re-run on the board the vector was chosen
+for: **5 of 8 decided, mean day 109.2, median 107.0**, three wins to 2+4 and two
+to 1+3 — the causeway document's V4 row, reproduced from what ships.
 
 ## 5. Where this leaves the feature
 

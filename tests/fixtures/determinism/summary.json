@@ -13,26 +13,27 @@
 	},
 	"bias": {
 		"overall": {
-			"bias_pp": 100.0,
+			"bias_pp": -100.0,
 			"decisive": 1,
 			"ok": false,
-			"red_win_pct": 100.0
+			"red_win_pct": 0.0
 		},
 		"per_map": [
 			{
-				"bias_pp": 100.0,
+				"bias_pp": -100.0,
 				"decisive": 1,
 				"map": "clash",
 				"matches": 1,
 				"naval_bounded": false,
 				"ok": false,
-				"red_win_pct": 100.0
+				"red_win_pct": 0.0
 			}
 		]
 	},
 	"notes": [
 		"Every matchup here is a mirror, so the win-rate column is the *first seat's* rate, not a balance reading. The answer this run is after is the bias table: with both sides identical, every point above 50% is the seat talking.",
-		"First-seat bias +100.0 pp exceeds the +-5 pp threshold. On a mirror run that *is* the finding — there is nothing else for it to be."
+		"Low confidence — under 50% of games resolved on the board (rout or HQ), so the rest were settled by the day-cap tiebreak, which can turn over on noise: none-normal vs none-normal. Probe with a longer --days= before believing the ordering.",
+		"First-seat bias -100.0 pp exceeds the +-5 pp threshold. On a mirror run that *is* the finding — there is nothing else for it to be."
 	],
 	"run": {
 		"axis": "matchup",
@@ -56,33 +57,33 @@
 	},
 	"values": [
 		{
-			"confidence": "ok",
+			"confidence": "low",
 			"draws": 0,
 			"economy": {
-				"built_value": 30000,
+				"built_value": 46000,
 				"captures": 1,
-				"exchange_ratio": 1.21052631578947,
-				"killed_per_1000_spent": 766.666666666667,
-				"killed_value": 23000,
-				"lost_value": 19000,
-				"spent": 30000,
-				"turns": 14
+				"exchange_ratio": 0.615384615384615,
+				"killed_per_1000_spent": 695.652173913043,
+				"killed_value": 32000,
+				"lost_value": 52000,
+				"spent": 46000,
+				"turns": 20
 			},
 			"flag": "mirror",
 			"matches": 1,
-			"mean_day_ended": 14.0,
+			"mean_day_ended": 21.0,
 			"mirror": true,
 			"naval_bounded": false,
-			"resolved_pct": 100.0,
+			"resolved_pct": 0.0,
 			"termination": {
 				"command_cap": 0,
-				"day_cap": 0,
+				"day_cap": 1,
 				"hq": 0,
-				"rout": 1
+				"rout": 0
 			},
 			"value": "none-normal vs none-normal",
-			"win_rate": 100.0,
-			"wins": 1
+			"win_rate": 0.0,
+			"wins": 0
 		}
 	]
 }

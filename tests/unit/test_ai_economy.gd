@@ -268,14 +268,14 @@ func _build_id(state: GameState, profile: AIProfile) -> StringName:
 	return &""
 
 
-## The defect, on the board it costs the most: twenty neutral properties sitting
-## there and the planner opens by banking, because the roster it was dealt already
-## met the flat target.
+## The defect, on the board it costs the most: sixteen neutral properties sitting
+## there and the planner opens down its priority list, because the roster it was
+## dealt already met the flat target.
 func test_a_property_rich_board_makes_the_capture_roster_short_on_day_one() -> void:
 	assert_eq(
 		_build_id(_board(PROPERTY_RICH, 5000), _profile(0.0)),
-		&"",
-		"blind, the AI banks its opening turn with sixteen neutral cities on the board"
+		&"apc",
+		"blind, the AI opens on its list with sixteen neutral cities on the board"
 	)
 	assert_eq(
 		_build_id(_board(PROPERTY_RICH, 5000), _profile(RATE)),
@@ -311,13 +311,13 @@ func test_the_target_falls_as_the_map_is_taken() -> void:
 
 ## R2, guarded directly. The rate that wins the property race must not delete the
 ## expensive half of the roster from boards with nothing much to race for: on a
-## small board the same non-zero rate never clears the floor, so the AI banks and
-## still fields its Md Tank.
-func test_a_property_poor_board_still_banks_and_still_fields_its_md_tank() -> void:
+## small board the same non-zero rate never clears the floor, so the AI plans its
+## ordinary list and still fields its Md Tank.
+func test_a_property_poor_board_still_fields_its_md_tank() -> void:
 	assert_eq(
 		_build_id(_board(PROPERTY_POOR, 5000), _profile(RATE)),
-		&"",
-		"two neutral cities are not a race; the AI banks toward the better unit"
+		&"apc",
+		"two neutral cities are not a race; no capturer is urgent here"
 	)
 	assert_eq(
 		_build_id(_board(PROPERTY_POOR, 16000), _profile(RATE)),
@@ -326,12 +326,14 @@ func test_a_property_poor_board_still_banks_and_still_fields_its_md_tank() -> vo
 	)
 
 
-## D1's inert pin. At rate 0 the board is never scanned and the floor is the whole
-## answer, so a zeroed profile plans the same build as the shipped one on a board
-## where a live rate demonstrably changes it.
-func test_the_dial_at_zero_plans_exactly_like_the_shipped_profile() -> void:
+## The seated rate, read on this board. It ships live since
+## docs/causeway_measure.md's V4, but 0.15 over sixteen unowned cities rounds to
+## three — exactly the floor — so the shipped profile still plans the blind plan
+## here, and the rate only reaches the roster on a board with more left to take
+## (Causeway deals thirty-six).
+func test_the_seated_rate_is_still_the_floor_on_this_board() -> void:
 	var shipped := AIProfile.load_default()
-	assert_eq(shipped.capture_units_per_property, 0.0, "the dial ships inert")
+	assert_eq(shipped.capture_units_per_property, 0.15, "the rate seated on Normal")
 	for funds in [1000, 5000, 16000]:
 		assert_eq(
 			_build_id(_board(PROPERTY_RICH, funds), _profile(0.0)),
@@ -544,15 +546,16 @@ func test_the_production_dials_at_their_inert_values_plan_like_the_shipped_profi
 		)
 
 
-## D1's inert pin for the three banking dials, which land beside AE3's pair and
-## ship the same way: every tier carries them at the value that skips the code, so
-## the banking rule every committed balance number was measured under is the one
-## the game still plays. What they do once a tier seats one is
+## Which of the three banking dials each tier seats. Only the spend ceiling has
+## been measured (docs/causeway_measure.md's V4, on Causeway's 2v2), so only it is
+## live, and only on the three tiers that carry V4 — Easy keeps the whole block
+## inert. What the ceiling does to the cadence is
 ## tests/unit/test_ai_production_cadence.gd's.
-func test_the_banking_dials_ship_inert_on_every_tier() -> void:
+func test_only_the_measured_banking_dial_is_seated() -> void:
 	for tier in ["default", "easy", "hard", "brutal"]:
 		var profile: AIProfile = load("res://data/ai/%s.tres" % tier)
-		assert_eq(profile.spend_ceiling_turns, 0.0, "%s: the spend ceiling never asks" % tier)
+		var ceiling: float = 0.0 if tier == "easy" else 3.0
+		assert_eq(profile.spend_ceiling_turns, ceiling, "%s: the spend ceiling" % tier)
 		assert_eq(
 			profile.bank_scope, AIProfile.BANK_SCOPE_BOARD, "%s: one answer for the board" % tier
 		)

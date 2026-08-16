@@ -85,7 +85,8 @@ func _built_id(command: Command) -> StringName:
 
 ## Four thousand in the bank is where her bias reaches the recon: unlisted on
 ## build_priority, it takes _build_rank's doctrine-tail branch at 2009 while the
-## second mech sits at 2010. The neutral commander banks the same board.
+## second mech sits at 2010. The neutral commander buys that mech — it banked the
+## same board until the spend ceiling was seated (docs/causeway_measure.md).
 ##
 ## She is the third commander to field a scout and the only one who does not name
 ## one — a consequence of pricing her bias by a ceiling rather than by a list.
@@ -94,7 +95,8 @@ func _built_id(command: Command) -> StringName:
 ## says so where it explains the mechanism.
 func test_four_thousand_buys_calder_a_recon() -> void:
 	assert_eq(_built_id(_build_as(&"ines_calder", 4000)), &"recon")
-	assert_true(
-		_build_as(CommanderType.NEUTRAL_ID, 4000) is EndTurnCommand,
-		"the neutral commander banks four thousand"
+	assert_eq(
+		_built_id(_build_as(CommanderType.NEUTRAL_ID, 4000)),
+		&"mech",
+		"the neutral commander takes the listed unit her bias outranks"
 	)
