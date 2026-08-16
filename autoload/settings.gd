@@ -31,6 +31,9 @@ const SPEED_KEY := "speed"
 const BATTLE_ANIMATIONS_KEY := "battle_animations"
 const VOLUME_KEY := "volume"
 const END_TURN_CONFIRM_KEY := "end_turn_confirm"
+## What a fresh install confirms with, and what `pin` stands a scripted launch
+## back at.
+const DEFAULT_END_TURN_CONFIRM := true
 const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
@@ -99,7 +102,7 @@ var volume: StringName = FULL_ID
 ## and off ends the day on the first press, for a player who reads their own
 ## board. Presentation only like everything else here: nothing under core/ or
 ## ai/ learns it exists, and ReadyUnits still answers who is ready either way.
-var end_turn_confirm := true
+var end_turn_confirm := DEFAULT_END_TURN_CONFIRM
 
 ## Which first-match hints this player has already performed their way out of —
 ## `TutorialHints` ids, retired for good. MissionStrip reads it to pick what to
@@ -263,8 +266,14 @@ func pin_hints(all_retired: bool) -> void:
 ## has one owner: the in-battle menu row reads its label off this too, and a
 ## capture whose animations were pinned but whose label was not would photograph
 ## the preference it was meant to ignore.
+##
+## The end-turn check stands back at its shipped default for the same reason: it
+## decides whether a scripted End Turn opens the guard or hands the day over, so
+## a machine whose player turned it off would drive a scenario differently from
+## one that never touched it.
 func pin(id: StringName) -> void:
 	_persistent = false
+	end_turn_confirm = DEFAULT_END_TURN_CONFIRM
 	if not _flag_wins:
 		speed = GameSpeed.by_id(id)
 

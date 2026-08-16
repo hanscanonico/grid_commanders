@@ -26,6 +26,20 @@ func test_the_check_ships_on() -> void:
 	assert_true(fresh.end_turn_confirm, "a fresh install still confirms the day away")
 
 
+## A capture or a scripted scenario pins its launch, and the guard is on the
+## board: the check has to stand at its shipped default there, or a machine whose
+## player turned it off drives an End Turn straight past the guard.
+func test_a_pinned_launch_stands_the_check_at_its_default() -> void:
+	var fresh = autofree(SETTINGS_SCRIPT.new())
+	fresh.end_turn_confirm = false
+	fresh.pin(GameSpeed.DEFAULT_ID)
+	assert_eq(
+		fresh.end_turn_confirm,
+		Settings.DEFAULT_END_TURN_CONFIRM,
+		"a pinned launch ignores what this machine's player chose"
+	)
+
+
 func test_the_row_says_which_way_it_is_set() -> void:
 	var fresh = autofree(SETTINGS_SCRIPT.new())
 	assert_eq(fresh.row_label(Settings.END_TURN_ROW), "End-turn check: On")
