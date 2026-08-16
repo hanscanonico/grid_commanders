@@ -83,6 +83,14 @@ const BORDER := 1  # chrome outline; 2 physical px on the default window
 const PANEL_BORDER := 2  # the panel's heavier outline
 const SHADOW := 1  # hard-shadow size; shows 2*SHADOW canvas px past bottom-right
 const RADIUS := 1  # a whisker of rounding, at most
+## A full-screen page's outer margin, and the deeper one its bottom edge takes
+## when the last row is a filled button. A button's ink runs to its own edge and
+## its shadow a pixel past it, where a text row's stops short, so the same margin
+## does not read the same: measured on the captured frames, a page ending in a
+## line of copy clears 10 canvas px under it and the debrief's Continue button
+## only 7, against a 12.5 px top on both. 13 reads as that top does.
+const PAGE_MARGIN := GAP
+const PAGE_BUTTON_MARGIN := 13
 
 # --- the docked battle HUD (the handoff, .lavish/hud/SPEC.md) ------------------
 ## Both bars are fixed height, and the board's viewport is what is left over. The
