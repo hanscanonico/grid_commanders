@@ -41,6 +41,7 @@ const SEVERITY := {
 	"hoarding": 40,
 	"missed_capture": 35,
 	"idle_unit": 30,
+	"abandoned_capture": 30,
 	"banked_power": 25,
 	## Deliberately under the banked meter's: the two are opposite readings of the
 	## same charge, and spending it at the wrong moment costs less than never
@@ -157,6 +158,15 @@ class Opening:
 	var takeable: Array[Vector2i] = []
 
 
+## A capture the unit standing on it had started and not finished, as its turn
+## opened. The points are carried with the cell because the finding prices what
+## was thrown away, and the moment the unit walks off the board has forgotten
+## them.
+class Partial:
+	var cell := Vector2i.ZERO
+	var points_left := 0
+
+
 ## One unit as the meter was spent, so what the turn did with it can be read off
 ## the board it is handed over on.
 class Condition:
@@ -228,6 +238,8 @@ class Walk:
 	## question has an answer on: by the end of the turn the unit has moved and its
 	## budget is spent, so a reach measured there is a reading of next turn.
 	var openings: Dictionary = {}
+	## Unit -> the `Partial` capture it was standing on as its turn opened.
+	var partial: Dictionary = {}
 	## team -> the hoarding streak it is in the middle of, or absent.
 	var hoard: Dictionary = {}
 	## Unit -> the cells it has stood on at the end of its owner's last two turns.
@@ -466,9 +478,11 @@ static func _check_landing(walk: Walk, state: GameState, command: Command, actor
 ## the ground it will take next turn and blames it for not having taken it yet.
 static func _open_turn(walk: Walk, state: GameState) -> void:
 	walk.openings = {}
+	walk.partial = {}
 	for unit in state.units_of(state.current_team):
 		if unit.carrier != null or not unit.type.can_capture:
 			continue
+		_note_partial(walk, state, unit)
 		var takeable := _takeable_within_reach(state, unit)
 		if takeable.is_empty():
 			continue
@@ -476,6 +490,22 @@ static func _open_turn(walk: Walk, state: GameState) -> void:
 		opening.cell = unit.cell
 		opening.takeable = takeable
 		walk.openings[unit] = opening
+
+
+## The unfinished capture this unit is standing on, if any.
+##
+## `GameState.capture_progress` is the authority and is exact here rather than
+## approximate: it is erased the moment the capturer steps off the cell or dies,
+## so points still owed under a unit at the open of its turn are that unit's own
+## work, and `CaptureCommand.capture_strength` is never asked a second time.
+static func _note_partial(walk: Walk, state: GameState, unit: Unit) -> void:
+	var owed: Variant = state.capture_progress.get(unit.cell)
+	if owed == null or state.allied(state.owner_at(unit.cell), unit.team):
+		return
+	var partial := Partial.new()
+	partial.cell = unit.cell
+	partial.points_left = int(owed)
+	walk.partial[unit] = partial
 
 
 # --- end of turn ---------------------------------------------------------------
@@ -495,6 +525,7 @@ static func _close_turn(walk: Walk, state: GameState) -> void:
 			continue
 		_check_idle(walk, state, unit)
 		_check_capture_chance(walk, state, unit, claimed)
+		_check_abandoned_capture(walk, state, unit)
 		_check_transport(walk, state, unit)
 		_check_oscillation(walk, state, unit)
 
@@ -792,6 +823,37 @@ static func _check_capture_chance(
 			SEVERITY["missed_capture"]
 		)
 		return
+
+
+## A capture started and then walked away from, throwing the points already spent
+## back to the board. Nothing carries a capture across turns — a claim is settled
+## once per command and cleared with it — so a unit half-way through a property
+## can be re-tasked next turn with nothing anywhere objecting.
+##
+## Reported only while the ground is still the side's to take: a property that
+## ended the turn allied cost nobody anything. A unit that fired buys its turn,
+## the same guard `_check_capture_chance` and `_check_oscillation` take, because
+## breaking off to take a shot is a trade this instrument cannot judge. No vision
+## guard: capture progress is the side's own knowledge and nothing here weighs an
+## enemy.
+static func _check_abandoned_capture(walk: Walk, state: GameState, unit: Unit) -> void:
+	var partial: Partial = walk.partial.get(unit)
+	if partial == null or unit.cell == partial.cell or walk.fought.has(unit):
+		return
+	if state.allied(state.owner_at(partial.cell), unit.team):
+		return
+	var owed := state.rules_config.capture_points
+	_add(
+		walk,
+		"abandoned_capture",
+		state,
+		unit,
+		(
+			"left the property at %s with %d of %d capture points already spent"
+			% [partial.cell, owed - partial.points_left, owed]
+		),
+		owed - partial.points_left
+	)
 
 
 static func _check_transport(walk: Walk, state: GameState, unit: Unit) -> void:
