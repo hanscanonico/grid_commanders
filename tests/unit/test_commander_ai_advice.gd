@@ -230,12 +230,13 @@ func test_seven_thousand_buys_each_doctrine_its_own_unit() -> void:
 	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"viktor_draeg", funds)), &"tank")
 
 
-## Four thousand is where the scouts show: the neutral commander banks a turn
-## for artillery, while Orin Flux and Cassian Rook pull the recon — a unit the
-## default list never buys at all — onto its tail and take it now.
+## Four thousand is where the scouts show: the neutral commander takes the mech
+## its list ranks next, while Orin Flux and Cassian Rook pull the recon — a unit
+## the default list never buys at all — onto its tail and take it instead. The
+## neutral one banked this board until the spend ceiling was seated
+## (docs/causeway_measure.md).
 func test_four_thousand_buys_the_scout_doctrines_a_recon() -> void:
-	var banked := _build_as(FUNDED_BASE_BOARD, CommanderType.NEUTRAL_ID, 4000)
-	assert_true(banked is EndTurnCommand, "the neutral commander banks, got %s" % banked)
+	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, CommanderType.NEUTRAL_ID, 4000)), &"mech")
 	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"orin_flux", 4000)), &"recon")
 	assert_eq(_built_id(_build_as(FUNDED_BASE_BOARD, &"cassian_rook", 4000)), &"recon")
 

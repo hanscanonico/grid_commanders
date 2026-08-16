@@ -280,7 +280,10 @@ const BANK_SCOPE_FACILITY := 1
 ## reaches the banking rule without the banking rule changing (D6) — a short
 ## roster is already urgent, so a property-rich board spends and a property-poor
 ## one banks, out of the same branch.
-@export var capture_units_per_property: float = 0.0
+##
+## Seated at 0.15 on Normal, Difficult and Brutal as the first of
+## docs/causeway_measure.md's V4; Easy keeps it at 0 with its floor of 2.
+@export var capture_units_per_property: float = 0.15
 ## How many capture units may claim one property as their goal. 0 turns claiming
 ## off and leaves the plain goal walk untouched; 1 is classic
 ## claiming, the nearest unit takes it and the next one is pushed to the next
@@ -331,7 +334,10 @@ const BANK_SCOPE_FACILITY := 1
 ## takings on a rich board and four on a poor one. It is a ceiling on the wait
 ## and not a second budget — the purchase itself is still whatever `_pick_build`
 ## already ranked best.
-@export var spend_ceiling_turns: float = 0.0
+##
+## Seated at 3.0 on Normal, Difficult and Brutal as the third of
+## docs/causeway_measure.md's V4; the other two banking dials stay inert.
+@export var spend_ceiling_turns: float = 3.0
 ## Whose banking answer a facility obeys: BANK_SCOPE_BOARD asks once for every
 ## empty facility together, which is the shipped planner; BANK_SCOPE_FACILITY
 ## asks each one about what it alone can produce.
@@ -471,20 +477,20 @@ const BANK_SCOPE_FACILITY := 1
 # never engage, a capture walk nothing prices, and a stand-off potential with a
 # limit cycle in it.
 #
-# Same contract as the blocks above: 0 skips the capability's code entirely, and
-# every tier ships them inert, so the planner the measurements were taken with is
-# still byte for byte the one that plays. Seating one is a follow-up's, with its
-# own measurement.
+# Same contract as the blocks above: 0 skips the capability's code entirely.
+# goal_engageability no longer ships inert — it is one of the three dials seated
+# on Normal, Difficult and Brutal by docs/causeway_measure.md's V4, which took
+# Causeway's 2v2 from 1 of 8 decided to 5 of 8; Easy keeps every one of them at 0.
 
 ## Whether the advance filters the enemies it may orient on down to the ones this
 ## unit could actually shoot. 0 walks at the nearest enemy of any kind, which is
-## the shipped planner; >0 asks AttackRange.can_engage.
+## the pre-V4 planner; >0 asks AttackRange.can_engage.
 ##
 ## A flag rather than a magnitude — there is no half-engageable enemy — and it is
 ## a float only so it reads like every dial beside it. A unit with nothing it can
 ## engage anywhere still advances on the nearest enemy: freezing a cruiser on a
 ## land board reads worse than milling it up the coast.
-@export var goal_engageability: float = 0.0
+@export var goal_engageability: float = 1.0
 ## How heavily a capture cell's expected incoming damage discounts the capture,
 ## as a fraction of the capturer's cost. 0 skips it entirely and never builds the
 ## threat map for a capture; >0 builds it on its own.

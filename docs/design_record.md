@@ -148,7 +148,13 @@ Covered here: `ai-judgement-plan.html`, `ai-economy-plan.html`, `ai-arena-plan.h
   boundaries verbatim. D1: **every dial ships inert and inert skips the code** — the merge bar for
   every milestone is a fixed-seed byte-diff of *both* balance reports, `make commander-balance` and
   `make difficulty-check`, with no accepted departure, and `reports/` is gitignored so both sides
-  are generated. D2: **this plan owns planner capabilities, BL2 owns the tier numbers** — no AE
+  are generated. **D1's inert half is superseded for `capture_units_per_property` as of
+  2026-08-16**: it went live at 0.15 on Normal, Difficult and Brutal (Easy stays 0) together with
+  `goal_engageability` and `spend_ceiling_turns` — `docs/causeway_measure.md`'s V4, which took
+  Causeway's 2v2 from 1 of 8 decided to 5 of 8. The three were measured as a vector and attribution
+  found no single dial and no measured pair carrying it, so they are seated together; inert still
+  skips the code, and the seating's cost to both balance reports is `docs/difficulty_check.md`
+  §4e's. D2: **this plan owns planner capabilities, BL2 owns the tier numbers** — no AE
   milestone edits a shipped value in `data/ai/`, and AE4's deliverable is a probe band in
   `docs/difficulty_check.md`, never a tier value. D7: nothing under `core/` is touched and no
   telemetry is added — every read goes through an authority that already exists

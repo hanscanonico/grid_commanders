@@ -1,2 +1,2 @@
 match_id,sweep_axis,sweep_value,map,seed,seat,mirror,naval,red_commander,red_tier,blue_commander,blue_tier,subject_side,subject_won,winner,termination,day_ended,commands,rejected,cap_stall,turn_cap_hits,red_units,blue_units,red_props,blue_props,red_funds,blue_funds,red_army_value,blue_army_value,red_powers,blue_powers
-clash#none-normal_vs_none-normal#s1000,matchup,none-normal vs none-normal,clash,1000,0,1,0,none,normal,none,normal,red,1,1,rout,14,126,0,0,0,5,0,3,0,7680,27800,23240,0,0,0
+clash#none-normal_vs_none-normal#s1000,matchup,none-normal vs none-normal,clash,1000,0,1,0,none,normal,none,normal,red,0,2,day_cap,21,211,0,0,0,3,4,3,3,5680,20800,4450,16580,0,0

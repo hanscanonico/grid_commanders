@@ -100,6 +100,13 @@ func test_difficult_turns_the_capabilities_on() -> void:
 ## them stops being a balance tweak and starts being a claim the campaign did not
 ## make. docs/ai_arena_results.md is the vector; a later campaign replaces this
 ## list wholesale rather than nudging an entry.
+##
+## It is the sixteen and no more: Brutal also carries capture_units_per_property,
+## goal_engageability and spend_ceiling_turns, which were 0 throughout that
+## campaign and are seated here at Normal's values by a different measurement
+## (docs/causeway_measure.md's V4, read in docs/difficulty_check.md §4e), a higher
+## tier not being allowed to be less capable than the middle one. They are
+## deliberately absent from this list, which pins the search's own answer.
 func test_brutal_is_the_searched_champion_verbatim() -> void:
 	var brutal := db.by_id(&"brutal").profile()
 	var searched := {
@@ -133,6 +140,23 @@ func test_brutal_leaves_the_refused_dials_off() -> void:
 	var brutal := db.by_id(&"brutal").profile()
 	for field: String in ["withdraw_weight", "join_weight", "focus_fire_bonus"]:
 		assert_almost_eq(float(brutal.get(field)), 0.0, 0.0001, "brutal.tres: %s" % field)
+
+
+## Which tier carries V4, by value. The vector is three dials measured together
+## (docs/causeway_measure.md, read in docs/difficulty_check.md §4e), so a tier
+## that seated two of them would be playing a vector nobody measured, and Easy
+## keeps all three at the value that skips the code. The third dial,
+## spend_ceiling_turns, is pinned beside the rest of its banking block in
+## tests/unit/test_ai_economy.gd.
+func test_the_causeway_vector_is_seated_on_the_three_upper_tiers() -> void:
+	for tier in ["normal", "hard", "brutal"]:
+		var profile := db.by_id(StringName(tier)).profile()
+		assert_almost_eq(profile.capture_units_per_property, 0.15, 0.0001, "%s: rate" % tier)
+		assert_almost_eq(profile.goal_engageability, 1.0, 0.0001, "%s: engageability" % tier)
+	var easy := db.by_id(&"easy").profile()
+	assert_almost_eq(easy.capture_units_per_property, 0.0, 0.0001, "easy keeps the floor alone")
+	assert_almost_eq(easy.goal_engageability, 0.0, 0.0001, "easy walks at the nearest enemy")
+	assert_almost_eq(easy.spend_ceiling_turns, 0.0, 0.0001, "easy banks as it always did")
 
 
 ## Guards against inert wiring the same way Easy's build test does, from the
