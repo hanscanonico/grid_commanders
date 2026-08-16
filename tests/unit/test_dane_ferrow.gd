@@ -122,6 +122,16 @@ func test_collect_ignores_a_wounded_target_nobody_can_reach() -> void:
 	assert_false(state.commander_of(1).wants_power(state, 1), "nineteen tiles is not a payday")
 
 
+## The payday walk asks AttackRange like the base gate does, so a wounded target
+## a manhattan guess called reachable — across a channel no land unit crosses —
+## is no payday.
+func test_collect_holds_when_the_payday_is_walled_off() -> void:
+	var state := _state("[terrain]\n.S.\n[units]\n1 t 0 0\n2 T 2 0")
+	state.units[1].hp = 30
+	state.funds[2] = 9000
+	assert_false(state.commander_of(1).wants_power(state, 1), "no Tank shot crosses the water")
+
+
 func test_collect_holds_when_the_payday_is_out_of_reach_of_the_contact() -> void:
 	var state := _state("[terrain]\n%s\n[units]\n1 t 0 0\n2 T 1 0\n2 T 19 0" % ".".repeat(20))
 	state.units[2].hp = 30

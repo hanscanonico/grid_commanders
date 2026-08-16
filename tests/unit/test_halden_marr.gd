@@ -56,8 +56,18 @@ func test_the_shore_power_holds_on_a_land_only_board() -> void:
 
 
 func test_the_shore_power_fires_for_a_hull() -> void:
-	var state := _state("[terrain]\n..S\n[units]\n1 t 0 0\n2 i 1 0\n1 c 2 0")
+	var state := _state("[terrain]\n...S\n[units]\n1 t 0 0\n2 i 1 0\n1 B 3 0")
 	assert_true(state.commander_of(1).wants_power(state, 1))
+
+
+## The beneficiary and the striker have to be the same unit. Here the hull is
+## out of range of the only enemy and the Infantry that can shoot it takes none
+## of the shore bonuses, so the intersection is empty — which the two halves,
+## asked separately, could not see.
+func test_the_shore_power_holds_when_the_hull_has_no_shot_of_its_own() -> void:
+	var state := _state("[terrain]\nS...........\n[units]\n1 B 0 0\n1 i 9 0\n2 i 10 0")
+	assert_true(CommanderType.neutral().wants_power(state, 1), "the default fires here")
+	assert_false(state.commander_of(1).wants_power(state, 1))
 
 
 func test_the_shore_power_fires_for_a_unit_standing_on_a_shoal() -> void:
