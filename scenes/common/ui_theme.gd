@@ -84,11 +84,11 @@ const PANEL_BORDER := 2  # the panel's heavier outline
 const SHADOW := 1  # hard-shadow size; shows 2*SHADOW canvas px past bottom-right
 const RADIUS := 1  # a whisker of rounding, at most
 ## A full-screen page's outer margin, and the deeper one its bottom edge takes
-## when the last row is a filled button. A button's ink runs to its own edge
-## where a text row's stops short of it, so one margin does not read as one
-## margin: measured on the captured frames, a page ending in a line of copy
-## clears 10 canvas px under it and the debrief's Continue button only 7,
-## against a 12.5 px top on both. 13 puts the button back on the top's reading.
+## when the last row is a filled button. A button's ink runs to its own edge and
+## its shadow a pixel past it, where a text row's stops short, so the same margin
+## does not read the same: measured on the captured frames, a page ending in a
+## line of copy clears 10 canvas px under it and the debrief's Continue button
+## only 7, against a 12.5 px top on both. 13 reads as that top does.
 const PAGE_MARGIN := GAP
 const PAGE_BUTTON_MARGIN := 13
 
