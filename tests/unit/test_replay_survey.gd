@@ -78,6 +78,30 @@ func test_subjects_are_ranked_per_kind_and_skip_the_side_wide_ones() -> void:
 	assert_eq(((kinds[1] as Dictionary)["subjects"] as Array).size(), 0)
 
 
+func test_a_kind_names_only_its_three_commonest_subjects() -> void:
+	var crowded := _report(
+		"res://maps/a.txt",
+		40,
+		4,
+		[
+			["idle_unit", "infantry"],
+			["idle_unit", "infantry"],
+			["idle_unit", "tank"],
+			["idle_unit", "tank"],
+			["idle_unit", "mech"],
+			["idle_unit", "recon"]
+		]
+	)
+	var reports: Array[ReplayAnalysis.Report] = [crowded]
+	var survey := ReplaySurvey.fold(reports)
+	var subjects: Array = ((survey["kinds"] as Array)[0] as Dictionary)["subjects"]
+	assert_eq(subjects.size(), 3)
+	var named: Array[String] = []
+	for entry: Dictionary in subjects:
+		named.append(String(entry["subject"]))
+	assert_eq(named, ["infantry", "tank", "mech"] as Array[String])
+
+
 func test_rows_carry_one_line_per_recording() -> void:
 	var survey := ReplaySurvey.fold(_two_reports())
 	var rows: Array = survey["rows"]
