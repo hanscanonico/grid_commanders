@@ -21,3 +21,5 @@ shore_power_attack_pct = 10
 shore_power_star_bonus = 1
 shore_power_move_bonus = 2
 shore_reach_move = 0
+shore_stand_tiles = 1
+shore_ready_stand_tiles = 2

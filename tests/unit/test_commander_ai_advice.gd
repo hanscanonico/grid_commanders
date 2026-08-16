@@ -292,7 +292,7 @@ const ADVICE_COVERAGE := {
 	&"cassian_rook": [&"build_bias"],
 	&"dane_ferrow": [],
 	&"gideon_holt": [&"retreat_hp_delta"],
-	&"halden_marr": [],
+	&"halden_marr": [&"stand_value"],
 	&"ines_calder": [&"build_bias"],
 	&"iona_vance": [],
 	&"iris_colt": [],
@@ -317,7 +317,6 @@ const ADVICE_COVERAGE := {
 const SILENT_REASONS := {
 	&"cass_orlov": "A finisher: the forecasts already see the wounded target she is paid for.",
 	&"dane_ferrow": "The bounty is a funds transfer on a kill the forecasts already price.",
-	&"halden_marr": "Domain-only, and the planner scores his coast through the resolvers.",
 	&"iona_vance": "Flat combat percentages in every exchange; the forecasts carry them whole.",
 	&"iris_colt": "Tempo: the refresh is a rule, and a flat combat malus the forecasts read.",
 	&"ivar_thorne": "Paid for staying hurt, which is an attack bonus the forecasts already have.",

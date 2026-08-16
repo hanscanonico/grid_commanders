@@ -123,6 +123,34 @@ cash-poor opponent** (whether plunder and its counterplay read), and **Colt agai
 a defensive commander** (whether a late refresh creates agency rather than a
 surprise extra turn). Each is played from both seats like the standing twelve.
 
+### Marr's shore stand advice, focused (2026-08-16)
+
+`HaldenMarr.stand_value` — one tile of preference for shoal, reef or port, two
+once Make for the Shore is banked or running — measured on the two fixtures with
+water, before and after, with
+`make commander-balance BAL="--commanders=halden_marr,perrin_ash,alina_ward --scenarios=combined,channel --seeds=<n>"`.
+
+| Seeds | Marr seats | before | after | Δ | powers before → after |
+|---|---:|---:|---:|---:|---:|
+| 2 | 24 | 37.5% | 58.3% | +20.8 | 140 → 130 |
+| 6 | 72 | 40.3% | 50.0% | **+9.7** | 455 → 424 |
+
+Both runs are 0 rejected and 0 cap stalls. By fixture at six seeds: `channel`
+47.2% → 61.1%, `combined` 33.3% → 38.9%. Alina Ward, his most frequent opponent
+in the slice, falls 65.3% → 56.9%, which is the same games read from the other
+seat rather than a second finding.
+
+**The held-forever claim could not be tested, and that is the finding.** The
+2026-08-15 batch reads 528 / 880 held seats for Marr, and every one of them is on
+`clash`, `ridge` or `holdings`: none of those three boards carries a shoal, reef
+or port glyph, so the advice is structurally zero there — the dry-fixture
+`matches.csv` and `summary.json` are **byte-identical** across the change
+(`--scenarios=clash,ridge,holdings --seeds=2`). On the two boards that do carry
+the coast he was already holding nothing (0 held seats, before and after), because
+`_can_use_the_shore` counts ground a unit can *reach* this turn. So the hold-forever
+cliff recorded under #216/#218 stands untouched; what this change buys is play on
+the boards his doctrine is for.
+
 ### Measured after the power-gate pass (2026-08-15)
 
 The full batch at twenty-two ran **9,680 matches** (22×22 ordered pairs × five
