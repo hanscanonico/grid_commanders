@@ -31,7 +31,7 @@ last_day = 9
 
 [sub_resource type="Resource" id="Failure_nothing_worth_the_charge"]
 script = ExtResource("6")
-text = "Let his one great strike find nothing worth the charge. Lose no more than nine units, to any cause."
+text = "Morn's one great strike found something worth the charge — more than nine of ours lost, to any cause."
 max_losses = 9
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_town_for_a_bonus"]

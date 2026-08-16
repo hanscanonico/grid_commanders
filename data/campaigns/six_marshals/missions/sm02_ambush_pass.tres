@@ -23,7 +23,7 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_the_bounty"]
 script = ExtResource("11")
-text = "Ferrow's bounty outgrew the passes. Lose no more than three units, to any cause."
+text = "Ferrow's bounty outgrew the passes — more than three of ours lost, to any cause."
 max_losses = 3
 
 [sub_resource type="Resource" id="Bonus_break_ferrows_column_outright"]

@@ -16,7 +16,7 @@ cell = Vector2i(9, 2)
 
 [sub_resource type="Resource" id="Failure_keep_it_loose"]
 script = ExtResource("5")
-text = "Hammerfall takes whatever stands together. Lose no more than eight units, to any cause."
+text = "Hammerfall took whatever stood together — more than eight of ours lost, to any cause."
 max_losses = 8
 
 [sub_resource type="Resource" id="Line_1"]

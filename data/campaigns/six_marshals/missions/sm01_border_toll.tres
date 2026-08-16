@@ -16,7 +16,7 @@ cell = Vector2i(5, 3)
 
 [sub_resource type="Resource" id="Failure_the_toll"]
 script = ExtResource("5")
-text = "Ferrow was paid three times over. Lose no more than two units, to any cause."
+text = "Ferrow was paid three times over — more than two of ours lost, to any cause."
 max_losses = 2
 
 [sub_resource type="Resource" id="Bonus_south_city"]

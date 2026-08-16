@@ -18,7 +18,7 @@ cell = Vector2i(7, 5)
 
 [sub_resource type="Resource" id="Failure_no_cripples"]
 script = ExtResource("5")
-text = "Orlov hunts what limps. Lose no more than eight units, to any cause."
+text = "Orlov hunted what limped — more than eight of ours lost, to any cause."
 max_losses = 8
 
 [sub_resource type="Resource" id="Line_1"]

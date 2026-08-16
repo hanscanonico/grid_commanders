@@ -30,7 +30,7 @@ last_day = 6
 
 [sub_resource type="Resource" id="Failure_the_count"]
 script = ExtResource("6")
-text = "Ferrow is paid by the kill. Lose no more than three units, to any cause."
+text = "Ferrow was paid by the kill — more than three of ours lost, to any cause."
 max_losses = 3
 
 [sub_resource type="Resource" id="Bonus_take_the_northern_camp_for_a_bonus"]

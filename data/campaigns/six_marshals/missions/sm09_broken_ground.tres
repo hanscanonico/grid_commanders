@@ -28,7 +28,7 @@ last_day = 7
 
 [sub_resource type="Resource" id="Failure_nothing_he_can_count"]
 script = ExtResource("5")
-text = "Every unit intact is one Orlov doesn't count. Lose no more than five, to any cause."
+text = "More than five of ours lost, to any cause — Orlov counted every one."
 max_losses = 5
 
 [sub_resource type="Resource" id="Line_1"]

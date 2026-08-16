@@ -18,7 +18,7 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_never_bunched"]
 script = ExtResource("5")
-text = "Four corners, four columns, and none of them worth a charge. Lose no more than three units, to any cause."
+text = "Four corners, four columns, and more than three of ours lost, to any cause."
 max_losses = 3
 
 [sub_resource type="Resource" id="Line_1"]
