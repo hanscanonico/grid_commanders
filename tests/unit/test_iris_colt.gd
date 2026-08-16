@@ -79,8 +79,8 @@ func test_a_dropped_rider_is_never_refreshed() -> void:
 	assert_true(rider.acted, "a unit somebody else set down stays exhausted")
 
 
-func test_ai_spends_second_wind_late_and_moves_twice() -> void:
-	var state := _state("[terrain]\n............\n[units]\n1 p 0 0\n2 i 11 0")
+func test_ai_spends_second_wind_late_to_reach_a_shot() -> void:
+	var state := _state("[terrain]\n............\n[units]\n1 t 0 0\n2 i 11 0")
 	var commander := state.commander_of(1)
 	state.add_charge(1, commander.power_cost)
 	var ai := AIController.new(unit_db)
@@ -89,9 +89,44 @@ func test_ai_spends_second_wind_late_and_moves_twice() -> void:
 	first.apply(state)
 	var first_cell := state.units[0].cell
 	var second := ai.plan_next_command(state)
-	assert_true(second is PowerCommand, "the eligible move should trigger the late power")
+	assert_true(second is PowerCommand, "one walk short of the enemy is worth the meter")
 	second.apply(state)
 	var third := ai.plan_next_command(state)
-	assert_true(third is MoveCommand, "the refreshed unit should be planned again")
+	assert_false(third is EndTurnCommand, "the refreshed tank should be planned again")
 	third.apply(state)
 	assert_gt(state.units[0].cell.x, first_cell.x)
+
+
+## The behaviour change: a refreshed unit that could only walk again buys nothing,
+## so the meter is kept. This APC is unarmed and cannot capture, and the enemy is
+## far out of anybody's reach.
+func test_a_second_walk_alone_never_spends_the_meter() -> void:
+	var state := _state("[terrain]\n............\n[units]\n1 p 0 0\n2 i 11 0")
+	var commander := state.commander_of(1)
+	var mover := state.units[0]
+	MoveCommand.new(mover, [Vector2i(0, 0), Vector2i(1, 0)]).apply(state)
+	assert_true(mover.refreshable)
+	assert_false(commander.wants_power(state, 1), "a second advance is not worth a full meter")
+
+
+func test_a_refreshed_shot_within_reach_spends_the_meter() -> void:
+	var state := _state("[terrain]\n.....\n[units]\n1 t 0 0\n2 i 4 0")
+	var commander := state.commander_of(1)
+	MoveCommand.new(state.units[0], [Vector2i(0, 0), Vector2i(1, 0)]).apply(state)
+	assert_true(commander.wants_power(state, 1), "a refreshed tank can walk into range and fire")
+
+
+func test_a_refreshed_capture_within_reach_spends_the_meter() -> void:
+	var state := _state("[terrain]\n..C..\n[units]\n1 i 0 0\n2 i 4 0")
+	var commander := state.commander_of(1)
+	MoveCommand.new(state.units[0], [Vector2i(0, 0), Vector2i(1, 0)]).apply(state)
+	assert_true(
+		commander.wants_power(state, 1), "unowned ground the refreshed infantry can stand on"
+	)
+
+
+func test_a_refreshed_capture_out_of_reach_keeps_the_meter() -> void:
+	var state := _state("[terrain]\n..........C\n[units]\n1 i 0 0\n2 i 10 0")
+	var commander := state.commander_of(1)
+	MoveCommand.new(state.units[0], [Vector2i(0, 0), Vector2i(1, 0)]).apply(state)
+	assert_false(commander.wants_power(state, 1), "the city is beyond a second walk")
