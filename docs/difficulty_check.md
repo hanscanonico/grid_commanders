@@ -896,7 +896,7 @@ number to quote.
 ## 6. Superseded measurements
 
 **None of this section is a current claim.** The standing verdict is at the top
-of this file and §4c holds the current measurements; §4 is the last record
+of this file and §4e holds the current measurements; §4 is the last record
 before the Judgement dials went live. These
 numbers are kept only because code comments and other documents were written
 against them and cite the shapes they found, or — for the COM-120 control

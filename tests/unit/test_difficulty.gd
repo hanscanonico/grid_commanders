@@ -142,6 +142,23 @@ func test_brutal_leaves_the_refused_dials_off() -> void:
 		assert_almost_eq(float(brutal.get(field)), 0.0, 0.0001, "brutal.tres: %s" % field)
 
 
+## Which tier carries V4, by value. The vector is three dials measured together
+## (docs/causeway_measure.md, read in docs/difficulty_check.md §4e), so a tier
+## that seated two of them would be playing a vector nobody measured, and Easy
+## keeps all three at the value that skips the code. The third dial,
+## spend_ceiling_turns, is pinned beside the rest of its banking block in
+## tests/unit/test_ai_economy.gd.
+func test_the_causeway_vector_is_seated_on_the_three_upper_tiers() -> void:
+	for tier in ["normal", "hard", "brutal"]:
+		var profile := db.by_id(StringName(tier)).profile()
+		assert_almost_eq(profile.capture_units_per_property, 0.15, 0.0001, "%s: rate" % tier)
+		assert_almost_eq(profile.goal_engageability, 1.0, 0.0001, "%s: engageability" % tier)
+	var easy := db.by_id(&"easy").profile()
+	assert_almost_eq(easy.capture_units_per_property, 0.0, 0.0001, "easy keeps the floor alone")
+	assert_almost_eq(easy.goal_engageability, 0.0, 0.0001, "easy walks at the nearest enemy")
+	assert_almost_eq(easy.spend_ceiling_turns, 0.0, 0.0001, "easy banks as it always did")
+
+
 ## Guards against inert wiring the same way Easy's build test does, from the
 ## other end of the ladder: Brutal keeps no dedicated capture roster, so where
 ## Normal buys its third infantry Brutal spends the same funds on the hammer.

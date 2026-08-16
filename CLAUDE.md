@@ -85,7 +85,8 @@ plan is stated in full below and has no copy there.
 - `difficulty-modes-plan.html` — difficulty tiers DF1–DF4. Locked: **the AI never cheats at any
   tier** — difficulty may only change which `AIProfile` the planner weighs moves with, never
   income, vision, damage or luck. Its DF4 acceptance gate is currently **failing, knowingly**
-  (68.3% / 53.3% against a required 70%) — the AI Judgement dials went live and closing that gap
+  (76.7% / 53.3% at 30 seeds, §4e, against a required 70%) — the AI Judgement dials went live,
+  the Causeway vector followed them, and closing that gap
   is the balance retune's BL2, which must do it by making Difficult better rather than Normal
   worse. Read
   `docs/difficulty_check.md` before touching an AI weight or a tier `.tres`.
