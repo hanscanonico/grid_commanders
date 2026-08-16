@@ -55,9 +55,16 @@ const DEFAULT_PATH := "res://data/ai/default.tres"
 ##
 ## The recon is absent on purpose, and the absence is the mechanism: a doctrine
 ## that wants scouts pulls one onto this list's tail with a negative build_bias
-## (commander-doctrine-ai D1), which is the whole of how Orin Flux and Cassian
-## Rook field one and nobody else does. Listing it would hand every commander the
-## buy and take the two of them their signature.
+## (commander-doctrine-ai D1). Listing it would hand every commander the buy and
+## take the doctrines that pay for it their signature.
+##
+## Three field one, and only two of them ask. Orin Flux and Cassian Rook name the
+## recon in a scout list. Ines Calder reaches it by **cost** — her bias is every
+## type at or under a cheap ceiling — so from her second cheap purchase the recon
+## outranks her mech and her army carries scouts. That was an accident of the
+## ceiling, and it was measured rather than assumed: narrowing her bias to
+## capture-capable types cost her 2.3 pp over 480 seats and was not shipped. See
+## docs/commander_balance.md, *Calder's cheap-breadth bias and the recon*.
 ##
 ## New entries join the tail rather than sorting into the middle. A doctrine's
 ## build_bias counts in places on this list, so every one of them is calibrated
