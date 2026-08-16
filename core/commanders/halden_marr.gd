@@ -50,10 +50,12 @@ func star_bonus(state: GameState, fight: Engagement) -> int:
 
 ## Every effect of Make for the Shore is keyed on a hull or on shore ground, so
 ## an army with neither fires a full meter for exactly nothing — forever, on a
-## land-only board. The offensive default still has to hold: the power is
-## OWNER_TURN and each of its bonuses lands inside this turn's exchanges.
+## land-only board. The power is OWNER_TURN and every bonus lands inside this
+## turn's exchanges, so the offensive default the base gate states is here too —
+## folded into the walk below rather than asked of `super()` beside it, because
+## the unit taking a bonus and the unit spending it have to be the same one.
 func wants_power(state: GameState, team: int) -> bool:
-	return _can_use_the_shore(state, team) and super(state, team)
+	return _can_use_the_shore(state, team)
 
 
 ## Ground advice: his army defends better on the coast, so a quiet move prefers
@@ -71,22 +73,37 @@ func stand_value(state: GameState, unit: Unit, cell: Vector2i) -> int:
 	return shore_stand_tiles
 
 
-## A hull to speed up, a unit already standing on the coast, or one that can be
-## standing on it before the turn ends. The walk goes through MovementResolver
-## like _can_reach_capture does, so the movement budget keeps one owner and fuel
-## still caps it.
+## One unit that both takes a bonus and can spend it: a beneficiary — a hull, a
+## unit already on the coast, or one that can be standing on it before the turn
+## ends — that can also open fire this turn. Both halves have to be the same unit,
+## because every effect lands inside that unit's own exchange; asked separately,
+## an idle battleship beside an inland rifle passed a gate whose intersection was
+## empty. A land beneficiary marching to the coast is the one looseness left: the
+## shot is not required to come from the shore cell itself.
 func _can_use_the_shore(state: GameState, team: int) -> bool:
+	var targets := _hostile_targets(state, team)
+	if targets.is_empty():
+		return false
+	var beneficiaries: Array[int] = [team]
 	for unit in state.units_of(team):
-		if unit.carrier != null:
+		if not _is_striker(state, team, unit, beneficiaries, true):
 			continue
-		if unit.type.domain == UnitType.SEA or _is_shore(state, unit.cell):
+		if _stands_on_the_shore(state, unit) and _unit_can_strike(state, unit, targets):
 			return true
-		if unit.acted:
-			continue
-		var reach := MovementResolver.reachable(state, unit, shore_reach_move)
-		for cell in reach.cells():
-			if reach.can_stop_at(cell) and _is_shore(state, cell):
-				return true
+	return false
+
+
+## Whether this unit takes a shore bonus at all: a hull anywhere, or ground it
+## holds or can stop on this turn. The walk goes through MovementResolver like
+## _can_reach_capture does, so the movement budget keeps one owner and fuel still
+## caps it.
+func _stands_on_the_shore(state: GameState, unit: Unit) -> bool:
+	if unit.type.domain == UnitType.SEA or _is_shore(state, unit.cell):
+		return true
+	var reach := MovementResolver.reachable(state, unit, shore_reach_move)
+	for cell in reach.cells():
+		if reach.can_stop_at(cell) and _is_shore(state, cell):
+			return true
 	return false
 
 

@@ -42,10 +42,23 @@ func test_the_default_fires_when_an_enemy_is_in_reach() -> void:
 	assert_true(_wants(state), "a Tank two tiles from an Infantry has a fight to have")
 
 
-func test_the_default_holds_when_the_enemy_is_far_away() -> void:
+## Distance is the plain case; the other three are what a manhattan guess against
+## a reach could not see. The gate asks AttackRange instead, so the ground
+## between the armies counts and so do the matchup and the ammo — the guess
+## called a Tank two tiles from an Infantry a fight with a channel in between,
+## and fired offensive powers on turns that then held no attack at all.
+func test_the_default_holds_when_there_is_no_shot_to_spend_it_on() -> void:
 	var line := ".".repeat(20)
-	var state := _state("[terrain]\n%s\n[units]\n1 i 0 0\n2 i 19 0" % line, &"alina_ward")
-	assert_false(_wants(state), "nothing in reach means nothing to spend it on")
+	var far := _state("[terrain]\n%s\n[units]\n1 i 0 0\n2 i 19 0" % line, &"alina_ward")
+	assert_false(_wants(far), "nothing in reach means nothing to spend it on")
+	var walled := _state("[terrain]\n.S.\n[units]\n1 t 0 0\n2 i 2 0", &"alina_ward")
+	assert_false(_wants(walled), "the Tank gets no firing position onto the far bank")
+	var mismatched := _state("[terrain]\nS.\n[units]\n1 c 0 0\n2 i 1 0", &"alina_ward")
+	assert_false(_wants(mismatched), "a Cruiser has nothing that hits an Infantry")
+	var dry := _state("[terrain]\n.....\n[units]\n1 R 0 0\n2 i 3 0", &"alina_ward")
+	assert_true(_wants(dry), "stocked, the battery has the shot")
+	dry.units[0].ammo = 0
+	assert_false(_wants(dry), "Rockets carry no secondary, so a dry battery has none")
 
 
 ## Reach is measured off units that can still act: a side that has already

@@ -384,36 +384,78 @@ func _can_strike_an_opponent(state: GameState, team: int, ready_only: bool) -> b
 ## right question about the side whose turn it is and the wrong one about the
 ## side waiting to reply.
 ##
-## Reach is AttackRange.strike_reach, which over-estimates deliberately: the
-## failure worth avoiding is a commander sitting on a full meter all match.
+## Reach is AttackRange's own, so the gate answers with the geometry the shot
+## would actually be resolved on. It used to be a manhattan guess against
+## strike_reach, which counted enemies across water and behind walls: two live
+## recordings caught offensive powers firing on turns that then held no attack at
+## all — Vale x12, Marr x6, Ferrow x5 — while over-firing outnumbered banking
+## 36:0 and 11:6 across the same two matches, so the old "over-estimate on
+## purpose" was buying nothing the banked-meter failure needed.
 ##
 ## Anything hidden from `team` — the commander doing the asking — is skipped on
 ## both sides of the question, so no doctrine plans around a unit its own side
 ## cannot see. Vision owns that judgement; it is not re-derived here.
 ##
-## The two sides are gathered in their own passes because reach is a fact about
-## the shooter alone: resolved once per attacker it costs one strike_reach call
-## an army, and resolved inside the target walk it costs one per pair.
+## The two sides are gathered in their own passes because firing geometry is a
+## fact about the shooter alone: resolved once per attacker it costs one fill an
+## army, and resolved inside the target walk it costs one per pair.
 func _can_strike(
 	state: GameState, team: int, attacker_team: int, defender_team: int, ready_only: bool
 ) -> bool:
-	var targets: Array[Vector2i] = []
-	for target in state.units:
-		if not state.allied(target.team, defender_team) or target.carrier != null:
-			continue
-		if Vision.is_hidden_from(state, team, target):
-			continue
-		targets.append(target.cell)
+	var targets := _strike_targets(state, team, defender_team)
 	if targets.is_empty():
 		return false
 	var attackers: Array[int] = [attacker_team]
 	for unit in state.units:
 		if not _is_striker(state, team, unit, attackers, ready_only):
 			continue
-		var reach := AttackRange.strike_reach(state, unit)
-		for cell in targets:
-			if Grid.manhattan(unit.cell, cell) <= reach:
-				return true
+		if _unit_can_strike(state, unit, targets):
+			return true
+	return false
+
+
+## Every unit of `defender_team`'s side `team` could shoot at.
+func _strike_targets(state: GameState, team: int, defender_team: int) -> Array[Unit]:
+	var targets: Array[Unit] = []
+	for target in state.units:
+		if state.allied(target.team, defender_team) and _is_target(state, team, target):
+			targets.append(target)
+	return targets
+
+
+## The same list over every army hostile to `team`, for a doctrine asking about
+## its own units rather than about one rival — the union `_can_strike_an_opponent`
+## takes one opponent at a time.
+func _hostile_targets(state: GameState, team: int) -> Array[Unit]:
+	var targets: Array[Unit] = []
+	for target in state.units:
+		if not state.allied(target.team, team) and _is_target(state, team, target):
+			targets.append(target)
+	return targets
+
+
+## Whether `team` could shoot at `target` at all: not cargo, a carried unit being
+## unreachable, and not hidden — Vision owns that judgement and it is not
+## re-derived here, so no doctrine plans around a unit its own side cannot see.
+func _is_target(state: GameState, team: int, target: Unit) -> bool:
+	return target.carrier == null and not Vision.is_hidden_from(state, team, target)
+
+
+## True when `unit` could actually open fire on one of `targets` this turn: the
+## cell is inside AttackRange.threat_cells — the single authority for the ground
+## a unit brings under fire — and AttackRange.can_fire says the weapon and the
+## matchup are there. Terrain, water, blockers, minimum range and ammo are all
+## that authority's to answer, so no doctrine spells the geometry a second time.
+##
+## One fill per striker, and the gate above it runs only on a ready meter, so at
+## most once per turn per commander.
+func _unit_can_strike(state: GameState, unit: Unit, targets: Array[Unit]) -> bool:
+	var under_fire: Dictionary[Vector2i, bool] = {}
+	for cell in AttackRange.threat_cells(state, unit):
+		under_fire[cell] = true
+	for target in targets:
+		if under_fire.has(target.cell) and AttackRange.can_fire(state, unit, target):
+			return true
 	return false
 
 
@@ -422,9 +464,10 @@ func _can_strike(
 ## `ready_only`, and not hidden. The one owner of that skip list, so every reading
 ## of "can that cell be brought under fire" — `_can_strike`'s over a whole army,
 ## Mara Voss's `stand_value` over one square of empty ground — grades the same
-## shooters. How far each of them reaches is `AttackRange.strike_reach`'s, asked
-## by the caller because only the caller knows whether that answer serves one
-## cell or many.
+## shooters. Where each of them reaches is AttackRange's, asked by the caller
+## because only the caller knows whether the question is about a live target
+## (`_unit_can_strike`, exact) or about one square of empty ground (Voss's
+## `strike_reach` screen, which nothing stands on to fire at).
 func _is_striker(
 	state: GameState, team: int, unit: Unit, attacker_teams: Array[int], ready_only: bool
 ) -> bool:

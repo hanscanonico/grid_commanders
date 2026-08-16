@@ -31,29 +31,25 @@ func wants_power(state: GameState, team: int) -> bool:
 	return _has_a_payday(state, team)
 
 
-## A visible, solvent enemy already hurt enough to finish, inside the reach of a
-## unit that has not acted. Reach is AttackRange.strike_reach and who counts as a
-## shooter is the base _is_striker, so this grades the same board the base gate
-## does; whether the shot actually kills is the forecast's, never asked here.
+## A visible, solvent enemy already hurt enough to finish, that a unit which has
+## not acted could really open fire on. Who counts as a shooter is the base
+## _is_striker and whether the shot is there at all is the base _unit_can_strike,
+## so this grades the same board the base gate does over a narrower target list;
+## whether the shot actually kills is the forecast's, never asked here.
 func _has_a_payday(state: GameState, team: int) -> bool:
-	var paydays: Array[Vector2i] = []
-	for victim in state.units:
-		if state.allied(victim.team, team) or victim.carrier != null:
-			continue
+	var paydays: Array[Unit] = []
+	for victim in _hostile_targets(state, team):
 		if victim.displayed_hp() > collect_want_hp:
 			continue
 		if state.funds.get(victim.team, 0) < collect_want_funds:
 			continue
-		if not Vision.is_hidden_from(state, team, victim):
-			paydays.append(victim.cell)
+		paydays.append(victim)
 	if paydays.is_empty():
 		return false
 	var shooters: Array[int] = [team]
 	for unit in state.units:
 		if not _is_striker(state, team, unit, shooters, true):
 			continue
-		var reach := AttackRange.strike_reach(state, unit)
-		for cell in paydays:
-			if Grid.manhattan(unit.cell, cell) <= reach:
-				return true
+		if _unit_can_strike(state, unit, paydays):
+			return true
 	return false
