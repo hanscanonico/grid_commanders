@@ -54,7 +54,7 @@ func _best_unit_plan(context: AIPlanningContext, unit: Unit) -> AIUnitPlan:
 	var plan := AIUnitPlan.new()
 	plan.reach = MovementResolver.reachable(context.state, unit)
 	_consider_attacks(context, unit, plan.reach, plan)
-	_consider_captures(context.state, unit, plan.reach, plan)
+	_consider_captures(context, unit, plan.reach, plan)
 	_consider_dive(context, unit, plan.reach, plan)
 	_consider_join(context, unit, plan.reach, plan)
 	_consider_supply(context.state, unit, plan.reach, plan)
@@ -316,11 +316,17 @@ func _defend_bonus(state: GameState, unit: Unit, enemy: Unit) -> float:
 	return profile.defend_weight * score
 
 
+## What taking ground is worth, and — under `capture_threat_aversion` — what
+## walking onto it invites. The map is resolved on the first capturable cell the
+## way `_consider_attacks` resolves it, so a unit with nothing to take builds
+## nothing.
 func _consider_captures(
-	state: GameState, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
+	context: AIPlanningContext, unit: Unit, reachable: MovementResolver.MoveRange, plan: AIUnitPlan
 ) -> void:
 	if not unit.type.can_capture:
 		return
+	var state := context.state
+	var threat: ThreatMap = null
 	for cell in reachable.cells():
 		if not reachable.can_stop_at(cell):
 			continue
@@ -341,6 +347,11 @@ func _consider_captures(
 		var step_cost: int = reachable.costs[cell]
 		score += (state.rules_config.capture_points - points) * profile.capture_progress_bonus
 		score -= profile.step_cost_penalty * step_cost
+		if profile.capture_threat_aversion > 0.0:
+			if threat == null:
+				threat = context.threat_map()
+			var incoming := threat.incoming_damage(state, unit, cell)
+			score -= profile.capture_threat_aversion * _unit_value(unit) * incoming / 100.0
 		if score > plan.score:
 			plan.score = score
 			plan.command = CaptureCommand.new(unit, reachable.path_to(cell))
@@ -538,9 +549,7 @@ static func _better_refuge(
 ## inside its own one-tile ring anyway, so there is nothing here to save. A unit
 ## that can see nobody is ranked at zero for the same reason: there is nothing to
 ## stand off from.
-static func _standoff_rank(
-	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i
-) -> int:
+func _standoff_rank(cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i) -> int:
 	if goal == null or not goal.stand_off:
 		return 0
 	return _position_rank(cell, goal, ring)
@@ -801,9 +810,12 @@ static func _nearest_distance(from: Vector2i, cells: Array[Vector2i]) -> int:
 ## ideally at maximum standoff. `ring` is `AttackRange.band`'s answer, handed in
 ## rather than asked for here because every caller weighs many cells against one
 ## unit's ring and the doctrine's range bonus is the same answer for all of them.
-static func _position_rank(
-	cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i
-) -> int:
+##
+## `standoff_band_tolerance` is what makes "ideally" optional: inside the band
+## every cell ranks alike, so the caller's own cost tie-break holds the unit
+## still rather than walking it to maximum stand-off against a goal that moves
+## every turn.
+func _position_rank(cell: Vector2i, goal: AIPlanningContext.AdvanceGoal, ring: Vector2i) -> int:
 	var dist := Grid.manhattan(goal.cell, cell)
 	if not goal.stand_off:
 		return dist
@@ -812,6 +824,8 @@ static func _position_rank(
 		return out_of_ring + dist - ring.y
 	if dist < ring.x:
 		return out_of_ring + ring.x - dist
+	if profile.standoff_band_tolerance > 0:
+		return 0
 	return ring.y - dist
 
 
@@ -847,10 +861,21 @@ func _advance_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.
 ## when the unit shoots over distance, and null when it can see nobody. The one
 ## answer to what a unit is orienting on, so the step forward and the step back
 ## are measured against the same thing rather than against two readings of it.
+##
+## `goal_engageability` narrows the list to what this unit could ever fire on,
+## asked of the matchup authority: a cruiser handed a land unit walks the coast
+## at something it can never shoot. Only a narrowed list with somebody on it is
+## used — a unit with nothing to engage anywhere still advances, because standing
+## still reads worse than milling.
 func _enemy_goal(context: AIPlanningContext, unit: Unit) -> AIPlanningContext.AdvanceGoal:
 	var enemy_cells: Array[Vector2i] = []
+	var engageable: Array[Vector2i] = []
 	for other in context.visible_enemies:
 		enemy_cells.append(other.cell)
+		if profile.goal_engageability > 0.0 and AttackRange.can_engage(context.state, unit, other):
+			engageable.append(other.cell)
+	if not engageable.is_empty():
+		enemy_cells = engageable
 	if enemy_cells.is_empty():
 		return null
 	var goal := AIPlanningContext.AdvanceGoal.new()

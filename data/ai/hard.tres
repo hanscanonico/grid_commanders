@@ -82,3 +82,6 @@ supply_weight = 0.35
 cover_tiles = 0.0
 condition_weight = 0.0
 join_weight = 0.0
+goal_engageability = 0.0
+capture_threat_aversion = 0.0
+standoff_band_tolerance = 0

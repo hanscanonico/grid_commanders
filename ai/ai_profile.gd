@@ -462,6 +462,57 @@ const BANK_SCOPE_FACILITY := 1
 ## is deliberately not a second dial — it is the reason this one is small.
 @export var join_weight: float = 0.0
 
+# --- Against the milling ------------------------------------------------------
+#
+# Three dials against one measured defect: 86-94% of unit actions in a live
+# four-army match are pure repositioning, and a free-for-all on causeway decides
+# none of 24 matches at any tier (docs/causeway_measure.md). Each answers one of
+# the three mechanisms the analysed recordings named — a goal the unit could
+# never engage, a capture walk nothing prices, and a stand-off potential with a
+# limit cycle in it.
+#
+# Same contract as the blocks above: 0 skips the capability's code entirely, and
+# every tier ships them inert, so the planner the measurements were taken with is
+# still byte for byte the one that plays. Seating one is a follow-up's, with its
+# own measurement.
+
+## Whether the advance filters the enemies it may orient on down to the ones this
+## unit could actually shoot. 0 walks at the nearest enemy of any kind, which is
+## the shipped planner; >0 asks AttackRange.can_engage.
+##
+## A flag rather than a magnitude — there is no half-engageable enemy — and it is
+## a float only so it reads like every dial beside it. A unit with nothing it can
+## engage anywhere still advances on the nearest enemy: freezing a cruiser on a
+## land board reads worse than milling it up the coast.
+@export var goal_engageability: float = 0.0
+## How heavily a capture cell's expected incoming damage discounts the capture,
+## as a fraction of the capturer's cost. 0 skips it entirely and never builds the
+## threat map for a capture; >0 builds it on its own.
+##
+## Denominated in VALUE, in _threat_penalty's exact arithmetic, because
+## _consider_captures is: the capture and the shot compete for one AIUnitPlan, so
+## the fear that discounts them has to be in one currency.
+##
+## The fourth reader of the one ThreatMap, which is why it is its own dial rather
+## than a wider threat_aversion — a capturer strolling into a firing ring is the
+## defect, and pricing it through the attack path's dial would move every shot on
+## the board to fix it. Tune it with threat_aversion, advance_threat_tiles and
+## withdraw_weight, never alone: four dials over one map can price one enemy four
+## times (AI Judgement R3).
+@export var capture_threat_aversion: float = 0.0
+## Whether an indirect unit already inside its own firing band is content there.
+## 0 makes it want exactly maximum stand-off, which is the shipped planner; any
+## value above 0 flattens the rank across the band.
+##
+## Maximum stand-off is measured against a nearest-enemy goal recomputed every
+## turn, so it is a potential that repels up close and attracts from afar — a
+## battleship was observed cycling between two cells for eight days. Flat inside
+## the band lets _advance_command's own cost tie-break hold the unit still.
+##
+## The cost is real and is the reason this ships inert: stand-off is a tactical
+## preference, and a gun content at minimum range is a gun easier to close on.
+@export var standoff_band_tolerance: int = 0
+
 
 ## The profile the game plays with. Falling back to an unmodified profile keeps
 ## a missing or broken file from taking the AI out entirely — it plays with the
