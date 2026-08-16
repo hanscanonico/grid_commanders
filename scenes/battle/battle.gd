@@ -664,12 +664,18 @@ func confirm_at(cell: Vector2i) -> void:
 					_animate_move()
 				else:
 					_reject("Occupied.", cell)
+			else:
+				_reject("Out of reach.", cell)
 		State.TARGETING:
 			if cell in _attack_targets:
 				_execute_attack(cell)
+			else:
+				_reject("No target there.", cell)
 		State.DROP_TARGETING:
 			if _drop_option != null and cell in _drop_option.cells:
 				_execute_drop(cell)
+			else:
+				_reject("Cannot unload there.", cell)
 		State.POWER_TARGETING:
 			_fire_aimed_power(cell)
 		State.AI_TURN:
@@ -1009,28 +1015,22 @@ func _commit_end_turn() -> void:
 	await conclude_command(receipt)
 
 
-## Fires the current team's Command Power. Reached from the HUD button, the F
-## shortcut its charged meter advertises, and the map menu; all three go through
-## PowerCommand, like every other action. Guarded rather than assumed legal,
-## because the HUD button sits outside the selection flow — it is reachable
-## mid-move — and the command is the authority on that. *Who is at the keyboard*
-## is the one thing it cannot answer, so the refusal the bar makes by hiding the
-## button from a computer commander is made here, once, for all three.
-##
-## A power that names a cell asks *where* before it spends anything, so its
-## legality is settled on a fresh command up front rather than by the receipt: a
-## player sent off to aim a meter they have not filled would be refused only after
-## picking the square.
+## Fires the current team's Command Power, or says why it cannot: which refusal a
+## press has earned is BattlePower's, settled up front for aimed and unaimed powers
+## alike so nobody is sent off to aim a meter they have not filled. Only a board
+## the player is playing gets the chip; the rest of them get nothing.
 func _fire_command_power() -> void:
-	if game.current_team in ai_teams or state not in [State.IDLE, State.MENU]:
+	if state not in [State.IDLE, State.MENU]:
+		if state in [State.UNIT_SELECTED, State.PREVIEW, State.TARGETING, State.DROP_TARGETING]:
+			_reject(BattlePower.MID_ACTION, cursor_cell)
 		return
-	var aimed := game.commander_of(game.current_team).aims_power()
-	if aimed and PowerCommand.new().validate(game) != "":
+	var refusal := BattlePower.refusal_for(game, ai_teams)
+	if refusal != "":
+		_reject(refusal, cursor_cell)
 		return
-	# A power may be fired from the HUD while a unit menu is open. Close that
-	# interactive layer before the activation card — or the aim — owns the screen.
+	# Close the menu the HUD button may sit over before the card or the aim takes it.
 	action_menu.close()
-	if aimed:
+	if game.commander_of(game.current_team).aims_power():
 		_enter_power_targeting()
 		return
 	await _fire_power(PowerCommand.new())
