@@ -803,7 +803,14 @@ plan is stated in full below and has no copy there.
   planner** —
   counterfactuals come from `AttackRange` / `MovementResolver` / `CombatResolver.forecast_at`, no
   why-hook is threaded out of `ai/`, and a finding is evidence rather than a gate, so
-  `make replay-report` stays out of `make verify`. D7: `--watch` (re-plan from a seed, the balance
+  `make replay-report` stays out of `make verify`. **A `REPLAY=` naming a directory surveys it** —
+  `tools/replay/replay_survey.gd` (`ReplaySurvey`) folds N reports into per-kind rates and **counts
+  nothing itself**, taking no counterfactual and re-running no detector, so the survey inherits D6
+  whole. A recording that stopped early and a file that would not read are both counted and both
+  said out loud, because a survey that silently dropped input reads exactly like one that had
+  nothing to drop. **`docs/replay_survey.md` is the committed measurement** — dated, superseded
+  wholesale by a later one rather than edited, and it names the analyser state it measured, because
+  a rate taken before a detector was quieted is not comparable to one taken after. D7: `--watch` (re-plan from a seed, the balance
   plan's BS3 fidelity instrument) and `--replay=` (immune to AI changes by design) are two
   instruments, not one; a `--replay=` naming no file is a viewing that named nothing and is refused
   out loud (`MatchRequest.replay_requested` is the fact `BattleSetup` reads), never quietly played

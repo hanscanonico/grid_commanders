@@ -2,9 +2,12 @@ extends SceneTree
 ## Reads a recorded match and reports what the sides playing it left on the table.
 ##
 ##   make replay-report REPLAY=<path to a .jsonl recording>
+##   make replay-report REPLAY=<directory of recordings>
 ##
 ## Flags (after `--`):
-##     --replay=<path>     the recording to read; also the bare first argument
+##     --replay=<path>     the recording to read; also the bare first argument.
+##                         A directory is surveyed: every .jsonl in it is read
+##                         and the reports are folded into per-kind rates.
 ##     --team=<n>          report only this side's misses (default: every side)
 ##     --out=reports/...   output directory (default reports/replay/<name>)
 ##     --quiet             write the files without printing the summary
@@ -12,6 +15,7 @@ extends SceneTree
 ## Writes two files, gitignored with the rest of reports/:
 ##   findings.md   — the ranked list, to read
 ##   findings.json — the same, to grep or diff
+## A survey writes survey.md and survey.json instead.
 ##
 ## The instrument observes (replay plan D6): every counterfactual comes from the
 ## rules — `AttackRange`, `MovementResolver`, `CombatResolver.forecast_at` — and
@@ -35,10 +39,56 @@ func _init() -> void:
 	if not _parse_args():
 		quit(2)
 		return
-	var recording := ReplayFile.read(_path)
-	if recording == null:
+	if DirAccess.dir_exists_absolute(_path):
+		quit(0 if _survey() else 2)
+		return
+	var report := _analyse(_path)
+	if report == null:
 		quit(2)  # ReplayFile has already said what is wrong with the file
 		return
+	var out := _out_dir if _out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
+	var dir := BalanceReportWriter.prepare_dir(out)
+	BalanceReportWriter.write_text(dir.path_join("findings.md"), _markdown(report))
+	BalanceReportWriter.write_json(dir.path_join("findings.json"), report.to_dict())
+	if not _quiet:
+		_print_summary(report, out)
+	quit(0)
+
+
+## Reads every recording in the named directory and writes one folded reading of
+## the lot. A file that will not read is counted rather than fatal: a survey of
+## twelve recordings is still worth having when one of them is stale, so long as
+## it says so — which `ReplaySurvey.dropped_line` is for.
+func _survey() -> bool:
+	var files := _recordings_in(_path)
+	if files.is_empty():
+		push_error("replay-report: no %s recordings in '%s'" % [ReplayFile.EXTENSION, _path])
+		return false
+	var reports: Array[ReplayAnalysis.Report] = []
+	var unreadable := 0
+	for file in files:
+		var report := _analyse(file)
+		if report == null:
+			unreadable += 1
+			continue
+		reports.append(report)
+	var survey := ReplaySurvey.fold(reports, unreadable)
+	var out := _out_dir if _out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
+	var dir := BalanceReportWriter.prepare_dir(out)
+	if dir == "":
+		return false
+	var title := "Replay survey — %s" % _path
+	BalanceReportWriter.write_text(dir.path_join("survey.md"), ReplaySurvey.markdown(survey, title))
+	BalanceReportWriter.write_json(dir.path_join("survey.json"), survey)
+	if not _quiet:
+		_print_survey(survey, out)
+	return true
+
+
+func _analyse(file_path: String) -> ReplayAnalysis.Report:
+	var recording := ReplayFile.read(file_path)
+	if recording == null:
+		return null
 	var report := ReplayAnalysis.run(
 		recording,
 		TerrainDB.load_default(),
@@ -48,13 +98,21 @@ func _init() -> void:
 	)
 	if _team != 0:
 		report.findings = _only(report.findings, _team)
-	var out := _out_dir if _out_dir != "" else DEFAULT_OUT_ROOT.path_join(_run_name())
-	var dir := BalanceReportWriter.prepare_dir(out)
-	BalanceReportWriter.write_text(dir.path_join("findings.md"), _markdown(report))
-	BalanceReportWriter.write_json(dir.path_join("findings.json"), report.to_dict())
-	if not _quiet:
-		_print_summary(report, out)
-	quit(0)
+	return report
+
+
+## The recordings in a directory, in a stable order: no filesystem promises one,
+## and a survey whose rows reshuffle between runs cannot be diffed.
+static func _recordings_in(dir: String) -> PackedStringArray:
+	var found := PackedStringArray()
+	for name in DirAccess.get_files_at(dir):
+		if name.ends_with(ReplayFile.EXTENSION):
+			found.append(name)
+	found.sort()
+	var paths := PackedStringArray()
+	for name in found:
+		paths.append(dir.path_join(name))
+	return paths
 
 
 ## Returns false on a bad flag rather than reading some other file: a mistyped
@@ -181,3 +239,23 @@ func _print_summary(report: ReplayAnalysis.Report, out: String) -> void:
 	if report.findings.size() > PRINTED:
 		print("  ... and %d more" % (report.findings.size() - PRINTED))
 	print("replay-report: wrote findings.md and findings.json to %s" % out)
+
+
+func _print_survey(survey: Dictionary, out: String) -> void:
+	print(
+		(
+			"replay-report: surveyed %d recordings, %d commands, %d findings"
+			% [int(survey["matches"]), int(survey["commands"]), int(survey["findings"])]
+		)
+	)
+	print("replay-report: %s" % ReplaySurvey.dropped_line(survey))
+	var kinds: Array = survey["kinds"]
+	for i in mini(kinds.size(), PRINTED):
+		var entry: Dictionary = kinds[i]
+		print(
+			(
+				"  %s — %d (%.2f per 100 commands)"
+				% [entry["kind"], int(entry["count"]), float(entry["per_100_commands"])]
+			)
+		)
+	print("replay-report: wrote survey.md and survey.json to %s" % out)
