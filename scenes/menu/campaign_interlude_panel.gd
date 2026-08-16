@@ -106,8 +106,9 @@ func _build() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, 8)
+	for edge in ["left", "right", "top"]:
+		margin.add_theme_constant_override("margin_" + edge, UiTheme.PAGE_MARGIN)
+	margin.add_theme_constant_override("margin_bottom", UiTheme.PAGE_BUTTON_MARGIN)
 	add_child(margin)
 
 	var main := VBoxContainer.new()
