@@ -96,13 +96,16 @@ wins" is the board and the planner, never the instrument.
 alive** at the horizon with nothing eliminated at any point. The single
 exception is V3 seed 3, where seat 3 falls and the other three are still going —
 the only army any of these vectors managed to kill in a free-for-all, against
-none at baseline. Attrition happens (the matches issue 10–15k commands each;
+none at baseline. Attrition happens (the matches issue 8.5–15.3k commands each;
 nothing is idle) but it never compounds: four mutually hostile armies on four
 corner islands trade across the causeways for 160 days and no army's board ever
 collapses.
 
+The V0 row is a fresh 8-seed run rather than v1's cell copied across, and it
+reproduces v1's Normal free-for-all exactly: 0 / 8, 11,067 commands per match.
+
 For scale, the command ceiling for this horizon is 193,844 (`301 × 4 × 161`) and
-the busiest match here used 16,039 — nothing is near a cap.
+the busiest free-for-all match used 15,301 — nothing is near a cap.
 
 ## Results — 1+3v2+4: the vector that works
 
@@ -147,8 +150,9 @@ one.
 **V5 is a refutation, and a useful one.** Reordering Normal's navy-heavy
 `build_priority` to Hard's land-first list was the most intuitive candidate in
 the ladder — and it is the only cell that made the 2v2 *worse* (5/8 back to 1/8)
-while costing **+46% commands per match** against V4 on the undecided matches the
-two have in common (14,878 against 10,192). Causeway is a board where
+while costing **+46% commands per match** against V4 across each cell's own
+undecided matches (V5's seven at 14,878, V4's three at 10,192; on the two seeds
+undecided in both, 14,682 against 10,460, +40%). Causeway is a board where
 the sea is one connected body every port opens onto; deprioritising hulls on it
 buys nothing and starves the crossings. Do not carry that idea into the seating
 task.
