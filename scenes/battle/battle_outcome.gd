@@ -206,17 +206,20 @@ func consume_input(event: InputEvent) -> bool:
 	return false
 
 
-## Mouse presses reach a Button before Battle's unhandled-input seam. Both
-## buttons ask here before leaving: an early click is swallowed and unfocused;
-## the first later click highlights its target, and only a subsequent press acts.
+## Mouse presses reach a Button before Battle's unhandled-input seam. Every button
+## asks here before leaving: a click inside the guard — where a press buffered
+## under the cut-in lands — is swallowed and unfocused.
+##
+## A later click acts on that same press, unlike the keyboard route above: a click
+## already names the button it wants, so there is nothing for a first press to
+## reveal, and asking for a second one read as a dead button (COM-244). It arms the
+## keyboard as well, so a key press after a click acts on what the pointer focused.
 func accepts_action(button: Button) -> bool:
 	if Time.get_ticks_msec() < _input_guard_until_ms:
 		button.release_focus()
 		return false
-	if not _action_armed:
-		_action_armed = true
-		button.grab_focus()
-		return false
+	_action_armed = true
+	button.grab_focus()
 	return true
 
 
