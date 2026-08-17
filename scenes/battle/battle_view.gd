@@ -32,16 +32,6 @@ const TILE := 16
 const TERRAIN_PX := 64
 const ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
 const ATLAS_SOURCE_ID := 0
-## One generated sheet per autotile family; the key — a TerrainAutotiles.Family
-## value — doubles as the TileSet source id, with NONE (0) the base atlas above.
-const AUTOTILE_PATHS: Dictionary[int, String] = {
-	TerrainAutotiles.Family.ROADS: "res://assets/tiles/autotiles/roads.png",
-	TerrainAutotiles.Family.RIVERS: "res://assets/tiles/autotiles/rivers.png",
-	TerrainAutotiles.Family.COAST: "res://assets/tiles/autotiles/coast.png",
-	TerrainAutotiles.Family.SHOALS: "res://assets/tiles/autotiles/shoals.png",
-	TerrainAutotiles.Family.WOODS: "res://assets/tiles/autotiles/woods.png",
-	TerrainAutotiles.Family.BRIDGES: "res://assets/tiles/autotiles/bridges.png",
-}
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
 
@@ -169,20 +159,21 @@ func _build_tile_set() -> TileSet:
 			for row in range(1, SideIdentity.FACTION_ROWS + 1):
 				atlas.create_tile(Vector2i(terrain.atlas_col, row))
 	tile_set.add_source(atlas, ATLAS_SOURCE_ID)
-	for family: int in AUTOTILE_PATHS:
+	for family: int in TerrainAutotiles.SHEET_PATHS:
 		tile_set.add_source(_autotile_source(family), family)
 	return tile_set
 
 
-## A source over one generated autotile sheet: 64px cells behind a 2px outer
-## margin with 2px separation — sprite_generator's contact-sheet contract. The
-## bridge sheet holds its two deck orientations; every other family holds all
-## 16 connection masks, laid out where TerrainAutotiles.atlas_coords says.
+## A source over one generated autotile sheet, cut on TerrainAutotiles' contact
+## sheet contract. The bridge sheet holds its two deck orientations; every other
+## family holds all 16 connection masks, laid out where atlas_coords says.
 func _autotile_source(family: int) -> TileSetAtlasSource:
 	var sheet := TileSetAtlasSource.new()
-	sheet.texture = load(AUTOTILE_PATHS[family])
-	sheet.margins = Vector2i(2, 2)
-	sheet.separation = Vector2i(2, 2)
+	sheet.texture = load(TerrainAutotiles.SHEET_PATHS[family])
+	sheet.margins = Vector2i(TerrainAutotiles.SHEET_MARGIN, TerrainAutotiles.SHEET_MARGIN)
+	sheet.separation = Vector2i(
+		TerrainAutotiles.SHEET_SEPARATION, TerrainAutotiles.SHEET_SEPARATION
+	)
 	sheet.texture_region_size = Vector2i(TERRAIN_PX, TERRAIN_PX)
 	if family == TerrainAutotiles.Family.BRIDGES:
 		sheet.create_tile(Vector2i(0, 0))
@@ -216,22 +207,32 @@ func _paint_map() -> void:
 	for y in map.height:
 		for x in map.width:
 			var cell := Vector2i(x, y)
-			var family := TerrainAutotiles.family(map, cell)
-			if family != TerrainAutotiles.Family.NONE:
-				var mask := TerrainAutotiles.mask(map, cell)
-				terrain_layer.set_cell(cell, family, TerrainAutotiles.atlas_coords(family, mask))
+			if _paint_autotile(terrain_layer, cell):
 				continue
 			var terrain := map.terrain_at(cell)
 			var row := identity.atlas_row(game.owner_at(cell)) if terrain.team_tinted else 0
 			terrain_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i(terrain.atlas_col, row))
 
 
+## Paints `cell` from its autotile family sheet, if it has one. False means the
+## cell keeps a base-atlas tile and the caller picks its row.
+func _paint_autotile(layer: TileMapLayer, cell: Vector2i) -> bool:
+	var family := TerrainAutotiles.family(map, cell)
+	if family == TerrainAutotiles.Family.NONE:
+		return false
+	var mask := TerrainAutotiles.mask(map, cell)
+	layer.set_cell(cell, family, TerrainAutotiles.atlas_coords(family, mask))
+	return true
+
+
 ## Fills a ring of cells beyond the map edges so that when the whole map is in
 ## view (see min_zoom) the rest of the screen reads as darkened out-of-bounds
-## ground, not engine-clear void. Each cell extends its nearest edge terrain;
-## properties fall back to plains so no building appears to stand off the board.
-## The ring is sized to the most min_zoom can expose, and the darkening is the
-## layer's modulate in the scene — the tiles themselves are the terrain atlas.
+## ground, not engine-clear void. TerrainAutotiles answers for an off-board cell
+## by reading the nearest edge terrain, which is exactly the continuation this
+## ring is, so a coastline, a road or a tree line runs off the board rather than
+## changing style at the rim. Properties fall back to plains so no building
+## appears to stand off the board. The ring is sized to the most min_zoom can
+## expose, and the darkening is the layer's modulate in the scene.
 func _paint_backdrop() -> void:
 	var plains := db.by_id(&"plains")
 	var map_px := Vector2(map.size() * TILE)
@@ -242,13 +243,15 @@ func _paint_backdrop() -> void:
 	)
 	for y in range(-margin.y, map.height + margin.y):
 		for x in range(-margin.x, map.width + margin.x):
-			if x >= 0 and x < map.width and y >= 0 and y < map.height:
+			var cell := Vector2i(x, y)
+			if map.in_bounds(cell):
 				continue
-			var src := Vector2i(clampi(x, 0, map.width - 1), clampi(y, 0, map.height - 1))
-			var terrain := map.terrain_at(src)
+			if _paint_autotile(backdrop_layer, cell):
+				continue
+			var terrain := db.by_id(TerrainAutotiles.terrain_id(map, cell))
 			if terrain.team_tinted:
 				terrain = plains
-			backdrop_layer.set_cell(Vector2i(x, y), ATLAS_SOURCE_ID, Vector2i(terrain.atlas_col, 0))
+			backdrop_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i(terrain.atlas_col, 0))
 
 
 ## Recolors one property to its current owner, after a capture — but only for a

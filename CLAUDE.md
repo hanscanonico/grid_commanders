@@ -520,8 +520,13 @@ plan is stated in full below and has no copy there.
   overlay washes are its sibling, `scenes/battle/overlay_palette.gd` (`OverlayPalette`) — a
   translucent wash over art is a different vocabulary from the shell's opaque chrome, so neither
   belongs on `UiTheme` and both are declared once where they are painted. Map thumbnails
-  (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
-  a miniature can never be a second opinion. The shared `CommanderCard`'s deferred dress is that
+  (`scenes/menu/map_thumbnail.gd`) draw from `TerrainAutotiles` × `SideIdentity.atlas_row` —
+  a miniature can never be a second opinion, which is why an autotiled cell asks the board's own
+  authority rather than reading `TerrainType.atlas_col` (a one-tile lake was a blue square in the
+  picker and a coasted pond in the match). `TerrainAutotiles` owns the family sheets' paths and
+  their contact-sheet cut, and every board read it takes is clamped to the rim — so it answers for
+  a cell beyond the edge too, and `BattleView`'s out-of-bounds backdrop is autotiled by the same
+  arithmetic as the board it continues. The shared `CommanderCard`'s deferred dress is that
   named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
   and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
   and because the card is also the in-battle info sheet, that one edit re-dressed commander
