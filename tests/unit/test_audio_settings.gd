@@ -95,5 +95,5 @@ func test_every_value_row_is_offered_once_and_declares_how_it_steps() -> void:
 		assert_eq(
 			cycles,
 			entry["id"] in Settings.VALUE_ROWS,
-			"%s cycles with left/right exactly when it carries a value" % entry["id"]
+			"%s is stepped in place, never chosen, exactly when it carries a value" % entry["id"]
 		)

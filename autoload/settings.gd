@@ -178,9 +178,10 @@ static func stepped_speed(id: StringName, step: int) -> StringName:
 	return StringName(ids[wrapi(i + step, 0, ids.size())])
 
 
-## What a value row reads on the pause menu at its current setting, and what the
-## banner confirming a change says. One string with one owner, so a row and its
-## own banner can never word the same setting differently.
+## What a value row reads on the pause menu at its current setting — before a
+## press and after one, since a stepped row is rewritten where it stands. One
+## string with one owner, so the row a player is reading and the setting the game
+## is playing at can never word themselves differently.
 func row_label(row: StringName) -> String:
 	match row:
 		SPEED_ROW:

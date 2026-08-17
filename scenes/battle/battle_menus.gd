@@ -126,9 +126,11 @@ static func build_actions(
 ## volume they are listening at and whether they want the end-of-day check each
 ## have one owner, and a menu that remembered its own copy would eventually show
 ## a setting the game is not playing at. Which rows there are is Settings' too —
-## a new preference is a new entry in its table, not a line here. Enter cycles
-## one to its next step (see Battle's map handler); left and right walk it either
-## way in place, which is what the `cycle` callable is for.
+## a new preference is a new entry in its table, not a line here. Left and right
+## walk one either way in place and Enter is the right press — every gesture that
+## moves a setting leaves the menu standing over the row it moved (COM-246,
+## `ActionMenu._step_value`), which is what the `cycle` callable is for. None of
+## these rows ever reaches Battle's map handler.
 ##
 ## The two exit rows are the only way out of a running match that is not winning,
 ## losing or killing the application, so they are spelled out rather than folded
