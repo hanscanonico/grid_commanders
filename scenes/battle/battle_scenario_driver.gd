@@ -229,6 +229,10 @@ func _run_demo(mode: String) -> void:
 	if mode in BattleMissionScenario.MODES:
 		_fail_if(await BattleMissionScenario.new(_battle).run(mode))
 		return
+	# And the driven feedback family, for the same reason.
+	if mode in BattleFeedbackScenario.MODES:
+		_fail_if(await BattleFeedbackScenario.new(_battle).run(mode))
+		return
 	match mode:
 		"attack", "resolve":
 			_battle.confirm_at(Vector2i(8, 8))  # select the red tank
@@ -265,15 +269,10 @@ func _run_demo(mode: String) -> void:
 			_battle.confirm_at(Vector2i(3, 3))  # select the red APC
 			_battle.confirm_at(Vector2i(3, 3))  # stay put -> menu offers Supply
 			await _until_state(Battle.State.MENU)
-		"mapmenu":
-			_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> End Turn / Save
-			await _until_state(Battle.State.MENU)
 		"leave_confirm":
 			await _stage_leave_routes()
 		"after_build_menu":
 			await _stage_menu_after_build_menu()
-		"rejected_confirm", "enemy_range_preview", "end_turn_ready_units", "power_range_readout":
-			_fail_if(await BattleFeedbackScenario.new(_battle).run(mode))
 		"turn_banner_build_attempt", "outcome_mash_guard", "mixed_seat_handoff", "ai_pause":
 			_fail_if(await BattleTransitionScenario.new(_battle).run(mode))
 		"powermenu":

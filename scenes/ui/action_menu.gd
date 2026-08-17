@@ -113,8 +113,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_labels()
 	elif VALUE_ACTIONS.has(dir) and _cycles[_index].is_valid():
 		get_viewport().set_input_as_handled()
-		_labels[_index] = _cycles[_index].call(VALUE_ACTIONS[dir])
-		_update_labels()
+		_step_value(_index, VALUE_ACTIONS[dir])
 	elif event.is_action_pressed(&"confirm"):
 		get_viewport().set_input_as_handled()
 		choose(_ids[_index])
@@ -130,13 +129,32 @@ func _unhandled_input(event: InputEvent) -> void:
 ## the menu flow — firing a Command Power from the HUD abandons the move the
 ## menu belonged to — and the rows left behind would otherwise still act, on a
 ## selection that is gone.
+##
+## A value row is never handed out as a chosen action: it answers a confirm the
+## way it answers a right press, below.
 func choose(id: StringName) -> void:
 	if not visible:
 		return
 	var i := _ids.find(id)
 	if i >= 0 and _disabled[i]:
 		return
+	if i >= 0 and _cycles[i].is_valid():
+		_step_value(i, 1)
+		return
 	action_chosen.emit(id)
+
+
+## Steps a value row where it stands, and leaves the menu up over it (COM-246).
+## Confirm and a right press are one gesture here: a confirm that stepped the
+## setting and then took the menu away with it left a player who pressed ENTER on
+## "Speed: Normal" meaning to *pick* it one tier faster, with the row that says
+## so gone and nothing left to step back with — which is how a device ends up
+## playing at Instant nobody chose. The stepped row is armed too, so a click and
+## the two arrow keys act on the same row.
+func _step_value(i: int, step: int) -> void:
+	_index = i
+	_labels[i] = _cycles[i].call(step)
+	_update_labels()
 
 
 ## Transparent stand-in the size icons are capped to, so icon-less rows keep

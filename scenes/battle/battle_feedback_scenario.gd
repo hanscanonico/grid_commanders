@@ -5,6 +5,16 @@ extends RefCounted
 ## string rather than reporting one: the driver's `_fail` owns the push_error
 ## and the exit-code flag together, and the two are not separable.
 
+## The modes this class drives, asked of it by BattleScenarioDriver rather than
+## listed there a second time.
+const MODES: Array[String] = [
+	"rejected_confirm",
+	"enemy_range_preview",
+	"end_turn_ready_units",
+	"power_range_readout",
+	"mapmenu",
+]
+
 var _battle: Battle
 
 
@@ -22,7 +32,34 @@ func run(mode: String) -> String:
 			return await _run_end_turn_ready_units()
 		"power_range_readout":
 			return _run_power_range_readout()
+		"mapmenu":
+			return await _run_map_menu()
 	return "unknown feedback scenario: %s" % mode
+
+
+## The map menu, stopped where a capture photographs it — and what its value rows
+## answer a confirm with. A row carrying a `cycle` steps where it stands and the
+## menu stays up (COM-246): a confirm that stepped the setting and then closed
+## over it left a player who pressed ENTER on "Speed: Normal" meaning to pick it
+## one tier faster, with the row that says so gone — which is how a device ends up
+## playing at Instant nobody chose.
+##
+## A whole lap of the ladder rather than one step, so the frame this mode is here
+## to take is still the tier the capture pinned.
+func _run_map_menu() -> String:
+	_battle.confirm_at(Vector2i(10, 5))  # empty road tile -> End Turn / Save
+	await _until_state(Battle.State.MENU)
+	var opened_at := Settings.speed.id
+	for _lap in GameSpeed.ordered().size():
+		var next_tier := Settings.stepped_speed(Settings.speed.id, 1)
+		_battle.action_menu.choose(Settings.SPEED_ROW)
+		if not _battle.action_menu.visible or _battle.state != Battle.State.MENU:
+			return "the Speed row closed the map menu over its own change"
+		if Settings.speed.id != next_tier:
+			return "a confirmed Speed row set %s, not %s" % [Settings.speed.id, next_tier]
+	if Settings.speed.id != opened_at:
+		return "a lap of the Speed ladder ended on %s, not %s" % [Settings.speed.id, opened_at]
+	return ""
 
 
 ## Ends a turn through the live map-menu route and, when the COM-14 guard opens,

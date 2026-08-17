@@ -947,9 +947,6 @@ func _handle_map_action(action: StringName) -> void:
 	if action == &"briefing":
 		await BattleCampaign.say_briefing(self)
 		return
-	if action in Settings.VALUE_ROWS:
-		present_banner(Settings.cycle_row(action))
-		return
 	if action == &"auto":
 		# Its own submenu, the same shape "quit" opens "abandon" into below: the
 		# context is Battle's to set, the rows and the handoff are BattleAuto's.
