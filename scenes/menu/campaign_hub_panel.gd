@@ -51,11 +51,13 @@ const _BOARD_TILE_MAX := 32
 ## scrolls rather than eating the picture.
 const _SPEECH_H := 96
 ## The foot of the page the shot stays out of, so the whole board is read above
-## the conversation about it rather than half of it behind one. A mission whose
-## terms make the band taller than this simply covers the shot's last rows; the
-## shot is centred in what is left, so a shorter band leaves dark rather than a
-## seam.
-const _BOARD_FOOT := 170
+## the conversation about it rather than half of it behind one. Measured off the
+## band a three-term briefing actually draws — the ordinary mission — rather than
+## guessed: at 170 the band's own top sat 36px inside the shot and every board
+## lost its last two rows, the player's own corner among them. A mission whose
+## terms run longer than that still covers the shot's last rows; the shot is
+## centred in what is left, so a shorter band leaves dark rather than a seam.
+const _BOARD_FOOT := 206
 
 var _title: Label
 var _subtitle: Label
