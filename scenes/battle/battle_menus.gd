@@ -165,13 +165,23 @@ static func build_actions(
 ## Briefing is offered only inside a campaign, asked of CampaignSession, because
 ## outside one there is nothing to re-read. It stays on a paused computer turn —
 ## reading the orders is not acting on them, which is what `commandable` drops.
+##
+## Objectives is the mission card's own O key, said out loud for a player who
+## never found the key — the card covers board, and a lens nobody can turn off
+## from the menu is the complaint this row answers. Its gate is the card's gate
+## and nothing else, `CampaignSession.active()`: the row exists exactly while
+## there is a card to raise, over a replay included, because a card on screen the
+## player cannot lower is the same annoyance either way. `objectives_up` is the
+## card's own answer, passed in like the Auto row's tier and for the same reason
+## — the state has one owner and this only prints it.
 static func map_actions(
 	game: GameState,
 	commandable: bool = true,
 	savable: bool = true,
 	ai_teams: Array[int] = [],
 	auto_tiers: Dictionary = {},
-	difficulty_db: DifficultyDB = null
+	difficulty_db: DifficultyDB = null,
+	objectives_up: bool = true
 ) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	if commandable:
@@ -181,6 +191,9 @@ static func map_actions(
 	actions.append({"id": &"commanders", "label": "Commanders"})
 	if savable and CampaignSession.active():
 		actions.append({"id": &"briefing", "label": "Briefing"})
+	if CampaignSession.active():
+		var card := "On" if objectives_up else "Off"
+		actions.append({"id": &"objectives", "label": "Objectives: %s" % card})
 	for row: StringName in Settings.VALUE_ROWS:
 		actions.append(
 			{

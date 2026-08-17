@@ -277,11 +277,11 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # depot the mission's own beat waits for, fires through the shipped seam, and
 # photographs Ferrow's line over the raider that just landed on the road.
 #
-# campaign_mapmenu is the same launch stopped at the pause menu: the Briefing row
-# is offered only inside a campaign, so mapmenu, power_mapmenu and ai_pause all
-# photograph the menu without it, and it reads the rows back like power_mapmenu
-# does — a menu that dropped the row, or carried it somewhere other than after
-# Commanders, writes a perfectly healthy PNG.
+# campaign_mapmenu is the same launch stopped at the pause menu: the Briefing and
+# Objectives rows are offered only inside a campaign, so mapmenu, power_mapmenu
+# and ai_pause all photograph the menu without them, and it reads the rows back
+# like power_mapmenu does — a menu that dropped either, or carried it somewhere
+# other than after Commanders, writes a perfectly healthy PNG.
 #
 # mission_defection is the other half of what a beat can do to the board, and it
 # is a check before it is a picture: a unit that changed army has to be redrawn in

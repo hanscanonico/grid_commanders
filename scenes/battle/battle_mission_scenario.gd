@@ -126,10 +126,10 @@ func run(mode: String) -> String:
 
 
 ## The pause menu, opened over a mission rather than over a skirmish, which is
-## the only board its Briefing row is offered on. The press is `mapmenu`'s — a
-## confirm on ground holding nothing to select — and the rows are read back off
-## the authority that builds them, because a menu missing the row, or carrying it
-## somewhere else, photographs perfectly well.
+## the only board its Briefing and Objectives rows are offered on. The press is
+## `mapmenu`'s — a confirm on ground holding nothing to select — and the rows are
+## read back off the authority that builds them, because a menu missing a row, or
+## carrying it somewhere else, photographs perfectly well.
 func _run_map_menu() -> String:
 	_battle.confirm_at(OPEN_GROUND)
 	await BattleScenarioDriver.until_state_of(_battle, Battle.State.MENU)
@@ -139,6 +139,8 @@ func _run_map_menu() -> String:
 	var at := ids.find(&"briefing")
 	if at < 1 or ids[at - 1] != &"commanders":
 		return "the map menu offers no Briefing row after Commanders: %s" % [ids]
+	if ids.find(&"objectives") != at + 1:
+		return "the map menu offers no Objectives row after Briefing: %s" % [ids]
 	return _in_band("map menu", _battle.action_menu)
 
 
@@ -149,12 +151,16 @@ func _run_panel() -> String:
 	# and a lowered card that never came back is the failure that leaves a mission
 	# unreadable. It ends up back where it started, which is what keeps the frame
 	# this scenario exists to capture byte-stable.
+	#
+	# The key lowers it and the pause menu's row raises it, which is the one claim
+	# worth driving: the two run the same toggle on the card's own state, so a row
+	# that grew a second copy of it would leave the card down here.
 	panel.toggle(_battle.game)
 	if panel.visible:
 		return "the objective panel stayed up after O lowered it"
-	panel.toggle(_battle.game)
+	await BattleCampaign.run_row(_battle, &"objectives")
 	if not panel.visible:
-		return "the objective panel did not come back up after a second O"
+		return "the objective panel did not come back up from the pause menu's row"
 	# The card measures and places itself a frame after its rows were added, like
 	# the teaching strip and the seat strip.
 	await _battle.get_tree().process_frame
