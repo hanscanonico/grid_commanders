@@ -15,6 +15,12 @@ extends RefCounted
 ## the first count whose open mission the list has to *scroll* to reach — twelve
 ## rows fit the page, so a shorter walk photographs a list that never moved and
 ## would read the same with `follow_focus` off.
+## Developer route: opens every authored mission of the war the hub is on, so one
+## behind a route gate can be played without a profile that earned it. Read here
+## because the hub is the one place a mission is chosen; it changes what the war
+## offers and never what the profile records.
+const UNLOCK_ARG := "--unlock-missions"
+
 const POSED_CLEARED_MISSIONS := 13
 const POSED_STARS := 2
 const POSED_DAY := 5
@@ -309,6 +315,7 @@ func _show_hub(campaign: CampaignDefinition) -> void:
 	var progress := CampaignProfile.load_progress(campaign.id)
 	if progress == null:
 		progress = CampaignState.begin(campaign)
+	progress.unlock_all = CmdArgs.flag(CmdArgs.user(), UNLOCK_ARG)
 	_campaign = campaign
 	_menu_root.hide()
 	_hub.begin(campaign, progress)

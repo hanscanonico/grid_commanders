@@ -129,6 +129,41 @@ func test_a_mission_ahead_of_the_route_is_locked_rather_than_skipped() -> void:
 	assert_false(state.is_skipped(_campaign(), &"three"))
 
 
+# --- the developer override -------------------------------------------------
+
+
+## `--unlock-missions` opens the doors and moves nothing else: what the war has
+## reached is still the profile's own latch, so nothing the override lets a
+## developer play can be written back as an unlock that was earned.
+func test_the_override_opens_every_mission_and_writes_no_unlock() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].unlock_requires = _condition(HELD)
+	var state := CampaignState.begin(campaign)
+	state.unlock_all = true
+	for id: StringName in [&"one", &"two", &"three"]:
+		assert_true(state.is_unlocked(id), "%s is playable" % id)
+		assert_false(state.is_skipped(campaign, id), "and none of them reads as a road not taken")
+	assert_eq(state.offered_count(campaign), 3)
+	state.complete(campaign, &"one", 1, 3)
+	assert_false(
+		state.unlocked.has(&"two"), "the route still refused it, so the profile records nothing"
+	)
+	assert_true(state.unlocked.has(&"three"), "and opened the one behind it as it always did")
+	assert_false(CampaignSaveCodec.encode(state)["unlocked"].has("two"))
+
+
+func test_the_override_leaves_the_route_and_the_verdict_alone() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].unlock_requires = _condition(HELD)
+	var state := CampaignState.begin(campaign)
+	state.unlock_all = true
+	assert_eq(state.open_mission(campaign), &"one")
+	state.complete(campaign, &"one", 1, 3)
+	assert_eq(state.open_mission(campaign), &"three", "the war still walked past two")
+	state.complete(campaign, &"three", 1, 3)
+	assert_true(state.is_complete(campaign))
+
+
 # --- what "complete" now means ----------------------------------------------
 
 

@@ -941,6 +941,12 @@ one skirmish save, and the hub is where a saved mission picks its board back up.
 has counted rides with the board: resuming one carries on with the days it had held and the units
 it had lost, and a **Retry** starts both clean.
 
+Launching the menu with `--unlock-missions` is the developer route through all of it: every authored
+mission of the war you open reads as unlocked, so one behind a route gate can be played without a
+profile that earned it. It changes only what the hub offers — the route, what a win records and the
+profiles under `user://campaigns/` are what they are without it, so the flag itself never banks an
+unlock (a mission you *win* out of order is still recorded as won, like any other).
+
 `make campaigns` is the authoring gate. It walks every mission of every campaign and refuses, at the
 door, anything that would only show up as a mission quietly not doing what it promised — a board
 that does not build, a beat that never fires, a briefing line nobody could ever hear, a mission the

@@ -96,3 +96,11 @@ func test_a_finished_war_expands_every_block() -> void:
 	var open: Array[StringName] = [&"m0", &"m1", &"m2", &"m3", &"m4", &"m5"]
 	var expanded := CampaignHubPanel.expanded_blocks(_war(), _progress(open))
 	assert_eq(expanded.size(), 3, "nothing is left to collapse")
+
+
+## The hub side of `--unlock-missions`: the list deals every block, because every
+## row in it is one the developer may press.
+func test_the_unlock_override_deals_the_whole_war() -> void:
+	var progress := _progress([])
+	progress.unlock_all = true
+	assert_eq(CampaignHubPanel.expanded_blocks(_war(), progress).size(), 3)
