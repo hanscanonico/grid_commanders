@@ -1,16 +1,17 @@
 extends Node
 ## Device preferences: what this machine likes, as opposed to what this match is.
-## Five of them today — how fast the battle's theatre plays out, whether a
-## resolved attack cuts to the full-screen battle animation at all, how loud the
-## game is, whether ending the day stops to confirm when units can still act, and
-## which of the first-match hints this player has already earned their way out of.
+## Six of them today — how fast the battle's theatre plays out, whether a
+## resolved attack cuts to the full-screen battle animation at all, whether the
+## menus move at all, how loud the game is, whether ending the day stops to
+## confirm when units can still act, and which of the first-match hints this
+## player has already earned their way out of.
 ##
 ## Deliberately not MatchConfig and deliberately not in the save file: resuming a
 ## three-day-old save should play at the speed you like *today* and watch battles
 ## the way you like *today*, and a hot-seat pair share one screen anyway. The
 ## hints belong here for the same reason and one more (UX recovery plan D1): a
 ## player who has learned to capture has learned it for good, and tying that to a
-## match would teach them again on every new one. All five are presentation only
+## match would teach them again on every new one. All six are presentation only
 ## — nothing here may ever change a rule, a number, or what the sim does, so two
 ## players' "same seed, same commands" keep meaning the same result. Nothing here
 ## is ever handed to core/ or ai/, so the sim cannot observe a preference it never
@@ -29,11 +30,16 @@ const BACKUP_SUFFIX := ".bak"
 const SECTION := "game"
 const SPEED_KEY := "speed"
 const BATTLE_ANIMATIONS_KEY := "battle_animations"
+const MENU_ANIMATIONS_KEY := "menu_animations"
 const VOLUME_KEY := "volume"
 const END_TURN_CONFIRM_KEY := "end_turn_confirm"
 ## What a fresh install confirms with, and what `pin` stands a scripted launch
 ## back at.
 const DEFAULT_END_TURN_CONFIRM := true
+## What a fresh install's menus move with, and what `pin` stands them back at: the
+## toggle's own checkmark is on the menu a capture photographs, so a machine that
+## turned the motion off must not change the frame.
+const DEFAULT_MENU_ANIMATIONS := true
 const HINTS_KEY := "hints_retired"
 ## Overrides the stored tier for one launch, in the family of --map / --fog /
 ## --difficulty. Deliberately un-persisted: a scripted run must not edit what
@@ -91,6 +97,12 @@ var speed: GameSpeed = GameSpeed.default_speed()
 ## to the on-map hit flash and shake, which is how combat looked before the
 ## cut-in existed — see BattleAnimator.animate_combat.
 var battle_animations := true
+
+## Whether the menus move at all — the main menu's drifting board backdrop and
+## blinking PRESS START, and the staggered reveals on the campaign pages. Off
+## leaves every one of them on its finished frame, which is also what a capture
+## poses; the pages that read a line at a time still show every line.
+var menu_animations := DEFAULT_MENU_ANIMATIONS
 
 ## Which step of VOLUME_STEPS the game plays at. Never a stranger: a stored id
 ## nothing answers to falls back to the loudest step, the same shape
@@ -224,6 +236,14 @@ func set_battle_animations(enabled: bool) -> void:
 		_save()
 
 
+## The setter the Menu motion checkbox is wired to. Mirrors set_battle_animations,
+## down to a pinned or scripted launch leaving the file alone.
+func set_menu_animations(enabled: bool) -> void:
+	menu_animations = enabled
+	if _persistent:
+		_save()
+
+
 ## The setter the End-turn check row is wired to. Mirrors set_battle_animations,
 ## down to a pinned or scripted launch leaving the file alone.
 func set_end_turn_confirm(enabled: bool) -> void:
@@ -271,10 +291,13 @@ func pin_hints(all_retired: bool) -> void:
 ## The end-turn check stands back at its shipped default for the same reason: it
 ## decides whether a scripted End Turn opens the guard or hands the day over, so
 ## a machine whose player turned it off would drive a scenario differently from
-## one that never touched it.
+## one that never touched it. Menu motion stands back for the plainer half of the
+## same reason: a capture poses the menu still whatever this preference says, so
+## all a stored "off" could reach is the toggle's own checkmark in the frame.
 func pin(id: StringName) -> void:
 	_persistent = false
 	end_turn_confirm = DEFAULT_END_TURN_CONFIRM
+	menu_animations = DEFAULT_MENU_ANIMATIONS
 	if not _flag_wins:
 		speed = GameSpeed.by_id(id)
 
@@ -291,6 +314,9 @@ func _load() -> void:
 	var stored_anim: Variant = config.get_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
 	if stored_anim is bool:
 		battle_animations = stored_anim
+	var stored_menu_anim: Variant = config.get_value(SECTION, MENU_ANIMATIONS_KEY, menu_animations)
+	if stored_menu_anim is bool:
+		menu_animations = stored_menu_anim
 	# A String here for the reason the hint ids are: ConfigFile has no StringName.
 	# An id this version answers to nothing with falls back to the loudest step
 	# rather than muting a player who cannot see why.
@@ -317,6 +343,7 @@ func _save() -> void:
 		return
 	config.set_value(SECTION, SPEED_KEY, String(speed.id))
 	config.set_value(SECTION, BATTLE_ANIMATIONS_KEY, battle_animations)
+	config.set_value(SECTION, MENU_ANIMATIONS_KEY, menu_animations)
 	config.set_value(SECTION, VOLUME_KEY, String(volume))
 	config.set_value(SECTION, END_TURN_CONFIRM_KEY, end_turn_confirm)
 	var hints := PackedStringArray()

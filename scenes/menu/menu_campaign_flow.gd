@@ -105,7 +105,8 @@ func resume() -> bool:
 		_next_title(campaign, progress, outcome),
 		progress,
 		CampaignSession.recorded_notes(),
-		losses
+		losses,
+		Settings.menu_animations
 	)
 	CampaignSession.clear()
 	return true
@@ -143,7 +144,7 @@ func _after_debrief() -> void:
 	if _pending == null:
 		_show_hub(_campaign)
 		return
-	_interlude.begin(_pending, _pending_ledger)
+	_interlude.begin(_pending, _pending_ledger, Settings.menu_animations)
 	_pending = null
 	_pending_ledger = null
 
