@@ -1,9 +1,10 @@
 class_name TerrainAutotiles
 extends RefCounted
 ## The one authority for which autotile family a terrain cell draws from and
-## which connection-mask variant of that family it wears. BattleView indexes
-## exactly what these statics return and does no neighbour reasoning of its
-## own, so the board's connected look has a single opinion.
+## which connection-mask variant of that family it wears. BattleView, its
+## out-of-bounds backdrop and MapThumbnail all index exactly what these statics
+## return and do no neighbour reasoning of their own, so the board, the field
+## behind the menu and the miniature in front of it have a single opinion.
 ##
 ## Pure reads over MapData and Node-free, like PathArrow.segments, so the
 ## suite checks every mask without a scene.
@@ -18,13 +19,34 @@ extends RefCounted
 ## every side keeps the full-bleed canopy that lets a forest butt seamlessly,
 ## and only a wood's fringe leaves the atlas for a scalloped tree line.
 ##
-## An off-board neighbour counts as the cell's own terrain, so the board rim
-## grows no shoreline and an edge road runs off the map the way the darkened
-## backdrop's continuation implies.
+## Every board read is clamped to the edge, which states one rule twice over:
+## an off-board neighbour counts as the cell's own terrain, so the board rim
+## grows no shoreline and an edge road runs off the map — and an off-board
+## *cell* reads as the nearest edge terrain, which is exactly what the darkened
+## backdrop paints there, so the ring is autotiled by the same arithmetic as
+## the rim it continues.
 
 ## NONE doubles as BattleView's base-atlas source id (0); the other values are
 ## the TileSet source ids the sheets are registered under.
 enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, WOODS, BRIDGES }
+
+## One generated sheet per family, the single naming of the files. BattleView
+## registers a TileSet source per entry and MapThumbnail blits from the same
+## images, so neither can point at art the other does not have.
+const SHEET_PATHS: Dictionary[int, String] = {
+	Family.ROADS: "res://assets/tiles/autotiles/roads.png",
+	Family.RIVERS: "res://assets/tiles/autotiles/rivers.png",
+	Family.COAST: "res://assets/tiles/autotiles/coast.png",
+	Family.SHOALS: "res://assets/tiles/autotiles/shoals.png",
+	Family.WOODS: "res://assets/tiles/autotiles/woods.png",
+	Family.BRIDGES: "res://assets/tiles/autotiles/bridges.png",
+}
+
+## The contact sheets' cut: a 2px outer margin, 2px between cells, TERRAIN_PX
+## cells — sprite_generator's contract, which BattleView registers a TileSet
+## source with and MapThumbnail reads regions out of by hand.
+const SHEET_MARGIN := 2
+const SHEET_SEPARATION := 2
 
 const BIT_N := 1
 const BIT_E := 2
@@ -53,7 +75,7 @@ const _STEP_BITS: Array[int] = [BIT_N, BIT_E, BIT_S, BIT_W]
 
 ## Which sheet `cell` draws from; NONE keeps the base atlas tile.
 static func family(map: MapData, cell: Vector2i) -> Family:
-	match map.terrain_at(cell).id:
+	match terrain_id(map, cell):
 		&"road":
 			return Family.ROADS
 		&"river":
@@ -77,7 +99,7 @@ static func family(map: MapData, cell: Vector2i) -> Family:
 ## mask is its deck orientation: E|W beside a road or another bridge, N|S
 ## otherwise.
 static func mask(map: MapData, cell: Vector2i) -> int:
-	match map.terrain_at(cell).id:
+	match terrain_id(map, cell):
 		&"road":
 			return _joins_mask(map, cell, _ROAD_JOINS)
 		&"river":
@@ -102,10 +124,17 @@ static func atlas_coords(p_family: int, p_mask: int) -> Vector2i:
 	return Vector2i(p_mask & 3, p_mask >> 2)
 
 
+## The terrain `cell` reads as, clamped to the board — the one place the rim
+## rule is stated, and what lets the backdrop's ring be asked about at all.
+static func terrain_id(map: MapData, cell: Vector2i) -> StringName:
+	var clamped := Vector2i(clampi(cell.x, 0, map.width - 1), clampi(cell.y, 0, map.height - 1))
+	return map.terrain_at(clamped).id
+
+
 static func _joins_mask(map: MapData, cell: Vector2i, joins: Array[StringName]) -> int:
 	var bits := 0
 	for i in _STEPS.size():
-		if joins.has(_neighbour_id(map, cell, _STEPS[i])):
+		if joins.has(terrain_id(map, cell + _STEPS[i])):
 			bits |= _STEP_BITS[i]
 	return bits
 
@@ -115,13 +144,6 @@ static func _joins_mask(map: MapData, cell: Vector2i, joins: Array[StringName]) 
 static func _land_mask(map: MapData, cell: Vector2i) -> int:
 	var bits := 0
 	for i in _STEPS.size():
-		if not _SEA_WATER.has(_neighbour_id(map, cell, _STEPS[i])):
+		if not _SEA_WATER.has(terrain_id(map, cell + _STEPS[i])):
 			bits |= _STEP_BITS[i]
 	return bits
-
-
-static func _neighbour_id(map: MapData, cell: Vector2i, step: Vector2i) -> StringName:
-	var neighbour := cell + step
-	if not map.in_bounds(neighbour):
-		return map.terrain_at(cell).id
-	return map.terrain_at(neighbour).id

@@ -1,14 +1,16 @@
 class_name MapThumbnail
 extends Control
-## Draws a MapData as a miniature board by blitting the terrain atlas per cell —
-## column from TerrainType.atlas_col, row from SideIdentity.atlas_row, the exact
-## authorities BattleView paints the live board with (menu-revamp plan D5).
+## Draws a MapData as a miniature board by blitting one sheet region per cell —
+## which sheet and which region from TerrainAutotiles and SideIdentity.atlas_row,
+## the exact authorities BattleView paints the live board with (menu-revamp D5).
 ##
 ## No symbol table, no per-terrain colour list, no second opinion (plan R2): there
 ## is only one of it, so a new terrain lands here for free and the miniature can
 ## never drift from the board it launches — the range-overlay-vs-command bug,
-## closed by construction. Owned properties draw in the resolved faction's row, so
-## a thumbnail is a truthful miniature of day one.
+## closed by construction. That is why an autotiled cell asks the same authority
+## the board does rather than reading atlas_col: a one-tile lake was a hard blue
+## square in the picker and a coasted pond in the match. Owned properties draw in
+## the resolved faction's row, so a thumbnail is a truthful miniature of day one.
 ##
 ## The same per-cell region logic serves two masters: `_draw` paints a live cell
 ## for the picker, and the static `bake()` renders the panning backdrop to an
@@ -18,10 +20,10 @@ extends Control
 ## Atlas cell size, mirroring BattleView.TERRAIN_PX and the art pipeline. The
 ## atlas is 14 columns x 5 rows of these; the row order is SideIdentity's.
 const CELL := 64
-const _ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
+const ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
 
-static var _atlas: Texture2D
-static var _atlas_image: Image
+static var _textures: Dictionary[String, Texture2D] = {}
+static var _images: Dictionary[String, Image] = {}
 
 var _map: MapData
 var _identity: SideIdentity
@@ -57,14 +59,13 @@ func setup(map: MapData, identity: SideIdentity, box: Vector2) -> void:
 func _draw() -> void:
 	if _map == null:
 		return
-	var atlas := _atlas_texture()
 	for y in _map.height:
 		for x in _map.width:
 			var cell := Vector2i(x, y)
-			var terrain := _map.terrain_at(cell)
-			var src := _region(terrain.atlas_col, _row_for(_map, _identity, terrain, cell))
 			var dst := Rect2(_origin + Vector2(x * _tile, y * _tile), Vector2(_tile, _tile))
-			draw_texture_rect_region(atlas, dst, src)
+			draw_texture_rect_region(
+				_texture(sheet_path(_map, cell)), dst, sheet_region(_map, _identity, cell)
+			)
 
 
 # --- the one renderer, shared by the live draw and the baked backdrop ---------
@@ -75,18 +76,43 @@ func _draw() -> void:
 ## the panning field behind the menu (plan MN2), and it is the same per-cell
 ## region logic `_draw` uses, so the backdrop cannot disagree with a thumbnail.
 static func bake(map: MapData, identity: SideIdentity, tile: int) -> ImageTexture:
-	var atlas := _atlas_source_image()
 	var full := Image.create(map.width * CELL, map.height * CELL, false, Image.FORMAT_RGBA8)
 	for y in map.height:
 		for x in map.width:
 			var cell := Vector2i(x, y)
-			var terrain := map.terrain_at(cell)
-			var region := _region(terrain.atlas_col, _row_for(map, identity, terrain, cell))
+			var region := sheet_region(map, identity, cell)
 			full.blit_rect(
-				atlas, Rect2i(region.position, region.size), Vector2i(x * CELL, y * CELL)
+				_source_image(sheet_path(map, cell)),
+				Rect2i(region.position, region.size),
+				Vector2i(x * CELL, y * CELL)
 			)
 	full.resize(map.width * tile, map.height * tile, Image.INTERPOLATE_NEAREST)
 	return ImageTexture.create_from_image(full)
+
+
+## Which sheet `cell` draws from: the base terrain atlas, or the autotile family
+## sheet TerrainAutotiles picks for it. The thumbnail names the file and never
+## decides the variant.
+static func sheet_path(map: MapData, cell: Vector2i) -> String:
+	var family := TerrainAutotiles.family(map, cell)
+	if family == TerrainAutotiles.Family.NONE:
+		return ATLAS_PATH
+	return TerrainAutotiles.SHEET_PATHS[family]
+
+
+## Where on that sheet `cell`'s art sits. The base atlas is a plain grid of
+## cells; an autotile sheet is cut on TerrainAutotiles' contact-sheet contract,
+## which is what BattleView hands its TileSet sources instead of indexing by
+## hand.
+static func sheet_region(map: MapData, identity: SideIdentity, cell: Vector2i) -> Rect2:
+	var family := TerrainAutotiles.family(map, cell)
+	if family == TerrainAutotiles.Family.NONE:
+		var terrain := map.terrain_at(cell)
+		return _region(terrain.atlas_col, _row_for(map, identity, terrain, cell))
+	var coords := TerrainAutotiles.atlas_coords(family, TerrainAutotiles.mask(map, cell))
+	var step := CELL + TerrainAutotiles.SHEET_SEPARATION
+	var margin := TerrainAutotiles.SHEET_MARGIN
+	return Rect2(margin + coords.x * step, margin + coords.y * step, CELL, CELL)
 
 
 ## The atlas row a cell draws in: a team-tinted property takes its owner's
@@ -104,16 +130,17 @@ static func _region(col: int, row: int) -> Rect2:
 	return Rect2(col * CELL, row * CELL, CELL, CELL)
 
 
-static func _atlas_texture() -> Texture2D:
-	if _atlas == null:
-		_atlas = load(_ATLAS_PATH)
-	return _atlas
+static func _texture(path: String) -> Texture2D:
+	if not _textures.has(path):
+		_textures[path] = load(path)
+	return _textures[path]
 
 
-## The atlas as a mutable RGBA8 Image, decompressed once for `bake`'s blits.
-static func _atlas_source_image() -> Image:
-	if _atlas_image == null:
-		_atlas_image = _atlas_texture().get_image()
-		if _atlas_image.get_format() != Image.FORMAT_RGBA8:
-			_atlas_image.convert(Image.FORMAT_RGBA8)
-	return _atlas_image
+## A sheet as a mutable RGBA8 Image, decompressed once for `bake`'s blits.
+static func _source_image(path: String) -> Image:
+	if not _images.has(path):
+		var image := _texture(path).get_image()
+		if image.get_format() != Image.FORMAT_RGBA8:
+			image.convert(Image.FORMAT_RGBA8)
+		_images[path] = image
+	return _images[path]

@@ -520,8 +520,13 @@ plan is stated in full below and has no copy there.
   overlay washes are its sibling, `scenes/battle/overlay_palette.gd` (`OverlayPalette`) — a
   translucent wash over art is a different vocabulary from the shell's opaque chrome, so neither
   belongs on `UiTheme` and both are declared once where they are painted. Map thumbnails
-  (`scenes/menu/map_thumbnail.gd`) draw from `TerrainType.atlas_col` × `SideIdentity.atlas_row` —
-  a miniature can never be a second opinion. The shared `CommanderCard`'s deferred dress is that
+  (`scenes/menu/map_thumbnail.gd`) draw from `TerrainAutotiles` × `SideIdentity.atlas_row` —
+  a miniature can never be a second opinion, which is why an autotiled cell asks the board's own
+  authority rather than reading `TerrainType.atlas_col` (a one-tile lake was a blue square in the
+  picker and a coasted pond in the match). `TerrainAutotiles` owns the family sheets' paths and
+  their contact-sheet cut, and every board read it takes is clamped to the rim — so it answers for
+  a cell beyond the edge too, and `BattleView`'s out-of-bounds backdrop is autotiled by the same
+  arithmetic as the board it continues. The shared `CommanderCard`'s deferred dress is that
   named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
   and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
   and because the card is also the in-battle info sheet, that one edit re-dressed commander
@@ -1157,10 +1162,12 @@ Follow the official Godot GDScript style guide. Key points:
   `test_side_identity_roster.gd` resolve an identity and assert its colours and rows directly.
   `BattleStyle` (a `Resource`) and its `BattleStyleDB` registry (`RefCounted`) are weapon-signature
   data rather than drawing, so `test_battle_styles.gd` checks every unit names a style that exists
-  without staging a cut-in. `PathArrow` is the one exception that is not itself Node-free — it
-  `extends Node2D` — but `test_path_arrow.gd` never builds one: `segments()`, the pure function its
-  `_draw` only paints, is static, and is all the suite calls, the same shape
-  `SeatStrip.normalised_sides` and `TransitionInput` are.
+  without staging a cut-in. `PathArrow` and `MapThumbnail` are the two exceptions that are not
+  themselves Node-free — they extend `Node2D` and `Control` — but neither suite builds one:
+  `PathArrow.segments()` and `MapThumbnail.sheet_path()` / `sheet_region()`, the pure functions the
+  `_draw` of each only paints, are static, and are all `test_path_arrow.gd` and
+  `test_map_thumbnail.gd` call, the same shape `SeatStrip.normalised_sides` and `TransitionInput`
+  are.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly. `tests/helpers/fixture.gd` (`Fixture`) is where
   a board, a path, a command line and the shared databases come from — it seeds every state it

@@ -165,3 +165,28 @@ func test_atlas_coords_walk_the_four_by_four_grid_row_major() -> void:
 	assert_eq(TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.ROADS, 7), Vector2i(3, 1))
 	assert_eq(TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.COAST, 12), Vector2i(0, 3))
 	assert_eq(TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.RIVERS, 15), Vector2i(3, 3))
+
+
+# --- off the board -----------------------------------------------------------
+## BattleView's backdrop paints a ring of cells beyond the edges, so the same
+## statics are asked about cells the board does not hold. Every read is clamped
+## to the rim, which is the rim rule stated once: the ring continues the edge.
+
+
+func test_an_off_board_cell_reads_the_nearest_edge_terrain() -> void:
+	var rows: Array[String] = ["=..", "...", "..."]
+	assert_eq(TerrainAutotiles.terrain_id(_map(rows), Vector2i(-3, -2)), &"road")
+
+
+func test_the_ring_beyond_an_edge_road_keeps_the_road_running_off_the_map() -> void:
+	var rows: Array[String] = ["==.", "...", "..."]
+	assert_eq(_family(rows, Vector2i(-2, 0)), TerrainAutotiles.Family.ROADS)
+	assert_eq(_mask(rows, Vector2i(-2, 0)), N | E | W)
+
+
+## A sea rim cell wears its coast, but the ring outside it is open water: the
+## land is inland, so nothing off the board breaks surf against it.
+func test_the_ring_beyond_a_coastal_edge_is_open_water() -> void:
+	var rows: Array[String] = ["S..", "S..", "S.."]
+	assert_eq(_family(rows, Vector2i(0, 1)), TerrainAutotiles.Family.COAST)
+	assert_eq(_family(rows, Vector2i(-1, 1)), TerrainAutotiles.Family.NONE)

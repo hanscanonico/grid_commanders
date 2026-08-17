@@ -39,7 +39,7 @@ const WINDOW_DARK := Color(CutscenePalette.SKY_HORIZON, 0.45)
 ## two windows one cell is read at cannot overwrite each other.
 static var _tint_cache: Dictionary = {}
 ## The atlas as a mutable RGBA8 Image, decompressed once for `cell_tint`'s reads
-## (MapThumbnail._atlas_source_image documents the same trade).
+## (MapThumbnail._source_image documents the same trade).
 static var _atlas_image: Image
 
 
