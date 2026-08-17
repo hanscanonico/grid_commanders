@@ -21,8 +21,8 @@ terrain_id = &"city"
 
 [sub_resource type="Resource" id="Failure_more_than_four_lost"]
 script = ExtResource("6")
-text = "More than five units lost, counting any merged into another."
-max_losses = 5
+text = "More than eight units lost, counting any merged into another."
+max_losses = 8
 
 [sub_resource type="Resource" id="Bonus_hold_the_central_relay"]
 script = ExtResource("4")

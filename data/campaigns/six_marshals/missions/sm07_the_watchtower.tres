@@ -18,8 +18,8 @@ cell = Vector2i(7, 5)
 
 [sub_resource type="Resource" id="Failure_no_cripples"]
 script = ExtResource("5")
-text = "Orlov hunted what limped — more than eight of ours lost, to any cause."
-max_losses = 8
+text = "Orlov hunted what limped — more than eleven of ours lost, to any cause."
+max_losses = 11
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")

@@ -20,8 +20,8 @@ day = 7
 
 [sub_resource type="Resource" id="Failure_the_span_fell_before_day_7"]
 script = ExtResource("3")
-text = "The span fell before day 7."
-last_day = 7
+text = "Day 11 came and the span went down with the west bank still contested."
+last_day = 11
 
 [sub_resource type="Resource" id="Bonus_break_the_van"]
 script = ExtResource("5")

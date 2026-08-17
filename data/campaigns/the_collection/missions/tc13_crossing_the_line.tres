@@ -22,8 +22,8 @@ cell = Vector2i(7, 5)
 
 [sub_resource type="Resource" id="Failure_the_crossing_was_not_clean"]
 script = ExtResource("5")
-text = "More than five units lost — the crossing was anything but clean."
-max_losses = 5
+text = "More than eight units lost — the crossing was anything but clean."
+max_losses = 8
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")

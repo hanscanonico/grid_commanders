@@ -1,6 +1,7 @@
 # The Furnace Winter, The Freeze — "Powder Ration".
-# Teaching board: the player owns only the HQ. Nothing is built until
-# the crossroads base at the centre is taken — capture-before-production.
+# Teaching board: the player owns the HQ and one back-line city, neither of
+# which builds. Nothing is built until the crossroads base at the centre is
+# taken — capture-before-production.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
@@ -18,6 +19,7 @@
 2 12 7
 2 11 7
 2 12 5
+1 3 6
 [units]
 1 i 2 1
 1 i 2 2
@@ -26,4 +28,3 @@
 2 i 10 6
 2 m 9 7
 2 r 11 5
-2 t 11 4

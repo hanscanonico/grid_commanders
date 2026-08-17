@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=38 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/hold_cell_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="6"]
@@ -31,15 +30,10 @@ script = ExtResource("2")
 text = "Take the east depot, the last one before his line."
 cell = Vector2i(14, 4)
 
-[sub_resource type="Resource" id="Failure_the_chain_was_broken_before_day_10"]
-script = ExtResource("3")
-text = "Day 10 passed with a depot in the chain still his."
-last_day = 10
-
 [sub_resource type="Resource" id="Failure_more_than_four_lost"]
 script = ExtResource("6")
-text = "More than five of ours were lost holding the road."
-max_losses = 5
+text = "More than eight of ours were lost holding the road."
+max_losses = 8
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -153,7 +147,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_first_depot"), SubResource("Objective_take_the_second_depot"), SubResource("Objective_take_the_third_depot")])
-failures = Array[Resource]([SubResource("Failure_the_chain_was_broken_before_day_10"), SubResource("Failure_more_than_four_lost")])
+failures = Array[Resource]([SubResource("Failure_more_than_four_lost")])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_both_ends_at_once"), SubResource("Event_spent_the_bounty")])
 par_day = 8

@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=36 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -20,15 +19,10 @@ script = ExtResource("2")
 text = "Hold the foundry core until day 8."
 day = 8
 
-[sub_resource type="Resource" id="Failure_the_core_fell_before_day_8"]
-script = ExtResource("3")
-text = "Day 8 arrived with the core still contested."
-last_day = 8
-
 [sub_resource type="Resource" id="Failure_the_line_bunched"]
 script = ExtResource("5")
-text = "More than six units lost — the line was too tight in one place."
-max_losses = 6
+text = "More than nine units lost — the line was too tight in one place."
+max_losses = 9
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
@@ -141,7 +135,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"hard"
 objectives = Array[Resource]([SubResource("Objective_hold_the_foundry_core_until_day_8")])
-failures = Array[Resource]([SubResource("Failure_the_core_fell_before_day_8"), SubResource("Failure_the_line_bunched")])
+failures = Array[Resource]([SubResource("Failure_the_line_bunched")])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_last_wave"), SubResource("Event_spent_them_here")])
 par_day = 6
