@@ -420,9 +420,9 @@ grouping together (**Duel** seats the opposite pair, 1 and 3). **Start** greys o
 fewer than two armies are seated or the badges leave nobody with anyone to fight.
 
 Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
-count, property count and pitch beneath the grid, and **Speed**, **Fog of war**,
-**Battle animations** and **Menu motion** each carry a permanent one-line explanation. How well the computer plays is
-not a match-wide setting: each row of the seat strip carries a tier chip that cycles
+count, property count and pitch beneath the grid, and **Speed**, **Fog of war**, **Battle
+animations** and **Menu motion** each carry a permanent one-line explanation. How well the computer
+plays is not a match-wide setting: each row of the seat strip carries a tier chip that cycles
 **Easy** / **Normal** / **Difficult** / **Brutal** and goes inert on a row the computer is not
 playing (see Difficulty below). Each setting's dotted-underlined label — **Speed**,
 **Fog of war**, **Battle animations**, **Menu motion** — still elaborates in a tip anchored to it, on
