@@ -11,6 +11,13 @@ extends RefCounted
 ## Staging is still one `MatchRequest` through `MatchConfig`, exactly as the
 ## skirmish and replay routes stage theirs, so a mission boots the shipped path.
 
+## Developer route: opens every authored mission of whichever war the hub is on,
+## so one behind a route gate can be played without a profile that earned it.
+## Nothing a flagged run does is written — `CampaignProfile.save_progress` refuses
+## a state carrying it — so it is an inspection rather than a shortcut, and a
+## mid-mission save is refused at that same door.
+const UNLOCK_ARG := "--unlock-missions"
+
 ## How far `pose_hub_deep` walks a war, and what each mission cost it. Thirteen is
 ## the first count whose open mission the list has to *scroll* to reach — twelve
 ## rows fit the page, so a shorter walk photographs a list that never moved and
@@ -306,10 +313,27 @@ func _open_hub(campaign_id: StringName) -> void:
 	_show_hub(campaign)
 
 
-func _show_hub(campaign: CampaignDefinition) -> void:
+## Whether this run was launched with the developer override. Static and
+## argument-taking for `SeatStrip.normalised_sides`' reason: the grammar is then
+## checked without a menu.
+static func unlocks_all(args: PackedStringArray) -> bool:
+	return CmdArgs.flag(args, UNLOCK_ARG)
+
+
+## The war as this run plays it: what the profile holds, a fresh start when it
+## holds nothing, and the override applied. Both the hub and the deploy read it
+## here rather than each loading its own, because a mission the list offered and
+## a state that had forgotten why is exactly the row that opens onto a refusal.
+func _progress_for(campaign: CampaignDefinition) -> CampaignState:
 	var progress := CampaignProfile.load_progress(campaign.id)
 	if progress == null:
 		progress = CampaignState.begin(campaign)
+	progress.unlock_all = unlocks_all(CmdArgs.user())
+	return progress
+
+
+func _show_hub(campaign: CampaignDefinition) -> void:
+	var progress := _progress_for(campaign)
 	_campaign = campaign
 	_menu_root.hide()
 	_hub.begin(campaign, progress)
@@ -327,9 +351,7 @@ func _deploy(mission_id: StringName) -> void:
 	if mission == null:
 		push_error("MenuCampaignFlow: no mission '%s' in '%s'" % [mission_id, _campaign.id])
 		return
-	var progress := CampaignProfile.load_progress(_campaign.id)
-	if progress == null:
-		progress = CampaignState.begin(_campaign)
+	var progress := _progress_for(_campaign)
 	# The mission the profile is midway through resumes its saved board rather
 	# than restarting, and carries on with the tally that board was kept with. Any
 	# other deploy starts fresh, snapshot or none — a snapshot belongs to exactly

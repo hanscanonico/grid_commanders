@@ -34,6 +34,13 @@ var campaign_id: StringName = &""
 ## latches its answer here, so a mission that has been opened stays open whatever
 ## the war goes on to record.
 var unlocked: Dictionary[StringName, bool] = {}
+## A developer override (`--unlock-missions`): every authored mission reads as
+## open for this run, so one behind a route gate can be played without a profile
+## that earned it. It is set by the menu and never decoded, so it belongs to a
+## run rather than to a war — and a state carrying it is one
+## `CampaignProfile.save_progress` refuses to write, which is what keeps an
+## inspection out of the player's record.
+var unlock_all: bool = false
 ## `mission id -> best result`, present only for cleared missions.
 var records: Dictionary[StringName, MissionRecord] = {}
 ## The mission the player is currently in, or "" between missions.
@@ -76,7 +83,7 @@ static func begin(campaign: CampaignDefinition) -> CampaignState:
 
 
 func is_unlocked(mission_id: StringName) -> bool:
-	return unlocked.get(mission_id, false)
+	return unlock_all or unlocked.get(mission_id, false)
 
 
 func is_cleared(mission_id: StringName) -> bool:
@@ -195,8 +202,11 @@ func _reached(campaign: CampaignDefinition) -> int:
 	return reached
 
 
+## The latch itself rather than `is_unlocked`, so the developer override cannot
+## reach the route: what a run may *play* is opened by the flag, what the war has
+## *reached* stays the profile's own answer and the only one `complete` writes.
 func _opens(mission: MissionDefinition) -> bool:
-	if is_unlocked(mission.id) or mission.unlock_requires == null:
+	if unlocked.get(mission.id, false) or mission.unlock_requires == null:
 		return true
 	return mission.unlock_requires.holds(self)
 

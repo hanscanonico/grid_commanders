@@ -115,9 +115,18 @@ static func _read(campaign_id: StringName) -> Dictionary:
 ## Writes progress, leaving the previous profile untouched if anything fails.
 ## Returns false and says why; the caller decides whether that is worth telling
 ## the player about.
+##
+## A run with the developer override open writes nothing at all, and the refusal
+## is here rather than at either caller because this is the one door onto the
+## disk: a mission played out of order would otherwise be recorded as cleared,
+## which walks the route past every mission behind it and reads the war back as
+## finished. So `--unlock-missions` is an inspection — the profile it opens is
+## exactly the profile it leaves.
 static func save_progress(
 	state: CampaignState, battle: Dictionary = {}, tally: MissionProgress = null
 ) -> bool:
+	if state.unlock_all:
+		return false
 	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(DIR)):
 		var error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
 		if error != OK:
