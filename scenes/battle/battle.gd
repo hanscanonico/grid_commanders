@@ -515,6 +515,7 @@ func _build_animator() -> BattleAnimator:
 	built.cursor = cursor
 	built.turn_banner = %TurnBanner
 	built.power_banner = %CommanderBanner
+	built.power_marks = $PowerMarks
 	built.mission_speech = %MissionSpeech
 	built.cutscene = %Cutscene
 	built.cutscene.view = view

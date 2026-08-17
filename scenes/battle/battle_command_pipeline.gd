@@ -52,6 +52,15 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 		if drop_passenger == null:
 			drop_passenger = game.cargo_of(drop.unit)[0]
 
+	# The board a fired power is about to change, and the square an aimed one
+	# names. Both are read before apply for the reason the combatants above are:
+	# afterwards the units the power removed are already off the board.
+	var power_before: PowerEffects.Snapshot
+	var blast: Array[Vector2i] = []
+	if command is PowerCommand:
+		power_before = PowerEffects.snapshot(game)
+		blast = _blast_cells(game, command as PowerCommand)
+
 	var watched_build := false
 	if animate_path and command is BuildCommand:
 		var build := command as BuildCommand
@@ -94,7 +103,7 @@ func execute(command: Command, animate_path: bool = false) -> BattleCommandRecei
 	elif command is JoinCommand:
 		await _present_join(command as JoinCommand, join_target, watched_move)
 	elif command is PowerCommand:
-		await _present_power(command as PowerCommand)
+		await _present_power(command as PowerCommand, power_before, blast)
 	elif command is BuildCommand:
 		_present_build(command as BuildCommand)
 	elif command is MissionEventCommand:
@@ -187,9 +196,40 @@ func _present_join(command: JoinCommand, target: Unit, watched: bool) -> void:
 		_battle.view.refresh_sprite(command.unit)
 
 
-func _present_power(command: PowerCommand) -> void:
+func _present_power(
+	command: PowerCommand, before: PowerEffects.Snapshot, blast: Array[Vector2i]
+) -> void:
 	Sfx.play(&"fanfare")
 	await _battle.animator.show_power_banner(command.commander, command.team)
+	await _battle.animator.show_power_effects(_visible_marks(before, blast))
+
+
+## The square an aimed power names, asked of the doctrine that owns the footprint
+## (plan D3) — the same call the aim preview and the strike itself make, so the
+## marks cannot paint a shape the power did not take. Empty for every power that
+## fires at the board rather than at a cell.
+func _blast_cells(game: GameState, command: PowerCommand) -> Array[Vector2i]:
+	var team := game.current_team
+	return game.commander_of(team).power_blast_cells(game, team, command.target)
+
+
+## What the power did, minus what the viewer has no business knowing: a mark over
+## a unit they cannot see would report a fogged army's health, and a mark on
+## unscouted ground would report an aim into the dark. The same gate every other
+## on-board caption obeys.
+func _visible_marks(
+	before: PowerEffects.Snapshot, blast: Array[Vector2i]
+) -> Array[PowerEffects.Mark]:
+	var shown: Array[PowerEffects.Mark] = []
+	for mark in PowerEffects.marks(before, _battle.game, blast):
+		var seen := (
+			_battle.perspective.can_see_unit(mark.unit)
+			if mark.unit != null
+			else _battle.perspective.can_see_cell(mark.cell)
+		)
+		if seen:
+			shown.append(mark)
+	return shown
 
 
 ## What a scripted beat says as it lands. Here rather than in the campaign layer

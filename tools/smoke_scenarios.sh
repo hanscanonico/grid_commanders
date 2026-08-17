@@ -71,6 +71,11 @@ MIN_BYTES="${SMOKE_MIN_BYTES:-2000}"
 # and victory+fog edits the sim behind the scene's back and resyncs. Both used
 # to leak enemy positions.
 #
+# The three scenarios that actually fire a power — powermenu, powermenu+fog and
+# power_banner — also photograph the marks the activation leaves on the board
+# (COM-247). They pose at rest while capturing, exactly as the card holds,
+# because there they are half of what the frame is of.
+#
 # ambush and vanish turn fog on themselves — they are the same board with Sable
 # Wren's power down and up, and only the second one may hide anything. Running
 # both is what keeps `vanish` honest: a board that hid those units for some
