@@ -25,11 +25,6 @@ const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const ICON_PATH := "res://assets/icon.png"
 ## Faction-silent by faction-identity D5: no "Red vs Blue" reaches a player screen.
 const TAGLINE := "TURN-BASED TACTICS · PICK YOUR GROUND"
-const _BLINK_SECONDS := 0.7
-## Canvas px per cell in the drifting terrain field behind the menu, and how much
-## bigger than the canvas the field is drawn so panning never exposes an edge.
-const BACKDROP_TILE := 4
-const BACKDROP_SPAN := Vector2(680, 400)
 ## Lines reserved for the selected board's caption. The words change with the
 ## selection; the height may not (UX-recovery D2), so the panel is as tall on the
 ## longest description as on the shortest.
@@ -75,6 +70,13 @@ var _campaign_button: Button
 var _replay_button: Button
 var _quit_button: Button
 var _press_start: Label
+## The page's scenery — the drifting board and the blinking PRESS START — and the
+## one switch that holds it, so the Menu motion toggle answers without rebuilding
+## the screen.
+var _motion := MenuMotion.new()
+## True while this boot is posing a still frame for a capture, which holds the
+## motion whatever the player prefers — see `_apply_menu_motion`.
+var _posed := false
 
 var _select_panel: CommanderSelectPanel
 var _replay_panel: ReplayPickerPanel
@@ -129,7 +131,8 @@ func _ready() -> void:
 	_maps = MapCatalog.ordered(_terrain_db)
 	_difficulties = DifficultyDB.load_default().all()
 	_speed_tiers = GameSpeed.ordered()
-	_build(shot_path == "")
+	_posed = shot_path != ""
+	_build()
 
 	_select_panel = CommanderSelectPanel.new()
 	add_child(_select_panel)
@@ -291,11 +294,18 @@ func _show_map(index: int) -> void:
 # --- layout ------------------------------------------------------------------
 
 
-## Draws the whole screen. `animate` is false under a capture so the one moving
-## thing on the menu (the blinking PRESS START) is pinned solid — a still frame
-## must not depend on when it was taken.
-func _build(animate: bool) -> void:
-	_paint_backdrop(animate)
+## Draws the whole screen. Both moving things on it — the drifting backdrop and
+## the blinking PRESS START — are built either way and then held or let go by
+## `_apply_menu_motion`, so the Menu motion toggle takes effect on the press
+## rather than on the next boot.
+func _build() -> void:
+	# The fullest board in the roster (largest, so last in MapCatalog.ordered()) is
+	# what drifts behind the page, baked by the thumbnail renderer — so the scenery
+	# can never disagree with the picker (plan R2).
+	var scenery: MapData = null
+	if not _maps.is_empty():
+		scenery = _maps[_maps.size() - 1]
+	_motion.paint_backdrop(self, scenery)
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -314,56 +324,9 @@ func _build(animate: bool) -> void:
 	body.alignment = BoxContainer.ALIGNMENT_CENTER
 	column.add_child(body)
 	body.add_child(_build_setup_panel())
-	body.add_child(_build_action_stack(animate))
+	body.add_child(_build_action_stack())
 	_reserve_map_caption()
-
-
-## The backdrop the menu sits on: a radial-lit slate floor (a brighter pool at
-## top-centre so the header reads against light, the panels against dark) with one
-## shipped board baked to a texture and drifting faintly behind everything — the
-## boot-screen game feel of the mockup. `animate` is false under a capture: the
-## drift and blink pin still so a frame never depends on when it was taken (the
-## animator's `capturing` precedent, plan MN2/R3).
-func _paint_backdrop(animate: bool) -> void:
-	var floor := TextureRect.new()
-	var gradient := Gradient.new()
-	gradient.set_color(0, UiTheme.SLATE_800)
-	gradient.set_color(1, UiTheme.SLATE_900)
-	var tex := GradientTexture2D.new()
-	tex.gradient = gradient
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.12)
-	tex.fill_to = Vector2(1.05, 1.05)
-	tex.width = 128
-	tex.height = 72
-	floor.texture = tex
-	floor.stretch_mode = TextureRect.STRETCH_SCALE
-	floor.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(floor)
-
-	if _maps.is_empty():
-		return
-	# The fullest board in the roster (largest, so last in MapCatalog.ordered()), baked
-	# once by the thumbnail renderer and tiled — the field is the thumbnails' own
-	# output, so it can never disagree with them (plan R2).
-	var board := _maps[_maps.size() - 1]
-	var period := Vector2(board.width * BACKDROP_TILE, board.height * BACKDROP_TILE)
-	var field := TextureRect.new()
-	field.texture = MapThumbnail.bake(
-		board, UiTheme.menu_identity(board.player_count()), BACKDROP_TILE
-	)
-	field.stretch_mode = TextureRect.STRETCH_TILE
-	field.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	field.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	field.modulate = Color(1, 1, 1, 0.14)
-	# Oversized by one tiling period so the screen stays covered across a full pan;
-	# at −period the tiled field is pixel-identical to its start, so the loop is
-	# seamless.
-	field.size = BACKDROP_SPAN + period
-	add_child(field)
-	if animate:
-		var drift := field.create_tween().set_loops()
-		drift.tween_property(field, "position", -period, 40.0).from(Vector2.ZERO)
+	_apply_menu_motion()
 
 
 func _build_header() -> Control:
@@ -594,39 +557,60 @@ func _build_choices_row() -> Control:
 	return row
 
 
+## The three checkboxes, one row of the panel's fixed height: fog is this match's,
+## the two animation settings are the device's (game-speed D1). Three across
+## rather than a second row because the panel's height is spent (`_chrome`), which
+## is why each explanation is a short one.
 func _build_toggles_row() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	var fog_col := VBoxContainer.new()
-	fog_col.add_theme_constant_override("separation", 2)
-	var fog := UiKit.toggle(
-		"Fog of war",
-		_fog_on,
-		"Hide the board beyond your units' sight",
-		"Off shows the whole map",
-		_on_fog_toggled
+	row.add_child(
+		_toggle_col(
+			"Fog of war",
+			_fog_on,
+			"Hide the board beyond your units' sight",
+			"Off shows the whole map",
+			"Hides tiles beyond sight",
+			_on_fog_toggled
+		)
 	)
-	fog_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	fog_col.add_child(fog)
-	fog_col.add_child(_option_help("Hides tiles beyond your units' sight"))
-	row.add_child(fog_col)
-	var anim_col := VBoxContainer.new()
-	anim_col.add_theme_constant_override("separation", 2)
-	var anim := UiKit.toggle(
-		"Battle animations",
-		Settings.battle_animations,
-		"Play the full-screen cut-in when an attack resolves",
-		"Any key skips one in progress",
-		_on_animations_toggled
+	row.add_child(
+		_toggle_col(
+			"Battle animations",
+			Settings.battle_animations,
+			"Play the full-screen cut-in when an attack resolves",
+			"Any key skips one in progress",
+			"Cut-ins · any key skips",
+			_on_animations_toggled
+		)
 	)
-	anim_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	anim_col.add_child(anim)
-	anim_col.add_child(_option_help("Full-screen cut-ins · any key skips"))
-	row.add_child(anim_col)
+	row.add_child(
+		_toggle_col(
+			"Menu motion",
+			Settings.menu_animations,
+			"Drift the board behind the menus and reveal pages a line at a time",
+			"Off holds every menu still",
+			"Backdrop drift and blink",
+			_on_menu_animations_toggled
+		)
+	)
 	return row
 
 
-func _build_action_stack(animate: bool) -> Control:
+## One checkbox with the help line under it that explains it — the pair every
+## option on this panel is set as.
+func _toggle_col(
+	text: String, is_on: bool, tip: String, tip_detail: String, help: String, on_change: Callable
+) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_child(UiKit.toggle(text, is_on, tip, tip_detail, on_change))
+	col.add_child(_option_help(help))
+	return col
+
+
+func _build_action_stack() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 5)
 	col.custom_minimum_size = Vector2(UiTheme.ACTION_W, 0)
@@ -693,8 +677,7 @@ func _build_action_stack(animate: bool) -> Control:
 	_press_start.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
 	_press_start.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_press_start)
-	if animate:
-		_start_blink()
+	_motion.blink(self, _press_start)
 	return col
 
 
@@ -739,12 +722,10 @@ func _reserve_map_caption() -> void:
 	_map_caption.text = words
 
 
-func _start_blink() -> void:
-	var timer := Timer.new()
-	timer.wait_time = _BLINK_SECONDS
-	timer.autostart = true
-	add_child(timer)
-	timer.timeout.connect(func() -> void: _press_start.visible = not _press_start.visible)
+## Whether the page's scenery moves: this boot's capture pose outranks the
+## preference, a still frame not being allowed to depend on which machine took it.
+func _apply_menu_motion() -> void:
+	_motion.set_moving(not _posed and Settings.menu_animations)
 
 
 # --- match option state ------------------------------------------------------
@@ -865,6 +846,14 @@ func _on_fog_toggled(pressed: bool) -> void:
 ## through the moment it is toggled rather than waiting for a match to start.
 func _on_animations_toggled(pressed: bool) -> void:
 	Settings.set_battle_animations(pressed)
+
+
+## Menu motion, the same kind of standing preference, and the one whose surface is
+## this very page — so the drift and the blink answer on the press rather than on
+## the next boot.
+func _on_menu_animations_toggled(pressed: bool) -> void:
+	Settings.set_menu_animations(pressed)
+	_apply_menu_motion()
 
 
 ## Re-dresses the panel for the seats now at the table. Which tier each seat plays

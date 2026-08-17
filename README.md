@@ -390,8 +390,10 @@ Any Godot 4.7+ works too — open the project folder in the editor.
 ## Main menu
 
 The game boots to the menu: pick a map, set the **seats**, pick a **Speed**,
-toggle **Fog of war** and **Battle animations** (the full-screen combat and capture cut-ins — a saved
-preference, on by default),
+toggle **Fog of war**, **Battle animations** (the full-screen combat and capture cut-ins — a saved
+preference, on by default) and **Menu motion** (the board drifting behind the menus and the campaign
+pages revealing a line at a time — a saved preference too, on by default, and off holds every menu
+still from the press),
 then press **Start**, which opens the **commander selection page**; **Continue** skips selection and
 resumes the save with its own map, fog setting, difficulty, commanders, grouping and AI sides. A line
 under it names what it would resume — `DAY 13 · ARSENAL` — so the menu alone answers whether the save
@@ -418,12 +420,12 @@ grouping together (**Duel** seats the opposite pair, 1 and 3). **Start** greys o
 fewer than two armies are seated or the badges leave nobody with anyone to fight.
 
 Nothing decision-critical is behind the mouse: the map picker prints the selected board's size, army
-count, property count and pitch beneath the grid, and **Speed**, **Fog of war** and
-**Battle animations** each carry a permanent one-line explanation. How well the computer plays is
+count, property count and pitch beneath the grid, and **Speed**, **Fog of war**,
+**Battle animations** and **Menu motion** each carry a permanent one-line explanation. How well the computer plays is
 not a match-wide setting: each row of the seat strip carries a tier chip that cycles
 **Easy** / **Normal** / **Difficult** / **Brutal** and goes inert on a row the computer is not
 playing (see Difficulty below). Each setting's dotted-underlined label — **Speed**,
-**Fog of war**, **Battle animations** — still elaborates in a tip anchored to it, on
+**Fog of war**, **Battle animations**, **Menu motion** — still elaborates in a tip anchored to it, on
 hover or on keyboard focus, and so do the map cells and the line under **Continue**; leaving, tabbing
 away or pressing Escape dismisses one.
 
