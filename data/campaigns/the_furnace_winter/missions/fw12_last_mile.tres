@@ -45,7 +45,7 @@ count = 7
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "I garrisoned the last mile myself, Ash. Past it is the foundry road, and I don't hand that over lightly."
+text = "I garrisoned the last mile myself, Ash. The foundry road is behind it, and I do not give that up."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -101,7 +101,7 @@ note = "Vale withdrew east off the last mile rather than burn what he could not 
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "The last mile is yours and I will not burn it to keep it from you. Column, east. We do this properly at the furnace."
+text = "The last mile is yours, and I will not burn it to keep it from you. Column, east. We settle this at the furnace."
 
 [sub_resource type="Resource" id="Event_vale_withdraws_east"]
 script = ExtResource("7")
@@ -125,7 +125,7 @@ note = "The last mile was opened intact, and the foundry road runs on it."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"perrin_ash"
-text = "Three depots, a day still in hand, and not a pump smashed on the way through. Log the last mile open."
+text = "Three depots, a day to spare, and not one pump smashed. The last mile is open."
 
 [sub_resource type="Resource" id="Event_the_last_mile_runs"]
 script = ExtResource("7")

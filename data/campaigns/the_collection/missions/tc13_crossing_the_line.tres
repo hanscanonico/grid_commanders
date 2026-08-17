@@ -38,7 +38,7 @@ text = "Crossing now. Clean approach, no hesitation — that foundry opens the w
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The foundry sits in a notch in the mountain wall, and we can walk onto it from our own side. Everything else on that row is rock — the two gaps and the foundry square itself are the only ground anything with tracks can cross."
+text = "The foundry sits in a notch in the mountain wall, and we can walk onto it from our own side. Everything else on that row is rock. The two gaps and the foundry square are the only ground anything with tracks can cross."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -81,7 +81,7 @@ tags = Array[StringName]([&"border_levy"])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "Ferrow. The audit is a forgery and my men will not die for it. Neither will your border levy — they have put their rifles down and walked home."
+text = "Ferrow. The audit is a forgery, and my men will not die for it. Nor will your border levy. They have put their rifles down and gone home."
 
 [sub_resource type="Resource" id="Event_the_border_levy"]
 script = ExtResource("6")

@@ -26,12 +26,12 @@ tag = &"ferrow_courier"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Ferrow keeps a hidden depot for every column that's crossed unnoticed. You found it on a hunch, Flux — don't waste the head start."
+text = "Ferrow keeps a hidden depot behind every column that has crossed unnoticed. You found it on a hunch, Flux. Do not waste the head start."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "The screen's extra vision made the hunch. Hit it before his garrison learns their depot isn't as hidden as it was yesterday."
+text = "My screen sees further than most, which is where the hunch came from. Hit it before the garrison learns the depot is not hidden any more."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")

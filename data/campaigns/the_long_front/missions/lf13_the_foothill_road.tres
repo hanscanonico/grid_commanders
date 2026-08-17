@@ -32,7 +32,7 @@ text = "We're crossing our own border for the first time, Sol. This is ground th
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Vale's engineers have dug a works into the only road through the passes. Give me three days, I take it or I know why not."
+text = "Vale's engineers have dug in on the only road through the passes. Give me three days. I take it, or I find out why not."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")

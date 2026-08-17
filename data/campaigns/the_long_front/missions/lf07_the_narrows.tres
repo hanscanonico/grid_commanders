@@ -44,7 +44,7 @@ text = "Three retreats met on one road and stopped retreating, Voss. Aurora and 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Then it's not my line anymore — it's ours. Draeg's spearhead hasn't slowed, only run out of ground to go around."
+text = "Then it is not my line any more. It is ours. Draeg's spearhead has not slowed down — it has run out of ground to go round."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")

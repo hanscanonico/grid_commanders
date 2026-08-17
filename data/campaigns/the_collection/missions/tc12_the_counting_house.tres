@@ -41,7 +41,7 @@ text = "The counting house is where Vale's occupation gets paid. Take it and the
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The auditor's witnesses are still talking, too. Put her testimony next to Vale's payment book and the forgery stops being an accusation."
+text = "The auditor's witnesses are still talking too. Put what they say beside Vale's payment book and the forgery stops being just an accusation."
 requires = SubResource("Witnesses_talking")
 
 [sub_resource type="Resource" id="Line_2"]
@@ -57,7 +57,7 @@ text = "This ends the financial war. What's left after this is a fair fight."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "The counting house is ours. Vale's books close in the red, and the occupation with them."
+text = "The counting house is ours. Vale's books close short, and the occupation closes with them."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -136,4 +136,4 @@ events = Array[Resource]([SubResource("Event_the_books"), SubResource("Event_the
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_1b"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The counting house held, and the squeeze that started in the border towns just got permanent."
+defeat = "The counting house held, and the squeeze that started in the border towns became permanent."

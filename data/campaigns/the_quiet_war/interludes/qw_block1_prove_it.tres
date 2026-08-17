@@ -41,7 +41,7 @@ requires = SubResource("Handler_at_large")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "Thornfield held, for whatever a wood line and a picket are worth on a report. The border district counted the difference before the map office did."
+text = "Thornfield held, for whatever a wood line and one picket are worth in a report. The border district noticed the difference before the map office did."
 requires = SubResource("Thornfield_held")
 
 [sub_resource type="Resource" id="Line_5"]

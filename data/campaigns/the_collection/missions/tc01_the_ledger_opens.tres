@@ -21,17 +21,17 @@ days = 2
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "A Directorate audit surfaced overnight, claiming this depot as payment on a debt that never existed. Ferrow's signature is all over it — he still steals off every kill he lands."
+text = "A Directorate audit appeared overnight, claiming this depot as payment on a debt that never existed. Ferrow's signature is all over it, and he still takes a cut of every kill he lands."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Then he doesn't get the kills. His raiders don't carry the armor to trade evenly — hold formation and make him pay for every approach."
+text = "Then he does not get the kills. His raiders are too thin-skinned to trade evenly. Hold formation and make him pay to come near us."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "It is one road end to end, and the depot sits square in the middle of it. There is no cover out there but the four stands of trees — whatever he sends, you will watch it coming for two days first."
+text = "It is one road end to end, with the depot square in the middle. The only cover is four stands of trees, so whatever he sends, you will watch it coming for two days first."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -91,7 +91,7 @@ points = 3000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "There. Their column is down to two, and the depot has not even changed hands yet. Every wreck posts to the credit column. Keep them coming."
+text = "There. Their column is down to two, and the depot has not even changed hands. I get paid for every wreck. Keep them coming."
 
 [sub_resource type="Resource" id="Event_paid_off_the_kills"]
 script = ExtResource("5")

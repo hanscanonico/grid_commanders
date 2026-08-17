@@ -32,7 +32,7 @@ text = "Vale's column is moving on Thornfield before it can be garrisoned proper
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "I doubted you at Selwich, Flux. I won't make that mistake twice — make the tree line look like more than it is."
+text = "I doubted you at Selwich, Flux. Not twice. We make the tree line look like more than it is."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")

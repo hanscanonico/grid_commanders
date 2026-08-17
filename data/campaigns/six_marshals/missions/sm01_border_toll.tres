@@ -37,7 +37,7 @@ text = "Then we stop paying. What is he actually after?"
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The customs city. Every column he breaks funds the next one, and that road is where the money walks."
+text = "The customs city. Every column he breaks pays for the next one, and that road is where the money moves."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -75,7 +75,7 @@ note = "Ferrow's raiders went home paid, in wrecks off our own column."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Two wrecks on the customs road. That is the toll, Commander, and it is paid — in your coin, into my column."
+text = "Two wrecks on the customs road. That is the toll, Commander, and you have just paid it."
 
 [sub_resource type="Resource" id="Event_the_toll_is_paid"]
 script = ExtResource("6")

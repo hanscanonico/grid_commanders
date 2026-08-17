@@ -40,7 +40,7 @@ text = "Eight days to answer you with force instead of a courier."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"halden_marr"
-text = "No coast on this crossing, Commander. Three towns strung on one road and nowhere to come in from the flank — we win it straight or not at all."
+text = "No coast on this crossing, Commander. Three towns on one road and no way round the flank. We win it head on or not at all."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

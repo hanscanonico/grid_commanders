@@ -48,18 +48,18 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Eleven weeks from the customs road to the keep. The staff officers wrote it up as one campaign, which is the tidiest lie in the file: it was three retreats, one line and one advance, and the ledger of it is shorter than the war was."
+text = "Eleven weeks from the customs road to the keep. The staff officers wrote it up as one campaign. It was three retreats, one line and one advance, and the report of it is shorter than the war was."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "The column I bought that first morning for is billeted in a town nobody shelled. That is the entry I would keep if I could only keep one."
+text = "The column I bought that first morning for is quartered in a town nobody shelled. If I could keep one line of this report, it would be that one."
 requires = SubResource("Column_saved")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "The column I bought that first morning for did not all get behind the line. I fought eleven weeks for the road it was on, and I know exactly what that is worth."
+text = "Not all of the column I bought that first morning for got behind the line. I fought eleven weeks for the road it was on, and I know exactly what that is worth."
 requires = SubResource("Column_lost")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -83,7 +83,7 @@ requires = SubResource("Carrow_early")
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Averyn's acres came back inside the week and its town did not come back at all. There is a stone going up on the ground we took back, and no plan to rebuild on it."
+text = "Averyn's land came back inside the week and its town never came back at all. There is a stone going up on the ground we took, and no plan to build on it."
 requires = SubResource("Averyn_held")
 
 [sub_resource type="Resource" id="Line_8"]
@@ -100,7 +100,7 @@ text = "Draeg said the uniform outlasts the officer who wears it, Voss. He was t
 [sub_resource type="Resource" id="Line_10"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "Then the uniform can wait behind a border it does not cross. I did not fight this front to sit behind his desk — I fought it so three nations could go home and find something still standing."
+text = "Then the uniform can wait behind a border it does not cross. I did not fight this front to sit at his desk. I fought it so three nations could go home and find something still standing."
 
 [resource]
 script = ExtResource("1")

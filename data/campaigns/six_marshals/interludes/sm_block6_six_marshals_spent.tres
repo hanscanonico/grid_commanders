@@ -42,7 +42,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The Directorate never was choosing a successor. It was spending six marshals against one border to see which of them came back cheapest, and the border kept all six answers."
+text = "The Directorate was never choosing a successor. It spent six marshals against one border to see which came back cheapest, and the border answered all six."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")

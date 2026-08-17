@@ -18,11 +18,11 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The Directorate had governed the Iron Dominion for forty years. It took eleven days to stop existing, and no two border capitals agree on which of them it died."
+text = "The Directorate had run the Iron Dominion for forty years. It took eleven days to fall apart, and no two border capitals agree on which of those days it died."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
-text = "Reed's staff logged the hour it reached the border: two Iron companies turned round mid-battle and walked off a field they were still winning. Nobody in the capital had told them to. Nobody in the capital was left to."
+text = "Reed's staff logged the hour it reached the border. Two Iron companies turned round mid-battle and walked off a field they were still winning. Nobody in the capital had told them to. There was nobody left in the capital to tell them."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
@@ -44,7 +44,7 @@ requires = SubResource("Unbloodied")
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "There is one marshal at your border who does not want the throne, Commander. Only the winter, and somebody to survive it beside. I will be in touch."
+text = "There is one marshal at your border who does not want the throne, Commander. I want the winter, and somebody to survive it beside. I will be in touch."
 
 [resource]
 script = ExtResource("1")

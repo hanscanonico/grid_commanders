@@ -12,18 +12,18 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Vale's war ended at a river, which is the wrong place for a man who never wanted to fight at one. His accountants left before his infantry did."
+text = "Vale's war ended at a river, which is the last place he ever wanted to fight. His accountants left before his infantry did."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"konrad_vale"
-text = "The crossroads factory is still under contract, Commander, and the contract does not name me. Whichever marshal is left will find it waiting, paid for, in your half of the map."
+text = "The crossroads factory is still under contract, Commander, and my name is not on it. Whichever marshal is left will find it waiting, paid for, in your half of the map."
 requires = SubResource("Factory_open")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Two answered. Cass Orlov is next, and he does not want the border at all — he wants whatever of ours is already hurt."
+text = "Two answered. Cass Orlov is next, and he does not want the border. He wants whatever of ours is already hurt."
 
 [resource]
 script = ExtResource("1")

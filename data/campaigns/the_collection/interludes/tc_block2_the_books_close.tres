@@ -36,12 +36,12 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The counting house burned for a day and a night, and the occupation could not make payroll in the morning. From here the war stops being financed and starts being fought."
+text = "The counting house burned for a day and a night, and the occupation could not pay its men in the morning. From here the war stops being financed and starts being fought."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "We have the courier's running count and Vale's own payment book. Iron's marshals are reading the forgery to each other in their own handwriting."
+text = "We have the courier's count and Vale's own payment book. Iron's marshals are reading the forgery to each other in their own handwriting."
 requires = SubResource("Books_taken")
 
 [sub_resource type="Resource" id="Line_3"]
@@ -65,7 +65,7 @@ requires = SubResource("Witnesses_talking")
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"konrad_vale"
-text = "The interest I drew at the blockade has already been spent, Commander. It is standing on the border, and it will not be sending you a statement."
+text = "What I earned at the blockade is already spent, Commander. It is standing on the border, and it will not be sending you a bill."
 requires = SubResource("Interest_drawn")
 
 [sub_resource type="Resource" id="Line_7"]

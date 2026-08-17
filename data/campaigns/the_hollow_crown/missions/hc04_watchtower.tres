@@ -42,7 +42,7 @@ text = "Watchtower road is ours. Her busiest entry, gone."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "For once the accounting favours you. I will remember the figures."
+text = "For once the numbers favour you. I will remember them."
 
 [sub_resource type="Resource" id="Trigger_middle_checkpoint_ours"]
 script = ExtResource("7")
@@ -81,7 +81,7 @@ note = "Vance's far checkpoint and its books were taken on the watchtower road."
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Three entries closed in one column, Commander. I am revising the figures downward."
+text = "Three posts closed in one move, Commander. I am revising my figures downward."
 
 [sub_resource type="Resource" id="Event_the_far_checkpoint"]
 script = ExtResource("6")

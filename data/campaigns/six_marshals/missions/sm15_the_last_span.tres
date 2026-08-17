@@ -36,7 +36,7 @@ text = "His tanks hit hard but they have to queue for the bridge to do it. Dig i
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Then we don't wait for them to come to us comfortably. Hit the head of that queue the moment it forms."
+text = "Then we do not wait for them to get comfortable. Hit the front of that queue as soon as it forms."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -51,7 +51,7 @@ text = "Day seven. The span held, and Draeg's column is still stacked up on the 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Fifteen percent doesn't matter to a tank that never gets to cross."
+text = "Fifteen percent means nothing to a tank that never crosses."
 
 [sub_resource type="Resource" id="Trigger_van_gone"]
 script = ExtResource("8")

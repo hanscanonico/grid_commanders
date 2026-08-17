@@ -38,7 +38,7 @@ tag = &"hammer_battery"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "The pass carries Averyn's name now. Morn's garrison shields it like the town he flattened were worth defending."
+text = "The pass carries Averyn's name now. Morn garrisons it as if the town he flattened were worth defending."
 
 [sub_resource type="Resource" id="Line_1a"]
 script = ExtResource("3")
@@ -49,7 +49,7 @@ requires = SubResource("Averyn_held")
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "The ground the town stood on came back to us late, after he had garrisoned the ashes and billed us by the day for them. This pass is the rest of that bill."
+text = "The ground the town stood on came back to us late, after he had garrisoned the ashes and charged us by the day for them. This pass is the rest of that bill."
 requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_2"]

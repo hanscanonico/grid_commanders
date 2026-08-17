@@ -36,7 +36,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Orlov never crossed a border in the open until there was no border left to dissolve, Ash. Every flipped town, every ledger, every raid pointed here."
+text = "Orlov never crossed a border in the open until there was nothing left to take quietly, Ash. Every flipped town, every ledger, every raid pointed here."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -46,7 +46,7 @@ text = "Then I finish it the way it should have started. An army, in daylight, a
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"cass_orlov"
-text = "Found, Commander Ash, but not finished. I've enjoyed watching you all learn to read my handwriting — genuinely."
+text = "Found, Commander Ash, but not finished. I have enjoyed watching you learn to read my handwriting. Genuinely."
 
 [sub_resource type="Resource" id="Line_3b"]
 script = ExtResource("3")
@@ -67,12 +67,12 @@ text = "A wall taken isn't a man caught, Commander. Remember that the next time 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "The headquarters falls, and every quiet annexation this war ran on stops being quiet or an annexation."
+text = "The headquarters falls, and every quiet land grab this war ran on is neither quiet nor a land grab any more."
 
 [sub_resource type="Resource" id="Line_6b"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Ten of the towns in his ledger never became Iron ground. He annexed them on paper and the paper never once reached the map."
+text = "Ten of the towns in his ledger never became Iron ground. He took them on paper, and the paper never reached the map."
 requires = SubResource("Every_town_saved")
 
 [sub_resource type="Resource" id="Line_7"]

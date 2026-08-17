@@ -18,7 +18,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"ivar_thorne"
-text = "Ferrow's not here to hold ground, Wren. He's here to burn what feeds it — the whole line runs on these three cities."
+text = "Ferrow is not here to hold ground, Wren. He is here to burn what feeds it. The whole line runs on these three cities."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")

@@ -28,22 +28,22 @@ text = "Every extra turn her doctrine bites harder. Race for the towns — don't
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "There is not a road on this board, and not a mountain either. Nobody here gets a lane the ground pays for — it comes down to who starts nearer the towns."
+text = "No roads on this board, and no mountains either. The ground helps nobody. It comes down to who starts nearer the towns."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Five of the six towns sit closer to our base than to hers; only the far eastern one is properly hers. She does not need to beat us there — she only needs the walk to take long enough."
+text = "Five of the six towns sit closer to our base than to hers. Only the far eastern one is properly hers. She does not have to beat us there — she only needs the walk to take long enough."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"nia_rowan"
-text = "She never caught the column she was chasing. We were through the trees and standing on them while her line was still crossing the grass."
+text = "She never caught the column she was chasing. We were through the trees and standing on the towns while her line was still crossing the grass."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "She never got the long grind she was built for."
+text = "She never got the long fight she was built for."
 
 [sub_resource type="Resource" id="Trigger_day_5"]
 script = ExtResource("6")
@@ -105,7 +105,7 @@ units = Array[Resource]([SubResource("Spawn_compound_guns")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "The depot bought these guns, Commander. Compounding, still."
+text = "The depot paid for these guns, Commander. It is still paying."
 
 [sub_resource type="Resource" id="Event_still_compounding"]
 script = ExtResource("5")
@@ -138,4 +138,4 @@ events = Array[Resource]([SubResource("Event_counting_turns"), SubResource("Even
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The race turned into a grind, and a grind was always going to be hers."
+defeat = "The race turned into a long fight, and a long fight was always hers."

@@ -42,18 +42,18 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Three nations lost the same morning and learned of each other six days late, and each of them counted the loss in something different: a road, a harbour, a wood."
+text = "Three nations lost the same morning and only heard about each other six days later. Each of them counted the loss in something different: a road, a harbour, a wood."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Meridian's ledger for the week. The customs column made the line behind Voss, wagon for wagon, and is billeted east of the Arden."
+text = "Meridian's account for the week. The customs column got behind Voss's line, wagon for wagon, and is quartered east of the Arden."
 requires = SubResource("Column_saved")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Meridian's ledger for the week. The customs column did not all make the line, and I am not writing down how much of it did."
+text = "Meridian's account for the week. Not all of the customs column got behind the line, and I am not writing down how much did."
 requires = SubResource("Column_lost")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -65,7 +65,7 @@ requires = SubResource("Watch_saved")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"orin_flux"
-text = "Aurora's is shorter. The port is gone, the coast watch went with the beach road, and there is nobody left who can tell me who else did."
+text = "Aurora's is shorter. The port is gone, the coast watch was lost with the beach road, and nobody is left who can tell me who else was."
 requires = SubResource("Watch_lost")
 
 [sub_resource type="Resource" id="Line_6"]
@@ -83,7 +83,7 @@ requires = SubResource("Shrine_lost")
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("2")
 speaker = &"mara_voss"
-text = "Three retreats, one road. There is a chokepoint at the narrows where all of them arrive, and after that there is nowhere left to arrive at separately."
+text = "Three retreats, one road. They all arrive at the narrows, and past that there is nowhere left to arrive separately."
 
 [resource]
 script = ExtResource("1")

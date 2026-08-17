@@ -110,7 +110,7 @@ tags = Array[StringName]([&"ferrow_riders_a", &"ferrow_riders_b"])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"dane_ferrow"
-text = "Ledger's empty and the road's yours. I don't die for districts, Wren — and neither do my riders. Boys: new employer."
+text = "Nothing earned, and the road is yours. I do not die for districts, Wren. Neither do my riders. Boys — new employer."
 
 [sub_resource type="Resource" id="Event_rode_out_with_an_empty_ledger"]
 script = ExtResource("7")
@@ -147,4 +147,4 @@ carry_out = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The arsenal stayed his hunting ground, and the ledger closed on our side instead."
+defeat = "The arsenal stayed his hunting ground, and we paid for it."

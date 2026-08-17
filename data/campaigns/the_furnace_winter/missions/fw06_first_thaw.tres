@@ -31,7 +31,7 @@ cell = Vector2i(11, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "The Director of Supply doesn't usually carry a rifle count. I make an exception for a pass worth holding."
+text = "The Director of Supply does not usually take the field. This pass is worth the exception."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -41,7 +41,7 @@ text = "You want Kestrel held as a lesson. We want it as a foothold."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"halden_marr"
-text = "Hold four properties, win the pass, and the roads start opening on their own weight."
+text = "Hold four properties and take the pass. After that the roads start opening on their own."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")
@@ -74,7 +74,7 @@ tags = Array[StringName]([&"vale_guard_a", &"vale_guard_b"])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"konrad_vale"
-text = "You are still on my pass, and my column is still paying for it. I do not spend a division on a point I have already lost. Withdraw to the depot line."
+text = "You are still on my pass and my column is still paying for it. I do not spend a division on ground I have already lost. Column, back to the depot line."
 
 [sub_resource type="Resource" id="Event_vale_withdraws_from_kestrel"]
 script = ExtResource("7")
@@ -98,7 +98,7 @@ note = "Kestrel Pass was taken inside the first week of the thaw, before Vale ha
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"halden_marr"
-text = "Inside the week. He has not had time to make this pass expensive, and he is not getting another."
+text = "Inside the week. He never got time to dig in here, and he is not getting another chance."
 
 [sub_resource type="Resource" id="Event_the_pass_taken_early"]
 script = ExtResource("7")

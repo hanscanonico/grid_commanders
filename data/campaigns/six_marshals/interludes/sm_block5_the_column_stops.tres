@@ -12,18 +12,18 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Draeg's column stopped at the river and stayed stopped. He filed no complaint, requested no reinforcement, and turned it around himself."
+text = "Draeg's column stopped at the river and stayed there. He made no complaint, asked for nothing, and turned it round himself."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "It came off your border in the order it went on. That is the only thing I ever promised anyone, Commander, and it is why the others are still afraid of me."
+text = "It came off your border in the same order it went on. That is the only thing I ever promised anyone, Commander, and it is why the others still fear me."
 requires = SubResource("Column_intact")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Five answered, and the succession comes down to the one who was never trying to win it. Radek Morn has spent this whole war charging a single strike."
+text = "Five answered. It comes down to the one who never wanted the chair. Radek Morn has spent the whole war charging a single strike."
 
 [resource]
 script = ExtResource("1")

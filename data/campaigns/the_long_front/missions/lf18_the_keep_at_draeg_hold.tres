@@ -59,7 +59,7 @@ cell = Vector2i(18, 9)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Every nation the spearhead put to flight in the opening week stands on this ground together, Voss. You bought that first morning with four units and a river."
+text = "Every nation his spearhead drove back in the first week is standing on this ground together, Voss. You bought that first morning with four units and a river."
 
 [sub_resource type="Resource" id="Line_1a"]
 script = ExtResource("3")
@@ -70,7 +70,7 @@ requires = SubResource("Averyn_held")
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Averyn's ground came back to us late, behind us, and Morn set the price on every acre of it. Whatever happens on this hill, that is the one bill we never got out from under."
+text = "Averyn's ground came back to us late, and Morn made us pay for every acre. Whatever happens on this hill, that is the one bill we never got out from under."
 requires = SubResource("Averyn_lost")
 
 [sub_resource type="Resource" id="Line_2"]
@@ -191,7 +191,7 @@ text = "The column I held the customs road for is standing on this hill, General
 [sub_resource type="Resource" id="Event_line_aurora"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "The coast watch I got off that beach kept every name on its lists. Aurora came looking for the officer who bought them the morning."
+text = "The coast watch I got off that beach kept every name on its lists. Aurora came looking for the officer who bought them that morning."
 
 [sub_resource type="Resource" id="Event_line_league"]
 script = ExtResource("3")

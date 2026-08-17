@@ -30,7 +30,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "A cache, a depot, a relay and a forward base, in that order, and none of them on a map. The network came apart the way it was built: quietly, and in the wrong order for anyone trying to explain it afterwards."
+text = "A cache, a depot, a relay and a forward base, in that order, and none of them on a map. The network came apart the way it was built: quietly, and in an order nobody could explain afterwards."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")

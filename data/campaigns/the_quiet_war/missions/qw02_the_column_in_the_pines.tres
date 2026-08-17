@@ -23,7 +23,7 @@ tag = &"pine_column"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "A whole company moved through the Aurora pine belt without tripping a single patrol. Selwich wasn't a one-off, Wren."
+text = "A whole company crossed the Aurora pine belt without a single patrol seeing them. Selwich was not a one-off, Wren."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")

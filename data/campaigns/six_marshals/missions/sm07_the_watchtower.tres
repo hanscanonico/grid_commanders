@@ -24,7 +24,7 @@ max_losses = 11
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Vale's economy is broken. Cass Orlov is a different animal — he doesn't build armies, he hunts the wounded in ours."
+text = "Vale's money is gone. Cass Orlov is different. He does not build armies — he hunts the wounded in ours."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")

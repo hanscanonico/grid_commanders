@@ -39,24 +39,24 @@ text = "This belt built the army that crossed our border in the first place. Tak
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale is finished and his money isn't — the interest he drew on the blockade is sitting in Vance's accounts."
+text = "Vale is finished, but his money is not. What he earned off the blockade is in Vance's hands now."
 requires = SubResource("Interest_drawn")
 
 [sub_resource type="Resource" id="Line_1c"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vance inherited Vale's belt and none of his reserves, because the blockade never paid him a coin."
+text = "Vance got Vale's belt and none of his money, because the blockade never paid him a coin."
 requires = SubResource("Interest_denied")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"sable_wren"
-text = "Every one of those foundries has trees against it. Sit in them, let her walk onto the property, and she pays twice for ground I never left."
+text = "Every one of those foundries has trees beside it. Sit in the trees, let her walk onto the property, and she pays twice for ground I never left."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four of the foundries are out at the corners with trees against them; the fifth is in the centre where her whole line can reach it. Take the cheap four and let her keep the expensive one."
+text = "Four of the foundries are out at the corners with trees beside them. The fifth is in the centre, where her whole line can reach it. Take the cheap four and let her keep the expensive one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -84,7 +84,7 @@ amount = 6000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Vale's money outlived Vale. Three percent a day, Commander, and it is all still compounding."
+text = "Vale's money outlived Vale. Three percent a day, Commander, and it is all still adding up."
 
 [sub_resource type="Resource" id="Event_vales_money_outlives_him"]
 script = ExtResource("6")

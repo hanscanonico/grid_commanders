@@ -93,7 +93,7 @@ note = "The relay fell inside five days, and it was Draeg's column that spent th
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"viktor_draeg"
-text = "Five days to the relay, Commander. My column held every other yard of the ridge to buy them for you, and there is not much of it left."
+text = "Five days to the relay, Commander. My column held the rest of the ridge to buy them for you, and there is not much of it left."
 
 [sub_resource type="Resource" id="Event_how_thin_the_column_is"]
 script = ExtResource("7")

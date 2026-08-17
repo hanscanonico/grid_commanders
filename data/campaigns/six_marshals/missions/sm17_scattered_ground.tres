@@ -24,7 +24,7 @@ max_losses = 3
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This board won't let you mass an army even if you wanted to — every prize is in a different corner."
+text = "This board will not let you gather an army even if you want to. Every prize is in a different corner."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -39,7 +39,7 @@ text = "Take two towns. Keep the columns apart the way the ground already wants 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"tomas_reed"
-text = "Two towns taken, and no two of my people ever within a charge of each other. The flags came down faster than he could find a target."
+text = "Two towns taken, and no two of my units ever close enough for one charge. The flags came down before he found a target."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -123,4 +123,4 @@ events = Array[Resource]([SubResource("Event_the_charge_is_ready_again"), SubRes
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Two columns met at the crossroads to consolidate, and that was the last thing they did together."
+defeat = "Two columns met at the crossroads to join up, and that was the last thing they did together."

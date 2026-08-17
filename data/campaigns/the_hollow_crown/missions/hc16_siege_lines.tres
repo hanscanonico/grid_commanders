@@ -30,7 +30,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"cass_orlov"
-text = "Ferrow and I dug siege lines around the capital itself, Ward. Each of us hoping to starve the other's claim, and yours with it."
+text = "Ferrow and I have dug siege lines around the capital, Ward. Each of us means to starve out the other's claim, and yours with it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")

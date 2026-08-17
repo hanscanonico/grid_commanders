@@ -28,22 +28,22 @@ days = 4
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Ferrow's collection was the opening move. Konrad Vale is the one actually financing this war, and he's bought this garrison three towns before we even crossed the border."
+text = "Ferrow's collection was only the opening move. Konrad Vale is the one paying for this war, and he has bought this garrison three towns before we even crossed the border."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "Financing isn't theft, Commander. It's simply better arithmetic."
+text = "Paying for a war is not theft, Commander. It is just better sums."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"cassian_rook"
-text = "Then we audit his arithmetic. Every day the blockade town stands, his funding gap widens on paper — take it and it widens for real."
+text = "Then we check his sums. Every day that blockade town stands, he falls further behind on paper. Take it and he falls behind for real."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"cassian_rook"
-text = "His blockade town and ours face each other three squares apart on the same row, and he holds the one directly below ours as well. Break the near pair and the belt is even again."
+text = "His blockade town and ours face each other three squares apart on the same row, and he holds the one directly below ours as well. Break that near pair and the belt is even again."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -72,7 +72,7 @@ units = Array[Resource]([SubResource("Spawn_bought_garrison")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "A garrison is a line item, Commander. I have simply approved another one."
+text = "A garrison is just a cost, Commander. I have approved another one."
 
 [sub_resource type="Resource" id="Event_another_line_item"]
 script = ExtResource("6")

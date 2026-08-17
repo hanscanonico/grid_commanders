@@ -26,7 +26,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Every cache, relay and raid column this act has cut all ran through one forward base, Lark. Close it before he stands up a second one somewhere harder to find."
+text = "Every cache, relay and raid column we have cut ran through one forward base, Lark. Close it before he builds another one somewhere harder to find."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")

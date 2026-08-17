@@ -22,7 +22,7 @@ max_losses = 11
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The last marshal. Radek Morn doesn't fight for ground, Gideon — he fights to erase it. Hammerfall flattens a three-by-three block, whole."
+text = "The last marshal. Radek Morn does not fight for ground, Gideon — he wipes it out. Hammerfall flattens a three-by-three block, whole."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -32,12 +32,12 @@ text = "Ground remembers nothing, Commander. Neither will yours."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Then we don't give him a block to erase. Spread the advance — there's no target worth the charge."
+text = "Then we do not give him a block to flatten. Spread the advance out. Leave him no target worth the charge."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The relay stands alone at the top of nineteen squares of open field — no cover near it, no second prize beside it. Whoever walks at it walks in the open, so walk at it in ones."
+text = "The relay stands alone at the top of nineteen squares of open field. No cover near it, no second prize beside it. Anyone walking at it walks in the open, so walk at it one at a time."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -47,7 +47,7 @@ text = "The relay's ours, and Morn never found three units close enough together
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Erase nothing, spend nothing. That's how you beat him."
+text = "Give him nothing to flatten and he never fires. That is how you beat him."
 
 [sub_resource type="Resource" id="Trigger_day_7"]
 script = ExtResource("7")

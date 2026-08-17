@@ -36,42 +36,42 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Six weeks in, the freeze had stopped being weather and started being policy. Every valve on our side of the armistice line answered to one office in the Iron capital, and the office answered to Konrad Vale."
+text = "Six weeks in, the freeze was not weather any more. It was policy. Every valve on our side of the line answered to one office in the Iron capital, and that office answered to Konrad Vale."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Milltown is still eating, and it eats because we reached the granary before the match did. Count that first — the rest of this winter is arithmetic."
+text = "Milltown is still eating. We reached the granary before the torch did. Count that first — the rest of this winter is numbers."
 requires = SubResource("Cond_granary_saved")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Milltown eats what we haul in for it. Ferrow struck his match and we took the base off him afterwards, which is not the same thing and everybody in that town knows it."
+text = "Milltown eats what we haul in. Ferrow lit his fire and we took the base back afterwards. That is not the same thing, and everyone down there knows it."
 requires = SubResource("Cond_granary_burned")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"tomas_reed"
-text = "The causeway is ours and holding. Whatever comes down off the northern ice this spring comes down it for us."
+text = "The causeway is ours and holding. Anything that comes off the northern ice this spring comes down it for us."
 requires = SubResource("Cond_ice_road_open")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"halden_marr"
-text = "And Kestrel was ours inside the week. Vale does not give up ground he has finished settling into, so we did not give him the time to settle."
+text = "And Kestrel was ours inside the week. Vale never gives up ground once he is dug in, so we never let him dig in."
 requires = SubResource("Cond_kestrel_held")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"halden_marr"
-text = "We hold Kestrel, and it took us long enough that he had the pass properly garrisoned first. He conceded it on his own terms, in his own time, and he will want that noted."
+text = "We hold Kestrel, but it took long enough that he garrisoned the pass first. He gave it up on his own terms, in his own time, and he will want that on the record."
 requires = SubResource("Cond_kestrel_contested")
 
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "Three valves open and a supply directorate that has stopped pretending this is a pricing dispute. Next is the depot line — thirteen of them, end to end, and every one of them a closed gate with a garrison behind it."
+text = "Three valves open, and the supply office has stopped calling this a price dispute. Next is the depot line — thirteen of them end to end, every one a closed gate with a garrison behind it."
 
 [resource]
 script = ExtResource("1")

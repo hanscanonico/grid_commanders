@@ -44,7 +44,7 @@ text = "Orlov's raiders picked this wood because the map calls it empty ground, 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"ines_calder"
-text = "Then let's make his ambush cost him more than it saves. A cheaper, smaller force reaches the tree line first."
+text = "Then his ambush should cost him more than it saves. A cheaper, smaller force reaches the tree line first."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")

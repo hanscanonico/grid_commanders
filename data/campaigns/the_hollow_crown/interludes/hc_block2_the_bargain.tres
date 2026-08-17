@@ -18,7 +18,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Six months earlier the three border nations had been three separate wars. Somewhere along the ridge the bargain with an Iron marshal stopped being a bargain and started being a front."
+text = "Six months earlier the three border nations had been fighting three separate wars. Somewhere along the ridge the bargain with an Iron marshal stopped being a bargain and became a front."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
@@ -28,7 +28,7 @@ text = "I keep accounts the same as Vance does, Commander. Mine are shorter, and
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"viktor_draeg"
-text = "Four crossings my column should not have come out of, and it came out of every one behind somebody else's guns. That debt is written down, and it is mine."
+text = "Four crossings my column should not have survived, and it survived every one behind somebody else's guns. That debt is written down, and it is mine."
 requires = SubResource("ColumnBroken")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -40,7 +40,7 @@ requires = SubResource("ColumnWhole")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "Two of my outriders under his banner, and he calls that a bargain kept. The bill is still open, Draeg. They always are."
+text = "Two of my outriders under his banner, and he calls that a bargain kept. The bill is still open, Draeg. It always is."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")

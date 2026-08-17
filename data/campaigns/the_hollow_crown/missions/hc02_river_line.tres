@@ -33,12 +33,12 @@ text = "No tricks up your sleeve, then. Almost restful, fighting a man who plays
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Orlov hits hardest at the wounded, and short of our own base those two towns on the road are the only place we mend. Nothing of ours stays out in the open below half."
+text = "Orlov hits the wounded hardest, and apart from our own base those two towns on the road are the only place we can repair. Nothing of ours stays in the open below half."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Line broke exactly where the numbers said it would — once the numbers were ours."
+text = "The line broke exactly where the numbers said it would, once the numbers were ours."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")

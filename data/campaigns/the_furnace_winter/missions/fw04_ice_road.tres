@@ -38,7 +38,7 @@ cell = Vector2i(10, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"tomas_reed"
-text = "First fuel convoy of the winter, one sledge, one bridge. The causeway base pays for the escort the moment it's ours."
+text = "First fuel convoy of the winter. One sledge, one bridge. Take the causeway base and it pays for the escort."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -82,7 +82,7 @@ units = Array[Resource]([SubResource("Spawn_ambush_lead"), SubResource("Spawn_am
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "Told you, Reed. The east bridgehead is mine, and your sledge is a fee waiting to be collected."
+text = "Told you, Reed. The east bridgehead is mine, and your sledge is money waiting to be picked up."
 
 [sub_resource type="Resource" id="Event_the_bridge_ambush"]
 script = ExtResource("6")
@@ -140,4 +140,4 @@ events = Array[Resource]([SubResource("Event_the_bridge_ambush"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The convoy never crossed, and the toll went on being paid in armour and men."
+defeat = "The convoy never crossed. We went on paying the toll in tanks and men."

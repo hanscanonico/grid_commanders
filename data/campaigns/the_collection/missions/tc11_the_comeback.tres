@@ -31,7 +31,7 @@ at_most = 0
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four of five towns, gone, and Vale's premium army holds every one of them. This is the bottom of the squeeze."
+text = "Four of the five towns are gone, and Vale's expensive army holds all of them. This is the bottom of the squeeze."
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("4")
@@ -42,13 +42,13 @@ requires = SubResource("Interest_drawn")
 [sub_resource type="Resource" id="Line_1c"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "You closed the blockade before it drew a coin, which is the only reason this belt is even a question."
+text = "You closed the blockade before it earned a coin. That is the only reason this belt is still in question."
 requires = SubResource("Interest_denied")
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Then the numbers only go up from here. Three towns brings us even — nothing more, nothing less."
+text = "Then it only gets better from here. Three towns puts us level. Nothing more, nothing less."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -58,7 +58,7 @@ text = "From here, the occupation starts costing him more than it's worth."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Three towns back, and from where I am standing I can count what he has left in the belt. Even is a position I know how to work from."
+text = "Three towns back, and from where I stand I can count what he has left in the belt. Level is a position I know how to work from."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

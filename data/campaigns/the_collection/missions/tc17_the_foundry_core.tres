@@ -27,17 +27,17 @@ max_losses = 9
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Everything we've taken this act comes down to holding this ground. Morn's throwing what's left at it, Hammerfall included."
+text = "Everything we have taken comes down to holding this ground. Morn is throwing what is left at it, Hammerfall included."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Then nothing gets bunched, and nothing gets thrown at us worth the charge. I've held worse ground on a thinner budget."
+text = "Then nothing bunches up, and he never gets a target worth the charge. I have held worse ground on less."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Four towns on this field, a long way apart, and almost nothing between them but open ground. There is nothing out there worth standing shoulder to shoulder for."
+text = "Four towns on this field, far apart, with nothing between them but open ground. There is nothing out there worth standing shoulder to shoulder for."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

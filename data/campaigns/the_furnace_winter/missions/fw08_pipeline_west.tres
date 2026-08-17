@@ -35,7 +35,7 @@ count = 6
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "The western depots mirror the eastern pair. I built them identically — economy of design."
+text = "The western depots match the eastern pair. I built them the same way. It is cheaper."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
@@ -55,7 +55,7 @@ text = "Held the first, took the second. Both pipelines answer to us now."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "You defended better than I budgeted. That line item is noted."
+text = "You defended better than I allowed for. Noted."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("8")
@@ -79,7 +79,7 @@ units = Array[Resource]([SubResource("Spawn_recovery_mech"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_recovery"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "You hold my depot. I have priced its recovery, and the answer is a column."
+text = "You hold my depot. Taking it back is worth a column to me, so here is one."
 
 [sub_resource type="Resource" id="Event_the_recovery_column"]
 script = ExtResource("7")
@@ -106,7 +106,7 @@ units = Array[Resource]([SubResource("Spawn_the_same_column")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Identical design, identical response. I have sent the same column to the same junction — you may find it answers the same way."
+text = "Same design, same answer. I have sent the same column to the same junction. Expect the same result."
 
 [sub_resource type="Resource" id="Event_the_same_column_again"]
 script = ExtResource("7")

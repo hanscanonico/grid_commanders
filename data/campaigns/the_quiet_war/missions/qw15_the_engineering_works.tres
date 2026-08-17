@@ -17,7 +17,7 @@ cell = Vector2i(17, 7)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"rhea_sol"
-text = "Vale's border works went from forged rail permits to a fortified position in the open, Marr. The paperwork phase is over."
+text = "Vale's border works have gone from forged rail permits to a fort in the open, Marr. The paperwork stage is over."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")

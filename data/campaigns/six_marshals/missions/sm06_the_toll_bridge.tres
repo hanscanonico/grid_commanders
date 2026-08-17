@@ -28,22 +28,22 @@ text = "Vale's whole column has to cross two bridges to reach us. Let his expens
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Two lanes, one outcome — every attack that funnels through them is a bad trade for him, reliably."
+text = "Two lanes, one result. Anything that comes through them is a bad trade for him. Reliably."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Two crossings, and they sit one square apart in the same gap. He cannot widen that — everything he owns comes at us in single file."
+text = "Two crossings, one square apart in the same gap. He cannot widen it, so everything he has comes at us in single file."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Day eight. The odds favored us the whole way, and the bridges are choked with wrecks that cost him a fortune apiece."
+text = "Day eight. The odds were with us the whole way, and the bridges are full of wrecks that cost him a fortune each."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale finally found a fight his ledger couldn't win."
+text = "Vale finally found a fight money could not win."
 
 [sub_resource type="Resource" id="Trigger_day_4"]
 script = ExtResource("7")
@@ -62,7 +62,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "The far town signed on this morning, Commander. I did not have to cross the river to buy it — only to outbid you."
+text = "The far town is mine as of this morning, Commander. I did not have to cross the river for it. I only had to outbid you."
 
 [sub_resource type="Resource" id="Event_the_far_bank_is_bought"]
 script = ExtResource("6")
@@ -86,7 +86,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "Premium hulls in the river, and the salvage is ours. His ledger will feel that one — reliably."
+text = "Expensive hulls in the river, and the scrap is ours. He will feel that one. Reliably."
 
 [sub_resource type="Resource" id="Event_the_river_bill"]
 script = ExtResource("6")

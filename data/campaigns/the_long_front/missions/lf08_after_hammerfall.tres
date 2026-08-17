@@ -27,7 +27,7 @@ days = 2
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Averyn had no garrison worth the name. Morn's Command Power fell on it overnight and left nothing standing to defend."
+text = "Averyn had barely any garrison. Morn's Command Power hit it overnight and left nothing standing to defend."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -101,7 +101,7 @@ note = "Averyn's ground flew allied colours again before Morn could garrison the
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "His engineers never got a spade into the ruins, Ward. The acres are back on our maps and they never became his garrison."
+text = "His engineers never got a spade into the ruins, Ward. The land is back on our maps and he never garrisoned it."
 
 [sub_resource type="Resource" id="Event_averyn_inside_the_week"]
 script = ExtResource("6")

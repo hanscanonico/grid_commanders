@@ -42,18 +42,18 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Thirteen depots run from the causeway to the foundry gate. By the thaw the map office had stopped calling it a road and started calling it a ledger, and both sides were reading from it."
+text = "Thirteen depots run from the causeway to the foundry gate. By the thaw the map office had stopped calling it a road and started calling it a ledger. Both sides were reading from it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"perrin_ash"
-text = "Ten of the thirteen came out of this whole with their pumps still turning. That is a supply line, quartermaster — not a souvenir."
+text = "Ten of the thirteen came out of it whole, pumps still turning. That is a working supply line, quartermaster, not a souvenir."
 requires = SubResource("Cond_road_runs_whole")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"perrin_ash"
-text = "We opened the road. A good part of it came out of the winter as scrap, so what runs east runs slowly, and the furnace will notice which."
+text = "We opened the road. A good part of it is scrap now, so the fuel runs east slowly. The furnace will notice."
 requires = SubResource("Cond_road_runs_short")
 
 [sub_resource type="Resource" id="Line_4"]
@@ -65,19 +65,19 @@ requires = SubResource("Cond_road_runs_nowhere")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "And Ferrow's book stayed shut the whole way down it. Every column that went down that road was at full strength every time he looked, and a raider paid per kill cannot invoice for a line with no gap in it."
+text = "And Ferrow was never paid once on that road. Every column he looked at was at full strength, and a raider paid per kill cannot bill for a line with no gaps in it."
 requires = SubResource("Cond_ledger_clean")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"cassian_rook"
-text = "Ferrow got paid. Not often and not well, but he has a column now that he did not have in the autumn, and we are the ones who bought it for him."
+text = "Ferrow got paid. Not often and not well, but he has a column now that he did not have in the autumn. We bought it for him."
 requires = SubResource("Cond_ledger_paid")
 
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"konrad_vale"
-text = "I withdrew east off the last mile rather than burn it. Note that I did not have to. Note also what is standing at the end of the road I left you."
+text = "I pulled east off the last mile rather than burn it. I did not have to. Look at what is standing at the end of the road I left you."
 requires = SubResource("Cond_vale_withdrew")
 
 [resource]

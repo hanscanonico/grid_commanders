@@ -33,22 +33,22 @@ cell = Vector2i(10, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "The magazine base is dug in, Commander. I ration everything, including how long you get to try."
+text = "The magazine base is dug in, Commander. I ration everything, including your time."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "HQ, three units, four days. That's the ledger we're working from."
+text = "One HQ, three units, four days. That is all we have."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "Take the base before the clock rations us out of the fight."
+text = "Take the base before the clock runs out on us."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "Magazine's ours. Four days, and the accounting closed in our favour."
+text = "Magazine's ours. Four days, and we still have a column."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -67,7 +67,7 @@ cells = Array[Vector2i]([Vector2i(10, 2)])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "The northern relay filed this morning. You may still take it; you will simply be taking it from me."
+text = "The northern relay is mine as of this morning. Take it if you like. You will be taking it from me."
 
 [sub_resource type="Resource" id="Event_the_ration_is_revised"]
 script = ExtResource("5")
