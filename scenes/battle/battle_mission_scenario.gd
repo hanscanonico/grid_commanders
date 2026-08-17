@@ -141,7 +141,23 @@ func _run_map_menu() -> String:
 		return "the map menu offers no Briefing row after Commanders: %s" % [ids]
 	if ids.find(&"objectives") != at + 1:
 		return "the map menu offers no Objectives row after Briefing: %s" % [ids]
+	# The label is read off the menu that is actually up rather than off a second
+	# call to the builder: what it prints is the card's own answer, and a menu told
+	# the wrong way round would offer to raise a card that is already standing.
+	var said := _menu_label(&"Objectives: ")
+	if said != "Objectives: On":
+		return "the open card's row reads '%s'" % said
 	return _in_band("map menu", _battle.action_menu)
+
+
+## What the menu on screen says on the row starting with `prefix`, minus the
+## two-character arm marker every row carries.
+func _menu_label(prefix: String) -> String:
+	for row in _battle.action_menu.rows.get_children():
+		var text: String = (row as Button).text.substr(2)
+		if text.begins_with(prefix):
+			return text
+	return ""
 
 
 func _run_panel() -> String:
