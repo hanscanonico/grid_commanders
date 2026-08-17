@@ -53,8 +53,17 @@ const BASE_COMMAND_DELAY_SECONDS := 0.2
 ## than the day banner because its card opens with the general's spoken line
 ## (plan PQ1) — a sentence needs more of a beat than a title.
 const BANNER_SECONDS := 1.2
-const POWER_BANNER_SECONDS := 1.5
+## Read at reading speed rather than glanced at: the card carries a spoken line,
+## a power name and the exact effect text, and playtest (COM-247) said 1.5s was
+## over before the words were. Any press still retires it early — see
+## BattleAnimator.consume_banner_skip — so the longer hold costs an impatient
+## player nothing.
+const POWER_BANNER_SECONDS := 2.6
 const INSTANT_BANNER_SECONDS := 0.5
+## How long the board's power marks take to lift and fade once the card clears.
+## Scaled like the other theatre rather than held at a readable length, because
+## the marks are on the board a player is already looking at.
+const BASE_POWER_MARK_SECONDS := 0.3
 ## The AI opens its turn just after the awaited day banner clears. This is only
 ## the breathing room after it, never a second copy of the banner's own hold.
 const START_DELAY_PADDING := 0.1
@@ -194,6 +203,12 @@ func banner_seconds() -> float:
 
 func power_banner_seconds() -> float:
 	return INSTANT_BANNER_SECONDS if instant else POWER_BANNER_SECONDS
+
+
+## Zero under Instant, where BattleAnimator skips the marks outright rather than
+## drawing them for no frames.
+func power_mark_seconds() -> float:
+	return BASE_POWER_MARK_SECONDS * anim_scale
 
 
 ## How long the AI waits after the day banner clears before its first command.

@@ -56,6 +56,8 @@ var perspective: BattlePerspective
 var cursor: Sprite2D
 var turn_banner: TurnBanner
 var power_banner: CommanderPowerBanner
+## The board marks a fired power leaves behind, played once the card clears.
+var power_marks: PowerMarks
 ## What a scripted mission beat says, held like the power card and retired by the
 ## same press; down for every skirmish, because nothing else ever fills it.
 var mission_speech: MissionSpeechCard
@@ -392,6 +394,37 @@ func _finish_power_banner() -> void:
 		return
 	power_banner.hide()
 	power_banner_finished.emit()
+
+
+## Who the power just touched, said on the board rather than only on the card: a
+## mark over every affected unit, lifting off its tile and fading. Awaitable like
+## the card, so the flow resumes with the board at rest.
+##
+## Handed the marks already worked out and already through the fog gate — this
+## decides nothing about who was affected. An empty list is the ordinary quiet
+## case: a power fired where the viewer can see none of it.
+##
+## While capturing the marks pose at rest, exactly as the card holds, because
+## there they are the frame's subject. Instant skips them outright — that tier
+## shows results rather than playing them out.
+func show_power_effects(marks: Array[PowerEffects.Mark]) -> void:
+	if marks.is_empty():
+		return
+	if capturing:
+		power_marks.set_marks(marks)
+		return
+	var tier := Settings.speed
+	if tier.instant:
+		return
+	power_marks.set_marks(marks)
+	var seconds := tier.power_mark_seconds()
+	var tween := node.create_tween().set_parallel()
+	tween.tween_property(power_marks, "rise", 1.0, seconds).set_trans(Tween.TRANS_CUBIC).set_ease(
+		Tween.EASE_OUT
+	)
+	tween.tween_property(power_marks, "modulate:a", 0.0, seconds).set_delay(seconds)
+	await tween.finished
+	power_marks.clear_marks()
 
 
 ## One beat of scripted mission dialogue, on the board the beat landed on. The
