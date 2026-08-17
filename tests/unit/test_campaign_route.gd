@@ -129,6 +129,36 @@ func test_a_mission_ahead_of_the_route_is_locked_rather_than_skipped() -> void:
 	assert_false(state.is_skipped(_campaign(), &"three"))
 
 
+# --- the developer override (`--unlock-missions`) ----------------------------
+
+
+## Every authored mission is playable, and none of them reads as a road not
+## taken: what the flag changes is what the war offers, nothing else.
+func test_the_override_opens_every_mission() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].unlock_requires = _condition(HELD)
+	var state := CampaignState.begin(campaign)
+	state.unlock_all = true
+	for id: StringName in [&"one", &"two", &"three"]:
+		assert_true(state.is_unlocked(id), "%s is playable" % id)
+		assert_false(state.is_skipped(campaign, id), "and none of them is a road not taken")
+	assert_eq(state.offered_count(campaign), 3)
+
+
+## The route is the profile's own answer throughout, so a mission the flag let a
+## developer play cannot be banked as an unlock the war earned.
+func test_the_override_leaves_the_route_and_the_latch_alone() -> void:
+	var campaign := _campaign()
+	campaign.missions[1].unlock_requires = _condition(HELD)
+	var state := CampaignState.begin(campaign)
+	state.unlock_all = true
+	assert_eq(state.open_mission(campaign), &"one")
+	state.complete(campaign, &"one", 1, 3)
+	assert_false(state.unlocked.has(&"two"), "the route still refused it")
+	assert_true(state.unlocked.has(&"three"), "and opened the one behind it as it always did")
+	assert_eq(state.open_mission(campaign), &"three", "the war still walked past two")
+
+
 # --- what "complete" now means ----------------------------------------------
 
 

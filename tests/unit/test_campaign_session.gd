@@ -250,6 +250,37 @@ func test_a_saved_mission_resumes_from_the_campaign_profile() -> void:
 	assert_eq(built.game.map_path, FIRST_STEPS)
 
 
+# --- the developer override (`--unlock-missions`) ----------------------------
+
+
+## The flagless case the one below is against: a won mission is recorded.
+func test_a_won_mission_is_written_to_the_profile() -> void:
+	_begin(_campaign())
+	var state := _state()
+	assert_true(CampaignSession.decide(state))
+	CampaignSession.record(state)
+	assert_true(CampaignProfile.has_profile(PROBE))
+
+
+## A mission won through the override banks nothing at all. Recording it would
+## clear a mission the player may not have reached, which walks the route past
+## every mission behind it and reads the war back as finished.
+func test_a_mission_won_through_the_override_writes_nothing() -> void:
+	var campaign := _campaign()
+	var progress := CampaignState.begin(campaign)
+	progress.unlock_all = true
+	CampaignSession.begin(campaign, campaign.missions[0], progress)
+	var state := _state()
+	assert_true(CampaignSession.decide(state))
+	CampaignSession.record(state)
+	assert_false(CampaignProfile.has_profile(PROBE), "the win is not banked")
+	assert_false(
+		CampaignSession.save_battle(SaveCodec.encode(state, [2] as Array[int])),
+		"and a mid-mission save is refused by the same door"
+	)
+	assert_false(CampaignProfile.has_profile(PROBE))
+
+
 ## A campaign resume with nothing to resume is a refusal, never a quiet fresh
 ## start: day one of the mission would look exactly like the resume working,
 ## with the player's half-played attempt silently gone.

@@ -111,6 +111,39 @@ func test_a_profile_the_codec_refuses_is_absent_to_every_reader() -> void:
 	assert_true(in_progress.tally.is_empty())
 
 
+# --- the developer override (`--unlock-missions`) ----------------------------
+
+
+## A run that opened every mission writes nothing at all: it never creates a
+## profile, and it never touches the one the player already had. Winning a
+## mission out of order otherwise walks the route past everything behind it, and
+## the war reads back as finished.
+func test_a_run_with_the_override_open_writes_no_profile() -> void:
+	var state := CampaignState.begin(campaign)
+	state.unlock_all = true
+	state.complete(campaign, &"three", 3, 4)
+	assert_false(CampaignProfile.save_progress(state), "the write is refused")
+	assert_false(CampaignProfile.has_profile(PROBE), "and nothing is on disk")
+
+
+func test_the_override_leaves_the_profile_the_player_earned_exactly_as_it_was() -> void:
+	var earned := CampaignState.begin(campaign)
+	earned.complete(campaign, &"one", 1, 9)
+	assert_true(CampaignProfile.save_progress(earned))
+	var before := FileAccess.get_file_as_string(CampaignProfile.path_for(PROBE))
+
+	var inspecting := CampaignProfile.load_progress(PROBE)
+	inspecting.unlock_all = true
+	inspecting.complete(campaign, &"three", 3, 2)
+	assert_false(CampaignProfile.save_progress(inspecting, {"version": 8, "day": 3}))
+	assert_eq(
+		FileAccess.get_file_as_string(CampaignProfile.path_for(PROBE)),
+		before,
+		"the profile is byte-for-byte the one the run opened"
+	)
+	assert_false(CampaignProfile.load_progress(PROBE).is_cleared(&"three"))
+
+
 func test_erase_takes_the_siblings_with_it() -> void:
 	var state := CampaignState.begin(campaign)
 	assert_true(CampaignProfile.save_progress(state))
