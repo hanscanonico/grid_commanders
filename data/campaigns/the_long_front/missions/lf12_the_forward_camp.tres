@@ -23,7 +23,7 @@ text = "Orlov's fortified camp is the last thing standing between us and the foo
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Then it's the last thing standing between defence and offence. Take the camp, and the front stops holding and starts moving."
+text = "Then it is the last thing between defending and attacking. Take the camp, and the front stops holding and starts moving."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")

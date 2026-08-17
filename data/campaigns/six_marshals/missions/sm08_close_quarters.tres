@@ -44,7 +44,7 @@ text = "Then we bleed on our terms, not his. Rotate the wounded out before he ev
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four hamlets and four squares of trees, and nothing else on twelve squares of board. Whatever gets hurt goes into the trees — there is no back to send it to."
+text = "Four hamlets and four squares of trees on twelve squares of board, and nothing else. Anything that gets hurt goes into the trees. There is no rear to send it to."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

@@ -47,7 +47,7 @@ tag = &"rider_b"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "Coalyard's mine personally, Rook. There's bounty in every column of yours I isolate and break."
+text = "The coalyard is mine, Rook. I get paid for every column of yours I cut off and break."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
@@ -57,12 +57,12 @@ text = "Noted. We move as one column, not three — nothing for you to isolate."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Two depots, nine days. His pay-riders carry the bounty ledger — run them down and he collects nothing."
+text = "Two depots, nine days. His pay-riders carry the bounty money. Run them down and he gets nothing."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Coalyard's running. Audit complete — he collected nothing for the trouble."
+text = "Coalyard's running. He rode all that way and collected nothing."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
@@ -90,7 +90,7 @@ note = "Ferrow caught our column under the strength it rode in with at least onc
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"dane_ferrow"
-text = "Your line came up short of what it rode in with. Invoice submitted."
+text = "Your line came out shorter than it went in. The bill is on its way."
 
 [sub_resource type="Resource" id="Event_invoice_submitted"]
 script = ExtResource("7")
@@ -183,4 +183,4 @@ events = Array[Resource]([SubResource("Event_invoice_submitted"), SubResource("E
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The coalyard stayed shut, and Ferrow's ledger grew by exactly our losses."
+defeat = "The coalyard stayed shut, and Ferrow was paid for every man we lost."

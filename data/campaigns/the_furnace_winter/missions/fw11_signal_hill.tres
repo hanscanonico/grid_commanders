@@ -57,7 +57,7 @@ text = "Three relays, Flux. Dug in on all of them — figured you'd besiege one 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Wrong figure. We take them together or not at all — a single depot held back funds the other two."
+text = "Wrong guess. We take all three at once. One left in his hands pays for the other two."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -96,7 +96,7 @@ units = Array[Resource]([SubResource("Spawn_rider_north"), SubResource("Spawn_ri
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Fast is the whole product, Flux. Two more riders on the hill — see if your three columns can be in three places."
+text = "Fast is what I sell, Flux. Two more riders on the hill. Let us see your three columns be in three places."
 
 [sub_resource type="Resource" id="Event_two_more_riders"]
 script = ExtResource("5")
@@ -127,7 +127,7 @@ note = "Ferrow caught our column under the strength it rode in with at least onc
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Three columns rode onto this hill and I am counting fewer than three. Invoice submitted."
+text = "Three columns rode onto this hill. I count fewer than three now. The bill is on its way."
 
 [sub_resource type="Resource" id="Event_invoice_submitted"]
 script = ExtResource("5")
@@ -159,7 +159,7 @@ objective_id = &"the_paymaster"
 [sub_resource type="Resource" id="Event_line_4"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "The middle relay's log is still warm. His pay schedule rides tonight — one rider, heavy satchel."
+text = "The middle relay's log is still warm. His paymaster rides tonight — one rider, heavy bag."
 
 [sub_resource type="Resource" id="Event_the_intercept"]
 script = ExtResource("5")
@@ -183,7 +183,7 @@ note = "Signal Hill's three relays were opened together with their stores intact
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Three relays, one morning, a day still on the clock. Nothing held back to fund anything. Log the hill open."
+text = "Three relays in one morning, a day still on the clock. He held nothing back. The hill is ours."
 
 [sub_resource type="Resource" id="Event_the_relays_answer"]
 script = ExtResource("5")

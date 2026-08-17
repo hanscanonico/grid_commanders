@@ -24,7 +24,7 @@ cell = Vector2i(12, 3)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"halden_marr"
-text = "Ferrow's turned a captured airfield into a raiding base against the advance. Every day it stands, the highlands cost more."
+text = "Ferrow has turned a captured airfield into a raiding base. Every day it stands, the highlands cost us more."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")

@@ -24,7 +24,7 @@ days = 2
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Three border towns are filing for Iron rail permits nobody in Meridian approved. That's Vale's paperwork, Rowan — he takes ground without a shot."
+text = "Three border towns have filed for Iron rail permits nobody in Meridian approved. That is Vale's paperwork, Rowan. He takes ground without firing."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -115,4 +115,4 @@ events = Array[Resource]([SubResource("Event_the_permit_clears"), SubResource("E
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "One town too many went through on paper, and the frontier is a little less Meridian's than the map says."
+defeat = "One town too many went through on paper, and the frontier is less Meridian's than the map says."

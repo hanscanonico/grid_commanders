@@ -26,22 +26,22 @@ text = "Vale's army costs more than it should and hits harder for it. Don't figh
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "Six towns on the board, income for the taking. Every one we hold is one his premium can't buy back."
+text = "Six towns out there, all paying. Every one we hold is one his money cannot buy back."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Four of the six sit closer to our base than to his — the western pair and the middle pair, that one by a single tile. Walk at those four and the majority is arithmetic."
+text = "Four of the six sit closer to our base than his — the western pair and the middle pair, that one by a single tile. Take those four and we have the majority."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"ines_calder"
-text = "The market closed while he was still pricing his first bid. We never out-shot him, Commander — we out-numbered him, town by town."
+text = "He was still working out his first bid when it ended. We never out-shot him, Commander. We out-owned him, town by town."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Vale's ledger shows the expense. It doesn't show the win."
+text = "Vale paid for a better army. It still lost."
 
 [sub_resource type="Resource" id="Trigger_day_5"]
 script = ExtResource("6")
@@ -88,7 +88,7 @@ units = Array[Resource]([SubResource("Spawn_crossroads_missiles")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "And the crossroads has begun to pay for itself. You left me a factory, Commander; this is its first invoice."
+text = "The crossroads has started paying for itself. You left me a factory, Commander. This is what it built."
 
 [sub_resource type="Resource" id="Event_the_crossroads_pays"]
 script = ExtResource("5")
@@ -121,4 +121,4 @@ events = Array[Resource]([SubResource("Event_interest_accrues"), SubResource("Ev
 par_day = 8
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "Vale's expensive army finally caught up to a treasury it had outgrown weeks before."
+defeat = "Vale's expensive army caught up with us, and our towns could not pay for the answer."

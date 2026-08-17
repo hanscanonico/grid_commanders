@@ -34,12 +34,12 @@ team = 2
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Ferrow's second column is probing the passes. He wants a lane through, not a fight — and every kill he lands still pays into his bounty."
+text = "Ferrow's second column is probing the passes. He wants a way through, not a fight, and every kill he lands still pays him."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Then make sure nothing he touches is worth killing. His raiders are thin-skinned — corner one and it comes apart."
+text = "Then give him nothing worth killing. His raiders are thin-skinned. Corner one and it falls apart."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -49,12 +49,12 @@ text = "Let him commit to one gap, then close on him from the towns either side.
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "He got his lane and nothing at the end of it. The column broke off with nothing to show for the climb."
+text = "He got his lane and found nothing at the end of it. The column climbed all that way for nothing."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "No kills, no bounty. That's the only ledger entry that matters today."
+text = "No kills, no bounty. That is the only number that matters today."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -102,7 +102,7 @@ amount = 3000
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "There it is. Wreckage on the climb, and a credit against my name for every piece of it."
+text = "There it is. Wreckage on the climb, and I get paid for every piece of it."
 
 [sub_resource type="Resource" id="Event_the_climb_pays"]
 script = ExtResource("6")
@@ -135,7 +135,7 @@ units = Array[Resource]([SubResource("Spawn_bought_raider")])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "The customs road bought this one outright, Commander. Your column, my third raider. Do keep spending."
+text = "The customs road paid for this one, Commander. Your column bought my third raider. Do keep spending."
 
 [sub_resource type="Resource" id="Event_bought_on_the_border"]
 script = ExtResource("6")
@@ -168,4 +168,4 @@ events = Array[Resource]([SubResource("Event_he_commits"), SubResource("Event_th
 par_day = 7
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The passes changed hands, and Ferrow's ledger got heavier."
+defeat = "The passes changed hands, and Ferrow was paid for all of it."

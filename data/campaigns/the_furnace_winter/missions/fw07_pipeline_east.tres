@@ -55,7 +55,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
 speaker = &"iris_colt"
-text = "The causeway's still ours from the freeze, so the fuel has somewhere to go the moment this road opens."
+text = "We still hold the causeway from the freeze. Open this road and the fuel has somewhere to go."
 requires = SubResource("Cond_ice_road_open")
 
 [sub_resource type="Resource" id="Line_3"]
@@ -71,7 +71,7 @@ text = "Both depots open. The eastern road's running fuel again."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Withdrawn to the next junction. I'll be waiting there with a longer ledger."
+text = "Withdrawn to the next junction. I will be waiting there with more."
 
 [sub_resource type="Resource" id="Trigger_depot_1_ours"]
 script = ExtResource("8")
@@ -96,7 +96,7 @@ units = Array[Resource]([SubResource("Spawn_depot_2_watch"), SubResource("Spawn_
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Depot one is yours. Depot two has just been re-staffed — I keep a reserve for exactly this entry in the book."
+text = "Depot one is yours. Depot two has fresh troops in it — I keep a reserve for exactly this."
 
 [sub_resource type="Resource" id="Event_re_staffed"]
 script = ExtResource("7")
@@ -125,7 +125,7 @@ note = "The eastern fuel road was reopened with its depots still working."
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"iris_colt"
-text = "Both depots ours with a day still in hand. Pumps turning, tankage full — log the eastern road open."
+text = "Both depots ours with a day to spare. Pumps turning, tanks full. The eastern road is open."
 
 [sub_resource type="Resource" id="Event_the_east_road_runs"]
 script = ExtResource("7")

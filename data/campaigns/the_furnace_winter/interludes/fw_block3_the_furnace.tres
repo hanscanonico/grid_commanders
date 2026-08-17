@@ -24,12 +24,12 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The valves opened in the order they had been closed, which took eleven days and read, in the office that had shut them, as a single very long correction."
+text = "The valves opened in the order they had been closed. It took eleven days. In the office that shut them, it read as one very long correction."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "The toll is over. That is the whole of the finding, and it is worth saying plainly because nobody on either side ever said the word war out loud."
+text = "The toll is over. That is the whole finding, and it is worth saying plainly, because nobody on either side ever said the word war out loud."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
@@ -40,13 +40,13 @@ requires = SubResource("Cond_road_runs_whole")
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "And Ferrow rode the entire winter without once finding our line a man short. He will tell you that is the only defeat he understands; he is not wrong."
+text = "And Ferrow rode all winter without once finding our line a man short. He says that is the only kind of defeat he understands. He is right."
 requires = SubResource("Cond_ledger_clean")
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "Milltown ate through the freeze on its own granary. Ask anybody down there which week of this mattered and they will name the first one."
+text = "Milltown ate through the freeze on its own granary. Ask anyone down there which week mattered and they will say the first one."
 requires = SubResource("Cond_granary_saved")
 
 [sub_resource type="Resource" id="Cond_siege_broken"]
@@ -58,13 +58,13 @@ at_most = -1
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("2")
 speaker = &"nia_rowan"
-text = "The smelter yard held all eight days, and her siege gun never fired again after it. Every road east of here is quieter for that."
+text = "The smelter yard held all eight days, and her siege gun never fired again. Every road east of here is quieter for it."
 requires = SubResource("Cond_siege_broken")
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("2")
 speaker = &"konrad_vale"
-text = "You have the furnace and the road to it, Commander, and you will find both cost more to keep open than they ever did to close. I signed for a winter without open war. You will be signing for whatever comes next."
+text = "You have the furnace and the road to it, Commander. You will find both cost more to keep open than they ever did to close. I signed for a winter without open war. You will be signing for whatever comes next."
 
 [resource]
 script = ExtResource("1")

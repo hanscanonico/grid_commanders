@@ -36,12 +36,12 @@ max_losses = 9
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three depots, one road, all feeding the same production line. Morn's defending output, not ground — he'll spend units to keep it running."
+text = "Three depots on one road, all feeding the same production line. Morn is defending output, not ground, and he will spend units to keep it running."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"tomas_reed"
-text = "Then we make it cost him more than it's worth. Take all three, but keep the column spread while we do it."
+text = "Then we make it cost more than it is worth. Take all three, and keep the column spread out while we do."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")

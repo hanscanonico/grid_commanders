@@ -50,13 +50,13 @@ text = "Ferrow's ledger now claims the entire province. This is the seizure he's
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "The auction towns closed four-of-five in our hands, so the only ground his claim still rests on is this."
+text = "We closed the auction holding four of the five towns, so this is the only ground his claim still rests on."
 requires = SubResource("Auction_won")
 
 [sub_resource type="Resource" id="Line_1c"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "The auction closed with the towns split, so his claim came into this province already half-argued."
+text = "The auction closed with the towns split, so he came into this province with half a case already made."
 requires = SubResource("Auction_split")
 
 [sub_resource type="Resource" id="Line_2"]
@@ -67,12 +67,12 @@ text = "I hold. I don't chase. Give me the majority of these towns and I'll make
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "Four towns out at the corners with woods beside them, and two stacked in the middle of the province with the relay among them. The middle is the shorter walk for both of us."
+text = "Four towns out at the corners with woods beside them, and two more stacked in the middle with the relay between them. The middle is the shorter walk for both of us."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"mara_voss"
-text = "He never took a second square of this province. I stood on four towns and let him spend himself reaching for the fifth."
+text = "He never took a second square of this province. I stood on four towns and let him wear himself out on the fifth."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")

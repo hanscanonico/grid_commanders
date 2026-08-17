@@ -25,7 +25,7 @@ tag = &"orlov_handler"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Every flipped town, every column in the woods, every forged ledger — all of it ran through one garrison base on no map anyone issued."
+text = "Every flipped town, every column in the woods, every forged ledger ran through one garrison base, and it is on no map anyone issued."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -63,7 +63,7 @@ objective_id = &"destroy_orlov_handler"
 [sub_resource type="Resource" id="Event_line_staff_car"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "A staff car just left the safehouse by the east road, ahead of us rather than behind. That's the handler — he's the whole file."
+text = "A staff car just left the safehouse by the east road, ahead of us. That is the handler, and he is the whole file."
 
 [sub_resource type="Resource" id="Event_the_handler_runs"]
 script = ExtResource("6")

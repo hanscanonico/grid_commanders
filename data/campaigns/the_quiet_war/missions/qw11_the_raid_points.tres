@@ -35,7 +35,7 @@ days = 3
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "Three small towns have traded hands all month between Ferrow's raiders and whoever held them last week. Nobody's held all three at once."
+text = "Three small towns have changed hands all month between Ferrow's raiders and whoever held them last week. Nobody has held all three at once."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -55,7 +55,7 @@ text = "This time I'm not leaving until it does."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"nia_rowan"
-text = "All three towns fly the same colours for the first time this month. His raiders have nowhere left to trade for."
+text = "All three towns fly the same colours for the first time this month. His raiders have nothing left to trade for."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")

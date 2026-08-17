@@ -19,7 +19,7 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"alina_ward"
-text = "Rumours put Viktor Draeg's own spearhead on this stretch of border, Sol. Orlov's hedging his play with real armour instead of forged paperwork."
+text = "Rumour puts Viktor Draeg's own spearhead on this stretch of border, Sol. Orlov is backing his game with real armour now, not forged paperwork."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -29,7 +29,7 @@ text = "Then I answer by taking and holding every city on the map. It's the leas
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "I was ordered here to make Orlov's war mine, Commander Sol. I find I have little taste for a war fought with ledgers and stolen towns."
+text = "I was ordered here to make Orlov's war mine, Commander Sol. I have little taste for a war fought with ledgers and stolen towns."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("3")
@@ -58,7 +58,7 @@ points = 3500
 [sub_resource type="Resource" id="Event_line_daylight"]
 script = ExtResource("3")
 speaker = &"viktor_draeg"
-text = "You are taking them in the open, exactly as you said you would. Then so will I — everything I have, where you can see it, and no order I would not sign."
+text = "You are taking them in the open, exactly as you said you would. Then so will I. Everything I have, where you can see it, and no order I would not sign."
 
 [sub_resource type="Resource" id="Event_draeg_answers_in_daylight"]
 script = ExtResource("5")

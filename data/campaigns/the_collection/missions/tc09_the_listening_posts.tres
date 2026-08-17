@@ -41,17 +41,17 @@ text = "Every post on this road reports straight to Orlov. Cut all three and his
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "We start this one behind on income — the odds favor speed over an even fight, every time I run it."
+text = "We start this one behind on income. Speed beats a fair fight here, every time I run the numbers."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "He is sitting on the near post and on the one a square off the road. The far post is nobody's — so the fight is the first two, and the third is only a walk."
+text = "He holds the near post and the one a square off the road. The far post is nobody's, so the fight is the first two and the third is only a walk."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "The wire is cut at all three. I never had better than even odds today — I simply refused to roll badly."
+text = "The wire is cut at all three. I never had better than even odds today. I just did not roll badly."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
@@ -71,7 +71,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"lyra_quill"
-text = "First post, and its pay chest with it. That is the deficit closed."
+text = "First post, and its pay chest with it. We are level on money now."
 
 [sub_resource type="Resource" id="Event_the_pay_chest"]
 script = ExtResource("6")

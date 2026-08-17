@@ -17,7 +17,7 @@ cell = Vector2i(7, 4)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Five marshals down to one border, and one left to open: Konrad Vale. Everything he fields costs more and hits harder for it."
+text = "Six marshals, one border, and the next one is Konrad Vale. Everything he fields costs more and hits harder for it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -27,22 +27,22 @@ text = "Then we don't let him field it. The crossroads base finishes in nine day
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"konrad_vale"
-text = "Six days. Optimistic pricing, Commander. I've built empires on worse odds."
+text = "Six days. Optimistic, Commander. I have built more than this on worse odds."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "Deny him the factory, and every premium he priced in never gets spent."
+text = "Take the factory off him and all that extra money never gets spent."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"rhea_sol"
-text = "The crossroads is ours, four days early. Vale's ledger shows a factory that never opened."
+text = "The crossroads is ours, four days early. His factory never opened."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "One marshal's economy, closed before it started."
+text = "One marshal's war, over before it started."
 
 [sub_resource type="Resource" id="Trigger_day_6"]
 script = ExtResource("6")

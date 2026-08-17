@@ -47,7 +47,7 @@ requires = SubResource("Every_town_saved")
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "We hold the hill and the papers, and not the man. Write it down as it happened — the next border he dissolves will be somebody else's, and they will want to know how this one read."
+text = "We hold the hill and the papers, but not the man. Write it down as it happened. The next border he takes apart will be somebody else's, and they will want to know how this one went."
 
 [resource]
 script = ExtResource("1")

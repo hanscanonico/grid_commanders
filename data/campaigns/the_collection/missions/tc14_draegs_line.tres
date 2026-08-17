@@ -25,17 +25,17 @@ terrain_id = &"city"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Word from the wire: Draeg's stood his whole sector down. Turns out even Iron's most honest marshal draws a line at fighting for a forged ledger."
+text = "Word off the wire: Draeg has stood his whole sector down. Even Iron's most honest marshal will not fight for a forged ledger."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Draeg's sentiment is noted and irrelevant. I inherited his sector, thin as it is, and I don't need to be honest to hold it."
+text = "Draeg's feelings are noted and beside the point. I have his sector now, thin as it is, and I do not need to be honest to hold it."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"sera_lark"
-text = "Thin is thin. Two men in the whole sector and four towns nobody is standing on — I can be on two of them before she has finished reading the reassignment."
+text = "Thin is thin. Two men in the whole sector and four towns nobody is standing on. I can be on two of them before she finishes reading her orders."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

@@ -49,12 +49,12 @@ tag = &"siege_gun"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "You are standing in my smelter yard, Commander. I have costed its recovery down to the shell."
+text = "You are standing in my smelter yard, Commander. I have already worked out what taking it back costs."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "Then your books are about to disagree with my column. The yard came at a price — we're not returning it."
+text = "Then your books are wrong. The yard cost us men, and we are not giving it back."
 
 [sub_resource type="Resource" id="Cond_depots_ten"]
 script = ExtResource("15")
@@ -65,7 +65,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "The depot road runs almost whole behind us. Relief is loaded and rolling — we only have to still be here."
+text = "Most of the depot road is open behind us. Relief is loaded and moving. We only have to still be here."
 requires = SubResource("Cond_depots_ten")
 
 [sub_resource type="Resource" id="Line_3"]
@@ -81,7 +81,7 @@ text = "Relief's in the yard and the smelters still answer to us. Held, all eigh
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "A recovery I costed to the shell, and the yard did not move. The error was mine to sign."
+text = "I costed that attack down to the last shell, and the yard did not move. My mistake."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("8")
@@ -132,7 +132,7 @@ units = Array[Resource]([SubResource("Spawn_wave_two_tank")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("6")
 speaker = &"iona_vance"
-text = "Second instalment. I budget deeper than you dig, Commander."
+text = "Second wave. I can pay for more than you can dig for, Commander."
 
 [sub_resource type="Resource" id="Event_the_second_instalment"]
 script = ExtResource("7")
@@ -188,7 +188,7 @@ note = "Vance's siege gun was silenced in the smelter yard, and her batteries ne
 [sub_resource type="Resource" id="Event_line_4"]
 script = ExtResource("6")
 speaker = &"nia_rowan"
-text = "The gun's silent. Whatever she budgeted for shells, refund it."
+text = "The gun is silent. She can have her shells back."
 
 [sub_resource type="Resource" id="Event_the_gun_falls_silent"]
 script = ExtResource("7")
@@ -224,4 +224,4 @@ carry_out = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_6"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The yard went back onto her books, and the smelters fed Vale's furnace all spring."
+defeat = "The yard went back to Vance, and the smelters fed Vale's furnace all spring."

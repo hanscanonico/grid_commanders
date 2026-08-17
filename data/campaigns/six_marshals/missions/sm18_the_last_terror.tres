@@ -46,7 +46,7 @@ text = "Fear doesn't need to win, Commander. It only needs you to hesitate once.
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"gideon_holt"
-text = "Then we don't. Two passes through the mountain, two squares wide apiece, with eight squares of rock between them — hold each one and keep everything behind it spread."
+text = "Then we do not. Two passes through the mountain, two squares wide each, with eight squares of rock between them. Hold each one and keep everything behind it spread out."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -56,7 +56,7 @@ text = "Win here and the succession — and the border — is decided."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "The heartland held. Morn's terror campaign, and with it the Dominion's succession fight, is finished."
+text = "The heartland held. Morn is finished, and so is the fight over who leads the Dominion."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
@@ -227,7 +227,7 @@ units = Array[Resource]([SubResource("Spawn_vances_levy")])
 [sub_resource type="Resource" id="Event_line_vance"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Compounding, still. The days you gave me at the depot are standing in front of you."
+text = "Still adding up. The days you gave me at the depot are standing in front of you."
 
 [sub_resource type="Resource" id="Event_vance_still_compounding"]
 script = ExtResource("7")

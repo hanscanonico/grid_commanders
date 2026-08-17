@@ -33,7 +33,7 @@ text = "This ground favors whoever uses the cover. Pull the wounded into the woo
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Reinforcements arrive day seven. Every unit we keep intact until then is one Orlov doesn't get to count."
+text = "Reinforcements come on day seven. Every unit still whole by then is one Orlov does not get."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
@@ -43,7 +43,7 @@ text = "Keep the line whole. He's patient, but he's not going anywhere either."
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
 speaker = &"orin_flux"
-text = "Day seven. The hunting party found nothing standing wounded, and nothing standing wounded found them."
+text = "Day seven. His hunters found nothing wounded standing in the open, all week."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")

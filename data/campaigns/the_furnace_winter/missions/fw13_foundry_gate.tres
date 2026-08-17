@@ -24,12 +24,12 @@ count = 7
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Two bases deep, Commander, and I open richer than you by design. Vale's doctrine, not an accident."
+text = "Two bases and more money than you, Commander. That is Vale's doing, not luck."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"sera_lark"
-text = "Design or not, a headquarters is a headquarters. Take it and the gate stops being yours to close."
+text = "Rich or not, a headquarters is a headquarters. Take it and she cannot close the gate any more."
 
 [sub_resource type="Resource" id="Cond_vale_withdrew"]
 script = ExtResource("10")
@@ -40,13 +40,13 @@ at_most = -1
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
 speaker = &"sera_lark"
-text = "He gave up the last mile without burning it. That was a man saving his stock for somewhere he means to stand."
+text = "He gave up the last mile without burning it. He is saving what he has for ground he means to hold."
 requires = SubResource("Cond_vale_withdrew")
 
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("5")
 speaker = &"sera_lark"
-text = "The column that opened the last mile is still mine. Every scar on it walked here from the causeway."
+text = "The column that opened the last mile is still with me. Every scar on it walked here from the causeway."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -61,7 +61,7 @@ text = "Gate's down. Your forward command answers to us now."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "Whatever richer opening he gave me, it bought one headquarters and no more."
+text = "All that extra money bought one headquarters. No more."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("7")
@@ -107,7 +107,7 @@ units = Array[Resource]([SubResource("Spawn_second_base_again")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"iona_vance"
-text = "And again, as promised. The gate's arithmetic does not tire, Commander. Do you?"
+text = "And again, as promised. The gate does not tire, Commander. Do you?"
 
 [sub_resource type="Resource" id="Event_the_gate_arithmetic"]
 script = ExtResource("6")

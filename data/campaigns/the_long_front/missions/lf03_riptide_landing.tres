@@ -28,12 +28,12 @@ count = 1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Second column's ashore behind the picket line, Rook. Same morning Meridian lost its border — this isn't a coincidence."
+text = "A second column is ashore behind the picket line, Rook. Meridian lost its border the same morning. That is no coincidence."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
 speaker = &"cassian_rook"
-text = "Coordinated landings on two fronts, noted. We don't have ground to trade for time, so we hold the road instead."
+text = "Two landings, one plan. Noted. We have no ground to trade for time, so we hold the road instead."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
@@ -103,4 +103,4 @@ events = Array[Resource]([SubResource("Event_the_watch_is_inland")])
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])
 victory = Array[Resource]([SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The coast road broke before the watch could pull back, and the sea gave nobody anywhere further to go."
+defeat = "The coast road broke before the watch got out, and behind them there was only the sea."

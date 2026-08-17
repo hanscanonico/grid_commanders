@@ -25,7 +25,7 @@ tag = &"tally_courier"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "The tally post is where Ferrow keeps his running count of what the ledger claims. Burn it and the count resets to nothing."
+text = "The tally post is where Ferrow keeps his count of what the ledger claims. Burn it and the count goes back to nothing."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -45,7 +45,7 @@ text = "The tally post is ours. Whatever Ferrow was counting, the count starts o
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Zero owed, zero collected. He hates that math most of all."
+text = "Nothing owed, nothing collected. That is the sum he hates most."
 
 [sub_resource type="Resource" id="Trigger_courier_taken"]
 script = ExtResource("7")

@@ -32,7 +32,7 @@ text = "Then I clear it. Nothing about the finish works if this ground's still h
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("3")
 speaker = &"iris_colt"
-text = "You'll have more open road to work with than that counterattack doctrine of yours has ever seen."
+text = "You will have more open road to work with than your counterattacks have ever had."
 
 [sub_resource type="Resource" id="Line_3b"]
 script = ExtResource("3")

@@ -24,7 +24,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "The account is closed. The Directorate withdrew its audit in a single line, without ever conceding that anything in it had been invented, and the border went back to where it had always been."
+text = "The account is closed. The Directorate withdrew its audit in one line, without ever admitting that anything in it had been invented, and the border went back to where it had always been."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
@@ -35,7 +35,7 @@ requires = SubResource("Books_taken")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"radek_morn"
-text = "I carried a charge from the foundry chain to the core and spent it on a line that would not bunch. Note it down, Commander. I have."
+text = "I carried a charge from the foundry chain to the core and spent it on a line that would not bunch up. Write that down, Commander. I have."
 requires = SubResource("Charge_banked")
 
 [sub_resource type="Resource" id="Line_4"]

@@ -22,7 +22,7 @@ cell = Vector2i(9, 2)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Vale shut the depots at first frost. No factory behind us — the crossroads base is the only one still unclaimed."
+text = "Vale closed the depots at first frost. There is no factory behind us. The crossroads base is the only one still free."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -42,7 +42,7 @@ text = "The depot is ours. First tanks are already rolling off it."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"dane_ferrow"
-text = "Pulled back east with less than I came for. Vale won't like the invoice."
+text = "Pulled back east with less than I came for. Vale won't like the bill."
 
 [sub_resource type="Resource" id="Trigger_day_3"]
 script = ExtResource("6")

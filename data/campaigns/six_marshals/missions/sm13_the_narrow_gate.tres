@@ -26,7 +26,7 @@ tag = &"draeg_spear"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "The fifth marshal isn't the terror. Viktor Draeg is worse in a simpler way — his tanks hit fifteen percent harder than the chart admits, and when his meter fills they walk through a point of your cover besides."
+text = "The fifth marshal is no terror. Viktor Draeg is worse in a simpler way: his tanks hit fifteen percent harder than the chart says, and when his meter fills they walk through a point of your cover as well."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -36,7 +36,7 @@ text = "I field an honest army, Commander. It simply outperforms yours."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"mara_voss"
-text = "Then we don't fight it on his terms. One gap in the wall — own it, and his whole column stalls there."
+text = "Then we do not fight it on his terms. There is one gap in the wall. Hold it and his whole column stops there."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")

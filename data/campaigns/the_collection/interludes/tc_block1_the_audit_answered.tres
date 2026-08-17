@@ -18,7 +18,7 @@ at_most = -1
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Six weeks of collection, and the Directorate's audit ends the season with the same four columns it opened with: claimed, collateral, interest, and paid. Only the last column has anything in it."
+text = "Six weeks of collection, and the Directorate's audit ends the season with the same four columns it opened with: claimed, collateral, interest, paid. Only the last one has anything in it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
@@ -28,7 +28,7 @@ text = "The province never changed hands. Whatever that paper says it is owed, i
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"alina_ward"
-text = "And the auction closed with four of the five in our hands, which is a number the Directorate cannot argue with in writing."
+text = "And the auction closed with four of the five in our hands. That is a number the Directorate cannot argue with on paper."
 requires = SubResource("Province_held")
 
 [sub_resource type="Resource" id="Line_4"]

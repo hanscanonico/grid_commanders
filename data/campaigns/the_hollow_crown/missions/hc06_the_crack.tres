@@ -71,7 +71,7 @@ text = "That order came from a capital with nobody left in it. My own column has
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"tomas_reed"
-text = "Two of his companies just turned round and walked off the field. That is not a retreat, Marshal — that is a chain of command coming apart where we can watch it."
+text = "Two of his companies just turned round and walked off the field. That is not a retreat, Marshal. That is a chain of command falling apart in front of us."
 
 [sub_resource type="Resource" id="Event_the_column_stops_answering"]
 script = ExtResource("6")
@@ -104,4 +104,4 @@ events = Array[Resource]([SubResource("Event_the_column_stops_answering")])
 par_day = 5
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = "Orlov held, and whatever is coming for Iron arrives without us having moved an inch closer to it."
+defeat = "Orlov held, and whatever is coming for Iron arrives with us no closer to it than before."

@@ -33,13 +33,13 @@ text = "Rook's picket bought a day. Cost him half his force, and the port's stil
 [sub_resource type="Resource" id="Line_1a"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "His coast watch came inland with him, so the quay knows exactly who is still in the district and how many boats that is."
+text = "His coast watch came inland with him, so the quay knows who is still in the district and how many boats that takes."
 requires = SubResource("Watch_saved")
 
 [sub_resource type="Resource" id="Line_1b"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "His coast watch never got off the beach road, so nobody at the quay has a list. We load until the hulls are full and hope that was everyone."
+text = "His coast watch never got off the beach road, so nobody at the quay has a list. We load until the boats are full and hope that was everyone."
 requires = SubResource("Watch_lost")
 
 [sub_resource type="Resource" id="Line_2"]
@@ -79,7 +79,7 @@ points = 5000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("3")
 speaker = &"orin_flux"
-text = "Last hull's past the mole, Quill. Whatever's still in the district is yours to spend, and nobody else's."
+text = "Last boat is past the harbour wall, Quill. Whatever is still in the district is yours to spend now."
 
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("3")

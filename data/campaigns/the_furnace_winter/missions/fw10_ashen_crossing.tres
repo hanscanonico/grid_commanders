@@ -43,7 +43,7 @@ text = "Three depots this time, spaced so no single column of yours reaches all 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "Spaced doesn't mean safe — the far depot funds the middle one. Break the order, break the funding."
+text = "Spread out is not the same as safe. The far depot pays for the middle one — take that one first."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
@@ -53,7 +53,7 @@ text = "Nine days for three checkpoints. Don't stop to hold what's already taken
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "The crossing's open. The odds on that chain holding were never good."
+text = "The crossing is open. That chain was never good odds."
 
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
@@ -78,7 +78,7 @@ amount = 4000
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "Far depot's books came with it, and the middle one hasn't been paid yet. That's their payroll in our pocket."
+text = "The far depot's pay chest came with it, and the middle one is still owed. Their wages are ours now."
 
 [sub_resource type="Resource" id="Event_the_far_depots_books"]
 script = ExtResource("6")
@@ -112,7 +112,7 @@ note = "The ashen crossing was reopened end to end with its depots still working
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"lyra_quill"
-text = "Three chambers, three depots, both bridges standing. Nobody had that priced."
+text = "Three depots, both bridges standing. Nobody bet on that."
 
 [sub_resource type="Resource" id="Event_the_ashen_road_runs"]
 script = ExtResource("6")
@@ -145,4 +145,4 @@ events = Array[Resource]([SubResource("Event_the_far_depots_books"), SubResource
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The ashen road stayed a chain of closed gates, and the column that was to open it is gone."
+defeat = "The ashen road stayed shut, and the column sent to open it is gone."

@@ -18,7 +18,7 @@ at_most = 0
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("2")
-text = "Ferrow's column went home in the second week of the thaw. It is the only Iron force on the whole border that withdrew because it wanted to."
+text = "Ferrow's column went home in the second week of the thaw. It is the only Iron force on the border that left because it wanted to."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("2")
@@ -29,13 +29,13 @@ requires = SubResource("Unpaid")
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("2")
 speaker = &"dane_ferrow"
-text = "The Directorate is dead and six of us are bidding for its chair. I go into that room with a full column and your losses on the ledger beside it."
+text = "The Directorate is dead and six of us want its chair. I walk into that room with a full column and a bill for your losses."
 requires = SubResource("Paid")
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("2")
 speaker = &"gideon_holt"
-text = "One marshal answered. The next one does not raid at all — Konrad Vale buys the ground before he takes it, and he is already building on ours."
+text = "One marshal answered. The next one does not raid at all. Konrad Vale buys ground before he takes it, and he is already building on ours."
 
 [resource]
 script = ExtResource("1")

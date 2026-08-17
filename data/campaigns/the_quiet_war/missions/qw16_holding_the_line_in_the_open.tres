@@ -32,7 +32,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"mara_voss"
-text = "Vance is committing her heaviest column of the war to break the line before we bring up reserves, Colt. No fog to hide behind this time — only the line itself."
+text = "Vance is throwing her heaviest column of the war at the line before our reserves arrive, Colt. No fog to hide behind this time. Just the line."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")

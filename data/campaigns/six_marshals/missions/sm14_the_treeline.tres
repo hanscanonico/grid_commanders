@@ -27,7 +27,7 @@ tag = &"draeg_lead"
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This ground's too broken for his tanks to mass. Meet a lone tank with artillery, not with a tank of your own."
+text = "This ground is too broken for his tanks to bunch up. Answer a lone tank with artillery, not with a tank of your own."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -37,7 +37,7 @@ text = "Broken ground. Good ground."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Three of the towns are our side of the wood line and the fourth is his — he opens already holding it. The two loose ones are both west; take them early and he spends the rest of the match walking."
+text = "Three of the towns are our side of the wood line and the fourth is his — he opens already holding it. Both loose ones are west. Take them early and he spends the rest of the match walking."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("4")
@@ -47,7 +47,7 @@ text = "Three towns. Draeg's bonus never found a lane."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "Fifteen percent harder means nothing at zero range in the open he never got."
+text = "Fifteen percent harder means nothing if he never gets the open ground."
 
 [sub_resource type="Resource" id="Trigger_lead_gone"]
 script = ExtResource("7")
@@ -103,7 +103,7 @@ units = Array[Resource]([SubResource("Spawn_gate_column")])
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("4")
 speaker = &"viktor_draeg"
-text = "The column you let through the gate. It is in your treeline now, and it kept its formation the whole way."
+text = "The column you let through the gate is in your treeline now, and it held formation the whole way."
 
 [sub_resource type="Resource" id="Event_the_gate_column_arrives"]
 script = ExtResource("6")

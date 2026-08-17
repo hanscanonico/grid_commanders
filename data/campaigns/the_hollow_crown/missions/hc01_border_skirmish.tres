@@ -30,12 +30,12 @@ text = "The line gets tested every spring, Commander. This year I brought more t
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "Noted for the record. The Directorate still stands, officially — nobody at this crossing believes it will for long."
+text = "Noted for the record. Officially the Directorate still stands. Nobody at this crossing thinks it will for long."
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"cassian_rook"
-text = "One road, two towns, woods either side of it. He is a shade better than us on every square, so take the ones he is not standing on yet."
+text = "One road, two towns, woods on both sides. He is slightly better than us on every square, so take the ones he is not standing on yet."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

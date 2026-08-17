@@ -24,7 +24,7 @@ at_most = -1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "There's nothing quiet about this one, Commander. Vance's column is advancing in the open, in daylight — every instrument the network needed to hide is worthless now."
+text = "There is nothing quiet about this one, Commander. Vance's column is advancing in the open, in daylight. Everything the network needed to stay hidden is worthless now."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("3")
@@ -50,7 +50,7 @@ text = "Good. I'm tired of chasing rumours."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Her base falls in a fight neither side had to hide from. We're holding ground we took in daylight — that's its own answer."
+text = "Her base falls in a fight neither side had to hide. We hold ground we took in daylight, and that is answer enough."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")

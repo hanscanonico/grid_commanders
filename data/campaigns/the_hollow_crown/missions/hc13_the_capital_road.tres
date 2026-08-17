@@ -36,7 +36,7 @@ text = "Your numbers are honest, same as ever. Ours have to be better today."
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"perrin_ash"
-text = "From up here it is one road and two towns, Commander, with nothing to hide behind but those woods. He will mass on the road — do not meet him on it."
+text = "From up here it is one road and two towns, Commander, with nothing to hide behind but those woods. He will gather on the road, so do not meet him on it."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")

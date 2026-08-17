@@ -30,7 +30,7 @@ count = 1
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"gideon_holt"
-text = "This is a short window, not a siege. Hold the bank, mass at the bridge, and go before Vance's edge compounds."
+text = "This is a short window, not a siege. Hold the bank, gather at the bridge, and go before her edge grows."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
@@ -74,7 +74,7 @@ units = Array[Resource]([SubResource("Spawn_far_bank_armour")])
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("4")
 speaker = &"iona_vance"
-text = "Three days, Commander, and I have spent every one of them. Whatever crosses that bridge meets what they bought."
+text = "Three days, Commander, and I have used every one of them. Whatever crosses that bridge meets what they paid for."
 
 [sub_resource type="Resource" id="Event_she_counts_the_days"]
 script = ExtResource("6")
@@ -165,4 +165,4 @@ events = Array[Resource]([SubResource("Event_she_counts_the_days"), SubResource(
 par_day = 6
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_5")])
-defeat = "The bank held too passively, and by the time the strike came, her army had grown into it."
+defeat = "We sat on the bank too long, and by the time we pushed, her army had grown into the job."

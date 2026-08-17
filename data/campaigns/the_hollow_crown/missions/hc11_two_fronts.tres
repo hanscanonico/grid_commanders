@@ -40,7 +40,7 @@ text = "I take the western pass. You take the eastern. Neither of us fights this
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("6")
 speaker = &"lyra_quill"
-text = "Good odds either way — two fronts only work against an alliance that fights like one army."
+text = "Good odds either way. Splitting into two fronts only works if we fight as two armies instead of one."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("6")

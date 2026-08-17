@@ -47,13 +47,13 @@ at_most = -1
 [sub_resource type="Resource" id="Line_7"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "Milltown still eats, because we reached its granary before his match did. That is the whole argument, Director, and it started in the first week."
+text = "Milltown still eats, because we reached the granary before his torch did. That is the whole argument, Director, and it started in week one."
 requires = SubResource("Cond_granary_saved")
 
 [sub_resource type="Resource" id="Line_3"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "We take your headquarters here, and the toll you've collected all winter stops being collected."
+text = "We take your headquarters, and the toll you have charged all winter stops."
 
 [sub_resource type="Resource" id="Line_4"]
 script = ExtResource("5")
@@ -63,12 +63,12 @@ text = "Your headquarters is ours. The furnace floor with it. The toll is over."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "The toll bought a winter without open war, Commander. Count the cost of that against what you're about to spend."
+text = "The toll bought a winter without open war, Commander. Weigh that against what you are about to spend."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "We'll count it. The gate's open regardless — that ledger's closed for good."
+text = "We will weigh it. The gate is open either way, and it stays open."
 
 [sub_resource type="Resource" id="Cond_ledger_stayed_clean"]
 script = ExtResource("12")
@@ -79,7 +79,7 @@ at_most = 0
 [sub_resource type="Resource" id="Line_8"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "And Ferrow rode the whole winter without collecting once. Send him the accounting; he'll appreciate it."
+text = "And Ferrow rode all winter without being paid once. Send him the figures. He will appreciate them."
 requires = SubResource("Cond_ledger_stayed_clean")
 
 [sub_resource type="Resource" id="Cond_road_open"]
@@ -126,7 +126,7 @@ units = Array[Resource]([SubResource("Spawn_relief_lead"), SubResource("Spawn_re
 [sub_resource type="Resource" id="Event_line_1"]
 script = ExtResource("5")
 speaker = &"alina_ward"
-text = "Every depot we opened this winter is running east tonight, and it came up the road behind us. Spend it — it was ours to begin with."
+text = "Every depot we opened is running east tonight, and the fuel came up the road behind us. Spend it. It was ours to start with."
 
 [sub_resource type="Resource" id="Event_the_road_runs_east"]
 script = ExtResource("6")
@@ -171,7 +171,7 @@ units = Array[Resource]([SubResource("Spawn_reserve_armour_a"), SubResource("Spa
 [sub_resource type="Resource" id="Event_line_2"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "The road behind you is still half mine, Commander — and the fuel you never freed is in these tanks. You will fight this room on what you carried in."
+text = "Half the road behind you is still mine, and the fuel you never freed is in my tanks. You fight this room on what you carried in."
 
 [sub_resource type="Resource" id="Event_the_road_runs_half"]
 script = ExtResource("6")
@@ -198,7 +198,7 @@ units = Array[Resource]([SubResource("Spawn_doorstep_sortie")])
 [sub_resource type="Resource" id="Event_line_3"]
 script = ExtResource("5")
 speaker = &"konrad_vale"
-text = "I gave up the last mile to stand here with something left to spend. This is the stock I saved, Commander."
+text = "I gave up the last mile so I would still have something to spend here. This is what I saved, Commander."
 
 [sub_resource type="Resource" id="Event_the_saved_stock"]
 script = ExtResource("6")
@@ -233,4 +233,4 @@ carry_in = true
 carry_floor_hp = 50
 briefing = Array[Resource]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_7"), SubResource("Line_3")])
 victory = Array[Resource]([SubResource("Line_4"), SubResource("Line_9"), SubResource("Line_8"), SubResource("Line_5"), SubResource("Line_6")])
-defeat = "The furnace kept running for Vale, and the coldest winter in memory goes on being the price of his ledger."
+defeat = "The furnace kept running for Vale, and the coldest winter anyone remembers went on."

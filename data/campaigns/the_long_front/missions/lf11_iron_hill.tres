@@ -45,7 +45,7 @@ text = "I'll take having it. Doesn't mean I plan on needing it."
 [sub_resource type="Resource" id="Line_5"]
 script = ExtResource("3")
 speaker = &"gideon_holt"
-text = "Her push spent itself against ground that refused to give. You're standing exactly where you started — that's the whole win."
+text = "Her push wore itself out on ground that would not give. You are standing exactly where you started, and that is the win."
 
 [sub_resource type="Resource" id="Line_6"]
 script = ExtResource("3")
