@@ -17,7 +17,7 @@ cell = Vector2i(7, 4)
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")
 speaker = &"alina_ward"
-text = "Six marshals, one border, and the next one is Konrad Vale. Everything he fields costs more and hits harder for it."
+text = "Five marshals left, and the second is Konrad Vale. Everything he fields costs more and hits harder for it."
 
 [sub_resource type="Resource" id="Line_2"]
 script = ExtResource("4")
