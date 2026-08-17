@@ -103,10 +103,19 @@ func refresh(game: GameState) -> void:
 	_place()
 
 
-## O raises and lowers the card. It is redrawn on the way up rather than merely
-## shown, because the board it describes has been played on while it was down —
-## `refresh` does nothing beyond the chip while the card is lowered, which is what
-## keeps a card nobody is looking at off every command's path.
+## Whether the player has the card up, for the pause menu's row to say which way
+## it will go. The up/down state stays this card's own: the row reads it here and
+## flips it through `toggle`, the same call O makes, so the key and the row can
+## never disagree.
+func is_up() -> bool:
+	return _up
+
+
+## O and the pause menu's Objectives row raise and lower the card. It is redrawn
+## on the way up rather than merely shown, because the board it describes has been
+## played on while it was down — `refresh` does nothing beyond the chip while the
+## card is lowered, which is what keeps a card nobody is looking at off every
+## command's path.
 func toggle(game: GameState) -> void:
 	_up = not _up
 	refresh(game)

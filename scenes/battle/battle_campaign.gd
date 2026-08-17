@@ -143,6 +143,23 @@ static func say_briefing(battle: Battle) -> void:
 	battle.state = battle.rest_state()
 
 
+## Runs a pause-menu row that belongs to the campaign, and says whether it was
+## one of ours — so Battle's map handler has a single arm for all of them and a
+## campaign row is written where the rest of this battle's campaign side is.
+##
+## Objectives makes the card's own O key sayable from the menu: it is that same
+## call (`MissionObjectivesPanel.toggle`), so the key and the row drive one
+## state and the card stays its owner.
+static func run_row(battle: Battle, action: StringName) -> bool:
+	if action == &"briefing":
+		await say_briefing(battle)
+		return true
+	if action == &"objectives":
+		battle.view.mission_panel.toggle(battle.game)
+		return true
+	return false
+
+
 ## Whether the mission just ended, and false for every skirmish — which is what
 ## leaves a match outside a campaign unchanged. Its answer outranks the receipt's
 ## own winner, and it is asked after the fallen-army banner and before the turn

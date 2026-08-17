@@ -944,9 +944,8 @@ func _handle_map_action(action: StringName) -> void:
 	if action == &"commanders":
 		_open_commander_info()
 		return
-	if action == &"briefing":
-		await BattleCampaign.say_briefing(self)
-		return
+	if await BattleCampaign.run_row(self, action):
+		return  # Briefing and Objectives: the campaign's rows are the campaign's
 	if action == &"auto":
 		# Its own submenu, the same shape "quit" opens "abandon" into below: the
 		# context is Battle's to set, the rows and the handoff are BattleAuto's.
@@ -1124,9 +1123,10 @@ func _open_map_menu() -> void:
 	# Opened before the state is set: the legend that setter prints asks the menu
 	# whether its rows answer to left and right, and this is the menu that carries
 	# the device settings they step.
+	var card := view.mission_panel.is_up()  # the Objectives row's label; the card owns it
 	action_menu.open(
 		BattleMenus.map_actions(
-			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db
+			game, not _paused, _replay == null, ai_teams, auto_tiers, difficulty_db, card
 		),
 		view.screen_pos_for_cell(cursor_cell)
 	)
