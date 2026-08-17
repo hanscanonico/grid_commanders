@@ -11,16 +11,17 @@ extends RefCounted
 ## Staging is still one `MatchRequest` through `MatchConfig`, exactly as the
 ## skirmish and replay routes stage theirs, so a mission boots the shipped path.
 
+## Developer route: opens every authored mission of whichever war the hub is on,
+## so one behind a route gate can be played without a profile that earned it.
+## Nothing a flagged run does is written — `CampaignProfile.save_progress` refuses
+## a state carrying it — so it is an inspection rather than a shortcut, and a
+## mid-mission save is refused at that same door.
+const UNLOCK_ARG := "--unlock-missions"
+
 ## How far `pose_hub_deep` walks a war, and what each mission cost it. Thirteen is
 ## the first count whose open mission the list has to *scroll* to reach — twelve
 ## rows fit the page, so a shorter walk photographs a list that never moved and
 ## would read the same with `follow_focus` off.
-## Developer route: opens every authored mission of whichever war the hub is on,
-## so one behind a route gate can be played without a profile that earned it.
-## Nothing a flagged run does is written — `CampaignProfile.save_progress` refuses
-## a state carrying it — so it is an inspection rather than a shortcut.
-const UNLOCK_ARG := "--unlock-missions"
-
 const POSED_CLEARED_MISSIONS := 13
 const POSED_STARS := 2
 const POSED_DAY := 5

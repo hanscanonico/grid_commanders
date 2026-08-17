@@ -947,7 +947,9 @@ Launching the menu with `--unlock-missions` is the developer route through all o
 mission of the war you open reads as unlocked, so one behind a route gate can be played without a
 profile that earned it. Nothing a flagged run does is written — the profiles under
 `user://campaigns/` are exactly what they were when it opened, wins included — so it is an
-inspection rather than a shortcut, and the route itself is untouched.
+inspection rather than a shortcut, and the route itself is untouched. The two save rows go the same
+way: a mission saved mid-run is refused out loud and the match stays up, there being nowhere for it
+to go that would not be a write.
 
 `make campaigns` is the authoring gate. It walks every mission of every campaign and refuses, at the
 door, anything that would only show up as a mission quietly not doing what it promised — a board
