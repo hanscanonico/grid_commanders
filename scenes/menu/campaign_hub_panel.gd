@@ -10,6 +10,13 @@ extends Control
 ## the one thing a player does over and over in a campaign is the cheapest thing
 ## the page does.
 ##
+## The briefing is read **over the board it is about**: the mission's own map,
+## baked by `MapThumbnail` — the one renderer the picker's miniatures and the
+## menu's drifting field already share, so the establishing shot can never be a
+## second opinion about the ground — under a scrim, with the generals talking in a
+## band docked at the bottom. The war's own header comes down while it is up,
+## because the campaign's tally is the list's context and not this mission's.
+##
 ## Locking is read from the profile, never inferred from the list: a mission is
 ## open because `CampaignState` says so, and one the route went past without
 ## opening says so too — a road not taken reads differently from ground nobody
@@ -28,13 +35,36 @@ signal cancelled
 const _TITLE_SIZE := 15
 const _ROW_HEIGHT := 26
 const _ROW_WIDTH := 420
-## The picker's own thumbnail box, so a board reads the same size everywhere.
-const _THUMB := Vector2(132, 60)
 const _BUST := 44
+## How dark the scrim over the establishing shot runs, top to bottom: enough to
+## read a title against at the top, enough to sit the speech band on at the foot.
+const _SCRIM_TOP := 0.55
+const _SCRIM_BOTTOM := 0.8
+## Canvas px per cell the board behind a briefing is baked at. The bake is at full
+## atlas resolution whatever this is, so the ceiling only bounds the texture a
+## pocket-sized board is resized to; the floor keeps the widest board in the game
+## legible rather than exact.
+const _BOARD_TILE_MIN := 4
+const _BOARD_TILE_MAX := 32
+## The band the dialogue is docked in. Fixed so every mission's briefing keeps the
+## same shape and the same amount of board showing above it; a longer conversation
+## scrolls rather than eating the picture.
+const _SPEECH_H := 96
+## The foot of the page the shot stays out of, so the whole board is read above
+## the conversation about it rather than half of it behind one. A mission whose
+## terms make the band taller than this simply covers the shot's last rows; the
+## shot is centred in what is left, so a shorter band leaves dark rather than a
+## seam.
+const _BOARD_FOOT := 170
 
 var _title: Label
 var _subtitle: Label
 var _war: VBoxContainer
+## The war's own header — title, tally, the war so far — down while a briefing is
+## up so the board behind it is not read through the campaign's scoreboard.
+var _header: VBoxContainer
+var _board: Control
+var _board_art: TextureRect
 var _list_view: VBoxContainer
 var _list_scroll: ScrollContainer
 var _rows: VBoxContainer
@@ -130,6 +160,9 @@ func _build() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
+	_board = _build_board()
+	add_child(_board)
+
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	for edge in ["left", "right", "top", "bottom"]:
@@ -140,18 +173,22 @@ func _build() -> void:
 	main.add_theme_constant_override("separation", 5)
 	margin.add_child(main)
 
+	_header = VBoxContainer.new()
+	_header.add_theme_constant_override("separation", 5)
+	main.add_child(_header)
+
 	_title = Label.new()
 	_title.add_theme_font_override("font", UiTheme.display(true))
 	_title.add_theme_font_size_override("font_size", _TITLE_SIZE)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	main.add_child(_title)
+	_header.add_child(_title)
 
 	_subtitle = _note("")
-	main.add_child(_subtitle)
+	_header.add_child(_subtitle)
 
 	_war = VBoxContainer.new()
 	_war.add_theme_constant_override("separation", 1)
-	main.add_child(_war)
+	_header.add_child(_war)
 
 	_list_view = VBoxContainer.new()
 	_list_view.add_theme_constant_override("separation", 5)
@@ -171,6 +208,58 @@ func _build() -> void:
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	footer.text = "UP/DOWN  BROWSE      ENTER  OPEN      ESC  BACK      MOUSE OK"
 	main.add_child(footer)
+
+
+## The establishing shot the briefing is read over: the mission's board, filling
+## the page, under a scrim that darkens toward the foot so the speech band and the
+## terms sit on ink rather than on grass. Down for the list, which is the war's
+## page and not one mission's.
+func _build_board() -> Control:
+	var layer := Control.new()
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.clip_contents = true
+	layer.hide()
+
+	_board_art = TextureRect.new()
+	_board_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_board_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_board_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_board_art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_board_art.offset_bottom = -_BOARD_FOOT
+	_board_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_board_art)
+
+	var gradient := Gradient.new()
+	gradient.set_color(0, UiTheme.veil(_SCRIM_TOP))
+	gradient.set_color(1, UiTheme.veil(_SCRIM_BOTTOM))
+	var wash := GradientTexture2D.new()
+	wash.gradient = gradient
+	wash.fill_from = Vector2.ZERO
+	wash.fill_to = Vector2(0, 1)
+	var scrim := TextureRect.new()
+	scrim.texture = wash
+	scrim.stretch_mode = TextureRect.STRETCH_SCALE
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.offset_bottom = -_BOARD_FOOT
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(scrim)
+
+	# The face is pinned to the shot's own corner rather than stacked above it: in
+	# the flow it sat in the middle of the board it is standing on.
+	var corner := MarginContainer.new()
+	corner.set_anchors_preset(Control.PRESET_FULL_RECT)
+	corner.offset_bottom = -_BOARD_FOOT
+	corner.add_theme_constant_override("margin_right", UiTheme.PAGE_MARGIN)
+	corner.add_theme_constant_override("margin_top", UiTheme.PAGE_MARGIN)
+	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(corner)
+
+	_brief_picture = HBoxContainer.new()
+	_brief_picture.alignment = BoxContainer.ALIGNMENT_END
+	_brief_picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	corner.add_child(_brief_picture)
+	return layer
 
 
 func _build_list(parent: VBoxContainer) -> void:
@@ -206,16 +295,29 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	_brief_where = _note("")
 	parent.add_child(_brief_where)
 
-	_brief_picture = HBoxContainer.new()
-	_brief_picture.add_theme_constant_override("separation", 10)
-	_brief_picture.alignment = BoxContainer.ALIGNMENT_CENTER
-	parent.add_child(_column(_brief_picture))
+	# Open ground between the title block and the band: the board showing through
+	# it is the point of the page, so it takes whatever height is left over.
+	var gap := Control.new()
+	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(gap)
+
+	var band := PanelContainer.new()
+	var box := UiTheme.dark_panel_box()
+	box.set_content_margin_all(UiTheme.GAP)
+	band.add_theme_stylebox_override("panel", box)
+	band.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	parent.add_child(band)
+
+	var docked := VBoxContainer.new()
+	docked.add_theme_constant_override("separation", 5)
+	band.add_child(docked)
 
 	var frame := ScrollContainer.new()
 	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	frame.follow_focus = true
-	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(_column(frame))
+	frame.custom_minimum_size.y = _SPEECH_H
+	docked.add_child(_column(frame))
 
 	_brief_body = VBoxContainer.new()
 	_brief_body.add_theme_constant_override("separation", 4)
@@ -226,7 +328,7 @@ func _build_briefing(parent: VBoxContainer) -> void:
 	# player is agreeing to has to be on the page at the moment they agree to it.
 	_brief_terms = VBoxContainer.new()
 	_brief_terms.add_theme_constant_override("separation", 2)
-	parent.add_child(_column(_brief_terms))
+	docked.add_child(_column(_brief_terms))
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
@@ -537,23 +639,32 @@ func _fill_terms(mission: MissionDefinition) -> void:
 		_brief_terms.add_child(_body_line(term, true))
 
 
-## The briefing's picture: where the fight is, against whom. The board is drawn
-## by `MapThumbnail` — the picker's own miniature, never a second opinion — and
-## the face is the first enemy seat's commander, resolved by the authorities
-## every other surface uses.
+## The briefing's picture: where the fight is, behind everything, and against whom,
+## in the one card over it. The face is the first enemy seat's commander, resolved
+## by the authorities every other surface uses.
 func _fill_picture(mission: MissionDefinition) -> void:
 	for child in _brief_picture.get_children():
 		_brief_picture.remove_child(child)
 		child.queue_free()
-	var map := MapData.load_from_file(mission.map_path, _terrain)
-	if map != null:
-		var thumb := MapThumbnail.new()
-		thumb.setup(map, UiTheme.menu_identity(map.player_count()), _THUMB)
-		thumb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		_brief_picture.add_child(thumb)
+	_fill_board(MapData.load_from_file(mission.map_path, _terrain))
 	var foe := _antagonist(mission, _commanders)
 	if foe != null:
 		_brief_picture.add_child(_foe_card(foe))
+
+
+## Bakes the mission's board to the layer behind the briefing. The whole board is
+## in the shot — where the fight is is what a briefing is for — at the largest
+## whole tile the page can hold, so it is never scaled up past the pixels it was
+## baked with. A board with no file behind it leaves the page on its plain veil
+## rather than on the last mission's ground.
+func _fill_board(map: MapData) -> void:
+	if map == null:
+		_board_art.texture = null
+		return
+	var view := get_viewport_rect().size
+	var fit := minf(view.x / float(map.width), (view.y - _BOARD_FOOT) / float(map.height))
+	var tile := clampi(floori(fit), _BOARD_TILE_MIN, _BOARD_TILE_MAX)
+	_board_art.texture = MapThumbnail.bake(map, UiTheme.menu_identity(map.player_count()), tile)
 
 
 ## The first hostile seat's commander. Hostility is read by side, the way every
@@ -578,7 +689,7 @@ static func _antagonist(mission: MissionDefinition, commanders: CommanderDB) -> 
 func _foe_card(commander: CommanderType) -> Control:
 	var card := VBoxContainer.new()
 	card.add_theme_constant_override("separation", 2)
-	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var bust := MissionSpeech.bust_of(commander, _BUST)
 	bust.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.add_child(bust)
@@ -588,6 +699,8 @@ func _foe_card(commander: CommanderType) -> Control:
 
 func _show_list() -> void:
 	_brief_view.hide()
+	_board.hide()
+	_header.show()
 	_list_view.show()
 	_showing = &""
 	if _row_buttons.is_empty():
@@ -598,6 +711,8 @@ func _show_list() -> void:
 
 func _show_briefing() -> void:
 	_list_view.hide()
+	_header.hide()
+	_board.show()
 	_brief_view.show()
 	_deploy_button.grab_focus()
 
