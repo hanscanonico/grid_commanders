@@ -62,11 +62,16 @@ condition that ends a battle the player is winning. It is now three.
   stopwatch on the player**: `sm06_the_toll_bridge` (the bridges go down),
   `sm15_the_last_span` (the span goes down) and `tc10_the_squeeze` (a siege is
   relieved or it is not).
-- **The three kept ones were loosened to a measured margin.** All three sat at or
-  under the measured median win day, so the deadline was authored against a
-  stopwatch nobody had read: 8 → 12, 7 → 11, 7 → 11. Each objective's own copy
-  names the new day, because the briefing sentence and the comparison have to
-  agree (`DayDeadlineObjective`'s own rule).
+- **The three kept ones were loosened to a measured margin**: 8 → 12, 7 → 11,
+  7 → 11, each with its own copy, because the briefing sentence and the
+  comparison have to agree (`DayDeadlineObjective`'s own rule). All three sat at
+  exactly the day their sole primary objective ends on, which is the margin those
+  numbers buy: each mission is a `SurviveUntilDay`, `DayDeadlineObjective` fires
+  strictly *past* `last_day`, so a clock set to the survival day can only ever
+  fire on a board the runtime has already decided. The loosening makes that
+  slack explicit rather than incidental — the clock is fiction on these three,
+  and the fiction should not be one arithmetic edit away from ending a mission
+  the player just won.
 
 Five missions went from never-won to winnable on the deletions alone
 (`tc04` 0 → 67%, `tc18` 0 → 33%, `qw03` 0 → 44%, `lf05` 11 → 100%,
@@ -108,15 +113,22 @@ both on the same board where one was enough:
 - `fw06` — a mech.
 - `qw06` — one of the safehouse garrison's two tanks.
 
-Eighteen further missions opened owning a **third to a half** of the enemy's
-properties, and each was given one neutral city on its own side of the board —
-never a base (which would retire a "capture the base to build" lesson), never a
-cell an objective or a beat names, and never a city closer to the enemy's
-headquarters than to the player's. **Honest reading: this moved one mission
-(`fw01` 33 → 89%) and no other.** The planner banks funds it never spends, so
-this instrument is close to blind to income; the edit stands on the opening
-asymmetry it removes, not on a number it moved, and it is the weakest-evidenced
-part of this pass.
+Thirty-one missions opened owning a **third to a half** of the enemy's
+properties. Eleven of them — `tc12`, `fw01`–`fw05`, `lf08`, `lf13`, `lf16`,
+`lf17`, `qw06` — gained one neutral city on their own side of the board. The bar
+a city had to clear is what kept the other twenty off the list: never a base
+(which would retire a "capture the base to build" lesson), never a cell an
+objective or a beat names, and never a city closer to the enemy's headquarters
+than to the player's. Two boards are worth naming because they look like
+candidates and are not: an `OwnProperties` objective counts by **terrain kind**
+rather than by named cells, so on `fw06_first_thaw` ("hold four of the pass's
+seven properties") and `lf14_the_high_passes` ("hold all four highland cities")
+every neutral city is one the primary objective counts, and handing one over
+would discount the goal rather than level the income. **Honest reading: this
+moved one mission (`fw01` 33 → 89%) and no other.** The planner banks funds it
+never spends, so this instrument is close to blind to income; the edit stands on
+the opening asymmetry it removes, not on a number it moved, and it is the
+weakest-evidenced part of this pass.
 
 ## What is still hard, and why it was left alone
 
@@ -174,7 +186,7 @@ supersedes this table wholesale rather than editing it.
 | furnace winter | `fw03_cold_relay` | normal | 0% | — | — | 0.67 | 0.67 | Your army was destroyed. |
 | furnace winter | `fw04_ice_road` | normal | 0% | — | — | 0.69 | 0.67 | The fuel sledge went under the ice. |
 | furnace winter | `fw05_powder_ration` | normal | 0% | — | — | 0.67 | 0.67 | Your army was destroyed. |
-| furnace winter | `fw06_first_thaw` | normal | 0% | — | — | 0.56 | 0.67 | Your army was destroyed. |
+| furnace winter | `fw06_first_thaw` | normal | 0% | — | — | 0.56 | 0.33 | Your army was destroyed. |
 | furnace winter | `fw07_pipeline_east` | normal | 0% | — | — | 1.60 | 0.50 | Your army was destroyed. |
 | furnace winter | `fw08_pipeline_west` | normal | 0% | — | — | 1.60 | 1.00 | Your army was destroyed. |
 | furnace winter | `fw09_coalyard_junction` | normal | 22% | 13 | — | 1.14 | 0.50 | More than five of our units left the column, however they went. |
@@ -254,7 +266,7 @@ supersedes this table wholesale rather than editing it.
 | long front | `lf11_iron_hill` | normal | 0% | — | — | 0.57 | 1.00 | Your army was destroyed. |
 | long front | `lf12_the_forward_camp` | normal | 22% | 9 | — | 0.85 | 0.50 | Your army was destroyed. |
 | long front | `lf13_the_foothill_road` | hard | 0% | — | — | 0.85 | 1.00 | Your army was destroyed. |
-| long front | `lf14_the_high_passes` | hard | 0% | — | — | 0.70 | 1.00 | Your army was destroyed. |
+| long front | `lf14_the_high_passes` | hard | 0% | — | — | 0.70 | 0.50 | Your army was destroyed. |
 | long front | `lf15_the_airfield_raid` | hard | 89% | 5 | — | 1.11 | 0.50 | Your army was destroyed. |
 | long front | `lf16_reckoning_at_averyn_pass` | hard | 0% | — | — | 0.74 | 1.00 | Your army was destroyed. |
 | long front | `lf17_the_shadow_of_the_keep` | hard | 0% | — | — | 0.94 | 0.67 | Your army was destroyed. |

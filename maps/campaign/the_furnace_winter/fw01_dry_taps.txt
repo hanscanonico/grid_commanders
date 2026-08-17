@@ -1,6 +1,7 @@
 # The Furnace Winter, The Freeze — "Dry Taps".
-# Teaching board: the player owns only the HQ. Nothing is built until
-# the crossroads base at the centre is taken — capture-before-production.
+# Teaching board: the player owns the HQ and one back-line city, neither of
+# which builds. Nothing is built until the crossroads base at the centre is
+# taken — capture-before-production.
 #
 # The row-4 road is the race, and the starting cells are what make it one: the
 # player's tank is 5 road tiles from the crossroads and Vale's is 9, so the

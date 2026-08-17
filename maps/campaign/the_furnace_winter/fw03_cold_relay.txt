@@ -1,6 +1,7 @@
 # The Furnace Winter, The Freeze — "Cold Relay".
-# Teaching board: the player owns only the HQ. Nothing is built until
-# the crossroads base at the centre is taken — capture-before-production.
+# Teaching board: the player owns the HQ and one back-line city, neither of
+# which builds. Nothing is built until the crossroads base at the centre is
+# taken — capture-before-production.
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
