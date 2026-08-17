@@ -147,8 +147,8 @@ func choose(id: StringName) -> void:
 ## Steps a value row where it stands, and leaves the menu up over it (COM-246).
 ## Confirm and a right press are one gesture here: a confirm that stepped the
 ## setting and then took the menu away with it left a player who pressed ENTER on
-## "Speed: Normal" meaning to *pick* it one tier faster, with nothing on screen
-## saying so and nothing left to step back from — which is how a device ends up
+## "Speed: Normal" meaning to *pick* it one tier faster, with the row that says
+## so gone and nothing left to step back with — which is how a device ends up
 ## playing at Instant nobody chose. The stepped row is armed too, so a click and
 ## the two arrow keys act on the same row.
 func _step_value(i: int, step: int) -> void:

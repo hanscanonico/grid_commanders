@@ -41,8 +41,8 @@ func run(mode: String) -> String:
 ## answer a confirm with. A row carrying a `cycle` steps where it stands and the
 ## menu stays up (COM-246): a confirm that stepped the setting and then closed
 ## over it left a player who pressed ENTER on "Speed: Normal" meaning to pick it
-## one tier faster, with nothing on screen saying so — which is how a device ends
-## up playing at Instant nobody chose.
+## one tier faster, with the row that says so gone — which is how a device ends up
+## playing at Instant nobody chose.
 ##
 ## A whole lap of the ladder rather than one step, so the frame this mode is here
 ## to take is still the tier the capture pinned.
