@@ -329,6 +329,19 @@ campaigns:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/check_campaigns.gd
 
+# How hard every shipped mission is: each one played to a verdict with both
+# armies driven by the planner at the mission's own tier, over N seeds, plus the
+# odds and the income the player's side opens on. `make campaigns` says a
+# mission is playable; this says how it played. A measurement, not a gate — it
+# stays out of `make verify` and `make test`, and it edits no content.
+# docs/campaign_difficulty.md is the committed record and the caveats to read
+# before acting on a row. Narrow it while iterating on an edit:
+#   make campaign-difficulty CAMPAIGN="--campaign=the_long_front --seeds=3"
+CAMPAIGN ?=
+campaign-difficulty:
+	$(call require-godot)
+	$(GODOT) --headless --path . -s res://tools/run_campaign_difficulty.gd -- $(CAMPAIGN)
+
 portraits:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd
@@ -352,7 +365,7 @@ gallery-screenshot: import
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio portraits import \
+	audio portraits import campaign-difficulty \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns

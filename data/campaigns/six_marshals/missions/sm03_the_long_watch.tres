@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/objectives/capture_cell_objective.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="6"]
@@ -22,11 +21,6 @@
 script = ExtResource("2")
 text = "Hold the timber line until day 6."
 day = 6
-
-[sub_resource type="Resource" id="Failure_the_line_broke_before_day_6"]
-script = ExtResource("3")
-text = "Day 6 passed with the watch still unfinished."
-last_day = 6
 
 [sub_resource type="Resource" id="Failure_the_count"]
 script = ExtResource("6")
@@ -111,7 +105,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_timber_line_until_day_6")])
-failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_6"), SubResource("Failure_the_count")])
+failures = Array[Resource]([SubResource("Failure_the_count")])
 bonus_objectives = Array[Resource]([SubResource("Bonus_take_the_northern_camp_for_a_bonus")])
 events = Array[Resource]([SubResource("Event_the_count_pays_out")])
 par_day = 5

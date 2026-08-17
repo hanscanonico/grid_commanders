@@ -30,8 +30,8 @@ cell = Vector2i(14, 5)
 
 [sub_resource type="Resource" id="Failure_the_column_bunched"]
 script = ExtResource("5")
-text = "More than six units lost — the column stopped being spread."
-max_losses = 6
+text = "More than nine units lost — the column stopped being spread."
+max_losses = 9
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")

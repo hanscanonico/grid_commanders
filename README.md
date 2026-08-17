@@ -45,6 +45,7 @@ make gallery-screenshot   # render all twenty-three commander cards (the G1 gate
 make commander-balance    # offline AI-vs-AI balance matrix -> reports/ (a release task)
 make difficulty-check     # AI-vs-AI difficulty ladder gate -> reports/ (a release task)
 make bulwark-measure      # Bulwark's win spread over N seeds -> reports/ (docs/bulwark_balance.md)
+make campaign-difficulty  # how hard every mission plays -> reports/ (docs/campaign_difficulty.md)
 make balance-sim          # the Balance Lab: any board, any commanders, any tiers, full telemetry
 make balance-pool         # the same engine, sharded across processes: resumable, several cores
 make ai-arena             # play two arbitrary AIProfiles against each other -> one JSON record a match
@@ -958,6 +959,12 @@ board it opens on has already won. `docs/campaign_authoring.md` is the author's 
 gate refuses in full, what a mission may say and what it may not, what each war records, and the two
 traps it deliberately leaves to a hand test.
 
+That gate says a mission is playable, never that it is winnable. `make campaign-difficulty` is the
+other question: every shipped mission played to a verdict with both armies driven by the planner at
+its own tier, plus the odds and the income the player's side opens on. A measurement rather than a
+gate — `docs/campaign_difficulty.md` is the committed record, the caveats to read before acting on a
+row, and what the last content pass over the six wars changed.
+
 ## Replays
 
 **Every match records itself** as it is played, to a rotating slot under `user://replays/` — ten of
@@ -1140,7 +1147,8 @@ already failing would muddy both readings.
   recording reader under `tools/replay/` (Replays
   above); `tools/run_bulwark_measure.gd`, the Bulwark board's own fairness measurement
   (`docs/bulwark_balance.md`) — a four-army board `BalanceMatchEngine` cannot play, so it runs the
-  match loop itself; plus `tools/focus_timeline.sh`, the focus-theft
+  match loop itself; `tools/run_campaign_difficulty.gd`, which plays every shipped mission to a
+  verdict and reads how hard it was (`docs/campaign_difficulty.md`); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, the arena's scorer and pools under

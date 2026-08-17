@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="MissionDefinition" load_steps=42 format=3]
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://core/campaign/mission_definition.gd" id="1"]
 [ext_resource type="Script" path="res://core/campaign/objectives/survive_until_day_objective.gd" id="2"]
-[ext_resource type="Script" path="res://core/campaign/objectives/day_deadline_objective.gd" id="3"]
 [ext_resource type="Script" path="res://core/campaign/mission_line.gd" id="4"]
 [ext_resource type="Script" path="res://core/campaign/objectives/loss_limit_objective.gd" id="5"]
 [ext_resource type="Script" path="res://core/campaign/mission_event.gd" id="6"]
@@ -20,11 +19,6 @@
 script = ExtResource("2")
 text = "Hold the hills until day 7."
 day = 7
-
-[sub_resource type="Resource" id="Failure_the_line_broke_before_day_7"]
-script = ExtResource("3")
-text = "The hills were still not held when day 7 ran out."
-last_day = 7
 
 [sub_resource type="Resource" id="Failure_nothing_he_can_count"]
 script = ExtResource("5")
@@ -171,7 +165,7 @@ commanders = {
 fog_enabled = false
 difficulty = &"normal"
 objectives = Array[Resource]([SubResource("Objective_hold_the_hills_until_day_7")])
-failures = Array[Resource]([SubResource("Failure_the_line_broke_before_day_7"), SubResource("Failure_nothing_he_can_count")])
+failures = Array[Resource]([SubResource("Failure_nothing_he_can_count")])
 bonus_objectives = Array[Resource]([])
 events = Array[Resource]([SubResource("Event_the_scent"), SubResource("Event_i_keep_what_i_catch"), SubResource("Event_the_relief_track")])
 par_day = 6

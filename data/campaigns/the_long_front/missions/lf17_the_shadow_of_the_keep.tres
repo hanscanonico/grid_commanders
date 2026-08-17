@@ -28,8 +28,8 @@ cell = Vector2i(16, 7)
 
 [sub_resource type="Resource" id="Failure_short_a_flank"]
 script = ExtResource("5")
-text = "More than six units lost, from any cause — nothing left to arrive with."
-max_losses = 6
+text = "More than nine units lost, from any cause — nothing left to arrive with."
+max_losses = 9
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("3")

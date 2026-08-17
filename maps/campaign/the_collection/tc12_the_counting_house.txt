@@ -23,6 +23,7 @@
 1 2 6
 2 5 2
 2 12 2
+1 5 9
 [units]
 # team symbol x y
 1 i 1 5

@@ -17,8 +17,8 @@ day = 8
 
 [sub_resource type="Resource" id="Failure_the_bridges_fell_before_day_8"]
 script = ExtResource("3")
-text = "The bridges fell before day 8."
-last_day = 8
+text = "Day 12 came and the bridges went down with the west bank still contested."
+last_day = 12
 
 [sub_resource type="Resource" id="Line_1"]
 script = ExtResource("4")

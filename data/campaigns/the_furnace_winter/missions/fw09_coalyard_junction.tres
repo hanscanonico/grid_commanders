@@ -31,8 +31,8 @@ cell = Vector2i(15, 3)
 
 [sub_resource type="Resource" id="Failure_1"]
 script = ExtResource("6")
-text = "More than three of our units left the column, however they went."
-max_losses = 3
+text = "More than five of our units left the column, however they went."
+max_losses = 5
 
 [sub_resource type="Resource" id="Bonus_rider_a"]
 script = ExtResource("13")

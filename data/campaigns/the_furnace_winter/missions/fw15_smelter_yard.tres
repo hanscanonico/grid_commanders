@@ -32,8 +32,8 @@ days = 6
 
 [sub_resource type="Resource" id="Failure_losses"]
 script = ExtResource("5")
-text = "More than four of ours lost, to any cause. The yard crews can replace machines, not columns."
-max_losses = 4
+text = "More than six of ours lost, to any cause. The yard crews can replace machines, not columns."
+max_losses = 6
 
 [sub_resource type="Resource" id="Bonus_starve"]
 script = ExtResource("4")
