@@ -45,7 +45,7 @@ from spritegen.terrain import (
     WATER_LIGHT,
     WOODS_SALT,
 )
-from spritegen.units import ATLAS_ORDER, build_model
+from spritegen.units import ATLAS_ORDER, UNITS, build_model
 from spritegen.voxel import render_indexed
 
 ROAD_TONES = {ROAD, ROAD_DARK}
@@ -1213,6 +1213,51 @@ class Silhouette(unittest.TestCase):
                         self.assertGreater(iou, 0.85)  # debt still real
                     else:
                         self.assertLessEqual(iou, 0.85)
+
+
+class HullValues(unittest.TestCase):
+    """The sub is the DARKEST ship in the line (design review round 7).
+
+    Round 6 gave the sub its mass back and the hull came back in the body
+    slot, which left its hull median (0.188) on the same side of the bar as
+    the water it swims in (0.404) — a hull-value contest against open sea,
+    which is the one contest a boat awash cannot win. So the hull and the
+    awash deck drop to the under and shadow slots and the boat separates as a
+    contrast pair instead: a dark hull under a lit sail and a light wake edge.
+
+    The hull region is the lower half of a ship's own vertical extent — hull
+    and waterline below, superstructure above — measured over the unit's own
+    pixels, excluding the composed shadow and foam, the same exclusion
+    `UnitBandCoverage` and `tests/measure_livery.py` make.
+    """
+
+    # Read off the registry's own cell kind, so a ship added later is held to
+    # the same gate instead of quietly sitting outside a hand-written list.
+    SHIPS = tuple(uid for uid, (_, kind) in UNITS.items() if kind == "sea")
+    COMPOSED = UnitBandCoverage.COMPOSED
+
+    def _hull_median(self, uid: str, fac) -> float:
+        cell = atlas.unit_cell(uid, fac).convert("RGBA")
+        px = cell.load()
+        pixels = [
+            (y, px[x, y][:3])
+            for y in range(cell.height)
+            for x in range(cell.width)
+            if px[x, y][3] == 255 and px[x, y][:3] not in self.COMPOSED
+        ]
+        ys = [y for y, _ in pixels]
+        waterline = (min(ys) + max(ys)) / 2
+        hull = [c for y, c in pixels if y >= waterline]
+        return statistics.median(terrain.luminance(c) for c in hull) / 255
+
+    def test_the_sub_is_the_darkest_hull_afloat(self):
+        for fac in FACTIONS:
+            medians = {uid: self._hull_median(uid, fac) for uid in self.SHIPS}
+            for uid in self.SHIPS:
+                if uid == "sub":
+                    continue
+                with self.subTest(faction=fac.key, against=uid):
+                    self.assertLess(medians["sub"], medians[uid])
 
 
 class IndexedPalette(unittest.TestCase):
