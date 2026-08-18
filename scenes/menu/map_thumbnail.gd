@@ -123,7 +123,7 @@ static func sheet_region(map: MapData, identity: SideIdentity, cell: Vector2i) -
 	if family == TerrainAutotiles.Family.NONE:
 		var terrain := map.terrain_at(cell)
 		return _region(terrain.atlas_col, _row_for(map, identity, terrain, cell))
-	var coords := TerrainAutotiles.atlas_coords(family, TerrainAutotiles.mask(map, cell))
+	var coords := TerrainAutotiles.atlas_coords(family, TerrainAutotiles.variant(map, cell))
 	var step := CELL + TerrainAutotiles.SHEET_SEPARATION
 	var margin := TerrainAutotiles.SHEET_MARGIN
 	return Rect2(margin + coords.x * step, margin + coords.y * step, CELL, CELL)

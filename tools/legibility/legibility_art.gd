@@ -61,10 +61,11 @@ static func load_shipped() -> LegibilityArt:
 
 ## The image and region a cell of `terrain_type` draws from when its four
 ## neighbours are the same terrain — plains and mountain off the base atlas,
-## a wood inside a wood keeping its full-bleed canopy, open water keeping the
-## base tile, a beach off the shoal sheet. Which of those it is, is
+## a wood inside a wood keeping its full-bleed canopy, open water on a phase of
+## the sea sheet, a beach off the shoal sheet. Which of those it is, is
 ## TerrainAutotiles' answer about a small field of that terrain, never a rule
-## restated here.
+## restated here — including which phase, which is the one the board draws at
+## this probe's own cell.
 ##
 ## A property carries an `under`: its column is a transparent overlay and the
 ## board paints TerrainDB.ground() beneath it, so the composite does too.
@@ -86,8 +87,7 @@ func board_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 		if terrain_type.is_property:
 			cell["under"] = Vector2i(db.ground().atlas_col * CELL_PX, 0)
 	else:
-		var mask := TerrainAutotiles.mask(field, centre)
-		var coords := TerrainAutotiles.atlas_coords(family, mask)
+		var coords := TerrainAutotiles.atlas_coords(family, TerrainAutotiles.variant(field, centre))
 		var margin := TerrainAutotiles.SHEET_MARGIN
 		var stride := CELL_PX + TerrainAutotiles.SHEET_SEPARATION
 		cell = {

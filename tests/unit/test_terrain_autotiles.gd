@@ -134,4 +134,4 @@ func test_the_ring_beyond_an_edge_road_keeps_the_road_running_off_the_map() -> v
 func test_the_ring_beyond_a_coastal_edge_is_open_water() -> void:
 	var rows: Array[String] = ["S..", "S..", "S.."]
 	assert_eq(_family(rows, Vector2i(0, 1)), TerrainAutotiles.Family.COAST)
-	assert_eq(_family(rows, Vector2i(-1, 1)), TerrainAutotiles.Family.NONE)
+	assert_eq(_family(rows, Vector2i(-1, 1)), TerrainAutotiles.Family.SEA)
