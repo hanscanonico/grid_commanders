@@ -30,6 +30,11 @@ generator's atlases replaced them wholesale (2026-08-14). The faction ramps are
 read from this game's own `CommanderVisuals.FactionTheme` values, so the
 sprites and the UI chrome can never disagree about a faction's colour.
 
+The atlas's **five property columns are transparent overlays** — the building,
+its plinth and an opaque dithered shadow, alpha everywhere else — so a city is
+an object rather than a green square baked onto whatever it stands on. Which
+ground goes under one is `TerrainDB.GROUND_ID`'s single answer.
+
 Rebuild with `make tiles`, which runs the generator from a checkout beside this
 repo (`SPRITEGEN=<path>` overrides). The committed sheets — both atlases and
 all six autotile families — are its exact output, so a clone without the

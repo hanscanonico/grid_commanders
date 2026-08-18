@@ -55,3 +55,16 @@ func test_a_plain_cell_keeps_its_atlas_column() -> void:
 		MapThumbnail.sheet_region(map, null, cell),
 		Rect2(col * MapThumbnail.CELL, 0, MapThumbnail.CELL, MapThumbnail.CELL)
 	)
+
+
+## The property columns are transparent overlays, so the miniature paints the
+## board's own ground under one and nothing under anything else.
+func test_a_property_is_drawn_over_the_default_ground() -> void:
+	var db := Fixture.terrain_db()
+	var map := _map(["...", ".C.", "..."])
+	var ground := db.ground().atlas_col
+	assert_eq(
+		MapThumbnail.ground_region(map, Vector2i(1, 1)),
+		Rect2(ground * MapThumbnail.CELL, 0, MapThumbnail.CELL, MapThumbnail.CELL)
+	)
+	assert_false(MapThumbnail.ground_region(map, Vector2i(0, 0)).has_area())

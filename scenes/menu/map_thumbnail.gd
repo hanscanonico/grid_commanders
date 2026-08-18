@@ -10,7 +10,9 @@ extends Control
 ## closed by construction. That is why an autotiled cell asks the same authority
 ## the board does rather than reading atlas_col: a one-tile lake was a hard blue
 ## square in the picker and a coasted pond in the match. Owned properties draw in
-## the resolved faction's row, so a thumbnail is a truthful miniature of day one.
+## the resolved faction's row, so a thumbnail is a truthful miniature of day one,
+## and they draw over the same ground the board paints under them — a property
+## column is a transparent overlay, so it is composed here rather than copied.
 ##
 ## The same per-cell region logic serves two masters: `_draw` paints a live cell
 ## for the picker, and the static `bake()` renders the panning backdrop to an
@@ -24,6 +26,7 @@ const ATLAS_PATH := "res://assets/tiles/terrain_atlas.png"
 
 static var _textures: Dictionary[String, Texture2D] = {}
 static var _images: Dictionary[String, Image] = {}
+static var _ground_col := -1
 
 var _map: MapData
 var _identity: SideIdentity
@@ -63,6 +66,9 @@ func _draw() -> void:
 		for x in _map.width:
 			var cell := Vector2i(x, y)
 			var dst := Rect2(_origin + Vector2(x * _tile, y * _tile), Vector2(_tile, _tile))
+			var under := ground_region(_map, cell)
+			if under.has_area():
+				draw_texture_rect_region(_texture(ATLAS_PATH), dst, under)
 			draw_texture_rect_region(
 				_texture(sheet_path(_map, cell)), dst, sheet_region(_map, _identity, cell)
 			)
@@ -81,10 +87,18 @@ static func bake(map: MapData, identity: SideIdentity, tile: int) -> ImageTextur
 		for x in map.width:
 			var cell := Vector2i(x, y)
 			var region := sheet_region(map, identity, cell)
+			var at := Vector2i(x * CELL, y * CELL)
+			var under := ground_region(map, cell)
+			# blit copies alpha and blend composites it, so a property overlay has to
+			# arrive the second way or it punches its ground back out again.
+			if under.has_area():
+				full.blit_rect(_source_image(ATLAS_PATH), Rect2i(under.position, under.size), at)
+				full.blend_rect(
+					_source_image(sheet_path(map, cell)), Rect2i(region.position, region.size), at
+				)
+				continue
 			full.blit_rect(
-				_source_image(sheet_path(map, cell)),
-				Rect2i(region.position, region.size),
-				Vector2i(x * CELL, y * CELL)
+				_source_image(sheet_path(map, cell)), Rect2i(region.position, region.size), at
 			)
 	full.resize(map.width * tile, map.height * tile, Image.INTERPOLATE_NEAREST)
 	return ImageTexture.create_from_image(full)
@@ -113,6 +127,18 @@ static func sheet_region(map: MapData, identity: SideIdentity, cell: Vector2i) -
 	var step := CELL + TerrainAutotiles.SHEET_SEPARATION
 	var margin := TerrainAutotiles.SHEET_MARGIN
 	return Rect2(margin + coords.x * step, margin + coords.y * step, CELL, CELL)
+
+
+## What `cell` is painted over, when its own art does not cover the tile: the
+## default ground's atlas cell under a property, whose column ships as a
+## transparent overlay (TerrainDB.GROUND_ID), and an empty rect everywhere else.
+## The board paints the same cell on its own layer under the same terrain.
+static func ground_region(map: MapData, cell: Vector2i) -> Rect2:
+	if not map.terrain_at(cell).is_property:
+		return Rect2()
+	if _ground_col < 0:
+		_ground_col = TerrainDB.load_default().ground().atlas_col
+	return _region(_ground_col, 0)
 
 
 ## The atlas row a cell draws in: a team-tinted property takes its owner's

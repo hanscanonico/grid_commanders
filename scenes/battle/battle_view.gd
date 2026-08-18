@@ -35,6 +35,18 @@ const ATLAS_SOURCE_ID := 0
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
 
+## The surface a property overlay stands on, under `terrain_layer`. The atlas
+## ships its property columns transparent (TerrainDB.GROUND_ID), so a city drawn
+## alone is a hole in the board; this layer is the ground the building sits on.
+## It carries nothing else — every other terrain paints its own ground.
+##
+## A second layer rather than plains-in-the-base-and-property-on-top, because the
+## property has to stay in `terrain_layer`: its atlas row is the owner's faction
+## (`repaint_property`, `_last_seen_owner`, the fog pass) and moving it would put
+## that row on a different layer from the one every other cell answers on, while
+## `TerrainAutotiles` would have to start answering for a cell it has no family
+## for. Under is the only side that costs nothing.
+var ground_layer: TileMapLayer
 var terrain_layer: TileMapLayer
 ## Painted beyond the map edges — a darkened continuation of the board that
 ## fills the screen when the camera is far enough out to show the whole map.
@@ -109,6 +121,7 @@ var _resting_zoom := 1.0
 func setup() -> void:
 	hud_bottom.identity = identity  # the bar names and tints sides through the same resolver
 	hud_bottom.chart = game.damage_chart  # and asks the rules which weapons a unit owns
+	hud_bottom.ground = db.ground()  # and paints a property chip on the same ground the board does
 	hud_bottom.fire_pressed.connect(fire_pressed.emit)
 	# Whose actions the teaching strip may learn from — the computer plays through
 	# the same events and must not retire a hint on the player's behalf — and
@@ -128,6 +141,8 @@ func setup() -> void:
 	terrain_layer.scale = Vector2.ONE * (float(TILE) / float(TERRAIN_PX))
 	backdrop_layer.tile_set = terrain_layer.tile_set
 	backdrop_layer.scale = terrain_layer.scale
+	ground_layer.tile_set = terrain_layer.tile_set
+	ground_layer.scale = terrain_layer.scale
 	fog_layer.tile_set = _build_fog_tile_set()
 	_paint_map()
 	_paint_backdrop()
@@ -204,6 +219,7 @@ func _build_fog_tile_set() -> TileSet:
 
 
 func _paint_map() -> void:
+	var ground := Vector2i(db.ground().atlas_col, 0)
 	for y in map.height:
 		for x in map.width:
 			var cell := Vector2i(x, y)
@@ -212,6 +228,8 @@ func _paint_map() -> void:
 			var terrain := map.terrain_at(cell)
 			var row := identity.atlas_row(game.owner_at(cell)) if terrain.team_tinted else 0
 			terrain_layer.set_cell(cell, ATLAS_SOURCE_ID, Vector2i(terrain.atlas_col, row))
+			if terrain.is_property:
+				ground_layer.set_cell(cell, ATLAS_SOURCE_ID, ground)
 
 
 ## Paints `cell` from its autotile family sheet, if it has one. False means the

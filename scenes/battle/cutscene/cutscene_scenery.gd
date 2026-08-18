@@ -187,7 +187,10 @@ static func object_tint(column: int, row: int) -> Color:
 	return cell_tint(column, row, OBJECT_WINDOW)
 
 
-## Average colour over one window of one atlas cell.
+## Average colour over one window of one atlas cell, counting only the pixels
+## that are there. The five property columns ship as transparent overlays, so a
+## window over a roof lands on alpha as often as on tile, and a transparent pixel
+## read as black drags a city's roof a third of the way to it.
 static func cell_tint(column: int, row: int, window: Rect2i) -> Color:
 	var key := [column, row, window]
 	if _tint_cache.has(key):
@@ -202,6 +205,8 @@ static func cell_tint(column: int, row: int, window: Rect2i) -> Color:
 				var pixel := image.get_pixel(
 					column * BattleView.TERRAIN_PX + x, row * BattleView.TERRAIN_PX + y
 				)
+				if pixel.a <= 0.0:
+					continue
 				total += Color(pixel.r, pixel.g, pixel.b)
 				samples += 1
 		if samples > 0:

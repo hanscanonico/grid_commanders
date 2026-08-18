@@ -28,6 +28,8 @@ script = ExtResource("1")
 [node name="Backdrop" type="TileMapLayer" parent="."]
 modulate = Color(0.45, 0.47, 0.56, 1)
 
+[node name="GroundLayer" type="TileMapLayer" parent="."]
+
 [node name="TerrainLayer" type="TileMapLayer" parent="."]
 
 [node name="MoveOverlay" type="TileMapLayer" parent="."]
