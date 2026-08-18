@@ -80,6 +80,30 @@ static func action_button(
 	return button
 
 
+## A text link: the lightest action the system has, for the one row that belongs
+## at the edge of a page rather than in its button stack. Silkscreen at micro size
+## in muted ink, brightening on hover and focus, and shrunk to its own words — a
+## full-width row with no fill and no border reads as a button whose chrome failed
+## to draw, which is exactly what the menu's Quit used to look like.
+static func text_link(text: String) -> Button:
+	var link := Button.new()
+	link.text = text.to_upper()
+	link.add_theme_font_override("font", UiTheme.stat())
+	link.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	var blank := UiTheme.flat(Color(0, 0, 0, 0))
+	link.add_theme_stylebox_override("normal", blank)
+	link.add_theme_stylebox_override("hover", blank)
+	link.add_theme_stylebox_override("pressed", blank)
+	link.add_theme_stylebox_override("focus", UiTheme.focus_box())
+	link.add_theme_color_override("font_color", UiTheme.NEUTRAL)
+	link.add_theme_color_override("font_hover_color", UiTheme.NEUTRAL_LIGHT)
+	link.add_theme_color_override("font_pressed_color", UiTheme.NEUTRAL_LIGHT)
+	link.add_theme_color_override("font_focus_color", UiTheme.NEUTRAL_LIGHT)
+	link.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	link.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	return link
+
+
 ## A segmented control: a Silkscreen micro-label over a bordered row of toggle
 ## buttons, the active one carrying the faction fill. Labels come from the
 ## authority that owns them (GameSpeed / DifficultyDB), never typed in, so the
