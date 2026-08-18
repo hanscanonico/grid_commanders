@@ -137,8 +137,9 @@ choice every run.
 
 Read the sheet with finding 1 in hand. Cells 07–20 are neutral figures at cut-in resolution over
 water, all at 0.00 steps and ~71.8 hue: on the ruler they are the worst cells in the game, and on
-screen they are tan hulls on blue water. Cells 01–06 are the same story in the other direction —
-meridian and verdant hulls whose value sits exactly on the sea's.
+screen they are tan figures on blue water. Cells 01–06 are the same story at board resolution —
+meridian and verdant carriers and bombers over open sea, whose value sits exactly on the water's
+and whose paint does not.
 
 ## Spot check
 

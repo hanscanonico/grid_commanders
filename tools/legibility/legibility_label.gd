@@ -31,25 +31,16 @@ static func create() -> LegibilityLabel:
 	return label
 
 
-## Draws one line with its top-left corner at `at`, in `ink`, and returns the pen
-## position it ended at. Anything the image cannot hold is clipped rather than
+## Draws one line with its top-left corner at `at`, in `ink`. Anything the image
+## cannot hold is clipped rather than
 ## wrapped: a caption that does not fit is a layout to fix, not a line to reflow.
-func draw(image: Image, text: String, at: Vector2i, ink: Color) -> int:
+func draw(image: Image, text: String, at: Vector2i, ink: Color) -> void:
 	var pen := at.x
 	var baseline := at.y + int(_font.get_ascent(SIZE))
 	for character in text.to_utf32_buffer():
 		var glyph := _font.get_glyph_index(SIZE, character, 0)
 		_blit(image, glyph, Vector2i(pen, baseline), ink)
 		pen += int(_font.get_glyph_advance(0, SIZE, glyph).x)
-	return pen
-
-
-## Width one line will take, so a caller can centre it or check it fits.
-func width(text: String) -> int:
-	var pen := 0
-	for character in text.to_utf32_buffer():
-		pen += int(_font.get_glyph_advance(0, SIZE, _font.get_glyph_index(SIZE, character, 0)).x)
-	return pen
 
 
 func _blit(image: Image, glyph: int, pen: Vector2i, ink: Color) -> void:
