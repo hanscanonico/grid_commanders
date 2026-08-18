@@ -56,6 +56,8 @@ make balance-watch        # watch a Balance Lab match play out live, both sides 
 make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
 make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/replay_survey.md)
+make legibility-check     # every unit, tint, ground and overlay composited, and how many ramp
+                          # steps it separates by -> reports/ (docs/sprite_legibility.md)
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
@@ -1148,11 +1150,15 @@ already failing would muddy both readings.
   above); `tools/run_bulwark_measure.gd`, the Bulwark board's own fairness measurement
   (`docs/bulwark_balance.md`) — a four-army board `BalanceMatchEngine` cannot play, so it runs the
   match loop itself; `tools/run_campaign_difficulty.gd`, which plays every shipped mission to a
-  verdict and reads how hard it was (`docs/campaign_difficulty.md`); plus `tools/focus_timeline.sh`, the focus-theft
+  verdict and reads how hard it was (`docs/campaign_difficulty.md`); the composite legibility sweep
+  under `tools/legibility/`, which stacks every unit, tint, ground and board overlay out of the
+  shipped atlases and measures how far each figure separates from its ground
+  (`docs/sprite_legibility.md`); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, the arena's scorer and pools under
-  `tools/arena/`, the recording reader under `tools/replay/`, and
+  `tools/arena/`, the recording reader under `tools/replay/`, the legibility metric under
+  `tools/legibility/`, and
   the launch layer that states which match to play (`MatchRequest`, `CmdArgs`) — each written that
   way for exactly this reason.
 - `addons/gut/` — vendored [GUT](https://github.com/bitwes/Gut) 9.6.1 (MIT), with one local
