@@ -98,7 +98,8 @@ previous page, and sea is identical to it.)
    stands *beside*; what this sweep measures is what it stands *on*. Reading the key-down needs a
    silhouette-aware ground, which would supersede this page.
 4. **The dark hull is invisible to the ruler for the same shape of reason.** The sub's sprite
-   really did darken — mean luminance 0.373 → 0.346 and the upper quartile 0.612 → 0.538 — but its
+   really did darken — on the neutral row the spot check below reads, mean luminance 0.373 → 0.346
+   and the upper quartile 0.612 → 0.538, and every other livery's mean falls with it — but its
    *median* pixel did not move (0.400), so every sub-on-sea cell reads exactly as before: 94.0%
    failing, 1.39 steps, figure luminance 0.188. The sub's overall failure rate moves 35.3% → 33.8%
    and **all of that is its woods cells**, not its water. The submarine class the previous page
