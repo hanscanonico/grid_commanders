@@ -26,11 +26,39 @@ extends RefCounted
 ## Luminance is Rec.709 over the stored (sRGB) components, which is the space
 ## the washes composite in — 2D blending in this project is over stored values,
 ## not linearised ones — so the ramp and the composites are read on one scale.
+##
+## ## The hue measure
+##
+## Separation in ramp steps is value only, so a figure that differs from its
+## ground in colour alone scores zero on it. `hue_distance` is the second
+## reading: **CIE76 in the chroma plane** — `sqrt(da^2 + db^2)` between the two
+## colours in CIE Lab over D65, taken between exactly the two colours the value
+## bar compared, which is what `median_colour` exists to name. Lab is reached the
+## standard way (sRGB -> linear through `Color.srgb_to_linear`, the linear ->
+## XYZ matrix, then the Lab cube root), so it is the one place in this instrument
+## that leaves the stored space.
+##
+## CIE76 rather than CIE94 or CIEDE2000 deliberately: the later formulas correct
+## for perceptual non-uniformities at small distances, and nothing here is a
+## small distance — the question is whether two things on screen are obviously
+## different colours, not how close a near-match is.
+##
+## **The lightness term is dropped, and that is the whole point**: full CIE76
+## carries `dL` too, which is the difference the ramp-step bar already measures,
+## so a column holding it would score the same pair twice and read as a second
+## opinion on value. Two greys are 0 apart here however far apart they are on
+## the bar, and that is the reading the bar cannot give.
 
 ## Slots in one faction ramp. sprite_generator's contract, recorded in
 ## assets/LICENSES.md ("indexed six-slot faction ramps"); the step below is the
 ## gap between two neighbouring slots.
 const RAMP_SLOTS := 6
+## CIE D65, the white point the sRGB primaries are stated against.
+const WHITE_POINT := Vector3(0.95047, 1.0, 1.08883)
+## The Lab cube root's linear segment: CIE's own epsilon and kappa, as the
+## integer ratios they are defined by.
+const LAB_EPSILON := 216.0 / 24389.0
+const LAB_KAPPA := 24389.0 / 27.0
 
 
 ## Rec.709 luminance of a stored colour, alpha ignored.
@@ -45,6 +73,52 @@ static func over(fg: Color, bg: Color) -> Color:
 	return Color(
 		fg.r * a + bg.r * (1.0 - a), fg.g * a + bg.g * (1.0 - a), fg.b * a + bg.b * (1.0 - a), 1.0
 	)
+
+
+## The luminance of every colour in a sample, in the order it was collected.
+static func luminances(colours: PackedColorArray) -> PackedFloat32Array:
+	var values := PackedFloat32Array()
+	for colour in colours:
+		values.append(luminance(colour))
+	return values
+
+
+## The colour at the middle of a sample ordered by luminance — the one the value
+## bar's median is the luminance of, so the two measures compare the same pair.
+## Black for an empty sample. Ties are settled by the components rather than by
+## the order the pixels were collected, and an even sample averages its two
+## middles exactly as `median` does, which is what keeps the two in step.
+static func median_colour(colours: PackedColorArray) -> Color:
+	if colours.is_empty():
+		return Color.BLACK
+	var levels := PackedFloat64Array()
+	for colour in colours:
+		levels.append(luminance(colour))
+	levels.sort()
+	var middle := levels.size() / 2
+	if levels.size() % 2 == 1:
+		return _colour_at(colours, levels[middle])
+	return (_colour_at(colours, levels[middle - 1]) + _colour_at(colours, levels[middle])) * 0.5
+
+
+## CIE Lab of a stored (sRGB) colour, alpha ignored.
+static func lab(colour: Color) -> Vector3:
+	var linear := colour.srgb_to_linear()
+	var x := 0.4124564 * linear.r + 0.3575761 * linear.g + 0.1804375 * linear.b
+	var y := 0.2126729 * linear.r + 0.7151522 * linear.g + 0.0721750 * linear.b
+	var z := 0.0193339 * linear.r + 0.1191920 * linear.g + 0.9503041 * linear.b
+	var fx := _lab_f(x / WHITE_POINT.x)
+	var fy := _lab_f(y / WHITE_POINT.y)
+	var fz := _lab_f(z / WHITE_POINT.z)
+	return Vector3(116.0 * fy - 16.0, 500.0 * (fx - fy), 200.0 * (fy - fz))
+
+
+## How far apart two colours are in colour, ignoring how far apart they are in
+## lightness: the CIE76 distance taken in Lab's chroma plane.
+static func hue_distance(a: Color, b: Color) -> float:
+	var first := lab(a)
+	var second := lab(b)
+	return Vector2(first.y - second.y, first.z - second.z).length()
 
 
 ## Median of a sample, 0.0 for an empty one. Sorts a copy: a caller's sample is
@@ -69,6 +143,36 @@ static func separation(
 	if step <= 0.0:
 		return 0.0
 	return absf(median(figure) - median(ground)) / step
+
+
+## The least colour of a sample painted at exactly `level`, "least" being by
+## components — a scan rather than a sort, and one that settles the case two
+## different colours share a luminance without ever asking what order the pixels
+## arrived in.
+static func _colour_at(colours: PackedColorArray, level: float) -> Color:
+	var found := Color.BLACK
+	var seen := false
+	for colour in colours:
+		if luminance(colour) != level:
+			continue
+		if not seen or _lower_components(colour, found):
+			found = colour
+			seen = true
+	return found
+
+
+static func _lower_components(a: Color, b: Color) -> bool:
+	if a.r != b.r:
+		return a.r < b.r
+	if a.g != b.g:
+		return a.g < b.g
+	return a.b < b.b
+
+
+static func _lab_f(ratio: float) -> float:
+	if ratio > LAB_EPSILON:
+		return pow(ratio, 1.0 / 3.0)
+	return (LAB_KAPPA * ratio + 16.0) / 116.0
 
 
 ## One ramp step of the shipped units atlas, in luminance.
