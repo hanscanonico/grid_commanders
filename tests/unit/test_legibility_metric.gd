@@ -79,10 +79,14 @@ func _ramp_atlas() -> Image:
 	return image
 
 
-func test_ramp_step_is_the_gap_between_two_slots() -> void:
-	var step := LegibilityMetric.ramp_step(_ramp_atlas(), 1, 2)
-	assert_gt(step, 0.0, "both rows carry a ramp")
-	assert_lt(step, GREY_STEP + 0.0001, "the grey row is the wider of the two")
+## The grey row steps by GREY_STEP in luminance and the red row by that much of
+## red alone; the sheet's step is the mean over the rows. The tolerance is the
+## 8-bit sheet's rounding, not slack in the metric.
+func test_ramp_step_is_the_mean_gap_between_two_slots() -> void:
+	var red_step := LegibilityMetric.luminance(Color(GREY_STEP, 0, 0))
+	assert_almost_eq(
+		LegibilityMetric.ramp_step(_ramp_atlas(), 1, 2), (GREY_STEP + red_step) / 2.0, 1.0 / 255.0
+	)
 
 
 func test_ramp_step_ignores_pixels_every_row_paints_the_same() -> void:

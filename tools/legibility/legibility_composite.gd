@@ -31,7 +31,8 @@ const CUTIN_PX := BattleView.TERRAIN_PX
 
 var art: LegibilityArt
 ## The art the figure is cut from, and the art of the ground under it: each a
-## {"image": Image, "origin": Vector2i} as LegibilityArt hands them over.
+## {"image": Image, "origin": Vector2i, "px": int} as LegibilityArt hands them
+## over.
 var figure_cell: Dictionary
 var ground_cell: Dictionary
 var overlay: Overlay = Overlay.NONE
@@ -134,12 +135,14 @@ func _modulate() -> Color:
 	return Color(0, 0, 0, 0)
 
 
-## Nearest sampling of a 64px art cell at this composite's resolution, which is
-## what the project's nearest texture filter does when the layer is scaled down.
+## Nearest sampling of an art cell at this composite's resolution, which is what
+## the project's nearest texture filter does when the layer is scaled down. The
+## cell states its own source size, so the figure is sampled at UnitSprite's and
+## the ground at the board's.
 func _texel(cell: Dictionary, x: int, y: int) -> Color:
 	var image: Image = cell["image"]
 	var origin: Vector2i = cell["origin"]
-	var step := float(LegibilityArt.CELL_PX) / float(size)
+	var step := float(cell["px"]) / float(size)
 	var texel := Vector2i(int((x + 0.5) * step), int((y + 0.5) * step))
 	return image.get_pixel(origin.x + texel.x, origin.y + texel.y)
 

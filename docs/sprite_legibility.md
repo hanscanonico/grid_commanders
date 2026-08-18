@@ -33,6 +33,9 @@ Three things to know before reading a number:
 - The ground is the **whole tile**, not the pixels the silhouette leaves showing. On the
   mountain tile that is mostly the grass plate around the peak, so a figure standing on
   the peak itself is measured against a slightly kinder ground than it stands on.
+- The figures are the **ambient frame A** atlas. The board beats between two
+  frames, and frame B is not in this sweep — a run that adds it supersedes this page rather
+  than extending it.
 - The board reading samples one texel per screen pixel (nearest filtering, as the project
   is configured), so a unit's board median is not its cut-in median: the downsample keeps
   a fixed quarter of the art.

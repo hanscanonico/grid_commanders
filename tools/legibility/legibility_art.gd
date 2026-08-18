@@ -32,6 +32,10 @@ const FOG_NODE := "FogLayer"
 ## pixel is one texel rather than an average of sixteen.
 const CELL_PX := BattleView.TERRAIN_PX
 
+## The units atlas at ambient frame A. The board also beats to frame B
+## (UnitSprite.UNITS_ATLAS_B_PATH), which this sweep does not measure: a frame is
+## a sixth axis, and adding it is a widening that supersedes a whole report
+## rather than an option on one.
 var units: Image
 var terrain: Image
 var overlay: Image
@@ -69,7 +73,11 @@ func board_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 	var family := TerrainAutotiles.family(field, centre)
 	var cell := {}
 	if family == TerrainAutotiles.Family.NONE:
-		cell = {"image": terrain, "origin": Vector2i(terrain_type.atlas_col * CELL_PX, 0)}
+		cell = {
+			"image": terrain,
+			"origin": Vector2i(terrain_type.atlas_col * CELL_PX, 0),
+			"px": CELL_PX,
+		}
 	else:
 		var mask := TerrainAutotiles.mask(field, centre)
 		var coords := TerrainAutotiles.atlas_coords(family, mask)
@@ -78,6 +86,7 @@ func board_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 		cell = {
 			"image": _sheet(TerrainAutotiles.SHEET_PATHS[family]),
 			"origin": Vector2i(margin, margin) + coords * stride,
+			"px": CELL_PX,
 		}
 	_board_cells[terrain_type.id] = cell
 	return cell
@@ -90,13 +99,19 @@ func cutin_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 	var paving := terrain_type
 	if terrain_type.stands_in_cutin():
 		paving = db.by_id(terrain_type.cutin_ground)
-	return {"image": terrain, "origin": Vector2i(paving.atlas_col * CELL_PX, 0)}
+	return {"image": terrain, "origin": Vector2i(paving.atlas_col * CELL_PX, 0), "px": CELL_PX}
 
 
-## The region one unit kind occupies in one faction row of the units atlas.
+## The region one unit kind occupies in one faction row of the units atlas. Its
+## cell is UnitSprite's own size rather than the terrain's: the two happen to
+## match today, and nothing here may depend on their staying equal.
 func unit_cell(unit_type: UnitType, atlas_row: int) -> Dictionary:
 	var size := UnitSprite.SPRITE_PX
-	return {"image": units, "origin": Vector2i(unit_type.atlas_col * size, atlas_row * size)}
+	return {
+		"image": units,
+		"origin": Vector2i(unit_type.atlas_col * size, atlas_row * size),
+		"px": size,
+	}
 
 
 func _sheet(path: String) -> Image:
