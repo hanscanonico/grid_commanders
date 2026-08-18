@@ -239,6 +239,23 @@ replay-report:
 	$(GODOT) --headless --path . -s res://tools/run_replay_report.gd -- \
 		--replay="$(REPLAY)" $(ARGS)
 
+# Composite legibility: renders every unit kind, in every faction's colours,
+# ready and acted, over grass, woods, sea, mountain and shoal, under the move,
+# fire, threat and fog layers, and reports how many ramp steps of separation the
+# figure keeps from its ground. Reads the shipped atlases and the shipped
+# constants; plays no match. It boots a bare scene rather than running with -s,
+# because the board constants it reads sit on scripts that name autoloads.
+#   make legibility-check
+#   make legibility-check LEGIBILITY="--worst=40 --dump=board:tank:verdant:ready:woods:none"
+# An instrument rather than a gate — a failing cell is a finding for the art to
+# answer, never a colour to move — so it stays out of `make verify`, like the
+# Balance Lab. docs/sprite_legibility.md is the committed reading; the run
+# itself writes to reports/ (gitignored).
+LEGIBILITY ?=
+legibility-check:
+	$(call require-godot)
+	$(GODOT) --headless --path . res://tools/run_legibility_check.tscn -- $(LEGIBILITY)
+
 # Every .gd file that is actually ours: skips the engine cache, vendored addons,
 # the engine binary, and .claude/worktrees, which holds whole nested checkouts of
 # this same repo and would otherwise be linted as if it were project source.
@@ -368,4 +385,4 @@ gallery-screenshot: import
 	audio portraits import campaign-difficulty \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
-	balance-watch replay replay-report campaigns
+	balance-watch replay replay-report campaigns legibility-check

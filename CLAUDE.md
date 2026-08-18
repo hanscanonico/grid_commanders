@@ -1126,8 +1126,10 @@ Follow the official Godot GDScript style guide. Key points:
 
 - Tests use **GUT** (Godot Unit Test) and live in `tests/`, mirroring `core/` and `ai/`.
 - **Test the Node-free layers only** — `core/`, plus `ai/`, the offline balance harness in
-  `tools/balance/`, the arena's grammar, scorer and pools in `tools/arena/`, and the replay
-  analyser in `tools/replay/`, all of which are Node-free for
+  `tools/balance/`, the arena's grammar, scorer and pools in `tools/arena/`, the replay
+  analyser in `tools/replay/`, and the composite legibility metric in `tools/legibility/`
+  (`LegibilityMetric` — the arithmetic only; the render sweep it reports in is an offline
+  instrument like the Balance Lab and stays out of `make verify`), all of which are Node-free for
   exactly this reason. That's where the rules
   live and where bugs hurt. Presentation is verified by playing the scene, not by unit tests.
   The narrow exception is the launch layer that was deliberately made Node-free and
