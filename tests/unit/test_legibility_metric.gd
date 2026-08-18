@@ -67,6 +67,81 @@ func test_separation_without_a_ramp_is_zero_rather_than_infinite() -> void:
 	assert_eq(LegibilityMetric.separation(_sample([1.0]), _sample([0.0]), 0.0), 0.0)
 
 
+func _colours(values: Array) -> PackedColorArray:
+	var packed := PackedColorArray()
+	for value: Color in values:
+		packed.append(value)
+	return packed
+
+
+## Lab of the colours whose coordinates are published: white sits at L 100 with
+## no chroma, and sRGB red at (53.24, 80.09, 67.20).
+func test_lab_places_the_published_colours() -> void:
+	var white := LegibilityMetric.lab(Color.WHITE)
+	assert_almost_eq(white.x, 100.0, 0.01)
+	assert_almost_eq(white.y, 0.0, 0.01)
+	assert_almost_eq(white.z, 0.0, 0.01)
+	assert_eq(LegibilityMetric.lab(Color.BLACK), Vector3.ZERO, "black is the origin")
+	var red := LegibilityMetric.lab(Color.RED)
+	assert_almost_eq(red.x, 53.24, 0.01)
+	assert_almost_eq(red.y, 80.09, 0.01)
+	assert_almost_eq(red.z, 67.20, 0.01)
+
+
+func test_hue_distance_is_the_chroma_plane_distance() -> void:
+	assert_eq(LegibilityMetric.hue_distance(Color.RED, Color.RED), 0.0, "a colour against itself")
+	assert_almost_eq(LegibilityMetric.hue_distance(Color.RED, Color.BLUE), 175.07, 0.01)
+
+
+## The two readings must not measure the same thing twice: black against white is
+## the largest gap the value bar can report and no colour difference at all.
+func test_hue_distance_ignores_lightness() -> void:
+	assert_almost_eq(LegibilityMetric.hue_distance(Color.WHITE, Color.BLACK), 0.0, 0.001)
+	assert_almost_eq(
+		LegibilityMetric.hue_distance(Color(0.2, 0.2, 0.2), Color(0.8, 0.8, 0.8)), 0.0, 0.001
+	)
+
+
+## The whole reason the hue column exists: a figure painted a different colour at
+## the same value scores nothing on the ramp-step bar and a great deal here.
+func test_hue_distance_sees_what_the_value_bar_cannot() -> void:
+	var green := Color(0.0, 0.2126 / 0.7152, 0.0)
+	var figure := _sample([LegibilityMetric.luminance(Color.RED)])
+	var ground := _sample([LegibilityMetric.luminance(green)])
+	assert_almost_eq(LegibilityMetric.separation(figure, ground, 0.15), 0.0, 0.0001)
+	assert_almost_eq(LegibilityMetric.hue_distance(Color.RED, green), 120.45, 0.01)
+
+
+## The two readings have to compare the same pair, which is only true while the
+## median colour is the colour the median luminance belongs to.
+func test_median_colour_is_the_colour_the_value_median_reads() -> void:
+	var sample := _colours([Color(0.9, 0.1, 0.1), Color(0.1, 0.1, 0.9), Color(0.2, 0.6, 0.2)])
+	var middle := LegibilityMetric.median_colour(sample)
+	assert_almost_eq(
+		LegibilityMetric.luminance(middle),
+		LegibilityMetric.median(LegibilityMetric.luminances(sample)),
+		0.0001
+	)
+
+
+func test_median_colour_ignores_collection_order() -> void:
+	var dark := Color(0.1, 0.1, 0.1)
+	var mid := Color(0.4, 0.4, 0.4)
+	var light := Color(0.9, 0.9, 0.9)
+	assert_eq(LegibilityMetric.median_colour(_colours([light, dark, mid])), mid)
+	assert_eq(LegibilityMetric.median_colour(_colours([mid, light, dark])), mid)
+
+
+## An even sample averages its two middles, exactly as the value median does.
+func test_median_colour_of_an_even_sample_averages_its_middles() -> void:
+	var sample := _colours([Color(0.2, 0.2, 0.2), Color(0.6, 0.6, 0.6)])
+	assert_almost_eq(LegibilityMetric.median_colour(sample).r, 0.4, 0.0001)
+
+
+func test_median_colour_of_an_empty_sample_is_black() -> void:
+	assert_eq(LegibilityMetric.median_colour(PackedColorArray()), Color.BLACK)
+
+
 ## A sheet of two rows that disagree everywhere: evenly spaced greys against the
 ## same levels in red. The ramp is what the rows disagree about, and its step is
 ## the gap between two of its slots.

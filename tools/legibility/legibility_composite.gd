@@ -43,15 +43,23 @@ var exhausted := false
 var size := BOARD_PX
 
 
-## Luminance of every pixel the figure covers, composited.
-func figure_luminances() -> PackedFloat32Array:
+## Every pixel the figure covers, composited.
+func figure_colours() -> PackedColorArray:
 	return _sample(true)
 
 
-## Luminance of the ground plate across the whole cell, composited — the tile
-## as it reads, independent of which figure is standing on it.
-func ground_luminances() -> PackedFloat32Array:
+## The ground plate across the whole cell, composited — the tile as it reads,
+## independent of which figure is standing on it.
+func ground_colours() -> PackedColorArray:
 	return _sample(false)
+
+
+func figure_luminances() -> PackedFloat32Array:
+	return LegibilityMetric.luminances(figure_colours())
+
+
+func ground_luminances() -> PackedFloat32Array:
+	return LegibilityMetric.luminances(ground_colours())
 
 
 ## The composite as an image, for eyeballing one cell the sweep has judged.
@@ -63,14 +71,13 @@ func to_image() -> Image:
 	return image
 
 
-func _sample(figure: bool) -> PackedFloat32Array:
-	var values := PackedFloat32Array()
+func _sample(figure: bool) -> PackedColorArray:
+	var values := PackedColorArray()
 	for y in size:
 		for x in size:
 			if figure and not _figure_covers(x, y):
 				continue
-			var colour := _pixel(x, y) if figure else _fogged(_ground(x, y))
-			values.append(LegibilityMetric.luminance(colour))
+			values.append(_pixel(x, y) if figure else _fogged(_ground(x, y)))
 	return values
 
 

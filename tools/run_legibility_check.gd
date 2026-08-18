@@ -20,16 +20,24 @@ extends Node
 ##   Godot --headless --path . res://tools/run_legibility_check.tscn -- [flags]
 ##     --out=reports/legibility   output directory (default shown)
 ##     --worst=20                 how many failing cells to print
+##     --gallery=docs/images/legibility_worst20.png
+##                                where the worst-cell sheet is written; empty
+##                                skips it
 ##     --dump=board:tank:verdant:ready:woods:none
 ##                                writes that one composite as a PNG beside the
 ##                                report, magnified by --dump-scale
 ##     --dump-scale=8             nearest magnification of a dumped crop
 ##
-## Writes cells.csv and summary.md under --out (gitignored).
+## Writes cells.csv and summary.md under --out (gitignored), plus the gallery,
+## which is the one thing a run publishes: it is committed review evidence that
+## docs/sprite_legibility.md references, so it lands under docs/images/ rather
+## than in the gitignored report directory, and it is deterministic — same art
+## in, same sheet out.
 
 const DEFAULT_OUT := "reports/legibility"
 const DEFAULT_WORST := 20
 const DEFAULT_DUMP_SCALE := 8
+const DEFAULT_GALLERY := "docs/images/legibility_worst20.png"
 
 
 func _ready() -> void:
@@ -51,6 +59,7 @@ func _ready() -> void:
 	_write(out.path_join("summary.md"), summary)
 	print(summary)
 	print(_worst(rows, int(args.get("worst", DEFAULT_WORST))))
+	_gallery(sweep, rows, str(args.get("gallery", DEFAULT_GALLERY)))
 	if args.has("dump"):
 		_dump(sweep, str(args["dump"]), int(args.get("dump-scale", DEFAULT_DUMP_SCALE)), out)
 	get_tree().quit(0)
@@ -69,7 +78,24 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 		"Bar: >= %.1f ramp steps of figure-vs-ground separation." % LegibilitySweep.PASS_STEPS
 	)
 	lines.append("")
+	lines.append(
+		(
+			"Second reading: CIE76 chroma distance between the same two colours, cleared at %.0f."
+			% LegibilitySweep.HUE_CLEAR
+		)
+	)
+	lines.append("")
 	lines.append("%d cells, %d failing (%.1f%%)." % [rows.size(), failed, _percent(failed, rows)])
+	var carried := LegibilitySweep.hue_carried(rows)
+	(
+		lines
+		. append(
+			(
+				"%d of those %d clear the hue bound (%.1f%% of the failures): value-blind, not illegible."
+				% [carried, failed, 100.0 * float(carried) / float(failed) if failed > 0 else 0.0]
+			)
+		)
+	)
 	for column in ["view", "overlay", "terrain", "faction", "state"]:
 		lines.append("")
 		lines.append_array(_table(column, LegibilitySweep.tally(rows, column)))
@@ -80,14 +106,15 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 
 func _table(column: String, counts: Dictionary[String, Array]) -> Array[String]:
 	var lines: Array[String] = [
-		"| %s | cells | failing | %% |" % column, "| --- | --- | --- | --- |"
+		"| %s | cells | failing | %% | hue-carried |" % column,
+		"| --- | --- | --- | --- | --- |",
 	]
 	var keys: Array = counts.keys()
 	keys.sort()
 	for key: String in keys:
-		var pair: Array = counts[key]
-		var share := 100.0 * float(pair[1]) / float(pair[0]) if pair[0] > 0 else 0.0
-		lines.append("| %s | %d | %d | %.1f |" % [key, pair[0], pair[1], share])
+		var triple: Array = counts[key]
+		var share := 100.0 * float(triple[1]) / float(triple[0]) if triple[0] > 0 else 0.0
+		lines.append("| %s | %d | %d | %.1f | %d |" % [key, triple[0], triple[1], share, triple[2]])
 	return lines
 
 
@@ -98,6 +125,7 @@ func _worst(rows: Array[Dictionary], count: int) -> String:
 		var row := failed[i]
 		var fields: Array = [
 			row["steps"],
+			row["hue"],
 			row["view"],
 			row["unit"],
 			row["faction"],
@@ -105,8 +133,26 @@ func _worst(rows: Array[Dictionary], count: int) -> String:
 			row["terrain"],
 			row["overlay"],
 		]
-		lines.append("  %5.2f steps  %-6s %-11s %-8s %-6s %-8s %s" % fields)
+		lines.append("  %5.2f steps  hue %5.1f  %-6s %-11s %-8s %-6s %-8s %s" % fields)
 	return "\n".join(lines)
+
+
+## The worst-cell sheet, the run's one committed artifact.
+func _gallery(sweep: LegibilitySweep, rows: Array[Dictionary], path: String) -> void:
+	if path == "":
+		return
+	var image := LegibilityGallery.compose(sweep, rows, LegibilityGallery.CELLS)
+	if image == null:
+		push_error("legibility: the gallery could not be drawn")
+		return
+	var absolute := ProjectSettings.globalize_path("res://").path_join(path)
+	if DirAccess.make_dir_recursive_absolute(absolute.get_base_dir()) != OK:
+		push_error("legibility: cannot create %s" % absolute.get_base_dir())
+		return
+	if image.save_png(absolute) != OK:
+		push_error("legibility: cannot write %s" % absolute)
+		return
+	print("\nWrote %s (%d x %d)" % [path, image.get_width(), image.get_height()])
 
 
 ## `view:unit:faction:state:terrain:overlay` — the same six fields a report row
@@ -116,21 +162,32 @@ func _dump(sweep: LegibilitySweep, spec: String, scale: int, out: String) -> voi
 	if parts.size() != 6:
 		push_error("legibility: --dump wants view:unit:faction:state:terrain:overlay")
 		return
-	var unit_type := sweep.unit_db.by_id(StringName(parts[1]))
-	var row := LegibilitySweep.ROW_NAMES.find(parts[2])
-	var overlay := LegibilityComposite.Overlay.keys().find(parts[5].to_upper())
-	if unit_type == null or row < 0 or overlay < 0:
+	var keyed := {}
+	for i in LegibilitySweep.KEYS.size():
+		keyed[LegibilitySweep.KEYS[i]] = parts[i]
+	var cell := sweep.composite_for(keyed)
+	if cell == null:
 		push_error("legibility: --dump names art that does not exist: %s" % spec)
 		return
-	var cell := sweep.composite(unit_type, row, StringName(parts[4]), overlay, parts[0])
-	cell.exhausted = parts[3] == "acted"
 	var image := cell.to_image()
 	image.resize(image.get_width() * scale, image.get_height() * scale, Image.INTERPOLATE_NEAREST)
 	var path := out.path_join("%s.png" % spec.replace(":", "_"))
 	if image.save_png(path) != OK:
 		push_error("legibility: cannot write %s" % path)
 		return
+	var figure := LegibilityMetric.median_colour(cell.figure_colours())
+	var ground := LegibilityMetric.median_colour(cell.ground_colours())
 	print("\nWrote %s" % path)
+	print(
+		(
+			"  figure #%s, ground #%s, hue %.2f — the two colours both readings compare"
+			% [
+				figure.to_html(false),
+				ground.to_html(false),
+				LegibilityMetric.hue_distance(figure, ground)
+			]
+		)
+	)
 
 
 func _percent(failed: int, rows: Array[Dictionary]) -> float:

@@ -242,15 +242,19 @@ replay-report:
 # Composite legibility: renders every unit kind, in every faction's colours,
 # ready and acted, over grass, woods, sea, mountain and shoal, under the move,
 # fire, threat and fog layers, and reports how many ramp steps of separation the
-# figure keeps from its ground. Reads the shipped atlases and the shipped
-# constants; plays no match. It boots a bare scene rather than running with -s,
-# because the board constants it reads sit on scripts that name autoloads.
+# figure keeps from its ground — plus, beside it, the CIE76 chroma distance
+# between the same two colours, so a pair told apart by hue alone is counted
+# rather than passed. Reads the shipped atlases and the shipped constants and
+# plays no match.
+# It boots a bare scene rather than running with -s, because the board constants
+# it reads sit on scripts that name autoloads.
 #   make legibility-check
 #   make legibility-check LEGIBILITY="--worst=40 --dump=board:tank:verdant:ready:woods:none"
 # An instrument rather than a gate — a failing cell is a finding for the art to
 # answer, never a colour to move — so it stays out of `make verify`, like the
 # Balance Lab. docs/sprite_legibility.md is the committed reading; the run
-# itself writes to reports/ (gitignored).
+# writes its tables to reports/ (gitignored) and redraws the one committed
+# artifact it publishes, docs/images/legibility_worst20.png.
 LEGIBILITY ?=
 legibility-check:
 	$(call require-godot)
