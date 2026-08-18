@@ -31,6 +31,11 @@ const TAGLINE := "TURN-BASED TACTICS · PICK YOUR GROUND"
 const MAP_CAPTION_LINES := 2
 ## The picker card's frame inset, read by its stylebox and by the content over it.
 const CARD_PAD := 4
+## The space between two groups of rows inside the Match Setup panel. Named so a
+## row group built elsewhere can match it: the seat strip sets its own separation
+## (SeatStrip._rebuild) and is tighter than this, which reads as a grouping the
+## panel does not have.
+const PANEL_ROW_GAP := 5
 
 ## Everything the select page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
@@ -405,7 +410,7 @@ func _build_setup_panel() -> Control:
 
 	# --- body ---
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 5)
+	body.add_theme_constant_override("separation", PANEL_ROW_GAP)
 	col.add_child(UiKit.pad(body, 8, 7))
 
 	body.add_child(_build_map_picker())
@@ -627,41 +632,46 @@ func _build_action_stack() -> Control:
 	_seat_refusal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_seat_refusal)
 
+	# The one filled row under Start: resuming is the action a returning player came
+	# for, so it outranks the two offers below it and stays a step under the match
+	# it must not compete with.
 	_continue_button = UiKit.action_button("Continue", "", UiTheme.ButtonVariant.SECONDARY, null)
 	col.add_child(_continue_button)
 	# What Continue resumes, on its own line rather than as the button's inline
 	# suffix: "DAY 12 · THE STRAITS" is longer than the 122px action stack can set
 	# at button size, and a micro-label under the control is the panel's own idiom.
-	#
-	# It is also Continue's tip trigger. The button itself is the one control here
-	# that can be disabled, and a disabled control is exactly where a tip is the
-	# only affordance left — so the explanation hangs off the caption beneath it,
-	# which stays hoverable either way. `_refresh_continue` sets the words.
+	# It is metadata about the button above it, not a control — hence muted ink and
+	# no dotted rule. `_refresh_continue` sets the words.
 	_continue_caption = UiKit.micro_label("")
 	_continue_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_continue_caption.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_continue_tip = Tooltip.attach(_continue_caption, "", "", Tooltip.Side.BOTTOM)
-	# A disabled button takes no focus — the case the hoverable caption covers.
-	_continue_tip.follow_focus(_continue_button)
 	col.add_child(_continue_caption)
+	# The tip hangs off the button itself: a disabled control still answers the
+	# pointer, so the one control here that can be disabled is also the one place
+	# the explanation is always reachable.
+	_continue_tip = Tooltip.attach(_continue_button, "", "", Tooltip.Side.BOTTOM)
 
 	# Above Replays, below Continue: an authored war is a different offer from the
 	# skirmish this page is otherwise about, and it is the one a first-time player
-	# is most likely to want.
-	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.SECONDARY, null)
+	# is most likely to want. Chrome-less, like Replays: the two of them are ways
+	# out of this page rather than ways to start the match it sets up.
+	_campaign_button = UiKit.action_button("Campaign", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_campaign_button)
 
-	# Below Continue, above Quit: it is the third thing you can do with a match, and
-	# the only surface that tells a player their matches are being recorded at all.
-	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.SECONDARY, null)
+	# Below Continue: it is the third thing you can do with a match, and the only
+	# surface that tells a player their matches are being recorded at all.
+	_replay_button = UiKit.action_button("Replays", "", UiTheme.ButtonVariant.GHOST, null)
 	col.add_child(_replay_button)
-
-	_quit_button = UiKit.action_button("Quit", "", UiTheme.ButtonVariant.GHOST, null)
-	col.add_child(_quit_button)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
+
+	# Out of the stack and down at the column's foot: leaving is not one of the
+	# things this page offers, and a full-width row is what made it read as a
+	# button someone forgot to dress.
+	_quit_button = UiKit.text_link("Quit")
+	col.add_child(_quit_button)
 
 	# One chip per seat the board deals, rebuilt when the map changes — the pair
 	# used to be spelled out here, which is why a third army had nowhere to appear.
@@ -942,9 +952,9 @@ func _refresh_continue() -> void:
 		return
 	_continue_button.disabled = false
 	_continue_caption.text = slot.summary.label().to_upper()
-	# The tagline's tone, which is what a micro-label needs to carry a fact rather
-	# than a hint on the dark backdrop — NEUTRAL_DARK is barely legible out here.
-	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	# Muted, because it is a note about the button above it rather than something to
+	# press — but not the dimmer NEUTRAL_DARK, which is barely legible out here.
+	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL)
 	# The caption already names the day and board, so the tip does not repeat them.
 	_continue_tip.set_copy("Resume the saved match", "Its own board and commanders apply")
 
