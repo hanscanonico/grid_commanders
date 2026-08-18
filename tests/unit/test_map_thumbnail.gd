@@ -45,7 +45,21 @@ func test_a_road_draws_its_connection_variant() -> void:
 	)
 
 
-## Open water and plains have no family, so they keep the base atlas column.
+## The miniature phases its open water off the same cell the board does, so a
+## sea a player picked out of the picker is the sea they are dropped onto.
+func test_open_water_draws_the_phase_the_board_draws() -> void:
+	var map := _map(["SSSS", "SSSS", "SSSS", "SSSS"])
+	var cell := Vector2i(1, 1)
+	var family := TerrainAutotiles.family(map, cell)
+	assert_eq(family, TerrainAutotiles.Family.SEA)
+	assert_eq(MapThumbnail.sheet_path(map, cell), TerrainAutotiles.SHEET_PATHS[family])
+	assert_eq(
+		MapThumbnail.sheet_region(map, null, cell),
+		_sheet_cell(family, TerrainAutotiles.sea_phase(cell))
+	)
+
+
+## Plains has no family, so it keeps the base atlas column.
 func test_a_plain_cell_keeps_its_atlas_column() -> void:
 	var map := _map(["...", "...", "..."])
 	var cell := Vector2i(1, 1)

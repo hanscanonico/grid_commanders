@@ -180,8 +180,8 @@ func _build_tile_set() -> TileSet:
 
 
 ## A source over one generated autotile sheet, cut on TerrainAutotiles' contact
-## sheet contract. The bridge sheet holds its two deck orientations; every other
-## family holds all 16 connection masks, laid out where atlas_coords says.
+## sheet contract, with a tile per variant that authority says the sheet holds,
+## laid out where its atlas_coords says.
 func _autotile_source(family: int) -> TileSetAtlasSource:
 	var sheet := TileSetAtlasSource.new()
 	sheet.texture = load(TerrainAutotiles.SHEET_PATHS[family])
@@ -190,12 +190,8 @@ func _autotile_source(family: int) -> TileSetAtlasSource:
 		TerrainAutotiles.SHEET_SEPARATION, TerrainAutotiles.SHEET_SEPARATION
 	)
 	sheet.texture_region_size = Vector2i(TERRAIN_PX, TERRAIN_PX)
-	if family == TerrainAutotiles.Family.BRIDGES:
-		sheet.create_tile(Vector2i(0, 0))
-		sheet.create_tile(Vector2i(1, 0))
-		return sheet
-	for variant in 16:
-		sheet.create_tile(TerrainAutotiles.atlas_coords(family, variant))
+	for coords in TerrainAutotiles.sheet_cells(family):
+		sheet.create_tile(coords)
 	return sheet
 
 
@@ -238,8 +234,8 @@ func _paint_autotile(layer: TileMapLayer, cell: Vector2i) -> bool:
 	var family := TerrainAutotiles.family(map, cell)
 	if family == TerrainAutotiles.Family.NONE:
 		return false
-	var mask := TerrainAutotiles.mask(map, cell)
-	layer.set_cell(cell, family, TerrainAutotiles.atlas_coords(family, mask))
+	var variant := TerrainAutotiles.variant(map, cell)
+	layer.set_cell(cell, family, TerrainAutotiles.atlas_coords(family, variant))
 	return true
 
 

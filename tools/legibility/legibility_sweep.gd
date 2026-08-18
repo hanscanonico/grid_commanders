@@ -13,9 +13,23 @@ extends RefCounted
 ## a ramp step is, and why the two medians are the sides of the comparison, is
 ## LegibilityMetric's to say.
 
-## The five grounds the spec names. Each is measured as the art that terrain
-## draws in a field of its own kind — see LegibilityArt.board_cell.
-const TERRAIN_IDS: Array[StringName] = [&"plains", &"woods", &"sea", &"mountain", &"shoal"]
+## Every ground the board can stand a figure on: the five the spec names, then
+## the five properties, which a unit sits on all match — capturing one, holding
+## one, repairing on one. Each is measured as the art that terrain draws in a
+## field of its own kind, a property composed over TerrainDB.ground() the way
+## the board composes it — see LegibilityArt.board_cell.
+const TERRAIN_IDS: Array[StringName] = [
+	&"plains",
+	&"woods",
+	&"sea",
+	&"mountain",
+	&"shoal",
+	&"city",
+	&"base",
+	&"hq",
+	&"airport",
+	&"port",
+]
 ## Ramp steps of separation a composite has to clear.
 const PASS_STEPS := 2.0
 const BOARD_VIEW := "board"

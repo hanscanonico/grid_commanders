@@ -36,8 +36,8 @@ an object rather than a green square baked onto whatever it stands on. Which
 ground goes under one is `TerrainDB.GROUND_ID`'s single answer.
 
 Rebuild with `make tiles`, which runs the generator from a checkout beside this
-repo (`SPRITEGEN=<path>` overrides). The committed sheets — both atlases and
-all six autotile families — are its exact output, so a clone without the
+repo (`SPRITEGEN=<path>` overrides). The committed sheets — both atlases, the
+six autotile families and the sea's phase sheet — are its exact output, so a clone without the
 generator still plays and still passes every gate; the per-cell PNGs under
 `sprites/units/` and `sprites/iso_buildings/` are the same art exported cell by
 cell, kept as reviewable reference copies.

@@ -76,23 +76,61 @@ func test_a_two_cell_lake_shores_against_the_land_and_not_its_own_water() -> voi
 	assert_eq(_mask(rows, Vector2i(2, 1)), N | E | S)
 
 
-func test_open_water_keeps_the_base_atlas_tile() -> void:
+func test_open_water_draws_a_phase_of_the_sea_sheet() -> void:
 	var rows: Array[String] = ["SSS", "SSS", "SSS"]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.NONE)
+	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.SEA)
 
 
 func test_the_board_rim_grows_no_shoreline() -> void:
 	var rows: Array[String] = ["SSS", "S.S", "SSS"]
 	# The rim cell coasts only against the land beside it, never the board edge.
 	assert_eq(_mask(rows, Vector2i(1, 0)), S)
-	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.NONE)
+	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.SEA)
 	assert_eq(_mask(rows, Vector2i(0, 0)), 0)
 
 
 func test_a_reef_keeps_its_base_tile_and_breaks_no_coastline() -> void:
 	var rows: Array[String] = ["SSS", "S*S", "SSS"]
 	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.NONE)
-	assert_eq(_family(rows, Vector2i(0, 1)), TerrainAutotiles.Family.NONE)
+	assert_eq(_family(rows, Vector2i(0, 1)), TerrainAutotiles.Family.SEA)
+
+
+# --- the sea's phases --------------------------------------------------------
+
+
+## The lattice a field of one tile repeats at is what the phases exist to break,
+## so the picker is checked as a field rather than a cell: every phase used, no
+## row and no column all one phase.
+func test_a_field_of_open_water_wears_every_phase_and_no_periodic_line() -> void:
+	var seen := {}
+	for y in 16:
+		var row_phases := {}
+		for x in 16:
+			var phase := TerrainAutotiles.sea_phase(Vector2i(x, y))
+			assert_between(phase, 0, TerrainAutotiles.SEA_PHASES - 1)
+			seen[phase] = true
+			row_phases[phase] = true
+		assert_gt(row_phases.size(), 1, "row %d is one phase wall to wall" % y)
+	assert_eq(seen.size(), TerrainAutotiles.SEA_PHASES)
+
+
+## Off-board cells are the backdrop's, and it draws the same water as the rim.
+func test_a_phase_is_the_cell_and_nothing_else() -> void:
+	assert_eq(
+		TerrainAutotiles.sea_phase(Vector2i(7, 3)), TerrainAutotiles.sea_phase(Vector2i(7, 3))
+	)
+	assert_between(TerrainAutotiles.sea_phase(Vector2i(-4, -9)), 0, TerrainAutotiles.SEA_PHASES - 1)
+
+
+func test_the_sea_sheet_is_cut_as_one_row_of_phases() -> void:
+	var cells := TerrainAutotiles.sheet_cells(TerrainAutotiles.Family.SEA)
+	assert_eq(cells, [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)] as Array[Vector2i])
+	var rows: Array[String] = ["SSS", "SSS", "SSS"]
+	var map := _map(rows)
+	var open := Vector2i(1, 1)
+	var variant := TerrainAutotiles.variant(map, open)
+	assert_eq(variant, TerrainAutotiles.sea_phase(open))
+	assert_has(cells, TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.SEA, variant))
 
 
 # --- shoals ------------------------------------------------------------------

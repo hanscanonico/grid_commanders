@@ -543,7 +543,16 @@ plan is stated in full below and has no copy there.
   picker and a coasted pond in the match). `TerrainAutotiles` owns the family sheets' paths and
   their contact-sheet cut, and every board read it takes is clamped to the rim — so it answers for
   a cell beyond the edge too, and `BattleView`'s out-of-bounds backdrop is autotiled by the same
-  arithmetic as the board it continues. The shared `CommanderCard`'s deferred dress is that
+  arithmetic as the board it continues. **Open water is the one family keyed by position rather
+  than by neighbours** (generator `1216fd5`, adopted 2026-08-18): the sheet is the same water in
+  `SEA_PHASES` phases, because what a field of one tile repeats at is the tile, so the glints line
+  up however they are spread inside it — the generator emits the phases and the game places them,
+  `TerrainAutotiles.sea_phase` hashing the cell so the lattice breaks deterministically and with
+  no stored state. Ask `variant(map, cell)`, never `mask` — it is the one call that knows which
+  families are keyed by connection and which by phase, and `sheet_cells` is the matching statement
+  of what a sheet holds, so the board, the backdrop, the miniature and the legibility harness
+  cannot phase a cell differently. Phase 0 is the terrain atlas's sea column byte for byte.
+  The shared `CommanderCard`'s deferred dress is that
   named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
   and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
   and because the card is also the in-battle info sheet, that one edit re-dressed commander

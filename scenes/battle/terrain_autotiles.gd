@@ -1,10 +1,11 @@
 class_name TerrainAutotiles
 extends RefCounted
 ## The one authority for which autotile family a terrain cell draws from and
-## which connection-mask variant of that family it wears. BattleView, its
-## out-of-bounds backdrop and MapThumbnail all index exactly what these statics
-## return and do no neighbour reasoning of their own, so the board, the field
-## behind the menu and the miniature in front of it have a single opinion.
+## which variant of that family it wears. BattleView, its out-of-bounds
+## backdrop, MapThumbnail and the legibility harness all index exactly what
+## these statics return and do no neighbour reasoning of their own, so the
+## board, the field behind the menu, the miniature in front of it and the
+## instrument that measures them have a single opinion.
 ##
 ## Pure reads over MapData and Node-free, like PathArrow.segments, so the
 ## suite checks every mask without a scene.
@@ -13,11 +14,20 @@ extends RefCounted
 ## 16 variants row-major on a 4x4 grid indexed by connection bits N=1 E=2 S=4
 ## W=8, and the bridge sheet's two cells are the E-W deck then the N-S deck.
 ## Mask 0 on the road and river sheets is their E-W fallback bar; the coast
-## sheet's mask 0 is plain open sea, which is why open water stays on the base
-## atlas (Family.NONE) exactly as the generator's own demo composes it. The
-## woods sheet's mask 15 is the base tile the same way: a wood with wood on
-## every side keeps the full-bleed canopy that lets a forest butt seamlessly,
-## and only a wood's fringe leaves the atlas for a scalloped tree line.
+## sheet's mask 0 is plain open sea, which is why a coasted cell only ever
+## wears a mask with land in it. The woods sheet's mask 15 is the base tile:
+## a wood with wood on every side keeps the full-bleed canopy that lets a
+## forest butt seamlessly, and only a wood's fringe leaves the atlas for a
+## scalloped tree line.
+##
+## The sea sheet is the one family that is not a connection set: the same open
+## water in SEA_PHASES phases, and what a field of it repeats at is the tile
+## rather than anything inside it, so a single tile reads row-aligned however
+## its glints are spread. The generator emits the phases and the game places
+## them (spritegen README), which is `sea_phase` — a hash of the cell, so the
+## lattice is broken deterministically and the board, the backdrop, the
+## miniature and the harness all break it the same way. Phase 0 is the terrain
+## atlas's sea column byte for byte.
 ##
 ## Every board read is clamped to the edge, which states one rule twice over:
 ## an off-board neighbour counts as the cell's own terrain, so the board rim
@@ -28,7 +38,7 @@ extends RefCounted
 
 ## NONE doubles as BattleView's base-atlas source id (0); the other values are
 ## the TileSet source ids the sheets are registered under.
-enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, WOODS, BRIDGES }
+enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, WOODS, BRIDGES, SEA }
 
 ## One generated sheet per family, the single naming of the files. BattleView
 ## registers a TileSet source per entry and MapThumbnail blits from the same
@@ -40,7 +50,14 @@ const SHEET_PATHS: Dictionary[int, String] = {
 	Family.SHOALS: "res://assets/tiles/autotiles/shoals.png",
 	Family.WOODS: "res://assets/tiles/autotiles/woods.png",
 	Family.BRIDGES: "res://assets/tiles/autotiles/bridges.png",
+	Family.SEA: "res://assets/tiles/autotiles/sea.png",
 }
+
+## How many cells each family's sheet holds: a connection set's 16 masks, the
+## bridge sheet's two decks, the sea sheet's phases.
+const CONNECTION_VARIANTS := 16
+const BRIDGE_VARIANTS := 2
+const SEA_PHASES := 3
 
 ## The contact sheets' cut: a 2px outer margin, 2px between cells, TERRAIN_PX
 ## cells — sprite_generator's contract, which BattleView registers a TileSet
@@ -85,9 +102,9 @@ static func family(map: MapData, cell: Vector2i) -> Family:
 		&"shoal":
 			return Family.SHOALS
 		&"sea":
-			# Open water keeps the base tile; only a sea cell with land on an
-			# edge draws from the coast sheet.
-			return Family.COAST if mask(map, cell) != 0 else Family.NONE
+			# A sea cell with land on an edge draws its shoreline from the coast
+			# sheet; open water draws a phase of the sea sheet.
+			return Family.COAST if mask(map, cell) != 0 else Family.SEA
 		&"woods":
 			# A wood walled in by wood keeps the base tile; only a fringe cell
 			# draws its tree line from the woods sheet.
@@ -116,12 +133,51 @@ static func mask(map: MapData, cell: Vector2i) -> int:
 	return 0
 
 
-## Where mask `p_mask` sits on family `p_family`'s sheet: variant m at grid
-## (m % 4, m / 4), except the two-cell bridge sheet.
-static func atlas_coords(p_family: int, p_mask: int) -> Vector2i:
+## Which cell of its family's sheet `cell` wears — the one call the painters
+## make, so no surface has to know which families are keyed by connection and
+## which by phase.
+static func variant(map: MapData, cell: Vector2i) -> int:
+	if family(map, cell) == Family.SEA:
+		return sea_phase(cell)
+	return mask(map, cell)
+
+
+## The phase open water at `cell` draws. A hash of the coordinate rather than a
+## seeded draw: the same cell is the same phase in every process, and nothing
+## has to store which tile went where.
+static func sea_phase(cell: Vector2i) -> int:
+	var hash_bits := (cell.x * 0x9E3779B1) ^ (cell.y * 0x85EBCA77)
+	hash_bits = (hash_bits ^ (hash_bits >> 13)) * 0xC2B2AE3D
+	return posmod(hash_bits >> 17, SEA_PHASES)
+
+
+## Every cell family `p_family`'s sheet holds, which is what BattleView
+## registers a tile for. Stated here rather than counted by the caller, because
+## a bridge's variant is a mask and a phase is an index, and only this file may
+## know which sheet is which.
+static func sheet_cells(p_family: int) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	match p_family:
+		Family.BRIDGES:
+			for deck in BRIDGE_VARIANTS:
+				cells.append(Vector2i(deck, 0))
+		Family.SEA:
+			for phase in SEA_PHASES:
+				cells.append(atlas_coords(p_family, phase))
+		_:
+			for connection in CONNECTION_VARIANTS:
+				cells.append(atlas_coords(p_family, connection))
+	return cells
+
+
+## Where variant `p_variant` sits on family `p_family`'s sheet: connection mask
+## m at grid (m % 4, m / 4), a phase or a deck along the sheet's one row.
+static func atlas_coords(p_family: int, p_variant: int) -> Vector2i:
 	if p_family == Family.BRIDGES:
-		return Vector2i(0 if p_mask & BIT_E != 0 else 1, 0)
-	return Vector2i(p_mask & 3, p_mask >> 2)
+		return Vector2i(0 if p_variant & BIT_E != 0 else 1, 0)
+	if p_family == Family.SEA:
+		return Vector2i(p_variant, 0)
+	return Vector2i(p_variant & 3, p_variant >> 2)
 
 
 ## The terrain `cell` reads as, clamped to the board — the one place the rim
