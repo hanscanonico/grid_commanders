@@ -63,9 +63,11 @@ func test_the_sea_coasts_against_land_and_not_against_water() -> void:
 ## sea edge is on the sides that face land — the same sheet, the same rule.
 func test_a_one_cell_inland_lake_wears_the_shore_on_every_side() -> void:
 	var rows: Array[String] = ["...", ".S.", "..."]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.COAST)
-	assert_eq(_mask(rows, Vector2i(1, 1)), N | E | S | W)
-	assert_eq(TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.COAST, 15), Vector2i(3, 3))
+	var lake := Vector2i(1, 1)
+	assert_eq(_family(rows, lake), TerrainAutotiles.Family.COAST)
+	var edges := _mask(rows, lake)
+	assert_eq(edges, N | E | S | W)
+	assert_eq(TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.COAST, edges), Vector2i(3, 3))
 
 
 func test_a_two_cell_lake_shores_against_the_land_and_not_its_own_water() -> void:
