@@ -4,6 +4,15 @@ extends RefCounted
 
 const TERRAIN_DIR := "res://data/terrain"
 
+## The ground a property stands on. The atlas ships its five property columns as
+## transparent overlays — the building, its plinth and its shadow, alpha all
+## around — so every surface that draws one has to paint this terrain's cell
+## underneath it first. Stated once, because the board, the menu thumbnail, the
+## tile chip and the legibility composite all have to agree about what is under
+## a city. Not a per-cell answer: a map has one terrain per cell and the property
+## *is* that terrain, so the ground beneath is the default one everywhere.
+const GROUND_ID := &"plains"
+
 var _by_id: Dictionary[StringName, TerrainType] = {}
 var _by_symbol: Dictionary[String, TerrainType] = {}
 
@@ -38,6 +47,12 @@ func register(terrain: TerrainType) -> void:
 
 func by_id(id: StringName) -> TerrainType:
 	return _by_id.get(id)
+
+
+## The terrain GROUND_ID names — the surface a transparent property overlay is
+## painted over.
+func ground() -> TerrainType:
+	return by_id(GROUND_ID)
 
 
 func by_symbol(symbol: String) -> TerrainType:

@@ -141,7 +141,24 @@ plan is stated in full below and has no copy there.
   3 iron, 4 verdant`) is a contract between `SideIdentity._ROW_FOR_KEY` and the art pipeline —
   since 2026-08-14 the sibling `sprite_generator` repo, whose `FACTIONS` tuple mirrors it row for
   row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
-  byte-for-byte" clause retired with the PixVoxel art it froze. D5: **"Red"/"Blue" survive only as developer slot vocabulary** (the Balance Lab's
+  byte-for-byte" clause retired with the PixVoxel art it froze.
+  **A property column of that atlas is a transparent overlay** (generator `e26154e`, adopted
+  2026-08-18): the building, its plinth and an opaque dithered shadow, alpha everywhere else, so a
+  city on road or beach no longer wears a baked green square. Two rules follow and neither is a
+  per-cell judgement. **`TerrainDB.GROUND_ID` / `ground()` is the single answer to what is
+  underneath** — the *default* ground everywhere, never a per-context one, because a map has one
+  terrain per cell and the property *is* that terrain; inventing a context would be a map-format
+  change. And **every surface that draws a property composes ground-then-building**:
+  `BattleView.ground_layer` is a second `TileMapLayer` under `terrain_layer` painted only on
+  property cells — under rather than instead, so the property keeps its cell in `terrain_layer`
+  and `repaint_property`, `_last_seen_owner` and the fog pass are untouched — `MapThumbnail`
+  answers `ground_region` beside `sheet_region` (and its `bake` must `blend_rect` the building,
+  since `blit_rect` copies alpha and would punch the ground back out), `HudBottomBar` stacks two
+  `TextureRect`s, and `LegibilityArt.board_cell` hands the composite an `under` cell. The
+  out-of-bounds backdrop needed nothing: it already substitutes plains for a team-tinted cell.
+  **`CutsceneScenery.cell_tint` skips `a == 0`** for the same reason — the capture cut-in's roof
+  window is always aimed at a property column, and transparent pixels read as black dragged a city
+  roof a third of the way to it. D5: **"Red"/"Blue" survive only as developer slot vocabulary** (the Balance Lab's
   `--red`/`--blue` grammar, identifiers, comments) — never on a screen a player sees.
 - `tile-info-panel-plan.html` + `.lavish/hud/SPEC.md` — the tile info panel and the docked HUD
   (`HudTopBar`, `HudBottomBar` under `scenes/ui/`, built in code; `show_tile()` is the bottom

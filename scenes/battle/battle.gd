@@ -471,6 +471,7 @@ func present_banner(text: String) -> void:
 ## Battle is.
 func _build_view() -> BattleView:
 	var built := BattleView.new()
+	built.ground_layer = $GroundLayer
 	built.terrain_layer = $TerrainLayer
 	built.backdrop_layer = $Backdrop
 	built.fog_layer = $FogLayer

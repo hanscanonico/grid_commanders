@@ -45,6 +45,11 @@ var identity: SideIdentity
 ## presentation key that only says how one looks.
 var chart: DamageChart
 
+## What a property overlay stands on (TerrainDB.GROUND_ID), handed over by
+## BattleView. The atlas draws a building with alpha around it, so the chip
+## composites the same ground under it the board paints beneath the cell.
+var ground: TerrainType
+
 var _built := false
 ## The charged shortcut, kept on the bar so the fire control sits with the
 ## readiness it reflects — the same contract the floating chip had. A press
@@ -67,6 +72,9 @@ var _fuel_label: Label
 var _ammo_label: Label
 
 var _terrain_icon: TextureRect
+## The building standing on `_terrain_icon`'s ground, for a property cell. Empty
+## for every other terrain, which draws its own ground in the icon itself.
+var _terrain_building: TextureRect
 var _terrain_name: Label
 var _terrain_def: Label
 
@@ -216,6 +224,16 @@ func _build_terrain(row: HBoxContainer) -> void:
 	_terrain_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_terrain_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	block.add_child(_terrain_icon)
+
+	# Both sources are one square atlas cell, so filling the icon's rect lands the
+	# building on its ground exactly as the board's two layers do.
+	_terrain_building = TextureRect.new()
+	_terrain_building.texture_filter = _terrain_icon.texture_filter
+	_terrain_building.expand_mode = _terrain_icon.expand_mode
+	_terrain_building.stretch_mode = _terrain_icon.stretch_mode
+	_terrain_building.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_terrain_building.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_terrain_icon.add_child(_terrain_building)
 
 	var data := VBoxContainer.new()
 	data.add_theme_constant_override("separation", UiTheme.HUD_GAP_HAIR)
@@ -399,7 +417,9 @@ func _order_line(
 
 
 func _show_terrain(terrain: TerrainType, owner_team: int, capture_left: int) -> void:
-	_terrain_icon.texture = _terrain_texture(terrain, owner_team)
+	var standing := terrain.is_property and ground != null
+	_terrain_icon.texture = _terrain_texture(ground if standing else terrain, owner_team)
+	_terrain_building.texture = _terrain_texture(terrain, owner_team) if standing else null
 	_terrain_name.text = terrain.display_name.to_upper()
 	var line := "DEF %s" % _stars(terrain.defense_stars)
 	if terrain.is_property:

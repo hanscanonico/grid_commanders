@@ -139,12 +139,20 @@ func _modulate() -> Color:
 ## the project's nearest texture filter does when the layer is scaled down. The
 ## cell states its own source size, so the figure is sampled at UnitSprite's and
 ## the ground at the board's.
+##
+## A cell that names an `under` origin is an overlay over that second cell of the
+## same image — a property building on its ground — and the two are composited
+## here, which is what the board's two layers do.
 func _texel(cell: Dictionary, x: int, y: int) -> Color:
 	var image: Image = cell["image"]
 	var origin: Vector2i = cell["origin"]
 	var step := float(cell["px"]) / float(size)
 	var texel := Vector2i(int((x + 0.5) * step), int((y + 0.5) * step))
-	return image.get_pixel(origin.x + texel.x, origin.y + texel.y)
+	var colour := image.get_pixel(origin.x + texel.x, origin.y + texel.y)
+	if not cell.has("under"):
+		return colour
+	var under: Vector2i = cell["under"]
+	return LegibilityMetric.over(colour, image.get_pixel(under.x + texel.x, under.y + texel.y))
 
 
 ## The overlay tile is authored at BattleView.TILE; this is the pixel of it a

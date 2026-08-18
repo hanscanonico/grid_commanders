@@ -222,3 +222,14 @@ func test_port_builds_and_services_only_hulls() -> void:
 	assert_false(port.services_domain(UnitType.LAND))
 	assert_true(port.is_passable(TerrainType.SHIP), "a hull has to be able to tie up at it")
 	assert_true(port.is_passable(TerrainType.FOOT), "and an infantryman to walk up and take it")
+
+
+## The ground a transparent property overlay is painted over. One answer, and it
+## is a terrain that ships, wears nobody's colours and is not itself a property —
+## a property under a property would be a hole under a building.
+func test_the_property_ground_is_plain_shipped_terrain() -> void:
+	var ground := db.ground()
+	assert_not_null(ground, "TerrainDB.GROUND_ID names no shipped terrain")
+	assert_eq(ground.id, TerrainDB.GROUND_ID)
+	assert_false(ground.is_property)
+	assert_false(ground.team_tinted)

@@ -65,6 +65,9 @@ static func load_shipped() -> LegibilityArt:
 ## base tile, a beach off the shoal sheet. Which of those it is, is
 ## TerrainAutotiles' answer about a small field of that terrain, never a rule
 ## restated here.
+##
+## A property carries an `under`: its column is a transparent overlay and the
+## board paints TerrainDB.ground() beneath it, so the composite does too.
 func board_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 	if _board_cells.has(terrain_type.id):
 		return _board_cells[terrain_type.id]
@@ -78,6 +81,10 @@ func board_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 			"origin": Vector2i(terrain_type.atlas_col * CELL_PX, 0),
 			"px": CELL_PX,
 		}
+		# A property column is a transparent overlay, so what a figure stands on
+		# there is the ground the board paints under it, seen through the building.
+		if terrain_type.is_property:
+			cell["under"] = Vector2i(db.ground().atlas_col * CELL_PX, 0)
 	else:
 		var mask := TerrainAutotiles.mask(field, centre)
 		var coords := TerrainAutotiles.atlas_coords(family, mask)
