@@ -31,7 +31,7 @@ const _ACTED_SCRIM := """
 shader_type canvas_item;
 void fragment() {
 	if (mod(floor(FRAGCOORD.x) + floor(FRAGCOORD.y), 2.0) < 0.5) {
-		COLOR.rgb *= 0.45;
+		COLOR.rgb *= 0.62;
 	}
 }"""
 static var _acted_material: ShaderMaterial
