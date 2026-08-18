@@ -103,6 +103,7 @@ func test_a_reef_keeps_its_base_tile_and_breaks_no_coastline() -> void:
 ## row and no column all one phase.
 func test_a_field_of_open_water_wears_every_phase_and_no_periodic_line() -> void:
 	var seen := {}
+	var column_phases := {}
 	for y in 16:
 		var row_phases := {}
 		for x in 16:
@@ -110,7 +111,12 @@ func test_a_field_of_open_water_wears_every_phase_and_no_periodic_line() -> void
 			assert_between(phase, 0, TerrainAutotiles.SEA_PHASES - 1)
 			seen[phase] = true
 			row_phases[phase] = true
+			if not column_phases.has(x):
+				column_phases[x] = {}
+			column_phases[x][phase] = true
 		assert_gt(row_phases.size(), 1, "row %d is one phase wall to wall" % y)
+	for x: int in column_phases:
+		assert_gt(column_phases[x].size(), 1, "column %d is one phase top to bottom" % x)
 	assert_eq(seen.size(), TerrainAutotiles.SEA_PHASES)
 
 
