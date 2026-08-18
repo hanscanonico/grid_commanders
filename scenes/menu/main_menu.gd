@@ -519,7 +519,7 @@ func _build_seats_row() -> Control:
 	if _difficulties.is_empty():
 		push_error("main menu: no difficulty tiers found in %s" % DifficultyDB.DIFFICULTY_DIR)
 	_seat_strip = SeatStrip.new()
-	_seat_strip.configure(UiTheme.menu_identity().theme(1).color, _difficulties)
+	_seat_strip.configure(_difficulties)
 	col.add_child(_seat_strip)
 	# No help line: the grouping buttons name themselves, each segment carries the
 	# sentence as a tip, and the panel's height is fixed — a line spent here is a
