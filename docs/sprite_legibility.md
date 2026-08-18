@@ -65,10 +65,10 @@ across.
 
 | wash | median steps | failing |
 | --- | --- | --- |
+| none | 1.80 | 56.2% |
 | move | 1.70 | 60.8% |
 | attack | 1.59 | 64.7% |
 | threat | 1.57 | 64.7% |
-| none | 1.54 | 62.4% |
 | fog | 1.19 | 92.2% |
 
 | faction row | median steps (bare board) | failing |
@@ -99,10 +99,10 @@ across.
 4. **Fog costs about 0.6 steps and takes the failure rate to 92.2%.** It sits *above* the
    units, so it compresses figure and ground together — a cell that was marginal in the
    clear is a cell nobody can read in fog.
-5. **The three board washes cost very little and never rescue a cell**: they land under the
-   figure, so they can only move the ground. The move wash reads slightly *better* than no
-   wash at all (1.70 against 1.54), which is the wash pulling dark grounds up rather than
-   the figures gaining anything.
+5. **The three board washes cost 0.10–0.23 steps each and never rescue a cell**: they land
+   under the figure, so they can only move the ground, and they move it towards the middle.
+   Every wash row above is a board reading, the bare board included — the cut-in view is
+   overlay-free by construction and belongs to finding 8, not to this table.
 6. **The neutral row is the weakest livery** (median 1.41, 81.6% failing). Its khaki sits
    between the two ends of every terrain's own value range, which is exactly the position
    with nowhere to separate to.
