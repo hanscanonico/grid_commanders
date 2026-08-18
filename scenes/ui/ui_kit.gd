@@ -63,8 +63,9 @@ static func rule() -> Control:
 	return line
 
 
-## A faction-tinted or cream action button with an optional Silkscreen suffix
-## ("VS AI", "HOT-SEAT") set a size down and dimmed, per the handoff.
+## A faction-tinted or cream action button with an optional suffix ("MATCH"),
+## appended to the label rather than set as a second run: one Button draws one
+## string in one font, so the suffix wears the same Pixelify the label does.
 static func action_button(
 	text: String,
 	suffix: String,
