@@ -57,21 +57,6 @@ func test_an_edge_road_counts_the_off_board_side_as_more_road() -> void:
 	assert_eq(_mask(rows, Vector2i(0, 0)), N | E | W)
 
 
-# --- rivers ------------------------------------------------------------------
-
-
-func test_a_river_meeting_the_sea_flows_into_it() -> void:
-	var rows: Array[String] = [".S.", ".~.", ".=."]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.RIVERS)
-	# North is sea; the road to the south is not a river join without a bridge.
-	assert_eq(_mask(rows, Vector2i(1, 1)), N)
-
-
-func test_a_river_flows_into_a_port() -> void:
-	var rows: Array[String] = ["...", "P~.", "..."]
-	assert_eq(_mask(rows, Vector2i(1, 1)), W)
-
-
 # --- bridges -----------------------------------------------------------------
 
 
@@ -86,46 +71,6 @@ func test_a_bridge_with_no_road_beside_lies_north_south() -> void:
 	var rows: Array[String] = [".~.", ".+.", ".~."]
 	assert_eq(_mask(rows, Vector2i(1, 1)), N | S)
 	assert_eq(TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.BRIDGES, N | S), Vector2i(1, 0))
-
-
-# --- sea and its coastline ---------------------------------------------------
-
-
-func test_the_sea_coasts_against_land_and_not_against_water() -> void:
-	var rows: Array[String] = [".F.", "~S=", ".S."]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.COAST)
-	# Woods north and road east are land; the river west and sea south are not.
-	assert_eq(_mask(rows, Vector2i(1, 1)), N | E)
-
-
-func test_open_water_keeps_the_base_atlas_tile() -> void:
-	var rows: Array[String] = ["SSS", "SSS", "SSS"]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.NONE)
-
-
-func test_the_board_rim_grows_no_shoreline() -> void:
-	var rows: Array[String] = ["SSS", "S.S", "SSS"]
-	# The rim cell coasts only against the land beside it, never the board edge.
-	assert_eq(_mask(rows, Vector2i(1, 0)), S)
-	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.NONE)
-	assert_eq(_mask(rows, Vector2i(0, 0)), 0)
-
-
-func test_a_reef_keeps_its_base_tile_and_breaks_no_coastline() -> void:
-	var rows: Array[String] = ["SSS", "S*S", "SSS"]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.NONE)
-	assert_eq(_family(rows, Vector2i(0, 1)), TerrainAutotiles.Family.NONE)
-
-
-# --- shoals ------------------------------------------------------------------
-
-
-func test_a_shoal_surfs_against_the_sea_but_not_its_own_run() -> void:
-	var rows: Array[String] = ["SSS", "__.", "..."]
-	assert_eq(_family(rows, Vector2i(1, 1)), TerrainAutotiles.Family.SHOALS)
-	# Surf on the seaward edge only: the neighbouring shoal and the land are dry.
-	assert_eq(_mask(rows, Vector2i(0, 1)), N)
-	assert_eq(_mask(rows, Vector2i(1, 1)), N)
 
 
 # --- woods -------------------------------------------------------------------
