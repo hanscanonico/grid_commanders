@@ -490,10 +490,9 @@ func _accent_for(index: int) -> Color:
 
 
 ## One run of segments, with `selected` lit and the rest paper. -1 lights none.
-static func _paint_run(buttons: Array, selected: int, accent: Color) -> void:
+static func _paint_run(buttons: Array[Button], selected: int, accent: Color) -> void:
 	for i in buttons.size():
-		var seg: Button = buttons[i]
-		UiKit.style_segment(seg, i == selected, i > 0, accent)
+		UiKit.style_segment(buttons[i], i == selected, i > 0, accent)
 
 
 func _rebuild() -> void:
