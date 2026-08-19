@@ -143,7 +143,8 @@ plan is stated in full below and has no copy there.
   row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
   byte-for-byte" clause retired with the PixVoxel art it froze.
   **A property column of that atlas is a transparent overlay** (generator `e26154e`, adopted
-  2026-08-18): the building, its plinth and an opaque dithered shadow, alpha everywhere else, so a
+  2026-08-18): the building, its plinth and an opaque shadow (solid since the clause below), alpha
+  everywhere else, so a
   city on road or beach no longer wears a baked green square. Two rules follow and neither is a
   per-cell judgement. **`TerrainDB.GROUND_ID` / `ground()` is the single answer to what is
   underneath** — the *default* ground everywhere, never a per-context one, because a map has one
@@ -253,8 +254,8 @@ plan is stated in full below and has no copy there.
   structure. **The tone is deliberately still the units'**, one shade on one board: the doubled
   coverage was rendered on plains, road and shoal at all three rungs against the dither and three
   lighter tones, and every lighter tone loses the shadow entirely on road and shoal zoomed out.
-  57 smoke frames moved — every board frame, plus the six menu frames that show a map thumbnail,
-  a thumbnail baking the property art. **Both cut-ins are byte-identical, and that is structural**:
+  57 smoke frames moved — every board frame but `commander_info`, whose sheet covers the board,
+  plus the six menu frames that show a map thumbnail, a thumbnail baking the property art. **Both cut-ins are byte-identical, and that is structural**:
   neither blits a property cell — a standing terrain is *drawn* with its colour sampled from a
   window — and the only changed pixels inside `CutsceneScenery.OBJECT_WINDOW` or
   `CaptureStage.ROOF_WINDOW` are the airport's and the port's, which no shipped scenario stages.

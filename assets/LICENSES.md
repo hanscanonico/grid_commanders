@@ -31,7 +31,7 @@ read from this game's own `CommanderVisuals.FactionTheme` values, so the
 sprites and the UI chrome can never disagree about a faction's colour.
 
 The atlas's **five property columns are transparent overlays** — the building,
-its plinth and an opaque dithered shadow, alpha everywhere else — so a city is
+its plinth and an opaque solid shadow, alpha everywhere else — so a city is
 an object rather than a green square baked onto whatever it stands on. Which
 ground goes under one is `TerrainDB.GROUND_ID`'s single answer.
 
