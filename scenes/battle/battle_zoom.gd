@@ -1,24 +1,43 @@
 class_name BattleZoom
 extends RefCounted
-## Owns the battle camera's zoom: the current level, its clamp against the view's
-## minimum, and the zoom steps themselves. Battle decides when to zoom and the view
-## owns the camera itself — this sits between them, split out of battle.gd so the
+## Owns the battle camera's zoom: the ladder itself, the current rung, and the
+## clamp against the view's floor. Battle decides when to zoom and the view owns
+## the camera itself — this sits between them, split out of battle.gd so the
 ## interaction flow could shed a responsibility (the gdlintrc line ratchet).
 ##
-## Semantics are unchanged from when this lived in Battle: the floor is the view's
-## min_zoom ceil'd to two decimals, the ceiling is MAX_ZOOM, and each press steps
-## the level by STEP.
+## **The ladder is integers, and this is the one place that says so.** The board
+## art is sampled with nearest filtering, so a rung that is not a whole number of
+## screen pixels per world pixel drops and doubles rows — and which rows it drops
+## moves as the camera pans, which reads as crawling edges the moment anything on
+## the board is animated. The ladder used to be anchored on the per-map fit ratio
+## (rungs like 1.37 / 2.37 / … / 5.0), which put every map but a lucky one on
+## fractional sampling at every rung. It is now anchored on `floor_for` and
+## stepped by whole rungs, and the remainder a whole rung leaves over is
+## letterboxed by the board's own out-of-bounds backdrop — the camera limits
+## already centre a map its rung overshoots (`BattleView._apply_camera_limits`).
+##
+## `tests/unit/test_texel_stability.gd` is what holds this to it.
 
 const MAX_ZOOM := 5.0
+const MIN_ZOOM := 1.0
 const STEP := 1.0
 
 var _view: BattleView
 var _zoom := 2.0
-var _min_zoom := 1.0
+var _min_zoom := MIN_ZOOM
 
 
 func _init(view: BattleView) -> void:
 	_view = view
+
+
+## The furthest-out rung a board is offered: the largest whole rung that still
+## shows the map entire, and MIN_ZOOM for a map too big for even that — a board
+## wider than the window scrolls, which is the honest floor now that "fit it
+## whole" is no longer allowed to buy itself a fractional rung.
+static func floor_for(view: Vector2, map_px: Vector2) -> float:
+	var fit := minf(view.x / map_px.x, view.y / map_px.y)
+	return clampf(floorf(fit), MIN_ZOOM, MAX_ZOOM)
 
 
 ## How far the player may zoom out depends on the viewport, so the clamp is
@@ -29,11 +48,7 @@ func setup() -> void:
 
 
 func set_zoom(zoom: float) -> void:
-	# The floor itself is capped at MAX_ZOOM: on a map tiny enough that even the
-	# whole-map zoom exceeds it, clampf(min > max) would return the floor and the
-	# zoom keys would oscillate between it and MAX_ZOOM. Such a map pins here.
-	var floor_zoom := minf(ceilf(_min_zoom * 100.0) / 100.0, MAX_ZOOM)
-	_zoom = clampf(zoom, floor_zoom, MAX_ZOOM)
+	_zoom = clampf(roundf(zoom), _min_zoom, MAX_ZOOM)
 	_view.set_zoom(_zoom)
 
 

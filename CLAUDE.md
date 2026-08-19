@@ -287,6 +287,26 @@ plan is stated in full below and has no copy there.
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
   on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
   a pip.
+- **The zoom ladder is integers** (no plan artifact; this entry is its record, and it is the
+  animation milestone's first slice) — the board is sampled with nearest filtering, so a rung that
+  is not a whole number of screen pixels per world pixel drops and doubles rows, and *which* rows it
+  drops moves as the camera pans: crawling edges, which animation makes impossible to ignore. The
+  ladder used to be anchored on the per-map fit ratio ceil'd to two decimals, which put nine shipped
+  boards on rungs like 2.02 and every rung above them. **`BattleZoom` is the one statement of what
+  rungs exist**: `floor_for` is the furthest-out rung — the largest whole rung that still shows the
+  map entire, floored at 1 — and `set_zoom` snaps to a whole rung, so `BattleView.min_zoom` hands
+  the ladder a board and asks rather than deriving a second answer. **A board too big for 1x
+  scrolls**: "fit it whole" no longer buys itself a fractional rung, and what a whole rung leaves
+  over is letterboxed by the out-of-bounds backdrop the camera limits already centre it in.
+  The zoom half is not the whole of it — a window that is not a whole multiple of the 640x360 canvas
+  puts every rung back on fractional sampling — so `window/stretch/scale_mode` is **`integer`**,
+  measured rather than argued: at 1280x720 the frame is byte-identical, and a maximized 1512x945 Mac
+  window renders the same 1280x720 canvas with bars instead of a 1512x850 smear.
+  `tests/unit/test_texel_stability.gd` is the gate and states the formula it simulates; the 4x
+  terrain oversample is deliberately outside it, `TILE / TERRAIN_PX` being an exact decimation whose
+  phase never moves. Four smoke frames moved with the ladder (`mission_strip`,
+  `mission_strip_retired`, `side_victory`, `mixed_seat_handoff+fog` — the boards that were on 2.02);
+  the other 81, cut-ins and menus included, are byte-identical.
 - **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
@@ -1195,7 +1215,8 @@ Follow the official Godot GDScript style guide. Key points:
   `PathArrow.segments()` and `MapThumbnail.sheet_path()` / `sheet_region()`, the pure functions the
   `_draw` of each only paints, are static, and are all `test_path_arrow.gd` and
   `test_map_thumbnail.gd` call, the same shape `SeatStrip.normalised_sides` and `TransitionInput`
-  are.
+  are. `BattleZoom.floor_for` joins them on the same terms: which rungs the zoom ladder offers is
+  arithmetic over a viewport and a board, so `test_texel_stability.gd` checks it without a camera.
 - Every bugfix in `core/` or `ai/` should come with a failing test that the fix makes pass.
 - Keep tests deterministic: seed the RNG explicitly. `tests/helpers/fixture.gd` (`Fixture`) is where
   a board, a path, a command line and the shared databases come from — it seeds every state it
