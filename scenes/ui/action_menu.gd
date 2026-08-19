@@ -64,7 +64,7 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		button.focus_mode = Control.FOCUS_NONE
 		var icon: Texture2D = entry.get("icon", spacer)
 		if icon != null:
-			button.add_theme_constant_override("icon_max_width", _icon_cap(icon))
+			button.add_theme_constant_override("icon_max_width", icon_cap(icon))
 			button.custom_minimum_size.y = UiTheme.MENU_ICON_ROW
 		button.icon = icon
 		var id: StringName = entry.id
@@ -162,7 +162,9 @@ func _step_value(i: int, step: int) -> void:
 ## adjusts the height to its ratio. Capping at the slot therefore fits anything
 ## square or wider — a taller-than-wide sprite has to be capped at the width its
 ## own ratio puts at the slot's height instead, or it would stand out of the row.
-static func _icon_cap(icon: Texture2D) -> int:
+## Public and pure, like PathArrow.segments, so the fit is checked without a scene
+## — today's art is square, so no capture can answer for a shape it does not hold.
+static func icon_cap(icon: Texture2D) -> int:
 	var size := icon.get_size()
 	if size.x <= 0.0 or size.y <= size.x:
 		return UiTheme.MENU_ICON
