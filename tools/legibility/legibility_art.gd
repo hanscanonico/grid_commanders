@@ -31,6 +31,17 @@ const FOG_NODE := "FogLayer"
 ## (project.godot: textures/canvas_textures/default_texture_filter=0), so a board
 ## pixel is one texel rather than an average of sixteen.
 const CELL_PX := BattleView.TERRAIN_PX
+## What a cell off the base atlas is called, there being exactly one of it: a
+## terrain whose family is NONE draws the same column wherever it stands.
+const ATLAS_VARIANT := "atlas"
+## How far along a row of its own terrain the probe walks a cell. A
+## connection-keyed family answers with the one mask its neighbours give at every
+## step; a phase-keyed one (open water) answers with a different cell per
+## position, so the walk is what turns a family into every tile it holds.
+## `_sheet_cells` checks what the walk found against the sheet rather than
+## trusting this span: a family answering with some of its cells and not others
+## is a hole in the measurement.
+const VARIANT_PROBE_SPAN := 24
 
 ## The units atlas at ambient frame A. The board also beats to frame B
 ## (UnitSprite.UNITS_ATLAS_B_PATH), which this sweep does not measure: a frame is
@@ -45,9 +56,10 @@ var terrain: Image
 var overlay: Image
 var fog_modulate: Color
 var acted_scrim: float
-## Terrain id -> the region of `_sheet_for` that terrain's cell is cut from,
-## with the sheet it belongs to; filled on demand by `board_cell`.
-var _board_cells: Dictionary[StringName, Dictionary] = {}
+## Terrain id -> one cell per variant that terrain's family offers, each the
+## region it is cut from and the sheet it belongs to; filled on demand by
+## `board_cells`.
+var _board_cells: Dictionary[StringName, Array] = {}
 var _sheets: Dictionary[String, Image] = {}
 
 
@@ -73,44 +85,39 @@ static func load_shipped(units_path := "") -> LegibilityArt:
 	return art
 
 
-## The image and region a cell of `terrain_type` draws from when its four
-## neighbours are the same terrain — plains and mountain off the base atlas,
-## a wood inside a wood keeping its full-bleed canopy, open water on a phase of
-## the sea sheet, a beach off the shoal sheet. Which of those it is, is
-## TerrainAutotiles' answer about a small field of that terrain, never a rule
-## restated here — including which phase, which is the one the board draws at
-## this probe's own cell.
+## Every image and region a cell of `terrain_type` can draw from when its four
+## neighbours are the same terrain — plains and mountain off the base atlas, a
+## wood inside a wood keeping its full-bleed canopy, a beach off the shoal sheet,
+## open water once per phase of the sea sheet. Which of those it is, and how many
+## there are, is TerrainAutotiles' answer over a run of probe cells, never a rule
+## or a family list restated here: whether a family is keyed by its neighbours or
+## by where it stands is exactly what the walk finds out.
+##
+## Each cell names its own `variant`, so a report can say which tile it read.
 ##
 ## A property carries an `under`: its column is a transparent overlay and the
 ## board paints TerrainDB.ground() beneath it, so the composite does too.
-func board_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
+func board_cells(terrain_type: TerrainType, db: TerrainDB) -> Array[Dictionary]:
 	if _board_cells.has(terrain_type.id):
 		return _board_cells[terrain_type.id]
 	var field := MapData.parse(_field_text(terrain_type), db)
-	var centre := Vector2i(1, 1)
-	var family := TerrainAutotiles.family(field, centre)
-	var cell := {}
+	var family := TerrainAutotiles.family(field, Vector2i(1, 1))
+	var cells: Array[Dictionary] = []
 	if family == TerrainAutotiles.Family.NONE:
-		cell = {
-			"image": terrain,
-			"origin": Vector2i(terrain_type.atlas_col * CELL_PX, 0),
-			"px": CELL_PX,
-		}
-		# A property column is a transparent overlay, so what a figure stands on
-		# there is the ground the board paints under it, seen through the building.
-		if terrain_type.is_property:
-			cell["under"] = Vector2i(db.ground().atlas_col * CELL_PX, 0)
+		cells.append(_atlas_cell(terrain_type, db))
 	else:
-		var coords := TerrainAutotiles.atlas_coords(family, TerrainAutotiles.variant(field, centre))
-		var margin := TerrainAutotiles.SHEET_MARGIN
-		var stride := CELL_PX + TerrainAutotiles.SHEET_SEPARATION
-		cell = {
-			"image": _sheet(TerrainAutotiles.SHEET_PATHS[family]),
-			"origin": Vector2i(margin, margin) + coords * stride,
-			"px": CELL_PX,
-		}
-	_board_cells[terrain_type.id] = cell
-	return cell
+		cells = _sheet_cells(field, family)
+	_board_cells[terrain_type.id] = cells
+	return cells
+
+
+## The one cell of `terrain_type` that variant names, or an empty dictionary when
+## its family has no such tile.
+func board_cell(terrain_type: TerrainType, db: TerrainDB, variant: String) -> Dictionary:
+	for cell in board_cells(terrain_type, db):
+		if cell["variant"] == variant:
+			return cell
+	return {}
 
 
 ## The surface a terrain paves the cut-in with — its own art, or the art of the
@@ -137,14 +144,66 @@ func unit_cell(unit_type: UnitType, atlas_row: int) -> Dictionary:
 	}
 
 
+func _atlas_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
+	var cell := {
+		"image": terrain,
+		"origin": Vector2i(terrain_type.atlas_col * CELL_PX, 0),
+		"px": CELL_PX,
+		"variant": ATLAS_VARIANT,
+	}
+	# A property column is a transparent overlay, so what a figure stands on
+	# there is the ground the board paints under it, seen through the building.
+	if terrain_type.is_property:
+		cell["under"] = Vector2i(db.ground().atlas_col * CELL_PX, 0)
+	return cell
+
+
+## One cell per variant the probe row wears, in variant order. A family that
+## answers with neither one tile nor its whole sheet has variants the walk never
+## reached, which is a hole in the measurement rather than a finding about art.
+func _sheet_cells(field: MapData, family: int) -> Array[Dictionary]:
+	var by_variant: Dictionary[int, Dictionary] = {}
+	for x in range(1, VARIANT_PROBE_SPAN + 1):
+		var variant := TerrainAutotiles.variant(field, Vector2i(x, 1))
+		by_variant[variant] = _sheet_cell(family, variant)
+	var variants: Array = by_variant.keys()
+	variants.sort()
+	var cells: Array[Dictionary] = []
+	for variant: int in variants:
+		cells.append(by_variant[variant])
+	var held := TerrainAutotiles.sheet_cells(family).size()
+	if cells.size() != 1 and cells.size() != held:
+		push_error(
+			(
+				"legibility: %d of family %d's %d variants in %d probes"
+				% [cells.size(), family, held, VARIANT_PROBE_SPAN]
+			)
+		)
+	return cells
+
+
+func _sheet_cell(family: int, variant: int) -> Dictionary:
+	var coords := TerrainAutotiles.atlas_coords(family, variant)
+	var margin := TerrainAutotiles.SHEET_MARGIN
+	var stride := CELL_PX + TerrainAutotiles.SHEET_SEPARATION
+	return {
+		"image": _sheet(TerrainAutotiles.SHEET_PATHS[family]),
+		"origin": Vector2i(margin, margin) + coords * stride,
+		"px": CELL_PX,
+		"variant": str(variant),
+	}
+
+
 func _sheet(path: String) -> Image:
 	if not _sheets.has(path):
 		_sheets[path] = _image(path)
 	return _sheets[path]
 
 
+## Three rows of one terrain, wide enough that the probe row walks
+## VARIANT_PROBE_SPAN cells with that terrain on all four sides of each.
 static func _field_text(terrain_type: TerrainType) -> String:
-	var row := terrain_type.symbol.repeat(3)
+	var row := terrain_type.symbol.repeat(VARIANT_PROBE_SPAN + 2)
 	return "# legibility probe field\n[terrain]\n%s\n%s\n%s\n" % [row, row, row]
 
 

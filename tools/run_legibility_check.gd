@@ -24,7 +24,7 @@ extends Node
 ##     --gallery=docs/images/legibility_worst20.png
 ##                                where the worst-cell sheet is written; empty
 ##                                skips it
-##     --dump=board:tank:verdant:ready:woods:none
+##     --dump=board:tank:verdant:ready:woods:atlas:none
 ##                                writes that one composite as a PNG beside the
 ##                                report, magnified by --dump-scale
 ##     --dump-scale=8             nearest magnification of a dumped crop
@@ -114,6 +114,8 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 		lines.append("")
 		lines.append_array(_table(column, LegibilitySweep.tally(clear, column)))
 	lines.append("")
+	lines.append_array(_table("terrain/variant", LegibilitySweep.tally_variants(clear)))
+	lines.append("")
 	lines.append_array(_table("unit", LegibilitySweep.tally(clear, "unit")))
 	return "\n".join(lines)
 
@@ -164,10 +166,10 @@ func _worst(rows: Array[Dictionary], count: int) -> String:
 			row["unit"],
 			row["faction"],
 			row["state"],
-			row["terrain"],
+			"%s/%s" % [row["terrain"], row["variant"]],
 			row["overlay"],
 		]
-		lines.append("  edge %5.2f  hue %5.1f  %-6s %-11s %-8s %-6s %-8s %s" % fields)
+		lines.append("  edge %5.2f  hue %5.1f  %-6s %-11s %-8s %-6s %-14s %s" % fields)
 	return "\n".join(lines)
 
 
@@ -189,12 +191,13 @@ func _gallery(sweep: LegibilitySweep, rows: Array[Dictionary], path: String) -> 
 	print("\nWrote %s (%d x %d)" % [path, image.get_width(), image.get_height()])
 
 
-## `view:unit:faction:state:terrain:overlay` — the same six fields a report row
-## is keyed by, so a cell in the table is copied straight onto the command line.
+## `view:unit:faction:state:terrain:variant:overlay` — the same seven fields a
+## report row is keyed by, so a cell in the table is copied straight onto the
+## command line.
 func _dump(sweep: LegibilitySweep, spec: String, scale: int, out: String) -> void:
 	var parts := spec.split(":")
-	if parts.size() != 6:
-		push_error("legibility: --dump wants view:unit:faction:state:terrain:overlay")
+	if parts.size() != LegibilitySweep.KEYS.size():
+		push_error("legibility: --dump wants %s" % ":".join(LegibilitySweep.KEYS))
 		return
 	var keyed := {}
 	for i in LegibilitySweep.KEYS.size():
