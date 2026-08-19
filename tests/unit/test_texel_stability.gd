@@ -153,34 +153,26 @@ func test_a_board_too_big_for_one_rung_floors_at_one() -> void:
 # --- where the board rests ----------------------------------------------------
 #
 # A whole rung is only half of a stable frame: the board also has to be *parked*
-# on whole screen pixels. It is docked into the band between the two bars by a
-# camera offset in world units, so what has to come out whole is that offset
-# times the rung.
-
-
-## The camera is offset by `lift / zoom` world units, so what reaches the screen
-## is `lift` pixels at every rung — whole exactly when the lift itself is.
-func _screen_lift(lift: float, rung: float) -> float:
-	return lift / rung * rung
+# on whole screen pixels. `BattleView._apply_board_offset` docks it by
+# `BOARD_LIFT_PX / zoom` **world** units, which the camera turns back into exactly
+# `BOARD_LIFT_PX` screen pixels — the rung cancels. So no rung can rescue a
+# fractional lift, and the constant itself is the whole of what has to be whole.
+# That is why these hold it to an integer rather than walking the ladder.
 
 
 func test_the_board_docks_on_a_whole_screen_pixel() -> void:
-	for rung in _ladder():
-		var lift := _screen_lift(float(BattleView.BOARD_LIFT_PX), rung)
-		assert_eq(lift, floorf(lift), "rung %.0f docks the board %.2f pixels up" % [rung, lift])
+	var lift := float(BattleView.BOARD_LIFT_PX)
+	assert_eq(lift, floorf(lift), "the board docks %.2f screen pixels up" % lift)
 
 
-## The bars differ by an odd number of pixels, so the half-difference the dock was
-## derived from is half a pixel at every rung. This is the same check failing on
-## it, and the reason the lift is a rounded constant rather than a derivation.
-func test_the_exact_half_difference_would_be_fractional() -> void:
+## The bars differ by an odd number of pixels, so the exact half-difference the
+## dock was derived from can only ever be half a pixel — which is why the lift is
+## a rounded constant. It still has to be the *nearest* whole pixel to it, or the
+## board would be docking somewhere other than the band's middle.
+func test_the_lift_is_the_nearest_whole_pixel_to_the_bands_middle() -> void:
 	var exact := float(UiTheme.HUD_BOTTOM_H - UiTheme.HUD_TOP_H) / 2.0
-	for rung in _ladder():
-		var lift := _screen_lift(exact, rung)
-		assert_ne(lift, floorf(lift), "rung %.0f should dock fractionally on %.1f" % [rung, exact])
-	assert_almost_eq(
-		float(BattleView.BOARD_LIFT_PX), exact, 0.5, "the lift stays the nearest pixel"
-	)
+	assert_ne(exact, floorf(exact), "the bars should differ by an odd number of pixels")
+	assert_almost_eq(float(BattleView.BOARD_LIFT_PX), exact, 0.5, "the lift is the nearest pixel")
 
 
 ## The board rides up rather than down: the bottom bar is the taller one, so the

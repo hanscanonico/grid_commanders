@@ -23,6 +23,12 @@ extends Control
 ## screen. At exactly 1.0 the buffer is therefore pixel-identical to the board
 ## under it, so opening and closing it is invisible.
 ##
+## A card standing *inside* the band — the mission objectives panel — is in the
+## still as well, and the flinch scales that copy behind the live one for its
+## tenth of a second. That is the price of photographing the window rather than
+## the world, which is what a SubViewport would have bought and what wrapping the
+## world in a second coordinate space costs everywhere else.
+##
 ## It decides nothing. `BattleAnimator` opens it, `CutscenePlayback` eases it back
 ## out on the cut-in's one clock, and `close` runs unconditionally when the cut-in
 ## ends — so a skip lands on the live board like everything else does.

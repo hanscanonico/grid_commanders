@@ -339,8 +339,9 @@ plan is stated in full below and has no copy there.
   *drawn shapes*, so it never sampled a texel and the beats' feel is unmoved. The band's own
   `PUSH_SCALE` is a known remaining continuous scale over the cut-in's textures, left alone
   because moving it moves seventeen shipped cut-in frames. `tests/unit/test_texel_stability.gd`
-  grew the rest half (the dock is whole at every rung, the half-difference it replaced is
-  fractional at every rung, the punch's pivot is the camera's own anchor). Fifty-six smoke frames
+  grew the rest half — the dock is stated in world units as `lift / zoom`, so the rung cancels and
+  what has to be whole is the lift itself, which is checked as an integer and as the nearest one to
+  the band's middle; the punch's pivot is the camera's own anchor. Fifty-six smoke frames
   moved and the set is exactly the predicted one: every board frame by the dock's half pixel, and
   the four `capture_cutin*` frames by the squad's snap — all seventeen combat cut-ins and all
   twelve menus are byte-identical.
