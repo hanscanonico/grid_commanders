@@ -9,7 +9,7 @@ const TILE := 16
 ## maths everywhere else still speaks in TILE. Must match sprite_generator's
 ## cell size (its atlas contract).
 const SPRITE_W := 64
-const SPRITE_H := 64
+const SPRITE_H := 96
 ## The sprite is scaled by its *width*, so a cell taller than it is wide overflows
 ## upward at the same texel rate rather than shrinking the unit inside its tile.
 const SPRITE_SCALE := float(TILE) / float(SPRITE_W)

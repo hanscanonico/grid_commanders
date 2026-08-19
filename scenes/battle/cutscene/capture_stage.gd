@@ -52,8 +52,10 @@ const FEET_RATIO := 0.82
 ## Pinned to `UnitSprite.SPRITE_W` rather than the cell's height: the figures are
 ## board art at 1:1 and their footprint — the slots they stand in and the ground
 ## they are spaced across — is a width, so a cell that grows taller overflows
-## upward without moving where anyone stands.
+## upward without moving where anyone stands. FIGURE_H is that cell's height, and
+## it is drawn entirely above the feet; test_texel_stability.gd pins both.
 const FIGURE_PX := 64
+const FIGURE_H := 96
 const SQUAD_SIZE := 3
 ## Where each figure stands relative to the squad's anchor, back to front.
 const SQUAD_SLOTS: Array[Vector2] = [
@@ -316,7 +318,7 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## every frame. The bob's amplitude is 5 px and the stagger's 4, so both still
 ## read; what goes is the shimmer inside them.
 func _draw_figure(feet: Vector2) -> void:
-	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_PX, FIGURE_PX, FIGURE_PX)
+	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_H, FIGURE_PX, FIGURE_H)
 	draw_set_transform(feet.round())
 	draw_texture_rect(
 		_squad_art,
