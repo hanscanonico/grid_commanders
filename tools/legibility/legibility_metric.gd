@@ -8,7 +8,23 @@ extends RefCounted
 ## reading a sheet (tests/unit/test_legibility_metric.gd). The pixels themselves
 ## are LegibilityArt's and the stacking order is LegibilityComposite's.
 ##
-## ## The metric
+## ## The edge reading — the headline since round 8
+##
+## Figure-ground separation is a **boundary** phenomenon: what tells a shape
+## from what it stands on is its contour, not the average of its middle. So the
+## reading the sweep is judged on compares each pixel of the silhouette's
+## perimeter against the ground within `EDGE_BAND_PX` **outside** that
+## silhouette, and reports the **p25** of that comparison along the whole
+## perimeter — in luminance, which `in_steps` states in ramp steps, and in the
+## same chroma-plane CIE76 distance `hue_distance` states.
+##
+## p25 rather than a median or a mean, and this is the whole reason the round-7
+## ruler had to be superseded: a figure can carry a bright back and a side that
+## vanishes into the ground, and both a median and a mean of the perimeter score
+## it on the back. A quarter of an outline may go soft; more than a quarter is a
+## shape with a missing edge.
+##
+## ## The median reading — the cheap secondary
 ##
 ## Separation is stated in **ramp steps**: the median luminance of the figure's
 ## own pixels, minus the median luminance of the ground plate under it, divided
@@ -59,6 +75,71 @@ const WHITE_POINT := Vector3(0.95047, 1.0, 1.08883)
 ## integer ratios they are defined by.
 const LAB_EPSILON := 216.0 / 24389.0
 const LAB_KAPPA := 24389.0 / 27.0
+## How far outside the silhouette a boundary pixel's ground is read, in
+## composite pixels — three, the round-8 review's own band. Wide enough that the
+## ground it names is the ground the eye reads that contour against, narrow
+## enough that it is still *that* contour's ground rather than the tile average
+## the median reading already reports.
+const EDGE_BAND_PX := 3
+## Which point of the perimeter the edge reading reports, as a share of it.
+const EDGE_PERCENTILE := 0.25
+
+
+## The p25 of the perimeter's luminance gap and of its chroma gap: for every
+## pixel of the figure's contour, how far it stands from the ground within
+## EDGE_BAND_PX outside the silhouette. `x` is luminance, which `in_steps`
+## states in ramp steps; `y` is the chroma-plane CIE76 distance.
+##
+## `pixels` is the composited cell row-major and `covered` is one byte per pixel
+## of it, non-zero where the figure covers the cell.
+static func edge_reading(pixels: PackedColorArray, covered: PackedByteArray, size: int) -> Vector2:
+	var lightness := PackedFloat32Array()
+	var chroma := PackedFloat32Array()
+	for index in boundary_pixels(covered, size):
+		var band := _band_colours(pixels, covered, size, index)
+		if band.is_empty():
+			continue
+		var ground := median_colour(band)
+		lightness.append(absf(luminance(pixels[index]) - luminance(ground)))
+		chroma.append(hue_distance(pixels[index], ground))
+	return Vector2(percentile(lightness, EDGE_PERCENTILE), percentile(chroma, EDGE_PERCENTILE))
+
+
+## Every figure pixel with ground directly beside it — the silhouette's contour,
+## four-connected like every other distance in this project.
+static func boundary_pixels(covered: PackedByteArray, size: int) -> PackedInt32Array:
+	var found := PackedInt32Array()
+	for index in covered.size():
+		if covered[index] == 0:
+			continue
+		var x := index % size
+		var y := index / size
+		if (
+			_is_ground(covered, size, x - 1, y)
+			or _is_ground(covered, size, x + 1, y)
+			or _is_ground(covered, size, x, y - 1)
+			or _is_ground(covered, size, x, y + 1)
+		):
+			found.append(index)
+	return found
+
+
+## The value `fraction` of the way through a sample, by nearest rank — never an
+## interpolation between two, so the number reported is a gap some pixel of the
+## contour really has. 0.0 for an empty sample, as `median` answers.
+static func percentile(values: PackedFloat32Array, fraction: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted := values.duplicate()
+	sorted.sort()
+	var rank := clampi(ceili(fraction * float(sorted.size())) - 1, 0, sorted.size() - 1)
+	return sorted[rank]
+
+
+## A luminance gap in ramp steps, unsigned. 0.0 without a ramp to state it
+## against, which is the one place this instrument divides by the step.
+static func in_steps(gap: float, step: float) -> float:
+	return absf(gap) / step if step > 0.0 else 0.0
 
 
 ## Rec.709 luminance of a stored colour, alpha ignored.
@@ -140,9 +221,32 @@ static func median(values: PackedFloat32Array) -> float:
 static func separation(
 	figure: PackedFloat32Array, ground: PackedFloat32Array, step: float
 ) -> float:
-	if step <= 0.0:
-		return 0.0
-	return absf(median(figure) - median(ground)) / step
+	return in_steps(median(figure) - median(ground), step)
+
+
+## The ground inside the band around one boundary pixel, in scan order.
+static func _band_colours(
+	pixels: PackedColorArray, covered: PackedByteArray, size: int, index: int
+) -> PackedColorArray:
+	var band := PackedColorArray()
+	var centre := Vector2i(index % size, index / size)
+	for y in range(maxi(centre.y - EDGE_BAND_PX, 0), mini(centre.y + EDGE_BAND_PX, size - 1) + 1):
+		for x in range(
+			maxi(centre.x - EDGE_BAND_PX, 0), mini(centre.x + EDGE_BAND_PX, size - 1) + 1
+		):
+			var at := y * size + x
+			if covered[at] == 0:
+				band.append(pixels[at])
+	return band
+
+
+## Off the cell counts as ground: a figure drawn out to the tile's edge has a
+## contour there, and the band that contour is read against is whatever of the
+## cell is left beside it.
+static func _is_ground(covered: PackedByteArray, size: int, x: int, y: int) -> bool:
+	if x < 0 or y < 0 or x >= size or y >= size:
+		return true
+	return covered[y * size + x] == 0
 
 
 ## The least colour of a sample painted at exactly `level`, "least" being by

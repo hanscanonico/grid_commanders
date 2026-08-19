@@ -4,8 +4,10 @@ extends RefCounted
 ## harness judged, magnified, with the numbers it judged it by under it.
 ##
 ## Review evidence rather than illustration. A hero screenshot shows the cell
-## somebody chose; this shows the cells the ruler chose, so the picture and the
-## table cannot disagree. It is deterministic — the rows come from
+## somebody chose; this shows the cells the ruler chose — since round 8 the ones
+## with the least of either reading left (LegibilitySweep.margin), so the sheet
+## opens on cells no reading can see rather than on a run of ties — and the
+## picture and the table cannot disagree. It is deterministic — the rows come from
 ## LegibilitySweep.failures, whose order is total, and every cell is rebuilt
 ## through LegibilitySweep.composite_for — so the same art in is the same sheet
 ## out, which is what lets it be committed under docs/images/.
@@ -19,7 +21,7 @@ const GRID_COLUMNS := 5
 const TILE := 128
 const CELL_WIDTH := 168
 const PAD := 8
-const CAPTION_LINES := 3
+const CAPTION_LINES := 4
 const HEADER_HEIGHT := 16
 ## The whole sheet is magnified by this at the end, so an 8px caption reads at
 ## arm's length beside a board cell that is 16 pixels across.
@@ -89,13 +91,14 @@ static func _caption(row: Dictionary, rank: int) -> Array[String]:
 				str(row["state"]).to_upper()
 			]
 		),
-		"%s %.2f STEPS HUE %.1f" % [str(row["view"]).to_upper(), row["steps"], row["hue"]],
+		"%s EDGE %.2f HUE %.1f" % [str(row["view"]).to_upper(), row["edge_steps"], row["edge_hue"]],
+		"MEDIAN %.2f HUE %.1f" % [row["steps"], row["hue"]],
 	]
 
 
 static func _header(failing: int, shown: int) -> String:
 	return (
-		"WORST %d OF %d FAILING COMPOSITES - BAR %.1f STEPS, HUE CLEARS AT %.0f"
+		"WORST %d OF %d FAILING COMPOSITES - EDGE BAR %.1f STEPS, HUE CLEARS AT %.0f"
 		% [shown, failing, LegibilitySweep.PASS_STEPS, LegibilitySweep.HUE_CLEAR]
 	)
 

@@ -37,6 +37,10 @@ const CELL_PX := BattleView.TERRAIN_PX
 ## a sixth axis, and adding it is a widening that supersedes a whole report
 ## rather than an option on one.
 var units: Image
+## Where `units` was read from — the shipped path, or the file a `--units=` run
+## put in its place. The ramp step is measured off that sheet, so a report has
+## to be able to say which one it read.
+var units_source := UnitSprite.UNITS_ATLAS_PATH
 var terrain: Image
 var overlay: Image
 var fog_modulate: Color
@@ -47,9 +51,19 @@ var _board_cells: Dictionary[StringName, Dictionary] = {}
 var _sheets: Dictionary[String, Image] = {}
 
 
-static func load_shipped() -> LegibilityArt:
+## The shipped art, or the same art with the units atlas taken from a file on
+## disk instead — which is how a past generation of the sheet is scored through
+## today's ruler (`--units=`). Only that one sheet is swappable, and deliberately:
+## the grounds are then held fixed, so a generation's numbers move because its
+## figures moved, and an older tree's terrain sheets are not always a set this
+## code can read at all.
+static func load_shipped(units_path := "") -> LegibilityArt:
 	var art := LegibilityArt.new()
-	art.units = _image(UnitSprite.UNITS_ATLAS_PATH)
+	if units_path == "":
+		art.units = _image(art.units_source)
+	else:
+		art.units_source = units_path
+		art.units = _file(units_path)
 	art.terrain = _image(BattleView.ATLAS_PATH)
 	art.overlay = _image(BattleOverlays.OVERLAY_PATH)
 	art.fog_modulate = _fog_modulate()
@@ -130,6 +144,14 @@ func _sheet(path: String) -> Image:
 static func _field_text(terrain_type: TerrainType) -> String:
 	var row := terrain_type.symbol.repeat(3)
 	return "# legibility probe field\n[terrain]\n%s\n%s\n%s\n" % [row, row, row]
+
+
+## A PNG read straight off disk, outside the project's imported art.
+static func _file(path: String) -> Image:
+	var image := Image.load_from_file(path)
+	if image == null:
+		push_error("legibility: cannot read %s" % path)
+	return image
 
 
 static func _image(path: String) -> Image:

@@ -2,8 +2,9 @@ extends Node
 ## The composite legibility sweep (sprite design spec item 15): every unit kind,
 ## in every faction's colours, ready and acted, over every ground, under every
 ## wash the board lays on it — and the same figures at the cut-in's resolution.
-## Each cell is measured for unit-vs-ground separation in ramp steps and judged
-## against LegibilitySweep.PASS_STEPS.
+## Each cell is measured for unit-vs-ground separation in ramp steps — along the
+## figure's own contour, which is the headline, and over the whole figure, which
+## is the secondary — and judged against LegibilitySweep.PASS_STEPS.
 ##
 ## An instrument, not a gate: it reads shipped art and shipped constants, plays
 ## no match, tunes nothing, and stays out of `make verify` for the same reason
@@ -27,6 +28,10 @@ extends Node
 ##                                writes that one composite as a PNG beside the
 ##                                report, magnified by --dump-scale
 ##     --dump-scale=8             nearest magnification of a dumped crop
+##     --units=/tmp/round5/units_atlas.png
+##                                score that units sheet instead of the shipped
+##                                one, on today's grounds — how a past
+##                                generation reads through today's ruler
 ##
 ## Writes cells.csv and summary.md under --out (gitignored), plus the gallery,
 ## which is the one thing a run publishes: it is committed review evidence that
@@ -42,7 +47,9 @@ const DEFAULT_GALLERY := "docs/images/legibility_worst20.png"
 
 func _ready() -> void:
 	var args := _args()
-	var sweep := LegibilitySweep.create(TerrainDB.load_default(), UnitDB.load_default())
+	var sweep := LegibilitySweep.create(
+		TerrainDB.load_default(), UnitDB.load_default(), str(args.get("units", ""))
+	)
 	if sweep == null:
 		push_error("legibility: the shipped art could not be read")
 		get_tree().quit(1)
@@ -72,18 +79,28 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 	lines.append("")
 	lines.append("Ran %s, %d ms." % [Time.get_datetime_string_from_system(true), elapsed])
 	lines.append(
-		"One ramp step = %.4f luminance, measured off the shipped units atlas." % sweep.ramp_step
+		(
+			"One ramp step = %.4f luminance, measured off %s."
+			% [sweep.ramp_step, sweep.art.units_source]
+		)
 	)
 	lines.append(
 		"Bar: >= %.1f ramp steps of figure-vs-ground separation." % LegibilitySweep.PASS_STEPS
 	)
+	lines.append(
+		(
+			"Read along the figure's contour, against the ground %d px outside it, at its p%d."
+			% [LegibilityMetric.EDGE_BAND_PX, int(LegibilityMetric.EDGE_PERCENTILE * 100.0)]
+		)
+	)
 	lines.append("")
 	lines.append(
 		(
-			"Second reading: CIE76 chroma distance between the same two colours, cleared at %.0f."
+			"Second reading: CIE76 chroma distance over the same pairs, cleared at %.0f."
 			% LegibilitySweep.HUE_CLEAR
 		)
 	)
+	lines.append("Secondary: the whole-figure medians, `steps` and `hue`, which decide nothing.")
 	lines.append("")
 	lines.append("%d cells, %d failing (%.1f%%)." % [rows.size(), failed, _percent(failed, rows)])
 	var carried := LegibilitySweep.hue_carried(rows)
@@ -120,12 +137,14 @@ func _table(column: String, counts: Dictionary[String, Array]) -> Array[String]:
 
 func _worst(rows: Array[Dictionary], count: int) -> String:
 	var failed := LegibilitySweep.failures(rows)
-	var lines: Array[String] = ["", "Worst %d of %d failing cells:" % [count, failed.size()]]
+	var lines: Array[String] = [
+		"", "Worst %d of %d failing cells, least margin first:" % [count, failed.size()]
+	]
 	for i in mini(count, failed.size()):
 		var row := failed[i]
 		var fields: Array = [
-			row["steps"],
-			row["hue"],
+			row["edge_steps"],
+			row["edge_hue"],
 			row["view"],
 			row["unit"],
 			row["faction"],
@@ -133,7 +152,7 @@ func _worst(rows: Array[Dictionary], count: int) -> String:
 			row["terrain"],
 			row["overlay"],
 		]
-		lines.append("  %5.2f steps  hue %5.1f  %-6s %-11s %-8s %-6s %-8s %s" % fields)
+		lines.append("  edge %5.2f  hue %5.1f  %-6s %-11s %-8s %-6s %-8s %s" % fields)
 	return "\n".join(lines)
 
 
@@ -177,13 +196,23 @@ func _dump(sweep: LegibilitySweep, spec: String, scale: int, out: String) -> voi
 		return
 	var figure := LegibilityMetric.median_colour(cell.figure_colours())
 	var ground := LegibilityMetric.median_colour(cell.ground_colours())
+	var edge := LegibilityMetric.edge_reading(cell.pixels(), cell.coverage(), cell.size)
 	print("\nWrote %s" % path)
 	print(
 		(
-			"  figure #%s, ground #%s, hue %.2f — the two colours both readings compare"
+			"  edge %.2f steps, hue %.2f — the verdict, taken along the contour"
+			% [LegibilityMetric.in_steps(edge.x, sweep.ramp_step), edge.y]
+		)
+	)
+	print(
+		(
+			"  figure #%s, ground #%s, median %.2f steps, hue %.2f — the secondary's two colours"
 			% [
 				figure.to_html(false),
 				ground.to_html(false),
+				LegibilityMetric.separation(
+					cell.figure_luminances(), cell.ground_luminances(), sweep.ramp_step
+				),
 				LegibilityMetric.hue_distance(figure, ground)
 			]
 		)
