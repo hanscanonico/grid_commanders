@@ -83,6 +83,9 @@ const BORDER := 1  # chrome outline; 2 physical px on the default window
 const PANEL_BORDER := 2  # the panel's heavier outline
 const SHADOW := 1  # hard-shadow size; shows 2*SHADOW canvas px past bottom-right
 const RADIUS := 1  # a whisker of rounding, at most
+## The clear space a button's stylebox keeps above and below its content, named
+## because a row that reserves a slot of its own has to say how tall the row is.
+const BUTTON_PAD_V := 3
 ## A full-screen page's outer margin, and the deeper one its bottom edge takes
 ## when the last row is a filled button. A button's ink runs to its own edge and
 ## its shadow a pixel past it, where a text row's stops short, so the same margin
@@ -150,6 +153,12 @@ const HUD_TILE_ICON := 20
 ## where it keeps the empty left third from collapsing to the portrait.
 const HUD_METER := Vector2(66, 6)
 const HUD_CO_MIN_W := 105
+## The square slot an illustrated menu row fits its artwork into — one world
+## tile, since the art is authored at the atlas's own resolution (64px for the
+## unit sprites) and would dwarf a 10px label — and the height such a row is
+## held at, so a row's height is the slot's rather than its picture's shape.
+const MENU_ICON := 16
+const MENU_ICON_ROW := MENU_ICON + 2 * BUTTON_PAD_V
 
 const SIZE_WORDMARK := 24
 const SIZE_TITLE := 8
@@ -531,8 +540,8 @@ static func _button_box(fill: Color, border: Color, shadow: bool) -> StyleBoxFla
 	box.set_corner_radius_all(RADIUS)
 	box.content_margin_left = 6
 	box.content_margin_right = 6
-	box.content_margin_top = 3
-	box.content_margin_bottom = 3
+	box.content_margin_top = BUTTON_PAD_V
+	box.content_margin_bottom = BUTTON_PAD_V
 	if shadow:
 		hard_shadow(box)
 	return box
@@ -547,9 +556,9 @@ static func _pressed_box(fill: Color, border: Color) -> StyleBoxFlat:
 	box.set_border_width_all(BORDER)
 	box.set_corner_radius_all(RADIUS)
 	box.content_margin_left = 6 + SHADOW
-	box.content_margin_top = 3 + SHADOW
+	box.content_margin_top = BUTTON_PAD_V + SHADOW
 	box.content_margin_right = 6 - SHADOW
-	box.content_margin_bottom = 3 - SHADOW
+	box.content_margin_bottom = BUTTON_PAD_V - SHADOW
 	return box
 
 
