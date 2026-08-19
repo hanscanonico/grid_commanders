@@ -8,7 +8,8 @@ extends GutTest
 ## regenerated on one side of the pair and not the other changes no code and no
 ## other test, and the cut-in would simply draw a stale army.
 
-const SPRITE_PX := UnitSprite.SPRITE_PX
+const SPRITE_W := UnitSprite.SPRITE_W
+const SPRITE_H := UnitSprite.SPRITE_H
 
 var units: UnitDB
 var board: Image
@@ -66,13 +67,13 @@ func test_the_cut_ins_ask_for_the_figure_sheet() -> void:
 ## `fix_alpha_border`, which bleeds colour into transparent pixels, so a removed
 ## shadow leaves RGB behind at alpha zero.
 func _column_loses_pixels(column: int) -> bool:
-	var rows := int(board.get_height() / SPRITE_PX)
+	var rows := int(board.get_height() / SPRITE_H)
 	for row in rows:
-		var region := Rect2i(column * SPRITE_PX, row * SPRITE_PX, SPRITE_PX, SPRITE_PX)
+		var region := Rect2i(column * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H)
 		var on_tile := board.get_region(region)
 		var posed := figures.get_region(region)
-		for y in SPRITE_PX:
-			for x in SPRITE_PX:
+		for y in SPRITE_H:
+			for x in SPRITE_W:
 				if on_tile.get_pixel(x, y).a > 0.0 and posed.get_pixel(x, y).a == 0.0:
 					return true
 	return false

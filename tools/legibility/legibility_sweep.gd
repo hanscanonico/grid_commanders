@@ -117,7 +117,7 @@ static func create(p_terrain_db: TerrainDB, p_unit_db: UnitDB, units_path := "")
 	sweep.terrain_db = p_terrain_db
 	sweep.unit_db = p_unit_db
 	sweep.ramp_step = LegibilityMetric.ramp_step(
-		sweep.art.units, UnitSprite.SPRITE_PX, SideIdentity.FACTION_ROWS + 1
+		sweep.art.units, UnitSprite.SPRITE_H, SideIdentity.FACTION_ROWS + 1
 	)
 	return sweep
 

@@ -233,4 +233,4 @@ func test_the_punch_scales_about_the_cameras_own_anchor() -> void:
 ## The capture cut-in's squad is board art at 1:1, so its draw origin has to be a
 ## whole pixel however the march, the bob and the stagger place it.
 func test_the_capture_squad_is_drawn_at_one_to_one() -> void:
-	assert_eq(CaptureStage.FIGURE_PX, UnitSprite.SPRITE_PX)
+	assert_eq(CaptureStage.FIGURE_PX, UnitSprite.SPRITE_W)
