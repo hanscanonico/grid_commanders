@@ -242,10 +242,11 @@ replay-report:
 # Composite legibility: renders every unit kind, in every faction's colours,
 # ready and acted, over grass, woods, sea, mountain and shoal, under the move,
 # fire, threat and fog layers, and reports how many ramp steps of separation the
-# figure keeps from its ground — plus, beside it, the CIE76 chroma distance
-# between the same two colours, so a pair told apart by hue alone is counted
-# rather than passed. Reads the shipped atlases and the shipped constants and
-# plays no match.
+# figure's own contour keeps from the ground just outside it — plus, beside it,
+# the CIE76 chroma distance over the same pairs, so a shape told apart by hue
+# alone is counted rather than passed, and the whole-figure medians behind both
+# as a secondary. Reads the shipped atlases and the shipped constants and plays
+# no match.
 # It boots a bare scene rather than running with -s, because the board constants
 # it reads sit on scripts that name autoloads.
 #   make legibility-check

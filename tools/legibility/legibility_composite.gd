@@ -54,6 +54,26 @@ func ground_colours() -> PackedColorArray:
 	return _sample(false)
 
 
+## Every pixel of the cell, composited, row-major — the tile as it draws, figure
+## and ground together, which is what the edge reading walks.
+func pixels() -> PackedColorArray:
+	var values := PackedColorArray()
+	for y in size:
+		for x in size:
+			values.append(_pixel(x, y))
+	return values
+
+
+## One byte per pixel of `pixels`, 1 where the figure covers the cell: the
+## silhouette the edge reading takes its contour from.
+func coverage() -> PackedByteArray:
+	var mask := PackedByteArray()
+	for y in size:
+		for x in size:
+			mask.append(1 if _figure_covers(x, y) else 0)
+	return mask
+
+
 func figure_luminances() -> PackedFloat32Array:
 	return LegibilityMetric.luminances(figure_colours())
 

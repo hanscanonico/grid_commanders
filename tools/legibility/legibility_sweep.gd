@@ -10,17 +10,27 @@ extends RefCounted
 ##
 ## The bar is the design spec's: at least two ramp steps of separation between
 ## the figure and the ground it stands on, after the wash has composited. What
-## a ramp step is, and why the two medians are the sides of the comparison, is
+## a ramp step is, and how the sides of the comparison are chosen, is
 ## LegibilityMetric's to say.
 ##
-## Every cell is measured twice and the two readings are reported side by side.
-## The **value** bar is the verdict, because it is what predicts legibility at
-## zoom 1 and because neutral and iron have barely any hue to lean on. The
-## **hue** column beside it is the CIE76 chroma-plane distance between the same
-## two colours, and it is a second reading rather than a second verdict: a cell
-## that misses the value bar but clears HUE_CLEAR is one the value bar cannot see
-## the truth about, so the report counts those separately instead of passing
-## them.
+## **The verdict is the edge reading** (round 8): the p25 of the luminance gap
+## along the figure's own contour, against the ground just outside it, held to
+## the same two steps. It replaced the whole-figure median as the headline
+## because the median had run out of things to say — twenty worst cells scoring
+## an identical 0.00 while their hues ranged over 68.8 to 98.8 are twenty ties,
+## not twenty findings.
+##
+## The whole-figure medians stay in the table as a **cheap secondary**: they are
+## what "is this figure, as a mass, a different value from this tile" means, and
+## a cell where the two readings disagree is worth looking at.
+##
+## Both readings are taken twice, in value and in colour. The value bar is the
+## verdict, because it is what predicts legibility at zoom 1 and because neutral
+## and iron have barely any hue to lean on. The **hue** columns beside them are
+## the CIE76 chroma-plane distance, a second reading rather than a second
+## verdict: a cell that misses the value bar but clears HUE_CLEAR is one the
+## value bar cannot see the truth about, so the report counts those separately
+## instead of passing them.
 
 ## Every ground the board can stand a figure on: the five the spec names, then
 ## the five properties, which a unit sits on all match — capturing one, holding
@@ -39,10 +49,17 @@ const TERRAIN_IDS: Array[StringName] = [
 	&"airport",
 	&"port",
 ]
-## Ramp steps of separation a composite has to clear.
+## Ramp steps of separation a composite has to clear. One bar for both readings:
+## two steps is the shading gap the art itself uses to tell one face of a hull
+## from the next, and a contour that stands less than that off its ground is
+## painted in a value the ground already holds — which is the same sentence at
+## the boundary as in the middle, so round 8 moved which sample it is asked of
+## rather than what it asks.
 const PASS_STEPS := 2.0
 ## Chroma-plane distance a figure and its ground have to differ by for the pair
-## to count as told apart by colour alone. A stated bound rather than a measured one:
+## to count as told apart by colour alone. Round 8 left it where it was, for the
+## reason it was set there: it is a property of the eye, not of the sample the
+## reading is taken over. A stated bound rather than a measured one:
 ## about eight times the ~2.3 that is one just-noticeable difference, which is
 ## the distance at which two paints stop being shades of each other and start
 ## being different colours. Moving it supersedes a report rather than editing
@@ -65,6 +82,8 @@ const COLUMNS: Array[String] = [
 	"overlay",
 	"figure",
 	"ground",
+	"edge_steps",
+	"edge_hue",
 	"steps",
 	"hue",
 	"verdict"
@@ -77,9 +96,9 @@ var unit_db: UnitDB
 var ramp_step := 0.0
 
 
-static func create(p_terrain_db: TerrainDB, p_unit_db: UnitDB) -> LegibilitySweep:
+static func create(p_terrain_db: TerrainDB, p_unit_db: UnitDB, units_path := "") -> LegibilitySweep:
 	var sweep := LegibilitySweep.new()
-	sweep.art = LegibilityArt.load_shipped()
+	sweep.art = LegibilityArt.load_shipped(units_path)
 	if sweep.art == null:
 		return null
 	sweep.terrain_db = p_terrain_db
@@ -144,11 +163,20 @@ static func failures(rows: Array[Dictionary]) -> Array[Dictionary]:
 			failed.append(row)
 	failed.sort_custom(
 		func(a: Dictionary, b: Dictionary) -> bool:
-			if a["steps"] != b["steps"]:
-				return a["steps"] < b["steps"]
+			if margin(a) != margin(b):
+				return margin(a) < margin(b)
 			return key_of(a) < key_of(b)
 	)
 	return failed
+
+
+## How far a row's contour is from the two bars, as a share of the nearer one.
+## Normalised because the two bars are in different units, and `min` because the
+## cell worth looking at first is the one no reading can see — ordering the
+## gallery by the value gap alone put twenty cells that all scored zero in front
+## of it, and picked among them by their keys.
+static func margin(row: Dictionary) -> float:
+	return minf(float(row["edge_steps"]) / PASS_STEPS, float(row["edge_hue"]) / HUE_CLEAR)
 
 
 ## How many of a set of rows miss the value bar but clear HUE_CLEAR — the cells
@@ -156,7 +184,7 @@ static func failures(rows: Array[Dictionary]) -> Array[Dictionary]:
 static func hue_carried(rows: Array[Dictionary]) -> int:
 	var carried := 0
 	for row in rows:
-		if row["verdict"] == "FAIL" and float(row["hue"]) >= HUE_CLEAR:
+		if row["verdict"] == "FAIL" and float(row["edge_hue"]) >= HUE_CLEAR:
 			carried += 1
 	return carried
 
@@ -182,7 +210,7 @@ static func tally(rows: Array[Dictionary], column: String) -> Dictionary[String,
 		if row["verdict"] != "FAIL":
 			continue
 		triple[1] += 1
-		if float(row["hue"]) >= HUE_CLEAR:
+		if float(row["edge_hue"]) >= HUE_CLEAR:
 			triple[2] += 1
 	return counts
 
@@ -217,6 +245,10 @@ func _row(
 	var steps := LegibilityMetric.separation(
 		LegibilityMetric.luminances(figure), LegibilityMetric.luminances(ground), ramp_step
 	)
+	var edge := LegibilityMetric.edge_reading(cell.pixels(), cell.coverage(), cell.size)
+	# Judged on the printed number rather than on the one behind it: a row that
+	# reads 2.00 and says FAIL is a table nobody can check.
+	var edge_steps := snappedf(LegibilityMetric.in_steps(edge.x, ramp_step), 0.01)
 	return {
 		"view": view,
 		"unit": String(unit_type.id),
@@ -226,9 +258,11 @@ func _row(
 		"overlay": overlay_name(overlay),
 		"figure": "%.4f" % LegibilityMetric.luminance(figure_median),
 		"ground": "%.4f" % LegibilityMetric.luminance(ground_median),
+		"edge_steps": edge_steps,
+		"edge_hue": snappedf(edge.y, 0.01),
 		"steps": snappedf(steps, 0.01),
 		"hue": snappedf(LegibilityMetric.hue_distance(figure_median, ground_median), 0.01),
-		"verdict": "PASS" if steps >= PASS_STEPS else "FAIL",
+		"verdict": "PASS" if edge_steps >= PASS_STEPS else "FAIL",
 	}
 
 

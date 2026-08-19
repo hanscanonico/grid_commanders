@@ -57,7 +57,8 @@ make replay REPLAY=<file> # re-watch a recorded match
 make replay-report REPLAY=<file>  # read one instead: what the computer left on the table
 make replay-report REPLAY=<dir>   # survey a directory of them -> rates (docs/replay_survey.md)
 make legibility-check     # every unit, tint, ground and overlay composited, and how many ramp
-                          # steps it separates by -> reports/ (docs/sprite_legibility.md)
+                          # steps its contour keeps from the ground beside it
+                          # -> reports/ (docs/sprite_legibility.md)
 ```
 
 `make verify` is the one command to run before merging: it parse-checks, lints, checks formatting,
@@ -1152,8 +1153,8 @@ already failing would muddy both readings.
   match loop itself; `tools/run_campaign_difficulty.gd`, which plays every shipped mission to a
   verdict and reads how hard it was (`docs/campaign_difficulty.md`); the composite legibility sweep
   under `tools/legibility/`, which stacks every unit, tint, ground and board overlay out of the
-  shipped atlases and measures how far each figure separates from its ground
-  (`docs/sprite_legibility.md`); plus `tools/focus_timeline.sh`, the focus-theft
+  shipped atlases and measures how far each figure's contour separates from the ground just outside
+  it (`docs/sprite_legibility.md`); plus `tools/focus_timeline.sh`, the focus-theft
   instrument the smoke sweep above is measured with.
 - `tests/` — GUT tests, targeting the Node-free layers: the simulation (`core/` and `ai/`), the
   offline balance harness under `tools/balance/`, the arena's scorer and pools under
