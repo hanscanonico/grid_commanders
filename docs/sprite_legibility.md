@@ -5,6 +5,20 @@ What the sweep finds on the sheets shipped by generator `0d87068`, which weighs 
 page wholesale rather than editing it, the way `docs/bulwark_balance.md` and
 `docs/replay_survey.md` are superseded.
 
+## Re-read 2026-08-19, after the solid cast shadow (generator `f07e77c`)
+
+The board's cast shadow became solid and the sub's wake with it, so board pixels moved and this
+page was re-read rather than re-authored: **1,284 failing (15.9%) clear and 123 (6.8%) fogged**,
+against the **1,276 (15.8%) / 118 (6.6%)** below. The control is exact — the shipped harness run
+against the *previous* atlas reproduces this page's headline to the cell — so the whole of the
+difference is 13 cells, and **every one of the 17 that crossed to failing is the sub** (4 crossed
+back on woods). The mechanism is the wake, not the shadow: it is continuous now, so bright foam
+sits on the silhouette's contour and against pale shoal or a property lot it is close in value.
+827 of the 9,900 rows moved their edge reading, 452 of them the sub's.
+
+No class moved and nothing was tuned in response. Every finding, table and gallery below still
+describes the art as this page found it, and the next full campaign supersedes the page wholesale.
+
 **Nothing was tuned in response to it.** No colour anywhere moved for this run, and **the ruler is
 unchanged from round 9** — same edge reading, same two-step bar, same hue bound of 20, same
 one-step fog bar, same `max` gallery sort. Every number below is the generator's art read back

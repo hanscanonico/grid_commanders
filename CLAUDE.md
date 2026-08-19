@@ -204,20 +204,47 @@ plan is stated in full below and has no copy there.
   in; `cutin_iron_commander` is the buildings'.
   **A figure is that art minus the shadow the tile needed** (no plan artifact; this clause is its
   record, and it holds for the capture cut-in's squad too): the generated cells carry an opaque
-  checkerboard contact shadow, which reads as half-tone under a 16px board sprite and as loose dots
-  wherever the 64px cell is drawn at 1:1 — a player reported them as "weird black points at the
-  bottom of the tank", and both cut-ins were drawing them **twice**, since each also stamps the whole
+  contact shadow, and both cut-ins were drawing it **twice**, since each also stamps the whole
   cell as an offset silhouette. Both cut-ins already draw their own ground plane and their own
-  contact ellipse, so the baked one carried nothing there. `UnitSprite.figure_texture_for` is the one
+  contact ellipse, so the baked one carried nothing there. (It was first cut for a sharper reason:
+  the shadow was a 1px checkerboard then, and at 1:1 the cut-in resolved its dots one by one — a
+  player reported them as "weird black points at the bottom of the tank". **That half of the
+  argument has retired and the doubling has not**, because the shadow is now *solid* — see the
+  shadow clause below. Do not read this sheet as a workaround for a dither.)
+  `UnitSprite.figure_texture_for` is the one
   way to ask for it and `assets/tiles/units_atlas_figures.png` the sheet it cuts from — the board's
   own sheet with those pixels **subtracted by the generator** (`compose_cell`'s `shadow`), never a
   redraw and never a colour-keyed shader here, because which pixels are shadow is the generator's
   answer and a second opinion on it in `scenes/` is exactly the drift D2 forbids. Subtracted rather
   than composed-without, because the waterline foam is placed against the composed cell's own spans.
   So D2 still holds of the figures: they *are* the board art, blown up. `tests/unit/test_figure_sheet.gd`
-  is the pin — the figure sheet may only ever remove a pixel, and every unit must lose one — and the
-  legibility ruler is deliberately not re-run, no board pixel having moved. All seventeen combat
-  cut-in frames and all four capture ones re-baselined; every board and menu frame is untouched.
+  is the pin — the figure sheet may only ever remove a pixel, and every unit must lose one. When it
+  shipped, the legibility ruler was deliberately not re-run, no board pixel having moved; all
+  seventeen combat cut-in frames and all four capture ones re-baselined and every board and menu
+  frame was untouched.
+  **The board's cast shadow is SOLID, and it is solid because the board was measured through it**
+  (generator `f07e77c`, adopted 2026-08-19; this clause is its record). The board draws the 64px
+  cell onto a 16px grid with nearest filtering at whole rungs 1–5, so it keeps one source pixel in
+  4/z — 4:1 at rung 1, 2:1 at rung 2, **1:1 at rung 4**. A shadow with 1px structure therefore had a
+  different read at every rung, and the checkerboard's was: a sampling phase drew between 0% and
+  285% of the shadow's own density at rung 1 and 0%–268% at rung 2, so on the board it was a solid
+  smear zoomed out, land units all but floating at the default rung, and loose black dots at 1:1 —
+  which is the "ugly black dots" a player reported twice. Solid is the one shape with no sub-pixel
+  structure to lose (0.92–1.07, 0.99–1.01, exactly 1.0 at those rungs), and the two alternatives
+  were **rendered** against it at rungs 1, 2 and 4 rather than argued — a logical-pixel checker in
+  4px blocks reads as a chequered flag under an aircraft at 1:1, a dithered fringe reads as debris.
+  The sub's wake followed, being drawn on the shadow's own parity; it is solid and drawn *over* the
+  shadow now. The generator owns all of it (`_shadow_ellipse`, `tests/…::CastShadow`) — there is no
+  shadow tone and no parity anywhere in `scenes/`, which is what keeps the figure sheet's
+  subtraction exact. **The buildings' drop shadow is still a 1px checkerboard** — a different
+  drawer in the generator's `terrain.py`, out of that pass's scope, and it is why a city still
+  wears a stippled fringe at 1:1. 54 of the 85 smoke frames moved and the set is exactly the
+  predicted one: every board frame, plus the three cut-ins that stage the sub against the cruiser —
+  a hull places its waterline foam against the composed cell's own spans, so a solid displacement
+  shadow moved a few flecks of it, and those flecks are the only pixels the figure sheet carries
+  over from this change. Every menu frame, every capture cut-in and every combat cut-in of a land
+  or air unit is byte-identical, which is the figure sheet's subtraction proving itself.
+  The legibility ruler was re-run this time and `docs/sprite_legibility.md` carries the re-read.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
