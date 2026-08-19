@@ -465,10 +465,14 @@ plan is stated in full below and has no copy there.
   `ActionMenu.icon_cap`'s taller-than-wide branch stays as the bound for art that does reach a row
   whole. Both cut-ins blow the cell up at 1:1, so each carries a `FIGURE_H` beside its `FIGURE_PX`
   (pinned to `SPRITE_H` / `SPRITE_W` by `tests/unit/test_texel_stability.gd`) and draws it above the
-  feet. 64 of the 85 smoke frames moved and the set is the predicted one: every board frame holding
-  armour, every combat cut-in staging it — plus four cut-ins of unraised units by 2 to 12 pixels,
-  the figure box's own height being resampled through the band's 1.03 push. All four capture
-  cut-ins, all twelve menu frames and `cutin:cruiser:sub` are byte-identical. The legibility ruler
+  feet. **72 of the 85 smoke frames moved, and the thirteen that did not are the twelve menu frames
+  and `side_victory`** — re-measured at review, the slice's own prediction of 64 having been short.
+  Two causes, and neither is a redraw: the raised columns and the square icon slot move every board
+  frame that shows a unit, and **a box 32 rows taller resamples the art inside it** wherever
+  something scales — both cut-ins push their band by up to 1.03, and `boot_camp` and `quartet` are
+  fought on a fractional floor rung — so all four capture cut-ins and the combat cut-ins of unraised
+  units moved by a pixel of phase with not one atlas pixel behind them changed. What did not move is
+  the art itself, which the three sheets prove cell by cell. The legibility ruler
   was re-run for both ambient frames against a same-day control and `docs/sprite_legibility.md`
   carries the re-read: nine cells, all hue-carried, and the tank came out *better*. The ruler reads
   the cell's bottom square for the same reason the icons do.
