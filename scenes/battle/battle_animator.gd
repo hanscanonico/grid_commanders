@@ -58,6 +58,8 @@ var turn_banner: TurnBanner
 var power_banner: CommanderPowerBanner
 ## The board marks a fired power leaves behind, played once the card clears.
 var power_marks: PowerMarks
+## The star at a firing unit's muzzle on the map path — see `_flash_muzzle`.
+var muzzle_flash: MuzzleFlash
 ## What a scripted mission beat says, held like the power card and retired by the
 ## same press; down for every skirmish, because nothing else ever fills it.
 var mission_speech: MissionSpeechCard
@@ -138,6 +140,7 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		_sync_aftermath()
 		return
 	Sfx.play(&"shot")
+	await _flash_muzzle(attacker, defender, result.attacker_weapon_slot)
 	await flash_hit(defender_sprite)
 	shake_camera()
 	if result.defender_died:
@@ -148,6 +151,7 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		view.refresh_sprite(defender)
 	if result.countered:
 		Sfx.play(&"shot")
+		await _flash_muzzle(defender, attacker, result.counter_weapon_slot)
 		await flash_hit(attacker_sprite)
 	if result.attacker_died:
 		view.release_sprite(attacker)
@@ -155,6 +159,37 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 	else:
 		view.refresh_sprite(attacker)
 	view.sync_sprites()
+
+
+## The shot leaving, on the map path the cut-in stands in for: a star at the
+## firing unit's muzzle, thrown at what it is shooting at, one beat ahead of the
+## hit flash. Awaitable. Without it the map path drew the shooter nothing at all,
+## so an exchange read as the target flinching at nothing — the cut-in has flashed
+## a muzzle since BA1 and this is the same flash at the board's scale.
+##
+## Which weapon fired is a snapshot fact — the result's own slot — mapped to its
+## BattleStyle through the registry the cut-in reads, so the two can never
+## disagree about what a weapon looks like. Nothing is recomputed here, and a
+## style with no muzzle (a bomber's, an unarmed unit's) flashes none.
+##
+## Silent under Instant, which shows results rather than playing them out — the
+## tier answers no beat to run on — and silent for a shooter the viewer cannot
+## see, which is the fog rule the cut-in's own gate reads: a flash out of the dark
+## would report a unit the board is hiding.
+func _flash_muzzle(shooter: Unit, target: Unit, slot: StringName) -> void:
+	if muzzle_flash == null or not perspective.can_see_unit(shooter):
+		return
+	var seconds := Settings.speed.flash_in_seconds()
+	if seconds <= 0.0:
+		return
+	var style := BattleStyleDB.shared().for_weapon(shooter.type, slot)
+	if style.muzzle <= 0.0:
+		return
+	muzzle_flash.show_shot(shooter.cell, target.cell, style)
+	var tween := node.create_tween()
+	tween.tween_property(muzzle_flash, "spark", 0.0, seconds)
+	await tween.finished
+	muzzle_flash.clear_shot()
 
 
 ## The white hit flash, at the active tier's pace. Awaitable.

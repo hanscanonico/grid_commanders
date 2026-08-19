@@ -119,7 +119,7 @@ var _def_style: BattleStyle
 
 func _ready() -> void:
 	_build()
-	_styles = BattleStyleDB.load_default()
+	_styles = BattleStyleDB.shared()
 	_play.root.hide()
 	set_process(false)
 

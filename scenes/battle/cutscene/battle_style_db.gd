@@ -17,6 +17,8 @@ const STYLE_DIR := "res://data/battle_anim"
 ## `@export` default that assumes a weapon: a silent style flashes no muzzle and
 ## slams no hull back, so this and `unarmed.tres` stay one answer.
 static var _unarmed: BattleStyle
+## The process-wide shelf `shared` hands out.
+static var _shared: BattleStyleDB
 
 var _by_id: Dictionary = {}
 var _warned: Dictionary = {}
@@ -37,6 +39,16 @@ static func load_default() -> BattleStyleDB:
 		if style != null:
 			db.register(style)
 	return db
+
+
+## The one registry a running battle reads: the cut-in and the board's muzzle
+## flash ask the same shelf, so what a weapon looks like cannot be answered twice
+## from two scans of the same directory. Cached like `unarmed` — the styles are
+## presentation data with no per-match state in them.
+static func shared() -> BattleStyleDB:
+	if _shared == null:
+		_shared = load_default()
+	return _shared
 
 
 static func unarmed() -> BattleStyle:
