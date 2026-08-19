@@ -287,28 +287,37 @@ plan is stated in full below and has no copy there.
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
   on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
   a pip.
-- **The zoom ladder is integers** (no plan artifact; this entry is its record, and it is the
+- **The zoom ladder is integers above its floor** (no plan artifact; this entry is its record, and it is the
   animation milestone's first slice) — the board is sampled with nearest filtering, so a rung that
   is not a whole number of screen pixels per world pixel drops and doubles rows, and *which* rows it
   drops moves as the camera pans: crawling edges, which animation makes impossible to ignore. The
   ladder used to be anchored on the per-map fit ratio ceil'd to two decimals, so **every** board's
   floor was fractional (0.57 on Bulwark up to 3.64 on the smallest fixture) and so was every rung
-  above it. **`BattleZoom` is the one statement of what
-  rungs exist**: `floor_for` is the furthest-out rung — the largest whole rung that still shows the
-  map entire, floored at 1 — and `set_zoom` snaps to a whole rung, so `BattleView.min_zoom` hands
-  the ladder a board and asks rather than deriving a second answer. **A board too big for 1x
-  scrolls**: "fit it whole" no longer buys itself a fractional rung, and what a whole rung leaves
-  over is letterboxed by the out-of-bounds backdrop the camera limits already centre it in.
-  The zoom half is not the whole of it — a window that is not a whole multiple of the 640x360 canvas
-  puts every rung back on fractional sampling — so `window/stretch/scale_mode` is **`integer`**,
-  measured rather than argued: at 1280x720 the frame is byte-identical, and a maximized 1512x945 Mac
-  window renders the same 1280x720 canvas with bars instead of a 1512x850 smear.
+  above it. **`BattleZoom` is the one statement of what rungs exist**: `rungs_for` is the ladder a
+  board offers and `floor_for` its furthest-out rung, so `BattleView.min_zoom` hands the ladder a
+  board and asks rather than deriving a second answer. `set_zoom` settles on the nearest rung and a
+  press steps one place, so nothing anywhere else can invent a level.
+  **A PLAYTEST HAS SINCE OVERRULED HALF OF THIS SLICE, and the half it kept is the half a match is
+  played at.** The player's verdict on the shipped build was that it "looks more pixelized than
+  before"; the captures agreed, and named two costs neither of them worth what they bought.
+  **`window/stretch/scale_mode` is back off** (its `integer` was one line and is gone): on a
+  maximized 1512x945 Mac window it rendered the picture at 1280x720 inside 116px side bars and
+  ~112px top and bottom, showing the *same board* 15% smaller, and it made every texel a perfectly
+  square, perfectly aligned block — which is exactly the lattice a player reads as "pixelized",
+  where the 2.36x fractional lattice's mixed 4/5px steps dither the grid and read as finer. **And
+  the floor rung is the fit-whole one again, fractional, with every rung above it still whole**:
+  floored at 1 it left Bulwark's 49x32 showing half of itself at maximum zoom-out, and a crawling
+  edge on a survey view nobody fights from is the cheaper defect. So what survives is that a board
+  the default rung fits inside is *fought* on whole rungs. **The exception is a board small enough
+  that its fit rung sits above the default** — `boot_camp` at 2.03 and `quartet` — where the floor
+  *is* the rung the match opens on, so those two play on a fractional rung again exactly as they
+  did before #322, and their four smoke frames (`mission_strip`, `mission_strip_retired`,
+  `side_victory`, `mixed_seat_handoff+fog`) moved back with them: the board fills the band edge to
+  edge instead of leaving a sliver of backdrop. The other 81 are byte-identical.
   `tests/unit/test_texel_stability.gd` is the gate and states the formula it simulates; the 4x
   terrain oversample is deliberately outside it, `TILE / TERRAIN_PX` being an exact decimation whose
-  phase never moves. Four smoke frames moved with the ladder (`mission_strip`,
-  `mission_strip_retired`, `side_victory`, `mixed_seat_handoff+fog` — the only two boards the sweep
-  visits whose floor was above the default 2.0, `boot_camp` and `quartet`, both on 2.03);
-  the other 81, cut-ins and menus included, are byte-identical.
+  phase never moves. It **states both weakenings in its own header and pins `scale_mode` to its
+  absence**, so re-forcing either is a decision rather than a drift.
   **The milestone's second slice takes the rung's own promise the rest of the way**, because a
   whole rung is only half of a still frame — the board also has to be *parked* on whole screen
   pixels and never scaled off them. Four decisions, all presentation, nothing under `core/` or

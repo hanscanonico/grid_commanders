@@ -5,51 +5,60 @@ extends RefCounted
 ## the camera itself — this sits between them, split out of battle.gd so the
 ## interaction flow could shed a responsibility (the gdlintrc line ratchet).
 ##
-## **The ladder is integers, and this is the one place that says so.** The board
-## art is sampled with nearest filtering, so a rung that is not a whole number of
-## screen pixels per world pixel drops and doubles rows — and which rows it drops
-## moves as the camera pans, which reads as crawling edges the moment anything on
-## the board is animated. The ladder used to be anchored on the per-map fit ratio
-## (rungs like 1.37 / 2.37 / … / 5.0), which put every map but a lucky one on
-## fractional sampling at every rung. It is now anchored on `floor_for` and
-## stepped by whole rungs, and the remainder a whole rung leaves over is
-## letterboxed by the board's own out-of-bounds backdrop — the camera limits
-## already centre a map its rung overshoots (`BattleView._apply_camera_limits`).
+## **The rungs are whole numbers, and the floor is the one that frames the board.**
+## The board art is sampled with nearest filtering, so a rung that is not a whole
+## number of screen pixels per world pixel drops and doubles rows — and which rows
+## it drops moves as the camera pans, which reads as crawling edges once anything
+## on the board is animated. That is what the whole rungs buy, and every rung a
+## match is played at is one.
+##
+## The furthest-out rung is the deliberate exception: it is the survey view, the
+## one that frames the whole map, and a board bigger than 1x has no whole rung
+## that can. Snapping it away left Bulwark's 49x32 showing half of itself at
+## maximum zoom-out, which is a worse frame than a crawling edge on a view nobody
+## fights from (playtest, 2026-08-19).
 ##
 ## `tests/unit/test_texel_stability.gd` is what holds this to it.
 
 const MAX_ZOOM := 5.0
-const MIN_ZOOM := 1.0
-const STEP := 1.0
+
+## The rung a match opens on, wherever the board can hold it.
+const DEFAULT_ZOOM := 2.0
 
 var _view: BattleView
-var _zoom := 2.0
-var _min_zoom := MIN_ZOOM
+var _rungs := rungs_for(DEFAULT_ZOOM)
+var _zoom := DEFAULT_ZOOM
 
 
 func _init(view: BattleView) -> void:
 	_view = view
 
 
-## The furthest-out rung a board is offered: the largest whole rung that still
-## shows the map entire, and MIN_ZOOM for a map too big for even that — a board
-## wider than the window scrolls, which is the honest floor now that "fit it
-## whole" is no longer allowed to buy itself a fractional rung.
+## The furthest-out rung a board is offered: exactly far enough to frame the
+## whole map, with the backdrop filling whatever the map's aspect leaves over.
 static func floor_for(view: Vector2, map_px: Vector2) -> float:
-	var fit := minf(view.x / map_px.x, view.y / map_px.y)
-	return clampf(floorf(fit), MIN_ZOOM, MAX_ZOOM)
+	return minf(minf(view.x / map_px.x, view.y / map_px.y), MAX_ZOOM)
 
 
-## How far the player may zoom out depends on the viewport, so the clamp is
+## The ladder a board offers, furthest out first: its floor, then every whole
+## rung above it. The one statement of what rungs exist.
+static func rungs_for(floor_zoom: float) -> PackedFloat64Array:
+	var rungs := PackedFloat64Array([floor_zoom])
+	for whole in range(1, int(MAX_ZOOM) + 1):
+		if whole > floor_zoom:
+			rungs.append(float(whole))
+	return rungs
+
+
+## How far the player may zoom out depends on the viewport, so the ladder is
 ## worked out here; the view owns the camera itself.
 func setup() -> void:
-	_min_zoom = _view.min_zoom()
+	_rungs = rungs_for(_view.min_zoom())
 	set_zoom(_zoom)
 
 
 func set_zoom(zoom: float) -> void:
-	_zoom = clampf(roundf(zoom), _min_zoom, MAX_ZOOM)
-	_view.set_zoom(_zoom)
+	_settle(_nearest_rung(zoom))
 
 
 ## The zoom-step actions — keys, wheel and the pad's shoulders alike. Returns true
@@ -57,9 +66,25 @@ func set_zoom(zoom: float) -> void:
 ## this replaced sat first in that chain and swallowed the event the same way.
 func handle_input(event: InputEvent) -> bool:
 	if event.is_action_pressed(&"zoom_in"):
-		set_zoom(_zoom + STEP)
+		_settle(_nearest_rung(_zoom) + 1)
 		return true
 	if event.is_action_pressed(&"zoom_out"):
-		set_zoom(_zoom - STEP)
+		_settle(_nearest_rung(_zoom) - 1)
 		return true
 	return false
+
+
+func _settle(index: int) -> void:
+	_zoom = _rungs[clampi(index, 0, _rungs.size() - 1)]
+	_view.set_zoom(_zoom)
+
+
+## Which rung a level asks for: the closest one, so the opening DEFAULT_ZOOM lands
+## on the floor of a board too small to hold it and on DEFAULT_ZOOM everywhere
+## else.
+func _nearest_rung(zoom: float) -> int:
+	var best := 0
+	for i in _rungs.size():
+		if absf(_rungs[i] - zoom) < absf(_rungs[best] - zoom):
+			best = i
+	return best
