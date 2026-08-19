@@ -142,10 +142,14 @@ static func animates(type: UnitType) -> bool:
 ## Instant is a still board by the same rule the tier states everywhere else —
 ## it shows a result rather than playing one out — so it answers frame A, the
 ## sheet every other surface draws from.
-static func ambient_frame() -> int:
+##
+## The clock is a defaulted argument so that both stills — Instant and a pinned
+## capture — are checkable rather than being read off whichever beat the suite
+## happened to run in.
+static func ambient_frame(now_ms: int = Time.get_ticks_msec()) -> int:
 	if ambient_frozen or Settings.speed.instant:
 		return 0
-	return int(Time.get_ticks_msec() / AMBIENT_MS) % 2
+	return int(now_ms / AMBIENT_MS) % 2
 
 
 func _process(_delta: float) -> void:

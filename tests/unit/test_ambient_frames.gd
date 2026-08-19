@@ -54,14 +54,24 @@ func test_only_the_animated_kinds_differ_between_the_sheets() -> void:
 		)
 
 
+## The tier is named rather than inherited: this machine's stored preference may
+## be Instant, which is a still board and would pass every one of these vacuously.
+func test_the_beat_alternates_every_cadence() -> void:
+	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
+	assert_eq(UnitSprite.ambient_frame(0), 0, "the beat did not open on frame A")
+	assert_eq(UnitSprite.ambient_frame(UnitSprite.AMBIENT_MS), 1, "the beat did not turn over")
+	assert_eq(UnitSprite.ambient_frame(2 * UnitSprite.AMBIENT_MS), 0, "the beat did not come back")
+
+
 func test_a_frozen_clock_holds_frame_a() -> void:
+	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
 	UnitSprite.ambient_frozen = true
-	assert_eq(UnitSprite.ambient_frame(), 0, "a pinned capture read a beat")
+	assert_eq(UnitSprite.ambient_frame(UnitSprite.AMBIENT_MS), 0, "a pinned capture read a beat")
 
 
 func test_instant_holds_frame_a() -> void:
 	Settings.speed = GameSpeed.by_id(&"instant")
-	assert_eq(UnitSprite.ambient_frame(), 0, "Instant played the beat")
+	assert_eq(UnitSprite.ambient_frame(UnitSprite.AMBIENT_MS), 0, "Instant played the beat")
 
 
 ## True when any faction row of `column` is *drawn* differently in frame B. The
