@@ -41,7 +41,7 @@ const CUT_IN_STREAK_GAP_MS := 1600
 const CUT_IN_MAX_STREAK := 4
 const CUT_IN_STREAK_SPEED := 0.11
 const CUT_IN_STREAK_TAIL := 0.22
-## The board's flinch as the frame is taken over: a short zoom toward the cell
+## The board's flinch as the frame is taken over: a short push toward the cell
 ## that is about to be struck. The cursor is already parked there by both call
 ## sites, and the camera follows the cursor, so there is nothing to pan. Its
 ## length is the cut-in's first beat in all but name, so it runs on the cut-in's
@@ -133,7 +133,7 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 		_pace_cut_in()
 		await _punch_board()
 		await cutscene.play(result, attacker, defender)
-		view.punch_zoom = 1.0  # safety net: the cut-in already eased it out on the wipe
+		_drop_punch()
 		_last_cut_in_ms = Time.get_ticks_msec()
 		_sync_aftermath()
 		return
@@ -216,17 +216,19 @@ func _pace_cut_in() -> void:
 		capture_cutscene.tail_scale = streak_tail
 
 
-## A short zoom onto the cell about to be struck, so the board flinches before
+## A short push onto the cell about to be struck, so the board flinches before
 ## the frame is taken away from it. Awaited, then left punched in: the cut-in
 ## covers the map for its whole run and eases the punch back out over the closing
 ## wipe, so the board is already at rest the moment it is uncovered — see
 ## CutscenePlayback._restore_zoom.
 ##
-## Asked of `BattleView.punch_zoom`, never written to the camera, for the same
-## reason `shake_camera` goes through `shake_offset`: the view derives the board's
-## docking inset and the camera limits from the zoom, and a punch it never hears
-## about leaves both at the resting level for as long as the flinch lasts.
+## What is pushed is a still of the board rather than the camera: the zoom ladder
+## is whole rungs, and a camera walked continuously from 1.00 to 1.14 drops and
+## doubles a different set of rows on every frame. `BoardPunch` grabs the frame
+## first — awaited, because the still has to carry the attacker on the cell it
+## has just been snapped to.
 func _punch_board() -> void:
+	await view.punch.open()
 	var tween := node.create_tween()
 	var seconds := PUNCH_SECONDS / Settings.speed.cutscene_rate()
 	(
@@ -236,6 +238,15 @@ func _punch_board() -> void:
 		. set_ease(Tween.EASE_OUT)
 	)
 	await tween.finished
+
+
+## Hands the frame back to the live board. The cut-in has already eased the still
+## to rest over its closing wipe, so this only tears it down — and it runs however
+## the cut-in ended, which is what keeps a skip landing on the board rather than
+## under a frozen picture of it.
+func _drop_punch() -> void:
+	view.punch_zoom = 1.0
+	view.punch.close()
 
 
 ## The map beats the cut-in stands in for. Both sides have already been shown
@@ -271,7 +282,7 @@ func animate_capture(result: CaptureCommand.CaptureResult, unit: Unit, cell: Vec
 		_pace_cut_in()
 		await _punch_board()
 		await capture_cutscene.play(result, unit, cell)
-		view.punch_zoom = 1.0  # safety net: the cut-in already eased it out on the wipe
+		_drop_punch()
 		_last_cut_in_ms = Time.get_ticks_msec()
 		return
 	if perspective.can_see_unit(unit):

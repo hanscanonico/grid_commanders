@@ -245,9 +245,12 @@ func _draw_paved_property(base: Vector2) -> void:
 		BattleView.TERRAIN_PX
 	)
 	var tint := Color(1.0, 1.0, 1.0).lerp(Color(3.0, 3.0, 3.0), brightness)
-	draw_texture_rect_region(
-		_terrain_atlas(), Rect2(base.x - w * 0.5, base.y - h, w, h), source, tint
-	)
+	# Snapped: an atlas cell drawn at a continuously animated fractional size and
+	# offset resamples itself every frame, so the building's own rows crawl through
+	# the mash. Whole pixels hold the sampling still between landings, and the
+	# squash still reads — the shape is 132 px tall and the rounding is one.
+	var box := Rect2(Vector2(base.x - w * 0.5, base.y - h).round(), Vector2(w, h).round())
+	draw_texture_rect_region(_terrain_atlas(), box, source, tint)
 
 
 ## The atlas row the property is drawn from: the owner's faction row, swapped to
@@ -301,9 +304,16 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 
 ## One figure, standing on `feet` and facing the property (rightward). A hard
 ## offset shadow, then the art.
+##
+## `feet` is rounded because the squad art is drawn at 1:1 — FIGURE_PX is
+## UnitSprite.SPRITE_PX — so a whole-pixel origin puts one source texel on one
+## screen pixel, while the march, the bob and the per-figure stagger otherwise
+## walk the sprite through fractional offsets and shed a different row of it on
+## every frame. The bob's amplitude is 5 px and the stagger's 4, so both still
+## read; what goes is the shimmer inside them.
 func _draw_figure(feet: Vector2) -> void:
 	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_PX, FIGURE_PX, FIGURE_PX)
-	draw_set_transform(feet)
+	draw_set_transform(feet.round())
 	draw_texture_rect(
 		_squad_art,
 		Rect2(box.position + Vector2(2.0, 3.0), box.size),

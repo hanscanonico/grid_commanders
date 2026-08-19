@@ -329,14 +329,7 @@ func _ready() -> void:
 	await BattleCampaign.fire_due(self)  # the opening board: the one boundary with no command
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn
 	camera.position = cursor.position
-	camera.reset_smoothing()
 	if _capturing:
-		# Smoothing glides the camera toward the cursor over several frames, so
-		# how far it has travelled when the shutter opens depends on real
-		# elapsed time — enough to shift a whole frame by a pixel between runs.
-		# Captures show where the view settles, which is the position UI is
-		# already anchored to anyway (see BattleView.screen_pos_for_cell).
-		camera.position_smoothing_enabled = false
 		_scenario_driver.run()
 
 
@@ -478,6 +471,7 @@ func _build_view() -> BattleView:
 	built.units_root = $Units
 	built.cursor = cursor
 	built.camera = camera
+	built.punch = %BoardPunch
 	built.hud_bottom = %HudBottom
 	built.damage_preview = %DamagePreview
 	built.hud_top = %HudTop

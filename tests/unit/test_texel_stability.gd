@@ -148,3 +148,51 @@ func test_a_small_board_is_shown_whole_at_its_floor() -> void:
 ## rather than buying itself a fractional one — the honest floor.
 func test_a_board_too_big_for_one_rung_floors_at_one() -> void:
 	assert_eq(BattleZoom.floor_for(_board_view(), _map_px(Vector2i(49, 32))), BattleZoom.MIN_ZOOM)
+
+
+# --- where the board rests ----------------------------------------------------
+#
+# A whole rung is only half of a stable frame: the board also has to be *parked*
+# on whole screen pixels. `BattleView._apply_board_offset` docks it by
+# `BOARD_LIFT_PX / zoom` **world** units, which the camera turns back into exactly
+# `BOARD_LIFT_PX` screen pixels — the rung cancels. So no rung can rescue a
+# fractional lift, and the constant itself is the whole of what has to be whole.
+# That is why these hold it to an integer rather than walking the ladder.
+
+
+func test_the_board_docks_on_a_whole_screen_pixel() -> void:
+	var lift := float(BattleView.BOARD_LIFT_PX)
+	assert_eq(lift, floorf(lift), "the board docks %.2f screen pixels up" % lift)
+
+
+## The bars differ by an odd number of pixels, so the exact half-difference the
+## dock was derived from can only ever be half a pixel — which is why the lift is
+## a rounded constant. It still has to be the *nearest* whole pixel to it, or the
+## board would be docking somewhere other than the band's middle.
+func test_the_lift_is_the_nearest_whole_pixel_to_the_bands_middle() -> void:
+	var exact := float(UiTheme.HUD_BOTTOM_H - UiTheme.HUD_TOP_H) / 2.0
+	assert_ne(exact, floorf(exact), "the bars should differ by an odd number of pixels")
+	assert_almost_eq(float(BattleView.BOARD_LIFT_PX), exact, 0.5, "the lift is the nearest pixel")
+
+
+## The board rides up rather than down: the bottom bar is the taller one, so the
+## band's middle is above the window's.
+func test_the_board_rides_up_toward_the_shorter_bar() -> void:
+	assert_gt(BattleView.BOARD_LIFT_PX, 0)
+
+
+## The entry flinch is a scale on a still of the board, and it has to be scaled
+## about the point a camera zoom would have scaled it about — the camera's own
+## anchor, which is the window's middle lifted by the dock.
+func test_the_punch_scales_about_the_cameras_own_anchor() -> void:
+	var view := Vector2(640, 360)
+	var anchor := BoardPunch.band_center(view)
+	assert_eq(anchor.x, view.x / 2.0)
+	assert_eq(anchor.y, view.y / 2.0 - float(BattleView.BOARD_LIFT_PX))
+	assert_eq(anchor.y, floorf(anchor.y), "a fractional anchor would resample the still")
+
+
+## The capture cut-in's squad is board art at 1:1, so its draw origin has to be a
+## whole pixel however the march, the bob and the stagger place it.
+func test_the_capture_squad_is_drawn_at_one_to_one() -> void:
+	assert_eq(CaptureStage.FIGURE_PX, UnitSprite.SPRITE_PX)

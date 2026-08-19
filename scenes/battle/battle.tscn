@@ -21,6 +21,7 @@
 [ext_resource type="Script" path="res://scenes/ui/mission_speech_card.gd" id="19"]
 [ext_resource type="Script" path="res://scenes/battle/objective_marks.gd" id="20"]
 [ext_resource type="Script" path="res://scenes/battle/power_marks.gd" id="21"]
+[ext_resource type="Script" path="res://scenes/battle/board_punch.gd" id="22"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
@@ -61,10 +62,13 @@ script = ExtResource("21")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)
-position_smoothing_enabled = true
-position_smoothing_speed = 12.0
 
 [node name="UI" type="CanvasLayer" parent="."]
+
+[node name="BoardPunch" type="Control" parent="UI"]
+unique_name_in_owner = true
+mouse_filter = 2
+script = ExtResource("22")
 
 [node name="HudTop" type="PanelContainer" parent="UI"]
 unique_name_in_owner = true
