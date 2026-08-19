@@ -13,6 +13,21 @@ const SPRITE_H := 64
 ## The sprite is scaled by its *width*, so a cell taller than it is wide overflows
 ## upward at the same texel rate rather than shrinking the unit inside its tile.
 const SPRITE_SCALE := float(TILE) / float(SPRITE_W)
+## What a taller cell has over its footprint, in atlas pixels.
+const SPRITE_OVERFLOW := SPRITE_H - SPRITE_W
+## The art is anchored by its *footprint*, not by the cell's middle: with `centered`
+## at its default, the bottom SPRITE_W square of the region lands exactly on the tile
+## and the surplus rides up over the row above. This is a texture-space offset, so
+## `position` stays the cell centre the sim derives — which is what leaves the HP,
+## fuel and acted badges (children of this node) and every mark posed off
+## `BattleView.cell_center` on the tile rather than floating up with a tall turret.
+##
+## Whole texels only, the rule the zoom ladder's A2/A4 keep everywhere else, so
+## SPRITE_OVERFLOW must be even; test_texel_stability.gd pins it.
+##
+## Fog is deliberately left drawing above Units: overflow reaching into a fogged
+## row is over ground the viewer cannot see, so having it clipped is correct.
+const ART_OFFSET := Vector2(0, -float(SPRITE_OVERFLOW) / 2.0)
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Ambient animation frame B: the same army one beat later — rotors swept,
 ## air and sea units riding a pixel higher while their shadows stay put.
@@ -103,6 +118,7 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	_frame = ambient_frame() if is_processing() else 0
 	atlas_row = p_atlas_row
 	scale = Vector2.ONE * SPRITE_SCALE
+	offset = ART_OFFSET
 	# The badges are authored against the world grid, so undo the sprite's scale
 	# rather than letting them shrink with the art. Their offsets are authored in
 	# the same units and need the same treatment, or a badge creeps toward centre.
