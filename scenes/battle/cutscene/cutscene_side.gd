@@ -200,7 +200,7 @@ func bind(
 func drawn_unit_row() -> int:
 	if _art == null:
 		return -1
-	return int(_art.region.position.y) / UnitSprite.SPRITE_PX
+	return int(_art.region.position.y) / UnitSprite.SPRITE_H
 
 
 ## The row the *cell's own* art is drawn in — the paved floor for a surface, the

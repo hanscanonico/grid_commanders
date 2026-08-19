@@ -8,8 +8,11 @@ const TILE := 16
 ## its detail; the sprite is scaled back down to cover exactly one cell. Grid
 ## maths everywhere else still speaks in TILE. Must match sprite_generator's
 ## cell size (its atlas contract).
-const SPRITE_PX := 64
-const SPRITE_SCALE := float(TILE) / float(SPRITE_PX)
+const SPRITE_W := 64
+const SPRITE_H := 64
+## The sprite is scaled by its *width*, so a cell taller than it is wide overflows
+## upward at the same texel rate rather than shrinking the unit inside its tile.
+const SPRITE_SCALE := float(TILE) / float(SPRITE_W)
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Ambient animation frame B: the same army one beat later — rotors swept,
 ## air and sea units riding a pixel higher while their shadows stay put.
@@ -118,10 +121,10 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 
 
 ## Atlas region for one unit kind in a resolved faction's colours, at the atlas's
-## own SPRITE_PX resolution. `row` is a SideIdentity atlas row, not a team int —
-## the two coincided before factions, when team N drew in row N, and this is the
-## one line where that stopped being true. Static so menus can show the same
-## artwork the board does without instancing a sprite; callers that draw it
+## own SPRITE_W x SPRITE_H resolution. `row` is a SideIdentity atlas row, not a
+## team int — the two coincided before factions, when team N drew in row N, and
+## this is the one line where that stopped being true. Static so menus can show
+## the same artwork the board does without instancing a sprite; callers that draw it
 ## outside the world grid size it themselves.
 static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
 	return _region_of(load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH), type, row)
@@ -141,7 +144,7 @@ static func figure_texture_for(type: UnitType, row: int) -> AtlasTexture:
 static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTexture:
 	var atlas := AtlasTexture.new()
 	atlas.atlas = sheet
-	atlas.region = Rect2(type.atlas_col * SPRITE_PX, row * SPRITE_PX, SPRITE_PX, SPRITE_PX)
+	atlas.region = Rect2(type.atlas_col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H)
 	return atlas
 
 

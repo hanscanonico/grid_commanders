@@ -385,7 +385,7 @@ plan is stated in full below and has no copy there.
   after every cursor step between two cells, which is that same fractional rest by another name;
   a capture run already switched it off for the same reason, so no captured frame depended on it.
   **A4: an atlas cell is drawn on whole texels** — the capture cut-in's squad is board art at 1:1
-  (`CaptureStage.FIGURE_PX` is `UnitSprite.SPRITE_PX`) and the march, bob and stagger walked it
+  (`CaptureStage.FIGURE_PX` is `UnitSprite.SPRITE_W`) and the march, bob and stagger walked it
   through fractional offsets, so its draw origin is rounded; the paved-property fallback's rect is
   snapped with it. The mash **squash** is deliberately untouched — it is `draw_set_transform` over
   *drawn shapes*, so it never sampled a texel and the beats' feel is unmoved. The band's own
