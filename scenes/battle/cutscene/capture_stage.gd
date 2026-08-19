@@ -49,6 +49,10 @@ const PROP_CENTER := 0.66
 const FEET_RATIO := 0.82
 ## The squad's art size and how many figures march (plan: infantry/mech capture,
 ## a three-figure squad carries it — the pip-exact number lives on the meter).
+## Pinned to `UnitSprite.SPRITE_W` rather than the cell's height: the figures are
+## board art at 1:1 and their footprint — the slots they stand in and the ground
+## they are spaced across — is a width, so a cell that grows taller overflows
+## upward without moving where anyone stands.
 const FIGURE_PX := 64
 const SQUAD_SIZE := 3
 ## Where each figure stands relative to the squad's anchor, back to front.
@@ -131,7 +135,7 @@ func bind(
 func drawn_squad_row() -> int:
 	if _squad_art == null:
 		return -1
-	return int(_squad_art.region.position.y) / UnitSprite.SPRITE_PX
+	return int(_squad_art.region.position.y) / UnitSprite.SPRITE_H
 
 
 func _draw() -> void:
@@ -306,7 +310,7 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## offset shadow, then the art.
 ##
 ## `feet` is rounded because the squad art is drawn at 1:1 — FIGURE_PX is
-## UnitSprite.SPRITE_PX — so a whole-pixel origin puts one source texel on one
+## UnitSprite.SPRITE_W — so a whole-pixel origin puts one source texel on one
 ## screen pixel, while the march, the bob and the per-figure stagger otherwise
 ## walk the sprite through fractional offsets and shed a different row of it on
 ## every frame. The bob's amplitude is 5 px and the stagger's 4, so both still

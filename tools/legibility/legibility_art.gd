@@ -125,13 +125,15 @@ func cutin_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 
 ## The region one unit kind occupies in one faction row of the units atlas. Its
 ## cell is UnitSprite's own size rather than the terrain's: the two happen to
-## match today, and nothing here may depend on their staying equal.
+## match today, and nothing here may depend on their staying equal. The ruler
+## samples a square, so `px` is the cell's width — the tile the board actually
+## gives the unit.
 func unit_cell(unit_type: UnitType, atlas_row: int) -> Dictionary:
-	var size := UnitSprite.SPRITE_PX
 	return {
 		"image": units,
-		"origin": Vector2i(unit_type.atlas_col * size, atlas_row * size),
-		"px": size,
+		"origin":
+		Vector2i(unit_type.atlas_col * UnitSprite.SPRITE_W, atlas_row * UnitSprite.SPRITE_H),
+		"px": UnitSprite.SPRITE_W,
 	}
 
 

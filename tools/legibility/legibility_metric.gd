@@ -288,15 +288,15 @@ static func _lab_f(ratio: float) -> float:
 ## pixels leaves that row's ramp on top, and its RAMP_SLOTS most-used colours
 ## are the ramp. A row's step is its span over RAMP_SLOTS - 1 gaps; the sheet's
 ## is the mean over the rows, since one number is what a bar can be stated in.
-static func ramp_step(atlas: Image, cell_px: int, rows: int) -> float:
+static func ramp_step(atlas: Image, cell_h: int, rows: int) -> float:
 	var total := 0.0
 	var counted := 0
 	var tallies: Array[Dictionary] = []
 	for row in rows:
 		tallies.append({})
-	for y in cell_px:
+	for y in cell_h:
 		for x in atlas.get_width():
-			_tally_row_colours(atlas, tallies, cell_px, x, y)
+			_tally_row_colours(atlas, tallies, cell_h, x, y)
 	for row in rows:
 		var step := _row_step(tallies[row])
 		if step > 0.0:
@@ -308,11 +308,11 @@ static func ramp_step(atlas: Image, cell_px: int, rows: int) -> float:
 ## Adds one column of pixels — the same (x, y) in every row — to the tallies,
 ## unless every row painted it the same colour, in which case it is shared ink.
 static func _tally_row_colours(
-	atlas: Image, tallies: Array[Dictionary], cell_px: int, x: int, y: int
+	atlas: Image, tallies: Array[Dictionary], cell_h: int, x: int, y: int
 ) -> void:
 	var colours: Array[Color] = []
 	for row in tallies.size():
-		colours.append(atlas.get_pixel(x, row * cell_px + y))
+		colours.append(atlas.get_pixel(x, row * cell_h + y))
 	var shared := true
 	for colour in colours:
 		if colour != colours[0]:

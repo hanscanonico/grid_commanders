@@ -9,7 +9,8 @@ extends GutTest
 ## regenerated with a still copter, or a land unit that started moving, changes
 ## no code and no test unless one reads the pixels.
 
-const SPRITE_PX := UnitSprite.SPRITE_PX
+const SPRITE_W := UnitSprite.SPRITE_W
+const SPRITE_H := UnitSprite.SPRITE_H
 
 var units: UnitDB
 var frame_a: Image
@@ -80,9 +81,9 @@ func test_instant_holds_frame_a() -> void:
 ## copter that moved leaves its neighbour's empty margin holding different — and
 ## equally invisible — RGB.
 func _column_differs(column: int) -> bool:
-	var rows := int(frame_a.get_height() / SPRITE_PX)
+	var rows := int(frame_a.get_height() / SPRITE_H)
 	for row in rows:
-		var region := Rect2i(column * SPRITE_PX, row * SPRITE_PX, SPRITE_PX, SPRITE_PX)
+		var region := Rect2i(column * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H)
 		var cell_a := frame_a.get_region(region)
 		var cell_b := frame_b.get_region(region)
 		if cell_a.get_data() != cell_b.get_data() and _visibly_differs(cell_a, cell_b):

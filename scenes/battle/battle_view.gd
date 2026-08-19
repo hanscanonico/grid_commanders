@@ -62,6 +62,10 @@ var terrain_layer: TileMapLayer
 ## fills the screen when the camera is far enough out to show the whole map.
 var backdrop_layer: TileMapLayer
 var fog_layer: TileMapLayer
+## Y-sorted, which is the single answer to how two unit sprites overlap: a
+## sprite's position is its cell's centre, so a lower row draws over a higher
+## one for free, mid-move and at rest alike. Nothing may set a per-unit
+## `z_index` — that would be a second opinion the sort cannot see.
 var units_root: Node2D
 var cursor: Sprite2D
 var camera: Camera2D
