@@ -11,10 +11,6 @@ extends PanelContainer
 
 signal action_chosen(action: StringName)
 
-## Row artwork is authored at the atlas's own resolution (64px for the unit
-## sprites), which would dwarf a 10px label, so every icon is capped to one
-## world tile wide. Aspect ratio is preserved, so square art lands at 16x16.
-const ICON_PX := 16
 ## How far the menu stays off the edges of the board band.
 const MARGIN := 4.0
 ## Which way each direction action walks the highlight.
@@ -66,8 +62,11 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		var button := Button.new()
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.focus_mode = Control.FOCUS_NONE
-		button.add_theme_constant_override("icon_max_width", ICON_PX)
-		button.icon = entry.get("icon", spacer)
+		var icon: Texture2D = entry.get("icon", spacer)
+		if icon != null:
+			button.add_theme_constant_override("icon_max_width", _icon_cap(icon))
+			button.custom_minimum_size.y = UiTheme.MENU_ICON_ROW
+		button.icon = icon
 		var id: StringName = entry.id
 		var is_disabled: bool = entry.get("disabled", false)
 		button.disabled = is_disabled
@@ -157,13 +156,26 @@ func _step_value(i: int, step: int) -> void:
 	_update_labels()
 
 
+## The width that lands a row's artwork inside UiTheme.MENU_ICON's square slot.
+## `Button.icon` is not a TextureRect, so STRETCH_KEEP_ASPECT is not on offer;
+## what the row has is `icon_max_width`, which scales the icon by width and
+## adjusts the height to its ratio. Capping at the slot therefore fits anything
+## square or wider — a taller-than-wide sprite has to be capped at the width its
+## own ratio puts at the slot's height instead, or it would stand out of the row.
+static func _icon_cap(icon: Texture2D) -> int:
+	var size := icon.get_size()
+	if size.x <= 0.0 or size.y <= size.x:
+		return UiTheme.MENU_ICON
+	return maxi(1, int(UiTheme.MENU_ICON * size.x / size.y))
+
+
 ## Transparent stand-in the size icons are capped to, so icon-less rows keep
 ## their labels in the same column. Null when no row has an icon at all: plain
 ## verb menus then draw exactly as they did before.
 func _spacer_icon(actions: Array[Dictionary]) -> Texture2D:
 	if not actions.any(func(entry: Dictionary) -> bool: return entry.get("icon") != null):
 		return null
-	var image := Image.create(ICON_PX, ICON_PX, false, Image.FORMAT_RGBA8)
+	var image := Image.create(UiTheme.MENU_ICON, UiTheme.MENU_ICON, false, Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
 	return ImageTexture.create_from_image(image)
 
