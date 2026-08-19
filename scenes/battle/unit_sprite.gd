@@ -16,6 +16,10 @@ const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Land cells are byte-identical between the sheets, so only what should
 ## move ever moves.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
+## The same army with the tile's cast shadow subtracted, for a surface that
+## draws the art at 1:1 over ground and a shadow of its own — see
+## `figure_texture_for`.
+const UNITS_ATLAS_FIGURES_PATH := "res://assets/tiles/units_atlas_figures.png"
 ## Milliseconds per ambient beat, and one cadence for both motions because the
 ## sheets encode one: frame B is the whole army a beat later, so a rotor and a
 ## swell cannot be given different rates without a third sheet. Half a second is
@@ -120,8 +124,23 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 ## artwork the board does without instancing a sprite; callers that draw it
 ## outside the world grid size it themselves.
 static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
+	return _region_of(load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH), type, row)
+
+
+## The same cell without the contact shadow the tile needs. The shadow is an
+## opaque checkerboard, which reads as half-tone at the board's 4:1 decimation
+## and as loose dots wherever the art is drawn at 1:1 — so the cut-ins, which
+## blow a figure up over a ground plane and a contact shadow they draw
+## themselves, ask for this one instead. The sheet is the board's own cell with
+## those pixels subtracted (the generator's `compose_cell`), never a redraw,
+## which is what keeps "board art, blown up" true of it.
+static func figure_texture_for(type: UnitType, row: int) -> AtlasTexture:
+	return _region_of(load(UNITS_ATLAS_FIGURES_PATH), type, row)
+
+
+static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTexture:
 	var atlas := AtlasTexture.new()
-	atlas.atlas = load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH)
+	atlas.atlas = sheet
 	atlas.region = Rect2(type.atlas_col * SPRITE_PX, row * SPRITE_PX, SPRITE_PX, SPRITE_PX)
 	return atlas
 

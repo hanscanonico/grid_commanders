@@ -9,11 +9,13 @@ extends Control
 ## difference between the attacker's half and the defender's.
 ##
 ## The ground is the board's own terrain art, tiled in receding bands, and the
-## figure is the board's own unit art — blown up, never redrawn (plan D2). The
-## scenery a standing terrain puts on that ground is the one exception, and says
-## so where it is declared (TerrainType.cutin_scenery). The other thing derived
-## rather than drawn is the horizon ridge's colour, which is averaged off the
-## terrain tile so a new terrain needs no entry anywhere.
+## figure is the board's own unit art — blown up, never redrawn (plan D2), minus
+## the contact shadow the tile needed and this half draws for itself
+## (UnitSprite.figure_texture_for). The scenery a standing terrain puts on that
+## ground is the one exception, and says so where it is declared
+## (TerrainType.cutin_scenery). The other thing derived rather than drawn is the
+## horizon ridge's colour, which is averaged off the terrain tile so a new
+## terrain needs no entry anywhere.
 
 const PLATE_TOP_H := 26
 const PLATE_BOT_H := 20
@@ -185,7 +187,7 @@ func bind(
 	owner_row = p_owner_row
 	accent = p_accent
 	mirror = p_mirror
-	_art = UnitSprite.texture_for(p_unit.type, p_unit_row)
+	_art = UnitSprite.figure_texture_for(p_unit.type, p_unit_row)
 	_ridge_tint = CutsceneScenery.ground_tint(ground.atlas_col, _ground_row())
 	_flying = p_unit.type.domain == UnitType.AIR
 	_floating = p_unit.type.domain == UnitType.SEA

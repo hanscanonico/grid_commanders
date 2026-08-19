@@ -202,6 +202,22 @@ plan is stated in full below and has no copy there.
   them together: set together or not at all, a known shape, and a pavement that exists and does not
   itself stand. `cutin_scenery:mech:mech` in the smoke sweep is the frame trees and peaks are drawn
   in; `cutin_iron_commander` is the buildings'.
+  **A figure is that art minus the shadow the tile needed** (no plan artifact; this clause is its
+  record, and it holds for the capture cut-in's squad too): the generated cells carry an opaque
+  checkerboard contact shadow, which reads as half-tone under a 16px board sprite and as loose dots
+  wherever the 64px cell is drawn at 1:1 — a player reported them as "weird black points at the
+  bottom of the tank", and both cut-ins were drawing them **twice**, since each also stamps the whole
+  cell as an offset silhouette. Both cut-ins already draw their own ground plane and their own
+  contact ellipse, so the baked one carried nothing there. `UnitSprite.figure_texture_for` is the one
+  way to ask for it and `assets/tiles/units_atlas_figures.png` the sheet it cuts from — the board's
+  own sheet with those pixels **subtracted by the generator** (`compose_cell`'s `shadow`), never a
+  redraw and never a colour-keyed shader here, because which pixels are shadow is the generator's
+  answer and a second opinion on it in `scenes/` is exactly the drift D2 forbids. Subtracted rather
+  than composed-without, because the waterline foam is placed against the composed cell's own spans.
+  So D2 still holds of the figures: they *are* the board art, blown up. `tests/unit/test_figure_sheet.gd`
+  is the pin — the figure sheet may only ever remove a pixel, and every unit must lose one — and the
+  legibility ruler is deliberately not re-run, no board pixel having moved. All seventeen combat
+  cut-in frames and all four capture ones re-baselined; every board and menu frame is untouched.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
