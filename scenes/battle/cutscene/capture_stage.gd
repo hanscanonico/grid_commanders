@@ -122,7 +122,7 @@ func bind(
 	prop_col = p_col
 	row_before = p_owner_row
 	row_after = p_capturer_row
-	_squad_art = UnitSprite.texture_for(p_unit.type, p_capturer_row)
+	_squad_art = UnitSprite.figure_texture_for(p_unit.type, p_capturer_row)
 
 
 ## The atlas row the marching squad is really drawn from, read back off the
