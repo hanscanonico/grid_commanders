@@ -233,11 +233,12 @@ func frame(present: float, wipe_out: Vector2) -> void:
 
 
 ## Eases the board's entry punch back out over the closing wipe, in lockstep with
-## `present` falling to zero — so the map is already at its resting zoom on the
-## frame the wipe uncovers it, and a skip (which pins the reveal at 1) lands the
-## zoom exactly at rest with everything else. The view composes the punch with the
-## player's level and re-docks the board, which is why this asks it rather than the
-## camera (see BattleView._apply_zoom).
+## `present` falling to zero — so the map is already at rest on the frame the wipe
+## uncovers it, and a skip (which pins the reveal at 1) lands it exactly at rest
+## with everything else. What is eased is a still of the board rather than the
+## camera, which never leaves its rung (see BoardPunch); this asks the view for it
+## so the shell keeps one route to the board and no second opinion about the
+## flinch.
 func _restore_zoom(wipe_out: Vector2) -> void:
 	if _board == null:
 		return

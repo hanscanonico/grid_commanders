@@ -35,6 +35,16 @@ const ATLAS_SOURCE_ID := 0
 
 const UNIT_SPRITE_SCENE := preload("res://scenes/battle/unit_sprite.tscn")
 
+## How many *screen* pixels the board rides up out of the window's middle so it
+## sits centred in the band between the two docked bars. The bars' heights differ
+## by an odd number, so the exact half-difference is 11.5, and half a screen pixel
+## of camera offset puts every texel boundary of the board on a half pixel — the
+## fractional rest the whole integer-rung argument exists to forbid. The odd pixel
+## goes to the bottom: the board rides 12 up rather than 11, so the extra half of
+## clearance sits above the taller bar, where a unit standing on the last row is
+## further from the chrome rather than nearer it.
+const BOARD_LIFT_PX := (UiTheme.HUD_BOTTOM_H - UiTheme.HUD_TOP_H + 1) / 2
+
 ## The surface a property overlay stands on, under `terrain_layer`. The atlas
 ## ships its property columns transparent (TerrainDB.GROUND_ID), so a city drawn
 ## alone is a hole in the board; this layer is the ground the building sits on.
@@ -55,6 +65,9 @@ var fog_layer: TileMapLayer
 var units_root: Node2D
 var cursor: Sprite2D
 var camera: Camera2D
+## The still the cut-in's entry flinch is played on, so the camera never leaves a
+## whole rung of the zoom ladder. Down at rest and invisible at rest scale.
+var punch: BoardPunch
 ## The docked bar below the board: the commander in hand, the unit under the
 ## cursor, the tile it stands on. Replaces the floating chip and corner panel.
 var hud_bottom: HudBottomBar
@@ -83,17 +96,17 @@ var shake_offset := Vector2.ZERO:
 		if camera != null:
 			_apply_board_offset()
 
-## The transient flinch the cut-in's entry lays over the player's zoom level, as a
-## multiple of it — 1.0 at rest. Set, tweened and eased back out through here
-## rather than written to the camera, for the same reason `shake_offset` is: the
-## docking inset and the camera limits are both derived from the zoom, so a punch
-## the view never hears about leaves them behind at the resting level and slides
-## the board out of the band. See `_apply_zoom`, which composes both.
+## The transient flinch the cut-in's entry lays over the board — 1.0 at rest. It
+## is a scale on a still of the board rather than on the camera, because the zoom
+## ladder is whole rungs and a camera walked through 1.00 … 1.14 drops and doubles
+## a different set of rows on every frame of the punch. `BoardPunch` is where that
+## decision lives; this is the property the animator tweens and the cut-in's clock
+## eases back out.
 var punch_zoom := 1.0:
 	set(value):
 		punch_zoom = value
-		if camera != null:
-			_apply_zoom()
+		if punch != null:
+			punch.set_punch(value)
 
 var db: TerrainDB
 var map: MapData
@@ -615,6 +628,13 @@ func update_damage_preview(forecast: CombatSnapshot.Forecast, cell: Vector2i) ->
 
 ## Moves the cursor sprite and the camera that follows it. The interaction
 ## state that hangs off a cursor move stays in Battle.
+##
+## The camera lands on the cell rather than gliding to it. Cell centres are whole
+## world pixels and every rung of the ladder is whole, so a camera parked on one
+## draws the board on whole screen pixels — while `position_smoothing` spent the
+## third of a second after every cursor step somewhere between two cells, which
+## is a fractional rest by another name and the exact thing the whole texel
+## argument forbids. A step is one cell; the board should arrive with the cursor.
 func move_cursor_to(cell: Vector2i) -> void:
 	cursor.position = cell_center(cell)
 	camera.position = cursor.position
@@ -639,14 +659,12 @@ func set_zoom(zoom: float) -> void:
 	_apply_zoom()
 
 
-## **`camera.zoom` has one writer, and this is it.** The player's level and the
-## combat flinch over it are two different things that both want that property, and
-## both the docking offset and the camera limits are worked out *from* it — so a
-## punch written straight to the camera keeps the resting level's world inset and
-## its wider limits, and the board sits out of the band until the next zoom key.
-## The level and the punch are composed here, like the docking shift and the shake.
+## **`camera.zoom` has one writer, and this is it**, and what it writes is a whole
+## rung of `BattleZoom`'s ladder and nothing else. The combat flinch used to be
+## composed in here as a multiplier; it is a scale on a rendered still now
+## (`BoardPunch`), which is what keeps the camera on a rung for the whole match.
 func _apply_zoom() -> void:
-	camera.zoom = Vector2.ONE * _resting_zoom * punch_zoom
+	camera.zoom = Vector2.ONE * _resting_zoom
 	_apply_board_offset()
 	_apply_camera_limits()
 
@@ -669,8 +687,7 @@ func _apply_zoom() -> void:
 ## match. So the shake is asked for through `shake_offset` and composed here.
 ## Anything else that wants to move the camera belongs in this sum too.
 func _apply_board_offset() -> void:
-	var inset := float(UiTheme.HUD_TOP_H - UiTheme.HUD_BOTTOM_H) / 2.0
-	camera.offset = Vector2(0, -inset / camera.zoom.y) + shake_offset
+	camera.offset = Vector2(0, float(BOARD_LIFT_PX) / camera.zoom.y) + shake_offset
 
 
 ## The furthest out the player may zoom, with the backdrop filling whatever the
@@ -725,9 +742,9 @@ func screen_pos_for_cell(cell: Vector2i) -> Vector2:
 	return (world - _screen_center()) * camera.zoom + _viewport_size() / 2.0 + Vector2(6, 0)
 
 
-## The world point the middle of the screen shows. Anchored to the camera's
-## target (unsmoothed) position so UI placed during a camera glide lands where
-## the view settles, not where it happens to be.
+## The world point the middle of the screen shows, clamped the way the engine
+## clamps the camera itself so UI placed near a map edge lands on the tile it
+## points at rather than off it.
 ##
 ## `camera.offset` is part of the answer: it is what pushes the board down into
 ## the band between the bars, so a transient overlay measured against the screen
