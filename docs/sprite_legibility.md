@@ -39,6 +39,28 @@ sea cells, phase 2 wins the worst-of 151 times and fails 16.6% of them against p
 phase is worth naming even now. Nothing was tuned in response, and no other terrain, unit,
 faction or class moved by a cell.
 
+## Re-read 2026-08-20, after the armour family was raised into a 64x96 cell
+
+The unit cell is one tile wide and half a tile taller, and tank, md tank, artillery and rockets grew
+upward into that headroom, so those four columns moved and this page was re-read rather than
+re-authored: **1,300 failing (16.0%) clear and 123 (6.8%) fogged**, against a same-day control on
+the previous sheets of **1,291 (15.9%) / 123 (6.8%)**. Nine cells, and the ruler names all of them:
+artillery 2 → 14, rockets 16 → 22, **tank 12 → 3**, md tank unchanged. The tank's deeper hull and
+raised turret ring *gained* contour against ground; the two guns that now stand clear of the tile
+lost a little, and every one of their new failures clears the hue bound — value-blind, not
+illegible. The fog class did not move by a cell, and no other unit, faction, terrain or class did
+either.
+
+The ruler measures the cell's **bottom square**, which is the tile the unit stands on: the board
+anchors the art by its footprint, so what a raised silhouette overflows into is the row behind it
+and a different tile's reading. That is why the fourteen unraised units are byte-identical here.
+
+Frame B was re-read on the same terms: **1,396 (17.2%) / 139 (7.7%)** against its control of
+**1,387 (17.1%) / 139 (7.7%)** — the same nine cells, the beat costing the board no class. (Both
+sit above the 16.5% / 7.5% this page's older frame-B note records: that figure predates the terrain
+variants and the solid shadows, so it is the control above, not the note, that this reading is
+against.) Nothing was tuned in response to any of it.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in

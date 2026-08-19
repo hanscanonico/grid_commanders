@@ -39,9 +39,13 @@ const SCENERY_SLOTS: Array[Vector3] = [
 	Vector3(0.63, 0.66, 0.92),
 	Vector3(0.85, 0.74, 1.0),
 ]
-## Figures are the 64 px atlas art at its own resolution — nearest-neighbour
-## scaling of pixel art to a fractional size drops rows unevenly, so it isn't.
+## Figures are the atlas art at its own resolution — nearest-neighbour scaling
+## of pixel art to a fractional size drops rows unevenly, so it isn't. The cell
+## is taller than it is wide and anchored by its footprint, so FIGURE_H is drawn
+## *above* the feet and a raised silhouette gets its headroom here too;
+## test_texel_stability.gd pins both to UnitSprite's cell.
 const FIGURE_PX := 64
+const FIGURE_H := 96
 ## How far in from the outer edge the squad's *middle* sits. Squads are centred
 ## on this whatever their size, so a lone 1 HP straggler holds the same ground a
 ## full five did rather than standing off at the edge of the frame where the
@@ -475,7 +479,7 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## A figure already on its way down does not flash: it has taken its hit.
 func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
 	var flip := Vector2(-1.0 if mirror else 1.0, 1.0)
-	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_PX, FIGURE_PX, FIGURE_PX)
+	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_H, FIGURE_PX, FIGURE_H)
 	var lift := 0.0
 	var spin := 0.0
 	var alpha := squad_alpha

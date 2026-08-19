@@ -444,7 +444,39 @@ plan is stated in full below and has no copy there.
   hex, opaque pixels only. **It obeys the cut-in's own fog rule, both combatants visible**, because
   the star is aimed and a visible shooter pointed at hidden ground would leak the direction COM-57
   exists to protect; Instant draws nothing (`flash_in_seconds()` is 0 there), which is also why
-  every smoke frame is byte-identical across the slice. (no plan artifact; this entry is its record) — `N` walks the cursor
+  every smoke frame is byte-identical across the slice.
+  **The milestone's fifth slice is the 64x96 unit cell, and the armour family is its first user**
+  (generator `e451095`, adopted 2026-08-20; this clause is its record). A tank has to read as
+  heavier than the grass tile it is parked on, and the tile is 64px, so the generator's unit cell is
+  one tile wide and half a tile taller — `UnitSprite.SPRITE_H` is 96 — with every vertical landmark
+  in `compose_cell` measured up from the cell's **bottom** edge. The extra rows are therefore sky:
+  the fourteen unraised units are byte-identical in all three sheets, which is the bottom anchor
+  proving itself, and the board needed nothing new because `SPRITE_OVERFLOW` / `ART_OFFSET` and the
+  y-sort had already landed. **What the headroom is spent on is MASS, and that is the 128px lesson
+  read at a different scale** (`docs/density_128.md`): a voxel of height is 2px here, so a turret
+  tall enough to clear a whole tile is a silo rather than a tank — it was *rendered* on the md tank
+  and rejected — and a mast thin enough to look right is one source pixel, which the board's 4:1
+  rung draws or drops on the sampling phase. So tank and md tank grew deeper running gear, a deeper
+  hull and a turret on a full armour ring and stay inside their tile, while artillery's howitzer and
+  the rocket rack, the two weapons that legitimately elevate, are what break the tile's line.
+  **A square icon slot shows the tile, not the cell** — `UnitSprite.tile_texture_for` is the cell's
+  footprint square and the HUD's unit icon and the illustrated menu rows ask for it, because fitting
+  a 2:3 cell into a 20px square shrinks every unit to two thirds to make room for sky;
+  `ActionMenu.icon_cap`'s taller-than-wide branch stays as the bound for art that does reach a row
+  whole. Both cut-ins blow the cell up at 1:1, so each carries a `FIGURE_H` beside its `FIGURE_PX`
+  (pinned to `SPRITE_H` / `SPRITE_W` by `tests/unit/test_texel_stability.gd`) and draws it above the
+  feet. **72 of the 85 smoke frames moved, and the thirteen that did not are the twelve menu frames
+  and `side_victory`** — re-measured at review, the slice's own prediction of 64 having been short.
+  Two causes, and neither is a redraw: the raised columns and the square icon slot move every board
+  frame that shows a unit, and **a box 32 rows taller resamples the art inside it** wherever
+  something scales — both cut-ins push their band by up to 1.03, and `boot_camp` and `quartet` are
+  fought on a fractional floor rung — so all four capture cut-ins and the combat cut-ins of unraised
+  units moved by a pixel of phase with not one atlas pixel behind them changed. What did not move is
+  the art itself, which the three sheets prove cell by cell. The legibility ruler
+  was re-run for both ambient frames against a same-day control and `docs/sprite_legibility.md`
+  carries the re-read: nine cells, all hue-carried, and the tank came out *better*. The ruler reads
+  the cell's bottom square for the same reason the icons do.
+  (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
   still act and for the order they are walked in** — `of()` is the list the End Turn guard prints

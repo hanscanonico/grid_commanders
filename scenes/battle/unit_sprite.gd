@@ -9,7 +9,7 @@ const TILE := 16
 ## maths everywhere else still speaks in TILE. Must match sprite_generator's
 ## cell size (its atlas contract).
 const SPRITE_W := 64
-const SPRITE_H := 64
+const SPRITE_H := 96
 ## The sprite is scaled by its *width*, so a cell taller than it is wide overflows
 ## upward at the same texel rate rather than shrinking the unit inside its tile.
 const SPRITE_SCALE := float(TILE) / float(SPRITE_W)
@@ -144,6 +144,20 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 ## outside the world grid size it themselves.
 static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
 	return _region_of(load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH), type, row)
+
+
+## The same art cut down to its footprint square — the tile the unit stands on,
+## without the headroom a raised silhouette overflows into. For a square slot that
+## *is* a tile: the HUD's unit icon and an illustrated menu row. Fitting the whole
+## cell into one of those instead shrinks every unit to two thirds of the slot to
+## make room for sky, which costs a 20 px icon far more than a raised turret's top
+## few pixels are worth.
+static func tile_texture_for(type: UnitType, row: int) -> AtlasTexture:
+	var art := texture_for(type, row)
+	art.region = Rect2(
+		art.region.position + Vector2(0, SPRITE_OVERFLOW), Vector2(SPRITE_W, SPRITE_W)
+	)
+	return art
 
 
 ## The same cell without the contact shadow the tile needs. The shadow is an

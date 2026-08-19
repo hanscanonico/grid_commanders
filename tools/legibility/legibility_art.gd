@@ -132,14 +132,22 @@ func cutin_cell(terrain_type: TerrainType, db: TerrainDB) -> Dictionary:
 
 ## The region one unit kind occupies in one faction row of the units atlas. Its
 ## cell is UnitSprite's own size rather than the terrain's: the two happen to
-## match today, and nothing here may depend on their staying equal. The ruler
-## samples a square, so `px` is the cell's width — the tile the board actually
-## gives the unit.
+## match in width today, and nothing here may depend on their staying equal.
+##
+## The ruler measures one tile, and the unit's tile is the BOTTOM square of a
+## cell taller than it is wide — the board anchors the art by its footprint, so
+## that square is what a unit shows against the ground it stands on. What a
+## raised silhouette overflows upward reads against the row behind it, which is
+## a different tile and outside this measurement.
 func unit_cell(unit_type: UnitType, atlas_row: int) -> Dictionary:
+	var footprint := Vector2i(0, UnitSprite.SPRITE_H - UnitSprite.SPRITE_W)
 	return {
 		"image": units,
 		"origin":
-		Vector2i(unit_type.atlas_col * UnitSprite.SPRITE_W, atlas_row * UnitSprite.SPRITE_H),
+		(
+			Vector2i(unit_type.atlas_col * UnitSprite.SPRITE_W, atlas_row * UnitSprite.SPRITE_H)
+			+ footprint
+		),
 		"px": UnitSprite.SPRITE_W,
 	}
 
