@@ -239,8 +239,11 @@ plan is stated in full below and has no copy there.
   subtraction exact. **The buildings' drop shadow is still a 1px checkerboard** — a different
   drawer in the generator's `terrain.py`, out of that pass's scope, and it is why a city still
   wears a stippled fringe at 1:1. 54 of the 85 smoke frames moved and the set is exactly the
-  predicted one: every board frame, plus the four cut-ins holding the sub — every menu frame and
-  every other cut-in is byte-identical, which is the figure sheet's subtraction proving itself.
+  predicted one: every board frame, plus the three cut-ins that stage the sub against the cruiser —
+  a hull places its waterline foam against the composed cell's own spans, so a solid displacement
+  shadow moved a few flecks of it, and those flecks are the only pixels the figure sheet carries
+  over from this change. Every menu frame, every capture cut-in and every combat cut-in of a land
+  or air unit is byte-identical, which is the figure sheet's subtraction proving itself.
   The legibility ruler was re-run this time and `docs/sprite_legibility.md` carries the re-read.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
