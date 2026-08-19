@@ -104,6 +104,13 @@ func test_the_terrain_oversample_is_a_whole_ratio() -> void:
 	assert_eq(BattleView.TERRAIN_PX % BattleView.TILE, 0)
 
 
+## The other half of `s`, and the half no rung can defend: on a window that is
+## not a whole multiple of the canvas the engine scales fractionally whatever
+## the ladder does, so the project setting is pinned here beside the ladder.
+func test_the_window_scale_is_forced_to_whole_multiples() -> void:
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "integer")
+
+
 ## The board viewport of the 640x360 canvas: everything the two docked HUD bars
 ## leave over.
 func _board_view() -> Vector2:
@@ -115,8 +122,8 @@ func _map_px(cells: Vector2i) -> Vector2:
 
 
 func test_the_floor_is_always_a_whole_rung() -> void:
-	for width in range(4, 60):
-		for height in range(4, 40):
+	for width in range(1, 60):
+		for height in range(1, 40):
 			var floor_zoom := BattleZoom.floor_for(_board_view(), _map_px(Vector2i(width, height)))
 			assert_eq(floor_zoom, floorf(floor_zoom), "%dx%d floors fractionally" % [width, height])
 			assert_between(floor_zoom, BattleZoom.MIN_ZOOM, BattleZoom.MAX_ZOOM)

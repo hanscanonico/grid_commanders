@@ -291,8 +291,9 @@ plan is stated in full below and has no copy there.
   animation milestone's first slice) — the board is sampled with nearest filtering, so a rung that
   is not a whole number of screen pixels per world pixel drops and doubles rows, and *which* rows it
   drops moves as the camera pans: crawling edges, which animation makes impossible to ignore. The
-  ladder used to be anchored on the per-map fit ratio ceil'd to two decimals, which put nine shipped
-  boards on rungs like 2.02 and every rung above them. **`BattleZoom` is the one statement of what
+  ladder used to be anchored on the per-map fit ratio ceil'd to two decimals, so **every** board's
+  floor was fractional (0.57 on Bulwark up to 3.64 on the smallest fixture) and so was every rung
+  above it. **`BattleZoom` is the one statement of what
   rungs exist**: `floor_for` is the furthest-out rung — the largest whole rung that still shows the
   map entire, floored at 1 — and `set_zoom` snaps to a whole rung, so `BattleView.min_zoom` hands
   the ladder a board and asks rather than deriving a second answer. **A board too big for 1x
@@ -305,7 +306,8 @@ plan is stated in full below and has no copy there.
   `tests/unit/test_texel_stability.gd` is the gate and states the formula it simulates; the 4x
   terrain oversample is deliberately outside it, `TILE / TERRAIN_PX` being an exact decimation whose
   phase never moves. Four smoke frames moved with the ladder (`mission_strip`,
-  `mission_strip_retired`, `side_victory`, `mixed_seat_handoff+fog` — the boards that were on 2.02);
+  `mission_strip_retired`, `side_victory`, `mixed_seat_handoff+fog` — the only two boards the sweep
+  visits whose floor was above the default 2.0, `boot_camp` and `quartet`, both on 2.03);
   the other 81, cut-ins and menus included, are byte-identical.
 - **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
