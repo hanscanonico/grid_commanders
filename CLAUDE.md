@@ -143,7 +143,8 @@ plan is stated in full below and has no copy there.
   row and reads this game's own `CommanderVisuals` themes; the original "rows 0–2 stay
   byte-for-byte" clause retired with the PixVoxel art it froze.
   **A property column of that atlas is a transparent overlay** (generator `e26154e`, adopted
-  2026-08-18): the building, its plinth and an opaque dithered shadow, alpha everywhere else, so a
+  2026-08-18): the building, its plinth and an opaque shadow (solid since the clause below), alpha
+  everywhere else, so a
   city on road or beach no longer wears a baked green square. Two rules follow and neither is a
   per-cell judgement. **`TerrainDB.GROUND_ID` / `ground()` is the single answer to what is
   underneath** — the *default* ground everywhere, never a per-context one, because a map has one
@@ -236,15 +237,30 @@ plan is stated in full below and has no copy there.
   The sub's wake followed, being drawn on the shadow's own parity; it is solid and drawn *over* the
   shadow now. The generator owns all of it (`_shadow_ellipse`, `tests/…::CastShadow`) — there is no
   shadow tone and no parity anywhere in `scenes/`, which is what keeps the figure sheet's
-  subtraction exact. **The buildings' drop shadow is still a 1px checkerboard** — a different
-  drawer in the generator's `terrain.py`, out of that pass's scope, and it is why a city still
-  wears a stippled fringe at 1:1. 54 of the 85 smoke frames moved and the set is exactly the
+  subtraction exact. 54 of the 85 smoke frames moved and the set is exactly the
   predicted one: every board frame, plus the three cut-ins that stage the sub against the cruiser —
   a hull places its waterline foam against the composed cell's own spans, so a solid displacement
   shadow moved a few flecks of it, and those flecks are the only pixels the figure sheet carries
   over from this change. Every menu frame, every capture cut-in and every combat cut-in of a land
   or air unit is byte-identical, which is the figure sheet's subtraction proving itself.
   The legibility ruler was re-run this time and `docs/sprite_legibility.md` carries the re-read.
+  **The buildings' drop shadow is solid on the same reading** (generator `cdc2a57`, adopted
+  2026-08-19; this clause retires the one that recorded it as the remaining checkerboard) —
+  `terrain._drop_shadow` is a different drawer and that pass left it behind, which is why a city
+  wore a stippled fringe at 1:1. Over the five property cells the dither drew 0%–276% of its own
+  density at rung 1 and 0%–200% at rung 2, a whole sampling phase drawing none of it, against
+  solid's 0.97–1.06 at rung 2 and exactly 1.0 at rung 4; solid still spreads 0.69–1.38 at rung 1,
+  and that residual is the band's own **shape** — a ~130px silhouette two pixels wide — rather than
+  structure. **The tone is deliberately still the units'**, one shade on one board: the doubled
+  coverage was rendered on plains, road and shoal at all three rungs against the dither and three
+  lighter tones, and every lighter tone loses the shadow entirely on road and shoal zoomed out.
+  57 smoke frames moved — every board frame but `commander_info`, whose sheet covers the board,
+  plus the six menu frames that show a map thumbnail, a thumbnail baking the property art. **Both cut-ins are byte-identical, and that is structural**:
+  neither blits a property cell — a standing terrain is *drawn* with its colour sampled from a
+  window — and the only changed pixels inside `CutsceneScenery.OBJECT_WINDOW` or
+  `CaptureStage.ROOF_WINDOW` are the airport's and the port's, which no shipped scenario stages.
+  The legibility ruler was re-run and reads the board unchanged cell for cell, so
+  `docs/sprite_legibility.md` is untouched.
 - `capture-animation-plan.html` — the capture cut-in CP1–CP3, the combat cut-in's structural
   sibling: same D1 (replays a snapshot), same gate (`capturing`, Instant, viewer visibility via
   `BattlePerspective`). `core/` gained only the `CaptureCommand.result` snapshot; the mash chips
