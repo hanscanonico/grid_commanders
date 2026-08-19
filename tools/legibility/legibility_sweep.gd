@@ -37,7 +37,8 @@ extends RefCounted
 ## the five properties, which a unit sits on all match — capturing one, holding
 ## one, repairing on one. Each is measured as the art that terrain draws in a
 ## field of its own kind, a property composed over TerrainDB.ground() the way
-## the board composes it — see LegibilityArt.board_cell.
+## the board composes it — and once per variant its family offers there, of
+## which the report keeps the worst, named. See LegibilityArt.board_cells.
 const TERRAIN_IDS: Array[StringName] = [
 	&"plains",
 	&"woods",
@@ -84,14 +85,19 @@ const CUTIN_VIEW := "cutin"
 ## SideIdentity's contract with the art pipeline; this is only how the report
 ## spells them.
 const ROW_NAMES: Array[String] = ["neutral", "meridian", "aurora", "iron", "verdant"]
-## The six fields that name one composite, in the order `--dump` spells them.
-const KEYS: Array[String] = ["view", "unit", "faction", "state", "terrain", "overlay"]
+## The seven fields that name one composite, in the order `--dump` spells them.
+## `variant` is which tile of its family the terrain drew — a phase of the sea
+## sheet, a connection mask, or LegibilityArt.ATLAS_VARIANT for a base-atlas
+## cell — so a row names a tile rather than a terrain and a regression points at
+## the one that moved.
+const KEYS: Array[String] = ["view", "unit", "faction", "state", "terrain", "variant", "overlay"]
 const COLUMNS: Array[String] = [
 	"view",
 	"unit",
 	"faction",
 	"state",
 	"terrain",
+	"variant",
 	"overlay",
 	"figure",
 	"ground",
@@ -133,23 +139,44 @@ func run() -> Array[Dictionary]:
 	return rows
 
 
-## A composite ready to be measured or drawn. The one place a cell of this
-## matrix is assembled, so `--dump` eyeballs exactly what the sweep judged.
+## A composite ready to be measured or drawn, or null when the terrain's family
+## has no such variant. The one place a cell of this matrix is assembled, so
+## `--dump` eyeballs exactly what the sweep judged.
 func composite(
-	unit_type: UnitType, row: int, terrain_id: StringName, overlay: int, view: String
+	unit_type: UnitType,
+	row: int,
+	terrain_id: StringName,
+	variant: String,
+	overlay: int,
+	view: String
 ) -> LegibilityComposite:
 	var terrain_type := terrain_db.by_id(terrain_id)
+	var ground := (
+		art.cutin_cell(terrain_type, terrain_db)
+		if view == CUTIN_VIEW
+		else art.board_cell(terrain_type, terrain_db, variant)
+	)
+	if ground.is_empty():
+		return null
 	var cell := LegibilityComposite.new()
 	cell.art = art
 	cell.figure_cell = art.unit_cell(unit_type, row)
 	cell.size = LegibilityComposite.CUTIN_PX if view == CUTIN_VIEW else LegibilityComposite.BOARD_PX
-	cell.ground_cell = (
-		art.cutin_cell(terrain_type, terrain_db)
-		if view == CUTIN_VIEW
-		else art.board_cell(terrain_type, terrain_db)
-	)
+	cell.ground_cell = ground
 	cell.overlay = overlay as LegibilityComposite.Overlay
 	return cell
+
+
+## Which tiles a terrain is measured on for one view: every variant its family
+## offers on the board, and the one paved surface in the cut-in, which redraws
+## nothing and so has no variant to choose.
+func variants_of(terrain_id: StringName, view: String) -> Array[String]:
+	if view == CUTIN_VIEW:
+		return [LegibilityArt.ATLAS_VARIANT]
+	var names: Array[String] = []
+	for cell in art.board_cells(terrain_db.by_id(terrain_id), terrain_db):
+		names.append(str(cell["variant"]))
+	return names
 
 
 ## The composite one report row names, rebuilt from the row's own six keys. The
@@ -161,7 +188,16 @@ func composite_for(row: Dictionary) -> LegibilityComposite:
 	var overlay := LegibilityComposite.Overlay.keys().find(str(row["overlay"]).to_upper())
 	if unit_type == null or faction < 0 or overlay < 0:
 		return null
-	var cell := composite(unit_type, faction, StringName(row["terrain"]), overlay, str(row["view"]))
+	var cell := composite(
+		unit_type,
+		faction,
+		StringName(row["terrain"]),
+		str(row["variant"]),
+		overlay,
+		str(row["view"])
+	)
+	if cell == null:
+		return null
 	cell.exhausted = row["state"] == "acted"
 	return cell
 
@@ -241,9 +277,25 @@ static func key_of(row: Dictionary) -> String:
 ## Per key of one column: cells, of them failing, and of those failing ones the
 ## ones the hue reading clears. The report's tables are these three.
 static func tally(rows: Array[Dictionary], column: String) -> Dictionary[String, Array]:
+	return _tally_keyed(rows, func(row: Dictionary) -> String: return str(row[column]))
+
+
+## The same three counts per terrain **and the tile it was read on** — which
+## variant won the worst-of, and how the cells it won read. A family whose phases
+## are alike shows up as an even split of near-identical rates; one with a bad
+## phase shows up as that phase winning the column.
+static func tally_variants(rows: Array[Dictionary]) -> Dictionary[String, Array]:
+	return _tally_keyed(
+		rows, func(row: Dictionary) -> String: return "%s/%s" % [row["terrain"], row["variant"]]
+	)
+
+
+static func _tally_keyed(
+	rows: Array[Dictionary], key_of_row: Callable
+) -> Dictionary[String, Array]:
 	var counts: Dictionary[String, Array] = {}
 	for row in rows:
-		var key := str(row[column])
+		var key: String = key_of_row.call(row)
 		if not counts.has(key):
 			counts[key] = [0, 0, 0]
 		var triple: Array = counts[key]
@@ -269,16 +321,22 @@ func _unit_rows(unit_type: UnitType, row: int, terrain_id: StringName) -> Array[
 	var rows: Array[Dictionary] = []
 	for overlay in LegibilityComposite.Overlay.values():
 		for exhausted in [false, true]:
-			rows.append(_row(unit_type, row, terrain_id, overlay, exhausted, BOARD_VIEW))
+			rows.append(_worst_row(unit_type, row, terrain_id, overlay, exhausted, BOARD_VIEW))
 	# The cut-in draws neither the board's washes nor the acted scrim: it is the
 	# figure against the surface its terrain paves with, and nothing else.
 	rows.append(
-		_row(unit_type, row, terrain_id, LegibilityComposite.Overlay.NONE, false, CUTIN_VIEW)
+		_worst_row(unit_type, row, terrain_id, LegibilityComposite.Overlay.NONE, false, CUTIN_VIEW)
 	)
 	return rows
 
 
-func _row(
+## One row per terrain: the worst of the variants its family offers, so a phase
+## that tanks contrast is what the table reports rather than being averaged away
+## by its siblings. Worst is least `edge_steps`, that being the reading the
+## verdict is taken on, with the hue reading and then the variant's own name
+## settling ties — the same total order `failures` needs, and for the same
+## reason: two runs of one tree have to name the same tile.
+func _worst_row(
 	unit_type: UnitType,
 	row: int,
 	terrain_id: StringName,
@@ -286,7 +344,32 @@ func _row(
 	exhausted: bool,
 	view: String
 ) -> Dictionary:
-	var cell := composite(unit_type, row, terrain_id, overlay, view)
+	var worst := {}
+	for variant in variants_of(terrain_id, view):
+		var candidate := _row(unit_type, row, terrain_id, variant, overlay, exhausted, view)
+		if worst.is_empty() or _worse(candidate, worst):
+			worst = candidate
+	return worst
+
+
+static func _worse(candidate: Dictionary, worst: Dictionary) -> bool:
+	if candidate["edge_steps"] != worst["edge_steps"]:
+		return candidate["edge_steps"] < worst["edge_steps"]
+	if candidate["edge_hue"] != worst["edge_hue"]:
+		return candidate["edge_hue"] < worst["edge_hue"]
+	return str(candidate["variant"]) < str(worst["variant"])
+
+
+func _row(
+	unit_type: UnitType,
+	row: int,
+	terrain_id: StringName,
+	variant: String,
+	overlay: int,
+	exhausted: bool,
+	view: String
+) -> Dictionary:
+	var cell := composite(unit_type, row, terrain_id, variant, overlay, view)
 	cell.exhausted = exhausted
 	var figure := cell.figure_colours()
 	var ground := cell.ground_colours()
@@ -305,6 +388,7 @@ func _row(
 		"faction": ROW_NAMES[row],
 		"state": "acted" if exhausted else "ready",
 		"terrain": String(terrain_id),
+		"variant": variant,
 		"overlay": overlay_name(overlay),
 		"figure": "%.4f" % LegibilityMetric.luminance(figure_median),
 		"ground": "%.4f" % LegibilityMetric.luminance(ground_median),

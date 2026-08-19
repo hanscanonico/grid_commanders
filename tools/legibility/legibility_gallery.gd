@@ -85,9 +85,10 @@ static func _caption(row: Dictionary, rank: int) -> Array[String]:
 	return [
 		"%02d %s %s" % [rank, str(row["unit"]).to_upper(), str(row["faction"]).to_upper()],
 		(
-			"%s %s %s"
+			"%s/%s %s %s"
 			% [
 				str(row["terrain"]).to_upper(),
+				str(row["variant"]).to_upper(),
 				str(row["overlay"]).to_upper(),
 				str(row["state"]).to_upper()
 			]

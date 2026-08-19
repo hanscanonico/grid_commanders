@@ -28,6 +28,17 @@ Re-run with `make legibility-check`. It reads the shipped atlases and the shippe
 no match, takes about a minute, writes `cells.csv` and `summary.md` under `reports/` (gitignored) —
 and redraws the one artifact it publishes, the worst-twenty gallery below.
 
+## Re-read 2026-08-19, over the terrain variants
+
+The ruler now reads a ground on every tile its family can draw and reports the worst (see *What is
+measured*), where it used to read the one tile a single probe cell happened to wear. Only open water
+has more than one tile today, and the re-read is **1,291 failing (15.9%) clear and 123 (6.8%)
+fogged** against the 1,284 (15.9%) / 123 (6.8%) above: **the whole difference is the sea, 90 → 97**,
+and the headline percentages are unmoved. The three phases are alike but not identical — of the
+sea cells, phase 2 wins the worst-of 151 times and fails 16.6% of them against phase 1's 7.3%, so a
+phase is worth naming even now. Nothing was tuned in response, and no other terrain, unit,
+faction or class moved by a cell.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in
@@ -50,6 +61,15 @@ threat, fog} at board resolution, plus the same figures at the cut-in's resoluti
 composites**, stacked in battle.tscn's own node order: terrain, the wash over it, the unit over
 that, the fog shroud over everything. One ramp step is **0.1543 luminance**, measured off the
 shipped units atlas.
+
+A ground is measured on **every tile its family can draw** where its own kind surrounds it, and the
+row reports the **worst** of them, named — open water is three phases of the sea sheet, everything
+else on the board is one tile today. So a row is keyed by a tile rather than by a terrain: the
+`variant` column beside `terrain` in `cells.csv` and in the `terrain/variant` table names it (a
+phase index, a connection mask, or `atlas` for a base-atlas cell), and `--dump` takes it as its
+sixth field. Which variants exist is asked of `TerrainAutotiles` by walking a probe cell along a row
+of its terrain, so a family that gains phases is measured through them without this harness learning
+its name.
 
 ## The headline
 
@@ -192,8 +212,8 @@ it with finding 5.
 ## Spot checks
 
 Three composites read by eye, each dumped by the harness itself
-(`make legibility-check LEGIBILITY="--dump=board:apc:neutral:ready:plains:none"`), which prints both
-readings beside the crop.
+(`make legibility-check LEGIBILITY="--dump=board:apc:neutral:ready:plains:atlas:none"`), which
+prints both readings beside the crop.
 
 The round's headline, at the cell two previous rounds could not move: a neutral APC on plains,
 **0.05 → 3.46 edge steps**. Nothing about the model changed; the outline is simply thick enough to

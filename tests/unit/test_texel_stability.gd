@@ -234,3 +234,13 @@ func test_the_punch_scales_about_the_cameras_own_anchor() -> void:
 ## whole pixel however the march, the bob and the stagger place it.
 func test_the_capture_squad_is_drawn_at_one_to_one() -> void:
 	assert_eq(CaptureStage.FIGURE_PX, UnitSprite.SPRITE_W)
+
+
+## A unit's art hangs off its footprint, so a cell taller than it is wide lifts the
+## texture by half the surplus. Half of an odd surplus is half a texel, which the
+## board samples with nearest filtering — the same defect a fractional rung has.
+func test_the_unit_art_is_offset_by_whole_texels() -> void:
+	assert_eq(UnitSprite.SPRITE_OVERFLOW % 2, 0, "an odd overflow draws the art on half a texel")
+	assert_eq(UnitSprite.ART_OFFSET.x, 0.0)
+	assert_eq(UnitSprite.ART_OFFSET.y, roundf(UnitSprite.ART_OFFSET.y))
+	assert_eq(UnitSprite.ART_OFFSET.y, -float(UnitSprite.SPRITE_OVERFLOW) / 2.0)
