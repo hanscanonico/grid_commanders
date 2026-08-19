@@ -103,6 +103,52 @@ func test_a_wood_on_the_board_rim_reads_the_off_board_side_as_more_wood() -> voi
 	assert_eq(_mask(rows, Vector2i(0, 0)), N | E | S | W)
 
 
+# --- the field's phases ------------------------------------------------------
+## Plains is keyed by where it stands rather than by its neighbours, exactly as
+## open water is, so what is checked is the field rather than a cell: the lattice
+## a stretch of one tile repeats at is what the phases exist to break.
+
+
+func test_plains_draws_a_phase_of_its_own_sheet_wherever_it_stands() -> void:
+	var rows: Array[String] = ["...", ".=.", "..."]
+	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.PLAINS)
+	assert_eq(_family(rows, Vector2i(2, 2)), TerrainAutotiles.Family.PLAINS)
+	var map := _map(rows)
+	var cell := Vector2i(2, 0)
+	assert_eq(
+		TerrainAutotiles.variant(map, cell),
+		TerrainAutotiles.phase(cell, TerrainAutotiles.PLAINS_PHASES)
+	)
+
+
+func test_a_field_of_plains_wears_every_phase_and_no_periodic_line() -> void:
+	var seen := {}
+	var column_phases := {}
+	for y in 16:
+		var row_phases := {}
+		for x in 16:
+			var phase := TerrainAutotiles.phase(Vector2i(x, y), TerrainAutotiles.PLAINS_PHASES)
+			assert_between(phase, 0, TerrainAutotiles.PLAINS_PHASES - 1)
+			seen[phase] = true
+			row_phases[phase] = true
+			if not column_phases.has(x):
+				column_phases[x] = {}
+			column_phases[x][phase] = true
+		assert_gt(row_phases.size(), 1, "row %d is one phase wall to wall" % y)
+	for x: int in column_phases:
+		assert_gt(column_phases[x].size(), 1, "column %d is one phase top to bottom" % x)
+	assert_eq(seen.size(), TerrainAutotiles.PLAINS_PHASES)
+
+
+func test_the_plains_sheet_is_cut_as_one_row_of_phases() -> void:
+	var cells := TerrainAutotiles.sheet_cells(TerrainAutotiles.Family.PLAINS)
+	assert_eq(cells, [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)] as Array[Vector2i])
+	var rows: Array[String] = ["...", "...", "..."]
+	var cell := Vector2i(1, 1)
+	var variant := TerrainAutotiles.variant(_map(rows), cell)
+	assert_has(cells, TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.PLAINS, variant))
+
+
 # --- the sheet grid ----------------------------------------------------------
 
 

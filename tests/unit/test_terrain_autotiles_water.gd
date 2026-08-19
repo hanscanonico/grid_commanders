@@ -107,7 +107,7 @@ func test_a_field_of_open_water_wears_every_phase_and_no_periodic_line() -> void
 	for y in 16:
 		var row_phases := {}
 		for x in 16:
-			var phase := TerrainAutotiles.sea_phase(Vector2i(x, y))
+			var phase := TerrainAutotiles.phase(Vector2i(x, y), TerrainAutotiles.SEA_PHASES)
 			assert_between(phase, 0, TerrainAutotiles.SEA_PHASES - 1)
 			seen[phase] = true
 			row_phases[phase] = true
@@ -123,9 +123,14 @@ func test_a_field_of_open_water_wears_every_phase_and_no_periodic_line() -> void
 ## Off-board cells are the backdrop's, and it draws the same water as the rim.
 func test_a_phase_is_the_cell_and_nothing_else() -> void:
 	assert_eq(
-		TerrainAutotiles.sea_phase(Vector2i(7, 3)), TerrainAutotiles.sea_phase(Vector2i(7, 3))
+		TerrainAutotiles.phase(Vector2i(7, 3), TerrainAutotiles.SEA_PHASES),
+		TerrainAutotiles.phase(Vector2i(7, 3), TerrainAutotiles.SEA_PHASES)
 	)
-	assert_between(TerrainAutotiles.sea_phase(Vector2i(-4, -9)), 0, TerrainAutotiles.SEA_PHASES - 1)
+	assert_between(
+		TerrainAutotiles.phase(Vector2i(-4, -9), TerrainAutotiles.SEA_PHASES),
+		0,
+		TerrainAutotiles.SEA_PHASES - 1
+	)
 
 
 func test_the_sea_sheet_is_cut_as_one_row_of_phases() -> void:
@@ -135,7 +140,7 @@ func test_the_sea_sheet_is_cut_as_one_row_of_phases() -> void:
 	var map := _map(rows)
 	var open := Vector2i(1, 1)
 	var variant := TerrainAutotiles.variant(map, open)
-	assert_eq(variant, TerrainAutotiles.sea_phase(open))
+	assert_eq(variant, TerrainAutotiles.phase(open, TerrainAutotiles.SEA_PHASES))
 	assert_has(cells, TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.SEA, variant))
 
 

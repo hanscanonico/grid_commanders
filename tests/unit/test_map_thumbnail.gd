@@ -55,13 +55,27 @@ func test_open_water_draws_the_phase_the_board_draws() -> void:
 	assert_eq(MapThumbnail.sheet_path(map, cell), TerrainAutotiles.SHEET_PATHS[family])
 	assert_eq(
 		MapThumbnail.sheet_region(map, null, cell),
-		_sheet_cell(family, TerrainAutotiles.sea_phase(cell))
+		_sheet_cell(family, TerrainAutotiles.phase(cell, TerrainAutotiles.SEA_PHASES))
 	)
 
 
-## Plains has no family, so it keeps the base atlas column.
-func test_a_plain_cell_keeps_its_atlas_column() -> void:
+## The field is phased off the same cell the board phases it off, for the reason
+## the sea is: the miniature can never be a second opinion.
+func test_plains_draws_the_phase_the_board_draws() -> void:
 	var map := _map(["...", "...", "..."])
+	var cell := Vector2i(1, 1)
+	var family := TerrainAutotiles.family(map, cell)
+	assert_eq(family, TerrainAutotiles.Family.PLAINS)
+	assert_eq(MapThumbnail.sheet_path(map, cell), TerrainAutotiles.SHEET_PATHS[family])
+	assert_eq(
+		MapThumbnail.sheet_region(map, null, cell),
+		_sheet_cell(family, TerrainAutotiles.phase(cell, TerrainAutotiles.PLAINS_PHASES))
+	)
+
+
+## A terrain with no family keeps the base atlas column.
+func test_a_mountain_cell_keeps_its_atlas_column() -> void:
+	var map := _map(["MMM", "MMM", "MMM"])
 	var cell := Vector2i(1, 1)
 	var col := map.terrain_at(cell).atlas_col
 	assert_eq(MapThumbnail.sheet_path(map, cell), MapThumbnail.ATLAS_PATH)

@@ -39,27 +39,15 @@ sea cells, phase 2 wins the worst-of 151 times and fails 16.6% of them against p
 phase is worth naming even now. Nothing was tuned in response, and no other terrain, unit,
 faction or class moved by a cell.
 
-## Re-read 2026-08-20, after the armour family was raised into a 64x96 cell
+## Re-read 2026-08-20, after plains gained phases (generator `4ba6a83`)
 
-The unit cell is one tile wide and half a tile taller, and tank, md tank, artillery and rockets grew
-upward into that headroom, so those four columns moved and this page was re-read rather than
-re-authored: **1,300 failing (16.0%) clear and 123 (6.8%) fogged**, against a same-day control on
-the previous sheets of **1,291 (15.9%) / 123 (6.8%)**. Nine cells, and the ruler names all of them:
-artillery 2 → 14, rockets 16 → 22, **tank 12 → 3**, md tank unchanged. The tank's deeper hull and
-raised turret ring *gained* contour against ground; the two guns that now stand clear of the tile
-lost a little, and every one of their new failures clears the hue bound — value-blind, not
-illegible. The fog class did not move by a cell, and no other unit, faction, terrain or class did
-either.
-
-The ruler measures the cell's **bottom square**, which is the tile the unit stands on: the board
-anchors the art by its footprint, so what a raised silhouette overflows into is the row behind it
-and a different tile's reading. That is why the fourteen unraised units are byte-identical here.
-
-Frame B was re-read on the same terms: **1,396 (17.2%) / 139 (7.7%)** against its control of
-**1,387 (17.1%) / 139 (7.7%)** — the same nine cells, the beat costing the board no class. (Both
-sit above the 16.5% / 7.5% this page's older frame-B note records: that figure predates the terrain
-variants and the solid shadows, so it is the control above, not the note, that this reading is
-against.) Nothing was tuned in response to any of it.
+Plains is now a phase-keyed family like the sea — three tiles, phase 0 the atlas column byte for
+byte — so the ruler reads it three ways and reports the worst. It is the reference ground most
+contrast pairs are read against, which is what made this the real gate for that change, and it
+**costs the board nothing**: **1,291 failing (15.9%) clear and 123 (6.8%) fogged**, the previous
+re-read's numbers to the cell, and `plains/0`, `plains/1` and `plains/2` each fail **0 of their
+cells**, as the single plains tile did. No unit, faction, overlay or other terrain moved by a cell,
+and nothing was tuned in response. Only the `terrain/variant` table gained rows.
 
 ## What the generator changed
 
@@ -85,8 +73,8 @@ that, the fog shroud over everything. One ramp step is **0.1543 luminance**, mea
 shipped units atlas.
 
 A ground is measured on **every tile its family can draw** where its own kind surrounds it, and the
-row reports the **worst** of them, named — open water is three phases of the sea sheet, everything
-else on the board is one tile today. So a row is keyed by a tile rather than by a terrain: the
+row reports the **worst** of them, named — open water is three phases of the sea sheet and plains
+three of its own, everything else on the board is one tile today. So a row is keyed by a tile rather than by a terrain: the
 `variant` column beside `terrain` in `cells.csv` and in the `terrain/variant` table names it (a
 phase index, a connection mask, or `atlas` for a base-atlas cell), and `--dump` takes it as its
 sixth field. Which variants exist is asked of `TerrainAutotiles` by walking a probe cell along a row
