@@ -114,11 +114,12 @@ func test_plains_draws_a_phase_of_its_own_sheet_wherever_it_stands() -> void:
 	assert_eq(_family(rows, Vector2i(0, 0)), TerrainAutotiles.Family.PLAINS)
 	assert_eq(_family(rows, Vector2i(2, 2)), TerrainAutotiles.Family.PLAINS)
 	var map := _map(rows)
-	var cell := Vector2i(2, 0)
-	assert_eq(
-		TerrainAutotiles.variant(map, cell),
-		TerrainAutotiles.phase(cell, TerrainAutotiles.PLAINS_PHASES)
-	)
+	# A cell whose phase is not 0: plains masks to 0, so a phase-0 cell would read
+	# the same whether or not `variant` routes the family to its phases.
+	var cell := Vector2i(1, 0)
+	var phase := TerrainAutotiles.phase(cell, TerrainAutotiles.PLAINS_PHASES)
+	assert_ne(phase, 0)
+	assert_eq(TerrainAutotiles.variant(map, cell), phase)
 
 
 func test_a_field_of_plains_wears_every_phase_and_no_periodic_line() -> void:
@@ -146,6 +147,7 @@ func test_the_plains_sheet_is_cut_as_one_row_of_phases() -> void:
 	var rows: Array[String] = ["...", "...", "..."]
 	var cell := Vector2i(1, 1)
 	var variant := TerrainAutotiles.variant(_map(rows), cell)
+	assert_eq(variant, TerrainAutotiles.phase(cell, TerrainAutotiles.PLAINS_PHASES))
 	assert_has(cells, TerrainAutotiles.atlas_coords(TerrainAutotiles.Family.PLAINS, variant))
 
 
