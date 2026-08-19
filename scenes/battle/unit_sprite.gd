@@ -16,10 +16,17 @@ const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Land cells are byte-identical between the sheets, so only what should
 ## move ever moves.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
-## Milliseconds per ambient beat.
+## Milliseconds per ambient beat, and one cadence for both motions because the
+## sheets encode one: frame B is the whole army a beat later, so a rotor and a
+## swell cannot be given different rates without a third sheet. Half a second is
+## the slowest rate a swept rotor still reads as turning, which is the faster of
+## the two motions and so the one that sets the beat.
 const AMBIENT_MS := 500
 ## Captures pin the ambient clock at frame A the way they pin game speed
 ## and the hint strip: a frame must not depend on when the shutter fired.
+## Belt as well as braces — a capture also pins Instant, which `ambient_frame`
+## already answers with frame A — because an explicit `--speed=` still wins over
+## the pinned tier and a capture of a tier must not become a capture of a beat.
 static var ambient_frozen := false
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:
 ## with the generated liveries a desaturated unit collapsed into the iron and
@@ -83,6 +90,10 @@ var acted_label: Label
 func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	unit = p_unit
 	active_team = p_active_team
+	# On the beat the rest of the board is on, before the first paint: a copter
+	# built mid-beat would otherwise open on frame A and snap a frame later.
+	set_process(animates(p_unit.type))
+	_frame = ambient_frame() if is_processing() else 0
 	atlas_row = p_atlas_row
 	scale = Vector2.ONE * SPRITE_SCALE
 	# The badges are authored against the world grid, so undo the sprite's scale
@@ -115,11 +126,24 @@ static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTextur
 	return atlas
 
 
+## Which figures the two sheets differ in at all: air and sea, whose rotors are
+## swept and whose hulls ride a pixel higher in frame B. Every land column is
+## byte-identical between the sheets — measured, and pinned against the shipped
+## art by tests/unit/test_ambient_frames.gd — so a land sprite is left out of the
+## beat entirely rather than repainted with the picture it already shows.
+static func animates(type: UnitType) -> bool:
+	return type.domain != UnitType.LAND
+
+
 ## The shared ambient beat. Wall-clock, not accumulated time: every sprite
 ## on the board (and any future surface that animates) agrees on the frame
 ## without a conductor, and pacing stays presentation-only by construction.
+##
+## Instant is a still board by the same rule the tier states everywhere else —
+## it shows a result rather than playing one out — so it answers frame A, the
+## sheet every other surface draws from.
 static func ambient_frame() -> int:
-	if ambient_frozen:
+	if ambient_frozen or Settings.speed.instant:
 		return 0
 	return int(Time.get_ticks_msec() / AMBIENT_MS) % 2
 

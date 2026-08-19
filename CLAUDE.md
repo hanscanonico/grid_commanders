@@ -345,6 +345,28 @@ plan is stated in full below and has no copy there.
   moved and the set is exactly the predicted one: every board frame by the dock's half pixel, and
   the four `capture_cutin*` frames by the squad's snap — all seventeen combat cut-ins and all
   twelve menus are byte-identical.
+  **The milestone's third slice is the board's ambient beat**, and it is a two-frame flip and
+  nothing more: `assets/tiles/units_atlas_b.png` is the same army a beat later, so `UnitSprite`
+  alternates the atlas its `AtlasTexture` cuts from every `AMBIENT_MS` and the region, the scrim,
+  the tint, the carrier hiding and the fog answer are untouched — every one of them is the sprite's
+  or the node's, so frame B inherits them by construction rather than by a second code path.
+  Three decisions. **`UnitSprite.animates` is the one answer to who moves, and it was measured**:
+  only the air and sea columns differ between the sheets (rotors swept, hulls a pixel higher over a
+  shadow that stays put), so `domain != LAND` is the gate and a land sprite never enters
+  `_process` at all — `tests/unit/test_ambient_frames.gd` pins that gate against the shipped art
+  cell by cell, comparing *drawn* pixels rather than bytes, because the atlases import with
+  `fix_alpha_border` and a copter that moved leaves its neighbour's transparent margin holding
+  different and equally invisible RGB. **The beat is a wall clock, not an accumulator** —
+  `Time.get_ticks_msec()`, so every sprite agrees on the frame with no conductor — and one cadence
+  serves both motions because the sheets encode one. **Instant is a still board and a capture is
+  pinned**: `ambient_frame` answers frame A under the Instant tier, the same explicit branch the
+  tier is everywhere else, and `Battle` also sets `UnitSprite.ambient_frozen` for a capture,
+  because an explicit `--speed=` outranks the pinned tier and a capture of a tier must not become
+  a capture of a beat. All 85 smoke frames are byte-identical across this slice, which is the pin
+  working rather than a re-baseline avoided. Frame B scored through the legibility ruler
+  (`make legibility-check LEGIBILITY="--units=assets/tiles/units_atlas_b.png"`, which needed no
+  change to the harness) reads 16.5% / 7.5% against the committed sheet's 15.8% / 6.6% — the beat
+  costs the board no legibility class, and `docs/sprite_legibility.md` stays a reading of frame A.
 - **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
