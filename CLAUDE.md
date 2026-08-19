@@ -732,15 +732,23 @@ plan is stated in full below and has no copy there.
   picker and a coasted pond in the match). `TerrainAutotiles` owns the family sheets' paths and
   their contact-sheet cut, and every board read it takes is clamped to the rim — so it answers for
   a cell beyond the edge too, and `BattleView`'s out-of-bounds backdrop is autotiled by the same
-  arithmetic as the board it continues. **Open water is the one family keyed by position rather
-  than by neighbours** (generator `1216fd5`, adopted 2026-08-18): the sheet is the same water in
-  `SEA_PHASES` phases, because what a field of one tile repeats at is the tile, so the glints line
-  up however they are spread inside it — the generator emits the phases and the game places them,
-  `TerrainAutotiles.sea_phase` hashing the cell so the lattice breaks deterministically and with
-  no stored state. Ask `variant(map, cell)`, never `mask` — it is the one call that knows which
-  families are keyed by connection and which by phase, and `sheet_cells` is the matching statement
-  of what a sheet holds, so the board, the backdrop, the miniature and the legibility harness
-  cannot phase a cell differently. Phase 0 is the terrain atlas's sea column byte for byte.
+  arithmetic as the board it continues. **A family is keyed by connection, by position, or by
+  both, and `variant(map, cell)` is the ONLY place that knows which** — ask it, never `mask`, and
+  `sheet_cells` is the matching statement of what a sheet holds, so the board, the backdrop, the
+  miniature and the legibility harness cannot phase a cell differently. **Phase 0 of a
+  phase-keyed family is that terrain's atlas column byte for byte**, which is what makes adopting
+  a phase sheet additive: a surface that has not adopted it is unchanged. Two families are keyed
+  by position today — open water (generator `1216fd5`, adopted 2026-08-18) and plains (generator
+  `4ba6a83`, adopted 2026-08-20) — because what a field of one tile repeats at is the tile, so
+  the glints or the tufts line up however they are spread inside it. The generator emits the
+  phases and the game places them, `TerrainAutotiles.phase(cell, count)` hashing the cell so the
+  lattice breaks deterministically and with no stored state; one hash serves every phase-keyed
+  family, since a second would be a second opinion about the same lattice. A phase varies the
+  field's texture and never its value — plains is the reference ground most contrast pairs are
+  read against, so `make legibility-check` is that family's gate and it reads every phase and
+  reports the worst (`docs/sprite_legibility.md`'s 2026-08-20 re-read: no class, no cell moved).
+  Variants may not be extra rows of the base terrain atlas: `BattleView._last_seen_owner` reads
+  an atlas cell's y as the faction row.
   The shared `CommanderCard`'s deferred dress is that
   named follow-up, and it landed (COM-92/93): the card wears Pixelify for its name and rules copy
   and Silkscreen for its micro-labels and its cost, at `UiTheme` sizes and off `UiTheme.flat` —
