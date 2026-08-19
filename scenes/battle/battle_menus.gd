@@ -109,7 +109,7 @@ static func build_actions(
 					"id": unit_type.id,
 					"label": "%s  %d" % [unit_type.display_name, price],
 					"disabled": game.funds[team] < price,
-					"icon": UnitSprite.texture_for(unit_type, row),
+					"icon": UnitSprite.tile_texture_for(unit_type, row),
 				}
 			)
 		)

@@ -146,6 +146,20 @@ static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTextur
 	return _region_of(load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH), type, row)
 
 
+## The same art cut down to its footprint square — the tile the unit stands on,
+## without the headroom a raised silhouette overflows into. For a square slot that
+## *is* a tile: the HUD's unit icon and an illustrated menu row. Fitting the whole
+## cell into one of those instead shrinks every unit to two thirds of the slot to
+## make room for sky, which costs a 20 px icon far more than a raised turret's top
+## few pixels are worth.
+static func tile_texture_for(type: UnitType, row: int) -> AtlasTexture:
+	var art := texture_for(type, row)
+	art.region = Rect2(
+		art.region.position + Vector2(0, SPRITE_OVERFLOW), Vector2(SPRITE_W, SPRITE_W)
+	)
+	return art
+
+
 ## The same cell without the contact shadow the tile needs. The shadow is an
 ## opaque checkerboard, which reads as half-tone at the board's 4:1 decimation
 ## and as loose dots wherever the art is drawn at 1:1 — so the cut-ins, which

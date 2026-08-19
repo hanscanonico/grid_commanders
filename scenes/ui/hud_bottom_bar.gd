@@ -362,7 +362,7 @@ func _show_unit(
 	_unit_data.visible = unit != null
 	if unit == null:
 		return
-	_unit_icon.texture = UnitSprite.texture_for(unit.type, identity.atlas_row(unit.team))
+	_unit_icon.texture = UnitSprite.tile_texture_for(unit.type, identity.atlas_row(unit.team))
 	# The board's own exhausted scrim, borrowed rather than redefined: a unit
 	# that has acted looks the same in the bar as it does on the tile.
 	var waited := unit.acted and unit.team == active_team
