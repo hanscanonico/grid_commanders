@@ -73,7 +73,6 @@ func _ready() -> void:
 
 
 func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> String:
-	var failed := LegibilitySweep.failures(rows).size()
 	var lines: Array[String] = []
 	lines.append("# Composite legibility sweep")
 	lines.append("")
@@ -85,7 +84,10 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 		)
 	)
 	lines.append(
-		"Bar: >= %.1f ramp steps of figure-vs-ground separation." % LegibilitySweep.PASS_STEPS
+		(
+			"Bar: >= %.1f ramp steps of figure-vs-ground separation, >= %.1f under the fog shroud."
+			% [LegibilitySweep.PASS_STEPS, LegibilitySweep.FOG_PASS_STEPS]
+		)
 	)
 	lines.append(
 		(
@@ -102,23 +104,32 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 	)
 	lines.append("Secondary: the whole-figure medians, `steps` and `hue`, which decide nothing.")
 	lines.append("")
-	lines.append("%d cells, %d failing (%.1f%%)." % [rows.size(), failed, _percent(failed, rows)])
-	var carried := LegibilitySweep.hue_carried(rows)
-	(
-		lines
-		. append(
-			(
-				"%d of those %d clear the hue bound (%.1f%% of the failures): value-blind, not illegible."
-				% [carried, failed, 100.0 * float(carried) / float(failed) if failed > 0 else 0.0]
-			)
-		)
-	)
+	var clear := LegibilitySweep.unfogged(rows)
+	lines.append_array(_class_lines("Clear", clear))
+	lines.append("")
+	lines.append_array(_class_lines("Fogged", LegibilitySweep.fogged(rows)))
+	lines.append("")
+	lines.append("Every table below is the clear class; the fog class is the line above it.")
 	for column in ["view", "overlay", "terrain", "faction", "state"]:
 		lines.append("")
-		lines.append_array(_table(column, LegibilitySweep.tally(rows, column)))
+		lines.append_array(_table(column, LegibilitySweep.tally(clear, column)))
 	lines.append("")
-	lines.append_array(_table("unit", LegibilitySweep.tally(rows, "unit")))
+	lines.append_array(_table("unit", LegibilitySweep.tally(clear, "unit")))
 	return "\n".join(lines)
+
+
+## The headline for one class of cells. Two of them, because the fog shroud is
+## judged against its own bar and a rate mixing the two answers nothing.
+func _class_lines(label: String, rows: Array[Dictionary]) -> Array[String]:
+	var failed := LegibilitySweep.failures(rows).size()
+	var carried := LegibilitySweep.hue_carried(rows)
+	return [
+		"%s: %d cells, %d failing (%.1f%%)." % [label, rows.size(), failed, _percent(failed, rows)],
+		(
+			"  %d of those clear the hue bound (%.1f%%): value-blind, not illegible."
+			% [carried, 100.0 * float(carried) / float(failed) if failed > 0 else 0.0]
+		),
+	]
 
 
 func _table(column: String, counts: Dictionary[String, Array]) -> Array[String]:
@@ -138,7 +149,11 @@ func _table(column: String, counts: Dictionary[String, Array]) -> Array[String]:
 func _worst(rows: Array[Dictionary], count: int) -> String:
 	var failed := LegibilitySweep.failures(rows)
 	var lines: Array[String] = [
-		"", "Worst %d of %d failing cells, least margin first:" % [count, failed.size()]
+		"",
+		(
+			"Worst %d of %d failing cells, least of the *further* reading first:"
+			% [count, failed.size()]
+		)
 	]
 	for i in mini(count, failed.size()):
 		var row := failed[i]
