@@ -4,10 +4,23 @@ extends GutTest
 ## — and which rows it drops moves as the camera pans, which reads as crawling
 ## edges the moment anything on the board is animated.
 ##
-## `BattleZoom.floor_for` is pure and static, like `PathArrow.segments` and
-## `SeatStrip.normalised_sides`, so the ladder is checked without a scene. What a
-## windowed render would show is simulated exactly rather than photographed: a
-## render is not CI-able, and the sampling is arithmetic anyway.
+## `BattleZoom.floor_for` and `rungs_for` are pure and static, like
+## `PathArrow.segments` and `SeatStrip.normalised_sides`, so the ladder is checked
+## without a scene. What a windowed render would show is simulated exactly rather
+## than photographed: a render is not CI-able, and the sampling is arithmetic
+## anyway.
+##
+## TWO CLAIMS WERE WEAKENED BY PLAYTEST (2026-08-19), and the suite says so rather
+## than quietly dropping them. The player's verdict on the shipped build was that
+## it "looks more pixelized than before", and the captures agreed: forcing the
+## window to a whole multiple of the canvas made every texel a perfectly square,
+## perfectly aligned block and shrank a maximized 1512x945 Mac window's picture to
+## 1280x720 inside hard bars. So `window/stretch/scale_mode` is back off, the
+## window scale is fractional again on such a window, and `s` with it — the
+## instability below is now a *recorded cost* rather than a thing the ladder
+## defends against. The floor rung went with it: it frames the whole board and is
+## allowed to be fractional, because at maximum zoom-out Bulwark's 49x32 was
+## showing half of itself. Every rung above the floor is still whole.
 ##
 ## THE FORMULA. Under `canvas_items` stretch the game draws into a 640x360 canvas
 ## and the window scales it by `window_scale = window_height / 360`. A world
@@ -59,12 +72,15 @@ func _is_stable(s: float) -> bool:
 	return true
 
 
+## The rungs a board offers above its floor — the ones a match is actually played
+## at. A board too big for 1x offers the whole ladder.
 func _ladder() -> Array[float]:
 	var rungs: Array[float] = []
-	var rung := BattleZoom.MIN_ZOOM
-	while rung <= BattleZoom.MAX_ZOOM:
-		rungs.append(rung)
-		rung += BattleZoom.STEP
+	for rung in BattleZoom.rungs_for(
+		BattleZoom.floor_for(_board_view(), _map_px(Vector2i(49, 32)))
+	):
+		if rung == floorf(rung):
+			rungs.append(rung)
 	return rungs
 
 
@@ -90,8 +106,9 @@ func test_the_old_map_ratio_ladder_is_unstable() -> void:
 
 
 ## The zoom half of the answer is not the whole of it: a window that is not a
-## whole multiple of the canvas puts every rung back on fractional sampling,
-## which is the evidence for `window/stretch/scale_mode = "integer"`.
+## whole multiple of the canvas puts every rung back on fractional sampling. This
+## is what the shipped game now does on a maximized Mac window, knowingly — see
+## the header. The arithmetic is unchanged; only which side of it we ship is.
 func test_a_fractional_window_scale_is_unstable() -> void:
 	for rung in _ladder():
 		assert_false(
@@ -104,11 +121,13 @@ func test_the_terrain_oversample_is_a_whole_ratio() -> void:
 	assert_eq(BattleView.TERRAIN_PX % BattleView.TILE, 0)
 
 
-## The other half of `s`, and the half no rung can defend: on a window that is
-## not a whole multiple of the canvas the engine scales fractionally whatever
-## the ladder does, so the project setting is pinned here beside the ladder.
-func test_the_window_scale_is_forced_to_whole_multiples() -> void:
-	assert_eq(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "integer")
+## The other half of `s`, and the half no rung can defend — and the half the
+## player overruled. `integer` fills the window's remainder with bars instead of
+## picture and makes the texel lattice perfectly regular, which is what the
+## playtest read as "more pixelized"; the setting is pinned to its absence here so
+## re-forcing it is a decision rather than a drift.
+func test_the_window_scale_is_not_forced_to_whole_multiples() -> void:
+	assert_ne(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "integer")
 
 
 ## The board viewport of the 640x360 canvas: everything the two docked HUD bars
@@ -121,33 +140,49 @@ func _map_px(cells: Vector2i) -> Vector2:
 	return Vector2(cells * BattleView.TILE)
 
 
-func test_the_floor_is_always_a_whole_rung() -> void:
+## Every rung a match is played at is whole. The floor is the one exception and
+## the next test is what it is for.
+func test_every_rung_above_the_floor_is_whole() -> void:
 	for width in range(1, 60):
 		for height in range(1, 40):
 			var floor_zoom := BattleZoom.floor_for(_board_view(), _map_px(Vector2i(width, height)))
-			assert_eq(floor_zoom, floorf(floor_zoom), "%dx%d floors fractionally" % [width, height])
-			assert_between(floor_zoom, BattleZoom.MIN_ZOOM, BattleZoom.MAX_ZOOM)
+			var rungs := BattleZoom.rungs_for(floor_zoom)
+			assert_eq(rungs[0], floor_zoom, "the floor is the furthest-out rung")
+			for i in range(1, rungs.size()):
+				assert_eq(
+					rungs[i], floorf(rungs[i]), "%dx%d offers a fractional rung" % [width, height]
+				)
+				assert_gt(rungs[i], floor_zoom, "a rung above the floor is above the floor")
 
 
-## A board small enough to be shown whole is: the floor is the largest rung that
-## still holds all of it, never one that crops it.
-func test_a_small_board_is_shown_whole_at_its_floor() -> void:
-	var cells := Vector2i(12, 8)
-	var map_px := _map_px(cells)
+## Whatever the board, its floor frames all of it — that is the whole job of the
+## furthest-out rung, and why it is allowed to be fractional.
+func test_the_floor_frames_the_whole_board() -> void:
 	var view := _board_view()
-	var floor_zoom := BattleZoom.floor_for(view, map_px)
-	assert_gt(floor_zoom, BattleZoom.MIN_ZOOM, "a 12x8 board fits several times over")
-	assert_true(map_px.x * floor_zoom <= view.x and map_px.y * floor_zoom <= view.y)
-	assert_false(
-		map_px.x * (floor_zoom + 1.0) <= view.x and map_px.y * (floor_zoom + 1.0) <= view.y,
-		"the floor should be the furthest-out rung that fits, not one further in"
-	)
+	for width in range(1, 60):
+		for height in range(1, 40):
+			var map_px := _map_px(Vector2i(width, height))
+			var floor_zoom := BattleZoom.floor_for(view, map_px)
+			assert_true(
+				map_px.x * floor_zoom <= view.x + 0.01 and map_px.y * floor_zoom <= view.y + 0.01,
+				"%dx%d is cropped at its own floor" % [width, height]
+			)
 
 
-## Bulwark's 49x32 does not fit the canvas at any whole rung. It scrolls at 1x
-## rather than buying itself a fractional one — the honest floor.
-func test_a_board_too_big_for_one_rung_floors_at_one() -> void:
-	assert_eq(BattleZoom.floor_for(_board_view(), _map_px(Vector2i(49, 32))), BattleZoom.MIN_ZOOM)
+## A board small enough to be shown several times over pins at MAX_ZOOM instead,
+## so the zoom keys cannot oscillate between a floor above the ceiling and it.
+func test_a_tiny_board_pins_at_the_ceiling() -> void:
+	var rungs := BattleZoom.rungs_for(BattleZoom.floor_for(_board_view(), _map_px(Vector2i(4, 3))))
+	assert_eq(rungs.size(), 1)
+	assert_eq(rungs[0], BattleZoom.MAX_ZOOM)
+
+
+## Bulwark's 49x32 fits no whole rung, so its floor is the fractional one that
+## frames it — the survey view a 49x32 board exists to be read from.
+func test_a_board_too_big_for_one_rung_still_gets_a_survey_rung() -> void:
+	var floor_zoom := BattleZoom.floor_for(_board_view(), _map_px(Vector2i(49, 32)))
+	assert_lt(floor_zoom, 1.0, "no whole rung frames Bulwark")
+	assert_eq(BattleZoom.rungs_for(floor_zoom).size(), 6, "the floor plus 1x through 5x")
 
 
 # --- where the board rests ----------------------------------------------------
