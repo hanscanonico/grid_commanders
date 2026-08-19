@@ -137,7 +137,7 @@ The cut-in was **85.3% failing** on the old ruler and is 4.0% on this one. That 
 4. **Fog is the strongest single term, and it is stronger here than the old ruler could see.**
    95.2% failing and **619 doubly-blind cells**, more than a third of the game's total: the shroud
    sits *above* the units, so it pulls the contour and the band it is read against toward the same
-   grey at once. Every one of the ten worst doubly-blind cells in the game is a fogged one.
+   grey at once. It is the only wash whose median contour falls under a step and a half.
 5. **Sea is no longer the worst ground; the properties are.** Water reads 1.26 median steps with
    only 73 doubly-blind cells — a figure over water is dark-on-blue and the contour holds. Base
    (88.3% failing), HQ (84.4%, 294 doubly blind) and city (76.0%, 271) are the grounds where a
@@ -169,24 +169,26 @@ their **value** margin, hue being the looser of the two bounds on almost every c
 the one doubly-blind tile on the sheet is 20, a neutral APC on a beach at **4.3** hue, which is
 finding 6 in one picture.
 
-The cells blind on **both** readings are a different list, and the ten worst of them are all fog:
+The cells blind on **both** readings are a different list. Ordered by the reading the gallery does
+*not* sort on — least colour left first — the ten worst are a base under fog and a beach under the
+move wash, and the gallery's APCs are nowhere in them:
 
 | unit | faction | ground | wash | state | edge steps | edge hue |
 | --- | --- | --- | --- | --- | --- | --- |
-| bomber | verdant | city | fog | ready | 0.30 | 2.19 |
-| bomber | verdant | hq | fog | ready | 0.30 | 2.17 |
+| fighter | iron | base | fog | ready | 0.72 | 1.28 |
 | bomber | neutral | base | fog | ready | 0.32 | 1.49 |
-| bomber | neutral | base | fog | acted | 0.32 | 3.12 |
-| fighter | neutral | hq | fog | ready | 0.32 | 2.35 |
-| bomber | neutral | city | fog | ready | 0.33 | 2.19 |
-| bomber | neutral | hq | fog | ready | 0.33 | 2.17 |
-| fighter | verdant | hq | fog | ready | 0.33 | 2.35 |
-| bomber | verdant | base | fog | acted | 0.34 | 3.12 |
-| bomber | meridian | hq | fog | ready | 0.35 | 2.17 |
+| bomber | iron | base | fog | ready | 0.47 | 1.49 |
+| bomber | aurora | base | fog | ready | 0.51 | 1.49 |
+| bomber | meridian | base | fog | ready | 0.56 | 1.49 |
+| bomber | verdant | base | fog | ready | 0.56 | 1.49 |
+| bomber | iron | shoal | move | acted | 0.74 | 1.59 |
+| fighter | iron | shoal | move | ready | 1.83 | 1.68 |
+| infantry | iron | shoal | move | acted | 1.81 | 1.75 |
+| lander | iron | shoal | move | acted | 1.98 | 1.75 |
 
 ## The history re-run
 
-The three generations of `units_atlas.png` this project has adopted, scored through today's ruler:
+The three units sheets the last three art rounds shipped, scored through today's ruler:
 round 5 (`81039c9`, #312, the indexed-palette and value-ceiling sheets), round 6 (`1216fd5`, #316)
 and round 7 (`8ba480c`, #318, shipping). Each is `git show`n into a file and read with
 `make legibility-check LEGIBILITY="--units=<file>"`.
