@@ -37,10 +37,10 @@ const ATLAS_VARIANT := "atlas"
 ## How far along a row of its own terrain the probe walks a cell. A
 ## connection-keyed family answers with the one mask its neighbours give at every
 ## step; a phase-keyed one (open water) answers with a different cell per
-## position, so the run is what turns the family into every phase it holds. Long
-## enough that it does — which `board_cells` checks against the sheet rather than
-## trusting, since a family that answered with some of its cells and not others
-## would be a measurement with a hole in it.
+## position, so the walk is what turns a family into every tile it holds.
+## `_sheet_cells` checks what the walk found against the sheet rather than
+## trusting this span: a family answering with some of its cells and not others
+## is a hole in the measurement.
 const VARIANT_PROBE_SPAN := 24
 
 ## The units atlas at ambient frame A. The board also beats to frame B
