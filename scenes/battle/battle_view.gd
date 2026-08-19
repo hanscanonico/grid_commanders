@@ -673,14 +673,12 @@ func _apply_board_offset() -> void:
 	camera.offset = Vector2(0, -inset / camera.zoom.y) + shake_offset
 
 
-## The furthest out the player may zoom: just far enough that the whole map is
-## in view, with the backdrop filling whatever the map's aspect leaves over. On
-## a map smaller than the viewport this sits above the default zoom, so a small
-## map starts at its floor. Battle owns the zoom level and clamps against this.
+## The furthest out the player may zoom, with the backdrop filling whatever the
+## map's aspect leaves over. On a map smaller than the viewport this sits above
+## the default zoom, so a small map starts at its floor. Which rungs exist is
+## `BattleZoom`'s — this only hands it the board it has to frame.
 func min_zoom() -> float:
-	var map_px := Vector2(map.size() * TILE)
-	var view := _board_viewport_size()
-	return minf(view.x / map_px.x, view.y / map_px.y)
+	return BattleZoom.floor_for(_board_viewport_size(), Vector2(map.size() * TILE))
 
 
 ## Camera limits pin the view inside the map. On an axis where the view shows
