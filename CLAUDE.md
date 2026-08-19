@@ -287,7 +287,7 @@ plan is stated in full below and has no copy there.
   chrome and so is in all of them; the `capture` and new `field_overlays` frames additionally move
   on the board itself, the path no longer being a yellow polyline and capturing tiles now carrying
   a pip.
-- **The zoom ladder is integers** (no plan artifact; this entry is its record, and it is the
+- **The zoom ladder is integers above its floor** (no plan artifact; this entry is its record, and it is the
   animation milestone's first slice) — the board is sampled with nearest filtering, so a rung that
   is not a whole number of screen pixels per world pixel drops and doubles rows, and *which* rows it
   drops moves as the camera pans: crawling edges, which animation makes impossible to ignore. The
@@ -307,8 +307,13 @@ plan is stated in full below and has no copy there.
   where the 2.36x fractional lattice's mixed 4/5px steps dither the grid and read as finer. **And
   the floor rung is the fit-whole one again, fractional, with every rung above it still whole**:
   floored at 1 it left Bulwark's 49x32 showing half of itself at maximum zoom-out, and a crawling
-  edge on a survey view nobody fights from is the cheaper defect. So what survives is the rung a
-  match is *played* at being a whole number, which is what the crawl argument was about.
+  edge on a survey view nobody fights from is the cheaper defect. So what survives is that a board
+  the default rung fits inside is *fought* on whole rungs. **The exception is a board small enough
+  that its fit rung sits above the default** — `boot_camp` at 2.03 and `quartet` — where the floor
+  *is* the rung the match opens on, so those two play on a fractional rung again exactly as they
+  did before #322, and their four smoke frames (`mission_strip`, `mission_strip_retired`,
+  `side_victory`, `mixed_seat_handoff+fog`) moved back with them: the board fills the band edge to
+  edge instead of leaving a sliver of backdrop. The other 81 are byte-identical.
   `tests/unit/test_texel_stability.gd` is the gate and states the formula it simulates; the 4x
   terrain oversample is deliberately outside it, `TILE / TERRAIN_PX` being an exact decimation whose
   phase never moves. It **states both weakenings in its own header and pins `scale_mode` to its

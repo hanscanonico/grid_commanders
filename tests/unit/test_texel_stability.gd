@@ -20,7 +20,10 @@ extends GutTest
 ## instability below is now a *recorded cost* rather than a thing the ladder
 ## defends against. The floor rung went with it: it frames the whole board and is
 ## allowed to be fractional, because at maximum zoom-out Bulwark's 49x32 was
-## showing half of itself. Every rung above the floor is still whole.
+## showing half of itself. Every rung above the floor is still whole — and on a
+## board whose fit rung sits above the default (`boot_camp`, `quartet`) the floor
+## is the rung the match opens on, so those play fractional again as they did
+## before the snap.
 ##
 ## THE FORMULA. Under `canvas_items` stretch the game draws into a 640x360 canvas
 ## and the window scales it by `window_scale = window_height / 360`. A world
@@ -72,8 +75,8 @@ func _is_stable(s: float) -> bool:
 	return true
 
 
-## The rungs a board offers above its floor — the ones a match is actually played
-## at. A board too big for 1x offers the whole ladder.
+## The whole rungs a board offers above its floor. A board too big for 1x — the
+## 49x32 asked for here — offers the whole ladder.
 func _ladder() -> Array[float]:
 	var rungs: Array[float] = []
 	for rung in BattleZoom.rungs_for(
