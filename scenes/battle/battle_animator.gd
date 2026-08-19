@@ -173,11 +173,13 @@ func animate_combat(result: CombatSnapshot.CombatResult, attacker: Unit, defende
 ## style with no muzzle (a bomber's, an unarmed unit's) flashes none.
 ##
 ## Silent under Instant, which shows results rather than playing them out — the
-## tier answers no beat to run on — and silent for a shooter the viewer cannot
-## see, which is the fog rule the cut-in's own gate reads: a flash out of the dark
-## would report a unit the board is hiding.
+## tier answers no beat to run on — and silent unless the viewer can see both
+## sides, which is `_cut_in_applies`' own fog rule: the star is aimed, so a
+## shooter alone would point at ground the board is hiding.
 func _flash_muzzle(shooter: Unit, target: Unit, slot: StringName) -> void:
-	if muzzle_flash == null or not perspective.can_see_unit(shooter):
+	if muzzle_flash == null:
+		return
+	if not perspective.can_see_unit(shooter) or not perspective.can_see_unit(target):
 		return
 	var seconds := Settings.speed.flash_in_seconds()
 	if seconds <= 0.0:

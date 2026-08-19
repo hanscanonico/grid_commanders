@@ -4,10 +4,10 @@ extends Node2D
 ## what it is shooting at, in the colours of the weapon that fired.
 ##
 ## The cut-in has flashed a muzzle since BA1, but the map path it stands in for —
-## battle animations off, a viewer who cannot see both sides, an exchange watched
-## at speed — showed the firing unit nothing at all: the target flinched and
-## whatever hit it was never on screen. This is the cut-in's flash at the board's
-## scale, and it is the only thing the map path draws for the shooter.
+## battle animations off, an exchange watched at speed — showed the firing unit
+## nothing at all: the target flinched and whatever hit it was never on screen.
+## This is the cut-in's flash at the board's scale, and it is the only thing the
+## map path draws for the shooter.
 ##
 ## Dumb, like CapturePips and PowerMarks: BattleAnimator hands over two cells and
 ## the BattleStyle the exchange already named, and this only draws them. It reads
