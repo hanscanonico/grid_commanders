@@ -1,71 +1,33 @@
-# Composite legibility — 2026-08-19 (generator `30c1e97`, round 9)
+# Composite legibility — 2026-08-19 (generator `0d87068`, round 10)
 
-What the sweep finds on the sheets shipped by generator `30c1e97`, the contour-precedence fix: every
-unit's outer boundary is now its S0 outline, whatever plane the model drew there. A dated
-measurement — it supersedes the previous page wholesale rather than editing it, the way
-`docs/bulwark_balance.md` and `docs/replay_survey.md` are superseded.
+What the sweep finds on the sheets shipped by generator `0d87068`, which weighs the contour in
+**logical pixels** rather than in source pixels. A dated measurement — it supersedes the previous
+page wholesale rather than editing it, the way `docs/bulwark_balance.md` and
+`docs/replay_survey.md` are superseded.
 
-**Nothing was tuned in response to it.** No colour anywhere moved for this run — every number below
-is the generator's art read back, and the two harness changes this round made (below) are a sort and
-a bar, neither of which touches a pixel.
+**Nothing was tuned in response to it.** No colour anywhere moved for this run, and **the ruler is
+unchanged from round 9** — same edge reading, same two-step bar, same hue bound of 20, same
+one-step fog bar, same `max` gallery sort. Every number below is the generator's art read back
+through the previous page's instrument.
 
 Re-run with `make legibility-check`. It reads the shipped atlases and the shipped constants, plays
 no match, takes about a minute, writes `cells.csv` and `summary.md` under `reports/` (gitignored) —
-and redraws the one artifact it publishes, the worst-twenty gallery below. Two runs of one tree
-write the same bytes, gallery included.
+and redraws the one artifact it publishes, the worst-twenty gallery below.
 
-## What changed in the ruler, and what did not
+## What the generator changed
 
-The **edge reading is unchanged**: for every pixel of the silhouette's perimeter, the ground within
-3 px outside it, reported at the **p25** of the perimeter — in ramp steps and in CIE76 chroma
-distance. Two ramp steps and a hue bound of 20 are where round 8 left them. The control is exact:
-the **previous** units sheet, read by this harness at a flat two-step bar over all 9,900 cells,
-reproduces the previous page's headline of **6,634 failing (67.0%)** to the cell.
+The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in
+four. Round 9 made every unit's outer boundary structurally its S0 outline and the APC still failed
+99.2% of its board cells, because a **1 px** contour is three-quarters unsampled and which quarter
+survives is an accident of where the edge falls. Round 10 states the band per edge in source pixels
+— 4 on the lit (top and left) edges, 2 on the ground-facing ones — so a board-scale sample lands on
+contour whatever the phase. The band grows **inward**, off the faction plane behind the edge; the
+outward halo is round 9's unchanged, because the md_tank already fills 63 of the 64 px its cell
+allows.
 
-Two things did move, and both are reporting rather than measuring.
-
-**The gallery now sorts by `max(edge steps / 2, edge hue / 20)`, not `min`.** `min` ranks a cell by
-whichever bar it misses hardest, so a figure that is invisible in value and obvious in colour
-outranks one that is invisible in both — which is how round 8's sheet came out as twenty tiles of a
-single unit. `max` can only be small when *both* readings are small, so the sheet opens on the
-doubly-blind class. `min` keeps the job it is right for and that job is not ordering: whether a cell
-missed a bar at all is the verdict and the hue bound beside it.
-
-**Fogged cells are held to their own bar of one ramp step, and are out of the headline.** Fog is
-drawn to hide; holding it to the bar a clear tile is held to measures the wash doing its job and
-files it as an art defect. What a fogged cell still owes is that something is *there* — one step of
-boundary surviving the wash. The two classes are counted apart everywhere, because a rate mixing two
-bars answers no question.
-
-## Is a unit ever really drawn under the fog wash?
-
-Asked because it decides how much the fogged class is worth. **Read off the game code: no unit ever
-*stands* under the shroud, and the only real-play instance is transient.**
-
-- `UnitSprite.refresh()` is `visible = unit.carrier == null and not fogged`
-  (`scenes/battle/unit_sprite.gd`), and `fogged` is `not perspective.can_see_unit(unit)`, decided in
-  `BattleView` and remembered rather than re-derived.
-- Anything the viewer *may* see stands on a cell the fog pass leaves bare. `Vision.can_see_unit`
-  returns true outright for a unit on the viewer's own side, and every such unit's own cell is in
-  its side's `visible_cells` (it is the centre of its own reveal); an enemy is visible only when
-  `visible.has(unit.cell)` — the same test, cell for cell, that `BattleView.refresh_fog` paints the
-  shroud by.
-- The two remaining viewer modes close the gap from both ends: a hot-seat blackout hides every cell
-  **and** every unit, and a replay's omniscient viewer makes `can_see_cell` true everywhere, so
-  `refresh_fog` paints no shroud at all.
-- **There are no last-known-position ghosts for units.** The board's only memory of what it last saw
-  is `BattleView._last_seen_owner`, which is a *property tile's* atlas row; a unit that walks out of
-  sight is simply not drawn.
-
-The smoke sweep's own `preview_fog` frame is the picture of that: the shrouded ground holds no
-figure at all, and every unit on the board stands on a tile the shroud did not reach.
-
-The one instance is motion. `BattleCommandPipeline` refreshes fog **after** the move animation has
-been awaited, so for the length of a walk a sprite the viewer can already see is tweened across
-cells whose shroud has not been lifted yet — an own unit stepping into unscouted ground, or a
-visible enemy walking out of the viewer's sight. `FogLayer` sits above `Units` in `battle.tscn`, so
-that walk really is drawn under the wash. It is a few hundred milliseconds, of a unit whose identity
-the viewer already knows, and it is why the fogged class earns a weaker bar rather than exemption.
+The control is exact: the **previous** units sheet, read by this harness at today's bars, reproduces
+the previous page's headline of **4,082 failing (50.4%)** and its fog line of **512 (28.4%)** to the
+cell.
 
 ## What is measured
 
@@ -77,128 +39,128 @@ shipped units atlas.
 
 ## The headline
 
-**Clear class: 8,100 cells, 4,082 failing (50.4%) at two ramp steps.** 3,119 of those failures
-(76.4%) are 20 or more apart in hue — value-blind rather than illegible — which leaves **963
-doubly blind** and **151 severe on both** (under half the bar *and* under 20 hue).
+**Clear class: 8,100 cells, 1,276 failing (15.8%) at two ramp steps** — down from 4,082 (50.4%).
+783 of those failures (61.4%) are 20 or more apart in hue — value-blind rather than illegible —
+which leaves **493 doubly blind** and **2 severe on both** (under half the bar *and* under 20 hue).
 
-**Fog class, reported separately: 1,800 cells, 512 failing (28.4%) at one ramp step**, 251 of them
+**Fog class, reported separately: 1,800 cells, 118 failing (6.6%) at one ramp step**, 101 of them
 doubly blind.
 
-The previous sheet, scored by the same harness with the same bars, is the comparison — only the
-units atlas differs, and the grounds and the ruler are identical:
-
-| class | previous (`8ba480c`) | shipped (`30c1e97`) |
+| class | previous (`30c1e97`) | shipped (`0d87068`) |
 | --- | --- | --- |
-| clear, failing | 4,920 (60.7%) | **4,082 (50.4%)** |
-| clear, doubly blind | 1,109 | **963** |
-| clear, severe on both | 297 | **151** |
-| fog, failing at 1.0 | 716 (39.8%) | **512 (28.4%)** |
-| fog, doubly blind | 316 | **251** |
+| clear, failing | 4,082 (50.4%) | **1,276 (15.8%)** |
+| clear, doubly blind | 963 | **493** |
+| clear, severe on both | 151 | **2** |
+| fog, failing at 1.0 | 512 (28.4%) | **118 (6.6%)** |
+| fog, doubly blind | 251 | **101** |
 
-**5,286 of the 9,900 rows moved. 1,061 cells crossed from fail to pass and 19 crossed the other
-way**, and all nineteen are the lander (finding 4).
+**9,528 of the 9,900 rows moved. 3,200 cells crossed from fail to pass and none crossed the other
+way** — the first round of this instrument with zero regressions, and the round that finally
+cleared the previous page's own two open findings (the APC, finding 3; the lander, finding 4).
 
-| view | median edge steps | median edge hue | failing |
-| --- | --- | --- | --- |
-| board | 1.68 → **1.89** | 30.1 → 30.2 | 67.8% → **56.2%** |
-| cutin | 3.02 → 3.02 | 27.5 → 27.5 | 4.0% → 4.0% |
+| view | median edge steps | failing |
+| --- | --- | --- |
+| board | 1.89 → **2.61** | 56.2% → **17.2%** |
+| cutin | 3.02 → 3.03 | 4.0% → 4.0% |
 
-(clear class; previous → shipped. The cut-in is unmoved to the cell: 36 failures before and after.)
+(clear class; previous → shipped. The cut-in is unmoved to the cell: 36 failures before and after —
+at 64 px nothing was ever unsampled, so the fix has nothing to buy there. What it *costs* there is
+finding 4.)
 
 | ground | median edge steps | failing | doubly blind |
 | --- | --- | --- | --- |
-| shoal | 1.90 → **2.28** | 54.7% → **33.3%** | 180 → 122 |
-| plains | 1.88 → **2.20** | 54.6% → **32.9%** | 24 → 12 |
-| mountain | 1.83 → 2.13 | 58.1% → 38.9% | 130 → 95 |
-| port | 1.83 → 2.06 | 60.0% → 46.9% | 57 → 53 |
-| airport | 1.81 → 2.06 | 59.4% → 46.2% | 45 → 45 |
-| woods | 1.67 → 1.80 | 82.2% → 75.6% | 61 → 52 |
-| city | 1.56 → 1.73 | 72.9% → 67.4% | 192 → 182 |
-| base | 1.52 → 1.55 | 85.4% → **83.1%** | 170 → 164 |
-| hq | 1.44 → 1.51 | 80.6% → **79.6%** | 205 → 199 |
-| sea | 1.34 → **1.79** | 70.4% → **58.1%** | 45 → 39 |
+| shoal | 2.28 → **3.22** | 33.3% → **0.0%** | 122 → 0 |
+| plains | 2.20 → **3.21** | 32.9% → **0.0%** | 12 → 0 |
+| airport | 2.06 → 3.02 | 46.2% → 7.4% | 45 → 14 |
+| port | 2.06 → 3.01 | 46.9% → 4.9% | 53 → 6 |
+| mountain | 2.13 → 2.81 | 38.9% → 2.9% | 95 → 12 |
+| city | 1.73 → 2.65 | 67.4% → 28.3% | 182 → 144 |
+| hq | 1.51 → 2.22 | 79.6% → **46.4%** | 199 → 175 |
+| sea | 1.79 → 2.17 | 58.1% → 9.9% | 39 → 4 |
+| woods | 1.80 → 2.15 | 75.6% → 23.2% | 52 → 10 |
+| base | 1.55 → 2.01 | 83.1% → **49.3%** | 164 → 128 |
 
 (clear board rows, every wash.)
 
 | wash | median edge steps | failing |
 | --- | --- | --- |
-| none | 1.62 → 1.83 | 69.6% → 59.4% |
-| move | 1.72 → 1.95 | 65.8% → 53.2% |
-| attack | 1.69 → 1.90 | 67.8% → 55.9% |
-| threat | 1.67 → 1.91 | 68.2% → 56.3% |
-| fog (bar 1.0) | 1.07 → 1.21 | 39.8% → 28.4% |
+| move | 1.95 → 2.63 | 53.2% → 13.9% |
+| threat | 1.91 → 2.60 | 56.3% → 16.8% |
+| none | 1.83 → 2.60 | 59.4% → 22.6% |
+| attack | 1.90 → 2.59 | 55.9% → 15.6% |
+| fog (bar 1.0) | 1.21 → 1.72 | 28.4% → 6.6% |
 
-(board rows. Fog's rate is at its own bar; at the clear bar the same cells read 95.2% → 93.4%.)
+(board rows. Fog's rate is at its own bar.)
 
 | faction row | median edge steps | median edge hue | failing |
 | --- | --- | --- | --- |
-| iron | 1.81 → 1.95 | 51.7 | 64.2% → 52.2% |
-| aurora | 1.65 → 1.86 | 54.1 | 66.4% → 56.1% |
-| meridian | 1.59 → 1.84 | 53.4 | 66.7% → 56.1% |
-| verdant | 1.61 → 1.75 | 26.6 | 76.1% → **66.9%** |
-| neutral | 1.55 → 1.69 | 45.5 | 74.7% → 65.6% |
+| iron | 1.95 → 2.76 | 51.7 | 52.2% → 15.8% |
+| aurora | 1.86 → 2.65 | 53.4 | 56.1% → 21.4% |
+| meridian | 1.84 → 2.63 | 52.1 | 56.1% → 21.9% |
+| neutral | 1.69 → 2.51 | 45.4 | 65.6% → 22.5% |
+| verdant | 1.75 → 2.45 | 42.3 | 66.9% → **31.4%** |
 
-(bare board, no wash. The hue column did not move — the fix is a value fix.)
+(bare board, no wash.)
 
 | unit | median edge steps | failing | doubly blind |
 | --- | --- | --- | --- |
-| tank | 2.89 → 2.89 | 8.2% → 8.2% | 1 |
-| recon | 2.84 → 2.84 | 14.2% → 14.2% | 1 |
-| missiles | 2.36 → 2.36 | 19.8% → 19.8% | 7 |
-| battleship | 2.14 → 2.22 | 39.2% → 30.2% | 26 → 21 |
-| artillery | 1.63 → **2.15** | 85.5% → **32.5%** | 25 → 3 |
-| sub | 2.13 → 2.13 | 31.5% → 31.5% | 34 |
-| rockets | 2.07 → 2.09 | 43.8% → 43.5% | 31 → 32 |
-| t_copter | 1.79 → 1.97 | 66.5% → 53.8% | 79 → 72 |
-| cruiser | 1.15 → **1.93** | 100.0% → **52.5%** | 59 → 33 |
-| b_copter | 1.53 → 1.88 | 87.2% → 57.8% | 72 → 57 |
-| lander | 1.87 → **1.84** | 67.8% → **69.8%** | 47 → 51 |
-| mech | 1.60 → 1.71 | 91.2% → 78.2% | 121 → 110 |
-| anti_air | 1.70 → 1.70 | 72.2% → 72.2% | 12 |
-| fighter | 1.44 → 1.58 | 95.0% → 78.5% | 152 → 124 |
-| infantry | 1.17 → 1.50 | 100.0% → 95.2% | 160 → 159 |
-| md_tank | 1.17 → 1.34 | 99.2% → 78.0% | 71 → 37 |
-| bomber | 0.71 → 1.12 | 100.0% → **96.2%** | 150 → 151 |
-| apc | 0.78 → **0.89** | 99.5% → **99.2%** | 61 → 58 |
+| tank | 2.89 → 3.19 | 8.2% → 2.5% | 1 → 0 |
+| anti_air | 1.70 → **3.18** | 72.2% → **0.2%** | 12 → 0 |
+| rockets | 2.09 → 3.17 | 43.5% → 3.5% | 32 → 1 |
+| md_tank | 1.34 → **3.16** | 78.0% → **0.5%** | 37 → 0 |
+| artillery | 2.15 → 3.14 | 32.5% → 0.0% | 3 → 0 |
+| recon | 2.84 → 3.12 | 14.2% → 2.5% | 1 → 0 |
+| apc | 0.89 → **2.99** | 99.2% → **11.8%** | 58 → 4 |
+| lander | 1.84 → **2.79** | 69.8% → **9.8%** | 51 → 1 |
+| missiles | 2.36 → 2.67 | 19.8% → 0.5% | 7 → 0 |
+| cruiser | 1.93 → 2.54 | 52.5% → 23.5% | 33 → 6 |
+| battleship | 2.22 → 2.45 | 30.2% → 12.8% | 21 → 13 |
+| b_copter | 1.88 → 2.33 | 57.8% → 27.0% | 57 → 47 |
+| sub | 2.13 → 2.30 | 31.5% → 12.8% | 34 → 11 |
+| t_copter | 1.97 → 2.28 | 53.8% → 30.8% | 72 → 61 |
+| bomber | 1.12 → 2.27 | 96.2% → 32.2% | 151 → 76 |
+| infantry | 1.50 → 2.14 | 95.2% → 40.0% | 159 → 86 |
+| mech | 1.71 → 2.12 | 78.2% → 37.8% | 110 → 84 |
+| fighter | 1.58 → **1.84** | 78.5% → **62.0%** | 124 → 103 |
 
-(clear board rows, every wash, 400 cells each.)
+(clear board rows, every wash, 400 cells each. The sweep's own per-unit table counts the cut-in rows
+too, which is why it reads the APC at 10.9% and the lander at 9.1%.)
 
 ## Findings
 
-1. **The contour fix is the largest single art movement this instrument has measured, and it lands
-   exactly where the ruler looks.** The clear class goes 60.7% → 50.4% failing, severe-on-both
-   halves (297 → 151), and 1,061 cells cross the bar. Nothing else could have done it: the terrain
-   sheets are byte-identical to the previous adoption, so every one of those cells moved because a
-   figure's *outline* changed colour.
-2. **Five units did not move at all, and that is the fix working rather than missing.** Missiles
-   moved on 0 rows, anti-air on 2, the sub on 6, the tank on 13 and the recon on 19 — their outer
-   boundary was already S0, so the pass had nothing to claim there, and the rim it pushed one pixel
-   inboard is interior pixels the edge reading does not read. Their sprite bytes all changed; their
-   numbers are identical to the digit.
-3. **The APC did not clear, and it is now the roster's worst hull alone.** 99.5% → 99.2% failing,
-   median contour 0.78 → 0.89 steps. Its flagship cell is unmoved to the hundredth — a neutral APC
-   on plains still reads **0.05 edge steps** at 47.1 hue — because the boundary that vanishes there
-   was already the outline: it is the right *kind* of pixel and the wrong *value*, a mid-tan the
-   grass already holds. The contour fix could only ever make an outline consistent; making it darker
-   is a separate ruling.
-4. **The lander is the one unit that lost ground, and all nineteen new failures are its.** Median
-   1.87 → 1.84 steps, 131 rows worse, worst −0.42, split 72 acted to 59 ready and confined to six of
-   the ten grounds — the beach, base, HQ, city, plains and mountain, none at sea. It is small and it
-   is real; it is the price of an outline that no longer borrows the value of whichever plane drew
-   it.
-5. **Sea, sand and grass are answered; the properties are not.** Open water gains most of any ground
-   (1.34 → 1.79 steps, 70.4% → 58.1%), plains and shoal both clear the two-step bar at the median
-   for the first time. Base (83.1%) and HQ (79.6%) barely move, because what fails there is a figure
-   lying on a grey building rather than an outline that had the wrong owner — the same defect the
-   previous page's finding 5 named, untouched by a fix aimed at outlines.
-6. **Fog costs less than the previous page could say.** At its own one-step bar the shroud fails
-   28.4% of its cells, down from 39.8% on the previous sheet — and 251 of those are doubly blind,
-   which is a quarter of that class rather than the third the flat bar reported. The wash is still
-   the strongest single term in the sweep; it is no longer the headline, because the headline
-   should not be the game hiding what it means to hide.
-7. **Hue did not move anywhere.** Every faction row's median edge hue is unchanged to the tenth, and
-   verdant is still the weakest livery at 26.6 against 51–54 for the other three. Green figures on
-   green ground remain the standing defect, and no generation has answered it.
+1. **The APC is answered, and it was the point of the round.** 99.2% → 11.8% failing, median 0.89 →
+   2.99 steps. Its flagship cell — the neutral APC on plains, which the previous page recorded at
+   **0.05 edge steps** before *and* after round 9's fix — now reads **3.46**. The previous page's
+   diagnosis was that the outline was the right kind of pixel and the wrong value; the real answer
+   was that at board scale three of its four pixels were never sampled at all.
+2. **The lander regression is gone, and no unit regressed to replace it.** The lander goes 69.8% →
+   9.8% and its worst cell (a meridian lander greyed out on a city, 1.39 steps) now reads 3.42.
+   Across all 9,900 rows, **3,200 crossed to pass and zero crossed to fail** — every previous round
+   of this instrument traded some cells for others.
+3. **Five units are now effectively solved and two grounds are perfect.** Anti-air, md_tank,
+   artillery, missiles and rockets all sit at or under 3.5% failing with zero or one doubly-blind
+   cell; plains and shoal fail nothing at all, and sea, port, airport, mountain and woods are all
+   under 10%. The whole remaining problem is one shape of cell.
+4. **The band is real weight, and the cut-in is where it is paid.** The sweep cannot see this — the
+   cut-in reads 36 failures before and after, because a thicker contour can only ever help a
+   figure-vs-ground reading. Measured off the sprites instead: the silhouette is unchanged to the
+   pixel (the halo did not grow), but **6.2% to 17.2% of every figure's interior was darkened into
+   contour** — battleship 6.2%, md_tank 9.3%, APC 10.0%, mech 14.1%, and the **infantry worst at
+   17.2%**, because a 4 px band is a large share of a 681 px figure. At board scale that is
+   invisible and good. At cut-in scale the smallest figures read heavier — closer to inked than to
+   crisp — which is finding 4's whole content and the one thing a human should look at before this
+   is called finished. It is a *judgement*, not a defect the sweep found: see the pair below.
+5. **What is left is grey aircraft on grey masonry, and it is the previous page's finding 5
+   unchanged.** Base (49.3%), HQ (46.4%) and city (28.3%) hold nearly every survivor; the fighter
+   (62.0%), infantry (40.0%), mech (37.8%), t_copter (30.8%) and bomber (32.2%) hold nearly every
+   unit-side one. The gallery is twenty cells of exactly that pairing. A contour weight cannot fix
+   it: the outline is dark and the roof is dark, so the figure is separated from the grass and not
+   from the building. That is a property-column value question, and it is the next round's.
+6. **Fog is close to free now.** At its own one-step bar the shroud fails 6.6% of its cells, down
+   from 28.4%. What survives the wash is contour, and there is now four times as much of it.
+7. **Verdant is still the weakest livery** (31.4% on the bare board against iron's 15.8%) and the
+   gap is still hue: green figures on green ground. The contour narrowed it — verdant was 66.9% —
+   without answering it, because the contour is not the livery.
 
 ## The gallery
 
@@ -208,50 +170,46 @@ state, view, both edge numbers and both median ones.
 
 ![the twenty worst-scoring composites](images/legibility_worst20.png)
 
-It is no longer one unit: twelve bombers, four APCs, two fighters, an md_tank and an infantry, five
-of them fogged. **The sort did that, not the art** — on this same shipped sheet the old `min` order
-still returns twenty APCs, because the APC's hue margin is enormous everywhere and `min` never looks
-at it. Every hue on the sheet is under 6: this is the doubly-blind class, which is what the order was
-changed to show.
-
-Read it with finding 3 and finding 5 in hand. The APCs are the beach under the move wash — tan on
-sand, the one ground where the APC's colour does not save it. The bombers are grey aircraft lying on
-grey masonry, and the fogged five are that same pairing with a grey wash over it.
+**No APC appears on it** — the previous page's sheet held four. It is now twelve fighters, five
+bombers and three t_copters, one of them fogged and nothing else on it: aircraft parked on an HQ or
+a base, every hue under 11, which is the doubly-blind class the `max` sort exists to surface. Read
+it with finding 5.
 
 ## Spot checks
 
-Four composites read by eye, each dumped by the harness itself
-(`make legibility-check LEGIBILITY="--dump=board:cruiser:aurora:ready:sea:none"`), which prints both
+Three composites read by eye, each dumped by the harness itself
+(`make legibility-check LEGIBILITY="--dump=board:apc:neutral:ready:plains:none"`), which prints both
 readings beside the crop.
 
-The fix at its best: an aurora cruiser on open water, **1.38 → 2.06 edge steps** (figure `#2d47a4`,
-ground `#2b70bf`) — a hull that now passes on a ground where its whole class used to fail 100% of
-the time:
+The round's headline, at the cell two previous rounds could not move: a neutral APC on plains,
+**0.05 → 3.46 edge steps**. Nothing about the model changed; the outline is simply thick enough to
+survive the board's one-in-four sample:
 
-![aurora cruiser on sea](images/legibility_r9_cruiser_aurora_sea.png)
+![neutral APC on plains](images/legibility_r10_apc_neutral_plains.png)
 
-The fix at its limit: a neutral APC on plains, **0.05 edge steps** before and after, 47.1 hue. The
-outline is the outline the fix guaranteed; the value is the value it could not change:
+The previous page's regression, answered: a meridian lander on a city, greyed out, **1.39 → 3.42**:
 
-![neutral APC on plains](images/legibility_r9_apc_neutral_plains.png)
+![meridian lander on a city](images/legibility_r10_lander_meridian_city.png)
 
-The regression, at its worst cell: a meridian lander on a city, greyed out, **1.81 → 1.39 edge
-steps** while its whole-figure median went the other way (2.34):
+What is left, at its worst: a verdant fighter on an HQ, **1.02 edge steps at 3.6 hue** — dark grey
+airframe on dark grey masonry, blind on both readings, and untouched by anything a contour can do:
 
-![meridian lander on a city](images/legibility_r9_lander_meridian_city.png)
+![verdant fighter on an HQ](images/legibility_r10_fighter_verdant_hq.png)
 
-The fog class at its own bar: a neutral bomber on a base under the shroud, **0.35 edge steps** and
-**1.5** hue — still a failure at 1.0, and one of the 251 the shroud blinds on both readings:
+## The cost, at cut-in scale
 
-![neutral bomber on a base under fog](images/legibility_r9_bomber_neutral_base_fog.png)
+Finding 4 as a picture rather than a percentage: the same verdant infantry in the cut-in's own
+resolution, previous sheet then shipped. The silhouette is identical; the band has taken the left
+shoulder and squeezed the helmet's lit face to a sliver. This is the roster's smallest figure and so
+its heaviest case.
 
-## The history re-run
+![verdant infantry, previous sheet](images/legibility_r10_cutin_infantry_before.png)
+![verdant infantry, shipped sheet](images/legibility_r10_cutin_infantry_after.png)
 
-The previous three generations were re-scored through the round-8 ruler on the previous page and
-that table is not repeated here: this round's whole comparison is the one above, previous sheet
-against shipped, because only the units atlas moved. `make legibility-check LEGIBILITY="--units=<file>"`
-is still how a past generation is read through today's ruler, and holding the grounds at today's art
-is still deliberate — a generation's numbers should move because its *figures* moved.
+The generator measured a 4-px-on-every-edge variant as better still on the board (12.8% clear
+against this one's 15.8%) and did not ship it, for this reason. Whether even the shipped band is too
+much for the cut-in is a human call on the frames, not something this sweep can answer — it reads
+figure against ground, and more ink always wins that reading.
 
 ## What the grounds are
 
