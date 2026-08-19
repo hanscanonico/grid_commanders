@@ -120,11 +120,11 @@ func _summary(sweep: LegibilitySweep, rows: Array[Dictionary], elapsed: int) -> 
 
 ## The headline for one class of cells. Two of them, because the fog shroud is
 ## judged against its own bar and a rate mixing the two answers nothing.
-func _class_lines(name: String, rows: Array[Dictionary]) -> Array[String]:
+func _class_lines(label: String, rows: Array[Dictionary]) -> Array[String]:
 	var failed := LegibilitySweep.failures(rows).size()
 	var carried := LegibilitySweep.hue_carried(rows)
 	return [
-		"%s: %d cells, %d failing (%.1f%%)." % [name, rows.size(), failed, _percent(failed, rows)],
+		"%s: %d cells, %d failing (%.1f%%)." % [label, rows.size(), failed, _percent(failed, rows)],
 		(
 			"  %d of those clear the hue bound (%.1f%%): value-blind, not illegible."
 			% [carried, 100.0 * float(carried) / float(failed) if failed > 0 else 0.0]

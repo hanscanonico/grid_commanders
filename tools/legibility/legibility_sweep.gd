@@ -299,8 +299,7 @@ func _row(
 	# Judged on the printed number rather than on the one behind it: a row that
 	# reads 2.00 and says FAIL is a table nobody can check.
 	var edge_steps := snappedf(LegibilityMetric.in_steps(edge.x, ramp_step), 0.01)
-	var bar := FOG_PASS_STEPS if overlay == LegibilityComposite.Overlay.FOG else PASS_STEPS
-	return {
+	var row_out := {
 		"view": view,
 		"unit": String(unit_type.id),
 		"faction": ROW_NAMES[row],
@@ -313,8 +312,12 @@ func _row(
 		"edge_hue": snappedf(edge.y, 0.01),
 		"steps": snappedf(steps, 0.01),
 		"hue": snappedf(LegibilityMetric.hue_distance(figure_median, ground_median), 0.01),
-		"verdict": "PASS" if edge_steps >= bar else "FAIL",
+		"verdict": "",
 	}
+	# Through bar_for like every other reader, so the verdict and the gallery's
+	# order can never be told the fog class apart differently.
+	row_out["verdict"] = "PASS" if edge_steps >= bar_for(row_out) else "FAIL"
+	return row_out
 
 
 static func overlay_name(overlay: int) -> String:
