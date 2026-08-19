@@ -367,7 +367,16 @@ plan is stated in full below and has no copy there.
   (`make legibility-check LEGIBILITY="--units=assets/tiles/units_atlas_b.png"`, which needed no
   change to the harness) reads 16.5% / 7.5% against the committed sheet's 15.8% / 6.6% — the beat
   costs the board no legibility class, and `docs/sprite_legibility.md` stays a reading of frame A.
-- **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
+  **The milestone's fourth slice is the on-map muzzle flash** (PR #325): the cut-in had drawn one
+  since BA1 (`CutsceneFx._draw_muzzle`), but the board's own attack path gave the shooter nothing —
+  a shot sound, then the defender's flash. `scenes/battle/muzzle_flash.gd` (`MuzzleFlash`) is a
+  dumb drawer in the `CapturePips` idiom; `BattleAnimator._flash_muzzle` poses it for the shot and
+  the counter, sized and tinted from the `BattleStyle` the result's own weapon slot names, through
+  `BattleStyleDB.shared()` so the cut-in and the board read one registry — no new sheet, no fresh
+  hex, opaque pixels only. **It obeys the cut-in's own fog rule, both combatants visible**, because
+  the star is aimed and a visible shooter pointed at hidden ground would leak the direction COM-57
+  exists to protect; Instant draws nothing (`flash_in_seconds()` is 0 there), which is also why
+  every smoke frame is byte-identical across the slice. (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
   still act and for the order they are walked in** — `of()` is the list the End Turn guard prints
