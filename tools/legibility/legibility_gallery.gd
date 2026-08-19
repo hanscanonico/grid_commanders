@@ -4,10 +4,11 @@ extends RefCounted
 ## harness judged, magnified, with the numbers it judged it by under it.
 ##
 ## Review evidence rather than illustration. A hero screenshot shows the cell
-## somebody chose; this shows the cells the ruler chose — since round 8 the ones
-## with the least of either reading left (LegibilitySweep.margin), so the sheet
-## opens on cells no reading can see rather than on a run of ties — and the
-## picture and the table cannot disagree. It is deterministic — the rows come from
+## somebody chose; this shows the cells the ruler chose — since round 9 the ones
+## with the least of the *further* reading left (LegibilitySweep.margin), so the
+## sheet opens on the cells no reading can see rather than on the ones a single
+## reading misses hardest — and the picture and the table cannot disagree. It is
+## deterministic — the rows come from
 ## LegibilitySweep.failures, whose order is total, and every cell is rebuilt
 ## through LegibilitySweep.composite_for — so the same art in is the same sheet
 ## out, which is what lets it be committed under docs/images/.
@@ -98,8 +99,14 @@ static func _caption(row: Dictionary, rank: int) -> Array[String]:
 
 static func _header(failing: int, shown: int) -> String:
 	return (
-		"WORST %d OF %d FAILING COMPOSITES - EDGE BAR %.1f STEPS, HUE CLEARS AT %.0f"
-		% [shown, failing, LegibilitySweep.PASS_STEPS, LegibilitySweep.HUE_CLEAR]
+		"WORST %d OF %d FAILING COMPOSITES - EDGE BAR %.1f STEPS (%.1f FOGGED), HUE CLEARS AT %.0f"
+		% [
+			shown,
+			failing,
+			LegibilitySweep.PASS_STEPS,
+			LegibilitySweep.FOG_PASS_STEPS,
+			LegibilitySweep.HUE_CLEAR
+		]
 	)
 
 

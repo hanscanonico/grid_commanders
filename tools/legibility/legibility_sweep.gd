@@ -9,9 +9,10 @@ extends RefCounted
 ## Nothing under core/ or ai/ knows it exists.
 ##
 ## The bar is the design spec's: at least two ramp steps of separation between
-## the figure and the ground it stands on, after the wash has composited. What
-## a ramp step is, and how the sides of the comparison are chosen, is
-## LegibilityMetric's to say.
+## the figure and the ground it stands on, after the wash has composited — and
+## since round 9 half that under the fog shroud, which is drawn to hide (see
+## FOG_PASS_STEPS). What a ramp step is, and how the sides of the comparison are
+## chosen, is LegibilityMetric's to say.
 ##
 ## **The verdict is the edge reading** (round 8): the p25 of the luminance gap
 ## along the figure's own contour, against the ground just outside it, held to
@@ -49,13 +50,25 @@ const TERRAIN_IDS: Array[StringName] = [
 	&"airport",
 	&"port",
 ]
-## Ramp steps of separation a composite has to clear. One bar for both readings:
-## two steps is the shading gap the art itself uses to tell one face of a hull
-## from the next, and a contour that stands less than that off its ground is
-## painted in a value the ground already holds — which is the same sentence at
-## the boundary as in the middle, so round 8 moved which sample it is asked of
-## rather than what it asks.
+## Ramp steps of separation a composite on a clear tile has to clear: two steps
+## is the shading gap the art itself uses to tell one face of a hull from the
+## next, and a contour that stands less than that off its ground is painted in a
+## value the ground already holds — which is the same sentence at the boundary as
+## in the middle, so round 8 moved which sample it is asked of rather than what
+## it asks. A fogged cell answers to FOG_PASS_STEPS instead.
 const PASS_STEPS := 2.0
+## The bar a **fogged** composite is held to instead, and the whole of round 9's
+## answer to what the shroud is for. Fog is drawn to hide, so holding it to the
+## bar a clear tile is held to measures the wash doing its job and reports it as
+## an art defect. What a fogged cell still owes is that something is *there* —
+## one ramp step of the figure's own boundary surviving the wash, half the clear
+## bar — so a shrouded silhouette may go soft without going missing.
+##
+## It is also the class with the least real play behind it: nothing in the live
+## scene ever *stands* under the shroud (see docs/sprite_legibility.md's fog
+## question), which is why these cells are counted apart from the headline
+## rather than folded into it.
+const FOG_PASS_STEPS := 1.0
 ## Chroma-plane distance a figure and its ground have to differ by for the pair
 ## to count as told apart by colour alone. Round 8 left it where it was, for the
 ## reason it was set there: it is a property of the eye, not of the sample the
@@ -170,13 +183,41 @@ static func failures(rows: Array[Dictionary]) -> Array[Dictionary]:
 	return failed
 
 
-## How far a row's contour is from the two bars, as a share of the nearer one.
-## Normalised because the two bars are in different units, and `min` because the
-## cell worth looking at first is the one no reading can see — ordering the
-## gallery by the value gap alone put twenty cells that all scored zero in front
-## of it, and picked among them by their keys.
+## How far a row's contour is from the two bars, as a share of the **further**
+## one. Normalised because the two bars are in different units, and `max`
+## because triage wants the cells no reading can see first: `min` ranks by
+## whichever bar a cell misses hardest, so a figure that is invisible in value
+## and obvious in colour outranks one that is invisible in both, which is how
+## round 8's gallery came out twenty tiles of a single unit. `max` can only be
+## small when both readings are, so the sheet opens on the doubly-blind class.
+##
+## `min` keeps the job it is right for and that job is not ordering: whether a
+## cell missed a bar **at all** is `verdict` and the HUE_CLEAR test beside it —
+## the two readings that decide membership — and a cell is in the failing set on
+## the value bar alone.
 static func margin(row: Dictionary) -> float:
-	return minf(float(row["edge_steps"]) / PASS_STEPS, float(row["edge_hue"]) / HUE_CLEAR)
+	return maxf(float(row["edge_steps"]) / bar_for(row), float(row["edge_hue"]) / HUE_CLEAR)
+
+
+## The ramp-step bar a row is judged against: its own, because the fog class has
+## a different one.
+static func bar_for(row: Dictionary) -> float:
+	return (
+		FOG_PASS_STEPS
+		if row["overlay"] == overlay_name(LegibilityComposite.Overlay.FOG)
+		else PASS_STEPS
+	)
+
+
+## The rows the fog shroud is over, and the rest. Counted apart everywhere the
+## report states a rate, because the two are held to different bars and a rate
+## mixing them answers no question.
+static func fogged(rows: Array[Dictionary]) -> Array[Dictionary]:
+	return _with_fog(rows, true)
+
+
+static func unfogged(rows: Array[Dictionary]) -> Array[Dictionary]:
+	return _with_fog(rows, false)
 
 
 ## How many of a set of rows miss the value bar but clear HUE_CLEAR — the cells
@@ -215,6 +256,15 @@ static func tally(rows: Array[Dictionary], column: String) -> Dictionary[String,
 	return counts
 
 
+static func _with_fog(rows: Array[Dictionary], keep: bool) -> Array[Dictionary]:
+	var picked: Array[Dictionary] = []
+	var fog := overlay_name(LegibilityComposite.Overlay.FOG)
+	for row in rows:
+		if (row["overlay"] == fog) == keep:
+			picked.append(row)
+	return picked
+
+
 func _unit_rows(unit_type: UnitType, row: int, terrain_id: StringName) -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	for overlay in LegibilityComposite.Overlay.values():
@@ -249,6 +299,7 @@ func _row(
 	# Judged on the printed number rather than on the one behind it: a row that
 	# reads 2.00 and says FAIL is a table nobody can check.
 	var edge_steps := snappedf(LegibilityMetric.in_steps(edge.x, ramp_step), 0.01)
+	var bar := FOG_PASS_STEPS if overlay == LegibilityComposite.Overlay.FOG else PASS_STEPS
 	return {
 		"view": view,
 		"unit": String(unit_type.id),
@@ -262,7 +313,7 @@ func _row(
 		"edge_hue": snappedf(edge.y, 0.01),
 		"steps": snappedf(steps, 0.01),
 		"hue": snappedf(LegibilityMetric.hue_distance(figure_median, ground_median), 0.01),
-		"verdict": "PASS" if edge_steps >= PASS_STEPS else "FAIL",
+		"verdict": "PASS" if edge_steps >= bar else "FAIL",
 	}
 
 
