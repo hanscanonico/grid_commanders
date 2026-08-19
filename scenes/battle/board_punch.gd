@@ -35,6 +35,11 @@ func _ready() -> void:
 	clip_contents = true
 	_frame = TextureRect.new()
 	_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The grab comes back at the window's resolution while the band is measured in
+	# canvas pixels, and a TextureRect's minimum size is its texture's — so without
+	# this the still is pinned to 1280x720 in a 640x360 canvas and the "punch" is a
+	# doubling.
+	_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(_frame)
 	hide()
 
@@ -47,12 +52,22 @@ static func band_center(view_size: Vector2) -> Vector2:
 
 
 ## Grabs the board as it stands and shows it in place of the live one, at rest.
-## Awaited: the viewport texture is whatever was last presented, and the attacker
-## has only just been snapped onto the cell the cut-in is about to be about.
+## One frame is awaited first: the viewport texture is whatever was last drawn,
+## and the attacker has only just been snapped onto the cell the cut-in is about
+## to be about.
+##
+## A frame that cannot be read costs the flinch and nothing else. macOS stops
+## presenting an occluded window and hands back an empty image (the same fact
+## `ScreenshotUtil.save_frame` forces a draw over), and a cut-in that failed to
+## open because the *board* could not be photographed would be a presentation
+## nicety taking the scene down with it.
 func open() -> void:
-	await RenderingServer.frame_post_draw
+	await get_tree().process_frame
+	var image := get_viewport().get_texture().get_image()
+	if image == null or image.is_empty():
+		return
 	var view_size := get_viewport_rect().size
-	_frame.texture = ImageTexture.create_from_image(get_viewport().get_texture().get_image())
+	_frame.texture = ImageTexture.create_from_image(image)
 	position = Vector2(0.0, float(UiTheme.HUD_TOP_H))
 	size = view_size - Vector2(0.0, float(UiTheme.HUD_BARS_H))
 	_frame.position = Vector2(0.0, -float(UiTheme.HUD_TOP_H))

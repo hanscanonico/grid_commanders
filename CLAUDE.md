@@ -309,6 +309,41 @@ plan is stated in full below and has no copy there.
   `mission_strip_retired`, `side_victory`, `mixed_seat_handoff+fog` — the only two boards the sweep
   visits whose floor was above the default 2.0, `boot_camp` and `quartet`, both on 2.03);
   the other 81, cut-ins and menus included, are byte-identical.
+  **The milestone's second slice takes the rung's own promise the rest of the way**, because a
+  whole rung is only half of a still frame — the board also has to be *parked* on whole screen
+  pixels and never scaled off them. Four decisions, all presentation, nothing under `core/` or
+  `ai/`. **A1: a continuous zoom is played on a rendered still, never on the camera** —
+  `scenes/battle/board_punch.gd` (`BoardPunch`) grabs the frame and scales *that*, so the cut-in's
+  entry flinch spreads one uniform filtering artefact over the whole image instead of dropping a
+  different set of rows out of every sprite on every frame. It is exact rather than an
+  approximation: a camera zoom scales what is drawn about the camera's screen anchor, and that
+  anchor is the middle of the board band by construction, so the still is scaled about the same
+  point — pinned by a driven capture that came back **byte-identical to the live board at rest
+  scale**. Clipped to the band, which is what keeps the still's own chrome out (at any scale of 1.0
+  or more the snapshot's bars fall outside the clip and the live ones are what is on screen), and
+  the grab is **best-effort**: an occluded window hands back an empty image, and a cut-in that
+  failed to open because the board could not be photographed would be a nicety taking the scene
+  down with it. `camera.zoom` is now a rung and nothing else. The rejected mechanism is a
+  `SubViewport` around the cut-in *layer*: the thing being scaled is the board, not the band, and
+  wrapping the world in a viewport buys a second coordinate space for every input and overlay
+  answer to be wrong in. **A2: the board docks on a whole screen pixel** — `BattleView.BOARD_LIFT_PX`
+  is 12, not the bars' exact half-difference of 11.5, and **the odd pixel goes to the bottom** so a
+  unit on the last row ends up further from the chrome rather than nearer it. **A3: the camera
+  lands on the cell rather than gliding to it** — `position_smoothing` spent a third of a second
+  after every cursor step between two cells, which is that same fractional rest by another name;
+  a capture run already switched it off for the same reason, so no captured frame depended on it.
+  **A4: an atlas cell is drawn on whole texels** — the capture cut-in's squad is board art at 1:1
+  (`CaptureStage.FIGURE_PX` is `UnitSprite.SPRITE_PX`) and the march, bob and stagger walked it
+  through fractional offsets, so its draw origin is rounded; the paved-property fallback's rect is
+  snapped with it. The mash **squash** is deliberately untouched — it is `draw_set_transform` over
+  *drawn shapes*, so it never sampled a texel and the beats' feel is unmoved. The band's own
+  `PUSH_SCALE` is a known remaining continuous scale over the cut-in's textures, left alone
+  because moving it moves seventeen shipped cut-in frames. `tests/unit/test_texel_stability.gd`
+  grew the rest half (the dock is whole at every rung, the half-difference it replaced is
+  fractional at every rung, the punch's pivot is the camera's own anchor). Fifty-six smoke frames
+  moved and the set is exactly the predicted one: every board frame by the dock's half pixel, and
+  the four `capture_cutin*` frames by the squad's snap — all seventeen combat cut-ins and all
+  twelve menus are byte-identical.
 - **The next-ready-unit key** (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
