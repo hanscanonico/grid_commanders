@@ -1286,6 +1286,14 @@ plan is stated in full below and has no copy there.
   treats as expected. The two file-line budgets the feature raised (`battle.gd`, `main_menu.gd`)
   are recorded with their reasons in `tools/check_scripts.sh`, extraction first —
   `MenuCampaignFlow` owns the menu's campaign walk.
+- **Standing terrain is interactive; the ground plane is where ambient variety lives** (no plan
+  artifact; the "Borrowed Doctrine" art research handoff, and this entry is its record) — a design
+  invariant to hold before the tall-buildings plan is written, not a change to any shipped surface.
+  Anything drawn rising off the cell's ground plane (a property, an HQ, a factory) reads to a player
+  as a thing to interact with, so nothing that merely decorates a cell may stand: decoration —
+  phase-keyed texture variety, mountain scenery, future biome dressing — stays flat in the ground
+  plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
+  decorative tree "stands" the height a property does, a player will try to capture it.
 
 ## Architecture — the rules that matter most
 
