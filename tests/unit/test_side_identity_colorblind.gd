@@ -72,10 +72,17 @@ const LMS_TO_RGB: Array[Vector3] = [
 ## the one those two imply.
 const DEUTERANOPE_M := Vector3(0.494207, 0.0, 1.24827)
 
-const FACTION_KEYS: Array[StringName] = [&"meridian", &"iron", &"aurora", &"verdant"]
+
+## Every faction on the roster, asked of the single authority rather than listed
+## here, so a fifth faction is measured the day it is seated.
+func _faction_keys() -> Array[StringName]:
+	var keys: Array[StringName] = []
+	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
+		keys.append(theme.key)
+	return keys
 
 
-## One faction's shipped field colour, asked of the single authority.
+## One faction's shipped field colour, asked of the same authority.
 func _hue(key: StringName) -> Color:
 	return CommanderVisuals.theme_for_key(key).color
 
@@ -103,10 +110,11 @@ static func cie76(a: Color, b: Color) -> float:
 
 
 func test_every_faction_pair_survives_deuteranopia() -> void:
-	for i in FACTION_KEYS.size():
-		for j in range(i + 1, FACTION_KEYS.size()):
-			var first := FACTION_KEYS[i]
-			var second := FACTION_KEYS[j]
+	var keys := _faction_keys()
+	for i in keys.size():
+		for j in range(i + 1, keys.size()):
+			var first := keys[i]
+			var second := keys[j]
 			var distance := cie76(deuteranope(_hue(first)), deuteranope(_hue(second)))
 			assert_gt(
 				distance,
@@ -122,16 +130,15 @@ func test_meridian_and_verdant_are_the_pair_to_watch() -> void:
 	# The header's finding, pinned: red and green are the pair the simulation
 	# costs the most, so a retune that made another pair worse than this one has
 	# moved the problem rather than fixed it.
+	var keys := _faction_keys()
 	var worst := INF
 	var worst_pair := ""
-	for i in FACTION_KEYS.size():
-		for j in range(i + 1, FACTION_KEYS.size()):
-			var distance := cie76(
-				deuteranope(_hue(FACTION_KEYS[i])), deuteranope(_hue(FACTION_KEYS[j]))
-			)
+	for i in keys.size():
+		for j in range(i + 1, keys.size()):
+			var distance := cie76(deuteranope(_hue(keys[i])), deuteranope(_hue(keys[j])))
 			if distance < worst:
 				worst = distance
-				worst_pair = "%s/%s" % [FACTION_KEYS[i], FACTION_KEYS[j]]
+				worst_pair = "%s/%s" % [keys[i], keys[j]]
 	assert_eq(worst_pair, "meridian/verdant", "the closest simulated pair moved")
 
 
