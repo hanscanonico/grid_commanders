@@ -49,6 +49,19 @@ re-read's numbers to the cell, and `plains/0`, `plains/1` and `plains/2` each fa
 cells**, as the single plains tile did. No unit, faction, overlay or other terrain moved by a cell,
 and nothing was tuned in response. Only the `terrain/variant` table gained rows.
 
+## Re-read 2026-08-20, after mountain gained phases (generator `5efec88`)
+
+Mountain is phase-keyed now for the reason plains is, read at its loudest: it is the most
+silhouette-dominant tile on the board, so a range drawn from one of them is a wall of the same peak.
+A phase moves the summits, the ridges under them and the snow-line seed and **nothing else** — the
+ground line and the contact shadow are fixed, so a range stands on one horizon — and the ruler reads
+all three and reports the worst. It **costs the board nothing**: **1,300 failing (16.0%) clear and
+123 (6.8%) fogged**, which is a same-day control on the atlas-only mountain to the cell (1,300 /
+123), and the `mountain` row is 21 failing (2.6%) in both readings. The worst phase is **`mountain/2`
+at 13.6%** of the 59 probe cells it wins, against `mountain/1`'s 0.0% of 312 — worth naming, like the
+sea's phase 2. One failure moved from value-blind to hue-carried and nothing else did; no unit,
+faction, overlay or other terrain moved by a cell, and nothing was tuned in response.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in
@@ -73,8 +86,9 @@ that, the fog shroud over everything. One ramp step is **0.1543 luminance**, mea
 shipped units atlas.
 
 A ground is measured on **every tile its family can draw** where its own kind surrounds it, and the
-row reports the **worst** of them, named — open water is three phases of the sea sheet and plains
-three of its own, everything else on the board is one tile today. So a row is keyed by a tile rather than by a terrain: the
+row reports the **worst** of them, named — open water, plains and mountain are three phases each of
+their own sheets, everything else on the board is one tile today. So a row is keyed by a tile rather
+than by a terrain: the
 `variant` column beside `terrain` in `cells.csv` and in the `terrain/variant` table names it (a
 phase index, a connection mask, or `atlas` for a base-atlas cell), and `--dump` takes it as its
 sixth field. Which variants exist is asked of `TerrainAutotiles` by walking a probe cell along a row
@@ -258,10 +272,10 @@ figure against ground, and more ink always wins that reading.
 ## What the grounds are
 
 Each terrain is measured as the art the board draws for it when its four neighbours are the same
-terrain — asked of `TerrainAutotiles`, never picked by hand. That is the base atlas cell for
-plains, mountain and the five properties, a wood inside a wood (its full-bleed canopy), the shoal
-sheet's mask-0 cell for a beach, and a phase of the sea sheet for open water — the phase the board
-itself draws at the probe's own cell.
+terrain — asked of `TerrainAutotiles`, never picked by hand. That is the base atlas cell for the
+five properties and the reef, a wood inside a wood (its full-bleed canopy), the shoal sheet's mask-0
+cell for a beach, and a phase of its own sheet for open water, plains and mountain — the phase the
+board itself draws at the probe's own cell.
 
 A property's column is a transparent overlay, so its cell is composed over `TerrainDB.ground()`
 exactly as `BattleView`'s two layers compose it. A wood's *fringe*, a coastline, a road, a river

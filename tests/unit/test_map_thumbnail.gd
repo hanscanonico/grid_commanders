@@ -73,9 +73,22 @@ func test_plains_draws_the_phase_the_board_draws() -> void:
 	)
 
 
-## A terrain with no family keeps the base atlas column.
-func test_a_mountain_cell_keeps_its_atlas_column() -> void:
+## The range is phased off the same cell too, and off a cell whose phase is not
+## 0, so a miniature reading the atlas column would fail here.
+func test_mountains_draw_the_phase_the_board_draws() -> void:
 	var map := _map(["MMM", "MMM", "MMM"])
+	var cell := Vector2i(1, 0)
+	var family := TerrainAutotiles.family(map, cell)
+	var phase := TerrainAutotiles.phase(cell, TerrainAutotiles.MOUNTAIN_PHASES)
+	assert_eq(family, TerrainAutotiles.Family.MOUNTAIN)
+	assert_ne(phase, 0)
+	assert_eq(MapThumbnail.sheet_path(map, cell), TerrainAutotiles.SHEET_PATHS[family])
+	assert_eq(MapThumbnail.sheet_region(map, null, cell), _sheet_cell(family, phase))
+
+
+## A terrain with no family keeps the base atlas column.
+func test_a_reef_keeps_its_atlas_column() -> void:
+	var map := _map(["***", "***", "***"])
 	var cell := Vector2i(1, 1)
 	var col := map.terrain_at(cell).atlas_col
 	assert_eq(MapThumbnail.sheet_path(map, cell), MapThumbnail.ATLAS_PATH)
