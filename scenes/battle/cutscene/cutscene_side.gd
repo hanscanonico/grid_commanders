@@ -80,8 +80,17 @@ const HOVER_PHASE := 1.1
 ## The unlit pip. The banded fill beside it is UiTheme.hp_color's, never a copy —
 ## see _draw_pips.
 const HP_EMPTY := Color(1.0, 1.0, 1.0, 0.12)
-## What a knocked-out figure burns down to on its way off the field.
-const WRECK_TINT := Color(0.22, 0.20, 0.21)
+## What a knocked-out figure burns down to on its way off the field. Neutral, so
+## a wreck is dead by value rather than by hue — a darkened faction tone reads as
+## a healthy rear rank in shadow.
+##
+## Its luma is the burn-down's floor, and the floor is measured rather than
+## picked: the figure sheet's own S0 ink sits at 0.086 luminance and one ramp
+## step is 0.1543 (docs/sprite_legibility.md), so two steps above that ink is
+## 0.395. Below it the interior lands on top of the outline it is supposed to be
+## inside and the figure reads as a hole; 0.205 — what this was — is 0.77 of a
+## step, which is that hole.
+const WRECK_TINT := Color(0.4, 0.4, 0.4)
 ## The wash the vignette darkens the arena's edges with, a step per band.
 const VIGNETTE := Color(0.05, 0.06, 0.10)
 
