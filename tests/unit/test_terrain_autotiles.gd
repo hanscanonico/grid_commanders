@@ -200,6 +200,25 @@ func test_every_phase_keyed_family_has_a_sheet_of_that_many_cells() -> void:
 		assert_eq(TerrainAutotiles.sheet_cells(p_family).size(), count)
 	assert_false(TerrainAutotiles.PHASE_COUNTS.has(TerrainAutotiles.Family.ROADS))
 	assert_false(TerrainAutotiles.PHASE_COUNTS.has(TerrainAutotiles.Family.BRIDGES))
+## The count and the art are one fact, and the count is the half that goes quiet
+## when it breaks: a phase the sheet does not hold is registered as a tile that
+## is not there, and a field would draw it as a hole with nothing else failing.
+## The sheet's own width is what settles it, read through the cut every painter
+## indexes with.
+func test_the_constant_names_exactly_the_phases_the_sheet_holds() -> void:
+	var sheet := load(TerrainAutotiles.SHEET_PATHS[TerrainAutotiles.Family.PLAINS]) as Texture2D
+	assert_not_null(sheet, "the plains sheet did not load")
+	var step := BattleView.TERRAIN_PX + TerrainAutotiles.SHEET_SEPARATION
+	var span := (
+		sheet.get_width() - 2 * TerrainAutotiles.SHEET_MARGIN + TerrainAutotiles.SHEET_SEPARATION
+	)
+	assert_eq(span % step, 0, "the sheet is not a whole number of cells wide")
+	assert_eq(span / step, TerrainAutotiles.PLAINS_PHASES, "the sheet holds a different count")
+	assert_eq(
+		sheet.get_height(),
+		BattleView.TERRAIN_PX + 2 * TerrainAutotiles.SHEET_MARGIN,
+		"the phases are not one row"
+	)
 
 
 # --- the sheet grid ----------------------------------------------------------
