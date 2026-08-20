@@ -143,7 +143,10 @@ func test_a_field_of_plains_wears_every_phase_and_no_periodic_line() -> void:
 
 func test_the_plains_sheet_is_cut_as_one_row_of_phases() -> void:
 	var cells := TerrainAutotiles.sheet_cells(TerrainAutotiles.Family.PLAINS)
-	assert_eq(cells, [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)] as Array[Vector2i])
+	var row: Array[Vector2i] = []
+	for index in TerrainAutotiles.PLAINS_PHASES:
+		row.append(Vector2i(index, 0))
+	assert_eq(cells, row)
 	var rows: Array[String] = ["...", "...", "..."]
 	var cell := Vector2i(1, 1)
 	var variant := TerrainAutotiles.variant(_map(rows), cell)
