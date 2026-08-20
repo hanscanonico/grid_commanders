@@ -334,13 +334,51 @@ func _run_end_turn_ready_units() -> String:
 	_battle.view.set_ai_teams(_battle.ai_teams)
 	var starting_team := _battle.game.current_team
 
-	var error := await _run_guard_safe_answers(starting_team)
+	var error := await _run_bar_end_turn(starting_team)
+	if error != "":
+		return error
+	error = await _run_guard_safe_answers(starting_team)
 	if error != "":
 		return error
 	error = await _run_spent_turn_bypass(starting_team)
 	if error != "":
 		return error
 	return await _run_guard_commit()
+
+
+## The bottom bar's End Turn button, clicked where it is hardest: from a preview,
+## the second rest state it is live in. The click has to reach the same guard the
+## map-menu row does, go dead while that guard is up, and take the preview's blue
+## reach with it — nothing on the turn path clears that paint, so a preview left
+## standing would be handed to the next side. Answered safely, so the turn this
+## flow hands on to is still the one it started.
+func _run_bar_end_turn(starting_team: int) -> String:
+	var resting_at := _battle.cursor_cell
+	_battle.set_cursor_cell(Vector2i(9, 8))  # the enemy tank on the default board
+	_battle.confirm_at(Vector2i(9, 8))
+	if _battle.state != Battle.State.PREVIEW:
+		return "the enemy confirm the button is judged from did not open a preview"
+	var button := _button(_battle.view.hud_bottom, "END TURN")
+	if button == null:
+		return "the bottom bar offers no End Turn button"
+	if button.disabled:
+		return "the bar's End Turn button was dead on the player's own board"
+	await _click(button)
+	var guard := _guard()
+	if guard == null or not guard.visible:
+		return "the bar's End Turn button did not reach the ready-unit guard"
+	if not button.disabled:
+		return "the bar's End Turn button stayed live under its own guard"
+	if not _battle.overlays.move_layer.get_used_cells().is_empty():
+		return "the preview's reach outlived the turn the bar's button ended"
+	var armed := await _await_armed(guard)  # the guard arms its safe action a frame late
+	if armed != "":
+		return armed
+	await _press_key(KEY_ESCAPE)
+	if guard.visible or _battle.game.current_team != starting_team:
+		return "the guard the bar's button opened did not return to the same turn"
+	_battle.set_cursor_cell(resting_at)
+	return ""
 
 
 ## Both safe answers, keyboard then mouse: each has to close the guard on the

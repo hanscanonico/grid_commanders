@@ -968,6 +968,11 @@ func _handle_map_action(action: StringName) -> void:
 
 
 func _request_end_turn() -> void:
+	# The bar's button reaches here from a preview as well as from rest, and the blue
+	# reach a preview painted belongs to the turn being ended: nothing on the turn
+	# path clears it, so it would otherwise be handed to the next side still up.
+	if state == State.PREVIEW:
+		_clear_preview()
 	var ready := ReadyUnits.of(game)
 	# Whether the guard opens at all is a device preference (COM-124); who is ready
 	# is ReadyUnits' answer either way, which is what N and Review still walk.
