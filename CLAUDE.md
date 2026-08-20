@@ -231,9 +231,10 @@ plan is stated in full below and has no copy there.
   armour — whose shadow is the widest, so whose gap is the largest — reading as a separate blob on
   the grass. One constant, both cut-ins' `_draw_shadow`, and `test_figure_sheet.gd` measures it off
   the shipped sheets rather than asserting it, the subtraction between them being the shadow itself.
-  Not a 64x96 regression: the old 64 cell carried the same 9 px margin and the frame is
-  byte-identical across #336 but for a twelve-pixel band-push artefact. All seventeen combat cut-in
-  frames and all four capture ones moved; every board and menu frame is byte-identical.
+  Not a 64x96 regression: the pre-#336 64 cell carries the same 9 px margin (measured on that
+  atlas) and the `-2.0` offset is BA3's, so the gap is as old as the cut-in and #336 only made it
+  easier to see. All seventeen combat cut-in frames and all four capture ones moved; every board and
+  menu frame is byte-identical.
   **The board's cast shadow is SOLID, and it is solid because the board was measured through it**
   (generator `f07e77c`, adopted 2026-08-19; this clause is its record). The board draws the 64px
   cell onto a 16px grid with nearest filtering at whole rungs 1–5, so it keeps one source pixel in
