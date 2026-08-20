@@ -20,14 +20,15 @@ extends RefCounted
 ## forest butt seamlessly, and only a wood's fringe leaves the atlas for a
 ## scalloped tree line.
 ##
-## The sea and plains sheets are the families that are not connection sets: the
-## same open water and the same field in phases, because what a stretch of one
-## repeats at is the tile rather than anything inside it, so a single tile reads
-## row-aligned however its glints or its tufts are spread. The generator emits
-## the phases and the game places them (spritegen README), which is `phase` — a
-## hash of the cell, so the lattice is broken deterministically and the board,
-## the backdrop, the miniature and the harness all break it the same way. Phase 0
-## of either is that terrain's atlas column byte for byte.
+## The sea, plains and mountain sheets are the families that are not connection
+## sets: the same open water, the same field and the same massif in phases,
+## because what a stretch of one repeats at is the tile rather than anything
+## inside it, so a single tile reads row-aligned however its glints, its tufts or
+## its peaks are spread. The generator emits the phases and the game places them
+## (spritegen README), which is `phase` — a hash of the cell, so the lattice is
+## broken deterministically and the board, the backdrop, the miniature and the
+## harness all break it the same way. Phase 0 of each is that terrain's atlas
+## column byte for byte.
 ##
 ## Every board read is clamped to the edge, which states one rule twice over:
 ## an off-board neighbour counts as the cell's own terrain, so the board rim
@@ -38,7 +39,7 @@ extends RefCounted
 
 ## NONE doubles as BattleView's base-atlas source id (0); the other values are
 ## the TileSet source ids the sheets are registered under.
-enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, WOODS, BRIDGES, SEA, PLAINS }
+enum Family { NONE, ROADS, RIVERS, COAST, SHOALS, WOODS, BRIDGES, SEA, PLAINS, MOUNTAIN }
 
 ## One generated sheet per family, the single naming of the files. BattleView
 ## registers a TileSet source per entry and MapThumbnail blits from the same
@@ -52,14 +53,25 @@ const SHEET_PATHS: Dictionary[int, String] = {
 	Family.BRIDGES: "res://assets/tiles/autotiles/bridges.png",
 	Family.SEA: "res://assets/tiles/autotiles/sea.png",
 	Family.PLAINS: "res://assets/tiles/autotiles/plains.png",
+	Family.MOUNTAIN: "res://assets/tiles/autotiles/mountain.png",
 }
 
 ## How many cells each family's sheet holds: a connection set's 16 masks, the
-## bridge sheet's two decks, the phases of the two phase-keyed sheets.
+## bridge sheet's two decks, the phases of the phase-keyed sheets.
 const CONNECTION_VARIANTS := 16
 const BRIDGE_VARIANTS := 2
 const SEA_PHASES := 3
 const PLAINS_PHASES := 3
+const MOUNTAIN_PHASES := 3
+
+## Which families are keyed by where the cell is rather than by what surrounds
+## it, and how many phases each of their sheets holds. Stated once so `variant`,
+## `sheet_cells` and `atlas_coords` cannot disagree about which is which.
+const PHASE_COUNTS: Dictionary[int, int] = {
+	Family.SEA: SEA_PHASES,
+	Family.PLAINS: PLAINS_PHASES,
+	Family.MOUNTAIN: MOUNTAIN_PHASES,
+}
 
 ## The contact sheets' cut: a 2px outer margin, 2px between cells, TERRAIN_PX
 ## cells — sprite_generator's contract, which BattleView registers a TileSet
@@ -113,6 +125,8 @@ static func family(map: MapData, cell: Vector2i) -> Family:
 			return Family.NONE if mask(map, cell) == _ALL_EDGES else Family.WOODS
 		&"plains":
 			return Family.PLAINS
+		&"mountain":
+			return Family.MOUNTAIN
 	return Family.NONE
 
 
@@ -141,11 +155,9 @@ static func mask(map: MapData, cell: Vector2i) -> int:
 ## make, so no surface has to know which families are keyed by connection and
 ## which by phase.
 static func variant(map: MapData, cell: Vector2i) -> int:
-	match family(map, cell):
-		Family.SEA:
-			return phase(cell, SEA_PHASES)
-		Family.PLAINS:
-			return phase(cell, PLAINS_PHASES)
+	var p_family := family(map, cell)
+	if PHASE_COUNTS.has(p_family):
+		return phase(cell, PHASE_COUNTS[p_family])
 	return mask(map, cell)
 
 
@@ -164,19 +176,16 @@ static func phase(cell: Vector2i, count: int) -> int:
 ## know which sheet is which.
 static func sheet_cells(p_family: int) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	match p_family:
-		Family.BRIDGES:
-			for deck in BRIDGE_VARIANTS:
-				cells.append(Vector2i(deck, 0))
-		Family.SEA:
-			for index in SEA_PHASES:
-				cells.append(atlas_coords(p_family, index))
-		Family.PLAINS:
-			for index in PLAINS_PHASES:
-				cells.append(atlas_coords(p_family, index))
-		_:
-			for connection in CONNECTION_VARIANTS:
-				cells.append(atlas_coords(p_family, connection))
+	if PHASE_COUNTS.has(p_family):
+		for index in PHASE_COUNTS[p_family]:
+			cells.append(atlas_coords(p_family, index))
+		return cells
+	if p_family == Family.BRIDGES:
+		for deck in BRIDGE_VARIANTS:
+			cells.append(Vector2i(deck, 0))
+		return cells
+	for connection in CONNECTION_VARIANTS:
+		cells.append(atlas_coords(p_family, connection))
 	return cells
 
 
@@ -185,7 +194,7 @@ static func sheet_cells(p_family: int) -> Array[Vector2i]:
 static func atlas_coords(p_family: int, p_variant: int) -> Vector2i:
 	if p_family == Family.BRIDGES:
 		return Vector2i(0 if p_variant & BIT_E != 0 else 1, 0)
-	if p_family == Family.SEA or p_family == Family.PLAINS:
+	if PHASE_COUNTS.has(p_family):
 		return Vector2i(p_variant, 0)
 	return Vector2i(p_variant & 3, p_variant >> 2)
 

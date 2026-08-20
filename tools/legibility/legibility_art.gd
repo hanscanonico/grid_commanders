@@ -86,9 +86,10 @@ static func load_shipped(units_path := "") -> LegibilityArt:
 
 
 ## Every image and region a cell of `terrain_type` can draw from when its four
-## neighbours are the same terrain — plains and mountain off the base atlas, a
-## wood inside a wood keeping its full-bleed canopy, a beach off the shoal sheet,
-## open water once per phase of the sea sheet. Which of those it is, and how many
+## neighbours are the same terrain — a reef off the base atlas, a wood inside a
+## wood keeping its full-bleed canopy, a beach off the shoal sheet, open water,
+## a field and a range once per phase of their own sheets. Which of those it is,
+## and how many
 ## there are, is TerrainAutotiles' answer over a run of probe cells, never a rule
 ## or a family list restated here: whether a family is keyed by its neighbours or
 ## by where it stands is exactly what the walk finds out.
