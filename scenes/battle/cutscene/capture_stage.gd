@@ -302,8 +302,12 @@ func _squad_anchor(arena: Rect2) -> Vector2:
 	return Vector2(x, y)
 
 
+## Centred on the cell's own ground line, the combat cut-in's sibling rule: the
+## cell's bottom rows are where the board's cast shadow spread to and the figure
+## sheet has it subtracted, so an ellipse on the box's bottom edge sits below the
+## feet it belongs under. See UnitSprite.CELL_GROUND_PX.
 func _draw_shadow(ground: Vector2, strength: float) -> void:
-	draw_set_transform(ground + Vector2(0.0, -2.0), 0.0, Vector2(1.0, 0.3))
+	draw_set_transform(ground + Vector2(0.0, -UnitSprite.CELL_GROUND_PX), 0.0, Vector2(1.0, 0.3))
 	draw_circle(Vector2.ZERO, 20.0, Color(CutscenePalette.GROUND_SHADOW, 0.3 * strength))
 	draw_set_transform(Vector2.ZERO)
 

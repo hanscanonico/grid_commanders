@@ -46,8 +46,27 @@ func test_every_unit_leaves_its_tile_shadow_behind() -> void:
 	assert_gt(units.size(), 0, "no units loaded, so this would pass vacuously")
 	for type in units.all():
 		assert_true(
-			_column_loses_pixels(type.atlas_col),
+			_shadow_rows(type.atlas_col).y >= 0,
 			"%s keeps its tile shadow in the figure sheet (column %d)" % [type.id, type.atlas_col]
+		)
+
+
+## The cut-ins draw their own contact ellipse on UnitSprite.CELL_GROUND_PX, so
+## that constant has to be the row the generator centres the tile's shadow on —
+## and the shadow is exactly what the two sheets differ by. Air is left out: its
+## cast is displaced down the cell from height, and a cut-in lifts the aircraft
+## off the ground plane itself.
+func test_the_cell_ground_line_is_where_the_tile_shadow_is_centred() -> void:
+	var ground_line := float(SPRITE_H - UnitSprite.CELL_GROUND_PX)
+	for type in units.all():
+		if type.domain == UnitType.AIR:
+			continue
+		var span := _shadow_rows(type.atlas_col)
+		assert_almost_eq(
+			(span.x + span.y + 1.0) / 2.0,
+			ground_line,
+			0.5,
+			"%s centres its tile shadow off the cell's ground line" % type.id
 		)
 
 
@@ -62,21 +81,25 @@ func test_the_cut_ins_ask_for_the_figure_sheet() -> void:
 	assert_eq(art.region, UnitSprite.texture_for(type, 1).region, "the two sheets cut differently")
 
 
-## True when any faction row of `column` shows a pixel the figure sheet dropped.
+## The rows of `column` the figure sheet dropped, as first and last, over every
+## faction row at once — the shadow is the same shape in all of them. Empty
+## (a negative last row) when the column lost nothing at all.
+##
 ## Read off drawn pixels rather than bytes: the atlases import with
 ## `fix_alpha_border`, which bleeds colour into transparent pixels, so a removed
 ## shadow leaves RGB behind at alpha zero.
-func _column_loses_pixels(column: int) -> bool:
-	var rows := int(board.get_height() / SPRITE_H)
-	for row in rows:
+func _shadow_rows(column: int) -> Vector2i:
+	var span := Vector2i(SPRITE_H, -1)
+	for row in int(board.get_height() / SPRITE_H):
 		var region := Rect2i(column * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H)
 		var on_tile := board.get_region(region)
 		var posed := figures.get_region(region)
 		for y in SPRITE_H:
 			for x in SPRITE_W:
 				if on_tile.get_pixel(x, y).a > 0.0 and posed.get_pixel(x, y).a == 0.0:
-					return true
-	return false
+					span = Vector2i(mini(span.x, y), maxi(span.y, y))
+					break
+	return span
 
 
 func _sheet(path: String) -> Image:
