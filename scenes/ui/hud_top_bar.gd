@@ -76,7 +76,7 @@ func _build() -> void:
 	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_CLIP_GAP))
 
 	row.add_child(UiTheme.hud_label("FUNDS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
-	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.CAPTURE, true)
+	_funds_label = UiTheme.hud_label("0", UiTheme.SIZE_SEGMENT, UiTheme.FUNDS_INK, true)
 	row.add_child(_funds_label)
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The threat lens, stated as a chip rather than a legend entry: it is a way of

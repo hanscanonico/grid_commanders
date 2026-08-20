@@ -59,6 +59,10 @@ const AMMO := Color(0.87843, 0.66275, 0.18039)
 ## lighter gold than AMMO and deliberately a second token rather than a second
 ## copy: it was an unnamed literal in two files before COM-89.
 const SELECT_GOLD := Color(0.95686, 0.74510, 0.19608)
+## #e8b33c. The funds readout's amber, and a token of its own rather than AMMO's
+## even though the two read alike: money is not a supply level, so retuning the
+## ammo bar must not move what a player's purse is printed in.
+const FUNDS_INK := Color(0.90980, 0.70196, 0.23529)
 const DANGER := Color(0.84706, 0.29020, 0.23529)  # #d84a3c critical HP
 ## The signature hard drop shadow: ink, 90% opaque, zero blur. rgba(35,39,43,.9).
 const SHADOW_INK := Color(0.13725, 0.15294, 0.16863, 0.9)
