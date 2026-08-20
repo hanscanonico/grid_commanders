@@ -167,8 +167,13 @@ func pose(total_in: float, at: float) -> void:
 ## the end. True exactly once per playthrough, which is what makes the exit
 ## single. Skipping still sets `t = total` outright, so any press at any tier
 ## lands on the final tableau.
+##
+## The held fast-forward key spends more of the clock per frame and nothing else,
+## which is what keeps it safe: every visual is a pure function of `t`, so
+## releasing the key mid-cut-in simply resumes at the moment the clock now reads
+## — no beat is re-entered and none is cancelled.
 func advance(delta: float) -> bool:
-	t = minf(t + delta * rate, total)
+	t = minf(t + delta * rate * FastForward.rate(), total)
 	return t >= total
 
 

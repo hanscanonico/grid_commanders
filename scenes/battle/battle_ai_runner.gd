@@ -76,8 +76,12 @@ func run() -> void:
 ## still repaints once per command, so a forty-command turn is forty frames the
 ## eye can track as a fast flicker, the window keeps pumping events, and the
 ## per-turn safety cap above keeps meaning what it says.
+##
+## The held fast-forward key shortens the beat that is about to be waited, so a
+## key let go is felt on the next command rather than inside this one — which is
+## also what keeps Instant's single frame untouched at any rate.
 func _think() -> void:
-	var delay := Settings.speed.command_delay_seconds()
+	var delay := Settings.speed.command_delay_seconds() / FastForward.rate()
 	if delay <= 0.0:
 		await _battle.get_tree().process_frame
 		return

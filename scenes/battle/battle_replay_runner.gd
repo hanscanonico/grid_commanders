@@ -72,9 +72,11 @@ func _finish(reason: String) -> void:
 	_battle.enter_victory()
 
 
-## The beat between two commands, paced off the same tier the animations run at.
+## The beat between two commands, paced off the same tier the animations run at
+## and shortened by the same held key, so watching a recording hurries along
+## exactly as watching a computer turn does.
 func _think() -> void:
-	var delay := Settings.speed.command_delay_seconds()
+	var delay := Settings.speed.command_delay_seconds() / FastForward.rate()
 	if delay <= 0.0:
 		await _battle.get_tree().process_frame
 		return
