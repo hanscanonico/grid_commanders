@@ -300,6 +300,7 @@ func _ready() -> void:
 	end_turn_guard.review_requested.connect(_review_ready_units)
 	end_turn_guard.end_requested.connect(_end_turn_anyway)
 	view.fire_pressed.connect(_fire_command_power)
+	view.end_turn_pressed.connect(_request_end_turn)
 	victory_screen.rematch_button.pressed.connect(_request_rematch)
 	victory_screen.menu_button.pressed.connect(_request_main_menu)
 	handoff_button.pressed.connect(leave_handoff)

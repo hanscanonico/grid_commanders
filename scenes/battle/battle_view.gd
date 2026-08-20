@@ -25,6 +25,10 @@ extends RefCounted
 ## rebuilt in code and a caller three fields deep breaks silently (COM-85).
 signal fire_pressed
 
+## The bottom bar's End Turn button was pressed, relayed for the same reason
+## `fire_pressed` is.
+signal end_turn_pressed
+
 const TILE := 16
 ## Terrain atlas cells are 4x the world grid so the generated property
 ## buildings keep their detail; TerrainLayer is scaled down to compensate.
@@ -140,6 +144,7 @@ func setup() -> void:
 	hud_bottom.chart = game.damage_chart  # and asks the rules which weapons a unit owns
 	hud_bottom.ground = db.ground()  # and paints a property chip on the same ground the board does
 	hud_bottom.fire_pressed.connect(fire_pressed.emit)
+	hud_bottom.end_turn_pressed.connect(end_turn_pressed.emit)
 	# Whose actions the teaching strip may learn from — the computer plays through
 	# the same events and must not retire a hint on the player's behalf — and
 	# whether this board teaches at all, which is MapCatalog's answer (COM-122).
@@ -520,11 +525,14 @@ func refresh_range_lens(on: bool) -> void:
 	hud_top.show_range_lens(on)
 
 
-## Prints the keys that do something in the interaction the player is now in.
-## Battle calls it from its `state` setter, so the legend cannot fall out of step
-## with the flow the way a per-call-site refresh eventually would.
+## Brings the chrome that answers to the interaction the player is now in up to
+## date: the top bar's key legend, and whether the bottom bar's End Turn button
+## may be pressed. Battle calls it from its `state` setter, so neither can fall
+## out of step with the flow the way a per-call-site refresh eventually would,
+## and both read the one context rather than each judging the turn for itself.
 func refresh_keys(context: StringName) -> void:
 	hud_top.show_keys(ControlHints.legend_for(context))
+	hud_bottom.show_end_turn(BattleLegend.commands_board(context))
 
 
 ## The sides a person is playing. One in a match against the computer, both in
