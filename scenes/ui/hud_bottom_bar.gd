@@ -25,6 +25,10 @@ extends PanelContainer
 ## happened to it; what a press means is Battle's, through BattleView.
 signal fire_pressed
 
+## The End Turn button was pressed. Same contract as `fire_pressed`: the bar owns
+## the button, what a press means is Battle's.
+signal end_turn_pressed
+
 const MAX_DEFENSE_STARS := 4
 const CLASS_LABELS: Dictionary = {
 	TerrainType.FOOT: "Foot",
@@ -55,6 +59,10 @@ var _built := false
 ## readiness it reflects — the same contract the floating chip had. A press
 ## leaves here as `fire_pressed`; nobody outside the bar reaches the Button.
 var _fire_button: Button
+## Ending the turn without opening a menu first — the most repeated action in a
+## match, kept on the bar that is always up. Greyed rather than hidden off the
+## player's turn, so the terrain chip beside it never slides.
+var _end_turn_button: Button
 var _portrait_field: Panel
 var _portrait: TextureRect
 var _co_name: Label
@@ -106,6 +114,8 @@ func _build() -> void:
 	# and the chip would slide left.
 	_build_unit(row)
 	_build_terrain(row)
+	row.add_child(UiTheme.hud_divider(UiTheme.HUD_BOTTOM_RULE_H))
+	_build_end_turn(row)
 	row.add_child(UiTheme.hud_spacer(UiTheme.HUD_PAD - UiTheme.HUD_GAP))
 
 	_built = true
@@ -168,6 +178,21 @@ func _build_commander(row: HBoxContainer) -> void:
 	UiTheme.apply_button(_fire_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_MICRO)
 	_fire_button.pressed.connect(fire_pressed.emit)
 	meter_row.add_child(_fire_button)
+
+
+func _build_end_turn(row: HBoxContainer) -> void:
+	_end_turn_button = Button.new()
+	_end_turn_button.text = "END TURN"
+	_end_turn_button.focus_mode = Control.FOCUS_NONE
+	_end_turn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Cream for the reason the Fire button is: this bar is slate, and a side-tinted
+	# button disappears into the chrome it stands on.
+	UiTheme.apply_button(
+		_end_turn_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_MICRO
+	)
+	_end_turn_button.disabled = true  # until a state says the board is the player's
+	_end_turn_button.pressed.connect(end_turn_pressed.emit)
+	row.add_child(_end_turn_button)
 
 
 func _build_unit(row: HBoxContainer) -> void:
@@ -302,6 +327,16 @@ func show_commander(
 		_charge_label.add_theme_color_override("font_color", UiTheme.INK_3)
 	_fire_button.visible = co_state.is_ready() and not is_ai
 	_fire_button.disabled = not co_state.is_ready() or is_ai
+
+
+## Whether the End Turn button may be pressed. `offered` is BattleLegend's answer
+## about the board's own context, so the button is live in exactly the two rest
+## states the player commands from and dead over a computer turn, a handoff, an
+## open menu or a cut-in.
+func show_end_turn(offered: bool) -> void:
+	if not _built:
+		return
+	_end_turn_button.disabled = not offered
 
 
 # --- the unit and terrain thirds ----------------------------------------------

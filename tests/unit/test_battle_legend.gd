@@ -24,3 +24,22 @@ func test_value_rows_relabel_only_the_menu() -> void:
 	assert_eq(ControlHints.VALUE_MENU, BattleLegend.context_for(ControlHints.MENU, false, true))
 	assert_eq(ControlHints.MENU, BattleLegend.context_for(ControlHints.MENU, false, false))
 	assert_eq(ControlHints.IDLE, BattleLegend.context_for(ControlHints.IDLE, false, true))
+
+
+func test_only_the_two_rest_states_command_the_board() -> void:
+	assert_true(BattleLegend.commands_board(ControlHints.IDLE))
+	assert_true(BattleLegend.commands_board(ControlHints.PREVIEW))
+	for context: StringName in [
+		ControlHints.UNIT_SELECTED,
+		ControlHints.MENU,
+		ControlHints.TARGETING,
+		ControlHints.ANIMATING,
+		ControlHints.AI_TURN,
+		ControlHints.REPLAY,
+		ControlHints.REPLAY_PAUSED,
+		ControlHints.PAUSED,
+		ControlHints.HANDOFF,
+		ControlHints.VICTORY,
+		ControlHints.END_TURN_GUARD,
+	]:
+		assert_false(BattleLegend.commands_board(context), String(context))

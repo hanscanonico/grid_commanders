@@ -27,3 +27,11 @@ static func context_for(base: StringName, replaying: bool, value_menu: bool) -> 
 	if value_menu and base == ControlHints.MENU:
 		return ControlHints.VALUE_MENU
 	return base
+
+
+## Whether the board in this context is the player's to command — the two rest
+## states, where nothing is in hand and nobody else is on turn. The bottom bar's
+## End Turn button reads it, so the button and the legend answer off one context
+## rather than off two opinions about whose turn it is.
+static func commands_board(context: StringName) -> bool:
+	return context == ControlHints.IDLE or context == ControlHints.PREVIEW
