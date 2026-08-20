@@ -28,6 +28,15 @@ const SPRITE_OVERFLOW := SPRITE_H - SPRITE_W
 ## Fog is deliberately left drawing above Units: overflow reaching into a fogged
 ## row is over ground the viewer cannot see, so having it clipped is correct.
 const ART_OFFSET := Vector2(0, -float(SPRITE_OVERFLOW) / 2.0)
+## Where the ground line sits inside the cell, measured up from its bottom edge:
+## the row the generator centres the tile's cast shadow on, and so the row a
+## figure's tracks or feet rest on. The rows below it are that shadow's own
+## spread, which is why a surface drawing the shadowless figure sheet over a
+## contact ellipse of its own must put the ellipse here rather than on the box's
+## bottom edge — the two cut-ins do, and an armour cell, whose shadow is the
+## widest, floated furthest above it. test_figure_sheet.gd measures it off the
+## shipped sheets, the subtraction between them being the shadow itself.
+const CELL_GROUND_PX := 9
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Ambient animation frame B: the same army one beat later — rotors swept,
 ## air and sea units riding a pixel higher while their shadows stay put.

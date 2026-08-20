@@ -452,6 +452,12 @@ func _altitude(slot: int, fall: float) -> float:
 ## Ground units get a flattened contact shadow — the light is high and the
 ## ground is a plane, so it lies down on it. A hull gets a pale wake instead: a
 ## dark disc under a ship reads as a hole in the water.
+##
+## Centred on the cell's own ground line rather than on the box's bottom edge,
+## which is UnitSprite.CELL_GROUND_PX above it: the bottom of the cell is where
+## the board's cast shadow spread to, and the figure sheet has that shadow
+## subtracted, so an ellipse on the box's edge sits below the tracks it is
+## supposed to be under.
 func _draw_shadow(ground: Vector2, strength: float) -> void:
 	var tint := Color(CutscenePalette.GROUND_SHADOW, 0.3 * strength * squad_alpha)
 	var reach := 22.0
@@ -462,7 +468,7 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 		# Cast from height: wider, fainter, and further from the thing casting it.
 		tint.a *= 0.55
 		reach = 26.0
-	draw_set_transform(ground + Vector2(0.0, -2.0), 0.0, Vector2(1.0, 0.3))
+	draw_set_transform(ground + Vector2(0.0, -UnitSprite.CELL_GROUND_PX), 0.0, Vector2(1.0, 0.3))
 	draw_circle(Vector2.ZERO, reach, tint)
 	draw_set_transform(Vector2.ZERO)
 
