@@ -530,16 +530,6 @@ func _build_outcome() -> BattleOutcome:
 	return built
 
 
-## The one press the two states that swallow play still listen for: the confirm
-## action, or a left click. Shared so the handoff's "I'm ready" and the computer
-## turn's refusal can never answer different presses.
-func _is_confirm_press(event: InputEvent) -> bool:
-	if event.is_action_pressed(&"confirm"):
-		return true
-	var button := event as InputEventMouseButton
-	return button != null and button.button_index == MOUSE_BUTTON_LEFT and button.pressed
-
-
 func _unhandled_input(event: InputEvent) -> void:
 	var dir := _dirs.step(event, DIR_ACTIONS.keys())
 	if animator.consume_banner_skip(event):
@@ -547,7 +537,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if state == State.HANDOFF:
 		# Only "I'm ready" gets through while the device is being passed over.
-		if _is_confirm_press(event):
+		if TransitionInput.is_confirm(event):
 			leave_handoff()
 		return
 	if state == State.AI_TURN:
@@ -556,7 +546,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			request_pause()
 			return
 		# The computer's turn refuses play, but it says so rather than going quiet.
-		if _is_confirm_press(event):
+		if TransitionInput.is_confirm(event):
 			confirm_at(cursor_cell)
 		return
 	if state == State.PAUSED:
@@ -609,6 +599,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		view.mission_panel.toggle(game)  # chrome the card owns; nothing here has state in it
 	elif event.is_action_pressed(&"fire_power"):
 		_fire_command_power()  # the shortcut the charged meter advertises
+	elif event.is_action_pressed(&"end_turn") and BattleLegend.commands_board(_legend_for(state)):
+		_request_end_turn()  # the bar's button by key: one gate, so they cannot disagree
 	elif not dir.is_empty():
 		var next: Vector2i = cursor_cell + DIR_ACTIONS[dir]
 		if map.in_bounds(next):

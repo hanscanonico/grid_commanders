@@ -59,6 +59,17 @@ const NEXT_CHIP := "N · NEXT"
 ## the set rather than over a list a new chip has to be remembered into.
 const CHIPS: Array[String] = [THREAT_CHIP, RANGE_CHIP, OBJECTIVES_CHIP, NEXT_CHIP]
 
+## End Turn's key, printed on the bottom bar's button rather than in a legend —
+## the button is already the thing that says what the key does, so a legend entry
+## would say it twice and IDLE's has no room for it either way. It wears the same
+## chip grammar as the four above so the two bars name a key the same way, and it
+## is stated here for the reason they are: a key named anywhere else is a key that
+## eventually names a binding the InputMap no longer has.
+##
+## Not in CHIPS: that set is what the *top* bar may print, and each of its members
+## is held to fitting beside a legend this one never sits next to.
+const END_TURN_CHIP := "E · END TURN"
+
 const IDLE := &"idle"
 const UNIT_SELECTED := &"unit_selected"
 const PREVIEW := &"preview"

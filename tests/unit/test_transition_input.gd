@@ -86,3 +86,31 @@ func test_a_stick_axis_is_not_a_press() -> void:
 	event.axis = JOY_AXIS_LEFT_X
 	event.axis_value = 1.0
 	assert_false(TransitionInput.is_press(event))
+
+
+## `is_confirm` is the narrower question the handoff and the computer turn's
+## refusal both ask. It moved here out of Battle because two boundaries answering
+## different presses is the drift this class exists to prevent — and here it is
+## checked without booting the scene.
+func test_the_confirm_action_is_a_confirm() -> void:
+	var event := InputEventAction.new()
+	event.action = &"confirm"
+	event.pressed = true
+	assert_true(TransitionInput.is_confirm(event))
+
+
+func test_a_left_click_is_a_confirm_and_its_release_is_not() -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = true
+	assert_true(TransitionInput.is_confirm(event))
+	event.pressed = false
+	assert_false(TransitionInput.is_confirm(event))
+
+
+func test_a_right_click_is_not_a_confirm() -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	assert_false(TransitionInput.is_confirm(event))
+	assert_true(TransitionInput.is_press(event), "though it is still a press")
