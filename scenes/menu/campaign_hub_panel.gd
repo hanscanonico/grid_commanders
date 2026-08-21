@@ -484,9 +484,18 @@ func _block_summary(block: int) -> Button:
 	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var title := _campaign.block_titles[block].to_upper()
 	var length: int = _campaign.block_lengths[block]
-	face.add_child(_row_cell("%s   ·   0/%d   ·   LOCKED" % [title, length], UiTheme.NEUTRAL_LIGHT))
+	face.add_child(_row_cell("%s   ·   0/%d   ·   LOCKED" % [title, length], _locked_ink()))
 	button.add_child(face)
 	return button
+
+
+## The words a row nobody has reached wears. A row is drawn on the face of a
+## disabled SECONDARY button, so it takes that button's own muted label rather
+## than a lighter grey of its own: the disabled plate is opaque, and a row that
+## dimmed itself by going lighter than the plate went with it.
+static func _locked_ink() -> Color:
+	var plate := DisabledPalette.plate(UiTheme.PAPER, UiTheme.HARD_BORDER)
+	return DisabledPalette.label(UiTheme.INK, plate)
 
 
 ## The row as columns rather than a padded string: mark, number and title on the
@@ -507,7 +516,7 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var cleared := open and _progress.is_cleared(mission.id)
 	var skipped := not open and _progress.is_skipped(_campaign, mission.id)
-	var ink := UiTheme.INK if open else (UiTheme.INK_3 if skipped else UiTheme.NEUTRAL_LIGHT)
+	var ink := UiTheme.INK if open else _locked_ink()
 	if cleared:
 		face.add_child(_row_cell("✓", UiTheme.CAPTURE))
 	var words := VBoxContainer.new()
@@ -525,7 +534,7 @@ func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 			words.add_child(_row_detail(detail))
 	face.add_child(words)
 	if not open:
-		face.add_child(_row_cell("NOT TAKEN" if skipped else "LOCKED", UiTheme.INK_3))
+		face.add_child(_row_cell("NOT TAKEN" if skipped else "LOCKED", _locked_ink()))
 		return face
 	if mission.fog_enabled:
 		face.add_child(_row_cell("FOG", UiTheme.AMMO))
