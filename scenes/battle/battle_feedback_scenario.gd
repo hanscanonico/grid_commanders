@@ -337,6 +337,9 @@ func _run_end_turn_ready_units() -> String:
 	var error := await _run_bar_end_turn(starting_team)
 	if error != "":
 		return error
+	error = await _run_key_end_turn(starting_team)
+	if error != "":
+		return error
 	error = await _run_guard_safe_answers(starting_team)
 	if error != "":
 		return error
@@ -358,7 +361,7 @@ func _run_bar_end_turn(starting_team: int) -> String:
 	_battle.confirm_at(Vector2i(9, 8))
 	if _battle.state != Battle.State.PREVIEW:
 		return "the enemy confirm the button is judged from did not open a preview"
-	var button := _button(_battle.view.hud_bottom, "END TURN")
+	var button := _button(_battle.view.hud_bottom, ControlHints.END_TURN_CHIP)
 	if button == null:
 		return "the bottom bar offers no End Turn button"
 	if button.disabled:
@@ -378,6 +381,36 @@ func _run_bar_end_turn(starting_team: int) -> String:
 	if guard.visible or _battle.game.current_team != starting_team:
 		return "the guard the bar's button opened did not return to the same turn"
 	_battle.set_cursor_cell(resting_at)
+	return ""
+
+
+## E, the key the button now prints. It has to reach the same guard the button
+## does from rest, and be dead with a unit in hand — there the cursor is planning
+## a move, and the board is not the player's to hand over mid-plan.
+func _run_key_end_turn(starting_team: int) -> String:
+	var ready := ReadyUnits.of(_battle.game, starting_team)
+	if ready.is_empty():
+		return "the key's turn opened with nobody ready to hold the board"
+	_battle.set_cursor_cell(ready[0].cell)
+	_battle.confirm_at(ready[0].cell)
+	if _battle.state != Battle.State.UNIT_SELECTED:
+		return "the friendly confirm the key is judged from did not take a unit in hand"
+	await _press_key(KEY_E)
+	if _guard().visible or _battle.state != Battle.State.UNIT_SELECTED:
+		return "E ended the turn with a unit in hand"
+	await _press_key(KEY_ESCAPE)  # put the unit back down; the board is at rest again
+	if _battle.state != Battle.State.IDLE:
+		return "cancelling the unit in hand did not return the board to rest"
+	await _press_key(KEY_E)
+	var guard := _guard()
+	if guard == null or not guard.visible:
+		return "E did not reach the ready-unit guard from rest"
+	var armed := await _await_armed(guard)
+	if armed != "":
+		return armed
+	await _press_key(KEY_ESCAPE)
+	if guard.visible or _battle.game.current_team != starting_team:
+		return "the guard E opened did not return to the same turn"
 	return ""
 
 

@@ -136,6 +136,13 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # until it is dismissed is BattleAnimator's, and what is left here is the three
 # lines of the dispatch branch itself.
 #
+# battle.gd 1423 -> 1415: E ends the turn, and the extraction paid for it twice
+# over. `_is_confirm_press` was a pure static answer over an InputEvent asked at
+# two transition boundaries, which is exactly TransitionInput's question, so it
+# moved there and is now checked without a scene. What the key costs here is the
+# two-line dispatch arm, gated on the same BattleLegend.commands_board the bottom
+# bar's button reads.
+#
 # Three more files enter at their current length, for the reason the two above
 # are here: each is comfortably under the ceiling, so today nothing at all would
 # say if it doubled.
@@ -168,7 +175,7 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # without it. The five lines are the read-back's dispatch, owned here like every
 # scenario's.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1423
+scenes/battle/battle.gd 1415
 scenes/menu/main_menu.gd 1121
 core/save_codec.gd 1332
 ai/ai_unit_action_planner.gd 1099
