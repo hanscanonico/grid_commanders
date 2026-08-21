@@ -489,15 +489,6 @@ func _block_summary(block: int) -> Button:
 	return button
 
 
-## The row as columns rather than a padded string: mark, number and title on the
-## left, the stars in a fixed right-hand cell so they line up down the page. The
-## four states read at a glance — cleared wears a green check and gold stars, an
-## open row shows the hollow stars still on offer, locked and not-taken dim to
-## their words. Children of a disabled button, so every child ignores the mouse.
-##
-## Only an open row carries its second line and its fog chip: what the fight is
-## and where it is are the mission's own facts to give away, and a road nobody
-## has reached must not leak them.
 ## The words a row nobody has reached wears. A row is drawn on the face of a
 ## disabled SECONDARY button, so it takes that button's own muted label rather
 ## than a lighter grey of its own: the disabled plate is opaque, and a row that
@@ -507,6 +498,15 @@ static func _locked_ink() -> Color:
 	return DisabledPalette.label(UiTheme.INK, plate)
 
 
+## The row as columns rather than a padded string: mark, number and title on the
+## left, the stars in a fixed right-hand cell so they line up down the page. The
+## four states read at a glance — cleared wears a green check and gold stars, an
+## open row shows the hollow stars still on offer, locked and not-taken dim to
+## their words. Children of a disabled button, so every child ignores the mouse.
+##
+## Only an open row carries its second line and its fog chip: what the fight is
+## and where it is are the mission's own facts to give away, and a road nobody
+## has reached must not leak them.
 func _row_face(index: int, mission: MissionDefinition, open: bool) -> Control:
 	var face := HBoxContainer.new()
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)
