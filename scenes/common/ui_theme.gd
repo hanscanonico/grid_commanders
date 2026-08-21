@@ -488,7 +488,7 @@ static func focus_box(accent := menu_identity().theme(2).color) -> StyleBoxFlat:
 
 ## Dresses a Button in the design system's recipe: chunky outline, hard offset
 ## shadow, snaps down on press (the shadow collapses and the label shifts into its
-## place), hover brightens, disabled desaturates to 45%. One implementation, read
+## place), hover brightens, disabled is `DisabledPalette`'s. One implementation, read
 ## by both the menu action stack and the select page (plan MN3), so the press
 ## feels identical wherever a button lives.
 ##
@@ -522,19 +522,22 @@ static func apply_button(
 			fg = WHITE
 
 	var ghost := variant == ButtonVariant.GHOST
+	var muted := DisabledPalette.plate(fill, border)
 	button.add_theme_stylebox_override("normal", _button_box(fill, border, not ghost))
 	button.add_theme_stylebox_override(
 		"hover", _button_box(_brighten(fill, ghost), border, not ghost)
 	)
 	button.add_theme_stylebox_override("pressed", _pressed_box(fill, border))
-	button.add_theme_stylebox_override("disabled", _disabled_box(fill, border))
+	# Disabled keeps the border it was drawn with and loses only the shadow: a
+	# button that cannot be pressed has nothing to drop off.
+	button.add_theme_stylebox_override("disabled", _button_box(muted, border, false))
 	button.add_theme_stylebox_override("focus", focus_box(WHITE))
 
 	button.add_theme_color_override("font_color", fg)
 	button.add_theme_color_override("font_hover_color", fg)
 	button.add_theme_color_override("font_pressed_color", fg)
 	button.add_theme_color_override("font_focus_color", fg)
-	button.add_theme_color_override("font_disabled_color", Color(fg.r, fg.g, fg.b, 0.6))
+	button.add_theme_color_override("font_disabled_color", DisabledPalette.label(fg, muted))
 
 
 static func _button_box(fill: Color, border: Color, shadow: bool) -> StyleBoxFlat:
@@ -564,11 +567,6 @@ static func _pressed_box(fill: Color, border: Color) -> StyleBoxFlat:
 	box.content_margin_right = 6 - SHADOW
 	box.content_margin_bottom = BUTTON_PAD_V - SHADOW
 	return box
-
-
-static func _disabled_box(fill: Color, border: Color) -> StyleBoxFlat:
-	var faded := Color(fill.r, fill.g, fill.b, fill.a * 0.45)
-	return _button_box(_desaturate(faded), border, false)
 
 
 # --- input plumbing ----------------------------------------------------------
@@ -607,8 +605,3 @@ static func _brighten(color: Color, ghost: bool) -> Color:
 	if ghost:
 		return Color(1, 1, 1, 0.10)
 	return color.lightened(0.07)
-
-
-static func _desaturate(color: Color) -> Color:
-	var grey := color.get_luminance()
-	return Color(color, color.a).lerp(Color(grey, grey, grey, color.a), 0.6)
