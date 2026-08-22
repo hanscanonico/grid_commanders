@@ -130,6 +130,31 @@ never spends, so this instrument is close to blind to income; the edit stands on
 the opening asymmetry it removes, not on a number it moved, and it is the
 weakest-evidenced part of this pass.
 
+### The Watch at Thornfield, 2026-08-22
+
+`qw05_the_watch_at_thornfield` was the one mission of the pass above whose
+failure line was its own ending: 0% over nine seeds, every loss reading "Rook's
+picket was overrun in the wood line." A `ProtectUnit` failure named the tagged
+mech, and that mech opened at (2,2) — seven tiles from the town it was
+supposed to be watching and three from Vale's nearest infantry — so the
+mission was decided in the open on day 2 or 3, before the five-day hold could
+begin. Three edits, all content:
+
+- **The picket opens in the wood line.** The mech moved to (8,3) and an infantry
+  to (7,1), either side of Thornfield, with Vale's two infantry pulled back to
+  (13,1) and (12,4). (13,4) is still clear, which is where the day-4 armour
+  spawns.
+- **`ProtectUnit` became `LossLimit(3)`.** One named unit in the open is a
+  coin-flip failure rather than a bill the player can pay; the tag stays on the
+  mech as the inert data it always was. At 2 the limit still decided the mission
+  (22%), which is why it is 3.
+- **The board opens level.** The picket gained an infantry at (6,1) and a mech at
+  (7,3), both in woods, taking `odds` from **0.56** to **1.00** — the lowest
+  opening in The Quiet War, and the fault this document's own bar names.
+
+0% → **56%** over nine seeds (50% over eighteen), median win day 6. The
+table below carries the re-measured row; every other row is the 2026-08-17 sweep.
+
 ## What is still hard, and why it was left alone
 
 Fifty missions are still never won by the planner. They are not a to-do list —
@@ -275,7 +300,7 @@ supersedes this table wholesale rather than editing it.
 | quiet war | `qw02_the_column_in_the_pines` | easy | 100% | 4 | — | 1.60 | 0.50 | — |
 | quiet war | `qw03_quiet_ground` | easy | 44% | 12 | — | 1.60 | 1.00 | Your army was destroyed. |
 | quiet war | `qw04_the_governors_scandal` | normal | 0% | — | — | 0.62 | 0.50 | Your army was destroyed. |
-| quiet war | `qw05_the_watch_at_thornfield` | normal | 0% | — | — | 0.56 | 2.00 | Rook's picket was overrun in the wood line. |
+| quiet war | `qw05_the_watch_at_thornfield` | normal | 56% | 6 | — | 1.00 | 2.00 | More than 3 of ours lost in the wood line, to any cause. |
 | quiet war | `qw06_the_forward_safehouse` | easy | 0% | — | — | 0.69 | 1.00 | Your army was destroyed. |
 | quiet war | `qw07_the_cache_at_millhollow` | normal | 0% | — | — | 0.67 | 0.50 | Your army was destroyed. |
 | quiet war | `qw08_the_waystation` | normal | 0% | — | — | 0.83 | 0.50 | Your army was destroyed. |

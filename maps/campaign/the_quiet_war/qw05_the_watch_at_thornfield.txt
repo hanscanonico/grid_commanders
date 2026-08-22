@@ -2,6 +2,8 @@
 # Thornfield before the town can be garrisoned properly. Cassian Rook's
 # picket has to make the wood line look like more than it is until
 # reinforcements can reach the city.
+# The picket opens in the wood line either side of the town rather than out on
+# the road. (13,4) stays clear: Vale's armour spawns there on day 4.
 # Symbols: . plains  F woods  C city  Q HQ
 [terrain]
 FF............FF
@@ -19,9 +21,11 @@ F.....F....FF...
 2 14 5
 [units]
 1 i 2 1
-1 i 3 2
-1 m 2 2 rook_picket
-2 i 11 4
-2 i 12 2
+1 i 6 1
+1 i 7 1
+1 m 7 3
+1 m 8 3 rook_picket
+2 i 12 4
+2 i 13 1
 2 m 12 5
 2 r 10 4
