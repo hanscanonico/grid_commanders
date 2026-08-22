@@ -14,6 +14,15 @@ from dataclasses import dataclass
 RGB = tuple[int, int, int]
 
 
+# Which grade of outline a row wears on the two sides the sun is on. The
+# selective outline lights those sides instead of darkening them, and that
+# trade is only paid for where the lit line reads against the ground: a row
+# whose lit planes sit in the ground's own value band, and whose colour the
+# ground shares, has nothing left to break with — see GROUND_BAND below and
+# docs/outlines.md for the measurement.
+OUTLINE_LIGHT, OUTLINE_HEAVY = 0, 1
+
+
 @dataclass(frozen=True)
 class Faction:
     key: str  # atlas row key (side_identity.gd)
@@ -21,19 +30,53 @@ class Faction:
     body: RGB  # FactionTheme.color
     body_dk: RGB  # FactionTheme.color_dark
     body_lt: RGB  # FactionTheme.color_light
+    outline: int = OUTLINE_LIGHT  # OUTLINE_LIGHT / OUTLINE_HEAVY
 
 
 # Atlas row order. Every row is the exact FactionTheme from the game's
 # commander_visuals.gd (color / color_dark / color_light, x255), neutral
 # included — the sprites and the UI chrome can never disagree about a
 # faction's color.
+#
+# The three chromatic rows wear the light grade: their bodies are the
+# design-system tokens, so a lit line that ties with the grass or the sand in
+# VALUE still breaks with it in colour. Neutral is the sand's own khaki and
+# Iron is achromatic and capped at S3 — the middle of the ground's band — so
+# those two rows have only value to break with, and take the heavy grade.
 FACTIONS: tuple[Faction, ...] = (
-    Faction("neutral", "neutral", (96, 106, 113), (60, 68, 74), (130, 140, 146)),
+    Faction(
+        "neutral",
+        "neutral",
+        (96, 106, 113),
+        (60, 68, 74),
+        (130, 140, 146),
+        OUTLINE_HEAVY,
+    ),
     Faction("meridian", "red", (219, 74, 59), (169, 54, 49), (239, 114, 95)),
     Faction("aurora", "blue", (56, 101, 216), (43, 78, 168), (109, 140, 232)),
-    Faction("iron", "iron", (74, 82, 88), (47, 54, 59), (107, 116, 123)),
+    Faction("iron", "iron", (74, 82, 88), (47, 54, 59), (107, 116, 123), OUTLINE_HEAVY),
     Faction("verdant", "verdant", (44, 134, 54), (29, 97, 39), (79, 168, 90)),
 )
+
+# The value band the ground a unit stands on occupies, on THIS module's
+# Rec. 601 scale (`terrain.py` states its own ceilings on Rec. 709, and the
+# two do not agree on green). The two grounds an army spends its game on are
+# plains and shoal, and their four authored tones span it: GRASS_DARK L118
+# and GRASS L147, SAND_DARK L139 and SAND L165. `terrain.py` cannot be
+# imported here — it imports this module — so the band is stated here and
+# pinned against the tones themselves by `GroundContrast`.
+GROUND_BAND = (118.0, 166.0)
+# Under 25L of separation, the 2026-08-21 sheet review read a boundary pixel
+# and the tile under it as one surface. A lit line therefore clears the ground
+# only below L93 or above L191.
+GROUND_BREAK = 25.0
+
+
+def clears_the_ground(lum: float) -> bool:
+    """Does a value read as a break against the ground under it?"""
+    lo, hi = GROUND_BAND
+    return lum < lo - GROUND_BREAK or lum > hi + GROUND_BREAK
+
 
 # Fixed (faction-independent) materials. Names are what models paint with.
 MATERIALS: dict[str, RGB] = {

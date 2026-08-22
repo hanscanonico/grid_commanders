@@ -25,11 +25,15 @@ from PIL import Image
 
 from spritegen import atlas, autotile, buildings, palette, terrain
 from spritegen.autotile import E, N, S, W
+from spritegen.gbuffer import project as voxel_project
 from spritegen.palette import (
     FACTIONS,
+    GROUND_BAND,
+    GROUND_BREAK,
     GUNMETAL_RAMP,
     MID_CONTOUR,
     MID_FACTION,
+    OUTLINE_HEAVY,
     RAMPS,
     S_BODY,
     faction_by_key,
@@ -38,6 +42,9 @@ from spritegen.terrain import (
     BUILDING_KEY_CEILING,
     CELL,
     GRASS,
+    GRASS_DARK,
+    SAND,
+    SAND_DARK,
     PLAINS_SALT,
     ROAD,
     ROAD_DARK,
@@ -1603,6 +1610,199 @@ class AmbientFrames(unittest.TestCase):
         return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
 
 
+class GroundContrast(unittest.TestCase):
+    """Figure and ground: a unit standing on plains or shoal has to cut out of it.
+
+    The 4px band answered this by construction — every boundary pixel was S0,
+    so 0% of any silhouette tied with the tile under it. The 1px selective
+    outline lights the two sunward sides instead, and that trade is only paid
+    for where the lit line reads against the ground. It does not on two rows:
+    neutral is the sand's own khaki, and Iron's lit planes are capped at S3
+    (L129) — the middle of the band GRASS_DARK, GRASS, SAND_DARK and SAND
+    occupy. The 2026-08-21 sheet review measured the result: neutral and Iron
+    boundaries within 25L of the tile beneath them, 10.3% and 12.7% on shoal
+    and 19.0% and 19.1% on plains, worst sprite 30% (apc).
+
+    `OUTLINE_HEAVY` is those two rows' answer: their sunward silhouette keeps
+    its light only where the lift clears the ground's own band, and takes the
+    ground-facing contour where it cannot. Measured the same way afterwards:
+    0.46% and 0.61% on shoal, 0.56% on plains for both, worst sprite 2.24%.
+
+    The three chromatic rows are unmoved, and deliberately: their bodies are
+    the design-system tokens, so a lit edge that ties with the grass or the
+    sand in VALUE still breaks with it in COLOUR — which is what
+    `test_a_light_row_that_ties_in_value_still_breaks_in_colour` holds them
+    to instead — with two same-hue pairs named and left open (`SAME_HUE`).
+    """
+
+    WEAK = GROUND_BREAK  # under this much luma, boundary and tile read as one
+    # The two grounds an army spends its game on.
+    GROUNDS = ("plains", "shoal")
+    MAX_WEAK_ROW = 0.02  # per row x ground; measured 0.0046-0.0061
+    MAX_WEAK_UNIT = 0.04  # per sprite; measured 0.0224 (tank, shoal)
+    # A light-grade row gives up value and must still break in colour. As a
+    # distance in RGB, over the same boundary: measured 0.15% at worst on
+    # shoal (meridian, verdant) and 0.00% on plains, once the two same-hue
+    # pairs below are set aside.
+    COLOUR_BREAK = 40.0
+    MAX_WEAK_LIGHT = 0.02
+    # The two places a light row shares its HUE with the ground as well as
+    # its band, where the colour half of the argument cannot save it: verdant
+    # on the plains grass (12.2% of its boundary), and aurora over the water
+    # a shoal is half made of (7.9%). Named rather than folded into the
+    # bound, because they are defects to answer and not a rule to live with —
+    # docs/outlines.md carries them as open.
+    SAME_HUE = {("verdant", "plains"), ("aurora", "shoal")}
+    SHADOW = (16, 18, 24)
+
+    def _ground(self, name: str):
+        tile = terrain._PLAIN_TILES[name]().convert("RGB")
+        px = tile.load()
+        return [
+            [px[x, y] for x in range(tile.width)] for y in range(tile.height)
+        ], tile.width
+
+    def _boundary(self, uid, fac, pose, ground, n):
+        """(value ties, colour-and-value ties, boundary pixels) of one sprite
+        standing on `ground`, the tile repeating under the cell as on a map."""
+        cell = atlas.unit_cell(uid, fac, pose, False).convert("RGBA")
+        px = cell.load()
+        w, h = cell.size
+        weak = both = total = 0
+        for y in range(h):
+            for x in range(w):
+                c = px[x, y]
+                if c[3] != 255 or c[:3] == self.SHADOW:
+                    continue
+                lum = palette.luminance(c[:3])
+                dv = dc = None
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < w and 0 <= ny < h and px[nx, ny][3] == 255:
+                        continue
+                    # Where the sprite ends the tile shows, and the tile is
+                    # laid on a 64px grid the 64x96 cell hangs off the top of.
+                    g = ground[ny % n][nx % n]
+                    v = abs(lum - palette.luminance(g))
+                    d = sum((a - b) ** 2 for a, b in zip(c[:3], g)) ** 0.5
+                    dv = v if dv is None else min(dv, v)
+                    dc = d if dc is None else min(dc, d)
+                if dv is None:
+                    continue
+                total += 1
+                weak += dv < self.WEAK
+                both += dv < self.WEAK and dc < self.COLOUR_BREAK
+        return weak, both, total
+
+    def test_the_band_the_outline_grade_is_stated_on_is_the_ground_it_names(self):
+        """`palette.GROUND_BAND` cannot import `terrain`, so it is pinned here.
+
+        The renderer decides whether a lit line clears the ground before any
+        tile exists, out of a band written in `palette.py`; these are the four
+        authored tones that band claims to span, and the ceiling over them.
+        """
+        lo, hi = GROUND_BAND
+        for tone in (GRASS_DARK, GRASS, SAND_DARK, SAND):
+            with self.subTest(tone=tone):
+                self.assertGreaterEqual(palette.luminance(tone), lo)
+                self.assertLessEqual(palette.luminance(tone), hi)
+
+    def test_the_value_only_rows_cut_out_of_the_ground_they_stand_on(self):
+        for name in self.GROUNDS:
+            ground, n = self._ground(name)
+            for fac in FACTIONS:
+                if fac.outline != OUTLINE_HEAVY:
+                    continue
+                weak = total = 0
+                for uid in ATLAS_ORDER:
+                    for pose in Pose:
+                        w_, _, t_ = self._boundary(uid, fac, pose, ground, n)
+                        weak += w_
+                        total += t_
+                        with self.subTest(
+                            ground=name, faction=fac.key, unit=uid, pose=pose.name
+                        ):
+                            self.assertLessEqual(w_ / t_, self.MAX_WEAK_UNIT)
+                with self.subTest(ground=name, faction=fac.key):
+                    self.assertLessEqual(weak / total, self.MAX_WEAK_ROW)
+
+    def test_a_light_row_that_ties_in_value_still_breaks_in_colour(self):
+        for name in self.GROUNDS:
+            ground, n = self._ground(name)
+            for fac in FACTIONS:
+                if fac.outline == OUTLINE_HEAVY or (fac.key, name) in self.SAME_HUE:
+                    continue
+                both = total = 0
+                for uid in ATLAS_ORDER:
+                    for pose in Pose:
+                        _, b_, t_ = self._boundary(uid, fac, pose, ground, n)
+                        both += b_
+                        total += t_
+                with self.subTest(ground=name, faction=fac.key):
+                    self.assertLessEqual(both / total, self.MAX_WEAK_LIGHT)
+
+    def test_the_b_copters_blades_stay_off_the_body_under_them(self):
+        """The rotor is the unit's tell and it is drawn one pixel wide.
+
+        A blade pixel whose four neighbours all sit within `WEAK` of it has
+        dissolved into whatever it crosses — the fuselage, the collar, the
+        sky. Measured over both frames of all five rows: 2 to 8 of the 35
+        blade pixels that touch another drawn pixel. The heavy grade raises
+        that on its own two rows (neutral and Iron go 3/6 to 7/8) because a
+        blade tip and the body edge under it can both be S0 now, which this
+        reading cannot tell from a merge — the blades' separation from the
+        GROUND is held by the row test above. So this is a floor under the
+        1px lattice rather than a reading of the livery.
+        """
+        for fac in FACTIONS:
+            for pose in Pose:
+                model = build_model("b_copter", pose)
+                sprite = render_indexed(model, fac)
+                px = sprite.image.load()
+                w, h = sprite.image.size
+                blades = self._blade_pixels(model)
+                dissolved = touching = 0
+                for x, y in sorted(blades):
+                    if not (0 <= x < w and 0 <= y < h) or px[x, y][3] != 255:
+                        continue
+                    steps = []
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        q = (x + dx, y + dy)
+                        if q in blades or not (0 <= q[0] < w and 0 <= q[1] < h):
+                            continue
+                        if px[q][3] != 255:
+                            continue
+                        steps.append(
+                            abs(
+                                palette.luminance(px[q][:3])
+                                - palette.luminance(px[x, y][:3])
+                            )
+                        )
+                    if not steps:
+                        continue
+                    touching += 1
+                    dissolved += max(steps) < self.WEAK
+                with self.subTest(faction=fac.key, pose=pose.name):
+                    self.assertLessEqual(dissolved / touching, 0.25)
+
+    def _blade_pixels(self, model) -> set:
+        """The screen pixels of the main rotor's blades — the `rotor` voxels
+        at the model's top layer, through the renderer's own projection."""
+        anchors = {v: voxel_project(v) for v in model.vox}
+        minx = min(a[0] for a in anchors.values()) - 1
+        miny = min(a[1] for a in anchors.values()) - 1
+        top = max(v[2] for v in model.vox)
+        out = set()
+        for v, mat in model.vox.items():
+            if mat != "rotor" or v[2] != top:
+                continue
+            sx, sy = anchors[v][0] - minx, anchors[v][1] - miny
+            for j in range(2):
+                for i in range(1 - j, 3 + j):
+                    out.add((sx + i, sy + j))
+        return out
+
+
 class BoardScaleEdge(unittest.TestCase):
     """The unit's edge has to survive the board, which keeps one pixel in four.
 
@@ -1891,19 +2091,43 @@ class IndexedPalette(unittest.TestCase):
                     with self.subTest(faction=fac.key, unit=uid, pose=pose.name):
                         self.assertEqual(naked, [])
 
+    # How much of the sunward silhouette may still be drawn dark, per outline
+    # grade. The light grade is the number the sel-out rewrite bought and is
+    # unmoved (7.07%); the heavy grade is neutral's and Iron's, where a lit
+    # line that lands in the ground's own value band gives way to the contour
+    # — 64.8% of it does, and the 35% that stays light is the rim flash those
+    # two rows key off (`GroundContrast`, docs/outlines.md).
+    MAX_SUNWARD_DARK = {palette.OUTLINE_LIGHT: 0.10, OUTLINE_HEAVY: 0.70}
+
     def test_the_sunward_edge_is_lit_rather_than_outlined(self):
         """Selective outlining: the sun side of the silhouette LIGHTENS.
 
         A pixel whose only break is up or left steps up its own ramp instead
         of going black, so the two sides the light comes from read as an edge
         without spending the plane behind them. Measured over both poses of
-        all 18 units in all five rows, 7.1% of those pixels are still S0
-        against 100% under the band — and the remainder is not slack: it is
-        the far side of a self-overlap (a hull passing behind a turret is a
-        dark line wherever it lies) and the handful the despeckle settles.
+        all 18 units in the three rows that wear the light grade, 7.07% of
+        those pixels are still S0 against 100% under the band — and the
+        remainder is not slack: it is the far side of a self-overlap (a hull
+        passing behind a turret is a dark line wherever it lies) and the
+        handful the despeckle settles.
+
+        The heavy grade is the same rule with one more question asked of it
+        (`palette.clears_the_ground`), so it is measured on the same reading
+        rather than exempted from it: neutral and Iron light the sunward edge
+        wherever the lift clears the ground's band, and take the contour
+        where it cannot.
         """
+        for grade in (palette.OUTLINE_LIGHT, OUTLINE_HEAVY):
+            with self.subTest(grade=grade):
+                dark, total = self._sunward(grade)
+                self.assertLess(dark / total, self.MAX_SUNWARD_DARK[grade])
+
+    def _sunward(self, grade: int) -> tuple[int, int]:
+        """(dark, all) sunward silhouette pixels of the rows wearing `grade`."""
         dark = total = 0
         for fac in FACTIONS:
+            if fac.outline != grade:
+                continue
             for uid in ATLAS_ORDER:
                 for pose in Pose:
                     sprite = render_indexed(build_model(uid, pose), fac)
@@ -1924,7 +2148,18 @@ class IndexedPalette(unittest.TestCase):
                                 continue
                             total += 1
                             dark += sprite.mid(x, y) == MID_CONTOUR
-        self.assertLess(dark / total, 0.10)
+        return dark, total
+
+    # What S0 may cost, per outline grade: (worst single sprite, whole grade).
+    # The light grade is round 11's bill, unmoved — 25.57% on verdant's
+    # b_copter frame B and 13.99% over the three rows. The heavy grade pays
+    # for its ground contour out of the same budget and lands at 30.71%
+    # (neutral's b_copter frame B) and 17.22%, both well under the band's
+    # 53.1% and 34.5%.
+    MAX_CONTOUR = {
+        palette.OUTLINE_LIGHT: (0.28, 0.15),
+        OUTLINE_HEAVY: (0.32, 0.20),
+    }
 
     def test_the_outline_costs_a_pixel_and_not_a_band(self):
         """The line is one pixel: what it does not take is the picture.
@@ -1932,28 +2167,41 @@ class IndexedPalette(unittest.TestCase):
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
         and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
         1px lattice and so nearly all boundary). The G-buffer outline spends
-        13.9% and 25.6%. That difference is the faction livery, the fittings
-        and the plane structure the band was eating, and it is measured here
-        so a future pass cannot quietly grow a band back.
+        13.99% and 25.57% on the rows wearing the light grade, and 17.22%
+        and 30.71% on the two that wear the heavy one. That difference is the
+        faction livery, the fittings and the plane structure the band was
+        eating, and it is measured here so a future pass cannot quietly grow
+        a band back — including through the heavy grade, which is why that
+        grade is budgeted rather than exempted.
         """
-        worst = 0.0
-        dark = total = 0
-        for fac in FACTIONS:
-            for uid in ATLAS_ORDER:
-                for pose in Pose:
-                    sprite = render_indexed(build_model(uid, pose), fac)
-                    img = sprite.image
-                    px = img.load()
-                    w, h = img.size
-                    drawn = [
-                        (x, y) for y in range(h) for x in range(w) if px[x, y][3] == 255
-                    ]
-                    black = sum(1 for x, y in drawn if sprite.mid(x, y) == MID_CONTOUR)
-                    total += len(drawn)
-                    dark += black
-                    worst = max(worst, black / len(drawn))
-        self.assertLess(worst, 0.28)
-        self.assertLess(dark / total, 0.15)
+        for grade in (palette.OUTLINE_LIGHT, OUTLINE_HEAVY):
+            worst = 0.0
+            dark = total = 0
+            for fac in FACTIONS:
+                if fac.outline != grade:
+                    continue
+                for uid in ATLAS_ORDER:
+                    for pose in Pose:
+                        sprite = render_indexed(build_model(uid, pose), fac)
+                        img = sprite.image
+                        px = img.load()
+                        w, h = img.size
+                        drawn = [
+                            (x, y)
+                            for y in range(h)
+                            for x in range(w)
+                            if px[x, y][3] == 255
+                        ]
+                        black = sum(
+                            1 for x, y in drawn if sprite.mid(x, y) == MID_CONTOUR
+                        )
+                        total += len(drawn)
+                        dark += black
+                        worst = max(worst, black / len(drawn))
+            max_worst, max_share = self.MAX_CONTOUR[grade]
+            with self.subTest(grade=grade):
+                self.assertLess(worst, max_worst)
+                self.assertLess(dark / total, max_share)
 
     def test_no_isolated_pixel_outside_the_dither(self):
         """Spec item 10: a pixel differing from all four of its orthogonal

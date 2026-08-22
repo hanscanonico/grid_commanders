@@ -33,7 +33,10 @@ and a shaded one upward, and neither is ever painted a tone the edge does not
 already run through. Where the two are one slot apart there is no slot
 between them and the corner is left alone: a sunward line lifted by
 `SEL_OUT_LIFT = 1` is usually exactly that case, which is the honest answer
-and not a threshold to widen.
+and not a threshold to widen. On the two rows wearing `OUTLINE_HEAVY` that
+sunward line is a contour wherever it cannot clear the ground, so this pass
+softens their corners the way it softens a shaded edge — the lookup is what
+makes that free.
 
 Today's models are drawn 2:1, so most of their silhouette is runs of TWO and
 this pass leaves it alone by design (a clean 2:1 diagonal is already the
