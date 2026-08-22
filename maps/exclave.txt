@@ -1,11 +1,13 @@
 # Every army's crown sits in the enemy's corner: garrison it before you attack.
 # symmetric
 # The exclave is the pocket in the far corner, walled off by mountain except for
-# two one-cell doors -- a road gate on the flank and a footpath on the shoulder.
+# one door: a one-cell road gate on the flank. Boots climb the mountain wall
+# anywhere, so the gate is the only way armour ever reaches a crown.
 # Team 1's home is the north-west (two bases, two cities, the main army), and the
 # HQ it cannot lose stands in the *south-east*, behind team 2's production, held
-# by a detachment of two riflemen and a gun. Team 2's board is the same thing
-# rotated: its crown sits in the north-west pocket, inside team 1's home.
+# by a detachment of two mechs, a gun and a rifleman, with a city of its own to
+# repair and resupply on. Team 2's board is the same thing rotated: its crown
+# sits in the north-west pocket, inside team 1's home.
 # Nothing forbids an HQ far from its bases -- it is pure ownership and layout --
 # and what it buys is an inverted opening. Every other board asks how fast you can
 # reach the enemy; this one asks how much you can spare to hold what you already
@@ -13,36 +15,43 @@
 # infantry make on turn one. Mirrors on (x, y) -> (19 - x, 13 - y).
 # The mountain ring is the pocket's whole defence: `data/terrain/mountain.tres`
 # moves only foot, boot and air, so armour reaches a crown through the road gate
-# or the shoulder path and nowhere else, while infantry and mech climb the wall
-# anywhere and take two turns doing it. Do not widen the ring's doors -- a pocket
-# with a third way in is a pocket that falls before its owner can reinforce it.
+# and nowhere else, while infantry and mech climb the wall anywhere and take two
+# turns doing it. Do not widen the ring's door -- a pocket with a second way in
+# for armour is a pocket that falls before its owner can reinforce it -- which is
+# also why the shoulder cell is mountain rather than the path it used to be.
+# Neither home base sits inside a two-turn march of the crown it faces. That is
+# the other half of the hold: a garrison can be worn down, but only by an army
+# that walked eight tiles to do it, never by a conveyor from the base next door.
+# Keep every base six tiles from the enemy gate and eight from the crown behind it.
 # The eight neutral cities are the ordinary game running underneath: they are what
 # pays for the second army each side needs, one to besiege and one to relieve.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
 [terrain]
-...M..F...FF...M....
-.Q.==B........F.....
+.C.M..F...FF...M....
+.QF==C........F.....
 ...M.=...C....F.....
-M.MM.=..C.......M...
-.....=C.F......F....
-.B====......C....M..
-.F..C....C.M....F...
-...F....M.C....C..F.
-..M....C......====B.
-....F......F.C=.....
-...M.......C..=.MM.M
+MMMM.=..C.......M...
+.....=B.F......F....
+..===C......C....M..
+.F..B....C.M....F...
+...F....M.C....B..F.
+..M....C......C===..
+....F......F.B=.....
+...M.......C..=.MMMM
 .....F....C...=.M...
-.....F........B==.Q.
-....M...FF...F..M...
+.....F........C==FQ.
+....M...FF...F..M.C.
 [owners]
 1 5 1
 1 6 4
-1 1 5
+1 5 5
 1 4 6
 1 18 12
+1 18 13
 2 1 1
+2 1 0
 2 15 7
-2 18 8
+2 14 8
 2 13 9
 2 14 12
 [units]
@@ -51,14 +60,16 @@ M.MM.=..C.......M...
 1 r 6 2
 1 m 2 4
 1 t 6 5
-1 m 18 11
-1 i 17 12
-1 g 19 12
-2 g 0 1
-2 i 2 1
-2 m 1 2
+1 m 17 12
+1 m 18 10
+1 g 18 11
+1 i 19 12
 2 t 13 8
 2 m 17 9
 2 r 13 11
 2 i 15 11
 2 i 13 12
+2 m 2 1
+2 m 1 3
+2 g 1 2
+2 i 0 1

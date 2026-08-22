@@ -302,10 +302,13 @@ and `the_straits` are the boards air and naval units were added for: the first p
 behind each front, the second a port on each coast of one shared channel.
 
 The newer duels are each built around a single idea, and each one's header states it. `exclave`
-(20×14) puts every army's HQ in the *other* army's corner, walled into a mountain pocket with two
-one-cell doors and held by a detachment of three: your bases and cities are home, the crown you
-cannot lose is not, and the shortest march to a match-ending capture is the one your own infantry
-make on turn one. `powder_keg` (14×10) is the roster's smallest economy: an HQ and one base a side,
+(20×14) puts every army's HQ in the *other* army's corner, walled into a mountain pocket whose only
+armour door is a one-cell road gate — boots climb the wall anywhere, nothing drives it — and a
+detachment of four holds it, with a city of its own to repair on: your bases and cities are
+home, the crown you cannot lose is not, and the shortest march to a match-ending capture is the one your own
+infantry make on turn one. Neither home base is within a two-turn march of the crown it faces, so a
+pocket falls to an army that walked to it rather than to the base next door.
+`powder_keg` (14×10) is the roster's smallest economy: an HQ and one base a side,
 two neutral cities and nothing else, so three properties a seat pays 3000 a turn and the army you
 open with is very nearly the army you finish with — what grows over those days is the Command Power
 meter, which charges off damage rather than off income. `blackwood` (18×13) is the board fog was
