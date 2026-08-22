@@ -85,5 +85,40 @@ class DemoMap(unittest.TestCase):
                 seen.add((x, y))
 
 
+class DemoRender(unittest.TestCase):
+    """The board as drawn, not merely as declared: a legend that hashes into
+    five phases proves nothing if `build_demo` still paints phase 0."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.img = atlas.build_demo()
+
+    def _quiet_plains(self):
+        """Plains cells with nothing drawn over them — no property overlay, and
+        no unit, which stands in its own cell and hangs into the one above."""
+        busy = set()
+        for _, _, x, y in atlas._DEMO_UNITS:
+            busy |= {(x, y), (x, y - 1)}
+        for y, row in enumerate(atlas._DEMO_MAP):
+            for x, char in enumerate(row):
+                if atlas._DEMO_LEGEND[char] == "plains" and (x, y) not in busy:
+                    yield x, y
+
+    def test_plains_cells_are_drawn_at_their_hashed_phase(self):
+        drawn = set()
+        for x, y in self._quiet_plains():
+            cell = terrain.CELL
+            got = self.img.crop((x * cell, y * cell, (x + 1) * cell, (y + 1) * cell))
+            want = atlas.phase(x, y, len(terrain.PLAINS_PHASES))
+            with self.subTest(cell=(x, y)):
+                self.assertEqual(
+                    got.tobytes(),
+                    terrain.plains(want).convert("RGBA").tobytes(),
+                    f"cell {(x, y)} is not plains phase {want}",
+                )
+            drawn.add(want)
+        self.assertGreaterEqual(len(drawn), 3, f"phases drawn: {sorted(drawn)}")
+
+
 if __name__ == "__main__":
     unittest.main()
