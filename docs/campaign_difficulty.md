@@ -157,8 +157,9 @@ table below carries the re-measured row; every other row is the 2026-08-17 sweep
 
 ## What is still hard, and why it was left alone
 
-Fifty missions are still never won by the planner. They are not a to-do list —
-they are the three limits above, and two findings:
+Forty-nine missions are still never won by the planner (fifty before Thornfield
+above). They are not a to-do list — they are the three limits above, and two
+findings:
 
 - **The strongest commanders are cast as the enemy.** Of the missions still never
   won, Iona Vance is the enemy in 12 of the 21 she plays, Radek Morn in 11 of 18
@@ -202,7 +203,9 @@ reached rather than the mission lost. A run also writes `missions.csv` and
 ## The measurement, 2026-08-17
 
 108 missions, 9 seeds each, 24-day horizon, after the pass above. A later sweep
-supersedes this table wholesale rather than editing it.
+supersedes this table wholesale rather than editing it. Its one edited row is
+`qw05_the_watch_at_thornfield`, re-measured 2026-08-22 above, because a stale 0%
+beside a mission that has since been fixed reads as a fault still open.
 
 | war | mission | tier | win% | median day | deadline | odds | income | most common ending |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
