@@ -2,9 +2,10 @@
 # Teaching board: the player owns the HQ and one back-line city, neither of
 # which builds. Nothing is built until the crossroads base at the centre is
 # taken — capture-before-production.
-# The player's two infantry open ON the road, five tiles from the crossroads,
-# because Vance's nearest infantry is six from it: off the road they arrived a
-# day late and the race the briefing sells could not be won (COM-256).
+# The player's two infantry open ON the road, four and five tiles from the
+# crossroads; Vance's nearest infantry is five from it as well, so the race the
+# briefing sells is won by moving first. Off the road they were seven out and
+# arrived a day after her, and the race could not be won at all (COM-256).
 # Symbols: . plains  F woods  M mountain  = road  ~ river  + bridge
 #          C city  B base  Q HQ
 [terrain]
