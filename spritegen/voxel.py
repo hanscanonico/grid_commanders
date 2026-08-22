@@ -49,6 +49,7 @@ from .palette import (
     MID_EMPTY,
     MID_FACTION,
     MID_GUNMETAL,
+    OUTLINE_HEAVY,
     RGB,
     S_CONTOUR,
     S_RIM,
@@ -57,6 +58,7 @@ from .palette import (
     SLOTS,
     Faction,
     Ramp,
+    clears_the_ground,
     darken,
     h01,
     lighten,
@@ -299,7 +301,14 @@ def render_indexed_gbuffer(
     keep: bytearray | None = None
     if outline:
         keep = _selective_outline(
-            img, mids, ramps, lit_slots, dark_slots, dplane, nplane
+            img,
+            mids,
+            ramps,
+            lit_slots,
+            dark_slots,
+            dplane,
+            nplane,
+            faction.outline == OUTLINE_HEAVY,
         )
     _despeckle(img, mids, keep)
     # The outline and the despeckle move colour, never geometry: every pixel
@@ -382,6 +391,7 @@ def _selective_outline(
     dark_slots: bytearray,
     depth: Plane,
     normal: Plane,
+    heavy: bool = False,
 ) -> bytearray:
     """1px outlines read off the G-buffer, dark away from the sun and light into it.
 
@@ -444,7 +454,20 @@ def _selective_outline(
             kind = _outline_kind(x, y, edges, convex, depth, normal)
             if kind is None:
                 continue
-            if kind == _LINE_LIT:
+            if kind == _LINE_LIT_GROUND and heavy:
+                # The heavy grade, and the only place it applies: a sunward
+                # pixel of the SILHOUETTE, where the line answers to the tile
+                # rather than to the model. It stays light as long as the lift
+                # clears the ground's own value band — a rim slot does, which
+                # is what keeps the flash these two rows key off. Where it
+                # cannot clear, a lit line and the grass under it are one
+                # surface, so the ground-facing contour is drawn instead.
+                if clears_the_ground(luminance(ramps[i][lit_slots[i]])):
+                    slot = lit_slots[i]
+                else:
+                    silhouette[i] = 1
+                    slot = S_CONTOUR
+            elif kind in (_LINE_LIT, _LINE_LIT_GROUND):
                 slot = lit_slots[i]
             elif kind == _LINE_DARK:
                 # The silhouette is S0's absolutely, whatever material meets
@@ -549,7 +572,10 @@ def _broad_flat_tops(
 
 
 # What a pixel's line is, before the material says which slot draws it.
-_LINE_DARK, _LINE_OVERLAP, _LINE_LIT = 0, 1, 2
+# `_LINE_LIT_GROUND` is the sunward SILHOUETTE — the lit pair drawn against
+# the tile rather than against more of the model — and is the one the heavy
+# grade may take back (see `_selective_outline`).
+_LINE_DARK, _LINE_OVERLAP, _LINE_LIT, _LINE_LIT_GROUND = 0, 1, 2, 3
 
 
 def _outline_kind(
@@ -585,7 +611,7 @@ def _outline_kind(
                 occluded = True
         if occluded:
             return _LINE_OVERLAP
-        return _LINE_LIT if lit else None
+        return _LINE_LIT_GROUND if lit else None
     # A ridge the sun is on: the top face is the only one this light reaches
     # over a crease, so only it carries the 1px highlight.
     if convex.at(x, y) and normal.at(x, y) == N_TOP:
