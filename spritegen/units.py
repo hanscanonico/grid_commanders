@@ -9,27 +9,50 @@ Weapon silhouettes follow each unit's battle_style: small_arms carry rifles
 or a pintle MG, rocket units carry tubes and pods, cannon units carry a
 single big gun, autocannon units carry thin multi-barrels, and the unarmed
 transports carry none.
+
+Every builder takes a `Pose`. Pose A is the model as it has always been
+authored; pose B is one hand-placed idle key pose of the same machine — a
+tread walked one link, a suspension settled a voxel, a weapon resting. The
+poses are keys, not in-betweens: they never move the silhouette enough to
+change what the unit is, and pose A is byte-frozen.
 """
 
 from __future__ import annotations
 
+from enum import IntEnum
+
 from .voxel import Model
+
+
+class Pose(IntEnum):
+    """The two ambient key poses. A is the parked/rest key, B the idle beat."""
+
+    A = 0
+    B = 1
+
 
 # ---------------------------------------------------------------------------
 # shared chassis parts
 # ---------------------------------------------------------------------------
 
 
-def _track(m: Model, x0: int, x1: int, y0: int, y1: int, z1: int = 1) -> None:
-    """One tread block with link texture on its visible faces and road wheels."""
+def _track(
+    m: Model, x0: int, x1: int, y0: int, y1: int, z1: int = 1, phase: int = 0
+) -> None:
+    """One tread block with link texture on its visible faces and road wheels.
+
+    `phase` walks the link pattern and the road wheels one voxel along the
+    run, which is the tracked idle key pose: the tread has crept a link, the
+    hull has not moved and the silhouette is untouched.
+    """
     m.box(x0, x1, y0, y1, 0, z1, "track")
     # alternating link texture along the outer (+x) face and the front (+y) face
     for y in range(y0, y1 + 1):
-        m.set(x1, y, z1 if (y - y0) % 2 == 0 else 0, "track_lt")
+        m.set(x1, y, z1 if (y - y0 + phase) % 2 == 0 else 0, "track_lt")
     for x in range(x0, x1 + 1):
-        m.set(x, y1, z1 if (x - x0) % 2 == 0 else 0, "track_lt")
+        m.set(x, y1, z1 if (x - x0 + phase) % 2 == 0 else 0, "track_lt")
     # road wheel hubs peeking out of the lower run
-    for y in range(y0 + 1, y1, 3):
+    for y in range(y0 + 1 + phase, y1, 3):
         m.set(x1, y, 0, "hub")
 
 
@@ -59,12 +82,34 @@ def _tire(m: Model, x: int, y: int, big: bool = False) -> None:
     m.set(x + 1, y + 1, 1, "hub")
 
 
+def _settle(m: Model, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> None:
+    """Drop a whole sub-assembly one voxel: the suspension/weight key pose.
+
+    Movement is in z only, on purpose. A model's screen WIDTH is a function
+    of its x/y extents alone, and compose_cell sizes and places the cast
+    shadow off that width, so a pose that only rises or settles leaves a land
+    unit's shadow pixel-identical — the unit shifts its weight, the patch of
+    ground it stands on does not.
+    """
+    moved = {
+        (x, y, z): m.vox[(x, y, z)]
+        for x in range(x0, x1 + 1)
+        for y in range(y0, y1 + 1)
+        for z in range(z0, z1 + 1)
+        if (x, y, z) in m.vox
+    }
+    for key in moved:
+        del m.vox[key]
+    for (x, y, z), mat in moved.items():
+        m.vox[(x, y, z - 1)] = mat
+
+
 # ---------------------------------------------------------------------------
 # land
 # ---------------------------------------------------------------------------
 
 
-def infantry() -> Model:
+def infantry(pose: Pose = Pose.A) -> Model:
     """Rifleman: helmet dome over an open face, legs apart mid-stride, rifle
     raised across the chest with the muzzle breaking the silhouette high to
     the right — the opposite corner from the mech's tube."""
@@ -103,10 +148,14 @@ def infantry() -> Model:
     for cx, cy in ((2, 3), (2, 6), (6, 3), (6, 6)):
         m.unset(cx, cy, 10)
     m.box(3, 5, 4, 5, 11, 11, "body")  # crown
+    if pose is Pose.B:
+        # weight shifts onto the trailing boot: the firing arm and the rifle
+        # it holds ride a voxel lower, port arms easing toward the hip
+        _settle(m, 7, 8, 1, 6, 4, 10)
     return m
 
 
-def mech() -> Model:
+def mech(pose: Pose = Pose.A) -> Model:
     """Rocket trooper: planted wide stance, heavy pauldrons over a bulky
     torso, and a fat launch tube climbing forward over the left shoulder —
     taller, wider and squarer than the rifleman's stride (rocket)."""
@@ -144,10 +193,14 @@ def mech() -> Model:
     m.set(0, 9, 16, "amber")  # loaded warhead tip
     m.set(1, 9, 16, "amber")
     m.box(1, 1, 5, 5, 9, 11, "hull")  # supporting arm
+    if pose is Pose.B:
+        # the loaded tube leans in: the left pauldron takes its weight and
+        # compresses a voxel, the whole launcher and its arm coming with it
+        _settle(m, 0, 1, 2, 9, 9, 16)
     return m
 
 
-def recon() -> Model:
+def recon(pose: Pose = Pose.A) -> Model:
     """Scout car: four wheels, sloped hood, roof MG, whip antenna."""
     m = Model()
     for x in (0, 8):
@@ -182,15 +235,19 @@ def recon() -> Model:
     m.set(4, 0, 3, "hub")
     # antenna
     m.box(2, 2, 1, 1, 4, 7, "hull")
+    if pose is Pose.B:
+        # idling suspension settles: the cabin, its MG and the whip drop a
+        # voxel onto the bed while the wheels stay planted
+        _settle(m, 0, 9, 0, 15, 4, 7)
     return m
 
 
-def tank() -> Model:
+def tank(pose: Pose = Pose.A) -> Model:
     """MBT: deep-chested — tall running gear, a turret raised on a full ring,
     hull-hugging long gun (cannon)."""
     m = Model()
-    _track(m, 0, 2, 0, 13, 2)
-    _track(m, 9, 11, 0, 13, 2)
+    _track(m, 0, 2, 0, 13, 2, phase=pose)
+    _track(m, 9, 11, 0, 13, 2, phase=pose)
     # hull in desaturated armour; the turret crown carries the team color
     m.box(0, 11, 1, 12, 3, 5, "hull")
     m.box(1, 10, 13, 13, 3, 5, "hull")
@@ -218,12 +275,12 @@ def tank() -> Model:
     return m
 
 
-def md_tank() -> Model:
+def md_tank(pose: Pose = Pose.A) -> Model:
     """Heavy tank: wider, taller, skirted tracks, long heavy gun (cannon).
     The tallest thing the land roster puts on a tile."""
     m = Model()
-    _track(m, 0, 2, 0, 15, 3)
-    _track(m, 10, 12, 0, 15, 3)
+    _track(m, 0, 2, 0, 15, 3, phase=pose)
+    _track(m, 10, 12, 0, 15, 3, phase=pose)
     # hull with armoured side skirts over the tracks
     m.box(0, 12, 1, 14, 4, 6, "hull")
     m.box(10, 12, 2, 13, 4, 5, "hull_dk")
@@ -255,12 +312,12 @@ def md_tank() -> Model:
     return m
 
 
-def anti_air() -> Model:
+def anti_air(pose: Pose = Pose.A) -> Model:
     """Tracked flak: twin long barrels raked past 60 degrees over the battery
     box — the howitzer's climb, paired and thin — plus a search radar."""
     m = Model()
-    _track(m, 0, 2, 0, 11)
-    _track(m, 8, 10, 0, 11)
+    _track(m, 0, 2, 0, 11, phase=pose)
+    _track(m, 8, 10, 0, 11, phase=pose)
     # low hull in desaturated armour
     m.box(0, 10, 1, 11, 2, 3, "hull")
     m.box(1, 9, 12, 12, 2, 3, "hull_lt")
@@ -291,11 +348,11 @@ def anti_air() -> Model:
     return m
 
 
-def artillery() -> Model:
+def artillery(pose: Pose = Pose.A) -> Model:
     """SPG: open casemate, howitzer erected past 60 degrees, recoil spade."""
     m = Model()
-    _track(m, 0, 2, 0, 12, 2)
-    _track(m, 8, 10, 0, 12, 2)
+    _track(m, 0, 2, 0, 12, 2, phase=pose)
+    _track(m, 8, 10, 0, 12, 2, phase=pose)
     m.box(0, 10, 1, 12, 3, 4, "hull")
     m.box(1, 9, 13, 13, 3, 3, "hull_lt")
     # open casemate: a deep armoured wall ring around the gun pit, no roof;
@@ -323,7 +380,7 @@ def artillery() -> Model:
     return m
 
 
-def rockets() -> Model:
+def rockets(pose: Pose = Pose.A) -> Model:
     """Wheeled MLRS: long eight-wheel carrier, low cab, one wide flat rack
     pitched up over the tail — a tilted plane, never a turret."""
     m = Model()
@@ -353,15 +410,19 @@ def rockets() -> Model:
         m.set(x, 2, 15, "bore")
     # solid launch-frame wall carrying the slab's high end
     m.box(2, 7, 1, 2, 4, 13, "hull_dk")
+    if pose is Pose.B:
+        # eight-wheel suspension breathes under the loaded rack: only the cab
+        # settles, the pod stays pitched at its firing angle
+        _settle(m, 2, 7, 13, 17, 4, 5)
     return m
 
 
-def apc() -> Model:
+def apc(pose: Pose = Pose.A) -> Model:
     """Tracked transport: the tall box — high flat-topped troop compartment
     over a sloped glacis, no turret at all — unarmed."""
     m = Model()
-    _track(m, 0, 2, 0, 12)
-    _track(m, 7, 9, 0, 12)
+    _track(m, 0, 2, 0, 12, phase=pose)
+    _track(m, 7, 9, 0, 12, phase=pose)
     # tall narrow slab hull: the highest solid mass on the land roster,
     # a track narrower than the gun tanks so the box reads upright
     m.box(0, 9, 1, 12, 2, 6, "hull")
@@ -392,7 +453,7 @@ def apc() -> Model:
     return m
 
 
-def missiles() -> Model:
+def missiles(pose: Pose = Pose.A) -> Model:
     """Wheeled SAM battery: two big rounds erected near-vertical over the
     tail — thin steep spikes with daylight between — plus a radar dish."""
     m = Model()
@@ -429,6 +490,9 @@ def missiles() -> Model:
     m.box(3, 6, 1, 1, 9, 9, "hull_lt")
     m.set(4, 0, 9, "gunmetal_dk")
     m.set(5, 0, 9, "gunmetal_dk")
+    if pose is Pose.B:
+        # erector chassis settles at the cab end, the rounds held on their rail
+        _settle(m, 2, 7, 8, 12, 4, 5)
     return m
 
 
@@ -437,7 +501,7 @@ def missiles() -> Model:
 # ---------------------------------------------------------------------------
 
 
-def fighter() -> Model:
+def fighter(pose: Pose = Pose.A) -> Model:
     """Swept-wing air-superiority jet (autocannon)."""
     m = Model()
     # fuselage in desaturated airframe grey, nose toward +y
@@ -473,7 +537,7 @@ def fighter() -> Model:
     return m
 
 
-def bomber() -> Model:
+def bomber(pose: Pose = Pose.A) -> Model:
     """Heavy strategic bomber: four podded engines, deep fuselage (bomb)."""
     m = Model()
     # deep fuselage in airframe grey; rounded nose
@@ -509,12 +573,11 @@ def bomber() -> Model:
     return m
 
 
-def b_copter(frame: int = 0) -> Model:
+def b_copter(pose: Pose = Pose.A) -> Model:
     """Attack helicopter: chin gun, stub-wing rocket pods, tail rotor.
 
-    `frame` 1 is the ambient-animation pose: the same aircraft with its
-    rotor blades swept 45 degrees, so alternating the two frames spins the
-    disc. Nothing else may differ between frames.
+    Pose B is the same aircraft with its rotor blades swept 45 degrees, so
+    alternating the two poses spins the disc. Nothing else may differ.
     """
     m = Model()
     # fuselage in hull livery, rounded nose
@@ -545,10 +608,10 @@ def b_copter(frame: int = 0) -> Model:
     # skids
     m.box(2, 2, 8, 14, 1, 1, "hull_dk")
     m.box(6, 6, 8, 14, 1, 1, "hull_dk")
-    # main rotor: hub mast + four blades over the fuselage (frame 1 sweeps
+    # main rotor: hub mast + four blades over the fuselage (pose B sweeps
     # the blades 45 degrees; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
-    if frame == 0:
+    if pose is Pose.A:
         m.box(4, 4, 5, 15, 9, 9, "rotor")
         m.box(-1, 9, 10, 10, 9, 9, "rotor")
         _rotor_collar(m, 4, 10, 9, ((0, 1), (0, -1), (1, 0), (-1, 0)))
@@ -560,10 +623,10 @@ def b_copter(frame: int = 0) -> Model:
     return m
 
 
-def t_copter(frame: int = 0) -> Model:
+def t_copter(pose: Pose = Pose.A) -> Model:
     """Tandem-rotor transport helicopter — unarmed.
 
-    `frame` 1 sweeps both rotor discs 45 degrees, as on b_copter.
+    Pose B sweeps both rotor discs 45 degrees, as on b_copter.
     """
     m = Model()
     # boxy hold in hull livery, rounded top edges so it stops reading as a
@@ -588,7 +651,7 @@ def t_copter(frame: int = 0) -> Model:
     # tandem rotor masts and overlapping blades
     m.box(4, 5, 4, 4, 7, 8, "hull_dk")
     m.box(4, 5, 13, 13, 7, 8, "hull_dk")
-    if frame == 0:
+    if pose is Pose.A:
         m.box(4, 4, 0, 8, 9, 9, "rotor")
         m.box(-1, 9, 4, 4, 9, 9, "rotor")
         m.box(5, 5, 9, 17, 9, 9, "rotor")
@@ -613,7 +676,7 @@ def t_copter(frame: int = 0) -> Model:
 # ---------------------------------------------------------------------------
 
 
-def battleship() -> Model:
+def battleship(pose: Pose = Pose.A) -> Model:
     """Dreadnought: the fleet's LONG one — a hull with a clear margin over
     every other keel, turrets fore and aft, midships bridge mast (cannon)."""
     m = Model()
@@ -658,7 +721,7 @@ def battleship() -> Model:
     return m
 
 
-def cruiser() -> Model:
+def cruiser(pose: Pose = Pose.A) -> Model:
     """Escort cruiser: the fleet's TOWER — one tall blocky superstructure
     amidships on a beamy mid-length hull, flat helipad aft (autocannon)."""
     m = Model()
@@ -698,7 +761,7 @@ def cruiser() -> Model:
     return m
 
 
-def sub() -> Model:
+def sub(pose: Pose = Pose.A) -> Model:
     """Attack submarine: the LOW one and the DARK one — decks awash, a beamy
     saddle amidships riding the waterline under one prominent sail with dive
     planes and periscopes."""
@@ -743,7 +806,7 @@ def sub() -> Model:
     return m
 
 
-def lander() -> Model:
+def lander(pose: Pose = Pose.A) -> Model:
     """Landing craft: the SHORT FAT one — stubbiest, beamiest hull, raised
     bow ramp, high cargo house aft. Unarmed."""
     m = Model()
@@ -803,10 +866,6 @@ UNITS: dict[str, tuple] = {
     "lander": (lander, "sea"),
 }
 
-# The two units whose model itself changes between ambient frames. Everything
-# else animates (or not) purely in composition — see atlas.unit_cell.
-_FRAMED = ("b_copter", "t_copter")
-
 # Hulls that run awash and so carry a wake (voxel._wake). A ship with
 # freeboard reads against open sea on its own; the sub is the one model whose
 # deck is at the waterline, which is what left it last in the round-4
@@ -814,10 +873,14 @@ _FRAMED = ("b_copter", "t_copter")
 WAKE: frozenset[str] = frozenset({"sub"})
 
 
-def build_model(uid: str, frame: int = 0) -> Model:
-    """The one seam a frame number reaches a builder through."""
-    builder = UNITS[uid][0]
-    return builder(1) if frame == 1 and uid in _FRAMED else builder()
+def build_model(uid: str, pose: Pose = Pose.A) -> Model:
+    """The one seam a pose reaches a builder through.
+
+    Every builder takes the pose, so there is no per-unit list of which
+    models animate: a unit that has nothing to say in pose B simply draws
+    the same voxels and lets composition (the air/sea bob) carry the beat.
+    """
+    return UNITS[uid][0](Pose(pose))
 
 
 # atlas_col -> unit id (contiguous 0..17), the order the sheet is assembled in

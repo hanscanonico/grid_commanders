@@ -46,8 +46,8 @@ from spritegen.terrain import (
     WATER_LIGHT,
     WOODS_SALT,
 )
-from spritegen.units import ATLAS_ORDER, UNITS, build_model
-from spritegen.voxel import render_indexed
+from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
+from spritegen.voxel import CAST, render_indexed
 
 ROAD_TONES = {ROAD, ROAD_DARK}
 WATER_TONES = {WATER, WATER_DARK}
@@ -231,7 +231,7 @@ class Livery(unittest.TestCase):
         ramp = set(RAMPS[red.key])
         for uid in ("tank", "md_tank", "apc", "fighter", "battleship"):
             with self.subTest(unit=uid):
-                sprite = render_indexed(build_model(uid, 0), red)
+                sprite = render_indexed(build_model(uid), red)
                 px = sprite.image.load()
                 worn = [
                     px[x, y][:3]
@@ -445,15 +445,15 @@ class UnitBandCoverage(unittest.TestCase):
 
     def test_every_unit_wears_its_team_on_most_of_itself(self):
         for uid in ATLAS_ORDER:
-            for frame in (0, 1):
-                red = atlas.unit_cell(uid, faction_by_key("red"), frame)
-                blue = atlas.unit_cell(uid, faction_by_key("blue"), frame).convert(
+            for pose in Pose:
+                red = atlas.unit_cell(uid, faction_by_key("red"), pose)
+                blue = atlas.unit_cell(uid, faction_by_key("blue"), pose).convert(
                     "RGBA"
                 )
                 other = blue.load()
                 px = self._unit_pixels(red)
                 worn = sum(1 for x, y, c in px if other[x, y][:3] != c)
-                with self.subTest(unit=uid, frame=frame):
+                with self.subTest(unit=uid, pose=pose.name):
                     self.assertGreaterEqual(worn / len(px), self.MIN_FACTION_SHARE)
 
     def test_the_unowned_row_is_never_the_loudest_one(self):
@@ -1196,7 +1196,7 @@ class RowSeparation(unittest.TestCase):
         tot = [0, 0, 0]
         n = 0
         for uid in ATLAS_ORDER:
-            sprite = render_indexed(build_model(uid, 0), fac)
+            sprite = render_indexed(build_model(uid), fac)
             px = sprite.image.load()
             for y in range(sprite.image.height):
                 for x in range(sprite.image.width):
@@ -1289,21 +1289,49 @@ class RowSeparation(unittest.TestCase):
 class AmbientFrames(unittest.TestCase):
     """Frame B is the same army breathing, never a different army."""
 
+    # An idle key pose shifts weight; it does not swap the sprite. The
+    # silhouette's pixel count may move a little (a settled cab hides a row,
+    # a swept rotor disc thins) and no more.
+    MAX_MASS_DRIFT = 0.08
+
     def test_frame_b_is_reproducible_and_distinct(self):
-        b1 = atlas.build_units_atlas(frame=1)
-        self.assertEqual(b1.tobytes(), atlas.build_units_atlas(frame=1).tobytes())
+        b1 = atlas.build_units_atlas(Pose.B)
+        self.assertEqual(b1.tobytes(), atlas.build_units_atlas(Pose.B).tobytes())
         self.assertNotEqual(b1.tobytes(), atlas.build_units_atlas().tobytes())
 
-    def test_land_units_are_identical_between_frames(self):
-        red = faction_by_key("red")
-        for uid, (_, kind) in atlas.UNITS.items():
-            if kind != "land":
+    def test_every_unit_has_a_second_key_pose(self):
+        """No cell may sit still: an army where half the units freeze while
+        the rest breathe reads as a bug, not as an idle."""
+        for uid in ATLAS_ORDER:
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertNotEqual(
+                        atlas.unit_cell(uid, fac).tobytes(),
+                        atlas.unit_cell(uid, fac, Pose.B).tobytes(),
+                    )
+
+    def test_the_key_pose_keeps_the_units_mass(self):
+        for uid in ATLAS_ORDER:
+            for fac in FACTIONS:
+                a = self._mass(atlas.unit_cell(uid, fac))
+                b = self._mass(atlas.unit_cell(uid, fac, Pose.B))
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertLess(abs(b - a) / a, self.MAX_MASS_DRIFT)
+
+    def test_land_units_keep_their_cast_shadow(self):
+        """A land unit is parked: it shifts its weight, and the patch of
+        ground it stands on may not move a pixel with it. That holds as long
+        as a land key pose only rises or settles — compose_cell sizes the
+        shadow off the sprite's WIDTH, which z motion cannot change."""
+        for uid in ATLAS_ORDER:
+            if UNITS[uid][1] != "land":
                 continue
-            with self.subTest(unit=uid):
-                self.assertEqual(
-                    atlas.unit_cell(uid, red).tobytes(),
-                    atlas.unit_cell(uid, red, frame=1).tobytes(),
-                )
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertEqual(
+                        self._shadow(atlas.unit_cell(uid, fac)),
+                        self._shadow(atlas.unit_cell(uid, fac, Pose.B)),
+                    )
 
     def test_air_and_sea_units_move_between_frames(self):
         red = faction_by_key("red")
@@ -1313,7 +1341,7 @@ class AmbientFrames(unittest.TestCase):
             with self.subTest(unit=uid):
                 self.assertNotEqual(
                     atlas.unit_cell(uid, red).tobytes(),
-                    atlas.unit_cell(uid, red, frame=1).tobytes(),
+                    atlas.unit_cell(uid, red, Pose.B).tobytes(),
                 )
 
     def test_frame_b_still_reads_as_its_own_unit(self):
@@ -1322,9 +1350,9 @@ class AmbientFrames(unittest.TestCase):
         # The real requirement: among every unit's frame A, the one a frame
         # B most resembles must be its own — animation may move pixels, it
         # may never move identity.
-        frame_a = {uid: self._sil(uid, 0) for uid in ATLAS_ORDER}
+        frame_a = {uid: self._sil(uid, Pose.A) for uid in ATLAS_ORDER}
         for uid in ATLAS_ORDER:
-            b = self._sil(uid, 1)
+            b = self._sil(uid, Pose.B)
             best = max(
                 ATLAS_ORDER,
                 key=lambda other: len(b & frame_a[other]) / len(b | frame_a[other]),
@@ -1332,11 +1360,21 @@ class AmbientFrames(unittest.TestCase):
             with self.subTest(unit=uid):
                 self.assertEqual(best, uid)
 
-    def _sil(self, uid: str, frame: int) -> set:
-        cell = atlas.unit_cell(uid, faction_by_key("neutral"), frame)
+    def _sil(self, uid: str, pose: Pose) -> set:
+        cell = atlas.unit_cell(uid, faction_by_key("neutral"), pose)
         small = cell.convert("RGBA").resize((32, 32), Image.NEAREST)
         px = small.load()
         return {(x, y) for y in range(32) for x in range(32) if px[x, y][3] > 200}
+
+    def _mass(self, cell: Image.Image) -> int:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return sum(1 for y in range(h) for x in range(w) if px[x, y][3] > 0)
+
+    def _shadow(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
 
 
 class ContourWeight(unittest.TestCase):
@@ -1389,7 +1427,7 @@ class ContourWeight(unittest.TestCase):
             for fac in FACTIONS:
                 for uid in ATLAS_ORDER:
                     found, total = self._board_boundary(
-                        render_indexed(build_model(uid, 0), fac), phase
+                        render_indexed(build_model(uid), fac), phase
                     )
                     contour += found
                     boundary += total
@@ -1572,9 +1610,9 @@ class IndexedPalette(unittest.TestCase):
 
     def test_the_atlas_carries_no_semi_transparent_pixel(self):
         # 9.8% of the shipped atlas was partial alpha — halos at cut-in.
-        for frame in (0, 1):
-            with self.subTest(frame=frame):
-                alpha = {p[3] for p in self._pixels(atlas.build_units_atlas(frame))}
+        for pose in Pose:
+            with self.subTest(pose=pose.name):
+                alpha = {p[3] for p in self._pixels(atlas.build_units_atlas(pose))}
                 self.assertEqual(alpha - {0, 255}, set())
 
     def test_no_plane_touches_the_ground(self):
@@ -1588,13 +1626,13 @@ class IndexedPalette(unittest.TestCase):
 
         Diagonals count: a corner touching the tile at a point is on the
         silhouette however few of its sides face out, which is exactly the
-        set the halo cannot reach. Both frames, because the ambient frame
-        moves rotors and hulls into new corners.
+        set the halo cannot reach. Both poses, because the idle key pose
+        moves rotors, treads and hulls into new corners.
         """
         for fac in FACTIONS:
             for uid in ATLAS_ORDER:
-                for frame in (0, 1):
-                    sprite = render_indexed(build_model(uid, frame), fac)
+                for pose in Pose:
+                    sprite = render_indexed(build_model(uid, pose), fac)
                     img = sprite.image
                     px = img.load()
                     w, h = img.size
@@ -1606,7 +1644,7 @@ class IndexedPalette(unittest.TestCase):
                         and sprite.mid(x, y) != MID_CONTOUR
                         and _touches_transparency(px, w, h, x, y)
                     ]
-                    with self.subTest(faction=fac.key, unit=uid, frame=frame):
+                    with self.subTest(faction=fac.key, unit=uid, pose=pose.name):
                         self.assertEqual(naked, [])
 
     def test_no_isolated_pixel_outside_the_dither(self):

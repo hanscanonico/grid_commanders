@@ -17,7 +17,7 @@ from PIL import Image
 
 from spritegen import atlas
 from spritegen.palette import FACTIONS
-from spritegen.units import ATLAS_ORDER, UNITS, WAKE, build_model
+from spritegen.units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from spritegen.voxel import compose_cell, place_in_cell, render_indexed
 
 TALLER = atlas.CELL_H + 32
@@ -62,8 +62,8 @@ class CellSize(unittest.TestCase):
         self.assertEqual(cell.size, (atlas.CELL_W, atlas.CELL_H))
 
     def test_the_units_atlas_is_the_cell_grid(self):
-        for frame, shadow in ((0, True), (1, True), (0, False)):
-            img = atlas.build_units_atlas(frame=frame, shadow=shadow)
+        for pose, shadow in ((Pose.A, True), (Pose.B, True), (Pose.A, False)):
+            img = atlas.build_units_atlas(pose=pose, shadow=shadow)
             self.assertEqual(
                 img.size,
                 (len(ATLAS_ORDER) * atlas.CELL_W, len(FACTIONS) * atlas.CELL_H),
