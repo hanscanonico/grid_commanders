@@ -69,8 +69,8 @@ func _draw_badge(font: Font, origin: Vector2, text: String) -> void:
 		text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
-		UiTheme.SIZE_MICRO,
+		UiTheme.SIZE_MARK,
 		OUTLINE,
 		UiTheme.HARD_BORDER
 	)
-	draw_string(font, pen, text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MICRO, UiTheme.WHITE)
+	draw_string(font, pen, text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MARK, UiTheme.WHITE)

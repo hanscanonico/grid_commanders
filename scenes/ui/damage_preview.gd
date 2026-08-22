@@ -38,13 +38,13 @@ func _build() -> void:
 	rows.add_theme_constant_override("separation", 2)
 	margin.add_child(rows)
 
-	_deal_label = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.WHITE)
+	_deal_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	rows.add_child(_deal_label)
 	# What comes back is the cost of the shot, so it reads as the secondary of the
 	# two — the same split the bottom bar's name and stat lines take.
-	_counter_label = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.PAPER_2)
+	_counter_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
 	rows.add_child(_counter_label)
-	_outcome_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_outcome_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	rows.add_child(_outcome_label)
 
 

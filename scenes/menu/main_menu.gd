@@ -34,8 +34,8 @@ const CARD_PAD := 4
 ## The space between two groups of rows inside the Match Setup panel. Named so a
 ## row group built elsewhere can match it: the seat strip sets its own separation
 ## (SeatStrip._rebuild) and is tighter than this, which reads as a grouping the
-## panel does not have.
-const PANEL_ROW_GAP := 5
+## panel does not have. 5 until COM-254 grew every caption in it by two pixels.
+const PANEL_ROW_GAP := 4
 
 ## Everything the select page hides behind itself when it opens, so no focus or
 ## click leaks to the buttons underneath.
@@ -58,7 +58,7 @@ var _column: VBoxContainer
 var _start_button: Button
 ## The footer identity chips, one per seat. Rebuilt from the roster rather than
 ## written out, so a board that seats four shows four.
-var _chips: HBoxContainer
+var _chips: HFlowContainer
 ## Why Start is refusing, under the button. A greyed control with no reason is the
 ## affordance this menu was burned by once already (COM-19).
 var _seat_refusal: Label
@@ -318,7 +318,7 @@ func _build() -> void:
 	_menu_root = center
 
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	center.add_child(column)
 	_column = column
 
@@ -370,7 +370,7 @@ func _build_header() -> Control:
 	var tagline := Label.new()
 	tagline.text = TAGLINE
 	tagline.add_theme_font_override("font", UiTheme.stat())
-	tagline.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	tagline.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	tagline.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	titles.add_child(tagline)
 
@@ -401,7 +401,7 @@ func _build_setup_panel() -> Control:
 	header_row.add_child(title)
 	_map_header = Label.new()
 	_map_header.add_theme_font_override("font", UiTheme.stat())
-	_map_header.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	_map_header.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	_map_header.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	_map_header.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	header_row.add_child(_map_header)
@@ -434,11 +434,11 @@ func _build_map_picker() -> Control:
 	col.add_child(UiKit.micro_label("Map"))
 
 	_map_scroll = ScrollContainer.new()
-	# 126 before the seat strip took its lines of the panel's fixed height. The
-	# picker is the one control here that scrolls by design, so it is the one that
-	# gives ground: a board stays one flick away, where a seat row pushed past the
-	# bottom would have been off the frame entirely (`_chrome` refuses that).
-	_map_scroll.custom_minimum_size = Vector2(0, 80)
+	# 126 before the seat strip took its lines of the panel's fixed height, and 80
+	# before COM-254 measured it against what the picker shows: one whole cell and
+	# its name. It is the one control here that scrolls by design, so it is the one
+	# that gives ground — down to its own content, and no further.
+	_map_scroll.custom_minimum_size = Vector2(0, 76)
 	_map_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(_map_scroll)
 
@@ -675,15 +675,16 @@ func _build_action_stack() -> Control:
 
 	# One chip per seat the board deals, rebuilt when the map changes — the pair
 	# used to be spelled out here, which is why a third army had nowhere to appear.
-	_chips = HBoxContainer.new()
-	_chips.add_theme_constant_override("separation", 4)
-	_chips.alignment = BoxContainer.ALIGNMENT_CENTER
+	# Flowed: four chips in a row are wider than the stack they sit under.
+	_chips = HFlowContainer.new()
+	_chips.add_theme_constant_override("h_separation", 4)
+	_chips.alignment = FlowContainer.ALIGNMENT_CENTER
 	col.add_child(_chips)
 
 	_press_start = Label.new()
 	_press_start.text = "PRESS START"
 	_press_start.add_theme_font_override("font", UiTheme.stat())
-	_press_start.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	_press_start.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	_press_start.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
 	_press_start.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_press_start)
