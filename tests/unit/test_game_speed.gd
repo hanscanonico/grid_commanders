@@ -57,3 +57,46 @@ func test_instant_answers_a_rate_rather_than_dividing_by_its_zero_scale() -> voi
 	var instant := GameSpeed.by_id(&"instant")
 	assert_true(instant.instant, "Instant is still an explicit branch")
 	assert_eq(instant.cutscene_rate(), 1.0, "and never reaches a cut-in to scale one")
+
+
+func test_a_longer_beat_holds_the_speech_card_longer() -> void:
+	var normal := GameSpeed.default_speed()
+	assert_gt(
+		normal.speech_seconds(160),
+		normal.speech_seconds(20),
+		"two generals arguing get more time than a five-word order"
+	)
+	assert_gte(
+		normal.speech_seconds(1),
+		normal.power_banner_seconds(),
+		"and the shortest order still holds at least the power card's beat"
+	)
+	assert_gt(
+		normal.speech_seconds(160),
+		normal.power_banner_seconds(),
+		"which a beat with words in it clears outright"
+	)
+
+
+func test_the_speech_card_reads_at_one_speed_on_every_playing_tier() -> void:
+	assert_eq(
+		GameSpeed.by_id(&"quick").speech_seconds(120),
+		GameSpeed.default_speed().speech_seconds(120),
+		"words are information, so only Instant tightens them"
+	)
+
+
+func test_a_long_exchange_cannot_park_the_board() -> void:
+	assert_eq(
+		GameSpeed.default_speed().speech_seconds(100000),
+		GameSpeed.SPEECH_MAX_SECONDS,
+		"capped; a reader who is done presses on"
+	)
+
+
+func test_instant_tightens_the_speech_card_like_a_banner() -> void:
+	assert_eq(
+		GameSpeed.by_id(&"instant").speech_seconds(400),
+		GameSpeed.INSTANT_BANNER_SECONDS,
+		"the tier that shows results rather than playing them out"
+	)
