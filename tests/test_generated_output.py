@@ -937,6 +937,37 @@ class PropertyPalette(unittest.TestCase):
                     self.assertGreater(len(worn), 40)
                     self.assertEqual(set(worn) - set(RAMPS[fac.key]), set())
 
+    def test_two_owners_of_the_same_building_are_tellable_apart(self):
+        """The roofs came down two bands in this pass, so the pixels that say
+        who owns a property are darker than they were. `RowSeparation` holds
+        the armies apart but says nothing about the board's flags, and the
+        pair that costs the most is the same one it costs on the units:
+        neutral khaki against iron slate, which meet at 48.9 here (the widest
+        pair, meridian against aurora on the base, is 176.2). The bar is the
+        floor that margin may
+        not sink toward, measured over the pixels that actually differ
+        between two rows of one building — an all-pixel mean would be mostly
+        the shared masonry.
+        """
+        for bid in sorted(terrain.PROPERTY):
+            rows = {f.key: self._sprite(bid, f).image for f in FACTIONS}
+            for i, a in enumerate(FACTIONS):
+                for b in FACTIONS[i + 1 :]:
+                    pa, pb = rows[a.key].load(), rows[b.key].load()
+                    w, h = rows[a.key].size
+                    seen = [
+                        (pa[x, y], pb[x, y])
+                        for y in range(h)
+                        for x in range(w)
+                        if pa[x, y] != pb[x, y]
+                    ]
+                    apart = sum(
+                        sum((c[k] - d[k]) ** 2 for k in range(3)) ** 0.5
+                        for c, d in seen
+                    ) / len(seen)
+                    with self.subTest(building=bid, pair=(a.key, b.key)):
+                        self.assertGreater(apart, 40.0)
+
     def test_a_property_never_takes_the_rim_step_a_unit_keys_off(self):
         """`BUILDING_TOP_SLOT`: the band over the top plane is the army's."""
         rim = {ramp[-1] for ramp in RAMPS.values()}
