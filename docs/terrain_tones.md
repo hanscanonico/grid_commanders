@@ -105,8 +105,22 @@ Nothing here loosened a threshold; the full suite (206 tests) passes.
 | `GroundSeparation` field tone vs gravel, luma step | >= 15 | 18.1 | **15.3** |
 | road / bridge / shoal value steps | >= 18 | 18.2 / 23.5 / 41.7 | unchanged (those three tones did not move) |
 | `GroundContrast` GROUND_BAND pin, Rec. 601 of GRASS_DARK / GRASS / SAND_DARK / SAND | 118-166 | 118.4 / 146.9 / 138.5 / 165.1 | 120.4 / 148.5 / 137.8 / 165.1 |
+| `GroundContrast` heavy row boundary tying in value, worst row x ground | <= 0.02 | 0.0061 (iron, shoal) | **0.0079** (both rows, plains) |
+| `GroundContrast` same, worst single sprite | <= 0.04 | 0.0224 | 0.0224 |
+| `GroundContrast` light row tying in value AND colour, worst row x ground outside `SAME_HUE` | <= 0.02 | 0.0015 | 0.0015 |
 | `CanopyLight` lit plane over canopy | > 68 | 72.6 | 72.8 |
 | plains tile median | < 165 | 156.0 | 155.8 |
+
+The two heavy rows pay a little for the regrade: a desaturated grass sits
+slightly deeper inside the band neutral and Iron are capped in, so their
+plains boundary goes 0.56% -> 0.79% of pixels tying in value, against a bound
+of 2%. The two open `SAME_HUE` pairs move with it in the same direction
+(verdant on plains 12.2% -> 12.5%, aurora on shoal 7.9% unchanged) and stay
+what they were: named defects, not a loosened rule.
+
+The claims this pass makes — sky-lit shadows, the greys' temperature, the
+chroma ceilings and the luma ladder that makes all of it safe — are pinned in
+`tests/test_terrain_tones.py`, which fails on the old literals.
 
 **The tight one is the field-vs-gravel step, at 15.3 against a bar of 15.0.**
 It moved because desaturating a green at constant Rec. 709 luma changes which
