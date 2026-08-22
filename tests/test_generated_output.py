@@ -1539,14 +1539,19 @@ class OneSun(unittest.TestCase):
         """The shadow a tile drawer stamps, read by DIFFERENCE against the
         same tile drawn with no offset at all — which is the only way to tell
         a wood's contact shadow from the tufts standing in its clearings,
-        both being GRASS_DARK, without the test copying their coordinates."""
+        both being GRASS_DARK, without the test copying their coordinates.
+
+        The plate the ground pixels are recognised by is the CLUMPED grass
+        plate every scenery tile stands on: read against the plain `_ground`
+        the clumps count as casters, and a clump four pixels up-left of a
+        shadow pixel vouches for it, which makes both readings vacuous."""
         with mock.patch.object(terrain, "SHADOW_OFFSET", offset):
             lit = draw().convert("RGB")
         with mock.patch.object(terrain, "SHADOW_OFFSET", (0, 0)):
             bare = draw().convert("RGB")
         a, b = lit.load(), bare.load()
         shade, caster = set(), set()
-        plate = set(opaque_pixels(terrain._ground(GRASS, PLAINS_SALT)))
+        plate = set(opaque_pixels(terrain._grass_ground(PLAINS_SALT)))
         for y in range(CELL):
             for x in range(CELL):
                 if a[x, y] != b[x, y]:
