@@ -8,18 +8,29 @@ extends Control
 ## player meets that fact. It reads `ReplayFile.list()`, which parses one line per
 ## file and no commands at all, and hands back the path of whatever was picked. It
 ## never opens a recording, never starts a battle and never touches `core/`.
+##
+## A recording is three facts — the board, the table and when it was played — and
+## the page sets them as three, in the campaign hub's row shape: a headline over a
+## micro detail line, with the stamp in a right-hand column so the dates line up
+## down the list. One padded string across a row read as a table missing its
+## columns.
 
 signal picked(path: String)
 signal cancelled
 
-const _ROW_HEIGHT := 18
-## The list is a reading column, not a banner. Full-frame rows set a 41-character
-## label across 624px with the last third empty, which reads as a table missing a
-## column; this is about as wide as the longest real label needs.
-const _ROW_WIDTH := 360
+## Two lines of ink plus the button's own frame.
+const _ROW_HEIGHT := 24
+## The page's one inset, the campaign hub's: a row's face from its button's
+## edges, and the list from the frame's.
+const _INSET := 6
+## The list is a reading column, not a banner: the shell's content width, which is
+## about as wide as the longest real row needs. The frame, its rows and Back all
+## take it, so nothing on the page has a width of its own.
+const _LIST_WIDTH := UiTheme.CONTENT_W
 
 var _title: Label
 var _rows: VBoxContainer
+var _count: Label
 var _empty: Label
 var _back_button: Button
 var _row_buttons: Array[Button] = []
@@ -102,25 +113,12 @@ func _build() -> void:
 	# kept, so it says so whether or not the list has anything in it yet.
 	main.add_child(_note("Every match records itself. The last %d are kept." % ReplayFile.KEEP))
 
-	_empty = _note("Nothing recorded yet — play a match and it will be here.")
-	main.add_child(_empty)
-
-	# Scrolled for the same reason the select page's card is: ten rows fit today,
-	# and the list's height must not be able to carry Back off the bottom.
-	var frame := ScrollContainer.new()
-	frame.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main.add_child(frame)
-
-	_rows = VBoxContainer.new()
-	_rows.add_theme_constant_override("separation", 3)
-	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_child(_rows)
+	main.add_child(_build_frame())
 
 	_back_button = Button.new()
 	_back_button.text = "Back"
 	UiTheme.apply_button(_back_button, UiTheme.ButtonVariant.GHOST, null, UiTheme.SIZE_BUTTON)
-	_back_button.custom_minimum_size = Vector2(_ROW_WIDTH, 20)
+	_back_button.custom_minimum_size = Vector2(_LIST_WIDTH, 20)
 	_back_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_back_button.pressed.connect(_leave)
 	main.add_child(_back_button)
@@ -131,6 +129,60 @@ func _build() -> void:
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	footer.text = "UP/DOWN  BROWSE      ENTER  WATCH      ESC  BACK      MOUSE OK"
 	main.add_child(footer)
+
+
+## The list's frame: a titled slate panel of a fixed width taking whatever height
+## the page has left, so a page holding three recordings and a page holding ten
+## are the same page. Slate rather than the cream `panel_box`, because the rows
+## are cream themselves and a cream list on a cream card is one surface.
+func _build_frame() -> Control:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UiTheme.dark_panel_box())
+	panel.custom_minimum_size = Vector2(_LIST_WIDTH, 0)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	panel.add_child(col)
+
+	var header := PanelContainer.new()
+	header.add_theme_stylebox_override("panel", UiTheme.header_box(UiTheme.SLATE_700))
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 6)
+	var heading := UiKit.micro_label("Recordings")
+	heading.add_theme_color_override("font_color", UiTheme.WHITE)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_child(heading)
+	_count = UiKit.micro_label("")
+	_count.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
+	header_row.add_child(_count)
+	header.add_child(header_row)
+	col.add_child(header)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 4)
+	var padded := UiKit.pad(body, _INSET, _INSET)
+	padded.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(padded)
+
+	_empty = _note("Nothing recorded yet — play a match and it will be here.")
+	body.add_child(_empty)
+
+	# Scrolled because ten rows are more than the frame holds, and focus-following
+	# because otherwise the list stays put while the keyboard walks off the bottom
+	# of it — the campaign hub's list learned the same lesson.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(scroll)
+
+	_rows = VBoxContainer.new()
+	_rows.add_theme_constant_override("separation", 3)
+	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_rows)
+	return panel
 
 
 ## A centred Silkscreen micro-line, the panel's one kind of explanatory text.
@@ -156,29 +208,94 @@ func _fill(summaries: Array[ReplayFile.Summary]) -> void:
 	_row_buttons.clear()
 	_paths = PackedStringArray()
 	_empty.visible = summaries.is_empty()
+	_count.text = "%d OF %d" % [summaries.size(), ReplayFile.KEEP]
 	for summary in summaries:
-		var button := Button.new()
-		button.text = _row_text(summary)
-		UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
-		button.custom_minimum_size = Vector2(_ROW_WIDTH, _ROW_HEIGHT)
-		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var index := _paths.size()
-		button.pressed.connect(func() -> void: _pick(index))
+		var button := _row_button(summary, _paths.size())
 		_rows.add_child(button)
 		_row_buttons.append(button)
 		_paths.append(summary.path)
 
 
-## "Ironworks · Alina Ward vs Cass Orlov   —   2026-08-01 19:06". The label is
-## what the recording called itself; the board is only named again when it did
-## not name one, which is what an older or hand-made file looks like.
-func _row_text(summary: ReplayFile.Summary) -> String:
-	var name := summary.label
-	if name.is_empty():
-		name = MapCatalog.display_name(summary.map_path)
-	var when := summary.recorded.replace("T", " ")
-	return name if when.is_empty() else "%s   —   %s" % [name, when]
+func _row_button(summary: ReplayFile.Summary, index: int) -> Button:
+	var button := Button.new()
+	UiTheme.apply_button(button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BUTTON)
+	button.custom_minimum_size = Vector2(0, _ROW_HEIGHT)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_child(_row_face(summary))
+	button.pressed.connect(func() -> void: _pick(index))
+	return button
+
+
+## The row as columns rather than a padded string: the board over the table on the
+## left, the stamp in its own right-hand column. Children of a button, so the face
+## ignores the mouse and the press stays the button's.
+func _row_face(summary: ReplayFile.Summary) -> Control:
+	var face := HBoxContainer.new()
+	face.set_anchors_preset(Control.PRESET_FULL_RECT)
+	face.offset_left = _INSET
+	face.offset_right = -_INSET
+	face.add_theme_constant_override("separation", 6)
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lines := _row_lines(summary)
+	var board := UiTheme.hud_label(lines[0], UiTheme.SIZE_BUTTON, UiTheme.INK, true)
+	board.clip_text = true
+	words.add_child(board)
+	if lines.size() > 1:
+		var table := _detail(lines[1], HORIZONTAL_ALIGNMENT_LEFT)
+		table.clip_text = true
+		words.add_child(table)
+	face.add_child(words)
+
+	var stamp := _stamp(summary)
+	if not stamp.is_empty():
+		var when := VBoxContainer.new()
+		when.add_theme_constant_override("separation", 0)
+		when.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		when.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for line in stamp:
+			when.add_child(_detail(line, HORIZONTAL_ALIGNMENT_RIGHT))
+		face.add_child(when)
+	return face
+
+
+## One of a row's quiet lines, in the kit's micro dress. Unclipped: a clipped
+## label asks for no width at all, which is right for the line that gives the
+## expanding column its ground and wrong for the stamp column, whose whole width
+## is what it has to say.
+func _detail(text: String, align: HorizontalAlignment) -> Label:
+	var label := UiKit.micro_label(text)
+	label.horizontal_alignment = align
+	return label
+
+
+## A recording as the board it was played on and who was at the table. A label is
+## written as those two joined by `BattleRecording.LABEL_SEPARATOR`, so the page
+## reads it back at that one separator rather than setting the whole string on one
+## line; a file that names no table — an older or hand-made one — keeps its label
+## as the headline, and one that names nothing at all falls back to the board its
+## own opening states.
+func _row_lines(summary: ReplayFile.Summary) -> PackedStringArray:
+	var parts := summary.label.split(BattleRecording.LABEL_SEPARATOR, true, 1)
+	if parts.size() > 1:
+		return parts
+	if summary.label.is_empty():
+		return PackedStringArray([MapCatalog.display_name(summary.map_path)])
+	return parts
+
+
+## When it was played, as the day over the time — a recording stamps itself
+## `Time.get_datetime_string_from_system`, which joins the two at a T. Empty when
+## the file carries no stamp, and the column is then left off the row entirely.
+func _stamp(summary: ReplayFile.Summary) -> PackedStringArray:
+	if summary.recorded.is_empty():
+		return PackedStringArray()
+	return summary.recorded.split("T", true, 1)
 
 
 func _pick(index: int) -> void:
