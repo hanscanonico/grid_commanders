@@ -477,9 +477,11 @@ func show_power_effects(marks: Array[PowerEffects.Mark]) -> void:
 
 ## One beat of scripted mission dialogue, on the board the beat landed on. The
 ## power card's shape throughout, because it is the same kind of thing: a blocking
-## card carrying a general's spoken line, which is also why it holds for the power
-## card's beat rather than the day banner's shorter one — a sentence needs more
-## time than a title. Silent for an event nobody comments on.
+## card carrying a general's spoken line. It holds longer than either banner and
+## for a length of its own — the tier is asked how long *these words* take to read
+## (COM-255), a beat being anything from a five-word order to two generals
+## arguing. Any press still retires it early, so the longer hold costs an
+## impatient player nothing. Silent for an event nobody comments on.
 ##
 ## While capturing it holds, exactly as the power card does, so a posed frame
 ## still has the card in it.
@@ -490,7 +492,7 @@ func speak_lines(lines: Array[MissionLine], commanders: CommanderDB) -> void:
 	if capturing:
 		return
 	_speech_tween = node.create_tween()
-	_speech_tween.tween_interval(Settings.speed.power_banner_seconds())
+	_speech_tween.tween_interval(Settings.speed.speech_seconds(_spoken_characters(lines)))
 	_speech_tween.tween_callback(_finish_speech)
 	await speech_finished
 
@@ -506,6 +508,16 @@ func speak_until_dismissed(lines: Array[MissionLine], commanders: CommanderDB) -
 	if capturing:
 		return
 	await speech_finished
+
+
+## How much there is to read on the card: the words themselves, the speakers'
+## names being a label rather than a sentence.
+static func _spoken_characters(lines: Array[MissionLine]) -> int:
+	var said := 0
+	for line: MissionLine in lines:
+		if line != null:
+			said += line.text.length()
+	return said
 
 
 func _raise_speech(lines: Array[MissionLine], commanders: CommanderDB) -> void:
