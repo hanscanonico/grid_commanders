@@ -356,7 +356,18 @@ that pipeline's paste step can be pointed at this art instead.
      **docs/outlines.md** has the full
      reading, including what a 1px line costs at board scale and why the
      contrast pair covers it.
-   - `render` (terrain and buildings) is the older path: three shaded face
+     The **property buildings** are drawn by this renderer too, one band
+     lower: `voxel.BUILDING_TOP_SLOT` stops every ramp at the top plane, so
+     the rim step — the flash the band above the terrain ceiling is reserved
+     for — stays a unit's alone. They are painted out of three shared
+     families built by the same shaper (`palette.PROPERTY_MATERIALS`:
+     masonry, concrete, machinery) with the owner's roof in the faction ramp,
+     and they wear the same selective outline. That took a building from
+     61-74 colours to 13-23 (the unit cap is 24) and its dark boundary share
+     from an unconditional 100% to 0.65-0.74 on the light grade — the units'
+     own figures. `PropertyPalette` in the tests is where both are held, and
+     **docs/properties.md** carries the ladders and the readings.
+   - `render` (the nature props) is the older path: three shaded face
      tones per material, fractional occlusion, and two rules that keep it
      countable (`docs/terrain_outlines.md`) — a **1px contour in one
      deliberate tone per material** (`PROP_CONTOUR_DARKEN`, drawn only where
@@ -393,18 +404,23 @@ that pipeline's paste step can be pointed at this art instead.
    take the sky's own hue in shade, where they used to be one S0.05 neutral
    under both lights. `docs/terrain_tones.md` has the before/after table, the
    re-measured gates and the two places the pass could not land exactly where
-   it aimed. A building's masonry is picked by its **lit** plane
-   rather than by its own value — a voxel top face is the material scaled
-   1.3x and rim-lit on top of that — so the greys are dark enough that no
-   wall reaches the units' band; a lit window and a pane of glazing are the
-   only things that glint into it (`BUILDING_KEY_CEILING`). Under the cap is
-   not the same thing as readable, though, so the ladder sits a further rung
-   down: the **mass** of every wall, lot and roof is dark — the lit half of a
-   property measures L79-111 — and the rung it used to be is **trim, drawn
-   only as a line**: a parapet, a coping, a ridge, a seam. Roofs follow the
-   same rule inside the faction's own ramp, the theme's dark as the plane and
-   the theme colour as the ridge, because a `body` roof lit to L152 sat
-   exactly on a verdant unit's own top slot. The woods canopy carries a lit
+   it aimed. A building is painted out of RAMP SLOTS, like a unit:
+   four rungs of one **masonry** ramp for the mass, its trim and its
+   openings, a cool **concrete** for the lot it stands on, and a **machinery**
+   ramp a full band over both for a crane, a mast or a chimney cap — so a
+   plate and the walls on it separate by hue rather than by spending the
+   value the units are keyed against. The ladder is authored where the old
+   fixed greys' lit planes landed: the **mass** of every wall, lot and roof
+   is dark — the lit half of a property measures L74-112 — and the rung above
+   it is **trim, drawn only as a line**: a parapet, a coping, a ridge, a
+   seam. A lit window and a pane of glazing are the only things that glint
+   into the units' band (`BUILDING_KEY_CEILING`), which is why the base's
+   hazard stripe is dashed rather than solid. Roofs follow the same rule
+   inside the faction's own ramp, two bands under the unit convention — the
+   owner's shadow band as the plane and the token itself as the ridge,
+   because a `body` roof lit to L152 sat exactly on a verdant unit's own top
+   slot. On Iron that is the row's whole identity: near-black panels under a
+   light-steel ridge. The woods canopy carries a lit
    top plane so a dark or green unit standing on it has a value step to
    separate against: it is authored one step under the dimmest plains pixel
    and painted over most of each crown rather than its cap alone, which is

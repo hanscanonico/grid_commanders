@@ -10,11 +10,12 @@ Two renderers share that geometry. `render_indexed` draws units: one flat
 ramp slot per visible plane, ambient occlusion and the ground contact
 charged as whole slot steps, 1px outlines read off the depth and normal
 planes (dark away from the sun, LIGHT into it — see `_selective_outline` and
-docs/outlines.md), and a material id emitted beside every pixel. `render` is
+docs/outlines.md), and a material id emitted beside every pixel. The property
+buildings draw with it too, one band lower (`BUILDING_TOP_SLOT`). `render` is
 the older shading path — three computed face tones, fractional occlusion, a
 two-tone dither on tops broad enough to carry one, and a contour in one
-deliberate tone per material — and terrain and buildings still draw with it.
-All of it is deterministic: no RNG anywhere.
+deliberate tone per material — and the nature props still draw with it. All of
+it is deterministic: no RNG anywhere.
 
 Both renderers also have a `*_gbuffer` form that hands back the depth and
 normal planes behind the picture as well as the picture — see
@@ -76,6 +77,12 @@ class Model:
 
     def __init__(self) -> None:
         self.vox: dict[tuple[int, int, int], str] = {}
+        # Which of the two renderers this model is authored for. Units call
+        # `render_indexed` themselves; a model that terrain hands to `render`
+        # says so here instead, so the tile drawers keep one entry point
+        # while the buildings go down the indexed path and the nature props
+        # (reef rock) stay on the shaded one.
+        self.indexed = False
 
     def set(self, x: int, y: int, z: int, m: str) -> None:
         self.vox[(x, y, z)] = m
@@ -191,7 +198,11 @@ class IndexedSprite:
 
 
 def render_indexed_gbuffer(
-    model: Model, faction: Faction, outline: bool = True, k: int = 1
+    model: Model,
+    faction: Faction,
+    outline: bool = True,
+    k: int = 1,
+    top_slot: int = S_RIM,
 ) -> GBuffer:
     """Render a unit out of the indexed ramps: one flat slot per visible plane.
 
@@ -200,6 +211,12 @@ def render_indexed_gbuffer(
     the plane structure that was never there. Here a face normal picks a SLOT
     — top, rim, body, shadow, under — and the ramp picks the colour, so a
     sprite costs tens of palette entries and a faction is a ramp swap.
+
+    `top_slot` is the highest rung ANY material on this model may reach, and
+    it is what tells a unit from a building: a unit keeps the rim step, which
+    is the flash the bright band above the terrain ceiling is reserved for; a
+    property stops at the top plane (`BUILDING_TOP_SLOT`), because a building
+    is what an army is read AGAINST and may not carry the same highlight.
     """
     if not model.vox:
         return _empty_gbuffer(bytearray([MID_EMPTY]))
@@ -230,6 +247,7 @@ def render_indexed_gbuffer(
         spec = material_slot(mat)
         ramp = ramp_for(mat, faction)
         cap = faction_cap if spec.mid == MID_FACTION else SLOTS - 1
+        cap = min(cap, top_slot)
         # A fixed accent is a small part — a lamp, a canopy, a nose cone —
         # and five bands on twenty pixels is palette spent on nothing, so an
         # accent gets shadow / body / top and no rim or under.
@@ -277,7 +295,7 @@ def render_indexed_gbuffer(
             # pixel at all in the band above L200 that the terrain ceiling
             # reserves for units.
             lifts_rim = rim and face == "top" and spec.mid == MID_FACTION
-            ceiling = S_RIM if lifts_rim else cap
+            ceiling = min(top_slot, S_RIM) if lifts_rim else cap
             slot = min(ceiling, max(floor, spec.slot + offsets[face]))
             slot = max(0, min(SLOTS - 1, slot))
             c = ramp[slot]
@@ -318,11 +336,19 @@ def render_indexed_gbuffer(
 
 
 def render_indexed(
-    model: Model, faction: Faction, outline: bool = True, k: int = 1
+    model: Model,
+    faction: Faction,
+    outline: bool = True,
+    k: int = 1,
+    top_slot: int = S_RIM,
 ) -> IndexedSprite:
     """`render_indexed_gbuffer` without the geometry planes."""
-    g = render_indexed_gbuffer(model, faction, outline, k)
+    g = render_indexed_gbuffer(model, faction, outline, k, top_slot)
     return IndexedSprite(g.rgba, bytearray(g.material.values))
+
+
+# Where a property's ramps stop. See `render_indexed_gbuffer`.
+BUILDING_TOP_SLOT = S_TOP
 
 
 def _empty_gbuffer(mids: bytearray) -> GBuffer:
@@ -622,8 +648,15 @@ def _outline_kind(
 def render_gbuffer(model: Model, faction: Faction, outline: bool = True) -> GBuffer:
     """`render`, with the depth and normal planes behind the picture kept.
 
-    The shaded path has no material ids, so `material` comes back empty.
+    The shaded path has no material ids, so `material` comes back empty. A
+    model that asks for the indexed path (`Model.indexed` — every property
+    building does) is handed straight to it, so the tile drawers keep one
+    entry point for a prop whichever renderer draws it.
     """
+    if model.indexed:
+        return render_indexed_gbuffer(
+            model, faction, outline, top_slot=BUILDING_TOP_SLOT
+        )
     if not model.vox:
         return _empty_gbuffer(bytearray([MID_EMPTY]))
 

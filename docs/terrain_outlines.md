@@ -1,7 +1,10 @@
 # The terrain outline and the dither — 2026-08-22
 
 Units are drawn out of six-slot ramps; terrain props and the five property
-buildings still go through `voxel.render`, the shading path. Two of its
+buildings still go through `voxel.render`, the shading path. (The buildings
+left it later the same day — see `docs/properties.md`. Everything below still
+describes the path the nature props draw on, and the numbers are the ones the
+properties pass measured its own against.) Two of its
 decisions were made per pixel rather than per material, and both of them spent
 colours the way the pre-indexed units did.
 
@@ -81,7 +84,7 @@ outcrops are `voxel.render` props. `TerrainPalette.PROPERTY_CEILING` comes down
 from **220 to 90** with that; the remaining spend is the shading arithmetic
 itself — three computed tones per material, plus fractional occlusion and the
 vertical gradient — which is the properties pass's to bring down, not this
-one's.
+one's. It did: 90 to 25, `docs/properties.md`.
 
 The terrain value ceilings are untouched and still pass: the contour and the
 dither's second tone are both *darker* than what they replaced, so nothing
