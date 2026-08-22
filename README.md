@@ -48,7 +48,14 @@ than a blend. **S3 is the design-system token itself**: the old livery
 multiplied the faction hue against a chassis grey, which preserved hue and
 halved brightness, so every army read a value darker than its own brand.
 Every pixel also carries a **material id** — 0 contour, 1 faction, 2
-gunmetal, 3 fixed accent — and only material 1 moves between rows.
+gunmetal, 3 fixed accent — and only material 1 moves between rows. A ramp is
+**built rather than typed**: an authored value ladder per faction, and one
+shared chroma shape over it — saturation peaking mid-ramp and collapsing at
+the rim, a single cool `AMBIENT` sky mixed into the shadow steps, and a small
+hue rotation toward that sky in the dark and toward the sun in the light. Six
+literal hexes drift into one hue at six brightnesses, which is what makes
+indexed sprites read as tinted grey rather than as lit objects
+(`docs/ramps.md`).
 **Iron is inverted**: its theme colour is at the value floor, so it is Iron's
 shadow plane and the identity comes from the near-black-to-light-steel jump
 no other faction has. Its ceiling is pulled in — lit planes stop at the body

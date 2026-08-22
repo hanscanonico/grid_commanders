@@ -8,6 +8,7 @@ about which color a faction is. Row order mirrors SideIdentity._ROW_FOR_KEY:
 
 from __future__ import annotations
 
+import colorsys
 from dataclasses import dataclass
 
 RGB = tuple[int, int, int]
@@ -210,41 +211,151 @@ MID_ACCENT = 3
 MID_EMPTY = 255
 
 
-def _hexramp(*hexes: str) -> Ramp:
-    return tuple((int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)) for h in hexes)
+def _hex(h: str) -> RGB:
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
 
-# The authored faction ramps: S3 is the game's own FactionTheme colour.
+# --- ramp shaping ----------------------------------------------------------
+#
+# A ramp is BUILT, not typed out: a value ladder authored per faction, and
+# one shared chroma shape applied to every rung of it. A ramp written as six
+# literal colours drifts toward a value-only ramp — the same hue at six
+# brightnesses — which is the flattest thing a six-colour ramp can be. What
+# separates a lit plane from a shadowed one in the reference art is not only
+# how bright it is but WHICH LIGHT it is: sun on the top faces, sky in the
+# shadows. So each rung gets three treatments beyond its brightness.
+#
+# 1. Saturation peaks in the middle and collapses at the top. A rim step is
+#    the sun itself and reads as near-white; a fully saturated rim looks like
+#    paint rather than light. The dark end keeps slightly MORE chroma than
+#    the light end, because a shadow is lit by a coloured sky while a
+#    highlight is washed out by a white sun.
+# 2. The shadow steps are mixed toward AMBIENT, a single cool sky. This is
+#    the difference between a shadow and an absence of light: unlit faces
+#    tinted toward one shared colour read as one scene, and black shadows
+#    read as holes.
+# 3. Hue rotates a little across the ramp — toward the sky in the dark steps,
+#    toward the sun in the light ones. The magnitude is empirical and small:
+#    _HUE_ARC is a ceiling on the rotation, not a per-step rule, and rungs
+#    take a fraction of it. Big rotations turn a red faction's shadow purple
+#    and stop reading as the same army.
+
+# The sky every shadow on the sheet is lit by. One constant, so the five
+# armies and the props share a light rather than each carrying their own.
+AMBIENT: RGB = (86, 112, 190)
+# Hue of that sky, and of the sun the lit steps drift toward.
+_SKY_HUE = 225.0
+_SUN_HUE = 45.0
+# The widest a rung may rotate off its base hue.
+_HUE_ARC = 14.0
+# Per slot, S0..S5: how far the rung rotates (negative = toward the sky),
+# how its chroma scales, and how much AMBIENT is blended into it. S3 is all
+# zeros/ones by construction — it IS the faction token and may not move.
+_HUE_PULL = (-1.00, -0.72, -0.34, 0.0, 0.46, 1.00)
+_SAT_SCALE = (1.10, 1.22, 1.24, 1.0, 0.82, 0.42)
+_AMBIENT_MIX = (0.26, 0.16, 0.07, 0.0, 0.0, 0.0)
+
+
+def _rgb_to_hsv(c: RGB) -> tuple[float, float, float]:
+    return colorsys.rgb_to_hsv(c[0] / 255.0, c[1] / 255.0, c[2] / 255.0)
+
+
+def _full_chroma(h_deg: float, sat: float) -> RGB:
+    r, g, b = colorsys.hsv_to_rgb((h_deg % 360.0) / 360.0, sat, 1.0)
+    return (clamp8(r * 255), clamp8(g * 255), clamp8(b * 255))
+
+
+def _rotate(h_deg: float, pull: float) -> float:
+    """Rotate a hue toward the sky (pull<0) or the sun (pull>0), capped."""
+    if pull == 0.0:
+        return h_deg
+    target = _SKY_HUE if pull < 0 else _SUN_HUE
+    delta = ((target - h_deg + 180.0) % 360.0) - 180.0
+    step = min(abs(delta), abs(pull) * _HUE_ARC)
+    return h_deg + (step if delta >= 0 else -step)
+
+
+def _at_luminance(c: RGB, target: float) -> RGB:
+    """Re-key a colour to an exact luminance, keeping chroma as long as it
+    can: scale first, and only wash toward white once a channel is pinned."""
+    lum = luminance(c)
+    if lum <= 0.0:
+        return (clamp8(target), clamp8(target), clamp8(target))
+    ceiling = lum * 255.0 / max(c)  # the brightest this hue gets by scaling
+    if target <= ceiling:
+        return (
+            clamp8(c[0] * target / lum),
+            clamp8(c[1] * target / lum),
+            clamp8(c[2] * target / lum),
+        )
+    pinned = mix((0, 0, 0), c, 255.0 / max(c))
+    return mix(pinned, (255, 255, 255), (target - ceiling) / (255.0 - ceiling))
+
+
+def _shape(base: RGB, slot: int, target: float) -> RGB:
+    """One rung: the base colour's hue and chroma, shaped for `slot`, keyed
+    to `target` luminance. Pure — the same base always gives the same rung."""
+    if _AMBIENT_MIX[slot] == 0.0 and _HUE_PULL[slot] == 0.0 and _SAT_SCALE[slot] == 1.0:
+        return _at_luminance(base, target)
+    h, s, _ = _rgb_to_hsv(base)
+    chroma = _full_chroma(
+        _rotate(h * 360.0, _HUE_PULL[slot]), min(1.0, s * _SAT_SCALE[slot])
+    )
+    if _AMBIENT_MIX[slot] > 0.0:
+        chroma = mix(
+            chroma, _at_luminance(AMBIENT, luminance(chroma)), _AMBIENT_MIX[slot]
+        )
+    return _at_luminance(chroma, target)
+
+
+def build_ramp(base: RGB, ladder: tuple[float, ...]) -> Ramp:
+    """The six-slot ramp for one base colour and one authored value ladder."""
+    return tuple(_shape(base, i, target) for i, target in enumerate(ladder))
+
+
+# The authored ramps: an anchor colour and a value ladder (Rec. 601 luminance
+# per slot). The chroma comes out of `build_ramp` above, which is why these
+# carry no hues but S3's own.
+#
+# The chromatic three anchor on the game's FactionTheme colour at its own
+# luminance, so S3 IS the token, bit for bit.
+_MERIDIAN_L = (23.0, 56.0, 86.0, 114.9, 148.0, 208.0)
+_AURORA_L = (21.0, 50.0, 74.0, 101.3, 136.0, 205.0)
+_VERDANT_L = (25.0, 56.0, 76.0, 98.0, 140.0, 214.0)
+# Iron keeps its inverted identity — near-black panels jumping to light
+# steel, a value structure no chromatic faction has — but its ceiling is
+# pulled in (see IRON_SLOT_CEILING) so it sits with them instead of above.
+# Its own token is at the value floor, so it is the shadow plane, and the
+# ramp anchors on the light steel its lit planes are made of instead.
+# S4 sat at L176 while every chromatic S4 sits at L134-147, and the
+# round-5 rim pass then lifted a rimmed shadow plane INTO that slot on
+# every model — which is how Iron came back as the brightest row (17.3%
+# of its pixels above L160 against 14.0-14.9%, round-6 review). It comes
+# down to L151, under the band, and Iron's flash stays the S5 rim.
+_IRON_L = (7.0, 31.0, 49.0, 129.0, 151.0, 229.0)
+# Warm khaki: neutral separates from Iron's cool steel by hue rather than
+# by value, so it stops competing with the exhausted state. The round-5
+# verdict measured that hue paid for at the top of the ramp — 27% of
+# neutral pixels above L160, 4,280 of them the S4 top plane alone, which
+# made the row nobody owns the brightest row on the board. S4 comes down
+# to L156 and the hue is carried further into the sand instead, which is
+# what keeps the row a wide margin off Iron with less light in it.
+_NEUTRAL_L = (20.0, 60.0, 102.0, 137.0, 156.0, 219.0)
+
 RAMPS: dict[str, Ramp] = {
-    "meridian": _hexramp("2b0f0e", "6b2320", "a4362c", "d84a3c", "f2705a", "ffc0ab"),
-    "aurora": _hexramp("0e1330", "1f3070", "2d47a4", "3c64d8", "6188f2", "bacdff"),
-    "verdant": _hexramp("0d2113", "174d24", "22682c", "2c8636", "51b45c", "b6ecbc"),
-    # Iron keeps its inverted identity — near-black panels jumping to light
-    # steel, a value structure no chromatic faction has — but its ceiling is
-    # pulled in (see IRON_TOP_SLOT) so it sits with them instead of above.
-    # Its own token is at the value floor, so it is the shadow plane.
-    # S4 sat at L176 while every chromatic S4 sits at L134-147, and the
-    # round-5 rim pass then lifted a rimmed shadow plane INTO that slot on
-    # every model — which is how Iron came back as the brightest row (17.3%
-    # of its pixels above L160 against 14.0-14.9%, round-6 review). It comes
-    # down to L151, under the band, and Iron's flash stays the S5 rim.
-    "iron": _hexramp("05070a", "1b2026", "2b3238", "79838d", "8f99a2", "dfe6ec"),
-    # Warm khaki: neutral separates from Iron's cool steel by hue rather than
-    # by value, so it stops competing with the exhausted state. The round-5
-    # verdict measured that hue paid for at the top of the ramp — 27% of
-    # neutral pixels above L160, 4,280 of them the S4 top plane alone, which
-    # made the row nobody owns the brightest row on the board. S4 comes down
-    # to L156 and the hue is carried further into the sand instead, which is
-    # what keeps the row a wide margin off Iron with less light in it.
-    "neutral": _hexramp("1c1207", "4a3a22", "7a6440", "a4874f", "b89a5e", "ecdcab"),
+    "meridian": build_ramp(_hex("db4a3b"), _MERIDIAN_L),
+    "aurora": build_ramp(_hex("3c64d8"), _AURORA_L),
+    "verdant": build_ramp(_hex("2c8636"), _VERDANT_L),
+    "iron": build_ramp(_hex("79838d"), _IRON_L),
+    "neutral": build_ramp(_hex("a4874f"), _NEUTRAL_L),
 }
 
-# Shared by every faction. Five authored steps plus one interpolated mid,
-# because the spec draws the gunmetal strip without a rim slot. Its body slot
-# sits at L132 so an identifying feature — a barrel, a mount, a rotor mast —
+# Shared by every faction, and shaped by the same rules — a gunmetal that is
+# six greys is the flat ramp this file exists to stop being. Its body slot
+# sits at L130 so an identifying feature — a barrel, a mount, a rotor mast —
 # reads on a dark hull instead of only on Iron's light one.
-GUNMETAL_RAMP: Ramp = _hexramp(
-    "14161a", "3a4048", "5a626d", "7a848f", "a7b1bb", "d2dae1"
+GUNMETAL_RAMP: Ramp = build_ramp(
+    _hex("7a848f"), (22.0, 63.0, 97.0, 130.0, 175.0, 216.0)
 )
 
 # Iron's ceiling. Shipped Iron put 27-51% of its pixels above L160 and used
@@ -315,17 +426,27 @@ def material_slot(material: str) -> MaterialSlot:
     return UNIT_MATERIALS.get(material, _accent(S_BODY))
 
 
+# The value ladder a fixed accent's ramp is built on, as fractions of the
+# accent's own luminance and, for the two lit steps, of the room above it.
+# S3 is the accent itself; S0 lands at ~18% of it and S5 is a pale rim.
+_ACCENT_DARK = (0.18, 0.45, 0.72)
+_ACCENT_TOP = 1.22
+_ACCENT_RIM = 0.62
+
+
 def _derived_ramp(base: RGB) -> Ramp:
-    """A six-step ramp around a fixed accent colour, shaped like the authored
-    faction ones: S0 at ~12% luminance, S3 the colour itself, S5 a pale rim."""
-    return (
-        darken(base, 0.82),
-        darken(base, 0.55),
-        darken(base, 0.28),
-        base,
-        mix(tuple(clamp8(v * 1.22) for v in base), (255, 255, 255), 0.10),
-        lighten(base, 0.62),
+    """A six-step ramp around a fixed accent colour, shaped by the same rules
+    as the authored faction ones — chroma peaking mid-ramp, a sky in the
+    shadow steps — over the accent's own value ladder."""
+    lum = luminance(base)
+    top = mix(tuple(clamp8(v * _ACCENT_TOP) for v in base), (255, 255, 255), 0.10)
+    ladder = (
+        *(lum * f for f in _ACCENT_DARK),
+        lum,
+        luminance(top),
+        lum + (255.0 - lum) * _ACCENT_RIM,
     )
+    return build_ramp(base, ladder)
 
 
 _DERIVED: dict[RGB, Ramp] = {}
