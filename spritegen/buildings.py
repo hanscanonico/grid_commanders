@@ -14,35 +14,42 @@ from __future__ import annotations
 from .palette import Faction, h01
 from .voxel import Model
 
-# The masonry these models are built from (fix spec rounds 4, 6 and 7, item 7).
-# A voxel top face is the material scaled 1.3x and a front-corner top is rim-lit
-# on top of that, so a material's lit plane lands ~45L above its own value.
-# Round 6 picked the greys by that LIT plane rather than by their own value,
-# which brought every wall under terrain.TERRAIN_VALUE_CEILING. Round 7 is the
-# other half of the same finding: a wall under the cap is not the same thing as
-# a wall a unit separates from, and the old ladder's lit planes (L150-164) sat
-# exactly on every faction's S4 top slot (L135-156), so a unit standing on a
-# property had its own lit planes to read against a wall of the same value.
-# The whole ladder therefore steps down one rung — the mass lands at L100-121
-# lit, roughly 40L clear of the band units key in — and the rung it vacated
-# becomes TRIM, which may only ever be drawn as a LINE: a parapet, a coping, a
-# seam. Highlights as trim, never as fields, is what keeps the buildings from
-# flattening into dark blocks now that their mass is dark.
-TRIM = "rock_dk"  # lit top L150 — lines only, never a plane
-METAL = "track_lt"  # lit top L137 — machinery: cranes, masts, chimney caps
-WALL = "gunmetal_dk"  # lit top L121 — the mass every wall and lot is built of
-WALL_DK = "track"  # lit top L100 — its shaded rung: rear walls, sheds, kerbs
-DETAIL = "bore"  # doors, seams, cables and openings, read as near-black
+# The property palette, as ramp slots (`palette.PROPERTY_MATERIALS`).
+#
+# Rounds 4-7 authored these as five unrelated fixed greys picked by where
+# their LIT plane landed, because the shaded renderer computed a lit plane out
+# of arithmetic. They are four rungs of one masonry ramp now, so the same
+# ladder holds by construction: the mass lit at L112, the trim a rung over it
+# at L140, and a wall's shadow steps sitting in the AMBIENT sky the armies
+# share. What round 7 found still holds and is what the ladder is authored
+# against — a wall under the terrain ceiling is not the same thing as a wall a
+# unit separates from, so the mass sits ~40L clear of the band every faction's
+# top slot occupies (L135-156), and the rung above it is TRIM, which may only
+# ever be drawn as a LINE: a parapet, a coping, a seam. Highlights as trim,
+# never as fields, is what keeps the buildings from flattening into dark
+# blocks now that their mass is dark.
+TRIM = "trim"  # lit top L140 — lines only, never a plane
+METAL = "machine"  # lit top L150 — machinery: cranes, masts, chimney caps
+WALL = "wall"  # lit top L112 — the mass every wall is built of
+WALL_DK = "wall_dk"  # its shaded rung: rear walls, sheds, kerbs
+DETAIL = "detail"  # doors, seams, cables and openings — masonry's own S0
+# The lot the building stands on is concrete, not stone: the same values in a
+# cool grey, so a plate and the mass on it separate by HUE and neither has to
+# spend the value the units are keyed against.
+PAD = "pad"
+PAD_RIM = "pad_rim"
 MASONRY = WALL
 MASONRY_DK = WALL_DK
 
-# A roof is the same rule in the faction's own ramp: the theme's dark is the
-# roof plane and the theme colour itself is the ridge, the cap and the banner.
-# The pale roofs the review named were `body` fields — verdant's lit to L152
-# against a verdant unit's S4 at L153 — and a ridge line carries the same hue
-# at the same value without being the thing a silhouette has to cross.
-ROOF = "body_dk"
-ROOF_TRIM = "body"
+# A roof is the same rule in the faction's own ramp: the owner's shadow band
+# is the roof plane and the body band — the theme token itself — is the ridge,
+# the cap and the banner. Both sit two bands under the unit convention, and
+# the rim step over them is a unit's alone (`voxel.BUILDING_TOP_SLOT`): a roof
+# lit like a chassis is the thing a silhouette has to be read against. On Iron
+# that is the row's identity rather than a compromise — near-black panels
+# under a light-steel ridge.
+ROOF = "roof"
+ROOF_TRIM = "roof_trim"
 
 # ---------------------------------------------------------------------------
 # nature props
@@ -70,8 +77,8 @@ def _pad(
     x1: int,
     y0: int,
     y1: int,
-    mat: str = WALL,
-    rim: str = WALL_DK,
+    mat: str = PAD,
+    rim: str = PAD_RIM,
 ) -> None:
     """The building's own base plate, with a darker rim."""
     m.box(x0, x1, y0, y1, 0, 0, mat)
@@ -147,9 +154,14 @@ def base() -> Model:
         m.box(1, 12, y0 - 1, y0, 4, 4, ROOF)
         m.box(1, 12, y0, y0, 5, 5, ROOF_TRIM)  # lit ridge
         m.box(1, 12, y0 - 1, y0 - 1, 5, 5, DETAIL)  # skylight band
-    # big vehicle door on the front face with hazard stripe
+    # big vehicle door on the front face with hazard stripe. The stripe is
+    # DASHED: amber is the brightest thing a property owns, and a solid band
+    # of it across the widest door on the sheet is a field rather than a
+    # marker — 2.3% of the base's pixels over the terrain ceiling on its own,
+    # where the whole building's budget for glazing is 2%.
     m.box(3, 8, 12, 12, 1, 3, DETAIL)
-    m.box(3, 8, 12, 12, 3, 3, "amber")
+    for x in range(3, 9, 2):
+        m.set(x, 12, 3, "amber")
     m.box(5, 6, 12, 12, 1, 1, DETAIL)  # door gap
     # chimney at the rear corner
     m.box(12, 13, 5, 6, 1, 6, WALL_DK)
@@ -228,11 +240,11 @@ def port() -> Model:
     """A quay over the water: warehouse, gantry crane, stacked containers."""
     m = Model()
     # quay deck standing on pilings
-    m.box(0, 13, 4, 13, 1, 1, WALL)
+    m.box(0, 13, 4, 13, 1, 1, PAD)
     for x in range(0, 14, 3):
-        m.set(x, 4, 0, WALL_DK)  # pilings at the water edge
+        m.set(x, 4, 0, PAD_RIM)  # pilings at the water edge
     for x in range(14):
-        m.set(x, 4, 1, WALL_DK)  # quay edge trim
+        m.set(x, 4, 1, PAD_RIM)  # quay edge trim
     # warehouse: concrete walls under a shallow faction gabled roof
     m.box(1, 6, 7, 13, 2, 5, WALL)
     m.box(1, 6, 8, 12, 6, 6, ROOF)
@@ -281,15 +293,17 @@ _NEUTRAL_GREYS = {
     "wood": WALL_DK,  # doors, crates
     "leaf": METAL,  # plaza planter
     "leaf_dk": WALL,
-    ROOF: METAL,  # roof planes: the slate theme's cast still reads owned
-    ROOF_TRIM: TRIM,  # and their ridges, caps and banner
-    "body_lt": TRIM,
+    ROOF: WALL_DK,  # roof planes: a dark plane, as an owned roof is
+    ROOF_TRIM: TRIM,  # and their ridges, caps and banner, as a bright line
 }
 
 
 def model_for(bid: str, fac: Faction) -> Model:
     """The property building's model for one faction row."""
     m = BUILDINGS[bid]()
+    # Buildings are drawn out of the indexed ramps, one band under the units
+    # (`voxel.BUILDING_TOP_SLOT`) — the properties pass, 2026-08-22.
+    m.indexed = True
     if fac.key == "neutral":
         for pos, mat in m.vox.items():
             m.vox[pos] = _NEUTRAL_GREYS.get(mat, mat)

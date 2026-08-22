@@ -60,9 +60,7 @@ from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
 from spritegen import voxel
 from spritegen.voxel import (
     CAST,
-    DITHER_MIN_TOP_AREA,
     _broad_flat_tops,
-    _face_pixels,
     _prop_contour,
     render,
     render_indexed,
@@ -713,15 +711,16 @@ class TerrainPalette(unittest.TestCase):
     """
 
     NATURE_CEILING = 80
-    # Property tiles compose a building drawn by the older shading renderer
-    # (`voxel.render`), which used to spend a colour per lit pixel — 204 on the
-    # aurora airport, most of them a neighbour's near-duplicate. The outline
-    # and dither pass (docs/terrain_outlines.md) took the worst of them to 75:
-    # one contour tone per material instead of one per lit neighbourhood, and
-    # a two-tone dither confined to the three roof planes broad enough for it.
-    # The debt that is left is the shading arithmetic itself, which is the
-    # properties pass's to bring down.
-    PROPERTY_CEILING = 90
+    # A property tile is a building plus its one shadow tone. The shading
+    # renderer spent a colour per lit pixel there — 204 on the aurora airport,
+    # then 75 once the contour and dither rules (docs/terrain_outlines.md) cut
+    # the worst of it. The properties pass brought the buildings onto the
+    # indexed ramps, which is the debt that was left, and the ceiling comes
+    # down with it: the widest tile on the sheet spends 24, so this is the
+    # unit cap plus the shadow rather than a headroom figure. It is a
+    # RATCHET — a change that needs more colours than this is spending them
+    # somewhere a slot should be.
+    PROPERTY_CEILING = 25
 
     def _colours(self, img) -> int:
         return len(set(opaque_pixels(img)))
@@ -772,6 +771,13 @@ class PropOutline(unittest.TestCase):
     out of `voxel.render` carrying 200 colours no eye could name. The rules
     that replaced them are countable, and this is where they are counted —
     see docs/terrain_outlines.md.
+
+    The buildings left this path in the properties pass (`PropertyPalette`
+    below), so what is left on it is the reef rock: a small prop, whose
+    contour is still one deliberate tone per material and whose tops are
+    still too narrow to carry a texture. The dither's other half — that a
+    plane broad enough DOES speckle — has no model left to state it on, and
+    is stated by `DITHER_MIN_TOP_AREA` alone.
     """
 
     def _contour_ring(self, model, fac) -> set[tuple[int, int, int]]:
@@ -786,33 +792,25 @@ class PropOutline(unittest.TestCase):
             if bare_px[x, y][3] == 0 and lit[x, y][3] == 255
         }
 
+    def _props(self):
+        for size in (2, 3, 4):
+            yield f"reef rock {size}", buildings.rock_outcrop(size)
+
     def test_a_contour_pixel_is_a_materials_own_contour_tone(self):
-        for bid in sorted(terrain.PROPERTY):
+        for name, model in self._props():
             for fac in FACTIONS:
-                model = buildings.model_for(bid, fac)
                 allowed = {_prop_contour(m, fac) for m in set(model.vox.values())}
-                with self.subTest(building=bid, faction=fac.key):
+                with self.subTest(prop=name, faction=fac.key):
+                    self.assertTrue(self._contour_ring(model, fac))
                     self.assertLessEqual(self._contour_ring(model, fac), allowed)
 
     def test_the_contour_spends_no_more_tones_than_the_model_has_materials(self):
-        for bid in sorted(terrain.PROPERTY):
-            model = buildings.model_for(bid, FACTIONS[2])
-            with self.subTest(building=bid):
+        for name, model in self._props():
+            with self.subTest(prop=name):
                 self.assertLessEqual(
                     len(self._contour_ring(model, FACTIONS[2])),
                     len(set(model.vox.values())),
                 )
-
-    def test_the_dither_only_lands_on_planes_wide_enough_to_carry_it(self):
-        models = {
-            bid: buildings.model_for(bid, FACTIONS[2]) for bid in terrain.PROPERTY
-        }
-        models["reef rock"] = buildings.rock_outcrop(3)
-        for name, model in sorted(models.items()):
-            planes = _broad_flat_tops(model.vox)
-            with self.subTest(prop=name):
-                for area in _plane_areas(model.vox, planes):
-                    self.assertGreaterEqual(area, DITHER_MIN_TOP_AREA)
 
     def _undithered(self, model, fac):
         """The same render with the dither hash pinned above its threshold."""
@@ -823,28 +821,14 @@ class PropOutline(unittest.TestCase):
         """A prop with no broad plane renders identically with the dither off.
 
         `_broad_flat_tops` agreeing with its own constant proves nothing if
-        the renderer ignores it, so this compares pixels. The base shed and
-        the port warehouses are made of dithering materials and their widest
-        top plane is 61px, so under the old "every top" rule they speckled
-        and under this one they must not: pin the hash above the threshold,
-        and their picture must not move by a pixel.
+        the renderer ignores it, so this compares pixels: pin the hash above
+        the threshold, and a narrow-topped prop's picture must not move by a
+        pixel.
         """
         fac = FACTIONS[2]
-        for bid in ("base", "port"):
-            model = buildings.model_for(bid, fac)
-            with self.subTest(building=bid):
+        for name, model in self._props():
+            with self.subTest(prop=name):
                 self.assertEqual(
-                    opaque_pixels(render(model, fac, outline=False)),
-                    self._undithered(model, fac),
-                )
-
-    def test_the_broad_roofs_do_carry_the_dither(self):
-        """...and the threshold is not so high that nothing dithers at all."""
-        fac = FACTIONS[2]
-        for bid in ("airport", "hq", "city"):
-            model = buildings.model_for(bid, fac)
-            with self.subTest(building=bid):
-                self.assertNotEqual(
                     opaque_pixels(render(model, fac, outline=False)),
                     self._undithered(model, fac),
                 )
@@ -857,28 +841,146 @@ class PropOutline(unittest.TestCase):
                 )
 
 
-def _plane_areas(vox, dithered) -> list[int]:
-    """Painted top-face area of each contiguous same-material plane in `dithered`."""
-    seen: set[tuple[int, int, int]] = set()
-    areas = []
-    for start in sorted(dithered):
-        if start in seen:
-            continue
-        stack, plane = [start], []
-        seen.add(start)
-        while stack:
-            x, y, z = stack.pop()
-            plane.append((x, y, z))
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                n = (x + dx, y + dy, z)
-                if n in dithered and n not in seen and vox[n] == vox[start]:
-                    seen.add(n)
-                    stack.append(n)
-        pixels: set[tuple[int, int]] = set()
-        for x, y, z in plane:
-            pixels.update(_face_pixels((x - y) * 2, (x + y) - z * 2)["top"])
-        areas.append(len(pixels))
-    return areas
+class PropertyPalette(unittest.TestCase):
+    """A building is drawn the way a unit is: slots, not shading arithmetic.
+
+    The properties pass (2026-08-22) took the five buildings off `voxel.render`
+    and onto `render_indexed`, out of the masonry / concrete / machinery ramps
+    (`palette.PROPERTY_MATERIALS`), one band under the units
+    (`voxel.BUILDING_TOP_SLOT`). What that bought is measured here: the two
+    numbers a building was an outlier on, held to what a unit is held to.
+    """
+
+    # The unit cap, `IndexedPalette.test_no_sprite_spends_more_than_24_colours`,
+    # now reached rather than approached: the shading path spent 61-74 colours
+    # a building (204 before the contour and dither rules), and the widest
+    # sprite on the sheet — the aurora airport, five ramps and four accents —
+    # spends 23.
+    SPRITE_CEILING = 24
+    # The share of a sprite's own silhouette boundary drawn as the contour,
+    # per outline grade, measured over all 18 units both poses:
+    #
+    #   light grade  units 0.579-0.696   buildings 0.650-0.743
+    #   heavy grade  units 0.791-0.941   buildings 0.821-0.985
+    #
+    # Buildings sit a little over the units of their grade because a lot is a
+    # flat plate — its whole sunward edge is one ground-facing step — and that
+    # is the gap these bands allow. What they do not allow is the shading
+    # path's figure, which was 1.000 on eleven of the twenty-five sprites: an
+    # unconditional keyline, drawn as hard on the side the sun is on as on the
+    # side it is not.
+    BOUNDARY_DARK = {palette.OUTLINE_LIGHT: (0.50, 0.75), OUTLINE_HEAVY: (0.75, 0.99)}
+
+    def _sprite(self, bid, fac):
+        return render_indexed(
+            buildings.model_for(bid, fac), fac, top_slot=voxel.BUILDING_TOP_SLOT
+        )
+
+    def test_every_building_is_drawn_by_the_indexed_renderer(self):
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                with self.subTest(building=bid, faction=fac.key):
+                    model = buildings.model_for(bid, fac)
+                    self.assertTrue(model.indexed)
+                    # ...and what terrain composes is that renderer's picture
+                    self.assertEqual(
+                        opaque_pixels(render(model, fac)),
+                        opaque_pixels(self._sprite(bid, fac).image),
+                    )
+        # the nature props are the shaded path's, and stay on it
+        self.assertFalse(buildings.rock_outcrop(2).indexed)
+
+    def test_no_building_spends_more_than_a_unit_does(self):
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                with self.subTest(building=bid, faction=fac.key):
+                    colours = len(set(opaque_pixels(self._sprite(bid, fac).image)))
+                    self.assertLessEqual(colours, self.SPRITE_CEILING)
+
+    def test_the_boundary_is_a_break_rather_than_a_keyline(self):
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                sprite = self._sprite(bid, fac)
+                img = sprite.image
+                px = img.load()
+                w, h = img.size
+                edge = [
+                    (x, y)
+                    for y in range(h)
+                    for x in range(w)
+                    if px[x, y][3] == 255
+                    and not all(
+                        0 <= x + dx < w
+                        and 0 <= y + dy < h
+                        and px[x + dx, y + dy][3] == 255
+                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                    )
+                ]
+                dark = sum(1 for x, y in edge if sprite.mid(x, y) == MID_CONTOUR)
+                lo, hi = self.BOUNDARY_DARK[fac.outline]
+                with self.subTest(building=bid, faction=fac.key):
+                    self.assertGreaterEqual(dark / len(edge), lo)
+                    self.assertLessEqual(dark / len(edge), hi)
+
+    def test_the_owner_reads_out_of_the_factions_own_ramp(self):
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS[1:]:  # the unowned row wears no faction pixel
+                sprite = self._sprite(bid, fac)
+                px = sprite.image.load()
+                worn = [
+                    px[x, y][:3]
+                    for y in range(sprite.image.height)
+                    for x in range(sprite.image.width)
+                    if sprite.mid(x, y) == MID_FACTION
+                ]
+                with self.subTest(building=bid, faction=fac.key):
+                    self.assertGreater(len(worn), 40)
+                    self.assertEqual(set(worn) - set(RAMPS[fac.key]), set())
+
+    def test_two_owners_of_the_same_building_are_tellable_apart(self):
+        """The roofs came down two bands in this pass, so the pixels that say
+        who owns a property are darker than they were. `RowSeparation` holds
+        the armies apart but says nothing about the board's flags, and the
+        pair that costs the most is the same one it costs on the units:
+        neutral khaki against iron slate, which meet at 48.9 here (the widest
+        pair, meridian against aurora on the base, is 176.2). The bar is the
+        floor that margin may
+        not sink toward, measured over the pixels that actually differ
+        between two rows of one building — an all-pixel mean would be mostly
+        the shared masonry.
+        """
+        for bid in sorted(terrain.PROPERTY):
+            rows = {f.key: self._sprite(bid, f).image for f in FACTIONS}
+            for i, a in enumerate(FACTIONS):
+                for b in FACTIONS[i + 1 :]:
+                    pa, pb = rows[a.key].load(), rows[b.key].load()
+                    w, h = rows[a.key].size
+                    seen = [
+                        (pa[x, y], pb[x, y])
+                        for y in range(h)
+                        for x in range(w)
+                        if pa[x, y] != pb[x, y]
+                    ]
+                    apart = sum(
+                        sum((c[k] - d[k]) ** 2 for k in range(3)) ** 0.5
+                        for c, d in seen
+                    ) / len(seen)
+                    with self.subTest(building=bid, pair=(a.key, b.key)):
+                        self.assertGreater(apart, 40.0)
+
+    def test_a_property_never_takes_the_rim_step_a_unit_keys_off(self):
+        """`BUILDING_TOP_SLOT`: the band over the top plane is the army's."""
+        rim = {ramp[-1] for ramp in RAMPS.values()}
+        rim |= {
+            palette.MASONRY_RAMP[-1],
+            palette.CONCRETE_RAMP[-1],
+            palette.MACHINE_RAMP[-1],
+        }
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                with self.subTest(building=bid, faction=fac.key):
+                    drawn = set(opaque_pixels(self._sprite(bid, fac).image))
+                    self.assertEqual(drawn & rim, set())
 
 
 class PropertyOverlays(unittest.TestCase):

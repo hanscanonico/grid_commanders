@@ -475,9 +475,87 @@ UNIT_MATERIALS: dict[str, MaterialSlot] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# the property palette — masonry, concrete, machinery
+# ---------------------------------------------------------------------------
+#
+# Buildings are drawn out of ramps for the same reason units are: the shading
+# arithmetic spends a colour per lit pixel, which is how one airport reached
+# 74 colours against a unit's 11-16. These three families are built by the
+# same `build_ramp` shaper as the faction ramps, so a wall's shadow steps sit
+# in the same AMBIENT sky an army's do and the board reads as one scene.
+#
+# The ladders are authored where the old material greys already put a
+# building — the mass lit at L112, the trim a rung above it at L140 — so
+# nothing here walks back into the value band `terrain.TERRAIN_VALUE_CEILING`
+# reserves for units. What the ramp adds is the STRUCTURE the greys only
+# approximated: four rungs of ONE family where there were four unrelated
+# materials, and a contour step that belongs to the wall rather than a flat
+# 0.55 dip taken off whatever colour happened to be there.
+#
+# Masonry is warm and concrete is cool, at nearly the same values: a lot and
+# the building standing on it separate by hue, so neither has to spend the
+# value the units are keyed against. Masonry's lit rung is the same grey the
+# terrain pass gave rock and stone (H37/S0.13 here, H34/S0.14 there), so a
+# wall and the cliff behind it are one material under one sun; the cool pair
+# is the deliberate exception, and their dark rungs are rotated into the same
+# AMBIENT sky `terrain._shade` puts a ground's shadow in.
+MASONRY_RAMP: Ramp = build_ramp(_hex("8a8378"), (24.0, 56.0, 84.0, 112.0, 140.0, 168.0))
+CONCRETE_RAMP: Ramp = build_ramp(
+    _hex("8f959c"), (20.0, 48.0, 74.0, 100.0, 128.0, 156.0)
+)
+# Machinery — a crane, a mast, a chimney cap, a door seam — sits a full band
+# over the masonry: metal catches this light where stone does not, and it is
+# the one thing on a building that may.
+MACHINE_RAMP: Ramp = build_ramp(_hex("77828f"), (26.0, 60.0, 92.0, 124.0, 150.0, 170.0))
+
+_MASONRY_SLOT = "masonry"
+_CONCRETE_SLOT = "concrete_ramp"
+_MACHINE_SLOT = "machine"
+
+# Named ramps every row shares. A faction's own is looked up per row instead,
+# and anything unlisted derives one from its fixed colour.
+_SHARED_RAMPS: dict[str, Ramp] = {
+    _GUNMETAL_SLOT: GUNMETAL_RAMP,
+    _MASONRY_SLOT: MASONRY_RAMP,
+    _CONCRETE_SLOT: CONCRETE_RAMP,
+    _MACHINE_SLOT: MACHINE_RAMP,
+}
+
+
+def _masonry(slot: int) -> MaterialSlot:
+    return MaterialSlot(_MASONRY_SLOT, slot, MID_GUNMETAL)
+
+
+# The building convention, restated as slots. The mass is the shadow band and
+# the trim the body band — a highlight on a building is a LINE (a coping, a
+# parapet, a ridge), never a field, which is what keeps a property from
+# out-keying the army standing on it. `detail` is the contour step of the
+# masonry itself, so a door or a seam is the wall's own darkest rung rather
+# than a fifth grey.
+PROPERTY_MATERIALS: dict[str, MaterialSlot] = {
+    "detail": _masonry(S_CONTOUR),
+    "wall_dk": _masonry(S_UNDER),
+    "wall": _masonry(S_SHADOW),
+    "trim": _masonry(S_BODY),
+    "pad_rim": MaterialSlot(_CONCRETE_SLOT, S_UNDER, MID_GUNMETAL),
+    "pad": MaterialSlot(_CONCRETE_SLOT, S_SHADOW, MID_GUNMETAL),
+    "machine": MaterialSlot(_MACHINE_SLOT, S_BODY, MID_GUNMETAL),
+    # The owner's two rows: the roof plane and the line that caps it. They sit
+    # two bands under the unit convention, so a roof plane's LIT face lands
+    # where a unit's shadowed one does — a roof lit to the faction token is
+    # the mass a silhouette is read against, not a chassis. Iron keeps its
+    # inverted identity here more than anywhere: near-black panels under a
+    # light-steel ridge.
+    "roof": _fac(S_UNDER),
+    "roof_trim": _fac(S_SHADOW),
+}
+
+
 def material_slot(material: str) -> MaterialSlot:
     """Slot for a model's material name; anything unlisted is a fixed accent."""
-    return UNIT_MATERIALS.get(material, _accent(S_BODY))
+    spec = UNIT_MATERIALS.get(material) or PROPERTY_MATERIALS.get(material)
+    return spec if spec is not None else _accent(S_BODY)
 
 
 # The value ladder a fixed accent's ramp is built on, as fractions of the
@@ -511,8 +589,9 @@ def ramp_for(material: str, faction: Faction) -> Ramp:
     spec = material_slot(material)
     if spec.ramp == _FACTION_SLOT:
         return RAMPS[faction.key]
-    if spec.ramp == _GUNMETAL_SLOT:
-        return GUNMETAL_RAMP
+    shared = _SHARED_RAMPS.get(spec.ramp)
+    if shared is not None:
+        return shared
     base = resolve(material, faction)
     ramp = _DERIVED.get(base)
     if ramp is None:
