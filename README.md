@@ -238,8 +238,8 @@ they end at, so the tree line is bays and points and a woods block is not a
 rectangle). A crown that overhangs a continued border is drawn again a whole
 cell along, so two woods cells butt on the same crown rather than on two
 halves of different ones. Each connection sheet lays out masks 0-15
-row-major (bit order N=1, E=2, S=4, W=8); `bridges.png` carries its two decks side by side.
-Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
+row-major (bit order N=1, E=2, S=4, W=8); `bridges.png` carries its two
+decks side by side. Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
 leaves the base sheet. A river is cut into a bank rather than laid on the
 grass — silt, its shaded outer edge and a wet lip at the waterline, all mixed
 from the same ground constants the plains and shoal tones come from — a run
@@ -466,9 +466,9 @@ that pipeline's paste step can be pointed at this art instead.
    woods/plains seam rule stays true. Both tiles stopped painting per-pixel
    noise on the way through: the hash still rags a band boundary so an arc
    does not read as a stripe, but it no longer makes tones, and woods went
-   from 77 colours and 53.7% of its pixels sitting on a colour change to 32
-   and 33.5% (`TileTexture`). Drawn as one stamp at one size in staggered
-   courses, though, that canopy read as roof SHINGLES, so what a wood varies
+   from 77 colours and 53.7% of its pixels sitting on a colour change to 28
+   — 32 on the widest variant — and 33.5% (`TileTexture`). Drawn as one
+   stamp at one size in staggered courses, though, that canopy read as roof SHINGLES, so what a wood varies
    by is stated too: five crown sizes, centres jittered off the table by the
    fixed hash, a shuffled overlap order, ragged outlines and a dappled
    surface, a fringe that stops short of its border by a hash, and trunks
