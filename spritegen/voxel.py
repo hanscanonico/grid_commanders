@@ -8,12 +8,13 @@ lower-left (units face +y), +z is up.
 
 Two renderers share that geometry. `render_indexed` draws units: one flat
 ramp slot per visible plane, ambient occlusion and the ground contact
-charged as whole slot steps, a per-faction contour, and a material id
-emitted beside every pixel. `render` is the older shading path — three
-computed face tones, fractional occlusion, a two-tone dither on tops broad
-enough to carry one, and a contour in one deliberate tone per material — and
-terrain and buildings still draw with it. All of it is deterministic: no
-RNG anywhere.
+charged as whole slot steps, 1px outlines read off the depth and normal
+planes (dark away from the sun, LIGHT into it — see `_selective_outline` and
+docs/outlines.md), and a material id emitted beside every pixel. `render` is
+the older shading path — three computed face tones, fractional occlusion, a
+two-tone dither on tops broad enough to carry one, and a contour in one
+deliberate tone per material — and terrain and buildings still draw with it.
+All of it is deterministic: no RNG anywhere.
 
 Both renderers also have a `*_gbuffer` form that hands back the depth and
 normal planes behind the picture as well as the picture — see
@@ -35,6 +36,8 @@ from .gbuffer import (
     N_TOP,
     GBuffer,
     Plane,
+    convex_edges,
+    edge_mask,
     voxel_depth,
 )
 from .palette import (
@@ -50,6 +53,7 @@ from .palette import (
     S_CONTOUR,
     S_RIM,
     S_TOP,
+    S_UNDER,
     SLOTS,
     Faction,
     Ramp,
@@ -131,34 +135,34 @@ _FACE_NORMAL = {"top": N_TOP, "left": N_LEFT, "right": N_RIGHT}
 
 Anchors = dict[tuple[int, int, int], tuple[int, int]]
 
-# Up, left, down, right — the four edges a contour is measured across. Up and
+# Up, left, down, right — the four edges an outline is measured across. Up and
 # left are the lit ones; down and right face the ground the unit stands on.
 UP, LEFT, DOWN, RIGHT = (0, -1), (-1, 0), (0, 1), (1, 0)
 
-# How thick the S0 band across each edge is, at the 64px cell the models are
-# drawn at. The board draws that cell onto a 16px grid with nearest filtering,
-# so it keeps ONE SOURCE PIXEL IN FOUR: a contour thinner than four is sampled
-# or skipped by where it happens to fall, which is why a structurally
-# guaranteed S0 boundary (round 9) still left the apc's roof line dissolving
-# into plains. Four is ONE LOGICAL PIXEL — whatever the phase, the board lands
-# on it.
-#
-# Round 10 measured four on every edge against four on the lit edges and two on
-# the ground-facing ones, through the game's own legibility sweep; the lighter
-# pair is what ships (see README, "The contour is one logical pixel").
-CONTOUR_WEIGHT: dict[tuple[int, int], int] = {UP: 4, LEFT: 4, DOWN: 2, RIGHT: 2}
+# Outlines are per PIXEL, off the G-buffer, not a band per part. The lit pair
+# (up and left) is where the sun is, and it is the pair a SELECTIVE outline
+# lightens instead of darkening — see `_selective_outline` and docs/outlines.md.
+_LIT_STEPS = (UP, LEFT)
 
-# How much of that band may sit OUTSIDE the silhouette. It is the round-9 halo
-# unchanged, and it is a cell budget rather than a taste: the md_tank is 63 of
-# the 64 px its cell allows, so a band that grew outward would either crop a
-# model or shrink one. The rest of the weight is claimed inward, off the plane
-# behind the edge — the silhouette stays the shape the model drew.
-_HALO: dict[tuple[int, int], int] = {UP: 1, LEFT: 1, DOWN: 2, RIGHT: 2}
+# How big a 4-neighbour depth step has to be before it is a real occlusion
+# rather than the depth gradient a flat plane already carries in this
+# projection. `gbuffer.edge_mask` documents why 2 is the floor; the unit path
+# uses that default so the silhouette and the self-overlap fall out of one
+# reading of one buffer.
+EDGE_THRESHOLD = 2
+
+# How far above the plane behind it a sel-out pixel is drawn, in ramp slots,
+# before the material's own ceiling clamps it. Two steps is what makes a lit
+# boundary read as a LINE on a side plane; on a top plane already at its
+# ceiling it clamps to that plane's own slot, so the lit edge simply carries no
+# line at all — which is the other half of what selective outlining means.
+SEL_OUT_LIFT = 1
 
 
 def _bounds(model: Model, k: int = 1) -> tuple[Anchors, int, int, int, int]:
-    """Screen anchors per voxel plus the crop the sprite needs (2px margin for
-    the doubled terrain-facing contour), at density `k`."""
+    """Screen anchors per voxel plus the crop the sprite needs (2px margin, so
+    a 1px outline and the passes after it always have a pixel to write), at
+    density `k`."""
     anchors: Anchors = {}
     for x, y, z in model.vox:
         anchors[(x, y, z)] = ((x - y) * 2 * k, ((x + y) - z * 2) * k)
@@ -205,6 +209,12 @@ def render_indexed_gbuffer(
     ramps: list[Ramp | None] = [None] * (w * h)
     depth = [DEPTH_EMPTY] * (w * h)
     normal = bytearray(w * h)
+    # The slot a sel-out pixel would be drawn at, kept per pixel because the
+    # ceiling that clamps it is the painting voxel's, not the outline pass's.
+    lit_slots = bytearray(w * h)
+    # The floor the same voxel answered to, so a dark line cannot dig below
+    # the material's own bottom step.
+    dark_slots = bytearray(w * h)
 
     vox = model.vox
     zmin = min(v[2] for v in vox)
@@ -270,22 +280,32 @@ def render_indexed_gbuffer(
             slot = max(0, min(SLOTS - 1, slot))
             c = ramp[slot]
             nid = _FACE_NORMAL[face]
+            lit = min(ceiling, SLOTS - 1, slot + SEL_OUT_LIFT)
+            dark = max(0, min(SLOTS - 1, floor))
             for ix, iy in pixels:
                 px[ix, iy] = (c[0], c[1], c[2], 255)
                 idx = iy * w + ix
                 mids[idx] = spec.mid
                 ramps[idx] = ramp
+                lit_slots[idx] = lit
+                dark_slots[idx] = dark
                 # Overdraw settles the geometry the same way it settles the
                 # colour: the painter's last write owns the pixel.
                 depth[idx] = vdepth
                 normal[idx] = nid
 
+    dplane = Plane(w, h, depth)
+    nplane = Plane(w, h, normal)
+    keep: bytearray | None = None
     if outline:
-        _contour(img, mids, ramps, k)
-    _despeckle(img, mids)
-    # The contour and the despeckle move colour, never geometry: a halo pixel
-    # outside the silhouette belongs to no face, and stays background here.
-    return GBuffer(img, Plane(w, h, depth), Plane(w, h, normal), Plane(w, h, mids))
+        keep = _selective_outline(
+            img, mids, ramps, lit_slots, dark_slots, dplane, nplane
+        )
+    _despeckle(img, mids, keep)
+    # The outline and the despeckle move colour, never geometry: every pixel
+    # they touch already belonged to a face, and keeps that face's depth and
+    # normal here.
+    return GBuffer(img, dplane, nplane, Plane(w, h, mids))
 
 
 def render_indexed(
@@ -308,35 +328,16 @@ def _empty_gbuffer(mids: bytearray) -> GBuffer:
 
 
 _NEIGHBOURS4 = ((0, -1), (-1, 0), (1, 0), (0, 1))
-_NEIGHBOURS8 = _NEIGHBOURS4 + ((-1, -1), (1, -1), (-1, 1), (1, 1))
 
 
-def _exposed(px, w: int, h: int) -> list[bool]:
-    """Every opaque pixel that touches transparency, diagonals included.
-
-    The outer boundary is what the unit is read against, so it is defined the
-    way an eye reads it — a step's inner corner is on the silhouette even
-    though no side of it faces out.
-    """
-    out = [False] * (w * h)
-    for y in range(h):
-        for x in range(w):
-            if px[x, y][3] != 255:
-                continue
-            for dx, dy in _NEIGHBOURS8:
-                nx, ny = x + dx, y + dy
-                if not (0 <= nx < w and 0 <= ny < h) or px[nx, ny][3] != 255:
-                    out[y * w + x] = True
-                    break
-    return out
-
-
-def _despeckle(img: Image.Image, mids: bytearray) -> None:
+def _despeckle(
+    img: Image.Image, mids: bytearray, keep: bytearray | None = None
+) -> None:
     """Fold every lone pixel into the plane it is most like.
 
     A pixel sharing its colour with none of its four orthogonal neighbours
     is dirt at cut-in scale and shimmer at zoom-out (sprite fix spec, section
-    2, rule 3). Stair corners and the contour's own diagonals leave a
+    2, rule 3). Stair corners and the outline's own diagonals leave a
     handful per sprite, so they are snapped to the neighbouring colour
     closest in value — the plane they were nearly part of already.
 
@@ -346,19 +347,18 @@ def _despeckle(img: Image.Image, mids: bytearray) -> None:
     image settles in one, because a pixel that was snapped to a neighbour
     has given that neighbour a match and neither can move again.
 
-    On the outer boundary it may only snap S0 to S0. The contour is the last
-    word on every pixel that meets the ground (`_claim_outer_boundary`), so a
-    lone pixel out there settles between neighbouring contours or stays as it
-    is; folding it into the plane behind it is what left a rim standing naked
-    against a light tile.
+    `keep` is the silhouette's own dark line, and it is exempt: a 1px outline
+    down a stair edge is diagonal, so it is lone by this rule everywhere and
+    folding it away is how an outline dots out. Every other pass answers for
+    itself — an interior overlap line or a sel-out pixel with four unlike
+    neighbours is dirt like any other, and goes.
     """
     px = img.load()
     w, h = img.size
-    exposed = _exposed(px, w, h)
     for y in range(h):
         for x in range(w):
             here = px[x, y]
-            if here[3] != 255:
+            if here[3] != 255 or (keep is not None and keep[y * w + x]):
                 continue
             neigh = []
             for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
@@ -368,323 +368,136 @@ def _despeckle(img: Image.Image, mids: bytearray) -> None:
                         neigh.append((c, ny * w + nx))
             if not neigh or any(c[:3] == here[:3] for c, _ in neigh):
                 continue
-            if exposed[y * w + x]:
-                neigh = [n for n in neigh if mids[n[1]] == MID_CONTOUR]
-                if not neigh:
-                    continue
             level = luminance(here[:3])
             best, src = min(neigh, key=lambda n: abs(luminance(n[0][:3]) - level))
             px[x, y] = best
             mids[y * w + x] = mids[src]
 
 
-def _contour(
-    img: Image.Image, mids: bytearray, ramps: list[Ramp | None], k: int = 1
-) -> None:
-    """Per-faction S0 contour, CONTOUR_WEIGHT * k pixels thick across each edge.
+def _selective_outline(
+    img: Image.Image,
+    mids: bytearray,
+    ramps: list[Ramp | None],
+    lit_slots: bytearray,
+    dark_slots: bytearray,
+    depth: Plane,
+    normal: Plane,
+) -> bytearray:
+    """1px outlines read off the G-buffer, dark away from the sun and light into it.
 
-    The weight is stated in LOGICAL pixels (round 10), so it scales with the
-    density: at k=2 the band is 8 source pixels on the lit edges, which is the
-    same one logical pixel it is at k=1 — and the same reason 128 buys no
-    outline the board can see that 64 does not.
+    Every line here is one pixel wide and lies INSIDE the silhouette: the alpha
+    never moves, and neither does the interior the model drew — which is what
+    the old band cost. `edge_mask` finds the pixels in one reading of the depth
+    plane, because in this projection a silhouette and a self-overlap are the
+    same fact: a 4-neighbour whose depth breaks the step a continuous surface
+    can carry (`EDGE_THRESHOLD`).
 
-    Every contour pixel takes the S0 of the ramp it borders — never a shared
-    black, which reads as a sticker edge. The band runs `_HALO` pixels outward
-    into the transparency and the rest of the weight inward off the plane
-    behind the edge, so a board that keeps one source pixel in four lands on it
-    whatever the phase (see CONTOUR_WEIGHT).
+    What each of those pixels becomes is decided by WHERE the break is, in one
+    fixed order, so a pixel is never both dark and light:
 
-    The band alone only answers for the pixels a plane faces out of; the corner
-    of every stair step still met the ground with whatever plane drew it, which
-    on a long top-facing edge is a dotted line of top and rim breaking the
-    outline every other pixel. `_claim_outer_boundary` closes that, and is what
-    makes the contour the last pass to speak.
+    - a break toward the ground (down or right) is the silhouette read against
+      terrain, and takes the faction's own S0 — never a shared black;
+    - a break against a NEARER surface is a self-overlap, and only the FAR side
+      draws, at S1: the turret keeps its shape and the hull behind it takes the
+      line, which is what stops one mass reading as two outlined stickers;
+    - a break toward the sun (up or left) is the lit side, and it LIGHTENS
+      instead: the pixel steps `SEL_OUT_LIFT` slots up its own ramp, clamped by
+      the ceiling the painting voxel already answered to. That is selective
+      outlining, and it is also why iron — capped at S3 — quietly draws no lit
+      line rather than a bright one it has no business wearing.
+
+    Convex creases (`convex_edges`) get the same lift where a lit face meets
+    another face over a ridge, so a chamfered turret or a raised deck carries a
+    1px highlight along its top edge. Concave gutters get nothing.
+
+    One line here is not geometry at all: `_interior_contour`, S0 between two
+    materials whose value step is too small to read. A barrel lying along a
+    hull is one continuous surface — no depth break, nothing for `edge_mask`
+    to find — and on a light Iron hull it disappears into it. Dropping that
+    pass with the band took the sheet from 306 mushy faction/gunmetal contacts
+    to 1,390, so it stays, and it stays last: the hull gives up the pixel, the
+    fitting keeps every pixel it was drawn with.
+
+    Nothing about the alpha, the depth or the normal moves here: this pass
+    recolours pixels the rasteriser already drew, so the G-buffer behind the
+    picture still describes the model rather than the outline.
+
+    Returns the mask of the SILHOUETTE's dark pixels, which `_despeckle` then
+    leaves alone. Along a stair edge that line runs diagonally, so its pixels
+    can differ from all four orthogonal neighbours and the despeckle would
+    fold half of them back into the plane — the dotted outline of round 9,
+    rebuilt one pass later. They are the pixels spec item 10 exempts anyway:
+    every one of them has a transparent neighbour.
     """
     px = img.load()
     w, h = img.size
-    opaque = [px[x, y][3] == 255 for y in range(h) for x in range(w)]
+    edges = edge_mask(depth, EDGE_THRESHOLD)
+    convex = convex_edges(normal)
+    paint: list[tuple[int, int, int]] = []
+    silhouette = bytearray(w * h)
 
-    def solid(x: int, y: int) -> bool:
-        return 0 <= x < w and 0 <= y < h and opaque[y * w + x]
-
-    # First claim wins, so a pixel two edges reach takes its S0 from the plane
-    # above it and then from the one to its left — one stated order, rather
-    # than whichever of them happened to be painted last.
-    edges: dict[tuple[int, int], Ramp] = {}
-    # Rims the band reaches, with the direction it came from: a rim is the lit
-    # edge of the plane behind it, so it retreats ahead of the contour rather
-    # than being painted over (`_settle_rims`).
-    reached: list[tuple[int, int, tuple[int, int], Ramp]] = []
-
-    def claim(x: int, y: int, ramp: Ramp, step: tuple[int, int] | None = None) -> None:
-        if (x, y) in edges:
-            return
-        edges[(x, y)] = ramp
-        if step is not None and mids[y * w + x] == MID_FACTION:
-            if px[x, y][:3] == ramp[S_RIM]:
-                reached.append((x, y, step, ramp))
-
-    for yy in range(h):
-        for xx in range(w):
-            if not opaque[yy * w + xx]:
+    for y in range(h):
+        for x in range(w):
+            i = y * w + x
+            if ramps[i] is None:
                 continue
-            ramp = ramps[yy * w + xx]
-            if ramp is None:
+            kind = _outline_kind(x, y, edges, convex, depth, normal)
+            if kind is None:
                 continue
-            for step, logical in CONTOUR_WEIGHT.items():
-                if solid(xx + step[0], yy + step[1]):
-                    continue
-                weight = logical * k
-                halo = _HALO[step] * k
-                for out in range(1, halo + 1):  # outward, into the transparency
-                    ex, ey = xx + step[0] * out, yy + step[1] * out
-                    if not (0 <= ex < w and 0 <= ey < h) or solid(ex, ey):
-                        break
-                    claim(ex, ey, ramp)
-                for inw in range(weight - halo):  # inward, off the plane behind
-                    ex, ey = xx - step[0] * inw, yy - step[1] * inw
-                    if not (0 <= ex < w and 0 <= ey < h) or not solid(ex, ey):
-                        break
-                    # The band eats plane, never highlight — the same rule
-                    # `_interior_contour` draws by, that the hull gives up the
-                    # pixel and the feature does not. An accent is a lamp, a
-                    # canopy or a face and keeps every pixel it was drawn with;
-                    # a fitting keeps the two lit slots it is read by, because
-                    # on a 31px infantry or an awash sub those are most of the
-                    # bright band the terrain ceiling reserves for units. What
-                    # is still on the silhouette after that is
-                    # `_claim_outer_boundary`'s, absolutely, as it always was.
-                    if _is_highlight(px, mids, ramps, w, ex, ey):
-                        break
-                    claim(ex, ey, ramp, step)
+            if kind == _LINE_LIT:
+                slot = lit_slots[i]
+            elif kind == _LINE_DARK:
+                # The silhouette is S0's absolutely, whatever material meets
+                # the ground there — round 9's precedence, kept.
+                silhouette[i] = 1
+                slot = S_CONTOUR
+            else:
+                # An INTERIOR line stops at the material's own floor instead:
+                # an accent is a lamp or a canopy drawn on tens of pixels, and
+                # a self-overlap inside one is a crease in the fitting, not a
+                # hole punched through it.
+                slot = max(dark_slots[i], S_UNDER)
+            paint.append((x, y, slot))
 
-    retreats = _settle_rims(px, mids, w, h, edges, reached, k)
-    interior = _interior_contour(px, mids, ramps, w, h, opaque)
-    for xx, yy, ramp in [(x, y, r) for (x, y), r in edges.items()] + interior:
-        c = ramp[S_CONTOUR]
-        px[xx, yy] = (c[0], c[1], c[2], 255)
-        idx = yy * w + xx
-        mids[idx] = MID_CONTOUR
-        ramps[idx] = ramp
-    for (nx, ny), ramp in retreats.items():
-        c = ramp[S_RIM]
-        px[nx, ny] = (c[0], c[1], c[2], 255)
-    _claim_outer_boundary(px, mids, ramps, w, h)
-
-
-def _is_highlight(
-    px, mids: bytearray, ramps: list[Ramp | None], w: int, x: int, y: int
-) -> bool:
-    """Is this pixel a fitting's lit face — a thing the band may not eat?
-
-    An accent always is: it is a lamp, a canopy or a face, drawn on tens of
-    pixels, and it identifies the unit. A gunmetal fitting is one only in its
-    two lit slots — a barrel's top, a deck's steel — because its dark slots are
-    tracks and hulls that the outline may run straight through. The faction
-    plane is not asked: its lit edge is a rim, and a rim retreats rather than
-    stands (`_settle_rims`).
-    """
-    i = y * w + x
-    if mids[i] == MID_ACCENT:
-        return True
-    if mids[i] != MID_GUNMETAL:
-        return False
-    ramp = ramps[i]
-    return ramp is not None and px[x, y][:3] in (ramp[S_TOP], ramp[S_RIM])
-
-
-def _settle_rims(
-    px,
-    mids: bytearray,
-    w: int,
-    h: int,
-    edges: dict[tuple[int, int], Ramp],
-    reached: list[tuple[int, int, tuple[int, int], Ramp]],
-    k: int = 1,
-) -> dict[tuple[int, int], Ramp]:
-    """Move every rim the band reached one plane inboard, or leave it standing.
-
-    A rim is the lit edge of the plane behind it, and it is the brightest thing
-    on the sprite — the band `UnitBandCoverage` reserves for units. A band four
-    pixels deep swallows whole leading edges, so a rim RETREATS ahead of it,
-    onto the first top-plane pixel the band did not take.
-
-    A rim with nowhere to retreat to keeps its pixel, and the band gives way
-    there rather than the art: on a 31px infantry the lit plane is the rim and
-    nothing else, so eating it is the terrain ceiling losing its counterpart to
-    win an outline the halo outside it is already drawing. Returns the pixels to
-    relight; the ones it spared are dropped from `edges` in place.
-    """
-    retreats: dict[tuple[int, int], tuple[Ramp, tuple[int, int]]] = {}
-    for x, y, step, ramp in reached:
-        target = None
-        for step_back in range(1, CONTOUR_WEIGHT[step] * k + 1):
-            nx, ny = x - step[0] * step_back, y - step[1] * step_back
-            if not (0 <= nx < w and 0 <= ny < h):
-                break
-            # The band, and the rest of the leading edge it is eating: a rim
-            # runs the depth of the voxel face it lit, and each of its pixels
-            # asks this question for itself.
-            if mids[ny * w + nx] != MID_FACTION or px[nx, ny][:3] == ramp[S_RIM]:
-                continue
-            if px[nx, ny][:3] != ramp[S_TOP] or (nx, ny) in edges:
-                break
-            # One pixel of plane cannot answer for two pixels of rim, or a
-            # leading edge quietly loses half its length to a shared target.
-            if (nx, ny) in retreats:
-                continue
-            target = (nx, ny)
-            break
-        if target is None:
-            edges.pop((x, y), None)
-            _free_lit_tip(px, mids, w, h, x, y, step, ramp, edges, retreats)
-        else:
-            retreats[target] = (ramp, step)
-    return _pair_lone_rims(px, mids, w, h, edges, retreats)
-
-
-def _free_lit_tip(
-    px,
-    mids: bytearray,
-    w: int,
-    h: int,
-    x: int,
-    y: int,
-    step: tuple[int, int],
-    ramp: Ramp,
-    edges: dict[tuple[int, int], Ramp],
-    retreats: dict[tuple[int, int], tuple[Ramp, tuple[int, int]]],
-) -> None:
-    """Give a spared rim the pixel behind it when the band took everything else.
-
-    A lit tip one pixel wide — an infantry's shoulder, a mast — is a rim with
-    nothing behind it to retreat onto, so the band gives way and leaves it
-    standing. Standing alone in contour it is dirt, and `_despeckle` folds it
-    away, which spends the sprite's brightest pixel on an outline the halo
-    outside it is already drawing. So the tip keeps the pixel behind it too.
-    """
-    nx, ny = x - step[0], y - step[1]
-    if not (0 <= nx < w and 0 <= ny < h) or mids[ny * w + nx] != MID_FACTION:
-        return
-    if px[nx, ny][:3] not in (ramp[S_TOP], ramp[S_RIM]):
-        return
-    edges.pop((nx, ny), None)
-    retreats[(nx, ny)] = (ramp, step)
-
-
-def _pair_lone_rims(
-    px,
-    mids: bytearray,
-    w: int,
-    h: int,
-    edges: dict[tuple[int, int], Ramp],
-    retreats: dict[tuple[int, int], tuple[Ramp, tuple[int, int]]],
-) -> dict[tuple[int, int], Ramp]:
-    """A rim that retreated alone takes the next pixel of plane with it.
-
-    One lit pixel among four unlike neighbours is dirt by `_despeckle`'s own
-    rule, and `_despeckle` duly folds it back into the plane — so a retreat
-    that lands alone is a retreat that never happened. It lands as a pair
-    instead, which is also how a rim was drawn in the first place: the leading
-    face of a voxel, two rows deep.
-    """
-    lit = {cell: ramp for cell, (ramp, _) in retreats.items()}
-
-    def lit_beside(x: int, y: int, ramp: Ramp) -> bool:
-        for dx, dy in _NEIGHBOURS4:
-            nx, ny = x + dx, y + dy
-            if (nx, ny) in retreats:
-                return True
-            if not (0 <= nx < w and 0 <= ny < h) or (nx, ny) in edges:
-                continue
-            if px[nx, ny][:3] == ramp[S_RIM]:
-                return True
-        return False
-
-    for (x, y), (ramp, step) in retreats.items():
-        if lit_beside(x, y, ramp):
-            continue
-        nx, ny = x - step[0], y - step[1]
-        if not (0 <= nx < w and 0 <= ny < h) or (nx, ny) in edges:
-            continue
-        if mids[ny * w + nx] == MID_FACTION and px[nx, ny][:3] == ramp[S_TOP]:
-            lit[(nx, ny)] = ramp
-    return lit
-
-
-def _claim_outer_boundary(
-    px, mids: bytearray, ramps: list[Ramp | None], w: int, h: int
-) -> None:
-    """The outer boundary is S0's, absolutely: no plane touches the ground.
-
-    Claiming the pixel rather than growing the halo into the gap keeps the
-    silhouette the shape the model drew — the alpha does not move, only the
-    colour under it — so what changes is that the outline reads as one line
-    instead of a dotted one.
-
-    A rim caught out there is MOVED, not deleted: it steps one pixel inboard
-    onto the top plane it leads, because a rim is the lit edge of that plane
-    and the plane is still lit one pixel in. Every other claimed plane simply
-    gives up the pixel; the outline is what the pixel is for.
-    """
-    exposed = _exposed(px, w, h)
-    for yy in range(h):
-        for xx in range(w):
-            i = yy * w + xx
-            if not exposed[i] or mids[i] == MID_CONTOUR:
-                continue
-            ramp = ramps[i]
-            if ramp is None:
-                continue
-            if mids[i] == MID_FACTION and px[xx, yy][:3] == ramp[S_RIM]:
-                _step_rim_inboard(px, mids, exposed, w, h, xx, yy, ramp)
-            c = ramp[S_CONTOUR]
-            px[xx, yy] = (c[0], c[1], c[2], 255)
+    for x, y, slot in paint:
+        i = y * w + x
+        ramp = ramps[i]
+        c = ramp[slot]
+        px[x, y] = (c[0], c[1], c[2], 255)
+        if slot <= S_UNDER:
             mids[i] = MID_CONTOUR
 
-
-def _step_rim_inboard(
-    px, mids: bytearray, exposed: list[bool], w: int, h: int, x: int, y: int, ramp: Ramp
-) -> None:
-    """Light the first inboard top-plane pixel this rim can retreat onto."""
-    for dx, dy in _NEIGHBOURS4:
-        nx, ny = x + dx, y + dy
-        if not (0 <= nx < w and 0 <= ny < h):
-            continue
-        j = ny * w + nx
-        if exposed[j] or mids[j] != MID_FACTION or px[nx, ny][:3] != ramp[S_TOP]:
-            continue
-        c = ramp[S_RIM]
-        px[nx, ny] = (c[0], c[1], c[2], 255)
-        return
+    for x, y in _interior_contour(px, mids, w, h):
+        i = y * w + x
+        c = ramps[i][S_CONTOUR]
+        px[x, y] = (c[0], c[1], c[2], 255)
+        mids[i] = MID_CONTOUR
+    return silhouette
 
 
 _INTERIOR_STEP = 36.0  # under ~2 ramp slots of value
 
 
-def _interior_contour(
-    px, mids: bytearray, ramps: list[Ramp | None], w: int, h: int, opaque: list[bool]
-) -> list[tuple[int, int, Ramp]]:
-    """S0 between two materials whose value step is too small to read.
+def _interior_contour(px, mids: bytearray, w: int, h: int) -> list[tuple[int, int]]:
+    """The faction pixels that meet a gunmetal fitting they cannot be told from.
 
     The hull gives up the pixel, never the feature: a gunmetal barrel on a
-    light Iron hull gets its contour out of the hull's own ramp, so the thing
+    light Iron hull gets its line out of the hull's own ramp, so the thing
     that identifies the unit keeps every pixel it was drawn with.
     """
-    out: list[tuple[int, int, Ramp]] = []
+    out: list[tuple[int, int]] = []
     for yy in range(h):
         for xx in range(w):
-            i = yy * w + xx
-            if not opaque[i] or mids[i] != MID_FACTION:
+            if px[xx, yy][3] != 255 or mids[yy * w + xx] != MID_FACTION:
                 continue
             here = luminance(px[xx, yy][:3])
             for nx, ny in ((xx + 1, yy), (xx, yy + 1), (xx - 1, yy), (xx, yy - 1)):
-                if not (0 <= nx < w and 0 <= ny < h and opaque[ny * w + nx]):
+                if not (0 <= nx < w and 0 <= ny < h) or px[nx, ny][3] != 255:
                     continue
                 if mids[ny * w + nx] != MID_GUNMETAL:
                     continue
                 if abs(here - luminance(px[nx, ny][:3])) < _INTERIOR_STEP:
-                    out.append((xx, yy, ramps[i]))
+                    out.append((xx, yy))
                     break
     return out
 
@@ -733,6 +546,51 @@ def _broad_flat_tops(
         if len(area) >= DITHER_MIN_TOP_AREA * k * k:
             broad.update(plane)
     return broad
+
+
+# What a pixel's line is, before the material says which slot draws it.
+_LINE_DARK, _LINE_OVERLAP, _LINE_LIT = 0, 1, 2
+
+
+def _outline_kind(
+    x: int,
+    y: int,
+    edges: Plane,
+    convex: Plane,
+    depth: Plane,
+    normal: Plane,
+) -> int | None:
+    """Which line this pixel carries, or None if it carries none.
+
+    Stated in one order and one order only, so no pixel is both dark and
+    light: the ground-facing silhouette outranks a self-overlap, and a
+    self-overlap outranks the lit side.
+    """
+    w, h = depth.width, depth.height
+    if edges.at(x, y):
+        d = depth.at(x, y)
+        lit = False
+        occluded = False
+        for step in _NEIGHBOURS4:
+            nx, ny = x + step[0], y + step[1]
+            if not (0 <= nx < w and 0 <= ny < h) or depth.at(nx, ny) == DEPTH_EMPTY:
+                if step in _LIT_STEPS:
+                    lit = True
+                else:
+                    return _LINE_DARK
+                continue
+            # Only the FAR side of a self-overlap draws: the near mass keeps
+            # its own shape, the one behind it takes the line.
+            if depth.at(nx, ny) - d > EDGE_THRESHOLD:
+                occluded = True
+        if occluded:
+            return _LINE_OVERLAP
+        return _LINE_LIT if lit else None
+    # A ridge the sun is on: the top face is the only one this light reaches
+    # over a crease, so only it carries the 1px highlight.
+    if convex.at(x, y) and normal.at(x, y) == N_TOP:
+        return _LINE_LIT
+    return None
 
 
 def render_gbuffer(model: Model, faction: Faction, outline: bool = True) -> GBuffer:

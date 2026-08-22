@@ -40,12 +40,18 @@ play state — zoom 2 in a 720p window — is `s = 4`.
 Two lines of that table are the whole finding.
 
 **The logical resolution is identical.** Round 10 pegged one logical pixel at
-`SPRITE_PX / TILE` source pixels — that is what `CONTOUR_WEIGHT` counts in and
-why the contour is 4 and not 1. Doubling `SPRITE_PX` doubles the source pixels
+`SPRITE_PX / TILE` source pixels — that is what `CONTOUR_WEIGHT` counted in and
+why the contour was 4 and not 1. Doubling `SPRITE_PX` doubles the source pixels
 inside a logical pixel and adds no logical pixels: 16 per tile either way. The
-contour band doubles with it, to 8 source pixels on the lit edges, so it eats
+contour band doubled with it, to 8 source pixels on the lit edges, so it ate
 the same share of the sprite it always did. Every rule the art is authored
 under is stated in logical pixels, and 128 buys none of them.
+
+(`CONTOUR_WEIGHT` is gone: units are outlined 1px per pixel off the G-buffer
+now, and the edge is carried by a dark/light contrast pair rather than by a
+band the board can resolve. See `docs/outlines.md`. The finding above is
+unaffected — it is about logical resolution, not about the outline — but the
+worked example no longer describes the code.)
 
 **The default view of a 128 sheet is a downsample of it.** At `s = 4` the 64px
 cell lands one source texel on one screen pixel exactly — the shipped art is

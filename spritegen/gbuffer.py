@@ -13,8 +13,9 @@ those buffers.
 
 This module is the buffer side of that: the containers, the depth convention,
 and two pure passes (`edge_mask`, `convex_edges`). It imports nothing from the
-renderer — the renderer imports it — and it draws nothing. Nothing in the
-shipped art consumes these yet.
+renderer — the renderer imports it — and it draws nothing. `voxel.py`'s unit
+path is what consumes it: every outline on the shipped unit sheet is one of
+these two masks, read per pixel (docs/outlines.md).
 
 Depth is measured along the VIEW AXIS. The projection is
 screen x = (vx - vy) * 2, y = (vx + vy) - vz * 2, so the only voxel offset that
@@ -31,8 +32,9 @@ from dataclasses import dataclass
 from PIL import Image
 
 # Face ids stored in the normal plane. NONE is background — and also every
-# pixel a post-pass (the contour, the outline) painted outside the silhouette,
-# since those pixels belong to no face.
+# pixel a post-pass painted outside the silhouette, since those pixels belong
+# to no face. The unit path's outline paints none: it recolours pixels the
+# rasteriser already drew, so the planes keep describing the model.
 N_NONE = 0
 N_TOP = 1
 N_LEFT = 2
@@ -52,7 +54,7 @@ FACE_NORMALS: dict[int, tuple[int, int, int]] = {
 # silhouette falls out of the same test that finds self-overlap.
 DEPTH_EMPTY = -1_000_000
 
-# Up, left, right, down — same four steps the renderer measures its contour
+# Up, left, right, down — same four steps the renderer measures its outlines
 # across, in the same order.
 _NEIGHBOURS4 = ((0, -1), (-1, 0), (1, 0), (0, 1))
 
@@ -100,9 +102,9 @@ class GBuffer:
     """A render's colour plus the geometry behind every pixel.
 
     `depth` and `normal` describe the face that OWNS each pixel after
-    overdraw — the last voxel the painter's algorithm wrote there. Pixels that
-    a later 2D pass painted (the contour's halo, the outline) are geometry
-    background: DEPTH_EMPTY and N_NONE. `material` is the same id plane
+    overdraw — the last voxel the painter's algorithm wrote there. Any pixel a
+    later 2D pass painted OUTSIDE the silhouette is geometry background:
+    DEPTH_EMPTY and N_NONE. `material` is the same id plane
     `IndexedSprite.materials` carries; the plain `render` path leaves it empty.
     """
 
