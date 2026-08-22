@@ -123,7 +123,14 @@ const PIP_GAP := 1
 ## reached a pixel — `hud_spacer` floors a negative width at zero, so each bar was
 ## always inset by its own gap, which is 7 in both (COM-98).
 const HUD_PAD := 7
-const HUD_GAP := 7
+## 7 until COM-254 set the bar's labels on the stat face's own pixel grid: the top
+## bar is one row of fixed content across 640 canvas px, so a third more glyph
+## width comes out of the space between the groups or out of the groups
+## themselves, and a key legend cut mid-word is the worse of the two. The bar is
+## full at 4: the campaign board measures it — four chips, the longest faction
+## name and IDLE's legend at ControlHints.MAX_CHARS — so a fifth chip or a longer
+## legend is a group that has to give, not another pixel here.
+const HUD_GAP := 4
 ## The separations *inside* a bar's groups — a commander block's rows, a stat
 ## line's icons — as opposed to HUD_GAP, which is between the groups. Four
 ## sizes because the bottom bar's blocks disagreed on which of them to use
@@ -182,7 +189,21 @@ const SIZE_SEGMENT := 7
 ## positioning off ("How fast moves" sets as "Howfast moves"). One step up is the
 ## smallest size that keeps the words apart.
 const SIZE_TIP := 8
-const SIZE_MICRO := 6  # Silkscreen micro-labels; 12 physical px, R1's floor
+## Silkscreen is drawn on an 8-pixel grid, and a pixel face only rasterises whole
+## at a whole multiple of the grid it was drawn on: below it the renderer drops
+## rows out of every glyph, which is not a blur but a different letter — at 6 the
+## shell printed "FUNDS 4200" as "FUHDG 42DD" and "MISSION" as "MIFFIDH", which is
+## the whole of COM-254's "the font is hard to read".
+const STAT_DESIGN_PX := 8
+## The one size the shell sets the stat face at: its own grid, 16 physical px on
+## the default window. One token rather than three sizes, because every label that
+## reads as broken is a label somebody set off the grid.
+const SIZE_STAT := STAT_DESIGN_PX
+## The one exception, and it is not a label: the count a board badge carries
+## (CapturePips, PowerMarks) is one or two digits drawn over a 16px tile with an
+## outline, and a digit on the grid covers the building it is counting down. A
+## number this short survives off the grid where a word does not.
+const SIZE_MARK := 6
 
 enum ButtonVariant { PRIMARY, SECONDARY, GHOST }
 
@@ -212,6 +233,8 @@ static func display(bold := false) -> Font:
 
 
 ## Silkscreen — micro-labels, numerals, badges. `bold` loads the static bold cut.
+## Serve it at SIZE_STAT and nowhere else: it is a pixel face with a grid, and the
+## sizes between its rungs are the ones that shatter (see STAT_DESIGN_PX).
 static func stat(bold := false) -> Font:
 	if bold:
 		if _stat_bold == null:

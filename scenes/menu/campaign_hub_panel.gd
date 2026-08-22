@@ -365,7 +365,7 @@ func _note(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
@@ -573,7 +573,7 @@ func _row_detail(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.INK_3)
 	label.clip_text = true
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE

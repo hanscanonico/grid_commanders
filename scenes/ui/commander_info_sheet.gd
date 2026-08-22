@@ -158,7 +158,7 @@ func _build() -> void:
 	footer.text = "UP/DOWN  SCROLL      ESC  CLOSE      MOUSE OK"
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
+	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	rows.add_child(footer)
 

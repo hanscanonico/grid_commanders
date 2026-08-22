@@ -144,7 +144,7 @@ func _note(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
@@ -257,14 +257,14 @@ func _micro(text: String, ink: Color, lines: int) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", ink)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.max_lines_visible = lines
 	label.add_theme_constant_override("line_spacing", 0)
-	label.custom_minimum_size.y = UiTheme.stat().get_height(UiTheme.SIZE_MICRO) * lines
+	label.custom_minimum_size.y = UiTheme.stat().get_height(UiTheme.SIZE_STAT) * lines
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
 

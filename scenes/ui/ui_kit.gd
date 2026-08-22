@@ -40,7 +40,7 @@ static func micro_label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text.to_upper()
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return label
@@ -89,7 +89,7 @@ static func text_link(text: String) -> Button:
 	var link := Button.new()
 	link.text = text.to_upper()
 	link.add_theme_font_override("font", UiTheme.stat())
-	link.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	link.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	var blank := UiTheme.flat(Color(0, 0, 0, 0))
 	link.add_theme_stylebox_override("normal", blank)
 	link.add_theme_stylebox_override("hover", blank)
@@ -239,7 +239,7 @@ static func toggle(
 	var mark := Label.new()
 	mark.text = "✓"
 	mark.add_theme_font_override("font", UiTheme.stat(true))
-	mark.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	mark.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	mark.add_theme_color_override("font_color", UiTheme.SLATE_900)
 	mark.set_anchors_preset(Control.PRESET_FULL_RECT)
 	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -265,7 +265,7 @@ static func toggle(
 
 	var status := Label.new()
 	status.add_theme_font_override("font", UiTheme.stat())
-	status.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	status.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(status)
 	UiTheme.make_decoration(row)
@@ -313,7 +313,7 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	var label := Label.new()
 	label.text = "%s · %s" % [String(theme.key).capitalize(), role]
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.INK)
 	row.add_child(label)
 	chip.add_child(row)

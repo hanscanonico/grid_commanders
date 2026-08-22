@@ -137,7 +137,7 @@ func _build() -> void:
 	_title_label = UiTheme.hud_label("", UiTheme.SIZE_TITLE, UiTheme.WHITE, true)
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(_title_label)
-	_count_label = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.AMMO)
+	_count_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.AMMO)
 	header_row.add_child(_count_label)
 
 	var body_margin := MarginContainer.new()
@@ -158,7 +158,7 @@ func _build() -> void:
 	_list.focus_mode = Control.FOCUS_NONE
 	_list.get_v_scroll_bar().focus_mode = Control.FOCUS_NONE
 	body.add_child(_list)
-	_unit_label = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.INK)
+	_unit_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK)
 	_unit_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_child(_unit_label)
 

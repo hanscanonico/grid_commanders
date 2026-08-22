@@ -201,11 +201,11 @@ func _build() -> void:
 	head.add_theme_constant_override("separation", _ROW_GAP)
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(head)
-	head.add_child(UiTheme.hud_label("MISSION", UiTheme.SIZE_MICRO, UiTheme.INK_3))
-	_title_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
+	head.add_child(UiTheme.hud_label("MISSION", UiTheme.SIZE_STAT, UiTheme.INK_3))
+	_title_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
 	head.add_child(_title_label)
 
-	_where_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_where_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	_where_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(_where_label)
 
@@ -227,7 +227,7 @@ func _group(heading: String, objectives: Array[MissionObjective], game: GameStat
 	var live := _live(objectives)
 	if live.is_empty():
 		return
-	_rows.add_child(UiTheme.hud_label(heading, UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	_rows.add_child(UiTheme.hud_label(heading, UiTheme.SIZE_STAT, UiTheme.INK_3))
 	for objective: MissionObjective in live:
 		_rows.add_child(_condition_row(objective, game))
 
@@ -241,7 +241,7 @@ func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
 	var live := _live(mission.bonus_objectives)
 	if live.is_empty() and mission.par_day <= 0:
 		return
-	_rows.add_child(UiTheme.hud_label("BONUS", UiTheme.SIZE_MICRO, UiTheme.INK_3))
+	_rows.add_child(UiTheme.hud_label("BONUS", UiTheme.SIZE_STAT, UiTheme.INK_3))
 	for objective: MissionObjective in live:
 		_rows.add_child(_condition_row(objective, game))
 	if mission.par_day <= 0:
@@ -254,7 +254,7 @@ func _bonus_group(mission: MissionDefinition, game: GameState) -> void:
 		_first_line(_OPEN if inside else _LOST, UiTheme.AMMO if inside else UiTheme.INK_3)
 	)
 	var words := UiTheme.hud_label(
-		"Finish by day %d." % mission.par_day, UiTheme.SIZE_MICRO, UiTheme.WHITE
+		"Finish by day %d." % mission.par_day, UiTheme.SIZE_STAT, UiTheme.WHITE
 	)
 	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -289,7 +289,7 @@ func _condition_row(objective: MissionObjective, game: GameState) -> Control:
 
 	var mark := _MET if met else _OPEN
 	row.add_child(_first_line(mark, UiTheme.CAPTURE if met else UiTheme.INK_3))
-	var words := UiTheme.hud_label(objective.text, UiTheme.SIZE_MICRO, UiTheme.WHITE)
+	var words := UiTheme.hud_label(objective.text, UiTheme.SIZE_STAT, UiTheme.WHITE)
 	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_row_labels.append(words)
@@ -304,7 +304,7 @@ func _condition_row(objective: MissionObjective, game: GameState) -> Control:
 ## A label that stays level with the first line of the wrapping words beside it,
 ## rather than centring itself against however many lines they took.
 func _first_line(text: String, color: Color) -> Label:
-	var label := UiTheme.hud_label(text, UiTheme.SIZE_MICRO, color)
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_STAT, color)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	return label

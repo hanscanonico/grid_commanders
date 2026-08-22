@@ -144,9 +144,9 @@ func _build_commander(row: HBoxContainer) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", UiTheme.HUD_GAP_SNUG)
 	block.add_child(head)
-	_co_name = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
+	_co_name = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	head.add_child(_co_name)
-	_power_name = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_power_name = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	_power_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_power_name)
 
@@ -167,7 +167,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	_meter_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_meter_frame.add_child(_meter_fill)
 
-	_charge_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_charge_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	meter_row.add_child(_charge_label)
 	_fire_button = Button.new()
 	_fire_button.text = "FIRE"
@@ -175,7 +175,7 @@ func _build_commander(row: HBoxContainer) -> void:
 	# Cream rather than the side's own fill, for the reason the faction chip above
 	# takes the -light value: this bar is slate, and Iron's hue sits close enough to
 	# it that a tinted button disappears into the chrome it stands on.
-	UiTheme.apply_button(_fire_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_MICRO)
+	UiTheme.apply_button(_fire_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BODY)
 	_fire_button.pressed.connect(fire_pressed.emit)
 	meter_row.add_child(_fire_button)
 
@@ -187,9 +187,7 @@ func _build_end_turn(row: HBoxContainer) -> void:
 	_end_turn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# Cream for the reason the Fire button is: this bar is slate, and a side-tinted
 	# button disappears into the chrome it stands on.
-	UiTheme.apply_button(
-		_end_turn_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_MICRO
-	)
+	UiTheme.apply_button(_end_turn_button, UiTheme.ButtonVariant.SECONDARY, null, UiTheme.SIZE_BODY)
 	_end_turn_button.disabled = true  # until a state says the board is the player's
 	_end_turn_button.pressed.connect(end_turn_pressed.emit)
 	row.add_child(_end_turn_button)
@@ -219,9 +217,9 @@ func _build_unit(row: HBoxContainer) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", UiTheme.HUD_GAP_SNUG)
 	data.add_child(head)
-	_unit_name = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.WHITE)
+	_unit_name = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	head.add_child(_unit_name)
-	_unit_sub = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_unit_sub = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	_unit_sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_unit_sub.clip_text = true
 	head.add_child(_unit_sub)
@@ -231,9 +229,9 @@ func _build_unit(row: HBoxContainer) -> void:
 	data.add_child(stats)
 	_pips = HpPips.new()
 	stats.add_child(_pips)
-	_fuel_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
+	_fuel_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
 	stats.add_child(_fuel_label)
-	_ammo_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
+	_ammo_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
 	stats.add_child(_ammo_label)
 
 
@@ -264,9 +262,9 @@ func _build_terrain(row: HBoxContainer) -> void:
 	data.add_theme_constant_override("separation", UiTheme.HUD_GAP_HAIR)
 	data.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	block.add_child(data)
-	_terrain_name = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
+	_terrain_name = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	data.add_child(_terrain_name)
-	_terrain_def = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_terrain_def = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	data.add_child(_terrain_def)
 
 

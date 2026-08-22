@@ -125,7 +125,7 @@ func _build() -> void:
 
 	var footer := Label.new()
 	footer.add_theme_font_override("font", UiTheme.stat())
-	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_BODY)
+	footer.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	footer.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	footer.text = "UP/DOWN  BROWSE      ENTER  WATCH      ESC  BACK      MOUSE OK"
 	main.add_child(footer)
@@ -192,7 +192,7 @@ func _build_frame() -> Control:
 ## to this page's own alignment (hud_label centres vertically, for a bar row;
 ## this note wants that horizontally instead).
 func _note(text: String) -> Label:
-	var label := UiTheme.hud_label(text, UiTheme.SIZE_MICRO, UiTheme.NEUTRAL_LIGHT)
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_STAT, UiTheme.NEUTRAL_LIGHT)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label

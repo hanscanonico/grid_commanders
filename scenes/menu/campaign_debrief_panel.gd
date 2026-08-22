@@ -135,7 +135,7 @@ func _star_row(text: String, lit: bool) -> HBoxContainer:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.SELECT_GOLD if lit else UiTheme.INK_3)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(label)
@@ -233,7 +233,7 @@ func _micro(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_override("font", UiTheme.stat())
-	label.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	label.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	label.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label

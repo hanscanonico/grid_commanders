@@ -52,7 +52,7 @@ func _build() -> void:
 
 	_band = PanelContainer.new()
 	column.add_child(_band)
-	_band_label = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.WHITE)
+	_band_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	_band_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_band.add_child(_band_label)
 
@@ -79,7 +79,7 @@ func _build() -> void:
 	_title.add_theme_font_override("font", UiTheme.display(true))
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rows.add_child(_title)
-	_sub = UiTheme.hud_label("", UiTheme.SIZE_BODY, UiTheme.INK)
+	_sub = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK)
 	_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rows.add_child(_sub)
 

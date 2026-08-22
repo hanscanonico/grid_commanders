@@ -157,8 +157,8 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 5)
 	rows.add_child(head)
-	head.add_child(UiTheme.hud_label("OBJECTIVE", UiTheme.SIZE_MICRO, UiTheme.INK_3))
-	_objective_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.PAPER_2)
+	head.add_child(UiTheme.hud_label("OBJECTIVE", UiTheme.SIZE_STAT, UiTheme.INK_3))
+	_objective_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.PAPER_2)
 	head.add_child(_objective_label)
 
 	var step := HBoxContainer.new()
@@ -166,12 +166,12 @@ func _build() -> void:
 	rows.add_child(step)
 	# Amber is this design system's "your attention here" — the same token the
 	# charge meter fills with — so the live step reads as the one thing to do.
-	_step_label = UiTheme.hud_label("", UiTheme.SIZE_SEGMENT, UiTheme.AMMO)
+	_step_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.AMMO)
 	step.add_child(_step_label)
-	_body_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.WHITE)
+	_body_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.WHITE)
 	step.add_child(_body_label)
 
-	_rest_label = UiTheme.hud_label("", UiTheme.SIZE_MICRO, UiTheme.INK_3)
+	_rest_label = UiTheme.hud_label("", UiTheme.SIZE_STAT, UiTheme.INK_3)
 	rows.add_child(_rest_label)
 
 	UiTheme.make_decoration(self)

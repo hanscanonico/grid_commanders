@@ -242,7 +242,7 @@ func _body(color: Color) -> Label:
 ## A block's caption or the cost beside it — Silkscreen, the face the whole game
 ## sets its labels and numerals in.
 func _micro(text: String, color: Color) -> Label:
-	var label := UiTheme.hud_label(text, UiTheme.SIZE_MICRO, color)
+	var label := UiTheme.hud_label(text, UiTheme.SIZE_STAT, color)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	return label
 

@@ -118,7 +118,7 @@ func _build() -> void:
 	_heading = Label.new()
 	_heading.text = "INTERLUDE"
 	_heading.add_theme_font_override("font", UiTheme.stat())
-	_heading.add_theme_font_size_override("font_size", UiTheme.SIZE_MICRO)
+	_heading.add_theme_font_size_override("font_size", UiTheme.SIZE_STAT)
 	_heading.add_theme_color_override("font_color", UiTheme.NEUTRAL_LIGHT)
 	_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(_heading)

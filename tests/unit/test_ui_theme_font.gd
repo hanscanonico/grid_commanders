@@ -45,3 +45,13 @@ func test_the_bold_display_face_shapes_fi_as_two_letters() -> void:
 func test_the_raw_font_file_is_the_one_that_merges_them() -> void:
 	var raw: FontFile = load(UiTheme.DISPLAY_FONT_PATH)
 	assert_lt(_glyphs(raw), LIGATURE_WORD.length())
+
+
+## What the stat face must never do again: Silkscreen is drawn on an 8-pixel grid,
+## and the shell served it at 6 and 7, where the rasteriser drops a row out of
+## every glyph and prints a different letter — "FUNDS 4200" as "FUHDG 42DD"
+## (COM-254). A size is a number anybody can type, so the grid is a constant and
+## this is the lint that keeps the one size the shell sets on it.
+func test_the_stat_face_is_set_on_its_own_pixel_grid() -> void:
+	assert_gt(UiTheme.SIZE_STAT, 0)
+	assert_eq(UiTheme.SIZE_STAT % UiTheme.STAT_DESIGN_PX, 0)

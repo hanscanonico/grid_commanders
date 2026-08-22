@@ -192,7 +192,7 @@ func _build() -> void:
 
 	_label = _line(UiTheme.display(), UiTheme.SIZE_TIP, UiTheme.WHITE)
 	column.add_child(_label)
-	_detail = _line(UiTheme.stat(), UiTheme.SIZE_MICRO, UiTheme.NEUTRAL_LIGHT)
+	_detail = _line(UiTheme.stat(), UiTheme.SIZE_STAT, UiTheme.NEUTRAL_LIGHT)
 	column.add_child(_detail)
 
 	_tail = NotchTail.new()
