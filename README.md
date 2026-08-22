@@ -37,7 +37,7 @@ empty. Baking the plains green into those cells put a green square around
 every city standing on road or beach; the board paints the ground under a
 property and the building reads as an object on it. Consumers compose
 default ground first, then the property cell — `preview_map.png` does
-exactly that.
+exactly that, with the plains phase the cell's coordinate hashes to.
 
 Units are painted out of **indexed ramps**: six slots per faction — S0
 contour, S1 under, S2 shadow, S3 body, S4 top, S5 rim — plus one shared
@@ -205,7 +205,7 @@ python3 -m venv .venv
 | `units/<id>_<team>.png` | 90 cells, the inputs `tools/paste_unit_sprites.gd` reads |
 | `iso_buildings/<id>_<team>.png` | 25 property-building cells for `assets/sprites/iso_buildings` |
 | `preview_units.png`, `preview_terrain.png` | 2x atlas contact sheets on checkerboard |
-| `preview_map.png` | an authored little battle map proving the sheet in context |
+| `preview_map.png` | an authored little battle map proving the sheet in context: the shipped maps' terrain mix, autotiled, phased by the game's own coordinate hash |
 | `autotiles/{roads,rivers,coast,shoals,woods}.png` | 16-variant connection sheets (see below) |
 | `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S |
 | `autotiles/sea.png` | the three sea phase variants, phase 0 first (see below) |
@@ -264,7 +264,11 @@ generator emits the phases; the game places them**, by hashing the cell
 coordinate into `0..2`. **Phase 0 is the terrain atlas's sea column byte for
 byte**, so a board that knows nothing about this sheet is unchanged and a
 board that adopts it keeps every cell it does not re-key; nothing has to move
-on the day the game registers the sheet.
+on the day the game registers the sheet. `preview_map.png` places them with
+that hash copied out of `scenes/battle/terrain_autotiles.gd`
+(`atlas.phase`, pinned against the engine's own arithmetic in
+`tests/test_demo_map.py`), so the review sheet is the board the game draws
+cell for cell rather than a plausible-looking one.
 
 `autotiles/plains.png` is that rule on the ground most of a board is made of,
 and it is phased the same way: five tiles, phase 0 the atlas plains column byte

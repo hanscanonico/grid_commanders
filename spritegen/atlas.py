@@ -129,59 +129,116 @@ def preview(atlas: Image.Image, zoom: int = 2) -> Image.Image:
     return base.resize((atlas.width * zoom, atlas.height * zoom), Image.NEAREST)
 
 
-# A small authored scene proving the sheet works as a map: terrain ids per
-# cell, then units placed on top with mixed factions. Roads, the river, the
-# bridge, every coastline and every wood's tree line resolve through the
-# autotile variants, so the preview shows the connected look the game gets if
-# it adopts them.
+# Phase-keyed terrains, and how many phases each of their sheets holds — the
+# game's TerrainAutotiles.PHASE_COUNTS, restated against this generator's own
+# tables so the two cannot drift apart.
+_PHASE_COUNTS = {
+    "plains": len(terrain.PLAINS_PHASES),
+    "sea": len(terrain.SEA_PHASES),
+    "mountain": len(terrain.MOUNTAIN_PHASES),
+}
+_PHASED = {
+    "plains": terrain.plains,
+    "sea": terrain.sea,
+    "mountain": terrain.mountain,
+}
+_I64 = 1 << 64
+
+
+def _wrap64(v: int) -> int:
+    """GDScript's int, which is a wrapping 64-bit signed one."""
+    v &= _I64 - 1
+    return v - _I64 if v >> 63 else v
+
+
+def phase(x: int, y: int, count: int) -> int:
+    """Which of `count` phases the cell at (x, y) wears — grid_commanders'
+    TerrainAutotiles.phase (scenes/battle/terrain_autotiles.gd), arithmetic for
+    arithmetic. The board hashes the coordinate rather than drawing a number,
+    so copying the hash is what makes this preview the game's board cell for
+    cell rather than a plausible-looking one."""
+    bits = _wrap64(_wrap64(x * 0x9E3779B1) ^ _wrap64(y * 0x85EBCA77))
+    bits = _wrap64((bits ^ (bits >> 13)) * 0xC2B2AE3D)
+    return (bits >> 17) % count  # Python's % on a positive divisor is posmod
+
+
+def phased_tile(tid: str, x: int, y: int) -> Image.Image:
+    """The tile the board would paint at (x, y): a phase variant where the
+    terrain has phases, the one tile where it does not."""
+    count = _PHASE_COUNTS.get(tid)
+    if count is None:
+        return terrain.tile(tid, FACTIONS[0])
+    return _PHASED[tid](phase(x, y, count))
+
+
+# A small authored scene proving the sheet works as a map: a board in
+# grid_commanders' own map syntax (the `symbol` of each data/terrain resource),
+# then units placed on top with mixed factions. Roads, the river, the bridge,
+# every coastline and every wood's tree line resolve through the autotile
+# variants, and plains, sea and mountain draw the phase their coordinate hashes
+# to, so the preview shows the connected, varied look the game gets — the same
+# cells, not merely the same tiles.
+#
+# The terrain mix is the mix of the shipped maps (grid_commanders/maps, 31
+# boards): about 56% plains, 12% sea, 11% road, 6% woods, 4% mountain, the rest
+# properties and water features. A demo that is half open sea proves the sea
+# tile and little else.
 _DEMO_MAP = [
-    "sea    sea    sea    sea    sea    sea    sea    sea    sea    sea",
-    "sea    reef   shoal  plains woods  plains river  city   port   sea",
-    "sea    shoal  plains road   road   road   bridge road   hq     sea",
-    "sea    plains woods  road   mount  road   river  road   city   sea",
-    "sea    base   road   road   plains woods  river  road   base   sea",
-    "sea    plains airport plains plains plains river  plains plains sea",
-    "sea    sea    sea    sea    sea    sea    sea    sea    sea    sea",
+    ".F..MM...F...SS",
+    "Q=B..M......CSS",
+    ".=..F........_S",
+    ".=.F...~...PSS*",
+    ".=M....~.FF..SS",
+    ".======+====.SS",
+    "....FF.~...A.SS",
+    ".......~....CSS",
+    "B...C..~...Q._S",
 ]
-_DEMO_ALIAS = {"mount": "mountain"}
+_DEMO_LEGEND = {
+    ".": "plains",
+    "F": "woods",
+    "M": "mountain",
+    "S": "sea",
+    "*": "reef",
+    "_": "shoal",
+    "=": "road",
+    "~": "river",
+    "+": "bridge",
+    "C": "city",
+    "B": "base",
+    "Q": "hq",
+    "A": "airport",
+    "P": "port",
+}
 # Tiles that read as open water (no coastline against them).
 _WATERY = frozenset({"sea", "reef", "river", "bridge", "port"})
 # (unit, faction row, col, row)
 _DEMO_UNITS = [
     ("infantry", 1, 3, 2),
-    ("tank", 1, 4, 2),
-    ("recon", 1, 2, 3),
-    ("mech", 2, 7, 2),
-    ("md_tank", 2, 4, 4),
-    ("artillery", 2, 7, 5),
-    ("rockets", 1, 1, 4),
-    ("apc", 2, 5, 1),
-    ("anti_air", 1, 3, 5),
-    ("missiles", 2, 8, 5),
-    ("fighter", 1, 5, 3),
-    ("bomber", 2, 2, 5),
-    ("b_copter", 1, 6, 1),
-    ("t_copter", 2, 4, 5),
-    ("battleship", 1, 1, 6),
-    ("cruiser", 2, 8, 6),
-    ("sub", 1, 3, 0),
-    ("lander", 2, 6, 6),
+    ("mech", 1, 2, 3),
+    ("recon", 1, 4, 5),
+    ("tank", 1, 6, 4),
+    ("apc", 1, 5, 3),
+    ("artillery", 1, 1, 6),
+    ("rockets", 1, 8, 6),
+    ("anti_air", 2, 10, 2),
+    ("missiles", 2, 10, 7),
+    ("md_tank", 2, 9, 5),
+    ("fighter", 1, 6, 1),
+    ("bomber", 2, 9, 3),
+    ("b_copter", 2, 12, 5),
+    ("t_copter", 1, 3, 7),
+    ("battleship", 2, 14, 4),
+    ("cruiser", 2, 13, 6),
+    ("sub", 2, 14, 7),
+    ("lander", 1, 13, 8),
 ]
 
 
 def build_demo() -> Image.Image:
-    rows = [[_DEMO_ALIAS.get(t, t) for t in r.split()] for r in _DEMO_MAP]
+    rows = [[_DEMO_LEGEND[c] for c in r] for r in _DEMO_MAP]
     h, w = len(rows), len(rows[0])
     img = Image.new("RGBA", (w * terrain.CELL, h * terrain.CELL))
-    fac_for_prop = {
-        (7, 1): 2,
-        (8, 1): 2,
-        (8, 2): 2,
-        (8, 3): 2,
-        (8, 4): 2,
-        (1, 4): 1,
-        (2, 5): 1,
-    }
 
     def at(x: int, y: int) -> str:
         if 0 <= x < w and 0 <= y < h:
@@ -242,18 +299,19 @@ def build_demo() -> Image.Image:
                 tile = (
                     autotile.coast_tile(edges, corners)
                     if edges or corners
-                    else terrain.tile("sea", FACTIONS[0])
+                    else phased_tile("sea", x, y)
                 )
+            elif tid in terrain.PROPERTY:
+                # west half to one faction, east half to the other
+                tile = terrain.tile(tid, FACTIONS[1 if x < w // 2 else 2])
             else:
-                fac_row = fac_for_prop.get((x, y), 1 if x < 5 else 2)
-                fac = FACTIONS[fac_row if tid in terrain.PROPERTY else 0]
-                tile = terrain.tile(tid, fac)
+                tile = phased_tile(tid, x, y)
             if tid in terrain.PROPERTY:
                 # A property ships as a transparent overlay, so the ground
-                # under it is the board's to paint — the default ground,
-                # which is what these cells used to bake.
+                # under it is the board's to paint — the plains phase that
+                # cell hashes to, exactly as the board paints it.
                 img.paste(
-                    terrain.tile("plains", FACTIONS[0]),
+                    phased_tile("plains", x, y),
                     (x * terrain.CELL, y * terrain.CELL),
                 )
                 img.alpha_composite(tile, (x * terrain.CELL, y * terrain.CELL))
