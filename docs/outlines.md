@@ -223,10 +223,18 @@ are a ground-aware lift into the rim slot for those pairs, or the terrain
 side: the woods tile already carries its own value band for exactly this
 reason (`CANOPY_TOP`).
 
-`b_copter`'s blades are not a faction defect. Measured over both frames of all
-five rows, 2 to 7 of the 35 blade pixels that touch anything sit within 25L of
-everything around them — the same count on every row, before and after the
-grade, because the blade tips meet the rotor collar and not the livery.
-`GroundContrast.test_the_b_copters_blades_stay_off_the_body_under_them` guards
-that 1px lattice at 25% rather than asserting a faction difference that is not
-there.
+`b_copter`'s blades are not a faction defect either, but they are not
+untouched. Measured over both frames of all five rows, 2 to 8 of the 35 blade
+pixels that touch another drawn pixel sit within 25L of everything around
+them, and the heavy grade RAISES that count on its two rows (neutral and Iron
+go 3/6 to 7/8, the light rows do not move). That is the reading's blind spot
+rather than a merge: where a blade tip and the body edge under it are now both
+S0, the metric sees two pixels of the same value and calls them one surface,
+which is exactly what an outline is. What the sheet review actually saw —
+blades dissolving into the tile behind them — is the reading
+`test_the_value_only_rows_cut_out_of_the_ground_they_stand_on` covers, and
+b_copter's own boundary there goes 10.2% to 0.87% on shoal (Iron) and
+6.4% to 0.29% (neutral).
+`GroundContrast.test_the_b_copters_blades_stay_off_the_body_under_them`
+therefore guards the 1px lattice at 25% — a floor under the rotor, not a
+reading of the livery.

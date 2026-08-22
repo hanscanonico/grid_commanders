@@ -68,7 +68,7 @@ FACTIONS: tuple[Faction, ...] = (
 GROUND_BAND = (118.0, 166.0)
 # Under 25L of separation, the 2026-08-21 sheet review read a boundary pixel
 # and the tile under it as one surface. A lit line therefore clears the ground
-# only below L106 or above L191.
+# only below L93 or above L191.
 GROUND_BREAK = 25.0
 
 

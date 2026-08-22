@@ -1648,7 +1648,7 @@ class GroundContrast(unittest.TestCase):
     MAX_WEAK_LIGHT = 0.02
     # The two places a light row shares its HUE with the ground as well as
     # its band, where the colour half of the argument cannot save it: verdant
-    # on the plains grass (12.6% of its boundary), and aurora over the water
+    # on the plains grass (12.2% of its boundary), and aurora over the water
     # a shoal is half made of (7.9%). Named rather than folded into the
     # bound, because they are defects to answer and not a rule to live with —
     # docs/outlines.md carries them as open.
@@ -1746,10 +1746,13 @@ class GroundContrast(unittest.TestCase):
 
         A blade pixel whose four neighbours all sit within `WEAK` of it has
         dissolved into whatever it crosses — the fuselage, the collar, the
-        sky. Measured over both frames of all five rows: 2 to 7 of the 35
-        blade pixels that touch anything, the same count on every row before
-        and after the heavy grade, so this is a guard on the 1px lattice
-        rather than a reading of the livery.
+        sky. Measured over both frames of all five rows: 2 to 8 of the 35
+        blade pixels that touch another drawn pixel. The heavy grade raises
+        that on its own two rows (neutral and Iron go 3/6 to 7/8) because a
+        blade tip and the body edge under it can both be S0 now, which this
+        reading cannot tell from a merge — the blades' separation from the
+        GROUND is held by the row test above. So this is a floor under the
+        1px lattice rather than a reading of the livery.
         """
         for fac in FACTIONS:
             for pose in Pose:

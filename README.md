@@ -307,11 +307,20 @@ that pipeline's paste step can be pointed at this art instead.
      ramp, clamped by the ceiling the painting voxel already answered to, so
      Iron draws no lit line at all rather than one it has no business
      wearing. `gbuffer.convex_edges` adds the same lift along a convex crease
-     on a lit top face, and concave gutters get nothing. Selective outlining
+     on a lit top face, and concave gutters get nothing. The sunward lift is
+     also **graded per faction** (`palette.OUTLINE_LIGHT` / `OUTLINE_HEAVY`):
+     a lit line only separates a unit from the tile it stands on where it
+     clears the ground's own value band, and neutral (the sand's own khaki)
+     and Iron (achromatic, capped at S3, the middle of that band) have no
+     colour left to break with when it does not — so on those two rows a
+     sunward silhouette pixel that cannot clear takes the ground-facing
+     contour instead. The three chromatic rows are untouched by the grade and
+     render byte for byte as before. Selective outlining
      is what buys the interior back: the 4px band it replaces spent 34.5% of
-     every unit's pixels on S0 (53.1% on the worst sprite) against 13.9% and
-     25.6% now, and the livery gates moved with it — the composed rows'
-     closest pair went from 34.6 to 45.2 against a bar of 30.
+     every unit's pixels on S0 (53.1% on the worst sprite) against 13.99% and
+     25.57% on the light rows and 17.22% / 30.71% on the heavy pair (15.3%
+     over the whole sheet), and the livery gates moved with it — the composed
+     rows' closest pair went from 34.6 to 45.2 against a bar of 30.
      **docs/outlines.md** has the full
      reading, including what a 1px line costs at board scale and why the
      contrast pair covers it.
@@ -366,12 +375,15 @@ that pipeline's paste step can be pointed at this art instead.
    silhouette is still the shape the model drew. It reads whatever that line
    is rather than assuming it is dark, and where line and body are one slot
    apart there is nothing between them to write: today that leaves every
-   sunward `SEL_OUT_LIFT` edge alone and softens only the shaded ones. The
+   sunward `SEL_OUT_LIFT` edge alone and softens only the shaded ones — plus,
+   on the two `OUTLINE_HEAVY` rows, the sunward pixels that came back as
+   contour, which is why those rows soften 40 pixels each against 22 on a
+   light row. The
    restraint is the point: the projection draws its diagonals as runs of TWO,
    which is already the smoothest line a grid can hold, and softening every
    step of one would only grey the outline down. What is left for it are the
    shallower stretches — a wing root, a hull front, the shoulders of a foot
-   unit — 110 pixels across the whole sheet. `ENABLED` turns the pass off;
+   unit — 146 pixels across the whole sheet. `ENABLED` turns the pass off;
    `MIN_RUN` is the knob that decides what counts as a staircase.
 7. **`spritegen/atlas.py`** — assembles atlases, exports cells, renders the
    preview sheets and the demo map (which resolves roads, the river, the
