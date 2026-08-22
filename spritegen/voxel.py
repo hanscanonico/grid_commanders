@@ -13,6 +13,11 @@ emitted beside every pixel. `render` is the older shading path — three
 computed face tones, fractional occlusion, dither on broad tops and a
 per-part outline — and terrain and buildings still draw with it. All of it
 is deterministic: no RNG anywhere.
+
+Both renderers also have a `*_gbuffer` form that hands back the depth and
+normal planes behind the picture as well as the picture — see
+`spritegen/gbuffer.py`. `render` and `render_indexed` are those forms with the
+extra planes dropped, so the colour they emit is unchanged to the byte.
 """
 
 from __future__ import annotations
@@ -21,6 +26,16 @@ from dataclasses import dataclass
 
 from PIL import Image
 
+from .gbuffer import (
+    DEPTH_EMPTY,
+    N_LEFT,
+    N_NONE,
+    N_RIGHT,
+    N_TOP,
+    GBuffer,
+    Plane,
+    voxel_depth,
+)
 from .palette import (
     DITHERED,
     GLOSSY,
@@ -109,6 +124,10 @@ def _face_pixels(sx: int, sy: int, k: int = 1) -> dict[str, list[tuple[int, int]
     return {"top": top, "left": left, "right": right}
 
 
+# Which normal id each face of the cube sprite carries, so the rasteriser can
+# stamp geometry beside colour without repeating the projection's conventions.
+_FACE_NORMAL = {"top": N_TOP, "left": N_LEFT, "right": N_RIGHT}
+
 Anchors = dict[tuple[int, int, int], tuple[int, int]]
 
 # Up, left, down, right — the four edges a contour is measured across. Up and
@@ -164,9 +183,9 @@ class IndexedSprite:
         return self.materials[y * self.image.width + x]
 
 
-def render_indexed(
+def render_indexed_gbuffer(
     model: Model, faction: Faction, outline: bool = True, k: int = 1
-) -> IndexedSprite:
+) -> GBuffer:
     """Render a unit out of the indexed ramps: one flat slot per visible plane.
 
     The old path shades every pixel by arithmetic, so one physical face lands
@@ -176,13 +195,15 @@ def render_indexed(
     sprite costs tens of palette entries and a faction is a ramp swap.
     """
     if not model.vox:
-        return IndexedSprite(Image.new("RGBA", (1, 1), (0, 0, 0, 0)), bytearray([255]))
+        return _empty_gbuffer(bytearray([MID_EMPTY]))
 
     anchors, minx, miny, w, h = _bounds(model, k)
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     px = img.load()
     mids = bytearray([MID_EMPTY]) * (w * h)
     ramps: list[Ramp | None] = [None] * (w * h)
+    depth = [DEPTH_EMPTY] * (w * h)
+    normal = bytearray(w * h)
 
     vox = model.vox
     zmin = min(v[2] for v in vox)
@@ -234,6 +255,7 @@ def render_indexed(
             "left": -left_steps,
             "right": -1 - right_steps,
         }
+        vdepth = voxel_depth(x, y, z)
         for face, pixels in _face_pixels(sx, sy, k).items():
             # The rim is the one place a ceiling gives way, and it gives way
             # to the top of the ramp: it is an edge one voxel deep, and it is
@@ -246,16 +268,42 @@ def render_indexed(
             slot = min(ceiling, max(floor, spec.slot + offsets[face]))
             slot = max(0, min(SLOTS - 1, slot))
             c = ramp[slot]
+            nid = _FACE_NORMAL[face]
             for ix, iy in pixels:
                 px[ix, iy] = (c[0], c[1], c[2], 255)
                 idx = iy * w + ix
                 mids[idx] = spec.mid
                 ramps[idx] = ramp
+                # Overdraw settles the geometry the same way it settles the
+                # colour: the painter's last write owns the pixel.
+                depth[idx] = vdepth
+                normal[idx] = nid
 
     if outline:
         _contour(img, mids, ramps, k)
     _despeckle(img, mids)
-    return IndexedSprite(img, mids)
+    # The contour and the despeckle move colour, never geometry: a halo pixel
+    # outside the silhouette belongs to no face, and stays background here.
+    return GBuffer(img, Plane(w, h, depth), Plane(w, h, normal), Plane(w, h, mids))
+
+
+def render_indexed(
+    model: Model, faction: Faction, outline: bool = True, k: int = 1
+) -> IndexedSprite:
+    """`render_indexed_gbuffer` without the geometry planes."""
+    g = render_indexed_gbuffer(model, faction, outline, k)
+    return IndexedSprite(g.rgba, bytearray(g.material.values))
+
+
+def _empty_gbuffer(mids: bytearray) -> GBuffer:
+    """The 1x1 transparent buffer an empty model renders to."""
+    img = Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+    return GBuffer(
+        img,
+        Plane(1, 1, [DEPTH_EMPTY]),
+        Plane(1, 1, bytearray([N_NONE])),
+        Plane(1, 1, mids),
+    )
 
 
 _NEIGHBOURS4 = ((0, -1), (-1, 0), (1, 0), (0, 1))
@@ -640,14 +688,19 @@ def _interior_contour(
     return out
 
 
-def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
-    """Render to a tightly-cropped RGBA image (1px border reserved for outline)."""
+def render_gbuffer(model: Model, faction: Faction, outline: bool = True) -> GBuffer:
+    """`render`, with the depth and normal planes behind the picture kept.
+
+    The shaded path has no material ids, so `material` comes back empty.
+    """
     if not model.vox:
-        return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+        return _empty_gbuffer(bytearray([MID_EMPTY]))
 
     anchors, minx, miny, w, h = _bounds(model)
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     px = img.load()
+    depths = [DEPTH_EMPTY] * (w * h)
+    normals = bytearray(w * h)
     vox = model.vox
     zmin = min(v[2] for v in vox)
     zmax = max(v[2] for v in vox)
@@ -689,7 +742,9 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
         grad_left = depth * 0.10 + (0.08 if z == zmin else 0.0)
         grad_right = depth * 0.12 + (0.08 if z == zmin else 0.0)
 
+        vdepth = voxel_depth(x, y, z)
         for face, pixels in faces.items():
+            nid = _FACE_NORMAL[face]
             tone = shade(base, face, gloss)
             if face == "top":
                 tone = mix(tone, (12, 16, 28), 1 - ao_top) if ao_top < 1.0 else tone
@@ -710,10 +765,21 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
                     n = (h01(ix, iy, 7) - 0.5) * 0.07
                     c = lighten(tone, n) if n > 0 else darken(tone, -n)
                 px[ix, iy] = (c[0], c[1], c[2], 255)
+                idx = iy * w + ix
+                depths[idx] = vdepth
+                normals[idx] = nid
 
     if outline:
         _outline(img)
-    return img
+    # The outline sits outside the silhouette, so it owns no face and leaves
+    # the geometry planes as background there.
+    mids = bytearray([MID_EMPTY]) * (w * h)
+    return GBuffer(img, Plane(w, h, depths), Plane(w, h, normals), Plane(w, h, mids))
+
+
+def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
+    """Render to a tightly-cropped RGBA image (1px border reserved for outline)."""
+    return render_gbuffer(model, faction, outline).rgba
 
 
 def _outline(img: Image.Image) -> None:
