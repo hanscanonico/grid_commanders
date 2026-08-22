@@ -25,7 +25,7 @@ from PIL import Image
 
 from . import autotile, buildings, terrain
 from .palette import FACTIONS, Faction
-from .units import ATLAS_ORDER, UNITS, WAKE, build_model
+from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from .voxel import compose_cell, place_in_cell, render, render_indexed
 
 # The units atlas's cell: one tile wide, half a tile taller than that. A
@@ -36,22 +36,23 @@ from .voxel import compose_cell, place_in_cell, render, render_indexed
 # turret needs; a taller cell than that is mostly empty column.
 CELL_W = 64
 CELL_H = 96
-# Ambient animation frame B: air and sea units ride one voxel-scale pixel
-# higher (their shadows stay put, so the bob reads as hover/swell), and the
-# copters' rotor discs sweep 45 degrees inside build_model. Land units are
-# byte-identical between frames — they are parked on the ground. Stated as
-# heights above the cell's bottom edge, like compose_cell's own landmarks.
+# Ambient animation frame B is pose B of every model plus this bob: air and
+# sea units ride one voxel-scale pixel higher (their shadows stay put, so the
+# bob reads as hover/swell). Land units hold their ground line and say it in
+# the model instead — a walked tread, a settled suspension, a rested weapon.
+# Stated as heights above the cell's bottom edge, like compose_cell's own
+# landmarks.
 _BOB_BOTTOM = {"air": 21, "sea": 10}
 
 
 def unit_cell(
-    uid: str, fac: Faction, frame: int = 0, shadow: bool = True
+    uid: str, fac: Faction, pose: Pose = Pose.A, shadow: bool = True
 ) -> Image.Image:
     """One atlas cell. Units render through the indexed ramps; terrain and
     buildings keep the shading renderer until their own pass moves them."""
     kind = UNITS[uid][1]
-    bob = _BOB_BOTTOM.get(kind) if frame == 1 else None
-    sprite = render_indexed(build_model(uid, frame), fac).image
+    bob = _BOB_BOTTOM.get(kind) if pose is Pose.B else None
+    sprite = render_indexed(build_model(uid, pose), fac).image
     return compose_cell(
         sprite,
         kind,
@@ -62,14 +63,14 @@ def unit_cell(
     )
 
 
-def build_units_atlas(frame: int = 0, shadow: bool = True) -> Image.Image:
+def build_units_atlas(pose: Pose = Pose.A, shadow: bool = True) -> Image.Image:
     atlas = Image.new(
         "RGBA", (len(ATLAS_ORDER) * CELL_W, len(FACTIONS) * CELL_H), (0, 0, 0, 0)
     )
     for row, fac in enumerate(FACTIONS):
         for col, uid in enumerate(ATLAS_ORDER):
             atlas.alpha_composite(
-                unit_cell(uid, fac, frame, shadow), (col * CELL_W, row * CELL_H)
+                unit_cell(uid, fac, pose, shadow), (col * CELL_W, row * CELL_H)
             )
     return atlas
 

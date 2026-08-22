@@ -8,7 +8,7 @@ the same bytes.
 
 Outputs (under --out, default ./out):
   units_atlas.png        1152x320 RGBA — drop-in for assets/tiles/units_atlas.png
-  units_atlas_b.png      ambient animation frame B (rotors swept, air/sea bobbed)
+  units_atlas_b.png      ambient animation frame B (every unit's second key pose)
   units_atlas_figures.png the same army with the tile's cast shadow left off,
                           for the cut-ins, which draw at 1:1 on their own ground
   terrain_atlas.png       896x320 RGBA — drop-in for assets/tiles/terrain_atlas.png
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from spritegen import atlas, terrain
 from spritegen.palette import FACTIONS, faction_by_key
-from spritegen.units import ATLAS_ORDER
+from spritegen.units import ATLAS_ORDER, Pose
 
 
 def _write(img, path: Path) -> None:
@@ -132,8 +132,8 @@ def main() -> None:
     units_atlas = atlas.build_units_atlas()
     _write(units_atlas, args.out / "units_atlas.png")
 
-    print("building ambient frame B (rotors swept, air/sea bobbed)")
-    _write(atlas.build_units_atlas(frame=1), args.out / "units_atlas_b.png")
+    print("building ambient frame B (every unit's second key pose)")
+    _write(atlas.build_units_atlas(Pose.B), args.out / "units_atlas_b.png")
 
     print("building the figure sheet (no tile shadow, for the cut-ins)")
     _write(atlas.build_units_atlas(shadow=False), args.out / "units_atlas_figures.png")
