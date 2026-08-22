@@ -18,6 +18,7 @@ from spritegen.gbuffer import (
     N_NONE,
     N_RIGHT,
     N_TOP,
+    Plane,
     convex_edges,
     edge_mask,
     voxel_depth,
@@ -147,6 +148,26 @@ class ConvexAgainstConcave(unittest.TestCase):
         self.assertTrue(ridges)
         for x, y in ridges:
             self.assertTrue(mask.at(x, y) and mask.at(x, y + 1))
+
+
+class CreaseAxis(unittest.TestCase):
+    """A crease only counts along the axis its two faces can actually fold on.
+
+    In this projection a top face sits ABOVE both camera-facing sides, so a
+    top pixel with a side pixel BESIDE it is two masses touching on screen,
+    not a fold — real art hits this (md_tank has 16 such pixels). Without the
+    axis restriction the splay test alone would call them convex.
+    """
+
+    def mask(self, row: list[int]) -> list[int]:
+        return list(convex_edges(Plane(len(row), 1, bytearray(row))).values)
+
+    def test_a_side_face_beside_a_top_face_is_not_a_ridge(self):
+        self.assertEqual(self.mask([N_LEFT, N_TOP, N_NONE]), [0, 0, 0])
+        self.assertEqual(self.mask([N_NONE, N_TOP, N_RIGHT]), [0, 0, 0])
+
+    def test_the_two_side_faces_still_crease_where_they_meet_sideways(self):
+        self.assertEqual(self.mask([N_LEFT, N_RIGHT]), [1, 1])
 
 
 class FlatDeck(unittest.TestCase):
