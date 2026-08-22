@@ -779,6 +779,13 @@ def _prop_outline(img: Image.Image, mats: list[str | None], faction: Faction) ->
 GROUND_BOTTOM = 9
 AIR_BOTTOM = 20
 AIR_SHADOW_BOTTOM = 6
+# One sun, one shadow direction. Every model on the sheet is lit from the
+# top-left, so every shadow it drops falls DOWN-RIGHT by this much — a land
+# hull, a ship's displacement and a building's silhouette alike
+# (`terrain.SHADOW_OFFSET` is the same offset on the tile drawer). An
+# airborne caster drops further, because the gap between unit and shadow is
+# the altitude cue, but never in another direction.
+SHADOW_OFFSET = (2, 2)
 
 
 def compose_cell(
@@ -830,19 +837,28 @@ def compose_cell(
     y0 = bottom - h
 
     cast: list[tuple[int, int]] = []
+    sx, sy = SHADOW_OFFSET
     if kind == "sea":
         # Ships sit IN the water: a flat displacement shading right under
         # the hull instead of a floating blob, then foam at the waterline.
         rx = max(6, int(w * 0.42))
-        cast = _shadow_ellipse(out, cell_w // 2 + dx, bottom - 1, rx, max(2, rx // 5))
+        cast = _shadow_ellipse(
+            out, cell_w // 2 + dx + sx, bottom - 1 + sy, rx, max(2, rx // 5)
+        )
     elif kind == "air":
         rx = max(6, int(w * 0.30))
         cast = _shadow_ellipse(
-            out, cell_w // 2 + dx + 4, cell_h - AIR_SHADOW_BOTTOM, rx, max(2, rx // 3)
+            out,
+            cell_w // 2 + dx + sx * 2,
+            cell_h - AIR_SHADOW_BOTTOM,
+            rx,
+            max(2, rx // 3),
         )
     elif kind == "land":
         rx = max(4, int(w * 0.34))
-        cast = _shadow_ellipse(out, cell_w // 2 + dx, bottom - 1, rx, max(2, rx // 4))
+        cast = _shadow_ellipse(
+            out, cell_w // 2 + dx + sx, bottom - 1 + sy, rx, max(2, rx // 4)
+        )
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
         if wake:

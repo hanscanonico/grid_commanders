@@ -86,6 +86,18 @@ _REEDS = ((-0.94, -0.34), (0.20, -0.98), (-0.55, 0.84))
 _REED_NOTCH = 0.93
 
 
+# The two screen directions the light comes from, and the tone each region's
+# sunward edge steps up to (see `_edge_pass`). Every one of them is a tone the
+# tile already spends — a road stone's highlight, the water's half-glint —
+# except the bank's, which is the largest step the ground ceiling leaves over
+# BANK itself: the shore is authored right under the plains it borders, so its
+# lit edge reads against BANK_DARK opposite rather than against the grass.
+_SUNWARD = ((-1, 0), (0, -1))
+ROAD_LIT = lighten(ROAD, 0.12)
+BANK_LIT = mix(BANK, SAND, 0.25)
+WATER_LIT = mix(WATER, WATER_LIGHT, 0.5)
+
+
 def _closed_half(x: int, y: int, open_bit: int) -> bool:
     """Whether a pixel is past the joint centre on the side a one-connection
     run terminates — the half the nose is cut into."""
@@ -115,23 +127,35 @@ def _fill_arms(img: Image.Image, mask: int, lo: int, hi: int, c) -> None:
         _rect(img, 0, lo, lo, hi - lo, c)
 
 
-def _edge_pass(img: Image.Image, inside, edge_c, outside_c=None) -> None:
-    """Outline a filled region: inside pixels touching outside get edge_c,
-    outside pixels touching inside optionally get outside_c (banks)."""
+def _edge_pass(img: Image.Image, inside, edge_c, outside_c=None, lit_c=None) -> None:
+    """Outline a filled region under the sheet's one light.
+
+    Inside pixels touching outside get `edge_c`, and outside pixels touching
+    inside optionally get `outside_c` (banks). Where `lit_c` is given the
+    outline is DIRECTIONAL, the way `voxel._selective_outline` is on the
+    units: an inside pixel whose break is up or left faces the sun, so it
+    steps up to `lit_c` instead of going dark, and only the two sides turned
+    away from the light keep `edge_c`. An outline of one tone on all four
+    sides is a stamped sticker at any zoom — it says the feature is cut out
+    of the tile rather than lying on it.
+    """
     px = img.load()
     marks = []
     for y in range(CELL):
         for x in range(CELL):
             a = inside(px[x, y][:3])
-            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
-                if not (0 <= nx < CELL and 0 <= ny < CELL):
-                    continue
-                if a != inside(px[nx, ny][:3]):
-                    if a:
-                        marks.append((x, y, edge_c))
-                    elif outside_c is not None:
-                        marks.append((x, y, outside_c))
-                    break
+            broke = [
+                (nx - x, ny - y)
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))
+                if 0 <= nx < CELL and 0 <= ny < CELL and a != inside(px[nx, ny][:3])
+            ]
+            if not broke:
+                continue
+            if a:
+                sunward = lit_c is not None and any(d in _SUNWARD for d in broke)
+                marks.append((x, y, lit_c if sunward else edge_c))
+            elif outside_c is not None:
+                marks.append((x, y, outside_c))
     for x, y, c in marks:
         px[x, y] = (*c, 255)
 
@@ -142,7 +166,7 @@ def road_tile(mask: int) -> Image.Image:
         mask = E | W
     t = plains()
     _fill_arms(t, mask, _RLO, _RHI, ROAD)
-    _edge_pass(t, lambda c: c == ROAD, ROAD_DARK)
+    _edge_pass(t, lambda c: c == ROAD, ROAD_DARK, lit_c=ROAD_LIT)
     # centre dashes along each arm, clear of the joint
     dash = ROAD_DARK
     cy = (_RLO + _RHI) // 2 - 2
@@ -157,7 +181,7 @@ def road_tile(mask: int) -> Image.Image:
     # a few embedded stones for wear
     for sx, sy in ((26, 26), (36, 37), (30, 34)):
         _rect(t, sx, sy, 3, 2, ROAD_DARK)
-        _rect(t, sx, sy, 2, 1, lighten(ROAD, 0.12))
+        _rect(t, sx, sy, 2, 1, ROAD_LIT)
     return t
 
 
@@ -243,14 +267,14 @@ def river_tile(mask: int, salt: int = 0) -> Image.Image:
     t = base.copy()
     _shape_river(t, base, mask)
     shore = {BANK, POND_BANK, POND_BANK_DK, WATER}
-    _edge_pass(t, lambda c: c in shore, BANK_DARK, GRASS_DARK)
-    _edge_pass(t, lambda c: c == WATER, WATER_DARK, BANK_WET)
+    _edge_pass(t, lambda c: c in shore, BANK_DARK, GRASS_DARK, BANK_LIT)
+    _edge_pass(t, lambda c: c == WATER, WATER_DARK, BANK_WET, WATER_LIT)
     if mask == 0:
         _rect(t, 25, 30, 7, 2, WATER_LIGHT)
-        _rect(t, 34, 36, 5, 1, mix(WATER, WATER_LIGHT, 0.5))
+        _rect(t, 34, 36, 5, 1, WATER_LIT)
         return t
     # flow streaks oriented along each arm, drifted per tile
-    half = mix(WATER, WATER_LIGHT, 0.5)
+    half = WATER_LIT
     d1 = int(h01(salt, 1, 45) * 10) - 5
     d2 = int(h01(salt, 2, 45) * 8) - 4
     if mask & W:

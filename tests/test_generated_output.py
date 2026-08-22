@@ -1444,6 +1444,245 @@ class CanopyLight(unittest.TestCase):
                 self.assertGreater(top / len(px), self.MIN_TOP_SHARE)
 
 
+class OneSun(unittest.TestCase):
+    """One light, so one shadow direction — over the whole sheet.
+
+    The board used to run four cast-shadow rules at once: a building dropped
+    its silhouette down-right, a land or sea unit sat on an ellipse straight
+    under itself, and a wood or a mountain laid a 1px line straight down its
+    fringe. Nothing on a tile is lit from underneath, so three of those four
+    read as ambient dirt rather than as shade, and a city and the wood beside
+    it disagreed about where the sun was.
+
+    `voxel.SHADOW_OFFSET` is now that one statement, and terrain re-exports
+    it rather than keeping a second copy. Airborne units keep their larger
+    drop — the gap between unit and shadow is the altitude cue — but on the
+    same diagonal.
+    """
+
+    OFFSET = voxel.SHADOW_OFFSET
+    # The measured floor on the units, whose shadow is an ellipse under the
+    # hull rather than the hull's own silhouette: rockets, whose long barrel
+    # sits left of its own cell centre, comes in at +0.37px lateral.
+    MIN_UNIT_LATERAL = 0.2
+
+    def _centroid(self, pts) -> tuple[float, float]:
+        return (
+            sum(x for x, _ in pts) / len(pts),
+            sum(y for _, y in pts) / len(pts),
+        )
+
+    def _split(self, cell, shadow_tone):
+        """(shadow pixels, everything else opaque) of a composed cell."""
+        img = cell.convert("RGBA")
+        px = img.load()
+        shade, caster = [], []
+        for y in range(img.height):
+            for x in range(img.width):
+                if px[x, y][3] == 0:
+                    continue
+                (shade if px[x, y][:3] == shadow_tone else caster).append((x, y))
+        return shade, caster
+
+    def test_the_tile_drawer_and_the_cell_read_one_offset(self):
+        sx, sy = self.OFFSET
+        self.assertIs(terrain.SHADOW_OFFSET, voxel.SHADOW_OFFSET)
+        self.assertGreater(sx, 0)  # down-RIGHT: the sun is up-left
+        self.assertGreater(sy, 0)
+
+    def test_every_unit_drops_its_shadow_down_right_of_itself(self):
+        fac = FACTIONS[1]
+        for uid in ATLAS_ORDER:
+            for pose in Pose:
+                cast, hull = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
+                with self.subTest(unit=uid, pose=pose.name):
+                    self.assertTrue(cast)
+                    (sx, sy), (hx, hy) = self._centroid(cast), self._centroid(hull)
+                    self.assertGreater(sx - hx, self.MIN_UNIT_LATERAL)
+                    self.assertGreater(sy - hy, 0.0)
+
+    def test_every_building_drops_its_shadow_down_right_of_itself(self):
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                cast, walls = self._split(
+                    terrain.property_overlay(bid, fac), terrain.SHADOW
+                )
+                with self.subTest(building=bid, faction=fac.key):
+                    self.assertTrue(cast)
+                    (sx, sy), (bx, by) = self._centroid(cast), self._centroid(walls)
+                    self.assertGreater(sx - bx, 0.0)
+                    self.assertGreater(sy - by, 0.0)
+
+    def _stamped(self, draw, offset):
+        """The shadow a tile drawer stamps, read by DIFFERENCE against the
+        same tile drawn with no offset at all — which is the only way to tell
+        a wood's contact shadow from the tufts standing in its clearings,
+        both being GRASS_DARK, without the test copying their coordinates."""
+        with mock.patch.object(terrain, "SHADOW_OFFSET", offset):
+            lit = draw().convert("RGB")
+        with mock.patch.object(terrain, "SHADOW_OFFSET", (0, 0)):
+            bare = draw().convert("RGB")
+        a, b = lit.load(), bare.load()
+        shade, caster = set(), set()
+        plate = set(opaque_pixels(terrain._ground(GRASS, PLAINS_SALT)))
+        for y in range(CELL):
+            for x in range(CELL):
+                if a[x, y] != b[x, y]:
+                    shade.add((x, y))
+                elif b[x, y] not in plate:
+                    caster.add((x, y))
+        return shade, caster
+
+    def _airborne(self, draw, drawn_with) -> int:
+        """Shadow pixels with nothing up-left of them to cast them, the tile
+        having been drawn with `drawn_with` — always read against the sheet's
+        own offset, so a tile stamped on another sun comes back non-zero."""
+        sx, sy = self.OFFSET
+        shade, caster = self._stamped(draw, drawn_with)
+        return sum(
+            1
+            for x, y in shade
+            if not any((x - sx, y - d) in caster for d in range(1, sy + 1))
+        )
+
+    def _drawers(self):
+        yield "woods", terrain.woods
+        for mask in range(16):
+            yield f"woods {mask}", lambda m=mask: autotile.woods_tile(m)
+        for phase in range(len(terrain.MOUNTAIN_PHASES)):
+            yield f"mountain {phase}", lambda p=phase: terrain.mountain(p)
+
+    def test_every_contact_shadow_is_its_own_caster_displaced_down_right(self):
+        """Scenery stamps its shadow rather than casting an ellipse, so it is
+        held to the offset pixel by pixel: every shadow pixel has the thing
+        that cast it exactly SHADOW_OFFSET[0] to its left and one to two rows
+        above."""
+        for name, draw in self._drawers():
+            with self.subTest(tile=name):
+                shade, _ = self._stamped(draw, self.OFFSET)
+                self.assertTrue(shade)
+                self.assertEqual(self._airborne(draw, self.OFFSET), 0)
+
+    def test_the_reading_refuses_a_shadow_thrown_the_other_way(self):
+        # worth asserting only if it catches a shadow on another sun: the
+        # same tiles drawn with the offset mirrored leave most of their
+        # shadow with nothing up-left of it
+        mirrored = (-self.OFFSET[0], self.OFFSET[1])
+        for name, draw in self._drawers():
+            with self.subTest(tile=name):
+                self.assertGreater(self._airborne(draw, mirrored), 0)
+
+
+class TileSunwardEdges(unittest.TestCase):
+    """The tile features are outlined by the same sun the units are.
+
+    `voxel._selective_outline` lights the two sunward sides of a unit rather
+    than blacking them (`test_the_sunward_edge_is_lit_rather_than_outlined`).
+    `autotile._edge_pass` used to ring a road, a bank or a channel in one
+    dark tone on all four sides, which is a sticker stamped into the tile: no
+    lit side means no direction, and a feature with no direction cannot lie
+    on the ground the units stand on.
+
+    Read over all sixteen masks of both autotiles: the sunward edge of a
+    region is never the dark tone, and the two sides turned away from the
+    light keep it.
+    """
+
+    # Where a later pass legitimately takes an away-facing edge pixel back:
+    # the pond's lip is 1px wide in the reed notches, so the waterline mud of
+    # the water pass lands on the very pixel the shore pass had just darkened.
+    # Measured worst case is the pond's own shore, at 0.93.
+    MIN_AWAY_DARK = 0.9
+
+    def _regions(self, mask: int):
+        """(region pixels, finished tile, lit tone, dark tone) per feature,
+        the region read off the shape BEFORE any edge pass touched it."""
+        base = terrain.plains()
+        road = base.copy()
+        autotile._fill_arms(road, mask or (E | W), autotile._RLO, autotile._RHI, ROAD)
+        river = base.copy()
+        autotile._shape_river(river, base, mask)
+        shore_tones = {
+            autotile.BANK,
+            autotile.POND_BANK,
+            autotile.POND_BANK_DK,
+            WATER,
+        }
+        road_tile = autotile.road_tile(mask)
+        river_tile = autotile.river_tile(mask)
+        return (
+            ("road", self._mask(road, {ROAD}), road_tile, autotile.ROAD_LIT, ROAD_DARK),
+            (
+                "shore",
+                self._mask(river, shore_tones),
+                river_tile,
+                autotile.BANK_LIT,
+                autotile.BANK_DARK,
+            ),
+            (
+                "water",
+                self._mask(river, {WATER}),
+                river_tile,
+                autotile.WATER_LIT,
+                WATER_DARK,
+            ),
+        )
+
+    def _mask(self, img, tones) -> set[tuple[int, int]]:
+        px = img.convert("RGB").load()
+        return {(x, y) for y in range(CELL) for x in range(CELL) if px[x, y] in tones}
+
+    def _edges(self, region, tile, dark):
+        """(sunward pixels drawn dark, sunward pixels, away pixels drawn
+        dark, away pixels). A break at the tile border is not an edge: a
+        feature running off the cell continues into its neighbour."""
+        px = tile.convert("RGB").load()
+        sun_dark = sun = away_dark = away = 0
+        for x, y in region:
+            out = [
+                (nx, ny)
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))
+                if 0 <= nx < CELL and 0 <= ny < CELL and (nx, ny) not in region
+            ]
+            if not out:
+                continue
+            if any(n in ((x - 1, y), (x, y - 1)) for n in out):
+                sun += 1
+                sun_dark += px[x, y] == dark
+            else:
+                away += 1
+                away_dark += px[x, y] == dark
+        return sun_dark, sun, away_dark, away
+
+    def test_no_sunward_tile_edge_is_drawn_dark(self):
+        for mask in range(16):
+            for name, region, tile, _lit, dark in self._regions(mask):
+                with self.subTest(mask=mask, feature=name):
+                    sun_dark, sun, _, _ = self._edges(region, tile, dark)
+                    self.assertGreater(sun, 0)
+                    self.assertEqual(sun_dark, 0)
+
+    def test_the_side_turned_away_from_the_light_keeps_its_contour(self):
+        for mask in range(16):
+            for name, region, tile, _lit, dark in self._regions(mask):
+                with self.subTest(mask=mask, feature=name):
+                    _, _, away_dark, away = self._edges(region, tile, dark)
+                    self.assertGreater(away, 0)
+                    self.assertGreaterEqual(away_dark / away, self.MIN_AWAY_DARK)
+
+    def test_the_reading_refuses_the_outline_it_replaced(self):
+        # the control: the same road drawn with the old one-tone outline, which
+        # blacks every sunward pixel it touches
+        for mask in (E | W, N | E | S | W):
+            with self.subTest(mask=mask):
+                tile = terrain.plains()
+                autotile._fill_arms(tile, mask, autotile._RLO, autotile._RHI, ROAD)
+                region = self._mask(tile.copy(), {ROAD})
+                autotile._edge_pass(tile, lambda c: c == ROAD, ROAD_DARK)
+                sun_dark, sun, _, _ = self._edges(region, tile, ROAD_DARK)
+                self.assertEqual(sun_dark, sun)
+
+
 class RowSeparation(unittest.TestCase):
     """Faction rows must be tellable apart as *armies*, not just per-pixel.
 
