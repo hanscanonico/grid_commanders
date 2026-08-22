@@ -32,7 +32,7 @@ from .palette import (
     mix,
 )
 from .palette import luminance as _luminance_601
-from .voxel import SHADOW_OFFSET, place_in_cell, render
+from .voxel import SHADOW_OFFSET, place_in_cell, render, render_indexed
 
 CELL = 64
 
@@ -439,62 +439,99 @@ def plains(phase: int = 0) -> Image.Image:
     return t
 
 
-# (crown x, crown y, radius) — clustered cover leaving two grass clearings,
-# so the tile reads as one occupied canopy rather than scattered props.
+# The wood, in the projection everything else on the sheet is drawn in.
+#
+# A crown was an orthographic CIRCLE — a disc of leaf tone with a rim, the one
+# shape this dimetric cannot produce. A canopy is a ground-parallel thing seen
+# from the sheet's camera, and the camera turns a ground-parallel disc into a
+# 2:1 ellipse: twice as wide as it is deep, which is the same 2:1 a voxel's top
+# face is drawn at and the same 2:1 the massif's foot lies on. So a crown is
+# that ellipse — the canopy's TOP PLANE — with the leaf mass hanging under it,
+# and the bands on it are planes rather than a painted gradient: the top plane
+# lit, its up-left edge the rim the sun catches, the skirt under it the sides,
+# lit on the up-left flank and shaded on the down-right.
+#
+# The old crown was also the noisiest object on the sheet: a per-pixel hash on
+# the body tone and a 14% leaf speckle put 53.7% of the tile on a colour change
+# against its right-hand neighbour (the mountain, the tile with the most
+# geometry, ran 21%) and spent 77 colours doing it. The hash stays, but only
+# where a hash belongs — in the DECISION, ragging the boundary between two
+# bands so an arc does not read as a painted stripe. It no longer makes tones.
+_CROWN_DEPTH = 5  # how far the leaf mass hangs under its top plane
+
+# (crown x, crown y, radius): the centre of the top plane and its half-WIDTH.
+# Six staggered courses, clustered so the tile reads as one occupied canopy,
+# with two clearings kept open — the trunks and the tufts stand in them, and
+# they are the plains plate `WoodsSeam` reads the tile against.
 _CROWNS = (
-    (8, 6, 9),
-    (26, 4, 10),
-    (45, 8, 10),
-    (60, 3, 8),
-    (4, 20, 9),
-    (19, 18, 10),
-    (36, 24, 10),
-    (58, 18, 9),
-    (10, 34, 10),
-    (27, 38, 9),
-    (61, 33, 8),
-    (5, 50, 9),
-    (22, 54, 10),
-    (42, 52, 10),
-    (59, 50, 9),
-    (34, 63, 8),
-    (52, 62, 8),
+    (6, 4, 9),
+    (23, 2, 11),
+    (42, 5, 9),
+    (58, 2, 8),
+    (0, 14, 8),
+    (14, 16, 10),
+    (33, 13, 9),
+    (52, 17, 10),
+    (6, 27, 10),
+    (24, 30, 9),
+    (41, 25, 11),
+    (61, 29, 8),
+    (14, 41, 10),
+    (31, 38, 9),
+    (57, 34, 7),
+    (4, 50, 9),
+    (21, 53, 11),
+    (40, 49, 10),
+    (59, 52, 9),
+    (11, 62, 9),
+    (30, 63, 10),
+    (50, 61, 10),
 )
 
 
+def _crown_reach(r: int) -> tuple[int, int]:
+    """How far a crown of half-width `r` reaches above and below its centre:
+    half the width up (the ellipse) and that plus the skirt down."""
+    return r // 2, r // 2 + _CROWN_DEPTH
+
+
 def _crowns_within(open_edges: int) -> tuple[tuple[int, int, int], ...]:
-    """The crown table with every disc pulled fully inside the cell on the
+    """The crown table with every crown pulled fully inside the cell on the
     edges the wood does not continue across, so a crown is never sliced flat
     by the tile border. A pulled crown stays tangent to that border, so the
     fringe scallops between crowns instead of gapping away from it. Crowns
     keep their authored overhang on a continued edge, which is what lets the
-    interior of a wood butt seamlessly."""
+    interior of a wood butt seamlessly. The pull is by the crown's REACH,
+    which is not its width any more: the ellipse is half as deep as it is
+    wide, and the mass hangs below it."""
     pulled = []
     for cx, cy, r in _CROWNS:
+        up, down = _crown_reach(r)
         if open_edges & W:
             cx = max(cx, r)
         if open_edges & E:
             cx = min(cx, CELL - 1 - r)
         if open_edges & N:
-            cy = max(cy, r)
+            cy = max(cy, up)
         if open_edges & S:
-            cy = min(cy, CELL - 1 - r)
+            cy = min(cy, CELL - 1 - down)
         pulled.append((cx, cy, r))
     return tuple(pulled)
 
 
 def _crown_light(x: int, y: int, dx: float, dy: float, r: int) -> float:
-    """How lit a point inside a crown of radius `r` is, on the same up-left
-    axis the crown's rim is lit along. The hash term breaks the two tone
-    boundaries into leaves — a clean arc reads as a painted stripe."""
-    return -(dx * 0.5 + dy) / r + (h01(x, y, 35) - 0.5) * 0.22
+    """How lit a point on a crown's top plane is, on the up-left axis the whole
+    sheet is lit from, in -1..1. `dy` is doubled because the plane is a 2:1
+    ellipse: a pixel of screen y is two of ground. The hash term breaks the
+    band boundary into leaves — a clean arc reads as a painted stripe."""
+    return -(dx + dy * 2.0) / (r * 2.0) + (h01(x, y, 35) - 0.5) * 0.22
 
 
 def woods(open_edges: int = 0) -> Image.Image:
-    """A filled canopy: crowns drawn back to front, each keeping its lit
-    top-left rim, over grass that shows only in the clearings and at the
-    fringe. The value drop against plains is the tile's read — cover, not
-    decoration — and trunks at the fringe say the cover is trees.
+    """A filled canopy: crowns drawn back to front, each a 2:1 top plane over
+    the leaf mass it hangs on, over grass that shows only in the clearings and
+    at the fringe. The value drop against plains is the tile's read — cover,
+    not decoration — and trunks at the fringe say the cover is trees.
 
     `open_edges` names the borders the wood ends at (see `_crowns_within`);
     0 — every edge continued — is the atlas tile."""
@@ -502,25 +539,27 @@ def woods(open_edges: int = 0) -> Image.Image:
     px = t.load()
     covered = [[False] * CELL for _ in range(CELL)]
     for cx, cy, r in sorted(_crowns_within(open_edges), key=lambda c: c[1]):
-        rim = (r - 2) * (r - 2)
-        for yy in range(max(0, cy - r), min(CELL, cy + r + 1)):
+        up, down = _crown_reach(r)
+        for yy in range(max(0, cy - up), min(CELL, cy + down + 1)):
             for xx in range(max(0, cx - r), min(CELL, cx + r + 1)):
                 dx, dy = xx - cx, yy - cy
-                d = dx * dx + dy * dy
-                if d > r * r:
+                # Half-depth of the top plane at this column: the 2:1 ellipse.
+                span = 1.0 - (dx / r) ** 2
+                if span <= 0.0:
                     continue
-                light = _crown_light(xx, yy, dx, dy, r)
-                if d > rim:  # crown edge: lit toward the light, shaded away
-                    c = CANOPY_LT if dx + dy * 1.5 < 0 else CANOPY_DK
-                elif h01(xx, yy, 34) < 0.14:
-                    c = CANOPY_DK  # leaf clumps
-                elif light > 0.24:
-                    c = CANOPY_TOP  # the crown's sunlit top plane
-                elif light > -0.08:
-                    c = CANOPY_MID  # and its shoulder, so the step is a roll
+                hh = up * span**0.5
+                if dy < -hh or dy > hh + _CROWN_DEPTH:
+                    continue
+                if dy > hh:  # the leaf mass under the plane: two side faces
+                    c = CANOPY_DK if dx >= 0 or dy > hh + _CROWN_DEPTH - 1 else CANOPY
+                elif dy > hh - 1.4 or (dx + dy * 2.0 >= 0 and abs(dx) > r - 1.6):
+                    c = CANOPY_DK  # the plane's edge, turned away from the sun
+                elif -dy > hh - 1.4 or abs(dx) > r - 1.6:
+                    c = CANOPY_LT  # and the edge the sun catches
+                elif _crown_light(xx, yy, dx, dy, r) > 0.04:
+                    c = CANOPY_TOP  # the plane itself
                 else:
-                    n = (h01(xx, yy, 33) - 0.5) * 0.12
-                    c = _lit(CANOPY, n) if n > 0 else darken(CANOPY, -n)
+                    c = CANOPY_MID  # rolling off toward the shaded side
                 px[xx, yy] = (*c, 255)
                 covered[yy][xx] = True
     # Contact shadow: the canopy's own shaded rim dropped by SHADOW_OFFSET, on
@@ -552,42 +591,34 @@ def woods(open_edges: int = 0) -> Image.Image:
 
 # Phase variants for the mountain — the sea's rule (SEA_PHASES below) applied
 # to the board's most silhouette-dominant tile, because a range is a wall of
-# identical peaks wherever one is repeated. An entry is (peaks, ridges, zig
-# seed): where the massif's three summits stand as (apex x, apex y, slope) —
-# summit first, then shoulder, then the low foothill, which is the order the
-# snow line is read off — the ridge lines and cracks that hang under them, and
-# the seed of the per-column snow line. Nothing else
-# varies — the ground line and the contact shadow are drawn at a fixed row in
-# every phase, so a range sits on one horizon, and the rock and snow tones are
-# the tile's throughout (they were authored under the value ceiling). Phase 0
-# is the atlas column, so a board that has not adopted the sheet is unchanged.
-MOUNTAIN_PHASES: tuple[
-    tuple[tuple[tuple[int, int, float], ...], tuple[tuple[int, int, int], ...], int],
-    ...,
-] = (
-    (
-        ((26, 10, 1.2), (46, 27, 1.3), (11, 36, 1.5)),
-        ((26, 17, 32), (18, 34, 10), (34, 30, 8), (46, 34, 16), (11, 41, 9)),
-        7,
-    ),
-    (
-        ((38, 11, 1.25), (17, 26, 1.35), (53, 35, 1.45)),
-        ((38, 18, 30), (29, 33, 9), (45, 31, 8), (17, 33, 15), (53, 42, 9)),
-        11,
-    ),
-    (
-        ((21, 12, 1.15), (43, 25, 1.35), (54, 38, 1.5)),
-        ((21, 19, 30), (13, 33, 10), (32, 32, 8), (43, 32, 15), (54, 45, 7)),
-        13,
-    ),
+# identical peaks wherever one is repeated. An entry is (summits, relief seed):
+# where the massif's three summits stand in the model's own VOXEL grid, as
+# (x, y, height) with the tallest first, and the seed the spurs and gullies of
+# the height field are keyed off (`buildings.massif`). A phase is a different
+# mountain rather than the same one slid sideways, and nothing else varies —
+# the mass stands on one row in every phase, so a range sits on one horizon,
+# and the rock and snow are the same two ramps throughout. Phase 0 is the
+# atlas column, so a board that has not adopted the sheet is unchanged.
+MOUNTAIN_PHASES: tuple[tuple[tuple[tuple[int, int, int], ...], int], ...] = (
+    (((6, 7, 15), (11, 4, 11), (2, 10, 10)), 21),
+    (((5, 8, 15), (11, 5, 11), (3, 3, 9)), 11),
+    (((4, 6, 15), (9, 10, 11), (11, 3, 10)), 17),
 )
 
+# Where the massif's front corner stands. Fixed across the phases: a ridge of
+# mountains that stood on three different rows would read as peaks at three
+# altitudes rather than as a range.
+MOUNTAIN_GROUND = 57
 
-# The massif's four rock tones, in the order the faces use them: two sunlit,
-# two shaded. They are one warm grey under two lights — the lit faces carry the
-# sun's own warmth (S0.14, where they used to be the S0.07 of cut card), the
-# shaded ones are `_shade`s of the lit face and so take the sky (see
-# `_SHADE_GREY`). Every luma is the one the tone was authored at.
+
+# The massif's four rock faces, in the order the old painter used them: two
+# sunlit, two shaded. They are one warm grey under two lights — the lit faces
+# carry the sun's own warmth (S0.14, where they used to be the S0.07 of cut
+# card), the shaded ones are `_shade`s of the lit face and so take the sky
+# (see `_SHADE_GREY`). The massif is a voxel mass drawn off `palette.ROCK_RAMP`
+# now, and the ramp is authored ON this ladder — its four upper rungs sit at
+# these four values — so this is what the tile's rock is still keyed to, and
+# `docs/terrain_tones.md` records it.
 ROCK: tuple[RGB, RGB, RGB, RGB] = (
     _tone((166, 161, 153), 0.14),
     _tone((148, 144, 137), 0.14),
@@ -596,65 +627,54 @@ ROCK: tuple[RGB, RGB, RGB, RGB] = (
 )
 
 
+def _contact_shadow(tile: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
+    """The shadow a prop standing on grass drops: its own silhouette, moved
+    down-right by `voxel.SHADOW_OFFSET` — the sheet's one sun — in the field's
+    own dark grass rather than in a tone of its own.
+
+    Only where the prop is not already standing, and only where the pixel that
+    CAST it is inside the cell: a shadow whose caster was clipped off the tile
+    is shade with nothing above it (`OneSun`).
+    """
+    sp = sprite.load()
+    px = tile.load()
+    dx, dy = SHADOW_OFFSET
+    for yy in range(sprite.height):
+        for xx in range(sprite.width):
+            if sp[xx, yy][3] == 0:
+                continue
+            sx, sy = x0 + xx, y0 + yy
+            tx, ty = sx + dx, sy + dy
+            if not (0 <= tx < CELL and 0 <= ty < CELL):
+                continue
+            if 0 <= tx - x0 < sprite.width and 0 <= ty - y0 < sprite.height:
+                if sp[tx - x0, ty - y0][3] != 0:
+                    continue  # the prop stands on its own shadow
+            px[tx, ty] = (*GRASS_DARK, 255)
+
+
 def mountain(phase: int = 0) -> Image.Image:
-    """A painted three-peak massif: light/dark faces split at each ridge,
-    jagged dithered snow caps, altitude banding down to a talus skirt."""
-    peaks, ridges, zig_seed = MOUNTAIN_PHASES[phase]
+    """A three-summit massif in the sheet's own projection: a voxel height
+    field rasterised into top, up-left and down-right planes off one rock
+    ramp, snow on the summits, talus at the foot.
+
+    The tile it replaces was a front elevation — a fitted silhouette with a
+    flat light/dark split and no top plane on it anywhere. See
+    `buildings.massif`.
+    """
+    peaks, seed = MOUNTAIN_PHASES[phase]
     # The massif stands on the same clumped grass plate plains and woods are
     # drawn on: a flat-green apron around a mountain reads as a lighter cell
     # against the field it borders, which is the seam the woods plate was
     # fixed for.
     t = _grass_ground(4)
-    px = t.load()
-    base_y = 56
-    rock_hi, rock_lt, rock_dk, rock_deep = ROCK
-    edge = (66, 63, 60)
-    # cool light-grey snow, authored under TERRAIN_VALUE_CEILING: the caps
-    # were the brightest thing on the board, louder than any unit highlight
-    snow_lt = (164, 171, 182)
-    snow_dk = (138, 148, 166)
-    for x in range(4, 60):
-        tops = [int(ay + s * abs(x - ax)) for ax, ay, s in peaks]
-        y_top = min(tops)
-        if y_top >= base_y - 2:
-            continue
-        owner = tops.index(y_top)
-        ax, ay, _s = peaks[owner]
-        lit = x <= ax
-        # jagged snow line per column; only the two tall peaks hold snow
-        zig = (x * zig_seed) % 3 + ((x // 3) % 2) * 3
-        snow_until = ay + 6 + zig if owner < 2 else y_top
-        mid = (y_top + base_y) // 2
-        for y in range(y_top, base_y):
-            if y == y_top:
-                c = edge
-            elif y < snow_until:
-                c = snow_lt if lit else snow_dk
-            elif y == snow_until and (x + y) % 2 == 0:
-                c = snow_dk if lit else mix(snow_dk, rock_dk, 0.5)  # melt dither
-            elif y >= base_y - 5:
-                c = rock_dk if lit else rock_deep  # talus skirt
-            elif y < mid:
-                c = rock_hi if lit else rock_dk  # sunlit high faces
-            else:
-                c = rock_lt if lit else rock_dk
-            px[x, y] = (*c, 255)
-    # ridge lines below the apexes and a few cracks
-    for x, y0, ln in ridges:
-        for y in range(y0, min(base_y - 1, y0 + ln)):
-            if px[x, y][3] == 255 and px[x, y][:3] in (rock_hi, rock_lt, rock_dk):
-                px[x, y] = (*mix(rock_dk, edge, 0.5), 255)
-    # Contact shadow and scree at the foot. The shadow is the massif's own
-    # foot dropped by SHADOW_OFFSET — same sun, same direction as the woods
-    # beside it and the units standing on both.
-    drop_x, drop_y = SHADOW_OFFSET
-    for x in range(6, 58):
-        if px[x, base_y - 1][:3] not in (rock_lt, rock_dk, rock_deep):
-            continue
-        for y in range(base_y, min(CELL, base_y + drop_y)):
-            if x + drop_x < CELL:
-                px[x + drop_x, y] = (*GRASS_DARK, 255)
-    for sx, sy in ((8, 52), (52, 54), (14, 58), (46, 59)):
+    rock = render_indexed(buildings.massif(peaks, seed), FACTIONS[0]).image
+    x0 = (CELL - rock.width) // 2
+    y0 = MOUNTAIN_GROUND - rock.height
+    _contact_shadow(t, rock, x0, y0)
+    place_in_cell(t, rock, x0, y0)
+    # boulders shed onto the apron, in the field's own dark grass
+    for sx, sy in ((5, 50), (56, 52), (12, 60), (44, 61)):
         _rect(t, sx, sy, 3, 2, GRASS_DARK)
     return t
 

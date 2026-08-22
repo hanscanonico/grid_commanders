@@ -710,7 +710,13 @@ class TerrainPalette(unittest.TestCase):
     passes it with headroom.
     """
 
-    NATURE_CEILING = 80
+    # 2026-08-23: the canopy and the massif came onto the projection, and
+    # both stopped painting tones — a crown is five banded planes over the
+    # plains plate and the massif is two shared ramps — so the widest nature
+    # tile on the sheet now spends 37 where woods alone spent 77. The ceiling
+    # comes down with them. It is a RATCHET, like the property one below: a
+    # tile that needs more than this is painting where it should be banding.
+    NATURE_CEILING = 48
     # A property tile is a building plus its one shadow tone. The shading
     # renderer spent a colour per lit pixel there — 204 on the aurora airport,
     # then 75 once the contour and dither rules (docs/terrain_outlines.md) cut
@@ -760,6 +766,60 @@ class TerrainPalette(unittest.TestCase):
                 with self.subTest(tile=tid, faction=fac.key):
                     self.assertLessEqual(
                         self._colours(terrain.tile(tid, fac)), self.PROPERTY_CEILING
+                    )
+
+
+class TileTexture(unittest.TestCase):
+    """A tile may not spend its detail budget on per-pixel noise either.
+
+    The colour ceiling above counts tones; this counts CHANGES, which is what
+    a player actually sees at the board's 4:1 nearest downsample — a texture
+    finer than the sample grid arrives as a different random pixel per frame
+    of camera movement, not as texture. Measured as the share of pixels whose
+    right-hand neighbour is a different colour.
+
+    The woods tile was the outlier the reading exists for: 53.7% against
+    19.9-27.5% for every other tile on the sheet, because a crown carried a
+    per-pixel hash on its body tone and a 14% leaf speckle over it. The hash
+    still rags the boundary between two bands — that is what keeps an arc from
+    reading as a painted stripe — but it no longer makes tones, and the tile
+    comes in at 23.2%. The ceiling is set where the noisiest tile that was
+    never a problem sits (coast at 29.7%) plus room to draw in.
+    """
+
+    HIGH_FREQUENCY_CEILING = 0.35
+
+    def _changes(self, img) -> float:
+        px = img.convert("RGB").load()
+        w, h = img.size
+        changed = sum(
+            1 for y in range(h) for x in range(w - 1) if px[x, y] != px[x + 1, y]
+        )
+        return changed / (h * (w - 1))
+
+    def test_no_nature_tile_is_mostly_colour_change(self):
+        for tid in terrain.TERRAIN_ORDER:
+            if tid in terrain.PROPERTY:
+                continue
+            with self.subTest(tile=tid):
+                self.assertLessEqual(
+                    self._changes(terrain.tile(tid, FACTIONS[0])),
+                    self.HIGH_FREQUENCY_CEILING,
+                )
+
+    def test_no_autotile_variant_is_mostly_colour_change(self):
+        builders = (
+            autotile.road_tile,
+            autotile.river_tile,
+            autotile.coast_tile,
+            autotile.shoal_tile,
+            autotile.woods_tile,
+        )
+        for builder in builders:
+            for mask in range(16):
+                with self.subTest(sheet=builder.__name__, mask=mask):
+                    self.assertLessEqual(
+                        self._changes(builder(mask)), self.HIGH_FREQUENCY_CEILING
                     )
 
 
@@ -1533,6 +1593,46 @@ class CanopyLight(unittest.TestCase):
             for c in set(opaque_pixels(terrain._ground(GRASS, PLAINS_SALT)))
         ]
         self.assertLess(terrain.luminance(terrain.CANOPY_TOP), min(plate))
+
+    def test_a_crown_is_a_disc_in_the_sheets_projection(self):
+        """And the plane is a plane: a canopy is a ground-parallel disc, and
+        this camera draws one at 2:1 — the same 2:1 a voxel top face is drawn
+        at and the massif's foot lies on. The crowns were orthographic
+        CIRCLES, the one shape the projection cannot produce.
+
+        Read off `_crown_reach`, which is what the drawer measures a crown's
+        top plane with, and confirmed on the tile: the canopy's own tones fill
+        twice as many columns as rows around each crown."""
+        for _, _, r in terrain._CROWNS:
+            with self.subTest(radius=r):
+                up, _ = terrain._crown_reach(r)
+                self.assertAlmostEqual(2 * up, r, delta=1)
+
+    # A crown's top plane, drawn alone, against the projection's own 2:1.
+    # Measured 2.00-2.29 over the four radii the table spends; a crown drawn
+    # as the orthographic circle this replaces scores 1.0.
+    MIN_PLANE_ASPECT = 1.8
+    MAX_PLANE_ASPECT = 2.6
+
+    def test_a_crowns_top_plane_is_drawn_at_two_to_one(self):
+        """The same claim on the picture rather than on the helper: one crown
+        on an otherwise empty wood, measured across the tones its top plane is
+        banded in."""
+        plane = {terrain.CANOPY_TOP, terrain.CANOPY_MID, terrain.CANOPY_LT}
+        for r in sorted({r for _, _, r in terrain._CROWNS}):
+            with self.subTest(radius=r):
+                with mock.patch.object(terrain, "_CROWNS", ((32, 32, r),)):
+                    px = terrain.woods().convert("RGB").load()
+                pts = [
+                    (x, y)
+                    for y in range(CELL)
+                    for x in range(CELL)
+                    if px[x, y] in plane
+                ]
+                width = max(x for x, _ in pts) - min(x for x, _ in pts) + 1
+                depth = max(y for _, y in pts) - min(y for _, y in pts) + 1
+                self.assertGreaterEqual(width / depth, self.MIN_PLANE_ASPECT)
+                self.assertLessEqual(width / depth, self.MAX_PLANE_ASPECT)
 
     def test_every_woods_variant_wears_the_plane(self):
         for mask in range(16):

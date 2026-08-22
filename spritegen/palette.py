@@ -509,9 +509,50 @@ CONCRETE_RAMP: Ramp = build_ramp(
 # the one thing on a building that may.
 MACHINE_RAMP: Ramp = build_ramp(_hex("77828f"), (26.0, 60.0, 92.0, 124.0, 150.0, 170.0))
 
+# ---------------------------------------------------------------------------
+# the massif's two ramps — rock and snow
+# ---------------------------------------------------------------------------
+#
+# The mountain is a voxel mass now (see `buildings.massif`), so its faces are
+# ramp slots like every other mass on the sheet rather than four literals
+# picked by hand. The ladder is not new: its four upper rungs are the four
+# faces `terrain.ROCK` was authored at (L163/145/118/95 against ROCK's
+# 161.5/144.3/113.5/95.3), so a face that used to be painted `rock_lt` is
+# still drawn at `rock_lt`'s value — what changes is that the warm/cool split
+# those literals carried is now `_shape`'s doing, out of the same AMBIENT sky
+# the armies stand in, and the renderer picks the rung off the face normal
+# instead of a painter picking it off an x comparison.
+#
+# The lit rungs are the rock the terrain pass authored (H37/S0.14), the same
+# grey masonry's lit rung is: a cliff and a wall are one material under one
+# sun. The rim rung is the massif's own sunlit ridge and stops at L163, well
+# under `terrain.TERRAIN_VALUE_CEILING` — a mountain may catch the light, it
+# may not out-key an army standing in front of it.
+#
+# The three rungs below the body are built off a SKY-hued base instead, which
+# is the one thing `_shape` cannot do for a grey on its own: its ambient mix
+# is 7-26% and a stone with this little chroma has no hue to defend, so a
+# small rotation lands anywhere. `terrain._shade` settled that for the painted
+# tones (`_SHADE_GREY`: under S0.20 a shadow simply IS the sky) and the ramp
+# says the same thing — warm stone in the light, cool stone in the shade,
+# which is the face a shaded flank of the old massif already wore.
+_ROCK_LIT: RGB = _hex("a6a099")
+_ROCK_SHADE: RGB = _full_chroma(_SKY_HUE, 0.15)
+_ROCK_L = (32.0, 66.0, 95.0, 118.0, 145.0, 163.0)
+ROCK_RAMP: Ramp = tuple(
+    _shape(_ROCK_LIT if slot >= S_BODY else _ROCK_SHADE, slot, target)
+    for slot, target in enumerate(_ROCK_L)
+)
+# Snow is the one cool material up there, and the only reason the ladder goes
+# this high: a cap is what tells a summit from a quarry at the board's 4:1
+# rung. It stops at L172, under the ceiling, where the painted caps sat.
+SNOW_RAMP: Ramp = build_ramp(_hex("aab2c4"), (44.0, 82.0, 112.0, 140.0, 160.0, 172.0))
+
 _MASONRY_SLOT = "masonry"
 _CONCRETE_SLOT = "concrete_ramp"
 _MACHINE_SLOT = "machine"
+_ROCK_SLOT = "rock_ramp"
+_SNOW_SLOT = "snow_ramp"
 
 # Named ramps every row shares. A faction's own is looked up per row instead,
 # and anything unlisted derives one from its fixed colour.
@@ -520,6 +561,18 @@ _SHARED_RAMPS: dict[str, Ramp] = {
     _MASONRY_SLOT: MASONRY_RAMP,
     _CONCRETE_SLOT: CONCRETE_RAMP,
     _MACHINE_SLOT: MACHINE_RAMP,
+    _ROCK_SLOT: ROCK_RAMP,
+    _SNOW_SLOT: SNOW_RAMP,
+}
+
+# The scenery convention: a natural mass carries one material and the renderer
+# spends the rungs around it on the three planes — top at S4, the up-left
+# flank at S3, the flank turned away at S2. `scree` is the same rock a band
+# down, for the talus a massif's foot spills into.
+TERRAIN_MATERIALS: dict[str, MaterialSlot] = {
+    "scarp": MaterialSlot(_ROCK_SLOT, S_BODY, MID_GUNMETAL),
+    "scree": MaterialSlot(_ROCK_SLOT, S_SHADOW, MID_GUNMETAL),
+    "snowcap": MaterialSlot(_SNOW_SLOT, S_BODY, MID_GUNMETAL),
 }
 
 
@@ -554,7 +607,11 @@ PROPERTY_MATERIALS: dict[str, MaterialSlot] = {
 
 def material_slot(material: str) -> MaterialSlot:
     """Slot for a model's material name; anything unlisted is a fixed accent."""
-    spec = UNIT_MATERIALS.get(material) or PROPERTY_MATERIALS.get(material)
+    spec = (
+        UNIT_MATERIALS.get(material)
+        or PROPERTY_MATERIALS.get(material)
+        or TERRAIN_MATERIALS.get(material)
+    )
     return spec if spec is not None else _accent(S_BODY)
 
 
