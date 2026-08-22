@@ -356,7 +356,24 @@ that pipeline's paste step can be pointed at this art instead.
 5. **`spritegen/autotile.py`** — the direction-aware road/river/bridge/
    coast/shoal/woods variants and the sea's phase variants, exported under
    `autotiles/`.
-6. **`spritegen/atlas.py`** — assembles atlases, exports cells, renders the
+6. **`spritegen/aa.py`** — the last word on a unit sprite, run between the
+   renderer and the cell: a **single mid-tone pixel in the inner corner of a
+   staircase step**, and only where both runs meeting there are three pixels
+   or longer and the riser between them is no taller than two. It writes an
+   existing slot off the sprite's own ramp — the one halfway between the 1px
+   outline the corner sits on and the body just inside it — so a softened
+   corner costs no palette entry, and it never touches alpha, so the
+   silhouette is still the shape the model drew. It reads whatever that line
+   is rather than assuming it is dark, and where line and body are one slot
+   apart there is nothing between them to write: today that leaves every
+   sunward `SEL_OUT_LIFT` edge alone and softens only the shaded ones. The
+   restraint is the point: the projection draws its diagonals as runs of TWO,
+   which is already the smoothest line a grid can hold, and softening every
+   step of one would only grey the outline down. What is left for it are the
+   shallower stretches — a wing root, a hull front, the shoulders of a foot
+   unit — 110 pixels across the whole sheet. `ENABLED` turns the pass off;
+   `MIN_RUN` is the knob that decides what counts as a staircase.
+7. **`spritegen/atlas.py`** — assembles atlases, exports cells, renders the
    preview sheets and the demo map (which resolves roads, the river, the
    bridge, every coastline and every wood's tree line through the autotile
    variants).

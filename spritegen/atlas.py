@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from PIL import Image
 
-from . import autotile, buildings, terrain
+from . import aa, autotile, buildings, terrain
 from .palette import FACTIONS, Faction
 from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from .voxel import compose_cell, place_in_cell, render, render_indexed
@@ -52,7 +52,12 @@ def unit_cell(
     buildings keep the shading renderer until their own pass moves them."""
     kind = UNITS[uid][1]
     bob = _BOB_BOTTOM.get(kind) if pose is Pose.B else None
-    sprite = render_indexed(build_model(uid, pose), fac).image
+    model = build_model(uid, pose)
+    # Softening is the LAST word on the art (see spritegen.aa): after the
+    # contour and the despeckle, before the cell composes a shadow under it —
+    # the shadow is not the unit's silhouette and has no staircase of its own
+    # to answer for.
+    sprite = aa.soften_unit(render_indexed(model, fac).image, model, fac)
     return compose_cell(
         sprite,
         kind,
