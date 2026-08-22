@@ -75,8 +75,8 @@ two-tone ground.
 1. **`WoodsSeam`**. The plate is `_grass_ground` now rather than `_ground`, so
    "the woods plate is the plains plate" and the clearing count are read
    against the whole grass palette, clumps included (the clearing floor of 300
-   px is untouched; the thinnest variant still clears 389). The value BAND a
-   woods pixel may not cross stays the FIELD tone's band — the grain over
+   px is untouched; the thinnest variant cleared 389 and clears 465 since
+   the de-shingling pass). The value BAND a woods pixel may not cross stays the FIELD tone's band — the grain over
    GRASS, without the clumps — because the canopy's lit top plane is authored
    one luma step under that floor, and folding a darker tone into the band
    would drop it past CANOPY_TOP and stop measuring anything.

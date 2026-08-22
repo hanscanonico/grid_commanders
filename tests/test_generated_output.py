@@ -15,7 +15,9 @@ Run with `.venv/bin/python -m unittest discover tests`.
 
 from __future__ import annotations
 
+import cmath
 import colorsys
+import math
 import statistics
 import unittest
 from unittest import mock
@@ -786,8 +788,14 @@ class TileTexture(unittest.TestCase):
     per-pixel hash on its body tone and a 14% leaf speckle over it. The hash
     still rags the boundary between two bands — that is what keeps an arc from
     reading as a painted stripe — but it no longer makes tones, and the tile
-    comes in at 23.2%. The ceiling is set where the noisiest tile that was
+    came in at 23.2%. The ceiling is set where the noisiest tile that was
     never a problem sits (coast at 29.7%) plus room to draw in.
+
+    The de-shingling pass spent that room and no more: the wood is drawn in
+    24 crowns rather than 22, its outline is hash-ragged and its bands carry
+    a two-in-ten dapple, and it comes in at 33.5% (33.7% on the widest
+    variant). 28.6% of that is the crowns themselves — the tile with the
+    speckle and both rags switched off — so the decoration is 5 points of it.
     """
 
     HIGH_FREQUENCY_CEILING = 0.35
@@ -1308,7 +1316,7 @@ class WoodsSeam(unittest.TestCase):
         return min(lums), max(lums)
 
     # every variant clears at least this much plate between its crowns; the
-    # thinnest today is 389px, so a plate that stopped being the plains one
+    # thinnest today is 465px, so a plate that stopped being the plains one
     # in either direction empties this rather than merely thinning it
     CLEARING_FLOOR = 300
 
@@ -1703,6 +1711,142 @@ class CanopyLight(unittest.TestCase):
                 top = sum(1 for c in px if c == terrain.CANOPY_TOP)
                 self.assertGreater(lit / len(px), self.MIN_SHARE)
                 self.assertGreater(top / len(px), self.MIN_TOP_SHARE)
+
+
+class CanopyGrain(unittest.TestCase):
+    """A wood is trees, and trees are not laid in courses.
+
+    The first projection pass put the canopy on the sheet's own 2:1 and the
+    tile came out READING as roof shingles: one crown stamp at one depth, six
+    staggered courses of it, and a lit rim round every ellipse. The value
+    gates above could not see it — a tray of pills wears the same lit plane a
+    wood does — so what the eye caught is measured here instead, as PERIOD.
+
+    Every crown course of pitch p puts a band into the tile's row profile
+    (mean luma per row) at period p. The crowns are 15-23px wide and half
+    that deep, so a course of them lands between 8 and 16px, and that is the
+    band read: the strongest component in it is the answer to "is this one
+    stamp repeated?". The shingled tile scored 12.05L on its worst variant,
+    the round-5 wood that read as trees 7.55L, and this canopy 6.22L — 3.32L
+    on the atlas tile, against 0.70L for the bare grass plate underneath.
+    """
+
+    PERIOD_CEILING = 7.0  # measured worst variant: 6.22L
+    MIN_CROWN_SIZES = 3  # a wood of one crown size is one stamp: today 5
+
+    def _row_profile(self, img) -> list[float]:
+        px = img.convert("RGB").load()
+        return [
+            sum(terrain.luminance(px[x, y]) for x in range(CELL)) / CELL
+            for y in range(CELL)
+        ]
+
+    def _period_amplitude(self, profile) -> float:
+        """The strongest crown-scale period in a row profile, in luma. A plain
+        DFT over the periods a course of crowns can land on (8-16px), stated
+        as the amplitude of that component rather than as its power."""
+        n = len(profile)
+        mean = sum(profile) / n
+        return max(
+            abs(
+                sum(
+                    (v - mean) * cmath.exp(-2j * cmath.pi * k * i / n)
+                    for i, v in enumerate(profile)
+                )
+            )
+            / n
+            for k in range(n // 16, n // 8 + 1)
+        )
+
+    def test_no_woods_variant_repeats_a_crown_course(self):
+        for mask in range(16):
+            with self.subTest(mask=mask):
+                self.assertLessEqual(
+                    self._period_amplitude(
+                        self._row_profile(autotile.woods_tile(mask))
+                    ),
+                    self.PERIOD_CEILING,
+                )
+
+    def test_the_reading_refuses_a_tile_laid_in_courses(self):
+        # worth asserting only if it catches the thing it is named for: the
+        # canopy's own profile with a 12.8px course of ±6L laid over it — the
+        # pitch and the depth the shingled tile was drawn at — fails it
+        profile = self._row_profile(terrain.woods())
+        coursed = [
+            v + 12.0 * math.cos(2 * math.pi * i / 12.8) for i, v in enumerate(profile)
+        ]
+        self.assertGreater(self._period_amplitude(coursed), self.PERIOD_CEILING)
+
+    def test_the_wood_is_drawn_in_more_than_one_crown(self):
+        """Size and place: the table spends several half-widths, no two crowns
+        share a row, and the mass under a crown scales with it."""
+        radii = {r for _, _, r in terrain._CROWNS}
+        self.assertGreaterEqual(len(radii), self.MIN_CROWN_SIZES)
+        self.assertGreaterEqual(
+            len({terrain._crown_depth(r) for r in radii}), self.MIN_CROWN_SIZES
+        )
+        rows = Counter(y for _, y, _ in terrain._CROWNS)
+        self.assertLessEqual(max(rows.values()), 2)
+        self.assertGreaterEqual(len(rows), len(terrain._CROWNS) - 3)
+
+    def test_the_hash_moves_every_crown_off_the_table(self):
+        moved = sum(
+            1
+            for cx, cy, _ in terrain._CROWNS
+            if terrain._crown_jitter(cx, cy) != (0, 0)
+        )
+        self.assertEqual(moved, len(terrain._CROWNS))
+
+    # How ragged a wood's outer boundary has to be, in pixels of spread
+    # between the shallowest and the deepest bite the tree line takes out of
+    # an edge it ends at. A canopy laid tangent to the border — which is what
+    # the shingled tile did — scores 0 to 2 and reads as a cut rectangle.
+    MIN_TREE_LINE_SPREAD = 6
+
+    def test_the_tree_line_is_bays_and_points_rather_than_a_straight_cut(self):
+        for mask in range(16):
+            for bit, deep in ((N, False), (S, True)):
+                if mask & bit:
+                    continue  # the wood continues: no boundary to read here
+                with self.subTest(mask=mask, edge=bit):
+                    px = autotile.woods_tile(mask).convert("RGB").load()
+                    plate = set(opaque_pixels(terrain._grass_ground(PLAINS_SALT)))
+                    rows = range(CELL - 1, -1, -1) if deep else range(CELL)
+                    depths = []
+                    for x in range(CELL):
+                        depth = 0
+                        for y in rows:
+                            if px[x, y] not in plate:
+                                break
+                            depth += 1
+                        depths.append(depth)
+                    self.assertGreaterEqual(
+                        max(depths) - min(depths), self.MIN_TREE_LINE_SPREAD
+                    )
+
+    def test_a_trunk_stands_under_a_crown_rather_than_at_a_tile_offset(self):
+        """The old pair of trunks was two fixed coordinates that all sixteen
+        variants repeated. A trunk belongs to the crown it holds up now, so
+        the variants disagree about where the trunks are — and every one of
+        them still shows at least one."""
+        bark = {terrain.TRUNK, terrain.darken(terrain.TRUNK, 0.25)}
+        seen = []
+        for mask in range(16):
+            px = autotile.woods_tile(mask).convert("RGB").load()
+            trunks = frozenset(
+                (x, y) for y in range(CELL) for x in range(CELL) if px[x, y] in bark
+            )
+            with self.subTest(mask=mask):
+                self.assertTrue(trunks)
+            seen.append(trunks)
+        # a handful of interior crowns stand clear in every variant, so the
+        # reading is that the variants MOSTLY disagree: four times as many
+        # trunk pixels over the sheet as the ones they all share
+        common = set.intersection(*(set(s) for s in seen))
+        every = set().union(*seen)
+        self.assertGreaterEqual(len(set(seen)), 6)
+        self.assertGreater(len(every), 4 * len(common))
 
 
 class OneSun(unittest.TestCase):

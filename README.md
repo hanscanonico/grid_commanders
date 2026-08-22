@@ -233,9 +233,13 @@ they can turn and junction), both bridge orientations, coastline tiles for
 sea bordering land, shoals surfed on whichever edges face water, and woods
 whose canopy runs off the edges the wood continues across and scallops to a
 tree line on the rest (so a stand of trees stops ending in a razor cut
-against the grass). Each connection sheet lays out masks 0-15 row-major (bit
-order N=1, E=2, S=4, W=8); `bridges.png` carries its two decks side by side.
-Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
+against the grass — the crowns stop a hash-keyed 0-6px short of a border
+they end at, so the tree line is bays and points and a woods block is not a
+rectangle). A crown that overhangs a continued border is drawn again a whole
+cell along, so two woods cells butt on the same crown rather than on two
+halves of different ones. Each connection sheet lays out masks 0-15
+row-major (bit order N=1, E=2, S=4, W=8); `bridges.png` carries its two
+decks side by side. Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
 leaves the base sheet. A river is cut into a bank rather than laid on the
 grass — silt, its shaded outer edge and a wet lip at the waterline, all mixed
 from the same ground constants the plains and shoal tones come from — a run
@@ -454,15 +458,23 @@ that pipeline's paste step can be pointed at this art instead.
    ground-parallel disc, and this camera draws one at **2:1**: the canopy is
    an ellipse twice as wide as it is deep — the same 2:1 a voxel's top face
    is drawn at — with the leaf mass hanging under it, banded into a lit top
-   plane, the up-left edge the sun catches, and two side faces below. That
-   lit top plane is what gives a dark or green unit standing in woods a value
-   step to separate against: it is authored one step under the dimmest plains
-   pixel and covers most of a crown rather than its cap alone, so a green
-   hull is actually seen against it while the woods/plains seam rule stays
-   true. Both tiles stopped painting per-pixel noise on the way through: the
-   hash still rags a band boundary so an arc does not read as a stripe, but
-   it no longer makes tones, and woods went from 77 colours and 53.7% of its
-   pixels sitting on a colour change to 30 and 23.2% (`TileTexture`).
+   plane, a rim lit or shaded by which way it faces the sun, and the mass
+   rolling off below. That lit top plane is what gives a dark or green unit
+   standing in woods a value step to separate against: it is authored one
+   step under the dimmest plains pixel and covers most of a crown rather than
+   its cap alone, so a green hull is actually seen against it while the
+   woods/plains seam rule stays true. Both tiles stopped painting per-pixel
+   noise on the way through: the hash still rags a band boundary so an arc
+   does not read as a stripe, but it no longer makes tones, and woods went
+   from 77 colours and 53.7% of its pixels sitting on a colour change to 28
+   — 32 on the widest variant — and 33.5% (`TileTexture`). Drawn as one
+   stamp at one size in staggered courses, though, that canopy read as roof SHINGLES, so what a wood varies
+   by is stated too: five crown sizes, centres jittered off the table by the
+   fixed hash, a shuffled overlap order, ragged outlines and a dappled
+   surface, a fringe that stops short of its border by a hash, and trunks
+   that belong to crowns instead of to fixed tile coordinates. Held by
+   period, not by taste — the strongest 8-16px band in the tile's row
+   profile, 12.05L shingled against 6.2L now (`CanopyGrain`).
 5. **`spritegen/autotile.py`** — the direction-aware road/river/bridge/
    coast/shoal/woods variants and the sea's phase variants, exported under
    `autotiles/`.
