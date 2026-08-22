@@ -433,7 +433,7 @@ that pipeline's paste step can be pointed at this art instead.
    temperature is what tells an unowned property from an **Iron** one, whose
    own colour is a grey. The ladder is authored where the old
    fixed greys' lit planes landed: the **mass** of every wall, lot and roof
-   is dark — the lit half of a property measures L72-115 — and the rung above
+   is dark — the lit half of a property measures L70-109 — and the rung above
    it is **trim, drawn only as a line**: a parapet, a coping, a ridge, a
    seam. A lit window and a pane of glazing are the only things that glint
    into the units' band (`BUILDING_KEY_CEILING`), which is why the base's

@@ -412,7 +412,7 @@ class ValueCeiling(unittest.TestCase):
     # planes to read against a wall of the same value. This bounds the lit half
     # of a property, which is the wall and roof area a silhouette is actually
     # seen against: L107-138 before the masonry ladder stepped down a rung,
-    # L79-111 after.
+    # L70-109 after (re-measured 2026-08-23, with the faction-read pass).
     PROPERTY_MASS_CEILING = 120.0
 
     def _tiles(self):
@@ -442,7 +442,8 @@ class ValueCeiling(unittest.TestCase):
 
     def test_property_masonry_stays_out_of_the_units_band(self):
         # The unowned row carries no lit window and no glazing — every
-        # hue-carrying material is swapped for masonry grey — so its share of
+        # hue-carrying material resolves onto the cool concrete rungs — so its
+        # share of
         # the band is the buildings' own construction, and it is none.
         for bid in sorted(terrain.PROPERTY):
             with self.subTest(building=bid):
@@ -725,8 +726,10 @@ class TerrainPalette(unittest.TestCase):
     # down with it: the widest tile on the sheet spends 24, so this is the
     # unit cap plus the shadow rather than a headroom figure. It is a
     # RATCHET — a change that needs more colours than this is spending them
-    # somewhere a slot should be.
-    PROPERTY_CEILING = 25
+    # somewhere a slot should be, so it comes down again with the
+    # faction-read pass (2026-08-23): the unowned row is drawn out of one
+    # family end to end and the widest tile now spends 23.
+    PROPERTY_CEILING = 24
 
     def _colours(self, img) -> int:
         return len(set(opaque_pixels(img)))

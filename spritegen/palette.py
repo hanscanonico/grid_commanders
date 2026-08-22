@@ -486,7 +486,7 @@ UNIT_MATERIALS: dict[str, MaterialSlot] = {
 # in the same AMBIENT sky an army's do and the board reads as one scene.
 #
 # The ladders are authored where the old material greys already put a
-# building — the mass lit at L112, the trim a rung above it at L140 — so
+# building — the mass lit at L116, the trim a rung above it at L142 — so
 # nothing here walks back into the value band `terrain.TERRAIN_VALUE_CEILING`
 # reserves for units. What the ramp adds is the STRUCTURE the greys only
 # approximated: four rungs of ONE family where there were four unrelated

@@ -171,10 +171,11 @@ worst pair, over the 40 bar; it fell from 48.9 because the unowned row now
 differs from an owned one in far more pixels, each by less).
 
 Nothing above moved a band. Every value gate passes on its original threshold:
-the lit half of a property measures **L72-115** against the L120 ceiling, the
+the lit half of a property measures **L70-109** against the L120 ceiling, the
 glazing share stays at 1.2% of 2%, the unowned row still puts zero pixels over
 the terrain ceiling, tile medians are untouched, no ramp reaches the rim step,
 and the colour ratchets come DOWN with the pass — 23 colours on the widest
-property tile against 24, and the unowned row spends 5-8 where it spent 13-14,
+property tile against 24, so `PROPERTY_CEILING` follows it down to 24, and the
+unowned row spends 5-8 where it spent 13-14,
 because a building drawn out of one family is cheaper than one drawn out of
 two.
