@@ -486,23 +486,33 @@ UNIT_MATERIALS: dict[str, MaterialSlot] = {
 # in the same AMBIENT sky an army's do and the board reads as one scene.
 #
 # The ladders are authored where the old material greys already put a
-# building — the mass lit at L112, the trim a rung above it at L140 — so
+# building — the mass lit at L116, the trim a rung above it at L142 — so
 # nothing here walks back into the value band `terrain.TERRAIN_VALUE_CEILING`
 # reserves for units. What the ramp adds is the STRUCTURE the greys only
 # approximated: four rungs of ONE family where there were four unrelated
 # materials, and a contour step that belongs to the wall rather than a flat
 # 0.55 dip taken off whatever colour happened to be there.
 #
-# Masonry is warm and concrete is cool, at nearly the same values: a lot and
-# the building standing on it separate by hue, so neither has to spend the
-# value the units are keyed against. Masonry's lit rung is the same grey the
-# terrain pass gave rock and stone (H37/S0.13 here, H34/S0.14 there), so a
-# wall and the cliff behind it are one material under one sun; the cool pair
-# is the deliberate exception, and their dark rungs are rotated into the same
-# AMBIENT sky `terrain._shade` puts a ground's shadow in.
-MASONRY_RAMP: Ramp = build_ramp(_hex("8a8378"), (24.0, 56.0, 84.0, 112.0, 140.0, 168.0))
+# Masonry is warm and concrete is cool at nearly the same values: a lot and
+# the building standing on it separate by HUE, so neither has to spend the
+# value the units are keyed against. Both dark rungs are rotated into the
+# same AMBIENT sky `terrain._shade` puts a ground's shadow in.
+#
+# The temperature is what the board reads a property by, so it is authored
+# far wider than the round-8 pair was (2026-08-23, the faction-read pass).
+# Those two were H37/S0.13 and H210/S0.09 — a warm card and a cool card,
+# 12 RGB apart at the contour rung — and the row nobody owns is built out of
+# concrete end to end while every owned one is built out of masonry, so that
+# gap IS the unowned-vs-owned read at the board's 4:1 rung. Sandstone against
+# slate holds the same six values 29-66 apart instead, which is what lets
+# Iron — the one faction whose own colour is a grey — stand on a warm plate
+# and still be told from the neutral row's cool one. The masonry ladder also
+# comes up off the near-black its contour rung sat at (24 to 38): a property
+# was the darkest, least saturated family on the sheet, and a wall's own
+# shadow step is where that was spent.
+MASONRY_RAMP: Ramp = build_ramp(_hex("a68d5e"), (38.0, 70.0, 96.0, 116.0, 142.0, 168.0))
 CONCRETE_RAMP: Ramp = build_ramp(
-    _hex("8f959c"), (20.0, 48.0, 74.0, 100.0, 128.0, 156.0)
+    _hex("74889e"), (22.0, 50.0, 78.0, 104.0, 130.0, 156.0)
 )
 # Machinery — a crane, a mast, a chimney cap, a door seam — sits a full band
 # over the masonry: metal catches this light where stone does not, and it is
@@ -591,8 +601,13 @@ PROPERTY_MATERIALS: dict[str, MaterialSlot] = {
     "wall_dk": _masonry(S_UNDER),
     "wall": _masonry(S_SHADOW),
     "trim": _masonry(S_BODY),
+    # Concrete answers the same four rungs, because the row nobody owns is
+    # built out of it end to end (`buildings._NEUTRAL_GREYS`): a seam, a kerb,
+    # the slab, and the trim line over it.
+    "pad_seam": MaterialSlot(_CONCRETE_SLOT, S_CONTOUR, MID_GUNMETAL),
     "pad_rim": MaterialSlot(_CONCRETE_SLOT, S_UNDER, MID_GUNMETAL),
     "pad": MaterialSlot(_CONCRETE_SLOT, S_SHADOW, MID_GUNMETAL),
+    "pad_trim": MaterialSlot(_CONCRETE_SLOT, S_BODY, MID_GUNMETAL),
     "machine": MaterialSlot(_MACHINE_SLOT, S_BODY, MID_GUNMETAL),
     # The owner's two rows: the roof plane and the line that caps it. They sit
     # two bands under the unit convention, so a roof plane's LIT face lands
