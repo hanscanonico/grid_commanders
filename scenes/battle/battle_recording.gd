@@ -7,6 +7,10 @@ extends RefCounted
 ## Static like BattleCampaign, and for the same reason: it owns nothing. The
 ## recorder it hands back is the pipeline's to feed and Battle's to close.
 
+## What a label joins the board to the table with. One statement, because the
+## replays page reads a stored label back at it to set the two on two lines.
+const LABEL_SEPARATOR := " · "
+
 
 ## Opens this match's recording, or null when there is nothing to record.
 ##
@@ -42,4 +46,5 @@ static func _label(battle: Battle) -> String:
 	var sides := PackedStringArray()
 	for team in battle.game.teams:
 		sides.append(battle.view.identity.display_name(team))
-	return "%s · %s" % [MapCatalog.display_name(battle.game.map_path), " vs ".join(sides)]
+	var board := MapCatalog.display_name(battle.game.map_path)
+	return "%s%s%s" % [board, LABEL_SEPARATOR, " vs ".join(sides)]
