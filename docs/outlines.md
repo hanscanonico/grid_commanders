@@ -90,8 +90,9 @@ now asks the two ground-facing sides orthogonally, because the sunward two are
 answered by light instead (a new test,
 `test_the_sunward_edge_is_lit_rather_than_outlined`, holds those to under 10%
 dark; measured 7.1%, all of it self-overlap, the interior material line and
-despeckle settling). Diagonal neighbours are no longer asked: a 1px line is connected through its sides, and
-a stair's inner corner is already fenced by the two line pixels beside it.
+despeckle settling). Diagonal neighbours are no longer asked: a 1px line is
+connected through its sides, and a stair's inner corner is already fenced by
+the two line pixels beside it.
 
 **`ContourWeight` → `BoardScaleEdge`.** This is the honest cost. The old
 reading — the share of board-sampled boundary pixels that are S0 — was 74-76%

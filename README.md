@@ -309,9 +309,10 @@ that pipeline's paste step can be pointed at this art instead.
      wearing. `gbuffer.convex_edges` adds the same lift along a convex crease
      on a lit top face, and concave gutters get nothing. Selective outlining
      is what buys the interior back: the 4px band it replaces spent 34.5% of
-     every unit's pixels on S0 (53.1% on the worst sprite) against 12.8% and
-     23.9% now, and the livery gates moved with it — the faction rows are
-     twice as far apart as they were. **docs/outlines.md** has the full
+     every unit's pixels on S0 (53.1% on the worst sprite) against 13.9% and
+     25.6% now, and the livery gates moved with it — the composed rows'
+     closest pair went from 34.6 to 45.2 against a bar of 30.
+     **docs/outlines.md** has the full
      reading, including what a 1px line costs at board scale and why the
      contrast pair covers it.
    - `render` (terrain and buildings) is the older path: three shaded face

@@ -581,10 +581,12 @@ class UnitBandCoverage(unittest.TestCase):
         against `test_no_row_out_lights_the_chromatic_band`, which is where
         a row actually running away with the band shows up.
 
-        Round 10 took the flip, at that same 0.02 pp: the thick contour
-        (voxel.CONTOUR_WEIGHT) pushes a rim inboard or leaves it standing on
-        every row, and neutral's rims survive marginally better than iron's
-        capped ones — 14.58% against verdant's 14.56% and iron's 14.31%. So
+        Round 10 took the flip at that same hair's width, and round 11's 1px
+        outline kept it while lifting every row about five points (the band
+        was eating a third of every sprite): neutral 18.67% against verdant's
+        18.66%, meridian and iron 18.63%, aurora 17.92%. Iron is no longer
+        the row just under neutral, and none of that is a reader's
+        difference — `ROW_BAND_TOLERANCE` is a whole percentage point. So
         the gate says what the paragraph above already argued it means: the
         unowned row may not OWN the band, `ROW_BAND_TOLERANCE` being the
         percentage point a reader cannot pick out of a contact sheet, and it
@@ -1478,12 +1480,15 @@ class RowSeparation(unittest.TestCase):
 
         Round 10 diluted it again, and the bar moved with the measurement
         rather than the art moving to the bar: a contour one LOGICAL pixel
-        thick (voxel.CONTOUR_WEIGHT) spends four times the sprite area on S0,
-        and every row's S0 is near-black, so every composed mean walks toward
-        black together — closest pair 37.6 -> 32.2, and every pair fell by
-        13-14%. Nothing about the rows changed; the outline got thicker on all
-        five. The bar is the faction-pixel bar above, which is the floor this
-        diluted figure may never sink below.
+        thick spent four times the sprite area on S0, and every row's S0 is
+        near-black, so every composed mean walked toward black together —
+        closest pair 37.6 -> 32.2, and every pair fell by 13-14%. Nothing
+        about the rows changed; the outline got thicker on all five.
+
+        Round 11 gave it back by spending a pixel instead of a band (see
+        docs/outlines.md): the closest pair is 45.2 now, against 34.6 under
+        the band. The bar is still the faction-pixel bar above, which is the
+        floor this diluted figure may never sink below.
         """
         means = {f.key: self._cell_mean(f.key) for f in FACTIONS}
         keys = list(means)
@@ -1608,13 +1613,13 @@ class BoardScaleEdge(unittest.TestCase):
     S0. It also cost 34.5% of every unit's pixels, which is the interior the
     sel-out rewrite got back (see docs/outlines.md).
 
-    A 1px outline cannot win that same reading and does not try: 16-26% of the
+    A 1px outline cannot win that same reading and does not try: 19-27% of the
     board's boundary lands on S0 now. What the reading becomes is the claim
     selective outlining actually makes — the edge is a VALUE BREAK, dark away
     from the sun and light into it, and the board sees the break either way.
     Measured as the share of board-sampled boundary pixels whose value is
-    outside the sprite's own interquartile band: 76.5-79.3% at the four
-    phases, against 81.9-87.0% for the band it replaces. That is the
+    outside the sprite's own interquartile band: 75.1-78.9% at the four
+    phases, against 81.4-87.0% for the band it replaces. That is the
     legibility round 10 bought, carried by two tones instead of one, and the
     terrain ceiling is what makes the light half of it safe: no tile may reach
     the band this sheet's lit planes live in.
@@ -1892,7 +1897,7 @@ class IndexedPalette(unittest.TestCase):
         A pixel whose only break is up or left steps up its own ramp instead
         of going black, so the two sides the light comes from read as an edge
         without spending the plane behind them. Measured over both poses of
-        all 18 units in all five rows, 6.8% of those pixels are still S0
+        all 18 units in all five rows, 7.1% of those pixels are still S0
         against 100% under the band — and the remainder is not slack: it is
         the far side of a self-overlap (a hull passing behind a turret is a
         dark line wherever it lies) and the handful the despeckle settles.
@@ -1927,7 +1932,7 @@ class IndexedPalette(unittest.TestCase):
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
         and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
         1px lattice and so nearly all boundary). The G-buffer outline spends
-        12.8% and 23.9%. That difference is the faction livery, the fittings
+        13.9% and 25.6%. That difference is the faction livery, the fittings
         and the plane structure the band was eating, and it is measured here
         so a future pass cannot quietly grow a band back.
         """

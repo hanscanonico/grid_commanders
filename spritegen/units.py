@@ -781,9 +781,10 @@ def sub(pose: Pose = Pose.A) -> Model:
     # the sneak boat is the darkest ship in the line. One band was enough only
     # while the 4px contour band ate most of the awash hull: with 1px outlines
     # the deck's own lit faces show, and a shadow-slot deck lights to exactly
-    # the body tone every other hull medians at (docs/outlines.md). Round 6 gave the hull its mass back and the hull then
-    # medianed into the water's own value band, which is a hull-value contest
-    # the sub cannot win from a mid slot; the separation it wins instead is a
+    # the body tone every other hull medians at (docs/outlines.md). Round 6
+    # gave the hull its mass back and the hull then medianed into the water's
+    # own value band, which is a hull-value contest the sub cannot win from a
+    # mid slot; the separation it wins instead is a
     # contrast pair, dark hull against mid water with the light on the sail
     # and the wake edge.
     m.box(3, 4, 0, 21, 0, 0, "hull_under")
