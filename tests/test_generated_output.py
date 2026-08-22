@@ -22,7 +22,7 @@ from collections import Counter
 
 from PIL import Image
 
-from spritegen import atlas, autotile, palette, terrain
+from spritegen import atlas, autotile, buildings, palette, terrain
 from spritegen.autotile import E, N, S, W
 from spritegen.palette import (
     FACTIONS,
@@ -49,7 +49,15 @@ from spritegen.terrain import (
     WOODS_SALT,
 )
 from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
-from spritegen.voxel import CAST, render_indexed
+from spritegen.voxel import (
+    CAST,
+    DITHER_MIN_TOP_AREA,
+    _broad_flat_tops,
+    _face_pixels,
+    _prop_contour,
+    render,
+    render_indexed,
+)
 
 ROAD_TONES = {ROAD, ROAD_DARK}
 WATER_TONES = {WATER, WATER_DARK}
@@ -665,11 +673,14 @@ class TerrainPalette(unittest.TestCase):
 
     NATURE_CEILING = 80
     # Property tiles compose a building drawn by the older shading renderer
-    # (`voxel.render`), which spends a colour per lit pixel — 209 on the
-    # aurora HQ today. That is the properties pass's to bring down, so it is
-    # recorded here as its own loose ceiling rather than left ungated: the
-    # number is debt, the gate is that it stops growing.
-    PROPERTY_CEILING = 220
+    # (`voxel.render`), which used to spend a colour per lit pixel — 204 on the
+    # aurora airport, most of them a neighbour's near-duplicate. The outline
+    # and dither pass (docs/terrain_outlines.md) took the worst of them to 75:
+    # one contour tone per material instead of one per lit neighbourhood, and
+    # a two-tone dither confined to the three roof planes broad enough for it.
+    # The debt that is left is the shading arithmetic itself, which is the
+    # properties pass's to bring down.
+    PROPERTY_CEILING = 90
 
     def _colours(self, img) -> int:
         return len(set(opaque_pixels(img)))
@@ -710,6 +721,88 @@ class TerrainPalette(unittest.TestCase):
                     self.assertLessEqual(
                         self._colours(terrain.tile(tid, fac)), self.PROPERTY_CEILING
                     )
+
+
+class PropOutline(unittest.TestCase):
+    """The shaded path's edge and texture, held to one decision each.
+
+    A neighbour-averaged contour spends one near-black per lit neighbourhood
+    and a per-pixel dither spends one tone per amplitude, so a building came
+    out of `voxel.render` carrying 200 colours no eye could name. The rules
+    that replaced them are countable, and this is where they are counted —
+    see docs/terrain_outlines.md.
+    """
+
+    def _contour_ring(self, model, fac) -> set[tuple[int, int, int]]:
+        """The pixels the outline pass adds, by difference."""
+        lit = render(model, fac, outline=True).load()
+        bare = render(model, fac, outline=False)
+        bare_px = bare.load()
+        return {
+            lit[x, y][:3]
+            for y in range(bare.height)
+            for x in range(bare.width)
+            if bare_px[x, y][3] == 0 and lit[x, y][3] == 255
+        }
+
+    def test_a_contour_pixel_is_a_materials_own_contour_tone(self):
+        for bid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                model = buildings.model_for(bid, fac)
+                allowed = {_prop_contour(m, fac) for m in set(model.vox.values())}
+                with self.subTest(building=bid, faction=fac.key):
+                    self.assertLessEqual(self._contour_ring(model, fac), allowed)
+
+    def test_the_contour_spends_no_more_tones_than_the_model_has_materials(self):
+        for bid in sorted(terrain.PROPERTY):
+            model = buildings.model_for(bid, FACTIONS[2])
+            with self.subTest(building=bid):
+                self.assertLessEqual(
+                    len(self._contour_ring(model, FACTIONS[2])),
+                    len(set(model.vox.values())),
+                )
+
+    def test_the_dither_only_lands_on_planes_wide_enough_to_carry_it(self):
+        models = {
+            bid: buildings.model_for(bid, FACTIONS[2]) for bid in terrain.PROPERTY
+        }
+        models["reef rock"] = buildings.rock_outcrop(3)
+        for name, model in sorted(models.items()):
+            planes = _broad_flat_tops(model.vox)
+            with self.subTest(prop=name):
+                for area in _plane_areas(model.vox, planes):
+                    self.assertGreaterEqual(area, DITHER_MIN_TOP_AREA)
+
+    def test_a_small_prop_carries_no_dither_at_all(self):
+        for size in (2, 3):
+            with self.subTest(size=size):
+                self.assertEqual(
+                    _broad_flat_tops(buildings.rock_outcrop(size).vox), set()
+                )
+
+
+def _plane_areas(vox, dithered) -> list[int]:
+    """Painted top-face area of each contiguous same-material plane in `dithered`."""
+    seen: set[tuple[int, int, int]] = set()
+    areas = []
+    for start in sorted(dithered):
+        if start in seen:
+            continue
+        stack, plane = [start], []
+        seen.add(start)
+        while stack:
+            x, y, z = stack.pop()
+            plane.append((x, y, z))
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = (x + dx, y + dy, z)
+                if n in dithered and n not in seen and vox[n] == vox[start]:
+                    seen.add(n)
+                    stack.append(n)
+        pixels: set[tuple[int, int]] = set()
+        for x, y, z in plane:
+            pixels.update(_face_pixels((x - y) * 2, (x + y) - z * 2)["top"])
+        areas.append(len(pixels))
+    return areas
 
 
 class PropertyOverlays(unittest.TestCase):

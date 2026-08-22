@@ -320,8 +320,14 @@ that pipeline's paste step can be pointed at this art instead.
      which retreats one plane inboard ahead of the band, or keeps its pixel
      and the one behind it when there is nothing to retreat onto.
    - `render` (terrain and buildings) is the older path: three shaded face
-     tones per material, fractional occlusion, hash dither on broad tops and
-     a 1px per-part outline.
+     tones per material, fractional occlusion, and two rules that keep it
+     countable (`docs/terrain_outlines.md`) — a **1px contour in one
+     deliberate tone per material** (`PROP_CONTOUR_DARKEN`, drawn only where
+     the silhouette meets transparency: the partial grade a thing an army is
+     read *against* gets, not the units' heavier band), and a **two-tone
+     dither confined to flat tops of at least `DITHER_MIN_TOP_AREA` painted
+     pixels**, because a speckle on a 4px feature is a chewed edge at board
+     zoom rather than a material.
 2. **`spritegen/palette.py`** — the indexed ramps and the material-to-slot
    table units are painted from, the faction colours mirroring the game's
    `CommanderVisuals`, fixed materials (gunmetal, track, glass, skin, ...),
