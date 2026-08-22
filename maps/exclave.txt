@@ -1,9 +1,8 @@
 # Every army's crown sits in the enemy's corner: garrison it before you attack.
 # symmetric
 # The exclave is the pocket in the far corner, walled off by mountain except for
-# two one-cell doors -- a road gate on the flank and a footpath on the shoulder.
-# The shoulder is mountain, so it is a door for boots and nothing else: the road
-# gate is the only way armour ever reaches a crown.
+# one door: a one-cell road gate on the flank. Boots climb the mountain wall
+# anywhere, so the gate is the only way armour ever reaches a crown.
 # Team 1's home is the north-west (two bases, two cities, the main army), and the
 # HQ it cannot lose stands in the *south-east*, behind team 2's production, held
 # by a detachment of two mechs, a gun and a rifleman, with a city of its own to
@@ -17,13 +16,13 @@
 # The mountain ring is the pocket's whole defence: `data/terrain/mountain.tres`
 # moves only foot, boot and air, so armour reaches a crown through the road gate
 # and nowhere else, while infantry and mech climb the wall anywhere and take two
-# turns doing it. Do not widen the ring's doors -- a pocket with a third way in
-# is a pocket that falls before its owner can reinforce it -- and do not pave the
-# shoulder: a second gate armour can drive through is the same defect.
+# turns doing it. Do not widen the ring's door -- a pocket with a second way in
+# for armour is a pocket that falls before its owner can reinforce it -- which is
+# also why the shoulder cell is mountain rather than the path it used to be.
 # Neither home base sits inside a two-turn march of the crown it faces. That is
 # the other half of the hold: a garrison can be worn down, but only by an army
 # that walked eight tiles to do it, never by a conveyor from the base next door.
-# Keep both bases at least seven tiles from the enemy pocket's gate.
+# Keep every base six tiles from the enemy gate and eight from the crown behind it.
 # The eight neutral cities are the ordinary game running underneath: they are what
 # pays for the second army each side needs, one to besiege and one to relieve.
 # Symbols: . plains  F woods  M mountain  = road  C city  B base  Q HQ
