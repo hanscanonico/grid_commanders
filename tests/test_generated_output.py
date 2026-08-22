@@ -1501,6 +1501,28 @@ class OneSun(unittest.TestCase):
                     self.assertGreater(sx - hx, self.MIN_UNIT_LATERAL)
                     self.assertGreater(sy - hy, 0.0)
 
+    def test_a_unit_cell_lays_its_ellipse_by_the_sheet_offset(self):
+        """The hull-relative reading above only fixes the SIGN — a unit whose
+        own mass sits left of centre would pass it on a half-pixel. This one
+        moves the sheet's offset to zero and measures how far each shadow
+        travels: a land or sea ellipse follows the full diagonal (short of
+        2px only where the cell edge or the wake clips it), and an airborne
+        one keeps its own larger lateral drop."""
+        fac = FACTIONS[1]
+        for uid in ATLAS_ORDER:
+            for pose in Pose:
+                with self.subTest(unit=uid, pose=pose.name):
+                    lit, _ = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
+                    with mock.patch.object(voxel, "SHADOW_OFFSET", (0, 0)):
+                        bare, _ = self._split(
+                            atlas.unit_cell(uid, fac, pose), voxel.SHADOW
+                        )
+                    (lx, ly), (bx, by) = self._centroid(lit), self._centroid(bare)
+                    self.assertGreaterEqual(lx - bx, 1.0)
+                    self.assertGreaterEqual(
+                        ly - by, 1.5 if UNITS[uid][1] != "air" else 0.0
+                    )
+
     def test_every_building_drops_its_shadow_down_right_of_itself(self):
         for bid in sorted(terrain.PROPERTY):
             for fac in FACTIONS:

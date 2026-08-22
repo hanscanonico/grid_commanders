@@ -86,8 +86,8 @@ displacement shadow with waterline foam, and a wood or a mountain the same
 displacement of its own fringe. Three of those four used to lay their shade
 straight down or straight under, lit from nowhere and disagreeing with the
 building in the next cell; `OneSun` holds all four drawers to the one offset,
-pixel by pixel where the shadow is a stamped silhouette. It was a 1px checkerboard until the board was measured
-through it — see "The shadow is drawn for every rung" below. The sub carries a
+pixel by pixel where the shadow is a stamped silhouette. It was a 1px
+checkerboard until the board was measured through it — see "The shadow is drawn for every rung" below. The sub carries a
 **wake** on top of that — running foam down its own underside and trailing off
 the stern — because a hull with no freeboard has nothing else to separate it
 from open sea. Its hull and awash deck also sit two bands under every other
