@@ -18,6 +18,7 @@ from __future__ import annotations
 import colorsys
 import statistics
 import unittest
+from unittest import mock
 from collections import Counter
 
 from PIL import Image
@@ -49,6 +50,7 @@ from spritegen.terrain import (
     WOODS_SALT,
 )
 from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
+from spritegen import voxel
 from spritegen.voxel import (
     CAST,
     DITHER_MIN_TOP_AREA,
@@ -772,6 +774,41 @@ class PropOutline(unittest.TestCase):
             with self.subTest(prop=name):
                 for area in _plane_areas(model.vox, planes):
                     self.assertGreaterEqual(area, DITHER_MIN_TOP_AREA)
+
+    def _undithered(self, model, fac):
+        """The same render with the dither hash pinned above its threshold."""
+        with mock.patch.object(voxel, "h01", lambda *_: 1.0):
+            return opaque_pixels(render(model, fac, outline=False))
+
+    def test_the_area_rule_reaches_the_picture_not_just_the_plane_finder(self):
+        """A prop with no broad plane renders identically with the dither off.
+
+        `_broad_flat_tops` agreeing with its own constant proves nothing if
+        the renderer ignores it, so this compares pixels. The base shed and
+        the port warehouses are made of dithering materials and their widest
+        top plane is 61px, so under the old "every top" rule they speckled
+        and under this one they must not: pin the hash above the threshold,
+        and their picture must not move by a pixel.
+        """
+        fac = FACTIONS[2]
+        for bid in ("base", "port"):
+            model = buildings.model_for(bid, fac)
+            with self.subTest(building=bid):
+                self.assertEqual(
+                    opaque_pixels(render(model, fac, outline=False)),
+                    self._undithered(model, fac),
+                )
+
+    def test_the_broad_roofs_do_carry_the_dither(self):
+        """...and the threshold is not so high that nothing dithers at all."""
+        fac = FACTIONS[2]
+        for bid in ("airport", "hq", "city"):
+            model = buildings.model_for(bid, fac)
+            with self.subTest(building=bid):
+                self.assertNotEqual(
+                    opaque_pixels(render(model, fac, outline=False)),
+                    self._undithered(model, fac),
+                )
 
     def test_a_small_prop_carries_no_dither_at_all(self):
         for size in (2, 3):
