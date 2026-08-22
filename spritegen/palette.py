@@ -79,6 +79,17 @@ def clears_the_ground(lum: float) -> bool:
 
 
 # Fixed (faction-independent) materials. Names are what models paint with.
+#
+# The five greys — rock, stone, concrete and their shades, plus asphalt — are
+# the one family here with a TEMPERATURE, added 2026-08-22 with the terrain
+# palette pass. They were S0.04-0.10 neutrals, the same hue lit and shaded,
+# which is the colour of cut card and not of stone: a lit face takes the warmth
+# of the sun (S0.14, hue 34-47) and a shaded one is lit by AMBIENT alone, so it
+# takes the sky's own hue at the same chroma (S0.11-0.15, hue 225). Asphalt is
+# already a shaded material and goes cool outright. Every value is unchanged to
+# a tenth of a luma — these are `terrain._tone`/`terrain._shade` evaluated on
+# the tone that was there, tabulated in docs/terrain_tones.md, and typed out
+# here because `palette` cannot import `terrain`.
 MATERIALS: dict[str, RGB] = {
     "gunmetal": (104, 112, 124),
     "gunmetal_dk": (76, 82, 93),
@@ -98,19 +109,19 @@ MATERIALS: dict[str, RGB] = {
     "white": (240, 242, 245),
     "deck": (139, 145, 155),
     "deck_dk": (112, 118, 128),
-    "concrete": (176, 174, 166),
-    "concrete_dk": (140, 138, 130),
-    "asphalt": (111, 116, 124),
+    "concrete": (178, 174, 160),
+    "concrete_dk": (134, 138, 150),
+    "asphalt": (110, 115, 131),
     "leaf": (52, 128, 58),
     "leaf_dk": (33, 96, 42),
     "leaf_lt": (94, 165, 76),
     "trunk": (109, 76, 65),
-    "rock": (145, 142, 138),
-    "rock_dk": (108, 106, 104),
+    "rock": (150, 141, 129),
+    "rock_dk": (102, 106, 120),
     "snow": (238, 240, 244),
     "flame": (238, 120, 46),
-    "stone": (158, 154, 146),
-    "stone_dk": (122, 118, 111),
+    "stone": (161, 154, 139),
+    "stone_dk": (114, 118, 133),
 }
 
 # Materials whose big top surfaces get a whisper of per-pixel dither texture.

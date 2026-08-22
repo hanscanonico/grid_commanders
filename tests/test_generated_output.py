@@ -1932,6 +1932,9 @@ class GroundContrast(unittest.TestCase):
     its light only where the lift clears the ground's own band, and takes the
     ground-facing contour where it cannot. Measured the same way afterwards:
     0.46% and 0.61% on shoal, 0.56% on plains for both, worst sprite 2.24%.
+    Re-measured after the 2026-08-22 ground regrade (docs/terrain_tones.md),
+    which moved the grass a little further into the two rows' band: 0.46% and
+    0.61% on shoal unchanged, 0.79% on plains for both, worst sprite 2.24%.
 
     The three chromatic rows are unmoved, and deliberately: their bodies are
     the design-system tokens, so a lit edge that ties with the grass or the
@@ -1943,7 +1946,7 @@ class GroundContrast(unittest.TestCase):
     WEAK = GROUND_BREAK  # under this much luma, boundary and tile read as one
     # The two grounds an army spends its game on.
     GROUNDS = ("plains", "shoal")
-    MAX_WEAK_ROW = 0.02  # per row x ground; measured 0.0046-0.0061
+    MAX_WEAK_ROW = 0.02  # per row x ground; measured 0.0046-0.0079
     MAX_WEAK_UNIT = 0.04  # per sprite; measured 0.0224 (tank, shoal)
     # A light-grade row gives up value and must still break in colour. As a
     # distance in RGB, over the same boundary: measured 0.15% at worst on
@@ -1953,7 +1956,7 @@ class GroundContrast(unittest.TestCase):
     MAX_WEAK_LIGHT = 0.02
     # The two places a light row shares its HUE with the ground as well as
     # its band, where the colour half of the argument cannot save it: verdant
-    # on the plains grass (12.2% of its boundary), and aurora over the water
+    # on the plains grass (12.5% of its boundary), and aurora over the water
     # a shoal is half made of (7.9%). Named rather than folded into the
     # bound, because they are defects to answer and not a rule to live with —
     # docs/outlines.md carries them as open.

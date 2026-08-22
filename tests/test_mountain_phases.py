@@ -107,18 +107,19 @@ class MountainPhases(unittest.TestCase):
 
 
 def _rock_rows(tile) -> list[int]:
-    """The rows the massif's own greys are drawn on. Rock is the one family on
-    the tile with no hue: the ground around it is grass and the caps are the
-    cool blue-grey snow."""
+    """The rows the massif's own four rock tones are drawn on.
+
+    This used to read them off as "the one family with no hue" — greys, where
+    the ground is grass and the caps are the cool blue-grey snow. The rock took
+    a temperature on 2026-08-22 (warm in the sun, the sky's own hue in shade,
+    `terrain.ROCK`), which puts a shaded face in the same corner of the wheel
+    as the snow, so the probe reads the four tones themselves instead of
+    guessing at them."""
     rgb = tile.convert("RGB")
-    rows = []
-    for y in range(CELL):
-        for x in range(CELL):
-            r, g, b = rgb.getpixel((x, y))
-            if abs(r - g) <= 6 and abs(g - b) <= 6 and r > b and 60 <= r <= 180:
-                rows.append(y)
-                break
-    return rows
+    rock = set(terrain.ROCK)
+    return [
+        y for y in range(CELL) if any(rgb.getpixel((x, y)) in rock for x in range(CELL))
+    ]
 
 
 if __name__ == "__main__":
