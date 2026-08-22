@@ -15,6 +15,7 @@ Run with `.venv/bin/python -m unittest discover tests`.
 
 from __future__ import annotations
 
+import colorsys
 import statistics
 import unittest
 from collections import Counter
@@ -25,6 +26,7 @@ from spritegen import atlas, autotile, palette, terrain
 from spritegen.autotile import E, N, S, W
 from spritegen.palette import (
     FACTIONS,
+    GUNMETAL_RAMP,
     MID_CONTOUR,
     MID_FACTION,
     RAMPS,
@@ -63,6 +65,16 @@ EDGE_PROBES = (
 def saturation(rgb: tuple[int, int, int]) -> float:
     hi, lo = max(rgb), min(rgb)
     return 0.0 if hi == 0 else (hi - lo) / hi
+
+
+def hue(rgb: tuple[int, int, int]) -> float:
+    """Hue in degrees; 0 for a grey, which has none."""
+    return colorsys.rgb_to_hsv(*(v / 255.0 for v in rgb))[0] * 360.0
+
+
+def hue_gap(rgb: tuple[int, int, int], target: float) -> float:
+    """Shortest angle, in degrees, between a colour's hue and `target`."""
+    return abs((hue(rgb) - target + 180.0) % 360.0 - 180.0)
 
 
 def opaque_pixels(img) -> list[tuple[int, int, int]]:
@@ -275,6 +287,85 @@ class Livery(unittest.TestCase):
                 tinted = len(faction_pixels(cell, atlas.building_cell(bid, blue)))
                 self.assertGreater(tinted, 0)  # roofs/caps are owned
                 self.assertLess(tinted, opaque * 0.5)  # the rest is concrete
+
+
+class RampShape(unittest.TestCase):
+    """The ramps are lit, not dimmed (`docs/ramps.md`).
+
+    A ramp typed out as six literal hexes drifts into one hue at six
+    brightnesses; these pin the three things `palette.build_ramp` adds on
+    top of the authored value ladder — a mid-ramp chroma peak, shadow steps
+    sitting in the coloured `AMBIENT` sky, a hue that turns across the ramp
+    — so that a slide back to a value-only ramp is a failure rather than a
+    diff nobody reads. Every shipped ramp before this shaping violated at
+    least one of them.
+    """
+
+    ALL_RAMPS = dict(RAMPS, gunmetal=GUNMETAL_RAMP)
+    # How far a shadow step has to rotate toward AMBIENT before the rotation
+    # is doing any work: the value-only ramps managed 0-6 degrees, which is
+    # rounding. Capped by how far the base sits from the sky in the first
+    # place — aurora is already on that hue and has nowhere to go.
+    MIN_SKY_PULL = 8.0
+    # The same, at the light end, toward the sun. Small: neutral's khaki is
+    # nearly the sun hue already, so it has the least room to turn.
+    MIN_SUN_TURN = 4.0
+    # Under this luminance a rung is two or three quantisation steps wide
+    # and cannot carry a hue at all (iron's S0 is L7).
+    HUE_FLOOR = 12.0
+
+    def test_chroma_peaks_mid_ramp_and_collapses_at_the_rim(self):
+        for key, ramp in self.ALL_RAMPS.items():
+            with self.subTest(ramp=key):
+                sats = [saturation(c) for c in ramp]
+                body = sats[S_BODY]
+                self.assertIn(sats.index(max(sats)), (1, 2), "peak is mid-ramp")
+                # a real lift over the body slot, not a rounding one
+                self.assertGreater(max(sats[1], sats[2]), body * 1.05)
+                # the rim is light rather than paint
+                self.assertLess(sats[5], body * 0.6)
+                # and the dark end keeps more chroma than the light end
+                self.assertGreater(sats[0], sats[5])
+
+    def test_the_shadow_steps_sit_in_the_ambient_sky(self):
+        sky = hue(palette.AMBIENT)
+        for key, ramp in self.ALL_RAMPS.items():
+            with self.subTest(ramp=key):
+                want = max(0.0, hue_gap(ramp[S_BODY], sky) - self.MIN_SKY_PULL)
+                for slot in (0, 1):
+                    if palette.luminance(ramp[slot]) < self.HUE_FLOOR:
+                        continue
+                    self.assertLessEqual(hue_gap(ramp[slot], sky), want + 0.5)
+
+    def test_the_rim_step_turns_away_toward_the_sun(self):
+        for key, ramp in self.ALL_RAMPS.items():
+            with self.subTest(ramp=key):
+                turn = hue_gap(ramp[5], hue(ramp[S_BODY]))
+                self.assertGreaterEqual(turn, self.MIN_SUN_TURN)
+                # toward the sun means away from the sky it came from
+                sky = hue(palette.AMBIENT)
+                self.assertGreater(
+                    hue_gap(ramp[5], sky), hue_gap(ramp[S_BODY], sky) - 0.5
+                )
+
+    def test_the_builder_hits_the_authored_value_ladder(self):
+        # `_at_luminance` is what lets the chroma move without moving the
+        # value structure every livery gate measures.
+        ladder = (18.0, 55.0, 90.0, 120.0, 160.0, 210.0)
+        for base in ((216, 74, 60), (60, 100, 216), (121, 131, 141), (255, 8, 0)):
+            with self.subTest(base=base):
+                built = palette.build_ramp(base, ladder)
+                self.assertEqual(len(built), 6)
+                for want, got in zip(ladder, built):
+                    self.assertAlmostEqual(palette.luminance(got), want, delta=0.6)
+
+    def test_the_builder_is_a_pure_function_of_the_base(self):
+        ladder = (18.0, 55.0, 90.0, 120.0, 160.0, 210.0)
+        base = (44, 134, 54)
+        self.assertEqual(
+            palette.build_ramp(base, ladder), palette.build_ramp(base, ladder)
+        )
+        self.assertNotEqual(palette.build_ramp((134, 44, 54), ladder), (0,) * 6)
 
 
 class ValueCeiling(unittest.TestCase):

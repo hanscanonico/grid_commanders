@@ -128,4 +128,10 @@ Meridian's faction pixels, as composed on the sheet: median saturation
 sprite's faction area is S3, which may not move; the p90 is the shadow and
 under planes, which is where the flatness was.
 
-Re-measure with `.venv/bin/python tests/measure_livery.py`.
+The shape itself is gated by `RampShape` in `tests/test_generated_output.py`:
+the mid-ramp chroma peak, the shadow steps' pull toward `AMBIENT`, the rim's
+turn toward the sun, and `build_ramp` landing on its ladder to within 0.6 of
+a luminance step. Every one of the six shipped hex ramps fails at least one
+of those, which is what the gate is for.
+
+Re-measure with `PYTHONPATH=. .venv/bin/python tests/measure_livery.py`.
