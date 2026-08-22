@@ -377,7 +377,23 @@ that pipeline's paste step can be pointed at this art instead.
    buildings and nature props composed onto 64px tile grounds. The grounds
    keep `tools/generate_tiles.gd`'s hues but not its values: every tone is
    authored under `terrain.TERRAIN_VALUE_CEILING` so the top of the ramp
-   stays the units'. A building's masonry is picked by its **lit** plane
+   stays the units'. **A ground's shadow tone is not typed, it is built**:
+   `terrain._shade` puts a lit tone through the same three steps
+   `palette._shape` builds a ramp's dark rungs with — rotated toward the sky,
+   a touch more chroma than the lit face, AMBIENT blended in — and then keys
+   the result back onto the luma that tone was already authored at, so the
+   ceilings, the ~18L movement-cost steps and `palette.GROUND_BAND` are
+   preserved by construction and only the colour of the light moves. The board
+   was two scenes before it: armies lit by a named sky, standing on ground
+   whose shadows were the lit tone with the value pulled down and the hue left
+   alone (2.6° on grass, under a degree on sand and timber). The same helpers
+   took the two grounds that cover a map off poster chroma (grass S0.60 ->
+   0.51, water S0.71 -> 0.60, at their own luma) and gave the greys a
+   TEMPERATURE — rock, stone and concrete are warm in the sun at S0.14 and
+   take the sky's own hue in shade, where they used to be one S0.05 neutral
+   under both lights. `docs/terrain_tones.md` has the before/after table, the
+   re-measured gates and the two places the pass could not land exactly where
+   it aimed. A building's masonry is picked by its **lit** plane
    rather than by its own value — a voxel top face is the material scaled
    1.3x and rim-lit on top of that — so the greys are dark enough that no
    wall reaches the units' band; a lit window and a pane of glazing are the

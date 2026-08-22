@@ -16,7 +16,22 @@ from __future__ import annotations
 from PIL import Image
 
 from . import buildings
-from .palette import RGB, FACTIONS, Faction, darken, h01, lighten, mix
+from .palette import (
+    AMBIENT,
+    RGB,
+    FACTIONS,
+    Faction,
+    _at_luminance,
+    _full_chroma,
+    _rgb_to_hsv,
+    _rotate,
+    _SKY_HUE,
+    darken,
+    h01,
+    lighten,
+    mix,
+)
+from .palette import luminance as _luminance_601
 from .voxel import SHADOW_OFFSET, place_in_cell, render
 
 CELL = 64
@@ -24,6 +39,79 @@ CELL = 64
 # Connection bits, shared with autotile.py: which neighbours a tile's feature
 # continues into.
 N, E, S, W = 1, 2, 4, 8
+
+
+def luminance(c: RGB) -> float:
+    """Rec. 709 luma, the scale every ceiling in this module is stated on."""
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+# --- ground tone shaping ----------------------------------------------------
+#
+# The ten ground tones below used to be ten hand-typed literals, and what they
+# said about the light was: nothing. A tile's shadow tone was its lit tone with
+# the value pulled down and the hue left where it was — grass shifted 2.6°,
+# water 2.8°, road and sand and timber under a degree. The units next to them
+# have been lit by a sky since the ramp rewrite (`palette.AMBIENT`, up to 14°
+# of rotation into the blue on the dark rungs), so the board was two scenes:
+# armies under a warm sun and a cool sky, standing on ground lit by neither.
+#
+# So a shadow tone is now BUILT from its lit tone, by the same three steps
+# `palette._shape` builds a ramp's dark rungs with — rotate the hue toward the
+# sky, keep a touch more chroma than the lit face, blend in AMBIENT — and then
+# re-keyed onto the luma the tone was already authored at. That last step is
+# what makes this safe to do wholesale: every value ceiling, every gap between
+# two grounds and the `palette.GROUND_BAND` the outline grade is chosen out of
+# are properties of the LUMA, and the luma is preserved by construction. Only
+# the hue and the chroma move. Measured before/after in docs/terrain_tones.md.
+#
+# One thing here is not `_shape`'s, and it is what gives the greys a
+# TEMPERATURE. `_rotate` moves a hue toward the sky the short way round the
+# wheel, which is a sane 6-11° for the grass and the water but meaningless for
+# gravel and rock: they sit almost OPPOSITE the sky, so a small rotation is a
+# coin flip that lands on red and makes a shadow warmer than the face casting
+# it. A tone with that little chroma has no hue to defend, so under
+# `_SHADE_GREY` the shaded face simply takes the sky's hue — warm stone in the
+# light, cool stone in the shade, the split the greys never had. Above it, the
+# tans and the greens keep their own hue and only lean.
+_SHADE_HUE = -0.45  # fraction of palette._HUE_ARC rotated toward the sky
+_SHADE_SAT = 1.10  # a shaded face keeps slightly more chroma than a lit one
+_SHADE_AMBIENT = 0.16  # how much of the sky is mixed into it
+_SHADE_GREY = 0.20  # under this saturation, a shadow IS the sky's hue
+
+
+def _at_value(c: RGB, target: float) -> RGB:
+    """`palette._at_luminance`, restated on this module's Rec. 709 scale.
+
+    Both lumas are linear in RGB, so scaling a colour scales both by the same
+    factor: asking `_at_luminance` for the Rec. 601 value that the Rec. 709
+    target corresponds to lands the result exactly on the target."""
+    lum = luminance(c)
+    if lum <= 0.0:
+        return _at_luminance(c, target)
+    return _at_luminance(c, _luminance_601(c) * target / lum)
+
+
+def _tone(c: RGB, sat: float, value: float | None = None) -> RGB:
+    """`c`'s hue at an exact saturation, keyed to `value` (default: its own).
+
+    Chroma at constant luminance — the one move that changes how saturated a
+    ground reads without touching a single band or gap it is measured on."""
+    h, _, _ = _rgb_to_hsv(c)
+    return _at_value(
+        _full_chroma(h * 360.0, sat), luminance(c) if value is None else value
+    )
+
+
+def _shade(lit: RGB, value: float) -> RGB:
+    """The shadow of a lit ground tone, at the luma that tone's dark was
+    authored at. Mirrors `palette._shape`'s dark rungs; see the note above."""
+    h, s, _ = _rgb_to_hsv(lit)
+    hue = _SKY_HUE if s < _SHADE_GREY else _rotate(h * 360.0, _SHADE_HUE)
+    chroma = _full_chroma(hue, min(1.0, s * _SHADE_SAT))
+    chroma = mix(chroma, _at_luminance(AMBIENT, _luminance_601(chroma)), _SHADE_AMBIENT)
+    return _at_value(chroma, value)
+
 
 # The terrain value ceiling (fix spec round 4, item 7). The rule was not
 # merely unimplemented, it was inverted: plains sat at median L174, road L183
@@ -45,17 +133,29 @@ BUILDING_KEY_CEILING = 200.0
 # into one: road, bridge deck and shoal sand now sit ~18L apart with a hue
 # split — gravel grey, timber brown, beach sand — so movement cost reads from
 # across the room.
-GRASS = (108, 181, 73)  # L158
-GRASS_DARK = (81, 150, 54)  # L131
+#
+# Two more things moved on 2026-08-22, both at constant luma. The chroma of
+# the two grounds that cover the board came down — 79% of a map's pixels were
+# a saturated green or a saturated blue, which is a poster rather than a place
+# and leaves the five armies nothing to be the colourful thing on — and every
+# _DARK is now `_shade`d out of its lit tone instead of typed.
+# GRASS is S0.51 and not the S0.48 the sweep asked for because of a knife
+# edge in `WoodsSeam`: the plains plate and the woods plate are the same GRASS
+# under two different grain salts, and they are only tone FOR tone identical
+# where the ±3% grain rounds to the same 25 integers on both salts. S0.48
+# misses by one tone at each end of the band, which is a seam the test is
+# right to refuse. S0.508-0.511 is the admissible window nearest the target.
+GRASS = _tone((108, 181, 73), 0.51)  # L158, was S0.60
+GRASS_DARK = _shade(GRASS, 128.4)  # L128
 ROAD = (146, 142, 133)  # gravel, L142 — road is ground
-ROAD_DARK = (115, 111, 103)  # L112
+ROAD_DARK = _shade(ROAD, 111.3)  # L111
 TIMBER = (150, 120, 87)  # bridge deck, L124 — bridge is structure
-TIMBER_DARK = (113, 90, 65)  # L93
-WATER = (63, 143, 220)  # 3f8fdc
-WATER_DARK = (42, 111, 191)  # 2a6fbf
-WATER_LIGHT = (113, 179, 219)  # L168
+TIMBER_DARK = _shade(TIMBER, 93.1)  # L93
+WATER = _tone((63, 143, 220), 0.60)  # 3f8fdc at S0.60, was S0.71
+WATER_DARK = _shade(WATER, 102.1)  # L102 — the sky puts the chroma back, S0.64
+WATER_LIGHT = _tone((113, 179, 219), 0.41)  # L168, the same drop as WATER
 SAND = (178, 166, 127)  # L166
-SAND_DARK = (150, 139, 106)  # L139
+SAND_DARK = _shade(SAND, 139.0)  # L139
 SNOW = (168, 174, 182)  # cool foam/marking grey, L173
 WILDFLOWER = (214, 163, 57)  # the field's one warm accent, L172
 
@@ -91,11 +191,6 @@ PLAINS_SALT = 2
 WOODS_SALT = 3
 
 
-def luminance(c: RGB) -> float:
-    """Rec. 709 luma, the scale every ceiling in this module is stated on."""
-    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
-
-
 def _lit(c: RGB, t: float) -> RGB:
     """A highlight, held under the ceiling. Lightening is the one way an
     authored tone leaves its band, so the ceiling is applied here — on the
@@ -104,8 +199,16 @@ def _lit(c: RGB, t: float) -> RGB:
     lum = luminance(hi)
     if lum <= TERRAIN_VALUE_CEILING:
         return hi
-    k = TERRAIN_VALUE_CEILING / lum
-    return (round(hi[0] * k), round(hi[1] * k), round(hi[2] * k))
+    scaled = [v * TERRAIN_VALUE_CEILING / lum for v in hi]
+    out = [round(v) for v in scaled]
+    # Rounding three channels can put the tone back over the line it was just
+    # scaled onto (the grass tuft highlight lands at L175.04). The ceiling is a
+    # hard "no pixel above it", so the channel that gained most from rounding
+    # gives its step back until the tone is under.
+    while luminance(out) > TERRAIN_VALUE_CEILING:
+        i = max(range(3), key=lambda j: out[j] - scaled[j])
+        out[i] -= 1
+    return (out[0], out[1], out[2])
 
 
 def _grain(c: RGB, bx: int, by: int, salt: int, grain: float = 0.03) -> RGB:
@@ -480,6 +583,19 @@ MOUNTAIN_PHASES: tuple[
 )
 
 
+# The massif's four rock tones, in the order the faces use them: two sunlit,
+# two shaded. They are one warm grey under two lights — the lit faces carry the
+# sun's own warmth (S0.14, where they used to be the S0.07 of cut card), the
+# shaded ones are `_shade`s of the lit face and so take the sky (see
+# `_SHADE_GREY`). Every luma is the one the tone was authored at.
+ROCK: tuple[RGB, RGB, RGB, RGB] = (
+    _tone((166, 161, 153), 0.14),
+    _tone((148, 144, 137), 0.14),
+    _shade(_tone((148, 144, 137), 0.14), luminance((117, 113, 108))),
+    _shade(_tone((148, 144, 137), 0.14), luminance((98, 95, 91))),
+)
+
+
 def mountain(phase: int = 0) -> Image.Image:
     """A painted three-peak massif: light/dark faces split at each ridge,
     jagged dithered snow caps, altitude banding down to a talus skirt."""
@@ -491,10 +607,7 @@ def mountain(phase: int = 0) -> Image.Image:
     t = _grass_ground(4)
     px = t.load()
     base_y = 56
-    rock_hi = (166, 161, 153)
-    rock_lt = (148, 144, 137)
-    rock_dk = (117, 113, 108)
-    rock_deep = (98, 95, 91)
+    rock_hi, rock_lt, rock_dk, rock_deep = ROCK
     edge = (66, 63, 60)
     # cool light-grey snow, authored under TERRAIN_VALUE_CEILING: the caps
     # were the brightest thing on the board, louder than any unit highlight
@@ -676,7 +789,19 @@ PROPERTY_ANCHOR: dict[str, tuple[int, int]] = {
 # building's own silhouette, shifted down-right away from the light every
 # model is lit from, in the same tone AND by the same offset the unit cells
 # cast (`voxel.SHADOW_OFFSET`, re-exported here — one sun for the sheet).
-SHADOW = (16, 18, 24)
+#
+# The tone is the sky, keyed down: a cast shadow is the one surface on the
+# sheet lit by AMBIENT and nothing else, so it is stated as AMBIENT's hue at a
+# third of its chroma at L18 rather than as a near-black literal — a black
+# shadow reads as a hole punched in the board rather than as shade on it, and
+# a typed triple gives no way to tell which of the two it is.
+#
+# It evaluates to (16, 18, 24), the exact literal it replaces: the shadow was
+# already the sky at S0.33, which nothing said out loud. So `voxel.SHADOW`,
+# the unit cells' copy of the same triple, still agrees with it byte for byte
+# — one sun and one sky for the sheet. If this derivation is ever retuned,
+# that constant has to move with it.
+SHADOW = _tone(AMBIENT, 0.34, 18.0)
 
 
 def _drop_shadow(cell: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
