@@ -83,9 +83,10 @@ altitude is the shadow's SIZE and how far it falls along that one diagonal,
 never its direction — land units get a tight contact shadow, air units a
 larger one dropped much further with ground showing between, ships a
 displacement shadow with waterline foam, and a wood or a mountain the same
-displacement of its own fringe. Three of those four used to lay their shade
-straight down or straight under, lit from nowhere and disagreeing with the
-building in the next cell; `OneSun` holds all four drawers to the one offset,
+displacement — the wood of its own fringe, the massif of its whole
+silhouette, the way a building drops one. Three of those four used to lay
+their shade straight down or straight under, lit from nowhere and
+disagreeing with the building in the next cell; `OneSun` holds all four drawers to the one offset,
 pixel by pixel where the shadow is a stamped silhouette. It was a 1px
 checkerboard until the board was measured through it — see "The shadow is drawn for every rung" below. The sub carries a
 **wake** on top of that — running foam down its own underside and trailing off
@@ -302,8 +303,25 @@ now, so a decal is scattered detail on an already-varied field. If a field ever
 reads busy, thin the table's decals rather than the clumps.
 `autotiles/mountain.png` is the same rule on the tile a repeat shows up in most
 loudly: mountain is the board's most silhouette-dominant terrain, so a range of
-atlas mountain column byte for byte. A phase moves where the three summits
-drawn at the same row in every phase, so a ridge of mountains stands on one
+identical peaks is the loudest repeat on any map. Phase 0 is the atlas mountain
+column byte for byte. A phase moves where the massif's three summits stand in
+the model's voxel grid and reseeds the relief its spurs and gullies come out
+of; the mass stands on the same row in every phase, so a ridge of mountains
+stands on one horizon.
+
+The massif itself is a **voxel height field**, rasterised by the same
+`render_indexed` the units and the buildings go through
+(`buildings.massif`). It used to be the one object on the sheet drawn in a
+projection of its own — a front elevation, a fitted silhouette at slope
+-1.20/+0.92 with the light split by an `x <= apex` comparison, no top plane on
+it anywhere and no y axis at all, standing in a board where everything else is
+a dimetric mass. Now it is three oriented planes off the face normals, one
+flat rung of `palette.ROCK_RAMP` each, with snow on the summits and talus at
+the foot; its footprint lies IN the ground plane at the projection's own 2:1
+and its summit flanks climb out of it at the slope they are authored at
+(`buildings.MASSIF_SLOPE`, which the projection puts on screen at
+SLOPE / sqrt(2)). `MountainProjection` in `tests/test_mountain_phases.py`
+measures both, and the plane count with them.
 
 Note the game's `make tiles` rebuilds its atlases from its own PixVoxel
 pipeline and would overwrite installed atlases; the per-cell exports exist so
@@ -420,12 +438,22 @@ that pipeline's paste step can be pointed at this art instead.
    owner's shadow band as the plane and the token itself as the ridge,
    because a `body` roof lit to L152 sat exactly on a verdant unit's own top
    slot. On Iron that is the row's whole identity: near-black panels under a
-   light-steel ridge. The woods canopy carries a lit
-   top plane so a dark or green unit standing on it has a value step to
-   separate against: it is authored one step under the dimmest plains pixel
-   and painted over most of each crown rather than its cap alone, which is
-   what makes it something a green hull is actually seen against while the
-   woods/plains seam rule stays true.
+   light-steel ridge. The massif is two more shared ramps on the same
+   shaping — **rock**, whose four upper rungs sit on the four values
+   `terrain.ROCK` was authored at, warm in the sun and rotated onto the sky
+   in the shade, and a cool **snow** for the caps. A crown of woods is a
+   ground-parallel disc, and this camera draws one at **2:1**: the canopy is
+   an ellipse twice as wide as it is deep — the same 2:1 a voxel's top face
+   is drawn at — with the leaf mass hanging under it, banded into a lit top
+   plane, the up-left edge the sun catches, and two side faces below. That
+   lit top plane is what gives a dark or green unit standing in woods a value
+   step to separate against: it is authored one step under the dimmest plains
+   pixel and covers most of a crown rather than its cap alone, so a green
+   hull is actually seen against it while the woods/plains seam rule stays
+   true. Both tiles stopped painting per-pixel noise on the way through: the
+   hash still rags a band boundary so an arc does not read as a stripe, but
+   it no longer makes tones, and woods went from 77 colours and 53.7% of its
+   pixels sitting on a colour change to 30 and 23.2% (`TileTexture`).
 5. **`spritegen/autotile.py`** — the direction-aware road/river/bridge/
    coast/shoal/woods variants and the sea's phase variants, exported under
    `autotiles/`.

@@ -66,6 +66,97 @@ def rock_outcrop(size: int = 2) -> Model:
     return m
 
 
+# --- the massif -------------------------------------------------------------
+#
+# The mountain used to be the one object on the sheet drawn in a projection of
+# its own: a FRONT ELEVATION, a fitted silhouette painted at slope -1.20/+0.92
+# with the light split by an `x <= apex` comparison, no top plane anywhere on
+# it and no y axis at all. Everything else — every unit, every building, the
+# reef rock beside it — is a voxel mass in the dimetric this engine defines,
+# so a range of mountains was a row of cardboard cut-outs standing in a
+# three-dimensional board.
+#
+# It is a height field now, rasterised by `voxel.render_indexed` like anything
+# else: three oriented planes off the face normals, one flat ramp slot each,
+# lit by the sheet's own sun. What the drawer above it still owns is where the
+# summits stand (`terrain.MOUNTAIN_PHASES`) and where the grass stops.
+MASSIF_SPAN = 13  # voxels across the footprint, on both ground axes
+# Voxels of z per voxel of ground — the flank angle, and the only number that
+# decides how a massif reads. The projection turns it into a screen slope of
+# SLOPE/sqrt(2) along the summit ridge (the crest is the 45° diagonal in the
+# ground plane, so a voxel step along it is sqrt(2) of ground for two pixels
+# of screen x), which is what `MountainProjection` measures. Anything under
+# ~1.2 leaves a wide low apron the renderer draws as one flat plinth — a
+# plateau, not a peak; 1.5 is where the flank stops showing terraces wider
+# than the crags on it.
+MASSIF_SLOPE = 1.5
+# Above this height a column is snow. A cap is the one thing that tells a
+# summit from a quarry at the board's 4:1 rung, and it is deliberately small:
+# the snow ramp is the brightest material on any tile.
+MASSIF_SNOW = 12
+# Under this height a column is talus rather than scarp — one ramp band down,
+# so the foot the grass apron meets is in the mass's own shadow.
+MASSIF_TALUS = 3
+
+
+def _relief(vx: int, vy: int, seed: int, lattice: int) -> float:
+    """A wrapping value field on the voxel grid, in -0.5..0.5.
+
+    The same smooth-hash lattice `terrain._clump_field` puts clumps in a
+    field, on the massif's ground plan: it is what gives the cone spurs and
+    gullies instead of the concentric contour rings a radial height field
+    draws — those rings are the wedding cake the first cut of this model was.
+    """
+    fx, fy = vx / lattice, vy / lattice
+    i, j = int(fx), int(fy)
+    tx, ty = fx - i, fy - j
+    sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)
+    top = h01(i, j, seed) * (1 - sx) + h01(i + 1, j, seed) * sx
+    bot = h01(i, j + 1, seed) * (1 - sx) + h01(i + 1, j + 1, seed) * sx
+    return top * (1 - sy) + bot * sy - 0.5
+
+
+# How far the two relief fields move the surface: the coarse one stretches and
+# pinches the plan (a spur reaches out, a gully cuts in), the fine one roughens
+# the surface by under a voxel so the flanks break into crags.
+_PLAN_RELIEF = 0.55
+_CRAG_RELIEF = 2.0
+
+
+def massif(peaks: tuple[tuple[int, int, int], ...], seed: int) -> Model:
+    """The mountain tile's mass: three summits over one height field.
+
+    `peaks` is (voxel x, voxel y, height) per summit, tallest first; `seed`
+    keys the relief, so a phase is a different mountain rather than the same
+    one slid sideways.
+    """
+    m = Model()
+    for vx in range(MASSIF_SPAN + 1):
+        for vy in range(MASSIF_SPAN + 1):
+            plan = 1.0 + _PLAN_RELIEF * _relief(vx, vy, seed, 4)
+            h, near = 0.0, MASSIF_SPAN * 1.0
+            for px, py, pz in peaks:
+                d = ((vx - px) ** 2 + (vy - py) ** 2) ** 0.5
+                near = min(near, d)
+                h = max(h, pz - MASSIF_SLOPE * d * plan)
+            # The crags fade out at a summit: a peak roughened as hard as its
+            # flanks is a rounded lump, and the summit is the one part of the
+            # silhouette the tile is read by.
+            h += _CRAG_RELIEF * min(1.0, near / 3.0) * _relief(vx, vy, seed + 31, 2)
+            top = int(h)
+            if top < 1:
+                continue
+            snow = MASSIF_SNOW + int(h01(vx, vy, seed + 7) * 3)
+            for z in range(top + 1):
+                if z >= snow:
+                    m.set(vx, vy, z, "snowcap")
+                elif top < MASSIF_TALUS:
+                    m.set(vx, vy, z, "scree")
+                else:
+                    m.set(vx, vy, z, "scarp")
+    return m
+
+
 # ---------------------------------------------------------------------------
 # property buildings
 # ---------------------------------------------------------------------------

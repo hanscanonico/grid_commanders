@@ -157,3 +157,27 @@ just been scaled onto. The grass tuft highlight landed at L175.04 after the
 regrade. The ceiling is a hard "no pixel above it", so the channel that gained
 most from rounding now gives its step back until the tone is under. On the old
 palette the fix is a no-op; nothing was overshooting.
+
+## Where the massif's four faces went (2026-08-23)
+
+`terrain.ROCK`'s four tones are still authored here and still measured here,
+but the mountain no longer paints with them: it is a voxel mass drawn out of
+`palette.ROCK_RAMP`, one flat rung per oriented plane. The ramp is authored ON
+this ladder — its four upper rungs land within 0.5L of ROCK's four faces —
+
+| ramp rung | luma | the face it replaces | luma |
+| --- | --- | --- | --- |
+| `ROCK_RAMP[5]` rim | 162.9 | `ROCK[0]` rock_hi | 161.8 |
+| `ROCK_RAMP[4]` top | 145.2 | `ROCK[1]` rock_lt | 144.5 |
+| `ROCK_RAMP[3]` body | 117.7 | `ROCK[2]` rock_dk | 113.7 |
+| `ROCK_RAMP[2]` shadow | 95.0 | `ROCK[3]` rock_deep | 95.1 |
+
+— so a face that used to be painted `rock_lt` is still drawn at `rock_lt`'s
+value, and the warm/cool split those literals carry is now `palette._shape`'s
+doing. One thing had to be said out loud in the ramp that `_shape` cannot
+infer: the three rungs below the body are built off a SKY-hued base rather
+than off the warm stone. `_shape` mixes 7-26% of AMBIENT into a dark rung and
+rotates its hue a fraction of `_HUE_ARC`, which is the right move for a tone
+with chroma to defend and a coin flip for a grey — the same finding
+`terrain._SHADE_GREY` records for the painted tones. `ROCK_RAMP[2]` comes out
+at (90, 95, 110) against `ROCK[3]`'s (91, 95, 108).
