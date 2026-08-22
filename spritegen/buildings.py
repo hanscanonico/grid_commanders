@@ -19,8 +19,8 @@ from .voxel import Model
 # Rounds 4-7 authored these as five unrelated fixed greys picked by where
 # their LIT plane landed, because the shaded renderer computed a lit plane out
 # of arithmetic. They are four rungs of one masonry ramp now, so the same
-# ladder holds by construction: the mass lit at L112, the trim a rung over it
-# at L140, and a wall's shadow steps sitting in the AMBIENT sky the armies
+# ladder holds by construction: the mass lit at L116, the trim a rung over it
+# at L142, and a wall's shadow steps sitting in the AMBIENT sky the armies
 # share. What round 7 found still holds and is what the ladder is authored
 # against — a wall under the terrain ceiling is not the same thing as a wall a
 # unit separates from, so the mass sits ~40L clear of the band every faction's
@@ -28,22 +28,34 @@ from .voxel import Model
 # ever be drawn as a LINE: a parapet, a coping, a seam. Highlights as trim,
 # never as fields, is what keeps the buildings from flattening into dark
 # blocks now that their mass is dark.
-TRIM = "trim"  # lit top L140 — lines only, never a plane
+TRIM = "trim"  # lit top L142 — lines only, never a plane
 METAL = "machine"  # lit top L150 — machinery: cranes, masts, chimney caps
-WALL = "wall"  # lit top L112 — the mass every wall is built of
+WALL = "wall"  # lit top L116 — the mass every wall is built of
 WALL_DK = "wall_dk"  # its shaded rung: rear walls, sheds, kerbs
 DETAIL = "detail"  # doors, seams, cables and openings — masonry's own S0
 # The lot the building stands on is concrete, not stone: the same values in a
-# cool grey, so a plate and the mass on it separate by HUE and neither has to
-# spend the value the units are keyed against.
-PAD = "pad"
-PAD_RIM = "pad_rim"
+# cool SLATE against masonry's warm sandstone, so a plate and the mass on it
+# separate by HUE and neither has to spend the value the units are keyed
+# against. The gap between the two families is what the unowned row is drawn
+# with (`_NEUTRAL_GREYS`), so it is authored wide.
+PAD = "pad"  # the slab
+PAD_RIM = "pad_rim"  # its kerb
+# The two rungs the lot itself has no use for: concrete's own contour step and
+# the trim line over its slab. They exist because the unowned row is built out
+# of this family end to end (`_NEUTRAL_GREYS`) and needs the same four rungs
+# masonry gives an owned one.
+PAD_SEAM = "pad_seam"
+PAD_TRIM = "pad_trim"
 MASONRY = WALL
 MASONRY_DK = WALL_DK
 
 # A roof is the same rule in the faction's own ramp: the owner's shadow band
 # is the roof plane and the body band — the theme token itself — is the ridge,
-# the cap and the banner. Both sit two bands under the unit convention, and
+# the cap and the banner — and the paint: a fascia under the eaves, a kerb, a
+# guide line on an apron, the band round a chimney. A roof deck is four pixels
+# at the board's 4:1 rung, so an owner that lives only on roofs does not
+# survive the downsample; the paint is how a property carries its owner down
+# the front of itself. Both sit two bands under the unit convention, and
 # the rim step over them is a unit's alone (`voxel.BUILDING_TOP_SLOT`): a roof
 # lit like a chassis is the thing a silhouette has to be read against. On Iron
 # that is the row's identity rather than a compromise — near-black panels
@@ -207,22 +219,29 @@ def _windows(
 
 
 def city() -> Model:
-    """Two grey towers of different heights on a compact plaza — the
+    """Two stone towers of different heights on a compact plaza — the
     tall-narrow silhouette of the set."""
     m = Model()
     _pad(m, 1, 12, 1, 12)
-    # tall slab tower, right: concrete walls, faction roof + penthouse
+    # tall slab tower, right: stone walls under the owner's roof deck
     m.box(7, 11, 2, 6, 1, 7, WALL)
-    m.box(7, 11, 2, 6, 8, 8, ROOF)
-    m.box(8, 10, 3, 5, 9, 9, ROOF_TRIM)  # penthouse, the tower's lit cap
+    m.box(7, 11, 2, 6, 8, 8, ROOF_TRIM)  # the roof deck, in the owner's paint
+    m.box(8, 10, 3, 5, 9, 9, PAD)  # the plant room, the tower's lit cap
     m.chamfer(8, 10, 3, 5, 9, 9)
+    # The fascia: two courses of the owner's paint under the eaves, on the two
+    # camera-facing walls. A roof deck is four pixels at the board's 4:1 rung
+    # and a tower is mostly WALL, so the owner's band has to come down the
+    # front of it to survive the downsample.
+    m.box(7, 11, 6, 6, 6, 7, ROOF_TRIM)
+    m.box(11, 11, 2, 6, 6, 7, ROOF_TRIM)
     _windows(m, "y", 8, 10, 6, 2, 7, 23)
     _windows(m, "x", 3, 5, 11, 2, 7, 24)
-    # shorter tower, left: faction roof over grey walls, coped along the front
+    # shorter tower, left: the same roof deck and the same fascia
     m.box(2, 6, 7, 11, 1, 4, WALL)
-    m.box(2, 6, 7, 11, 5, 5, ROOF)
-    m.box(2, 6, 11, 11, 5, 5, ROOF_TRIM)  # parapet coping
+    m.box(2, 6, 7, 11, 5, 5, ROOF_TRIM)
     m.chamfer(2, 6, 7, 11, 5, 5)
+    m.box(2, 6, 11, 11, 3, 4, ROOF_TRIM)
+    m.box(6, 6, 7, 11, 3, 4, ROOF_TRIM)
     _windows(m, "y", 3, 5, 11, 2, 4, 21)
     _windows(m, "x", 8, 10, 6, 2, 4, 22)
     # plaza planter at the front corner
@@ -232,7 +251,7 @@ def city() -> Model:
 
 
 def base() -> Model:
-    """A factory: a long grey shed under a faction sawtooth roof, chimney,
+    """A factory: a long stone shed under a faction sawtooth roof, chimney,
     crates. The lot is a shallow full-width strip, so the silhouette reads
     long and low — never the square diamond the hq owns."""
     m = Model()
@@ -256,7 +275,7 @@ def base() -> Model:
     m.box(5, 6, 12, 12, 1, 1, DETAIL)  # door gap
     # chimney at the rear corner
     m.box(12, 13, 5, 6, 1, 6, WALL_DK)
-    m.box(12, 13, 5, 6, 6, 6, METAL)
+    m.box(12, 13, 5, 6, 6, 6, ROOF_TRIM)  # the owner's band round the cap
     m.set(12, 5, 7, DETAIL)
     m.set(13, 6, 7, DETAIL)
     # crates on the front apron
@@ -271,11 +290,14 @@ def hq() -> Model:
     # curtain walls in castle stone
     m.box(1, 12, 1, 12, 1, 4, MASONRY)
     m.clear(3, 10, 3, 10, 1, 4)  # hollow courtyard (hidden anyway)
-    # crenellations along the front and right parapets — spaced merlons, the
-    # dotted trim line that keeps the curtain wall from reading as a slab
+    # crenellations along all four parapets — the dotted line that keeps the
+    # curtain wall from reading as a slab. The two the camera sees are the
+    # owner's paint, and they carry it along the widest run of stone on the
+    # sheet; the two turned away stay stone, because a merlon the camera only
+    # sees the back of is a silhouette pixel and nothing else
     for i in range(1, 13, 2):
-        m.set(i, 12, 5, TRIM)
-        m.set(12, i, 5, TRIM)
+        m.set(i, 12, 5, ROOF_TRIM)
+        m.set(12, i, 5, ROOF_TRIM)
         m.set(i, 1, 5, TRIM)
         m.set(1, i, 5, TRIM)
     # corner towers, capped in the owner's color at parapet height — the
@@ -312,15 +334,20 @@ def airport() -> Model:
     m.box(2, 7, 8, 11, 6, 6, ROOF)  # arch crown
     m.box(2, 7, 9, 10, 6, 6, ROOF_TRIM)  # lit ridge along the barrel
     m.chamfer(2, 7, 8, 11, 6, 6)
+    m.box(1, 8, 13, 13, 4, 4, ROOF_TRIM)  # painted lintel over the door
     m.box(2, 7, 13, 13, 1, 3, DETAIL)  # hangar door
     m.box(4, 5, 13, 13, 1, 3, METAL)  # door seam
     m.box(1, 8, 6, 6, 1, 4, WALL_DK)  # rear wall
     # control tower with glass cab and radar
     m.box(10, 12, 4, 6, 1, 4, WALL)
-    m.box(9, 13, 3, 7, 5, 5, WALL_DK)  # balcony ring
+    m.box(9, 13, 3, 7, 5, 5, ROOF)  # balcony ring, in the owner's paint
     m.box(10, 12, 4, 6, 6, 6, "glass_dk")
     m.box(10, 12, 4, 6, 7, 7, ROOF_TRIM)  # cap
     m.set(11, 5, 8, DETAIL)  # radar knob
+    # the apron's guide line, dashed in the owner's paint: ground markings
+    # are how an airfield says whose it is, and they cost no height at all
+    for x in range(0, 14, 2):
+        m.set(x, 4, 0, ROOF_TRIM)
     # windsock on the apron corner
     m.box(13, 13, 11, 11, 1, 4, METAL)
     m.set(13, 12, 4, "amber")
@@ -334,19 +361,21 @@ def port() -> Model:
     m.box(0, 13, 4, 13, 1, 1, PAD)
     for x in range(0, 14, 3):
         m.set(x, 4, 0, PAD_RIM)  # pilings at the water edge
-    for x in range(14):
-        m.set(x, 4, 1, PAD_RIM)  # quay edge trim
+    for x in range(0, 14, 2):
+        m.set(x, 4, 1, ROOF_TRIM)  # quay edge, dashed in the owner's paint
     # warehouse: concrete walls under a shallow faction gabled roof
     m.box(1, 6, 7, 13, 2, 5, WALL)
     m.box(1, 6, 8, 12, 6, 6, ROOF)
     m.box(1, 6, 10, 10, 7, 7, ROOF_TRIM)  # ridge
+    m.box(1, 6, 13, 13, 5, 5, ROOF_TRIM)  # fascia along both eaves
+    m.box(6, 6, 7, 13, 5, 5, ROOF_TRIM)
     m.box(3, 4, 13, 13, 2, 4, DETAIL)  # cargo door
     # gantry crane over the dockside
-    m.box(9, 10, 11, 12, 2, 7, METAL)
+    m.box(9, 10, 11, 12, 2, 7, ROOF_TRIM)  # painted crane legs
     m.box(9, 10, 4, 12, 8, 8, METAL)  # jib reaching the water
     m.set(9, 5, 7, DETAIL)  # cable
     m.set(9, 5, 6, DETAIL)
-    m.box(9, 10, 11, 12, 8, 9, DETAIL)  # cab + counterweight
+    m.box(9, 10, 11, 12, 8, 9, ROOF_TRIM)  # cab + counterweight, owner-painted
     # container stack on the quay
     m.box(11, 13, 6, 8, 2, 2, ROOF)
     m.box(11, 13, 6, 7, 3, 3, ROOF_TRIM)
@@ -366,26 +395,37 @@ BUILDINGS = {
     "port": port,
 }
 
-# The neutral row strips hue: an unowned property must not read as lit or
-# owned, so every hue-carrying material resolves to a grey (design review
-# 2026-08-13). The greys are the ladder above rather than the pale
-# `rock`/`stone_dk` pair, for the reason the ladder itself moved: `rock` lit a
-# top plane at L200 and `stone_dk` at L176, which put the row nobody owns the
-# furthest into the units' band. Every entry is a rung, so an unowned property
-# is keyed exactly like an owned one — the roof plane lands a rung above the
-# wall and its ridge on TRIM, which is the same three-step read with the hue
-# taken out. Owned rows keep their accents untouched, so the lit-window glint
-# is an owned property's alone. `bore` stays — the palette has no dark true
-# grey and its few pixels read black. The machinery greys need no entry now
-# that the ladder itself is built of them.
+# The neutral row is COLD. An unowned property must not read as lit or owned,
+# so every hue-carrying material resolves off the faction ramps (design review
+# 2026-08-13) — and since round 8 it resolved onto the same warm masonry every
+# owned property is built of, which is how the row nobody owns and the Iron
+# row ended up 12 RGB apart at the board's 4:1 rung: Iron's own colour is a
+# grey, so an Iron property was a neutral property with slightly darker roof
+# panels. The unowned row is drawn out of CONCRETE end to end instead — the
+# cool slate the lots were already paved in — against the warm sandstone an
+# owned one is built of. Nobody's lights are on and nobody's stone is in the
+# sun: that is a temperature, not a value, so the row stays under every band
+# the owned rows are held to while telling itself apart at a glance.
+#
+# Every entry is still a RUNG, so an unowned property is keyed exactly like an
+# owned one: the roof plane lands a rung above the wall and its ridge on the
+# trim step, which is the same three-step read with the owner taken out. Owned
+# rows keep their accents untouched, so the lit-window glint is an owned
+# property's alone. `bore` stays — the palette has no dark true grey and its
+# few pixels read black.
 _NEUTRAL_GREYS = {
-    "amber": TRIM,  # lit windows, hazard stripe, windsock, container marker
+    "amber": PAD_TRIM,  # lit windows, hazard stripe, windsock, container mark
     "glass_dk": METAL,  # window and cab glazing
-    "wood": WALL_DK,  # doors, crates
+    "wood": PAD_RIM,  # doors, crates
     "leaf": METAL,  # plaza planter
-    "leaf_dk": WALL,
-    ROOF: WALL_DK,  # roof planes: a dark plane, as an owned roof is
-    ROOF_TRIM: TRIM,  # and their ridges, caps and banner, as a bright line
+    "leaf_dk": PAD,
+    ROOF: PAD_RIM,  # roof planes: a dark plane, as an owned roof is
+    ROOF_TRIM: PAD,  # and their ridges, caps and banner
+    # ...and the masonry itself, rung for rung, into the cool family
+    DETAIL: PAD_SEAM,
+    WALL_DK: PAD_RIM,
+    WALL: PAD,
+    TRIM: PAD_TRIM,
 }
 
 

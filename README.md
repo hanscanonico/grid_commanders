@@ -73,9 +73,9 @@ in **order** rather than at a number: no row's share of the band above L160
 may sit more than a percentage point over the widest chromatic row's. Freezing
 that as an absolute figure is what let Iron come back as the loudest row once
 the rim pass lifted everybody (17.3% against 14.0-14.9%, round 6) — the pixels
-moved, the pinned number did not. Buildings are
-neutral concrete and stone under faction-colored roofs, caps and banners, and
-still render through the older shading path (`render`), which terrain shares.
+moved, the pinned number did not. Buildings are warm stone and cool concrete
+under faction-colored roofs, caps, banners and paint, and are drawn by the
+indexed renderer too, one band lower than an army (`BUILDING_TOP_SLOT`).
 **The cast shadow is solid**, and there is **one sun**: every caster on the
 board drops its shadow down-right by the same `voxel.SHADOW_OFFSET`, which
 terrain re-exports rather than keeping a second copy of. What encodes
@@ -423,13 +423,17 @@ that pipeline's paste step can be pointed at this art instead.
    under both lights. `docs/terrain_tones.md` has the before/after table, the
    re-measured gates and the two places the pass could not land exactly where
    it aimed. A building is painted out of RAMP SLOTS, like a unit:
-   four rungs of one **masonry** ramp for the mass, its trim and its
+   four rungs of one warm **masonry** ramp for the mass, its trim and its
    openings, a cool **concrete** for the lot it stands on, and a **machinery**
    ramp a full band over both for a crane, a mast or a chimney cap — so a
    plate and the walls on it separate by hue rather than by spending the
-   value the units are keyed against. The ladder is authored where the old
+   value the units are keyed against. The two families are a sandstone and a
+   slate rather than two cards, because the row nobody owns is built out of
+   the cool one end to end and every owned row out of the warm one: that
+   temperature is what tells an unowned property from an **Iron** one, whose
+   own colour is a grey. The ladder is authored where the old
    fixed greys' lit planes landed: the **mass** of every wall, lot and roof
-   is dark — the lit half of a property measures L74-112 — and the rung above
+   is dark — the lit half of a property measures L72-115 — and the rung above
    it is **trim, drawn only as a line**: a parapet, a coping, a ridge, a
    seam. A lit window and a pane of glazing are the only things that glint
    into the units' band (`BUILDING_KEY_CEILING`), which is why the base's
@@ -438,7 +442,12 @@ that pipeline's paste step can be pointed at this art instead.
    owner's shadow band as the plane and the token itself as the ridge,
    because a `body` roof lit to L152 sat exactly on a verdant unit's own top
    slot. On Iron that is the row's whole identity: near-black panels under a
-   light-steel ridge. The massif is two more shared ramps on the same
+   light-steel ridge. The token is also the **paint** — a fascia under the
+   eaves, a kerb, an apron's guide line, the band round a chimney — because a
+   roof deck is four pixels at the board's 4:1 rung and an owner that lives
+   only on roofs does not survive the downsample. What that is held to is the
+   4:1 gate in `PropertyPalette`: two rows of one property stand 27-64 RGB
+   apart as the board samples them, against 12-27 before the pass. The massif is two more shared ramps on the same
    shaping — **rock**, whose four upper rungs sit on the four values
    `terrain.ROCK` was authored at, warm in the sun and rotated onto the sky
    in the shade, and a cool **snow** for the caps. A crown of woods is a

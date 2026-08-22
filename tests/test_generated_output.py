@@ -998,16 +998,18 @@ class PropertyPalette(unittest.TestCase):
                     self.assertEqual(set(worn) - set(RAMPS[fac.key]), set())
 
     def test_two_owners_of_the_same_building_are_tellable_apart(self):
-        """The roofs came down two bands in this pass, so the pixels that say
-        who owns a property are darker than they were. `RowSeparation` holds
-        the armies apart but says nothing about the board's flags, and the
-        pair that costs the most is the same one it costs on the units:
-        neutral khaki against iron slate, which meet at 48.9 here (the widest
-        pair, meridian against aurora on the base, is 176.2). The bar is the
-        floor that margin may
-        not sink toward, measured over the pixels that actually differ
-        between two rows of one building — an all-pixel mean would be mostly
-        the shared masonry.
+        """The 1x reading, kept beside the board-scale one above.
+
+        `RowSeparation` holds the armies apart but says nothing about the
+        board's flags, and the pair that costs the most is the same one it
+        costs on the units: the unowned row against Iron, two greys, which
+        meet at 45.0 here (the widest pair, meridian against aurora on the
+        base, is 176.2). Measured over the pixels that actually DIFFER
+        between two rows of one building, which is a different question from
+        the one the 4:1 gate asks — this bounds how far apart the changed
+        pixels are, that one bounds how much of the cell changed at all. The
+        faction-read pass moved both: the unowned row swapped families, so
+        far more pixels differ and each of them by less.
         """
         for bid in sorted(terrain.PROPERTY):
             rows = {f.key: self._sprite(bid, f).image for f in FACTIONS}
@@ -1027,6 +1029,60 @@ class PropertyPalette(unittest.TestCase):
                     ) / len(seen)
                     with self.subTest(building=bid, pair=(a.key, b.key)):
                         self.assertGreater(apart, 40.0)
+
+    # The board draws a 64px tile into a 16px cell — 4:1, NEAREST — and an
+    # owner is read there, not in the atlas. The measure is the mean RGB
+    # distance between two rows of ONE property over that downsample, taken
+    # over every pixel either row draws (the shared transparent surround is
+    # not evidence of anything). The units answer the same measure at 34-95,
+    # so a property is allowed to say less than an army does and no less than
+    # this.
+    #
+    # The properties pass left the faction read at 12-27 here, and the pair it
+    # left worst is the pair whose colours are both greys: the unowned row and
+    # Iron, 12.4 on the airport. Owned rows now differ by more than which
+    # dark roof they wear — the paint comes down the front of the building
+    # (`buildings.ROOF_TRIM`) — and the unowned row is built out of cool
+    # concrete against the owned rows' warm masonry, which is the one thing
+    # Iron's own grey cannot be told from by value.
+    BOARD_ZOOM = 4
+    OWNERS_APART = 25.0
+    # Neutral against Iron is a grey against a grey and buys its margin with
+    # hue alone, so it is held to a floor of its own rather than to the bar
+    # every coloured pair clears.
+    NEUTRAL_IRON_APART = 20.0
+
+    def _board_cell(self, tid: str, fac):
+        """One property tile as the board samples it: 4:1, nearest."""
+        tile = terrain.tile(tid, fac).convert("RGBA")
+        size = (tile.width // self.BOARD_ZOOM, tile.height // self.BOARD_ZOOM)
+        return tile.resize(size, Image.NEAREST)
+
+    def test_two_owners_are_tellable_apart_at_the_boards_own_scale(self):
+        for tid in sorted(terrain.PROPERTY):
+            rows = {f.key: self._board_cell(tid, f) for f in FACTIONS}
+            for i, a in enumerate(FACTIONS):
+                for b in FACTIONS[i + 1 :]:
+                    pa, pb = rows[a.key].load(), rows[b.key].load()
+                    w, h = rows[a.key].size
+                    drawn = [
+                        (pa[x, y], pb[x, y])
+                        for y in range(h)
+                        for x in range(w)
+                        if pa[x, y][3] or pb[x, y][3]
+                    ]
+                    apart = sum(
+                        sum((c[k] - d[k]) ** 2 for k in range(3)) ** 0.5
+                        for c, d in drawn
+                    ) / len(drawn)
+                    pair = {a.key, b.key}
+                    bar = (
+                        self.NEUTRAL_IRON_APART
+                        if pair == {"neutral", "iron"}
+                        else self.OWNERS_APART
+                    )
+                    with self.subTest(property=tid, pair=(a.key, b.key)):
+                        self.assertGreater(apart, bar)
 
     def test_a_property_never_takes_the_rim_step_a_unit_keys_off(self):
         """`BUILDING_TOP_SLOT`: the band over the top plane is the army's."""
