@@ -477,10 +477,10 @@ func show_power_effects(marks: Array[PowerEffects.Mark]) -> void:
 
 ## One beat of scripted mission dialogue, on the board the beat landed on. The
 ## power card's shape throughout, because it is the same kind of thing: a blocking
-## card carrying a general's spoken line. It holds longer than either banner and
-## for a length of its own — the tier is asked how long *these words* take to read
-## (COM-255), a beat being anything from a five-word order to two generals
-## arguing. Any press still retires it early, so the longer hold costs an
+## card carrying a general's spoken line. It is never briefer than either banner
+## and it holds for a length of its own — the tier is asked how long *these
+## words* take to read (COM-255), a beat being anything from a five-word order
+## to two generals arguing. Any press still retires it early, so the longer hold costs an
 ## impatient player nothing. Silent for an event nobody comments on.
 ##
 ## While capturing it holds, exactly as the power card does, so a posed frame

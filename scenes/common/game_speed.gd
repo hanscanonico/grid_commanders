@@ -63,9 +63,11 @@ const INSTANT_BANNER_SECONDS := 0.5
 ## A scripted mission beat is the one card whose length is not known in advance:
 ## it may be a five-word order or two generals arguing, so it holds for as long
 ## as its own words take to read (COM-255) rather than for the power card's fixed
-## beat. Below, that is a moment to notice the card plus a reading rate, capped
-## so a long exchange cannot park the board for a quarter of a minute — a player
-## who has finished reading presses on, exactly as they do over the power card.
+## beat. Below, that is a moment to notice the card plus a reading rate, floored
+## at the power card's own beat so the shortest order is never *quicker* than the
+## card this one is modelled on, and capped so a long exchange cannot park the
+## board for a quarter of a minute — a player who has finished reading presses
+## on, exactly as they do over the power card.
 const SPEECH_BASE_SECONDS := 1.2
 const SPEECH_SECONDS_PER_CHAR := 1.0 / 22.0
 const SPEECH_MAX_SECONDS := 8.0
@@ -222,7 +224,7 @@ func speech_seconds(characters: int) -> float:
 	if instant:
 		return INSTANT_BANNER_SECONDS
 	var read := SPEECH_BASE_SECONDS + maxi(characters, 0) * SPEECH_SECONDS_PER_CHAR
-	return minf(read, SPEECH_MAX_SECONDS)
+	return clampf(read, POWER_BANNER_SECONDS, SPEECH_MAX_SECONDS)
 
 
 ## Zero under Instant, where BattleAnimator skips the marks outright rather than

@@ -66,10 +66,15 @@ func test_a_longer_beat_holds_the_speech_card_longer() -> void:
 		normal.speech_seconds(20),
 		"two generals arguing get more time than a five-word order"
 	)
+	assert_gte(
+		normal.speech_seconds(1),
+		normal.power_banner_seconds(),
+		"and the shortest order still holds at least the power card's beat"
+	)
 	assert_gt(
-		normal.speech_seconds(20),
-		normal.power_banner_seconds() * 0.5,
-		"and even the shortest beat is a beat, not a flash"
+		normal.speech_seconds(160),
+		normal.power_banner_seconds(),
+		"which a beat with words in it clears outright"
 	)
 
 
