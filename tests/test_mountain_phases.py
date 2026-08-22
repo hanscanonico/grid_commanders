@@ -111,6 +111,33 @@ class MountainPhases(unittest.TestCase):
         tops = [min(_rock_rows(tile)) for tile in self._phases()]
         self.assertTrue(all(top <= tops[0] + 4 for top in tops), tops)
 
+    def test_every_phase_wears_a_cap(self):
+        """Snow is what tells a summit from a quarry at the board's 4:1 rung
+        (`buildings.MASSIF_SNOW`), so every phase has to reach it — and reach
+        it at the TOP: a cap that has slid down the flank is a snowfield, and
+        the rock a phase is mostly made of has to stay rock."""
+        for phase, tile in enumerate(self._phases()):
+            with self.subTest(phase=phase):
+                rgb = tile.convert("RGB")
+                snow = [
+                    (x, y)
+                    for y in range(CELL)
+                    for x in range(CELL)
+                    if rgb.getpixel((x, y)) in frozenset(SNOW_RAMP)
+                ]
+                mass = [
+                    (x, y)
+                    for y in range(CELL)
+                    for x in range(CELL)
+                    if rgb.getpixel((x, y)) in _MASSIF_TONES
+                ]
+                self.assertGreater(len(snow), 20)
+                # a cap: inside the top third of the mass, and a small share
+                # of it — the snow ramp is the brightest material on the tile.
+                top, foot = min(y for _, y in mass), max(y for _, y in mass)
+                self.assertLess(max(y for _, y in snow), top + (foot - top) // 3)
+                self.assertLess(len(snow) / len(mass), 0.10)
+
     def test_the_sheet_lays_the_phases_out_in_order(self):
         sheet = autotile.mountain_sheet()
         phases = self._phases()

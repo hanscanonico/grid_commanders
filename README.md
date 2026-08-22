@@ -82,11 +82,11 @@ terrain re-exports rather than keeping a second copy of. What encodes
 altitude is the shadow's SIZE and how far it falls along that one diagonal,
 never its direction — land units get a tight contact shadow, air units a
 larger one dropped much further with ground showing between, ships a
-displacement shadow with waterline foam, a wood the same displacement of its
-own fringe and a mountain of its whole silhouette, the way a building drops
-one. Three of those four used to lay their shade
-straight down or straight under, lit from nowhere and disagreeing with the
-building in the next cell; `OneSun` holds all four drawers to the one offset,
+displacement shadow with waterline foam, and a wood or a mountain the same
+displacement — the wood of its own fringe, the massif of its whole
+silhouette, the way a building drops one. Three of those four used to lay
+their shade straight down or straight under, lit from nowhere and
+disagreeing with the building in the next cell; `OneSun` holds all four drawers to the one offset,
 pixel by pixel where the shadow is a stamped silhouette. It was a 1px
 checkerboard until the board was measured through it — see "The shadow is drawn for every rung" below. The sub carries a
 **wake** on top of that — running foam down its own underside and trailing off
