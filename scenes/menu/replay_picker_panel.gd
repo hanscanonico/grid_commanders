@@ -20,8 +20,9 @@ signal cancelled
 
 ## Two lines of ink plus the button's own frame.
 const _ROW_HEIGHT := 24
-## What a row's face is inset from its button's edges, the campaign hub's.
-const _FACE_INSET := 6
+## The page's one inset, the campaign hub's: a row's face from its button's
+## edges, and the list from the frame's.
+const _INSET := 6
 ## The list is a reading column, not a banner: the shell's content width, which is
 ## about as wide as the longest real row needs. The frame, its rows and Back all
 ## take it, so nothing on the page has a width of its own.
@@ -161,7 +162,7 @@ func _build_frame() -> Control:
 
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 4)
-	var padded := UiKit.pad(body, UiTheme.GAP - 2, UiTheme.GAP - 2)
+	var padded := UiKit.pad(body, _INSET, _INSET)
 	padded.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(padded)
 
@@ -231,8 +232,8 @@ func _row_button(summary: ReplayFile.Summary, index: int) -> Button:
 func _row_face(summary: ReplayFile.Summary) -> Control:
 	var face := HBoxContainer.new()
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = _FACE_INSET
-	face.offset_right = -_FACE_INSET
+	face.offset_left = _INSET
+	face.offset_right = -_INSET
 	face.add_theme_constant_override("separation", 6)
 	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
