@@ -254,20 +254,34 @@ on the day the game registers the sheet.
 
 `autotiles/plains.png` is that rule on the ground most of a board is made of,
 and it is phased the same way: five tiles, phase 0 the atlas plains column byte
-for byte, chosen by the same coordinate hash. A phase moves the grain's salt and
-stands the tufts and wildflowers somewhere else — same count, same tones, wrapped
-around the tile rather than off it — because plains is the reference ground most
-contrast pairs are read against, so a phase may vary the field's texture and not
-its value.
+for byte, chosen by the same coordinate hash. A phase's salt keys **the clump
+field and the grain**, and its offset stands the tufts and wildflowers
+somewhere else — same count, same tones, same clump coverage, wrapped around
+the tile rather than off it — because plains is the reference ground most
+contrast pairs are read against, so a phase varies the field's arrangement and
+not its value.
 
-Two of the five carry **decals**: a stone, a flower clump, a patch of bare earth,
-drawn in the tile's own tones and under the terrain value ceiling. They are
-ground detail and never a game object — no signpost, fence or marker, which a
-board reads as a property from across the room — and they are drawn inside the
-cell rather than wrapped, so a decal never overhangs its neighbour. Rarity is
-`PLAINS_PHASES`' job rather than each decal's: three of the five phases stay
-bare, so a decal is a scattered find on an open field. If a field ever reads
-busy, repeat a bare phase in that table instead of thinning a decal.
+The field itself is **two tones**, not one green with a grain on it: GRASS with
+a darker grass clumped over 30% of the tile in 4px blocks, laid out by a
+wrapping 16px value field and taken by rank so every phase gets the same
+coverage. A ±3% per-pixel grain is a texture the game's 4:1 downsample averages
+away — the old tile put 97.9% of its pixels within 8L of its mean — and a clump
+is a shape that survives it (sd 4.5 -> ~10). Woods and the mountain's apron draw
+the same plate, so no grass cell steps against its neighbour.
+`docs/plains_field.md` carries the measurements, the two tests restated for a
+two-tone ground, and the one thing it costs: a clump ties in value with road
+gravel and separates from it by hue alone.
+
+Four of the five phases carry **decals**: a stone, a flower clump, a patch of
+bare earth, drawn in the tile's own tones and under the terrain value ceiling.
+They are ground detail and never a game object — no signpost, fence or marker,
+which a board reads as a property from across the room — and they are drawn
+inside the cell rather than wrapped, so a decal never overhangs its neighbour.
+Phase 0 stays bare because it is the atlas column. Rarity used to be this
+table's job — three of five phases empty, since a decal was the only thing that
+told two phases apart; the clump field is what a stretch of field varies by
+now, so a decal is scattered detail on an already-varied field. If a field ever
+reads busy, thin the table's decals rather than the clumps.
 `autotiles/mountain.png` is the same rule on the tile a repeat shows up in most
 loudly: mountain is the board's most silhouette-dominant terrain, so a range of
 atlas mountain column byte for byte. A phase moves where the three summits

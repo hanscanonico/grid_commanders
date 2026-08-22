@@ -656,19 +656,49 @@ class GroundSeparation(unittest.TestCase):
                 gap = abs(terrain.luminance(grounds[a]) - terrain.luminance(grounds[b]))
                 self.assertGreaterEqual(gap, self.MIN_SEPARATION)
 
+    # A share of the tile this big is a tone the ground READS as, not a fleck:
+    # the field tone and the two clump tones clear it, a tuft or a wildflower
+    # does not.
+    FIELD_SHARE = 0.05
+
+    def _plains_tones(self) -> list[tuple[int, int, int]]:
+        """The tones an open field is made of, commonest first."""
+        px = opaque_pixels(terrain.tile("plains", FACTIONS[0]))
+        counts = Counter(px)
+        return [c for c, n in counts.most_common() if n >= self.FIELD_SHARE * len(px)]
+
+    def _plains_field_tone(self) -> tuple[int, int, int]:
+        """The tone the OPEN field is, as against the clumps in it.
+
+        Plains stopped being a one-tone ground on 2026-08-22: it is GRASS with
+        a darker grass clumped over a third of it, so a single `dominant()`
+        over the tile now returns whichever of the two happens to win the
+        count. The measurement this test was always making — the tone a
+        stretch of open grass reads as — is `dominant()` over the light half,
+        and on a one-tone ground that is the same number it returned before.
+        """
+        px = opaque_pixels(terrain.tile("plains", FACTIONS[0]))
+        mid = statistics.median(terrain.luminance(c) for c in px)
+        return dominant([c for c in px if terrain.luminance(c) >= mid])
+
     def test_plains_reads_apart_from_the_ground_it_borders(self):
         grounds = self._grounds()
-        plains = dominant(opaque_pixels(terrain.tile("plains", FACTIONS[0])))
         # Grass carries a hue no other ground has, so colour distance is what
-        # separates it from sand — but against gravel, the ground it shares a
-        # board edge with most often, the value step has to be real too or a
-        # 1:4 downsample averages the two into one grey-green.
-        for tid, ground in grounds.items():
-            with self.subTest(against=tid):
-                gap = sum((a - b) ** 2 for a, b in zip(plains, ground)) ** 0.5
-                self.assertGreaterEqual(gap, 40.0)
+        # separates it from sand — and EVERY tone the field is made of has to
+        # carry it, because the clumps are a third of the tile.
+        for tone in self._plains_tones():
+            for tid, ground in grounds.items():
+                with self.subTest(against=tid, tone=tone):
+                    gap = sum((a - b) ** 2 for a, b in zip(tone, ground)) ** 0.5
+                    self.assertGreaterEqual(gap, 40.0)
+        # Against gravel, the ground plains shares a board edge with most
+        # often, the value step has to be real too or a 1:4 downsample averages
+        # the two into one grey-green. The field tone carries that step; a
+        # clump does not (L143 against gravel's L142, a colour break only) —
+        # measured and left open in docs/plains_field.md.
+        field = self._plains_field_tone()
         self.assertGreaterEqual(
-            abs(terrain.luminance(plains) - terrain.luminance(grounds["road"])), 15.0
+            abs(terrain.luminance(field) - terrain.luminance(grounds["road"])), 15.0
         )
 
 
@@ -1041,10 +1071,19 @@ class WoodsSeam(unittest.TestCase):
     OLD_PLATE_GREEN = (119, 198, 79)  # what the game's committed sheet holds
 
     def _plate(self, salt: int) -> set[tuple[int, int, int]]:
-        return set(opaque_pixels(terrain._ground(GRASS, salt)))
+        """Every tone the grass ground is made of: the grain over GRASS plus
+        the two flat clump tones the field is clumped with (2026-08-22)."""
+        return set(opaque_pixels(terrain._grass_ground(salt)))
 
     def _band(self, salt: int) -> tuple[float, float]:
-        lums = [terrain.luminance(c) for c in self._plate(salt)]
+        """The band of the plate's FIELD tone — the grain over GRASS, without
+        the clumps. This is the band a woods pixel may not cross, and it is
+        the same band it always was: the clumps only darken, and the canopy's
+        lit top is authored one step under this floor, so folding them in
+        would drop the floor past CANOPY_TOP and stop measuring anything."""
+        lums = [
+            terrain.luminance(c) for c in opaque_pixels(terrain._ground(GRASS, salt))
+        ]
         return min(lums), max(lums)
 
     # every variant clears at least this much plate between its crowns; the
@@ -1141,7 +1180,7 @@ class RiverBanks(unittest.TestCase):
     )
 
     def _ground(self) -> set[tuple[int, int, int]]:
-        return set(opaque_pixels(terrain._ground(GRASS, PLAINS_SALT)))
+        return set(opaque_pixels(terrain._grass_ground(PLAINS_SALT)))
 
     def _hard_edged(self, mask: int, outline=None):
         """The tile as it was drawn before this pass: water straight onto the

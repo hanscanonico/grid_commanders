@@ -108,6 +108,12 @@ def _lit(c: RGB, t: float) -> RGB:
     return (round(hi[0] * k), round(hi[1] * k), round(hi[2] * k))
 
 
+def _grain(c: RGB, bx: int, by: int, salt: int, grain: float = 0.03) -> RGB:
+    """One 4px block's tone: `c` nudged by the block's own hash."""
+    n = (h01(bx, by, salt) - 0.5) * grain * 2
+    return _lit(c, n) if n > 0 else darken(c, -n)
+
+
 def _ground(c: RGB, salt: int, grain: float = 0.03) -> Image.Image:
     """Base tile: edge-to-edge fill with 4px-block grain (kept at 4px so it
     survives the game's 4:1 nearest downsample). No border treatment — the
@@ -117,11 +123,80 @@ def _ground(c: RGB, salt: int, grain: float = 0.03) -> Image.Image:
     px = img.load()
     for by in range(0, CELL, 4):
         for bx in range(0, CELL, 4):
-            n = (h01(bx, by, salt) - 0.5) * grain * 2
-            t = _lit(c, n) if n > 0 else darken(c, -n)
+            t = _grain(c, bx, by, salt, grain)
             for yy in range(by, by + 4):
                 for xx in range(bx, bx + 4):
                     px[xx, yy] = (*t, 255)
+    return img
+
+
+# The field's second and third grass tones (design review 2026-08-22). The
+# ±3% grain above is a texture no eye reads: 97.9% of a plains tile's pixels
+# sat within 8L of its mean (sd 4.5), so a board that is ~78% flat green read
+# as one painted rectangle per cell. What breaks that is not more grain — a
+# per-pixel wobble averages out under the game's 4:1 nearest downsample — but
+# CLUMPS: patches of a darker grass, several blocks across, so the field keeps
+# a shape at the board's rung as well as at 1x.
+# Both tones are mixes toward GRASS_DARK, which keeps the hue the saturated
+# green `GroundContrast`'s COLOUR_BREAK relies on, and neither goes below
+# GRASS_DARK, the tuft tone at the floor of `palette.GROUND_BAND` — the band
+# the outline grade is chosen out of, so a clump cannot make a silhouette's
+# ground-facing contour a decision the renderer did not already account for.
+# The field DARKENS only: the median stays GRASS and TERRAIN_MEDIAN_CEILING
+# keeps its headroom.
+CLUMP = mix(GRASS, GRASS_DARK, 0.5)  # L143, 15L under the field
+CLUMP_DK = mix(GRASS, GRASS_DARK, 0.88)  # L132, one step over the tuft tone
+
+_CLUMP_LATTICE = 16  # px between field nodes — four across the cell, so it wraps
+# Coverage is fixed by RANK, not by a threshold on the field: with four nodes
+# across a tile, an absolute cut gave one phase 4% clumps and another 43%. The
+# darkest twelfth and the next fifth of each tile's blocks take the two tones,
+# so every phase is the same field in a different arrangement — which is what
+# lets the woods plate and the plains plate stay tone for tone identical.
+_CLUMP_DEEP_SHARE = 0.12
+_CLUMP_SHARE = 0.30
+
+
+def _clump_field(x: int, y: int, salt: int) -> float:
+    """A smooth value field on a 16px lattice that wraps at the cell, roughened
+    by the block's own hash so a clump's edge is ragged instead of a circle."""
+    g = CELL // _CLUMP_LATTICE
+    fx, fy = x / _CLUMP_LATTICE, y / _CLUMP_LATTICE
+    i, j = int(fx), int(fy)
+    tx, ty = fx - i, fy - j
+    sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)
+
+    def node(a: int, b: int) -> float:
+        return h01(a % g, b % g, salt)
+
+    top = node(i, j) * (1 - sx) + node(i + 1, j) * sx
+    bot = node(i, j + 1) * (1 - sx) + node(i + 1, j + 1) * sx
+    return top * (1 - sy) + bot * sy + (h01(x, y, salt + 101) - 0.5) * 0.3
+
+
+def _grass_ground(salt: int) -> Image.Image:
+    """The grass plate: `_ground`'s grain with the two-tone clump field over
+    it, in 4px blocks so a clump survives the game's 4:1 nearest downsample.
+    Plains and woods share this plate (see `WoodsSeam`)."""
+    img = _ground(GRASS, salt)
+    px = img.load()
+    blocks = sorted(
+        ((bx, by) for by in range(0, CELL, 4) for bx in range(0, CELL, 4)),
+        key=lambda b: (_clump_field(b[0], b[1], salt), b),
+    )
+    deep = round(len(blocks) * _CLUMP_DEEP_SHARE)
+    for rank, (bx, by) in enumerate(blocks[: round(len(blocks) * _CLUMP_SHARE)]):
+        # A clump is FLAT — the grain the field carries is not repeated inside
+        # it. Two reasons: a clump is meant to be a shape at the board's 4:1
+        # rung, which a wobble inside it only blurs, and a grained clump spends
+        # a colour per rung on a tile already close to the 80-colour ceiling
+        # (woods measured 88). Flat also means both plates and all five phases
+        # spend exactly these two tones, which is what `WoodsSeam` reads the
+        # woods plate against the plains one on.
+        tone = CLUMP_DK if rank < deep else CLUMP
+        for yy in range(by, by + 4):
+            for xx in range(bx, bx + 4):
+                px[xx, yy] = (*tone, 255)
     return img
 
 
@@ -224,26 +299,31 @@ def _scuff(t: Image.Image, x: int, y: int) -> None:
 _DECALS = {"pebble": _pebble, "flower": _flower_clump, "scuff": _scuff}
 
 # Phase offsets for plains — the sea's rule (SEA_PHASES below) applied to the
-# ground most of a board is made of. Each entry is (grain salt, prop dx, dy,
-# decals): the same field with its grain in a different phase and its props
-# stood elsewhere, so what repeats over a stretch of it is no longer one tile.
-# Same count and same tones every phase, which is what keeps the field's value
-# read a phase apart. Phase 0 is the atlas column, so a board that has not
-# adopted the sheet is unchanged and adoption is additive.
-# Rarity is this table's job rather than a decal's: three of the five phases are
-# bare, so a decal is a scattered find on an open field instead of a texture.
+# ground most of a board is made of. Each entry is (salt, prop dx, dy, decals):
+# the salt keys BOTH the grain and the clump field, so a phase is a different
+# arrangement of the same field rather than the same picture slid sideways, and
+# the props stand somewhere else on top of it. Same tone count and the same
+# clump coverage every phase, which is what keeps the field's value read a
+# phase apart. Phase 0 is the atlas column, so a board that has not adopted the
+# sheet is unchanged and adoption is additive.
+# The 2026-08-22 review measured the old table as five translations of one tuft
+# grid: tile means within 0.31L of each other, with three of the five carrying
+# nothing at all. Rarity is the clump field's job now — it is what a stretch of
+# field varies BY — so the decals stop being the only difference between phases
+# and four of the five carry a find. Phase 0 stays bare because it is the atlas
+# column, which is the tile a board falls back to everywhere.
 PLAINS_PHASES: tuple[tuple[int, int, int, tuple[tuple[str, int, int], ...]], ...] = (
     (PLAINS_SALT, 0, 0, ()),
-    (11, 27, 19, ()),
-    (19, 45, 37, ()),
+    (11, 27, 19, (("flower", 52, 22), ("scuff", 24, 46))),
+    (19, 45, 37, (("pebble", 6, 30), ("scuff", 40, 8))),
     (29, 13, 49, (("pebble", 21, 40), ("scuff", 43, 14))),
     (37, 55, 7, (("flower", 12, 22), ("pebble", 45, 50))),
 )
 
 
 def plains(phase: int = 0) -> Image.Image:
-    grain, dx, dy, decals = PLAINS_PHASES[phase]
-    t = _ground(GRASS, grain)
+    salt, dx, dy, decals = PLAINS_PHASES[phase]
+    t = _grass_ground(salt)
     for i, (sx, sy) in enumerate(_TUFTS):
         x, y = sx + dx, sy + dy
         _wrap_rect(t, x, y, 3, 2, GRASS_DARK)
@@ -315,7 +395,7 @@ def woods(open_edges: int = 0) -> Image.Image:
 
     `open_edges` names the borders the wood ends at (see `_crowns_within`);
     0 — every edge continued — is the atlas tile."""
-    t = _ground(GRASS, WOODS_SALT)
+    t = _grass_ground(WOODS_SALT)
     px = t.load()
     covered = [[False] * CELL for _ in range(CELL)]
     for cx, cy, r in sorted(_crowns_within(open_edges), key=lambda c: c[1]):
@@ -392,7 +472,11 @@ def mountain(phase: int = 0) -> Image.Image:
     """A painted three-peak massif: light/dark faces split at each ridge,
     jagged dithered snow caps, altitude banding down to a talus skirt."""
     peaks, ridges, zig_seed = MOUNTAIN_PHASES[phase]
-    t = _ground(GRASS, 4)
+    # The massif stands on the same clumped grass plate plains and woods are
+    # drawn on: a flat-green apron around a mountain reads as a lighter cell
+    # against the field it borders, which is the seam the woods plate was
+    # fixed for.
+    t = _grass_ground(4)
     px = t.load()
     base_y = 56
     rock_hi = (166, 161, 153)
