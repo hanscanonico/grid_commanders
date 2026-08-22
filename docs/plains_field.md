@@ -5,8 +5,8 @@ of one green. Measured on the atlas tile before this pass:
 
 | | before | after |
 | --- | --- | --- |
-| tile luma sd | 4.5 | 9.7-10.2 (per phase) |
-| pixels within 8L of the tile mean | 97.9% | 61-68% |
+| tile luma sd | 4.5 | 9.70-9.95 (per phase) |
+| pixels within 8L of the tile mean | 97.9% | 55-75% |
 | tile median | L157.7 | L156.0 |
 | phase-to-phase difference | five translations of one tuft table, tile means within 0.31L | five different clump layouts, 8-33% of their clumped area shared |
 
