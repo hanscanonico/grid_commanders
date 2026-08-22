@@ -83,12 +83,12 @@ with waterline foam. It was a 1px checkerboard until the board was measured
 through it — see "The shadow is drawn for every rung" below. The sub carries a
 **wake** on top of that — running foam down its own underside and trailing off
 the stern — because a hull with no freeboard has nothing else to separate it
-from open sea. Its hull and awash deck also sit a band under every other keel
-(the under and shadow slots), so the sneak boat is the darkest ship in the
-line and separates as a contrast pair — dark hull against mid water, under a
-lit sail and a light wake edge — rather than by out-valuing the sea, which is
-a contest a boat awash cannot win. Nothing a unit
-emits is semi-transparent — every shadow and every fleck of foam is opaque,
+from open sea. Its hull and awash deck also sit two bands under every other
+keel (both in the under slot, so their lit faces land on shadow), so the sneak
+boat is the darkest ship in the line and separates as a contrast pair — dark
+hull against mid water, under a lit sail and a light wake edge — rather than
+by out-valuing the sea, which is a contest a boat awash cannot win. Nothing a
+unit emits is semi-transparent — every shadow and every fleck of foam is opaque,
 because partial alpha is a blurred halo at cut-in scale.
 
 ### The shadow is drawn for every rung
@@ -288,37 +288,33 @@ that pipeline's paste step can be pointed at this art instead.
    - `render_indexed` (units) shades **per face normal into ramp slots** —
      top, rim, body, shadow, under — with ambient occlusion, the ground
      contact and the depth gradient charged as whole slot steps rather than
-     as fractions of a colour. Then a per-faction S0 contour, S0 between two
-     materials whose values are too close to read apart, and a despeckle pass
-     folding lone pixels into the plane they were nearly part of. It also
-     returns a per-pixel material id. Those passes are **ordered, and the
-     contour speaks last**: the outer boundary is S0's absolutely — no pixel
-     that touches transparency, diagonals included, may carry anything else,
-     so the band is followed by a claim over the stair corners it cannot
-     reach, and the despeckle may only ever snap one S0 to another out there.
-     Unordered, they left the rim and the top plane meeting the ground every
-     other pixel along a long top-facing edge — the apc's whole roof line —
-     which is an outline that dots out and a silhouette that goes with it on
-     plains and shoal. The alpha never moves: the silhouette is the shape the
-     model drew, and only the colour under it changes.
+     as fractions of a colour. It also returns a per-pixel material id, and
+     the depth and normal planes behind the picture. Then **one outline pass
+     reads those planes** and a despeckle pass folds lone pixels into the
+     plane they were nearly part of. The alpha never moves: the silhouette is
+     the shape the model drew, and only the colour under it changes.
 
-     **The contour is one logical pixel, not one pixel.** The game draws the
-     64px cell onto a 16px grid with nearest filtering, so it keeps one source
-     pixel in four: a 1px contour is three-quarters unsampled, and which
-     quarter survives is an accident of where the edge falls. That is why the
-     apc kept failing the game's legibility sweep after round 9 had made its
-     boundary structurally S0 — the outline was right and the board could not
-     see it. `CONTOUR_WEIGHT` states the band per edge in source pixels: **4
-     on the lit (top and left) edges, 2 on the ground-facing ones**, which
-     already carried a doubled halo. Only `_HALO` of that band sits outside
-     the silhouette — the md_tank is 63 of the 64px its cell allows, so a band
-     that grew outward would crop a model — and the rest is claimed inward off
-     the faction plane behind the edge. Two things the band may not eat: a
-     **fitting's lit face** (an accent always, a gunmetal highlight in its two
-     lit slots), because on a 31px infantry or an awash sub those are most of
-     the bright band the terrain ceiling reserves for units; and a **rim**,
-     which retreats one plane inboard ahead of the band, or keeps its pixel
-     and the one behind it when there is nothing to retreat onto.
+     **Outlines are 1px, per pixel, and selective.** `gbuffer.edge_mask` finds
+     every pixel whose 4-neighbour breaks the depth step a continuous surface
+     can carry, which in this projection is the silhouette and a self-overlap
+     in one reading. What each one becomes is fixed by where the break is, in
+     one order, so no pixel is both dark and light: a break toward the ground
+     (down or right) is the faction's own S0 — the outer boundary is S0's
+     absolutely, round 9's precedence, kept; a break against a nearer surface
+     draws on the FAR side only, at the material's own dark step, so a turret
+     keeps its shape and the hull behind it takes the line; a break toward the
+     sun (up or left) **lightens** — `SEL_OUT_LIFT` slots up the pixel's own
+     ramp, clamped by the ceiling the painting voxel already answered to, so
+     Iron draws no lit line at all rather than one it has no business
+     wearing. `gbuffer.convex_edges` adds the same lift along a convex crease
+     on a lit top face, and concave gutters get nothing. Selective outlining
+     is what buys the interior back: the 4px band it replaces spent 34.5% of
+     every unit's pixels on S0 (53.1% on the worst sprite) against 13.9% and
+     25.6% now, and the livery gates moved with it — the composed rows'
+     closest pair went from 34.6 to 45.2 against a bar of 30.
+     **docs/outlines.md** has the full
+     reading, including what a 1px line costs at board scale and why the
+     contrast pair covers it.
    - `render` (terrain and buildings) is the older path: three shaded face
      tones per material, fractional occlusion, and two rules that keep it
      countable (`docs/terrain_outlines.md`) — a **1px contour in one

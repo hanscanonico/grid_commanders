@@ -581,10 +581,12 @@ class UnitBandCoverage(unittest.TestCase):
         against `test_no_row_out_lights_the_chromatic_band`, which is where
         a row actually running away with the band shows up.
 
-        Round 10 took the flip, at that same 0.02 pp: the thick contour
-        (voxel.CONTOUR_WEIGHT) pushes a rim inboard or leaves it standing on
-        every row, and neutral's rims survive marginally better than iron's
-        capped ones — 14.58% against verdant's 14.56% and iron's 14.31%. So
+        Round 10 took the flip at that same hair's width, and round 11's 1px
+        outline kept it while lifting every row about five points (the band
+        was eating a third of every sprite): neutral 18.67% against verdant's
+        18.66%, meridian and iron 18.63%, aurora 17.92%. Iron is no longer
+        the row just under neutral, and none of that is a reader's
+        difference — `ROW_BAND_TOLERANCE` is a whole percentage point. So
         the gate says what the paragraph above already argued it means: the
         unowned row may not OWN the band, `ROW_BAND_TOLERANCE` being the
         percentage point a reader cannot pick out of a contact sheet, and it
@@ -1478,12 +1480,15 @@ class RowSeparation(unittest.TestCase):
 
         Round 10 diluted it again, and the bar moved with the measurement
         rather than the art moving to the bar: a contour one LOGICAL pixel
-        thick (voxel.CONTOUR_WEIGHT) spends four times the sprite area on S0,
-        and every row's S0 is near-black, so every composed mean walks toward
-        black together — closest pair 37.6 -> 32.2, and every pair fell by
-        13-14%. Nothing about the rows changed; the outline got thicker on all
-        five. The bar is the faction-pixel bar above, which is the floor this
-        diluted figure may never sink below.
+        thick spent four times the sprite area on S0, and every row's S0 is
+        near-black, so every composed mean walked toward black together —
+        closest pair 37.6 -> 32.2, and every pair fell by 13-14%. Nothing
+        about the rows changed; the outline got thicker on all five.
+
+        Round 11 gave it back by spending a pixel instead of a band (see
+        docs/outlines.md): the closest pair is 45.2 now, against 34.6 under
+        the band. The bar is still the faction-pixel bar above, which is the
+        floor this diluted figure may never sink below.
         """
         means = {f.key: self._cell_mean(f.key) for f in FACTIONS}
         keys = list(means)
@@ -1598,62 +1603,73 @@ class AmbientFrames(unittest.TestCase):
         return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
 
 
-class ContourWeight(unittest.TestCase):
-    """The contour has to survive the board, which keeps one pixel in four.
+class BoardScaleEdge(unittest.TestCase):
+    """The unit's edge has to survive the board, which keeps one pixel in four.
 
     The game draws the 64px cell onto a 16px grid with nearest filtering, so
-    three of every four source pixels are never sampled. Round 9 made every
-    unit's outer boundary S0 and the apc still failed the game's legibility
-    sweep, because an outline the board cannot see is not an outline: measured
-    here, only 44.7-55.9% of a board-scale silhouette's boundary came out S0,
-    and which pixels did was an accident of where the edge fell.
+    three of every four source pixels are never sampled. Round 10 answered
+    that by making the contour ONE LOGICAL PIXEL — a 4px band on the lit edges
+    — and the answer worked: 74-76% of what the board drew on a boundary was
+    S0. It also cost 34.5% of every unit's pixels, which is the interior the
+    sel-out rewrite got back (see docs/outlines.md).
 
-    So the band is stated in LOGICAL pixels (`voxel.CONTOUR_WEIGHT`) and this
-    is the reading that says so: at every one of the four sampling phases, most
-    of what the board draws on the boundary is contour. It is a floor rather
-    than a total, and deliberately — the band gives way to a fitting's lit face
-    and to a rim with nowhere to retreat, which is the other half of the same
-    round.
+    A 1px outline cannot win that same reading and does not try: 19-27% of the
+    board's boundary lands on S0 now. What the reading becomes is the claim
+    selective outlining actually makes — the edge is a VALUE BREAK, dark away
+    from the sun and light into it, and the board sees the break either way.
+    Measured as the share of board-sampled boundary pixels whose value is
+    outside the sprite's own interquartile band: 75.1-78.9% at the four
+    phases, against 81.4-87.0% for the band it replaces. That is the
+    legibility round 10 bought, carried by two tones instead of one, and the
+    terrain ceiling is what makes the light half of it safe: no tile may reach
+    the band this sheet's lit planes live in.
     """
 
-    MIN_BOARD_CONTOUR = 0.70
+    MIN_BOARD_BREAK = 0.70
     SCALE = 4
 
     def _board_boundary(self, sprite, phase: int) -> tuple[int, int]:
-        """(contour pixels, boundary pixels) of the sprite as the board samples
-        it: every SCALE-th pixel, offset by `phase`."""
+        """(pixels that read as an edge, boundary pixels) of the sprite as the
+        board samples it: every SCALE-th pixel, offset by `phase`."""
         img = sprite.image
         px = img.load()
+        values = [
+            terrain.luminance(px[x, y][:3])
+            for y in range(img.height)
+            for x in range(img.width)
+            if px[x, y][3] == 255
+        ]
+        lo, _, hi = statistics.quantiles(values, n=4)
         cells = {}
         for y in range(phase, img.height, self.SCALE):
             for x in range(phase, img.width, self.SCALE):
                 cells[(x // self.SCALE, y // self.SCALE)] = (
                     px[x, y][3] == 255,
-                    sprite.mid(x, y) == MID_CONTOUR,
+                    terrain.luminance(px[x, y][:3]),
                 )
-        contour = boundary = 0
-        for (bx, by), (solid, is_contour) in cells.items():
+        breaks = boundary = 0
+        for (bx, by), (solid, value) in cells.items():
             if not solid:
                 continue
             beside = ((bx - 1, by), (bx + 1, by), (bx, by - 1), (bx, by + 1))
-            if all(cells.get(n, (False, False))[0] for n in beside):
+            if all(cells.get(n, (False, 0.0))[0] for n in beside):
                 continue
             boundary += 1
-            contour += is_contour
-        return contour, boundary
+            breaks += value <= lo or value >= hi
+        return breaks, boundary
 
-    def test_the_board_lands_on_the_contour_at_every_phase(self):
+    def test_the_board_lands_on_the_edge_at_every_phase(self):
         for phase in range(self.SCALE):
-            contour = boundary = 0
+            breaks = boundary = 0
             for fac in FACTIONS:
                 for uid in ATLAS_ORDER:
                     found, total = self._board_boundary(
                         render_indexed(build_model(uid), fac), phase
                     )
-                    contour += found
+                    breaks += found
                     boundary += total
             with self.subTest(phase=phase):
-                self.assertGreaterEqual(contour / boundary, self.MIN_BOARD_CONTOUR)
+                self.assertGreaterEqual(breaks / boundary, self.MIN_BOARD_BREAK)
 
 
 class CastShadow(unittest.TestCase):
@@ -1836,19 +1852,22 @@ class IndexedPalette(unittest.TestCase):
                 alpha = {p[3] for p in self._pixels(atlas.build_units_atlas(pose))}
                 self.assertEqual(alpha - {0, 255}, set())
 
-    def test_no_plane_touches_the_ground(self):
-        """The outer boundary is S0's, absolutely — round-9 contour precedence.
+    def test_no_plane_touches_the_ground_on_the_shaded_side(self):
+        """The ground-facing silhouette is S0's, absolutely — round-9
+        precedence, kept through the switch to 1px outlines.
 
-        The contour halo and the rim were two passes with no order between
-        them, so a stair step's inner corner met the ground with whatever
-        plane drew it. On a long top-facing edge — the apc's whole roof line
-        — that is the outline broken every other pixel, and against plains or
-        shoal the silhouette goes with it.
+        What changed is the SIDES it is claimed on. The band claimed all four
+        and ate four pixels of plane doing it; the G-buffer outline claims the
+        two that face away from the sun (down and right), one pixel wide, and
+        answers for the other two with light instead
+        (`test_the_sunward_edge_is_lit_rather_than_outlined`). So the rule the
+        apc's dotted roof line needed is still absolute where a plane meets
+        the ground: 0 violations over both poses of all 18 units in all five
+        rows, the same reading the band produced.
 
-        Diagonals count: a corner touching the tile at a point is on the
-        silhouette however few of its sides face out, which is exactly the
-        set the halo cannot reach. Both poses, because the idle key pose
-        moves rotors, treads and hulls into new corners.
+        Orthogonal, not diagonal: a 1px line is connected through its sides,
+        and a stair's inner corner touching the tile at a point is already
+        fenced by the two line pixels beside it.
         """
         for fac in FACTIONS:
             for uid in ATLAS_ORDER:
@@ -1857,16 +1876,84 @@ class IndexedPalette(unittest.TestCase):
                     img = sprite.image
                     px = img.load()
                     w, h = img.size
+
+                    def opaque(x, y, px=px, w=w, h=h):
+                        return 0 <= x < w and 0 <= y < h and px[x, y][3] == 255
+
                     naked = [
                         (x, y)
                         for y in range(h)
                         for x in range(w)
-                        if px[x, y][3] == 255
+                        if opaque(x, y)
                         and sprite.mid(x, y) != MID_CONTOUR
-                        and _touches_transparency(px, w, h, x, y)
+                        and (not opaque(x, y + 1) or not opaque(x + 1, y))
                     ]
                     with self.subTest(faction=fac.key, unit=uid, pose=pose.name):
                         self.assertEqual(naked, [])
+
+    def test_the_sunward_edge_is_lit_rather_than_outlined(self):
+        """Selective outlining: the sun side of the silhouette LIGHTENS.
+
+        A pixel whose only break is up or left steps up its own ramp instead
+        of going black, so the two sides the light comes from read as an edge
+        without spending the plane behind them. Measured over both poses of
+        all 18 units in all five rows, 7.1% of those pixels are still S0
+        against 100% under the band — and the remainder is not slack: it is
+        the far side of a self-overlap (a hull passing behind a turret is a
+        dark line wherever it lies) and the handful the despeckle settles.
+        """
+        dark = total = 0
+        for fac in FACTIONS:
+            for uid in ATLAS_ORDER:
+                for pose in Pose:
+                    sprite = render_indexed(build_model(uid, pose), fac)
+                    img = sprite.image
+                    px = img.load()
+                    w, h = img.size
+
+                    def opaque(x, y, px=px, w=w, h=h):
+                        return 0 <= x < w and 0 <= y < h and px[x, y][3] == 255
+
+                    for y in range(h):
+                        for x in range(w):
+                            if not opaque(x, y):
+                                continue
+                            if not opaque(x, y + 1) or not opaque(x + 1, y):
+                                continue
+                            if opaque(x, y - 1) and opaque(x - 1, y):
+                                continue
+                            total += 1
+                            dark += sprite.mid(x, y) == MID_CONTOUR
+        self.assertLess(dark / total, 0.10)
+
+    def test_the_outline_costs_a_pixel_and_not_a_band(self):
+        """The line is one pixel: what it does not take is the picture.
+
+        `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
+        and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
+        1px lattice and so nearly all boundary). The G-buffer outline spends
+        13.9% and 25.6%. That difference is the faction livery, the fittings
+        and the plane structure the band was eating, and it is measured here
+        so a future pass cannot quietly grow a band back.
+        """
+        worst = 0.0
+        dark = total = 0
+        for fac in FACTIONS:
+            for uid in ATLAS_ORDER:
+                for pose in Pose:
+                    sprite = render_indexed(build_model(uid, pose), fac)
+                    img = sprite.image
+                    px = img.load()
+                    w, h = img.size
+                    drawn = [
+                        (x, y) for y in range(h) for x in range(w) if px[x, y][3] == 255
+                    ]
+                    black = sum(1 for x, y in drawn if sprite.mid(x, y) == MID_CONTOUR)
+                    total += len(drawn)
+                    dark += black
+                    worst = max(worst, black / len(drawn))
+        self.assertLess(worst, 0.28)
+        self.assertLess(dark / total, 0.15)
 
     def test_no_isolated_pixel_outside_the_dither(self):
         """Spec item 10: a pixel differing from all four of its orthogonal

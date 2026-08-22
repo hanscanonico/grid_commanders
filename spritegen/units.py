@@ -663,11 +663,16 @@ def t_copter(pose: Pose = Pose.A) -> Model:
         # One diagonal blade pair per disc, opposed between the discs: two
         # full X sweeps overlap on the tandem hull and read as a different
         # aircraft at 32px, while a two-blade mid-turn keeps the silhouette.
+        # The collar carries all four blade ROOTS even so. Two blades of nine
+        # voxels are 9.3% less silhouette than pose A's four, over the 8% an
+        # idle may move (`AmbientFrames`) once the outline stopped padding
+        # every sprite with a halo; lengthening the blades instead bought the
+        # mass back and read as a fighter's wings at 32px.
         for d in range(-4, 5):
             m.set(4 + d, 4 + d, 9, "rotor")
             m.set(5 + d, 13 - d, 9, "rotor")
-        _rotor_collar(m, 4, 4, 9, ((1, 1), (-1, -1)))
-        _rotor_collar(m, 5, 13, 9, ((1, -1), (-1, 1)))
+        _rotor_collar(m, 4, 4, 9, ((1, 1), (-1, -1), (1, -1), (-1, 1)))
+        _rotor_collar(m, 5, 13, 9, ((1, -1), (-1, 1), (1, 1), (-1, -1)))
     return m
 
 
@@ -772,22 +777,27 @@ def sub(pose: Pose = Pose.A) -> Model:
     # smallest sprite on the sheet at 22.9% legibility, and a hull two voxels
     # wide leaves a deck the player cannot see is a deck.
     #
-    # Both rows sit a band under every other keel — under slot at the
-    # waterline, shadow slot on the deck — so the sneak boat is the darkest
-    # ship in the line. Round 6 gave the hull its mass back and the hull then
-    # medianed into the water's own value band, which is a hull-value contest
-    # the sub cannot win from a mid slot; the separation it wins instead is a
+    # Both rows sit in the under slot, two bands beneath every other keel, so
+    # the sneak boat is the darkest ship in the line. One band was enough only
+    # while the 4px contour band ate most of the awash hull: with 1px outlines
+    # the deck's own lit faces show, and a shadow-slot deck lights to exactly
+    # the body tone every other hull medians at (docs/outlines.md). Round 6
+    # gave the hull its mass back and the hull then medianed into the water's
+    # own value band, which is a hull-value contest the sub cannot win from a
+    # mid slot; the separation it wins instead is a
     # contrast pair, dark hull against mid water with the light on the sail
     # and the wake edge.
     m.box(3, 4, 0, 21, 0, 0, "hull_under")
     m.box(2, 5, 3, 19, 0, 0, "hull_under")
-    m.box(3, 4, 1, 19, 1, 1, "hull_dk")
-    m.box(2, 5, 4, 18, 1, 1, "hull_dk")
+    m.box(3, 4, 1, 19, 1, 1, "hull_under")
+    m.box(2, 5, 4, 18, 1, 1, "hull_under")
     # the saddle-tank crowns amidships are the one lit run on the boat's own
     # hull: the water breaks over them beside the sail, and their leading
-    # edges are what carry the sub's share of the band above L200.
-    m.box(2, 2, 8, 14, 1, 1, "hull")
-    m.box(5, 5, 8, 14, 1, 1, "hull")
+    # edges are what carry the sub's share of the band above L200. They stay
+    # one band over the awash rows, which is the relationship that reads —
+    # so they moved down with them.
+    m.box(2, 2, 8, 14, 1, 1, "hull_dk")
+    m.box(5, 5, 8, 14, 1, 1, "hull_dk")
     # deck hatches fore and aft of the sail
     m.set(3, 16, 1, "body_lt")
     m.set(4, 4, 1, "body_lt")
