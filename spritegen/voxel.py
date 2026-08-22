@@ -10,9 +10,10 @@ Two renderers share that geometry. `render_indexed` draws units: one flat
 ramp slot per visible plane, ambient occlusion and the ground contact
 charged as whole slot steps, a per-faction contour, and a material id
 emitted beside every pixel. `render` is the older shading path — three
-computed face tones, fractional occlusion, dither on broad tops and a
-per-part outline — and terrain and buildings still draw with it. All of it
-is deterministic: no RNG anywhere.
+computed face tones, fractional occlusion, a two-tone dither on tops broad
+enough to carry one, and a contour in one deliberate tone per material — and
+terrain and buildings still draw with it. All of it is deterministic: no
+RNG anywhere.
 
 Both renderers also have a `*_gbuffer` form that hands back the depth and
 normal planes behind the picture as well as the picture — see
@@ -688,6 +689,52 @@ def _interior_contour(
     return out
 
 
+# A dither is only a texture where there is a surface to spread it over. Under
+# that area it is per-pixel noise: at the 4:1 board downsample a speckled 4px
+# roof edge is a chewed edge, not a material (Gerstner's rule that uniform
+# dither is harmful at sprite sizes). The threshold is measured in PAINTED TOP
+# PIXELS of one contiguous same-material plane, not in voxels — a 12-voxel
+# sawtooth ridge and a 12-voxel slab are the same voxel count and nothing like
+# the same surface — and 96px is the roof plane of the airport hangar, the HQ
+# fort and the city towers, the only three broad enough to read as texture.
+DITHER_MIN_TOP_AREA = 96  # px of contiguous flat top, ~a 12x8 roof plane
+DITHER_STEP = 0.06  # the one step under the face tone the dither drops to
+
+
+def _broad_flat_tops(
+    vox: dict[tuple[int, int, int], str], k: int = 1
+) -> set[tuple[int, int, int]]:
+    """The voxels whose exposed top belongs to a plane big enough to dither.
+
+    A plane is a 4-connected run of same-material voxels at one z whose tops
+    are all open to the sky; its area is the union of the top faces they paint.
+    """
+    tops = {v for v in vox if (v[0], v[1], v[2] + 1) not in vox and vox[v] in DITHERED}
+    seen: set[tuple[int, int, int]] = set()
+    broad: set[tuple[int, int, int]] = set()
+    for start in sorted(tops):
+        if start in seen:
+            continue
+        mat = vox[start]
+        seen.add(start)
+        stack = [start]
+        plane = []
+        while stack:
+            x, y, z = stack.pop()
+            plane.append((x, y, z))
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = (x + dx, y + dy, z)
+                if n in tops and n not in seen and vox[n] == mat:
+                    seen.add(n)
+                    stack.append(n)
+        area: set[tuple[int, int]] = set()
+        for x, y, z in plane:
+            area.update(_face_pixels((x - y) * 2 * k, ((x + y) - z * 2) * k, k)["top"])
+        if len(area) >= DITHER_MIN_TOP_AREA * k * k:
+            broad.update(plane)
+    return broad
+
+
 def render_gbuffer(model: Model, faction: Faction, outline: bool = True) -> GBuffer:
     """`render`, with the depth and normal planes behind the picture kept.
 
@@ -702,6 +749,10 @@ def render_gbuffer(model: Model, faction: Faction, outline: bool = True) -> GBuf
     depths = [DEPTH_EMPTY] * (w * h)
     normals = bytearray(w * h)
     vox = model.vox
+    # Which material painted each pixel, for the contour below. The painter's
+    # last write owns it, exactly as it owns the colour.
+    mats: list[str | None] = [None] * (w * h)
+    broad = _broad_flat_tops(vox)
     zmin = min(v[2] for v in vox)
     zmax = max(v[2] for v in vox)
     zspan = max(1, zmax - zmin)
@@ -758,19 +809,23 @@ def render_gbuffer(model: Model, faction: Faction, outline: bool = True) -> GBuf
                 shade_amt = (1 - ao_right) + grad_right
                 if shade_amt > 0:
                     tone = mix(tone, (12, 16, 28), min(0.55, shade_amt))
-            dither = mat in DITHERED and face == "top"
+            # A dither, not a noise field: one step under the face tone, on
+            # half the pixels, and only where the plane is broad enough to
+            # read as texture. The old per-pixel jitter spent a colour per
+            # amplitude on every top in the model — 203 colours on the aurora
+            # airport, most of them one another's neighbours.
+            dither = face == "top" and (x, y, z) in broad
+            low = darken(tone, DITHER_STEP) if dither else tone
             for ix, iy in pixels:
-                c = tone
-                if dither:
-                    n = (h01(ix, iy, 7) - 0.5) * 0.07
-                    c = lighten(tone, n) if n > 0 else darken(tone, -n)
+                c = low if dither and h01(ix, iy, 7) < 0.5 else tone
                 px[ix, iy] = (c[0], c[1], c[2], 255)
                 idx = iy * w + ix
                 depths[idx] = vdepth
                 normals[idx] = nid
+                mats[idx] = mat
 
     if outline:
-        _outline(img)
+        _prop_outline(img, mats, faction)
     # The outline sits outside the silhouette, so it owns no face and leaves
     # the geometry planes as background there.
     mids = bytearray([MID_EMPTY]) * (w * h)
@@ -782,26 +837,54 @@ def render(model: Model, faction: Faction, outline: bool = True) -> Image.Image:
     return render_gbuffer(model, faction, outline).rgba
 
 
-def _outline(img: Image.Image) -> None:
-    """1px per-part outline: each edge pixel is a dark tint of its neighbour."""
+# The contour a terrain prop or a building is read against. It is a PARTIAL
+# grade — one deliberate tone per material, drawn only where the silhouette
+# meets transparency — against the units' heavier per-faction S0 band: a
+# building is what an army is read AGAINST, so its edge states the shape
+# without keying like a unit's.
+#
+# 0.55 of the material's own colour puts it a clear step under that material's
+# darkest face (the right face is 0.60 of it), so the line reads on every side
+# of the mass. The tone is taken from the MATERIAL, not from the shaded pixel
+# it borders: averaging the neighbours spent one near-black per lit
+# neighbourhood — 30-40 colours a building, none of them separable from the
+# next — where one tone per material spends five.
+PROP_CONTOUR_DARKEN = 0.55
+
+
+def _prop_contour(mat: str, faction: Faction) -> RGB:
+    return darken(resolve(mat, faction), PROP_CONTOUR_DARKEN)
+
+
+def _prop_outline(img: Image.Image, mats: list[str | None], faction: Faction) -> None:
+    """1px silhouette contour, one deliberate tone per material.
+
+    Where two materials meet along the same edge the darker of their contours
+    wins, so the line around a mass is one line rather than a dotted seam of
+    two — the same reason the indexed path claims the outer boundary whole.
+    """
     px = img.load()
     w, h = img.size
+    tones: dict[str, RGB] = {}
     edges: list[tuple[int, int, RGB]] = []
     for yy in range(h):
         for xx in range(w):
             if px[xx, yy][3] != 0:
                 continue
-            neigh = []
+            best: RGB | None = None
             for nx, ny in ((xx - 1, yy), (xx + 1, yy), (xx, yy - 1), (xx, yy + 1)):
-                if 0 <= nx < w and 0 <= ny < h:
-                    c = px[nx, ny]
-                    if c[3] == 255:
-                        neigh.append(c)
-            if neigh:
-                r = sum(c[0] for c in neigh) // len(neigh)
-                g = sum(c[1] for c in neigh) // len(neigh)
-                b = sum(c[2] for c in neigh) // len(neigh)
-                edges.append((xx, yy, darken((r, g, b), 0.68)))
+                if not (0 <= nx < w and 0 <= ny < h) or px[nx, ny][3] != 255:
+                    continue
+                mat = mats[ny * w + nx]
+                if mat is None:
+                    continue
+                if mat not in tones:
+                    tones[mat] = _prop_contour(mat, faction)
+                c = tones[mat]
+                if best is None or (luminance(c), c) < (luminance(best), best):
+                    best = c
+            if best is not None:
+                edges.append((xx, yy, best))
     for xx, yy, c in edges:
         px[xx, yy] = (c[0], c[1], c[2], 255)
 
