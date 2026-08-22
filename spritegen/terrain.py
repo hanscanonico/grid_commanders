@@ -17,7 +17,7 @@ from PIL import Image
 
 from . import buildings
 from .palette import RGB, FACTIONS, Faction, darken, h01, lighten, mix
-from .voxel import place_in_cell, render
+from .voxel import SHADOW_OFFSET, place_in_cell, render
 
 CELL = 64
 
@@ -420,11 +420,23 @@ def woods(open_edges: int = 0) -> Image.Image:
                     c = _lit(CANOPY, n) if n > 0 else darken(CANOPY, -n)
                 px[xx, yy] = (*c, 255)
                 covered[yy][xx] = True
-    # contact shadow along the canopy's lower fringe
-    for x in range(CELL):
-        for y in range(CELL - 1):
-            if covered[y][x] and not covered[y + 1][x]:
-                px[x, y + 1] = (*GRASS_DARK, 255)
+    # Contact shadow: the canopy's own shaded rim dropped by SHADOW_OFFSET, on
+    # the one rule every caster on the sheet obeys. It used to be a 1px line
+    # straight under the fringe, which put the wood's shade on a different sun
+    # from the building beside it and from every unit standing on it. It stays
+    # a LINE rather than the building's solid silhouette because the clearings
+    # between the crowns are the plains plate the tile is measured on
+    # (`WoodsSeam`), and a wood is not one massing casting one shadow.
+    sx, sy = SHADOW_OFFSET
+    for y in range(CELL):
+        for x in range(CELL):
+            if not covered[y][x] or (
+                covered[min(y + 1, CELL - 1)][x] and covered[y][min(x + 1, CELL - 1)]
+            ):
+                continue  # only the fringe turned away from the light casts
+            tx, ty = x + sx, y + sy
+            if 0 <= tx < CELL and 0 <= ty < CELL and not covered[ty][tx]:
+                px[tx, ty] = (*GRASS_DARK, 255)
     # trunks where the fringe meets the clearings
     for tx, ty in ((46, 31), (12, 59)):
         _rect(t, tx, ty, 2, 3, TRUNK)
@@ -519,10 +531,16 @@ def mountain(phase: int = 0) -> Image.Image:
         for y in range(y0, min(base_y - 1, y0 + ln)):
             if px[x, y][3] == 255 and px[x, y][:3] in (rock_hi, rock_lt, rock_dk):
                 px[x, y] = (*mix(rock_dk, edge, 0.5), 255)
-    # contact shadow and scree at the foot
+    # Contact shadow and scree at the foot. The shadow is the massif's own
+    # foot dropped by SHADOW_OFFSET — same sun, same direction as the woods
+    # beside it and the units standing on both.
+    drop_x, drop_y = SHADOW_OFFSET
     for x in range(6, 58):
-        if px[x, base_y - 1][:3] in (rock_lt, rock_dk, rock_deep):
-            px[x, base_y] = (*GRASS_DARK, 255)
+        if px[x, base_y - 1][:3] not in (rock_lt, rock_dk, rock_deep):
+            continue
+        for y in range(base_y, min(CELL, base_y + drop_y)):
+            if x + drop_x < CELL:
+                px[x + drop_x, y] = (*GRASS_DARK, 255)
     for sx, sy in ((8, 52), (52, 54), (14, 58), (46, 59)):
         _rect(t, sx, sy, 3, 2, GRASS_DARK)
     return t
@@ -656,9 +674,9 @@ PROPERTY_ANCHOR: dict[str, tuple[int, int]] = {
 
 # The shadow a building drops on whatever ground it is standing on: the
 # building's own silhouette, shifted down-right away from the light every
-# model is lit from, in the same tone the unit cells cast.
+# model is lit from, in the same tone AND by the same offset the unit cells
+# cast (`voxel.SHADOW_OFFSET`, re-exported here — one sun for the sheet).
 SHADOW = (16, 18, 24)
-SHADOW_OFFSET = (2, 2)
 
 
 def _drop_shadow(cell: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:

@@ -76,11 +76,18 @@ the rim pass lifted everybody (17.3% against 14.0-14.9%, round 6) — the pixels
 moved, the pinned number did not. Buildings are
 neutral concrete and stone under faction-colored roofs, caps and banners, and
 still render through the older shading path (`render`), which terrain shares.
-**The cast shadow is solid**, and its size and offset are what encode
-altitude: land units get a tight contact shadow, air units a larger one
-offset down-right with ground showing between, ships a displacement shadow
-with waterline foam. It was a 1px checkerboard until the board was measured
-through it — see "The shadow is drawn for every rung" below. The sub carries a
+**The cast shadow is solid**, and there is **one sun**: every caster on the
+board drops its shadow down-right by the same `voxel.SHADOW_OFFSET`, which
+terrain re-exports rather than keeping a second copy of. What encodes
+altitude is the shadow's SIZE and how far it falls along that one diagonal,
+never its direction — land units get a tight contact shadow, air units a
+larger one dropped much further with ground showing between, ships a
+displacement shadow with waterline foam, and a wood or a mountain the same
+displacement of its own fringe. Three of those four used to lay their shade
+straight down or straight under, lit from nowhere and disagreeing with the
+building in the next cell; `OneSun` holds all four drawers to the one offset,
+pixel by pixel where the shadow is a stamped silhouette. It was a 1px
+checkerboard until the board was measured through it — see "The shadow is drawn for every rung" below. The sub carries a
 **wake** on top of that — running foam down its own underside and trailing off
 the stern — because a hull with no freeboard has nothing else to separate it
 from open sea. Its hull and awash deck also sit two bands under every other
@@ -235,7 +242,14 @@ that stops ends on a rounded nose, and a river's mask 0 is a banked pond,
 since a watercourse joined to nothing is a pool rather than an E-W bar — a
 pool whose bank is widest and darkest down the shadow diagonal and thins to a
 one-pixel lip in the notches its reeds stand in, because a ring of one weight
-and one tone is a badge rather than a shore. The
+and one tone is a badge rather than a shore. A feature's outline is
+**directional**, for the reason the units' is (`autotile._edge_pass` mirrors
+`voxel._selective_outline`): the two sunward sides of a road, a bank or a
+channel step UP a tone and only the two sides turned away from the light keep
+the dark contour, because one tone ringing all four sides is a sticker
+stamped into the tile rather than a thing lying on the ground. Each lit tone
+is one the tile already spends, except the bank's, which is the largest step
+the terrain ceiling leaves over `BANK` itself (`TileSunwardEdges`). The
 demo map composes from these, which is why its roads connect and its island
 has a shoreline; the atlases themselves are
 unchanged drop-ins.
