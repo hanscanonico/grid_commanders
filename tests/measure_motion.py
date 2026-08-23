@@ -22,9 +22,12 @@ failure mode — the sprite boils instead of animating.
 The texel rule behind it: one voxel is a 4x4 px cube and projects to
 `sx=(x-y)*2`, `sy=(x+y)-2z`, so one board texel at rung 1 is 4 atlas px,
 which is a dz of two voxels or a (dx +1, dy -1) diagonal. A pose delta
-smaller than that cannot move the silhouette; it can only re-tone texels.
+smaller than that cannot carry a texel a whole texel across: inside the shape
+it only re-tones, and at the edge it flips boundary texels with the sampling
+phase rather than moving them.
 
-Recorded 2026-08-23, before any pose fix, so a later pass can diff it:
+Recorded 2026-08-23 on the red (meridian) row, before any pose fix, so a later
+pass can diff it; livery changes the tones, not the shape:
 
               rung 1 (16x24)          rung 2 (32x48)
   unit         opaq  chng silh shim    opaq  chng silh shim
@@ -49,10 +52,21 @@ Recorded 2026-08-23, before any pose fix, so a later pass can diff it:
   ALL          1367   366  117  2.13   5452  1518  451  2.37
 
 The whole tracked family — tank, md tank, anti air, artillery, rockets, apc —
-moves nothing at either rung: their pose B is a crept tread link, one atlas
-pixel of it, so every texel it touches only changes tone. Missiles is the same
-at rung 1. Everything that flies or floats moves, because its pose B carries
-the one-pixel bob and a swept rotor or a rolled hull with it.
+moves nothing at either rung. Four of them creep a tread link (`units._track`
+walks its phase), which only re-tones link texels inside a track block that
+never changes shape; rockets and missiles settle a sub-assembly one voxel,
+which is 2 atlas px of dz, half a rung-1 texel, so it lands inside the shape
+too — missiles holds that to rung 1 and leaks 3 silhouette texels at rung 2.
+
+Everything that flies or floats does change silhouette texels, but read that
+carefully before crediting it as animation: fighter, bomber and every hull
+build the SAME model for both poses (verified against `build_model`), and
+differ only by the one-pixel bob in `atlas._BOB_BOTTOM` — pose B is pose A
+translated one atlas pixel up, a quarter of a rung-1 texel. It scores because
+a whole-body translation re-phases the nearest sample, so boundary texels pick
+a different source pixel; that is aliasing at the edge, not a move. Only the
+copters, which sweep their rotor discs 45 degrees, change the shape itself,
+and they are the two with a shimmer index near 1.
 
 Run: .venv/bin/python tests/measure_motion.py [unit ...]
 """
