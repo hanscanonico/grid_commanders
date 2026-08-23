@@ -46,63 +46,8 @@ jobs:
           diff -r /tmp/gen_a /tmp/gen_b
 
       - name: Assert committed .lavish/assets snapshots match generator output
-        # Pixel comparison, not byte comparison: the committed PNGs may have
-        # been encoded by a different Pillow/zlib than CI's, so identical art
-        # can still differ in compression.
-        run: |
-          python - <<'EOF'
-          import sys
-          from pathlib import Path
+        # The pair list is derived from the generation, both directions, so a
+        # new output cannot land compared against nothing. See the module
+        # docstring for what it checks and why it is a pixel comparison.
+        run: python tests/check_snapshots.py /tmp/gen_a .lavish/assets
 
-          from PIL import Image, ImageChops
-
-          GEN = Path("/tmp/gen_a")
-          ASSETS = Path(".lavish/assets")
-          EXPECTED = 38
-          pairs = [
-              (GEN / "units_atlas.png", ASSETS / "units_atlas.png"),
-              (GEN / "units_atlas_b.png", ASSETS / "units_atlas_b.png"),
-              (GEN / "terrain_atlas.png", ASSETS / "terrain_atlas.png"),
-              (GEN / "preview_map.png", ASSETS / "preview_map.png"),
-              (GEN / "preview_units.png", ASSETS / "preview_units.png"),
-              (GEN / "preview_terrain.png", ASSETS / "preview_terrain.png"),
-          ]
-          pairs += [
-              (GEN / "autotiles" / f"{n}.png", ASSETS / "autotiles" / f"{n}.png")
-              for n in ("roads", "rivers", "coast", "shoals", "woods", "bridges", "sea")
-          ]
-          # Enumerated from the committed side so a snapshot the generator no
-          # longer emits fails loudly instead of dropping out of the pair list.
-          pairs += [
-              (GEN / "iso_buildings" / p.name, p)
-              for p in sorted((ASSETS / "iso_buildings").glob("*.png"))
-          ]
-          bad = []
-          if len(pairs) != EXPECTED:
-              bad.append(f"expected {EXPECTED} snapshots to compare, found {len(pairs)}")
-          orphans = sorted(
-              p.name
-              for p in (GEN / "iso_buildings").glob("*.png")
-              if not (ASSETS / "iso_buildings" / p.name).exists()
-          )
-          bad += [f"generated cell has no committed snapshot: {n}" for n in orphans]
-          for gen, snap in pairs:
-              if not snap.exists():
-                  bad.append(f"missing snapshot: {snap}")
-                  continue
-              if not gen.exists():
-                  bad.append(f"generator did not emit: {gen}")
-                  continue
-              a = Image.open(gen).convert("RGBA")
-              b = Image.open(snap).convert("RGBA")
-              if a.size != b.size:
-                  bad.append(f"size mismatch: {snap} {b.size} vs generated {a.size}")
-              # alpha_only=False is required: on RGBA images getbbox() otherwise
-              # inspects only the alpha band, so color-only drift would pass.
-              elif ImageChops.difference(a, b).getbbox(alpha_only=False) is not None:
-                  bad.append(f"pixel mismatch: {snap}")
-          if bad:
-              print("\n".join(bad))
-              sys.exit(1)
-          print(f"{len(pairs)} snapshots match generator output")
-          EOF

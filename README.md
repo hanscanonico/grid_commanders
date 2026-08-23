@@ -552,6 +552,15 @@ other for byte determinism, and a pixel comparison of the committed
 generator draws and those snapshots have to be regenerated in the same
 commit, or CI fails.
 
+That comparison is `tests/check_snapshots.py`, and it enumerates nothing by
+hand: it pairs off every PNG the generator emitted with the committed file of
+the same relative path, and fails in both directions, so a new output landing
+with no snapshot is a failure rather than a silence. The single exception is
+`units/<id>_<team>.png` — instead of committing 90 duplicates of art the
+atlas already carries, each exported cell must be pixel for pixel one of the
+cells of the committed `units_atlas.png`. Run it against your own output
+with `.venv/bin/python tests/check_snapshots.py out`.
+
 ## Cell density
 
 The sheet is emitted at a **64px cell**, and that is the shipped default.
