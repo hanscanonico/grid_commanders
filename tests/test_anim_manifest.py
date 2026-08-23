@@ -1,0 +1,103 @@
+"""`anim.json` says what the tables say, and says it the same way twice.
+
+The manifest exists so the game stops retyping this pipeline's numbers, which
+only helps if the manifest is not retyping them either. These tests hold every
+field against the table it is supposed to come from — column order against
+`ATLAS_ORDER`, rows against `FACTIONS`, phase counts against the terrain phase
+tables, the cell against `atlas`, and `ground_px` against a cell actually
+rendered — plus the determinism the rest of the pipeline promises.
+
+Run with `.venv/bin/python -m unittest discover tests`.
+"""
+
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from spritegen import anim, atlas, terrain
+from spritegen.palette import FACTIONS
+from spritegen.units import ATLAS_ORDER, UNITS
+
+
+class Columns(unittest.TestCase):
+    def test_the_columns_are_the_atlas_order(self):
+        cols = anim.MANIFEST["columns"]
+        self.assertEqual(len(cols), len(ATLAS_ORDER))
+        for want, uid in enumerate(ATLAS_ORDER):
+            self.assertEqual(cols[uid], want, f"{uid} is not column {want}")
+
+    def test_the_rows_are_the_faction_order(self):
+        self.assertEqual(
+            anim.MANIFEST["rows"],
+            [{"key": f.key, "team": f.team} for f in FACTIONS],
+        )
+
+
+class Phases(unittest.TestCase):
+    def test_the_phase_counts_are_the_phase_tables(self):
+        self.assertEqual(
+            anim.MANIFEST["terrain_phases"],
+            {
+                "sea": len(terrain.SEA_PHASES),
+                "plains": len(terrain.PLAINS_PHASES),
+                "mountain": len(terrain.MOUNTAIN_PHASES),
+            },
+        )
+
+
+class Cell(unittest.TestCase):
+    def test_the_cell_is_the_atlas_cell(self):
+        cell = anim.MANIFEST["cell"]
+        self.assertEqual((cell["w"], cell["h"]), (atlas.CELL_W, atlas.CELL_H))
+        self.assertEqual(cell["overflow"], atlas.CELL_H - atlas.CELL_W)
+
+    def test_ground_px_is_where_every_land_cell_puts_its_shadow(self):
+        """The measured row is not one column's accident: the contact ellipse
+        is centred on the same row under every land unit on the sheet."""
+        ground = anim.MANIFEST["cell"]["ground_px"]
+        fac = FACTIONS[1]
+        for uid in ATLAS_ORDER:
+            if UNITS[uid][1] != "land":
+                continue
+            cell = atlas.unit_cell(uid, fac)
+            lit = cell.load()
+            bare = atlas.unit_cell(uid, fac, shadow=False).load()
+            spans = [
+                sum(
+                    1
+                    for x in range(cell.width)
+                    if lit[x, y][3] != 0 and bare[x, y][3] == 0
+                )
+                for y in range(cell.height)
+            ]
+            widest = max(range(len(spans)), key=lambda y: spans[y])
+            self.assertEqual(
+                cell.height - 1 - widest, ground, f"{uid}'s shadow is centred elsewhere"
+            )
+
+
+class Clip(unittest.TestCase):
+    def test_the_ambient_clip_plays_the_sheets_the_generator_writes(self):
+        clip = anim.MANIFEST["clips"]["ambient"]
+        self.assertEqual(clip["sheets"], list(anim.AMBIENT_SHEETS))
+        self.assertEqual(clip["order"], list(range(len(anim.AMBIENT_SHEETS))))
+        self.assertEqual(clip["ms_per_frame"], anim.AMBIENT_MS)
+        self.assertEqual(clip["mode"], "loop")
+
+
+class Determinism(unittest.TestCase):
+    def test_two_dumps_are_byte_identical(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / "a" / "anim.json", Path(tmp) / "b" / "anim.json"
+            anim.dump(a)
+            anim.dump(b)
+            self.assertEqual(a.read_bytes(), b.read_bytes())
+            self.assertTrue(a.read_text().endswith("}\n"))
+            self.assertEqual(json.loads(a.read_text()), anim.MANIFEST)
+
+
+if __name__ == "__main__":
+    unittest.main()
