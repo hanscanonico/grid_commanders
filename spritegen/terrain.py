@@ -163,7 +163,9 @@ WATER_LIGHT = _tone((113, 179, 219), 0.41)  # L168, the same drop as WATER
 SAND = (178, 166, 127)  # L166
 SAND_DARK = _shade(SAND, 139.0)  # L139
 SNOW = (168, 174, 182)  # cool foam/marking grey, L173
-WILDFLOWER = (214, 163, 57)  # the field's one warm accent, L172
+WILDFLOWER = (214, 163, 57)  # L172 — unspent since 2026-08-23, when the
+# field's warm flecks came off it: at 1-3px a hue-40 pixel on a hue-100
+# ground is a dead pixel, not a flower (see `_DECALS`).
 
 # Woods canopy tones (design review round 3): the tile is a filled canopy
 # with its own value band — clearly darker than plains underfoot and than
@@ -437,16 +439,6 @@ def _rect(img: Image.Image, x0: int, y0: int, w: int, h: int, c: RGB) -> None:
             px[xx, yy] = (*c, 255)
 
 
-def _wrap_rect(img: Image.Image, x0: int, y0: int, w: int, h: int, c: RGB) -> None:
-    """`_rect` around the tile's edge instead of off it. A prop moved by a phase
-    offset has to keep its area, or a phase would be a thinner field rather than
-    a differently arranged one."""
-    px = img.load()
-    for yy in range(y0, y0 + h):
-        for xx in range(x0, x0 + w):
-            px[xx % CELL, yy % CELL] = (*c, 255)
-
-
 def _paste_prop(tile: Image.Image, prop: Image.Image, cx: int, bottom: int) -> None:
     place_in_cell(tile, prop, cx - prop.width // 2, bottom - prop.height)
 
@@ -580,8 +572,15 @@ _TUFT_MARGIN = 1
 
 
 def _tuft_at(sx: int, sy: int, dx: int, dy: int) -> tuple[int, int]:
+    """Where a tuft stands once its phase offset is folded into the cell.
+
+    Both axes are clamped off the outermost pixel ring on both sides — the
+    ring is the shared one every phase carries, and a tuft painted into it
+    would be the one pixel that is not shared and so the one that seams. The
+    low bound on y is one further in because the blade is drawn a row above.
+    """
     span = CELL - _TUFT_MARGIN - 3
-    x = min((sx + dx) % CELL, span)
+    x = min(max((sx + dx) % CELL, _TUFT_MARGIN), span)
     y = min(max((sy + dy) % CELL, _TUFT_MARGIN + 1), span)
     return x, y
 
