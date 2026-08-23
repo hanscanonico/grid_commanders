@@ -30,6 +30,7 @@ from spritegen.autotile import E, N, S, W
 from spritegen.gbuffer import project as voxel_project
 from spritegen.palette import (
     FACTIONS,
+    Faction,
     GROUND_BAND,
     GROUND_BREAK,
     GUNMETAL_RAMP,
@@ -2243,16 +2244,87 @@ class AmbientFrames(unittest.TestCase):
         self.assertEqual(b1.tobytes(), atlas.build_units_atlas(Pose.B).tobytes())
         self.assertNotEqual(b1.tobytes(), atlas.build_units_atlas().tobytes())
 
-    def test_every_unit_has_a_second_key_pose(self):
-        """No cell may sit still: an army where half the units freeze while
-        the rest breathe reads as a bug, not as an idle."""
+    # What the board draws. BattleView scales the 64x96 cell by 0.25 per zoom
+    # rung with nearest filtering, so rung 1 — the furthest the board zooms
+    # out, and the hardest sample an idle has to survive — is a 16x24 texel
+    # sample of the cell, where a pose delta under 4 atlas px moves nothing.
+    RUNG_1 = (16, 24)
+    # Every unit at rung 1, measured by tests/measure_motion.py on 2026-08-24:
+    # apc 3, recon 4, tank 5, md_tank 6, mech 7, artillery 7, anti_air 8,
+    # missiles 10, rockets 11, infantry 12 for the land army; fighter 30,
+    # bomber 36, b_copter 28, t_copter 30 in the air; battleship 30, cruiser
+    # 22, sub 24, lander 18 at sea. Three is the floor the quietest of them
+    # clears, and it is what an idle needs to be seen at board scale at all.
+    MIN_SILHOUETTE_TEXELS = 3
+    # Interior change per silhouette texel at rung 1, same run, worst first:
+    # apc 4.67, tank 4.40, md_tank 4.33, rockets 3.64, artillery 3.00,
+    # recon 2.25, anti_air 2.12, cruiser 1.91, missiles 1.90, infantry 1.58,
+    # lander 1.56, bomber 1.39, battleship 1.20, t_copter 1.07, fighter 0.90,
+    # sub 0.83, b_copter 0.79, mech 0.43 — each the worst of that unit's five
+    # liveries, which move the tones and not the shape and spread it by 0.25
+    # at most. Five is just over the noisiest honest unit; the apc is up
+    # there because it has no turret and no gun, so its whole texel is the
+    # nose dipping past a hull that can only re-tone behind it.
+    MAX_SHIMMER = 5.0
+
+    def test_every_unit_moves_a_whole_board_texel(self):
+        """A beat the board cannot resample is not a beat.
+
+        This used to ask only that frame B's cell differ from frame A's
+        somewhere in its 64x96 pixels, which one pixel satisfies and which a
+        one-voxel settle or a period-2 tread checker passed while changing
+        NOTHING the player sees: under the 4:1 sample a sub-texel delta
+        re-tones the inside of a shape that holds still. So ask it at the
+        size the board draws — how many rung-1 texels the two poses disagree
+        about being PAINTED — for every unit of every livery.
+
+        Each land unit earns it by moving one named assembly a whole texel
+        (a dz of two voxels, or a `(dx +1, dy -1)` diagonal); the two foot
+        figures by leaning the whole upper body; the copters by turning
+        their rotors; everything else that flies or floats by the `BOB_PX`
+        hop, which is one texel of altitude exactly.
+        """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
+                _, silhouette = self._texels(uid, fac)
                 with self.subTest(unit=uid, faction=fac.key):
-                    self.assertNotEqual(
-                        atlas.unit_cell(uid, fac).tobytes(),
-                        atlas.unit_cell(uid, fac, Pose.B).tobytes(),
-                    )
+                    self.assertGreaterEqual(silhouette, self.MIN_SILHOUETTE_TEXELS)
+
+    def test_no_unit_shimmers_more_than_it_moves(self):
+        """The floor above can be bought the wrong way.
+
+        A unit that repaints half its interior while its outline holds still
+        does clear a silhouette bar if a few boundary texels flip with the
+        sampling phase, and it reads as the sprite boiling rather than as an
+        idle. So cap the other half of the ratio: interior texels that only
+        change tone, per texel of silhouette that actually moves, under
+        `MAX_SHIMMER` at rung 1. The two numbers together say the change the
+        board sees is mostly the shape going somewhere.
+        """
+        for uid in ATLAS_ORDER:
+            for fac in FACTIONS:
+                changed, silhouette = self._texels(uid, fac)
+                interior = changed - silhouette
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
+
+    def _texels(self, uid: str, fac: Faction) -> tuple[int, int]:
+        """Rung-1 texels the two poses disagree on, and how many of those
+        disagreements are the silhouette rather than the tone."""
+        w, h = self.RUNG_1
+        pa, pb = (
+            atlas.unit_cell(uid, fac, pose).resize(self.RUNG_1, Image.NEAREST).load()
+            for pose in (Pose.A, Pose.B)
+        )
+        changed = silhouette = 0
+        for y in range(h):
+            for x in range(w):
+                ca, cb = pa[x, y], pb[x, y]
+                if ca != cb:
+                    changed += 1
+                    if (ca[3] > 128) != (cb[3] > 128):
+                        silhouette += 1
+        return changed, silhouette
 
     def test_the_key_pose_keeps_the_units_mass(self):
         for uid in ATLAS_ORDER:
@@ -2407,57 +2479,6 @@ class AmbientFrames(unittest.TestCase):
                     a = self._foam(atlas.unit_cell(uid, fac))
                     self.assertTrue(a)
                     self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, Pose.B)))
-
-    def test_air_and_sea_units_move_between_frames(self):
-        red = faction_by_key("red")
-        for uid, (_, kind) in atlas.UNITS.items():
-            if kind == "land":
-                continue
-            with self.subTest(unit=uid):
-                self.assertNotEqual(
-                    atlas.unit_cell(uid, red).tobytes(),
-                    atlas.unit_cell(uid, red, Pose.B).tobytes(),
-                )
-
-    # The ten land units, measured at rung 1 by tests/measure_motion.py on
-    # 2026-08-24: apc 3, recon 4, tank 5, md_tank 6, mech 7, artillery 7,
-    # anti_air 8, missiles 10, rockets 11, infantry 12. Three is the floor
-    # the quietest of them clears, and it is what an idle needs to be seen at
-    # board scale at all; the pass before the vehicles' had six of the eight
-    # at exactly zero, and the two foot figures held 2 each until they took
-    # their own whole-texel beat.
-    MIN_SILHOUETTE_TEXELS = 3
-
-    def test_the_land_units_move_a_whole_board_texel(self):
-        """A beat the board cannot resample is not a beat.
-
-        `test_every_unit_has_a_second_key_pose` only asks that frame B differ
-        somewhere in the 64x96 cell, which a one-voxel settle or a period-2
-        tread checker satisfies while changing NOTHING the board draws: at
-        rung 1 the cell is sampled to 16x24, so a delta under 4 atlas px
-        re-tones the inside of a shape that holds still. This asks the
-        question at the size the player sees — how many texels the two poses
-        disagree about being painted at all — for every land unit, each of
-        which moves one named assembly a whole texel (dz of two voxels, or a
-        (dx +1, dy -1) diagonal). The two foot figures are in it now: the
-        rifleman leans his whole upper body, rifle and hands included, and
-        the rocket trooper's shoulder drops under its tube.
-        """
-        red = faction_by_key("red")
-        for uid in (u for u, (_, kind) in atlas.UNITS.items() if kind == "land"):
-            a, b = (
-                atlas.unit_cell(uid, red, pose).resize((16, 24), Image.NEAREST)
-                for pose in (Pose.A, Pose.B)
-            )
-            pa, pb = a.load(), b.load()
-            silhouette = sum(
-                1
-                for y in range(24)
-                for x in range(16)
-                if (pa[x, y][3] > 128) != (pb[x, y][3] > 128)
-            )
-            with self.subTest(unit=uid):
-                self.assertGreaterEqual(silhouette, self.MIN_SILHOUETTE_TEXELS)
 
     def test_frame_b_still_reads_as_its_own_unit(self):
         # A rotor sweep on a small aircraft legitimately moves a quarter of

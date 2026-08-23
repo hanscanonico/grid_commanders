@@ -192,10 +192,13 @@ shoulders (2 -> 12 silhouette texels at rung 1), and the rocket trooper's left
 pauldron drops `dz = -2` under its launch tube (2 -> 7). The rifleman leans
 rather than compresses because a `dz = -2` on him costs 4 px of height and 64
 opaque pixels, below the floors his own read tests hold.
-`AmbientFrames.test_the_land_units_move_a_whole_board_texel` holds the floor at
-three changed silhouette texels at rung 1 for all ten; the air and sea units,
-whose pose B is their pose A translated by `atlas.BOB_PX`, clear it by moving
-every boundary texel they own.
+`AmbientFrames.test_every_unit_moves_a_whole_board_texel` holds the floor at
+three changed silhouette texels at rung 1 for every unit of every livery — the
+air and sea ones, whose pose B is their pose A translated by `atlas.BOB_PX`,
+clear it by moving every boundary texel they own — and
+`test_no_unit_shimmers_more_than_it_moves` caps the other half of the ratio, so
+the floor can never be bought by repainting an interior under an outline that
+holds still.
 
 ## Setup
 
