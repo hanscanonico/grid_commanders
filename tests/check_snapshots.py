@@ -12,9 +12,13 @@ autotile sheet, a new atlas) from landing compared against nothing.
 
 The one output not compared file-for-file is `units/<id>_<team>.png`: those
 cells are the units atlas's own cells, exported for the game's paste script.
-Instead of committing 120 duplicates of art already snapshotted, each cell is
+Instead of committing 90 duplicates of art already snapshotted, each cell is
 required to be, pixel for pixel, one of the cells of the committed
-`units_atlas.png` — which pins the exporter to the atlas.
+`units_atlas.png` — which pins the exporter to the atlas. That binds the art
+but not the cell's address in the atlas, which nothing here can know.
+
+Scope is the PNGs: the one non-image output, `anim.json`, is pinned by the
+determinism double-run rather than by a committed snapshot.
 
 Run: .venv/bin/python tests/check_snapshots.py <generated-dir> [assets-dir]
 """
