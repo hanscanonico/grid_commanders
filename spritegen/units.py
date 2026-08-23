@@ -110,48 +110,112 @@ def _settle(m: Model, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> N
 
 
 def infantry(pose: Pose = Pose.A) -> Model:
-    """Rifleman: helmet dome over an open face, legs apart mid-stride, rifle
-    raised across the chest with the muzzle breaking the silhouette high to
-    the right — the opposite corner from the mech's tube."""
+    """Rifleman: a full stride under a fatigue torso, a lit shoulder line, a
+    helmeted head notched well inside that line, and a short dark rifle
+    carried level across the chest with its muzzle breaking the silhouette to
+    the right — the opposite corner from the mech's tube.
+
+    Everything here is sized for the board, where the 64px cell is sampled
+    4:1 and the man is worth some 8x12 logical pixels. The 2026-08-23 reading
+    of the model this replaces was the sheet's smallest and dimmest land
+    unit — 516 opaque pixels in a 28x29 box, 4.7% of them above L200, twelve
+    voxels tall against the mech's seventeen, and a 6x8 smudge once halved
+    twice. It is 692 in 32x37 now, at 6.2% above L200, which is 42-50 logical
+    pixels on the board against 35-38 before.
+
+    Three of those pixels are what makes it a FIGURE rather than a mass, and
+    each is authored against the halving:
+
+    - the boots stand two voxels apart on both axes, so sky survives between
+      the legs at all four sampling phases (it survived at three before, and
+      the legs fused into a plinth at the fourth);
+    - the head is four source pixels inside the shoulder line on the near
+      side and six on the far one, with one shadow-slot neck row between the
+      two, so the neck reads as a step instead of head and body sharing one
+      unbroken field of livery;
+    - the face is skin on the camera-facing plane INSIDE the helmet's own
+      z-range, three source rows of it and the only large neutral patch on
+      the man. The old skin box sat below the helmet, on the chest, and read
+      as a sash.
+
+    The shoulders take the top slot on their two camera-facing edges only —
+    a lit LINE, not a lit table — and that line carries about half the
+    sprite's mass above L200 against the crest's third, so the brightest
+    thing on the man is his shoulders and the pure team colour stays an
+    accent on his helmet.
+
+    The rifle runs along the (+x, -y) world diagonal, which this projection
+    maps to an exactly HORIZONTAL screen row, so it comes out as a bar rather
+    than the 45° stair of mid-greys a z-climbing barrel leaves: at least
+    three contiguous gunmetal logical pixels at every phase, against one
+    before. Grip, magazine and handguard hang a voxel under the receiver and
+    barrel, which is also what gives the bar a second solid screen row — with
+    one row of cubes the board lands on the dotted top face at one phase in
+    four. It is kept dark and short on purpose: an earlier draft ran a bright
+    `steel` bar out past the man and became the widest, lightest thing on the
+    sprite, out-shouting the faction colour on every row (A/B panel,
+    2026-08-15). Both hands sit one z under their gun voxel, which this
+    projection puts two pixels below it, so there is no sky between the man
+    and the weapon at any zoom.
+    """
     m = Model()
-    # mid-stride legs: left boot planted a full step forward, right boot
-    # trailing behind the hip line
-    m.box(2, 3, 6, 7, 0, 0, "tire")
-    m.box(5, 6, 2, 3, 0, 0, "tire")
-    m.box(2, 3, 6, 7, 1, 2, "hull_dk")
-    m.box(5, 6, 2, 3, 1, 2, "hull_dk")
-    # hips bridging the stride
-    m.box(2, 6, 3, 6, 3, 3, "hull_dk")
+    # Full stride: the boots are two voxels apart on BOTH axes, which opens a
+    # wedge of sky wide enough to survive the 4:1 board sample at every phase
+    # — at one voxel the legs fused into a plinth on half of them.
+    m.box(2, 3, 5, 7, 0, 0, "tire")  # forward boot, planted
+    m.box(5, 6, 1, 3, 0, 0, "tire")  # trailing boot
+    m.box(2, 3, 5, 6, 1, 5, "hull_dk")  # forward leg
+    m.box(5, 6, 2, 3, 1, 5, "hull_dk")  # trailing leg
+    # belt line bridging the stride
+    m.box(2, 6, 2, 6, 6, 6, "hull_dk")
     # plain fatigue torso — the mech wears the plated chest, not the rifleman
-    m.box(2, 6, 3, 6, 4, 6, "hull")
-    # backpack
-    m.box(3, 5, 2, 2, 4, 6, "body_dk")
-    # left arm at the side; right arm raised across the chest to the grip
-    m.box(1, 1, 3, 5, 4, 6, "hull")
-    m.box(7, 7, 4, 6, 4, 5, "hull")
-    # rifle at port arms, held a voxel clear of the torso so the barrel's
-    # diagonal reads against sky rather than across the chest
-    m.set(8, 6, 5, "wood")  # stock
-    m.set(8, 5, 6, "gunmetal")  # receiver
-    m.set(8, 4, 7, "gunmetal")
-    m.set(8, 3, 8, "gunmetal")
-    m.set(8, 2, 9, "gunmetal")
-    m.set(8, 1, 10, "gunmetal_dk")  # muzzle
-    # big open face under an overhanging dome helmet; the brim ring is a
-    # voxel wider than the torso so the dome breaks the column silhouette
-    m.box(3, 5, 4, 6, 7, 8, "skin")
-    m.box(3, 5, 3, 3, 7, 8, "hull_dk")  # nape guard
-    m.box(1, 7, 3, 6, 9, 9, "hull")  # brim
-    for cx, cy in ((1, 3), (1, 6), (7, 3), (7, 6)):
-        m.unset(cx, cy, 9)
-    m.box(2, 6, 3, 6, 10, 10, "hull")  # dome
-    for cx, cy in ((2, 3), (2, 6), (6, 3), (6, 6)):
-        m.unset(cx, cy, 10)
-    m.box(3, 5, 4, 5, 11, 11, "body")  # crown
+    m.box(2, 6, 2, 6, 7, 11, "hull")
+    # backpack riding high on the shoulders
+    m.box(3, 5, 2, 2, 7, 11, "body_dk")
+    # near arm hanging at the flank; firing arm out to the grip
+    m.box(1, 1, 3, 6, 7, 11, "hull_dk")
+    m.box(7, 7, 3, 6, 7, 10, "hull")
+    # The lit shoulder LINE, not a lit shoulder table: only the outer edges of
+    # the shoulder plane take the top slot. Lighting the whole plane made a
+    # bright slab the eye read as a table the head was standing on.
+    m.box(1, 7, 6, 6, 11, 11, "hull_lt")
+    m.box(7, 7, 3, 6, 11, 11, "hull_lt")
+    m.box(1, 1, 3, 6, 11, 11, "hull_lt")
+    # Rifle carried level: wood butt at the shoulder, a receiver standing a
+    # voxel taller for its sight, a one-voxel barrel out to a near-black
+    # muzzle, and the furniture hanging under the first four. Only one voxel
+    # of the whole weapon takes the lighter `gunmetal` step.
+    m.set(7, 6, 11, "wood")  # butt against the shoulder
+    m.set(8, 5, 11, "gunmetal_dk")  # receiver
+    m.set(8, 5, 12, "gunmetal_dk")  # rear sight
+    m.set(9, 4, 11, "gunmetal")  # the one lit step on the weapon
+    m.set(10, 3, 11, "gunmetal_dk")  # barrel
+    m.set(11, 2, 11, "bore")  # muzzle
+    m.set(7, 6, 10, "gunmetal_dk")  # butt plate under the stock
+    m.set(8, 5, 10, "gunmetal_dk")  # magazine
+    m.set(9, 4, 10, "gunmetal_dk")  # handguard
+    m.set(10, 3, 10, "gunmetal_dk")  # under-barrel
+    m.set(8, 5, 9, "skin")  # trigger hand
+    m.set(9, 4, 9, "skin")  # support hand
+    # Neck: one shadow-slot row between the shoulder line and the skull, and
+    # narrow, so the shoulder plane stays open around it. That dark step is
+    # what stops head and body reading as a single field of livery.
+    m.box(4, 5, 5, 6, 12, 12, "hull_dk")
+    # head, inset from the shoulder line on both sides, with the open face on
+    # the camera-facing plane
+    m.box(3, 5, 4, 5, 13, 14, "hull_dk")  # skull and cheek guards
+    m.box(3, 5, 6, 6, 13, 14, "skin")  # face
+    # helmet: one octagonal shell overhanging the skull, still four source
+    # pixels inside the shoulder line on the near side and six on the far
+    # one, and a pure team crest along its front edge — the accent, not the
+    # sprite's brightest plane
+    m.box(2, 6, 4, 6, 15, 15, "hull_dk")
+    m.chamfer(2, 6, 4, 6, 15, 15)
+    m.box(3, 5, 6, 6, 16, 16, "body")  # crest
     if pose is Pose.B:
         # weight shifts onto the trailing boot: the firing arm and the rifle
         # it holds ride a voxel lower, port arms easing toward the hip
-        _settle(m, 7, 8, 1, 6, 4, 10)
+        _settle(m, 7, 11, 2, 6, 9, 12)
     return m
 
 
