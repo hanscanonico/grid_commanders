@@ -18,23 +18,26 @@ import unittest
 from spritegen import atlas, terrain
 
 
-# TerrainAutotiles.phase(Vector2i(x, y), 5) for x in 0..14, printed by Godot
-# from scenes/battle/terrain_autotiles.gd. The hash is the whole contract — a
-# preview whose phases are merely plausible is not the game's board — so it is
-# pinned against the engine's own arithmetic rather than against ours.
-_GODOT_PLAINS_PHASES_ROW0 = (0, 4, 1, 0, 4, 1, 3, 3, 3, 4, 0, 1, 3, 4, 4)
+# TerrainAutotiles.phase(Vector2i(x, y), 8) and (…, 3) for x in 0..14, printed
+# by Godot 4.7 from scenes/battle/terrain_autotiles.gd. The hash is the whole
+# contract — a preview whose phases are merely plausible is not the game's
+# board — so it is pinned against the engine's own arithmetic rather than
+# against ours. The plains row was re-derived when the field went from five
+# phases to eight; the count is an argument to the hash, so every cell moves.
+_GODOT_PLAINS_PHASES_ROW0 = (0, 1, 3, 4, 0, 7, 1, 1, 0, 2, 7, 4, 4, 3, 3)
 _GODOT_SEA_PHASES_ROW0 = (0, 1, 0, 0, 1, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2)
 
 
 class DemoPhaseHash(unittest.TestCase):
     def test_matches_the_games_hash(self):
+        self.assertEqual(len(terrain.PLAINS_PHASES), 8, "re-derive the pinned row")
         for x, want in enumerate(_GODOT_PLAINS_PHASES_ROW0):
-            self.assertEqual(atlas.phase(x, 0, 5), want, f"plains phase at x={x}")
+            self.assertEqual(atlas.phase(x, 0, 8), want, f"plains phase at x={x}")
         for x, want in enumerate(_GODOT_SEA_PHASES_ROW0):
             self.assertEqual(atlas.phase(x, 0, 3), want, f"sea phase at x={x}")
 
     def test_stays_inside_the_phase_count(self):
-        for count in (3, 5):
+        for count in (3, 8):
             for y in range(40):
                 for x in range(40):
                     self.assertIn(atlas.phase(x, y, count), range(count))
@@ -59,13 +62,18 @@ class DemoMap(unittest.TestCase):
         self.assertGreaterEqual(share, 0.45, f"{share:.0%} plains, too little ground")
         self.assertLessEqual(share, 0.65, f"{share:.0%} plains, too little else")
 
-    def test_plains_cells_wear_at_least_three_phases(self):
+    def test_plains_cells_wear_every_phase(self):
+        """The demo board has to exercise the whole table, not a corner of it:
+        75 plains cells over eight phases, so a phase the hash never lands on
+        here is a phase no reviewer ever sees."""
         phases = {
             atlas.phase(x, y, len(terrain.PLAINS_PHASES))
             for x, y, tid in self._cells()
             if tid == "plains"
         }
-        self.assertGreaterEqual(len(phases), 3, f"phases drawn: {sorted(phases)}")
+        self.assertEqual(
+            phases, set(range(len(terrain.PLAINS_PHASES))), f"drawn: {sorted(phases)}"
+        )
 
     def test_every_terrain_column_appears(self):
         drawn = collections.Counter(tid for _, _, tid in self._cells())
@@ -87,7 +95,7 @@ class DemoMap(unittest.TestCase):
 
 class DemoRender(unittest.TestCase):
     """The board as drawn, not merely as declared: a legend that hashes into
-    five phases proves nothing if `build_demo` still paints phase 0."""
+    eight phases proves nothing if `build_demo` still paints phase 0."""
 
     @classmethod
     def setUpClass(cls):
@@ -117,7 +125,9 @@ class DemoRender(unittest.TestCase):
                     f"cell {(x, y)} is not plains phase {want}",
                 )
             drawn.add(want)
-        self.assertGreaterEqual(len(drawn), 3, f"phases drawn: {sorted(drawn)}")
+        self.assertEqual(
+            drawn, set(range(len(terrain.PLAINS_PHASES))), f"drawn: {sorted(drawn)}"
+        )
 
 
 if __name__ == "__main__":

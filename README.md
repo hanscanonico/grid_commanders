@@ -210,7 +210,7 @@ python3 -m venv .venv
 | `autotiles/{roads,rivers,coast,shoals,woods}.png` | 16-variant connection sheets (see below) |
 | `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S |
 | `autotiles/sea.png` | the three sea phase variants, phase 0 first (see below) |
-| `autotiles/plains.png` | the five plains phase variants, phase 0 first (see below) |
+| `autotiles/plains.png` | the eight plains phase variants, phase 0 first (see below) |
 | `autotiles/mountain.png` | the three mountain phase variants, phase 0 first (see below) |
 
 `units_atlas_figures.png` exists because a figure standing on a drawn ground
@@ -276,8 +276,13 @@ that hash copied out of `scenes/battle/terrain_autotiles.gd`
 cell for cell rather than a plausible-looking one.
 
 `autotiles/plains.png` is that rule on the ground most of a board is made of,
-and it is phased the same way: five tiles, phase 0 the atlas plains column byte
-for byte, chosen by the same coordinate hash. A phase's salt keys **the clump
+and it is phased the same way: eight tiles, phase 0 the atlas plains column
+byte for byte, chosen by the same coordinate hash. Eight and not the sea's
+three because the shipped maps are ~56% plains: at that share a five-phase
+field still puts the same fleck back at the same in-tile position often enough
+to read as a lattice at a longer pitch, and the phase count is the only dial
+that lengthens it. `TerrainAutotiles.PLAINS_PHASES` counts the sheet's cells,
+so the game's constant moves with the table. A phase's salt keys **the clump
 field and the grain**, and its offset stands the tufts somewhere else — same
 count, same tones, same clump coverage, every tuft drawn whole inside the cell
 — because plains is the reference ground most contrast pairs are read against,
@@ -306,7 +311,7 @@ every ground on the sheet came down with it (27.8 colours a cell -> 9.4).
 two-tone ground, and the one thing it costs: a clump ties in value with road
 gravel and separates from it by hue alone.
 
-Four of the five phases carry **decals**: a stone, a knot of tall grass, a
+Seven of the eight phases carry **decals**: a stone, a knot of tall grass, a
 patch the summer dried out — all of them in grass's own hue under S0.45, and
 under the terrain value ceiling. A find is 1-3px, which is a size that carries
 a hue and not a material: gravel grey and wildflower tan at that size read as
@@ -315,7 +320,7 @@ They are ground detail and never a game object — no signpost, fence or marker,
 which a board reads as a property from across the room — and they are drawn
 inside the cell rather than wrapped, so a decal never overhangs its neighbour.
 Phase 0 stays bare because it is the atlas column. Rarity used to be this
-table's job — three of five phases empty, since a decal was the only thing that
+table's job — three of the five phases empty, since a decal was the only thing that
 told two phases apart; the clump field is what a stretch of field varies by
 now, so a decal is scattered detail on an already-varied field. If a field ever
 reads busy, thin the table's decals rather than the clumps.

@@ -165,16 +165,21 @@ def _rock_rows(tile) -> list[int]:
 
 
 def _contact_shadow(tile) -> list[tuple[int, int]]:
-    """The massif's own cast shadow: dark grass with the rock that cast it
-    exactly `SHADOW_OFFSET` up-left, which is what tells it from the boulders
-    shed on the apron (`OneSun` reads the whole sheet this way)."""
+    """The massif's own cast shadow: the sheet's cast-shadow tone with the
+    rock that cast it exactly `SHADOW_OFFSET` up-left (`OneSun` reads the
+    whole sheet this way).
+
+    It used to be read as GRASS_DARK, and had to check the caster to tell the
+    shadow from the boulders shed on the apron. The massif drops the same
+    `terrain.SHADOW` a unit and a city drop now, so the tone alone names it —
+    the caster check stays because the offset is what is being asserted."""
     rgb = tile.convert("RGB")
     dx, dy = SHADOW_OFFSET
     return [
         (x, y)
         for y in range(dy, CELL)
         for x in range(dx, CELL)
-        if rgb.getpixel((x, y)) == terrain.GRASS_DARK
+        if rgb.getpixel((x, y)) == terrain.SHADOW
         and rgb.getpixel((x - dx, y - dy)) in _MASSIF_TONES
     ]
 

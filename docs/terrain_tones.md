@@ -181,3 +181,24 @@ rotates its hue a fraction of `_HUE_ARC`, which is the right move for a tone
 with chroma to defend and a coin flip for a grey — the same finding
 `terrain._SHADE_GREY` records for the painted tones. `ROCK_RAMP[2]` comes out
 at (90, 95, 110) against `ROCK[3]`'s (91, 95, 108).
+
+## The massif drops the sheet's shadow (2026-08-23)
+
+`terrain._contact_shadow` stamped the massif's silhouette in `GRASS_DARK`,
+which is the grass's own shaded rim — the tone the tufts and the boulders shed
+on the apron are drawn in — so the darkest pixel anywhere on the mountain tile
+was its (30, 32, 36) outline. Every other raised thing on the board drops
+`SHADOW` (16, 18, 24) at `voxel.SHADOW_OFFSET`: units through
+`voxel.compose_cell`, buildings through `terrain._drop_shadow`. A massif
+standing next to either of them read as flat-lit beside a hard shadow.
+
+It drops the same tone now, at the same offset, with the same two clips it
+already had (inside the cell, and never where the rock stands on it). Nothing
+about the shadow's SHAPE moved, so `MountainPhases`' horizon reading is the
+same row it was; only the tone the test picks the shadow out by changed, and
+`OneSun`'s per-pixel caster reading is unaffected because it reads a difference
+against the same tile drawn with no offset.
+
+The woods keep `GRASS_DARK`: that fringe is a line under each crown's shaded
+rim rather than one massing's cast silhouette, and the clearings between the
+crowns are the plains plate `WoodsSeam` measures the tile on.

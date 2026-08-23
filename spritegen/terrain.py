@@ -375,8 +375,8 @@ def _clump_layout(salt: int) -> dict[tuple[int, int], RGB]:
     The border ring is the shared one, read at its folded index; the interior
     is the phase's own field, ranked to whatever the ring left of the tile's
     fixed clump budget. Every phase therefore spends the same number of blocks
-    on each tone — the two plates and the five phases stay one field in
-    different arrangements — while their edges stay identical.
+    on each tone — the two plates and every phase stay one field in different
+    arrangements — while their edges stay identical.
     """
     ring = _ring_layout()
     layout = {}
@@ -420,7 +420,7 @@ def _grass_ground(salt: int) -> Image.Image:
             # board's 4:1 rung, which a wobble inside it only blurs, and a
             # grained clump spends a colour per rung on a tile already close
             # to the 80-colour ceiling (woods measured 88). Flat also means
-            # both plates and all five phases spend exactly these two tones,
+            # both plates and every phase spend exactly these two tones,
             # which is what `WoodsSeam` reads the woods plate against the
             # plains one on.
             tone = layout.get((bxi, byi))
@@ -547,19 +547,34 @@ _DECALS = {"pebble": _pebble, "tussock": _tussock, "dry": _dry_patch}
 # grid: tile means within 0.31L of each other, with three of the five carrying
 # nothing at all. Rarity is the clump field's job now — it is what a stretch of
 # field varies BY — so the decals stop being the only difference between phases
-# and four of the five carry a find. Phase 0 stays bare because it is the atlas
+# and all but one carry a find. Phase 0 stays bare because it is the atlas
 # column, which is the tile a board falls back to everywhere.
-# The salts were re-picked on 2026-08-23, when the border ring became shared:
-# the ring is a fifth of a tile's clumps laid the same way in every phase, a
-# floor of ~0.15 under any two phases' layout overlap, so the four that are
-# free are the four whose interiors agree least — 0.31 at the worst pair,
-# against 0.47 for the salts the table happened to hold.
+# EIGHT of them since 2026-08-23, not five: the shipped maps are ~56% plains,
+# and at the board's 4:1 rung a five-phase field puts the same fleck back at
+# the same in-tile position every fifth cell the hash lands on — a lattice at
+# a longer pitch is still a lattice. The three added phases are salt variants
+# of the same field, drawn by the same painter: only the hash key, the tuft
+# offset and where the find lies move, so the coverage, the tone count and the
+# value band the field is measured on are the phases the table already had.
+# The game's `TerrainAutotiles.PLAINS_PHASES` counts these cells, so it moves
+# with this tuple or the board indexes off the end of the sheet.
+# The salts are PICKED, not chosen for looks: since the border ring became
+# shared it is a fifth of a tile's clumps laid the same way in every phase, a
+# floor of ~0.15 under any two phases' layout overlap, so what a salt buys is
+# how little its INTERIOR agrees with the others'. The five the table held
+# were searched for on 2026-08-23 (0.31 at the worst of ten pairs, against
+# 0.47 for the salts it happened to hold); 31, 253 and 316 are the trio that
+# joins them at the least worst pair over all 28 — 0.34, which no trio of
+# salts under 400 beats.
 PLAINS_PHASES: tuple[tuple[int, int, int, tuple[tuple[str, int, int], ...]], ...] = (
     (PLAINS_SALT, 0, 0, ()),
     (8, 27, 19, (("tussock", 52, 22), ("dry", 24, 46))),
     (13, 45, 37, (("pebble", 6, 30), ("dry", 40, 8))),
     (20, 13, 49, (("pebble", 21, 40), ("dry", 43, 14))),
     (49, 55, 7, (("tussock", 12, 22), ("pebble", 45, 50))),
+    (31, 33, 29, (("dry", 14, 12), ("tussock", 46, 44))),
+    (253, 7, 41, (("pebble", 50, 18), ("tussock", 18, 46))),
+    (316, 49, 11, (("dry", 40, 46), ("pebble", 12, 24))),
 )
 
 # A tuft is drawn whole, inside the cell. It used to WRAP around the tile,
@@ -931,8 +946,17 @@ ROCK: tuple[RGB, RGB, RGB, RGB] = (
 
 def _contact_shadow(tile: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
     """The shadow a prop standing on grass drops: its own silhouette, moved
-    down-right by `voxel.SHADOW_OFFSET` — the sheet's one sun — in the field's
-    own dark grass rather than in a tone of its own.
+    down-right by `voxel.SHADOW_OFFSET` — the sheet's one sun — in the sheet's
+    one cast-shadow tone, `SHADOW`.
+
+    It used to be stamped in GRASS_DARK, which is the grass's own shaded rim
+    and the tone the tufts and the shed boulders are drawn in: the massif was
+    then the one raised thing on the board whose darkest pixel was its (30,
+    32, 36) outline, standing beside a unit and a city that both drop the
+    (16, 18, 24) SHADOW at the same offset. A raised mass reads as raised by
+    the hole its shadow puts in the ground, so the massif drops the same one.
+    The grass keeps GRASS_DARK for what the grass does — the woods' fringe
+    line stays a line of dark grass, because a wood is not one massing.
 
     Only where the prop is not already standing, and only where the pixel that
     CAST it is inside the cell: a shadow whose caster was clipped off the tile
@@ -952,7 +976,7 @@ def _contact_shadow(tile: Image.Image, sprite: Image.Image, x0: int, y0: int) ->
             if 0 <= tx - x0 < sprite.width and 0 <= ty - y0 < sprite.height:
                 if sp[tx - x0, ty - y0][3] != 0:
                     continue  # the prop stands on its own shadow
-            px[tx, ty] = (*GRASS_DARK, 255)
+            px[tx, ty] = (*SHADOW, 255)
 
 
 def mountain(phase: int = 0) -> Image.Image:
