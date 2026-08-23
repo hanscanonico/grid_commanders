@@ -118,8 +118,9 @@ class InfantryRifle(unittest.TestCase):
     and two at the rest. Along the (+x, -y) world diagonal the same weapon is
     a horizontal screen row, and the furniture hung a voxel under it gives the
     bar a second solid row so the sample cannot land on the dotted top face
-    alone. Measured a longest run of 4-6 at all sixteen offsets in pose A and
-    3-5 in pose B, where the muzzle steps down.
+    alone. Measured a longest run of 4-6 at all sixteen offsets in BOTH poses:
+    pose B carries the whole upper body, the rifle line with it, one texel
+    along that same diagonal, so the bar travels without changing shape.
 
     The gunmetal ramp is shared with `tire`, so the run is looked for above
     the figure's ankles only: the boots are on the same ramp and must not be
