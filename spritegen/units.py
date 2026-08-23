@@ -217,6 +217,11 @@ def infantry(pose: Pose = Pose.A) -> Model:
     earlier draft put the sleeve and hands one screen row higher, where they
     ate the bottom of the bar, and the 4:1 sample lost the weapon entirely at
     two phases in sixteen.
+
+    Pose A is byte-frozen; pose B leans the whole upper body one board texel
+    over planted boots — 12 changed silhouette texels at rung 1 against the
+    2 the old rifle-only settle scored. See the branch below for why the lean
+    is diagonal rather than a drop.
     """
     m = Model()
     # Full stride: the boots are two voxels apart on BOTH axes, which opens a
@@ -281,17 +286,39 @@ def infantry(pose: Pose = Pose.A) -> Model:
     m.chamfer(2, 6, 4, 6, 15, 15)
     m.box(3, 5, 6, 6, 16, 16, "body")  # crest
     if pose is Pose.B:
-        # weight shifts onto the trailing boot and the muzzle eases down:
-        # barrel, muzzle, forward sleeve and forward hand all drop a voxel
-        # together, so the hold changes rather than the whole man sliding.
-        _shift(m, (9, 11, 3, 6, 9, 11), dz=-1)
+        # The beat is the man shifting his weight, and it is a WHOLE board
+        # texel. Everything from the belt line up — torso, both arms, the
+        # shoulder line, backpack, neck, head, helmet, crest, and the whole
+        # rifle line with both hands still on it — takes one `(dx +1, dy -1)`
+        # diagonal step while the boots and legs stay planted, which carries
+        # the weight back over the trailing boot: the figure leans as one
+        # body and the weapon travels with the shoulders rather than waggling
+        # on its own.
+        #
+        # The lean is along the diagonal rather than down the z axis on
+        # purpose. A `dz = -2` compression of the same assembly is the same
+        # one texel, but it costs the man his height and his mass: measured
+        # 33 px tall and 619 opaque against pose A's 37 and 683, which is
+        # under this sprite's own floor (`tests/test_infantry_read.py`
+        # MIN_HEIGHT 34, MIN_PIXELS 640). The diagonal step moves the same
+        # texel for free — 689 opaque in the same 37 px box.
+        #
+        # Rung-1 silhouette texels, pose A against pose B: 2 before (the old
+        # rifle-only one-voxel settle, half a texel and inside the shape),
+        # 12 now; rung 2 goes 8 -> 45 (`tests/measure_motion.py`).
+        _shift(m, (1, 11, 2, 8, 6, 16), dx=1, dy=-1)
     return m
 
 
 def mech(pose: Pose = Pose.A) -> Model:
     """Rocket trooper: planted wide stance, heavy pauldrons over a bulky
     torso, and a fat launch tube climbing forward over the left shoulder —
-    taller, wider and squarer than the rifleman's stride (rocket)."""
+    taller, wider and squarer than the rifleman's stride (rocket).
+
+    Pose B leans the loaded tube in a whole board texel: the left pauldron
+    and everything it carries ride `dz = -2`, measured at 7 changed
+    silhouette texels at rung 1 against the 2 the old one-voxel settle
+    scored."""
     m = Model()
     # wide planted stance, two-voxel-thick armoured legs
     for x0 in (1, 6):
@@ -327,9 +354,15 @@ def mech(pose: Pose = Pose.A) -> Model:
     m.set(1, 9, 16, "amber")
     m.box(1, 1, 5, 5, 9, 11, "hull")  # supporting arm
     if pose is Pose.B:
-        # the loaded tube leans in: the left pauldron takes its weight and
-        # compresses a voxel, the whole launcher and its arm coming with it
-        _shift(m, (0, 1, 2, 9, 9, 16), dz=-1)
+        # The loaded tube leans in and the left shoulder takes its weight,
+        # for a WHOLE board texel: pauldron first, then exhaust, tube, muzzle
+        # ring, warhead tips and the supporting arm, all `dz = -2` together —
+        # the pauldron leads so the launcher lands back on it rather than
+        # through it. The one-voxel settle this replaces was half a texel and
+        # stayed inside the shape: 2 changed silhouette texels at rung 1
+        # against 7 now, 15 -> 29 at rung 2 (`tests/measure_motion.py`).
+        _shift(m, (0, 0, 3, 6, 7, 8), dz=-2)  # left pauldron
+        _shift(m, (0, 1, 2, 9, 9, 16), dz=-2)  # launcher, arm, pauldron top
     return m
 
 

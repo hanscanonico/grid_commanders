@@ -27,15 +27,19 @@ it only re-tones, and at the edge it flips boundary texels with the sampling
 phase rather than moving them.
 
 Recorded on the red (meridian) row; livery changes the tones, not the shape.
-BEFORE is main at the 2026-08-23 land-idle pass, AFTER is that pass — the
-eight land vehicles re-authored to move a named sub-assembly a whole texel,
-and `units._track`'s link stripe given a period of eight voxels so pose B
-advances it four, one texel in the direction of travel:
+BEFORE is main at the 2026-08-23 land-idle pass, AFTER is that pass plus the
+2026-08-24 foot-figure one — the eight land vehicles re-authored to move a
+named sub-assembly a whole texel, `units._track`'s link stripe given a period
+of eight voxels so pose B advances it four (one texel in the direction of
+travel), and then the rifleman and the rocket trooper given whole-texel body
+beats of their own:
 
                      rung 1 (16x24)               rung 2 (32x48)
   unit         opaq  chng silh shim   |   opaq  chng silh shim
-  infantry       45     6    2  2.00  |    189    28    8  2.50
-  mech           49     7    2  2.50  |    202    26   15  0.73
+  infantry       45     6    2  2.00  |    189    28    8  2.50   before
+                 45    31   12  1.58  |    189   126   45  1.80   after
+  mech           49     7    2  2.50  |    202    26   15  0.73   before
+                 49    10    7  0.43  |    202    41   29  0.41   after
   recon          67    19    3  5.33  |    277    78   13  5.00   before
                  67    12    4  2.00  |    277    46   13  2.54   after
   tank           95     5    0  5.00  |    386    28    0 28.00   before
@@ -61,7 +65,7 @@ advances it four, one texel in the direction of travel:
   sub            60    43   24  0.79  |    252   177   96  0.84
   lander         58    46   18  1.56  |    216   188   72  1.61
   ALL          1367   544  216  1.52  |   5452  2209  856  1.58   before
-               1367   690  267  1.58  |   5452  2777 1053  1.64   after
+               1367   718  282  1.55  |   5452  2890 1104  1.62   after
 
 Before the pass the whole tracked family — tank, md tank, anti air,
 artillery, rockets, apc — moved nothing at either rung. Six of them crept a
@@ -71,7 +75,16 @@ is exactly Nyquist at the board's 4:1 sample: the pattern inverted rather than
 travelled. Rockets, missiles and recon settled a sub-assembly one voxel, which
 is 2 atlas px of dz, half a rung-1 texel, so it landed inside the shape too.
 
-What the eight move now is in each builder's docstring. Two of them are worth
+The two foot figures were the pass after that. Both were at 2 silhouette
+texels on a one-voxel hold — the rifleman easing his muzzle down, the trooper
+settling his launch tube — which is half a texel and reads as the sprite
+boiling. The rifleman now leans his ENTIRE upper body, belt line up, one
+`(dx +1, dy -1)` step over planted boots, rifle and both hands riding with the
+shoulders; a `dz = -2` compression moves the same texel but costs him 4 px of
+height and 64 opaque pixels, under the floors in `tests/test_infantry_read.py`.
+The trooper's shoulder and launcher drop `dz = -2` together.
+
+What each land unit moves is in its builder's docstring. Two of them are worth
 the reader's time here, because they are what the projection costs: the APC
 has no turret and no gun and a roof detail buries itself under the roof's own
 far edge, so its texel is the nose dipping; and the MBT's barrel is two voxels

@@ -2354,24 +2354,16 @@ class AmbientFrames(unittest.TestCase):
                     atlas.unit_cell(uid, red, Pose.B).tobytes(),
                 )
 
-    # The eight land vehicles, measured at rung 1 by tests/measure_motion.py
-    # on 2026-08-24: apc 3, recon 4, tank 5, md_tank 6, artillery 7,
-    # anti_air 8, missiles 10, rockets 11. Three is the floor the quietest of
-    # them clears, and it is what an idle needs to be seen at board scale at
-    # all; the pass before this one had six of the eight at exactly zero.
+    # The ten land units, measured at rung 1 by tests/measure_motion.py on
+    # 2026-08-24: apc 3, recon 4, tank 5, md_tank 6, mech 7, artillery 7,
+    # anti_air 8, missiles 10, rockets 11, infantry 12. Three is the floor
+    # the quietest of them clears, and it is what an idle needs to be seen at
+    # board scale at all; the pass before the vehicles' had six of the eight
+    # at exactly zero, and the two foot figures held 2 each until they took
+    # their own whole-texel beat.
     MIN_SILHOUETTE_TEXELS = 3
-    VEHICLES = (
-        "recon",
-        "tank",
-        "md_tank",
-        "anti_air",
-        "artillery",
-        "rockets",
-        "apc",
-        "missiles",
-    )
 
-    def test_the_land_vehicles_move_a_whole_board_texel(self):
+    def test_the_land_units_move_a_whole_board_texel(self):
         """A beat the board cannot resample is not a beat.
 
         `test_every_unit_has_a_second_key_pose` only asks that frame B differ
@@ -2380,13 +2372,14 @@ class AmbientFrames(unittest.TestCase):
         rung 1 the cell is sampled to 16x24, so a delta under 4 atlas px
         re-tones the inside of a shape that holds still. This asks the
         question at the size the player sees — how many texels the two poses
-        disagree about being painted at all — for the eight vehicles that
-        each move one named sub-assembly a whole texel (dz of two voxels, or
-        a (dx +1, dy -1) diagonal). Infantry and mech are out: they are foot
-        figures whose pose B is a one-voxel hold, worth 2 texels of edge.
+        disagree about being painted at all — for every land unit, each of
+        which moves one named assembly a whole texel (dz of two voxels, or a
+        (dx +1, dy -1) diagonal). The two foot figures are in it now: the
+        rifleman leans his whole upper body, rifle and hands included, and
+        the rocket trooper's shoulder drops under its tube.
         """
         red = faction_by_key("red")
-        for uid in self.VEHICLES:
+        for uid in (u for u, (_, kind) in atlas.UNITS.items() if kind == "land"):
             a, b = (
                 atlas.unit_cell(uid, red, pose).resize((16, 24), Image.NEAREST)
                 for pose in (Pose.A, Pose.B)

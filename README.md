@@ -185,9 +185,15 @@ voxels, which is exactly Nyquist at the board's 4:1 sample and so inverted in
 place instead of travelling, and the rest settled a sub-assembly one voxel,
 half a texel. Each of the eight now moves one named sub-assembly a whole texel
 — a gun laid, a howitzer recoiled, a rack pitched, a nose dipped — and the
-tread's link stripe runs a period of eight so pose B advances it four.
-`AmbientFrames.test_the_land_vehicles_move_a_whole_board_texel` holds the
-floor at three changed silhouette texels at rung 1; the air and sea units,
+tread's link stripe runs a period of eight so pose B advances it four. The two
+foot figures followed: the rifleman leans his whole upper body, belt line up,
+one diagonal step over planted boots with his rifle and both hands riding the
+shoulders (2 -> 12 silhouette texels at rung 1), and the rocket trooper's left
+pauldron drops `dz = -2` under its launch tube (2 -> 7). The rifleman leans
+rather than compresses because a `dz = -2` on him costs 4 px of height and 64
+opaque pixels, below the floors his own read tests hold.
+`AmbientFrames.test_the_land_units_move_a_whole_board_texel` holds the floor at
+three changed silhouette texels at rung 1 for all ten; the air and sea units,
 whose pose B is their pose A translated by `atlas.BOB_PX`, clear it by moving
 every boundary texel they own.
 
