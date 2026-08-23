@@ -5,10 +5,10 @@ of one green. Measured on the atlas tile before this pass:
 
 | | before | after |
 | --- | --- | --- |
-| tile luma sd | 4.5 | 9.70-9.95 (per phase) |
-| pixels within 8L of the tile mean | 97.9% | 55-75% |
+| tile luma sd | 4.5 | 9.87-10.07 (per phase) |
+| pixels within 8L of the tile mean | 97.9% | 44-66% |
 | tile median | L157.7 | L156.0 |
-| phase-to-phase difference | five translations of one tuft table, tile means within 0.31L | five different clump layouts, 23-30% of their clumped area shared |
+| phase-to-phase difference | five translations of one tuft table, tile means within 0.31L | eight different clump layouts, 23-33% of their clumped area shared |
 
 The ±3% per-block grain was doing none of that work and could not: it is a
 wobble of a couple of luma steps, and the game draws the board at a 4:1
@@ -62,11 +62,17 @@ seam the woods plate was fixed for in the first place.
 carrying nothing at all, so a decal was the only thing that told two phases
 apart — and the table therefore held decals rare on purpose ("most of the
 table is bare"). The clump field is what a stretch of field varies by now, so
-that rule is retired: **four of the five phases carry a find**, and phase 0
-stays bare only because it is the atlas column, the tile a board that has not
-adopted the sheet draws everywhere. `tests/test_plains_phases.py` states the
-replacement — clump coverage per phase, a floor under the field's sd, and no
-two phases laying their clumps the same way.
+that rule is retired: **all but one phase carries a find**, and phase 0 stays
+bare only because it is the atlas column, the tile a board that has not adopted
+the sheet draws everywhere. The table went to **eight** phases on 2026-08-23
+for the reason it has one at all — the boards are ~56% plains, so five variants
+still recur often enough for the eye to find the fleck at the same in-tile
+position across the lattice. The three added phases (salts 31, 253, 316) are
+salt variants of the same field: nothing in the painter moved, so their
+coverage, tone count and clump-layout overlap sit inside the bounds the first
+five are measured against. `tests/test_plains_phases.py` states the replacement
+— clump coverage per phase, a floor under the field's sd, and no two phases
+laying their clumps the same way.
 
 ## Two measurements restated, and one left open
 
@@ -142,12 +148,12 @@ every phase carries one:
   remove.
 - Coverage is still exact: the ring spends some of the tile's fixed clump
   budget and the interior is ranked to whatever is left, so every phase spends
-  the same number of blocks on each tone (29.0-29.5% of the tile, as before).
+  the same number of blocks on each tone (29.0-29.6% of the tile, as before).
 
 What it costs is that a fifth of a tile's clumps are laid the same way in every
-phase — a floor of ~0.15 under any two phases' layout overlap. The four free
-salts were re-picked for the interiors that agree least: the worst pair is 0.30
-against the `MAX_LAYOUT_OVERLAP` bar of 0.40, which did not move. The tufts
+phase — a floor of ~0.15 under any two phases' layout overlap. The seven free
+salts were picked for the interiors that agree least: the worst of the 28 pairs
+is 0.33 against the `MAX_LAYOUT_OVERLAP` bar of 0.40, which did not move. The tufts
 stopped wrapping around the tile for the same reason the ring exists — a tuft
 cut at one phase's edge met another phase's uncut one — and are now folded
 inside the cell, all twelve of them, in every phase.
@@ -179,8 +185,8 @@ S0.45 (`DECAL_HUE_ARC`, `DECAL_MAX_SAT`):
 | dry patch | `_DRY` L147, `_DRY_DK` L127 | H80 S0.34 / S0.38 |
 
 The dry patch leans 20° toward sand — as far as the arc allows — so a worn
-patch still reads as ground worn thin rather than as another clump. Four of the
-five phases still carry a find; phase 0 is still the atlas column and still
+patch still reads as ground worn thin rather than as another clump. Every
+phase but one still carries a find; phase 0 is still the atlas column and still
 bare.
 
 ### What did not move

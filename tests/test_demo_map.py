@@ -18,23 +18,26 @@ import unittest
 from spritegen import atlas, terrain
 
 
-# TerrainAutotiles.phase(Vector2i(x, y), 5) for x in 0..14, printed by Godot
-# from scenes/battle/terrain_autotiles.gd. The hash is the whole contract — a
-# preview whose phases are merely plausible is not the game's board — so it is
-# pinned against the engine's own arithmetic rather than against ours.
-_GODOT_PLAINS_PHASES_ROW0 = (0, 4, 1, 0, 4, 1, 3, 3, 3, 4, 0, 1, 3, 4, 4)
+# TerrainAutotiles.phase(Vector2i(x, y), 8) and (…, 3) for x in 0..14, printed
+# by Godot 4.7 from scenes/battle/terrain_autotiles.gd. The hash is the whole
+# contract — a preview whose phases are merely plausible is not the game's
+# board — so it is pinned against the engine's own arithmetic rather than
+# against ours. The plains row was re-derived when the field went from five
+# phases to eight; the count is an argument to the hash, so every cell moves.
+_GODOT_PLAINS_PHASES_ROW0 = (0, 1, 3, 4, 0, 7, 1, 1, 0, 2, 7, 4, 4, 3, 3)
 _GODOT_SEA_PHASES_ROW0 = (0, 1, 0, 0, 1, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2)
 
 
 class DemoPhaseHash(unittest.TestCase):
     def test_matches_the_games_hash(self):
+        self.assertEqual(len(terrain.PLAINS_PHASES), 8, "re-derive the pinned row")
         for x, want in enumerate(_GODOT_PLAINS_PHASES_ROW0):
-            self.assertEqual(atlas.phase(x, 0, 5), want, f"plains phase at x={x}")
+            self.assertEqual(atlas.phase(x, 0, 8), want, f"plains phase at x={x}")
         for x, want in enumerate(_GODOT_SEA_PHASES_ROW0):
             self.assertEqual(atlas.phase(x, 0, 3), want, f"sea phase at x={x}")
 
     def test_stays_inside_the_phase_count(self):
-        for count in (3, 5):
+        for count in (3, 8):
             for y in range(40):
                 for x in range(40):
                     self.assertIn(atlas.phase(x, y, count), range(count))

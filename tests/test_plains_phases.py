@@ -44,19 +44,19 @@ DECAL_SPAN = 8
 
 
 class PlainsPhases(unittest.TestCase):
-    # The field's texture, bounded from below. Measured 9.70-9.95 sd and
-    # 55-75% of pixels within 8L of the mean, against 4.5 and 97.9% before
+    # The field's texture, bounded from below. Measured 9.87-10.07 sd and
+    # 44-66% of pixels within 8L of the mean, against 4.5 and 97.9% before
     # the clump field.
     MIN_FIELD_SD = 8.0
     MAX_FLAT_SHARE = 0.80
     # `terrain._CLUMP_SHARE` is a fixed 30% of the tile's blocks; the tufts
     # and decals drawn over the field eat a little of it, which measures
-    # 29.0-29.5% of the tile — so the floor is close under that rather than a
+    # 29.0-29.6% of the tile — so the floor is close under that rather than a
     # token one a half-coverage field would still clear.
     MIN_CLUMP_SHARE = 0.25
     MAX_CLUMP_SHARE = 0.30
     # Two phases sharing this much of their clump layout would be the same
-    # picture again. Measured 0.23-0.30 over the ten pairs; the border ring
+    # picture again. Measured 0.23-0.33 over the 28 pairs; the border ring
     # every phase shares (`terrain._SEAM_SALT`) is a fifth of a tile's clumps
     # laid identically, so ~0.15 of that is structural and the bar stays where
     # it was rather than being moved to suit the ring.
@@ -280,9 +280,10 @@ class PlainsPhases(unittest.TestCase):
         """The doctrine this table shipped with was the reverse — three of the
         five phases bare, so a decal was the only thing a phase varied by. With
         the clump field carrying the variation, a decal is scattered detail on
-        a field that already differs, and the field can afford them: four of
-        the five carry one. Phase 0 stays bare because it is the atlas column,
-        the tile a board that has not adopted the sheet draws everywhere."""
+        a field that already differs, and the field can afford them: every
+        phase but one carries a find. Phase 0 stays bare because it is the
+        atlas column, the tile a board that has not adopted the sheet draws
+        everywhere."""
         carried = [bool(entry[3]) for entry in terrain.PLAINS_PHASES]
         self.assertFalse(carried[0])
         self.assertEqual(sum(carried), len(carried) - 1)
