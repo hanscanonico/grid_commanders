@@ -2981,11 +2981,12 @@ class IndexedPalette(unittest.TestCase):
         return dark, total
 
     # What S0 may cost, per outline grade: (worst single sprite, whole grade).
-    # The light grade is round 11's bill, unmoved — 25.57% on verdant's
-    # b_copter frame B and 13.99% over the three rows. The heavy grade pays
-    # for its ground contour out of the same budget and lands at 30.71%
-    # (neutral's b_copter frame B) and 17.22%, both well under the band's
-    # 53.1% and 34.5%.
+    # The light grade is round 11's bill — 24.52% on verdant's b_copter frame
+    # B and 14.16% over the three rows. The heavy grade pays for its ground
+    # contour out of the same budget and lands at 30.76% (neutral's b_copter
+    # frame B) and 17.33%, both well under the band's 53.1% and 34.5%. The
+    # copters' frame B stays the worst sprite through the 2026-08-24 rotor
+    # tick, and moved a fifth of a point when it landed.
     MAX_CONTOUR = {
         palette.OUTLINE_LIGHT: (0.28, 0.15),
         OUTLINE_HEAVY: (0.32, 0.20),
@@ -2997,8 +2998,8 @@ class IndexedPalette(unittest.TestCase):
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
         and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
         1px lattice and so nearly all boundary). The G-buffer outline spends
-        13.99% and 25.57% on the rows wearing the light grade, and 17.22%
-        and 30.71% on the two that wear the heavy one. That difference is the
+        14.16% and 24.52% on the rows wearing the light grade, and 17.33%
+        and 30.76% on the two that wear the heavy one. That difference is the
         faction livery, the fittings and the plane structure the band was
         eating, and it is measured here so a future pass cannot quietly grow
         a band back — including through the heavy grade, which is why that

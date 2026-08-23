@@ -31,8 +31,9 @@ BEFORE is main at the 2026-08-23 land-idle pass, AFTER is that pass plus the
 2026-08-24 foot-figure one — the eight land vehicles re-authored to move a
 named sub-assembly a whole texel, `units._track`'s link stripe given a period
 of eight voxels so pose B advances it four (one texel in the direction of
-travel), and then the rifleman and the rocket trooper given whole-texel body
-beats of their own:
+travel), then the rifleman and the rocket trooper given whole-texel body
+beats of their own, and then the two copters' rotors turned rather than
+swapped:
 
                      rung 1 (16x24)               rung 2 (32x48)
   unit         opaq  chng silh shim   |   opaq  chng silh shim
@@ -56,8 +57,10 @@ beats of their own:
                  86    17    3  4.67  |    340    75   15  4.00   after
   fighter        62    55   30  0.83  |    243   237  114  1.08
   bomber        101    83   36  1.31  |    369   328  144  1.28
-  b_copter       44    49   25  0.96  |    209   207   97  1.13
-  t_copter       60    58   24  1.42  |    260   241   90  1.68
+  b_copter       44    49   25  0.96  |    209   207   97  1.13   before
+                 44    49   28  0.75  |    209   209  107  0.95   after
+  t_copter       60    58   24  1.42  |    260   241   90  1.68   before
+                 60    62   30  1.07  |    260   249  109  1.28   after
   missiles       74     7    0  7.00  |    289    36    3 11.00   before
                  74    29   10  1.90  |    289   118   35  2.37   after
   battleship     80    66   30  1.20  |    329   267  116  1.30
@@ -65,7 +68,7 @@ beats of their own:
   sub            60    43   24  0.79  |    252   177   96  0.84
   lander         58    46   18  1.56  |    216   188   72  1.61
   ALL          1367   544  216  1.52  |   5452  2209  856  1.58   before
-               1367   718  282  1.55  |   5452  2890 1104  1.62   after
+               1367   722  291  1.48  |   5452  2900 1133  1.56   after
 
 Before the pass the whole tracked family — tank, md tank, anti air,
 artillery, rockets, apc — moved nothing at either rung. Six of them crept a
@@ -98,8 +101,18 @@ differ only by `atlas.BOB_PX` — pose B is pose A translated four atlas pixels
 up, which is one whole rung-1 texel of altitude and nothing else. They score
 the way a translated shape scores: every boundary texel of the sprite moves,
 which is why their counts dwarf a land unit's moving one assembly. Only the
-copters, which sweep their rotor discs 45 degrees, change the shape itself,
-and they are the two with a shimmer index near 1.
+copters, which turn their rotor discs, change the shape itself, and they are
+the two with a shimmer index near 1.
+
+The copters' own BEFORE row is the 45-degree sweep they used to do, which is
+the ambiguous middle of a four-blade disc's 90-degree symmetry and was drawn
+with a different blade set besides: two long diagonals against pose A's four
+axial blades. That scored well here and read as two aircraft alternating —
+silhouette IoU between the frames, bob taken out, 0.74 on b_copter and 0.74
+on t_copter. The AFTER row is the same four blades turned 14 degrees
+(`units._BLADE_B`), at 0.88 and 0.87, which is one aircraft with its rotor
+advanced, and it still moves 28 and 30 silhouette texels at rung 1. Silhouette
+share is not the measure of an idle on its own: WHICH texels move is.
 
 Run: .venv/bin/python tests/measure_motion.py [unit ...]
 """

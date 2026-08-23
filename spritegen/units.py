@@ -73,9 +73,66 @@ def _track(
         m.set(x1, y, 0, "hub")
 
 
-def _rotor_collar(
-    m: Model, cx: int, cy: int, z: int, arms: tuple[tuple[int, int], ...]
+# One rotor blade, hub-relative and tip last. The disc is this blade and its
+# three quarter turns, so the two poses differ by how far round the SAME four
+# blades stand — pose B is each of pose A's five voxels turned 14 degrees
+# about the hub and rounded to the grid, which is the smallest turn the grid
+# can say: 14 is where the outer three voxels each cross into the next cell
+# while the two by the hub, whose lever arm is under a voxel, hold. A larger
+# step reads no faster (a four-blade disc repeats every 90 degrees and 45 is
+# the ambiguous middle, with no direction in it at all) and costs the read:
+#
+#   pose B                       blades   IoU with pose A   rung-1 silhouette
+#                                        b_copter t_copter   b_copter t_copter
+#   45-degree sweep, L1 8 (old)     4/2     0.74     0.74       25       24
+#   this 14-degree tick, L1 6        4      0.88     0.87       28       30
+#
+# IoU is of the two frames' silhouettes with `atlas.BOB_PX` taken out, so it
+# reads the rotor and not the hop; the silhouette counts are
+# `tests/measure_motion.py`'s, bob and all. The tick both shares more of the
+# frame and moves more of the board's texels than the sweep did.
+#
+# What went before was a 45-degree sweep drawn as its own blade set — four
+# long diagonals on b_copter, two on t_copter — and the tips are why it read
+# as a second aircraft rather than a turn. A voxel projects
+# to `sx = (x - y) * 2`, `sy = x + y`, so a tip `(a, b)` and its quarter turns
+# put the disc's screen extremes at `4(|a| + |b|)` wide by `2(|a| + |b|)`
+# tall: the L1 radius alone sets the rendered diameter. Pose A's tips sit at
+# L1 5 and draw 20x10; the old diagonals ran out to L1 8 and drew 32x16 — the
+# disc grew by half, on the one part of the sprite the eye tracks. This tip is
+# at L1 6, one voxel of span per side, and no blade changes length.
+Blade = tuple[tuple[int, int], ...]
+
+_BLADE_A: Blade = ((1, 0), (2, 0), (3, 0), (4, 0), (5, 0))
+_BLADE_B: Blade = ((1, 0), (2, 0), (3, 1), (4, 1), (5, 1))
+
+
+def _quarters(blade: Blade) -> tuple[Blade, ...]:
+    """One blade and its three quarter turns — the whole disc."""
+    arms = [blade]
+    for _ in range(3):
+        arms.append(tuple((-dy, dx) for dx, dy in arms[-1]))
+    return tuple(arms)
+
+
+def _rotor(
+    m: Model, cx: int, cy: int, z: int, blade: Blade, clipped: bool = False
 ) -> None:
+    """A four-blade disc at `(cx, cy, z)`, collar last so the livery roots sit
+    over the sweep. `clipped` takes the tip off the two arms that run along
+    y — the tandem's discs would meet over the hold otherwise — and it is a
+    property of the AIRCRAFT, so both poses of a disc are clipped alike and
+    the tick stays the only difference between them."""
+    arms = _quarters(blade)
+    if clipped:
+        arms = tuple(arm[:-1] if i % 2 else arm for i, arm in enumerate(arms))
+    for arm in arms:
+        for dx, dy in arm:
+            m.set(cx + dx, cy + dy, z, "rotor")
+    _rotor_collar(m, cx, cy, z, arms)
+
+
+def _rotor_collar(m: Model, cx: int, cy: int, z: int, arms: tuple[Blade, ...]) -> None:
     """Paint a rotor's hub cap and its four blade ROOTS in livery.
 
     A helicopter's disc is the one large mass on the sheet that carries no
@@ -86,9 +143,9 @@ def _rotor_collar(
     Both discs get it, so the two copters answer the gate the same way.
     """
     m.set(cx, cy, z, "hull_lt")
-    for dx, dy in arms:
-        m.set(cx + dx, cy + dy, z, "hull")
-        m.set(cx + dx * 2, cy + dy * 2, z, "hull_dk")
+    for arm in arms:
+        m.set(cx + arm[0][0], cy + arm[0][1], z, "hull")
+        m.set(cx + arm[1][0], cy + arm[1][1], z, "hull_dk")
 
 
 def _tire(m: Model, x: int, y: int, big: bool = False) -> None:
@@ -850,8 +907,9 @@ def bomber(pose: Pose = Pose.A) -> Model:
 def b_copter(pose: Pose = Pose.A) -> Model:
     """Attack helicopter: chin gun, stub-wing rocket pods, tail rotor.
 
-    Pose B is the same aircraft with its rotor blades swept 45 degrees, so
-    alternating the two poses spins the disc. Nothing else may differ.
+    Pose B is the same aircraft with the same four blades a tick further
+    round (`_BLADE_B`), so alternating the two poses turns the disc rather
+    than swapping its shape. Nothing else may differ.
     """
     m = Model()
     # fuselage in hull livery, rounded nose
@@ -882,25 +940,18 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # skids
     m.box(2, 2, 8, 14, 1, 1, "hull_dk")
     m.box(6, 6, 8, 14, 1, 1, "hull_dk")
-    # main rotor: hub mast + four blades over the fuselage (pose B sweeps
-    # the blades 45 degrees; the tail rotor is vertical and stays)
+    # main rotor: hub mast + four blades over the fuselage (pose B turns the
+    # same four blades a notch; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
-    if pose is Pose.A:
-        m.box(4, 4, 5, 15, 9, 9, "rotor")
-        m.box(-1, 9, 10, 10, 9, 9, "rotor")
-        _rotor_collar(m, 4, 10, 9, ((0, 1), (0, -1), (1, 0), (-1, 0)))
-    else:
-        for d in range(-4, 5):
-            m.set(4 + d, 10 + d, 9, "rotor")
-            m.set(4 + d, 10 - d, 9, "rotor")
-        _rotor_collar(m, 4, 10, 9, ((1, 1), (-1, -1), (1, -1), (-1, 1)))
+    _rotor(m, 4, 10, 9, _BLADE_A if pose is Pose.A else _BLADE_B)
     return m
 
 
 def t_copter(pose: Pose = Pose.A) -> Model:
     """Tandem-rotor transport helicopter — unarmed.
 
-    Pose B sweeps both rotor discs 45 degrees, as on b_copter.
+    Both discs are clipped along y so they do not meet over the hold, and
+    both take pose B's tick together, as on b_copter.
     """
     m = Model()
     # boxy hold in hull livery, rounded top edges so it stops reading as a
@@ -925,28 +976,11 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     # tandem rotor masts and overlapping blades
     m.box(4, 5, 4, 4, 7, 8, "hull_dk")
     m.box(4, 5, 13, 13, 7, 8, "hull_dk")
-    if pose is Pose.A:
-        m.box(4, 4, 0, 8, 9, 9, "rotor")
-        m.box(-1, 9, 4, 4, 9, 9, "rotor")
-        m.box(5, 5, 9, 17, 9, 9, "rotor")
-        m.box(0, 10, 13, 13, 9, 9, "rotor")
-        axes = ((0, 1), (0, -1), (1, 0), (-1, 0))
-        _rotor_collar(m, 4, 4, 9, axes)
-        _rotor_collar(m, 5, 13, 9, axes)
-    else:
-        # One diagonal blade pair per disc, opposed between the discs: two
-        # full X sweeps overlap on the tandem hull and read as a different
-        # aircraft at 32px, while a two-blade mid-turn keeps the silhouette.
-        # The collar carries all four blade ROOTS even so. Two blades of nine
-        # voxels are 9.3% less silhouette than pose A's four, over the 8% an
-        # idle may move (`AmbientFrames`) once the outline stopped padding
-        # every sprite with a halo; lengthening the blades instead bought the
-        # mass back and read as a fighter's wings at 32px.
-        for d in range(-4, 5):
-            m.set(4 + d, 4 + d, 9, "rotor")
-            m.set(5 + d, 13 - d, 9, "rotor")
-        _rotor_collar(m, 4, 4, 9, ((1, 1), (-1, -1), (1, -1), (-1, 1)))
-        _rotor_collar(m, 5, 13, 9, ((1, -1), (-1, 1), (1, 1), (-1, -1)))
+    # Both discs turn the same blade the same way, so the tandem reads as one
+    # machine's two rotors advancing and not as a counter-rotating pair.
+    blade = _BLADE_A if pose is Pose.A else _BLADE_B
+    _rotor(m, 4, 4, 9, blade, clipped=True)
+    _rotor(m, 5, 13, 9, blade, clipped=True)
     return m
 
 

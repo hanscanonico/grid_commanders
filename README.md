@@ -232,7 +232,7 @@ python3 -m venv .venv
 | File | Contract |
 | --- | --- |
 | `units_atlas.png` | 1152x480 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
-| `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors swept, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
+| `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png` | the same army with the tile's cast shadow subtracted, for the cut-ins (see below) |
 | `terrain_atlas.png` | 896x320 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
 | `units/<id>_<team>.png` | 90 cells, the inputs `tools/paste_unit_sprites.gd` reads |
