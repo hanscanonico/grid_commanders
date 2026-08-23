@@ -2327,6 +2327,71 @@ class AmbientFrames(unittest.TestCase):
                         a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                     )
 
+    # The copters are the only units whose SHAPE changes between poses, and
+    # the shape is one part: the rotor. Measured on 2026-08-24, cell IoU with
+    # the bob taken out is 0.879 (b_copter) and 0.865 (t_copter); the
+    # 45-degree sweep these replaced drew a DIFFERENT blade set in frame B —
+    # four axial blades against two long diagonals — and scored 0.74 and
+    # 0.74, which read as two aircraft alternating rather than one turning.
+    MIN_ROTOR_IOU = 0.85
+    # ...while still moving what the board can see: 28 and 30 texels at rung
+    # 1 (`tests/measure_motion.py`), so the bar is a floor, not the number.
+    MIN_ROTOR_TEXELS = 10
+
+    def test_the_copters_turn_one_rotor_rather_than_swapping_its_blades(self):
+        """A disc that spins keeps its blades and moves them.
+
+        Three readings of the same requirement. The models must draw the
+        same COUNT of `rotor` voxels in both poses and span the same box
+        within a voxel, so no blade is added, dropped or lengthened; the two
+        composed cells, with `atlas.BOB_PX` subtracted so this reads the
+        rotor and not the hop, must share `MIN_ROTOR_IOU` of their union; and
+        the board at rung 1 must still see `MIN_ROTOR_TEXELS` of silhouette
+        change, so keeping the frames alike may never be bought by keeping
+        them still.
+        """
+        neutral = faction_by_key("neutral")
+        for uid in ("b_copter", "t_copter"):
+            box = {}
+            for pose in Pose:
+                blades = [
+                    v for v, mat in build_model(uid, pose).vox.items() if mat == "rotor"
+                ]
+                box[pose] = (
+                    len(blades),
+                    max(x for x, _, _ in blades) - min(x for x, _, _ in blades),
+                    max(y for _, y, _ in blades) - min(y for _, y, _ in blades),
+                )
+            with self.subTest(unit=uid, reading="blades"):
+                self.assertEqual(box[Pose.A][0], box[Pose.B][0])
+                self.assertLessEqual(abs(box[Pose.A][1] - box[Pose.B][1]), 1)
+                self.assertLessEqual(abs(box[Pose.A][2] - box[Pose.B][2]), 1)
+            cells = {}
+            for pose in Pose:
+                cell = atlas.unit_cell(uid, neutral, pose, shadow=False)
+                px = cell.load()
+                w, h = cell.size
+                dy = atlas.BOB_PX if pose is Pose.B else 0
+                cells[pose] = {
+                    (x, y + dy) for y in range(h) for x in range(w) if px[x, y][3] > 200
+                }
+            a, b = cells[Pose.A], cells[Pose.B]
+            with self.subTest(unit=uid, reading="iou"):
+                self.assertGreaterEqual(len(a & b) / len(a | b), self.MIN_ROTOR_IOU)
+            small = [
+                atlas.unit_cell(uid, neutral, pose).resize((16, 24), Image.NEAREST)
+                for pose in Pose
+            ]
+            pa, pb = (cell.load() for cell in small)
+            moved = sum(
+                1
+                for y in range(24)
+                for x in range(16)
+                if (pa[x, y][3] > 128) != (pb[x, y][3] > 128)
+            )
+            with self.subTest(unit=uid, reading="texels"):
+                self.assertGreaterEqual(moved, self.MIN_ROTOR_TEXELS)
+
     def test_the_foam_line_stays_on_the_water(self):
         """The sea's own marks belong to the sea, not to the hull that made
         them: a ship riding a swell leaves its waterline foam exactly where
@@ -2981,11 +3046,12 @@ class IndexedPalette(unittest.TestCase):
         return dark, total
 
     # What S0 may cost, per outline grade: (worst single sprite, whole grade).
-    # The light grade is round 11's bill, unmoved — 25.57% on verdant's
-    # b_copter frame B and 13.99% over the three rows. The heavy grade pays
-    # for its ground contour out of the same budget and lands at 30.71%
-    # (neutral's b_copter frame B) and 17.22%, both well under the band's
-    # 53.1% and 34.5%.
+    # The light grade is round 11's bill — 24.52% on verdant's b_copter frame
+    # B and 14.16% over the three rows. The heavy grade pays for its ground
+    # contour out of the same budget and lands at 30.76% (neutral's b_copter
+    # frame B) and 17.33%, both well under the band's 53.1% and 34.5%. The
+    # copters' frame B stays the worst sprite through the 2026-08-24 rotor
+    # tick, and moved a fifth of a point when it landed.
     MAX_CONTOUR = {
         palette.OUTLINE_LIGHT: (0.28, 0.15),
         OUTLINE_HEAVY: (0.32, 0.20),
@@ -2997,8 +3063,8 @@ class IndexedPalette(unittest.TestCase):
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
         and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
         1px lattice and so nearly all boundary). The G-buffer outline spends
-        13.99% and 25.57% on the rows wearing the light grade, and 17.22%
-        and 30.71% on the two that wear the heavy one. That difference is the
+        14.16% and 24.52% on the rows wearing the light grade, and 17.33%
+        and 30.76% on the two that wear the heavy one. That difference is the
         faction livery, the fittings and the plane structure the band was
         eating, and it is measured here so a future pass cannot quietly grow
         a band back — including through the heavy grade, which is why that
