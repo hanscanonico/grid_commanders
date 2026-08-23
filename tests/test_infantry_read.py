@@ -23,7 +23,13 @@ from __future__ import annotations
 
 import unittest
 
-from spritegen.palette import MID_FACTION, FACTIONS, material_slot, ramp_for
+from spritegen.palette import (
+    FACTIONS,
+    MID_FACTION,
+    MID_GUNMETAL,
+    material_slot,
+    ramp_for,
+)
 from spritegen.units import Pose, build_model
 from spritegen.voxel import render_indexed
 
@@ -63,8 +69,8 @@ def _longest_run(row, wanted) -> int:
 
 class InfantryMass(unittest.TestCase):
     """The rifleman may be the smallest unit on the sheet; he may not be a
-    token. Measured 692 opaque pixels in a 32x37 box against the mech's 720,
-    and 40-50 logical pixels once the board halves him twice."""
+    token. Measured 683 opaque pixels in a 30x37 box against the mech's 720,
+    and 40-46 logical pixels once the board halves him twice."""
 
     MIN_PIXELS = 640
     MIN_HEIGHT = 34
@@ -112,7 +118,8 @@ class InfantryRifle(unittest.TestCase):
     and two at the rest. Along the (+x, -y) world diagonal the same weapon is
     a horizontal screen row, and the furniture hung a voxel under it gives the
     bar a second solid row so the sample cannot land on the dotted top face
-    alone. Measured a longest run of 4 at all sixteen offsets.
+    alone. Measured a longest run of 4-6 at all sixteen offsets in pose A and
+    3-5 in pose B, where the muzzle steps down.
 
     The gunmetal ramp is shared with `tire`, so the run is looked for above
     the figure's ankles only: the boots are on the same ramp and must not be
@@ -150,8 +157,9 @@ class InfantryFace(unittest.TestCase):
     wherever it lands is what the eye calls the face. The model this replaces
     put its skin box BELOW the helmet, on the chest, where it read as a sash;
     the face is on the skull's camera-facing plane now, and the only skin left
-    below it is the two hands on the rifle. Measured 67% of the skin mass in
-    the top 40% of the figure, against 18% before.
+    below it is the two hands on the rifle. Measured 59% of the skin mass in
+    the top 40% of the figure — the face against those two hands — where the
+    model this replaces had 18%.
     """
 
     HEAD_BAND = 0.40
@@ -244,3 +252,89 @@ class InfantryNeck(unittest.TestCase):
                 # and the head clears the shoulder line's outer slots
                 self.assertGreater(min(x for x, _ in head), min(x for x, _ in shoulder))
                 self.assertLess(max(x for x, _ in head), max(x for x, _ in shoulder))
+
+
+class InfantryGrip(unittest.TestCase):
+    """A rifle is HELD, and the tell is two hands at two places on it.
+
+    The draft this replaces laid the bar across the chest with a single blob
+    of skin under its middle and a rear sight standing above the shoulder
+    line, so the weapon read as a grey bracket bolted on at chin height. The
+    hold is two separated grip points now — a rear hand at the pistol grip
+    inside the butt end of the bar, a forward hand on the handguard out past
+    its middle — with a livery sleeve running between them. Measured skin
+    under the bar at 9-22% and 61-74% of its length, one clear group each.
+    """
+
+    HAND_BAND = 4  # screen rows under the bar a hand may sit in
+    MIN_HAND_GAP = 4  # columns of no skin between the two grips
+    REAR_GRIP = 0.35  # the rear hand stays inside the butt end
+    FORWARD_GRIP = 0.55  # the forward hand reaches past the middle
+
+    def _grips(self, pose: Pose):
+        """The bar's screen extent, and the columns carrying skin under it."""
+        sprite = _sprite(pose)
+        px = sprite.convert("RGBA").load()
+        gun = set(ramp_for("gunmetal", FACTIONS[1]))
+        skin = set(ramp_for("skin", FACTIONS[1]))
+
+        def tone(x, y):
+            c = px[x, y]
+            return c[:3] if c[3] > 200 else None
+
+        # the boots are on the gunmetal ramp too, so read the upper figure
+        upper = int(sprite.height * InfantryRifle.BOOT_BAND)
+        bar = {
+            x: max(y for y in range(upper) if tone(x, y) in gun)
+            for x in range(sprite.width)
+            if any(tone(x, y) in gun for y in range(upper))
+        }
+        hands = [
+            x
+            for x, y0 in sorted(bar.items())
+            if any(
+                tone(x, y) in skin
+                for y in range(y0 + 1, min(y0 + 1 + self.HAND_BAND, sprite.height))
+            )
+        ]
+        return min(bar), max(bar), hands
+
+    def _groups(self, columns):
+        """Grip columns clustered into hands: a hand is a couple of skin
+        pixels a stitch apart, two hands are MIN_HAND_GAP columns apart."""
+        groups = [[columns[0]]]
+        for x in columns[1:]:
+            if x - groups[-1][-1] < self.MIN_HAND_GAP:
+                groups[-1].append(x)
+            else:
+                groups.append([x])
+        return groups
+
+    def test_two_hands_grip_the_bar_at_two_separate_places(self):
+        for pose in Pose:
+            lo, hi, hands = self._grips(pose)
+            with self.subTest(pose=pose):
+                self.assertTrue(hands, "no skin under the weapon at all")
+                groups = self._groups(hands)
+                self.assertEqual(len(groups), 2, f"grip columns: {hands}")
+                rear, forward = groups
+                self.assertLessEqual((rear[-1] - lo) / (hi - lo), self.REAR_GRIP)
+                self.assertGreaterEqual(
+                    (forward[0] - lo) / (hi - lo), self.FORWARD_GRIP
+                )
+
+    def test_the_weapon_never_rides_above_the_shoulder_line(self):
+        """A gun level with the head is a gun nobody is holding: every voxel
+        of the weapon sits at or under the lit shoulder line. The draft this
+        replaces stood its rear sight a voxel above that line."""
+        for pose in Pose:
+            vox = build_model("infantry", pose).vox
+            weapon = [
+                z
+                for (_, _, z), mat in vox.items()
+                if material_slot(mat).mid == MID_GUNMETAL
+            ]
+            shoulder = max(z for (_, _, z), mat in vox.items() if mat == "hull_lt")
+            with self.subTest(pose=pose):
+                self.assertTrue(weapon)
+                self.assertLessEqual(max(weapon), shoulder)
