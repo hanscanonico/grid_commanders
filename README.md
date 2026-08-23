@@ -175,13 +175,21 @@ rung 1. One voxel is a 4x4px cube projected to `sx = (x - y) * 2`,
 voxels** or a **(dx +1, dy -1) diagonal**: anything a pose moves by less than
 that cannot carry the silhouette a texel across. Inside the shape it only
 re-tones texels in place; along the edge it flips boundary texels on and off
-with the sampling phase — which is why the jets and the hulls, whose pose B is
-their pose A translated one atlas pixel by the bob and nothing else, still
-score silhouette change. Both read as shimmer rather than movement.
+with the sampling phase, which reads as shimmer rather than movement.
 `tests/measure_motion.py` is the readout — per unit, per rung, the changed
 texels, how many of those are the silhouette, and the shimmer index — and its
-docstring records the table as measured, where the whole tracked family moves
-zero silhouette texels at both rungs.
+docstring records the table before and after the pass that applied the rule to
+the land roster. Before it, the whole tracked family moved zero silhouette
+texels at both rungs: six of them only crept a tread link, at a period of two
+voxels, which is exactly Nyquist at the board's 4:1 sample and so inverted in
+place instead of travelling, and the rest settled a sub-assembly one voxel,
+half a texel. Each of the eight now moves one named sub-assembly a whole texel
+— a gun laid, a howitzer recoiled, a rack pitched, a nose dipped — and the
+tread's link stripe runs a period of eight so pose B advances it four.
+`AmbientFrames.test_the_land_vehicles_move_a_whole_board_texel` holds the
+floor at three changed silhouette texels at rung 1; the air and sea units,
+whose pose B is their pose A translated by `atlas.BOB_PX`, clear it by moving
+every boundary texel they own.
 
 ## Setup
 

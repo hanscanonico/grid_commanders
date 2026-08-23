@@ -2354,6 +2354,53 @@ class AmbientFrames(unittest.TestCase):
                     atlas.unit_cell(uid, red, Pose.B).tobytes(),
                 )
 
+    # The eight land vehicles, measured at rung 1 by tests/measure_motion.py
+    # on 2026-08-24: apc 3, recon 4, tank 5, md_tank 6, artillery 7,
+    # anti_air 8, missiles 10, rockets 11. Three is the floor the quietest of
+    # them clears, and it is what an idle needs to be seen at board scale at
+    # all; the pass before this one had six of the eight at exactly zero.
+    MIN_SILHOUETTE_TEXELS = 3
+    VEHICLES = (
+        "recon",
+        "tank",
+        "md_tank",
+        "anti_air",
+        "artillery",
+        "rockets",
+        "apc",
+        "missiles",
+    )
+
+    def test_the_land_vehicles_move_a_whole_board_texel(self):
+        """A beat the board cannot resample is not a beat.
+
+        `test_every_unit_has_a_second_key_pose` only asks that frame B differ
+        somewhere in the 64x96 cell, which a one-voxel settle or a period-2
+        tread checker satisfies while changing NOTHING the board draws: at
+        rung 1 the cell is sampled to 16x24, so a delta under 4 atlas px
+        re-tones the inside of a shape that holds still. This asks the
+        question at the size the player sees — how many texels the two poses
+        disagree about being painted at all — for the eight vehicles that
+        each move one named sub-assembly a whole texel (dz of two voxels, or
+        a (dx +1, dy -1) diagonal). Infantry and mech are out: they are foot
+        figures whose pose B is a one-voxel hold, worth 2 texels of edge.
+        """
+        red = faction_by_key("red")
+        for uid in self.VEHICLES:
+            a, b = (
+                atlas.unit_cell(uid, red, pose).resize((16, 24), Image.NEAREST)
+                for pose in (Pose.A, Pose.B)
+            )
+            pa, pb = a.load(), b.load()
+            silhouette = sum(
+                1
+                for y in range(24)
+                for x in range(16)
+                if (pa[x, y][3] > 128) != (pb[x, y][3] > 128)
+            )
+            with self.subTest(unit=uid):
+                self.assertGreaterEqual(silhouette, self.MIN_SILHOUETTE_TEXELS)
+
     def test_frame_b_still_reads_as_its_own_unit(self):
         # A rotor sweep on a small aircraft legitimately moves a quarter of
         # its 32px silhouette, so an absolute overlap bar would misfire.
