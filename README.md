@@ -278,25 +278,39 @@ cell for cell rather than a plausible-looking one.
 `autotiles/plains.png` is that rule on the ground most of a board is made of,
 and it is phased the same way: five tiles, phase 0 the atlas plains column byte
 for byte, chosen by the same coordinate hash. A phase's salt keys **the clump
-field and the grain**, and its offset stands the tufts and wildflowers
-somewhere else — same count, same tones, same clump coverage, wrapped around
-the tile rather than off it — because plains is the reference ground most
-contrast pairs are read against, so a phase varies the field's arrangement and
-not its value.
+field and the grain**, and its offset stands the tufts somewhere else — same
+count, same tones, same clump coverage, every tuft drawn whole inside the cell
+— because plains is the reference ground most contrast pairs are read against,
+so a phase varies the field's arrangement and not its value.
 
 The field itself is **two tones**, not one green with a grain on it: GRASS with
 a darker grass clumped over 30% of the tile in 4px blocks, laid out by a
-wrapping 16px value field and taken by rank so every phase gets the same
-coverage. A ±3% per-pixel grain is a texture the game's 4:1 downsample averages
-away — the old tile put 97.9% of its pixels within 8L of its mean — and a clump
-is a shape that survives it (sd 4.5 -> ~10). Woods and the mountain's apron draw
-the same plate, so no grass cell steps against its neighbour.
-`docs/plains_field.md` carries the measurements, the two tests restated for a
+wrapping value field and taken by rank so every phase gets the same coverage. A
+±3% per-pixel grain is a texture the game's 4:1 downsample averages away — the
+old tile put 97.9% of its pixels within 8L of its mean — and a clump is a shape
+that survives it (sd 4.5 -> ~10). Woods and the mountain's apron draw the same
+plate, so no grass cell steps against its neighbour.
+
+A phase wraps against **every other phase**, not only against itself: the game
+hashes a phase per cell, so what butts on a board is one phase's right edge
+against another's left. Every tile's outermost 4px ring is therefore drawn from
+one **shared field**, on a 60px period so a tile's last block column is its
+first — the two blocks that meet at a seam are one block, and the mean luma
+step across a 64px boundary on a hashed field is 0.0 against 1.9 inside a tile
+(it was 9.6). Each phase's own field dithers in behind the ring.
+
+The field is also **indexed**: the grain is a ramp of three steps rather than a
+mix per block, so a plains tile spends 7-11 colours where it spent 29-33, and
+every ground on the sheet came down with it (27.8 colours a cell -> 9.4).
+`docs/plains_field.md` carries the measurements, the tests restated for a
 two-tone ground, and the one thing it costs: a clump ties in value with road
 gravel and separates from it by hue alone.
 
-Four of the five phases carry **decals**: a stone, a flower clump, a patch of
-bare earth, drawn in the tile's own tones and under the terrain value ceiling.
+Four of the five phases carry **decals**: a stone, a knot of tall grass, a
+patch the summer dried out — all of them in grass's own hue under S0.45, and
+under the terrain value ceiling. A find is 1-3px, which is a size that carries
+a hue and not a material: gravel grey and wildflower tan at that size read as
+dead pixels on a hue-100 field, so the field's ramp is what a find is drawn in.
 They are ground detail and never a game object — no signpost, fence or marker,
 which a board reads as a property from across the room — and they are drawn
 inside the cell rather than wrapped, so a decal never overhangs its neighbour.

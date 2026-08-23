@@ -19,6 +19,8 @@ import statistics
 import unittest
 from unittest import mock
 
+from PIL import Image
+
 from spritegen import atlas, autotile, palette, terrain
 from spritegen.terrain import (
     CELL,
@@ -47,19 +49,67 @@ class PlainsPhases(unittest.TestCase):
     # the clump field.
     MIN_FIELD_SD = 8.0
     MAX_FLAT_SHARE = 0.80
-    # `terrain._CLUMP_SHARE` is a fixed 30% of the tile's blocks; the tufts,
-    # wildflowers and decals drawn over the field eat a little of it, which
-    # measures 29.2-29.5% of the tile — so the floor is close under that
-    # rather than a token one a half-coverage field would still clear.
+    # `terrain._CLUMP_SHARE` is a fixed 30% of the tile's blocks; the tufts
+    # and decals drawn over the field eat a little of it, which measures
+    # 29.0-29.5% of the tile — so the floor is close under that rather than a
+    # token one a half-coverage field would still clear.
     MIN_CLUMP_SHARE = 0.25
     MAX_CLUMP_SHARE = 0.30
     # Two phases sharing this much of their clump layout would be the same
-    # picture again. Measured 0.08-0.33 over the ten pairs, against 0.18 for
-    # two layouts of this coverage drawn independently.
+    # picture again. Measured 0.23-0.30 over the ten pairs; the border ring
+    # every phase shares (`terrain._SEAM_SALT`) is a fifth of a tile's clumps
+    # laid identically, so ~0.15 of that is structural and the bar stays where
+    # it was rather than being moved to suit the ring.
     MAX_LAYOUT_OVERLAP = 0.40
+    # A tile of open field is an INDEXED tile. The ±3% grain used to be a
+    # continuous mix per 4px block, which spent 29-33 colours a tile — 28 of
+    # them green, 17 inside one 0.03 slice of luma — against 16.5 for a unit
+    # sprite. The grain is a three-step ramp now: the field is six authored
+    # greens (the three grain steps, the two clumps, the tuft) and whatever
+    # the phase's two decals add, measured 7-11.
+    MAX_TILE_COLOURS = 14
+    # A find is drawn in the field's own hue: gravel-grey and wildflower-tan
+    # at 1-3px are dead pixels on a hue-100 ground, not a stone and a flower.
+    DECAL_HUE_ARC = 30.0
+    DECAL_MAX_SAT = 0.45
+    # Seamlessness, measured the way a board tiles: the mean luma step across
+    # a 64px boundary against the mean step inside a tile, on a field of
+    # phases laid by coordinate hash. The clump field wrapped at the cell,
+    # which is seamless only for ONE phase repeated — measured 9.6 against
+    # 1.9 inside, a five-fold discontinuity that quilts an open field.
+    MAX_SEAM_RATIO = 1.5
+    FIELD_TILES = 8
 
     def _phases(self):
         return [terrain.plains(phase) for phase in range(len(terrain.PLAINS_PHASES))]
+
+    def _hashed_field(self):
+        """The board's own arrangement: a phase per cell, by coordinate hash —
+        which is the only arrangement seamlessness can be measured on. One
+        phase repeated is a different, easier question."""
+        tiles = self._phases()
+        n = self.FIELD_TILES
+        field = Image.new("RGB", (n * CELL, n * CELL))
+        for gy in range(n):
+            for gx in range(n):
+                i = int(palette.h01(gx, gy, 7) * len(tiles)) % len(tiles)
+                field.paste(tiles[i].convert("RGB"), (gx * CELL, gy * CELL))
+        return field
+
+    def _steps(self, field, axis: int) -> tuple[float, float]:
+        """Mean |luma step| between adjacent pixels across a cell boundary and
+        inside a cell, along one axis."""
+        w, h = field.size
+        px = field.load()
+        lum = [[terrain.luminance(px[x, y]) for x in range(w)] for y in range(h)]
+        seam, inside = [], []
+        for y in range(h - axis):
+            for x in range(w - (1 - axis)):
+                nxt = lum[y + axis][x + 1 - axis]
+                step = abs(nxt - lum[y][x])
+                at = (y if axis else x) + 1
+                (seam if at % CELL == 0 else inside).append(step)
+        return statistics.mean(seam), statistics.mean(inside)
 
     def test_phase_zero_is_the_atlas_plains_column(self):
         col = terrain.TERRAIN_ORDER.index("plains")
@@ -96,13 +146,64 @@ class PlainsPhases(unittest.TestCase):
                 self.assertLessEqual(len(set(px)), TerrainPalette.NATURE_CEILING)
 
     def test_every_phase_carries_the_same_tufts(self):
-        """A phase moves the field's texture, never its density: the tufts wrap
-        around the tile rather than off it, so no phase is a thinner field."""
+        """A phase moves the field's texture, never its density: every tuft is
+        drawn whole, inside the cell, so no phase is a thinner field."""
         counts = [
             sum(1 for c in opaque_pixels(tile) if c == terrain.GRASS_DARK)
             for tile in self._phases()
         ]
         self.assertEqual(len(set(counts)), 1)
+        self.assertEqual(counts[0], len(terrain._TUFTS) * 3 * 2)
+
+    def test_a_field_of_mixed_phases_has_no_seam(self):
+        """The gate this pass exists for.
+
+        Every phase wraps against every OTHER phase, on all four sides, because
+        that is what the game lays: a phase per cell by coordinate hash. A field
+        of them is measured the way an eye reads a quilt — the luma step across
+        the 64px boundaries against the step inside the cells. Before the shared
+        border ring the boundaries stepped 9.6/9.7 against 1.9/2.0 inside; the
+        ring makes the two blocks that meet at a seam one block, so the step is
+        0.0 and the ratio cannot creep back up without this failing.
+        """
+        field = self._hashed_field()
+        for axis, name in ((0, "horizontal"), (1, "vertical")):
+            with self.subTest(axis=name):
+                seam, inside = self._steps(field, axis)
+                self.assertGreater(inside, 0.0)
+                self.assertLessEqual(seam / inside, self.MAX_SEAM_RATIO)
+
+    def test_a_tile_of_field_stays_indexed(self):
+        """A ratchet on the field's colour count, the way `IndexedPalette`
+        ratchets a unit's. Terrain averaged 27.8 colours a cell against 16.5
+        for a sprite, and plains — the tile 78% of a board is — spent 29 of
+        them on 28 near-duplicate greens the grain mixed per block."""
+        for phase, tile in enumerate(self._phases()):
+            with self.subTest(phase=phase):
+                self.assertLessEqual(
+                    len(set(opaque_pixels(tile))), self.MAX_TILE_COLOURS
+                )
+
+    def test_every_decal_is_drawn_in_the_fields_own_hue(self):
+        """A find is 1-3px on a hue-100 ground. At that size a tone carries no
+        material, only a hue: gravel (H41 S0.09), its shadow (H225) and the
+        wildflower (H40 S0.73) read as dead pixels, not as a stone and a
+        flower. Every tone a decal spends is grass's hue, held under S0.45."""
+        grass_hue = palette._rgb_to_hsv(GRASS)[0] * 360.0
+        for kind, paint in terrain._DECALS.items():
+            swatch = Image.new("RGBA", (CELL, CELL), (*GRASS, 255))
+            paint(swatch, 8, 8)
+            for tone in set(opaque_pixels(swatch)) - {GRASS}:
+                with self.subTest(decal=kind, tone=tone):
+                    hue, sat, _ = palette._rgb_to_hsv(tone)
+                    arc = abs(hue * 360.0 - grass_hue)
+                    self.assertLessEqual(min(arc, 360.0 - arc), self.DECAL_HUE_ARC)
+                    self.assertLessEqual(sat, self.DECAL_MAX_SAT)
+        # and the table really spends them: a decal every phase but the atlas
+        # column, drawn from this set and no other
+        for entry in terrain.PLAINS_PHASES:
+            for kind, _, _ in entry[3]:
+                self.assertIn(kind, terrain._DECALS)
 
     def test_the_field_is_clumped_rather_than_grained(self):
         """The 2026-08-22 measurement, kept as a floor.
