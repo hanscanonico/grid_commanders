@@ -165,6 +165,24 @@ greebling. `tests/test_raised_armour.py` holds both halves — only the family
 reaches out of its tile, and what it gained still draws at every rung-1
 sampling phase.
 
+### A pose smaller than one board texel is not motion
+
+The same arithmetic sets the size of the smallest move the ambient animation
+can make. The board samples the 64x96 cell down to **16x24 texels at zoom
+rung 1** and **32x48 at rung 2**, so one board texel is **4 atlas pixels** at
+rung 1. One voxel is a 4x4px cube projected to `sx = (x - y) * 2`,
+`sy = (x + y) - 2z`, which makes four atlas pixels either a **dz of two
+voxels** or a **(dx +1, dy -1) diagonal**: anything a pose moves by less than
+that cannot carry the silhouette a texel across. Inside the shape it only
+re-tones texels in place; along the edge it flips boundary texels on and off
+with the sampling phase — which is why the jets and the hulls, whose pose B is
+their pose A translated one atlas pixel by the bob and nothing else, still
+score silhouette change. Both read as shimmer rather than movement.
+`tests/measure_motion.py` is the readout — per unit, per rung, the changed
+texels, how many of those are the silhouette, and the shimmer index — and its
+docstring records the table as measured, where the whole tracked family moves
+zero silhouette texels at both rungs.
+
 ## Setup
 
 ```sh
