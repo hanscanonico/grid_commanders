@@ -2249,7 +2249,8 @@ class AmbientFrames(unittest.TestCase):
     # out, and the hardest sample an idle has to survive — is a 16x24 texel
     # sample of the cell, where a pose delta under 4 atlas px moves nothing.
     RUNG_1 = (16, 24)
-    # Every unit at rung 1, measured by tests/measure_motion.py on 2026-08-24:
+    # Every unit at rung 1, measured on 2026-08-24 over all five liveries
+    # (tests/measure_motion.py prints the red row of the same readout):
     # apc 3, recon 4, tank 5, md_tank 6, mech 7, artillery 7, anti_air 8,
     # missiles 10, rockets 11, infantry 12 for the land army; fighter 30,
     # bomber 36, b_copter 28, t_copter 30 in the air; battleship 30, cruiser
@@ -2261,10 +2262,14 @@ class AmbientFrames(unittest.TestCase):
     # recon 2.25, anti_air 2.12, cruiser 1.91, missiles 1.90, infantry 1.58,
     # lander 1.56, bomber 1.39, battleship 1.20, t_copter 1.07, fighter 0.90,
     # sub 0.83, b_copter 0.79, mech 0.43 — each the worst of that unit's five
-    # liveries, which move the tones and not the shape and spread it by 0.25
-    # at most. Five is just over the noisiest honest unit; the apc is up
-    # there because it has no turret and no gun, so its whole texel is the
-    # nose dipping past a hull that can only re-tone behind it.
+    # liveries. Livery moves the tones and not the shape, so the silhouette
+    # counts above are the same for all five, but this ratio is a tone count
+    # and does drift with them: by 0.1 or less on most units, 0.67 on the
+    # md_tank and 1.67 on the apc (3.00 in iron, 4.67 in the other four),
+    # whose three silhouette texels make a very small divisor. Five is just
+    # over the noisiest livery of the noisiest unit; the apc is up there
+    # because it has no turret and no gun, so its whole texel is the nose
+    # dipping past a hull that can only re-tone behind it.
     MAX_SHIMMER = 5.0
 
     def test_every_unit_moves_a_whole_board_texel(self):
@@ -2286,8 +2291,8 @@ class AmbientFrames(unittest.TestCase):
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
-                _, silhouette = self._texels(uid, fac)
                 with self.subTest(unit=uid, faction=fac.key):
+                    _, silhouette = self._texels(uid, fac)
                     self.assertGreaterEqual(silhouette, self.MIN_SILHOUETTE_TEXELS)
 
     def test_no_unit_shimmers_more_than_it_moves(self):
@@ -2303,9 +2308,9 @@ class AmbientFrames(unittest.TestCase):
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
-                changed, silhouette = self._texels(uid, fac)
-                interior = changed - silhouette
                 with self.subTest(unit=uid, faction=fac.key):
+                    changed, silhouette = self._texels(uid, fac)
+                    interior = changed - silhouette
                     self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
 
     def _texels(self, uid: str, fac: Faction) -> tuple[int, int]:
