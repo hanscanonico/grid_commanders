@@ -212,6 +212,20 @@ python3 -m venv .venv
 | `autotiles/sea.png` | the three sea phase variants, phase 0 first (see below) |
 | `autotiles/plains.png` | the eight plains phase variants, phase 0 first (see below) |
 | `autotiles/mountain.png` | the three mountain phase variants, phase 0 first (see below) |
+| `anim.json` | the sheet contract in machine-readable form (see below) |
+
+`anim.json` is the same numbers the sheets are built from, written down for the
+game to read instead of retype: the cell's size, its ground line and its
+overflow, the ambient clip (which sheets, in what order, at what cadence), the
+units atlas's column and row order, and how many phase variants each terrain
+family ships. Every field is derived from the live tables in `spritegen/` —
+`atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
+phase tables — and `ground_px` is **measured** off a rendered cell (a composed
+cell minus the shadowless one is the cast shadow alone; an ellipse is widest on
+the row it is centred on) rather than restated, so the manifest cannot become
+one more place the number drifts. It is written deterministically like
+everything else here: sorted keys, two-space indent, trailing newline. See
+`spritegen/anim.py`.
 
 `units_atlas_figures.png` exists because a figure standing on a drawn ground
 already has a shadow. The tile shadow grounds the cell against the board's

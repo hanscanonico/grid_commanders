@@ -7,6 +7,8 @@ no randomness: every sprite is an authored model, and every run reproduces
 the same bytes.
 
 Outputs (under --out, default ./out):
+  anim.json              the sheet contract — cell geometry, ambient clip,
+                         column/row order, terrain phase counts
   units_atlas.png        1152x320 RGBA — drop-in for assets/tiles/units_atlas.png
   units_atlas_b.png      ambient animation frame B (every unit's second key pose)
   units_atlas_figures.png the same army with the tile's cast shadow left off,
@@ -24,7 +26,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from spritegen import atlas, terrain
+from spritegen import anim, atlas, terrain
 from spritegen.palette import FACTIONS, faction_by_key
 from spritegen.units import ATLAS_ORDER, Pose
 
@@ -64,15 +66,16 @@ def _preview_only(ids: list[str], team: str, zoom: int, out: Path) -> None:
 def _install(src: Path, dest: Path) -> None:
     import shutil
 
-    atlases = [
-        (src / "units_atlas.png", dest / "assets/tiles/units_atlas.png"),
-        (src / "units_atlas_b.png", dest / "assets/tiles/units_atlas_b.png"),
-        (
-            src / "units_atlas_figures.png",
-            dest / "assets/tiles/units_atlas_figures.png",
-        ),
-        (src / "terrain_atlas.png", dest / "assets/tiles/terrain_atlas.png"),
+    # The manifest travels with the sheets it describes: a checkout with new
+    # atlases and last run's anim.json would be the coupling this file exists
+    # to end.
+    sheets = [
+        *anim.AMBIENT_SHEETS,
+        "units_atlas_figures.png",
+        "terrain_atlas.png",
+        anim.MANIFEST_NAME,
     ]
+    atlases = [(src / name, dest / "assets/tiles" / name) for name in sheets]
     pairs = list(atlases)
     for cell in sorted((src / "units").glob("*.png")):
         pairs.append((cell, dest / "assets/sprites/units" / cell.name))
@@ -128,12 +131,14 @@ def main() -> None:
         _preview_only(args.only.split(","), args.team, args.zoom, args.out)
         return
 
+    frame_a, frame_b = anim.AMBIENT_SHEETS
+
     print("building units atlas (18 units x 5 factions)")
     units_atlas = atlas.build_units_atlas()
-    _write(units_atlas, args.out / "units_atlas.png")
+    _write(units_atlas, args.out / frame_a)
 
     print("building ambient frame B (every unit's second key pose)")
-    _write(atlas.build_units_atlas(Pose.B), args.out / "units_atlas_b.png")
+    _write(atlas.build_units_atlas(Pose.B), args.out / frame_b)
 
     print("building the figure sheet (no tile shadow, for the cut-ins)")
     _write(atlas.build_units_atlas(shadow=False), args.out / "units_atlas_figures.png")
@@ -186,6 +191,11 @@ def main() -> None:
     _write(autotile.sea_sheet(), args.out / "autotiles" / "sea.png")
     _write(autotile.plains_sheet(), args.out / "autotiles" / "plains.png")
     _write(autotile.mountain_sheet(), args.out / "autotiles" / "mountain.png")
+
+    print("writing the sheet manifest")
+    manifest = args.out / anim.MANIFEST_NAME
+    anim.dump(manifest)
+    print(f"  wrote {manifest}")
 
     print("rendering previews")
     _write(atlas.preview(units_atlas, 2), args.out / "preview_units.png")
