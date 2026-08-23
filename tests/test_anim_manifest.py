@@ -5,19 +5,23 @@ only helps if the manifest is not retyping them either. These tests hold every
 field against the table it is supposed to come from — column order against
 `ATLAS_ORDER`, rows against `FACTIONS`, phase counts against the terrain phase
 tables, the cell against `atlas`, and `ground_px` against a cell actually
-rendered — plus the determinism the rest of the pipeline promises.
+rendered — plus the determinism the rest of the pipeline promises and the
+install step that has to carry the file to the game beside its sheets.
 
 Run with `.venv/bin/python -m unittest discover tests`.
 """
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from spritegen import anim, atlas, terrain
+import sprite_generator
+from spritegen import anim, atlas, terrain, voxel
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, UNITS
 
@@ -78,6 +82,17 @@ class Cell(unittest.TestCase):
                 cell.height - 1 - widest, ground, f"{uid}'s shadow is centred elsewhere"
             )
 
+    def test_ground_px_is_the_composer_s_own_arithmetic(self):
+        """A second, independent derivation, so the two readings cannot share
+        an off-by-one: `compose_cell` centres a land unit's ellipse on
+        `bottom - 1 + SHADOW_OFFSET.y` with `bottom = h - GROUND_BOTTOM`, so
+        the height of that row above the bottom edge is a subtraction of two
+        voxel constants. If the pixel scan drifts a row, this disagrees."""
+        self.assertEqual(
+            anim.MANIFEST["cell"]["ground_px"],
+            voxel.GROUND_BOTTOM - voxel.SHADOW_OFFSET[1],
+        )
+
 
 class Clip(unittest.TestCase):
     def test_the_ambient_clip_plays_the_sheets_the_generator_writes(self):
@@ -86,6 +101,26 @@ class Clip(unittest.TestCase):
         self.assertEqual(clip["order"], list(range(len(anim.AMBIENT_SHEETS))))
         self.assertEqual(clip["ms_per_frame"], anim.AMBIENT_MS)
         self.assertEqual(clip["mode"], "loop")
+
+
+class Install(unittest.TestCase):
+    def test_the_install_step_ships_the_manifest_with_the_sheets(self):
+        """The manifest is only a contract where the game can read it: a
+        game install that took the new atlases and left last run's anim.json
+        behind is the drift this file exists to end."""
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dest = Path(tmp) / "out", Path(tmp) / "game"
+            for sub in ("units", "iso_buildings", "autotiles"):
+                (src / sub).mkdir(parents=True)
+            for name in (*anim.AMBIENT_SHEETS, "units_atlas_figures.png"):
+                (src / name).write_bytes(b"")
+            (src / "terrain_atlas.png").write_bytes(b"")
+            anim.dump(src / anim.MANIFEST_NAME)
+            with contextlib.redirect_stdout(io.StringIO()):
+                sprite_generator._install(src, dest)
+            shipped = dest / "assets/tiles" / anim.MANIFEST_NAME
+            self.assertTrue(shipped.exists(), "the install left the manifest behind")
+            self.assertEqual(shipped.read_text(encoding="utf-8"), anim.dumps())
 
 
 class Determinism(unittest.TestCase):
