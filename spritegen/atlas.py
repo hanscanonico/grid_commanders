@@ -21,12 +21,23 @@ building cells    — <building>_<team>.png, one terrain cell each, RGBA
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from PIL import Image
 
 from . import aa, autotile, buildings, terrain
 from .palette import FACTIONS, Faction
 from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
-from .voxel import compose_cell, place_in_cell, render, render_indexed
+from .voxel import (
+    AIR_BOTTOM,
+    GROUND_BOTTOM,
+    compose_cell,
+    place_in_cell,
+    render,
+    render_indexed,
+    sprite_origin,
+    sprite_size,
+)
 
 # The units atlas's cell: one tile wide, half a tile taller than that. A
 # silhouette with more mass than the grass tile it stands on has to overflow
@@ -36,13 +47,82 @@ from .voxel import compose_cell, place_in_cell, render, render_indexed
 # turret needs; a taller cell than that is mostly empty column.
 CELL_W = 64
 CELL_H = 96
-# Ambient animation frame B is pose B of every model plus this bob: air and
-# sea units ride one voxel-scale pixel higher (their shadows stay put, so the
-# bob reads as hover/swell). Land units hold their ground line and say it in
-# the model instead — a walked tread, a settled suspension, a rested weapon.
-# Stated as heights above the cell's bottom edge, like compose_cell's own
-# landmarks.
-_BOB_BOTTOM = {"air": 21, "sea": 10}
+# Ambient animation frame B is pose B of every model plus this bob, for the
+# kinds that are not standing on the ground. It is ONE BOARD TEXEL: the board
+# draws this 64x96 cell at 0.25 scale, so four atlas pixels are one texel at
+# zoom rung 1 and a whole texel at every rung above it — the argument
+# `_shadow_ellipse` makes about parity, made about motion. The 1px bob this
+# replaces moved no visible pixel at all; it only changed which source pixel
+# the resample kept, which is a flicker across a third of the sprite and a
+# hover nowhere.
+#
+# What stays put under the bob is the SURFACE — cast shadow, displacement
+# ellipse, wake and waterline foam all sit on compose_cell's `ground` — so an
+# aircraft gains altitude over its own shadow and a ship rides a swell past a
+# fixed foam line, instead of the sea heaving with the hull.
+#
+# Two other readings of the sea bob were rendered and measured against this
+# one. Settling the hull INTO a pinned ellipse reads best of the three by eye
+# and buries it: the sheet's shadow-direction gate then measures the sub's
+# remaining crescent as lying 0.64px up-LEFT of its caster, where the ellipse
+# is laid 2px down-right. Bobbing the hull with its wake still attached costs
+# the sub its identity — frame B then resembles the BATTLESHIP's frame A
+# (0.682 IoU) more than its own (0.672) — which is what says the wake belongs
+# to the water; left there, the sub scores 0.698 against its own frame A and
+# 0.604 against the nearest other unit.
+#
+# Land units hold their ground line and say the beat in the model instead — a
+# walked tread, a settled suspension, a rested weapon.
+BOB_PX = 4
+_BOBBING = frozenset({"air", "sea"})
+
+# Pose A's crop, per unit id, as (minx, miny, width, height): the placement
+# reference every other pose is pinned to. Poses differ in extent — t_copter's
+# pose B is 4px wider than its A — so centring each pose's OWN bounding box
+# slid the whole helicopter 2px sideways every beat and pumped its cast shadow
+# by 9% (159px to 173px) with it. Cached because the sheet composes each unit
+# 20 times (5 rows x 2 poses x 2 shadow variants) and this costs a model build,
+# not a render: `sprite_origin` and `sprite_size` read the crop off the voxels.
+_POSE_A_BOX: dict[str, tuple[int, int, int, int]] = {}
+
+
+def _pose_a_box(uid: str) -> tuple[int, int, int, int]:
+    box = _POSE_A_BOX.get(uid)
+    if box is None:
+        model = build_model(uid, Pose.A)
+        box = _POSE_A_BOX[uid] = (*sprite_origin(model), *sprite_size(model))
+    return box
+
+
+class Placement(NamedTuple):
+    """Where one pose of one unit goes in its cell.
+
+    `origin` is the cell pixel model space's screen origin lands on — NOT the
+    sprite's top-left, which is a different point of the model in every pose.
+    Pinning it is what makes an idle beat a unit MOVING rather than a unit
+    sliding: it is the same pair for both poses of a land unit, and `BOB_PX`
+    higher for pose B of an air or sea one.
+
+    `footprint_w` and `ground` are pose-invariant by construction — the width
+    every cast shadow is sized from and the surface row it sits on — so the
+    origin is the only one of the three a beat may move.
+    """
+
+    origin: tuple[int, int]
+    footprint_w: int
+    ground: int
+
+
+def cell_placement(uid: str, pose: Pose) -> Placement:
+    kind = UNITS[uid][1]
+    minx_a, miny_a, w_a, h_a = _pose_a_box(uid)
+    ground = CELL_H - (AIR_BOTTOM if kind == "air" else GROUND_BOTTOM)
+    bob = BOB_PX if pose is Pose.B and kind in _BOBBING else 0
+    # Pose A's own placement — centred on the cell, anchored to the ground row
+    # — with every other pose hung off that same origin.
+    return Placement(
+        ((CELL_W - w_a) // 2 - minx_a, ground - h_a - miny_a - bob), w_a, ground
+    )
 
 
 def unit_cell(
@@ -51,8 +131,9 @@ def unit_cell(
     """One atlas cell. Units render through the indexed ramps; terrain and
     buildings keep the shading renderer until their own pass moves them."""
     kind = UNITS[uid][1]
-    bob = _BOB_BOTTOM.get(kind) if pose is Pose.B else None
     model = build_model(uid, pose)
+    place = cell_placement(uid, pose)
+    minx, miny = sprite_origin(model)
     # Softening is the LAST word on the art (see spritegen.aa): after the
     # contour and the despeckle, before the cell composes a shadow under it —
     # the shadow is not the unit's silhouette and has no staircase of its own
@@ -62,7 +143,9 @@ def unit_cell(
         sprite,
         kind,
         cell=(CELL_W, CELL_H),
-        bottom=None if bob is None else CELL_H - bob,
+        origin=(place.origin[0] + minx, place.origin[1] + miny),
+        footprint_w=place.footprint_w,
+        ground=place.ground,
         wake=uid in WAKE,
         shadow=shadow,
     )

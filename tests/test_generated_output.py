@@ -2261,20 +2261,41 @@ class AmbientFrames(unittest.TestCase):
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertLess(abs(b - a) / a, self.MAX_MASS_DRIFT)
 
-    def test_land_units_keep_their_cast_shadow(self):
-        """A land unit is parked: it shifts its weight, and the patch of
-        ground it stands on may not move a pixel with it. That holds as long
-        as a land key pose only rises or settles — compose_cell sizes the
-        shadow off the sprite's WIDTH, which z motion cannot change."""
+    def test_every_unit_keeps_its_cast_shadow(self):
+        """A parked unit shifts its weight, and the patch of ground it stands
+        on may not move a pixel with it.
+
+        This used to be asked of land units alone, and an air or sea shadow
+        was sized off the POSE's own sprite width: t_copter's pose B is 4px
+        wider than its A, so its shadow pumped from 159px to 173px — 9% —
+        every beat, and the whole helicopter slid 2px sideways with it. Sized
+        off the pose-A footprint and laid on the pose-A ground row instead
+        (compose_cell's `footprint_w` and `ground`), every kind's shadow now
+        holds still through the bob the way a land unit's always did.
+        """
         for uid in ATLAS_ORDER:
-            if UNITS[uid][1] != "land":
-                continue
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertEqual(
                         self._shadow(atlas.unit_cell(uid, fac)),
                         self._shadow(atlas.unit_cell(uid, fac, Pose.B)),
                     )
+
+    def test_both_poses_stand_on_the_same_cell_coordinate(self):
+        """Pose B is the same unit moving, so model space's screen origin
+        lands on the same cell pixel in both — a land unit exactly, an air or
+        sea one exactly one board texel higher, which is the bob and nothing
+        else. The footprint the shadow is sized from and the ground row it
+        sits on are the same number for both poses, whatever the crops do."""
+        for uid in ATLAS_ORDER:
+            a = atlas.cell_placement(uid, Pose.A)
+            b = atlas.cell_placement(uid, Pose.B)
+            bob = atlas.BOB_PX if UNITS[uid][1] in ("air", "sea") else 0
+            with self.subTest(unit=uid):
+                self.assertEqual(a.footprint_w, b.footprint_w)
+                self.assertEqual(a.ground, b.ground)
+                self.assertEqual(a.origin[0], b.origin[0])
+                self.assertEqual(a.origin[1] - b.origin[1], bob)
 
     def test_air_and_sea_units_move_between_frames(self):
         red = faction_by_key("red")
