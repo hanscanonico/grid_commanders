@@ -182,6 +182,28 @@ def _bounds(model: Model, k: int = 1) -> tuple[Anchors, int, int, int, int]:
     return anchors, minx, miny, w, h
 
 
+def sprite_origin(model: Model, k: int = 1) -> tuple[int, int]:
+    """Where model space's screen origin sits inside the rendered sprite.
+
+    A sprite is cropped to the pose it holds, so its top-left corner is a
+    different point of the MODEL for every pose: the voxel at screen (sx, sy)
+    lands on sprite pixel (sx - minx, sy - miny). A caller that wants two
+    poses of one unit to stand in the same place therefore has to place them
+    by this origin — `(x0 - minx, y0 - miny)` equal — rather than by centring
+    each pose's own bounding box, which slides the whole model sideways every
+    time a limb or a rotor changes the crop (see `atlas.unit_cell`).
+    """
+    _, minx, miny, _, _ = _bounds(model, k)
+    return minx, miny
+
+
+def sprite_size(model: Model, k: int = 1) -> tuple[int, int]:
+    """The (width, height) `render` will crop this model to, without rendering
+    it — the other half of what pose-invariant placement needs."""
+    _, _, _, w, h = _bounds(model, k)
+    return w, h
+
+
 @dataclass
 class IndexedSprite:
     """A rendered sprite plus the material id behind every pixel.
@@ -829,6 +851,9 @@ def compose_cell(
     dx: int = 0,
     wake: bool = False,
     shadow: bool = True,
+    origin: tuple[int, int] | None = None,
+    footprint_w: int | None = None,
+    ground: int | None = None,
 ) -> Image.Image:
     """Center a rendered sprite on a transparent atlas cell with its shadow.
 
@@ -860,26 +885,41 @@ def compose_cell(
     pixels taken back out and can never be a second opinion on the art. The
     waterline foam is why that matters: it is placed against the composed
     cell's own spans, so a shadow that was never drawn would move the foam.
+
+    The last three arguments are what lets a SECOND pose of the same unit be
+    the same unit moving rather than a second composition. `origin` places the
+    sprite's top-left corner outright, so a caller can pin two crops by their
+    model origin (`sprite_origin`) instead of centring each one's own box.
+    `footprint_w` is the width every shadow radius is taken from — the unit's
+    footprint on the ground, which a raised rotor or a swung barrel does not
+    change. `ground` is the SURFACE the unit is over, which is not the row it
+    rides at once it bobs: the shadow, the displacement ellipse, the running
+    wake and the waterline foam all stay here, so a ship that rises a board
+    texel rides a swell instead of dragging the sea up with it. All three
+    default to the single-pose behaviour: centred crop, the sprite's own
+    width, and the surface right under the unit.
     """
     cell_w, cell_h = cell
     out = Image.new("RGBA", (cell_w, cell_h), (0, 0, 0, 0))
     w, h = sprite.size
     if bottom is None:
         bottom = cell_h - (AIR_BOTTOM if kind == "air" else GROUND_BOTTOM)
-    x0 = (cell_w - w) // 2 + dx
-    y0 = bottom - h
+    x0, y0 = origin if origin is not None else ((cell_w - w) // 2 + dx, bottom - h)
+    if ground is None:
+        ground = bottom
+    fw = w if footprint_w is None else footprint_w
 
     cast: list[tuple[int, int]] = []
     sx, sy = SHADOW_OFFSET
     if kind == "sea":
         # Ships sit IN the water: a flat displacement shading right under
         # the hull instead of a floating blob, then foam at the waterline.
-        rx = max(6, int(w * 0.42))
+        rx = max(6, int(fw * 0.42))
         cast = _shadow_ellipse(
-            out, cell_w // 2 + dx + sx, bottom - 1 + sy, rx, max(2, rx // 5)
+            out, cell_w // 2 + dx + sx, ground - 1 + sy, rx, max(2, rx // 5)
         )
     elif kind == "air":
-        rx = max(6, int(w * 0.30))
+        rx = max(6, int(fw * 0.30))
         cast = _shadow_ellipse(
             out,
             cell_w // 2 + dx + sx * 2,
@@ -888,15 +928,20 @@ def compose_cell(
             max(2, rx // 3),
         )
     elif kind == "land":
-        rx = max(4, int(w * 0.34))
+        rx = max(4, int(fw * 0.34))
         cast = _shadow_ellipse(
-            out, cell_w // 2 + dx + sx, bottom - 1 + sy, rx, max(2, rx // 4)
+            out, cell_w // 2 + dx + sx, ground - 1 + sy, rx, max(2, rx // 4)
         )
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
         if wake:
-            _wake(out, sprite, x0, y0)
-        _waterline_foam(out)
+            # Running foam is the WATER's, not the hull's, so it is left on
+            # the surface: a bobbed hull rises out of its own wake rather than
+            # carrying it up. Measured on the sub, whose wake is a third of
+            # its silhouette, that is the difference between a frame B that
+            # reads as itself and one that reads as the battleship.
+            _wake(out, sprite, x0, ground - h)
+        _waterline_foam(out, ground)
     if not shadow:
         _erase_shadow(out, cast)
     return out
@@ -962,6 +1007,10 @@ def _wake(img: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
     swallowed the whole length of it and left the hull nothing but its stern
     trail. `_erase_shadow` keeps a shadow pixel the wake has taken, so the
     figure sheet is unmoved by this.
+
+    `y0` is where the hull sits ON THE WATER, which is not always where it is
+    drawn: a bobbed hull passes the row it rose from, because the foam it
+    broke stays on the surface (see compose_cell's `ground`).
     """
     px = img.load()
     sp = sprite.load()
@@ -990,21 +1039,28 @@ def _wake(img: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
         fleck(stern_x + k, y + 1)
 
 
-def _waterline_foam(img: Image.Image) -> None:
-    """Foam flecks just outside the hull along its real waterline rows.
+def _waterline_foam(img: Image.Image, ground: int) -> None:
+    """Foam flecks just outside the hull along its waterline rows.
 
-    The waterline is wherever the hull actually bottoms out, so the rows come
-    from the composed pixels rather than from the ground line the sprite was
-    placed against: `render` reserves a trailing empty row, and the dimetric
-    hull tapers to a narrow tip, so a fixed offset misses the wide part of
-    the wake. Flecks trail outward along the hull's last few rows, widest at
-    the bottom.
+    The rows come from the composed pixels rather than from a fixed offset:
+    `render` reserves a trailing empty row, and the dimetric hull tapers to a
+    narrow tip, so an offset measured off the sprite misses the wide part of
+    the wake. Measured on the 64x96 cell, the last four opaque rows of a ship
+    (battleship 90-93, cruiser 88-91, sub 89-92, lander 88-91) are the
+    displacement ellipse's own — the shape the hull cuts in the water, which
+    is exactly what the foam breaks around.
+
+    Only rows at or below `ground` are read, because only they are the water:
+    a hull bobbing a board texel above the surface is not a waterline however
+    low its own pixels reach, and skipping it is what leaves the foam line
+    where the still pose put it while the ship rides the swell. Flecks trail
+    outward along the last few rows, widest at the bottom.
     """
     px = img.load()
     w, h = img.size
     foam = FOAM
     spans = []
-    for yy in range(h):
+    for yy in range(max(0, ground), h):
         xs = [xx for xx in range(w) if px[xx, yy][3] == 255]
         if xs:
             spans.append((yy, min(xs), max(xs)))

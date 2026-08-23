@@ -85,11 +85,11 @@ def _tire(m: Model, x: int, y: int, big: bool = False) -> None:
 def _settle(m: Model, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> None:
     """Drop a whole sub-assembly one voxel: the suspension/weight key pose.
 
-    Movement is in z only, on purpose. A model's screen WIDTH is a function
-    of its x/y extents alone, and compose_cell sizes and places the cast
-    shadow off that width, so a pose that only rises or settles leaves a land
-    unit's shadow pixel-identical — the unit shifts its weight, the patch of
-    ground it stands on does not.
+    Movement is in z only, on purpose: what settles is the machine on its
+    springs, not the machine on the map. The cast shadow no longer depends on
+    that restraint — `atlas.cell_placement` sizes and places every pose's
+    shadow off pose A's footprint — but the read does. A unit that shifts its
+    weight is parked; one that shifts in x or y has driven off.
     """
     moved = {
         (x, y, z): m.vox[(x, y, z)]

@@ -62,6 +62,7 @@ from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
 from spritegen import voxel
 from spritegen.voxel import (
     CAST,
+    FOAM,
     _broad_flat_tops,
     _prop_contour,
     render,
@@ -2261,20 +2262,86 @@ class AmbientFrames(unittest.TestCase):
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertLess(abs(b - a) / a, self.MAX_MASS_DRIFT)
 
-    def test_land_units_keep_their_cast_shadow(self):
-        """A land unit is parked: it shifts its weight, and the patch of
-        ground it stands on may not move a pixel with it. That holds as long
-        as a land key pose only rises or settles — compose_cell sizes the
-        shadow off the sprite's WIDTH, which z motion cannot change."""
+    def test_every_unit_keeps_its_cast_shadow(self):
+        """A parked unit shifts its weight, and the patch of ground it stands
+        on may not move a pixel with it.
+
+        This used to be asked of land units alone, and an air or sea shadow
+        was sized off the POSE's own sprite width: t_copter's pose B is 4px
+        wider than its A, so its shadow pumped from 159px to 173px — 9% —
+        every beat, and the whole helicopter slid 2px sideways with it. Sized
+        off the pose-A footprint and laid on the pose-A ground row instead
+        (compose_cell's `footprint_w` and `ground`), every kind's shadow now
+        holds still through the bob the way a land unit's always did.
+        """
         for uid in ATLAS_ORDER:
-            if UNITS[uid][1] != "land":
-                continue
             for fac in FACTIONS:
                 with self.subTest(unit=uid, faction=fac.key):
                     self.assertEqual(
                         self._shadow(atlas.unit_cell(uid, fac)),
                         self._shadow(atlas.unit_cell(uid, fac, Pose.B)),
                     )
+
+    def test_both_poses_stand_on_the_same_cell_coordinate(self):
+        """Pose B is the same unit moving, so model space's screen origin
+        lands on the same cell pixel in both — a land unit exactly, an air or
+        sea one exactly one board texel higher, which is the bob and nothing
+        else. The footprint the shadow is sized from and the ground row it
+        sits on are the same number for both poses, whatever the crops do."""
+        for uid in ATLAS_ORDER:
+            a = atlas.cell_placement(uid, Pose.A)
+            b = atlas.cell_placement(uid, Pose.B)
+            bob = atlas.BOB_PX if UNITS[uid][1] in ("air", "sea") else 0
+            with self.subTest(unit=uid):
+                self.assertEqual(a.footprint_w, b.footprint_w)
+                self.assertEqual(a.ground, b.ground)
+                self.assertEqual(a.origin[0], b.origin[0])
+                self.assertEqual(a.origin[1] - b.origin[1], bob)
+
+    def test_the_bob_lifts_the_whole_aircraft_and_nothing_else(self):
+        """The placement above is a plan; this is the composed cell.
+
+        `fighter` and `bomber` draw the same voxels in both poses — the beat
+        IS the bob for them — so frame B has to be frame A moved up exactly
+        `BOB_PX` and nothing else: identical pixels from the hover line down,
+        which is where the cast shadow lives. A bob that moved a fraction of
+        a board texel, or that carried the shadow with it, fails here."""
+        # One board texel and not a pixel less: the board draws the 64x96
+        # cell at 0.25 scale, so a bob under 4px moves no visible pixel at
+        # all — it only changes which source pixel the resample keeps, which
+        # is the flicker the 1px bob shipped as a hover.
+        self.assertEqual(atlas.BOB_PX, 4)
+        for uid in ("fighter", "bomber"):
+            self.assertEqual(build_model(uid, Pose.A).vox, build_model(uid, Pose.B).vox)
+            ground = atlas.cell_placement(uid, Pose.A).ground
+            for fac in FACTIONS:
+                a = atlas.unit_cell(uid, fac)
+                b = atlas.unit_cell(uid, fac, Pose.B)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertEqual(
+                        b.crop((0, 0, atlas.CELL_W, ground - atlas.BOB_PX)).tobytes(),
+                        a.crop((0, atlas.BOB_PX, atlas.CELL_W, ground)).tobytes(),
+                    )
+                    self.assertEqual(
+                        b.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
+                        a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
+                    )
+
+    def test_the_foam_line_stays_on_the_water(self):
+        """The sea's own marks belong to the sea, not to the hull that made
+        them: a ship riding a swell leaves its waterline foam exactly where
+        the still pose broke it (10 flecks for the surface ships, 94 for the
+        sub, whose running wake is foam too). Derived from the bobbed hull
+        instead, the whole line rose with the ship and the swell read as the
+        sea heaving."""
+        for uid in ATLAS_ORDER:
+            if UNITS[uid][1] != "sea":
+                continue
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    a = self._foam(atlas.unit_cell(uid, fac))
+                    self.assertTrue(a)
+                    self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, Pose.B)))
 
     def test_air_and_sea_units_move_between_frames(self):
         red = faction_by_key("red")
@@ -2318,6 +2385,16 @@ class AmbientFrames(unittest.TestCase):
         px = cell.convert("RGBA").load()
         w, h = cell.size
         return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
+
+    def _foam(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {
+            (x, y)
+            for y in range(h)
+            for x in range(w)
+            if px[x, y][:3] == FOAM and px[x, y][3] == 255
+        }
 
 
 class GroundContrast(unittest.TestCase):
