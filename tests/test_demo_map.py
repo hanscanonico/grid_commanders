@@ -62,13 +62,18 @@ class DemoMap(unittest.TestCase):
         self.assertGreaterEqual(share, 0.45, f"{share:.0%} plains, too little ground")
         self.assertLessEqual(share, 0.65, f"{share:.0%} plains, too little else")
 
-    def test_plains_cells_wear_at_least_three_phases(self):
+    def test_plains_cells_wear_every_phase(self):
+        """The demo board has to exercise the whole table, not a corner of it:
+        75 plains cells over eight phases, so a phase the hash never lands on
+        here is a phase no reviewer ever sees."""
         phases = {
             atlas.phase(x, y, len(terrain.PLAINS_PHASES))
             for x, y, tid in self._cells()
             if tid == "plains"
         }
-        self.assertGreaterEqual(len(phases), 3, f"phases drawn: {sorted(phases)}")
+        self.assertEqual(
+            phases, set(range(len(terrain.PLAINS_PHASES))), f"drawn: {sorted(phases)}"
+        )
 
     def test_every_terrain_column_appears(self):
         drawn = collections.Counter(tid for _, _, tid in self._cells())
@@ -90,7 +95,7 @@ class DemoMap(unittest.TestCase):
 
 class DemoRender(unittest.TestCase):
     """The board as drawn, not merely as declared: a legend that hashes into
-    five phases proves nothing if `build_demo` still paints phase 0."""
+    eight phases proves nothing if `build_demo` still paints phase 0."""
 
     @classmethod
     def setUpClass(cls):
@@ -120,7 +125,9 @@ class DemoRender(unittest.TestCase):
                     f"cell {(x, y)} is not plains phase {want}",
                 )
             drawn.add(want)
-        self.assertGreaterEqual(len(drawn), 3, f"phases drawn: {sorted(drawn)}")
+        self.assertEqual(
+            drawn, set(range(len(terrain.PLAINS_PHASES))), f"drawn: {sorted(drawn)}"
+        )
 
 
 if __name__ == "__main__":
