@@ -2327,6 +2327,71 @@ class AmbientFrames(unittest.TestCase):
                         a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                     )
 
+    # The copters are the only units whose SHAPE changes between poses, and
+    # the shape is one part: the rotor. Measured on 2026-08-24, cell IoU with
+    # the bob taken out is 0.879 (b_copter) and 0.865 (t_copter); the
+    # 45-degree sweep these replaced drew a DIFFERENT blade set in frame B —
+    # four axial blades against two long diagonals — and scored 0.74 and
+    # 0.74, which read as two aircraft alternating rather than one turning.
+    MIN_ROTOR_IOU = 0.85
+    # ...while still moving what the board can see: 28 and 30 texels at rung
+    # 1 (`tests/measure_motion.py`), so the bar is a floor, not the number.
+    MIN_ROTOR_TEXELS = 10
+
+    def test_the_copters_turn_one_rotor_rather_than_swapping_its_blades(self):
+        """A disc that spins keeps its blades and moves them.
+
+        Three readings of the same requirement. The models must draw the
+        same COUNT of `rotor` voxels in both poses and span the same box
+        within a voxel, so no blade is added, dropped or lengthened; the two
+        composed cells, with `atlas.BOB_PX` subtracted so this reads the
+        rotor and not the hop, must share `MIN_ROTOR_IOU` of their union; and
+        the board at rung 1 must still see `MIN_ROTOR_TEXELS` of silhouette
+        change, so keeping the frames alike may never be bought by keeping
+        them still.
+        """
+        neutral = faction_by_key("neutral")
+        for uid in ("b_copter", "t_copter"):
+            box = {}
+            for pose in Pose:
+                blades = [
+                    v for v, mat in build_model(uid, pose).vox.items() if mat == "rotor"
+                ]
+                box[pose] = (
+                    len(blades),
+                    max(x for x, _, _ in blades) - min(x for x, _, _ in blades),
+                    max(y for _, y, _ in blades) - min(y for _, y, _ in blades),
+                )
+            with self.subTest(unit=uid, reading="blades"):
+                self.assertEqual(box[Pose.A][0], box[Pose.B][0])
+                self.assertLessEqual(abs(box[Pose.A][1] - box[Pose.B][1]), 1)
+                self.assertLessEqual(abs(box[Pose.A][2] - box[Pose.B][2]), 1)
+            cells = {}
+            for pose in Pose:
+                cell = atlas.unit_cell(uid, neutral, pose, shadow=False)
+                px = cell.load()
+                w, h = cell.size
+                dy = atlas.BOB_PX if pose is Pose.B else 0
+                cells[pose] = {
+                    (x, y + dy) for y in range(h) for x in range(w) if px[x, y][3] > 200
+                }
+            a, b = cells[Pose.A], cells[Pose.B]
+            with self.subTest(unit=uid, reading="iou"):
+                self.assertGreaterEqual(len(a & b) / len(a | b), self.MIN_ROTOR_IOU)
+            small = [
+                atlas.unit_cell(uid, neutral, pose).resize((16, 24), Image.NEAREST)
+                for pose in Pose
+            ]
+            pa, pb = (cell.load() for cell in small)
+            moved = sum(
+                1
+                for y in range(24)
+                for x in range(16)
+                if (pa[x, y][3] > 128) != (pb[x, y][3] > 128)
+            )
+            with self.subTest(unit=uid, reading="texels"):
+                self.assertGreaterEqual(moved, self.MIN_ROTOR_TEXELS)
+
     def test_the_foam_line_stays_on_the_water(self):
         """The sea's own marks belong to the sea, not to the hull that made
         them: a ship riding a swell leaves its waterline foam exactly where

@@ -81,9 +81,10 @@ _BOBBING = frozenset({"air", "sea"})
 # pose B was 4px wider than its A when the rotor swept 45 degrees, and is a
 # pixel taller than it now that the rotor ticks instead — so centring each
 # pose's OWN bounding box slid the whole helicopter 2px sideways every beat
-# and pumped its cast shadow by 9% (159px to 173px) with it. Cached because the sheet composes each unit
-# 20 times (5 rows x 2 poses x 2 shadow variants) and this costs a model build,
-# not a render: `sprite_origin` and `sprite_size` read the crop off the voxels.
+# and pumped its cast shadow by 9% (159px to 173px) with it. Cached because
+# the sheet composes each unit 20 times (5 rows x 2 poses x 2 shadow
+# variants) and this costs a model build, not a render: `sprite_origin` and
+# `sprite_size` read the crop off the voxels.
 _POSE_A_BOX: dict[str, tuple[int, int, int, int]] = {}
 
 
