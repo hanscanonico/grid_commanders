@@ -11,10 +11,17 @@ single big gun, autocannon units carry thin multi-barrels, and the unarmed
 transports carry none.
 
 Every builder takes a `Pose`. Pose A is the model as it has always been
-authored; pose B is one hand-placed idle key pose of the same machine — a
-tread walked one link, a suspension settled a voxel, a weapon resting. The
-poses are keys, not in-betweens: they never move the silhouette enough to
+authored; pose B is one hand-placed idle key pose of the same machine — a gun
+laid up, a howitzer recoiled, a rack pitched, a nose dipped, a tread walked.
+The poses are keys, not in-betweens: they never move the silhouette enough to
 change what the unit is, and pose A is byte-frozen.
+
+What a key pose moves, it moves a WHOLE BOARD TEXEL (`_shift`). The board
+draws the 64x96 cell at a quarter of its size, so a delta under four atlas
+pixels — a one-voxel settle, the tread's old period-2 checker — never carries
+a texel across: it re-tones the inside of a shape that holds still, and the
+sprite boils instead of animating. Measured, that was every land vehicle on
+the sheet at zero changed silhouette texels (`tests/measure_motion.py`).
 """
 
 from __future__ import annotations
@@ -41,18 +48,28 @@ def _track(
 ) -> None:
     """One tread block with link texture on its visible faces and road wheels.
 
-    `phase` walks the link pattern and the road wheels one voxel along the
-    run, which is the tracked idle key pose: the tread has crept a link, the
-    hull has not moved and the silhouette is untouched.
+    The link stripe has a period of EIGHT voxels along the run — four voxels
+    riding the top face, four on the bottom — and `phase` advances it by four,
+    which is one whole board texel of travel in the direction the tread runs.
+    The period-2 checker this replaces was exactly Nyquist at the board's 4:1
+    sample: pose B inverted every link and the tread flickered in place with
+    no direction at all. A stripe four voxels long survives the sample and its
+    half-period step reads as the track walking.
+
+    The road wheels no longer take the phase. A hub is bolted to the hull, so
+    translating it along the run was the one thing on the model that said the
+    chassis had driven off rather than the tread having crept.
     """
     m.box(x0, x1, y0, y1, 0, z1, "track")
-    # alternating link texture along the outer (+x) face and the front (+y) face
+    # link texture: a four-on/four-off stripe along the outer (+x) face, and
+    # the same stripe wrapping the front (+y) face, mirrored because the run
+    # turns the corner there
     for y in range(y0, y1 + 1):
-        m.set(x1, y, z1 if (y - y0 + phase) % 2 == 0 else 0, "track_lt")
+        m.set(x1, y, z1 if (y - y0 + 4 * phase) % 8 < 4 else 0, "track_lt")
     for x in range(x0, x1 + 1):
-        m.set(x, y1, z1 if (x - x0 + phase) % 2 == 0 else 0, "track_lt")
+        m.set(x, y1, z1 if (x1 - x + 4 * phase) % 8 < 4 else 0, "track_lt")
     # road wheel hubs peeking out of the lower run
-    for y in range(y0 + 1 + phase, y1, 3):
+    for y in range(y0 + 1, y1, 3):
         m.set(x1, y, 0, "hub")
 
 
@@ -82,15 +99,34 @@ def _tire(m: Model, x: int, y: int, big: bool = False) -> None:
     m.set(x + 1, y + 1, 1, "hub")
 
 
-def _settle(m: Model, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> None:
-    """Drop a whole sub-assembly one voxel: the suspension/weight key pose.
+def _shift(
+    m: Model,
+    box: tuple[int, int, int, int, int, int],
+    dx: int = 0,
+    dy: int = 0,
+    dz: int = 0,
+) -> None:
+    """Move one sub-assembly — the box `(x0, x1, y0, y1, z0, z1)` — bodily.
 
-    Movement is in z only, on purpose: what settles is the machine on its
-    springs, not the machine on the map. The cast shadow no longer depends on
-    that restraint — `atlas.cell_placement` sizes and places every pose's
-    shadow off pose A's footprint — but the read does. A unit that shifts its
-    weight is parked; one that shifts in x or y has driven off.
+    Delete then reinsert, so whatever the assembly lands on is overwritten and
+    whatever it came off is left open, the same way an authored box paints.
+
+    The size of a delta is not a matter of taste. A voxel is a 4x4px cube
+    projected at `sx = (x - y) * 2`, `sy = (x + y) - 2z`, and the board draws
+    the 64x96 cell at a quarter of its size, so ONE board texel at zoom rung 1
+    is four atlas pixels: a `dz` of two voxels, or a `(dx +1, dy -1)` diagonal
+    step. Anything smaller cannot carry a texel a whole texel across — inside
+    the silhouette it only re-tones, and at the edge it flips boundary texels
+    with the sampling phase. That is what the whole tracked family shipped as
+    an idle: a one-voxel settle, worth half a texel, measured at zero changed
+    silhouette texels at both rungs the board plays at
+    (`tests/measure_motion.py`).
+
+    Which axis moves is still a matter of read: a unit that shifts its weight
+    or lays its gun is parked, one that translates its hull has driven off, so
+    the callers move a named assembly and leave the chassis alone.
     """
+    x0, x1, y0, y1, z0, z1 = box
     moved = {
         (x, y, z): m.vox[(x, y, z)]
         for x in range(x0, x1 + 1)
@@ -101,7 +137,7 @@ def _settle(m: Model, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> N
     for key in moved:
         del m.vox[key]
     for (x, y, z), mat in moved.items():
-        m.vox[(x, y, z - 1)] = mat
+        m.vox[(x + dx, y + dy, z + dz)] = mat
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +284,7 @@ def infantry(pose: Pose = Pose.A) -> Model:
         # weight shifts onto the trailing boot and the muzzle eases down:
         # barrel, muzzle, forward sleeve and forward hand all drop a voxel
         # together, so the hold changes rather than the whole man sliding.
-        _settle(m, 9, 11, 3, 6, 9, 11)
+        _shift(m, (9, 11, 3, 6, 9, 11), dz=-1)
     return m
 
 
@@ -293,12 +329,23 @@ def mech(pose: Pose = Pose.A) -> Model:
     if pose is Pose.B:
         # the loaded tube leans in: the left pauldron takes its weight and
         # compresses a voxel, the whole launcher and its arm coming with it
-        _settle(m, 0, 1, 2, 9, 9, 16)
+        _shift(m, (0, 1, 2, 9, 9, 16), dz=-1)
     return m
 
 
 def recon(pose: Pose = Pose.A) -> Model:
-    """Scout car: four wheels, sloped hood, roof MG, whip antenna."""
+    """Scout car: four wheels, sloped hood, roof MG, whip antenna.
+
+    Pose B traverses the pintle MG and the whip antenna one `(dx +1, dy -1)`
+    step each — one whole board texel across the screen, the gunner sweeping
+    his arc while the car idles. What it replaces was the whole cabin settling
+    one voxel, which is half a texel and measured 3 changed silhouette texels
+    at rung 1, all of them boundary flicker. Settling the cabin the two voxels
+    a texel actually costs was tried first and is not available: the cabin is
+    two voxels tall over a bed two voxels tall, so a texel of settle buries
+    the roofline in the hull and the scout reads as a flatbed. The traverse
+    measures 4 changed silhouette texels at rung 1, 13 at rung 2.
+    """
     m = Model()
     for x in (0, 8):
         _tire(m, x, 2)
@@ -333,15 +380,28 @@ def recon(pose: Pose = Pose.A) -> Model:
     # antenna
     m.box(2, 2, 1, 1, 4, 7, "hull")
     if pose is Pose.B:
-        # idling suspension settles: the cabin, its MG and the whip drop a
-        # voxel onto the bed while the wheels stay planted
-        _settle(m, 0, 9, 0, 15, 4, 7)
+        # the gunner traverses: pintle mount, barrel and muzzle swing one
+        # diagonal step across the cabin roof, and the whip steps with them,
+        # both staying inside the hull's own x/y extents
+        _shift(m, (4, 5, 4, 10, 6, 7), dx=1, dy=-1)
+        _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
     return m
 
 
 def tank(pose: Pose = Pose.A) -> Model:
     """MBT: deep-chested — tall running gear, a turret raised on a full ring,
-    hull-hugging long gun (cannon)."""
+    hull-hugging long gun (cannon).
+
+    Pose B lays the gun up: mantlet, barrel, evacuator and muzzle brake all
+    take `dz = +4` together, and the mantlet grows down to the deck so the
+    gun stays carried. Two board texels, not the one texel the heavy tank's
+    gun moves, because this barrel is two voxels wide against the heavy's
+    three: a one-texel lay measured 2 changed silhouette texels at rung 1,
+    under the 3 an idle needs to be seen at all, and 5 at two: 5 changed
+    silhouette texels at rung 1, 26 at rung 2. The tread walks its link
+    stripe a half period under it, and the hull's x/y extents are untouched,
+    so the footprint and the cast shadow are unchanged.
+    """
     m = Model()
     _track(m, 0, 2, 0, 13, 2, phase=pose)
     _track(m, 9, 11, 0, 13, 2, phase=pose)
@@ -369,12 +429,24 @@ def tank(pose: Pose = Pose.A) -> Model:
     m.box(5, 6, 14, 14, 7, 7, "gunmetal_dk")  # bore evacuator
     m.box(4, 7, 19, 19, 7, 7, "gunmetal_dk")  # muzzle brake
     m.box(5, 6, 20, 20, 7, 7, "bore")
+    if pose is Pose.B:
+        # the gun lays up two texels, mantlet and all, and the mantlet is
+        # rebuilt down to the deck as the mount that holds it there
+        _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
+        m.box(4, 7, 10, 10, 6, 9, "hull_dk")
     return m
 
 
 def md_tank(pose: Pose = Pose.A) -> Model:
     """Heavy tank: wider, taller, skirted tracks, long heavy gun (cannon).
-    The tallest thing the land roster puts on a tile."""
+    The tallest thing the land roster puts on a tile.
+
+    Pose B lays the heavy gun up one board texel, as the MBT does: the wide
+    mantlet, the sleeved barrel and the muzzle brake take `dz = +2` off a
+    turret that stays where it was. One texel is enough here because this
+    barrel is three voxels wide — 6 changed silhouette texels at rung 1, 20
+    at rung 2, where the MBT's thinner gun needed two.
+    """
     m = Model()
     _track(m, 0, 2, 0, 15, 3, phase=pose)
     _track(m, 10, 12, 0, 15, 3, phase=pose)
@@ -406,12 +478,20 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     m.box(5, 7, 17, 17, 10, 10, "gunmetal_dk")
     m.box(4, 8, 20, 20, 10, 10, "gunmetal_dk")  # muzzle brake
     m.box(5, 7, 21, 21, 10, 10, "bore")
+    if pose is Pose.B:
+        _shift(m, (4, 8, 12, 21, 7, 11), dz=2)
     return m
 
 
 def anti_air(pose: Pose = Pose.A) -> Model:
     """Tracked flak: twin long barrels raked past 60 degrees over the battery
-    box — the howitzer's climb, paired and thin — plus a search radar."""
+    box — the howitzer's climb, paired and thin — plus a search radar.
+
+    Pose B walks both barrel runs up one board texel (`dz = +2`) on a cradle
+    that grows the two voxels with them, so the battery tracks a target and
+    the raked lines — the identity — are what the player sees move: 8 changed
+    silhouette texels at rung 1, 31 at rung 2.
+    """
     m = Model()
     _track(m, 0, 2, 0, 11, phase=pose)
     _track(m, 8, 10, 0, 11, phase=pose)
@@ -442,11 +522,27 @@ def anti_air(pose: Pose = Pose.A) -> Model:
     m.box(7, 8, 3, 5, 9, 9, "hull_lt")
     m.box(7, 8, 4, 4, 10, 10, "hull_lt")
     m.set(8, 4, 9, "gunmetal_dk")
+    if pose is Pose.B:
+        # both runs elevate a texel; the trunnion column grows the two voxels
+        # under them so the barrels stay carried instead of floating off the
+        # cradle. The box is per-barrel so the battery roof between them, and
+        # the pedestal it sits on, are left alone.
+        for x in (3, 7):
+            _shift(m, (x, x, 9, 14, 8, 18), dz=2)
+            m.box(x, x, 8, 8, 8, 9, "gunmetal_dk")
     return m
 
 
 def artillery(pose: Pose = Pose.A) -> Model:
-    """SPG: open casemate, howitzer erected past 60 degrees, recoil spade."""
+    """SPG: open casemate, howitzer erected past 60 degrees, recoil spade.
+
+    Pose B is the recoil stroke: trunnion pedestal, sleeved barrel and muzzle
+    brake ride `dz = -2` back down into the pit — one board texel, so the
+    spike visibly shortens against the casemate wall instead of shimmering
+    inside it — 7 changed silhouette texels at rung 1, 30 at rung 2. The
+    walls, the spade and the hull hold their ground, which is what makes it a
+    gun firing rather than a vehicle sinking.
+    """
     m = Model()
     _track(m, 0, 2, 0, 12, 2, phase=pose)
     _track(m, 8, 10, 0, 12, 2, phase=pose)
@@ -474,12 +570,26 @@ def artillery(pose: Pose = Pose.A) -> Model:
     # recoil spade dug in at the rear
     m.box(3, 7, 0, 0, 2, 4, "hull_dk")  # spade arms
     m.box(2, 8, -1, -1, 1, 3, "hull")  # blade
+    if pose is Pose.B:
+        # the howitzer recoils one texel into the pit, pedestal and all. Two
+        # boxes, not one: the casemate's front wall stands at y=8 inside the
+        # gun's own x span, and it is the thing the barrel recoils PAST.
+        _shift(m, (4, 6, 4, 6, 5, 7), dz=-2)  # trunnion pedestal
+        _shift(m, (3, 7, 6, 13, 8, 22), dz=-2)  # barrel, brake and muzzle
     return m
 
 
 def rockets(pose: Pose = Pose.A) -> Model:
     """Wheeled MLRS: long eight-wheel carrier, low cab, one wide flat rack
-    pitched up over the tail — a tilted plane, never a turret."""
+    pitched up over the tail — a tilted plane, never a turret.
+
+    Pose B pitches the rack: the whole tube slab rides `dz = +2` on a launch
+    frame that grows the same two voxels, one board texel of elevation on the
+    biggest plane the unit owns, and the loudest idle on the land roster at
+    11 changed silhouette texels at rung 1 and 43 at rung 2. The cab settle
+    it replaces was one voxel — half a texel, and hidden under the rack
+    besides — which is why the truck measured zero at both board rungs.
+    """
     m = Model()
     for y in (1, 5, 9, 13):
         _tire(m, 0, y)
@@ -508,15 +618,33 @@ def rockets(pose: Pose = Pose.A) -> Model:
     # solid launch-frame wall carrying the slab's high end
     m.box(2, 7, 1, 2, 4, 13, "hull_dk")
     if pose is Pose.B:
-        # eight-wheel suspension breathes under the loaded rack: only the cab
-        # settles, the pod stays pitched at its firing angle
-        _settle(m, 2, 7, 13, 17, 4, 5)
+        # the rack pitches up a texel: each slab row moves on its own y band,
+        # which is what keeps the launch-frame wall — the same y as the slab's
+        # high end, two voxels lower — out of the moved box. The frame then
+        # grows the two voxels it has to, so the high end stays carried.
+        for k in range(6):
+            y0 = 11 - 2 * k
+            _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=2)
+        m.box(2, 7, 1, 2, 14, 15, "hull_dk")
     return m
 
 
 def apc(pose: Pose = Pose.A) -> Model:
     """Tracked transport: the tall box — high flat-topped troop compartment
-    over a sloped glacis, no turret at all — unarmed."""
+    over a sloped glacis, no turret at all — unarmed.
+
+    Pose B dips the nose: glacis, bumper, visor and headlights ride `dz = -2`
+    while the box behind them holds still, the transport nodding on its
+    torsion bars as the engine loads. It is the one thing on this unit a
+    board texel of movement can be SEEN on, and it is the roster's quietest
+    beat even so: 3 changed silhouette texels at rung 1, 15 at rung 2. The
+    transport carries no turret and no gun, and everything else it owns is
+    interior to its own outline — this projection buries a roof detail under
+    the roof's far edge unless it climbs more than its distance from that
+    edge, so the open troop hatch tried first changed zero silhouette texels
+    at either rung, and the comms whip, two pixels wide, changed six pixels
+    and no whole texel.
+    """
     m = Model()
     _track(m, 0, 2, 0, 12, phase=pose)
     _track(m, 7, 9, 0, 12, phase=pose)
@@ -547,12 +675,22 @@ def apc(pose: Pose = Pose.A) -> Model:
     # tall comms whip — the APC keeps one; the gun tanks lost theirs
     m.box(8, 8, 3, 3, 8, 9, "hull_lt")
     m.set(8, 3, 10, "amber")
+    if pose is Pose.B:
+        _shift(m, (1, 8, 13, 14, 2, 5), dz=-2)
     return m
 
 
 def missiles(pose: Pose = Pose.A) -> Model:
     """Wheeled SAM battery: two big rounds erected near-vertical over the
-    tail — thin steep spikes with daylight between — plus a radar dish."""
+    tail — thin steep spikes with daylight between — plus a radar dish.
+
+    Pose B runs both rounds one board texel up the rail (`dz = +2`), seeker
+    tips and all, so the two spikes — the identity — are what moves: 10
+    changed silhouette texels at rung 1, 35 at rung 2. The cab
+    settle it replaces was one voxel of a four-wheel chassis, half a texel:
+    zero changed silhouette texels at rung 1 and 3 at rung 2, all of them
+    boundary flicker.
+    """
     m = Model()
     for y in (1, 8):
         _tire(m, 0, y)
@@ -588,8 +726,14 @@ def missiles(pose: Pose = Pose.A) -> Model:
     m.set(4, 0, 9, "gunmetal_dk")
     m.set(5, 0, 9, "gunmetal_dk")
     if pose is Pose.B:
-        # erector chassis settles at the cab end, the rounds held on their rail
-        _settle(m, 2, 7, 8, 12, 4, 5)
+        # both rounds run a texel up the rail. The pedestal is repainted
+        # because their seated tails were sitting in its top course, and each
+        # round's own rail grows the two voxels under it, per round, so the
+        # daylight gap between the two spikes stays open
+        m.box(2, 7, 1, 4, 4, 5, "hull_dk")
+        for x0 in (2, 6):
+            _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=2)
+            m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
     return m
 
 

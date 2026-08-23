@@ -26,45 +26,65 @@ smaller than that cannot carry a texel a whole texel across: inside the shape
 it only re-tones, and at the edge it flips boundary texels with the sampling
 phase rather than moving them.
 
-Recorded 2026-08-23 on the red (meridian) row, before any pose fix, so a later
-pass can diff it; livery changes the tones, not the shape:
+Recorded on the red (meridian) row; livery changes the tones, not the shape.
+BEFORE is main at the 2026-08-23 land-idle pass, AFTER is that pass — the
+eight land vehicles re-authored to move a named sub-assembly a whole texel,
+and `units._track`'s link stripe given a period of eight voxels so pose B
+advances it four, one texel in the direction of travel:
 
-              rung 1 (16x24)          rung 2 (32x48)
-  unit         opaq  chng silh shim    opaq  chng silh shim
-  infantry       45     6    2  2.00    189    28    8  2.50
-  mech           49     7    2  2.50    202    26   15  0.73
-  recon          67    19    3  5.33    277    78   13  5.00
-  tank           95     5    0  5.00    386    28    0 28.00
-  md_tank       122     4    0  4.00    483    26    0 26.00
-  anti_air       80     6    0  6.00    321    20    0 20.00
-  artillery      94     8    0  8.00    377    29    0 29.00
-  rockets       119    12    0 12.00    469    43    0 43.00
-  apc            86     6    0  6.00    340    25    0 25.00
-  fighter        62    18    1 17.00    243   125   39  2.21
-  bomber        101    31    6  4.17    369   169   42  3.02
-  b_copter       44    42   22  0.91    209   152   63  1.41
-  t_copter       60    43   20  1.15    260   196   86  1.28
-  missiles       74     7    0  7.00    289    36    3 11.00
-  battleship     80    51   21  1.43    329   160   57  1.81
-  cruiser        71    36   14  1.57    241   141   42  2.36
-  sub            60    28   14  1.00    252   125   47  1.66
-  lander         58    37   12  2.08    216   111   36  2.08
-  ALL          1367   366  117  2.13   5452  1518  451  2.37
+                     rung 1 (16x24)               rung 2 (32x48)
+  unit         opaq  chng silh shim   |   opaq  chng silh shim
+  infantry       45     6    2  2.00  |    189    28    8  2.50
+  mech           49     7    2  2.50  |    202    26   15  0.73
+  recon          67    19    3  5.33  |    277    78   13  5.00   before
+                 67    12    4  2.00  |    277    46   13  2.54   after
+  tank           95     5    0  5.00  |    386    28    0 28.00   before
+                 95    26    5  4.20  |    386   125   26  3.81   after
+  md_tank       122     4    0  4.00  |    483    26    0 26.00   before
+                122    30    6  4.00  |    483   120   20  5.00   after
+  anti_air       80     6    0  6.00  |    321    20    0 20.00   before
+                 80    25    8  2.12  |    321    88   31  1.84   after
+  artillery      94     8    0  8.00  |    377    29    0 29.00   before
+                 94    27    7  2.86  |    377    96   30  2.20   after
+  rockets       119    12    0 12.00  |    469    43    0 43.00   before
+                119    47   11  3.27  |    469   185   43  3.30   after
+  apc            86     6    0  6.00  |    340    25    0 25.00   before
+                 86    17    3  4.67  |    340    75   15  4.00   after
+  fighter        62    55   30  0.83  |    243   237  114  1.08
+  bomber        101    83   36  1.31  |    369   328  144  1.28
+  b_copter       44    49   25  0.96  |    209   207   97  1.13
+  t_copter       60    58   24  1.42  |    260   241   90  1.68
+  missiles       74     7    0  7.00  |    289    36    3 11.00   before
+                 74    29   10  1.90  |    289   118   35  2.37   after
+  battleship     80    66   30  1.20  |    329   267  116  1.30
+  cruiser        71    64   22  1.91  |    241   225   88  1.56
+  sub            60    43   24  0.79  |    252   177   96  0.84
+  lander         58    46   18  1.56  |    216   188   72  1.61
+  ALL          1367   544  216  1.52  |   5452  2209  856  1.58   before
+               1367   690  267  1.58  |   5452  2777 1053  1.64   after
 
-The whole tracked family — tank, md tank, anti air, artillery, rockets, apc —
-moves nothing at either rung. Four of them creep a tread link (`units._track`
-walks its phase), which only re-tones link texels inside a track block that
-never changes shape; rockets and missiles settle a sub-assembly one voxel,
-which is 2 atlas px of dz, half a rung-1 texel, so it lands inside the shape
-too — missiles holds that to rung 1 and leaks 3 silhouette texels at rung 2.
+Before the pass the whole tracked family — tank, md tank, anti air,
+artillery, rockets, apc — moved nothing at either rung. Six of them crept a
+tread link (`units._track` walked its phase), which only re-toned link texels
+inside a track block that never changes shape, and did it at period 2, which
+is exactly Nyquist at the board's 4:1 sample: the pattern inverted rather than
+travelled. Rockets, missiles and recon settled a sub-assembly one voxel, which
+is 2 atlas px of dz, half a rung-1 texel, so it landed inside the shape too.
+
+What the eight move now is in each builder's docstring. Two of them are worth
+the reader's time here, because they are what the projection costs: the APC
+has no turret and no gun and a roof detail buries itself under the roof's own
+far edge, so its texel is the nose dipping; and the MBT's barrel is two voxels
+wide, thin enough that a one-texel lay measured 2 silhouette texels, so its
+gun lays two.
 
 Everything that flies or floats does change silhouette texels, but read that
 carefully before crediting it as animation: fighter, bomber and every hull
 build the SAME model for both poses (verified against `build_model`), and
-differ only by the one-pixel bob in `atlas._BOB_BOTTOM` — pose B is pose A
-translated one atlas pixel up, a quarter of a rung-1 texel. It scores because
-a whole-body translation re-phases the nearest sample, so boundary texels pick
-a different source pixel; that is aliasing at the edge, not a move. Only the
+differ only by `atlas.BOB_PX` — pose B is pose A translated four atlas pixels
+up, which is one whole rung-1 texel of altitude and nothing else. They score
+the way a translated shape scores: every boundary texel of the sprite moves,
+which is why their counts dwarf a land unit's moving one assembly. Only the
 copters, which sweep their rotor discs 45 degrees, change the shape itself,
 and they are the two with a shimmer index near 1.
 
