@@ -62,6 +62,7 @@ from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
 from spritegen import voxel
 from spritegen.voxel import (
     CAST,
+    FOAM,
     _broad_flat_tops,
     _prop_contour,
     render,
@@ -2297,6 +2298,51 @@ class AmbientFrames(unittest.TestCase):
                 self.assertEqual(a.origin[0], b.origin[0])
                 self.assertEqual(a.origin[1] - b.origin[1], bob)
 
+    def test_the_bob_lifts_the_whole_aircraft_and_nothing_else(self):
+        """The placement above is a plan; this is the composed cell.
+
+        `fighter` and `bomber` draw the same voxels in both poses — the beat
+        IS the bob for them — so frame B has to be frame A moved up exactly
+        `BOB_PX` and nothing else: identical pixels from the hover line down,
+        which is where the cast shadow lives. A bob that moved a fraction of
+        a board texel, or that carried the shadow with it, fails here."""
+        # One board texel and not a pixel less: the board draws the 64x96
+        # cell at 0.25 scale, so a bob under 4px moves no visible pixel at
+        # all — it only changes which source pixel the resample keeps, which
+        # is the flicker the 1px bob shipped as a hover.
+        self.assertEqual(atlas.BOB_PX, 4)
+        for uid in ("fighter", "bomber"):
+            self.assertEqual(build_model(uid, Pose.A).vox, build_model(uid, Pose.B).vox)
+            ground = atlas.cell_placement(uid, Pose.A).ground
+            for fac in FACTIONS:
+                a = atlas.unit_cell(uid, fac)
+                b = atlas.unit_cell(uid, fac, Pose.B)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertEqual(
+                        b.crop((0, 0, atlas.CELL_W, ground - atlas.BOB_PX)).tobytes(),
+                        a.crop((0, atlas.BOB_PX, atlas.CELL_W, ground)).tobytes(),
+                    )
+                    self.assertEqual(
+                        b.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
+                        a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
+                    )
+
+    def test_the_foam_line_stays_on_the_water(self):
+        """The sea's own marks belong to the sea, not to the hull that made
+        them: a ship riding a swell leaves its waterline foam exactly where
+        the still pose broke it (10 flecks for the surface ships, 94 for the
+        sub, whose running wake is foam too). Derived from the bobbed hull
+        instead, the whole line rose with the ship and the swell read as the
+        sea heaving."""
+        for uid in ATLAS_ORDER:
+            if UNITS[uid][1] != "sea":
+                continue
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    a = self._foam(atlas.unit_cell(uid, fac))
+                    self.assertTrue(a)
+                    self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, Pose.B)))
+
     def test_air_and_sea_units_move_between_frames(self):
         red = faction_by_key("red")
         for uid, (_, kind) in atlas.UNITS.items():
@@ -2339,6 +2385,16 @@ class AmbientFrames(unittest.TestCase):
         px = cell.convert("RGBA").load()
         w, h = cell.size
         return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
+
+    def _foam(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {
+            (x, y)
+            for y in range(h)
+            for x in range(w)
+            if px[x, y][:3] == FOAM and px[x, y][3] == 255
+        }
 
 
 class GroundContrast(unittest.TestCase):
