@@ -3,9 +3,11 @@
 Ground hues are the game's tools/generate_tiles.gd palette, revalued under
 the ceiling below so scenery never out-keys an army; the detail on top
 (painted canopies, terraced mountains, foam, wear) is what this generator
-adds. Ground fills are seamless — repeated tiles butt with no
-border treatment (design review 2026-08-13: the old darkened-edge
-convention read as a seam grid over any open field). Non-property tiles
+adds. Ground fills are seamless — no tile is darkened at its edge
+(design review 2026-08-13: that convention read as a seam grid over
+any open field), and the grass plate goes further, drawing its border
+ring out of one shared field so that any two PHASES butt without a
+step as well (`_SEAM_SALT`). Non-property tiles
 are identical on every faction row; property tiles are transparent
 overlays — a faction-tinted voxel building and its shadow, with the ground
 around them left empty for the board to paint (see `property_overlay`).
@@ -145,6 +147,10 @@ BUILDING_KEY_CEILING = 200.0
 # where the ±3% grain rounds to the same 25 integers on both salts. S0.48
 # misses by one tone at each end of the band, which is a seam the test is
 # right to refuse. S0.508-0.511 is the admissible window nearest the target.
+# (That knife edge is blunt since 2026-08-23: the grain is a ramp of three
+# steps, so both salts spend the same three tones whatever the chroma is.
+# Whether S0.48 is reachable again is a chroma question, not a seam one, and
+# it is not asked here.)
 GRASS = _tone((108, 181, 73), 0.51)  # L158, was S0.60
 GRASS_DARK = _shade(GRASS, 128.4)  # L128
 ROAD = (146, 142, 133)  # gravel, L142 — road is ground
@@ -157,7 +163,9 @@ WATER_LIGHT = _tone((113, 179, 219), 0.41)  # L168, the same drop as WATER
 SAND = (178, 166, 127)  # L166
 SAND_DARK = _shade(SAND, 139.0)  # L139
 SNOW = (168, 174, 182)  # cool foam/marking grey, L173
-WILDFLOWER = (214, 163, 57)  # the field's one warm accent, L172
+WILDFLOWER = (214, 163, 57)  # L172 — unspent since 2026-08-23, when the
+# field's warm flecks came off it: at 1-3px a hue-40 pixel on a hue-100
+# ground is a dead pixel, not a flower (see `_DECALS`).
 
 # Woods canopy tones (design review round 3): the tile is a filled canopy
 # with its own value band — clearly darker than plains underfoot and than
@@ -212,9 +220,22 @@ def _lit(c: RGB, t: float) -> RGB:
 
 
 def _grain(c: RGB, bx: int, by: int, salt: int, grain: float = 0.03) -> RGB:
-    """One 4px block's tone: `c` nudged by the block's own hash."""
-    n = (h01(bx, by, salt) - 0.5) * grain * 2
-    return _lit(c, n) if n > 0 else darken(c, -n)
+    """One 4px block's tone: `c` on a three-step ramp, picked by the block's
+    own hash.
+
+    The nudge used to be CONTINUOUS — every block a mix of its own — and the
+    2026-08-23 index read what that costs: one plains tile carried 29 colours,
+    28 of them green, 17 inside a single 0.03 slice of luma. A ramp of three
+    steps is the same texture (the hash still decides which block is lighter)
+    for three tones, which is what an indexed sheet is: a ground spends the
+    tones it authored, not a tone per block.
+    """
+    step = min(2, int(h01(bx, by, salt) * 3))
+    if step == 2:
+        return _lit(c, grain)
+    if step == 0:
+        return darken(c, grain)
+    return c
 
 
 def _ground(c: RGB, salt: int, grain: float = 0.03) -> Image.Image:
@@ -250,56 +271,164 @@ def _ground(c: RGB, salt: int, grain: float = 0.03) -> Image.Image:
 CLUMP = mix(GRASS, GRASS_DARK, 0.5)  # L143, 15L under the field
 CLUMP_DK = mix(GRASS, GRASS_DARK, 0.88)  # L132, one step over the tuft tone
 
-_CLUMP_LATTICE = 16  # px between field nodes — four across the cell, so it wraps
-# Coverage is fixed by RANK, not by a threshold on the field: with four nodes
-# across a tile, an absolute cut gave one phase 4% clumps and another 43%. The
-# darkest twelfth and the next fifth of each tile's blocks take the two tones,
-# so every phase is the same field in a different arrangement — which is what
-# lets the woods plate and the plains plate stay tone for tone identical.
+_BLOCK = 4  # px — the field's unit, kept at the game's 4:1 downsample step
+_BLOCKS = CELL // _BLOCK
+# The darkest twelfth and the next fifth of each tile's blocks take the two
+# tones (by rank — see `_rank_clumps`), so every phase is the same field in a
+# different arrangement, which is what lets the woods plate and the plains
+# plate stay tone for tone identical.
 _CLUMP_DEEP_SHARE = 0.12
 _CLUMP_SHARE = 0.30
 
+# The field's period, and why it is 60 and not 64 (seam pass, 2026-08-23).
+#
+# The clump field wrapped at the CELL, which makes one phase repeat seamlessly
+# — and the game does not repeat one phase. It hashes a phase per cell, so what
+# actually butts on a board is phase 3's right edge against phase 1's left, and
+# those were two different fields cut off at the border: the mean luma step
+# across a 64px boundary on a hashed 8x8 field measured 9.6 against 1.9 inside
+# a tile, a five-fold discontinuity that quilts an open field.
+#
+# Two tiles can only butt without a step if their edges are THE SAME PIXELS, so
+# the outermost block ring is drawn from one shared field (`_SEAM_SALT`) that
+# every phase carries, and each phase's own field dithers in over `_SEAM_FADE`
+# blocks behind it. The shared field has a period of 60px — fifteen blocks —
+# so the ring's last block column IS its first: block column 15 starts at x=60
+# and reads the same field value as block column 0, so the two 4px blocks that
+# meet at a seam carry one tone, whichever phases meet. The period is the
+# field's own rather than a duplicated column, which is what keeps the ring
+# smooth against the interior it fades into.
+_CLUMP_PERIOD = 60
+_CLUMP_LATTICE = _CLUMP_PERIOD // 4  # px between field nodes, four to a period
+_SEAM_SALT = 5
+_SEAM_FADE = 2  # blocks over which a phase's own field takes over from it
+
 
 def _clump_field(x: int, y: int, salt: int) -> float:
-    """A smooth value field on a 16px lattice that wraps at the cell, roughened
-    by the block's own hash so a clump's edge is ragged instead of a circle."""
-    g = CELL // _CLUMP_LATTICE
-    fx, fy = x / _CLUMP_LATTICE, y / _CLUMP_LATTICE
+    """A smooth value field on a lattice that wraps every `_CLUMP_PERIOD` px in
+    both axes, roughened by the block's own hash so a clump's edge is ragged
+    instead of a circle."""
+    px_, py = x % _CLUMP_PERIOD, y % _CLUMP_PERIOD
+    fx, fy = px_ / _CLUMP_LATTICE, py / _CLUMP_LATTICE
     i, j = int(fx), int(fy)
     tx, ty = fx - i, fy - j
     sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)
 
     def node(a: int, b: int) -> float:
-        return h01(a % g, b % g, salt)
+        return h01(a % 4, b % 4, salt)
 
     top = node(i, j) * (1 - sx) + node(i + 1, j) * sx
     bot = node(i, j + 1) * (1 - sx) + node(i + 1, j + 1) * sx
-    return top * (1 - sy) + bot * sy + (h01(x, y, salt + 101) - 0.5) * 0.3
+    return top * (1 - sy) + bot * sy + (h01(px_, py, salt + 101) - 0.5) * 0.3
+
+
+def _seam_key(bxi: int, byi: int) -> tuple[int, int]:
+    """A border block's index on the shared ring, folded onto the field's
+    period: 15 becomes 0, so a tile's last block column IS its first."""
+    return bxi % (_CLUMP_PERIOD // _BLOCK), byi % (_CLUMP_PERIOD // _BLOCK)
+
+
+def _own_field(bxi: int, byi: int, salt: int) -> float:
+    """The field value a block takes behind the shared ring.
+
+    The hand-over is DITHERED, not averaged: a block one step in takes its own
+    phase's field or the shared one by its own hash, in the proportion
+    `_SEAM_FADE` asks for. Averaging two fields halves their variance, and the
+    field is ranked — so a smooth fade put every phase's darkest blocks in the
+    middle of its tile and drew a sparse frame around every cell, which is the
+    quilt this pass exists to remove. A dither keeps the distribution the rank
+    is taken over identical everywhere.
+    """
+    edge = min(bxi, byi, _BLOCKS - 1 - bxi, _BLOCKS - 1 - byi)
+    x, y = bxi * _BLOCK, byi * _BLOCK
+    w = min(1.0, edge / _SEAM_FADE)
+    keep = h01(bxi, byi, salt + 211) < w
+    return _clump_field(x, y, salt if keep else _SEAM_SALT)
+
+
+def _ring_layout() -> dict[tuple[int, int], RGB]:
+    """The border every phase carries, ranked over the shared field alone."""
+    field = {
+        (bxi, byi): _clump_field(bxi * _BLOCK, byi * _BLOCK, _SEAM_SALT)
+        for byi in range(_BLOCKS)
+        for bxi in range(_BLOCKS)
+    }
+    return _rank_clumps(field, round(len(field) * _CLUMP_SHARE))
+
+
+def _rank_clumps(
+    field: dict[tuple[int, int], float], count: int, deep: int | None = None
+) -> dict[tuple[int, int], RGB]:
+    """The darkest `count` of `field`'s blocks, the darkest `deep` of them in
+    the deeper tone. Coverage is fixed by RANK, not by a threshold on the
+    field: with four nodes across a tile, an absolute cut gave one phase 4%
+    clumps and another 43%."""
+    if deep is None:
+        deep = round(len(field) * _CLUMP_DEEP_SHARE)
+    order = sorted(field, key=lambda b: (field[b], b))[:count]
+    return {b: (CLUMP_DK if i < deep else CLUMP) for i, b in enumerate(order)}
+
+
+def _clump_layout(salt: int) -> dict[tuple[int, int], RGB]:
+    """Which of a tile's 4px blocks a phase clumps, and with which tone.
+
+    The border ring is the shared one, read at its folded index; the interior
+    is the phase's own field, ranked to whatever the ring left of the tile's
+    fixed clump budget. Every phase therefore spends the same number of blocks
+    on each tone — the two plates and the five phases stay one field in
+    different arrangements — while their edges stay identical.
+    """
+    ring = _ring_layout()
+    layout = {}
+    for byi in range(_BLOCKS):
+        for bxi in range(_BLOCKS):
+            if bxi in (0, _BLOCKS - 1) or byi in (0, _BLOCKS - 1):
+                tone = ring.get(_seam_key(bxi, byi))
+                if tone is not None:
+                    layout[(bxi, byi)] = tone
+    total, deep = (
+        round(_BLOCKS**2 * _CLUMP_SHARE),
+        round(_BLOCKS**2 * _CLUMP_DEEP_SHARE),
+    )
+    inner = {
+        (bxi, byi): _own_field(bxi, byi, salt)
+        for byi in range(1, _BLOCKS - 1)
+        for bxi in range(1, _BLOCKS - 1)
+    }
+    ring_deep = sum(1 for tone in layout.values() if tone == CLUMP_DK)
+    layout.update(_rank_clumps(inner, total - len(layout), max(0, deep - ring_deep)))
+    return layout
 
 
 def _grass_ground(salt: int) -> Image.Image:
-    """The grass plate: `_ground`'s grain with the two-tone clump field over
+    """The grass plate: the three-step grain with the two-tone clump field over
     it, in 4px blocks so a clump survives the game's 4:1 nearest downsample.
     Plains and woods share this plate (see `WoodsSeam`)."""
-    img = _ground(GRASS, salt)
+    img = Image.new("RGBA", (CELL, CELL), (*GRASS, 255))
     px = img.load()
-    blocks = sorted(
-        ((bx, by) for by in range(0, CELL, 4) for bx in range(0, CELL, 4)),
-        key=lambda b: (_clump_field(b[0], b[1], salt), b),
-    )
-    deep = round(len(blocks) * _CLUMP_DEEP_SHARE)
-    for rank, (bx, by) in enumerate(blocks[: round(len(blocks) * _CLUMP_SHARE)]):
-        # A clump is FLAT — the grain the field carries is not repeated inside
-        # it. Two reasons: a clump is meant to be a shape at the board's 4:1
-        # rung, which a wobble inside it only blurs, and a grained clump spends
-        # a colour per rung on a tile already close to the 80-colour ceiling
-        # (woods measured 88). Flat also means both plates and all five phases
-        # spend exactly these two tones, which is what `WoodsSeam` reads the
-        # woods plate against the plains one on.
-        tone = CLUMP_DK if rank < deep else CLUMP
-        for yy in range(by, by + 4):
-            for xx in range(bx, bx + 4):
-                px[xx, yy] = (*tone, 255)
+    layout = _clump_layout(salt)
+    for byi in range(_BLOCKS):
+        for bxi in range(_BLOCKS):
+            # The border ring's grain is the shared one too, read at the same
+            # folded index the ring's clumps are: a tile's last block column is
+            # its first, so any two phases butt with no step at all.
+            border = bxi in (0, _BLOCKS - 1) or byi in (0, _BLOCKS - 1)
+            kx, ky = _seam_key(bxi, byi) if border else (bxi, byi)
+            key_salt = _SEAM_SALT if border else salt
+            # A clump is FLAT — the grain the field carries is not repeated
+            # inside it. Two reasons: a clump is meant to be a shape at the
+            # board's 4:1 rung, which a wobble inside it only blurs, and a
+            # grained clump spends a colour per rung on a tile already close
+            # to the 80-colour ceiling (woods measured 88). Flat also means
+            # both plates and all five phases spend exactly these two tones,
+            # which is what `WoodsSeam` reads the woods plate against the
+            # plains one on.
+            tone = layout.get((bxi, byi))
+            if tone is None:
+                tone = _grain(GRASS, kx * _BLOCK, ky * _BLOCK, key_salt)
+            for yy in range(byi * _BLOCK, byi * _BLOCK + _BLOCK):
+                for xx in range(bxi * _BLOCK, bxi * _BLOCK + _BLOCK):
+                    px[xx, yy] = (*tone, 255)
     return img
 
 
@@ -308,16 +437,6 @@ def _rect(img: Image.Image, x0: int, y0: int, w: int, h: int, c: RGB) -> None:
     for yy in range(max(0, y0), min(CELL, y0 + h)):
         for xx in range(max(0, x0), min(CELL, x0 + w)):
             px[xx, yy] = (*c, 255)
-
-
-def _wrap_rect(img: Image.Image, x0: int, y0: int, w: int, h: int, c: RGB) -> None:
-    """`_rect` around the tile's edge instead of off it. A prop moved by a phase
-    offset has to keep its area, or a phase would be a thinner field rather than
-    a differently arranged one."""
-    px = img.load()
-    for yy in range(y0, y0 + h):
-        for xx in range(x0, x0 + w):
-            px[xx % CELL, yy % CELL] = (*c, 255)
 
 
 def _paste_prop(tile: Image.Image, prop: Image.Image, cx: int, bottom: int) -> None:
@@ -345,8 +464,14 @@ def road() -> Image.Image:
 
 
 # Grass tufts: a dark check with a light blade, like the old speckles but drawn
-# as 3px clusters. Followed by a couple of tiny wildflowers, so a big field does
-# not tile dead flat.
+# as 3px clusters.
+#
+# The pair of wildflowers that used to follow them is gone (2026-08-23). They
+# were two pixels of WILDFLOWER (H40 S0.73) and two of SNOW (H214) on a hue-100
+# field, at the size the board keeps one source pixel in four of: an off-palette
+# fleck reads as a dead pixel, not as a flower. What a stretch of field varies
+# by is the clump field; a find is a decal, and every decal is on the field's
+# own ramp now.
 _TUFTS = (
     (10, 12),
     (34, 8),
@@ -361,45 +486,54 @@ _TUFTS = (
     (14, 56),
     (38, 24),
 )
-_WILDFLOWERS = ((30, 36), (50, 40))
 
 
 # A clump's leaves, kept off GRASS_DARK so the tufts stay countable per phase.
-_LEAF = darken(GRASS_DARK, 0.18)
+_LEAF = _tone(GRASS_DARK, 0.44, 105.0)  # L105, S0.44 — a find's chroma bound
+_BLADE = _lit(GRASS, 0.18)  # the tuft's lit blade, which a decal reuses
 
-# Bare ground worn through the field: road gravel warmed toward beach sand, L125.
-# The scuff was drawn in the bridge deck's timber brown, the warmest tone on the
-# ground palette — and the board keeps one source pixel in four at its default
-# rung, so a 6x3 mark arrives as one or two pixels of it and reads as a stray
-# faction pixel. Faction hue is the armies'; a scuff is dirt.
-_EARTH = mix(SAND_DARK, ROAD_DARK, 0.5)
+# The decal tones, all of them ON THE FIELD'S RAMP (2026-08-23). A decal used
+# to be drawn out of the grounds it depicted — gravel for a stone, sand and
+# gravel for a scuff — and at 1-3px on a hue-100 field those are not a stone
+# and a scuff, they are three dead pixels: gravel is H41 S0.09, its shadow
+# H225, the wildflower H40 S0.73. Nothing that small carries a material; what
+# it carries is a hue, so a find is drawn in grass's own hue held under S0.45,
+# which is a lichen-grey stone and a patch of dry, bleached grass. The dry tone
+# leans 20° toward sand — as far as a find may go — so a patch still reads as
+# ground worn thin rather than as more clump.
+_STONE = _tone(GRASS, 0.10, 152.0)  # H100 S0.10, L152
+_STONE_DK = _tone(GRASS, 0.14, 120.0)
+_DRY_BASE = mix(GRASS, SAND, 0.55)
+_DRY = _tone(_DRY_BASE, 0.34, 147.0)  # H80 S0.34, L147
+_DRY_DK = _tone(_DRY_BASE, 0.38, 127.0)
 
 
 def _pebble(t: Image.Image, x: int, y: int) -> None:
-    _rect(t, x, y + 1, 3, 2, ROAD_DARK)
-    _rect(t, x + 1, y, 2, 1, ROAD)
+    _rect(t, x, y + 1, 3, 2, _STONE_DK)
+    _rect(t, x + 1, y, 2, 1, _STONE)
 
 
-def _flower_clump(t: Image.Image, x: int, y: int) -> None:
+def _tussock(t: Image.Image, x: int, y: int) -> None:
+    """A knot of taller grass: a leaf base with two blades out of it."""
     _rect(t, x, y + 1, 4, 1, _LEAF)
-    _rect(t, x, y, 1, 1, WILDFLOWER)
-    _rect(t, x + 2, y, 1, 1, SNOW)
-    _rect(t, x + 3, y + 1, 1, 1, WILDFLOWER)
+    _rect(t, x, y, 1, 1, _LEAF)
+    _rect(t, x + 2, y, 1, 1, _BLADE)
+    _rect(t, x + 3, y + 1, 1, 1, _LEAF)
 
 
-def _scuff(t: Image.Image, x: int, y: int) -> None:
-    _rect(t, x, y, 6, 3, _EARTH)
-    _rect(t, x + 1, y + 1, 4, 1, SAND_DARK)
+def _dry_patch(t: Image.Image, x: int, y: int) -> None:
+    _rect(t, x, y, 6, 3, _DRY)
+    _rect(t, x + 1, y + 1, 4, 1, _DRY_DK)
 
 
-# A decal is scattered ground detail and nothing more: a stone, a flower clump,
-# a patch of bare earth, all in the tile's own tones and all under the terrain
-# value ceiling. Deliberately no signpost, fence or marker — a drawn object on
-# open ground reads as a property from across the board. A decal is drawn inside
-# the cell (`_rect` clips, unlike the tufts' `_wrap_rect`) so it never overhangs
+# A decal is scattered ground detail and nothing more: a stone, a knot of tall
+# grass, a patch the summer has dried out — all in the field's own tones and
+# all under the terrain value ceiling. Deliberately no signpost, fence or
+# marker — a drawn object on open ground reads as a property from across the
+# board. A decal is drawn inside the cell (`_rect` clips) so it never overhangs
 # into the neighbour, and it stands clear of the tufts, which is what keeps
 # every phase carrying the same field.
-_DECALS = {"pebble": _pebble, "flower": _flower_clump, "scuff": _scuff}
+_DECALS = {"pebble": _pebble, "tussock": _tussock, "dry": _dry_patch}
 
 # Phase offsets for plains — the sea's rule (SEA_PHASES below) applied to the
 # ground most of a board is made of. Each entry is (salt, prop dx, dy, decals):
@@ -415,25 +549,49 @@ _DECALS = {"pebble": _pebble, "flower": _flower_clump, "scuff": _scuff}
 # field varies BY — so the decals stop being the only difference between phases
 # and four of the five carry a find. Phase 0 stays bare because it is the atlas
 # column, which is the tile a board falls back to everywhere.
+# The salts were re-picked on 2026-08-23, when the border ring became shared:
+# the ring is a fifth of a tile's clumps laid the same way in every phase, a
+# floor of ~0.15 under any two phases' layout overlap, so the four that are
+# free are the four whose interiors agree least — 0.31 at the worst pair,
+# against 0.47 for the salts the table happened to hold.
 PLAINS_PHASES: tuple[tuple[int, int, int, tuple[tuple[str, int, int], ...]], ...] = (
     (PLAINS_SALT, 0, 0, ()),
-    (11, 27, 19, (("flower", 52, 22), ("scuff", 24, 46))),
-    (19, 45, 37, (("pebble", 6, 30), ("scuff", 40, 8))),
-    (29, 13, 49, (("pebble", 21, 40), ("scuff", 43, 14))),
-    (37, 55, 7, (("flower", 12, 22), ("pebble", 45, 50))),
+    (8, 27, 19, (("tussock", 52, 22), ("dry", 24, 46))),
+    (13, 45, 37, (("pebble", 6, 30), ("dry", 40, 8))),
+    (20, 13, 49, (("pebble", 21, 40), ("dry", 43, 14))),
+    (49, 55, 7, (("tussock", 12, 22), ("pebble", 45, 50))),
 )
+
+# A tuft is drawn whole, inside the cell. It used to WRAP around the tile,
+# which is seamless for one phase repeated and is not what the game does: it
+# hashes a phase per cell, so a tuft cut at phase 3's right edge met phase 1's
+# uncut left edge and the cut showed. The offset is folded into the cell and
+# then held off the border, so every phase still carries all twelve tufts —
+# what moves is where they stand, not how many survive.
+_TUFT_MARGIN = 1
+
+
+def _tuft_at(sx: int, sy: int, dx: int, dy: int) -> tuple[int, int]:
+    """Where a tuft stands once its phase offset is folded into the cell.
+
+    Both axes are clamped off the outermost pixel ring on both sides — the
+    ring is the shared one every phase carries, and a tuft painted into it
+    would be the one pixel that is not shared and so the one that seams. The
+    low bound on y is one further in because the blade is drawn a row above.
+    """
+    span = CELL - _TUFT_MARGIN - 3
+    x = min(max((sx + dx) % CELL, _TUFT_MARGIN), span)
+    y = min(max((sy + dy) % CELL, _TUFT_MARGIN + 1), span)
+    return x, y
 
 
 def plains(phase: int = 0) -> Image.Image:
     salt, dx, dy, decals = PLAINS_PHASES[phase]
     t = _grass_ground(salt)
     for i, (sx, sy) in enumerate(_TUFTS):
-        x, y = sx + dx, sy + dy
-        _wrap_rect(t, x, y, 3, 2, GRASS_DARK)
-        _wrap_rect(t, x + (i % 2), y - 1, 1, 1, _lit(GRASS, 0.18))
-    for fx, fy in _WILDFLOWERS:
-        _wrap_rect(t, fx + dx, fy + dy, 1, 1, SNOW)
-        _wrap_rect(t, fx + dx + 1, fy + dy, 1, 1, WILDFLOWER)
+        x, y = _tuft_at(sx, sy, dx, dy)
+        _rect(t, x, y, 3, 2, GRASS_DARK)
+        _rect(t, x + (i % 2), y - 1, 1, 1, _BLADE)
     for kind, x, y in decals:
         _DECALS[kind](t, x, y)
     return t

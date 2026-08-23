@@ -8,7 +8,7 @@ of one green. Measured on the atlas tile before this pass:
 | tile luma sd | 4.5 | 9.70-9.95 (per phase) |
 | pixels within 8L of the tile mean | 97.9% | 55-75% |
 | tile median | L157.7 | L156.0 |
-| phase-to-phase difference | five translations of one tuft table, tile means within 0.31L | five different clump layouts, 8-33% of their clumped area shared |
+| phase-to-phase difference | five translations of one tuft table, tile means within 0.31L | five different clump layouts, 23-30% of their clumped area shared |
 
 The ±3% per-block grain was doing none of that work and could not: it is a
 wobble of a couple of luma steps, and the game draws the board at a 4:1
@@ -21,10 +21,11 @@ over 30% of the tile in 4px blocks.
 `terrain._grass_ground(salt)` draws `_ground(GRASS, salt)` and then paints the
 clumps over it:
 
-- `_clump_field` is a smooth value field on a 16px lattice — four nodes across
-  the cell, indexed modulo 4, so the field **wraps** and repeated tiles still
-  butt seamlessly — roughened by the block's own hash so a clump's edge is
-  ragged instead of a circle. Every term is `palette.h01`; there is no
+- `_clump_field` is a smooth value field on a lattice of four nodes to a
+  period, indexed modulo 4, so the field **wraps** — roughened by the block's
+  own hash so a clump's edge is ragged instead of a circle. (The period was the
+  64px cell, which wraps one phase against itself and nothing else; see round
+  two below.) Every term is `palette.h01`; there is no
   randomness anywhere.
 - Coverage is fixed by **rank**, not by a threshold on the field: the darkest
   12% of a tile's blocks take `CLUMP_DK` and the next 18% take `CLUMP`. With
@@ -97,3 +98,96 @@ board flat. The `SAME_HUE` verdant-on-plains exemption was re-measured over
 the same boundaries and did not move: 12.2% of the boundary ties in both value
 and colour, the same figure to the same decimal as before this pass. The
 clumps are a value variation inside a hue that exemption already names.
+
+## Round two: seamless, indexed, on-ramp — 2026-08-23
+
+The clump field above wraps at the cell, and the visual-QA pass measured what
+that is worth on a board: nothing. The game does not repeat one phase, it
+**hashes a phase per cell**, so what actually butts is phase 3's right edge
+against phase 1's left — two different fields cut off at the border. On a
+synthetic 8x8 field of hashed phases:
+
+| mean \|luma step\| | before | after |
+| --- | --- | --- |
+| across a 64px boundary, horizontal | 9.58 | 0.00 |
+| across a 64px boundary, vertical | 9.68 | 0.00 |
+| inside a tile | 1.89 / 2.03 | 2.10 / 2.19 |
+| seam : interior | 5.1x / 4.8x | 0.0x |
+
+Two other measurements from the same pass, both about tones rather than shapes:
+one plains tile carried **29 colours, 28 of them green**, 17 inside a single
+0.03 slice of luma — the ±3% grain was a continuous mix per 4px block, so the
+tile spent a colour per block. And the decals were drawn out of the grounds
+they depicted: gravel (H41 S0.09) for a stone, its shadow (H225), the
+wildflower (H40 S0.73). At 1-3px on a hue-100 field those are not a stone and a
+flower, they are three dead pixels.
+
+### The shared border ring
+
+Two tiles can only butt with no step if their edges are the **same pixels**, so
+every phase carries one:
+
+- The outermost 4px block ring is drawn from a single shared field
+  (`_SEAM_SALT`), grain and clumps both, and it is the same ring in every phase
+  and on both plates.
+- That field has a period of **60px — fifteen blocks** — so block column 15
+  starts at x=60 and reads the same value as block column 0. The two blocks that
+  meet at a seam are one block. The period is the field's own rather than a
+  duplicated column, which is what keeps the ring smooth against the interior.
+- Behind it, each phase's own field **dithers** in over `_SEAM_FADE` blocks: a
+  block takes its own field or the shared one by its own hash. The first
+  attempt averaged the two, and averaging halves the variance a rank is taken
+  over — every phase then put its darkest blocks in the middle of its tile and
+  drew a sparse frame around every cell, which is the quilt this pass exists to
+  remove.
+- Coverage is still exact: the ring spends some of the tile's fixed clump
+  budget and the interior is ranked to whatever is left, so every phase spends
+  the same number of blocks on each tone (29.0-29.5% of the tile, as before).
+
+What it costs is that a fifth of a tile's clumps are laid the same way in every
+phase — a floor of ~0.15 under any two phases' layout overlap. The four free
+salts were re-picked for the interiors that agree least: the worst pair is 0.30
+against the `MAX_LAYOUT_OVERLAP` bar of 0.40, which did not move. The tufts
+stopped wrapping around the tile for the same reason the ring exists — a tuft
+cut at one phase's edge met another phase's uncut one — and are now folded
+inside the cell, all twelve of them, in every phase.
+
+### Six greens and a three-step grain
+
+`_grain` picks one of three tones — the base, `_lit` by 3%, `darken`ed by 3% —
+instead of mixing one per block. The texture is the same (the hash still
+decides which block is lighter); what changes is that the field is a set of
+authored tones rather than a spray of near-duplicates. Measured per plains
+phase: **7, 10, 11, 11, 10 colours** against 29-33, under a new
+`MAX_TILE_COLOURS` ratchet of 14. `_ground` is shared, so every ground on the
+sheet came down with it: the terrain atlas averages **9.4 colours a cell**
+against 27.8, and the woods tile 13 against a `NATURE_CEILING` of 80.
+
+The plate's tones are now exactly six greens plus what a decal spends: GRASS
+and its two grain steps, `CLUMP`, `CLUMP_DK`, and the `GRASS_DARK` tuft.
+
+### Decals on the field's ramp
+
+The wildflower pair is gone from the field — four pixels of H40 and H214 on a
+hue-100 ground — and the three decals are drawn in grass's own hue, held under
+S0.45 (`DECAL_HUE_ARC`, `DECAL_MAX_SAT`):
+
+| find | tones | hue / sat |
+| --- | --- | --- |
+| pebble | `_STONE` L152, `_STONE_DK` L120 | H100 S0.10 / S0.15 |
+| tussock | `_LEAF` L105, `_BLADE` L174 | H112 S0.44 / H100 S0.38 |
+| dry patch | `_DRY` L147, `_DRY_DK` L127 | H80 S0.34 / S0.38 |
+
+The dry patch leans 20° toward sand — as far as the arc allows — so a worn
+patch still reads as ground worn thin rather than as another clump. Four of the
+five phases still carry a find; phase 0 is still the atlas column and still
+bare.
+
+### What did not move
+
+`TERRAIN_MEDIAN_CEILING` (the tile median is L153.1, as it was),
+`GroundContrast`, the `GroundSeparation` 15.0 bar (field-vs-gravel measures
+15.33, the same figure as before this pass — the field tone is untouched), the
+`WoodsSeam` plate identity and its 300px clearing floor, and
+`MAX_LAYOUT_OVERLAP`. No threshold in `tests/` was loosened for this pass; two
+were added.
