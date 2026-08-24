@@ -81,7 +81,6 @@ func _assert_baked(path: String, size: Vector2) -> void:
 	assert_true(texture.get_image().has_mipmaps(), "%s imported without mipmaps" % path)
 
 
-
 ## The head column is the only thing separating one bust from another before the
 ## hair goes on, and every way it can go wrong is silent: a row that forgot it
 ## draws the shared skull, a jaw outside the vocabulary falls through to the
