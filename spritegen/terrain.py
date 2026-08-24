@@ -1123,12 +1123,21 @@ def reef() -> Image.Image:
 # Where each building stands in its cell: (centre x, ground line). One
 # statement, read by the atlas tiles and by the iso_buildings cells, so the
 # two can never place the same building differently.
+#
+# One ground line for all five. The line is where the bottom edge of the
+# building sprite lands in the cell, not where its base plate happens to end:
+# every model is drawn tight, bottom-flush, so pinning the frames to a shared
+# `bottom` puts every property's lowest painted row on the same row of the
+# board. The airport used to sit at 46 and the port at 52, which floated them
+# up to 15px above the row city, base and hq stand on — buildings hovering
+# over the same tile grid. Centre x is 32, the cell's own centre, for all of
+# them; the airport's old 31 pushed it a pixel off-centre.
 PROPERTY_ANCHOR: dict[str, tuple[int, int]] = {
     "city": (32, 61),
     "base": (32, 61),
     "hq": (32, 61),
-    "airport": (31, 46),
-    "port": (32, 52),
+    "airport": (32, 61),
+    "port": (32, 61),
 }
 
 # The shadow a building drops on whatever ground it is standing on: the

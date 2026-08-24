@@ -1210,6 +1210,21 @@ class PropertyOverlays(unittest.TestCase):
                                 share, 1.0, delta=self.RUNG_TOLERANCE
                             )
 
+    def test_every_property_stands_on_one_ground_line(self):
+        # Five buildings on one board share one grid, so they have to share
+        # the row they stand on. The airport used to bottom out at 45 and the
+        # port at 51 against the other three's 60, which read as two of the
+        # five hovering over the tile the other three sit on. The row is
+        # pinned, not merely agreed: a shared line that drifts up the cell
+        # would still pass a five-way equality.
+        lines = {}
+        for tid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                px = self._cell(tid, fac).load()
+                rows = [y for y in range(CELL) for x in range(CELL) if px[x, y][3] != 0]
+                lines[(tid, fac.key)] = max(rows)
+        self.assertEqual(set(lines.values()), {60}, lines)
+
     def test_the_tile_and_the_exported_cell_place_one_building(self):
         # The atlas tile is the exported iso_buildings cell plus a shadow, so
         # the two surfaces cannot drift into placing the same building twice.
