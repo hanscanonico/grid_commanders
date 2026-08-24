@@ -59,6 +59,15 @@ func test_the_neutral_portrait_path_names_a_file() -> void:
 	_assert_baked(CommanderVisuals.NEUTRAL_PORTRAIT_PATH, Vector2(CommanderVisuals.PORTRAIT_SIZE))
 
 
+## Every bust and emblem is minified — hardest into the 31px HUD chip and the
+## 28px speech bust — so ART_FILTER samples them through their mip chain. A
+## texture imported without one is sampled at level 0 and shimmers, and a fresh
+## bake writes a default .import with mipmaps off, so the flag would go quiet on
+## the twenty-third general rather than fail.
+func test_the_art_filter_is_the_mipmapped_one() -> void:
+	assert_eq(CommanderVisuals.ART_FILTER, CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
+
+
 ## Both doors, because they answer differently: ResourceLoader reads the import
 ## cache, so it alone would still say yes over a source file that has been
 ## deleted, and FileAccess alone would say yes over one that never imported.
@@ -69,3 +78,4 @@ func _assert_baked(path: String, size: Vector2) -> void:
 		return
 	var texture: Texture2D = load(path)
 	assert_eq(texture.get_size(), size, "%s is not the pinned size" % path)
+	assert_true(texture.get_image().has_mipmaps(), "%s imported without mipmaps" % path)

@@ -82,7 +82,13 @@ const FACE_REGION := Rect2i(26, 14, 168, 168)
 ## ratios drops whole rows and frays the ink outlines the style rests on.
 ## Every surface that draws a bust asks for this by name rather than setting a
 ## filter of its own, so none of them can drift from the others.
-const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR
+## With mipmaps, because the two smallest fields minify hardest — 220x268 into a
+## 31px chip and into a 28px speech bust — and plain linear samples four texels
+## out of the sixty each output pixel covers there, so the ink outlines shimmer
+## and thin features drop in and out. Every portrait and emblem import therefore
+## carries `mipmaps/generate=true`; a texture built in code without them (the
+## flat-colour fallback) is simply drawn at its one level.
+const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 ## The neutral commander has no faction; it renders in this iron-grey so "No
 ## Commander" still reads as a deliberate, styled choice rather than a blank.
