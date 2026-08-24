@@ -2977,6 +2977,24 @@ class MoveFrames(unittest.TestCase):
                             other - shadow - body, set(), f"{pose.name}'s shadow"
                         )
 
+    def test_a_moving_hull_leaves_its_foam_line_where_it_found_it(self):
+        """The ambient clip's rule (`test_the_foam_line_stays_on_the_water`),
+        asked of the move clip too, because a gait is where it is easy to
+        break: `voxel._waterline_foam` places the flecks against the composed
+        cell's own lowest spans, so a hull that trims bow-up by lifting its
+        waterline course out of them would drag the foam line up the sheet
+        and the sea would read as heaving rather than the ship as running.
+        Every move pose's foam must be pose A's, pixel for pixel."""
+        for uid in self._movers():
+            if UNITS[uid][1] != "sea":
+                continue
+            for fac in FACTIONS:
+                a = self._foam(atlas.unit_cell(uid, fac, Pose.A))
+                self.assertTrue(a)
+                for pose in MOVE_POSES:
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, pose)))
+
     def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
         """The fallback is what makes the move sheets valid from day one:
         every unit outside `MOVES` draws its ambient counterpart, byte for
@@ -3037,6 +3055,16 @@ class MoveFrames(unittest.TestCase):
         px = cell.convert("RGBA").load()
         w, h = cell.size
         return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
+
+    def _foam(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {
+            (x, y)
+            for y in range(h)
+            for x in range(w)
+            if px[x, y][:3] == FOAM and px[x, y][3] == 255
+        }
 
     def _body(self, cell: Image.Image) -> set:
         """Everything the unit itself paints — the shadow is the ground's."""
