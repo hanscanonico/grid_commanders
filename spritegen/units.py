@@ -25,6 +25,16 @@ a texel across: it re-tones the inside of a shape that holds still, and the
 sprite boils instead of animating. Measured, that was every land vehicle on
 the sheet at zero changed silhouette texels (`tests/measure_motion.py`).
 
+The move clip is the same machine UNDER WAY, and it is a gait and never a
+journey: the game tweens the sprite across the board itself, so a move frame
+may not translate the hull along its own run — that would double the travel
+and slide the unit out of the cell it is standing in. What a move frame owns
+is the running gear and the chassis's reaction to it. On the tracked family
+that is the tread stripe walking a half period (`_track`'s `phase`) and the
+whole hull jolting one board texel of ride height on the off-beat (`_roll`),
+with the weapons left at travel-lock — pose A's gun, not pose B's laid-up or
+recoiled one, because a vehicle on the move does not lay its gun.
+
 Only the uids in `MOVES` author the move clip; every other unit falls back to
 its ambient counterpart in `build_model`, so the move sheets are valid from
 the day the plumbing lands and a family arrives one unit at a time. That
@@ -92,10 +102,10 @@ def beat(pose: Pose) -> bool:
     return Pose(pose) in (Pose.B, Pose.MOVE_B)
 
 
-# The uids that author the move clip. Empty for now: the move sheets ship as
-# copies of the ambient pair and each family task adds its units here as it
-# hand-places their strides.
-MOVES: frozenset[str] = frozenset()
+# The uids that author the move clip. Everything else is served its ambient
+# counterpart, so the move sheets stay valid while the families arrive one at
+# a time. First in: the five tracked hulls.
+MOVES: frozenset[str] = frozenset({"tank", "md_tank", "anti_air", "artillery", "apc"})
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +265,27 @@ def _shift(
         del m.vox[key]
     for (x, y, z), mat in moved.items():
         m.vox[(x + dx, y + dy, z + dz)] = mat
+
+
+def _roll(m: Model, dz: int) -> None:
+    """Jolt the WHOLE model `dz` — the chassis riding over ground.
+
+    Two things make this the move clip's bob rather than a slide. It is
+    authored in the MODEL, so `atlas.cell_placement` still pins the sprite by
+    pose A's crop: origin, `footprint_w` and `ground` are pose-invariant and
+    the cast shadow stays nailed to the ground row while the hull lifts off
+    it. And it is vertical: the wide land hulls have no horizontal margin left
+    in the 64x96 cell — a whole-body `(dx -1, dy +1)` on the tank overflows
+    `voxel.place_in_cell` outright — and a hull that translated along its own
+    run would say the vehicle had driven off, which is the game's tween's job
+    and never the sheet's.
+
+    `dz = 2` is one board texel, the same unit `_shift` moves an assembly by.
+    """
+    xs = [x for x, _, _ in m.vox]
+    ys = [y for _, y, _ in m.vox]
+    zs = [z for _, _, z in m.vox]
+    _shift(m, (min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)), dz=dz)
 
 
 # ---------------------------------------------------------------------------
@@ -551,10 +582,18 @@ def tank(pose: Pose = Pose.A) -> Model:
     silhouette texels at rung 1, 26 at rung 2. The tread walks its link
     stripe a half period under it, and the hull's x/y extents are untouched,
     so the footprint and the cast shadow are unchanged.
+
+    The move clip leaves the gun where pose A carries it — a tank under way
+    does not lay its barrel — and animates the running gear instead: MOVE_A is
+    pose A with the link stripe at phase 0, MOVE_B advances the stripe a half
+    period and jolts the WHOLE hull `dz = +2` (`_roll`), one board texel of
+    ride height over rough ground. Bouncing only the sprung mass was the other
+    reading and it opens a 4px gap between hull and tread here. 28 changed
+    silhouette texels at rung 1, 1.96 shimmer, 0.003 mass drift.
     """
     m = Model()
-    _track(m, 0, 2, 0, 13, 2, phase=pose)
-    _track(m, 9, 11, 0, 13, 2, phase=pose)
+    _track(m, 0, 2, 0, 13, 2, phase=int(beat(pose)))
+    _track(m, 9, 11, 0, 13, 2, phase=int(beat(pose)))
     # hull in desaturated armour; the turret crown carries the team color
     m.box(0, 11, 1, 12, 3, 5, "hull")
     m.box(1, 10, 13, 13, 3, 5, "hull")
@@ -584,6 +623,8 @@ def tank(pose: Pose = Pose.A) -> Model:
         # rebuilt down to the deck as the mount that holds it there
         _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
         m.box(4, 7, 10, 10, 6, 9, "hull_dk")
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
@@ -596,10 +637,17 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     turret that stays where it was. One texel is enough here because this
     barrel is three voxels wide — 6 changed silhouette texels at rung 1, 20
     at rung 2, where the MBT's thinner gun needed two.
+
+    The move clip walks the stripe and rolls the whole hull `dz = +2` on
+    MOVE_B with the gun left at pose A's travel-lock, as the MBT's does. The
+    roll is UP and never down even though this is the tallest thing on the
+    land roster: `voxel.place_in_cell` still takes it, and a settle would read
+    as the suspension giving way rather than the chassis riding. 30 changed
+    silhouette texels at rung 1, 2.33 shimmer, 0.002 mass drift.
     """
     m = Model()
-    _track(m, 0, 2, 0, 15, 3, phase=pose)
-    _track(m, 10, 12, 0, 15, 3, phase=pose)
+    _track(m, 0, 2, 0, 15, 3, phase=int(beat(pose)))
+    _track(m, 10, 12, 0, 15, 3, phase=int(beat(pose)))
     # hull with armoured side skirts over the tracks
     m.box(0, 12, 1, 14, 4, 6, "hull")
     m.box(10, 12, 2, 13, 4, 5, "hull_dk")
@@ -630,6 +678,8 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     m.box(5, 7, 21, 21, 10, 10, "bore")
     if pose is Pose.B:
         _shift(m, (4, 8, 12, 21, 7, 11), dz=2)
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
@@ -641,10 +691,18 @@ def anti_air(pose: Pose = Pose.A) -> Model:
     that grows the two voxels with them, so the battery tracks a target and
     the raked lines — the identity — are what the player sees move: 8 changed
     silhouette texels at rung 1, 31 at rung 2.
+
+    The move clip holds the battery at pose A's travelling elevation — a flak
+    track under way is not tracking — and gives the movement to the running
+    gear: stripe at phase 0 on MOVE_A, stripe advanced plus a whole-model
+    `dz = +2` on MOVE_B. 28 changed silhouette texels at rung 1, 1.64
+    shimmer, 0.000 mass drift; 17 of the 28 land in the top half of the
+    sprite, where the raked barrels and their cradle ride the jolt — the
+    right part of this unit to see move.
     """
     m = Model()
-    _track(m, 0, 2, 0, 11, phase=pose)
-    _track(m, 8, 10, 0, 11, phase=pose)
+    _track(m, 0, 2, 0, 11, phase=int(beat(pose)))
+    _track(m, 8, 10, 0, 11, phase=int(beat(pose)))
     # low hull in desaturated armour
     m.box(0, 10, 1, 11, 2, 3, "hull")
     m.box(1, 9, 12, 12, 2, 3, "hull_lt")
@@ -680,6 +738,8 @@ def anti_air(pose: Pose = Pose.A) -> Model:
         for x in (3, 7):
             _shift(m, (x, x, 9, 14, 8, 18), dz=2)
             m.box(x, x, 8, 8, 8, 9, "gunmetal_dk")
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
@@ -705,10 +765,17 @@ def artillery(pose: Pose = Pose.A) -> Model:
     silhouette texels at rung 1 and 46 at rung 2, at 1.75 shimmer. The walls,
     the spade and the hull hold their ground, which is what makes it a gun
     firing rather than a vehicle sinking.
+
+    The move clip does NOT recoil: a gun fires from a halt, so MOVE_A and
+    MOVE_B both carry pose A's erected howitzer and the animation is the
+    stripe walking under a hull rolled `dz = +2` on the off-beat. 28 changed
+    silhouette texels at rung 1, 2.14 shimmer, 0.000 mass drift, and they run
+    the whole height of the sprite: 6 of them are the near-vertical spike
+    riding the jolt across open sky, the rest the hull and casemate lines.
     """
     m = Model()
-    _track(m, 0, 2, 0, 12, 2, phase=pose)
-    _track(m, 8, 10, 0, 12, 2, phase=pose)
+    _track(m, 0, 2, 0, 12, 2, phase=int(beat(pose)))
+    _track(m, 8, 10, 0, 12, 2, phase=int(beat(pose)))
     m.box(0, 10, 1, 12, 3, 4, "hull")
     m.box(1, 9, 13, 13, 3, 3, "hull_lt")
     # open casemate: a deep armoured wall ring around the gun pit, no roof;
@@ -745,6 +812,8 @@ def artillery(pose: Pose = Pose.A) -> Model:
         # ones, over the 5.0 shimmer bar. The full stroke clears the spike's
         # own width off the top of the sky.
         _shift(m, (3, 7, 6, 12, 8, 27), dz=-4)
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
@@ -835,10 +904,18 @@ def apc(pose: Pose = Pose.A) -> Model:
     scored — the old model had nothing else a texel could be seen on, and the
     open troop hatch tried then changed zero texels at either rung because
     this projection buries a roof detail under the roof's own far edge.
+
+    The move clip keeps the cab up — the nod is a parked transport settling —
+    and rolls the whole hull, dropped ramp and all, `dz = +2` on MOVE_B over a
+    stripe walked a half period. The ramp riding the roll is deliberate: it is
+    bolted to the tail, so leaving it on the ground while the hull lifted
+    would tear the outline. It clears the cell at +2, so the pair needed no
+    inversion. 26 changed silhouette texels at rung 1, 1.92 shimmer, 0.000
+    mass drift.
     """
     m = Model()
-    _track(m, 0, 2, 0, 15, phase=pose)
-    _track(m, 6, 8, 0, 15, phase=pose)
+    _track(m, 0, 2, 0, 15, phase=int(beat(pose)))
+    _track(m, 6, 8, 0, 15, phase=int(beat(pose)))
     # low hull tub running the whole length — the floor the cargo bay and the
     # cab both stand on, and one voxel narrower than any gun tank's
     m.box(0, 8, 1, 15, 2, 4, "hull")
@@ -896,6 +973,8 @@ def apc(pose: Pose = Pose.A) -> Model:
         # replaces moved a corner of a slab; this moves the tallest mass the
         # unit owns.
         _shift(m, (1, 7, 10, 17, 2, 12), dz=-2)
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
