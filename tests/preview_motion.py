@@ -1,20 +1,30 @@
-"""Dev instrument for the ambient animation — the picture behind the numbers.
+"""Dev instrument for the unit animation clips — the picture behind the numbers.
 
 `tests/measure_motion.py` counts what survives the board's sample; this draws
 it. Every judgement about an idle so far has been made from those counts, and a
 count cannot say whether a moving assembly reads as one aircraft turning its
-rotor or as two aircraft alternating. So this writes, into a directory you name:
+rotor or as two aircraft alternating. `--clip {ambient,move}` picks which clip
+is drawn (default ambient), and it writes, into a directory you name:
 
-  motion_sheet.png   a contact sheet — every unit, pose A above pose B, once
-                     per zoom rung, nearest-upscaled so both rungs occupy the
-                     same 64x96 patch of your screen;
-  motion_<uid>.gif   one loop per unit, rung 2, at the manifest's cadence.
+  motion_sheet_<clip>.png  a contact sheet — every unit, one row per pose of
+                           the clip, once per zoom rung, nearest-upscaled so
+                           both rungs occupy the same 64x96 patch of your
+                           screen;
+  motion_<clip>_<uid>.gif  one loop per unit, rung 2, at that clip's cadence.
+
+The move clip is drawn FLIPPED as well by default (`--no-flip` turns it off,
+`--flip` forces it on for any clip): the sheets are the left-facing art and the
+game mirrors them about the cell centre for a rightward move, so the contact
+sheet puts each unit's frames next to their `FLIP_LEFT_RIGHT` mirror. Nothing
+in a move frame may encode screen-handedness, and the mirror is the only place
+that shows.
 
 Two things it does NOT do, on purpose. It is not part of `sprite_generator.py`'s
 run and writes nothing into `out/`, so the determinism diff and the snapshot
 gate never see it. And it invents no numbers: the frame list and the cadence are
-read from `spritegen.anim` (`AMBIENT_SHEETS`, `AMBIENT_MS`), so a third sheet or
-a new beat changes the preview without anyone editing it here.
+read from `spritegen.units` (`CLIP_POSES`) and `spritegen.anim` (the clip's
+sheet tuple and its `*_MS`), so a third sheet or a new beat changes the preview
+without anyone editing it here.
 
 What you are looking at is the board's own pipeline, in the board's own order:
 the cell is composited over the terrain it stands on FIRST — plains for land and
@@ -27,11 +37,13 @@ decimation, which is the point of doing it with nearest too.
 The GIFs share one quantised palette across their frames — both frames are
 palettised together — so nothing flickers except what the art moves.
 
-Run: .venv/bin/python tests/preview_motion.py OUTDIR [unit ...]
+Run: .venv/bin/python tests/preview_motion.py OUTDIR [--clip {ambient,move}]
+     [--flip | --no-flip] [unit ...]
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -43,9 +55,14 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from spritegen import atlas, terrain  # noqa: E402
-from spritegen.anim import AMBIENT_MS, AMBIENT_SHEETS  # noqa: E402
+from spritegen.anim import (  # noqa: E402
+    AMBIENT_MS,
+    AMBIENT_SHEETS,
+    MOVE_MS,
+    MOVE_SHEETS,
+)
 from spritegen.palette import faction_by_key  # noqa: E402
-from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, UNITS, Pose  # noqa: E402
+from spritegen.units import ATLAS_ORDER, CLIP_POSES, UNITS, Pose  # noqa: E402
 
 # The rungs `measure_motion` reads, and how far each is upscaled to land back
 # on a 64x96 patch: rung r samples the cell to (16r, 24r), so 4 // r restores
@@ -67,18 +84,32 @@ LABEL_H = 12
 INK = (232, 232, 232, 255)
 PAPER = (24, 24, 28, 255)
 
-# The clip's frames, as poses. This previews the AMBIENT clip: the manifest
-# names its sheets and `units.AMBIENT_POSES` names the keys that draw them, so
-# the two tables have to be the same length — if a third sheet ever ships
-# without a third pose, say so here rather than quietly previewing two frames
-# of a three-frame clip.
-if len(AMBIENT_SHEETS) != len(AMBIENT_POSES):
-    raise SystemExit(
-        f"anim.AMBIENT_SHEETS has {len(AMBIENT_SHEETS)} sheets but "
-        f"units.AMBIENT_POSES has {len(AMBIENT_POSES)} keys — preview_motion "
-        "cannot tell which draws which"
-    )
-_POSES = AMBIENT_POSES
+# Each previewable clip, as the two tables that have to agree about it: the
+# sheets `anim` publishes and the cadence they play at. The poses come from
+# `units.CLIP_POSES` under the same key, so a clip is named once.
+CLIP_SHEETS = {
+    "ambient": (AMBIENT_SHEETS, AMBIENT_MS),
+    "move": (MOVE_SHEETS, MOVE_MS),
+}
+
+
+def clip_poses(clip: str) -> tuple[Pose, ...]:
+    """The clip's frames, as poses, gated against its sheet count.
+
+    The manifest names a clip's sheets and `units.CLIP_POSES` names the keys
+    that draw them, so the two tables have to be the same length — if a third
+    sheet ever ships without a third pose, say so here rather than quietly
+    previewing two frames of a three-frame clip.
+    """
+    sheets, _ = CLIP_SHEETS[clip]
+    poses = CLIP_POSES[clip]
+    if len(sheets) != len(poses):
+        raise SystemExit(
+            f"the {clip} clip has {len(sheets)} sheets but "
+            f"units.CLIP_POSES[{clip!r}] has {len(poses)} keys — preview_motion "
+            "cannot tell which draws which"
+        )
+    return poses
 
 
 def backdrop(kind: str) -> Image.Image:
@@ -103,11 +134,22 @@ def backdrop(kind: str) -> Image.Image:
     return img
 
 
-def board_frame(uid: str, fac, pose: Pose, size: tuple[int, int]) -> Image.Image:
+def board_frame(
+    uid: str, fac, pose: Pose, size: tuple[int, int], flip: bool = False
+) -> Image.Image:
     """One unit, one pose, as the board hands it to the screen at `size`:
-    composited over its ground, then decimated with nearest."""
+    composited over its ground, then decimated with nearest.
+
+    `flip` mirrors the CELL and not the ground, because that is what the
+    consumer does: `Sprite2D.flip_h` about the cell centre, over terrain that
+    never mirrors. Mirroring the composite instead would flip the ground's own
+    lighting and make the sprite look wrong for the ground's reason.
+    """
     ground = backdrop(UNITS[uid][1])
-    ground.alpha_composite(atlas.unit_cell(uid, fac, pose))
+    cell = atlas.unit_cell(uid, fac, pose)
+    if flip:
+        cell = cell.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    ground.alpha_composite(cell)
     return ground.resize(size, Image.NEAREST)
 
 
@@ -117,13 +159,22 @@ def zoom(img: Image.Image, factor: int) -> Image.Image:
     return img.resize((img.width * factor, img.height * factor), Image.NEAREST)
 
 
-def contact_sheet(uids: list[str], frames: dict) -> Image.Image:
-    """Every unit across, every pose down, one band per rung."""
+def contact_sheet(
+    uids: list[str], frames: dict, poses: tuple[Pose, ...], flip: bool
+) -> Image.Image:
+    """Every unit across, every pose down, one band per rung.
+
+    With `flip`, a unit occupies two adjacent columns — its frames as authored
+    and the same frames mirrored — so the pair is read side by side, which is
+    the only way to see that a stride does not encode screen-handedness.
+    """
     cell_w, cell_h = atlas.CELL_W, atlas.CELL_H
-    band_h = LABEL_H + len(_POSES) * (cell_h + GAP)
+    sides = (False, True) if flip else (False,)
+    unit_w = len(sides) * (cell_w + GAP)
+    band_h = LABEL_H + len(poses) * (cell_h + GAP)
     sheet = Image.new(
         "RGBA",
-        (GAP + len(uids) * (cell_w + GAP), GAP + len(RUNGS) * (LABEL_H + band_h)),
+        (GAP + len(uids) * unit_w, GAP + len(RUNGS) * (LABEL_H + band_h)),
         PAPER,
     )
     draw = ImageDraw.Draw(sheet)
@@ -138,18 +189,20 @@ def contact_sheet(uids: list[str], frames: dict) -> Image.Image:
         )
         top += LABEL_H
         for col, uid in enumerate(uids):
-            x = GAP + col * (cell_w + GAP)
-            draw.text((x, top), uid, fill=INK)
-            for i, pose in enumerate(_POSES):
-                sheet.paste(
-                    zoom(frames[uid, rung, pose], VIEW // rung),
-                    (x, top + LABEL_H + i * (cell_h + GAP)),
-                )
+            x0 = GAP + col * unit_w
+            for s, mirrored in enumerate(sides):
+                x = x0 + s * (cell_w + GAP)
+                draw.text((x, top), f"{uid} flip" if mirrored else uid, fill=INK)
+                for i, pose in enumerate(poses):
+                    sheet.paste(
+                        zoom(frames[uid, rung, pose, mirrored], VIEW // rung),
+                        (x, top + LABEL_H + i * (cell_h + GAP)),
+                    )
         top += band_h
     return sheet
 
 
-def gif(path: Path, frames: list[Image.Image]) -> None:
+def gif(path: Path, frames: list[Image.Image], ms: int) -> None:
     """Write the loop, with ONE palette for the whole clip.
 
     Quantising each frame on its own gives each its own 256 colours, and the
@@ -168,36 +221,69 @@ def gif(path: Path, frames: list[Image.Image]) -> None:
         path,
         save_all=True,
         append_images=cut[1:],
-        duration=AMBIENT_MS,
+        duration=ms,
         loop=0,
         disposal=1,
         optimize=False,
     )
 
 
-def preview(uids: list[str], outdir: Path) -> None:
+def preview(
+    uids: list[str], outdir: Path, clip: str = "ambient", flip: bool | None = None
+) -> None:
+    """Draw one clip. `flip` defaults to on for the move clip, off otherwise —
+    move is the only clip the consumer mirrors."""
+    poses = clip_poses(clip)
+    ms = CLIP_SHEETS[clip][1]
+    if flip is None:
+        flip = clip == "move"
     fac = faction_by_key("red")
     outdir.mkdir(parents=True, exist_ok=True)
     frames = {
-        (uid, rung, pose): board_frame(uid, fac, pose, size)
+        (uid, rung, pose, mirrored): board_frame(uid, fac, pose, size, mirrored)
         for uid in uids
         for rung, size in RUNGS.items()
-        for pose in _POSES
+        for pose in poses
+        for mirrored in ((False, True) if flip else (False,))
     }
-    sheet = outdir / "motion_sheet.png"
-    contact_sheet(uids, frames).save(sheet)
+    sheet = outdir / f"motion_sheet_{clip}.png"
+    contact_sheet(uids, frames, poses, flip).save(sheet)
     print(f"{sheet}  ({len(uids)} units, rungs {', '.join(map(str, RUNGS))})")
     for uid in uids:
-        path = outdir / f"motion_{uid}.gif"
-        gif(path, [zoom(frames[uid, 2, pose], GIF_ZOOM) for pose in _POSES])
-        print(f"{path}  ({len(_POSES)} frames @ {AMBIENT_MS} ms)")
+        path = outdir / f"motion_{clip}_{uid}.gif"
+        gif(path, [zoom(frames[uid, 2, pose, False], GIF_ZOOM) for pose in poses], ms)
+        print(f"{path}  ({len(poses)} frames @ {ms} ms)")
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        sys.exit("usage: preview_motion.py OUTDIR [unit ...]")
-    wanted = sys.argv[2:] or list(ATLAS_ORDER)
+def main(argv: list[str]) -> None:
+    parser = argparse.ArgumentParser(
+        description="Draw a clip's frames the way the board samples them.",
+    )
+    parser.add_argument("outdir", metavar="OUTDIR", help="where the files are written")
+    parser.add_argument(
+        "--clip",
+        choices=sorted(CLIP_SHEETS),
+        default="ambient",
+        help="which clip to draw (default: ambient)",
+    )
+    parser.add_argument(
+        "--flip",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="show each unit beside its mirror (default: on for the move clip)",
+    )
+    parser.add_argument(
+        "unit",
+        nargs="*",
+        help="uids to draw (default: the whole atlas, in column order)",
+    )
+    args = parser.parse_args(argv)
+    wanted = args.unit or list(ATLAS_ORDER)
     unknown = [uid for uid in wanted if uid not in ATLAS_ORDER]
     if unknown:
         sys.exit(f"unknown unit(s): {', '.join(unknown)}")
-    preview(wanted, Path(sys.argv[1]))
+    preview(wanted, Path(args.outdir), args.clip, args.flip)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
