@@ -770,7 +770,7 @@ func _rays() -> String:
 			% [55 + 170 * cos(a), 118 + 170 * sin(a), 55 + 170 * cos(b), 118 + 170 * sin(b)]
 		)
 	var hub := _path("M21,118 A34,34 0 0 1 89,118 Z", "#ffffff", ' opacity="0.12"')
-	return '<g fill="#ffffff" opacity="0.2">%s</g>' % wedges + hub
+	return ('<g fill="#ffffff" opacity="0.2">%s</g>' % wedges) + hub
 
 
 func _burst() -> String:
