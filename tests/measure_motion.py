@@ -52,10 +52,12 @@ bob (guns, autocannon, periscope, bow visor):
                  80    25    8  2.12  |    321    88   31  1.84   after
   artillery      94     8    0  8.00  |    377    29    0 29.00   before
                  94    27    7  2.86  |    377    96   30  2.20   after
+                 99    33   12  1.75  |    393   112   46  1.43   remass
   rockets       119    12    0 12.00  |    469    43    0 43.00   before
                 119    47   11  3.27  |    469   185   43  3.30   after
   apc            86     6    0  6.00  |    340    25    0 25.00   before
                  86    17    3  4.67  |    340    75   15  4.00   after
+                 95    34    8  3.25  |    375   133   32  3.16   remass
   fighter        62    55   30  0.83  |    243   237  114  1.08
   bomber        101    83   36  1.31  |    369   328  144  1.28
   b_copter       44    49   25  0.96  |    209   207   97  1.13   before
@@ -74,6 +76,7 @@ bob (guns, autocannon, periscope, bow visor):
                  58    50   20  1.50  |    216   199   81  1.46   after
   ALL          1367   544  216  1.52  |   5452  2209  856  1.58   before
                1367   731  299  1.44  |   5452  2937 1170  1.51   after
+               1381   754  309  1.44  |   5503  3011 1203  1.50   remass
 
 Before the pass the whole tracked family — tank, md tank, anti air,
 artillery, rockets, apc — moved nothing at either rung. Six of them crept a
@@ -92,12 +95,20 @@ shoulders; a `dz = -2` compression moves the same texel but costs him 4 px of
 height and 64 opaque pixels, under the floors in `tests/test_infantry_read.py`.
 The trooper's shoulder and launcher drop `dz = -2` together.
 
-What each unit moves is in its builder's docstring. Two of them are worth
-the reader's time here, because they are what the projection costs: the APC
-has no turret and no gun and a roof detail buries itself under the roof's own
-far edge, so its texel is the nose dipping; and the MBT's barrel is two voxels
-wide, thin enough that a one-texel lay measured 2 silhouette texels, so its
-gun lays two.
+The REMASS rows are 2026-08-24, when the APC and the artillery were rebuilt
+to separate from the tank at rung 1 (`Silhouette`'s zoomed-out reading) and
+both idles had to be re-authored to suit the new mass:
+
+- the APC is no longer a featureless slab with a nose to dip, so the whole
+  raised cab — roof, cupola, glacis and bumper — dips together over an open
+  cargo deck that holds still, and it goes 3 -> 8 silhouette texels at rung 1;
+- the artillery's howitzer stands three z per y now instead of two, which
+  puts it near-VERTICAL on screen, and a near-vertical spike recoiling one
+  texel slides down its own column: 3 silhouette texels against 23 interior
+  ones, 6.67 shimmer, over the 5.0 bar. The stroke is two texels for the same
+  reason the MBT's thin gun lays two, and comes in at 12 and 1.75.
+
+What each unit moves is otherwise in its builder's docstring.
 
 Everything that flies or floats does change silhouette texels, but read that
 carefully before crediting it as animation: fighter and bomber build the SAME
