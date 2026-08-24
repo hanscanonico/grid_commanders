@@ -37,6 +37,7 @@ from spritegen.palette import (
     MID_CONTOUR,
     MID_FACTION,
     OUTLINE_HEAVY,
+    OUTLINE_RIM,
     RAMPS,
     S_BODY,
     faction_by_key,
@@ -936,13 +937,23 @@ class PropertyPalette(unittest.TestCase):
     #   light grade  units 0.579-0.696   buildings 0.650-0.743
     #   heavy grade  units 0.791-0.941   buildings 0.821-0.985
     #
+    # The rim grade shares the light grade's band, and on a BUILDING it shares
+    # its pixels outright: a property stops at `BUILDING_TOP_SLOT`, so the rim
+    # the grade lifts into is not a rung a wall may reach and the lift never
+    # fires (`voxel._selective_outline`). A roof is what an army is read
+    # against; it does not get to answer the ground the same way.
+    #
     # Buildings sit a little over the units of their grade because a lot is a
     # flat plate — its whole sunward edge is one ground-facing step — and that
     # is the gap these bands allow. What they do not allow is the shading
     # path's figure, which was 1.000 on eleven of the twenty-five sprites: an
     # unconditional keyline, drawn as hard on the side the sun is on as on the
     # side it is not.
-    BOUNDARY_DARK = {palette.OUTLINE_LIGHT: (0.50, 0.75), OUTLINE_HEAVY: (0.75, 0.99)}
+    BOUNDARY_DARK = {
+        palette.OUTLINE_LIGHT: (0.50, 0.75),
+        OUTLINE_RIM: (0.50, 0.75),
+        OUTLINE_HEAVY: (0.75, 0.99),
+    }
 
     def _sprite(self, bid, fac):
         return render_indexed(
@@ -2705,11 +2716,23 @@ class GroundContrast(unittest.TestCase):
     which moved the grass a little further into the two rows' band: 0.46% and
     0.61% on shoal unchanged, 0.79% on plains for both, worst sprite 2.24%.
 
-    The three chromatic rows are unmoved, and deliberately: their bodies are
-    the design-system tokens, so a lit edge that ties with the grass or the
-    sand in VALUE still breaks with it in COLOUR — which is what
-    `test_a_light_row_that_ties_in_value_still_breaks_in_colour` holds them
-    to instead — with two same-hue pairs named and left open (`SAME_HUE`).
+    Meridian is unmoved, and deliberately: its body is a design-system token
+    no ground shares, so a lit edge that ties with the grass or the sand in
+    VALUE still breaks with it in COLOUR — which is what
+    `test_a_light_row_that_ties_in_value_still_breaks_in_colour` holds it to
+    instead.
+
+    Two rows had neither half of that argument, and were carried as named
+    debt for three rounds: verdant IS the grass's hue (10.30% of its boundary
+    tying with the plains in value AND colour) and aurora IS the water's
+    (6.48% on shoal). `OUTLINE_RIM` is their answer, and it is the heavy
+    grade's question with the opposite answer — where the lift cannot clear
+    the ground's band, the line climbs to the rim rather than falling to the
+    contour, because the band above the terrain ceiling is the units' by
+    contract and a green army on grass has nothing to spend below. Measured
+    the same way afterwards: 0.39% and 0.55%, worst sprite 1.56% and 3.75%,
+    so both pairs are now inside the bound the light rows answer to and
+    nothing is carried as open.
     """
 
     WEAK = GROUND_BREAK  # under this much luma, boundary and tile read as one
@@ -2717,19 +2740,12 @@ class GroundContrast(unittest.TestCase):
     GROUNDS = ("plains", "shoal")
     MAX_WEAK_ROW = 0.02  # per row x ground; measured 0.0046-0.0079
     MAX_WEAK_UNIT = 0.04  # per sprite; measured 0.0224 (tank, shoal)
-    # A light-grade row gives up value and must still break in colour. As a
-    # distance in RGB, over the same boundary: measured 0.15% at worst on
-    # shoal (meridian, verdant) and 0.00% on plains, once the two same-hue
-    # pairs below are set aside.
+    # A row that keeps its lit line gives up value and must still break in
+    # colour. As a distance in RGB, over the same boundary: measured 0.29% at
+    # worst on shoal (meridian, verdant) and 0.00-0.39% on plains, with no
+    # pair set aside — the two that used to be are the rim grade's now.
     COLOUR_BREAK = 40.0
     MAX_WEAK_LIGHT = 0.02
-    # The two places a light row shares its HUE with the ground as well as
-    # its band, where the colour half of the argument cannot save it: verdant
-    # on the plains grass (12.5% of its boundary), and aurora over the water
-    # a shoal is half made of (7.9%). Named rather than folded into the
-    # bound, because they are defects to answer and not a rule to live with —
-    # docs/outlines.md carries them as open.
-    SAME_HUE = {("verdant", "plains"), ("aurora", "shoal")}
     SHADOW = (16, 18, 24)
 
     def _ground(self, name: str):
@@ -2784,6 +2800,26 @@ class GroundContrast(unittest.TestCase):
                 self.assertGreaterEqual(palette.luminance(tone), lo)
                 self.assertLessEqual(palette.luminance(tone), hi)
 
+    def test_the_hues_the_rim_grade_is_stated_on_are_the_grounds_it_names(self):
+        """`palette.GROUND_HUES` is the other half of the same pinning.
+
+        The grade is per FACTION and the question it asks is per pixel, so
+        both ends have to be checked: the two chromatic grounds are inside the
+        arc, the sand is not (it is neutral's khaki, and neutral answers with
+        the heavy grade), and exactly the rows whose body token sits inside a
+        ground wear the rim grade.
+        """
+        for tone in (GRASS, GRASS_DARK, WATER, WATER_DARK, WATER_LIGHT):
+            with self.subTest(tone=tone):
+                self.assertTrue(palette.shares_a_ground_hue(tone))
+        for tone in (SAND, SAND_DARK):
+            with self.subTest(tone=tone):
+                self.assertFalse(palette.shares_a_ground_hue(tone))
+        for fac in FACTIONS:
+            with self.subTest(faction=fac.key):
+                shares = palette.shares_a_ground_hue(RAMPS[fac.key][S_BODY])
+                self.assertEqual(shares, fac.outline == OUTLINE_RIM)
+
     def test_the_value_only_rows_cut_out_of_the_ground_they_stand_on(self):
         for name in self.GROUNDS:
             ground, n = self._ground(name)
@@ -2807,7 +2843,7 @@ class GroundContrast(unittest.TestCase):
         for name in self.GROUNDS:
             ground, n = self._ground(name)
             for fac in FACTIONS:
-                if fac.outline == OUTLINE_HEAVY or (fac.key, name) in self.SAME_HUE:
+                if fac.outline == OUTLINE_HEAVY:
                     continue
                 both = total = 0
                 for uid in ATLAS_ORDER:
@@ -3200,9 +3236,16 @@ class IndexedPalette(unittest.TestCase):
     # grade. The light grade is the number the sel-out rewrite bought and is
     # unmoved (7.07%); the heavy grade is neutral's and Iron's, where a lit
     # line that lands in the ground's own value band gives way to the contour
-    # — 64.8% of it does, and the 35% that stays light is the rim flash those
-    # two rows key off (`GroundContrast`, docs/outlines.md).
-    MAX_SUNWARD_DARK = {palette.OUTLINE_LIGHT: 0.10, OUTLINE_HEAVY: 0.70}
+    # — 63.2% of it does, and the 37% that stays light is the rim flash those
+    # two rows key off (`GroundContrast`, docs/outlines.md). The rim grade
+    # spends the band UPWARD instead, so it is held to the light grade's
+    # figure: 6.72% of aurora's and verdant's sunward silhouette is dark,
+    # against meridian's 7.19%.
+    MAX_SUNWARD_DARK = {
+        palette.OUTLINE_LIGHT: 0.10,
+        OUTLINE_RIM: 0.10,
+        OUTLINE_HEAVY: 0.70,
+    }
 
     def test_the_sunward_edge_is_lit_rather_than_outlined(self):
         """Selective outlining: the sun side of the silhouette LIGHTENS.
@@ -3210,19 +3253,19 @@ class IndexedPalette(unittest.TestCase):
         A pixel whose only break is up or left steps up its own ramp instead
         of going black, so the two sides the light comes from read as an edge
         without spending the plane behind them. Measured over both poses of
-        all 18 units in the three rows that wear the light grade, 7.07% of
-        those pixels are still S0 against 100% under the band — and the
-        remainder is not slack: it is the far side of a self-overlap (a hull
-        passing behind a turret is a dark line wherever it lies) and the
-        handful the despeckle settles.
+        all 18 units, 7.19% of meridian's are still S0 against 100% under the
+        band — and the remainder is not slack: it is the far side of a
+        self-overlap (a hull passing behind a turret is a dark line wherever
+        it lies) and the handful the despeckle settles.
 
-        The heavy grade is the same rule with one more question asked of it
-        (`palette.clears_the_ground`), so it is measured on the same reading
-        rather than exempted from it: neutral and Iron light the sunward edge
-        wherever the lift clears the ground's band, and take the contour
-        where it cannot.
+        Both other grades are the same rule with one more question asked of it
+        (`palette.clears_the_ground`), so they are measured on the same
+        reading rather than exempted from it: neutral and Iron light the
+        sunward edge wherever the lift clears the ground's band and take the
+        contour where it cannot, and aurora and verdant climb to the rim
+        instead — which spends no more of the edge on S0 than meridian does.
         """
-        for grade in (palette.OUTLINE_LIGHT, OUTLINE_HEAVY):
+        for grade in (palette.OUTLINE_LIGHT, OUTLINE_RIM, OUTLINE_HEAVY):
             with self.subTest(grade=grade):
                 dark, total = self._sunward(grade)
                 self.assertLess(dark / total, self.MAX_SUNWARD_DARK[grade])
@@ -3256,14 +3299,17 @@ class IndexedPalette(unittest.TestCase):
         return dark, total
 
     # What S0 may cost, per outline grade: (worst single sprite, whole grade).
-    # The light grade is round 11's bill — 24.52% on verdant's b_copter frame
-    # B and 14.16% over the three rows. The heavy grade pays for its ground
-    # contour out of the same budget and lands at 30.76% (neutral's b_copter
-    # frame B) and 17.33%, both well under the band's 53.1% and 34.5%. The
-    # copters' frame B stays the worst sprite through the 2026-08-24 rotor
-    # tick, and moved a fifth of a point when it landed.
+    # The light grade is round 11's bill — 24.22% on meridian's b_copter frame
+    # B and 14.22% over its row. The heavy grade pays for its ground contour
+    # out of the same budget and lands at 30.76% (neutral's b_copter frame B)
+    # and 17.35%, both well under the band's 53.1% and 34.5%. The rim grade
+    # buys its ground contrast UPWARD and so is held to the light grade's
+    # budget: 24.67% (verdant's b_copter frame B) and 14.28%. The copters'
+    # frame B stays the worst sprite through the 2026-08-24 rotor tick, and
+    # moved a fifth of a point when it landed.
     MAX_CONTOUR = {
         palette.OUTLINE_LIGHT: (0.28, 0.15),
+        OUTLINE_RIM: (0.28, 0.15),
         OUTLINE_HEAVY: (0.32, 0.20),
     }
 
@@ -3273,14 +3319,15 @@ class IndexedPalette(unittest.TestCase):
         `CONTOUR_WEIGHT`'s band spent 34.5% of every unit's own pixels on S0
         and 53.1% on the worst sprite (b_copter's frame B, whose rotor is a
         1px lattice and so nearly all boundary). The G-buffer outline spends
-        14.16% and 24.52% on the rows wearing the light grade, and 17.33%
-        and 30.76% on the two that wear the heavy one. That difference is the
-        faction livery, the fittings and the plane structure the band was
-        eating, and it is measured here so a future pass cannot quietly grow
-        a band back — including through the heavy grade, which is why that
+        14.22% and 24.22% on the row wearing the light grade, 14.28% and
+        24.67% on the two wearing the rim grade, and 17.35% and 30.76% on the
+        two that wear the heavy one. That difference is the faction livery,
+        the fittings and the plane structure the band was eating, and it is
+        measured here so a future pass cannot quietly grow a band back —
+        including through the two ground-aware grades, which is why every
         grade is budgeted rather than exempted.
         """
-        for grade in (palette.OUTLINE_LIGHT, OUTLINE_HEAVY):
+        for grade in (palette.OUTLINE_LIGHT, OUTLINE_RIM, OUTLINE_HEAVY):
             worst = 0.0
             dark = total = 0
             for fac in FACTIONS:

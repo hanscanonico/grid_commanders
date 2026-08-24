@@ -20,7 +20,17 @@ RGB = tuple[int, int, int]
 # whose lit planes sit in the ground's own value band, and whose colour the
 # ground shares, has nothing left to break with — see GROUND_BAND below and
 # docs/outlines.md for the measurement.
-OUTLINE_LIGHT, OUTLINE_HEAVY = 0, 1
+#
+# LIGHT keeps the lit line wherever it falls: the row's body is a design-system
+# token, so a line tying with the grass or the sand in VALUE still breaks with
+# it in COLOUR. HEAVY is the answer for the two rows with no colour to spend
+# (neutral is the sand's own khaki, Iron is achromatic): the lit line gives way
+# to the ground-facing contour where it cannot clear the ground's band. RIM is
+# the answer for a row whose colour the ground SHARES — the one case where
+# neither half of the argument holds — and it spends the rim rather than the
+# contour: a green army on grass has no value left below, and the band above
+# the terrain ceiling is the units' by contract (`GROUND_HUES`).
+OUTLINE_LIGHT, OUTLINE_HEAVY, OUTLINE_RIM = 0, 1, 2
 
 
 @dataclass(frozen=True)
@@ -38,11 +48,14 @@ class Faction:
 # included — the sprites and the UI chrome can never disagree about a
 # faction's color.
 #
-# The three chromatic rows wear the light grade: their bodies are the
-# design-system tokens, so a lit line that ties with the grass or the sand in
-# VALUE still breaks with it in colour. Neutral is the sand's own khaki and
-# Iron is achromatic and capped at S3 — the middle of the ground's band — so
-# those two rows have only value to break with, and take the heavy grade.
+# Meridian wears the light grade: its body is a design-system token no ground
+# shares, so a lit line that ties with the grass or the sand in VALUE still
+# breaks with it in colour. Neutral is the sand's own khaki and Iron is
+# achromatic and capped at S3 — the middle of the ground's band — so those two
+# rows have only value to break with, and take the heavy grade. Aurora and
+# verdant are the two rows whose own hue is a ground's: blue over the water a
+# shoal is half made of, green over the grass, measured at 6.5% and 10.3% of
+# their boundary tying in value AND colour. They take the rim grade.
 FACTIONS: tuple[Faction, ...] = (
     Faction(
         "neutral",
@@ -53,9 +66,13 @@ FACTIONS: tuple[Faction, ...] = (
         OUTLINE_HEAVY,
     ),
     Faction("meridian", "red", (219, 74, 59), (169, 54, 49), (239, 114, 95)),
-    Faction("aurora", "blue", (56, 101, 216), (43, 78, 168), (109, 140, 232)),
+    Faction(
+        "aurora", "blue", (56, 101, 216), (43, 78, 168), (109, 140, 232), OUTLINE_RIM
+    ),
     Faction("iron", "iron", (74, 82, 88), (47, 54, 59), (107, 116, 123), OUTLINE_HEAVY),
-    Faction("verdant", "verdant", (44, 134, 54), (29, 97, 39), (79, 168, 90)),
+    Faction(
+        "verdant", "verdant", (44, 134, 54), (29, 97, 39), (79, 168, 90), OUTLINE_RIM
+    ),
 )
 
 # The value band the ground a unit stands on occupies, on THIS module's
@@ -76,6 +93,34 @@ def clears_the_ground(lum: float) -> bool:
     """Does a value read as a break against the ground under it?"""
     lo, hi = GROUND_BAND
     return lum < lo - GROUND_BREAK or lum > hi + GROUND_BREAK
+
+
+# The two grounds that have a HUE — the grass of the plains and the open water
+# a shoal is half made of. Sand is the third and is not listed: it is the
+# khaki neutral already answers with the heavy grade, and no chromatic row
+# sits inside it (meridian's body is 40 degrees off it). Stated here for the
+# same reason GROUND_BAND is, and pinned against the tones by `GroundContrast`.
+GROUND_HUES = (106.0, 210.0)
+# Inside this arc a colour and a ground are the same colour, so the colour
+# half of the light grade's argument — a token hue no ground shares — is not
+# available. Verdant's body sits 21 degrees off the grass and aurora's 15 off
+# the water; meridian's is 40 off the sand, and stays a light row.
+GROUND_HUE_ARC = 30.0
+# Under this much saturation a colour has no hue to tie with: gunmetal, steel
+# and the greys read as value alone whatever the tile beneath them is.
+GROUND_HUE_CHROMA = 0.20
+
+
+def shares_a_ground_hue(c: RGB) -> bool:
+    """Is this colour the same COLOUR as a ground, and not only its value?"""
+    h, s, _ = colorsys.rgb_to_hsv(c[0] / 255.0, c[1] / 255.0, c[2] / 255.0)
+    if s < GROUND_HUE_CHROMA:
+        return False
+    deg = h * 360.0
+    return any(
+        abs(((deg - hue + 180.0) % 360.0) - 180.0) <= GROUND_HUE_ARC
+        for hue in GROUND_HUES
+    )
 
 
 # Fixed (faction-independent) materials. Names are what models paint with.

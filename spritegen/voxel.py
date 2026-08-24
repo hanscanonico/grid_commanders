@@ -51,6 +51,8 @@ from .palette import (
     MID_FACTION,
     MID_GUNMETAL,
     OUTLINE_HEAVY,
+    OUTLINE_LIGHT,
+    OUTLINE_RIM,
     RGB,
     S_CONTOUR,
     S_RIM,
@@ -69,6 +71,7 @@ from .palette import (
     ramp_for,
     resolve,
     shade,
+    shares_a_ground_hue,
 )
 
 
@@ -256,6 +259,11 @@ def render_indexed_gbuffer(
     # The floor the same voxel answered to, so a dark line cannot dig below
     # the material's own bottom step.
     dark_slots = bytearray(w * h)
+    # The highest rung the same voxel may be lit to when the ordinary lift
+    # lands inside the ground's own colour — the rim grade's reach. A faction
+    # plane may climb into the rim band the terrain ceiling reserves for units;
+    # a fitting or an accent keeps the ceiling it was drawn under.
+    reach_slots = bytearray(w * h)
 
     vox = model.vox
     zmin = min(v[2] for v in vox)
@@ -323,6 +331,8 @@ def render_indexed_gbuffer(
             c = ramp[slot]
             nid = _FACE_NORMAL[face]
             lit = min(ceiling, SLOTS - 1, slot + SEL_OUT_LIFT)
+            reach = min(top_slot, S_RIM) if spec.mid == MID_FACTION else ceiling
+            reach = max(lit, min(reach, SLOTS - 1))
             dark = max(0, min(SLOTS - 1, floor))
             for ix, iy in pixels:
                 px[ix, iy] = (c[0], c[1], c[2], 255)
@@ -330,6 +340,7 @@ def render_indexed_gbuffer(
                 mids[idx] = spec.mid
                 ramps[idx] = ramp
                 lit_slots[idx] = lit
+                reach_slots[idx] = reach
                 dark_slots[idx] = dark
                 # Overdraw settles the geometry the same way it settles the
                 # colour: the painter's last write owns the pixel.
@@ -345,10 +356,11 @@ def render_indexed_gbuffer(
             mids,
             ramps,
             lit_slots,
+            reach_slots,
             dark_slots,
             dplane,
             nplane,
-            faction.outline == OUTLINE_HEAVY,
+            faction.outline,
         )
     _despeckle(img, mids, keep)
     # The outline and the despeckle move colour, never geometry: every pixel
@@ -404,7 +416,7 @@ def _despeckle(
     image settles in one, because a pixel that was snapped to a neighbour
     has given that neighbour a match and neither can move again.
 
-    `keep` is the silhouette's own dark line, and it is exempt: a 1px outline
+    `keep` is the silhouette's own line, and it is exempt: a 1px outline
     down a stair edge is diagonal, so it is lone by this rule everywhere and
     folding it away is how an outline dots out. Every other pass answers for
     itself — an interior overlap line or a sel-out pixel with four unlike
@@ -436,10 +448,11 @@ def _selective_outline(
     mids: bytearray,
     ramps: list[Ramp | None],
     lit_slots: bytearray,
+    reach_slots: bytearray,
     dark_slots: bytearray,
     depth: Plane,
     normal: Plane,
-    heavy: bool = False,
+    grade: int = OUTLINE_LIGHT,
 ) -> bytearray:
     """1px outlines read off the G-buffer, dark away from the sun and light into it.
 
@@ -464,6 +477,13 @@ def _selective_outline(
       outlining, and it is also why iron — capped at S3 — quietly draws no lit
       line rather than a bright one it has no business wearing.
 
+    The row's `grade` asks one more question of that last case where the break
+    is the SILHOUETTE — the line drawn against the tile rather than against
+    more of the model. `OUTLINE_HEAVY` takes the line back to the contour where
+    the lift cannot clear the ground's value band; `OUTLINE_RIM` sends it the
+    other way, up to the rim, for the two rows whose own hue is a ground's and
+    who therefore have neither value nor colour left at the ordinary lift.
+
     Convex creases (`convex_edges`) get the same lift where a lit face meets
     another face over a ridge, so a chamfered turret or a raised deck carries a
     1px highlight along its top edge. Concave gutters get nothing.
@@ -480,12 +500,13 @@ def _selective_outline(
     recolours pixels the rasteriser already drew, so the G-buffer behind the
     picture still describes the model rather than the outline.
 
-    Returns the mask of the SILHOUETTE's dark pixels, which `_despeckle` then
-    leaves alone. Along a stair edge that line runs diagonally, so its pixels
-    can differ from all four orthogonal neighbours and the despeckle would
-    fold half of them back into the plane — the dotted outline of round 9,
-    rebuilt one pass later. They are the pixels spec item 10 exempts anyway:
-    every one of them has a transparent neighbour.
+    Returns the mask of the SILHOUETTE's own line — its dark pixels, and the
+    rim grade's lifted ones — which `_despeckle` then leaves alone. Along a
+    stair edge that line runs diagonally, so its pixels can differ from all
+    four orthogonal neighbours and the despeckle would fold half of them back
+    into the plane — the dotted outline of round 9, rebuilt one pass later.
+    They are the pixels spec item 10 exempts anyway: every one of them has a
+    transparent neighbour.
     """
     px = img.load()
     w, h = img.size
@@ -502,7 +523,32 @@ def _selective_outline(
             kind = _outline_kind(x, y, edges, convex, depth, normal)
             if kind is None:
                 continue
-            if kind == _LINE_LIT_GROUND and heavy:
+            if kind == _LINE_LIT_GROUND and grade == OUTLINE_RIM:
+                # The rim grade, and the only place it applies: the same
+                # sunward silhouette pixel, on a row whose own colour a ground
+                # already owns. A lit line inside the ground's band is normally
+                # paid for in COLOUR; here there is none to pay with, so the
+                # line climbs to the first rung that clears the band instead —
+                # at most the rim, which is the band above the terrain ceiling
+                # that units own by contract. Where nothing on the way up
+                # clears (a fitting under its own accent ceiling, a grey with
+                # no hue to tie with), the line is the light grade's, unmoved.
+                slot = lit_slots[i]
+                ramp = ramps[i]
+                if not clears_the_ground(luminance(ramp[slot])) and (
+                    shares_a_ground_hue(ramp[slot])
+                ):
+                    for up in range(slot + 1, reach_slots[i] + 1):
+                        if clears_the_ground(luminance(ramp[up])):
+                            slot = up
+                            # The lifted line is the silhouette's line, so it
+                            # is exempt from the despeckle for the same reason
+                            # the dark one is: down a stair edge it runs
+                            # diagonally, and folding half of it back into the
+                            # plane is how an outline dots out.
+                            silhouette[i] = 1
+                            break
+            elif kind == _LINE_LIT_GROUND and grade == OUTLINE_HEAVY:
                 # The heavy grade, and the only place it applies: a sunward
                 # pixel of the SILHOUETTE, where the line answers to the tile
                 # rather than to the model. It stays light as long as the lift
