@@ -991,7 +991,13 @@ def t_copter(pose: Pose = Pose.A) -> Model:
 
 def battleship(pose: Pose = Pose.A) -> Model:
     """Dreadnought: the fleet's LONG one — a hull with a clear margin over
-    every other keel, turrets fore and aft, midships bridge mast (cannon)."""
+    every other keel, turrets fore and aft, midships bridge mast (cannon).
+
+    Pose B lays BOTH main batteries up one board texel (`dz = +2`): 33 changed
+    silhouette texels at rung 1 against the bob's own 30, and the gun runs are
+    what the extra three are. The batteries at both ends move together, so the
+    beat reads along the ship's length, which is the identity.
+    """
     m = Model()
     # long low naval-grey hull, tapered bow (+y) and stern; dark waterline.
     # Narrow beam on purpose: length is the identity, so the slab stays
@@ -1031,12 +1037,28 @@ def battleship(pose: Pose = Pose.A) -> Model:
     # lone funnel between bridge and aft turret — one more evenly spaced bump
     m.box(3, 4, 7, 8, 3, 4, "hull_dk")
     m.box(3, 4, 7, 8, 5, 5, "bore")
+    if pose is Pose.B:
+        # Both main batteries lay their guns up one board texel (`dz = +2`),
+        # bores and all, and each gunhouse grows the two voxels behind its
+        # barrels so the run stays carried by a mantlet instead of floating
+        # off the roof — the joint the SAM erector keeps.
+        for x in (3, 4):
+            _shift(m, (x, x, 19, 23, 4, 4), dz=2)
+            m.set(x, 18, 5, "hull_dk")
+            _shift(m, (x, x, 0, 2, 4, 4), dz=2)
+            m.set(x, 3, 5, "body_dk")
     return m
 
 
 def cruiser(pose: Pose = Pose.A) -> Model:
     """Escort cruiser: the fleet's TOWER — one tall blocky superstructure
-    amidships on a beamy mid-length hull, flat helipad aft (autocannon)."""
+    amidships on a beamy mid-length hull, flat helipad aft (autocannon).
+
+    Pose B elevates the forward autocannon one board texel (`dz = +2`), the
+    one assembly on the ship that is not a slab: 24 changed silhouette texels
+    at rung 1 against the bob's 22. The tower holds still — the cruiser owns
+    "tallest", and a tower that swayed would be the ship rolling, not aiming.
+    """
     m = Model()
     # mid-length hull, a strake beamier than the battleship's; dark waterline
     m.box(1, 6, 2, 15, 0, 1, "hull")
@@ -1071,13 +1093,24 @@ def cruiser(pose: Pose = Pose.A) -> Model:
     m.box(2, 5, 1, 4, 2, 2, "hull_dk")
     m.set(3, 2, 2, "white")
     m.set(4, 2, 2, "white")
+    if pose is Pose.B:
+        # the forward autocannon elevates its twin barrels one board texel,
+        # muzzles included, on a mount that grows the same two voxels
+        _shift(m, (3, 4, 14, 16, 3, 4), dz=2)
+        m.box(3, 4, 13, 13, 4, 5, "hull_dk")
     return m
 
 
 def sub(pose: Pose = Pose.A) -> Model:
     """Attack submarine: the LOW one and the DARK one — decks awash, a beamy
     saddle amidships riding the waterline under one prominent sail with dive
-    planes and periscopes."""
+    planes and periscopes.
+
+    Pose B raises the search periscope one board texel out of the sail — the
+    only thing on a boat with decks awash that CAN move without looking like
+    it is diving — for 25 changed silhouette texels at rung 1 against the
+    bob's 24, on the sprite's highest and most isolated line.
+    """
     m = Model()
     # decks awash: one waterline row end to end, one deck row of freeboard
     # that stops short of the tapered bow and stern. The saddle tanks widen
@@ -1121,12 +1154,26 @@ def sub(pose: Pose = Pose.A) -> Model:
     # periscope and attack scope over the sail
     m.box(3, 3, 11, 11, 7, 8, "steel")
     m.set(4, 13, 7, "steel")
+    if pose is Pose.B:
+        # the search periscope runs up one board texel and the shaft it came
+        # out of fills in behind it: the mast is raised, not levitating. The
+        # short attack scope stays down, so the pair reads as one scope
+        # working
+        _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
+        m.box(3, 3, 11, 11, 7, 8, "steel")
     return m
 
 
 def lander(pose: Pose = Pose.A) -> Model:
     """Landing craft: the SHORT FAT one — stubbiest, beamiest hull, raised
-    bow ramp, high cargo house aft. Unarmed."""
+    bow ramp, high cargo house aft. Unarmed.
+
+    Pose B rides the bow visor one board texel UP its hinge posts (`dz = +2`),
+    20 changed silhouette texels at rung 1 against the bob's 18. The dip the
+    APC does was tried first and measured 17: dipping a texel while the hull
+    bobs a texel the other way pins the bow's outline exactly where pose A
+    left it, so the one part that moves is the one part the board cannot see.
+    """
     m = Model()
     # short wide hull; dark waterline
     m.box(0, 8, 1, 9, 0, 1, "hull")
@@ -1156,6 +1203,14 @@ def lander(pose: Pose = Pose.A) -> Model:
     m.set(8, 1, 3, "gunmetal_dk")
     m.set(0, 9, 3, "gunmetal_dk")
     m.set(8, 9, 3, "gunmetal_dk")
+    if pose is Pose.B:
+        # the bow visor lifts one board texel, ribs and lip together, on two
+        # dark hinge posts that grow the same two voxels at the gunwale
+        # corners — the well between them stays open, so the visor reads as
+        # standing off the bow rather than as the bow growing
+        _shift(m, (1, 7, 10, 10, 2, 5), dz=2)
+        m.box(1, 1, 10, 10, 2, 3, "hull_dk")
+        m.box(7, 7, 10, 10, 2, 3, "hull_dk")
     return m
 
 
