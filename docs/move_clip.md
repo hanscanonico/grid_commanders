@@ -36,8 +36,10 @@ way it is flipped.
 `GameSpeed.BASE_MOVE_STEP_SECONDS` (0.06) times the tier's `anim_scale`:
 normal 3.0 → 0.18 s per cell, quick 2.0 → 0.12 s per cell, instant 0.0 → no
 tween at all. 160 ms is one stride per cell at the tier a fresh install plays
-and a little under two at quick, which is what a faster tier should look like.
-It is also deliberately not a divisor or a multiple of 500 (`AMBIENT_MS`) or
+(0.18 s of travel per 0.16 s frame, 1.1 strides a cell); at quick the travel
+outruns the gait a little — one stride per 1.3 cells — so the faster tier reads
+as a longer stride rather than a faster one, which is the right way round for a
+clip whose cadence is fixed. It is also deliberately not a divisor or a multiple of 500 (`AMBIENT_MS`) or
 900 (`SEA_MS`): a walking unit, a parked one and the water never turn over on
 the same tick, so the board never blinks at once.
 
