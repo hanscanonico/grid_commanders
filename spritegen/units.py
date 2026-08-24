@@ -559,16 +559,17 @@ def recon(pose: Pose = Pose.A) -> Model:
     a scout on the move is not sweeping its arc — and gives the movement to
     the chassis, since wheels cannot carry it at this scale (see `_tire`).
     MOVE_B pitches the NOSE one board texel: the front axle, the hood, the
-    bumper and the headlights take `dz = +2` while the tail axle and the
-    cabin hold, and the whip alone lies one diagonal step BACK over the tail.
+    bumper and the headlights take `dz = +2` while the tail axle, the cabin
+    and the MG hold, and the whip alone lies one diagonal step BACK over the
+    tail.
 
     The whole-hull `_roll` the tracked family uses is not available here, for
     the reason the MBT's pitch documents: lifting all of a low car costs it
-    its identity. Rolled, MOVE_B read closer to the apc's frame A (0.695)
-    than to recon's own (0.690) and failed the identity gate. Pitching the
-    nose moves the same texel over the front third: 0.802 against its own
-    frame A, 0.664 against the apc's. 15 changed silhouette texels at rung 1,
-    1.13 shimmer.
+    its identity. Rolled, MOVE_B read closer to the apc's frame A (0.703)
+    than to recon's own (0.700) and failed the identity gate. Pitching the
+    nose moves the same texel over the front third: 0.818 against its own
+    frame A, 0.671 against the apc's. 14 changed silhouette texels at rung 1,
+    1.14 shimmer.
     """
     m = Model()
     for x in (0, 8):
@@ -618,7 +619,12 @@ def recon(pose: Pose = Pose.A) -> Model:
         # the tail. The MG is left where pose A carries it; the gunner sweeps
         # his arc in the ambient clip, not while the scout is running.
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
-        _shift(m, (0, 9, 10, 15, 0, 7), dz=2)
+        # The lifted box stops at z=6 so it takes the chassis and nothing
+        # else: the only voxel above it inside the nose's x/y is the MG's
+        # muzzle at (4, 10, 7), which overhangs the front axle from a barrel
+        # rooted in the cabin. Lifted, it left the barrel behind and floated
+        # two voxels off its own tip.
+        _shift(m, (0, 9, 10, 15, 0, 6), dz=2)
     return m
 
 
