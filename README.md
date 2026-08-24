@@ -292,9 +292,10 @@ laid over a ruled one: the fixed hash sampled every 16px along the edge and
 smoothstepped between the samples, 5px peak to trough, with the wet lip and
 the breaking foam following that line. The profile wraps on the cell, so the
 shore of the tile alongside begins where this one's ends, and coast and shoal
-read the same profile per direction, so a beach cell and the sea cell beside
-it agree on where the water is. Where two seaward edges meet the beach turns
-through a quarter-arc (`autotile._inland`, the rounded-rectangle distance)
+draw the same wobble per direction, so where the two meet along one shore the
+bays are in phase (the bands keep their own widths, 5px of sand on a coast
+and 8px of water on a shoal). Where two seaward edges meet the point of sand
+is taken off on an arc (`autotile._inland`, the rounded-rectangle distance)
 rather than crossing two bands at a right angle, which is what had a beach
 reading as a beige square in a blue picture frame; a shoal takes the same
 diagonal `corners` mask a coast does. Each connection sheet lays out masks 0-15

@@ -1877,6 +1877,7 @@ class Shoreline(unittest.TestCase):
     MIN_BOUNDARY_ROWS = 3
     MODE_SHARE_CEILING = 0.60  # measured flattest variant: 0.54
     SEAM_LUMA_STEP = 4.0  # docs/plains_field.md's reading, across a cell edge
+    CORNER_CUT = 1  # px of the mitre point taken off; crossing bands cut 0
 
     def _lip_profile(self, img, bit: int, beach: bool) -> list[int]:
         """Where the wet lip stands along edge `bit`, one entry per pixel
@@ -1937,6 +1938,32 @@ class Shoreline(unittest.TestCase):
                 right = [terrain.luminance(px[CELL, y]) for y in range(CELL)]
                 step = abs(sum(left) - sum(right)) / CELL
                 self.assertLessEqual(step, self.SEAM_LUMA_STEP)
+
+    def test_a_beach_corner_is_cut_back_rather_than_mitred(self):
+        """Where two seaward edges meet, the point of sand they would leave
+        is taken off (`autotile._inland`'s rounded-rectangle distance).
+
+        Two crossing bands leave the beach exactly the INTERSECTION of what
+        the two one-edge tiles leave — a right-angled point. Combining the
+        two depths as a distance instead takes the tip of that point off, so
+        some pixels dry in both one-edge tiles are wet in the two-edge one.
+        Crossing bands score 0 by construction; the fillet is shallow (it is
+        a smooth-min, not a full radius-7 quarter circle), so the bound is
+        the presence of the cut, not its size.
+        """
+        box = 20
+        dry = (terrain.SAND, terrain.SAND_DARK)
+        for a, b, (x0, y0) in ((N, E, (CELL - box, 0)), (S, W, (0, CELL - box))):
+            with self.subTest(edges=(a, b)):
+                both = autotile.shoal_tile(a | b).convert("RGB").load()
+                one = autotile.shoal_tile(a).convert("RGB").load()
+                two = autotile.shoal_tile(b).convert("RGB").load()
+                cut = sum(
+                    one[x, y] in dry and two[x, y] in dry and both[x, y] not in dry
+                    for y in range(y0, y0 + box)
+                    for x in range(x0, x0 + box)
+                )
+                self.assertGreaterEqual(cut, self.CORNER_CUT)
 
 
 class OneSun(unittest.TestCase):
