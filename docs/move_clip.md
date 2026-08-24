@@ -1,0 +1,196 @@
+# The `move` clip — the contract the game implements against
+
+The board has one clip today: `ambient`, two sheets half a second apart, played
+by every unit all the time. A unit walking a path plays it too, so a tank
+crossing four cells is a parked tank sliding. This is the second clip — the
+gait the tween has never had — written down before either side builds it, so
+that the generator and `grid_commanders` can land it in the same batch without
+guessing at each other.
+
+Status: the `move` clip is **not yet in `anim.json`**. Every ambient number
+below is what `spritegen.anim.dumps()` emits on `main` today; every `move`
+number is the decision this batch lands, in the same batch as the sheets. A
+game-side reader that finds no `move` key in the manifest is reading a
+manifest from before that batch and must fall back to `ambient` — which is the
+`fallback` field saying so in the file rather than in a comment.
+
+## 1. What the clip is
+
+| field | value |
+| --- | --- |
+| name | `move` |
+| `sheets` | `units_atlas_move.png`, `units_atlas_move_b.png` |
+| `order` | `[0, 1]` |
+| `mode` | `loop` |
+| `ms_per_frame` | `160` |
+| `facing` | `"left"` |
+| `flip_x_for` | `["right"]` |
+| `fallback` | `"ambient"` |
+
+Two frames, one facing, no figures variant — the cut-ins draw a unit standing
+in front of a camera, not walking — and no per-direction sheets, ever. Four
+directions would be four times the sheet for art whose only handedness is which
+way it is flipped.
+
+**Why 160 ms.** The travel is the game's tween, and the tween moves one cell in
+`GameSpeed.BASE_MOVE_STEP_SECONDS` (0.06) times the tier's `anim_scale`:
+normal 3.0 → 0.18 s per cell, quick 2.0 → 0.12 s per cell, instant 0.0 → no
+tween at all. 160 ms is one stride per cell at the tier a fresh install plays
+(0.18 s of travel per 0.16 s frame, 1.1 strides a cell); at quick the travel
+outruns the gait a little — one stride per 1.3 cells — so the faster tier reads
+as a longer stride rather than a faster one, which is the right way round for a
+clip whose cadence is fixed. It is also deliberately not a divisor or a multiple of 500 (`AMBIENT_MS`) or
+900 (`SEA_MS`): a walking unit, a parked one and the water never turn over on
+the same tick, so the board never blinks at once.
+
+**`facing`.** `voxel.py`'s projection is `x = (vx - vy) * 2`,
+`y = (vx + vy) - vz * 2`, so **+y runs toward screen lower-LEFT**, and every
+model on the sheet faces +y (`units.py` header). The art therefore faces
+**screen-left**, the manifest carries `"facing": "left"`, and the consumer
+mirrors for the other one: `"flip_x_for": ["right"]`.
+
+**Semantics of the two new keys.** `facing` is which screen direction the art
+is drawn facing; a clip with **no** `facing` key must never be mirrored, which
+is what keeps `ambient`, `ambient_figures` and `sea` byte-identical in
+behaviour — the manifest schema is additive and `VERSION` stays 1. `fallback`
+names the clip to play when this clip's sheets are missing from the install.
+
+A unit with no authored move pose renders its ambient counterpart
+(MOVE_A → A, MOVE_B → B), so the move sheets are valid from the day they ship —
+initially identical to the ambient pair — and the per-unit opt-in
+(`units.MOVES`) grows one family at a time. The consumer never has to know
+which units are authored.
+
+## 2. Region maths — identical to ambient
+
+The move sheets are byte-for-byte the ambient grid: **1152x480 RGBA**, 18
+columns of 64 px (`units.ATLAS_ORDER`, the manifest's `columns`) by 5 rows of
+96 px (`palette.FACTIONS`, the manifest's `rows`). One cell is
+
+    Rect2(col * 64, row * 96, 64, 96)
+
+and nothing else — same `cell.w` 64, `cell.h` 96, `cell.ground_px` **7**,
+`cell.overflow` **32**. Swapping the clip swaps only which texture the
+`AtlasTexture` points at; the region, the scale, the `ART_OFFSET` and the
+ground line are pose-invariant.
+
+All four poses pin to pose A's crop (`atlas._pose_a_box`), `footprint_w` and
+`ground` do not move with the pose, and `bob = BOB_PX` applies to air and sea
+on any beat frame (B and MOVE_B) exactly as it does today. Land never bobs via
+placement.
+
+**The sheet never translates the hull.** A move frame may not shift the unit
+horizontally in-cell: the game's tween is the travel, and a sheet that also
+travelled would double it and then snap back on the loop. The sheet shows gait
+only.
+
+## 3. Flip policy
+
+`flip_h` follows the sign of the current path leg's x delta — negative x
+(moving screen-left) is `false`, positive x is `true`; a purely vertical leg
+holds whatever facing the previous leg left. Facing is set in `setup()` and by
+`face_step` during a move, and **never** in `refresh()`, so a unit that has
+walked right stays facing right through every subsequent repaint.
+
+`Sprite2D.flip_h` mirrors about the sprite's centre, and `ART_OFFSET` is
+vertical only (`Vector2(0, -SPRITE_OVERFLOW / 2.0)`), so the mirrored cell lands
+on the same tile. The HP, fuel and acted badges are child nodes and are not
+mirrored with it.
+
+The cast shadow **will** mirror. One sun lights this whole sheet from the
+top-left and every shadow falls down-right by `voxel.SHADOW_OFFSET` (2, 2); a
+flipped sprite drops its shadow down-left, as if lit from the top-right. That
+is accepted: a wrong-handed 2 px offset at the board's 4:1 decimation is half a
+board pixel, and the alternative is either a second sheet or a unit that walks
+backwards.
+
+Nothing in a move frame may encode screen-handedness for any other reason. A
+mirrored rifleman leading with the other leg is correct.
+
+## 4. Clip lifetime
+
+`move` plays only for the duration of `BattleAnimator.animate_path`'s tween:
+set the clip before the tween, return to `ambient` after `await
+tween.finished`, on the Instant early return (which sets the destination and
+returns in the same frame, so there is no clip to play), and if the tween is
+killed — a scene teardown or a skipped animation must not leave a unit
+striding on the spot.
+
+The frame comes from elapsed wall-clock time on the same clock `ambient_frame`
+uses (`Time.get_ticks_msec()`), divided by the clip's own `ms_per_frame`, so a
+whole column of moving units agrees on the beat without a conductor and pacing
+stays presentation-only. Both stills pin the clip to frame A, by the same rule
+that pins ambient: `UnitSprite.ambient_frozen` (a capture must not depend on
+when the shutter fired) and the Instant tier (a still board shows a result
+rather than playing one out).
+
+## 5. The game-side task
+
+Files:
+
+- `scenes/battle/anim_manifest.gd` — **new**. A static loader for
+  `res://assets/tiles/anim.json`: parse once, cache, expose `cell`, `columns`,
+  `rows` and `clip(name)`. Resolves `fallback` when a clip's sheets do not
+  load, and returns `null` for an unknown clip.
+- `scenes/battle/unit_sprite.gd` — `set_clip(name)`, `clip_frame(now_ms)` and
+  `face_step(delta: Vector2i)`. `set_clip` swaps the sheet the existing
+  `AtlasTexture` points at and leaves the region alone; `clip_frame` is
+  `ambient_frame`'s shape with the clip's own `ms_per_frame`, honouring
+  `ambient_frozen` and Instant; `face_step` sets `flip_h` from the sign of
+  `delta.x` and holds on `delta.x == 0`.
+- `scenes/battle/battle_animator.gd` — `animate_path` sets the `move` clip
+  before building the tween, appends a per-leg `face_step` callback so facing
+  turns at each corner rather than once for the whole path, and restores
+  `ambient` on every exit (finish, Instant early return, kill).
+- `assets/tiles/` — commit `anim.json`, `units_atlas_move.png`,
+  `units_atlas_move_b.png` and their `.import` files, plus the two sheets that
+  are currently untracked in the game checkout: `units_atlas_figures_b.png`
+  and `autotiles/sea_b.png`.
+- `assets/LICENSES.md` — the new sheets in the generated-art row.
+- `CLAUDE.md` — the manifest is the source for cell and clip numbers; do not
+  retype them.
+
+Verification:
+
+- `tests/unit/test_anim_manifest.gd` — a drift alarm. The manifest's
+  `cell.w/h/ground_px/overflow` must equal `UnitSprite.SPRITE_W`, `SPRITE_H`,
+  `CELL_GROUND_PX`, `SPRITE_OVERFLOW`; the ambient clip's `ms_per_frame` must
+  equal `UnitSprite.AMBIENT_MS`; and every `UnitType.atlas_col` must match the
+  manifest's `columns` entry for that id, with the same count (18).
+- `tests/unit/test_move_clip.gd` — the move sheets are the ambient grid, the
+  clip resolves, `clip_frame` returns A under `ambient_frozen` and under
+  Instant, and `face_step` holds facing on a vertical leg.
+- `make smoke` — all 85 capture modes byte-identical. Captures pin Instant, so
+  nothing in this change may move a single frame of them.
+- Manual: walk a unit left and right across the board and check the sprite,
+  the badges and the shadow.
+
+New sheets need `make import` in the game before they load.
+
+Out of scope: per-direction art, a figures variant of the move clip, attack or
+death clips, any change to the ambient cadence or to the existing clips' keys,
+and the sim — no file under `core/` or `ai/` sees any of this.
+
+## 6. What the generator must respect
+
+- **Same grid.** 1152x480, the same 18 columns and 5 rows in the same order.
+  The move sheets are a third and fourth frame of the same atlas, not a new
+  atlas.
+- **Same ground line.** `cell.ground_px` is measured off the art
+  (`anim.measure_ground_px`) and every pose must measure the same 7, which is
+  what the shared pose-A crop and the pose-invariant `ground` buy.
+- **Mirror-safe silhouettes.** Nothing that reads as left- or right-handed on
+  screen; the consumer flips about the cell centre.
+- **Whole-texel motion.** One board texel is 4 atlas px, i.e. dz ±2 or
+  (dx ±1, dy ∓1) in voxels; forward is (dx −1, dy +1). A delta under a texel
+  re-tones the inside of a shape that holds still and the sprite boils instead
+  of walking.
+- **No in-sheet travel.** See section 2.
+- **PNG as the game imports it**: lossless (`compress/mode=0`), no mipmaps
+  (`mipmaps/generate=false`), straight alpha (`process/premult_alpha=false`)
+  and `process/fix_alpha_border=true`. That last one rewrites the RGB of fully
+  transparent pixels at import, so any comparison against a shipped sheet —
+  here or in the game's tests — must look at drawn pixels only.
+- **Manifest and sheets ship together.** `sprite_generator --install` copies
+  `anim.json` with the atlases it describes; a checkout with new sheets and
+  last run's manifest is exactly the coupling the manifest exists to end.
