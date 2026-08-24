@@ -44,7 +44,19 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 const _NAME_SIZE := 12
 ## The portrait band, public because a surface that frames this card checks its
 ## own layout against it — a card showing less than its face is showing nothing.
+## Deliberately not raised to fill the band's width with the bust: the four-army
+## info sheet frames a 242-256px card in 119px, so it already scrolls and every
+## pixel added here is a pixel of the Command Power block pushed out of it — and
+## that same 119 is the ceiling the sheet's own layout check holds this constant
+## under, which leaves too little to widen the fitted bust by anything worth the
+## room (measured on commander_info, 2026-08-25).
 const PORTRAIT_H := 96
+## The faction badge pinned into the band's top-left corner, and the inset it sits
+## at. Card-local like the geometry above it, not a missing shell token: the design
+## system sizes widgets rather than pins on art, and its smallest icon
+## (UiTheme.MENU_ICON) is a menu row's glyph.
+const _EMBLEM_PX := 22
+const _EMBLEM_INSET := 6
 
 var _commander: CommanderType
 var _built := false
@@ -105,12 +117,18 @@ func _build() -> void:
 
 	_emblem = TextureRect.new()
 	_emblem.texture_filter = CommanderVisuals.ART_FILTER
-	# IGNORE_SIZE, or the 64px source becomes the control's minimum and the 22 below
+	# IGNORE_SIZE, or the 64px source becomes the control's minimum and _EMBLEM_PX
 	# is clamped straight back up to it — which is how the badge has been drawing at
 	# three times its size, unnoticed while an opaque bust filled the field behind it.
 	_emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_emblem.position = Vector2(6, 6)
-	_emblem.size = Vector2(22, 22)
+	# Anchored to the corner it is pinned to rather than placed there: a bare
+	# position/size holds only while nothing lays this child out, so the badge's
+	# size was one container away from silently snapping back to its source again.
+	_emblem.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	_emblem.offset_left = _EMBLEM_INSET
+	_emblem.offset_top = _EMBLEM_INSET
+	_emblem.offset_right = _EMBLEM_INSET + _EMBLEM_PX
+	_emblem.offset_bottom = _EMBLEM_INSET + _EMBLEM_PX
 	_field.add_child(_emblem)
 
 	# --- name band ---
