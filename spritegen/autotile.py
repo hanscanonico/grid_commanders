@@ -541,11 +541,18 @@ def plains_sheet() -> Image.Image:
     )
 
 
-def sea_sheet() -> Image.Image:
+def sea_sheet(frame: int = 0) -> Image.Image:
     """The sea's phase variants, left to right, phase 0 first.
 
     Phase 0 is the atlas sea column byte for byte, so a board that knows
     nothing about this sheet is unchanged and one that adopts it picks a
     column per cell (the game hashes the coordinate) to break the repeat.
+
+    `frame` is the time frame (`terrain.sea`): the frames are separate sheets
+    with the same columns in the same order, so a cell keeps its phase and
+    only swaps which sheet it samples — the board animates without rehashing
+    anything.
     """
-    return sheet([sea(phase) for phase in range(len(SEA_PHASES))], len(SEA_PHASES))
+    return sheet(
+        [sea(phase, frame) for phase in range(len(SEA_PHASES))], len(SEA_PHASES)
+    )

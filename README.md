@@ -255,15 +255,16 @@ python3 -m venv .venv
 | `autotiles/{roads,rivers,coast,shoals,woods}.png` | 16-variant connection sheets (see below) |
 | `autotiles/bridges.png` | the two bridge deck orientations, E-W then N-S |
 | `autotiles/sea.png` | the three sea phase variants, phase 0 first (see below) |
+| `autotiles/sea_b.png` | the same three phases in the same order, one time frame later: only the glints have moved (see below) |
 | `autotiles/plains.png` | the eight plains phase variants, phase 0 first (see below) |
 | `autotiles/mountain.png` | the three mountain phase variants, phase 0 first (see below) |
 | `anim.json` | the sheet contract in machine-readable form (see below) |
 
 `anim.json` is the same numbers the sheets are built from, written down for the
 game to read instead of retype: the cell's size, its ground line and its
-overflow, the ambient clip (which sheets, in what order, at what cadence), the
-units atlas's column and row order, and how many phase variants each terrain
-family ships. Every field is derived from the live tables in `spritegen/` —
+overflow, the clips (which sheets, in what order, at what cadence — the army's
+ambient beat and the sea's), the units atlas's column and row order, and how
+many phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
 phase tables — and `ground_px` is **measured** off a rendered cell (a composed
 cell minus the shadowless one is the cast shadow alone; an ellipse is widest on
@@ -345,6 +346,25 @@ that hash copied out of `scenes/battle/terrain_autotiles.gd`
 (`atlas.phase`, pinned against the engine's own arithmetic in
 `tests/test_demo_map.py`), so the review sheet is the board the game draws
 cell for cell rather than a plausible-looking one.
+
+A phase is a place, not a moment: it re-salts the water base, so the phases
+**cannot be played as frames** — every pixel of the cell would repaint on the
+same tick, which is the boil that makes cheap animated water read as static.
+`autotiles/sea_b.png` is the sea a moment later instead: the same three
+columns in the same order, `_water_base` byte for byte identical, and every
+glint dash slid **one board texel** (4 atlas px at the 4:1 rung) along its own
+row, both rows of a dash together so the stagger that makes it read as a
+streak survives the move. The slide wraps inside the tile's interior band, off
+the outer 2px ring — the rule the plains tufts are held to at their own one-px
+margin — so a cell animating beside a neighbour on another phase never opens a
+seam. A cell keeps its phase across the frames and only swaps which sheet it
+samples, so the board animates without rehashing anything.
+`tests/test_sea_frames.py` is the no-boil proof:
+mask out the two glint tones and the frames are one image, and that image is
+the untouched base. The clip is in `anim.json` as `clips.sea`, at 900 ms a
+frame — slower than the 500 ms ambient beat because a swell is the slow motion
+on the board, and deliberately not a multiple of it, so the water and the army
+do not turn over on the same tick.
 
 `autotiles/plains.png` is that rule on the ground most of a board is made of,
 and it is phased the same way: eight tiles, phase 0 the atlas plains column

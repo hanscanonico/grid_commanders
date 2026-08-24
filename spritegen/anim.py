@@ -1,9 +1,9 @@
 """`anim.json` — the sheet contract the game reads instead of retyping it.
 
 Every number the board needs to animate this art lives in one Python table
-here: the cell's size and its ground line, the ambient clip's sheets and
-cadence, the column and row order of the units atlas, and how many phase
-variants each terrain family ships. The game currently restates all of them by
+here: the cell's size and its ground line, each clip's sheets and cadence, the
+column and row order of the units atlas, and how many phase variants each
+terrain family ships. The game currently restates all of them by
 hand (`unit_sprite.gd`, `terrain_autotiles.gd`), which is why a third ambient
 sheet costs an edit on both sides; a manifest emitted next to the atlases costs
 one.
@@ -41,6 +41,22 @@ AMBIENT_SHEETS: tuple[str, ...] = ("units_atlas.png", "units_atlas_b.png")
 # the slowest rate a swept rotor still reads as turning, and the rotor is the
 # faster of the two motions, so it sets the beat.
 AMBIENT_MS = 500
+
+# The sea's clip: the same three spatial phases in the same column order, once
+# per time frame, written under the autotile directory the game installs them
+# into (`sprite_generator._install`), so a path here is a path there. The
+# frames themselves are `terrain.SEA_FRAMES`; a sheet name is the one thing
+# only this table can answer, and the count is gated against that table.
+SEA_SHEETS: tuple[str, ...] = ("autotiles/sea.png", "autotiles/sea_b.png")
+# Milliseconds per sea frame. Nearly twice the ambient beat, and deliberately
+# not a multiple of it: at 500 the two clips would turn over on the same tick
+# every other frame and the whole board would blink at once, where 9:5 lets
+# the water and the army drift out of step the way two unrelated motions do.
+# The motion itself asks for slow — one glint crossing one board texel is a
+# swell travelling, and a swell that crosses a texel twice a second is
+# scintillation, which is the boil this clip exists to avoid. 900 ms puts the
+# two-frame cycle at 1.8 s, about the period of the sea it is drawing.
+SEA_MS = 900
 
 # The terrain families that ship phase variants, and the table each counts.
 # Named for the autotile sheet each family is drawn onto.
@@ -108,7 +124,13 @@ def build() -> dict:
                 "order": list(range(len(AMBIENT_SHEETS))),
                 "ms_per_frame": AMBIENT_MS,
                 "mode": "loop",
-            }
+            },
+            "sea": {
+                "sheets": list(SEA_SHEETS),
+                "order": list(range(len(SEA_SHEETS))),
+                "ms_per_frame": SEA_MS,
+                "mode": "loop",
+            },
         },
         "columns": {uid: col for col, uid in enumerate(ATLAS_ORDER)},
         "rows": [{"key": fac.key, "team": fac.team} for fac in FACTIONS],
