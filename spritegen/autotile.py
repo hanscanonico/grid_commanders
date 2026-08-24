@@ -321,6 +321,121 @@ def bridge_tile(horizontal: bool = True) -> Image.Image:
     return t if horizontal else t.transpose(Image.ROTATE_90)
 
 
+# The shoreline (design review 2026-08-24: the shore was a ruled rectangle).
+# The waterline itself carries the wobble now — the lip and the foam follow it
+# rather than jittering on their own over a straight cut — and it is drawn the
+# way the wood's tree line is: the fixed hash sampled at control points and
+# smoothstepped between them, so the boundary is BAYS AND POINTS at a scale the
+# board's 4:1 downsample can still see, not per-pixel noise it would eat. One
+# control point every 16px and 5px peak to trough — which still leaves 3px of
+# dry sand against the tile border at the deepest bay, so water never meets
+# the grass of the land cell next door.
+#
+# The profile is a function of the position ALONG the edge and wraps on the
+# cell, so the tile to the left ends exactly where this one begins: a run of
+# coast is one continuous shore, which is the plains ring's rule. Coast and
+# shoal read the same profile per direction, so a beach cell and the sea cell
+# beside it agree on where the water is.
+_SHORE_SPAN = 16  # px between control points — a bay, not a jitter
+_SHORE_AMP = 5.0  # peak to trough of the waterline
+# Four control points is four hash draws, and four draws are as likely to come
+# out flat as to come out as a coastline: this salt is the one whose worst
+# side of the four still spans 0.87 of the range, so no direction ships a
+# shore that happens to be straight.
+_SHORE_SALT = 206
+_SHORE_R = 7.0  # the radius the beach turns through at an outside corner
+_SIDE = {N: 0, E: 1, S: 2, W: 3}
+
+
+def _shore_wobble(u: int, side: int) -> float:
+    """How far the waterline is pushed inland at `u` px along a `side` edge."""
+    nodes = CELL // _SHORE_SPAN
+    i, f = divmod(u % CELL, _SHORE_SPAN)
+    a = h01(i % nodes, side, _SHORE_SALT)
+    b = h01((i + 1) % nodes, side, _SHORE_SALT)
+    t = f / _SHORE_SPAN
+    return (a + (b - a) * t * t * (3 - 2 * t) - 0.5) * _SHORE_AMP
+
+
+def _shore_profile(edges: int, depth: float) -> dict[int, list[float]]:
+    """The wobbled boundary of each active edge, as one distance per pixel
+    along it, `depth` being the width the band would have if it were ruled."""
+    return {
+        bit: [depth + _shore_wobble(u, _SIDE[bit]) for u in range(CELL)]
+        for bit in (N, E, S, W)
+        if edges & bit
+    }
+
+
+def _inland(x: int, y: int, prof: dict[int, list[float]]) -> tuple[float, int]:
+    """How deep (x, y) lies inside the region the profiles enclose, and where
+    it stands along the nearest of them.
+
+    Negative is outside. The corner where two edges meet is ROUNDED rather
+    than mitred — combining the two depths as a distance to the region eroded
+    by `_SHORE_R` is the rounded-rectangle trick — because a beach that turns
+    a corner turns through an arc; two crossing bands meeting at 90 degrees
+    are what made a coastline read as a picture frame.
+    """
+    total, near, along = 0.0, _SHORE_R * 4, 0
+    for bit, p in prof.items():
+        if bit == N:
+            d, u = (y + 0.5) - p[x], x
+        elif bit == S:
+            d, u = (CELL - 0.5 - y) - p[x], x
+        elif bit == W:
+            d, u = (x + 0.5) - p[y], y
+        else:
+            d, u = (CELL - 0.5 - x) - p[y], y
+        if d < near:
+            near, along = d, u
+        gap = _SHORE_R - d
+        if gap > 0:
+            total += gap * gap
+    return _SHORE_R - total**0.5, along
+
+
+def _foam_run(u: int, offset: int, run: int) -> bool:
+    """The scallop the breaking foam is cut into: a run of `run` px out of
+    every 8 along the shore, alternately longer, so the surf clusters instead
+    of dashing evenly like a road marking."""
+    k = (u // 8) % 2
+    return offset <= u % 8 < offset + run + k * 2
+
+
+def _draw_shore(t: Image.Image, prof: dict[int, list[float]], beach: bool) -> None:
+    """Paint the waterline `prof` describes: water, a one-pixel wet lip on the
+    sand side of it, dry sand beyond, and foam breaking on the water side.
+
+    `beach` says which side of the tile the sea is on. A shoal's profiles
+    enclose the SAND and the water lies against the tile edge; a coast's
+    enclose the water and the sand is the ring. Either way only the half that
+    is not the tile's own plate gets painted, so the sea keeps its glints and
+    the beach keeps its grain.
+    """
+    if not prof:
+        return
+    px = t.load()
+    foam_mix = mix(WATER, SNOW, 0.55)
+    snow_w = 2.0 if beach else 1.0
+    for y in range(CELL):
+        for x in range(CELL):
+            s, u = _inland(x, y, prof)
+            d = -s if beach else s  # depth into the water, either way
+            if d < -1.0:
+                if not beach:
+                    px[x, y] = (*SAND, 255)
+            elif d < 0.0:
+                px[x, y] = (*SAND_DARK, 255)
+            else:
+                if beach:
+                    px[x, y] = (*WATER, 255)
+                if d < snow_w and _foam_run(u, 0, 5):
+                    px[x, y] = (*SNOW, 255)
+                elif d < snow_w + 1.0 and _foam_run(u, 2, 3):
+                    px[x, y] = (*foam_mix, 255)
+
+
 def coast_tile(edges: int, corners: int = 0) -> Image.Image:
     """Sea with a sand-and-surf shoreline along each landward edge.
 
@@ -329,39 +444,7 @@ def coast_tile(edges: int, corners: int = 0) -> Image.Image:
     corner patch where land touches only diagonally.
     """
     t = sea()
-    foam_mix = mix(WATER, SNOW, 0.55)
-
-    def surf(along_x: bool, sand_at_low: bool) -> None:
-        # 4px dry sand, 1px wet lip, then irregular foam in the water
-        if along_x:
-            y_sand = 0 if sand_at_low else CELL - 4
-            _rect(t, 0, y_sand, CELL, 4, SAND)
-            y_lip = 4 if sand_at_low else CELL - 5
-            _rect(t, 0, y_lip, CELL, 1, SAND_DARK)
-            for k, sx in enumerate(range(0, CELL, 8)):
-                wob = int(h01(sx, y_lip, 43) * 2)
-                y_foam = (5 + wob) if sand_at_low else (CELL - 7 - wob)
-                _rect(t, sx, y_foam, 5 + (k % 2) * 2, 1, SNOW)
-                _rect(t, sx + 2, y_foam + (1 if sand_at_low else -1), 3, 1, foam_mix)
-        else:
-            x_sand = 0 if sand_at_low else CELL - 4
-            _rect(t, x_sand, 0, 4, CELL, SAND)
-            x_lip = 4 if sand_at_low else CELL - 5
-            _rect(t, x_lip, 0, 1, CELL, SAND_DARK)
-            for k, sy in enumerate(range(0, CELL, 8)):
-                wob = int(h01(x_lip, sy, 44) * 2)
-                x_foam = (5 + wob) if sand_at_low else (CELL - 7 - wob)
-                _rect(t, x_foam, sy, 1, 5 + (k % 2) * 2, SNOW)
-                _rect(t, x_foam + (1 if sand_at_low else -1), sy + 2, 1, 3, foam_mix)
-
-    if edges & N:
-        surf(True, True)
-    if edges & S:
-        surf(True, False)
-    if edges & W:
-        surf(False, True)
-    if edges & E:
-        surf(False, False)
+    _draw_shore(t, _shore_profile(edges, 5.0), beach=False)
 
     # diagonal-only land: a small sand nub in that corner, skipped when an
     # adjacent edge strip already reaches it
@@ -378,44 +461,27 @@ def coast_tile(edges: int, corners: int = 0) -> Image.Image:
     return t
 
 
-def shoal_tile(edges: int) -> Image.Image:
-    """A beach tile: dry sand with surf along each seaward edge."""
+def shoal_tile(edges: int, corners: int = 0) -> Image.Image:
+    """A beach tile: dry sand with surf along each seaward edge.
+
+    `edges` marks which sides the water is on; `corners` carries the same
+    bits for water that touches only diagonally (N->NE, E->SE, S->SW, W->NW),
+    the mirror of `coast_tile`'s.
+    """
     if edges == 0:
         edges = S
     t = _ground(SAND, 7)
-    foam_mix = mix(WATER, SNOW, 0.55)
+    _draw_shore(t, _shore_profile(edges, 8.0), beach=True)
 
-    def surf(along_x: bool, water_at_low: bool) -> None:
-        # 8px of water, a wet-sand lip, then scalloped breaking foam
-        if along_x:
-            y_w = 0 if water_at_low else CELL - 8
-            _rect(t, 0, y_w, CELL, 8, WATER)
-            y_lip = 8 if water_at_low else CELL - 9
-            _rect(t, 0, y_lip, CELL, 1, SAND_DARK)
-            for k, sx in enumerate(range(0, CELL, 8)):
-                wob = int(h01(sx, y_lip, 46) * 2)
-                y_f = (5 - wob) if water_at_low else (CELL - 7 + wob)
-                _rect(t, sx, y_f, 5 + (k % 2) * 2, 2, SNOW)
-                _rect(t, sx + 2, y_f + (-1 if water_at_low else 2), 3, 1, foam_mix)
-        else:
-            x_w = 0 if water_at_low else CELL - 8
-            _rect(t, x_w, 0, 8, CELL, WATER)
-            x_lip = 8 if water_at_low else CELL - 9
-            _rect(t, x_lip, 0, 1, CELL, SAND_DARK)
-            for k, sy in enumerate(range(0, CELL, 8)):
-                wob = int(h01(x_lip, sy, 47) * 2)
-                x_f = (5 - wob) if water_at_low else (CELL - 7 + wob)
-                _rect(t, x_f, sy, 2, 5 + (k % 2) * 2, SNOW)
-                _rect(t, x_f + (-1 if water_at_low else 2), sy + 2, 1, 3, foam_mix)
-
-    if edges & N:
-        surf(True, True)
-    if edges & S:
-        surf(True, False)
-    if edges & W:
-        surf(False, True)
-    if edges & E:
-        surf(False, False)
+    # diagonal-only water: a small pool in that corner, skipped when an
+    # adjacent surf band already reaches it
+    nubs = {N: (CELL - 6, 0), E: (CELL - 6, CELL - 6), S: (0, CELL - 6), W: (0, 0)}
+    adjacent = {N: N | E, E: E | S, S: S | W, W: W | N}
+    for bit, (cx, cy) in nubs.items():
+        if corners & bit and not edges & adjacent[bit]:
+            _rect(t, cx, cy, 6, 6, WATER)
+            _rect(t, cx, cy + (5 if cy == 0 else 0), 6, 1, SAND_DARK)
+            _rect(t, cx + (5 if cx == 0 else 0), cy, 1, 6, SAND_DARK)
     # dry-sand speckles kept clear of the surf bands
     for sx, sy in ((26, 26), (36, 20), (24, 38), (40, 32)):
         _rect(t, sx, sy, 3, 2, SAND_DARK)

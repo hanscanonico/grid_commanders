@@ -1851,6 +1851,94 @@ class CanopyGrain(unittest.TestCase):
         self.assertGreater(len(every), 4 * len(common))
 
 
+class Shoreline(unittest.TestCase):
+    """A coast is bays and points, and it joins up across the cell.
+
+    `CanopyGrain` above measures the same thing for a wood's tree line, and
+    the shore had exactly the fault the canopy was fixed for: the waterline
+    was a ruled full-width rect on every seaward edge — 4px of sand on a
+    coast, 8px of water on a shoal, the same row in every column — with the
+    wobble spent on decorative foam flecks laid over a straight cut. A beach
+    cell read as a beige square in a dashed blue picture frame.
+
+    The reading is the WET LIP, which is the waterline by construction: one
+    pixel of `SAND_DARK` between the water and the dry sand, scanned in from
+    the water side of the edge under test. Columns where a perpendicular
+    edge's water covers the whole scan — the corners of a two-sided tile,
+    where the shore has turned and belongs to the other edge — have no lip of
+    their own and drop out.
+
+    Two numbers, both of which a ruled line fails outright (one distinct row,
+    mode share 1.00): how many rows the boundary visits, and how much of it
+    sits on any single row — the strongest band in the profile. The flattest
+    variant on the sheet today visits 5 rows with a 0.54 mode share.
+    """
+
+    MIN_BOUNDARY_ROWS = 3
+    MODE_SHARE_CEILING = 0.60  # measured flattest variant: 0.54
+    SEAM_LUMA_STEP = 4.0  # docs/plains_field.md's reading, across a cell edge
+
+    def _lip_profile(self, img, bit: int, beach: bool) -> list[int]:
+        """Where the wet lip stands along edge `bit`, one entry per pixel
+        along it.
+
+        Scanned from the WATER side and stopped at the tile's midline, so
+        neither a facing edge's own lip nor the dry sand's `SAND_DARK`
+        speckles can answer first: a shoal's water lies against the tile
+        border and a coast's fills the middle.
+        """
+        px = img.convert("RGB").load()
+        half = CELL // 2
+        span = range(half) if bit in (N, W) else range(half, CELL)
+        scan = list(span) if beach == (bit in (N, W)) else list(span)[::-1]
+        out = []
+        for u in range(CELL):
+            for k in scan:
+                p = px[u, k] if bit in (N, S) else px[k, u]
+                if p == terrain.SAND_DARK:
+                    out.append(k)
+                    break
+        return out
+
+    def _edges(self, mask: int):
+        return [bit for bit in (N, E, S, W) if mask & bit]
+
+    def test_the_waterline_is_bays_and_points_rather_than_a_ruled_line(self):
+        for builder, beach in (
+            (autotile.coast_tile, False),
+            (autotile.shoal_tile, True),
+        ):
+            for mask in range(1, 16):
+                tile = builder(mask)
+                for bit in self._edges(mask):
+                    with self.subTest(sheet=builder.__name__, mask=mask, edge=bit):
+                        prof = self._lip_profile(tile, bit, beach)
+                        self.assertGreater(len(prof), CELL // 2)
+                        self.assertGreaterEqual(len(set(prof)), self.MIN_BOUNDARY_ROWS)
+                        top = Counter(prof).most_common(1)[0][1]
+                        self.assertLessEqual(top / len(prof), self.MODE_SHARE_CEILING)
+
+    def test_the_shore_runs_on_into_the_next_cell(self):
+        """The wobble is a function of the position ALONG the edge and wraps
+        on the cell, so the shore of the tile to the left ends where this
+        one's begins: a bay may not be cut off by a tile border."""
+        for builder, beach in (
+            (autotile.coast_tile, False),
+            (autotile.shoal_tile, True),
+        ):
+            with self.subTest(sheet=builder.__name__):
+                prof = self._lip_profile(builder(N), N, beach)
+                self.assertLessEqual(abs(prof[0] - prof[-1]), 1)
+                strip = Image.new("RGB", (CELL * 2, CELL))
+                for i in range(2):
+                    strip.paste(builder(N).convert("RGB"), (i * CELL, 0))
+                px = strip.load()
+                left = [terrain.luminance(px[CELL - 1, y]) for y in range(CELL)]
+                right = [terrain.luminance(px[CELL, y]) for y in range(CELL)]
+                step = abs(sum(left) - sum(right)) / CELL
+                self.assertLessEqual(step, self.SEAM_LUMA_STEP)
+
+
 class OneSun(unittest.TestCase):
     """One light, so one shadow direction — over the whole sheet.
 
