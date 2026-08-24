@@ -1,7 +1,7 @@
 """`anim.json` — the sheet contract the game reads instead of retyping it.
 
 Every number the board needs to animate this art lives in one Python table
-here: the cell's size and its ground line, the ambient clip's sheets and
+here: the cell's size and its ground line, each ambient clip's sheets and
 cadence, the column and row order of the units atlas, and how many phase
 variants each terrain family ships. The game currently restates all of them by
 hand (`unit_sprite.gd`, `terrain_autotiles.gd`), which is why a third ambient
@@ -35,6 +35,14 @@ from .units import ATLAS_ORDER, UNITS
 # and the files on disk cannot disagree.
 MANIFEST_NAME = "anim.json"
 AMBIENT_SHEETS: tuple[str, ...] = ("units_atlas.png", "units_atlas_b.png")
+# The same two frames with the tile's cast shadow left off, for the cut-ins,
+# which draw at 1:1 on a ground plane of their own. Same art, same order, so
+# the clip below is the ambient clip pointed at the other pair — a cut-in that
+# idles shows exactly the beat the board shows.
+FIGURE_SHEETS: tuple[str, ...] = (
+    "units_atlas_figures.png",
+    "units_atlas_figures_b.png",
+)
 # Milliseconds per ambient frame. One cadence for the whole clip because the
 # sheets encode one: frame B is the entire army a beat later, so a rotor and a
 # swell cannot run at different rates without a third sheet. Half a second is
@@ -103,12 +111,16 @@ def build() -> dict:
             "overflow": atlas.CELL_H - atlas.CELL_W,
         },
         "clips": {
-            "ambient": {
-                "sheets": list(AMBIENT_SHEETS),
-                "order": list(range(len(AMBIENT_SHEETS))),
+            name: {
+                "sheets": list(sheets),
+                "order": list(range(len(sheets))),
                 "ms_per_frame": AMBIENT_MS,
                 "mode": "loop",
             }
+            for name, sheets in (
+                ("ambient", AMBIENT_SHEETS),
+                ("ambient_figures", FIGURE_SHEETS),
+            )
         },
         "columns": {uid: col for col, uid in enumerate(ATLAS_ORDER)},
         "rows": [{"key": fac.key, "team": fac.team} for fac in FACTIONS],

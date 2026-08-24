@@ -170,50 +170,66 @@ class AtlasContract(unittest.TestCase):
 
 
 class FigureSheet(unittest.TestCase):
-    """units_atlas_figures.png: the board's army, minus the tile's shadow.
+    """units_atlas_figures[_b].png: the board's army, minus the tile's shadow.
 
     The cut-ins draw the art at 1:1 over a ground plane of their own, with a
     contact shadow of their own under it, so the tile's would be a second
-    shadow rather than the same one. What the sheet must never be is a second
+    shadow rather than the same one. What the sheets must never be is a second
     opinion on the ART: the figure a cut-in blows up has to be the figure the
-    board shows.
+    board shows, in either key pose — the pair is the ambient pair with the
+    shadow erased, which is what lets a cut-in idle on the same beat.
     """
 
     def test_it_removes_shadow_pixels_and_changes_nothing_else(self):
-        board = atlas.build_units_atlas().load()
-        figures = atlas.build_units_atlas(shadow=False).load()
-        removed = 0
-        for y in range(len(FACTIONS) * atlas.CELL_H):
-            for x in range(len(ATLAS_ORDER) * atlas.CELL_W):
-                if board[x, y] == figures[x, y]:
-                    continue
-                # The only legal difference: an opaque shadow pixel is gone.
-                self.assertEqual(figures[x, y][3], 0, f"repainted pixel at {x},{y}")
-                self.assertEqual(board[x, y][3], 255, f"half-shadow at {x},{y}")
-                removed += 1
-        self.assertGreater(removed, 0)
+        for pose in (Pose.A, Pose.B):
+            with self.subTest(pose=pose):
+                board = atlas.build_units_atlas(pose).load()
+                figures = atlas.build_units_atlas(pose, shadow=False).load()
+                removed = 0
+                for y in range(len(FACTIONS) * atlas.CELL_H):
+                    for x in range(len(ATLAS_ORDER) * atlas.CELL_W):
+                        if board[x, y] == figures[x, y]:
+                            continue
+                        # The only legal difference: an opaque shadow pixel is
+                        # gone.
+                        self.assertEqual(
+                            figures[x, y][3], 0, f"repainted pixel at {x},{y}"
+                        )
+                        self.assertEqual(board[x, y][3], 255, f"half-shadow at {x},{y}")
+                        removed += 1
+                self.assertGreater(removed, 0)
 
     def test_every_unit_of_every_faction_loses_its_shadow(self):
-        board = atlas.build_units_atlas()
-        figures = atlas.build_units_atlas(shadow=False)
-        for row, fac in enumerate(FACTIONS):
-            for col, uid in enumerate(ATLAS_ORDER):
-                box = (
-                    col * atlas.CELL_W,
-                    row * atlas.CELL_H,
-                    (col + 1) * atlas.CELL_W,
-                    (row + 1) * atlas.CELL_H,
-                )
-                self.assertNotEqual(
-                    board.crop(box).tobytes(),
-                    figures.crop(box).tobytes(),
-                    f"{uid} ({fac.key}) has no shadow to leave off",
-                )
+        for pose in (Pose.A, Pose.B):
+            board = atlas.build_units_atlas(pose)
+            figures = atlas.build_units_atlas(pose, shadow=False)
+            for row, fac in enumerate(FACTIONS):
+                for col, uid in enumerate(ATLAS_ORDER):
+                    box = (
+                        col * atlas.CELL_W,
+                        row * atlas.CELL_H,
+                        (col + 1) * atlas.CELL_W,
+                        (row + 1) * atlas.CELL_H,
+                    )
+                    self.assertNotEqual(
+                        board.crop(box).tobytes(),
+                        figures.crop(box).tobytes(),
+                        f"{uid} ({fac.key}) has no shadow to leave off in {pose}",
+                    )
 
-    def test_the_figure_sheet_is_reproducible(self):
-        self.assertEqual(
-            atlas.build_units_atlas(shadow=False).tobytes(),
-            atlas.build_units_atlas(shadow=False).tobytes(),
+    def test_the_figure_sheets_are_reproducible(self):
+        for pose in (Pose.A, Pose.B):
+            self.assertEqual(
+                atlas.build_units_atlas(pose, shadow=False).tobytes(),
+                atlas.build_units_atlas(pose, shadow=False).tobytes(),
+            )
+
+    def test_the_two_figure_frames_differ(self):
+        """A clip needs two frames: the shadow erase must not flatten the
+        pose difference the ambient pair carries."""
+        self.assertNotEqual(
+            atlas.build_units_atlas(Pose.A, shadow=False).tobytes(),
+            atlas.build_units_atlas(Pose.B, shadow=False).tobytes(),
         )
 
 

@@ -11,8 +11,10 @@ Outputs (under --out, default ./out):
                          column/row order, terrain phase counts
   units_atlas.png        1152x320 RGBA — drop-in for assets/tiles/units_atlas.png
   units_atlas_b.png      ambient animation frame B (every unit's second key pose)
-  units_atlas_figures.png the same army with the tile's cast shadow left off,
-                          for the cut-ins, which draw at 1:1 on their own ground
+  units_atlas_figures.png / units_atlas_figures_b.png
+                          the same two frames with the tile's cast shadow left
+                          off, for the cut-ins, which draw at 1:1 on their own
+                          ground and idle on the ambient_figures clip
   terrain_atlas.png       896x320 RGBA — drop-in for assets/tiles/terrain_atlas.png
                           (the five property columns are transparent overlays)
   units/<id>_<team>.png   one units-atlas cell each, for paste_unit_sprites.gd
@@ -71,7 +73,7 @@ def _install(src: Path, dest: Path) -> None:
     # to end.
     sheets = [
         *anim.AMBIENT_SHEETS,
-        "units_atlas_figures.png",
+        *anim.FIGURE_SHEETS,
         "terrain_atlas.png",
         anim.MANIFEST_NAME,
     ]
@@ -140,8 +142,11 @@ def main() -> None:
     print("building ambient frame B (every unit's second key pose)")
     _write(atlas.build_units_atlas(Pose.B), args.out / frame_b)
 
-    print("building the figure sheet (no tile shadow, for the cut-ins)")
-    _write(atlas.build_units_atlas(shadow=False), args.out / "units_atlas_figures.png")
+    figures_a, figures_b = anim.FIGURE_SHEETS
+
+    print("building the figure sheets (no tile shadow, for the cut-ins)")
+    _write(atlas.build_units_atlas(shadow=False), args.out / figures_a)
+    _write(atlas.build_units_atlas(Pose.B, shadow=False), args.out / figures_b)
 
     print("building terrain atlas (14 terrains x 5 rows)")
     terrain_atlas = atlas.build_terrain_atlas()
