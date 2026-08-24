@@ -1255,9 +1255,11 @@ class PropertySilhouette(unittest.TestCase):
     and until 2026-08-24 nothing measured it: read at rung 1 (4:1, the rung a
     match is played at) the three land properties were one shape wearing
     three labels — city/hq 0.729, base/hq 0.713, city/base 0.671 — and the
-    hq, the tile a match is won on, stood ONE ROW taller than a city, which
-    at 4:1 is not a step at all. The hq/city remass answers both: 0.578,
-    0.536 and 0.585, and the hq's top row ten source rows over the city's.
+    hq, the tile a match is won on, topped out THREE SOURCE ROWS over a city,
+    which is under one board texel at 4:1 and so no step at all. The hq/city
+    remass answers both — 0.591, 0.585 and 0.536, in that order — and puts
+    the hq's top row six source rows over the city's and twenty-two over the
+    base's.
 
     Two readings, on the building alone: the cast shadow is the same
     silhouette offset down-right, so counting it in doubles every shape's

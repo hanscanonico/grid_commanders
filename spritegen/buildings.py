@@ -255,8 +255,11 @@ def city() -> Model:
     # its roof, and the owner's band has to be most of the two walls the
     # camera sees or the downsample loses it (`PropertyPalette.test_two
     # _owners_are_tellable_apart_at_the_boards_own_scale`: Iron against
-    # verdant, the closest pair on this tile, 17.6 with the two-course fascia
-    # the old 5x5 towers wore, 29.2 with the cladding).
+    # verdant, the closest COLOURED pair on this tile, 17.6 with the
+    # two-course fascia the old 5x5 towers wore, 29.2 with the cladding).
+    # What the narrowing costs is the pair that separates by hue alone:
+    # neutral against Iron goes 33.4 to 24.7 over its 20.0 floor, because
+    # two greys need area where two colours need only the paint.
     m.box(8, 11, 2, 5, 1, 7, WALL)
     m.box(8, 11, 5, 5, 6, 7, ROOF_TRIM)
     m.box(11, 11, 2, 5, 6, 7, ROOF_TRIM)
@@ -331,6 +334,13 @@ def hq() -> Model:
     texel). What it is not is a taller BOX: the curtain wall
     and its corner towers stay exactly where they were, so the growth reads
     as a keep rising out of a fort rather than as the fort inflating.
+
+    The keep spends headroom that is not its own: a mast and a pennant put
+    the tile's shadow further out along one diagonal, and the phase spread
+    `PropertyOverlays.test_every_rung_draws_the_same_share_of_the_shadow`
+    measures goes 0.278 -> 0.435 against its 0.45 bar. It passes, with less
+    slack than any other property has; the next thing added above the roof
+    line has to buy it back (the city's setback, below, is how).
     """
     m = Model()
     _pad(m, 0, 13, 0, 13)
