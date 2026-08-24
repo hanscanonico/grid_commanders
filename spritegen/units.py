@@ -31,8 +31,10 @@ may not translate the hull along its own run — that would double the travel
 and slide the unit out of the cell it is standing in. What a move frame owns
 is the running gear and the chassis's reaction to it. On the tracked family
 that is the tread stripe walking a half period (`_track`'s `phase`) and the
-whole hull jolting one board texel of ride height on the off-beat (`_roll`),
-with the weapons left at travel-lock — pose A's gun, not pose B's laid-up or
+whole hull jolting one board texel of ride height on the off-beat (`_roll`) —
+except on the MBT, which pitches its nose that texel instead so its
+silhouette does not climb into the heavy tank's (see `tank`) — with the
+weapons left at travel-lock — pose A's gun, not pose B's laid-up or
 recoiled one, because a vehicle on the move does not lay its gun.
 
 Only the uids in `MOVES` author the move clip; every other unit falls back to
@@ -599,10 +601,23 @@ def tank(pose: Pose = Pose.A) -> Model:
     The move clip leaves the gun where pose A carries it — a tank under way
     does not lay its barrel — and animates the running gear instead: MOVE_A is
     pose A with the link stripe at phase 0, MOVE_B advances the stripe a half
-    period and jolts the WHOLE hull `dz = +2` (`_roll`), one board texel of
-    ride height over rough ground. Bouncing only the sprung mass was the other
-    reading and it opens a 4px gap between hull and tread here. 28 changed
-    silhouette texels at rung 1, 1.96 shimmer, 0.003 mass drift.
+    period and PITCHES the nose one board texel. Everything forward of the
+    turret ring — the front hull course, the glacis, the leading track run,
+    the mantlet and the gun it carries — takes `dz = +2` together; the engine
+    deck, the turret and the cupola hold. The gun rides up with the nose it is
+    bolted to, so this is a chassis attitude and not the two-texel gun lay of
+    pose B.
+
+    It is a pitch here and the whole-hull `_roll` the rest of the tracked
+    family uses everywhere else, for one measured reason: the MBT is the heavy
+    tank's small brother, and `_roll` raises the whole silhouette into its
+    brother's. Rolled, MOVE_B's rung-1 silhouette matched md_tank's frame A at
+    IoU 0.799 against 0.761 for its own — the unit stopped reading as itself.
+    Pitching the nose moves the same one texel over a fifth of the mass, so
+    the shape stays the tank's: 0.893 against its own frame A, 0.746 against
+    md_tank's, and md_tank's own move frames are untouched (0.785 own, 0.612
+    next). 11 changed silhouette texels at rung 1, 3.18 shimmer, 0.048 mass
+    drift.
     """
     m = Model()
     _track(m, 0, 2, 0, 13, 2, phase=int(beat(pose)))
@@ -637,7 +652,8 @@ def tank(pose: Pose = Pose.A) -> Model:
         _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
         m.box(4, 7, 10, 10, 6, 9, "hull_dk")
     if pose is Pose.MOVE_B:
-        _roll(m, 2)
+        # the nose rides up a texel: everything ahead of the turret ring
+        _shift(m, (0, 11, 10, 20, 0, 7), dz=2)
     return m
 
 

@@ -213,11 +213,32 @@ class MoveFallback(unittest.TestCase):
         """`MOVES` is what takes a unit out of the fallback above, so a uid
         listed there with no move art of its own would ship a move clip that
         is its idle under a new name and no test would notice: the fallback
-        test skips it and the sheets still build."""
+        test skips it and the sheets still build.
+
+        The claim is asked of the PAIR, not of either frame. Written as
+        "MOVE_A's voxels differ from A's" it fails units that author their
+        stride honestly: the tracked family holds the travel-lock, so its
+        MOVE_A IS pose A and everything the clip says is in MOVE_B. So what
+        is asked is that the move pair differs from the ambient pair — one
+        frame may reuse its ambient key, not both.
+
+        This is the cheap voxel-level half of the rule and it is kept for
+        that: it fails in the builder's own terms, before anything is
+        composed. The other half — that the two move frames differ from each
+        OTHER — cannot be asked here, because a frame may differ only in
+        composition: the fixed-wing pair holds one attitude in the model and
+        takes its beat from the air bob. `MoveFrames.
+        test_the_move_pair_is_not_the_ambient_pair` asks both halves of the
+        composed cells, which is where that one is answerable.
+        """
         for uid in MOVES:
             builder = UNITS[uid][0]
+            vox = {pose: builder(pose).vox for pose in Pose}
             with self.subTest(unit=uid):
-                self.assertNotEqual(builder(Pose.MOVE_A).vox, builder(Pose.A).vox)
+                self.assertNotEqual(
+                    (vox[Pose.MOVE_A], vox[Pose.MOVE_B]),
+                    (vox[Pose.A], vox[Pose.B]),
+                )
 
     def test_the_aircraft_under_way_hold_a_texel_of_nose_down(self):
         """What the air family's move clip says, in the only terms a sheet
