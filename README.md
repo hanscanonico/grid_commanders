@@ -198,7 +198,11 @@ air and sea ones, whose pose B is their pose A translated by `atlas.BOB_PX`,
 clear it by moving every boundary texel they own — and
 `test_no_unit_shimmers_more_than_it_moves` caps the other half of the ratio, so
 the floor can never be bought by repainting an interior under an outline that
-holds still.
+holds still. The picture behind those numbers is
+`tests/preview_motion.py OUTDIR`, which writes a contact sheet of every unit's
+two poses at both rungs plus one GIF per unit at the manifest's cadence, all
+composited over the terrain the unit stands on; it takes its output directory
+on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
 ## Setup
 
