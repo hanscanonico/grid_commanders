@@ -127,6 +127,9 @@ func _build_commander(row: HBoxContainer) -> void:
 	_portrait_field.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_portrait_field.clip_contents = true
 	row.add_child(_portrait_field)
+	# The chip is smaller than a face, so it shows one: the face crop, covered
+	# into the square. Covering the whole bust crops about the image's own centre,
+	# which sits below the head — a small head over a band of chest.
 	_portrait = TextureRect.new()
 	_portrait.texture_filter = CommanderVisuals.ART_FILTER
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -293,7 +296,7 @@ func show_commander(
 	# chrome with a fixed footprint, so hiding the block would leave a hole rather
 	# than reclaim anything. Only the meter and its controls go.
 	var powered := commander.has_power()
-	_portrait.texture = CommanderVisuals.portrait_for(commander)
+	_portrait.texture = CommanderVisuals.face_for(commander)
 	_portrait_field.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_light))
 	_co_name.text = commander.display_name.to_upper()
 	_power_name.text = commander.power_name.to_upper() if powered else ""
