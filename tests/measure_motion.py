@@ -1,23 +1,33 @@
-"""Dev instrument for the ambient animation — not a test, a readout.
+"""Dev instrument for the unit animation clips — not a test, a readout.
 
-The A/B poses are authored at atlas scale, where a moved voxel is obvious.
+`--clip {ambient,move}` picks which pair of poses is measured (default
+ambient); the pair itself comes from `units.CLIP_POSES`, so a clip that gains
+a frame is measured without editing this file. The uids are positional and
+default to the whole atlas:
+
+  .venv/bin/python tests/measure_motion.py [--clip CLIP] [unit ...]
+
+The pose keys are authored at atlas scale, where a moved voxel is obvious.
 The board is not at atlas scale: it draws the 64x96 cell onto a 16px grid
 with nearest filtering, so at zoom rung 1 the player sees a 16x24 texel
 sample of the cell and at rung 2 a 32x48 one. This prints what survives that
 sample, per unit, per rung:
 
-  opaque       texels the pose-A cell paints (alpha > 128)
-  changed      texels whose colour differs between pose A and pose B
+  opaque       texels the clip's first pose paints (alpha > 128)
+  changed      texels whose colour differs between the clip's two poses
   silhouette   of those, texels one pose paints and the other does not
   shimmer      interior changed / silhouette changed (the divisor floors at
                1, so a unit whose silhouette holds still reports its whole
                changed count)
+  MOVES?       move clip only: whether the uid is in `units.MOVES`. A "no"
+               unit renders its ambient counterpart, so its row is the
+               ambient row and says nothing about a stride.
 
 A unit with silhouette 0 does not move on the board at that rung: whatever
-pose B did landed inside a shape the sampler draws identically, so the only
-thing the player can see is texels changing tone in place. That is what the
-shimmer index counts, and a high shimmer over a zero silhouette is the
-failure mode — the sprite boils instead of animating.
+the off-beat did landed inside a shape the sampler draws identically, so
+the only thing the player can see is texels changing tone in place. That is
+what the shimmer index counts, and a high shimmer over a zero silhouette is
+the failure mode — the sprite boils instead of animating.
 
 The texel rule behind it: one voxel is a 4x4 px cube and projects to
 `sx=(x-y)*2`, `sy=(x+y)-2z`, so one board texel at rung 1 is 4 atlas px,
@@ -138,11 +148,23 @@ on t_copter. The AFTER row is the same four blades turned 14 degrees
 advanced, and it still moves 28 and 30 silhouette texels at rung 1. Silhouette
 share is not the measure of an idle on its own: WHICH texels move is.
 
-Run: .venv/bin/python tests/measure_motion.py [unit ...]
+MOVE CLIP
+---------
+Everything above is the ambient clip, and its numbers stand on their own. The
+move clip (`--clip move`) is measured the same way against MOVE_A/MOVE_B, and
+its numbers are recorded HERE, by the family task that authors them — one
+block per family, so a stride can be read against the idle it replaced. A uid
+outside `units.MOVES` prints MOVES? no and simply repeats its ambient row: the
+fallback draws the ambient pose, so there is nothing of its own to record yet.
+
+(No family has landed; this section is empty on purpose.)
+
+Run: .venv/bin/python tests/measure_motion.py [--clip {ambient,move}] [unit ...]
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -155,7 +177,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from spritegen import atlas  # noqa: E402
 from spritegen.palette import faction_by_key  # noqa: E402
-from spritegen.units import ATLAS_ORDER, Pose  # noqa: E402
+from spritegen.units import ATLAS_ORDER, CLIP_POSES, MOVES, Pose  # noqa: E402
 
 # What the board hands the sampler. BattleView draws the 64x96 cell at 0.25
 # of its size per zoom rung, so rung r is a (16r, 24r) texel sample of the
@@ -191,27 +213,49 @@ def shimmer(changed: int, silhouette: int) -> float:
     return (changed - silhouette) / max(silhouette, 1)
 
 
-def report(uids: list[str]) -> None:
+def poses_for(clip: str) -> tuple[Pose, Pose]:
+    """The pose pair the clip is measured across.
+
+    The counts compare two frames, so a clip that ever grows a third says so
+    here rather than being silently measured on its ends.
+    """
+    poses = CLIP_POSES[clip]
+    if len(poses) != 2:
+        sys.exit(
+            f"clip {clip!r} has {len(poses)} poses; measure_motion compares a pair"
+        )
+    return poses[0], poses[1]
+
+
+def report(uids: list[str], clip: str = "ambient") -> None:
     fac = faction_by_key("red")
+    first, second = poses_for(clip)
+    # Only the move clip has units that fall back, so only it carries the
+    # column that says which ones do.
+    show_moves = clip == "move"
     cells = {
         uid: (
-            atlas.unit_cell(uid, fac, Pose.A),
-            atlas.unit_cell(uid, fac, Pose.B),
+            atlas.unit_cell(uid, fac, first),
+            atlas.unit_cell(uid, fac, second),
         )
         for uid in uids
     }
+    print(f"=== clip {clip} ({first.name} vs {second.name}) ===")
     for rung, size in RUNGS.items():
         print(f"--- rung {rung} ({size[0]}x{size[1]} texels) " + "-" * 24)
-        print(f"{'unit':<12} {'opaque':>7} {'changed':>8} {'silh':>6} {'shimmer':>8}")
+        head = f"{'unit':<12} {'opaque':>7} {'changed':>8} {'silh':>6} {'shimmer':>8}"
+        print(head + (f" {'MOVES?':>7}" if show_moves else ""))
         totals = [0, 0, 0]
         for uid in uids:
             a, b = (sample(img, size) for img in cells[uid])
             opaque, changed, silh = counts(a, b)
             totals = [t + v for t, v in zip(totals, (opaque, changed, silh))]
-            print(
+            row = (
                 f"{uid:<12} {opaque:>7} {changed:>8} {silh:>6} "
                 f"{shimmer(changed, silh):>8.2f}"
             )
+            authored = "yes" if uid in MOVES else "no"
+            print(row + (f" {authored:>7}" if show_moves else ""))
         print(
             f"{'ALL':<12} {totals[0]:>7} {totals[1]:>8} {totals[2]:>6} "
             f"{shimmer(totals[1], totals[2]):>8.2f}"
@@ -219,9 +263,28 @@ def report(uids: list[str]) -> None:
         print()
 
 
-if __name__ == "__main__":
-    wanted = sys.argv[1:] or list(ATLAS_ORDER)
+def main(argv: list[str]) -> None:
+    parser = argparse.ArgumentParser(
+        description="Count what survives the board's sample, per unit, per rung.",
+    )
+    parser.add_argument(
+        "--clip",
+        choices=sorted(CLIP_POSES),
+        default="ambient",
+        help="which clip's pose pair to measure (default: ambient)",
+    )
+    parser.add_argument(
+        "unit",
+        nargs="*",
+        help="uids to measure (default: the whole atlas, in column order)",
+    )
+    args = parser.parse_args(argv)
+    wanted = args.unit or list(ATLAS_ORDER)
     unknown = [uid for uid in wanted if uid not in ATLAS_ORDER]
     if unknown:
         sys.exit(f"unknown unit(s): {', '.join(unknown)}")
-    report(wanted)
+    report(wanted, args.clip)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
