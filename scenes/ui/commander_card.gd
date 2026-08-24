@@ -45,14 +45,16 @@ const _NAME_SIZE := 12
 ## The portrait band, public because a surface that frames this card checks its
 ## own layout against it — a card showing less than its face is showing nothing.
 ## Deliberately not raised to fill the band's width with the bust: the four-army
-## info sheet shows a card 119px tall, and both cards of a duel already stand at
-## their scroll frame's full height, so every pixel added here is a pixel of the
-## Command Power block scrolled off the one sheet that photographs it.
+## info sheet frames a 242-256px card in 119px, so it already scrolls and every
+## pixel added here is a pixel of the Command Power block pushed out of it — and
+## that same 119 is the ceiling the sheet's own layout check holds this constant
+## under, which leaves too little to widen the fitted bust by anything worth the
+## room (measured on commander_info, 2026-08-25).
 const PORTRAIT_H := 96
 ## The faction badge pinned into the band's top-left corner, and the inset it sits
-## at. Card-local for the reason _NAME_SIZE is: the design system has no token for
-## a corner pin, and the shell's smallest icon (UiTheme.MENU_ICON) is a menu row's
-## glyph rather than a badge on art.
+## at. Card-local like the geometry above it, not a missing shell token: the design
+## system sizes widgets rather than pins on art, and its smallest icon
+## (UiTheme.MENU_ICON) is a menu row's glyph.
 const _EMBLEM_PX := 22
 const _EMBLEM_INSET := 6
 
