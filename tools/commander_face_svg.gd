@@ -242,7 +242,7 @@ const FACES := {
 		"acc": &"glasses",
 		"pose": [-4.0, 1.18, false],
 		"bg": &"bars",
-		"prop": &"book",
+		"prop": &"ledger",
 	},
 	&"konrad_vale":
 	{
@@ -256,7 +256,7 @@ const FACES := {
 		"acc": &"none",
 		"pose": [5.0, 1.25, false],
 		"bg": &"wedge",
-		"prop": &"medal",
+		"prop": &"helm",
 	},
 	&"perrin_ash":
 	{
@@ -270,7 +270,7 @@ const FACES := {
 		"acc": &"goggles",
 		"pose": [-7.0, 1.2, true],
 		"bg": &"speed",
-		"prop": &"card",
+		"prop": &"plane",
 	},
 	&"halden_marr":
 	{
@@ -284,7 +284,7 @@ const FACES := {
 		"acc": &"none",
 		"pose": [3.0, 1.16, false],
 		"bg": &"rays",
-		"prop": &"pipe",
+		"prop": &"anchor",
 	},
 	&"dane_ferrow":
 	{
@@ -298,7 +298,7 @@ const FACES := {
 		"acc": &"scar",
 		"pose": [7.0, 1.24, false],
 		"bg": &"burst",
-		"prop": &"cigar",
+		"prop": &"coins",
 	},
 	&"iris_colt":
 	{
@@ -312,7 +312,7 @@ const FACES := {
 		"acc": &"headset",
 		"pose": [-6.0, 1.22, false],
 		"bg": &"halftone",
-		"prop": &"sabre",
+		"prop": &"whistle",
 	},
 	&"sera_lark":
 	{
@@ -326,7 +326,7 @@ const FACES := {
 		"acc": &"bandana",
 		"pose": [5.0, 1.2, true],
 		"bg": &"wedge",
-		"prop": &"baton",
+		"prop": &"compass",
 	},
 	&"iona_vance":
 	{
@@ -340,7 +340,7 @@ const FACES := {
 		"acc": &"none",
 		"pose": [0.0, 1.16, false],
 		"bg": &"bars",
-		"prop": &"baton",
+		"prop": &"scales",
 	},
 	&"ivar_thorne":
 	{
@@ -354,7 +354,7 @@ const FACES := {
 		"acc": &"scar",
 		"pose": [-5.0, 1.26, true],
 		"bg": &"burst",
-		"prop": &"sabre",
+		"prop": &"axe",
 	},
 	&"radek_morn":
 	{
@@ -368,7 +368,7 @@ const FACES := {
 		"acc": &"none",
 		"pose": [2.0, 1.28, false],
 		"bg": &"halftone",
-		"prop": &"medal",
+		"prop": &"hammer",
 	},
 }
 
@@ -818,45 +818,83 @@ func _bars() -> String:
 # --- signature props ---------------------------------------------------------
 
 
-## The one object each general is never without. Two are shouldered, so they are
-## drawn behind the bust; the rest are held, and sit in front of it.
+## The one object each general is never without. The shouldered ones are drawn
+## behind the bust; the rest are held, and sit in front of it.
+##
+## Two placement rules the drawings are laid out against: a whole object stands
+## low and near x 12-48, because the pose scales up to 1.28 about (55, 120) and
+## anything higher or further out crops; a shouldered haft sits outside x 86, or
+## the `long` and `hood` back hair swallows it.
 func _prop(id: StringName, layer: StringName, skin: String) -> String:
 	return _prop_back(id) if layer == &"back" else _prop_front(id, skin)
 
 
 func _prop_back(id: StringName) -> String:
-	if id == &"sabre":
-		var blade := _path("M82,96 L95,32 L101,35 L88,98 Z", "#cfd6dd", _line())
-		return blade + _stroke_path("M79,91 L93,96", 4)
-	if id == &"wrench":
-		var shaft := _path("M80,96 L89,55 L97,57 L88,98 Z", "#aab3bb", _line())
-		var jaw := "M86,57 Q82,44 93,41 Q104,39 103,50 L95,49 L94,55 Z"
-		return shaft + _path(jaw, "#aab3bb", _line())
+	match id:
+		&"sabre":
+			var blade := _path("M82,96 L95,32 L101,35 L88,98 Z", "#cfd6dd", _line())
+			return blade + _stroke_path("M79,91 L93,96", 4)
+		&"wrench":
+			var shaft := _path("M80,96 L89,55 L97,57 L88,98 Z", "#aab3bb", _line())
+			var jaw := "M86,57 Q82,44 93,41 Q104,39 103,50 L95,49 L94,55 Z"
+			return shaft + _path(jaw, "#aab3bb", _line())
+		&"anchor":
+			return _anchor()
+		&"axe":
+			return _axe()
+		&"hammer":
+			return _hammer()
 	return ""
 
 
 func _prop_front(id: StringName, skin: String) -> String:
+	var worn := _prop_worn(id)
+	return worn if not worn.is_empty() else _prop_held(id, skin)
+
+
+## The front props that stand on their own — smoked, worn, flown or set down.
+func _prop_worn(id: StringName) -> String:
 	match id:
 		&"pipe":
 			return _pipe()
 		&"cigar":
 			return _cigar()
-		&"baton":
-			return _baton(skin)
 		&"medal":
 			return _medal()
-		&"card":
-			return _card(skin)
-		&"book":
-			return _book(skin)
 		&"drone":
 			return _drone()
 		&"falcon":
 			return _falcon()
+		&"helm":
+			return _helm()
+		&"scales":
+			return _scales()
+		&"whistle":
+			return _whistle()
+		&"plane":
+			return _plane()
+	return ""
+
+
+## The front props a hand closes on, so each one draws that hand too.
+func _prop_held(id: StringName, skin: String) -> String:
+	match id:
+		&"baton":
+			return _baton(skin)
+		&"card":
+			return _card(skin)
+		&"book":
+			return _book(skin)
 		&"dagger":
 			return _dagger(skin)
 		&"radio":
 			return _radio(skin)
+		&"coins":
+			return _coins(skin)
+		&"compass":
+			return _compass(skin)
+		&"ledger":
+			return _ledger(skin)
 	return ""
 
 
@@ -943,3 +981,81 @@ func _radio(skin: String) -> String:
 	var body := _rect(71, 65, 11, 18, _slate, _line(2.2) + ' rx="3"')
 	var grille := _path("M73.5,69 H79.5 M73.5,72 H79.5", "none", _tint("#ffffff", 1.4))
 	return antenna + body + '<g opacity="0.7">%s</g>' % grille + _hand(77, 85, skin)
+
+
+func _anchor() -> String:
+	var steel := "#aab3bb"
+	var shaft := _path("M85,98 L86,38 L92,38 L91,98 Z", steel, _line())
+	var stock := _rect(78, 48, 22, 5, steel, _line() + ' rx="2"')
+	var ring := _circle(89, 31, 6.5, "none", _line(4))
+	var flukes := "M70,78 Q72,98 88,101 Q104,98 106,78 L99,80 Q97,93 88,94 Q79,93 77,80 Z"
+	return shaft + stock + ring + _path(flukes, steel, _line())
+
+
+func _axe() -> String:
+	var haft := _path("M86,100 L89,28 L95,29 L92,101 Z", "#8c5a30", _line())
+	var bit := _path("M83,30 Q94,25 96,42 Q94,58 83,54 L88,48 Q89,42 88,36 Z", "#cfd6dd", _line())
+	return haft + bit
+
+
+func _hammer() -> String:
+	var haft := _path("M81,32 L89,32 L87,102 L79,102 Z", "#8c5a30", _line())
+	var head := _rect(74, 22, 22, 16, "#8f9aa3", _line())
+	var cheek := _rect(90, 22, 6, 16, "#6d7880")
+	return '<g transform="rotate(-10 85 30)">%s</g>' % (haft + head + cheek)
+
+
+func _helm() -> String:
+	var dome := _path("M20,120 Q18,98 34,96 Q50,98 48,120 Z", "#8f9aa3", _line())
+	var crest := _stroke_path("M20,100 Q34,92 48,100", 4.5, _accent)
+	return dome + crest + _stroke_path("M34,97 L34,120", 1.6)
+
+
+func _coins(skin: String) -> String:
+	var pen := ' stroke="%s" stroke-width="1.8" stroke-linejoin="round"' % _ink
+	var tossed := _circle(89, 83, 5, _gold, pen) + _circle(98, 89, 5, _gold, pen)
+	var held := _circle(91, 95, 5, _gold, pen)
+	return _hand(82, 97, skin) + held + '<g opacity="0.85">%s</g>' % tossed
+
+
+func _scales() -> String:
+	var steel := "#aab3bb"
+	var post := _rect(26, 94, 4, 26, steel, _line(1.8))
+	var beam := _rect(15, 92, 30, 3.5, steel, _line(1.8))
+	var cords := _stroke_path("M17,95 L17,104 M43,95 L43,104", 1.4)
+	var pans := _path("M11,104 Q17,112 23,104 Z", _gold, _line(1.8))
+	pans += _path("M37,104 Q43,112 49,104 Z", _gold, _line(1.8))
+	return post + beam + cords + pans + _circle(28, 91, 2.6, _gold, _line(1.6))
+
+
+func _whistle() -> String:
+	var mouthpiece := _path("M60,71 L70,69.5 L70,77 L60,75.5 Z", _gold, _line(1.8))
+	var body := _rect(69, 66.5, 13, 11, _gold, _line(2) + ' rx="3.5"')
+	var hole := _circle(76, 70, 1.8, _ink)
+	var puffs: Array[Vector3] = [Vector3(88, 62, 3), Vector3(94, 52, 3.8)]
+	return mouthpiece + body + hole + _smoke(puffs, "0.42")
+
+
+func _plane() -> String:
+	var fuselage := _path("M76,29 Q87,24 98,30 Q87,36 76,34 Z", "#e4e9ee", _line(1.8))
+	var wings := _path("M84,29 L90,19 L94,20 L92,31 Z", _accent, _line(1.6))
+	wings += _path("M84,32 L90,42 L94,41 L92,30 Z", _accent, _line(1.6))
+	var tail := _path("M77,28 L72,23 L74,33 Z", _accent, _line(1.4))
+	var flown := fuselage + wings + tail + _circle(93, 30, 2, _slate)
+	var puffs: Array[Vector3] = [Vector3(80, 42, 2.6), Vector3(86, 52, 3.4)]
+	return '<g transform="rotate(-16 88 32)">%s</g>' % flown + _smoke(puffs, "0.4")
+
+
+func _compass(skin: String) -> String:
+	var dial := _circle(28, 90, 12, "#e4e9ee", _line(2.2))
+	var rim := _circle(28, 90, 8, "none", _line(1.2))
+	var north := _path("M28,81 L31.5,90 L28,93 L24.5,90 Z", _accent, _line(1.4))
+	var south := _path("M28,99 L31.5,90 L24.5,90 Z", "#aab3bb", _line(1.2))
+	return dial + rim + north + south + _circle(28, 90, 1.6, _ink) + _hand(39, 99, skin)
+
+
+func _ledger(skin: String) -> String:
+	var block := _rect(13, 93, 26, 20, "#f2ead8", _line(2.2) + ' rx="1.5"')
+	var clasp := _rect(34, 98, 6, 7, "#aab3bb", _line(1.6) + ' rx="1"')
+	var rules := _path("M19,99 H31 M19,103 H31 M19,107 H27", "none", _tint(_ink, 1.4))
+	return block + '<g opacity="0.55">%s</g>' % rules + clasp + _hand(38, 111, skin)
