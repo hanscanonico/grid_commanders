@@ -115,6 +115,9 @@ MOVES: frozenset[str] = frozenset(
         "anti_air",
         "artillery",
         "apc",
+        "recon",
+        "rockets",
+        "missiles",
         "fighter",
         "bomber",
         "b_copter",
@@ -236,7 +239,17 @@ def _rotor_collar(m: Model, cx: int, cy: int, z: int, arms: tuple[Blade, ...]) -
 
 
 def _tire(m: Model, x: int, y: int, big: bool = False) -> None:
-    """One wheel: dark tire block with a hub dot on the outer face."""
+    """One wheel: dark tire block with a hub dot on the outer face.
+
+    The wheel cannot carry the move clip and no later pass should try. The
+    hub dot is a single voxel — 2 screen px, half a board texel at rung 1 —
+    and it is the only feature on the tire, so any rotation of it re-tones
+    half a texel at best and vanishes at the sample. The tread's link stripe
+    works because it is four voxels long and steps a whole texel (see
+    `_track`); there is no room on a 2x3 wheel for the same trick. So the
+    wheeled family says "moving" with the chassis — `_roll` — and leaves the
+    wheels alone.
+    """
     m.box(x, x + 1, y, y + 2, 0, 1, "tire")
     if big:
         m.box(x, x + 1, y, y + 2, 2, 2, "tire")
@@ -675,6 +688,22 @@ def recon(pose: Pose = Pose.A) -> Model:
     two voxels tall over a bed two voxels tall, so a texel of settle buries
     the roofline in the hull and the scout reads as a flatbed. The traverse
     measures 4 changed silhouette texels at rung 1, 13 at rung 2.
+
+    The move clip holds both the MG and the whip where pose A carries them —
+    a scout on the move is not sweeping its arc — and gives the movement to
+    the chassis, since wheels cannot carry it at this scale (see `_tire`).
+    MOVE_B pitches the NOSE one board texel: the front axle, the hood, the
+    bumper and the headlights take `dz = +2` while the tail axle, the cabin
+    and the MG hold, and the whip alone lies one diagonal step BACK over the
+    tail.
+
+    The whole-hull `_roll` the tracked family uses is not available here, for
+    the reason the MBT's pitch documents: lifting all of a low car costs it
+    its identity. Rolled, MOVE_B read closer to the apc's frame A (0.703)
+    than to recon's own (0.700) and failed the identity gate. Pitching the
+    nose moves the same texel over the front third: 0.818 against its own
+    frame A, 0.671 against the apc's. 14 changed silhouette texels at rung 1,
+    1.14 shimmer.
     """
     m = Model()
     for x in (0, 8):
@@ -715,6 +744,21 @@ def recon(pose: Pose = Pose.A) -> Model:
         # both staying inside the hull's own x/y extents
         _shift(m, (4, 5, 4, 10, 6, 7), dx=1, dy=-1)
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
+    if pose is Pose.MOVE_B:
+        # The whip trails one board texel BACKWARD — `(dx +1, dy -1)` is the
+        # reverse of the models' forward `(dx -1, dy +1)` — and the chassis
+        # jolts a texel under it. Because the step is taken against the
+        # model's own facing rather than against a screen side, a horizontal
+        # flip carries it: the mirrored car's antenna still lies back over
+        # the tail. The MG is left where pose A carries it; the gunner sweeps
+        # his arc in the ambient clip, not while the scout is running.
+        _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
+        # The lifted box stops at z=6 so it takes the chassis and nothing
+        # else: the only voxel above it inside the nose's x/y is the MG's
+        # muzzle at (4, 10, 7), which overhangs the front axle from a barrel
+        # rooted in the cabin. Lifted, it left the barrel behind and floated
+        # two voxels off its own tip.
+        _shift(m, (0, 9, 10, 15, 0, 6), dz=2)
     return m
 
 
@@ -1027,6 +1071,8 @@ def rockets(pose: Pose = Pose.A) -> Model:
             y0 = 11 - 2 * k
             _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=2)
         m.box(2, 7, 1, 2, 14, 15, "hull_dk")
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
@@ -1151,6 +1197,11 @@ def missiles(pose: Pose = Pose.A) -> Model:
     settle it replaces was one voxel of a four-wheel chassis, half a texel:
     zero changed silhouette texels at rung 1 and 3 at rung 2, all of them
     boundary flicker.
+
+    The move clip leaves both rounds seated at pose A and rolls the whole
+    erector a board texel on MOVE_B. Running the rail is pose B's verb and
+    belongs to the ambient clip: a battery that erected its rounds while
+    driving would be firing on the move.
     """
     m = Model()
     for y in (1, 8):
@@ -1195,6 +1246,8 @@ def missiles(pose: Pose = Pose.A) -> Model:
         for x0 in (2, 6):
             _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=2)
             m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
+    if pose is Pose.MOVE_B:
+        _roll(m, 2)
     return m
 
 
