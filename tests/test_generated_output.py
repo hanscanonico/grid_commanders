@@ -2253,15 +2253,15 @@ class AmbientFrames(unittest.TestCase):
     # (tests/measure_motion.py prints the red row of the same readout):
     # apc 3, recon 4, tank 5, md_tank 6, mech 7, artillery 7, anti_air 8,
     # missiles 10, rockets 11, infantry 12 for the land army; fighter 30,
-    # bomber 36, b_copter 28, t_copter 30 in the air; battleship 30, cruiser
-    # 22, sub 24, lander 18 at sea. Three is the floor the quietest of them
+    # bomber 36, b_copter 28, t_copter 30 in the air; battleship 33, cruiser
+    # 24, sub 25, lander 20 at sea. Three is the floor the quietest of them
     # clears, and it is what an idle needs to be seen at board scale at all.
     MIN_SILHOUETTE_TEXELS = 3
     # Interior change per silhouette texel at rung 1, same run, worst first:
     # apc 4.67, tank 4.40, md_tank 4.33, rockets 3.64, artillery 3.00,
-    # recon 2.25, anti_air 2.12, cruiser 1.91, missiles 1.90, infantry 1.58,
-    # lander 1.56, bomber 1.39, battleship 1.20, t_copter 1.07, fighter 0.90,
-    # sub 0.83, b_copter 0.79, mech 0.43 — each the worst of that unit's five
+    # recon 2.25, anti_air 2.12, missiles 1.90, cruiser 1.71, infantry 1.58,
+    # lander 1.50, bomber 1.39, battleship 1.09, t_copter 1.07, fighter 0.90,
+    # sub 0.80, b_copter 0.79, mech 0.43 — each the worst of that unit's five
     # liveries. Livery moves the tones and not the shape, so the silhouette
     # counts above are the same for all five, but this ratio is a tone count
     # and does drift with them: by 0.1 or less on most units, 0.67 on the
@@ -2286,8 +2286,9 @@ class AmbientFrames(unittest.TestCase):
         Each land unit earns it by moving one named assembly a whole texel
         (a dz of two voxels, or a `(dx +1, dy -1)` diagonal); the two foot
         figures by leaning the whole upper body; the copters by turning
-        their rotors; everything else that flies or floats by the `BOB_PX`
-        hop, which is one texel of altitude exactly.
+        their rotors; the four hulls by the `BOB_PX` hop plus an assembly of
+        their own riding it; fighter and bomber by the hop alone, which is
+        one texel of altitude exactly.
         """
         for uid in ATLAS_ORDER:
             for fac in FACTIONS:
@@ -2403,6 +2404,23 @@ class AmbientFrames(unittest.TestCase):
                         b.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                         a.crop((0, ground, atlas.CELL_W, atlas.CELL_H)).tobytes(),
                     )
+
+    def test_every_hull_moves_a_part_and_not_only_its_altitude(self):
+        """The bob is a fleet rising in unison; the beat is a ship working.
+
+        All four hulls used to build byte-identical models in both poses and
+        pass the texel floor on `BOB_PX` alone. Each now moves one named
+        assembly besides — the guns, the autocannon, the periscope, the bow
+        visor — so ask the models, where the bob does not reach. And ask that
+        it stayed ONE assembly: the two poses keep nine voxels in ten, so a
+        hull that answered this by rebuilding itself would fail here."""
+        for uid in ("battleship", "cruiser", "sub", "lander"):
+            with self.subTest(unit=uid):
+                a = build_model(uid, Pose.A).vox
+                b = build_model(uid, Pose.B).vox
+                self.assertNotEqual(a, b)
+                shared = sum(1 for v, mat in a.items() if b.get(v) == mat)
+                self.assertGreater(shared / len(a), 0.9)
 
     # The copters are the only units whose SHAPE changes between poses, and
     # the shape is one part: the rotor. Measured on 2026-08-24, cell IoU with

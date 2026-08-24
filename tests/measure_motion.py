@@ -28,12 +28,13 @@ phase rather than moving them.
 
 Recorded on the red (meridian) row; livery changes the tones, not the shape.
 BEFORE is main at the 2026-08-23 land-idle pass, AFTER is that pass plus the
-2026-08-24 foot-figure one — the eight land vehicles re-authored to move a
-named sub-assembly a whole texel, `units._track`'s link stripe given a period
-of eight voxels so pose B advances it four (one texel in the direction of
-travel), then the rifleman and the rocket trooper given whole-texel body
-beats of their own, and then the two copters' rotors turned rather than
-swapped:
+2026-08-24 foot-figure and hull ones — the eight land vehicles re-authored to
+move a named sub-assembly a whole texel, `units._track`'s link stripe given a
+period of eight voxels so pose B advances it four (one texel in the direction
+of travel), then the rifleman and the rocket trooper given whole-texel body
+beats of their own, then the two copters' rotors turned rather than swapped,
+and finally the four static hulls given a moving assembly each on top of the
+bob (guns, autocannon, periscope, bow visor):
 
                      rung 1 (16x24)               rung 2 (32x48)
   unit         opaq  chng silh shim   |   opaq  chng silh shim
@@ -63,12 +64,16 @@ swapped:
                  60    62   30  1.07  |    260   249  109  1.28   after
   missiles       74     7    0  7.00  |    289    36    3 11.00   before
                  74    29   10  1.90  |    289   118   35  2.37   after
-  battleship     80    66   30  1.20  |    329   267  116  1.30
-  cruiser        71    64   22  1.91  |    241   225   88  1.56
-  sub            60    43   24  0.79  |    252   177   96  0.84
-  lander         58    46   18  1.56  |    216   188   72  1.61
+  battleship     80    66   30  1.20  |    329   267  116  1.30   before
+                 80    69   33  1.09  |    329   285  133  1.14   after
+  cruiser        71    64   22  1.91  |    241   225   88  1.56   before
+                 71    65   24  1.71  |    241   229   95  1.41   after
+  sub            60    43   24  0.79  |    252   177   96  0.84   before
+                 60    44   25  0.76  |    252   181  100  0.81   after
+  lander         58    46   18  1.56  |    216   188   72  1.61   before
+                 58    50   20  1.50  |    216   199   81  1.46   after
   ALL          1367   544  216  1.52  |   5452  2209  856  1.58   before
-               1367   722  291  1.48  |   5452  2900 1133  1.56   after
+               1367   731  299  1.44  |   5452  2937 1170  1.51   after
 
 Before the pass the whole tracked family — tank, md tank, anti air,
 artillery, rockets, apc — moved nothing at either rung. Six of them crept a
@@ -87,7 +92,7 @@ shoulders; a `dz = -2` compression moves the same texel but costs him 4 px of
 height and 64 opaque pixels, under the floors in `tests/test_infantry_read.py`.
 The trooper's shoulder and launcher drop `dz = -2` together.
 
-What each land unit moves is in its builder's docstring. Two of them are worth
+What each unit moves is in its builder's docstring. Two of them are worth
 the reader's time here, because they are what the projection costs: the APC
 has no turret and no gun and a roof detail buries itself under the roof's own
 far edge, so its texel is the nose dipping; and the MBT's barrel is two voxels
@@ -95,14 +100,22 @@ wide, thin enough that a one-texel lay measured 2 silhouette texels, so its
 gun lays two.
 
 Everything that flies or floats does change silhouette texels, but read that
-carefully before crediting it as animation: fighter, bomber and every hull
-build the SAME model for both poses (verified against `build_model`), and
-differ only by `atlas.BOB_PX` — pose B is pose A translated four atlas pixels
-up, which is one whole rung-1 texel of altitude and nothing else. They score
-the way a translated shape scores: every boundary texel of the sprite moves,
-which is why their counts dwarf a land unit's moving one assembly. Only the
-copters, which turn their rotor discs, change the shape itself, and they are
-the two with a shimmer index near 1.
+carefully before crediting it as animation: fighter and bomber build the SAME
+model for both poses (verified against `build_model`), and differ only by
+`atlas.BOB_PX` — pose B is pose A translated four atlas pixels up, which is
+one whole rung-1 texel of altitude and nothing else. They score the way a
+translated shape scores: every boundary texel of the sprite moves, which is
+why their counts dwarf a land unit's moving one assembly.
+
+The four hulls used to score that way too — the BEFORE rows above are the bob
+on its own, with a fleet that rose and fell in unison and nothing on any ship
+moving. Each now moves one named assembly a texel BESIDES bobbing, and the
+gain shows in both columns: a part that rises with the bob travels two texels
+where the hull travels one. The lander is the one that had to change its mind
+about which way: the bow visor dips in a landing craft, but a texel down
+under a texel of bob pins the bow's outline exactly where pose A left it (17
+silhouette texels, below the 18 the bob scored alone), so the visor rides UP
+its hinge posts instead.
 
 The copters' own BEFORE row is the 45-degree sweep they used to do, which is
 the ambiguous middle of a four-blade disc's 90-degree symmetry and was drawn

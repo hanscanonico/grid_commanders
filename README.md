@@ -191,10 +191,16 @@ one diagonal step over planted boots with his rifle and both hands riding the
 shoulders (2 -> 12 silhouette texels at rung 1), and the rocket trooper's left
 pauldron drops `dz = -2` under its launch tube (2 -> 7). The rifleman leans
 rather than compresses because a `dz = -2` on him costs 4 px of height and 64
-opaque pixels, below the floors his own read tests hold.
+opaque pixels, below the floors his own read tests hold. The four hulls came
+last: they cleared the bar on the `atlas.BOB_PX` bob alone, which is a fleet
+rising and falling in unison with nothing on any ship moving, so each now
+rides one assembly a texel on top of the bob — the battleship lays both main
+batteries, the cruiser elevates its autocannon, the sub raises its search
+periscope, the lander walks its bow visor UP its hinge posts (a dip cancels
+the bob at the bow and pins the outline where pose A left it, 18 -> 17).
 `AmbientFrames.test_every_unit_moves_a_whole_board_texel` holds the floor at
-three changed silhouette texels at rung 1 for every unit of every livery — the
-air and sea ones, whose pose B is their pose A translated by `atlas.BOB_PX`,
+three changed silhouette texels at rung 1 for every unit of every livery —
+fighter and bomber, whose pose B is their pose A translated by `atlas.BOB_PX`,
 clear it by moving every boundary texel they own — and
 `test_no_unit_shimmers_more_than_it_moves` caps the other half of the ratio, so
 the floor can never be bought by repainting an interior under an outline that
