@@ -1058,6 +1058,14 @@ class PropertyPalette(unittest.TestCase):
     # (`buildings.ROOF_TRIM`) — and the unowned row is built out of cool
     # concrete against the owned rows' warm masonry, which is the one thing
     # Iron's own grey cannot be told from by value.
+    #
+    # This measure is phase-sensitive: 4:1 NEAREST keeps one row in four, so
+    # moving a building up or down the cell changes which of its rows the
+    # board ever draws. Standing the airport and the port on the shared
+    # ground line (`terrain.PROPERTY_ANCHOR`) moved them 15 and 9 rows and
+    # cost them a phase's worth of read — port neutral/Iron 29.0 -> 23.0,
+    # airport Iron/verdant 32.6 -> 27.1, the two thinnest margins on the
+    # board today. Recolouring work should aim at those two pairs first.
     BOARD_ZOOM = 4
     OWNERS_APART = 25.0
     # Neutral against Iron is a grey against a grey and buys its margin with
