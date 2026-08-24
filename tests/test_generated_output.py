@@ -3041,9 +3041,9 @@ class Silhouette(unittest.TestCase):
             pair = frozenset((a, b))
             with self.subTest(pair=(a, b)):
                 if pair in self.KNOWN_CLONES:
-                    self.assertGreater(iou, 0.85)  # debt still real
+                    self.assertGreater(iou, self.RUNG_2_BAR)  # debt still real
                 else:
-                    self.assertLessEqual(iou, 0.85)
+                    self.assertLessEqual(iou, self.RUNG_2_BAR)
 
     def test_no_two_units_share_a_silhouette_zoomed_out(self):
         for a, b, iou in self._pairs(self.RUNG_1):

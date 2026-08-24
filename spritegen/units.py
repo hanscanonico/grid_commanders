@@ -632,7 +632,7 @@ def artillery(pose: Pose = Pose.A) -> Model:
     the howitzer ran along the tank's own gun line and the two units measured
     0.800 IoU at rung 1, one shape wearing two labels on the zoomed-out board
     (`Silhouette`). Three z per y draws a 5:2 slope the sheet has nothing else
-    at, and the spike leaves the hull line for open sky — 0.757 now, and the
+    at, and the spike leaves the hull line for open sky — 0.764 now, and the
     unit is a foot taller into the cell's headroom for it.
 
     Pose B is the recoil stroke: the sleeved barrel, the flared brake and the
@@ -758,12 +758,14 @@ def apc(pose: Pose = Pose.A) -> Model:
       course and gives 1px back per voxel it stands forward of the mass it is
       stepped up from, so with the cab 9 voxels ahead of the bay's rear
       corner the step only clears the iso slope at five;
-    - the hull is one voxel narrower than any gun tank's and two voxels
-      longer, which is a carrier's proportion and not a turret ring's;
+    - the hull is 9 voxels wide against the MBT's 12 and the narrowest gun
+      tank's 11, and its run is two voxels longer than the MBT's, which is a
+      carrier's proportion and not a turret ring's;
     - the ramp is DOWN, three voxels of it stepping to the ground behind the
       tail. No gun vehicle on the sheet has anything at that corner.
 
-    It reads 0.743 against the tank now, and 0.757 is the roster's worst pair.
+    It reads 0.743 against the tank now, and tank/artillery's 0.764 is the
+    roster's worst pair.
 
     Pose B dips the nose a whole board texel: the cab, its roof, the cupola,
     the glacis and the bumper all ride `dz = -2` while the open deck behind
