@@ -22,6 +22,7 @@ import statistics
 import unittest
 from unittest import mock
 from collections import Counter
+from functools import lru_cache
 
 from PIL import Image
 
@@ -60,7 +61,15 @@ from spritegen.terrain import (
     WATER_LIGHT,
     WOODS_SALT,
 )
-from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, UNITS, Pose, build_model
+from spritegen.units import (
+    AMBIENT_POSES,
+    ATLAS_ORDER,
+    MOVE_POSES,
+    MOVES,
+    UNITS,
+    Pose,
+    build_model,
+)
 from spritegen import voxel
 from spritegen.voxel import (
     CAST,
@@ -139,6 +148,41 @@ def faction_pixels(sprite_a, sprite_b) -> list[tuple[int, int, int]]:
             if pa[x, y][3] > 200 and pa[x, y][:3] != pb[x, y][:3]:
                 out.append(pa[x, y][:3])
     return out
+
+
+# Rung 1 of the board's zoom: BattleView scales the 64x96 cell by 0.25 per
+# rung with nearest filtering, so the furthest the board zooms out samples the
+# cell down to 16x24 texels, and a pose delta under 4 atlas px moves nothing a
+# player can see. Both clips are read at this size.
+RUNG_1_CELL = (16, 24)
+
+
+def rung1_texels(
+    uid: str, fac: Faction, poses: tuple[Pose, ...] = AMBIENT_POSES
+) -> tuple[int, int]:
+    """Rung-1 texels a clip's two poses disagree on, and how many of those
+    disagreements are the silhouette rather than the tone."""
+    w, h = RUNG_1_CELL
+    pa, pb = (
+        atlas.unit_cell(uid, fac, pose).resize(RUNG_1_CELL, Image.NEAREST).load()
+        for pose in poses
+    )
+    changed = silhouette = 0
+    for y in range(h):
+        for x in range(w):
+            ca, cb = pa[x, y], pb[x, y]
+            if ca != cb:
+                changed += 1
+                if (ca[3] > 128) != (cb[3] > 128):
+                    silhouette += 1
+    return changed, silhouette
+
+
+@lru_cache(maxsize=None)
+def _pose_cell(uid: str, fac_key: str, pose: Pose) -> Image.Image:
+    """One composed cell, kept across tests — a move gate compares the same
+    handful of cells several ways and each render costs ~35 ms."""
+    return atlas.unit_cell(uid, faction_by_key(fac_key), pose)
 
 
 class AtlasContract(unittest.TestCase):
@@ -2489,11 +2533,8 @@ class AmbientFrames(unittest.TestCase):
         self.assertEqual(b1.tobytes(), atlas.build_units_atlas(Pose.B).tobytes())
         self.assertNotEqual(b1.tobytes(), atlas.build_units_atlas().tobytes())
 
-    # What the board draws. BattleView scales the 64x96 cell by 0.25 per zoom
-    # rung with nearest filtering, so rung 1 — the furthest the board zooms
-    # out, and the hardest sample an idle has to survive — is a 16x24 texel
-    # sample of the cell, where a pose delta under 4 atlas px moves nothing.
-    RUNG_1 = (16, 24)
+    # What the board draws is `RUNG_1_CELL` — the furthest the board zooms
+    # out, and the hardest sample an idle has to survive.
     # Every unit at rung 1, measured on 2026-08-24 over all five liveries
     # (tests/measure_motion.py prints the red row of the same readout):
     # apc 3, recon 4, tank 5, md_tank 6, mech 7, artillery 7, anti_air 8,
@@ -2560,22 +2601,7 @@ class AmbientFrames(unittest.TestCase):
                     self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
 
     def _texels(self, uid: str, fac: Faction) -> tuple[int, int]:
-        """Rung-1 texels the two poses disagree on, and how many of those
-        disagreements are the silhouette rather than the tone."""
-        w, h = self.RUNG_1
-        pa, pb = (
-            atlas.unit_cell(uid, fac, pose).resize(self.RUNG_1, Image.NEAREST).load()
-            for pose in (Pose.A, Pose.B)
-        )
-        changed = silhouette = 0
-        for y in range(h):
-            for x in range(w):
-                ca, cb = pa[x, y], pb[x, y]
-                if ca != cb:
-                    changed += 1
-                    if (ca[3] > 128) != (cb[3] > 128):
-                        silhouette += 1
-        return changed, silhouette
+        return rung1_texels(uid, fac, AMBIENT_POSES)
 
     def test_the_key_pose_keeps_the_units_mass(self):
         for uid in ATLAS_ORDER:
@@ -2792,6 +2818,208 @@ class AmbientFrames(unittest.TestCase):
             for x in range(w)
             if px[x, y][:3] == FOAM and px[x, y][3] == 255
         }
+
+
+class MoveFrames(unittest.TestCase):
+    """The move clip is the same army walking, and it has to walk at board
+    scale.
+
+    `MIN_SILHOUETTE_TEXELS = 6` is double the idle floor. An idle shifts one
+    named assembly and three rung-1 texels is the quietest of those anyone
+    can see; a gait is the whole running gear — legs, tracks, rotor, bow —
+    and if the board cannot see six texels of it move, the unit reads as
+    sliding rather than travelling. Six is also exactly the texel rule
+    applied twice over: one board texel is 4 atlas px (`dz +/-2`, or a
+    `(dx -1, dy +1)` forward diagonal), so a stride that clears this cannot
+    be a sub-texel jiggle in any livery.
+
+    `MAX_SHIMMER = 5.0` and `MAX_MASS_DRIFT = 0.08` are `AmbientFrames`'
+    numbers, carried over unchanged and for the same reasons: a frame that
+    repaints its interior instead of moving its outline reads as boiling,
+    and a unit that walks is still the same mass of metal. The drift is
+    measured against pose A for BOTH move frames, so a gait may not grow the
+    unit across the clip either.
+
+    Everything that reads pixels is scoped to `units.MOVES`, the opt-in set
+    of units with an authored gait. The rest render their ambient
+    counterpart (`MOVE_A -> A`, `MOVE_B -> B`), which the fallback test
+    checks byte-for-byte; while `MOVES` is empty the scoped tests skip
+    loudly rather than pass vacuously.
+    """
+
+    MIN_SILHOUETTE_TEXELS = 6
+    MAX_SHIMMER = 5.0
+    MAX_MASS_DRIFT = 0.08
+
+    def _movers(self) -> list[str]:
+        """The units under gate, or a skip that says the gate saw nothing."""
+        if not MOVES:
+            self.skipTest("no unit has authored move poses yet")
+        return [uid for uid in ATLAS_ORDER if uid in MOVES]
+
+    def test_the_move_sheet_is_reproducible(self):
+        """The move sheets are sheets like any other: same bytes every run.
+        Whether they differ from the ambient pair is a per-unit question the
+        next two tests ask, since a unit outside `MOVES` falls back."""
+        a1 = atlas.build_units_atlas(Pose.MOVE_A)
+        self.assertEqual(a1.tobytes(), atlas.build_units_atlas(Pose.MOVE_A).tobytes())
+
+    def test_the_move_pair_is_not_the_ambient_pair(self):
+        """A unit that opts in has to author something.
+
+        `MOVES` is the claim that this unit walks; the claim is empty if the
+        clip is the idle under another name. Per unit and per livery: the two
+        move frames differ from each other, and the pair is not the ambient
+        pair (one of the two may legitimately reuse its ambient key — a gait
+        that passes through the rest pose — but not both)."""
+        for uid in self._movers():
+            for fac in FACTIONS:
+                cells = {
+                    pose: _pose_cell(uid, fac.key, pose).tobytes() for pose in Pose
+                }
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertNotEqual(cells[Pose.MOVE_A], cells[Pose.MOVE_B])
+                    self.assertNotEqual(
+                        (cells[Pose.MOVE_A], cells[Pose.MOVE_B]),
+                        (cells[Pose.A], cells[Pose.B]),
+                    )
+
+    def test_every_moving_unit_crosses_a_whole_board_texel(self):
+        """The gait at the size the board draws it: how many rung-1 texels
+        the two move frames disagree about being PAINTED, for every livery.
+        Under this floor the stride re-tones the inside of a shape that
+        holds still, which is the sliding-sprite failure the ambient gate
+        was written for, doubled because a gait moves more than an idle."""
+        for uid in self._movers():
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    _, silhouette = rung1_texels(uid, fac, MOVE_POSES)
+                    self.assertGreaterEqual(silhouette, self.MIN_SILHOUETTE_TEXELS)
+
+    def test_no_moving_unit_shimmers_more_than_it_walks(self):
+        """The other half of the ratio, as in `AmbientFrames`: interior
+        texels that only change tone, per texel of silhouette that actually
+        moves. Together the two say the change the board sees is mostly the
+        shape going somewhere."""
+        for uid in self._movers():
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    changed, silhouette = rung1_texels(uid, fac, MOVE_POSES)
+                    interior = changed - silhouette
+                    self.assertLess(interior / max(silhouette, 1), self.MAX_SHIMMER)
+
+    def test_the_gait_keeps_the_units_mass(self):
+        for uid in self._movers():
+            for fac in FACTIONS:
+                a = self._mass(_pose_cell(uid, fac.key, Pose.A))
+                for pose in MOVE_POSES:
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        m = self._mass(_pose_cell(uid, fac.key, pose))
+                        self.assertLessEqual(abs(m - a) / a, self.MAX_MASS_DRIFT)
+
+    def test_the_move_clip_moves_no_cell(self):
+        """The game's tween is the travel; the sheet shows gait only.
+
+        A move frame that translated the hull in-sheet would travel twice —
+        once by the tween and once by the art — so all four poses hang off
+        pose A's crop: `MOVE_A` places exactly where `A` does and `MOVE_B`
+        where `B` does (the air/sea bob included, since `beat` is true for
+        both off-beats), and the footprint the shadow is sized from and the
+        ground row it sits on are one number for the whole unit. Asked of
+        all eighteen units, `MOVES` or not, because it is placement and
+        costs no render."""
+        for uid in ATLAS_ORDER:
+            a = atlas.cell_placement(uid, Pose.A)
+            with self.subTest(unit=uid):
+                self.assertEqual(atlas.cell_placement(uid, Pose.MOVE_A), a)
+                self.assertEqual(
+                    atlas.cell_placement(uid, Pose.MOVE_B),
+                    atlas.cell_placement(uid, Pose.B),
+                )
+                for pose in Pose:
+                    place = atlas.cell_placement(uid, pose)
+                    self.assertEqual(place.footprint_w, a.footprint_w)
+                    self.assertEqual(place.ground, a.ground)
+
+    def test_every_moving_unit_keeps_its_cast_shadow(self):
+        """The patch of ground a unit walks over may not pump with its
+        stride, exactly as a parked unit's may not pump with its idle: one
+        shadow, sized off the pose-A footprint and laid on the pose-A ground
+        row, identical in all four poses."""
+        for uid in self._movers():
+            for fac in FACTIONS:
+                shadow = self._shadow(_pose_cell(uid, fac.key, Pose.A))
+                for pose in (Pose.B, *MOVE_POSES):
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        self.assertEqual(
+                            self._shadow(_pose_cell(uid, fac.key, pose)), shadow
+                        )
+
+    def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
+        """The fallback is what makes the move sheets valid from day one:
+        every unit outside `MOVES` draws its ambient counterpart, byte for
+        byte, so the clip can be adopted one family at a time without the
+        sheet ever going blank or stale."""
+        for uid in ATLAS_ORDER:
+            if uid in MOVES:
+                continue
+            for fac in FACTIONS:
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertEqual(
+                        _pose_cell(uid, fac.key, Pose.MOVE_A).tobytes(),
+                        _pose_cell(uid, fac.key, Pose.A).tobytes(),
+                    )
+                    self.assertEqual(
+                        _pose_cell(uid, fac.key, Pose.MOVE_B).tobytes(),
+                        _pose_cell(uid, fac.key, Pose.B).tobytes(),
+                    )
+
+    def test_a_moving_unit_still_reads_as_its_own_unit(self):
+        """As for frame B: among every unit's frame A, the one a move frame
+        most resembles must be its own. A gait may move pixels; it may never
+        move identity."""
+        movers = self._movers()
+        frame_a = {uid: self._sil(uid, Pose.A) for uid in ATLAS_ORDER}
+        for uid in movers:
+            for pose in MOVE_POSES:
+                sil = self._sil(uid, pose)
+                best = max(
+                    ATLAS_ORDER,
+                    key=lambda o: len(sil & frame_a[o]) / len(sil | frame_a[o]),
+                )
+                with self.subTest(unit=uid, pose=pose.name):
+                    self.assertEqual(best, uid)
+
+    def test_a_move_frame_is_not_its_own_mirror(self):
+        """Informational, and it guards the consumer's `flip_h`.
+
+        The game plays one move clip for both facings and mirrors the cell
+        about its centre for the other. A frame that is its own mirror makes
+        that flip a no-op — nothing in the art leads — so a gait worth
+        mirroring is asymmetric in the sheet."""
+        for uid in self._movers():
+            for fac in FACTIONS:
+                cell = _pose_cell(uid, fac.key, Pose.MOVE_A)
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertNotEqual(
+                        cell.tobytes(),
+                        cell.transpose(Image.Transpose.FLIP_LEFT_RIGHT).tobytes(),
+                    )
+
+    def _mass(self, cell: Image.Image) -> int:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return sum(1 for y in range(h) for x in range(w) if px[x, y][3] > 0)
+
+    def _shadow(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
+
+    def _sil(self, uid: str, pose: Pose) -> set:
+        cell = _pose_cell(uid, "neutral", pose).convert("RGBA")
+        px = cell.resize((32, 32), Image.NEAREST).load()
+        return {(x, y) for y in range(32) for x in range(32) if px[x, y][3] > 200}
 
 
 class GroundContrast(unittest.TestCase):
