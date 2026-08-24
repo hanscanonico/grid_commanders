@@ -201,21 +201,22 @@ class FigureSheet(unittest.TestCase):
 
     def test_every_unit_of_every_faction_loses_its_shadow(self):
         for pose in (Pose.A, Pose.B):
-            board = atlas.build_units_atlas(pose)
-            figures = atlas.build_units_atlas(pose, shadow=False)
-            for row, fac in enumerate(FACTIONS):
-                for col, uid in enumerate(ATLAS_ORDER):
-                    box = (
-                        col * atlas.CELL_W,
-                        row * atlas.CELL_H,
-                        (col + 1) * atlas.CELL_W,
-                        (row + 1) * atlas.CELL_H,
-                    )
-                    self.assertNotEqual(
-                        board.crop(box).tobytes(),
-                        figures.crop(box).tobytes(),
-                        f"{uid} ({fac.key}) has no shadow to leave off in {pose}",
-                    )
+            with self.subTest(pose=pose):
+                board = atlas.build_units_atlas(pose)
+                figures = atlas.build_units_atlas(pose, shadow=False)
+                for row, fac in enumerate(FACTIONS):
+                    for col, uid in enumerate(ATLAS_ORDER):
+                        box = (
+                            col * atlas.CELL_W,
+                            row * atlas.CELL_H,
+                            (col + 1) * atlas.CELL_W,
+                            (row + 1) * atlas.CELL_H,
+                        )
+                        self.assertNotEqual(
+                            board.crop(box).tobytes(),
+                            figures.crop(box).tobytes(),
+                            f"{uid} ({fac.key}) has no shadow to leave off in {pose}",
+                        )
 
     def test_the_figure_sheets_are_reproducible(self):
         for pose in (Pose.A, Pose.B):
