@@ -40,6 +40,12 @@ const HEAD_CX := 55.0
 ## spread walks the eyes apart (0.9-1.1). A row without one gets these, which
 ## are the single head every bust used to share.
 const HEAD_DEFAULT: Array = [1.0, &"round", 0.0, 1.0]
+## The jaws `_jaw` knows how to draw. A name outside this vocabulary falls
+## through to the round one, which is silent, so the FACES table is linted
+## against these rather than against a literal spelled a second time.
+const JAW_ROUND := &"round"
+const JAW_SQUARE := &"square"
+const JAW_TAPERED := &"tapered"
 
 const SKIN := {
 	&"light": "#f2c9a0",
@@ -287,7 +293,7 @@ const FACES := {
 		"mouth": &"grin",
 		"facial": &"none",
 		"acc": &"goggles",
-		"head": [0.92, &"tapered", 1.0, 1.04],
+		"head": [0.98, &"round", 0.0, 1.06],
 		"pose": [-7.0, 1.2, true],
 		"bg": &"speed",
 		"prop": &"plane",
@@ -332,7 +338,7 @@ const FACES := {
 		"mouth": &"smile",
 		"facial": &"none",
 		"acc": &"headset",
-		"head": [0.92, &"round", 0.5, 1.06],
+		"head": [0.9, &"tapered", 0.5, 1.08],
 		"pose": [-6.0, 1.22, false],
 		"bg": &"halftone",
 		"prop": &"whistle",
@@ -654,12 +660,12 @@ func _head(skin: String, face: Dictionary = {}) -> String:
 
 ## The lower half of the skull, from the cheekbone down.
 func _jaw(kind: StringName, width: float, left: float, right: float) -> String:
-	if kind == &"square":
+	if kind == JAW_SQUARE:
 		return (
 			"L%s,80 Q%s,88 %s,89 Q%s,88 %s,80 L%s,60 Z"
 			% [_hx(74, width), _hx(70, width), HEAD_CX, _hx(40, width), _hx(36, width), left]
 		)
-	if kind == &"tapered":
+	if kind == JAW_TAPERED:
 		return "Q%s,80 %s,89 Q%s,80 %s,60 Z" % [_hx(76, width), HEAD_CX, _hx(34, width), left]
 	return "Q%s,84 %s,89 Q%s,84 %s,60 Z" % [right, HEAD_CX, left, left]
 

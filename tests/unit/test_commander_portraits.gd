@@ -79,3 +79,40 @@ func _assert_baked(path: String, size: Vector2) -> void:
 	var texture: Texture2D = load(path)
 	assert_eq(texture.get_size(), size, "%s is not the pinned size" % path)
 	assert_true(texture.get_image().has_mipmaps(), "%s imported without mipmaps" % path)
+
+
+
+## The head column is the only thing separating one bust from another before the
+## hair goes on, and every way it can go wrong is silent: a row that forgot it
+## draws the shared skull, a jaw outside the vocabulary falls through to the
+## round one, and a row copied off a neighbour hands two generals one face. All
+## three come from a data edit, so this is where they are caught.
+func test_every_general_is_drawn_on_a_skull_of_their_own() -> void:
+	var jaws: Array[StringName] = [FaceSvg.JAW_ROUND, FaceSvg.JAW_SQUARE, FaceSvg.JAW_TAPERED]
+	var seen := {}
+	for id: StringName in FaceSvg.FACES:
+		var row: Dictionary = FaceSvg.FACES[id]
+		assert_true(row.has("head"), "%s is drawn on the shared skull" % id)
+		var head: Array = row.get("head", FaceSvg.HEAD_DEFAULT)
+		assert_eq(
+			head.size(), FaceSvg.HEAD_DEFAULT.size(), "%s: head is [width, jaw, crown, spread]" % id
+		)
+		assert_between(float(head[0]), 0.86, 1.14, "%s: head width" % id)
+		assert_has(jaws, head[1], "%s stands an unknown jaw" % id)
+		assert_between(float(head[2]), -3.0, 3.0, "%s: crown" % id)
+		assert_between(float(head[3]), 0.9, 1.1, "%s: eye spread" % id)
+		var key := str(head)
+		assert_false(seen.has(key), "%s and %s share a skull" % [id, seen.get(key, &"")])
+		seen[key] = id
+
+
+## The default is the one head the handoff authored, so a row that names none
+## still draws the bust every general shared before this table grew a column —
+## which is what the neutral silhouette has always been and must stay. The
+## numbers are the handoff's, printed as the floats they are now composed from;
+## the raster is unchanged, which is what `make portraits` shows.
+func test_the_default_skull_is_the_handoff_head() -> void:
+	var drawn := FaceSvg.new(CommanderVisuals.faction_themes()[0]).build_neutral()
+	var crown := "M32.0,52 Q32.0,27.0 55.0,27.0 Q78.0,27.0 78.0,52"
+	var handoff := crown + " L78.0,60 Q78.0,84 55.0,89 Q32.0,84 32.0,60 Z"
+	assert_string_contains(drawn, handoff, "the neutral bust is no longer the authored head")
