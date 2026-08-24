@@ -28,6 +28,8 @@ const WINDOW := Rect2(6, 24, 98, 96)
 const WINDOW_SHADE := 0.28
 const RIM := "#ffffff"
 const RIM_OPACITY := 0.22
+## The uniform mass every bust rises out of, faction or not.
+const SHOULDER_MASS := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
 ## The two eye centres every brow, lash and pupil is placed against.
 const EYE_X: Array[float] = [45.0, 65.0]
 ## Nia Rowan's freckles, three to a cheek.
@@ -429,11 +431,11 @@ func build_neutral() -> String:
 	return out + body + "</g></svg>"
 
 
-## The empty seat's uniform: the mass and collar every bust wears, in slate, with
-## the design system's diamond struck on the chest where a faction chevron goes.
+## The empty seat's uniform: the same mass in slate, under a collar cut shallow
+## enough to clear the design system's diamond, struck on the chest where a
+## faction chevron goes.
 func _blank_shoulders() -> String:
-	var mass := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
-	var out := _path(mass, _slate, _line())
+	var out := _path(SHOULDER_MASS, _slate, _line())
 	out += _stroke_path("M44,90 L55,93 L66,90", 2.4)
 	return out + _stroke_path("M55,93 L62,100 L55,107 L48,100 Z", 2.4)
 
@@ -561,8 +563,7 @@ func _bust(face: Dictionary) -> String:
 ## Uniform shoulders rising off the bottom edge, with the ink V of a collar and
 ## the faction chevron under it.
 func _shoulders() -> String:
-	var mass := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
-	var out := _path(mass, _accent, _line())
+	var out := _path(SHOULDER_MASS, _accent, _line())
 	out += _path("M6,110 Q6,93 32,90 L78,90 Q104,93 104,110", "none", _rim())
 	out += _stroke_path("M44,90 L55,101 L66,90", 2.4)
 	return out + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent_dark)
