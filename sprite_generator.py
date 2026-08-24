@@ -9,12 +9,15 @@ the same bytes.
 Outputs (under --out, default ./out):
   anim.json              the sheet contract — cell geometry, ambient clip,
                          column/row order, terrain phase counts
-  units_atlas.png        1152x320 RGBA — drop-in for assets/tiles/units_atlas.png
+  units_atlas.png        1152x480 RGBA — drop-in for assets/tiles/units_atlas.png
   units_atlas_b.png      ambient animation frame B (every unit's second key pose)
   units_atlas_figures.png / units_atlas_figures_b.png
                           the same two frames with the tile's cast shadow left
                           off, for the cut-ins, which draw at 1:1 on their own
                           ground and idle on the ambient_figures clip
+  units_atlas_move.png / units_atlas_move_b.png
+                          the same grid again, under way — one facing (the
+                          art's own, screen-left); the consumer mirrors it
   terrain_atlas.png       896x320 RGBA — drop-in for assets/tiles/terrain_atlas.png
                           (the five property columns are transparent overlays)
   units/<id>_<team>.png   one units-atlas cell each, for paste_unit_sprites.gd
@@ -74,6 +77,7 @@ def _install(src: Path, dest: Path) -> None:
     sheets = [
         *anim.AMBIENT_SHEETS,
         *anim.FIGURE_SHEETS,
+        *anim.MOVE_SHEETS,
         "terrain_atlas.png",
         anim.MANIFEST_NAME,
     ]
@@ -147,6 +151,15 @@ def main() -> None:
     print("building the figure sheets (no tile shadow, for the cut-ins)")
     _write(atlas.build_units_atlas(shadow=False), args.out / figures_a)
     _write(atlas.build_units_atlas(Pose.B, shadow=False), args.out / figures_b)
+
+    move_a, move_b = anim.MOVE_SHEETS
+
+    print(
+        "building the move clip (one facing — the art's own, screen-left; "
+        "the consumer mirrors it)"
+    )
+    _write(atlas.build_units_atlas(Pose.MOVE_A), args.out / move_a)
+    _write(atlas.build_units_atlas(Pose.MOVE_B), args.out / move_b)
 
     print("building terrain atlas (14 terrains x 5 rows)")
     terrain_atlas = atlas.build_terrain_atlas()

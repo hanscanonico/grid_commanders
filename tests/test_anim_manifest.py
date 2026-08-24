@@ -21,9 +21,9 @@ import unittest
 from pathlib import Path
 
 import sprite_generator
-from spritegen import anim, atlas, terrain, voxel
+from spritegen import anim, atlas, terrain, units, voxel
 from spritegen.palette import FACTIONS
-from spritegen.units import ATLAS_ORDER, UNITS
+from spritegen.units import ATLAS_ORDER, MOVES, UNITS, Pose
 
 
 class Columns(unittest.TestCase):
@@ -114,6 +114,109 @@ class Clip(unittest.TestCase):
         self.assertEqual(clip["ms_per_frame"], ambient["ms_per_frame"])
         self.assertEqual(clip["mode"], ambient["mode"])
 
+    def test_the_move_clip_plays_the_move_sheets_at_the_move_cadence(self):
+        clip = anim.MANIFEST["clips"]["move"]
+        self.assertEqual(clip["sheets"], list(anim.MOVE_SHEETS))
+        self.assertEqual(clip["order"], list(range(len(anim.MOVE_SHEETS))))
+        self.assertEqual(clip["ms_per_frame"], anim.MOVE_MS)
+        self.assertEqual(clip["mode"], "loop")
+        self.assertEqual(clip["fallback"], "ambient")
+
+    def test_the_move_clip_ships_one_facing_and_says_which(self):
+        """The sheets are the art's own facing and the consumer mirrors for
+        the other one, so the manifest has to name both halves of that deal —
+        a `facing` the game can compare a heading against, and the heading it
+        must set `flip_h` for."""
+        clip = anim.MANIFEST["clips"]["move"]
+        self.assertIn(clip["facing"], ("left", "right"))
+        other = "right" if clip["facing"] == "left" else "left"
+        self.assertEqual(clip["flip_x_for"], [other])
+
+    def test_only_the_mirrored_clip_carries_a_facing(self):
+        """`facing`'s absence is a version-1 consumer's reading of "never
+        mirror", which is what lets the schema grow without a version bump —
+        so an existing clip may not sprout the key."""
+        for name in ("ambient", "ambient_figures", "sea"):
+            clip = anim.MANIFEST["clips"][name]
+            self.assertNotIn("facing", clip, f"{name} must not claim a facing")
+            self.assertNotIn("flip_x_for", clip)
+            self.assertNotIn("fallback", clip)
+
+    def test_the_move_cadence_is_quicker_than_the_idle_and_shares_no_tick(self):
+        """A stride per cell crossed is faster than an idle beat, and the
+        three cadences must not turn over together: if one divided another the
+        whole board would step on the same tick."""
+        self.assertLess(anim.MOVE_MS, anim.AMBIENT_MS)
+        self.assertNotEqual(anim.AMBIENT_MS % anim.MOVE_MS, 0)
+        self.assertNotEqual(anim.SEA_MS % anim.MOVE_MS, 0)
+
+    def test_each_clip_owns_its_own_sheets(self):
+        """A sheet in two clips is two cadences drawing one file."""
+        tuples = (anim.AMBIENT_SHEETS, anim.FIGURE_SHEETS, anim.SEA_SHEETS)
+        for sheets in tuples:
+            self.assertTrue(
+                set(anim.MOVE_SHEETS).isdisjoint(sheets),
+                f"the move clip shares a sheet with {sheets}",
+            )
+
+
+class MoveFallback(unittest.TestCase):
+    def test_an_unauthored_unit_moves_as_it_idles(self):
+        """The move clip is valid before a single stride is authored: every
+        uid outside `units.MOVES` renders its ambient counterpart, cell for
+        cell. That is the contract the sheets ship on, so it is measured on
+        the assembled sheets — placement included — rather than trusted from
+        `build_model`."""
+        for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
+            moved = atlas.build_units_atlas(move)
+            idle = atlas.build_units_atlas(ambient)
+            for col, uid in enumerate(ATLAS_ORDER):
+                if uid in MOVES:
+                    continue
+                for row in range(len(FACTIONS)):
+                    box = (
+                        col * atlas.CELL_W,
+                        row * atlas.CELL_H,
+                        (col + 1) * atlas.CELL_W,
+                        (row + 1) * atlas.CELL_H,
+                    )
+                    with self.subTest(unit=uid, row=row, pose=move.name):
+                        self.assertEqual(
+                            moved.crop(box).tobytes(), idle.crop(box).tobytes()
+                        )
+
+    def test_a_frame_ticking_branch_reads_the_beat_not_the_pose(self):
+        """`build_model`'s fallback hides this, so it is asked of the builders
+        directly: a branch that ticks with the FRAME — the rotor phase — must
+        give MOVE_A the A art and MOVE_B the B art. Written as
+        `X if pose is Pose.A else Y` it would hand MOVE_A the off-beat blade,
+        and the first authored copter stride would inherit the bug."""
+        for uid in ("b_copter", "t_copter"):
+            builder = UNITS[uid][0]
+            for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
+                with self.subTest(unit=uid, pose=move.name):
+                    self.assertEqual(builder(move).vox, builder(ambient).vox)
+
+    def test_the_clip_table_names_the_clips_the_manifest_publishes(self):
+        """`units.CLIP_POSES` is what a family task reads to know which poses
+        it owes a clip; a name or a frame count that drifts from the manifest
+        would author strides for a clip no consumer plays."""
+        for name, poses in units.CLIP_POSES.items():
+            clip = anim.MANIFEST["clips"].get(name)
+            self.assertIsNotNone(
+                clip, f"CLIP_POSES names {name}, the manifest does not"
+            )
+            self.assertEqual(len(poses), len(clip["sheets"]))
+
+
+# Every units sheet the install has to carry, in one place, so seeding the
+# fake output directory and asserting what landed cannot drift apart.
+_SHEETS: tuple[str, ...] = (
+    *anim.AMBIENT_SHEETS,
+    *anim.FIGURE_SHEETS,
+    *anim.MOVE_SHEETS,
+)
+
 
 class Install(unittest.TestCase):
     def test_the_install_step_ships_the_manifest_with_the_sheets(self):
@@ -124,7 +227,7 @@ class Install(unittest.TestCase):
             src, dest = Path(tmp) / "out", Path(tmp) / "game"
             for sub in ("units", "iso_buildings", "autotiles"):
                 (src / sub).mkdir(parents=True)
-            for name in (*anim.AMBIENT_SHEETS, *anim.FIGURE_SHEETS):
+            for name in _SHEETS:
                 (src / name).write_bytes(b"")
             (src / "terrain_atlas.png").write_bytes(b"")
             anim.dump(src / anim.MANIFEST_NAME)
@@ -136,7 +239,7 @@ class Install(unittest.TestCase):
             self.assertEqual(shipped.read_text(encoding="utf-8"), anim.dumps())
             # A clip the manifest names but the install does not ship is the
             # same drift one step later, so every sheet has to land too.
-            for name in (*anim.AMBIENT_SHEETS, *anim.FIGURE_SHEETS):
+            for name in _SHEETS:
                 self.assertTrue((tiles / name).exists(), f"the install left {name}")
 
 
