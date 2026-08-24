@@ -192,7 +192,10 @@ def contact_sheet(
             x0 = GAP + col * unit_w
             for s, mirrored in enumerate(sides):
                 x = x0 + s * (cell_w + GAP)
-                draw.text((x, top), f"{uid} flip" if mirrored else uid, fill=INK)
+                # The mirror's label is bare "flip": the default bitmap font is
+                # about 6 px a character, so "<uid> flip" runs past a 64 px
+                # column and into the next unit's label.
+                draw.text((x, top), "flip" if mirrored else uid, fill=INK)
                 for i, pose in enumerate(poses):
                     sheet.paste(
                         zoom(frames[uid, rung, pose, mirrored], VIEW // rung),
