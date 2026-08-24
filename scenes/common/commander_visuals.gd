@@ -100,6 +100,7 @@ const _FACTION_KEYS := {
 
 static var _themes: Dictionary = {}
 static var _texture_cache: Dictionary = {}
+static var _warned_portraits: Dictionary = {}
 
 
 static func _build_themes() -> void:
@@ -192,9 +193,11 @@ static func faction_themes() -> Array[FactionTheme]:
 ## flat-colour placeholder so no caller ever gets null and no scene crashes.
 static func portrait_for(commander: CommanderType) -> Texture2D:
 	var id := commander.id if commander != null else CommanderType.NEUTRAL_ID
+	var path := "%s/%s.png" % [PORTRAIT_DIR, id]
 	return _cached(
-		"%s/%s.png" % [PORTRAIT_DIR, id],
+		path,
 		func() -> Texture2D:
+			_warn_missing_portrait(path)
 			if ResourceLoader.exists(NEUTRAL_PORTRAIT_PATH):
 				return load(NEUTRAL_PORTRAIT_PATH)
 			return _fallback_portrait()
@@ -242,6 +245,19 @@ static func _cached(path: String, on_missing: Callable) -> Texture2D:
 		texture = on_missing.call()
 	_texture_cache[path] = texture
 	return texture
+
+
+## Names a bust the tree does not hold, once. Without it a fresh clone draws every
+## general as the same neutral silhouette and says nothing anywhere about why. It
+## warns rather than errors because this is presentation and the fallback is the
+## point — the loud gate on missing art belongs to the offline bake and the suite.
+## The emblems deliberately do not get one: neutral has no emblem by design, so a
+## miss there is the shape rather than a defect.
+static func _warn_missing_portrait(path: String) -> void:
+	if _warned_portraits.has(path):
+		return
+	_warned_portraits[path] = true
+	push_warning("Missing commander portrait %s - run `make portraits` to bake it." % path)
 
 
 static func _fallback_portrait() -> Texture2D:
