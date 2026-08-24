@@ -417,14 +417,32 @@ func build(id: StringName) -> String:
 
 ## "No Commander": the same framed window with a featureless bust in it, so an
 ## empty seat reads as a deliberate styled choice rather than a missing file.
+## Slate rather than the faction shade, so the bust reads as no army at all
+## instead of as an unlit one against the window it sits in.
 func build_neutral() -> String:
 	var out := '<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s">' % VIEW_BOX
 	out += _clip_def()
 	out += _window()
 	out += '<g clip-path="url(#win)">%s</g>' % _backdrop(&"bars")
-	var body := _shoulders() + _neck(_accent_dark) + _head(_accent_dark)
+	var body := _blank_shoulders() + _neck(_slate) + _head(_slate) + _blank_crown()
 	out += '<g transform="translate(55 120) scale(1.18) translate(-55 -120)">'
 	return out + body + "</g></svg>"
+
+
+## The empty seat's uniform: the mass and collar every bust wears, in slate, with
+## the design system's diamond struck on the chest where a faction chevron goes.
+func _blank_shoulders() -> String:
+	var mass := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
+	var out := _path(mass, _slate, _line())
+	out += _stroke_path("M44,90 L55,93 L66,90", 2.4)
+	return out + _stroke_path("M55,93 L62,100 L55,107 L48,100 Z", 2.4)
+
+
+## One hard band down the crown, so a featureless head still has form rather
+## than reading as a hole cut out of the window.
+func _blank_crown() -> String:
+	var lit := hex(UiTheme.SLATE_800.lightened(0.34))
+	return _path("M34.5,50 Q35,29.5 55,28.5 L55,34.5 Q41,35.5 40.5,51 Z", lit)
 
 
 # --- frame -------------------------------------------------------------------
