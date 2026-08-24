@@ -5,8 +5,9 @@ Buildings carry their own isometric base plate, the convention the game's
 compositor has always assumed (the lot IS the plate; no square of pavement
 behind a diamond footprint). Each building owns one mass identity the
 others don't (design review round 3: five near-identical grey lumps):
-city two towers, base a long sawtooth shed, hq a wide low fort, airport a
-hangar arch with a control tower, port a crane over a warehouse.
+city two narrow towers a plaza apart, base a long sawtooth shed, hq a keep
+standing a whole board texel over the rest of the sheet, airport a hangar
+arch with a control tower, port a crane over a warehouse.
 """
 
 from __future__ import annotations
@@ -219,31 +220,67 @@ def _windows(
 
 
 def city() -> Model:
-    """Two stone towers of different heights on a compact plaza — the
-    tall-narrow silhouette of the set."""
+    """Two clad towers of different heights on a plaza — the tall-narrow
+    silhouette of the set.
+
+    The mass is TWO PILLARS, which is a thing the board can see. The 5x5
+    towers this used to be, nine voxels tall and five, decimated into one
+    slab at the board's 4:1 rung (`PropertySilhouette`, 2026-08-24: city
+    against the hq 0.729, against the base 0.671), so both are three and
+    four voxels across now, pushed out into opposite corners of the same
+    12x12 plaza — a diagonal apart, with daylight between them at rung 1 —
+    and each carries its height instead of its width: a pillar four voxels
+    across has to be tall or it is a stump.
+
+    The plaza itself does not shrink with them. Its plate is what casts most
+    of the cell's shadow, and the phases of the board's 4:1 grid have to draw
+    the same share of that shadow (`PropertyOverlays.test_every_rung_draws
+    _the_same_share_of_the_shadow`): a smaller lot is a shorter band, and the
+    band starts flickering by phase.
+
+    The tall tower is SET BACK for the same reason. A pillar taken straight
+    up ends in one unbroken vertical arris, and the shadow of an arris is a
+    two-pixel column standing clear of the plate — 52 of the cell's 171
+    shadow pixels in two columns of the four, which is the same flicker
+    arriving by a different road (deviation 0.47 against a 0.45 bar, 0.18
+    with the setback). The step that pays for it is the step a tower this
+    narrow wanted anyway.
+    """
     m = Model()
     _pad(m, 1, 12, 1, 12)
-    # tall slab tower, right: stone walls under the owner's roof deck
-    m.box(7, 11, 2, 6, 1, 7, WALL)
-    m.box(7, 11, 2, 6, 8, 8, ROOF_TRIM)  # the roof deck, in the owner's paint
-    m.box(8, 10, 3, 5, 9, 9, PAD)  # the plant room, the tower's lit cap
-    m.chamfer(8, 10, 3, 5, 9, 9)
-    # The fascia: two courses of the owner's paint under the eaves, on the two
-    # camera-facing walls. A roof deck is four pixels at the board's 4:1 rung
-    # and a tower is mostly WALL, so the owner's band has to come down the
-    # front of it to survive the downsample.
-    m.box(7, 11, 6, 6, 6, 7, ROOF_TRIM)
-    m.box(11, 11, 2, 6, 6, 7, ROOF_TRIM)
-    _windows(m, "y", 8, 10, 6, 2, 7, 23)
-    _windows(m, "x", 3, 5, 11, 2, 7, 24)
-    # shorter tower, left: the same roof deck and the same fascia
-    m.box(2, 6, 7, 11, 1, 4, WALL)
-    m.box(2, 6, 7, 11, 5, 5, ROOF_TRIM)
-    m.chamfer(2, 6, 7, 11, 5, 5)
-    m.box(2, 6, 11, 11, 3, 4, ROOF_TRIM)
-    m.box(6, 6, 7, 11, 3, 4, ROOF_TRIM)
-    _windows(m, "y", 3, 5, 11, 2, 4, 21)
-    _windows(m, "x", 8, 10, 6, 2, 4, 22)
+    # tall tower, right: a stone podium, a shaft set back a voxel on each
+    # camera-facing side, and the owner's cladding up both of them. The
+    # cladding is what the width paid for: a 3x3 deck is ONE pixel at the
+    # board's 4:1 rung, so a tower this narrow cannot say whose it is from
+    # its roof, and the owner's band has to be most of the two walls the
+    # camera sees or the downsample loses it (`PropertyPalette.test_two
+    # _owners_are_tellable_apart_at_the_boards_own_scale`: Iron against
+    # verdant, the closest pair on this tile, 17.6 with the two-course fascia
+    # the old 5x5 towers wore, 29.2 with the cladding).
+    m.box(8, 11, 2, 5, 1, 7, WALL)
+    m.box(8, 11, 5, 5, 6, 7, ROOF_TRIM)
+    m.box(11, 11, 2, 5, 6, 7, ROOF_TRIM)
+    _windows(m, "y", 9, 10, 5, 2, 4, 23)
+    _windows(m, "x", 3, 4, 11, 2, 4, 24)
+    m.box(8, 10, 2, 4, 8, 15, WALL)
+    m.box(8, 10, 4, 4, 8, 15, ROOF_TRIM)
+    m.box(10, 10, 2, 4, 8, 15, ROOF_TRIM)
+    # a stone belt course halfway up the shaft: eight unbroken courses of
+    # paint between the setback and the deck is a silo, and the break is what
+    # makes the panels above and below it read as storeys
+    m.box(8, 10, 2, 4, 12, 12, WALL)
+    m.box(8, 10, 2, 4, 16, 16, ROOF_TRIM)  # the roof deck, in the owner's paint
+    m.box(9, 10, 3, 4, 17, 17, PAD)  # the plant room, the tower's lit cap
+    # shorter tower, left: the same podium, cladding, belt and deck, with no
+    # setback — it is short enough to carry its paint in one panel
+    m.box(2, 4, 9, 11, 1, 10, WALL)
+    m.box(2, 4, 9, 11, 11, 11, ROOF_TRIM)
+    m.chamfer(2, 4, 9, 11, 11, 11)
+    m.box(2, 4, 11, 11, 4, 10, ROOF_TRIM)
+    m.box(4, 4, 9, 11, 4, 10, ROOF_TRIM)
+    m.box(2, 4, 9, 11, 8, 8, WALL)
+    _windows(m, "y", 3, 3, 11, 2, 3, 21)
+    _windows(m, "x", 9, 10, 4, 2, 3, 22)
     # plaza planter at the front corner
     m.set(11, 11, 1, "leaf")
     m.set(12, 11, 1, "leaf_dk")
@@ -284,7 +321,17 @@ def base() -> Model:
 
 
 def hq() -> Model:
-    """A stone fortress; faction color on the tower caps, keep roof, banner."""
+    """A stone fortress; faction color on the tower caps, keep roof, banner.
+
+    The hq is the tile a match is WON on, so it is the tallest thing on the
+    board by a clear step: the keep is a stepped tower — a 6x6 storey, a 4x4
+    one on top of it, an oversailing roof, then the banner mast — and its
+    top line stands a board texel and a half over the city's and five over
+    every other property's (`PropertySilhouette`, which holds the step at one
+    texel). What it is not is a taller BOX: the curtain wall
+    and its corner towers stay exactly where they were, so the growth reads
+    as a keep rising out of a fort rather than as the fort inflating.
+    """
     m = Model()
     _pad(m, 0, 13, 0, 13)
     # curtain walls in castle stone
@@ -300,9 +347,9 @@ def hq() -> Model:
         m.set(12, i, 5, ROOF_TRIM)
         m.set(i, 1, 5, TRIM)
         m.set(1, i, 5, TRIM)
-    # corner towers, capped in the owner's color at parapet height — the
-    # rear corner sets the sprite's top line, so the height budget goes to
-    # the central keep instead
+    # corner towers, capped in the owner's color at parapet height — they
+    # stay LOW on purpose: the whole height budget goes to the central keep,
+    # which is what sets the sprite's top line
     for tx, ty in ((1, 1), (1, 11), (11, 1), (11, 11)):
         m.box(tx, tx + 1, ty, ty + 1, 1, 4, MASONRY)
         m.box(tx, tx + 1, ty, ty + 1, 5, 5, ROOF_TRIM)
@@ -311,14 +358,27 @@ def hq() -> Model:
     m.box(6, 7, 12, 12, 1, 3, "wood")
     m.set(6, 12, 4, DETAIL)
     m.set(7, 12, 4, DETAIL)
-    # central stone keep under a faction roof, banner mast above
+    # central stone keep under a faction roof, banner mast above. The upper
+    # storey is a voxel narrower on every side than the lower one, so the
+    # step is what carries the height: a six-wide box taken straight up is a
+    # silo, and the rung-1 read of one is a fatter lump, not a taller mass.
     m.box(4, 9, 4, 9, 1, 6, MASONRY)
-    m.box(4, 9, 4, 9, 7, 7, ROOF)
-    m.box(5, 8, 5, 8, 8, 8, ROOF_TRIM)
-    m.chamfer(5, 8, 5, 8, 8, 8)
+    m.box(5, 8, 5, 8, 7, 13, MASONRY)
+    m.box(4, 9, 4, 9, 14, 14, ROOF)  # the roof oversails the upper storey
+    m.box(5, 8, 5, 8, 15, 15, ROOF_TRIM)
+    m.chamfer(5, 8, 5, 8, 15, 15)
     _windows(m, "y", 5, 8, 9, 3, 6, 31)
-    m.box(6, 6, 6, 6, 9, 10, METAL)
-    m.box(7, 8, 6, 6, 9, 10, ROOF_TRIM)  # banner
+    _windows(m, "y", 6, 7, 8, 8, 10, 32)
+    # the keep's own fascia, on the two walls the camera sees, clear of the
+    # roof's overhang: the paint has to climb with the stone or the tallest
+    # thing on the board is grey
+    m.box(5, 8, 8, 8, 11, 12, ROOF_TRIM)
+    m.box(8, 8, 5, 8, 11, 12, ROOF_TRIM)
+    # the banner: the mast clears the roof's own back corner before the
+    # pennant starts, or the flag is drawn inside the roof's silhouette and
+    # the hq's top line is a roof like everybody else's
+    m.box(6, 6, 6, 6, 16, 19, METAL)
+    m.box(7, 9, 6, 6, 17, 19, ROOF_TRIM)
     return m
 
 

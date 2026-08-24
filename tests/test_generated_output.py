@@ -1248,6 +1248,83 @@ class PropertyOverlays(unittest.TestCase):
                             self.assertEqual(tile_px[x, y], cell_px[x, y])
 
 
+class PropertySilhouette(unittest.TestCase):
+    """`Silhouette`'s reading, asked of the five properties.
+
+    A property is picked off a full map by its MASS, exactly as a unit is,
+    and until 2026-08-24 nothing measured it: read at rung 1 (4:1, the rung a
+    match is played at) the three land properties were one shape wearing
+    three labels — city/hq 0.729, base/hq 0.713, city/base 0.671 — and the
+    hq, the tile a match is won on, stood ONE ROW taller than a city, which
+    at 4:1 is not a step at all. The hq/city remass answers both: 0.578,
+    0.536 and 0.585, and the hq's top row ten source rows over the city's.
+
+    Two readings, on the building alone: the cast shadow is the same
+    silhouette offset down-right, so counting it in doubles every shape's
+    area with a copy of itself and washes the comparison out.
+    """
+
+    RUNG_1 = 4  # source pixels per screen pixel at the board's own zoom
+    IOU_BAR = 0.62
+    # One board texel at rung 1, in source rows: the hq does not merely edge
+    # the others out, it stands a whole texel of the sampled cell above them.
+    HQ_LEAD = RUNG_1
+    # Named debt, not tolerance, in `Silhouette.KNOWN_CLONES`'s style: a pair
+    # listed here fails the bar and is asserted to keep failing, so paying one
+    # off is a visible diff. These three are the water/air group — airport
+    # 0.781 against the base and 0.862 against the port, base/port 0.689 —
+    # which the hq/city pass did not touch: the three of them are one low
+    # shed apiece and the next remass owes them a mass each. Every pair
+    # either of the two this pass DID touch is in clears the bar; the worst
+    # of those is airport/city at 0.611.
+    KNOWN_CLONES: frozenset[frozenset[str]] = frozenset(
+        {
+            frozenset(("airport", "base")),
+            frozenset(("airport", "port")),
+            frozenset(("base", "port")),
+        }
+    )
+
+    def _drawn(self, tid: str) -> Image.Image:
+        """One property cell with its cast shadow knocked out."""
+        cell = terrain.tile(tid, FACTIONS[0]).convert("RGBA")
+        px = cell.load()
+        for y in range(CELL):
+            for x in range(CELL):
+                if px[x, y][:3] == terrain.SHADOW:
+                    px[x, y] = (0, 0, 0, 0)
+        return cell
+
+    def _silhouette(self, tid: str) -> set[tuple[int, int]]:
+        small = self._drawn(tid).resize(
+            (CELL // self.RUNG_1, CELL // self.RUNG_1), Image.NEAREST
+        )
+        px, n = small.load(), CELL // self.RUNG_1
+        return {(x, y) for y in range(n) for x in range(n) if px[x, y][3] > 200}
+
+    def _top_row(self, tid: str) -> int:
+        px = self._drawn(tid).load()
+        return min(y for y in range(CELL) for x in range(CELL) if px[x, y][3] > 200)
+
+    def test_no_two_properties_share_a_silhouette_on_the_board(self):
+        order = sorted(terrain.PROPERTY)
+        shapes = {tid: self._silhouette(tid) for tid in order}
+        for i, a in enumerate(order):
+            for b in order[i + 1 :]:
+                iou = len(shapes[a] & shapes[b]) / len(shapes[a] | shapes[b])
+                with self.subTest(pair=(a, b)):
+                    if frozenset((a, b)) in self.KNOWN_CLONES:
+                        self.assertGreater(iou, self.IOU_BAR)  # debt still real
+                    else:
+                        self.assertLessEqual(iou, self.IOU_BAR)
+
+    def test_the_hq_stands_a_board_texel_over_every_other_property(self):
+        hq_top = self._top_row("hq")
+        for tid in sorted(terrain.PROPERTY - {"hq"}):
+            with self.subTest(property=tid):
+                self.assertGreaterEqual(self._top_row(tid) - hq_top, self.HQ_LEAD)
+
+
 class AutotileMasks(unittest.TestCase):
     """Sheets laid out row-major, bits N=1 E=2 S=4 W=8."""
 
