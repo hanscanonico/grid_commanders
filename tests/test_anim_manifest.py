@@ -21,7 +21,7 @@ import unittest
 from pathlib import Path
 
 import sprite_generator
-from spritegen import anim, atlas, terrain, voxel
+from spritegen import anim, atlas, terrain, units, voxel
 from spritegen.palette import FACTIONS
 from spritegen.units import ATLAS_ORDER, MOVES, UNITS, Pose
 
@@ -184,6 +184,29 @@ class MoveFallback(unittest.TestCase):
                         self.assertEqual(
                             moved.crop(box).tobytes(), idle.crop(box).tobytes()
                         )
+
+    def test_a_frame_ticking_branch_reads_the_beat_not_the_pose(self):
+        """`build_model`'s fallback hides this, so it is asked of the builders
+        directly: a branch that ticks with the FRAME — the rotor phase — must
+        give MOVE_A the A art and MOVE_B the B art. Written as
+        `X if pose is Pose.A else Y` it would hand MOVE_A the off-beat blade,
+        and the first authored copter stride would inherit the bug."""
+        for uid in ("b_copter", "t_copter"):
+            builder = UNITS[uid][0]
+            for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
+                with self.subTest(unit=uid, pose=move.name):
+                    self.assertEqual(builder(move).vox, builder(ambient).vox)
+
+    def test_the_clip_table_names_the_clips_the_manifest_publishes(self):
+        """`units.CLIP_POSES` is what a family task reads to know which poses
+        it owes a clip; a name or a frame count that drifts from the manifest
+        would author strides for a clip no consumer plays."""
+        for name, poses in units.CLIP_POSES.items():
+            clip = anim.MANIFEST["clips"].get(name)
+            self.assertIsNotNone(
+                clip, f"CLIP_POSES names {name}, the manifest does not"
+            )
+            self.assertEqual(len(poses), len(clip["sheets"]))
 
 
 # Every units sheet the install has to carry, in one place, so seeding the
