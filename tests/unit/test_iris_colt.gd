@@ -50,6 +50,26 @@ func test_second_wind_refreshes_a_move_and_an_attack_alike() -> void:
 	assert_false(attacker.acted, "and so does the shot")
 
 
+## The retune itself, read through the command that has to accept it: an
+## exhausted attacker is refused, and the same shot validates once the meter is
+## spent.
+func test_a_refreshed_attacker_may_fire_again() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+	var attacker := state.units[0]
+	var target := state.units[1]
+	var first := AttackCommand.new(attacker, [Vector2i(0, 0)], Vector2i(1, 0))
+	assert_eq(first.validate(state), "")
+	first.apply(state)
+	var hp_after_first := target.hp
+	assert_lt(hp_after_first, Unit.MAX_HP, "the first shot landed")
+	var again := AttackCommand.new(attacker, [Vector2i(0, 0)], Vector2i(1, 0))
+	assert_ne(again.validate(state), "", "an exhausted attacker is refused")
+	_fire(state)
+	assert_eq(again.validate(state), "", "Second Wind hands the shot back")
+	again.apply(state)
+	assert_lt(target.hp, hp_after_first, "and the second shot lands")
+
+
 func test_a_new_build_is_never_refreshed() -> void:
 	var state := _state("[terrain]\nB.\n[owners]\n1 0 0")
 	state.funds[1] = 1000
