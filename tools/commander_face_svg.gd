@@ -30,17 +30,22 @@ const RIM := "#ffffff"
 const RIM_OPACITY := 0.22
 ## The uniform mass every bust rises out of, faction or not.
 const SHOULDER_MASS := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
-## The two eye centres every brow, lash and pupil is placed against.
-const EYE_X: Array[float] = [45.0, 65.0]
-## Nia Rowan's freckles, three to a cheek.
-const FRECKLES: Array[Vector2] = [
-	Vector2(42, 66),
-	Vector2(45, 68),
-	Vector2(48, 66),
-	Vector2(62, 66),
-	Vector2(65, 68),
-	Vector2(68, 66),
-]
+## The centre of the skull: every head, ear, eye and hat is placed against it,
+## and the per-commander width scales about it.
+const HEAD_CX := 55.0
+## The skull a general is drawn on, the FACES `head` column:
+## [width, jaw, crown, spread]. Width scales the head path's x about HEAD_CX
+## (0.86-1.14), jaw names its lower half (round, square, tapered), crown lifts
+## the top of it (-3..+3, which is what buys age and brow-heaviness), and
+## spread walks the eyes apart (0.9-1.1). A row without one gets these, which
+## are the single head every bust used to share.
+const HEAD_DEFAULT: Array = [1.0, &"round", 0.0, 1.0]
+## The jaws `_jaw` knows how to draw. A name outside this vocabulary falls
+## through to the round one, which is silent, so the FACES table is linted
+## against these rather than against a literal spelled a second time.
+const JAW_ROUND := &"round"
+const JAW_SQUARE := &"square"
+const JAW_TAPERED := &"tapered"
 
 const SKIN := {
 	&"light": "#f2c9a0",
@@ -59,8 +64,12 @@ const HAIR := {
 	&"darkbrown": "#33251a",
 }
 
-## Per-commander spec, straight from the handoff's FACES table. `pose` is
-## [tilt degrees, zoom, mirrored].
+## Per-commander spec, straight from the handoff's FACES table, with the skull
+## this repo gave each general on top of it. `head` is
+## [width, jaw, crown, spread] (see HEAD_DEFAULT) and `pose` is
+## [tilt degrees, zoom, mirrored]. Heads are cast against doctrine: the
+## immovable are wide and square, the quick and the clever narrow and tapered,
+## and the three grey veterans wear a low crown.
 const FACES := {
 	&"alina_ward":
 	{
@@ -73,6 +82,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"none",
 		"earring": true,
+		"head": [0.96, &"round", 0.5, 1.0],
 		"pose": [-5.0, 1.2, false],
 		"bg": &"rays",
 		"prop": &"sabre",
@@ -87,6 +97,7 @@ const FACES := {
 		"mouth": &"smile",
 		"facial": &"beard",
 		"acc": &"glasses",
+		"head": [1.08, &"square", -2.0, 1.0],
 		"pose": [3.0, 1.14, false],
 		"bg": &"halftone",
 		"prop": &"pipe",
@@ -101,6 +112,7 @@ const FACES := {
 		"mouth": &"grin",
 		"facial": &"none",
 		"acc": &"goggles",
+		"head": [0.92, &"tapered", 0.0, 1.05],
 		"pose": [-8.0, 1.24, true],
 		"bg": &"speed",
 		"prop": &"wrench",
@@ -115,6 +127,7 @@ const FACES := {
 		"mouth": &"smirk",
 		"facial": &"stubble",
 		"acc": &"scar",
+		"head": [1.1, &"square", 0.5, 0.96],
 		"pose": [6.0, 1.22, false],
 		"bg": &"wedge",
 		"prop": &"cigar",
@@ -129,6 +142,7 @@ const FACES := {
 		"mouth": &"stern",
 		"facial": &"none",
 		"acc": &"none",
+		"head": [0.94, &"tapered", 1.0, 1.0],
 		"pose": [0.0, 1.18, false],
 		"bg": &"bars",
 		"prop": &"baton",
@@ -143,6 +157,7 @@ const FACES := {
 		"mouth": &"snarl",
 		"facial": &"mustache",
 		"acc": &"eyepatch",
+		"head": [1.12, &"square", -1.0, 0.94],
 		"pose": [-3.0, 1.26, false],
 		"bg": &"burst",
 		"prop": &"medal",
@@ -157,6 +172,7 @@ const FACES := {
 		"mouth": &"smirk",
 		"facial": &"none",
 		"acc": &"none",
+		"head": [0.92, &"tapered", 1.0, 1.0],
 		"pose": [8.0, 1.18, true],
 		"bg": &"halftone",
 		"prop": &"card",
@@ -171,6 +187,7 @@ const FACES := {
 		"mouth": &"smile",
 		"facial": &"none",
 		"acc": &"glasses",
+		"head": [0.88, &"tapered", 2.0, 0.94],
 		"pose": [-4.0, 1.12, false],
 		"bg": &"grid",
 		"prop": &"book",
@@ -185,6 +202,7 @@ const FACES := {
 		"mouth": &"grin",
 		"facial": &"none",
 		"acc": &"headset",
+		"head": [0.9, &"round", 1.0, 1.08],
 		"pose": [-9.0, 1.22, false],
 		"bg": &"speed",
 		"prop": &"drone",
@@ -200,6 +218,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"headband",
 		"freckles": true,
+		"head": [0.92, &"round", 0.5, 1.06],
 		"pose": [4.0, 1.16, false],
 		"bg": &"rays",
 		"prop": &"falcon",
@@ -214,6 +233,7 @@ const FACES := {
 		"mouth": &"neutral",
 		"facial": &"none",
 		"acc": &"hood",
+		"head": [0.88, &"tapered", 0.5, 0.96],
 		"pose": [0.0, 1.24, false],
 		"bg": &"wedge",
 		"prop": &"dagger",
@@ -228,6 +248,7 @@ const FACES := {
 		"mouth": &"grin",
 		"facial": &"stubble",
 		"acc": &"bandana",
+		"head": [1.06, &"round", 0.0, 1.0],
 		"pose": [-6.0, 1.2, false],
 		"bg": &"burst",
 		"prop": &"radio",
@@ -242,6 +263,7 @@ const FACES := {
 		"mouth": &"smirk",
 		"facial": &"none",
 		"acc": &"glasses",
+		"head": [0.94, &"round", 0.5, 1.02],
 		"pose": [-4.0, 1.18, false],
 		"bg": &"grid",
 		"prop": &"ledger",
@@ -256,6 +278,7 @@ const FACES := {
 		"mouth": &"stern",
 		"facial": &"mustache",
 		"acc": &"none",
+		"head": [1.04, &"tapered", -2.0, 0.98],
 		"pose": [5.0, 1.25, false],
 		"bg": &"wedge",
 		"prop": &"helm",
@@ -270,6 +293,7 @@ const FACES := {
 		"mouth": &"grin",
 		"facial": &"none",
 		"acc": &"goggles",
+		"head": [0.98, &"round", 0.0, 1.06],
 		"pose": [-7.0, 1.2, true],
 		"bg": &"speed",
 		"prop": &"plane",
@@ -284,6 +308,7 @@ const FACES := {
 		"mouth": &"neutral",
 		"facial": &"beard",
 		"acc": &"none",
+		"head": [1.08, &"round", -2.0, 1.0],
 		"pose": [3.0, 1.16, false],
 		"bg": &"rays",
 		"prop": &"anchor",
@@ -298,6 +323,7 @@ const FACES := {
 		"mouth": &"snarl",
 		"facial": &"stubble",
 		"acc": &"scar",
+		"head": [1.08, &"square", 0.0, 0.96],
 		"pose": [7.0, 1.24, false],
 		"bg": &"burst",
 		"prop": &"coins",
@@ -312,6 +338,7 @@ const FACES := {
 		"mouth": &"smile",
 		"facial": &"none",
 		"acc": &"headset",
+		"head": [0.9, &"tapered", 0.5, 1.08],
 		"pose": [-6.0, 1.22, false],
 		"bg": &"halftone",
 		"prop": &"whistle",
@@ -326,6 +353,7 @@ const FACES := {
 		"mouth": &"grin",
 		"facial": &"none",
 		"acc": &"bandana",
+		"head": [0.9, &"round", 1.0, 1.04],
 		"pose": [5.0, 1.2, true],
 		"bg": &"wedge",
 		"prop": &"compass",
@@ -340,6 +368,7 @@ const FACES := {
 		"mouth": &"stern",
 		"facial": &"none",
 		"acc": &"none",
+		"head": [1.0, &"square", 0.0, 0.98],
 		"pose": [0.0, 1.16, false],
 		"bg": &"grid",
 		"prop": &"scales",
@@ -354,6 +383,7 @@ const FACES := {
 		"mouth": &"snarl",
 		"facial": &"beard",
 		"acc": &"scar",
+		"head": [1.1, &"square", -0.5, 0.96],
 		"pose": [-5.0, 1.26, true],
 		"bg": &"burst",
 		"prop": &"axe",
@@ -368,6 +398,7 @@ const FACES := {
 		"mouth": &"stern",
 		"facial": &"beard",
 		"acc": &"none",
+		"head": [1.14, &"square", -1.5, 0.94],
 		"pose": [2.0, 1.28, false],
 		"bg": &"halftone",
 		"prop": &"hammer",
@@ -538,25 +569,29 @@ func _rect(x: float, y: float, w: float, h: float, fill: String, extra := "") ->
 func _bust(face: Dictionary) -> String:
 	var skin: String = SKIN[face["skin"]]
 	var hair: String = HAIR[face["hair"]]
+	var geom := _head_geom(face)
+	var width := float(geom[0])
+	var xs := _eye_xs(face)
 	var out := _prop(face["prop"], &"back", skin)
 	if face["style"] == &"hood":
 		out += _path("M20,120 Q12,64 55,50 Q98,64 90,120 Z", _accent, _line())
-	out += _hair_back(face["style"], hair)
+	out += _crowned(_hair_back(face["style"], hair), geom)
 	out += _shoulders()
-	out += _neck(skin)
-	out += _circle(31, 58, 5, skin, _line()) + _circle(79, 58, 5, skin, _line())
+	out += _neck(skin, width)
+	var ear := _line()
+	out += _circle(_hx(31, width), 58, 5, skin, ear) + _circle(_hx(79, width), 58, 5, skin, ear)
 	if face.get("earring", false):
-		out += _circle(31, 63.5, 1.9, _gold, ' stroke="%s" stroke-width="1.2"' % _ink)
-	out += _head(skin)
-	out += _facial(face["facial"], hair)
-	out += _hair_front(face["style"], hair)
-	out += _headwear(face["acc"])
-	out += _brows(face["brow"])
-	out += _eyes(face["eyes"])
-	out += _eyewear(face["acc"])
+		var pin := ' stroke="%s" stroke-width="1.2"' % _ink
+		out += _circle(_hx(31, width), 63.5, 1.9, _gold, pin)
+	out += _head(skin, face)
+	out += _crowned(_facial(face["facial"], hair), geom, false)
+	out += _crowned(_hair_front(face["style"], hair) + _headwear(face["acc"]), geom)
+	out += _brows(face["brow"], xs)
+	out += _eyes(face["eyes"], xs)
+	out += _eyewear(face["acc"], xs, width)
 	out += _stroke_path("M55,60 L53.5,65 Q55,66.5 57,65.2", 1.8)
 	out += _mouth(face["mouth"])
-	out += _details(face)
+	out += _details(face, xs, geom)
 	return out + _prop(face["prop"], &"front", skin)
 
 
@@ -569,13 +604,70 @@ func _shoulders() -> String:
 	return out + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent_dark)
 
 
-func _neck(skin: String) -> String:
-	return _path("M47,76 L47,90 Q55,95 63,90 L63,76 Z", skin, _line())
+## The skull's own x, scaled about its centre: the one place a width is applied.
+func _hx(x: float, width: float) -> float:
+	return snappedf(HEAD_CX + (x - HEAD_CX) * width, 0.01)
 
 
-func _head(skin: String) -> String:
-	var d := "M32,52 Q32,27 55,27 Q78,27 78,52 L78,60 Q78,84 55,89 Q32,84 32,60 Z"
+func _head_geom(face: Dictionary) -> Array:
+	return face.get("head", HEAD_DEFAULT)
+
+
+## The two eye centres every brow, lash, lens and freckle is placed against.
+func _eye_xs(face: Dictionary) -> Array[float]:
+	var geom := _head_geom(face)
+	var half := snappedf(10.0 * float(geom[0]) * float(geom[3]), 0.01)
+	return [HEAD_CX - half, HEAD_CX + half]
+
+
+## Hair, hats and the headset band are drawn against the one skull the handoff
+## authored, so they ride the head's own width and crown rather than being
+## redrawn per general. Facial hair takes the width without the lift: it hangs
+## off the chin, which the crown never moves. An unspecified head leaves the
+## fragment untouched.
+func _crowned(inner: String, geom: Array, lift := true) -> String:
+	var width := float(geom[0])
+	var crown := float(geom[2]) if lift else 0.0
+	if is_equal_approx(width, 1.0) and is_zero_approx(crown):
+		return inner
+	return (
+		'<g transform="translate(%s %s) scale(%s 1) translate(-%s 0)">%s</g>'
+		% [HEAD_CX, -crown, width, HEAD_CX, inner]
+	)
+
+
+## A neck as wide as the skull it carries — a broad head over the stock one
+## reads as a bobblehead.
+func _neck(skin: String, width := 1.0) -> String:
+	var side := _hx(47, width)
+	var far := _hx(63, width)
+	var d := "M%s,76 L%s,90 Q%s,95 %s,90 L%s,76 Z" % [side, side, HEAD_CX, far, far]
 	return _path(d, skin, _line())
+
+
+func _head(skin: String, face: Dictionary = {}) -> String:
+	var geom := _head_geom(face)
+	var width := float(geom[0])
+	var top := 27.0 - float(geom[2])
+	var left := _hx(32, width)
+	var right := _hx(78, width)
+	var d := (
+		"M%s,52 Q%s,%s %s,%s Q%s,%s %s,52 L%s,60 "
+		% [left, left, top, HEAD_CX, top, right, top, right, right]
+	)
+	return _path(d + _jaw(geom[1], width, left, right), skin, _line())
+
+
+## The lower half of the skull, from the cheekbone down.
+func _jaw(kind: StringName, width: float, left: float, right: float) -> String:
+	if kind == JAW_SQUARE:
+		return (
+			"L%s,80 Q%s,88 %s,89 Q%s,88 %s,80 L%s,60 Z"
+			% [_hx(74, width), _hx(70, width), HEAD_CX, _hx(40, width), _hx(36, width), left]
+		)
+	if kind == JAW_TAPERED:
+		return "Q%s,80 %s,89 Q%s,80 %s,60 Z" % [_hx(76, width), HEAD_CX, _hx(34, width), left]
+	return "Q%s,84 %s,89 Q%s,84 %s,60 Z" % [right, HEAD_CX, left, left]
 
 
 func _facial(kind: StringName, hair: String) -> String:
@@ -672,20 +764,25 @@ func _headwear(acc: StringName) -> String:
 	return ""
 
 
-func _eyewear(acc: StringName) -> String:
+## Lenses and a patch ride the eyes they cover, so a narrow face wears its
+## glasses narrow; the strap crosses the skull, so it rides its width.
+func _eyewear(acc: StringName, xs: Array[float], width: float) -> String:
+	var left := xs[0] - 45.0
+	var right := xs[1] - 65.0
 	if acc == &"eyepatch":
-		var strap := _stroke_path("M28,50 L82,45", 2.6)
-		return strap + _rect(38, 52, 15, 12, _ink, ' rx="3"')
+		var strap := _stroke_path("M%s,50 L%s,45" % [_hx(28, width), _hx(82, width)], 2.6)
+		return strap + _rect(38 + left, 52, 15, 12, _ink, ' rx="3"')
 	if acc == &"glasses":
 		var pen := ' fill="none" stroke="%s" stroke-width="2"' % _ink
-		var lenses := '<rect x="38" y="52" width="15" height="11" rx="3"%s/>' % pen
-		lenses += '<rect x="57" y="52" width="15" height="11" rx="3"%s/>' % pen
-		return lenses + _path("M53,56 H57", "none", ' stroke="%s" stroke-width="2"' % _ink)
+		var ink := ' stroke="%s" stroke-width="2"' % _ink
+		var lenses := '<rect x="%s" y="52" width="15" height="11" rx="3"%s/>' % [38 + left, pen]
+		lenses += '<rect x="%s" y="52" width="15" height="11" rx="3"%s/>' % [57 + right, pen]
+		return lenses + _path("M%s,56 H%s" % [53 + left, 57 + right], "none", ink)
 	return ""
 
 
 ## Everything drawn over the face: a scar, freckles, a headset boom.
-func _details(face: Dictionary) -> String:
+func _details(face: Dictionary, xs: Array[float], geom: Array) -> String:
 	var out := ""
 	if face["acc"] == &"scar":
 		var cuts: Array[String] = ["M67,49 L71,60", "M65,52 L68,53", "M67,56 L70,57"]
@@ -693,44 +790,47 @@ func _details(face: Dictionary) -> String:
 			out += _stroke_path(d, 1.6, "#b56b5a")
 	if face.get("freckles", false):
 		var dots := ""
-		for spot: Vector2 in FRECKLES:
-			dots += _circle(spot.x, spot.y, 1, "#b56b5a")
+		for x: float in xs:
+			dots += _circle(x - 3, 66, 1, "#b56b5a") + _circle(x, 68, 1, "#b56b5a")
+			dots += _circle(x + 3, 66, 1, "#b56b5a")
 		out += '<g opacity="0.5">%s</g>' % dots
 	if face["acc"] == &"headset":
-		out += _stroke_path("M30,50 Q30,32 55,32 Q80,32 80,50", 3)
-		out += _rect(26, 50, 8, 12, _accent_dark, _line() + ' rx="3"')
-		out += _stroke_path("M28,60 Q24,68 40,70", 2.4)
-		out += _circle(41, 70.5, 2.4, _accent, ' stroke="%s" stroke-width="1.4"' % _ink)
+		var rig := _stroke_path("M30,50 Q30,32 55,32 Q80,32 80,50", 3)
+		rig += _rect(26, 50, 8, 12, _accent_dark, _line() + ' rx="3"')
+		rig += _stroke_path("M28,60 Q24,68 40,70", 2.4)
+		rig += _circle(41, 70.5, 2.4, _accent, ' stroke="%s" stroke-width="1.4"' % _ink)
+		out += _crowned(rig, geom)
 	return out
 
 
 # --- face parts --------------------------------------------------------------
 
 
-func _eyes(kind: StringName) -> String:
+func _eyes(kind: StringName, xs: Array[float]) -> String:
 	var out := ""
 	if kind == &"closed":
-		for x: float in EYE_X:
+		for x: float in xs:
 			out += _stroke_path("M%s,57 Q%s,60.5 %s,57" % [x - 4.5, x, x + 4.5], 2.4)
 		return out
 	var ry := 2.6 if kind == &"narrow" else 4.4
-	for x: float in EYE_X:
+	for x: float in xs:
 		out += '<ellipse cx="%s" cy="57" rx="4.1" ry="%s" fill="#ffffff"%s/>' % [x, ry, _line()]
 		out += _circle(x, 57.4, 2.1, _ink)
 		out += _circle(x + 1.1, 56, 0.9, "#ffffff")
 	if kind == &"f":
-		for x: float in EYE_X:
+		for x: float in xs:
 			out += _stroke_path("M%s,53.6 Q%s,51.2 %s,53.6" % [x - 5, x, x + 5], 2.8)
 	return out
 
 
-func _brows(kind: StringName) -> String:
+func _brows(kind: StringName, xs: Array[float]) -> String:
 	var out := ""
-	for x: float in EYE_X:
+	for i: int in xs.size():
+		var x: float = xs[i]
 		var d := ""
 		if kind == &"angled":
-			var rise := 48.5 if x == 45.0 else 52.0
-			var fall := 52.0 if x == 45.0 else 48.5
+			var rise := 48.5 if i == 0 else 52.0
+			var fall := 52.0 if i == 0 else 48.5
 			d = "M%s,%s L%s,%s" % [x - 5.5, rise, x + 5.5, fall]
 		elif kind == &"raised":
 			d = "M%s,48 Q%s,45.5 %s,48" % [x - 5, x, x + 5]
