@@ -44,7 +44,17 @@ const _MICRO_INK := Color(0.408, 0.443, 0.471)
 const _NAME_SIZE := 12
 ## The portrait band, public because a surface that frames this card checks its
 ## own layout against it — a card showing less than its face is showing nothing.
+## Deliberately not raised to fill the band's width with the bust: the four-army
+## info sheet shows a card 119px tall, and both cards of a duel already stand at
+## their scroll frame's full height, so every pixel added here is a pixel of the
+## Command Power block scrolled off the one sheet that photographs it.
 const PORTRAIT_H := 96
+## The faction badge pinned into the band's top-left corner, and the inset it sits
+## at. Card-local for the reason _NAME_SIZE is: the design system has no token for
+## a corner pin, and the shell's smallest icon (UiTheme.MENU_ICON) is a menu row's
+## glyph rather than a badge on art.
+const _EMBLEM_PX := 22
+const _EMBLEM_INSET := 6
 
 var _commander: CommanderType
 var _built := false
@@ -105,12 +115,18 @@ func _build() -> void:
 
 	_emblem = TextureRect.new()
 	_emblem.texture_filter = CommanderVisuals.ART_FILTER
-	# IGNORE_SIZE, or the 64px source becomes the control's minimum and the 22 below
+	# IGNORE_SIZE, or the 64px source becomes the control's minimum and _EMBLEM_PX
 	# is clamped straight back up to it — which is how the badge has been drawing at
 	# three times its size, unnoticed while an opaque bust filled the field behind it.
 	_emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_emblem.position = Vector2(6, 6)
-	_emblem.size = Vector2(22, 22)
+	# Anchored to the corner it is pinned to rather than placed there: a bare
+	# position/size holds only while nothing lays this child out, so the badge's
+	# size was one container away from silently snapping back to its source again.
+	_emblem.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	_emblem.offset_left = _EMBLEM_INSET
+	_emblem.offset_top = _EMBLEM_INSET
+	_emblem.offset_right = _EMBLEM_INSET + _EMBLEM_PX
+	_emblem.offset_bottom = _EMBLEM_INSET + _EMBLEM_PX
 	_field.add_child(_emblem)
 
 	# --- name band ---
