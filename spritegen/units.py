@@ -696,8 +696,9 @@ def anti_air(pose: Pose = Pose.A) -> Model:
     track under way is not tracking — and gives the movement to the running
     gear: stripe at phase 0 on MOVE_A, stripe advanced plus a whole-model
     `dz = +2` on MOVE_B. 28 changed silhouette texels at rung 1, 1.64
-    shimmer, 0.000 mass drift; the raked barrels riding the jolt are most of
-    it, which is the right part of this unit to see move.
+    shimmer, 0.000 mass drift; 17 of the 28 land in the top half of the
+    sprite, where the raked barrels and their cradle ride the jolt — the
+    right part of this unit to see move.
     """
     m = Model()
     _track(m, 0, 2, 0, 11, phase=int(beat(pose)))
@@ -767,10 +768,10 @@ def artillery(pose: Pose = Pose.A) -> Model:
 
     The move clip does NOT recoil: a gun fires from a halt, so MOVE_A and
     MOVE_B both carry pose A's erected howitzer and the animation is the
-    stripe walking under a hull rolled `dz = +2` on the off-beat. The
-    near-vertical spike is what pays for it — it rides the jolt across open
-    sky, where a texel is a texel. 28 changed silhouette texels at rung 1,
-    2.14 shimmer, 0.000 mass drift.
+    stripe walking under a hull rolled `dz = +2` on the off-beat. 28 changed
+    silhouette texels at rung 1, 2.14 shimmer, 0.000 mass drift, and they run
+    the whole height of the sprite: 6 of them are the near-vertical spike
+    riding the jolt across open sky, the rest the hull and casemate lines.
     """
     m = Model()
     _track(m, 0, 2, 0, 12, 2, phase=int(beat(pose)))
