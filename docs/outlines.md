@@ -252,7 +252,7 @@ The bill, re-recorded over both poses of all 18 units:
 | S0 share of a unit's own pixels | 14.22% | 14.28% | 17.35% |
 | S0 share on the worst sprite (b_copter, pose B) | 24.22% | 24.67% | 30.76% |
 | sunward silhouette drawn dark | 7.19% | 6.72% | 63.23% |
-| boundary within 25L of shoal | 15.27% | 2.97 / 4.26% | 0.44 / 0.55% |
+| boundary within 25L of shoal | 15.27% | 2.97 / 2.83% | 0.44 / 0.55% |
 | boundary within 25L of plains | 14.66% | 3.69 / 3.38% | 0.75 / 0.75% |
 | boundary tying in value AND colour, shoal | 0.29% | **0.55 / 0.29%** | 0.15 / 0.07% |
 | boundary tying in value AND colour, plains | 0.00% | **0.00 / 0.39%** | 0.00 / 0.00% |

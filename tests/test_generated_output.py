@@ -3304,7 +3304,8 @@ class IndexedPalette(unittest.TestCase):
     # out of the same budget and lands at 30.76% (neutral's b_copter frame B)
     # and 17.35%, both well under the band's 53.1% and 34.5%. The rim grade
     # buys its ground contrast UPWARD and so is held to the light grade's
-    # budget: 24.67% (verdant's b_copter frame B) and 14.28%. The copters'
+    # budget: 24.67% (aurora's b_copter frame B; verdant's is 24.37%) and
+    # 14.28%. The copters'
     # frame B stays the worst sprite through the 2026-08-24 rotor tick, and
     # moved a fifth of a point when it landed.
     MAX_CONTOUR = {
