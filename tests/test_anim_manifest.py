@@ -190,12 +190,24 @@ class MoveFallback(unittest.TestCase):
         directly: a branch that ticks with the FRAME — the rotor phase — must
         give MOVE_A the A art and MOVE_B the B art. Written as
         `X if pose is Pose.A else Y` it would hand MOVE_A the off-beat blade,
-        and the first authored copter stride would inherit the bug."""
+        and the first authored copter stride would inherit the bug.
+
+        It is asked of the ROTOR voxels alone. When it was written the copters
+        had no move art and the whole model answered it; now that they hold a
+        nose-down attitude under way, the airframe legitimately differs from
+        its ambient key and only the disc — the part that ticks with the frame
+        rather than with the clip — has to match frame for frame."""
         for uid in ("b_copter", "t_copter"):
             builder = UNITS[uid][0]
             for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
                 with self.subTest(unit=uid, pose=move.name):
-                    self.assertEqual(builder(move).vox, builder(ambient).vox)
+                    self.assertEqual(
+                        self._rotor(builder(move)), self._rotor(builder(ambient))
+                    )
+
+    @staticmethod
+    def _rotor(model) -> set:
+        return {v for v, mat in model.vox.items() if mat == "rotor"}
 
     def test_the_clip_table_names_the_clips_the_manifest_publishes(self):
         """`units.CLIP_POSES` is what a family task reads to know which poses
