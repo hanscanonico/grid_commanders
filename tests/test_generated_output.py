@@ -2945,14 +2945,36 @@ class MoveFrames(unittest.TestCase):
         """The patch of ground a unit walks over may not pump with its
         stride, exactly as a parked unit's may not pump with its idle: one
         shadow, sized off the pose-A footprint and laid on the pose-A ground
-        row, identical in all four poses."""
+        row, in all four poses.
+
+        The rule is that the shadow never MOVES; it may only be UNCOVERED.
+        The same ellipse is drawn every pose, but the hull is composed over
+        it, so a pose that lifts a track off the ground — the tracked
+        family's roll, the MBT's nose pitch — hands back the four or five
+        pixels its pose-A hull was standing on. Those pixels are the ground
+        showing through, not the shadow growing. So each pose's shadow is
+        asked to account for the other's exactly: every shadow pixel of one
+        pose is either a shadow pixel of the other, or it is hidden under the
+        other's body. A shadow that slid, stretched or swelled has pixels
+        that answer to neither and fails here — as does one that shrank,
+        since the containment is checked both ways.
+        """
         for uid in self._movers():
             for fac in FACTIONS:
-                shadow = self._shadow(_pose_cell(uid, fac.key, Pose.A))
+                a = _pose_cell(uid, fac.key, Pose.A)
+                shadow, body = self._shadow(a), self._body(a)
                 for pose in (Pose.B, *MOVE_POSES):
+                    cell = _pose_cell(uid, fac.key, pose)
+                    other, other_body = self._shadow(cell), self._body(cell)
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        # Reported as the offending pixels rather than as a
+                        # subset relation between two several-hundred-pixel
+                        # sets, which prints both in full and names neither.
                         self.assertEqual(
-                            self._shadow(_pose_cell(uid, fac.key, pose)), shadow
+                            shadow - other - other_body, set(), "pose A's shadow"
+                        )
+                        self.assertEqual(
+                            other - shadow - body, set(), f"{pose.name}'s shadow"
                         )
 
     def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
@@ -3015,6 +3037,17 @@ class MoveFrames(unittest.TestCase):
         px = cell.convert("RGBA").load()
         w, h = cell.size
         return {(x, y) for y in range(h) for x in range(w) if px[x, y] == CAST}
+
+    def _body(self, cell: Image.Image) -> set:
+        """Everything the unit itself paints — the shadow is the ground's."""
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {
+            (x, y)
+            for y in range(h)
+            for x in range(w)
+            if px[x, y][3] > 0 and px[x, y] != CAST
+        }
 
     def _sil(self, uid: str, pose: Pose) -> set:
         cell = _pose_cell(uid, "neutral", pose).convert("RGBA")
