@@ -329,11 +329,10 @@ def _stride(m: Model, lead: str, rise: int = 0) -> None:
     Which leg leads is a point reflection through the hip centre,
     `(x, y) -> (8 - x, 8 - y)`, so `"near"` and `"far"` are one another's
     mirror and neither is authored twice. That reflection is also why the
-    toe-off is what carries the lead at all: this projection puts a voxel at
-    screen `x - y`, and the planted pair's two legs differ by exactly
-    `(dx +3, dy -3)` — the reflection maps the planted pair ONTO ITSELF, so a
-    swap of two identical planted legs is a no-op on the sheet, whatever it is
-    in the model. The lifted foot is the asymmetry that makes the mirror
+    toe-off is what carries the lead at all: the planted pair is already its
+    own image under that reflection, boot for boot and shin for shin, so the
+    reflection maps it ONTO ITSELF and a swap of two identical planted legs
+    is a no-op on the sheet, whatever it is in the model. The lifted foot is the asymmetry that makes the mirror
     visible, which is why the lift lives in here rather than in the caller.
     """
     legs: dict[tuple[int, int, int], str] = {}
@@ -567,11 +566,18 @@ def _mech_legs(m: Model, lifted: int | None, rise: int = 0) -> None:
     boot, the knee taking the difference, and every leg — raised or planted —
     ends one voxel under the belt band, so the raised one hangs off the hips
     rather than floating and the caller's hip line is never punched through.
+
+    A raised leg on a flat frame has room for no shin at all — its boot is
+    already where the shin would start — and the guard is what keeps the
+    boot: `m.box` normalises its bounds, so an inverted shin span would
+    paint back DOWN over the tire and cost that foot the one dark texel
+    that says foot.
     """
     for x0 in (1, 6):
         dz = 2 if x0 == lifted else 0
         m.box(x0, x0 + 1, 4, 6, dz, dz, "tire")  # boot
-        m.box(x0, x0 + 1, 4, 6, dz + 1, 2 + rise, "hull")  # shin
+        if dz + 1 <= 2 + rise:
+            m.box(x0, x0 + 1, 4, 6, dz + 1, 2 + rise, "hull")  # shin
         m.box(x0, x0 + 1, 4, 6, 3 + rise, 3 + rise, "hull_dk")  # knee plate
 
 
