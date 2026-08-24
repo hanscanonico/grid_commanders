@@ -13,9 +13,10 @@ sizes come from `atlas.CELL_W/CELL_H`, the columns from `units.ATLAS_ORDER`,
 the rows from `palette.FACTIONS`, the phase counts from the terrain phase
 tables, and `ground_px` is MEASURED off a rendered cell (see
 `measure_ground_px`) rather than restated — a manifest that retypes a number is
-just a third place to keep it in step. `AMBIENT_MS` is the one value with no
-Python table behind it, because the cadence was only ever a game constant; the
-manifest is now its source, and the comment carries the reasoning.
+just a third place to keep it in step. The cadences (`AMBIENT_MS`, `SEA_MS`,
+`MOVE_MS`) are the values with no Python table behind them, because a beat was
+only ever a game constant; the manifest is now their source, and the comment
+over each carries the reasoning.
 
 The JSON is deterministic like the rest of the pipeline: sorted keys, two-space
 indent, trailing newline, so two runs are byte-identical.
@@ -50,6 +51,22 @@ FIGURE_SHEETS: tuple[str, ...] = (
 # faster of the two motions, so it sets the beat.
 AMBIENT_MS = 500
 
+# The move clip: the same 18x5 grid, the same cell rects, one frame per key of
+# a unit under way. One facing only — the art faces +y, which the projection
+# puts at screen lower-LEFT (`voxel` header: "+y toward screen lower-left,
+# units face +y"), so these sheets are the LEFT-facing clip and the consumer
+# mirrors them about the cell centre for a rightward move. Nothing in a move
+# frame may encode screen-handedness; a mirrored rifleman leading with the
+# other leg is correct.
+MOVE_SHEETS: tuple[str, ...] = ("units_atlas_move.png", "units_atlas_move_b.png")
+# Milliseconds per move frame. The board tweens one cell per 0.06 s x
+# anim_scale — 0.18 s/cell at the normal tier, 0.12 s at quick — so 160 ms is
+# about one stride per cell crossed, which is the whole reason a walk cycle
+# reads instead of skating. It is also deliberately coprime-ish with the other
+# two cadences: it neither divides nor multiplies 500 (ambient) or 900 (sea),
+# so a moving unit, an idling one and the water never turn over on one tick.
+MOVE_MS = 160
+
 # The sea's clip: the same three spatial phases in the same column order, once
 # per time frame, written under the autotile directory the game installs them
 # into (`sprite_generator._install`), so a path here is a path there. The
@@ -75,8 +92,53 @@ _PHASE_TABLES = {
 }
 
 # Format version. Bump it when a consumer would have to read the file
-# differently — adding a clip or a family is not that.
+# differently — adding a clip or a family is not that, and neither is a clip
+# carrying a key the older clips do not: `facing`/`flip_x_for`/`fallback`
+# appear only on the clips that need them, and their ABSENCE is the reading a
+# version-1 consumer already makes (never mirror, no fallback).
 VERSION = 1
+
+
+def _clip(
+    sheets: tuple[str, ...],
+    ms: int,
+    mode: str = "loop",
+    **extra: object,
+) -> dict:
+    """One clip entry: its sheets, their frame order, cadence and mode.
+
+    `order` is derived from the sheet tuple rather than typed, so a clip and
+    the files on disk cannot disagree about how many frames there are.
+    """
+    return {
+        "sheets": list(sheets),
+        "order": list(range(len(sheets))),
+        "ms_per_frame": ms,
+        "mode": mode,
+        **extra,
+    }
+
+
+def _clips() -> dict[str, dict]:
+    """The clip table, in the order a reader meets it. A new clip is one line
+    here and nothing else."""
+    return {
+        "ambient": _clip(AMBIENT_SHEETS, AMBIENT_MS),
+        "ambient_figures": _clip(FIGURE_SHEETS, AMBIENT_MS),
+        "sea": _clip(SEA_SHEETS, SEA_MS),
+        "move": _clip(
+            MOVE_SHEETS,
+            MOVE_MS,
+            # The art's one facing, and the one the consumer flips for.
+            facing="left",
+            flip_x_for=["right"],
+            # A unit with no authored move pose draws its ambient counterpart,
+            # so a consumer that finds the move clip indistinguishable from
+            # ambient for some column is seeing the intended art, not a
+            # missing sheet.
+            fallback="ambient",
+        ),
+    }
 
 
 def measure_ground_px() -> int:
@@ -126,26 +188,7 @@ def build() -> dict:
             # above rather than shrinking the unit inside its tile.
             "overflow": atlas.CELL_H - atlas.CELL_W,
         },
-        "clips": {
-            name: {
-                "sheets": list(sheets),
-                "order": list(range(len(sheets))),
-                "ms_per_frame": AMBIENT_MS,
-                "mode": "loop",
-            }
-            for name, sheets in (
-                ("ambient", AMBIENT_SHEETS),
-                ("ambient_figures", FIGURE_SHEETS),
-            )
-        }
-        | {
-            "sea": {
-                "sheets": list(SEA_SHEETS),
-                "order": list(range(len(SEA_SHEETS))),
-                "ms_per_frame": SEA_MS,
-                "mode": "loop",
-            },
-        },
+        "clips": _clips(),
         "columns": {uid: col for col, uid in enumerate(ATLAS_ORDER)},
         "rows": [{"key": fac.key, "team": fac.team} for fac in FACTIONS],
         "terrain_phases": {name: len(table) for name, table in _PHASE_TABLES.items()},

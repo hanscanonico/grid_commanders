@@ -25,7 +25,7 @@ from typing import NamedTuple
 
 from PIL import Image
 
-from . import aa, autotile, buildings, terrain
+from . import aa, autotile, buildings, terrain, units
 from .palette import FACTIONS, Faction
 from .units import ATLAS_ORDER, UNITS, WAKE, Pose, build_model
 from .voxel import (
@@ -73,6 +73,12 @@ CELL_H = 96
 #
 # Land units hold their ground line and say the beat in the model instead — a
 # walked tread, a settled suspension, a rested weapon.
+#
+# The bob rides the FRAME, not the clip (`units.beat`): a helicopter under way
+# hops on MOVE_B exactly as it does on B. What placement never does is carry a
+# unit sideways. A move frame shows GAIT only — the travel across the board is
+# the consumer's tween (`battle_animator.animate_path`), and a hull already
+# translated in-sheet would double it and then snap back on arrival.
 BOB_PX = 4
 _BOBBING = frozenset({"air", "sea"})
 
@@ -119,7 +125,7 @@ def cell_placement(uid: str, pose: Pose) -> Placement:
     kind = UNITS[uid][1]
     minx_a, miny_a, w_a, h_a = _pose_a_box(uid)
     ground = CELL_H - (AIR_BOTTOM if kind == "air" else GROUND_BOTTOM)
-    bob = BOB_PX if pose is Pose.B and kind in _BOBBING else 0
+    bob = BOB_PX if units.beat(pose) and kind in _BOBBING else 0
     # Pose A's own placement — centred on the cell, anchored to the ground row
     # — with every other pose hung off that same origin.
     return Placement(

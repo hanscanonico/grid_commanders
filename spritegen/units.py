@@ -10,11 +10,13 @@ or a pintle MG, rocket units carry tubes and pods, cannon units carry a
 single big gun, autocannon units carry thin multi-barrels, and the unarmed
 transports carry none.
 
-Every builder takes a `Pose`. Pose A is the model as it has always been
-authored; pose B is one hand-placed idle key pose of the same machine — a gun
-laid up, a howitzer recoiled, a rack pitched, a nose dipped, a tread walked.
-The poses are keys, not in-betweens: they never move the silhouette enough to
-change what the unit is, and pose A is byte-frozen.
+Every builder takes a `Pose`. A pose is a CLIP and a FRAME: the ambient clip's
+two keys are `A`/`B`, the move clip's are `MOVE_A`/`MOVE_B`. Pose A is the
+model as it has always been authored; pose B is one hand-placed idle key pose
+of the same machine — a gun laid up, a howitzer recoiled, a rack pitched, a
+nose dipped, a tread walked. The poses are keys, not in-betweens: they never
+move the silhouette enough to change what the unit is, and pose A is
+byte-frozen.
 
 What a key pose moves, it moves a WHOLE BOARD TEXEL (`_shift`). The board
 draws the 64x96 cell at a quarter of its size, so a delta under four atlas
@@ -22,6 +24,21 @@ pixels — a one-voxel settle, the tread's old period-2 checker — never carrie
 a texel across: it re-tones the inside of a shape that holds still, and the
 sprite boils instead of animating. Measured, that was every land vehicle on
 the sheet at zero changed silhouette texels (`tests/measure_motion.py`).
+
+Only the uids in `MOVES` author the move clip; every other unit falls back to
+its ambient counterpart in `build_model`, so the move sheets are valid from
+the day the plumbing lands and a family arrives one unit at a time. That
+fallback is also why a builder's pose test has to say which question it asks:
+
+* `if pose is Pose.B` is an AMBIENT-only branch — the idle beat, and nothing
+  else. A move pose reaching that builder must not fall into it.
+* `if beat(pose)` is the OFF-BEAT of whatever clip is playing (B or MOVE_B) —
+  for anything that ticks with the frame regardless of clip, such as a rotor
+  blade phase.
+
+An `else` that quietly means "pose B" is the trap: with four poses,
+`X if pose is Pose.A else Y` hands MOVE_A the B branch. Write the beat side as
+the condition (`Y if beat(pose) else X`) so an unlisted pose lands on A.
 """
 
 from __future__ import annotations
@@ -32,10 +49,53 @@ from .voxel import Model
 
 
 class Pose(IntEnum):
-    """The two ambient key poses. A is the parked/rest key, B the idle beat."""
+    """One clip's one frame. A/B are the ambient clip, MOVE_A/MOVE_B the move.
+
+    A is the parked/rest key and B the idle beat; MOVE_A and MOVE_B are the
+    same machine under way, one stride apart. The values of A and B are frozen
+    at 0 and 1 because the sheets and the manifest's frame order are written
+    against them.
+    """
 
     A = 0
     B = 1
+    MOVE_A = 2
+    MOVE_B = 3
+
+
+# The clips, as frame order. `CLIP_POSES` is keyed by the clip names
+# `anim.MANIFEST["clips"]` publishes, so a sheet, a pose and a clip entry
+# cannot end up meaning different things.
+AMBIENT_POSES: tuple[Pose, ...] = (Pose.A, Pose.B)
+MOVE_POSES: tuple[Pose, ...] = (Pose.MOVE_A, Pose.MOVE_B)
+CLIP_POSES: dict[str, tuple[Pose, ...]] = {
+    "ambient": AMBIENT_POSES,
+    "move": MOVE_POSES,
+}
+
+# The ambient pose each move pose falls back to when a unit has not authored
+# the move clip: same frame index, other clip.
+_FALLBACK: dict[Pose, Pose] = {Pose.MOVE_A: Pose.A, Pose.MOVE_B: Pose.B}
+
+
+def moving(pose: Pose) -> bool:
+    """True for the move clip's frames."""
+    return Pose(pose) in MOVE_POSES
+
+
+def beat(pose: Pose) -> bool:
+    """True on the off-beat of whichever clip is playing (B or MOVE_B).
+
+    Anything that ticks with the frame rather than with the clip — a rotor
+    blade phase, the air/sea bob — asks this instead of `pose is Pose.B`.
+    """
+    return Pose(pose) in (Pose.B, Pose.MOVE_B)
+
+
+# The uids that author the move clip. Empty for now: the move sheets ship as
+# copies of the ambient pair and each family task adds its units here as it
+# hand-places their strides.
+MOVES: frozenset[str] = frozenset()
 
 
 # ---------------------------------------------------------------------------
@@ -1012,7 +1072,9 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # main rotor: hub mast + four blades over the fuselage (pose B turns the
     # same four blades a notch; the tail rotor is vertical and stays)
     m.box(4, 4, 10, 10, 7, 8, "hull_dk")
-    _rotor(m, 4, 10, 9, _BLADE_A if pose is Pose.A else _BLADE_B)
+    # The rotor ticks with the FRAME, not the clip: a moving helicopter's
+    # blades are at the off-beat position on MOVE_B exactly as on B.
+    _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
     return m
 
 
@@ -1047,7 +1109,8 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     m.box(4, 5, 13, 13, 7, 8, "hull_dk")
     # Both discs turn the same blade the same way, so the tandem reads as one
     # machine's two rotors advancing and not as a counter-rotating pair.
-    blade = _BLADE_A if pose is Pose.A else _BLADE_B
+    # Frame, not clip — see `b_copter`.
+    blade = _BLADE_B if beat(pose) else _BLADE_A
     _rotor(m, 4, 4, 9, blade, clipped=True)
     _rotor(m, 5, 13, 9, blade, clipped=True)
     return m
@@ -1319,10 +1382,19 @@ def build_model(uid: str, pose: Pose = Pose.A) -> Model:
     """The one seam a pose reaches a builder through.
 
     Every builder takes the pose, so there is no per-unit list of which
-    models animate: a unit that has nothing to say in pose B simply draws
-    the same voxels and lets composition (the air/sea bob) carry the beat.
+    models animate within a clip: a unit that has nothing to say in pose B
+    simply draws the same voxels and lets composition (the air/sea bob) carry
+    the beat.
+
+    Across clips there IS such a list. A move pose only reaches the builder
+    for a uid in `MOVES`; anything else is served its ambient counterpart, so
+    the move sheets are a valid clip before a single stride is authored and a
+    family lands one unit at a time.
     """
-    return UNITS[uid][0](Pose(pose))
+    pose = Pose(pose)
+    if moving(pose) and uid not in MOVES:
+        pose = _FALLBACK[pose]
+    return UNITS[uid][0](pose)
 
 
 # atlas_col -> unit id (contiguous 0..17), the order the sheet is assembled in

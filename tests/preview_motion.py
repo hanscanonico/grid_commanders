@@ -45,7 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from spritegen import atlas, terrain  # noqa: E402
 from spritegen.anim import AMBIENT_MS, AMBIENT_SHEETS  # noqa: E402
 from spritegen.palette import faction_by_key  # noqa: E402
-from spritegen.units import ATLAS_ORDER, UNITS, Pose  # noqa: E402
+from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, UNITS, Pose  # noqa: E402
 
 # The rungs `measure_motion` reads, and how far each is upscaled to land back
 # on a 64x96 patch: rung r samples the cell to (16r, 24r), so 4 // r restores
@@ -67,16 +67,18 @@ LABEL_H = 12
 INK = (232, 232, 232, 255)
 PAPER = (24, 24, 28, 255)
 
-# The clip's frames, as poses. The manifest names the sheets and `units.Pose`
-# names the keys that draw them, so the two tables have to be the same length —
-# if a third sheet ever ships without a third pose, say so here rather than
-# quietly previewing two frames of a three-frame clip.
-if len(AMBIENT_SHEETS) != len(Pose):
+# The clip's frames, as poses. This previews the AMBIENT clip: the manifest
+# names its sheets and `units.AMBIENT_POSES` names the keys that draw them, so
+# the two tables have to be the same length — if a third sheet ever ships
+# without a third pose, say so here rather than quietly previewing two frames
+# of a three-frame clip.
+if len(AMBIENT_SHEETS) != len(AMBIENT_POSES):
     raise SystemExit(
-        f"anim.AMBIENT_SHEETS has {len(AMBIENT_SHEETS)} sheets but units.Pose has "
-        f"{len(Pose)} keys — preview_motion cannot tell which draws which"
+        f"anim.AMBIENT_SHEETS has {len(AMBIENT_SHEETS)} sheets but "
+        f"units.AMBIENT_POSES has {len(AMBIENT_POSES)} keys — preview_motion "
+        "cannot tell which draws which"
     )
-_POSES = tuple(Pose)
+_POSES = AMBIENT_POSES
 
 
 def backdrop(kind: str) -> Image.Image:

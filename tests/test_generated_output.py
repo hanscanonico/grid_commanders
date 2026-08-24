@@ -60,7 +60,7 @@ from spritegen.terrain import (
     WATER_LIGHT,
     WOODS_SALT,
 )
-from spritegen.units import ATLAS_ORDER, UNITS, Pose, build_model
+from spritegen.units import AMBIENT_POSES, ATLAS_ORDER, UNITS, Pose, build_model
 from spritegen import voxel
 from spritegen.voxel import (
     CAST,
@@ -2693,7 +2693,10 @@ class AmbientFrames(unittest.TestCase):
         neutral = faction_by_key("neutral")
         for uid in ("b_copter", "t_copter"):
             box = {}
-            for pose in Pose:
+            # The ambient pair only: this reading is about the idle clip, and
+            # a `for pose in Pose` here would hand the two-frame comparisons
+            # below four frames.
+            for pose in AMBIENT_POSES:
                 blades = [
                     v for v, mat in build_model(uid, pose).vox.items() if mat == "rotor"
                 ]
@@ -2707,7 +2710,7 @@ class AmbientFrames(unittest.TestCase):
                 self.assertLessEqual(abs(box[Pose.A][1] - box[Pose.B][1]), 1)
                 self.assertLessEqual(abs(box[Pose.A][2] - box[Pose.B][2]), 1)
             cells = {}
-            for pose in Pose:
+            for pose in AMBIENT_POSES:
                 cell = atlas.unit_cell(uid, neutral, pose, shadow=False)
                 px = cell.load()
                 w, h = cell.size
@@ -2720,7 +2723,7 @@ class AmbientFrames(unittest.TestCase):
                 self.assertGreaterEqual(len(a & b) / len(a | b), self.MIN_ROTOR_IOU)
             small = [
                 atlas.unit_cell(uid, neutral, pose).resize((16, 24), Image.NEAREST)
-                for pose in Pose
+                for pose in AMBIENT_POSES
             ]
             pa, pb = (cell.load() for cell in small)
             moved = sum(
