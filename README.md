@@ -263,9 +263,8 @@ python3 -m venv .venv
 `anim.json` is the same numbers the sheets are built from, written down for the
 game to read instead of retype: the cell's size, its ground line and its
 overflow, the clips (which sheets, in what order, at what cadence — the army's
-ambient beat and the sea's), the
-units atlas's column and row order, and how many phase variants each terrain
-family ships. Every field is derived from the live tables in `spritegen/` —
+ambient beat and the sea's), the units atlas's column and row order, and how
+many phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
 phase tables — and `ground_px` is **measured** off a rendered cell (a composed
 cell minus the shadowless one is the cast shadow alone; an ellipse is widest on

@@ -137,6 +137,26 @@ class Seam(unittest.TestCase):
                                 f"border ring at {x},{y}"
                             )
 
+    def test_the_wrap_lands_inside_the_interior_band(self):
+        """No shipped dash reaches the band edge, so the wrap itself is only
+        ever exercised by future salts — pin it here rather than leave the
+        rule that keeps the ring clear resting on today's hash."""
+        ring = terrain._GLINT_RING
+        for x in range(ring, CELL - ring):
+            landed = terrain._slide_x(x, terrain.SEA_GLINT_SLIDE)
+            self.assertGreaterEqual(landed, ring, f"{x} slid onto the ring")
+            self.assertLess(landed, CELL - ring, f"{x} slid onto the ring")
+        # The band is permuted, not folded: every interior column is the
+        # landing place of exactly one other, so a wrapped dash cannot pile up
+        # on a column that stayed.
+        band = range(ring, CELL - ring)
+        self.assertEqual(
+            sorted(terrain._slide_x(x, terrain.SEA_GLINT_SLIDE) for x in band),
+            list(band),
+        )
+        # The band's last column wraps to its first, not to the tile's.
+        self.assertEqual(terrain._slide_x(CELL - ring - 1, 1), ring)
+
     def test_the_slide_is_one_whole_board_texel(self):
         self.assertEqual(terrain.SEA_GLINT_SLIDE, 4)
         self.assertEqual(terrain.SEA_GLINT_SLIDE, CELL // TEXELS)
