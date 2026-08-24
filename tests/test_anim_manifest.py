@@ -102,6 +102,18 @@ class Clip(unittest.TestCase):
         self.assertEqual(clip["ms_per_frame"], anim.AMBIENT_MS)
         self.assertEqual(clip["mode"], "loop")
 
+    def test_the_figure_clip_is_the_ambient_clip_on_the_figure_sheets(self):
+        """The cut-in idles on the same beat the board does — the figure pair
+        is the ambient pair minus the tile shadow, so a second cadence here
+        would be the two surfaces disagreeing about one motion."""
+        clip = anim.MANIFEST["clips"]["ambient_figures"]
+        self.assertEqual(clip["sheets"], list(anim.FIGURE_SHEETS))
+        self.assertEqual(len(anim.FIGURE_SHEETS), len(anim.AMBIENT_SHEETS))
+        ambient = anim.MANIFEST["clips"]["ambient"]
+        self.assertEqual(clip["order"], ambient["order"])
+        self.assertEqual(clip["ms_per_frame"], ambient["ms_per_frame"])
+        self.assertEqual(clip["mode"], ambient["mode"])
+
 
 class Install(unittest.TestCase):
     def test_the_install_step_ships_the_manifest_with_the_sheets(self):
@@ -112,15 +124,20 @@ class Install(unittest.TestCase):
             src, dest = Path(tmp) / "out", Path(tmp) / "game"
             for sub in ("units", "iso_buildings", "autotiles"):
                 (src / sub).mkdir(parents=True)
-            for name in (*anim.AMBIENT_SHEETS, "units_atlas_figures.png"):
+            for name in (*anim.AMBIENT_SHEETS, *anim.FIGURE_SHEETS):
                 (src / name).write_bytes(b"")
             (src / "terrain_atlas.png").write_bytes(b"")
             anim.dump(src / anim.MANIFEST_NAME)
             with contextlib.redirect_stdout(io.StringIO()):
                 sprite_generator._install(src, dest)
-            shipped = dest / "assets/tiles" / anim.MANIFEST_NAME
+            tiles = dest / "assets/tiles"
+            shipped = tiles / anim.MANIFEST_NAME
             self.assertTrue(shipped.exists(), "the install left the manifest behind")
             self.assertEqual(shipped.read_text(encoding="utf-8"), anim.dumps())
+            # A clip the manifest names but the install does not ship is the
+            # same drift one step later, so every sheet has to land too.
+            for name in (*anim.AMBIENT_SHEETS, *anim.FIGURE_SHEETS):
+                self.assertTrue((tiles / name).exists(), f"the install left {name}")
 
 
 class Determinism(unittest.TestCase):

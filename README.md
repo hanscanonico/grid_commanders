@@ -246,7 +246,7 @@ python3 -m venv .venv
 | --- | --- |
 | `units_atlas.png` | 1152x480 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
-| `units_atlas_figures.png` | the same army with the tile's cast shadow subtracted, for the cut-ins (see below) |
+| `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
 | `terrain_atlas.png` | 896x320 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
 | `units/<id>_<team>.png` | 90 cells, the inputs `tools/paste_unit_sprites.gd` reads |
 | `iso_buildings/<id>_<team>.png` | 25 property-building cells for `assets/sprites/iso_buildings` |
@@ -262,9 +262,11 @@ python3 -m venv .venv
 
 `anim.json` is the same numbers the sheets are built from, written down for the
 game to read instead of retype: the cell's size, its ground line and its
-overflow, the clips (which sheets, in what order, at what cadence — the army's
-ambient beat and the sea's), the units atlas's column and row order, and how
-many phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
+overflow, the clips (which sheets, in what order, at what cadence — the
+army's ambient beat on the board, the same beat on the cut-ins' shadowless
+`ambient_figures` pair because they are the same motion, and the sea's own),
+the units atlas's column and row order, and how many phase variants each
+terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
 phase tables — and `ground_px` is **measured** off a rendered cell (a composed
 cell minus the shadowless one is the cast shadow alone; an ellipse is widest on
@@ -273,19 +275,25 @@ one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
 
-`units_atlas_figures.png` exists because a figure standing on a drawn ground
+The figure sheets exist because a figure standing on a drawn ground
 already has a shadow. The tile shadow grounds the cell against the board's
 tile; the game's cut-ins draw the same 64px cell over a ground plane and a
 contact shadow **of their own**, so the tile's would be a second shadow rather
 than the same one. (It was first cut for a sharper reason — the shadow was a
 checkerboard then, and at 1:1 the cut-in resolved its dots one by one. The
 shadow is solid now and that half of the argument has retired; the doubling
-has not.) The sheet **subtracts** that shadow
+has not.) Each sheet **subtracts** that shadow
 from the composed cell rather than composing a cell without one, so it is the
 board's art and can never drift from it: the waterline foam is placed against
 the composed cell's own spans, so a shadow that was never drawn would have
 moved the foam. Everything else — every hull pixel, every fleck of foam — is
 identical, which is what the `FigureSheet` tests hold it to.
+
+There are two of them, one per ambient key pose, because a frozen figure is
+the closest look a player ever gets at this art and the cut-in should breathe
+like the board does. `_b` is frame B put through the same subtraction, and
+`clips.ambient_figures` in `anim.json` names the pair at the ambient cadence,
+so the game plays a cut-in idle without retyping either filename.
 
 The `autotiles/` sheets are the opt-in upgrade path beyond the fixed
 14-column terrain contract: roads and rivers as N/E/S/W connection sets (so
