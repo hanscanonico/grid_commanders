@@ -3020,7 +3020,18 @@ class Silhouette(unittest.TestCase):
     """Units must be tellable apart by mass at board zoom (32px), where
     colour and greebling are averaged away. Pairwise IoU of the 1-bit
     silhouettes is the review's gate: any pair above 0.85 is one shape
-    wearing two labels."""
+    wearing two labels.
+
+    Rung 2 is not the zoomed-out board, though, and the rung it is not is
+    where a player picks a unit off a full map: rung 1 draws the same cell at
+    16x24, one source pixel in four, and a pair that separates on 32x48 can
+    still be one blob there. Read at rung 1 on 2026-08-24 the armour cluster
+    was a clone family the rung-2 gate could not see — tank/apc 0.810,
+    tank/artillery 0.800, artillery/apc 0.782, all of them comfortably under
+    the 0.85 bar above. The second reading below holds that rung at 0.78,
+    which is where the roster's next-closest pairs already sat (tank/md_tank
+    0.750, recon/cruiser 0.747): the bar is the field, not a target.
+    """
 
     # Named debt, not tolerance: a pair listed here fails the gate and is
     # asserted to keep failing, so fixing one is a visible diff. The mass-table
@@ -3028,26 +3039,43 @@ class Silhouette(unittest.TestCase):
     # pair back is a regression.
     KNOWN_CLONES: frozenset[frozenset[str]] = frozenset()
 
-    def _silhouette(self, uid: str) -> set[tuple[int, int]]:
+    # Source pixels per screen pixel at the two rungs a match is played at,
+    # and the bar each one holds.
+    RUNG_2, RUNG_2_BAR = 2, 0.85
+    RUNG_1, RUNG_1_BAR = 4, 0.78
+
+    def _silhouette(self, uid: str, ratio: int = 2) -> set[tuple[int, int]]:
         cell = atlas.unit_cell(uid, faction_by_key("neutral")).convert("RGBA")
-        w, h = atlas.CELL_W // 2, atlas.CELL_H // 2
+        w, h = atlas.CELL_W // ratio, atlas.CELL_H // ratio
         small = cell.resize((w, h), Image.NEAREST)
         px = small.load()
         return {(x, y) for y in range(h) for x in range(w) if px[x, y][3] > 200}
 
-    def test_no_two_units_share_a_silhouette(self):
-        shapes = {uid: self._silhouette(uid) for uid in ATLAS_ORDER}
+    def _pairs(self, ratio: int):
+        shapes = {uid: self._silhouette(uid, ratio) for uid in ATLAS_ORDER}
         for i, a in enumerate(ATLAS_ORDER):
             for b in ATLAS_ORDER[i + 1 :]:
-                pair = frozenset((a, b))
                 inter = len(shapes[a] & shapes[b])
                 union = len(shapes[a] | shapes[b])
-                iou = inter / union if union else 1.0
-                with self.subTest(pair=(a, b)):
-                    if pair in self.KNOWN_CLONES:
-                        self.assertGreater(iou, 0.85)  # debt still real
-                    else:
-                        self.assertLessEqual(iou, 0.85)
+                yield a, b, (inter / union if union else 1.0)
+
+    def test_no_two_units_share_a_silhouette(self):
+        for a, b, iou in self._pairs(self.RUNG_2):
+            pair = frozenset((a, b))
+            with self.subTest(pair=(a, b)):
+                if pair in self.KNOWN_CLONES:
+                    self.assertGreater(iou, self.RUNG_2_BAR)  # debt still real
+                else:
+                    self.assertLessEqual(iou, self.RUNG_2_BAR)
+
+    def test_no_two_units_share_a_silhouette_zoomed_out(self):
+        for a, b, iou in self._pairs(self.RUNG_1):
+            pair = frozenset((a, b))
+            with self.subTest(pair=(a, b)):
+                if pair in self.KNOWN_CLONES:
+                    self.assertGreater(iou, self.RUNG_1_BAR)  # debt still real
+                else:
+                    self.assertLessEqual(iou, self.RUNG_1_BAR)
 
 
 class HullValues(unittest.TestCase):

@@ -624,14 +624,27 @@ def anti_air(pose: Pose = Pose.A) -> Model:
 
 
 def artillery(pose: Pose = Pose.A) -> Model:
-    """SPG: open casemate, howitzer erected past 60 degrees, recoil spade.
+    """SPG: open casemate, howitzer erected near-vertical, recoil spade.
 
-    Pose B is the recoil stroke: trunnion pedestal, sleeved barrel and muzzle
-    brake ride `dz = -2` back down into the pit — one board texel, so the
-    spike visibly shortens against the casemate wall instead of shimmering
-    inside it — 7 changed silhouette texels at rung 1, 30 at rung 2. The
-    walls, the spade and the hull hold their ground, which is what makes it a
-    gun firing rather than a vehicle sinking.
+    The gun climbs THREE z per y (2026-08-24), where it used to climb two.
+    Two z per y draws a 2:1 screen slope, which is the slope of every roofline
+    and every glacis in this projection and of the MBT's hull-hugging barrel:
+    the howitzer ran along the tank's own gun line and the two units measured
+    0.800 IoU at rung 1, one shape wearing two labels on the zoomed-out board
+    (`Silhouette`). Three z per y draws a 5:2 slope the sheet has nothing else
+    at, and the spike leaves the hull line for open sky — 0.764 now, and the
+    unit is a foot taller into the cell's headroom for it.
+
+    Pose B is the recoil stroke: the sleeved barrel, the flared brake and the
+    bore ride `dz = -4` down into the pit while the TRUNNION PEDESTAL stays
+    put, so the barrel slides through its own mount the way a recoiling gun
+    does. Two board texels, not the one the shallower gun took: a near-
+    vertical spike dropped one texel slides down its own column and changes
+    almost nothing at the edges (3 silhouette texels against 23 interior ones,
+    6.67 shimmer, over the 5.0 bar). The full stroke measures 12 changed
+    silhouette texels at rung 1 and 46 at rung 2, at 1.75 shimmer. The walls,
+    the spade and the hull hold their ground, which is what makes it a gun
+    firing rather than a vehicle sinking.
     """
     m = Model()
     _track(m, 0, 2, 0, 12, 2, phase=pose)
@@ -647,25 +660,31 @@ def artillery(pose: Pose = Pose.A) -> Model:
     m.box(1, 9, 2, 2, 7, 7, "body")
     m.box(2, 8, 8, 8, 7, 7, "body")
     m.box(2, 8, 3, 7, 4, 4, "hull_dk")  # pit floor
-    # howitzer erected steeply out of the pit: the rising spike no other
-    # land unit carries — two z per y, well clear of the hull mass, and one
-    # step longer than the tile is tall; the lower barrel wears a livery
-    # recoil sleeve, the muzzle stays steel
+    # howitzer erected out of the pit: the rising spike no other land unit
+    # carries — THREE z per y, so it breaks away from the 2:1 line every
+    # roofline and every tank barrel on the sheet runs at, well clear of the
+    # hull mass and half again longer than the tile is tall; the lower barrel
+    # wears a livery recoil sleeve, the muzzle stays steel
     m.box(4, 6, 4, 6, 5, 7, "hull_dk")  # trunnion pedestal
-    for i in range(7):
+    for i in range(6):
         paint = "hull_dk" if i < 2 else "gunmetal"
-        m.box(4, 6, 6 + i, 6 + i, 8 + 2 * i, 9 + 2 * i, paint)
-    m.box(3, 7, 13, 13, 21, 21, "gunmetal_dk")  # muzzle brake
-    m.box(4, 6, 13, 13, 22, 22, "bore")
+        m.box(4, 6, 6 + i, 6 + i, 8 + 3 * i, 10 + 3 * i, paint)
+    m.box(3, 7, 11, 11, 25, 25, "gunmetal_dk")  # muzzle brake, flared
+    m.box(4, 6, 12, 12, 26, 26, "bore")
     # recoil spade dug in at the rear
     m.box(3, 7, 0, 0, 2, 4, "hull_dk")  # spade arms
     m.box(2, 8, -1, -1, 1, 3, "hull")  # blade
     if pose is Pose.B:
-        # the howitzer recoils one texel into the pit, pedestal and all. Two
-        # boxes, not one: the casemate's front wall stands at y=8 inside the
-        # gun's own x span, and it is the thing the barrel recoils PAST.
-        _shift(m, (4, 6, 4, 6, 5, 7), dz=-2)  # trunnion pedestal
-        _shift(m, (3, 7, 6, 13, 8, 22), dz=-2)  # barrel, brake and muzzle
+        # the howitzer recoils TWO board texels down into the pit, and the
+        # trunnion pedestal stays put: the barrel slides through its own
+        # mount, which is what a recoiling gun does and what leaves the pit
+        # and the casemate as the fixed thing the stroke is read against.
+        # Two, not the one the shallower gun took, because the erected barrel
+        # is now near-vertical on screen — a texel of recoil slid it down its
+        # OWN column and changed 3 silhouette texels against 23 interior
+        # ones, over the 5.0 shimmer bar. The full stroke clears the spike's
+        # own width off the top of the sky.
+        _shift(m, (3, 7, 6, 12, 8, 27), dz=-4)
     return m
 
 
@@ -720,53 +739,103 @@ def rockets(pose: Pose = Pose.A) -> Model:
 
 
 def apc(pose: Pose = Pose.A) -> Model:
-    """Tracked transport: the tall box — high flat-topped troop compartment
-    over a sloped glacis, no turret at all — unarmed.
+    """Tracked transport: a raised forward cab stepped down to a long OPEN
+    cargo deck with the ramp dropped at the tail — unarmed.
 
-    Pose B dips the nose: glacis, bumper, visor and headlights ride `dz = -2`
-    while the box behind them holds still, the transport nodding on its
-    torsion bars as the engine loads. It is the one thing on this unit a
-    board texel of movement can be SEEN on, and it is the roster's quietest
-    beat even so: 3 changed silhouette texels at rung 1, 15 at rung 2. The
-    transport carries no turret and no gun, and everything else it owns is
-    interior to its own outline — this projection buries a roof detail under
-    the roof's far edge unless it climbs more than its distance from that
-    edge, so the open troop hatch tried first changed zero silhouette texels
-    at either rung, and the comms whip, two pixels wide, changed six pixels
-    and no whole texel.
+    What this replaces (2026-08-24) was a tall flat-topped box, and a box is
+    the one thing a tank also is. Measured at rung 1 — the zoomed-out board,
+    16x24 texels, where `Silhouette`'s 32x48 reading cannot see the
+    difference — the transport and the MBT came in at 0.810 IoU: a player
+    picked between a gun tank and an unarmed carrier by colour alone. The
+    answer is mass and not greebling (docs/density_128.md): a step in the top
+    line and a hole where the roof used to be.
+
+    Three changes carry it, and each is sized against the projection rather
+    than against the drawing:
+
+    - the cargo deck is a ONE-course wall ring with no roof over it, five
+      courses under the cab roof. A roof gains 2px of screen height per
+      course and gives 1px back per voxel it stands forward of the mass it is
+      stepped up from, so with the cab 9 voxels ahead of the bay's rear
+      corner the step only clears the iso slope at five;
+    - the hull is 9 voxels wide against the MBT's 12 and the narrowest gun
+      tank's 11, and its run is two voxels longer than the MBT's, which is a
+      carrier's proportion and not a turret ring's;
+    - the ramp is DOWN, three voxels of it stepping to the ground behind the
+      tail. No gun vehicle on the sheet has anything at that corner.
+
+    It reads 0.743 against the tank now, and tank/artillery's 0.764 is the
+    roster's worst pair.
+
+    Pose B dips the nose a whole board texel: the cab, its roof, the cupola,
+    the glacis and the bumper all ride `dz = -2` while the open deck behind
+    holds still, so the step between the two visibly shallows as the
+    transport nods on its torsion bars. That is 8 changed silhouette texels
+    at rung 1 and 32 at rung 2, against the 3 and 15 the old glacis-only dip
+    scored — the old model had nothing else a texel could be seen on, and the
+    open troop hatch tried then changed zero texels at either rung because
+    this projection buries a roof detail under the roof's own far edge.
     """
     m = Model()
-    _track(m, 0, 2, 0, 12, phase=pose)
-    _track(m, 7, 9, 0, 12, phase=pose)
-    # tall narrow slab hull: the highest solid mass on the land roster,
-    # a track narrower than the gun tanks so the box reads upright
-    m.box(0, 9, 1, 12, 2, 6, "hull")
-    m.box(1, 8, 2, 12, 7, 7, "hull")  # inset roof, dead-flat top line
+    _track(m, 0, 2, 0, 15, phase=pose)
+    _track(m, 6, 8, 0, 15, phase=pose)
+    # low hull tub running the whole length — the floor the cargo bay and the
+    # cab both stand on, and one voxel narrower than any gun tank's
+    m.box(0, 8, 1, 15, 2, 4, "hull")
+    # hull-side skirts: a dark plate down each flank, the full length of the
+    # run, so the transport's flank is armour and the tracks read as covered.
+    # They stop at the tub's own bottom course — a skirt dropped over the
+    # tread would take the link stripe with it, and the stripe is the only
+    # thing on the model that says tracked.
+    m.box(0, 0, 1, 15, 2, 3, "hull_dk")
+    m.box(8, 8, 1, 15, 2, 3, "hull_dk")
+    # open cargo deck over the rear half: a ONE-course wall ring and no roof
+    # at all. The team color has the whole ring, which is the largest pure
+    # livery run on the land roster.
+    m.box(0, 8, 1, 9, 5, 5, "hull")
+    m.clear(1, 7, 2, 8, 5, 5)
+    m.box(1, 7, 2, 8, 4, 4, "hull_dk")  # bay floor, in shadow under the walls
+    m.box(0, 0, 1, 9, 5, 5, "body_dk")  # wall caps
+    m.box(8, 8, 1, 9, 5, 5, "body_dk")
+    m.box(0, 8, 1, 1, 5, 5, "body")
+    m.box(2, 6, 8, 8, 5, 5, "body")
+    # raised forward cab: five courses over the bay wall, which is what it
+    # takes for the step to clear the projection — a roof gains 2px of screen
+    # height per course and loses 1px per voxel it stands forward of the
+    # thing it is stepped up from
+    m.box(1, 7, 10, 15, 5, 9, "hull")
+    m.box(2, 6, 10, 15, 10, 10, "hull")  # cab roof, inset
+    m.chamfer(2, 6, 10, 15, 10, 10)
+    m.box(3, 5, 11, 14, 10, 10, "body")  # roof panel
+    m.box(1, 7, 10, 10, 5, 9, "hull_dk")  # cab rear bulkhead, over the bay
+    # small commander's cupola on the cab roof
+    m.box(3, 5, 11, 12, 11, 11, "body_dk")
+    m.set(4, 12, 12, "steel")  # periscope
     # sloped glacis nose stepping down to the bumper; the team stripe
     # across it keeps a pure accent on an unshaded face
-    m.box(1, 8, 13, 13, 2, 5, "hull")
-    m.box(2, 7, 13, 13, 5, 5, "hull_lt")
-    m.box(3, 6, 13, 13, 5, 5, "body")
-    m.box(2, 7, 14, 14, 2, 3, "hull_lt")
-    # driver visor slit and headlights
-    m.box(3, 5, 14, 14, 3, 3, "glass_dk")
-    m.set(2, 14, 3, "amber")
-    m.set(7, 14, 3, "amber")
-    # livery roof: a broad team panel and hatch pair, painted flush so the
-    # top stays a slab
-    m.box(2, 7, 4, 10, 7, 7, "body")
-    m.box(3, 4, 8, 9, 7, 7, "body_dk")  # troop hatches
-    m.box(5, 6, 8, 9, 7, 7, "body_dk")
-    m.box(0, 0, 2, 11, 4, 4, "hull_dk")  # side stowage rail
-    m.box(9, 9, 2, 11, 4, 4, "hull_dk")
-    # rear troop door, full height
-    m.box(3, 6, 0, 0, 2, 6, "hull_dk")
-    m.set(5, 0, 4, "steel")  # door handle
-    # tall comms whip — the APC keeps one; the gun tanks lost theirs
-    m.box(8, 8, 3, 3, 8, 9, "hull_lt")
-    m.set(8, 3, 10, "amber")
+    m.box(1, 7, 16, 16, 2, 8, "hull")
+    m.box(2, 6, 16, 16, 8, 8, "hull_lt")
+    m.box(3, 5, 16, 16, 6, 7, "glass")  # driver's screen
+    m.box(2, 6, 17, 17, 2, 3, "hull_lt")
+    m.box(3, 5, 17, 17, 3, 3, "glass_dk")
+    m.set(2, 17, 3, "amber")
+    m.set(6, 17, 3, "amber")
+    # rear ramp, dropped: it steps down out of the bay floor and lies on the
+    # ground behind the hull — the one part of the outline that says troops
+    # get out of this, and no gun vehicle on the sheet has anything like it
+    m.box(2, 6, 0, 0, 2, 2, "hull_dk")
+    m.box(2, 6, -1, -1, 1, 1, "hull_dk")
+    m.box(2, 6, -2, -2, 0, 0, "hull")
+    m.set(3, -2, 0, "steel")  # ramp lip
+    m.set(5, -2, 0, "steel")
     if pose is Pose.B:
-        _shift(m, (1, 8, 13, 14, 2, 5), dz=-2)
+        # the nose dips a WHOLE board texel and the open bay holds still: cab,
+        # roof, cupola, glacis and bumper all ride `dz = -2` together, so the
+        # step between the cab roof and the bay wall visibly shallows as the
+        # transport nods on its torsion bars. The glacis-only dip this
+        # replaces moved a corner of a slab; this moves the tallest mass the
+        # unit owns.
+        _shift(m, (1, 7, 10, 17, 2, 12), dz=-2)
     return m
 
 
