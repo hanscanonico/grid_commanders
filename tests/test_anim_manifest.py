@@ -190,12 +190,61 @@ class MoveFallback(unittest.TestCase):
         directly: a branch that ticks with the FRAME — the rotor phase — must
         give MOVE_A the A art and MOVE_B the B art. Written as
         `X if pose is Pose.A else Y` it would hand MOVE_A the off-beat blade,
-        and the first authored copter stride would inherit the bug."""
+        and the first authored copter stride would inherit the bug.
+
+        It is asked of the ROTOR voxels alone. When it was written the copters
+        had no move art and the whole model answered it; now that they hold a
+        nose-down attitude under way, the airframe legitimately differs from
+        its ambient key and only the disc — the part that ticks with the frame
+        rather than with the clip — has to match frame for frame."""
         for uid in ("b_copter", "t_copter"):
             builder = UNITS[uid][0]
             for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
                 with self.subTest(unit=uid, pose=move.name):
-                    self.assertEqual(builder(move).vox, builder(ambient).vox)
+                    self.assertEqual(
+                        self._rotor(builder(move)), self._rotor(builder(ambient))
+                    )
+
+    @staticmethod
+    def _rotor(model) -> set:
+        return {v for v, mat in model.vox.items() if mat == "rotor"}
+
+    def test_a_unit_that_opts_into_the_move_clip_authors_a_move_pose(self):
+        """`MOVES` is what takes a unit out of the fallback above, so a uid
+        listed there with no move art of its own would ship a move clip that
+        is its idle under a new name and no test would notice: the fallback
+        test skips it and the sheets still build."""
+        for uid in MOVES:
+            builder = UNITS[uid][0]
+            with self.subTest(unit=uid):
+                self.assertNotEqual(builder(Pose.MOVE_A).vox, builder(Pose.A).vox)
+
+    def test_the_aircraft_under_way_hold_a_texel_of_nose_down(self):
+        """What the air family's move clip says, in the only terms a sheet
+        that may never translate the hull has: attitude. The forward-most
+        course of the airframe sits one whole board texel lower under way
+        (`dz = -2`, the texel rule in `units._shift`) while the aftmost two
+        courses — nozzles, tail turret, tail rotor — are untouched, so the
+        screen line ROTATES about the wings or the mast rather than the whole
+        aircraft sinking."""
+        for uid in MOVES:
+            if UNITS[uid][1] != "air":
+                continue
+            builder = UNITS[uid][0]
+            idle, moved = builder(Pose.A).vox, builder(Pose.MOVE_A).vox
+            ys = [y for _, y, _ in idle]
+            with self.subTest(unit=uid, reading="nose"):
+                nose = max(ys)
+                self.assertEqual(
+                    min(z for _, y, z in moved if y == nose),
+                    min(z for _, y, z in idle if y == nose) - 2,
+                )
+            with self.subTest(unit=uid, reading="tail"):
+                tail = min(ys) + 1
+                self.assertEqual(
+                    {v: m for v, m in idle.items() if v[1] <= tail},
+                    {v: m for v, m in moved.items() if v[1] <= tail},
+                )
 
     def test_the_clip_table_names_the_clips_the_manifest_publishes(self):
         """`units.CLIP_POSES` is what a family task reads to know which poses

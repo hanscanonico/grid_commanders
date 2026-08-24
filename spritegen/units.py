@@ -102,10 +102,23 @@ def beat(pose: Pose) -> bool:
     return Pose(pose) in (Pose.B, Pose.MOVE_B)
 
 
-# The uids that author the move clip. Everything else is served its ambient
-# counterpart, so the move sheets stay valid while the families arrive one at
-# a time. First in: the five tracked hulls.
-MOVES: frozenset[str] = frozenset({"tank", "md_tank", "anti_air", "artillery", "apc"})
+# The uids that author the move clip. Each family task adds its units here as
+# it hand-places their strides; everything absent still renders its ambient
+# counterpart onto the move sheets, so the sheets stay valid while the
+# families arrive one at a time.
+MOVES: frozenset[str] = frozenset(
+    {
+        "tank",
+        "md_tank",
+        "anti_air",
+        "artillery",
+        "apc",
+        "fighter",
+        "bomber",
+        "b_copter",
+        "t_copter",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -1073,6 +1086,17 @@ def fighter(pose: Pose = Pose.A) -> Model:
     m.box(4, 5, 0, 0, 3, 4, "gunmetal_dk")
     m.set(4, -1, 3, "bore")
     m.set(5, -1, 3, "bore")
+    if moving(pose):
+        # Under way the jet holds one board texel of nose-down (dz = -2): the
+        # fuselage ahead of the cockpit and the radome drop, while the wings,
+        # the intakes and the nozzles stay where pose A has them, so the
+        # airframe's screen line ROTATES about the wing root instead of
+        # translating. The break is AHEAD of the canopy (y14): taken through
+        # it at y12 the glass split into two blocks two voxels apart and the
+        # jet grew a second cockpit. The y13 course is repainted a voxel
+        # deeper so the step down to the nose does not open a hole.
+        _shift(m, (4, 5, 14, 19, 3, 5), dz=-2)
+        m.box(4, 5, 13, 13, 2, 2, "hull")
     return m
 
 
@@ -1109,6 +1133,13 @@ def bomber(pose: Pose = Pose.A) -> Model:
     m.box(5, 6, 2, 2, 5, 6, "body_dk")
     # tail turret hint
     m.box(5, 6, 0, 0, 3, 3, "gunmetal_dk")
+    if moving(pose):
+        # Same held nose-down as the fighter: the forward fuselage, the flight
+        # deck and the nose cap drop a board texel, the wings, pods and tail
+        # hold their line. One course of fuselage at y13 is repainted deeper
+        # so the break behind the flight deck stays closed.
+        _shift(m, (4, 7, 14, 20, 3, 5), dz=-2)
+        m.box(4, 7, 13, 13, 2, 2, "hull")
     return m
 
 
@@ -1154,6 +1185,15 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     # The rotor ticks with the FRAME, not the clip: a moving helicopter's
     # blades are at the off-beat position on MOVE_B exactly as on B.
     _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
+    if moving(pose):
+        # A helicopter under way flies nose-down, and that attitude is what
+        # says heading on a sheet that may never translate the hull. The nose,
+        # the tandem canopy and the chin gun drop one board texel (dz = -2)
+        # about the mast, which stays: the disc is the part the eye tracks and
+        # tilting it would read as a second animation. The break needs no
+        # course repainted behind it: the fuselage is three voxels deep here,
+        # so the dropped section still overlaps the one it left.
+        _shift(m, (3, 5, 12, 18, 2, 6), dz=-2)
     return m
 
 
@@ -1192,6 +1232,15 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     blade = _BLADE_B if beat(pose) else _BLADE_A
     _rotor(m, 4, 4, 9, blade, clipped=True)
     _rotor(m, 5, 13, 9, blade, clipped=True)
+    if moving(pose):
+        # The tandem's nose-down starts AHEAD of the forward mast (y14): the
+        # mast is bolted to the roof it stands on, so a break at y11 would
+        # leave the disc hanging over two voxels of air. Cockpit, glazing and
+        # the front of the hold drop a board texel; hold, sponsons, ramp and
+        # both discs keep pose A's line, and the belly course at y13 is
+        # repainted a voxel deeper so the break stays closed.
+        _shift(m, (3, 6, 14, 17, 3, 6), dz=-2)
+        m.box(3, 6, 13, 13, 2, 2, "hull")
     return m
 
 
