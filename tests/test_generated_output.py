@@ -2967,8 +2967,15 @@ class MoveFrames(unittest.TestCase):
                     cell = _pose_cell(uid, fac.key, pose)
                     other, other_body = self._shadow(cell), self._body(cell)
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
-                        self.assertLessEqual(shadow, other | other_body)
-                        self.assertLessEqual(other, shadow | body)
+                        # Reported as the offending pixels rather than as a
+                        # subset relation between two several-hundred-pixel
+                        # sets, which prints both in full and names neither.
+                        self.assertEqual(
+                            shadow - other - other_body, set(), "pose A's shadow"
+                        )
+                        self.assertEqual(
+                            other - shadow - body, set(), f"{pose.name}'s shadow"
+                        )
 
     def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
         """The fallback is what makes the move sheets valid from day one:
