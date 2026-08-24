@@ -119,6 +119,10 @@ MOVES: frozenset[str] = frozenset(
         "bomber",
         "b_copter",
         "t_copter",
+        "battleship",
+        "cruiser",
+        "sub",
+        "lander",
     }
 )
 
@@ -1273,6 +1277,12 @@ def battleship(pose: Pose = Pose.A) -> Model:
     silhouette texels at rung 1 against the bob's own 30, and the gun runs are
     what the extra three are. The batteries at both ends move together, so the
     beat reads along the ship's length, which is the identity.
+
+    The move clip is the ship UNDER WAY, and what a hull under way has that a
+    hull at anchor does not is TRIM: both move frames hold the bow up one board
+    texel, so the long deck line rakes over the whole length the battleship is
+    named for. Frame to frame it trains the AFT battery a texel, the one the
+    idle does not touch — 30 changed silhouette texels at rung 1, shimmer 1.23.
     """
     m = Model()
     # long low naval-grey hull, tapered bow (+y) and stern; dark waterline.
@@ -1323,6 +1333,34 @@ def battleship(pose: Pose = Pose.A) -> Model:
             m.set(x, 18, 5, "hull_dk")
             _shift(m, (x, x, 0, 2, 4, 4), dz=2)
             m.set(x, 3, 5, "body_dk")
+    if moving(pose):
+        # Under way the dreadnought carries a held BOW-UP trim, both frames:
+        # everything forward of the bridge above the waterline — foredeck,
+        # fore turret, bow flash — rides one board texel up and the stern
+        # holds, so the long deck line rakes over the ship's whole length,
+        # which is this hull's identity. The `hull_dk` waterline course at
+        # z0 never moves: `voxel._waterline_foam` places the foam against the
+        # composed cell's lowest spans, and a bow lifted out of them would
+        # drag the foam line up the sheet with it.
+        _shift(m, (2, 5, 16, 26, 1, 5), dz=2)
+        m.box(2, 5, 16, 23, 1, 2, "hull")
+        m.box(3, 4, 24, 26, 1, 2, "hull")
+        if beat(pose):
+            # The frame-to-frame delta is the AFT battery training one board
+            # texel across the stern — deliberately not the fore battery the
+            # idle lays up, so the two clips read apart at a glance. The
+            # barbette grows under the trained gunhouse so the guns keep a
+            # mount instead of hanging over the deck.
+            #
+            # The traverse runs `(dx -1, dy +1)` and not the other diagonal
+            # because this hull has no room for the other one: pose A's sprite
+            # is 64px wide in a 64px cell (length is the battleship's identity)
+            # and `(dx +1, dy -1)` carries the stern bore off the right edge —
+            # `place_in_cell` refuses the 65px sprite outright. Screen-wise the
+            # two are the same traverse mirrored, and the consumer mirrors the
+            # clip anyway.
+            _shift(m, (3, 4, 0, 5, 4, 4), dx=-1, dy=1)
+            m.box(2, 3, 6, 6, 3, 3, "hull")
     return m
 
 
@@ -1334,6 +1372,11 @@ def cruiser(pose: Pose = Pose.A) -> Model:
     one assembly on the ship that is not a slab: 24 changed silhouette texels
     at rung 1 against the bob's 22. The tower holds still — the cruiser owns
     "tallest", and a tower that swayed would be the ship rolling, not aiming.
+
+    Under way it carries the fleet's held bow-up trim (see `battleship`) with
+    the autocannon riding up on the raised foredeck, and its frame-to-frame
+    delta is the mast HEAD alone running up the lattice — the tower still holds
+    still: 23 changed silhouette texels at rung 1, shimmer 1.70.
     """
     m = Model()
     # mid-length hull, a strake beamier than the battleship's; dark waterline
@@ -1374,6 +1417,22 @@ def cruiser(pose: Pose = Pose.A) -> Model:
         # muzzles included, on a mount that grows the same two voxels
         _shift(m, (3, 4, 14, 16, 3, 4), dz=2)
         m.box(3, 4, 13, 13, 4, 5, "hull_dk")
+    if moving(pose):
+        # The escort's held BOW-UP trim: hull, deck, bow flash and the forward
+        # autocannon forward of the tower all ride one board texel up while
+        # the stern and the helipad hold. The waterline course stays put for
+        # the foam (see `battleship`), and the freeboard under the raised
+        # section is repainted so the rake is a hull and not a gap.
+        _shift(m, (1, 6, 11, 18, 1, 4), dz=2)
+        m.box(1, 6, 11, 15, 1, 2, "hull")
+        m.box(2, 5, 16, 17, 1, 2, "hull")
+        m.box(3, 4, 18, 18, 1, 2, "hull")
+        if beat(pose):
+            # The delta is the mast HEAD alone, run one board texel up its own
+            # lattice: the tower itself holds still, which is the cruiser's
+            # recorded rule — a tower that swayed would be the ship rolling.
+            _shift(m, (3, 3, 8, 8, 11, 11), dz=2)
+            m.box(3, 3, 8, 8, 11, 12, "steel")
     return m
 
 
@@ -1386,6 +1445,13 @@ def sub(pose: Pose = Pose.A) -> Model:
     only thing on a boat with decks awash that CAN move without looking like
     it is diving — for 25 changed silhouette texels at rung 1 against the
     bob's 24, on the sprite's highest and most isolated line.
+
+    It is the one hull that does NOT take the move clip's bow-up trim: decks
+    awash is the whole identity, and a bow lifted clear of the water is a boat
+    that has surfaced. Under way it runs its masts and its planes instead —
+    search periscope up in both frames, dive planes rigged down onto the
+    saddle, attack scope up on the off-beat: 25 changed silhouette texels at
+    rung 1, shimmer 0.72.
     """
     m = Model()
     # decks awash: one waterline row end to end, one deck row of freeboard
@@ -1437,6 +1503,22 @@ def sub(pose: Pose = Pose.A) -> Model:
         # working
         _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
         m.box(3, 3, 11, 11, 7, 8, "steel")
+    if moving(pose):
+        # No bow-up trim here: the sub's identity is the darkest hull afloat
+        # with its decks awash, and a bow raised out of the water is a boat
+        # that has surfaced. What it runs instead is its masts — the search
+        # periscope held up in both frames, as pose B raises it — and the dive
+        # planes rigged down one board texel onto the saddle for the run.
+        _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
+        m.box(3, 3, 11, 11, 7, 8, "steel")
+        _shift(m, (2, 2, 11, 12, 3, 3), dz=-2)
+        _shift(m, (5, 5, 11, 12, 3, 3), dz=-2)
+        if beat(pose):
+            # The delta is the short ATTACK scope coming up beside the search
+            # one — the search mast is already up in both frames, so what the
+            # board sees moving is the second mast and not the first.
+            _shift(m, (4, 4, 13, 13, 7, 7), dz=2)
+            m.set(4, 13, 7, "steel")
     return m
 
 
@@ -1449,6 +1531,13 @@ def lander(pose: Pose = Pose.A) -> Model:
     APC does was tried first and measured 17: dipping a texel while the hull
     bobs a texel the other way pins the bow's outline exactly where pose A
     left it, so the one part that moves is the one part the board cannot see.
+
+    Under way it runs bow-up like the two warships, visor DOWN in both frames —
+    a loaded lander does not carry its ramp open at sea — and cracks the visor's
+    centre lip a texel on the off-beat: 20 changed silhouette texels at rung 1,
+    shimmer 1.40. The lip is cracked and not thrown open because the mass gate
+    is what is scarce here: the rake alone spends 3.6% of the 8% drift and a
+    full-width visor lift spends another 5.1%.
     """
     m = Model()
     # short wide hull; dark waterline
@@ -1487,6 +1576,22 @@ def lander(pose: Pose = Pose.A) -> Model:
         _shift(m, (1, 7, 10, 10, 2, 5), dz=2)
         m.box(1, 1, 10, 10, 2, 3, "hull_dk")
         m.box(7, 7, 10, 10, 2, 3, "hull_dk")
+    if moving(pose):
+        # The craft runs bow-up with the visor DOWN — pose A's closed ramp, a
+        # loaded lander does not carry its bow open at sea. The forward third
+        # of the hull, the forward end of the well floor and the whole ramp
+        # ride one board texel up; the cargo house aft holds, so the stubby
+        # block rakes. Waterline course untouched for the foam
+        # (see `battleship`), freeboard repainted under the raised section.
+        _shift(m, (0, 8, 7, 10, 1, 5), dz=2)
+        m.box(0, 8, 7, 9, 1, 2, "hull")
+        m.box(1, 7, 10, 10, 1, 2, "hull")
+        if beat(pose):
+            # The delta is the ramp LIP alone lifting off its ribs — the
+            # visor cracked, not opened — with the ramp face grown behind it
+            # so nothing floats.
+            _shift(m, (3, 5, 10, 10, 7, 7), dz=2)
+            m.box(3, 5, 10, 10, 7, 7, "hull")
     return m
 
 
