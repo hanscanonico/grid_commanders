@@ -341,10 +341,6 @@ audio:
 		exit 1; }
 	cd "$(AUDIOGEN)" && .venv/bin/python audio_generator.py --install "$(CURDIR)"
 
-# Regenerates the commander portraits (220x268 busts, drawn as SVG by
-# tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
-# the new PNGs register. These are committed art, so this only needs rerunning
-# when either generator changes or a commander is added.
 # Holds every shipped campaign to the bar a playable mission clears. Run it after
 # authoring a mission; what it refuses is listed in docs/campaign_authoring.md.
 campaigns:
@@ -364,10 +360,24 @@ campaign-difficulty:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/run_campaign_difficulty.gd -- $(CAMPAIGN)
 
+# Regenerates the commander portraits (220x268 busts, drawn as SVG by
+# tools/commander_face_svg.gd) and the four faction emblems, then re-imports so
+# the new PNGs register. These are committed art, so this only needs rerunning
+# when either generator changes or a commander is added.
 portraits:
 	$(call require-godot)
 	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd
 	$(GODOT) --headless --path . --import
+
+# Bakes the same art in memory and byte-diffs it against the committed PNGs,
+# writing nothing: the answer to "does regenerating reproduce it?", and the
+# merge bar for a change to either generator. Deliberately out of `make verify`
+# — the rasteriser is thorvg's, so the bytes are engine-version-stable but not
+# machine-independent, and this repo does not commit renderer-dependent goldens
+# (SMOKE_HASHES is recorded, never committed).
+portraits-check:
+	$(call require-godot)
+	$(GODOT) --headless --path . -s res://tools/generate_portraits.gd -- --check
 
 import:
 	$(call require-godot)
@@ -387,7 +397,7 @@ gallery-screenshot: import
 
 .PHONY: run hotseat test verify smoke check determinism lint format format-check tiles \
 	atlases ui-art \
-	audio portraits import campaign-difficulty \
+	audio portraits portraits-check import campaign-difficulty \
 	screenshot menu-screenshot gallery-screenshot commander-balance difficulty-check \
 	balance-sim balance-pool bulwark-measure board-measure ai-arena arena-report arena-anchors arena-search \
 	balance-watch replay replay-report campaigns legibility-check

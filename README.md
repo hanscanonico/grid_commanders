@@ -38,6 +38,7 @@ make format          # gdformat — reformat in place; format-check only reports
 make tiles           # rebuild the art: generator atlases (SPRITEGEN=<path>), UI chrome, import
 make audio           # reinstall the sound effects + music from the sibling audio_generator repo
 make portraits       # regenerate the commander portraits + faction emblems
+make portraits-check # bake them in memory and byte-diff against the committed PNGs
 make import          # (re)import assets headless
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu

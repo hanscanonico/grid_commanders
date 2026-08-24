@@ -11,7 +11,8 @@ extends SceneTree
 ##
 ## Faction colours are read from CommanderVisuals, the one authority on them, so
 ## the baked art and the UI that frames it can never disagree.  Run with:
-##   make portraits    (headless, writes under assets/portraits/)
+##   make portraits          (headless, writes under assets/portraits/)
+##   make portraits-check    (bakes in memory, byte-diffs what is committed)
 
 ## The rasterised size, as a multiple of the handoff's 110x134 drawing units.
 ## Twice the largest surface that shows a portrait (the power banner's 104x108
@@ -24,20 +25,26 @@ const FaceSvg := preload("res://tools/commander_face_svg.gd")
 
 
 func _init() -> void:
-	DirAccess.make_dir_recursive_absolute(
-		ProjectSettings.globalize_path(CommanderVisuals.PORTRAIT_DIR)
-	)
-	DirAccess.make_dir_recursive_absolute(
-		ProjectSettings.globalize_path(CommanderVisuals.FACTION_DIR)
-	)
+	var images := _bake()
+	if images.is_empty():
+		return
+	if OS.get_cmdline_user_args().has("--check"):
+		_check(images)
+		return
+	_write(images)
+
+
+## Every file the bake owns, keyed by the path it belongs at — drawn in memory,
+## so the same pass answers both writing and checking. Empty when a portrait
+## could not be drawn: the run is already reported and quit by then.
+func _bake() -> Dictionary[String, Image]:
+	var images: Dictionary[String, Image] = {}
 	var db := CommanderDB.load_default()
-	var count := 0
 	for commander in db.all():
 		var image := _draw_portrait(commander)
 		if image == null:
-			push_error("generate_portraits: could not rasterise %s" % commander.id)
 			quit(1)
-			return
+			return {}
 		if image.get_size() != CommanderVisuals.PORTRAIT_SIZE:
 			push_error(
 				(
@@ -46,52 +53,73 @@ func _init() -> void:
 				)
 			)
 			quit(1)
-			return
-		var path := "%s/%s.png" % [CommanderVisuals.PORTRAIT_DIR, commander.id]
-		var err := image.save_png(ProjectSettings.globalize_path(path))
+			return {}
+		images["%s/%s.png" % [CommanderVisuals.PORTRAIT_DIR, commander.id]] = image
+	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
+		images["%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key]] = _draw_emblem(theme)
+	return images
+
+
+func _write(images: Dictionary[String, Image]) -> void:
+	DirAccess.make_dir_recursive_absolute(
+		ProjectSettings.globalize_path(CommanderVisuals.PORTRAIT_DIR)
+	)
+	DirAccess.make_dir_recursive_absolute(
+		ProjectSettings.globalize_path(CommanderVisuals.FACTION_DIR)
+	)
+	for path in images:
+		var err := images[path].save_png(ProjectSettings.globalize_path(path))
 		if err != OK:
 			push_error("generate_portraits: cannot write %s: %s" % [path, error_string(err)])
 			quit(1)
 			return
-		count += 1
-	for theme: CommanderVisuals.FactionTheme in CommanderVisuals.faction_themes():
-		var emblem := _draw_emblem(theme)
-		var emblem_path := "%s/%s.png" % [CommanderVisuals.FACTION_DIR, theme.key]
-		var emblem_err := emblem.save_png(ProjectSettings.globalize_path(emblem_path))
-		if emblem_err != OK:
-			push_error(
-				"generate_portraits: cannot write %s: %s" % [emblem_path, error_string(emblem_err)]
-			)
-			quit(1)
-			return
-	print("generate_portraits: wrote %d portraits and 4 emblems" % count)
+	var emblems := CommanderVisuals.faction_themes().size()
+	print(
+		"generate_portraits: wrote %d portraits and %d emblems" % [images.size() - emblems, emblems]
+	)
+	quit()
+
+
+## Compares a fresh bake against the committed bytes and writes nothing, so the
+## question "does regenerating this art reproduce it?" has an answer that is run
+## rather than argued.
+func _check(images: Dictionary[String, Image]) -> void:
+	var stale := PackedStringArray()
+	for path in images:
+		var committed := FileAccess.get_file_as_bytes(path)
+		if committed.is_empty():
+			stale.append("%s: nothing baked there" % path)
+		elif images[path].save_png_to_buffer() != committed:
+			stale.append("%s: differs from a fresh bake" % path)
+	if not stale.is_empty():
+		for line in stale:
+			push_error("generate_portraits: %s" % line)
+		quit(1)
+		return
+	print("generate_portraits: %d files match the committed bake" % images.size())
 	quit()
 
 
 # --- portraits ---------------------------------------------------------------
 
 
-## One general's bust. A commander the handoff has no face spec for falls back to
-## the featureless silhouette rather than failing the bake. That is the empty
-## seat's own portrait, so it passes quietly; for anyone else it means a general
-## added ahead of their art would ship reading as "No Commander", which the bake
-## says out loud rather than reporting as a success.
+## One general's bust. The featureless silhouette is the empty seat's own
+## portrait, so that id draws it quietly; anyone else reaching it is a general
+## seated ahead of their art, who would ship reading as "No Commander" — the
+## bake refuses rather than reporting it as a success.
 func _draw_portrait(commander: CommanderType) -> Image:
 	var svg := ""
 	if FaceSvg.has_face(commander.id):
 		svg = FaceSvg.new(CommanderVisuals.theme_for(commander)).build(commander.id)
 	else:
 		if commander.id != CommanderType.NEUTRAL_ID:
-			push_warning(
-				(
-					"generate_portraits: no face spec for %s — baking the neutral silhouette"
-					% commander.id
-				)
-			)
+			push_error("generate_portraits: no face spec for %s" % commander.id)
+			return null
 		var neutral := CommanderVisuals.theme_for_key(CommanderVisuals.NEUTRAL_KEY)
 		svg = FaceSvg.new(neutral).build_neutral()
 	var image := Image.new()
 	if image.load_svg_from_string(svg, PORTRAIT_SCALE) != OK:
+		push_error("generate_portraits: could not rasterise %s" % commander.id)
 		return null
 	return image
 
