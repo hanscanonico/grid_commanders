@@ -1058,6 +1058,14 @@ class PropertyPalette(unittest.TestCase):
     # (`buildings.ROOF_TRIM`) — and the unowned row is built out of cool
     # concrete against the owned rows' warm masonry, which is the one thing
     # Iron's own grey cannot be told from by value.
+    #
+    # This measure is phase-sensitive: 4:1 NEAREST keeps one row in four, so
+    # moving a building up or down the cell changes which of its rows the
+    # board ever draws. Standing the airport and the port on the shared
+    # ground line (`terrain.PROPERTY_ANCHOR`) moved them 15 and 9 rows and
+    # cost them a phase's worth of read — port neutral/Iron 29.0 -> 23.0,
+    # airport Iron/verdant 32.6 -> 27.1, the two thinnest margins on the
+    # board today. Recolouring work should aim at those two pairs first.
     BOARD_ZOOM = 4
     OWNERS_APART = 25.0
     # Neutral against Iron is a grey against a grey and buys its margin with
@@ -1209,6 +1217,21 @@ class PropertyOverlays(unittest.TestCase):
                             self.assertAlmostEqual(
                                 share, 1.0, delta=self.RUNG_TOLERANCE
                             )
+
+    def test_every_property_stands_on_one_ground_line(self):
+        # Five buildings on one board share one grid, so they have to share
+        # the row they stand on. The airport used to bottom out at 45 and the
+        # port at 51 against the other three's 60, which read as two of the
+        # five hovering over the tile the other three sit on. The row is
+        # pinned, not merely agreed: a shared line that drifts up the cell
+        # would still pass a five-way equality.
+        lines = {}
+        for tid in sorted(terrain.PROPERTY):
+            for fac in FACTIONS:
+                px = self._cell(tid, fac).load()
+                rows = [y for y in range(CELL) for x in range(CELL) if px[x, y][3] != 0]
+                lines[(tid, fac.key)] = max(rows)
+        self.assertEqual(set(lines.values()), {60}, lines)
 
     def test_the_tile_and_the_exported_cell_place_one_building(self):
         # The atlas tile is the exported iso_buildings cell plus a shadow, so
