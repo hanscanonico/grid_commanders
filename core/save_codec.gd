@@ -18,8 +18,8 @@ extends RefCounted
 ## Version 7 adds each army's home HQ, which pins where every army began against a
 ## later edit of the map file it names: the board still derives the same answer, so
 ## carrying it is what lets a save whose board has since moved be *refused* rather
-## than silently re-homed. Version 8 records whether an acted unit's last committed
-## action was not an attack, so a refresh power is exact across a mid-turn save.
+## than silently re-homed. Version 8 records whether an acted unit spent its own
+## action or was exhausted by another's, so a refresh power is exact mid-turn.
 ## Version 9 carries the name a board gave a unit, so a mission that is about one
 ## unit can still find it after a resume. Version 10 carries which seats a player
 ## has handed to the computer mid-match through the pause menu's Auto row, and at

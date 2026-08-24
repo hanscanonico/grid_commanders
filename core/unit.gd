@@ -14,8 +14,10 @@ var cell: Vector2i
 var hp: int = 100
 ## True once the unit has used its action this turn.
 var acted: bool = false
-## True when the unit's last committed action this turn did not attack. Kept
-## separate from acted so a refresh power remains exact across a mid-turn save.
+## True when the action that exhausted this unit was its own — a walk, a shot, a
+## capture. A fresh build and a unit somebody else set down or merged into are
+## exhausted by another unit's action and stay false. Kept separate from acted so
+## a refresh power remains exact across a mid-turn save.
 var refreshable: bool = false
 ## Remaining fuel; movement spends it point-for-point with terrain cost.
 var fuel: int = 99

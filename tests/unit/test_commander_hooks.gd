@@ -196,9 +196,11 @@ func test_every_shipped_commander_is_well_formed() -> void:
 		# The plan's band. Below it a power fires most turns and stops being an
 		# event; above it a match can end before the meter ever fills. A number
 		# outside this is a balance decision, not a typo, so it has to be made
-		# here as well as in the .tres. The ceiling is Hammerfall's, and it is the
-		# only power that takes units off the board (more-commanders D4).
-		assert_between(co.power_cost, 9000, 24000, "%s power cost" % co.id)
+		# here as well as in the .tres. The ceiling is Second Wind's, whose price
+		# was doubled when it stopped sparing attackers — a whole second turn for
+		# the army that acted, so it is deliberately the dearest meter on the
+		# roster, above Hammerfall's 24000 (more-commanders D4).
+		assert_between(co.power_cost, 9000, 44000, "%s power cost" % co.id)
 
 
 ## Every general's own numbers are written on its .tres. A balance pass reads
