@@ -296,7 +296,19 @@ against the grass — the crowns stop a hash-keyed 0-6px short of a border
 they end at, so the tree line is bays and points and a woods block is not a
 rectangle). A crown that overhangs a continued border is drawn again a whole
 cell along, so two woods cells butt on the same crown rather than on two
-halves of different ones. Each connection sheet lays out masks 0-15
+halves of different ones. A shore is bays and points for the same reason a
+tree line is, and the wobble is on the WATERLINE rather than on decoration
+laid over a ruled one: the fixed hash sampled every 16px along the edge and
+smoothstepped between the samples, 5px peak to trough, with the wet lip and
+the breaking foam following that line. The profile wraps on the cell, so the
+shore of the tile alongside begins where this one's ends, and coast and shoal
+draw the same wobble per direction, so where the two meet along one shore the
+bays are in phase (the bands keep their own widths, 5px of sand on a coast
+and 8px of water on a shoal). Where two seaward edges meet the point of sand
+is taken off on an arc (`autotile._inland`, the rounded-rectangle distance)
+rather than crossing two bands at a right angle, which is what had a beach
+reading as a beige square in a blue picture frame; a shoal takes the same
+diagonal `corners` mask a coast does. Each connection sheet lays out masks 0-15
 row-major (bit order N=1, E=2, S=4, W=8); `bridges.png` carries its two
 decks side by side. Mask 15 on the woods sheet is the atlas tile exactly, so only a wood's fringe
 leaves the base sheet. A river is cut into a bank rather than laid on the

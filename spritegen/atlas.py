@@ -342,6 +342,21 @@ def build_demo() -> Image.Image:
                 m |= bit
         return m
 
+    def corner_mask(x: int, y: int, joins: frozenset[str]) -> int:
+        """The same bits for the DIAGONAL neighbours, N reading north-east and
+        going clockwise — the contract the coast and shoal tiles round their
+        outside corners against."""
+        m = 0
+        for bit, (dx, dy) in (
+            (autotile.N, (1, -1)),
+            (autotile.E, (1, 1)),
+            (autotile.S, (-1, 1)),
+            (autotile.W, (-1, -1)),
+        ):
+            if at(x + dx, y + dy) in joins:
+                m |= bit
+        return m
+
     road_joins = frozenset({"road", "bridge"})
     river_joins = frozenset({"river", "bridge", "sea"})
     for y, row in enumerate(rows):
@@ -351,7 +366,9 @@ def build_demo() -> Image.Image:
             elif tid == "river":
                 tile = autotile.river_tile(mask(x, y, river_joins), salt=x * 7 + y)
             elif tid == "shoal":
-                tile = autotile.shoal_tile(mask(x, y, _WATERY))
+                tile = autotile.shoal_tile(
+                    mask(x, y, _WATERY), corner_mask(x, y, _WATERY)
+                )
             elif tid == "woods":
                 tile = autotile.woods_tile(mask(x, y, frozenset({"woods"})))
             elif tid == "bridge":
