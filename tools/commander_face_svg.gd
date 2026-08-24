@@ -170,7 +170,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"glasses",
 		"pose": [-4.0, 1.12, false],
-		"bg": &"rays",
+		"bg": &"grid",
 		"prop": &"book",
 	},
 	&"orin_flux":
@@ -241,7 +241,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"glasses",
 		"pose": [-4.0, 1.18, false],
-		"bg": &"bars",
+		"bg": &"grid",
 		"prop": &"ledger",
 	},
 	&"konrad_vale":
@@ -339,7 +339,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"none",
 		"pose": [0.0, 1.16, false],
-		"bg": &"bars",
+		"bg": &"grid",
 		"prop": &"scales",
 	},
 	&"ivar_thorne":
@@ -741,7 +741,7 @@ func _mouth(kind: StringName) -> String:
 # --- backdrops ---------------------------------------------------------------
 
 
-## One of six dramatic treatments behind the bust, clipped to the window.
+## One of seven dramatic treatments behind the bust, clipped to the window.
 func _backdrop(kind: StringName) -> String:
 	match kind:
 		&"rays":
@@ -754,6 +754,8 @@ func _backdrop(kind: StringName) -> String:
 			return _halftone()
 		&"wedge":
 			return _wedge()
+		&"grid":
+			return _grid()
 	return _bars()
 
 
@@ -767,7 +769,8 @@ func _rays() -> String:
 			"<path d='M55,118 L%.1f,%.1f L%.1f,%.1f Z'/>"
 			% [55 + 170 * cos(a), 118 + 170 * sin(a), 55 + 170 * cos(b), 118 + 170 * sin(b)]
 		)
-	return '<g fill="#ffffff" opacity="0.13">%s</g>' % wedges
+	var hub := _path("M21,118 A34,34 0 0 1 89,118 Z", "#ffffff", ' opacity="0.12"')
+	return '<g fill="#ffffff" opacity="0.2">%s</g>' % wedges + hub
 
 
 func _burst() -> String:
@@ -777,10 +780,19 @@ func _burst() -> String:
 		var r := 30.0 if i % 2 == 1 else 62.0
 		pts.append("%.1f,%.1f" % [55 + r * cos(a), 70 + r * sin(a)])
 	var points := " ".join(pts)
-	var out := '<polygon points="%s" fill="#ffffff" opacity="0.14"/>' % points
-	var ring := 'fill="none" stroke="%s" stroke-width="2" opacity="0.5"' % _accent
-	var move := 'transform="rotate(9 55 70) scale(0.8) translate(13.75 17.5)"'
-	return out + '<polygon points="%s" %s %s/>' % [points, ring, move]
+	var out := '<polygon points="%s" fill="#ffffff" opacity="0.22"/>' % points
+	return out + _burst_ring(points, 0.8, 9.0, 2.0) + _burst_ring(points, 0.6, -7.0, 1.6)
+
+
+## A concentric copy of the star, scaled about its own centre (55,70).
+func _burst_ring(points: String, scale: float, rot: float, width: float) -> String:
+	var back := (1.0 - scale) / scale
+	var ring := 'fill="none" stroke="%s" stroke-width="%s" opacity="0.5"' % [_accent, width]
+	var move := (
+		'transform="rotate(%s 55 70) scale(%s) translate(%.2f %.2f)"'
+		% [rot, scale, 55 * back, 70 * back]
+	)
+	return '<polygon points="%s" %s %s/>' % [points, ring, move]
 
 
 func _speed() -> String:
@@ -790,7 +802,9 @@ func _speed() -> String:
 		var thin := i % 2 == 1
 		var offset := 16.0 if thin else 0.0
 		bands += _rect(-20.0 + offset, ys[i], 150, 3.0 if thin else 4.5, "#ffffff")
-	return '<g transform="rotate(-16 55 70)" opacity="0.13">%s</g>' % bands
+	var slab := _rect(-20.0, 33.0, 150, 9.0, "#ffffff") + _rect(-20.0, 89.0, 150, 9.0, "#ffffff")
+	var tilt := 'transform="rotate(-16 55 70)"'
+	return '<g %s opacity="0.2">%s</g><g %s opacity="0.3">%s</g>' % [tilt, bands, tilt, slab]
 
 
 func _halftone() -> String:
@@ -798,21 +812,32 @@ func _halftone() -> String:
 	for row in 10:
 		for col in 11:
 			var stagger := 4.5 if row % 2 == 1 else 0.0
-			dots += _circle(10.0 + col * 9 + stagger, 30.0 + row * 9, 2 - row * 0.12, "#ffffff")
-	return '<g opacity="0.16">%s</g>' % dots
+			dots += _circle(10.0 + col * 9 + stagger, 30.0 + row * 9, 2.6 - row * 0.16, "#ffffff")
+	return '<g opacity="0.24">%s</g>' % dots
 
 
 func _wedge() -> String:
 	var shade := _path("M6,120 L104,22 L104,120 Z", "#000000", ' opacity="0.2"')
-	var edge := ' stroke="#ffffff" stroke-width="2.5" opacity="0.35"'
-	return shade + _path("M6,120 L104,22", "none", edge)
+	var edge := ' stroke="#ffffff" stroke-width="2.5" opacity="0.5"'
+	var trail := ' stroke="#ffffff" stroke-width="1.4" opacity="0.25"'
+	return shade + _path("M6,120 L104,22", "none", edge) + _path("M6,134 L104,36", "none", trail)
 
 
 func _bars() -> String:
 	var bars := _rect(17, 46, 13, 80, "#ffffff")
 	bars += _rect(48, 30, 13, 96, "#ffffff")
 	bars += _rect(79, 58, 13, 68, "#ffffff")
-	return '<g opacity="0.15">%s</g>' % bars
+	var edge := _rect(48, 30, 13, 96, "none", _line(2.0))
+	return '<g opacity="0.22">%s</g><g opacity="0.4">%s</g>' % [bars, edge]
+
+
+## The strategist's lattice: a 12-unit ruled grid over the whole window.
+func _grid() -> String:
+	var lines := ""
+	for i in 10:
+		lines += _rect(6.0 + i * 12.0, -20.0, 1.2, 160, "#ffffff")
+		lines += _rect(-20.0, 24.0 + i * 12.0, 150, 1.2, "#ffffff")
+	return '<g opacity="0.18">%s</g>' % lines
 
 
 # --- signature props ---------------------------------------------------------
