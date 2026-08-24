@@ -174,7 +174,8 @@ is the middle of the band.
 
 ### The grade, and why it is per faction
 
-`Faction.outline` is `OUTLINE_LIGHT` or `OUTLINE_HEAVY` (palette.py), and the
+`Faction.outline` is `OUTLINE_LIGHT`, `OUTLINE_HEAVY` or — since 2026-08-24,
+see below — `OUTLINE_RIM` (palette.py), and the
 heavy grade asks one more question of a sunward SILHOUETTE pixel before it
 lights it: does the lifted colour clear the ground's band —
 `palette.clears_the_ground`, i.e. below L93 or above L191, off `GROUND_BAND`
@@ -210,18 +211,64 @@ the top of this file are the same numbers measured on three rows instead of
 five. `GroundContrast` holds the heavy rows to 2% per row and 4% per sprite,
 and the two budget gates above are stated per grade rather than loosened.
 
-### What is still open
+### The third grade: the two rows a ground is the same COLOUR as (2026-08-24)
 
 Two light rows share a HUE with a ground and not only a band, so the colour
-half of the argument does not save them: verdant on plains (12.2% of its
-boundary ties in both value and colour) and aurora over the water a shoal tile
-is half made of (7.9%). `GroundContrast.SAME_HUE` names them rather than
-folding them into a bound. Neither is a regression this round introduced —
-both are the same round-11 trade — and neither is answered by a value rule,
-since a green unit on grass has no value left to spend either. The candidates
-are a ground-aware lift into the rim slot for those pairs, or the terrain
-side: the woods tile already carries its own value band for exactly this
-reason (`CANOPY_TOP`).
+half of the argument did not save them: verdant on plains and aurora over the
+water a shoal tile is half made of. They were carried as named debt
+(`GroundContrast.SAME_HUE`) for three rounds, and re-measured on the sheet as
+it stands they were 10.30% and 6.48% of their boundary tying in value AND
+colour, worst sprite 22.8% and 14.2%.
+
+`OUTLINE_RIM` is the heavy grade's question with the opposite answer. On the
+same sunward SILHOUETTE pixel, where the ordinary lift lands inside the
+ground's band AND inside a ground's hue (`palette.shares_a_ground_hue`, the
+two chromatic grounds' hues within 30 degrees, greys under S0.20 excluded),
+the line climbs to the first rung that clears the band instead of falling to
+the contour — at most the rim, which is the band above
+`terrain.TERRAIN_VALUE_CEILING` that units own by contract. A green army on
+grass has nothing left to spend downward; the rim is the one place it has
+room. Both ramps skip S4 on the way (verdant L140, aurora L136 — inside the
+band), so in practice the lift lands on S5, L214 and L205.
+
+Three details make it hold:
+
+- the reach is the PAINTING voxel's, not the pass's: only a faction plane may
+  climb into the rim band, and only on a model whose `top_slot` reaches it. A
+  building stops at `BUILDING_TOP_SLOT`, so the rim grade never fires on a
+  property and the five verdant and aurora buildings are byte-identical;
+- a fitting keeps the ceiling it was drawn under, so aurora's cyan canopy —
+  which does sit inside the water's hue — is unmoved: an accent is capped at
+  its own slot plus one, and nothing there clears;
+- the lifted pixel joins the despeckle's `keep` mask. Without that, half of it
+  folded straight back into the plane behind it (round 9's dotted outline,
+  from the light side) and the reading only came down to 2.07% instead of
+  0.39%.
+
+The bill, re-recorded over both poses of all 18 units:
+
+| reading | light (meridian) | rim (aurora / verdant) | heavy (neutral / iron) |
+| --- | --- | --- | --- |
+| S0 share of a unit's own pixels | 14.22% | 14.28% | 17.35% |
+| S0 share on the worst sprite (b_copter, pose B) | 24.22% | 24.67% | 30.76% |
+| sunward silhouette drawn dark | 7.19% | 6.72% | 63.23% |
+| boundary within 25L of shoal | 15.27% | 2.97 / 2.83% | 0.44 / 0.55% |
+| boundary within 25L of plains | 14.66% | 3.69 / 3.38% | 0.75 / 0.75% |
+| boundary tying in value AND colour, shoal | 0.29% | **0.55 / 0.29%** | 0.15 / 0.07% |
+| boundary tying in value AND colour, plains | 0.00% | **0.00 / 0.39%** | 0.00 / 0.00% |
+| share above L160 (chromatic max 21.43%) | 19.00% | 20.67 / 21.43% | 18.61 / 18.58% |
+
+Nothing else moved: the light and heavy rows are byte-identical, the terrain
+and every property are byte-identical, and the two open pairs are now inside
+the 2% bound `GroundContrast` holds every non-heavy row to, so `SAME_HUE` is
+gone rather than shrunk. The order gate
+(`UnitBandCoverage.test_no_row_out_lights_the_chromatic_band`) is what this
+was tested against and it holds by construction rather than by a tolerance:
+the two rows that rise ARE chromatic rows, so the band's owners are still its
+loudest, with neutral and iron 2-3 points under them and unmoved.
+
+The alternative kept on the shelf is the terrain side: the woods tile already
+carries its own value band for exactly this reason (`CANOPY_TOP`).
 
 `b_copter`'s blades are not a faction defect either, but they are not
 untouched. Measured over both frames of all five rows, 2 to 8 of the 35 blade

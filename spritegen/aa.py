@@ -36,7 +36,10 @@ between them and the corner is left alone: a sunward line lifted by
 and not a threshold to widen. On the two rows wearing `OUTLINE_HEAVY` that
 sunward line is a contour wherever it cannot clear the ground, so this pass
 softens their corners the way it softens a shaded edge — the lookup is what
-makes that free.
+makes that free. On the two wearing `OUTLINE_RIM` the same line is two slots
+up instead of one, so there IS a rung between it and the body and those
+corners take a mid the other rows' do not: the pass reads the line rather than
+the grade, and that is why it needed no change when the grade landed.
 
 Today's models are drawn 2:1, so most of their silhouette is runs of TWO and
 this pass leaves it alone by design (a clean 2:1 diagonal is already the

@@ -480,19 +480,28 @@ that pipeline's paste step can be pointed at this art instead.
      Iron draws no lit line at all rather than one it has no business
      wearing. `gbuffer.convex_edges` adds the same lift along a convex crease
      on a lit top face, and concave gutters get nothing. The sunward lift is
-     also **graded per faction** (`palette.OUTLINE_LIGHT` / `OUTLINE_HEAVY`):
-     a lit line only separates a unit from the tile it stands on where it
-     clears the ground's own value band, and neutral (the sand's own khaki)
-     and Iron (achromatic, capped at S3, the middle of that band) have no
-     colour left to break with when it does not — so on those two rows a
-     sunward silhouette pixel that cannot clear takes the ground-facing
-     contour instead. The three chromatic rows are untouched by the grade and
-     render byte for byte as before. Selective outlining
+     also **graded per faction** (`palette.OUTLINE_LIGHT` / `OUTLINE_HEAVY` /
+     `OUTLINE_RIM`): a lit line only separates a unit from the tile it stands
+     on where it clears the ground's own value band, and neutral (the sand's
+     own khaki) and Iron (achromatic, capped at S3, the middle of that band)
+     have no colour left to break with when it does not — so on those two rows
+     a sunward silhouette pixel that cannot clear takes the ground-facing
+     contour instead. Aurora and verdant have the opposite problem and get the
+     opposite answer: a ground IS their colour — the water a shoal is half made
+     of, the grass — so where their lift lands inside both the ground's band
+     and its hue (`palette.shares_a_ground_hue`) the line climbs to the **rim**
+     rather than falling to the contour, into the one band the terrain ceiling
+     reserves for units. That took the two pairs the sheet carried as named
+     debt for three rounds — a boundary tying with the tile in value AND colour
+     — from 10.3% and 6.5% to 0.39% and 0.55%. Meridian is untouched by either
+     grade, and so is every building: a property stops at
+     `BUILDING_TOP_SLOT`, so the rim is not a rung it can climb to.
+     Selective outlining
      is what buys the interior back: the 4px band it replaces spent 34.5% of
-     every unit's pixels on S0 (53.1% on the worst sprite) against 13.99% and
-     25.57% on the light rows and 17.22% / 30.71% on the heavy pair (15.3%
-     over the whole sheet), and the livery gates moved with it — the composed
-     rows' closest pair went from 34.6 to 45.2 against a bar of 30.
+     every unit's pixels on S0 (53.1% on the worst sprite) against 14.22% and
+     24.22% on the light row, 14.28% / 24.67% on the rim pair and 17.35% /
+     30.76% on the heavy pair, and the livery gates moved with it — the
+     composed rows' closest pair went from 34.6 to 45.2 against a bar of 30.
      **docs/outlines.md** has the full
      reading, including what a 1px line costs at board scale and why the
      contrast pair covers it.

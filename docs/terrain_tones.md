@@ -116,7 +116,9 @@ slightly deeper inside the band neutral and Iron are capped in, so their
 plains boundary goes 0.56% -> 0.79% of pixels tying in value, against a bound
 of 2%. The two open `SAME_HUE` pairs move with it in the same direction
 (verdant on plains 12.2% -> 12.5%, aurora on shoal 7.9% unchanged) and stay
-what they were: named defects, not a loosened rule.
+what they were: named defects, not a loosened rule. (Both were answered on
+2026-08-24 by the rim outline grade, and `SAME_HUE` is gone — the row x ground
+reading above is now taken over every non-heavy row with nothing set aside.)
 
 The claims this pass makes — sky-lit shadows, the greys' temperature, the
 chroma ceilings and the luma ladder that makes all of it safe — are pinned in
