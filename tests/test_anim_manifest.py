@@ -130,9 +130,14 @@ class Install(unittest.TestCase):
             anim.dump(src / anim.MANIFEST_NAME)
             with contextlib.redirect_stdout(io.StringIO()):
                 sprite_generator._install(src, dest)
-            shipped = dest / "assets/tiles" / anim.MANIFEST_NAME
+            tiles = dest / "assets/tiles"
+            shipped = tiles / anim.MANIFEST_NAME
             self.assertTrue(shipped.exists(), "the install left the manifest behind")
             self.assertEqual(shipped.read_text(encoding="utf-8"), anim.dumps())
+            # A clip the manifest names but the install does not ship is the
+            # same drift one step later, so every sheet has to land too.
+            for name in (*anim.AMBIENT_SHEETS, *anim.FIGURE_SHEETS):
+                self.assertTrue((tiles / name).exists(), f"the install left {name}")
 
 
 class Determinism(unittest.TestCase):
