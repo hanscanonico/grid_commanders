@@ -188,7 +188,10 @@ def main() -> None:
         args.out / "autotiles" / "woods.png",
     )
     _write(autotile.bridge_sheet(), args.out / "autotiles" / "bridges.png")
-    _write(autotile.sea_sheet(), args.out / "autotiles" / "sea.png")
+    # Both sea time frames, named by the clip that plays them so the manifest
+    # and the files on disk cannot drift apart.
+    for frame, name in enumerate(anim.SEA_SHEETS):
+        _write(autotile.sea_sheet(frame), args.out / name)
     _write(autotile.plains_sheet(), args.out / "autotiles" / "plains.png")
     _write(autotile.mountain_sheet(), args.out / "autotiles" / "mountain.png")
 

@@ -1009,19 +1009,51 @@ def _water_base(deep: bool, salt: int) -> Image.Image:
     return _ground(WATER_DARK if deep else WATER, salt, grain=0.027)
 
 
-def _glints(t: Image.Image, base: RGB, light: RGB, salt: int) -> None:
+# The outermost ring a sliding glint may not be pushed into. It is the rule
+# the plains tufts are held to (`_tuft_at`, at its own one-px margin) for the
+# same reason: the ring is the strip a cell shares with the neighbour it is
+# repeated against, so a dash cut at one tile's border meeting the next tile's
+# uncut border is a seam. Two px here, one more than the tufts', because a
+# glint is two rows and the dash's own edge should not sit on the join either.
+_GLINT_RING = 2
+
+
+def _slide_x(x: int, dx: int) -> int:
+    """Where a glint's pixel column lands `dx` px along its own row.
+
+    The dash wraps inside the interior band rather than around the whole cell,
+    which is what keeps `_GLINT_RING` clear. No shipped glint reaches the band
+    edge, so the wrap is the rule the slide is safe under, not something that
+    happens to the art as it stands.
+    """
+    span = CELL - 2 * _GLINT_RING
+    return _GLINT_RING + (x - _GLINT_RING + dx) % span
+
+
+def _dash(t: Image.Image, sx: int, sy: int, w: int, dx: int, c: RGB) -> None:
+    """One glint row, drawn column by column so the wrap can split it."""
+    for k in range(w):
+        _rect(t, _slide_x(sx + k, dx), sy, 1, 1, c)
+
+
+def _glints(t: Image.Image, base: RGB, light: RGB, salt: int, slide: int = 0) -> None:
     """Three hash-placed flow glints: short, staggered, low-contrast.
 
     The old four dashes sat on the same rows in every repeated tile, and a
     stretch of water read as a lattice from across the room (round 3). The
     hash spreads them with no shared row; nothing here aligns to a grid.
+
+    `slide` moves every dash along its own row and nothing else, which is what
+    a time frame of this water is (`sea`): the two rows of a glint move
+    together, so the stagger between them — the thing that makes a dash read
+    as a streak with a direction rather than as a bar — survives the move.
     """
     for i in range(3):
         sx = 3 + int(h01(i, 0, salt) * 42)
         sy = 4 + int(h01(i, 1, salt) * 55)
         w = 7 + int(h01(i, 2, salt) * 7)
-        _rect(t, sx, sy, w, 1, mix(base, light, 0.55))
-        _rect(t, sx + 2 + i, sy + 1, max(3, w - 4), 1, mix(base, light, 0.3))
+        _dash(t, sx, sy, w, slide, mix(base, light, 0.55))
+        _dash(t, sx + 2 + i, sy + 1, max(3, w - 4), slide, mix(base, light, 0.3))
 
 
 def river() -> Image.Image:
@@ -1042,11 +1074,29 @@ def river() -> Image.Image:
 # can adopt the rest one at a time.
 SEA_PHASES: tuple[tuple[int, int], ...] = ((6, 73), (14, 91), (23, 108))
 
+# How far a glint travels between the sea's two TIME frames, in atlas px.
+# A phase and a frame are different things and the difference is the whole
+# trick: a phase re-salts the water base, so playing the phases as frames
+# would repaint every pixel of the cell at once — the boil that makes cheap
+# animated water look like static. A frame keeps `_water_base` byte-identical
+# and moves only the dashes, so what the eye is given is a few streaks
+# travelling over water that is standing still.
+# Four px is exactly one board texel at the 4:1 rung (`voxel`'s cube is 4 px),
+# the same whole-texel rule the unit idles are held to: less than a texel is a
+# re-tone the nearest-filtered board can swallow, a texel is a move.
+SEA_FRAMES = 2
+SEA_GLINT_SLIDE = 4
 
-def sea(phase: int = 0) -> Image.Image:
+
+def sea(phase: int = 0, frame: int = 0) -> Image.Image:
+    """One sea cell: spatial variant `phase`, time frame `frame`.
+
+    Frame 0 is the tile as it has always been, so the atlas column and every
+    board that has not adopted the clip are unchanged.
+    """
     grain, glint = SEA_PHASES[phase]
     t = _water_base(True, grain)
-    _glints(t, WATER_DARK, WATER, glint)
+    _glints(t, WATER_DARK, WATER, glint, slide=frame * SEA_GLINT_SLIDE)
     return t
 
 
