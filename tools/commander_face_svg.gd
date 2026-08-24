@@ -1042,7 +1042,7 @@ func _plane() -> String:
 	wings += _path("M84,32 L90,42 L94,41 L92,30 Z", _accent, _line(1.6))
 	var tail := _path("M77,28 L72,23 L74,33 Z", _accent, _line(1.4))
 	var flown := fuselage + wings + tail + _circle(93, 30, 2, _slate)
-	var puffs: Array[Vector3] = [Vector3(68, 40, 2.6), Vector3(61, 49, 3.4)]
+	var puffs: Array[Vector3] = [Vector3(80, 42, 2.6), Vector3(86, 52, 3.4)]
 	return '<g transform="rotate(-16 88 32)">%s</g>' % flown + _smoke(puffs, "0.4")
 
 
