@@ -5,11 +5,11 @@ extends GutTest
 ## In scope for the reason test_figure_sheet.gd is, and CommanderVisuals already
 ## earns: nothing here builds a Node, and what is under test is an art contract
 ## that goes quiet when it breaks. A general seated without a FACES row is
-## caught here before the bake, which fails loud rather than drawing them as the
-## neutral silhouette; a general whose .tres lands with no bake run behind it ships a flat faction
-## rectangle; and PORTRAIT_SIZE is hand-written on one side of the pipeline and
-## derived from the drawing's viewBox on the other, with only the offline bake
-## ever comparing them.
+## caught here, ahead of the bake that now refuses them rather than drawing the
+## neutral silhouette; a general whose .tres lands with no bake run behind it
+## ships a flat faction rectangle; and PORTRAIT_SIZE is hand-written on one side
+## of the pipeline and derived from the drawing's viewBox on the other, with
+## only the offline bake ever comparing them.
 
 const FaceSvg := preload("res://tools/commander_face_svg.gd")
 
