@@ -22,6 +22,12 @@ extends RefCounted
 ## clipped to; the bust is deliberately larger than it.
 const VIEW_BOX := "0 -14 110 134"
 const WINDOW := Rect2(6, 24, 98, 96)
+## The figure/ground split, in two numbers: the wash that sinks the window field
+## under the accent the uniform is now filled with, and the light along the
+## bust's top edge that lifts it off that field.
+const WINDOW_SHADE := 0.28
+const RIM := "#ffffff"
+const RIM_OPACITY := 0.22
 ## The two eye centres every brow, lash and pupil is placed against.
 const EYE_X: Array[float] = [45.0, 65.0]
 ## Nia Rowan's freckles, three to a cheek.
@@ -431,8 +437,11 @@ func _clip_def() -> String:
 	)
 
 
+## The ink-bordered field the backdrop is clipped to, with a black wash over it:
+## the uniform below is the accent itself, so the wall has to sit a value deeper
+## than the bust or the two merge into one faction rectangle.
 func _window() -> String:
-	return (
+	var field := (
 		'<rect x="%s" y="%s" width="%s" height="%s" fill="%s" stroke="%s" stroke-width="3"/>'
 		% [
 			WINDOW.position.x,
@@ -443,6 +452,15 @@ func _window() -> String:
 			_ink,
 		]
 	)
+	var wash := _rect(
+		WINDOW.position.x,
+		WINDOW.position.y,
+		WINDOW.size.x,
+		WINDOW.size.y,
+		"#000000",
+		' opacity="%s"' % WINDOW_SHADE
+	)
+	return field + wash
 
 
 func _pose(face: Dictionary) -> String:
@@ -476,6 +494,12 @@ func _stroke_path(d: String, width: float, color := "") -> String:
 	return _path(d, "none", pen)
 
 
+## The lit top edge of the uniform: the design system's hard offset shadow read
+## on a bust, and the line that keeps the shoulders off the field behind them.
+func _rim() -> String:
+	return ' stroke="%s" stroke-width="2" stroke-linecap="round" opacity="%s"' % [RIM, RIM_OPACITY]
+
+
 func _tint(color: String, width: float) -> String:
 	return ' stroke="%s" stroke-width="%s" stroke-linecap="round"' % [color, width]
 
@@ -496,7 +520,7 @@ func _bust(face: Dictionary) -> String:
 	var hair: String = HAIR[face["hair"]]
 	var out := _prop(face["prop"], &"back", skin)
 	if face["style"] == &"hood":
-		out += _path("M20,120 Q12,64 55,50 Q98,64 90,120 Z", _accent_dark, _line())
+		out += _path("M20,120 Q12,64 55,50 Q98,64 90,120 Z", _accent, _line())
 	out += _hair_back(face["style"], hair)
 	out += _shoulders()
 	out += _neck(skin)
@@ -520,9 +544,10 @@ func _bust(face: Dictionary) -> String:
 ## the faction chevron under it.
 func _shoulders() -> String:
 	var mass := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
-	var out := _path(mass, _accent_dark, _line())
+	var out := _path(mass, _accent, _line())
+	out += _path("M6,110 Q6,93 32,90 L78,90 Q104,93 104,110", "none", _rim())
 	out += _stroke_path("M44,90 L55,101 L66,90", 2.4)
-	return out + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent)
+	return out + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent_dark)
 
 
 func _neck(skin: String) -> String:
@@ -623,7 +648,8 @@ func _headwear(acc: StringName) -> String:
 			return strap + glass
 		&"hood":
 			var d := "M24,64 Q18,30 55,26 Q92,30 86,64 Q80,44 55,44 Q30,44 24,64 Z"
-			return _path(d, _accent_dark, pen)
+			var lining := "M24,64 Q26,48 55,44 Q84,48 86,64 Q80,44 55,44 Q30,44 24,64 Z"
+			return _path(d, _accent, pen) + _path(lining, _accent_dark)
 	return ""
 
 
