@@ -743,7 +743,12 @@ def recon(pose: Pose = Pose.A) -> Model:
     (0.703) than to recon's own (0.700). Moving one end at a time keeps the
     shape: 0.806 and 0.904 against its own frame A, next best 0.675 and 0.765
     (cruiser). A against MOVE_A is 30 changed texels at rung 1, 14 of them
-    silhouette; MOVE_A against MOVE_B is 46 and 15, at 2.07 shimmer.
+    silhouette; MOVE_A against MOVE_B is 46 and 15, at 2.07 shimmer. Mass
+    drift 0.057 and 0.067 — the largest on the land roster, and in opposite
+    directions: MOVE_A gives ground back under the lifted nose and MOVE_B's
+    band pays out more than the raised cabin uncovers. That leaves 0.013 of
+    headroom under the gate's 0.08 and no more, so a later pass that deepens
+    either move has to take pixels back somewhere.
     """
     m = Model()
     for x in (0, 8):
