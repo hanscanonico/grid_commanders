@@ -2,8 +2,8 @@ class_name UiKit
 extends RefCounted
 ## The widgets the design system's screens are assembled from: the padded box, the
 ## micro-label, the divider, the action button, the segmented control, the toggle
-## row and the identity chip. Every one of them is drawn out of UiTheme's colours,
-## fonts and styleboxes and holds no state of its own.
+## row, the identity chip and the commander bust. Every one of them is drawn out of
+## UiTheme's colours, fonts and styleboxes and holds no state of its own.
 ##
 ## UiTheme's sibling, and the split between them is what each answers. UiTheme owns
 ## the *recipe* — a colour, a size, a stylebox — and UiKit owns the *widget* built
@@ -20,6 +20,23 @@ extends RefCounted
 ##
 ## Presentation only, and no Node held: every builder hands its control back to the
 ## screen that asked for it and keeps no reference.
+
+## A bust drawn on no field at all — the victory lockup, which stands its portrait
+## on the lockup's own paper rather than on a faction colour.
+const NO_FIELD := Color(0, 0, 0, 0)
+
+## What a field does with a general's art. WHOLE_FITTED stands the drawing in the
+## field entire; WHOLE_COVERED fills the field with it and lets the edges go;
+## FACE shows `CommanderVisuals.face_for` instead. Derived from the field's shape
+## by `_crop_for` — never named by a caller.
+enum BustCrop { WHOLE_FITTED, WHOLE_COVERED, FACE }
+
+## The field height a whole bust needs. A portrait is a framed window with the head
+## about five eighths of the drawing tall, so fitted whole into a shorter field the
+## head lands under 40px — where two generals stop telling apart, which is what
+## CommanderVisuals.FACE_REGION exists for.
+const _BUST_MIN_H := 64
+const _BUST_ART := &"Bust"
 
 
 ## Wraps `child` (may be null) in a MarginContainer with even h/v padding.
@@ -320,7 +337,72 @@ static func identity_chip(identity: SideIdentity, team: int, role: String) -> Co
 	return chip
 
 
+## A general's art on a faction-tinted field, clipped to `size` — the one bust
+## every surface that shows a commander is built from. Six of them kept their own
+## TextureRect recipe and disagreed about the crop, which is the drift this kit
+## exists to prevent (menu-revamp D1).
+##
+## The tint stays the caller's, because the three in the tree are deliberate: the
+## speech card's darkened field is a reading column, the HUD chip's `color_light`
+## is chrome, and the victory lockup stands its bust on the panel's own paper
+## (`NO_FIELD`). The crop is not the caller's — it is a function of the field's
+## shape, decided by `_crop_for` and nowhere else.
+static func commander_bust(commander: CommanderType, size: Vector2, tint: Color) -> Panel:
+	var field := Panel.new()
+	field.custom_minimum_size = size
+	field.clip_contents = true
+	var art := TextureRect.new()
+	art.name = _BUST_ART
+	art.texture_filter = CommanderVisuals.ART_FILTER
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = (
+		TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if _crop_for(size) == BustCrop.WHOLE_FITTED
+		else TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	)
+	art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	field.add_child(art)
+	bind_bust(field, commander, tint)
+	return field
+
+
+## Points a built bust at another general, for the four surfaces that outlive the
+## match's commanders. It asks `_crop_for` the same field it was built with, so
+## the two readings are one answer rather than a stored copy of it.
+static func bind_bust(bust: Panel, commander: CommanderType, tint: Color) -> void:
+	bust.add_theme_stylebox_override("panel", UiTheme.flat(tint))
+	var art := bust.get_node(NodePath(_BUST_ART)) as TextureRect
+	if _crop_for(bust.custom_minimum_size) == BustCrop.FACE:
+		art.texture = CommanderVisuals.face_for(commander)
+	else:
+		art.texture = CommanderVisuals.portrait_for(commander)
+
+
 # --- internals ---------------------------------------------------------------
+
+
+## What a field of this shape shows of a general, and the one statement of it.
+##
+## A field tall enough to hold the drawing stands it there whole — the portrait is
+## a framed window with the head breaking over its top edge, and filling a band
+## that wide can only cut that composition in half.
+##
+## A field that names a square shorter than a bust is a chip: fitted whole its head
+## lands under 40px, where two generals stop telling apart, so it shows the face
+## crop instead.
+##
+## A field that names a short *band*, or names no height at all and takes what a
+## container hands it, gets the drawing whole and covered. The face region is a
+## square, and covering a wide band with it magnifies a head past its own art;
+## covered whole is the reading the commander-select tile has always drawn (#358)
+## and this is where that stays said.
+static func _crop_for(size: Vector2) -> BustCrop:
+	if size.y >= _BUST_MIN_H:
+		return BustCrop.WHOLE_FITTED
+	if size.y > 0.0 and size.x <= size.y:
+		return BustCrop.FACE
+	return BustCrop.WHOLE_COVERED
 
 
 ## A micro-label carrying its group's explanation, added to `into` in place: shrunk

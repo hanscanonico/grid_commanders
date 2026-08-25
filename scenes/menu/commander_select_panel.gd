@@ -405,18 +405,12 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	content.add_theme_constant_override("separation", 0)
 	button.add_child(content)
 
-	var stage := Panel.new()
-	stage.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
+	# The tile states no size of its own — the row gives it the width and what is
+	# left over under the name band — so the kit draws the general whole and
+	# covered here, filling whatever band the row hands over.
+	var stage := UiKit.commander_bust(commander, Vector2.ZERO, theme.color)
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stage.clip_contents = true
 	content.add_child(stage)
-	var portrait := TextureRect.new()
-	portrait.texture = CommanderVisuals.portrait_for(commander)
-	portrait.texture_filter = CommanderVisuals.ART_FILTER
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stage.add_child(portrait)
 
 	var name_label := _small_label(UiTheme.SIZE_BODY)
 	name_label.text = commander.display_name
