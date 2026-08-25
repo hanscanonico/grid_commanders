@@ -26,7 +26,7 @@ from functools import lru_cache
 
 from PIL import Image
 
-from spritegen import atlas, autotile, buildings, palette, terrain
+from spritegen import atlas, autotile, buildings, palette, terrain, units
 from spritegen.autotile import E, N, S, W
 from spritegen.gbuffer import project as voxel_project
 from spritegen.palette import (
@@ -2154,6 +2154,12 @@ class OneSun(unittest.TestCase):
     it rather than keeping a second copy. Airborne units keep their larger
     drop — the gap between unit and shadow is the altitude cue — but on the
     same diagonal.
+
+    The move clip is the one thing on the board the consumer MIRRORS, and a
+    mirrored offset is a second sun. Its land and air poses therefore hold
+    the drop and drop the throw; that is the only place the sheet does not
+    read down-right, and it has a test of its own
+    (`test_a_mirrored_move_frame_owes_the_sun_nothing_lateral`).
     """
 
     OFFSET = voxel.SHADOW_OFFSET
@@ -2161,6 +2167,24 @@ class OneSun(unittest.TestCase):
     # hull rather than the hull's own silhouette: rockets, whose long barrel
     # sits left of its own cell centre, comes in at +0.37px lateral.
     MIN_UNIT_LATERAL = 0.2
+    # Half a pixel: how far a centred move shadow's centre of mass may sit
+    # off the cell's mirror axis. The ELLIPSE is symmetric by construction
+    # (`voxel._shadow_ellipse`'s `mirrored`); what moves the centroid at all
+    # is the asymmetric hull standing on part of it, and the tracked family's
+    # roll is the worst of those at 0.04px.
+    MAX_MOVE_LATERAL = 0.5
+
+    def _sheet_poses(self, uid: str) -> tuple[Pose, ...]:
+        """The poses that carry the sheet's own sun for this unit.
+
+        Everything but the move poses of a unit whose shadow is CENTRED for
+        the consumer's mirror — land and air; a ship's ellipse is
+        displacement and keeps the offset in every pose. See
+        `test_a_mirrored_move_frame_owes_the_sun_nothing_lateral`.
+        """
+        if UNITS[uid][1] == "sea":
+            return tuple(Pose)
+        return AMBIENT_POSES
 
     def _centroid(self, pts) -> tuple[float, float]:
         return (
@@ -2189,7 +2213,7 @@ class OneSun(unittest.TestCase):
     def test_every_unit_drops_its_shadow_down_right_of_itself(self):
         fac = FACTIONS[1]
         for uid in ATLAS_ORDER:
-            for pose in Pose:
+            for pose in self._sheet_poses(uid):
                 cast, hull = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
                 with self.subTest(unit=uid, pose=pose.name):
                     self.assertTrue(cast)
@@ -2206,7 +2230,7 @@ class OneSun(unittest.TestCase):
         one keeps its own larger lateral drop."""
         fac = FACTIONS[1]
         for uid in ATLAS_ORDER:
-            for pose in Pose:
+            for pose in self._sheet_poses(uid):
                 with self.subTest(unit=uid, pose=pose.name):
                     lit, _ = self._split(atlas.unit_cell(uid, fac, pose), voxel.SHADOW)
                     with mock.patch.object(voxel, "SHADOW_OFFSET", (0, 0)):
@@ -2215,6 +2239,50 @@ class OneSun(unittest.TestCase):
                         )
                     (lx, ly), (bx, by) = self._centroid(lit), self._centroid(bare)
                     self.assertGreaterEqual(lx - bx, 1.0)
+                    self.assertGreaterEqual(
+                        ly - by, 1.5 if UNITS[uid][1] != "air" else 0.0
+                    )
+
+    def test_a_mirrored_move_frame_owes_the_sun_nothing_lateral(self):
+        """The sheet's one exception, and it is the mirror that buys it.
+
+        The consumer plays the move clip through `Sprite2D.flip_h` for
+        rightward travel (docs/move_clip.md section 3), which negates x: a
+        shadow thrown down-right on the sheet is thrown down-LEFT on screen
+        for every unit travelling right, next to terrain that never mirrors.
+        A sun that changes sides with a unit's heading is worse than one that
+        stops throwing, so the land and air move poses keep the whole drop
+        and give up the throw, on an ellipse drawn symmetric about the cell's
+        mirror axis — the same shadow either way round.
+
+        Three readings say that: it is still under its caster, its centre of
+        mass is on the mirror axis, and zeroing the sheet's offset in x alone
+        changes not one byte of the cell — it owes the sheet's sun nothing
+        lateral — while zeroing it in y still costs a land unit its 2px drop.
+
+        Ships are not centred and are asked the sheet's own question in all
+        four poses by the two tests above.
+        """
+        fac = FACTIONS[1]
+        axis = (atlas.CELL_W - 1) / 2
+        for uid in ATLAS_ORDER:
+            if UNITS[uid][1] == "sea":
+                continue
+            for pose in MOVE_POSES:
+                with self.subTest(unit=uid, pose=pose.name):
+                    cell = atlas.unit_cell(uid, fac, pose)
+                    lit, hull = self._split(cell, voxel.SHADOW)
+                    self.assertTrue(lit)
+                    with mock.patch.object(voxel, "SHADOW_OFFSET", (0, self.OFFSET[1])):
+                        no_throw = atlas.unit_cell(uid, fac, pose)
+                    with mock.patch.object(voxel, "SHADOW_OFFSET", (0, 0)):
+                        bare, _ = self._split(
+                            atlas.unit_cell(uid, fac, pose), voxel.SHADOW
+                        )
+                    (lx, ly), (_, by) = self._centroid(lit), self._centroid(bare)
+                    self.assertGreater(ly - self._centroid(hull)[1], 0.0)
+                    self.assertLessEqual(abs(lx - axis), self.MAX_MOVE_LATERAL)
+                    self.assertEqual(cell.tobytes(), no_throw.tobytes())
                     self.assertGreaterEqual(
                         ly - by, 1.5 if UNITS[uid][1] != "air" else 0.0
                     )
@@ -2941,11 +3009,28 @@ class MoveFrames(unittest.TestCase):
                     self.assertEqual(place.footprint_w, a.footprint_w)
                     self.assertEqual(place.ground, a.ground)
 
+    def _shadow_dx(self, uid: str) -> int:
+        """How far left the move clip recentres this unit's shadow.
+
+        The throw it gives up: `voxel.SHADOW_OFFSET`'s x, doubled for the
+        airborne caster that drops further, and zero for a ship — a hull's
+        ellipse is displacement with the foam line placed against it, and it
+        keeps its offset in every pose (see `atlas.unit_cell`).
+        """
+        kind = UNITS[uid][1]
+        if kind == "sea":
+            return 0
+        return voxel.SHADOW_OFFSET[0] * (2 if kind == "air" else 1)
+
+    def _flip(self, pixels: set) -> set:
+        """The set as `Sprite2D.flip_h` leaves it: mirrored in the cell."""
+        return {(atlas.CELL_W - 1 - x, y) for x, y in pixels}
+
     def test_every_moving_unit_keeps_its_cast_shadow(self):
         """The patch of ground a unit walks over may not pump with its
         stride, exactly as a parked unit's may not pump with its idle: one
         shadow, sized off the pose-A footprint and laid on the pose-A ground
-        row, in all four poses.
+        row, in every pose.
 
         The rule is that the shadow never MOVES; it may only be UNCOVERED.
         The same ellipse is drawn every pose, but the hull is composed over
@@ -2958,23 +3043,76 @@ class MoveFrames(unittest.TestCase):
         other's body. A shadow that slid, stretched or swelled has pixels
         that answer to neither and fails here — as does one that shrank,
         since the containment is checked both ways.
+
+        The move poses are asked the same question about a RECENTRED pose A:
+        their shadow gives up its x throw so that the consumer's mirror is a
+        no-op on it (`compose_cell`'s `centred_shadow`). The reference is
+        therefore pose A's shadow translated by `(-dx, 0)` and intersected
+        with its own reflection in the cell — exactly what a mirror-safe
+        ellipse is — with the allowance mirrored too, since a pixel pose A's
+        hull hid is hidden on both sides of a symmetric shadow. Nothing else
+        moves: the drop, the radii and the ground row are pose A's.
         """
         for uid in self._movers():
+            dx = self._shadow_dx(uid)
             for fac in FACTIONS:
                 a = _pose_cell(uid, fac.key, Pose.A)
                 shadow, body = self._shadow(a), self._body(a)
                 for pose in (Pose.B, *MOVE_POSES):
                     cell = _pose_cell(uid, fac.key, pose)
                     other, other_body = self._shadow(cell), self._body(cell)
+                    ref, ref_body = shadow, body
+                    if units.moving(pose) and dx:
+                        ref = {(x - dx, y) for x, y in shadow}
+                        ref_body = {(x - dx, y) for x, y in body}
+                        ref, ref_body = (
+                            ref & self._flip(ref),
+                            ref_body | self._flip(ref_body),
+                        )
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
                         # Reported as the offending pixels rather than as a
                         # subset relation between two several-hundred-pixel
                         # sets, which prints both in full and names neither.
                         self.assertEqual(
-                            shadow - other - other_body, set(), "pose A's shadow"
+                            ref - other - other_body, set(), "pose A's shadow"
                         )
                         self.assertEqual(
-                            other - shadow - body, set(), f"{pose.name}'s shadow"
+                            other - ref - ref_body, set(), f"{pose.name}'s shadow"
+                        )
+
+    def test_a_moving_units_shadow_survives_the_consumers_mirror(self):
+        """The property the whole centred shadow exists for.
+
+        The game plays this clip with `Sprite2D.flip_h` for rightward travel
+        (`docs/move_clip.md` section 3), which mirrors the cell about its
+        centre. An ambient shadow is thrown down-right by
+        `voxel.SHADOW_OFFSET`, so mirroring one lands it 5 px (land) or 9 px
+        (air) to the LEFT of where every terrain tile puts its own — a sun
+        that changes sides when a unit turns round. So the ground patch a
+        move frame draws must be its own reflection.
+
+        Checked modulo the body, because the hull mirrors too and is supposed
+        to: a shadow pixel whose mirror is not shadow is only allowed if the
+        mirrored hull is standing on it. That is the same 'uncovered, never
+        moved' allowance the test above makes, asked of the flip.
+
+        Ships are exempt and keep their offset ellipse: it is displacement,
+        not a cast shadow, and the foam line is placed against it — see
+        `_shadow_dx` and `atlas.unit_cell`.
+        """
+        for uid in self._movers():
+            if not self._shadow_dx(uid):
+                continue
+            for fac in FACTIONS:
+                for pose in MOVE_POSES:
+                    cell = _pose_cell(uid, fac.key, pose)
+                    shadow, body = self._shadow(cell), self._body(cell)
+                    flipped = self._flip(shadow)
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        self.assertTrue(shadow)
+                        self.assertEqual(flipped - shadow - body, set(), "mirrored")
+                        self.assertEqual(
+                            shadow - flipped - self._flip(body), set(), "unmirrored"
                         )
 
     def test_a_moving_hull_leaves_its_foam_line_where_it_found_it(self):

@@ -900,6 +900,7 @@ def compose_cell(
     origin: tuple[int, int] | None = None,
     footprint_w: int | None = None,
     ground: int | None = None,
+    centred_shadow: bool = False,
 ) -> Image.Image:
     """Center a rendered sprite on a transparent atlas cell with its shadow.
 
@@ -944,6 +945,22 @@ def compose_cell(
     texel rides a swell instead of dragging the sea up with it. All three
     default to the single-pose behaviour: centred crop, the sprite's own
     width, and the surface right under the unit.
+
+    `centred_shadow` drops the shadow's HORIZONTAL offset (the full vertical
+    drop stays) and straddles the ellipse across the cell's mirror axis, so
+    flipping the cell leaves the shadow exactly where it was. It is for a
+    frame the consumer MIRRORS: the game plays the move clip with
+    `Sprite2D.flip_h` for rightward travel, which would otherwise swing the
+    shadow 5px (land) or 9px (air) to the wrong side of a sun every terrain
+    tile agrees on. Straddling costs the ellipse one column of width (see
+    `_shadow_ellipse`'s `mirrored`) and costs the unit a 2px — 4px for air —
+    shadow recentre at the instant it starts or stops moving, which lands on
+    the frame the position tween starts or ends on. See docs/move_clip.md.
+
+    A ship does NOT ask for this even under way: its ellipse is displacement
+    rather than a cast shadow, and `_waterline_foam` is placed against the
+    composed cell's own spans, so recentring it would carry the foam line
+    with it — see `atlas.unit_cell`.
     """
     cell_w, cell_h = cell
     out = Image.new("RGBA", (cell_w, cell_h), (0, 0, 0, 0))
@@ -957,12 +974,22 @@ def compose_cell(
 
     cast: list[tuple[int, int]] = []
     sx, sy = SHADOW_OFFSET
+    if centred_shadow:
+        # The sun's x is what the mirror would negate, so a mirrored frame
+        # gives it up: no lateral throw, and the ellipse is drawn symmetric
+        # about the cell's flip axis rather than about one column of it.
+        sx = 0
     if kind == "sea":
         # Ships sit IN the water: a flat displacement shading right under
         # the hull instead of a floating blob, then foam at the waterline.
         rx = max(6, int(fw * 0.42))
         cast = _shadow_ellipse(
-            out, cell_w // 2 + dx + sx, ground - 1 + sy, rx, max(2, rx // 5)
+            out,
+            cell_w // 2 + dx + sx,
+            ground - 1 + sy,
+            rx,
+            max(2, rx // 5),
+            mirrored=centred_shadow,
         )
     elif kind == "air":
         rx = max(6, int(fw * 0.30))
@@ -972,11 +999,17 @@ def compose_cell(
             cell_h - AIR_SHADOW_BOTTOM,
             rx,
             max(2, rx // 3),
+            mirrored=centred_shadow,
         )
     elif kind == "land":
         rx = max(4, int(fw * 0.34))
         cast = _shadow_ellipse(
-            out, cell_w // 2 + dx + sx, ground - 1 + sy, rx, max(2, rx // 4)
+            out,
+            cell_w // 2 + dx + sx,
+            ground - 1 + sy,
+            rx,
+            max(2, rx // 4),
+            mirrored=centred_shadow,
         )
     place_in_cell(out, sprite, x0, y0)
     if kind == "sea":
@@ -1126,7 +1159,7 @@ def _waterline_foam(img: Image.Image, ground: int) -> None:
 
 
 def _shadow_ellipse(
-    img: Image.Image, cx: int, cy: int, rx: int, ry: int
+    img: Image.Image, cx: int, cy: int, rx: int, ry: int, mirrored: bool = False
 ) -> list[tuple[int, int]]:
     """A hard SOLID shadow: opaque dark pixels, filled, no partial alpha.
 
@@ -1149,17 +1182,32 @@ def _shadow_ellipse(
     rung 2, and the fringe reads as debris. Solid was the only one that read
     as shade at all three.
 
+    `mirrored` intersects the ellipse with its own reflection in the image's
+    vertical mirror axis, which is what makes a shape that survives
+    `Sprite2D.flip_h` unchanged: the axis of an even-width cell runs BETWEEN
+    two columns, so no odd-width ellipse centred on a column can be symmetric
+    about it, but keeping only the ground both readings agree is in shade
+    gives an even-width one that is. It costs the ellipse a single column —
+    intersecting rather than unioning, so a mirror-safe shadow is never
+    larger than the shadow it replaces. See compose_cell's `centred_shadow`.
+
     Returns the pixels it wrote, so a caller composing a shadowless cell can
     take exactly those back out again — see compose_cell's `shadow`.
     """
     px = img.load()
     w, h = img.size
     written = []
+
+    def inside(xx: int, yy: int) -> bool:
+        return ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 1.0
+
     for yy in range(cy - ry, cy + ry + 1):
         for xx in range(cx - rx, cx + rx + 1):
             if not (0 <= xx < w and 0 <= yy < h):
                 continue
-            if ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 > 1.0:
+            if not inside(xx, yy):
+                continue
+            if mirrored and not inside(w - 1 - xx, yy):
                 continue
             if px[xx, yy][3] == 0:
                 px[xx, yy] = CAST

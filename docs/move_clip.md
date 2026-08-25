@@ -97,12 +97,36 @@ vertical only (`Vector2(0, -SPRITE_OVERFLOW / 2.0)`), so the mirrored cell lands
 on the same tile. The HP, fuel and acted badges are child nodes and are not
 mirrored with it.
 
-The cast shadow **will** mirror. One sun lights this whole sheet from the
-top-left and every shadow falls down-right by `voxel.SHADOW_OFFSET` (2, 2); a
-flipped sprite drops its shadow down-left, as if lit from the top-right. That
-is accepted: a wrong-handed 2 px offset at the board's 4:1 decimation is half a
-board pixel, and the alternative is either a second sheet or a unit that walks
-backwards.
+The cast shadow **does not** mirror, because on the move sheets it is already
+centred. One sun lights the rest of the sheet from the top-left and every
+ambient shadow falls down-right by `voxel.SHADOW_OFFSET` (2, 2) — but a
+mirrored frame negates that x, so a rightward-moving unit would drop its
+shadow down-LEFT, 5 px (land) or 9 px (air) from where the terrain tiles put
+theirs: 1.25 and 2.25 board texels of a sun on the wrong side. The move poses
+therefore compose with `voxel.compose_cell(centred_shadow=True)`: the shadow
+keeps its full vertical drop, gives up its horizontal throw, and is drawn
+symmetric about the cell's flip axis — the ellipse intersected with its own
+reflection, since that axis runs between two columns and no odd-width shape
+centred on a column can be symmetric about it. `flip_h` then leaves it exactly
+where it was. What still mirrors is the hull, and with it which pixels of that
+ground patch the hull hides, which is correct: a unit occludes its own shadow
+from whichever side it faces.
+
+The cost is a 2 px (4 px for air) horizontal recentre of the shadow at the
+instant a unit starts or stops moving — half a board texel, and it happens on
+the same frame as the position tween starting or ending, which is the loudest
+thing on screen at that moment. Ambient, figures and terrain keep the offset
+shadow unchanged; nothing that is never mirrored gives up its sun.
+
+**Ships keep theirs.** A sea unit's ellipse is the water its hull displaces,
+not a shadow cast on a tile, and `voxel._waterline_foam` places the foam
+against the composed cell's own spans — recentring the ellipse would carry the
+foam line 2 px with it, and the foam line staying put across the clip is what
+makes the ship ride the sea instead of the sea heaving with the ship
+(`test_a_moving_hull_leaves_its_foam_line_where_it_found_it`). A mirrored ship
+therefore does move its displacement patch 5 px, which is the one place this
+sheet still has a handedness. Nobody reads a water shading for a sun angle;
+everybody reads a hard ellipse on grass for one.
 
 Nothing in a move frame may encode screen-handedness for any other reason. A
 mirrored rifleman leading with the other leg is correct.

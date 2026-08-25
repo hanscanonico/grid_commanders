@@ -156,6 +156,16 @@ def unit_cell(
         ground=place.ground,
         wake=uid in WAKE,
         shadow=shadow,
+        # The move clip is the one the consumer MIRRORS, so its shadow gives
+        # up the sun's x and is drawn symmetric about the cell's flip axis.
+        # Not a ship's: that ellipse is the water the hull displaces, and
+        # `voxel._waterline_foam` breaks around the composed cell's own
+        # spans, so recentring it would drag the foam line off the water,
+        # which is the one thing a move frame may not do (the foam-line test
+        # in `MoveFrames`). A displacement patch is also not read as a cast
+        # shadow, so its handedness is not what a mirrored sprite is caught
+        # on: the hard ellipse a tank lays on grass is.
+        centred_shadow=units.moving(pose) and kind != "sea",
     )
 
 
