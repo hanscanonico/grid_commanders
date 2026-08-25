@@ -177,13 +177,12 @@ static func phase(cell: Vector2i, count: int) -> int:
 	return posmod(hash_bits >> 17, count)
 
 
-## Which file family `p_family` draws frame `p_frame` of. Frame 0 is the sheet
-## every surface has always read, so the miniature and the legibility ruler keep
-## calling this with no frame and are unaffected by the beat: a time frame is
-## another axis, and a thumbnail or a report taken on a different one answers a
-## different question. Only the sea has a second frame; every other family
-## answers frame 0 whatever it is asked, so a caller never has to know which
-## families animate.
+## Which file family `p_family` draws frame `p_frame` of. Frame 0 is the
+## `SHEET_PATHS` sheet every surface has always read, so the miniature and the
+## legibility ruler are unaffected by the beat: a time frame is another axis, and
+## a thumbnail or a report taken on a different one answers a different question.
+## Only the sea has a second frame; every other family answers frame 0 whatever
+## it is asked, so a caller never has to know which families animate.
 static func sheet_path(p_family: int, p_frame: int = 0) -> String:
 	if p_family == Family.SEA and p_frame == 1:
 		return SEA_B_PATH

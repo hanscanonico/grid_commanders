@@ -522,8 +522,8 @@ plan is stated in full below and has no copy there.
   `PHASE_COUNTS` are all untouched and the beat re-points the SEA `TileSetAtlasSource`'s texture
   and nothing else. Three decisions. **`TerrainAutotiles.sheet_path(family, frame)` is the
   filename authority, as it is for every other sheet** — frame 0 is what every surface has always
-  read, so the miniature and the legibility ruler keep calling the frameless form and are
-  **deliberately** unedited: a time frame is another axis, and a thumbnail or a report taken on a
+  read, so the miniature and the legibility ruler keep reading the frame-A sheet `sheet_path`'s
+  default is pinned equal to, and are **deliberately** unedited: a time frame is another axis, and a thumbnail or a report taken on a
   different one answers a different question, which is the reason `legibility_art.gd` already
   states about the units' frame B. **`scenes/battle/sea_beat.gd` (`SeaBeat`) is where the tick
   lands** — a `Node` in the `CapturePips` idiom owning nothing but the source it was handed,
@@ -533,8 +533,7 @@ plan is stated in full below and has no copy there.
   **The backdrop and the property ground swell by construction**, sharing `terrain_layer.tile_set`,
   so the out-of-bounds ring beats with the water it continues with no second code path. Instant and
   a pinned capture are already frame A through `BoardBeat.frame`, so **all 85 smoke frames are
-  byte-identical** — measured, with `commander_info` moving run to run on its own glyph edges in
-  two baseline sweeps of the same tree.
+  byte-identical** — measured in one tree against the same sweep with the slice reverted in place.
   (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
