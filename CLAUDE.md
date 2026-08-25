@@ -234,7 +234,8 @@ plan is stated in full below and has no copy there.
   — `UnitSprite.CELL_GROUND_PX`, **7** px up (9 until the animation install; the generator's one sun
   drops the shadow its 2 px `SHADOW_OFFSET` below the feet row rather than centring it on them), the
   same on every land and sea column, with air's cast displaced lower by height. The figure sheet is
-  a **pair** now, frame B beside frame A, though only frame A is read — see the install below. The rows below it are the shadow's own spread, so a cut-in drawing the
+  a **pair** now, frame B beside frame A, though only frame A is read — see the install below. The
+  rows below it are the shadow's own spread, so a cut-in drawing the
   shadowless sheet over a contact ellipse of *its* own has to centre that ellipse on the ground line;
   both did it on the box's bottom edge, which put the ellipse below the tracks it was under and left
   armour — whose shadow is the widest, so whose gap is the largest — reading as a separate blob on
