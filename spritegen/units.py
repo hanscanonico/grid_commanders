@@ -362,6 +362,44 @@ def _roll(m: Model, dz: int) -> None:
     _shift(m, (min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)), dz=dz)
 
 
+def _gear_down(
+    m: Model, x0: int, x1: int, y0: int, y1: int, mat: str = "track"
+) -> None:
+    """Stand the running gear over `(x0..x1, y0..y1)` back on the ground.
+
+    A move frame that raises a chassis — the family's nose pitch, or `_roll`'s
+    whole-hull jolt — raises the wheels or the track run under it too, and at
+    the board's 4:1 sample that opens ONE TEXEL OF BARE GROUND between the
+    hull's lowest row and the cast shadow (rung-1 row 20, the shadow on 21-22):
+    the vehicle hovers over its own shadow for the whole clip. Running gear
+    does not leave the ground when a hull pitches; the suspension extends. So
+    wherever a pose lifts gear, this paints the two voxel courses it came off
+    back in — one board texel, `dz = +2`'s own unit — and the machine pitches
+    ABOUT its contact patch instead of translating off it.
+
+    The courses go in plain: no link stripe, no hub. They are the lowest texel
+    of the sprite and they are identical in every pose, so the contact patch
+    carries none of the gait and the clip's measured deltas barely move. z=0
+    is the floor and nothing is ever painted under it, so the sprite's ground
+    row is pose A's in all four poses.
+
+    How MUCH of a run comes back down is a mass question, not a taste one. A
+    pitch grounds the length it lifted, which costs almost nothing because the
+    nose boxes are short. `_roll` lifts everything, and a WHOLE run brought
+    back down under a rolled hull is a band of new pixels that breaks
+    `MoveFrames.MAX_MASS_DRIFT`: measured at 0.100 (md_tank), 0.118
+    (anti_air), 0.103 (artillery), 0.118 (apc) and 0.081 (rockets, all eight
+    wheels) against the gate's 0.08. So the roll frames ground the LEADING
+    four voxels of each run — the end the sprite's lowest texel is drawn from,
+    since screen row is `x + y - 2z` and the contact texel is the front-outer
+    corner — which is 0.050 to 0.068 and answers the contact rule with the
+    same pixels. Lengthening from there is nearly free until it is not:
+    md_tank runs 0.050 / 0.060 / 0.068 / 0.076 at four, six, eight and ten
+    voxels, and anti_air is already at 0.081 at six.
+    """
+    m.box(x0, x1, y0, y1, 0, 1, mat)
+
+
 # ---------------------------------------------------------------------------
 # land
 # ---------------------------------------------------------------------------
@@ -762,9 +800,11 @@ def recon(pose: Pose = Pose.A) -> Model:
 
     The two frames are the car's two ends taking the ride, since the wheels
     cannot carry it at this scale (see `_tire`). MOVE_A pitches the NOSE one
-    board texel — front axle, hood, bumper and headlights at `dz = +2`, tail
-    axle and cabin holding — and MOVE_B sets the nose down and runs the CABIN
-    up instead: the roof, the glass, the rear plate and the pintle ride the
+    board texel — hood, bumper, headlights and front axle at `dz = +2`, tail
+    axle and cabin holding — with the front tyres painted back onto the ground
+    under it (`_gear_down`), so the car pitches ABOUT its contact patch on its
+    springs instead of lifting off it. MOVE_B sets the nose down and runs the
+    CABIN up instead: the roof, the glass, the rear plate and the pintle ride the
     texel on a one-course `hull_dk` band painted in under them, so the
     roofline moves against a level chassis and the body reads as working on
     its springs. Extending the nose pitch back to take the cabin with it was
@@ -777,13 +817,12 @@ def recon(pose: Pose = Pose.A) -> Model:
     costs it its identity. Rolled, MOVE_B read closer to the apc's frame A
     (0.703) than to recon's own (0.700). Moving one end at a time keeps the
     shape: 0.806 and 0.904 against its own frame A, next best 0.675 and 0.765
-    (cruiser). A against MOVE_A is 30 changed texels at rung 1, 14 of them
-    silhouette; MOVE_A against MOVE_B is 46 and 15, at 2.07 shimmer. Mass
-    drift 0.057 and 0.067 — the largest on the land roster, and in opposite
-    directions: MOVE_A gives ground back under the lifted nose and MOVE_B's
-    band pays out more than the raised cabin uncovers. That leaves 0.013 of
-    headroom under the gate's 0.08 and no more, so a later pass that deepens
-    either move has to take pixels back somewhere.
+    (cruiser). A against MOVE_A is 32 changed texels at rung 1, 16 of them
+    silhouette; MOVE_A against MOVE_B is 44 and 13, at 2.38 shimmer. Mass
+    drift 0.020 and 0.059: the planted tyres pay most of MOVE_A's back, and
+    MOVE_B's band — which pays out more than the raised cabin uncovers — is
+    now the whole of the unit's headroom question, with 0.021 left under the
+    gate's 0.08.
     """
     m = Model()
     for x in (0, 8):
@@ -835,6 +874,10 @@ def recon(pose: Pose = Pose.A) -> Model:
         # rooted in the cabin. Lifted, it left the barrel behind and floated
         # two voxels off its own tip.
         _shift(m, (0, 9, 10, 15, 0, 6), dz=2)
+        # ...and the front wheels stay down under it: the car pitches on its
+        # springs about the contact patch rather than lifting off it
+        for x in (0, 8):
+            _gear_down(m, x, x + 1, 10, 12, "tire")
     if pose is Pose.MOVE_B:
         # the cabin runs up its springs over a level chassis, pintle and all
         # — the box reaches y=10 to take the muzzle with the barrel — and the
@@ -862,8 +905,11 @@ def tank(pose: Pose = Pose.A) -> Model:
     The move clip leaves the gun where pose A carries it — a tank under way
     does not lay its barrel — and ROCKS the hull over its running gear
     instead, one end at a time. MOVE_A takes the family's nose-up: the front
-    hull course, the glacis and the leading track run at `dz = +2`. MOVE_B
-    sets that down and lifts the REAR — the back hull course, the deck vents,
+    hull course, the glacis and the leading track run at `dz = +2`, with that
+    run's two bottom courses painted straight back onto the ground
+    (`_gear_down`) — a track does not leave the ground when a hull pitches, and
+    at rung 1 the texel it stands on is the one that bridges hull to shadow.
+    MOVE_B sets that down and lifts the REAR — the back hull course, the vents,
     the exhausts and the trailing track run — so the link stripe walks under a
     hull that pitches back and forth instead of one holding still. The turret,
     the cupola, the mantlet and the gun lie outside both boxes and never move:
@@ -885,9 +931,11 @@ def tank(pose: Pose = Pose.A) -> Model:
     and so moved a line lying inside the sprite's own outline at rung 1 — 46
     changed texels for 11 of silhouette, 3.18 shimmer, a frame re-toning its
     interior more than it moved its edge. Cut to the running gear and the
-    glacis, the same one-texel move buys 52 changed for 19 of silhouette at
-    1.74 shimmer, and A against MOVE_A is 34 changed with 9 of silhouette.
-    Mass drift 0.040 and 0.055.
+    glacis, the same one-texel move buys 46 changed for 14 of silhouette at
+    2.29 shimmer, and A against MOVE_A is 32 changed with 8 of silhouette —
+    fewer than the pitch moved before it kept its track down, because the
+    contact courses are the sprite's lowest texels and they now hold still in
+    every pose. Mass drift 0.004 and 0.049.
     """
     m = Model()
     _track(m, 0, 2, 0, 13, 2, phase=_tread_phase(pose))
@@ -922,8 +970,11 @@ def tank(pose: Pose = Pose.A) -> Model:
         _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
         m.box(4, 7, 10, 10, 6, 9, "hull_dk")
     if pose is Pose.MOVE_A:
-        # nose up: hull front, glacis and the leading track run, gun excluded
+        # nose up: hull front, glacis and the leading track run, gun excluded,
+        # with the run's contact courses painted back onto the ground
         _shift(m, (0, 11, 10, 14, 0, 5), dz=2)
+        for x0 in (0, 9):
+            _gear_down(m, x0, x0 + 2, 10, 13)
     if pose is Pose.MOVE_B:
         # and the other end, clear of the turret ring at y=4
         _shift(m, (0, 11, 0, 3, 0, 5), dz=2)
@@ -948,14 +999,25 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     rolls the WHOLE hull the same texel (`_roll`), which is the off-beat jolt
     of a machine this heavy riding ground.
 
+    Neither frame takes its track off the ground with it. Both stand the run's
+    two bottom courses back at z=0 (`_gear_down`) — the lifted end's on MOVE_A,
+    the leading four voxels of both runs on MOVE_B, which is where the sprite's
+    lowest texel is drawn — so the hull rides its suspension and the texel that
+    bridges hull to shadow at rung 1 is the parked one in every frame. The roll
+    grounds the leading end only because a whole run brought back down under a
+    rolled hull is a band of new pixels the mass gate cannot pay for: at full
+    length the drift was 0.100 against the 0.08 bar.
+
     The roll is UP and never down even though this is the tallest thing on the
     land roster: `voxel.place_in_cell` still takes it, and a settle would read
     as the suspension giving way rather than the chassis riding. Nothing here
     has to borrow the MBT's rock, because it is the heavy that the MBT's roll
     collided with and not the other way about: rolled, MOVE_B still reads
     0.781 against its own frame A and 0.616 against the next unit's. A against
-    MOVE_A is 30 changed texels at rung 1 with 7 of silhouette; MOVE_A against
-    MOVE_B is 79 and 23, at 2.43 shimmer, mass drift 0.039 and 0.002.
+    MOVE_A is 26 changed texels at rung 1 with 4 of silhouette — the thinnest
+    parked-to-moving reading on the land roster, since a nose pitch this short
+    over a run that stays down moves the glacis line and nothing else; MOVE_A
+    against MOVE_B is 77 and 22, at 2.50 shimmer, mass drift 0.006 and 0.050.
     """
     m = Model()
     _track(m, 0, 2, 0, 15, 3, phase=_tread_phase(pose))
@@ -993,8 +1055,14 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     if pose is Pose.MOVE_A:
         # nose up: stepped glacis, front hull and the leading track run
         _shift(m, (0, 12, 13, 16, 0, 6), dz=2)
+        # ...and the lifted length of the run is stood back on the ground
+        for x0 in (0, 10):
+            _gear_down(m, x0, x0 + 2, 13, 15)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
+        # the leading end of both runs comes back down under the jolt
+        for x0 in (0, 10):
+            _gear_down(m, x0, x0 + 2, 12, 15)
     return m
 
 
@@ -1013,14 +1081,22 @@ def anti_air(pose: Pose = Pose.A) -> Model:
     front hull, its lip and the leading track run take `dz = +2` at z at most
     3, which is under the battery box, so the raked barrels stay exactly where
     the travelling lock put them and only the hull they ride on moves. MOVE_B
-    levels that and rolls the whole model the same texel (`_roll`).
+    levels that and rolls the whole model the same texel (`_roll`). Both frames
+    stand the track back down where the lift took it (`_gear_down`): the front
+    of the run on MOVE_A, the leading four voxels of both runs under the roll,
+    which is the end the sprite's lowest texel is drawn from and so the texel
+    that bridges hull to shadow at rung 1.
 
     Lifting the nose UNDER the roll — both at once — was tried and is what
     the alternation replaces: at MOVE_B the flak track's own frame A read
     0.615 against the apc's 0.635 and it stopped being itself. One at a time
     it reads 0.890 and 0.702 own, against 0.650 and 0.683 next. A against
-    MOVE_A is 31 changed texels at rung 1 with 9 of silhouette; MOVE_A against
-    MOVE_B is 53 and 19, at 1.79 shimmer, mass drift 0.056 and 0.000.
+    MOVE_A is 31 changed texels at rung 1 with 5 of silhouette; MOVE_A against
+    MOVE_B is 53 and 19, at 1.79 shimmer, mass drift 0.001 and 0.068. The roll
+    frame is the tightest mass reading of the eight land vehicles: this is the
+    shortest hull that grounds four voxels of both runs, so the contact patch
+    is the biggest share of a sprite here and the drift it buys leaves 0.012
+    under the gate.
     """
     m = Model()
     _track(m, 0, 2, 0, 11, phase=_tread_phase(pose))
@@ -1063,8 +1139,14 @@ def anti_air(pose: Pose = Pose.A) -> Model:
     if pose is Pose.MOVE_A:
         # nose up, under the battery: the box stops at the hull's top course
         _shift(m, (0, 10, 9, 12, 0, 3), dz=2)
+        # ...over a track run that stays on the ground under it
+        for x0 in (0, 8):
+            _gear_down(m, x0, x0 + 2, 9, 11)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
+        # the leading end of both runs comes back down under the jolt
+        for x0 in (0, 8):
+            _gear_down(m, x0, x0 + 2, 8, 11)
     return m
 
 
@@ -1098,11 +1180,14 @@ def artillery(pose: Pose = Pose.A) -> Model:
     the pit it stands in are carried and not bent — and MOVE_B levels that and
     rolls the whole model the same texel (`_roll`), which swings the
     near-vertical spike a texel across open sky where nothing else on the
-    sheet has anything.
+    sheet has anything. The track stays on the ground through both
+    (`_gear_down`, the lifted front on MOVE_A and the leading four voxels of
+    both runs under the roll), so the SPG rides its suspension rather than
+    hovering a texel over its own shadow.
 
-    A against MOVE_A is 36 changed texels at rung 1 with 9 of silhouette;
-    MOVE_A against MOVE_B is 60 and 19, at 2.16 shimmer, mass drift 0.041 and
-    0.000. Identity holds at 0.911 and 0.752 against its own frame A, next
+    A against MOVE_A is 36 changed texels at rung 1 with 7 of silhouette;
+    MOVE_A against MOVE_B is 59 and 19, at 2.11 shimmer, mass drift 0.005 and
+    0.061. Identity holds at 0.911 and 0.752 against its own frame A, next
     best 0.703 and 0.687.
     """
     m = Model()
@@ -1147,8 +1232,14 @@ def artillery(pose: Pose = Pose.A) -> Model:
     if pose is Pose.MOVE_A:
         # nose up, clear of the casemate wall and the pit inside it
         _shift(m, (0, 10, 10, 13, 0, 4), dz=2)
+        # ...over a track run that stays on the ground under it
+        for x0 in (0, 8):
+            _gear_down(m, x0, x0 + 2, 10, 12)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
+        # the leading end of both runs comes back down under the jolt
+        for x0 in (0, 8):
+            _gear_down(m, x0, x0 + 2, 9, 12)
     return m
 
 
@@ -1170,7 +1261,12 @@ def rockets(pose: Pose = Pose.A) -> Model:
     which stands the loaded end of a long truck up over its rear bogies.
     MOVE_B levels that and rolls the whole truck the same texel (`_roll`), and
     the rack, being the biggest plane on the roster, carries the jolt across
-    most of the sprite.
+    most of the sprite — with the FRONT pair of tyres painted back onto the
+    ground under it (`_gear_down`), since that axle is where the sprite's
+    lowest row is drawn and MOVE_A is already standing on it. The other three
+    axles ride the roll: eight grounded wheels is a band of new pixels worth
+    0.081 of mass drift against the gate's 0.08, and one axle answers the
+    contact rule for both frames.
 
     It is the tail here and the nose everywhere else in the family, for a
     measured reason that belongs to the shadow rather than to the ride. This
@@ -1184,9 +1280,9 @@ def rockets(pose: Pose = Pose.A) -> Model:
     the tail takes the same texel off the screen-RIGHT end and the margin
     widens to 0.77px.
 
-    A against MOVE_A is 26 changed texels at rung 1 with 7 of silhouette;
-    MOVE_A against MOVE_B is 67 and 19, at 2.53 shimmer, mass drift 0.044 and
-    0.000. Identity 0.942 and 0.803 own, next best 0.646 and 0.607.
+    A against MOVE_A is 28 changed texels at rung 1 with 9 of silhouette;
+    MOVE_A against MOVE_B is 65 and 14, at 3.64 shimmer, mass drift 0.048 and
+    0.030. Identity 0.942 and 0.803 own, next best 0.646 and 0.607.
     """
     m = Model()
     for y in (1, 5, 9, 13):
@@ -1225,10 +1321,18 @@ def rockets(pose: Pose = Pose.A) -> Model:
             _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=2)
         m.box(2, 7, 1, 2, 14, 15, "hull_dk")
     if pose is Pose.MOVE_A:
-        # tail up: the bed and the three rear axles, under the slab
+        # tail up: the bed and the three rear axles, under the slab. The front
+        # axle holds the ground here, and it is the front that carries the
+        # sprite's lowest row, so this frame already stands on its contact
+        # patch and the tightest shadow margin on the sheet is left alone.
         _shift(m, (0, 9, 0, 11, 0, 3), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
+        # the roll takes all eight wheels up with the bed; the FRONT pair
+        # comes back down, which is the axle the sprite's lowest row is drawn
+        # from and the one the truck is already standing on in MOVE_A
+        for x in (0, 8):
+            _gear_down(m, x, x + 1, 13, 15, "tire")
     return m
 
 
@@ -1280,15 +1384,19 @@ def apc(pose: Pose = Pose.A) -> Model:
     the way pose B's nod makes it. MOVE_B levels that and rolls the whole
     hull, dropped ramp and all, the same texel (`_roll`). The ramp riding the
     roll is deliberate: it is bolted to the tail, so leaving it on the ground
-    while the hull lifted would tear the outline.
+    while the hull lifted would tear the outline. The TRACK is not bolted to
+    anything and never leaves the ground: both frames paint its bottom two
+    courses back at z=0 (`_gear_down`) — the whole lifted length on MOVE_A, the
+    leading four voxels under the roll — which is the texel that bridges hull
+    to shadow at rung 1.
 
     Pitch and roll TOGETHER on MOVE_B is what the alternation replaces: it put
     the cab a second texel up and the frame read 0.667 against the bomber's
     against 0.658 for its own, the one silhouette on the sheet a raised slab
     can be mistaken for. One at a time reads 0.871 and 0.759 own, next best
     0.718 and 0.695. A against MOVE_A is the loudest reading on the land
-    roster at 48 changed texels at rung 1 with 13 of silhouette; MOVE_A
-    against MOVE_B is 34 and 13, at 1.62 shimmer, mass drift 0.012 and 0.000.
+    roster at 47 changed texels at rung 1 with 9 of silhouette; MOVE_A
+    against MOVE_B is 34 and 13, at 1.62 shimmer, mass drift 0.047 and 0.053.
     """
     m = Model()
     _track(m, 0, 2, 0, 15, phase=_tread_phase(pose))
@@ -1354,8 +1462,14 @@ def apc(pose: Pose = Pose.A) -> Model:
         # nose up: the whole raised cab module from its rear bulkhead forward,
         # the track run under it included; the open bay and the ramp hold
         _shift(m, (0, 8, 10, 17, 0, 12), dz=2)
+        # ...over the length of run the lift took up with it
+        for x0 in (0, 6):
+            _gear_down(m, x0, x0 + 2, 10, 15)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
+        # the leading end of both runs comes back down under the jolt
+        for x0 in (0, 6):
+            _gear_down(m, x0, x0 + 2, 12, 15)
     return m
 
 
@@ -1377,11 +1491,15 @@ def missiles(pose: Pose = Pose.A) -> Model:
     livery cab and the bumper one texel (z at most 5, which is the cab's own
     roof, so the erector pedestal and the seated rounds behind it never enter
     the box), and MOVE_B levels that and rolls the whole erector the same
-    texel (`_roll`), which swings both spikes across open sky.
+    texel (`_roll`), which swings both spikes across open sky. The FRONT tyres
+    are painted back onto the ground in both frames (`_gear_down`): they are
+    the axle the sprite's lowest row is drawn from, so the battery pitches and
+    jolts about its contact patch instead of hovering over its own shadow. The
+    tail axle rides the roll, which is what keeps the mass drift payable.
 
-    A against MOVE_A is 28 changed texels at rung 1 with 9 of silhouette;
-    MOVE_A against MOVE_B is 43 and 17, at 1.53 shimmer, mass drift 0.040 and
-    0.000. Identity 0.883 and 0.701 own, next best 0.604 and 0.587 — the
+    A against MOVE_A is 30 changed texels at rung 1 with 10 of silhouette;
+    MOVE_A against MOVE_B is 43 and 17, at 1.53 shimmer, mass drift 0.009 and
+    0.049. Identity 0.883 and 0.701 own, next best 0.604 and 0.587 — the
     thinnest own-to-next margin on the land roster, and it is the seated
     rounds that hold it, so a later pass may not move them under way.
     """
@@ -1429,10 +1547,16 @@ def missiles(pose: Pose = Pose.A) -> Model:
             _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=2)
             m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
     if pose is Pose.MOVE_A:
-        # nose up: front axle, cab and bumper, below the seated rounds
+        # nose up: front axle, cab and bumper, below the seated rounds; the
+        # front tyres are painted back onto the ground under it
         _shift(m, (0, 9, 8, 12, 0, 5), dz=2)
+        for x in (0, 8):
+            _gear_down(m, x, x + 1, 8, 10, "tire")
     if pose is Pose.MOVE_B:
         _roll(m, 2)
+        # the front axle comes back down under the jolt, as in MOVE_A
+        for x in (0, 8):
+            _gear_down(m, x, x + 1, 8, 10, "tire")
     return m
 
 
