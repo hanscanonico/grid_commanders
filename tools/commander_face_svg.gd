@@ -108,6 +108,14 @@ const MOUTH_KINDS: Array[StringName] = [
 	&"wry",
 	&"open",
 ]
+## The collars a tunic is cut with, the FACES `collar` column: the V-necked
+## chevron every general used to share, a standing mandarin band, and a
+## double-breasted facing with two gold buttons. A row that names none wears
+## COLLAR_DEFAULT, which draws the handoff's chevron unchanged.
+const COLLAR_V := &"v"
+const COLLAR_MANDARIN := &"mandarin"
+const COLLAR_DOUBLE := &"double"
+const COLLAR_DEFAULT := COLLAR_V
 
 const SKIN := {
 	&"light": "#f2c9a0",
@@ -127,13 +135,16 @@ const HAIR := {
 }
 
 ## Per-commander spec, straight from the handoff's FACES table, with the skull
-## this repo gave each general on top of it. `head` is
-## [width, jaw, crown, spread] (see HEAD_DEFAULT) and `pose` is
-## [tilt degrees, zoom, mirrored]. Heads are cast against doctrine: the
-## immovable are wide and square, the quick and the clever narrow and tapered,
-## and the three grey veterans wear a low crown. So are the expressions —
-## `brow`, `eyes`, `mouth` and the `eye` size each general's power quote is read
-## off, so a face looks like it could say its own line.
+## and the collar this repo gave each general on top of it. `head` is
+## [width, jaw, crown, spread] (see HEAD_DEFAULT), `pose` is
+## [tilt degrees, zoom, mirrored], `collar` is one of the three cuts above, and
+## `pip` puts a rank stud on it — the four costliest powers only. Heads are
+## cast against doctrine: the immovable are wide and square, the quick and the
+## clever narrow and tapered, and the three grey veterans wear a low crown.
+## Collars are cast the same way: line officers wear the V, staff and planners
+## the mandarin band, the veterans and the admiral double-breasted. So are the
+## expressions — `brow`, `eyes`, `mouth` and the `eye` size each general's power
+## quote is read off, so a face looks like it could say its own line.
 const FACES := {
 	&"alina_ward":
 	{
@@ -147,6 +158,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"none",
 		"earring": true,
+		"collar": &"v",
 		"head": [0.96, &"round", 0.5, 1.0],
 		"pose": [-5.0, 1.2, false],
 		"bg": &"rays",
@@ -163,6 +175,7 @@ const FACES := {
 		"eye": 0.91,
 		"facial": &"beard",
 		"acc": &"glasses",
+		"collar": &"double",
 		"head": [1.08, &"square", -2.0, 1.0],
 		"pose": [3.0, 1.14, false],
 		"bg": &"halftone",
@@ -179,6 +192,7 @@ const FACES := {
 		"eye": 0.98,
 		"facial": &"none",
 		"acc": &"goggles",
+		"collar": &"mandarin",
 		"head": [0.92, &"tapered", 0.0, 1.05],
 		"pose": [-8.0, 1.24, true],
 		"bg": &"speed",
@@ -195,6 +209,7 @@ const FACES := {
 		"eye": 0.9,
 		"facial": &"stubble",
 		"acc": &"scar",
+		"collar": &"v",
 		"head": [1.1, &"square", 0.5, 0.96],
 		"pose": [6.0, 1.22, false],
 		"bg": &"wedge",
@@ -211,6 +226,7 @@ const FACES := {
 		"eye": 0.95,
 		"facial": &"none",
 		"acc": &"none",
+		"collar": &"v",
 		"head": [0.94, &"tapered", 1.0, 1.0],
 		"pose": [0.0, 1.18, false],
 		"bg": &"bars",
@@ -227,6 +243,7 @@ const FACES := {
 		"eye": 1.06,
 		"facial": &"mustache",
 		"acc": &"eyepatch",
+		"collar": &"v",
 		"head": [1.12, &"square", -1.0, 0.94],
 		"pose": [-3.0, 1.26, false],
 		"bg": &"burst",
@@ -243,6 +260,7 @@ const FACES := {
 		"eye": 0.92,
 		"facial": &"none",
 		"acc": &"none",
+		"collar": &"mandarin",
 		"head": [0.92, &"tapered", 1.0, 1.0],
 		"pose": [8.0, 1.18, true],
 		"bg": &"halftone",
@@ -259,6 +277,7 @@ const FACES := {
 		"eye": 0.86,
 		"facial": &"none",
 		"acc": &"glasses",
+		"collar": &"mandarin",
 		"head": [0.88, &"tapered", 2.0, 0.94],
 		"pose": [-4.0, 1.12, false],
 		"bg": &"grid",
@@ -275,6 +294,7 @@ const FACES := {
 		"eye": 1.04,
 		"facial": &"none",
 		"acc": &"headset",
+		"collar": &"mandarin",
 		"head": [0.9, &"round", 1.0, 1.08],
 		"pose": [-9.0, 1.22, false],
 		"bg": &"speed",
@@ -292,6 +312,7 @@ const FACES := {
 		"facial": &"none",
 		"acc": &"headband",
 		"freckles": true,
+		"collar": &"v",
 		"head": [0.92, &"round", 0.5, 1.06],
 		"pose": [4.0, 1.16, false],
 		"bg": &"rays",
@@ -308,6 +329,7 @@ const FACES := {
 		"eye": 0.9,
 		"facial": &"none",
 		"acc": &"hood",
+		"collar": &"v",
 		"head": [0.88, &"tapered", 0.5, 0.96],
 		"pose": [0.0, 1.24, false],
 		"bg": &"wedge",
@@ -324,6 +346,7 @@ const FACES := {
 		"eye": 1.03,
 		"facial": &"stubble",
 		"acc": &"bandana",
+		"collar": &"v",
 		"head": [1.06, &"round", 0.0, 1.0],
 		"pose": [-6.0, 1.2, false],
 		"bg": &"burst",
@@ -340,6 +363,7 @@ const FACES := {
 		"eye": 0.93,
 		"facial": &"none",
 		"acc": &"glasses",
+		"collar": &"mandarin",
 		"head": [0.94, &"round", 0.5, 1.02],
 		"pose": [-4.0, 1.18, false],
 		"bg": &"grid",
@@ -356,6 +380,7 @@ const FACES := {
 		"eye": 0.87,
 		"facial": &"mustache",
 		"acc": &"none",
+		"collar": &"double",
 		"head": [1.04, &"tapered", -2.0, 0.98],
 		"pose": [5.0, 1.25, false],
 		"bg": &"wedge",
@@ -372,6 +397,7 @@ const FACES := {
 		"eye": 1.01,
 		"facial": &"none",
 		"acc": &"goggles",
+		"collar": &"v",
 		"head": [0.98, &"round", 0.0, 1.06],
 		"pose": [-7.0, 1.2, true],
 		"bg": &"speed",
@@ -388,6 +414,7 @@ const FACES := {
 		"eye": 0.97,
 		"facial": &"beard",
 		"acc": &"none",
+		"collar": &"double",
 		"head": [1.08, &"round", -2.0, 1.0],
 		"pose": [3.0, 1.16, false],
 		"bg": &"rays",
@@ -404,6 +431,7 @@ const FACES := {
 		"eye": 0.94,
 		"facial": &"stubble",
 		"acc": &"scar",
+		"collar": &"mandarin",
 		"head": [1.08, &"square", 0.0, 0.96],
 		"pose": [7.0, 1.24, false],
 		"bg": &"burst",
@@ -420,6 +448,8 @@ const FACES := {
 		"eye": 1.05,
 		"facial": &"none",
 		"acc": &"headset",
+		"collar": &"v",
+		"pip": true,
 		"head": [0.9, &"tapered", 0.5, 1.08],
 		"pose": [-6.0, 1.22, false],
 		"bg": &"halftone",
@@ -436,6 +466,7 @@ const FACES := {
 		"eye": 0.99,
 		"facial": &"none",
 		"acc": &"bandana",
+		"collar": &"mandarin",
 		"head": [0.9, &"round", 1.0, 1.04],
 		"pose": [5.0, 1.2, true],
 		"bg": &"wedge",
@@ -452,6 +483,8 @@ const FACES := {
 		"eye": 0.96,
 		"facial": &"none",
 		"acc": &"none",
+		"collar": &"mandarin",
+		"pip": true,
 		"head": [1.0, &"square", 0.0, 0.98],
 		"pose": [0.0, 1.16, false],
 		"bg": &"grid",
@@ -468,6 +501,8 @@ const FACES := {
 		"eye": 0.85,
 		"facial": &"beard",
 		"acc": &"scar",
+		"collar": &"v",
+		"pip": true,
 		"head": [1.1, &"square", -0.5, 0.96],
 		"pose": [-5.0, 1.26, true],
 		"bg": &"burst",
@@ -484,6 +519,8 @@ const FACES := {
 		"eye": 0.88,
 		"facial": &"beard",
 		"acc": &"none",
+		"collar": &"double",
+		"pip": true,
 		"head": [1.14, &"square", -1.5, 0.94],
 		"pose": [2.0, 1.28, false],
 		"bg": &"halftone",
@@ -669,7 +706,7 @@ func _bust(face: Dictionary) -> String:
 	if face["style"] == &"hood":
 		out += _path("M20,120 Q12,64 55,50 Q98,64 90,120 Z", _accent, _line())
 	out += _crowned(_hair_back(face["style"], hair), geom)
-	out += _shoulders() + _shade_uniform(face)
+	out += _shoulders(face) + _shade_uniform(face)
 	out += _neck(skin, width) + _shade_neck(width)
 	var ear := _line()
 	out += _circle(_hx(31, width), 58, 5, skin, ear) + _circle(_hx(79, width), 58, 5, skin, ear)
@@ -690,13 +727,45 @@ func _bust(face: Dictionary) -> String:
 	return out + _prop(face["prop"], &"front", skin)
 
 
-## Uniform shoulders rising off the bottom edge, with the ink V of a collar and
-## the faction chevron under it.
-func _shoulders() -> String:
+## Uniform shoulders rising off the bottom edge, cut with the general's own
+## collar and, for the four costliest powers, a rank pip on it.
+func _shoulders(face: Dictionary) -> String:
+	var collar: StringName = face.get("collar", COLLAR_DEFAULT)
 	var out := _path(SHOULDER_MASS, _accent, _line())
 	out += _path("M6,110 Q6,93 32,90 L78,90 Q104,93 104,110", "none", _rim())
-	out += _stroke_path("M44,90 L55,101 L66,90", 2.4)
-	return out + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent_dark)
+	out += _collar(collar)
+	if face.get("pip", false):
+		out += _rank_pip(collar)
+	return out
+
+
+## The collar itself. The V is the one the handoff authored — an ink neckline
+## over the faction chevron — and the two others cut the same neckline
+## differently rather than adding anything beside it.
+func _collar(kind: StringName) -> String:
+	match kind:
+		COLLAR_MANDARIN:
+			var band := "M40,100 Q40,87 48,85 L62,85 Q70,87 70,100 Q55,105 40,100 Z"
+			return _path(band, _accent_dark, _line()) + _stroke_path("M55,85 L55,103", 2)
+		COLLAR_DOUBLE:
+			var facing := _path("M63,90 L73,90 L54,120 L43,120 Z", _accent_dark)
+			var pen := ' stroke="%s" stroke-width="1.2"' % _ink
+			var buttons := _circle(61.5, 100, 2, _gold, pen) + _circle(55, 110, 2, _gold, pen)
+			return facing + _stroke_path("M40,90 L47,97 L63,90", 2.4) + buttons
+	var neckline := _stroke_path("M44,90 L55,101 L66,90", 2.4)
+	return neckline + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent_dark)
+
+
+## The rank pip the costliest powers wear, placed where its own collar leaves
+## room for it: in the V's notch, on the mandarin band, and out on the shoulder
+## where a double-breasted facing already carries buttons.
+func _rank_pip(collar: StringName) -> String:
+	var at := Vector2(55, 97)
+	if collar == COLLAR_MANDARIN:
+		at = Vector2(55, 96.5)
+	elif collar == COLLAR_DOUBLE:
+		at = Vector2(34, 100)
+	return _circle(at.x, at.y, 2.2, _gold, ' stroke="%s" stroke-width="1.2"' % _ink)
 
 
 ## The skull's own x, scaled about its centre: the one place a width is applied.

@@ -172,3 +172,42 @@ func _mean_luminance(image: Image, patch: Rect2i) -> float:
 		for x: int in range(patch.position.x, patch.end.x):
 			total += image.get_pixel(x, y).get_luminance()
 	return total / float(patch.size.x * patch.size.y)
+
+
+## The collar column is data, and a name outside the vocabulary falls through to
+## the chevron silently — which is exactly the repeat the column exists to
+## break, so it is caught here rather than seen on the sheet.
+func test_every_collar_is_one_the_file_can_cut() -> void:
+	var collars: Array[StringName] = [
+		FaceSvg.COLLAR_V, FaceSvg.COLLAR_MANDARIN, FaceSvg.COLLAR_DOUBLE
+	]
+	for id: StringName in FaceSvg.FACES:
+		var row: Dictionary = FaceSvg.FACES[id]
+		assert_has(collars, row.get("collar", FaceSvg.COLLAR_DEFAULT), "%s: unknown collar" % id)
+
+
+## The chevron is what a row wearing no collar still draws, so the column is
+## additive: the default is the V and the V is the handoff's own two paths,
+## unchanged. The mandarin general beside it is what says the column is read at
+## all — without that half, a `collar` nothing ever cut would pass.
+func test_the_default_collar_is_the_handoff_chevron() -> void:
+	assert_eq(FaceSvg.COLLAR_DEFAULT, FaceSvg.COLLAR_V, "the default collar is no longer the V")
+	var chevron := "M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z"
+	var drawn := _bust_wearing(FaceSvg.COLLAR_V)
+	assert_string_contains(drawn, chevron, "the V is no longer the authored chevron")
+	assert_string_contains(drawn, "M44,90 L55,101 L66,90", "the V has lost its neckline")
+	assert_false(
+		_bust_wearing(FaceSvg.COLLAR_MANDARIN).contains(chevron),
+		"the mandarin band still draws the chevron under it"
+	)
+
+
+## The first general on the table wearing this collar, drawn whole.
+func _bust_wearing(collar: StringName) -> String:
+	var artist := FaceSvg.new(CommanderVisuals.faction_themes()[0])
+	for id: StringName in FaceSvg.FACES:
+		var row: Dictionary = FaceSvg.FACES[id]
+		if row.get("collar", FaceSvg.COLLAR_DEFAULT) == collar:
+			return artist.build(id)
+	fail_test("no general wears the %s collar" % collar)
+	return ""
