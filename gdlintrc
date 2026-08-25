@@ -334,4 +334,11 @@ max-public-methods: 22
 #
 # 1420 -> 1423, tracking battle.gd up: the pause menu's Briefing row, whose flow
 # went to BattleCampaign first. See the same entry in tools/check_scripts.sh.
-max-file-lines: 1423
+#
+# 1423 -> 1454, and the ceiling is tools/commander_face_svg.gd's now rather than
+# battle.gd's: the portrait busts grew an expression column — the eye dial, the
+# lid and brow-side vocabularies, and the band that rides the eyes with the
+# crown. battle.gd is pinned at its own length in tools/check_scripts.sh, so it
+# takes none of this slack. Adding to the face drawer still means moving
+# something out first, and the split due there is the FACES table itself.
+max-file-lines: 1454
