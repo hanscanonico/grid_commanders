@@ -8,9 +8,9 @@ extends RefCounted
 
 ## Per-commander spec, straight from the handoff's FACES table, with the skull
 ## the collar and the nose this repo gave each general on top of it. `head` is
-## [width, jaw, crown, spread] (see HEAD_DEFAULT), `pose` is
-## [tilt degrees, zoom, mirrored], `nose` is one of the three glyphs (see
-## NOSE_TICK), `collar` is one of the three cuts above, and `pip` puts a rank
+## [width, jaw, crown, spread] (see the drawer's HEAD_DEFAULT), `pose` is
+## [tilt degrees, zoom, mirrored], `nose` is one of its three glyphs (see
+## NOSE_TICK there), `collar` is one of its three cuts, and `pip` puts a rank
 ## stud on it — the four costliest powers only. Heads are cast against doctrine:
 ## the immovable are wide and square, the quick and the clever narrow and
 ## tapered, and the three grey veterans wear a low crown. Collars are cast the

@@ -268,9 +268,35 @@ func test_a_shouldered_prop_is_carried_by_something_in_front() -> void:
 		assert_eq(_casts_in(_portrait(id)), 2, "%s wears no strap over its haft" % id)
 
 
+## The strap was one diagonal band on every shouldered bust and read as the
+## sheet's loudest shared mark, so each rig is its own now. Read off the strap's
+## own cast, which is flattened to one tone: what is compared is the geometry
+## rather than the faction colour over it.
+func test_no_two_shouldered_busts_wear_the_same_strap() -> void:
+	var worn := {}
+	for id: StringName in FaceSvg.FACES:
+		if not SHOULDERED.has(FaceSvg.FACES[id]["prop"]):
+			continue
+		var strap := _strap_cast(_portrait(id))
+		assert_false(strap.is_empty(), "%s draws no strap to compare" % id)
+		assert_false(worn.has(strap), "%s wears %s's strap" % [id, worn.get(strap, &"")])
+		worn[strap] = id
+
+
 func _portrait(id: StringName) -> String:
 	return FaceSvg.new(CommanderVisuals.faction_themes()[0]).build(id)
 
 
 func _casts_in(document: String) -> int:
 	return document.count(CAST_GROUP)
+
+
+## The second cast is the strap's: a shouldered prop draws its haft behind the
+## bust first, then the rig that carries it.
+func _strap_cast(document: String) -> String:
+	var haft := document.find(CAST_GROUP)
+	var strap := document.find(CAST_GROUP, haft + 1)
+	if strap < 0:
+		return ""
+	var start := strap + CAST_GROUP.length()
+	return document.substr(start, document.find("</g>", start) - start)
