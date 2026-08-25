@@ -124,10 +124,39 @@ not a shadow cast on a tile, and `voxel._waterline_foam` places the foam
 against the composed cell's own spans — recentring the ellipse would carry the
 foam line 2 px with it, and the foam line staying put across the clip is what
 makes the ship ride the sea instead of the sea heaving with the ship
-(`test_a_moving_hull_leaves_its_foam_line_where_it_found_it`). A mirrored ship
+(`test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else`). A mirrored ship
 therefore does move its displacement patch 5 px, which is the one place this
 sheet still has a handedness. Nobody reads a water shading for a sun angle;
 everybody reads a hard ellipse on grass for one.
+
+**What a ship's move frames get instead is a bow wave.** A held bow-up trim
+alone left a running hull almost the parked picture — 15 changed and 2 rung-1
+silhouette texels between the lander's pose A and its MOVE_A, 18/3 for the
+cruiser — so `voxel._bow_wave` breaks white water over the leading rim of the
+displacement patch on the move poses only: 20/3 and 22/3 after, 24/6 for the
+battleship, 27/7 for the sub. It is repainted displacement rather than foam
+laid on open sea, and that is three things at once — it sits on the water
+plane by construction so it cannot heave with the bob, it is white on
+near-black rather than white on blue so it survives the board's 4:1 sample at
+rung 1, and it costs almost no new pixels, which matters because all four
+hulls' move poses already sit within 9 px of `MoveFrames.MAX_MASS_DRIFT`. That
+budget is also the ceiling on the wave: only the 1 px lip outside the rim is
+new water, and a second column of lip measures 0.083 drift on the battleship
+against a gate of 0.08. That is why the parked-vs-running change count rises by
+four or five texels while the SILHOUETTE count barely moves — one texel on the
+lander, none on the cruiser, the sub or the battleship. Six silhouette texels
+between parked and running is not reachable this way; a hull that has to change
+outline that much has to change shape, not water.
+
+The wave rides the displacement patch, so a mirrored ship carries it the same
+5 px the patch moves — the handedness above, not a new one. It stays at the
+mirrored hull's bow, which is where a bow wave belongs.
+
+The wave is the same on both move frames. Ticking it with the beat is not
+buildable here: at `voxel.BOW_REACH` the crest already covers every row of
+every hull's patch — nine rows at the widest — so carrying it further aft on
+the off-beat repaints nothing. The hulls carry the beat where they already
+did, in the trim, the guns and the mast.
 
 Nothing in a move frame may encode screen-handedness for any other reason. A
 mirrored rifleman leading with the other leg is correct.

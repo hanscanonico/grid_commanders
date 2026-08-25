@@ -2975,6 +2975,13 @@ class MoveFrames(unittest.TestCase):
     SUB_MIN_PARKED_CHANGED = 14
     SUB_MIN_PARKED_SILHOUETTE = 6
 
+    # The floor on a bow wave (`voxel._bow_wave`), in cell pixels: 16 is one
+    # whole rung-1 board texel of white water (4 atlas px on a side), the
+    # least a hull can break and still have the 4:1 sample see anything.
+    # Measured 2026-08-25 at 42 px (lander, cruiser), 60 (sub) and 78
+    # (battleship); the floor is the texel rule, not the measurement.
+    MIN_BOW_WAVE_PX = 16
+
     def test_the_running_sub_is_not_the_parked_sub(self):
         """A submarine under way must differ from one lying stopped by
         something the board can count, not by a periscope the 4:1 sample
@@ -3207,23 +3214,69 @@ class MoveFrames(unittest.TestCase):
         rows = [y for y in range(h) for x in range(w) if px[x, y][3] > 128]
         return max(rows)
 
-    def test_a_moving_hull_leaves_its_foam_line_where_it_found_it(self):
-        """The ambient clip's rule (`test_the_foam_line_stays_on_the_water`),
-        asked of the move clip too, because a gait is where it is easy to
-        break: `voxel._waterline_foam` places the flecks against the composed
-        cell's own lowest spans, so a hull that trims bow-up by lifting its
-        waterline course out of them would drag the foam line up the sheet
-        and the sea would read as heaving rather than the ship as running.
-        Every move pose's foam must be pose A's, pixel for pixel."""
+    def test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else(self):
+        """A running hull ADDS white water; it never moves the water it had.
+
+        Two rules, and the first is the ambient clip's own
+        (`test_the_foam_line_stays_on_the_water`) asked of the move clip.
+        `voxel._waterline_foam` places its flecks against the composed cell's
+        lowest spans, so a hull that trims bow-up by lifting its waterline
+        course out of them would drag the foam line up the sheet and the sea
+        would read as heaving rather than the ship as running. So every fleck
+        pose A drew is still there, in the same pixel, in both move poses:
+        pose A's foam is a SUBSET of the move pose's, not merely equal to it.
+
+        The second is what a move pose may add on top — the bow wave
+        (`voxel._bow_wave`), which is why this is a superset and not an
+        equality. It is held to being a WAVE rather than a licence to paint:
+
+        - it is a whole board texel of white water at least
+          (`MIN_BOW_WAVE_PX`), in every livery and both move frames, so the
+          4:1 sample cannot eat it;
+        - every new fleck lands where pose A had displacement shading or open
+          water, never on the hull, so the wave is on the sea and not a white
+          stripe on the freeboard;
+        - every new fleck is forward of the displacement patch's own midline,
+          so it is the bow breaking and not the whole ship going white;
+        - it occupies the same ROWS on both move frames. The hull bobs
+          `voxel.BOB_PX` on the beat and the water does not: a crest authored
+          against the hull instead of the water plane would ride up with it
+          and the sea would heave again. Rows and not pixels, so a later
+          frame may still tick the crest along the water.
+
+        Together those say the sea under a moving ship is the sea under the
+        parked one plus foam at its bow, which is the whole claim the move
+        clip makes about water.
+        """
         for uid in self._movers():
             if UNITS[uid][1] != "sea":
                 continue
             for fac in FACTIONS:
-                a = self._foam(atlas.unit_cell(uid, fac, Pose.A))
-                self.assertTrue(a)
+                parked = atlas.unit_cell(uid, fac, Pose.A)
+                foam, shade = self._foam(parked), self._shadow(parked)
+                water = shade | self._transparent(parked)
+                self.assertTrue(foam)
+                midline = (min(x for x, _ in shade) + max(x for x, _ in shade) + 1) // 2
+                rows = {}
                 for pose in MOVE_POSES:
+                    running = self._foam(atlas.unit_cell(uid, fac, pose))
+                    wave = running - foam
+                    rows[pose] = {y for _, y in wave}
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
-                        self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, pose)))
+                        self.assertEqual(foam - running, set(), "the ambient line")
+                        self.assertGreaterEqual(
+                            len(wave), self.MIN_BOW_WAVE_PX, "no bow wave"
+                        )
+                        self.assertEqual(wave - water, set(), "off the water")
+                        self.assertEqual(
+                            {(x, y) for x, y in wave if x > midline}, set(), "abaft"
+                        )
+                with self.subTest(unit=uid, faction=fac.key):
+                    self.assertEqual(
+                        rows[Pose.MOVE_A],
+                        rows[Pose.MOVE_B],
+                        "the wave heaved with the hull",
+                    )
 
     def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
         """The fallback is what makes the move sheets valid from day one:
@@ -3332,6 +3385,11 @@ class MoveFrames(unittest.TestCase):
             for x in range(w)
             if px[x, y][:3] == FOAM and px[x, y][3] == 255
         }
+
+    def _transparent(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {(x, y) for y in range(h) for x in range(w) if px[x, y][3] == 0}
 
     def _body(self, cell: Image.Image) -> set:
         """Everything the unit itself paints — the shadow is the ground's."""

@@ -901,6 +901,7 @@ def compose_cell(
     footprint_w: int | None = None,
     ground: int | None = None,
     centred_shadow: bool = False,
+    under_way: bool = False,
 ) -> Image.Image:
     """Center a rendered sprite on a transparent atlas cell with its shadow.
 
@@ -961,6 +962,10 @@ def compose_cell(
     rather than a cast shadow, and `_waterline_foam` is placed against the
     composed cell's own spans, so recentring it would carry the foam line
     with it — see `atlas.unit_cell`.
+
+    `under_way` is what a ship's move frames ask for instead: white water at
+    the bow (`_bow_wave`), which is the one thing a running hull has that a
+    moored one does not.
     """
     cell_w, cell_h = cell
     out = Image.new("RGBA", (cell_w, cell_h), (0, 0, 0, 0))
@@ -1021,6 +1026,11 @@ def compose_cell(
             # reads as itself and one that reads as the battleship.
             _wake(out, sprite, x0, ground - h)
         _waterline_foam(out, ground)
+        if under_way:
+            # After the waterline foam, never before: `_waterline_foam` reads
+            # the composed cell's own opaque spans, so a crest laid down first
+            # would widen them and carry the ambient foam line off the water.
+            _bow_wave(out)
     if not shadow:
         _erase_shadow(out, cast)
     return out
@@ -1066,6 +1076,15 @@ CAST = (*SHADOW, 255)
 EMPTY = (0, 0, 0, 0)
 # How far the wake runs on past the stern, in cell columns.
 WAKE_TRAIL = 6
+
+# The bow wave: how far aft along the displacement patch's leading rim the
+# crest runs (in water-plane voxels, 2 cell columns each) and how deep into
+# the patch it breaks (in px). Eight and eight put white water over the
+# leading third of the longest patch and stop well short of amidships on all
+# four — a white run that reaches the middle of a hull stops reading as a wave
+# and starts reading as a scratch across the shadow. See `_bow_wave`.
+BOW_REACH = 8
+BOW_CREST = 8
 
 
 def _wake(img: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
@@ -1116,6 +1135,73 @@ def _wake(img: Image.Image, sprite: Image.Image, x0: int, y0: int) -> None:
         y = stern_y - (k + 1) // 2
         fleck(stern_x + k, y)
         fleck(stern_x + k, y + 1)
+
+
+def _bow_wave(img: Image.Image) -> None:
+    """White water at the bow: the foam a hull only makes under way.
+
+    A parked hull and a running one were the same picture plus a trim — 15
+    changed and 2 rung-1 silhouette texels between the lander's pose A and its
+    MOVE_A, 18/3 for the cruiser — so a ship on passage read as moored. What a
+    ship under way has and a ship at anchor does not is white water, and this
+    is where the sheet puts it.
+
+    It is drawn on the LEADING EDGE OF THE DISPLACEMENT PATCH, not against the
+    hull: `_shadow_ellipse` lays that patch on `compose_cell`'s `ground` and
+    the hull is composed over it, so its leading rim is both the water the
+    stem is pushing and a shape that cannot heave when the hull bobs. Reading
+    it off the composed cell also means the crest never covers freeboard —
+    only CAST is repainted, so wherever the hull overhangs its own
+    displacement the foam simply is not there.
+
+    The crest is white-on-near-black rather than white-on-sea, which is the
+    strongest contrast on the cell and the reason a wave two texels tall
+    survives the board's 4:1 sample at zoom rung 1 (see `tests/measure_motion`).
+    It costs almost nothing to draw for the same reason: repainting shadow
+    adds no pixel, and the four hulls' move poses sit within 9 px of
+    `MoveFrames.MAX_MASS_DRIFT` already. Only the one-pixel LIP outside the
+    rim is new water — the wave breaking clear of the patch — and that px is
+    what the drift budget affords.
+
+    The wave is the same on both move frames on purpose. Ticking it with the
+    beat was tried and is unbuildable here: at `BOW_REACH` 8 the crest already
+    covers every row of every hull's patch — the widest is nine rows tall — so
+    carrying it two voxels further aft on the off-beat repainted nothing at
+    all. The beat stays where the four hulls already carry it, in the trim and
+    the guns; the water just runs.
+    """
+    px = img.load()
+    w, h = img.size
+
+    def fleck(x: int, y: int) -> None:
+        if 0 <= x < w and 0 <= y < h and px[x, y] in (EMPTY, CAST):
+            px[x, y] = (*FOAM, 255)
+
+    lead = {}
+    for yy in range(h):
+        run = [xx for xx in range(w) if px[xx, yy] == CAST]
+        # A row with less patch in it than the crest is deep is the ellipse's
+        # own top or bottom cap, a couple of pixels wide amidships: breaking
+        # foam there is a fleck floating over the middle of the ship, not a
+        # wave, so those rows are left to the ambient waterline foam.
+        if len(run) > BOW_CREST:
+            lead[yy] = min(run)
+    if not lead:
+        return
+    # The leading tip: models face +y, which the projection puts at screen
+    # lower-LEFT, so the bow end of the patch is its smallest column.
+    tip = min(lead.values())
+    for yy, lo in lead.items():
+        if lo > tip + 2 * BOW_REACH:
+            continue
+        # One pixel of the wave breaking clear of the patch, and one only:
+        # this is the crest's whole cost in new water, and a second column of
+        # it puts the battleship over `MoveFrames.MAX_MASS_DRIFT`.
+        fleck(lo - 1, yy)
+        for k in range(BOW_CREST):
+            if px[lo + k, yy] != CAST:
+                break
+            fleck(lo + k, yy)
 
 
 def _waterline_foam(img: Image.Image, ground: int) -> None:
