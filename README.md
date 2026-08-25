@@ -210,6 +210,76 @@ two poses at both rungs plus one GIF per unit at the manifest's cadence, all
 composited over the terrain the unit stands on; it takes its output directory
 on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
+Both instruments take `--clip {ambient,move}` (default `ambient`) and read the
+clip's frames from `units.CLIP_POSES` — `preview_motion.py` also takes its
+sheet tuple and its cadence (`*_MS`) from `spritegen.anim` — so a clip that
+gains a frame is measured and drawn without either file being edited.
+`measure_motion.py` adds a `MOVES?` column on the move clip — a "no" row is a
+unit rendering its ambient counterpart, and says nothing about a stride.
+`preview_motion.py` draws the move clip FLIPPED as well by default, each unit's
+frames beside their mirror, because that mirror is the only place a
+screen-handed silhouette would show; `--no-flip` turns it off and `--flip`
+forces it on for any clip.
+
+### A move clip is a gait, not a translation
+
+The texel rule above is the same one, unchanged: one board texel is 4 atlas px,
+a `dz` of two voxels or a `(dx -1, dy +1)` forward diagonal. What changes is the
+floor. `MoveFrames.MIN_SILHOUETTE_TEXELS` is **6** at rung 1, double the idle's
+3, for every unit of every livery — an idle shifts one named assembly and three
+texels is the quietest of those anyone can see, where a gait is the whole
+running gear and a board that cannot see six texels of it move is watching a
+unit slide. `MAX_SHIMMER` (5.0) and `MAX_MASS_DRIFT` (0.08) carry over from
+`AmbientFrames` unchanged, the drift measured against pose A for both move
+frames so a stride may not grow the unit either.
+
+**The sheet may never translate the hull.** The game's `animate_path` tweens the
+sprite one cell per 0.06 s x `anim_scale`; that tween IS the travel. A frame
+that also travelled would double it and then snap back on the loop, so what a
+move frame owns is the running gear and the chassis's reaction to it, and the
+placement pins all four poses to pose A's crop.
+
+All 18 units author the clip (`units.MOVES`), by family:
+
+- **Tracked** (`tank`, `md_tank`, `anti_air`, `artillery`, `apc`) — the tread's
+  link stripe walks a half period (`_track`'s eight-voxel stripe, so the step is
+  one whole texel along the run) under a hull jolted one texel of ride height on
+  the off-beat (`_roll`). The MBT pitches its NOSE that texel instead: rolled
+  whole, its rung-1 silhouette matched `md_tank`'s frame A better than its own
+  (0.799 against 0.761) and the unit stopped reading as itself. Weapons stay at
+  pose A's travel-lock throughout — a vehicle on the move does not lay its gun,
+  recoil its howitzer or track a target.
+- **Wheeled** (`recon`, `rockets`, `missiles`) — the same `_roll`, and nothing
+  on the wheels: a hub dot is one voxel, half a texel, so no rotation of it
+  survives the sample (`_tire`). `recon` is the exception again for the same
+  identity reason the MBT is — lifting all of a low car reads as the apc — so it
+  pitches the nose a texel and lays its whip antenna one diagonal step back over
+  the tail.
+- **Foot** (`infantry`, `mech`) — a HELD forward `(dx -1, dy +1)` lean (an
+  alternating one would be a man rocking on the spot at 160 ms), a hip line that
+  alternates a texel of rise, and the legs taking it in turns to be at toe-off.
+  The rifleman's pair swaps through the hip centre (`_stride`); the trooper's
+  stand side by side with nothing to swap, so his gait alternates a lift
+  (`_mech_legs`). Toe-off alone measured 6 texels on the rifleman and 5 on the
+  mech — the bob is what carries both clear.
+- **Air** (`fighter`, `bomber`, `b_copter`, `t_copter`) — a held nose-down
+  attitude, one texel of `dz` on the forward fuselage about a wing root or a
+  rotor mast that stays, which is what says heading on a sheet that may not
+  translate. The frame-to-frame change is the `atlas.BOB_PX` bob, and on the two
+  helicopters the rotor blades a notch further round, both of which tick with the
+  FRAME rather than the clip (`beat(pose)`).
+- **Sea** (`battleship`, `cruiser`, `lander`) — a held bow-up TRIM, the forward
+  hull a texel up over a waterline course that never moves (the foam is placed
+  against the composed cell's lowest spans), plus one working assembly on the
+  off-beat: the aft battery trained, the mast head running up the lattice, the
+  bow visor's centre lip cracked. `sub` takes no trim — decks awash is the whole
+  identity and a raised bow is a boat that has surfaced — and runs its masts
+  instead, search periscope held up, dive planes rigged down, attack scope up on
+  the off-beat.
+
+`docs/move_clip.md` is the consumer contract: sheet names, region maths, the
+flip policy, when the clip starts and stops, and the game-side task.
+
 ## Setup
 
 ```sh
@@ -247,6 +317,8 @@ python3 -m venv .venv
 | `units_atlas.png` | 1152x480 RGBA — 64x96 cells, drop-in `assets/tiles/units_atlas.png` |
 | `units_atlas_b.png` | ambient animation frame B: every unit's second key pose (`units.Pose.B`) — treads walked, suspensions settled, rotors turned a notch on their own blades, air and sea bobbed one board texel (`atlas.BOB_PX`) over a shadow, a wake and a foam line that stay on the surface. Every pose is placed by the model's screen origin, never by its own crop, so a beat moves the unit and not the cell |
 | `units_atlas_figures.png`, `units_atlas_figures_b.png` | the same two ambient frames with the tile's cast shadow subtracted, for the cut-ins (see below) |
+| `units_atlas_move.png` | 1152x480 RGBA — the move clip's frame A (`units.Pose.MOVE_A`): the same 18 columns by 5 rows of 64x96 cells as the ambient sheet, the same army under way instead of parked. One facing only — the models face +y, which this projection puts at screen lower-LEFT, so these are the left-facing sheets and the consumer mirrors them about the cell centre for a rightward move (`clips.move.facing`/`flip_x_for`). Nothing in a move frame encodes screen-handedness |
+| `units_atlas_move_b.png` | the move clip's frame B (`units.Pose.MOVE_B`), one stride later — gait only, never travel (see below). All four poses pin to pose A's crop, so swapping the clip never moves the cell, and a unit outside `units.MOVES` renders its ambient counterpart instead (MOVE_A -> A, MOVE_B -> B), which keeps the pair valid whatever is authored |
 | `terrain_atlas.png` | 896x320 RGBA — drop-in `assets/tiles/terrain_atlas.png`; property columns carry alpha |
 | `units/<id>_<team>.png` | 90 cells, the inputs `tools/paste_unit_sprites.gd` reads |
 | `iso_buildings/<id>_<team>.png` | 25 property-building cells for `assets/sprites/iso_buildings` |
@@ -264,9 +336,9 @@ python3 -m venv .venv
 game to read instead of retype: the cell's size, its ground line and its
 overflow, the clips (which sheets, in what order, at what cadence — the
 army's ambient beat on the board, the same beat on the cut-ins' shadowless
-`ambient_figures` pair because they are the same motion, and the sea's own),
-the units atlas's column and row order, and how many phase variants each
-terrain family ships. Every field is derived from the live tables in `spritegen/` —
+`ambient_figures` pair because they are the same motion, the sea's own, and
+the `move` clip's), the units atlas's column and row order, and how many
+phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
 phase tables — and `ground_px` is **measured** off a rendered cell (a composed
 cell minus the shadowless one is the cast shadow alone; an ellipse is widest on
@@ -274,6 +346,23 @@ the row it is centred on) rather than restated, so the manifest cannot become
 one more place the number drifts. It is written deterministically like
 everything else here: sorted keys, two-space indent, trailing newline. See
 `spritegen/anim.py`.
+
+`clips.move` is the one clip with keys of its own, and they are additive:
+`version` stays **1**, because their ABSENCE is the reading a version-1
+consumer already makes. `facing` (`"left"`) is the screen direction the art is
+drawn facing and `flip_x_for` (`["right"]`) is the direction the consumer
+mirrors it for; a clip with no `facing` — `ambient`, `ambient_figures`, `sea` —
+must never be mirrored. `fallback` (`"ambient"`) names the clip to play when
+the move sheets are not in the install, so a checkout from before these sheets
+existed degrades to the idle instead of drawing nothing. The cadence is
+`anim.MOVE_MS` = **160 ms**, and it is chosen against the game's tween rather
+than against the art: the board moves a unit one cell in 0.06 s x `anim_scale`
+— 0.18 s per cell at the normal tier, 0.12 s at quick — so 160 ms is about one
+stride per cell crossed. It is also deliberately neither a divisor nor a
+multiple of 500 (`AMBIENT_MS`) or 900 (`SEA_MS`), so a walking unit, a parked
+one and the water never turn over on the same tick and the board never blinks
+at once. `docs/move_clip.md` is the full contract the game implements against —
+region maths, flip policy, clip lifetime, and what the generator owes it.
 
 The figure sheets exist because a figure standing on a drawn ground
 already has a shadow. The tile shadow grounds the cell against the board's

@@ -18,6 +18,12 @@ just a third place to keep it in step. The cadences (`AMBIENT_MS`, `SEA_MS`,
 only ever a game constant; the manifest is now their source, and the comment
 over each carries the reasoning.
 
+The schema grows by ADDING, never by rewriting: `move` is the one clip carrying
+`facing`, `flip_x_for` and `fallback`, and `VERSION` stays 1 because the absence
+of those keys is the reading a version-1 consumer already makes — never mirror,
+no fallback. `docs/move_clip.md` is the contract the game implements against;
+the README's outputs table names the sheets.
+
 The JSON is deterministic like the rest of the pipeline: sorted keys, two-space
 indent, trailing newline, so two runs are byte-identical.
 """
