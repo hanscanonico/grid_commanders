@@ -204,9 +204,13 @@ class MoveFallback(unittest.TestCase):
             builder = UNITS[uid][0]
             for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
                 with self.subTest(unit=uid, pose=move.name):
-                    self.assertEqual(
-                        self._disc(builder(move)), self._disc(builder(ambient))
-                    )
+                    disc = self._disc(builder(move))
+                    # Named, so a `_disc` that stopped finding the blades
+                    # cannot answer this test with two empty sets: four arms
+                    # of five voxels on `b_copter`, two discs of them on the
+                    # tandem, in every pose.
+                    self.assertEqual(len(disc), 20 if uid == "b_copter" else 32)
+                    self.assertEqual(disc, self._disc(builder(ambient)))
 
     # Both copters paint every main disc at one height (`units._rotor(m, ...,
     # 9, ...)`), and a disc is the one rotor that sweeps HORIZONTALLY: each

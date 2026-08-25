@@ -1590,13 +1590,21 @@ def b_copter(pose: Pose = Pose.A) -> Model:
         # the boom draws one leaning line instead of a stepped one. The nose
         # alone was 17 changed / 6 silhouette rung-1 texels against pose A,
         # the smallest parked-vs-moving delta in the fleet; the rake is 30 and
-        # 19. No course needs repainting at either break: the fuselage is
-        # three voxels deep, so each shifted section still shares a face with
-        # the one it left.
+        # 19.
+        #
+        # The break behind the canopy needs no repainting — the fuselage is
+        # three voxels deep there, so the dropped section still shares a face
+        # with the one it left. The two breaks along the BOOM do: aft of y7
+        # the boom is one voxel of hull, so a section lifted a voxel above the
+        # one ahead of it meets it edge-on, and the projection opens a pinhole
+        # at the joint. A voxel of hull in each inner corner closes both and
+        # keeps the boom one solid piece.
         _shift(m, (3, 5, 12, 18, 2, 6), dz=-2)
         _shift(m, (3, 5, 5, 9, 2, 6), dz=2)
         _shift(m, (3, 5, 3, 4, 2, 6), dz=3)
         _shift(m, (3, 5, 0, 2, 2, 7), dz=4)
+        m.set(4, 4, 6, "hull")
+        m.set(4, 2, 7, "hull")
     return m
 
 
