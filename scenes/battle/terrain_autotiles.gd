@@ -61,7 +61,7 @@ const SHEET_PATHS: Dictionary[int, String] = {
 const CONNECTION_VARIANTS := 16
 const BRIDGE_VARIANTS := 2
 const SEA_PHASES := 3
-const PLAINS_PHASES := 5
+const PLAINS_PHASES := 8
 const MOUNTAIN_PHASES := 3
 
 ## Which families are keyed by where the cell is rather than by what surrounds

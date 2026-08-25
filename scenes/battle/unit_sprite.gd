@@ -36,12 +36,13 @@ const ART_OFFSET := Vector2(0, -float(SPRITE_OVERFLOW) / 2.0)
 ## bottom edge — the two cut-ins do, and an armour cell, whose shadow is the
 ## widest, floated furthest above it. test_figure_sheet.gd measures it off the
 ## shipped sheets, the subtraction between them being the shadow itself.
-const CELL_GROUND_PX := 9
+## Since the generator's one-sun pass the shadow sits SHADOW_OFFSET (2px) below
+## the feet row, so this is 9 - 2.
+const CELL_GROUND_PX := 7
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Ambient animation frame B: the same army one beat later — rotors swept,
 ## air and sea units riding a pixel higher while their shadows stay put.
-## Land cells are byte-identical between the sheets, so only what should
-## move ever moves.
+## Land cells carry an idle key pose in frame B, so every column animates.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
 ## The same army with the tile's cast shadow subtracted, for a surface that
 ## draws the art at 1:1 over ground and a shadow of its own — see
@@ -187,13 +188,12 @@ static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTextu
 	return atlas
 
 
-## Which figures the two sheets differ in at all: air and sea, whose rotors are
-## swept and whose hulls ride a pixel higher in frame B. Every land column is
-## byte-identical between the sheets — measured, and pinned against the shipped
-## art by tests/unit/test_ambient_frames.gd — so a land sprite is left out of the
-## beat entirely rather than repainted with the picture it already shows.
-static func animates(type: UnitType) -> bool:
-	return type.domain != UnitType.LAND
+## Every column differs between the sheets: air and sea ride a pixel higher
+## with rotors swept, and land figures carry an idle key pose in frame B
+## (generator 7c69860). Pinned against the shipped art by
+## tests/unit/test_ambient_frames.gd.
+static func animates(_type: UnitType) -> bool:
+	return true
 
 
 ## The shared ambient beat. Wall-clock, not accumulated time: every sprite

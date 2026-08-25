@@ -1,0 +1,111 @@
+{
+  "cell": {
+    "ground_px": 7,
+    "h": 96,
+    "overflow": 32,
+    "w": 64
+  },
+  "clips": {
+    "ambient": {
+      "mode": "loop",
+      "ms_per_frame": 500,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "units_atlas.png",
+        "units_atlas_b.png"
+      ]
+    },
+    "ambient_figures": {
+      "mode": "loop",
+      "ms_per_frame": 500,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "units_atlas_figures.png",
+        "units_atlas_figures_b.png"
+      ]
+    },
+    "move": {
+      "facing": "left",
+      "fallback": "ambient",
+      "flip_x_for": [
+        "right"
+      ],
+      "mode": "loop",
+      "ms_per_frame": 160,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "units_atlas_move.png",
+        "units_atlas_move_b.png"
+      ]
+    },
+    "sea": {
+      "mode": "loop",
+      "ms_per_frame": 900,
+      "order": [
+        0,
+        1
+      ],
+      "sheets": [
+        "autotiles/sea.png",
+        "autotiles/sea_b.png"
+      ]
+    }
+  },
+  "columns": {
+    "anti_air": 5,
+    "apc": 8,
+    "artillery": 6,
+    "b_copter": 11,
+    "battleship": 14,
+    "bomber": 10,
+    "cruiser": 15,
+    "fighter": 9,
+    "infantry": 0,
+    "lander": 17,
+    "md_tank": 4,
+    "mech": 1,
+    "missiles": 13,
+    "recon": 2,
+    "rockets": 7,
+    "sub": 16,
+    "t_copter": 12,
+    "tank": 3
+  },
+  "rows": [
+    {
+      "key": "neutral",
+      "team": "neutral"
+    },
+    {
+      "key": "meridian",
+      "team": "red"
+    },
+    {
+      "key": "aurora",
+      "team": "blue"
+    },
+    {
+      "key": "iron",
+      "team": "iron"
+    },
+    {
+      "key": "verdant",
+      "team": "verdant"
+    }
+  ],
+  "terrain_phases": {
+    "mountain": 3,
+    "plains": 8,
+    "sea": 3
+  },
+  "version": 1
+}
