@@ -3046,6 +3046,43 @@ class MoveFrames(unittest.TestCase):
                         cell.transpose(Image.Transpose.FLIP_LEFT_RIGHT).tobytes(),
                     )
 
+    def test_the_rocket_trooper_steps_under_a_launcher_that_holds_still(self):
+        """The mech's beat stops at the belt (`units.mech`, `_mech_legs`).
+
+        A step needs a landmark that does NOT move: lift and translate the
+        whole figure a board texel and every landmark travels at once, which
+        at 160 ms reads as a hop in place rather than as a stride. So the
+        trooper's torso, backpack, helmet, pauldrons and the launcher with
+        its amber warhead tip are placed identically on both move frames,
+        knee plates included, and only the boots and shins scissor.
+
+        Pinned twice, because the two say different things. In the model,
+        every voxel from the knee plate up (`z >= 3`) is the same material
+        in the same place on both frames, while the legs under it are not.
+        In the composed cell — where the ramps, the softening and the
+        sampler have had their say — no pixel above the figure's own midline
+        differs, the launcher and its tip being up there, while the half
+        under it does.
+        """
+        a, b = (build_model("mech", pose) for pose in MOVE_POSES)
+        self.assertTrue(a.vox)
+        self.assertNotEqual(a.vox, b.vox)
+        # z 3 is the knee plate, the lowest thing the beat may not touch;
+        # the amber warhead tip rides at the top of the same span, z 16.
+        self.assertEqual(
+            {v: m for v, m in a.vox.items() if v[2] >= 3},
+            {v: m for v, m in b.vox.items() if v[2] >= 3},
+        )
+        for fac in FACTIONS:
+            cells = [_pose_cell("mech", fac.key, pose) for pose in MOVE_POSES]
+            rows = [y for _, y in self._body(cells[0])]
+            waist = (min(rows) + max(rows) + 1) // 2
+            upper = [c.crop((0, 0, c.width, waist)).tobytes() for c in cells]
+            lower = [c.crop((0, waist, c.width, c.height)).tobytes() for c in cells]
+            with self.subTest(faction=fac.key):
+                self.assertEqual(upper[0], upper[1])
+                self.assertNotEqual(lower[0], lower[1])
+
     def _mass(self, cell: Image.Image) -> int:
         px = cell.convert("RGBA").load()
         w, h = cell.size
