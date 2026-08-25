@@ -549,9 +549,12 @@ plan is stated in full below and has no copy there.
   rightward step mirrors them** — `UnitSprite.facing_for(delta, was)` is that policy, static and
   pure the way `PathArrow.segments` is, and **a purely vertical leg holds the previous facing**;
   facing is set in `setup()` and by `face_step` at each corner and **never in `refresh()`**, so a
-  unit that walked right stays facing right through every later repaint. The cast shadow is centred
-  on the move pair by the generator, so mirroring leaves it where it was and the game does nothing
-  about it. **An unauthored unit needs no fallback code**: the generator bakes each unauthored
+  unit that walked right stays facing right through every later repaint. The generator draws the
+  move pair's land and air cells over a **cell-centred** cast shadow, so mirroring leaves that
+  shadow where it was and the game does nothing about it; the ambient pair's is not centred, so the
+  facing outliving the clip costs a parked strider about a board pixel of shadow displacement —
+  measured, and the accepted price of a facing that survives a repaint.
+  **An unauthored unit needs no fallback code**: the generator bakes each unauthored
   column's ambient cell into both move sheets, so the clip is valid for the whole roster and nothing
   here asks which families are authored — `tests/unit/test_move_frames.gd` pins that pairing (both
   move frames equal to their ambient counterparts, or both different), the shared grid, the cadence,

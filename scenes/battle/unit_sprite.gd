@@ -50,8 +50,13 @@ const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
 ## has authored no gait for carries its ambient cell in both move sheets, so
 ## nothing here ever asks which units are authored — the clip is valid for the
 ## whole roster from the day it ships. The art faces screen-left and a rightward
-## step mirrors it; the cast shadow is centred on these two sheets so the mirror
-## leaves it where it was. tests/unit/test_move_frames.gd pins all of that.
+## step mirrors it: the generator draws this pair's land and air cells over a
+## cell-centred cast shadow, so the mirror leaves the shadow where it was. The
+## facing outlives the clip, so a unit that walked right parks mirrored over the
+## *ambient* pair, whose shadow is not centred — about a board pixel of
+## displacement, the price of a facing that survives every later repaint.
+## tests/unit/test_move_frames.gd pins the grid, the pairing, the cadence, the two
+## stills and the flip policy.
 const UNITS_ATLAS_MOVE_PATH := "res://assets/tiles/units_atlas_move.png"
 const UNITS_ATLAS_MOVE_B_PATH := "res://assets/tiles/units_atlas_move_b.png"
 ## The same army with the tile's cast shadow subtracted, for a surface that
@@ -161,9 +166,11 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 ## team int — the two coincided before factions, when team N drew in row N, and
 ## this is the one line where that stopped being true. Static so menus can show
 ## the same artwork the board does without instancing a sprite; callers that draw it
-## outside the world grid size it themselves.
-static func texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
-	return _region_of(load(UNITS_ATLAS_B_PATH if frame == 1 else UNITS_ATLAS_PATH), type, row)
+## outside the world grid size it themselves. Always the resting frame: a slot
+## outside the board shows the army parked, and `_sheet_path` stays the one place
+## a clip and a frame pick a sheet.
+static func texture_for(type: UnitType, row: int) -> AtlasTexture:
+	return _region_of(load(UNITS_ATLAS_PATH), type, row)
 
 
 ## The same art cut down to its footprint square — the tile the unit stands on,
