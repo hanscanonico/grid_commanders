@@ -231,8 +231,11 @@ plan is stated in full below and has no copy there.
   seventeen combat cut-in frames and all four capture ones re-baselined and every board and menu
   frame was untouched.
   **Where that shadow was centred is the cell's ground line, and it is not the cell's bottom edge**
-  — `UnitSprite.CELL_GROUND_PX`, 9 px up, the same on every land and sea column, with air's cast
-  displaced lower by height. The rows below it are the shadow's own spread, so a cut-in drawing the
+  — `UnitSprite.CELL_GROUND_PX`, **7** px up (9 until the animation install; the generator's one sun
+  drops the shadow its 2 px `SHADOW_OFFSET` below the feet row rather than centring it on them), the
+  same on every land and sea column, with air's cast displaced lower by height. The figure sheet is
+  a **pair** now, frame B beside frame A, though only frame A is read — see the install below. The
+  rows below it are the shadow's own spread, so a cut-in drawing the
   shadowless sheet over a contact ellipse of *its* own has to centre that ellipse on the ground line;
   both did it on the box's bottom edge, which put the ellipse below the tracks it was under and left
   armour — whose shadow is the widest, so whose gap is the largest — reading as a separate blob on
@@ -437,23 +440,20 @@ plan is stated in full below and has no copy there.
   alternates the atlas its `AtlasTexture` cuts from every `AMBIENT_MS` and the region, the scrim,
   the tint, the carrier hiding and the fog answer are untouched — every one of them is the sprite's
   or the node's, so frame B inherits them by construction rather than by a second code path.
-  Three decisions. **`UnitSprite.animates` is the one answer to who moves, and it was measured**:
-  only the air and sea columns differ between the sheets (rotors swept, hulls a pixel higher over a
-  shadow that stays put), so `domain != LAND` is the gate and a land sprite never enters
-  `_process` at all — `tests/unit/test_ambient_frames.gd` pins that gate against the shipped art
-  cell by cell, comparing *drawn* pixels rather than bytes, because the atlases import with
-  `fix_alpha_border` and a copter that moved leaves its neighbour's transparent margin holding
-  different and equally invisible RGB. **The beat is a wall clock, not an accumulator** —
+  Three decisions. **The beat is a wall clock, not an accumulator** —
   `Time.get_ticks_msec()`, so every sprite agrees on the frame with no conductor — and one cadence
   serves both motions because the sheets encode one. **Instant is a still board and a capture is
-  pinned**: `ambient_frame` answers frame A under the Instant tier, the same explicit branch the
-  tier is everywhere else, and `Battle` also sets `UnitSprite.ambient_frozen` for a capture,
+  pinned**: the clock answers frame A under the Instant tier, the same explicit branch the
+  tier is everywhere else, and `Battle` also freezes it for a capture,
   because an explicit `--speed=` outranks the pinned tier and a capture of a tier must not become
-  a capture of a beat. All 85 smoke frames are byte-identical across this slice, which is the pin
-  working rather than a re-baseline avoided. Frame B scored through the legibility ruler
-  (`make legibility-check LEGIBILITY="--units=assets/tiles/units_atlas_b.png"`, which needed no
-  change to the harness) reads 16.5% / 7.5% against the committed sheet's 15.8% / 6.6% — the beat
-  costs the board no legibility class, and `docs/sprite_legibility.md` stays a reading of frame A.
+  a capture of a beat. **`UnitSprite.animates` is deleted and every sprite processes** (the
+  animation install, below): only the air and sea columns used to differ between the sheets, so
+  `domain != LAND` was the gate; every column now carries an idle key pose, and a predicate with
+  one answer is a dead branch. `tests/unit/test_ambient_frames.gd` pins *that* against the shipped
+  art cell by cell, comparing *drawn* pixels rather than bytes, because the atlases import with
+  `fix_alpha_border` and a copter that moved leaves its neighbour's transparent margin holding
+  different and equally invisible RGB. This slice's own "all 85 smoke frames byte-identical" and
+  its frame-B legibility reading (16.5% / 7.5%) are both superseded by the install below.
   **The milestone's fourth slice is the on-map muzzle flash** (PR #325): the cut-in had drawn one
   since BA1 (`CutsceneFx._draw_muzzle`), but the board's own attack path gave the shooter nothing —
   a shot sound, then the defender's flash. `scenes/battle/muzzle_flash.gd` (`MuzzleFlash`) is a
@@ -495,6 +495,27 @@ plan is stated in full below and has no copy there.
   was re-run for both ambient frames against a same-day control and `docs/sprite_legibility.md`
   carries the re-read: nine cells, all hue-carried, and the tank came out *better*. The ruler reads
   the cell's bottom square for the same reason the icons do.
+  **The milestone's sixth slice is the animation install, the board's new ambient baseline**
+  (generator `e16d261`, adopted 2026-08-25; this clause is its record). Every sheet on the board was
+  regenerated and four new ones arrived: `units_atlas_figures_b.png`, `units_atlas_move.png`,
+  `units_atlas_move_b.png` and `autotiles/sea_b.png` **ship installed and read by nothing** — the
+  move clip and the sea's beat are their own slices and the cut-in's idle is deliberately deferred,
+  a cut-in being a pure function of `CutscenePlayback`'s clock rather than of a wall clock. Three
+  decisions. **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet
+  reads** — the cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples
+  of one another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable
+  without a scene; the sea has no business asking a unit sprite what time it is. **`animates` is
+  gone** (above). **The constants stay hardcoded and `assets/tiles/anim.json` is *pinned*, never
+  read at runtime**: the generator's manifest states the cell, the clips, the columns, the rows and
+  the phase counts, and `tests/unit/test_anim_manifest.gd` is the one place it is consumed, so the
+  contract and the game's constants cannot drift without putting a JSON parse in the draw path.
+  `PLAINS_PHASES` is 8 with it. **80 of the 85 smoke frames moved** and the five that did not are
+  exactly the menu screens that draw neither board art nor a thumbnail (`menu_campaign_hub`,
+  `..._debrief`, `..._interlude`, `menu_commander_select`, `menu_replays`).
+  **The legibility ruler was re-run and it reads a REGRESSION**: 86.7% of clear cells failing
+  against a same-day control of 16.0% on the previous art, the failure entirely at board resolution
+  (94.8% board against 21.6% cut-in) and 71.1% of it hue-carried. `docs/sprite_legibility.md`
+  carries the re-read; nothing was tuned in response, and answering it is the generator's.
   (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
@@ -760,7 +781,8 @@ plan is stated in full below and has no copy there.
   one statement of which families are keyed by position and how many phases each holds**, so
   `variant`, `sheet_cells` and `atlas_coords` cannot disagree about which is which. Three families
   are keyed by position today — open water (generator `1216fd5`, adopted 2026-08-18), plains
-  (generator `4ba6a83`) and mountain (generator `5efec88`, both adopted 2026-08-20) — because what
+  (`4ba6a83` at five phases, **eight since the animation install's `e16d261`**, the shipped maps
+  being about 56% plains) and mountain (generator `5efec88`, both adopted 2026-08-20) — because what
   a field of one tile repeats at is the tile, so the glints, the tufts or the peaks line up however
   they are spread inside it. The generator emits the
   phases and the game places them, `TerrainAutotiles.phase(cell, count)` hashing the cell so the

@@ -323,9 +323,9 @@ func _ready() -> void:
 		# decide whether a card sits over the board in every other scenario's
 		# frame. Every capture but the strip's own hides it (COM-12).
 		Settings.pin_hints(not _scenario_driver.wants_mission_strip())
-		# And the ambient beat: rotors and swells alternate on a wall-clock
-		# frame, so an unpinned capture would hash differently by shutter time.
-		UnitSprite.ambient_frozen = true
+		# And the board's beat: every sheet alternates on a wall-clock frame, so
+		# an unpinned capture would hash differently by shutter time.
+		BoardBeat.frozen = true
 	animator.start_cursor_pulse()
 	await BattleCampaign.fire_due(self)  # the opening board: the one boundary with no command
 	start_turn()  # day 1 gets the same banner/cursor/event as every turn

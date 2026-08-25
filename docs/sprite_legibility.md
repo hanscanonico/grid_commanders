@@ -62,6 +62,30 @@ at 13.6%** of the 59 probe cells it wins, against `mountain/1`'s 0.0% of 312 —
 sea's phase 2. One failure moved from value-blind to hue-carried and nothing else did; no unit,
 faction, overlay or other terrain moved by a cell, and nothing was tuned in response.
 
+## Re-read 2026-08-25, after the animation install (generator `e16d261`) — A REGRESSION
+
+The animation install regenerates every sheet on the board, and the ruler reads it far worse than
+the art it replaces: **7,023 failing (86.7%) clear and 1,439 (79.9%) fogged**, against a same-day
+control on the previous art of **1,300 (16.0%) / 123 (6.8%)** — the same harness, the same 8,100 +
+1,800 cells, the ramp step unmoved at 0.1549 against 0.1543. This is a finding, not a tuning: no
+colour was moved in response, and the art is installed byte-identical to the generator.
+
+**The failure is at board resolution and only there.** The `board` view fails 94.8% of its cells
+where the `cutin` view — the same figures at 1:1 — fails 21.6% (control: 17.6% / 4.0%). The board
+draws the 64 px cell onto 16 px with nearest filtering, so a contour that is not several source
+pixels thick is three-quarters unsampled; round 10's per-edge band is what bought the 15.8% this
+page is a reading of, and the new cells do not read as carrying it. 71.1% of the clear failures
+still clear the hue bound, so the board is value-blind rather than illegible — the shapes are told
+apart by colour, which is exactly what the two-reading bar exists to count rather than pass.
+
+Frame B is the same reading: **7,073 (87.3%) / 1,459 (81.1%)**, board 96.2% against cut-in 16.1%
+(`make legibility-check LEGIBILITY="--units=assets/tiles/units_atlas_b.png"`). So the beat costs
+nothing on top of the install — both frames are the install's art.
+
+Everything below this line still describes the `0d87068` art. The next generator round supersedes
+this page wholesale; until one does, **read the headline as the previous art's and this section as
+what shipped over it**.
+
 ## What the generator changed
 
 The board draws a 64 px cell onto a 16 px grid with nearest filtering: it keeps one source pixel in
