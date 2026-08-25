@@ -3140,6 +3140,39 @@ class MoveFrames(unittest.TestCase):
                             shadow - flipped - self._flip(body), set(), "unmirrored"
                         )
 
+    def test_a_moving_land_unit_keeps_a_foot_on_the_ground(self):
+        """A land unit under way touches the ground in EVERY frame.
+
+        The shadow is drawn on pose A's ground row and never moves, so a
+        move frame that lifts its whole running gear opens the board's
+        smallest visible gap — one rung-1 texel of bare terrain between the
+        lowest body row and the shadow — and the unit reads as hovering, or,
+        if the two frames disagree about it, as bouncing at the clip's own
+        6 Hz. Asked at the board's 4:1 sample rather than in voxels because
+        that is where the gap is either visible or not: the lowest body row
+        of each move pose must be pose A's, in every livery. Air and sea are
+        exempt — they carry `atlas.BOB_PX` on the off-beat by design."""
+        for uid in self._movers():
+            if UNITS[uid][1] != "land":
+                continue
+            for fac in FACTIONS:
+                parked = self._lowest_body_row(uid, fac, Pose.A)
+                for pose in MOVE_POSES:
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        self.assertEqual(self._lowest_body_row(uid, fac, pose), parked)
+
+    @staticmethod
+    def _lowest_body_row(uid: str, fac: Faction, pose: Pose) -> int:
+        """The bottom rung-1 row the unit's own body paints, shadow off."""
+        w, h = RUNG_1_CELL
+        px = (
+            atlas.unit_cell(uid, fac, pose, shadow=False)
+            .resize(RUNG_1_CELL, Image.NEAREST)
+            .load()
+        )
+        rows = [y for y in range(h) for x in range(w) if px[x, y][3] > 128]
+        return max(rows)
+
     def test_a_moving_hull_leaves_its_foam_line_where_it_found_it(self):
         """The ambient clip's rule (`test_the_foam_line_stays_on_the_water`),
         asked of the move clip too, because a gait is where it is easy to
