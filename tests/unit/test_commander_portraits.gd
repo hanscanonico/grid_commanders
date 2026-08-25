@@ -172,3 +172,15 @@ func _mean_luminance(image: Image, patch: Rect2i) -> float:
 		for x: int in range(patch.position.x, patch.end.x):
 			total += image.get_pixel(x, y).get_luminance()
 	return total / float(patch.size.x * patch.size.y)
+
+
+## The collar column is data, and a name outside the vocabulary falls through to
+## the chevron silently — which is exactly the repeat the column exists to
+## break, so it is caught here rather than seen on the sheet.
+func test_every_collar_is_one_the_file_can_cut() -> void:
+	var collars: Array[StringName] = [
+		FaceSvg.COLLAR_V, FaceSvg.COLLAR_MANDARIN, FaceSvg.COLLAR_DOUBLE
+	]
+	for id: StringName in FaceSvg.FACES:
+		var row: Dictionary = FaceSvg.FACES[id]
+		assert_has(collars, row.get("collar", FaceSvg.COLLAR_DEFAULT), "%s: unknown collar" % id)
