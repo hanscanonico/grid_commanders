@@ -1023,8 +1023,13 @@ func _strap(id: StringName) -> String:
 			var across := _path("M69,95 L74,88 L93,104 L88,112 Z", _accent_dark, _line(INK_DETAIL))
 			return down + across + _circle(78, 101, 3.4, _gold, _line(INK_DETAIL))
 		&"hammer":
-			var bandolier := _path("M82,93 L93,100 L64,120 L56,111 Z", _accent_dark, _line(INK_DETAIL))
-			var loops := _stroke_path("M78,98 L72,107", INK_DETAIL) + _stroke_path("M69,105 L63,114", INK_DETAIL)
+			var bandolier := _path(
+				"M82,93 L93,100 L64,120 L56,111 Z", _accent_dark, _line(INK_DETAIL)
+			)
+			var loops := (
+				_stroke_path("M78,98 L72,107", INK_DETAIL)
+				+ _stroke_path("M69,105 L63,114", INK_DETAIL)
+			)
 			return bandolier + loops
 	var band := _path("M80,91 L92,97 L71,122 L59,116 Z", _accent_dark, _line(INK_DETAIL))
 	return band + _circle(75.5, 106.5, 3, _gold, _line(INK_DETAIL))
