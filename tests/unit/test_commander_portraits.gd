@@ -141,6 +141,20 @@ func test_every_general_names_a_nose_that_is_drawn() -> void:
 	assert_eq(counts.size(), noses.size(), "the sheet is not using all three noses")
 
 
+## The tick is the nose every bust wore before the column existed, so a row that
+## names none has to keep drawing it, on the skull's own x. Pinned by its path
+## because nothing in `make verify` bakes a portrait, and Vance is where it is
+## read: the one general on the sheet at width 1.0, where the skull applies
+## nothing and the glyph is the handoff's literal.
+func test_the_default_nose_is_the_one_every_bust_wore() -> void:
+	var row: Dictionary = FaceSvg.FACES[&"iona_vance"]
+	assert_eq(float(row["head"][0]), 1.0, "Vance is the unscaled skull this is read on")
+	assert_eq(row.get("nose", FaceSvg.NOSE_DEFAULT), FaceSvg.NOSE_TICK, "Vance wears the default")
+	var drawn := FaceSvg.new(CommanderVisuals.faction_themes()[0]).build(&"iona_vance")
+	var tick := "M55.0,60 L53.5,65 Q55.0,66.5 57.0,65.2"
+	assert_string_contains(drawn, tick, "the default nose is no longer the authored tick")
+
+
 ## The default is the one head the handoff authored, so a row that names none
 ## still draws the bust every general shared before this table grew a column —
 ## which is what the neutral silhouette has always been and must stay. The
