@@ -192,22 +192,42 @@ class MoveFallback(unittest.TestCase):
         `X if pose is Pose.A else Y` it would hand MOVE_A the off-beat blade,
         and the first authored copter stride would inherit the bug.
 
-        It is asked of the ROTOR voxels alone. When it was written the copters
-        had no move art and the whole model answered it; now that they hold a
-        nose-down attitude under way, the airframe legitimately differs from
-        its ambient key and only the disc — the part that ticks with the frame
-        rather than with the clip — has to match frame for frame."""
+        It is asked of the DISC alone. When it was written the copters had no
+        move art and the whole model answered it; now that they rake under
+        way, the airframe legitimately differs from its ambient key and only
+        the disc — the part that ticks with the frame rather than with the
+        clip — has to match frame for frame. `b_copter`'s tail rotor is rotor
+        material too, and it is bolted to a boom that comes up in the rake, so
+        reading every rotor voxel would take the boom's attitude for a blade
+        phase."""
         for uid in ("b_copter", "t_copter"):
             builder = UNITS[uid][0]
             for move, ambient in ((Pose.MOVE_A, Pose.A), (Pose.MOVE_B, Pose.B)):
                 with self.subTest(unit=uid, pose=move.name):
-                    self.assertEqual(
-                        self._rotor(builder(move)), self._rotor(builder(ambient))
-                    )
+                    disc = self._disc(builder(move))
+                    # Named, so a `_disc` that stopped finding the blades
+                    # cannot answer this test with two empty sets: four arms
+                    # of five voxels on `b_copter`, two discs of them on the
+                    # tandem, in every pose.
+                    self.assertEqual(len(disc), 20 if uid == "b_copter" else 32)
+                    self.assertEqual(disc, self._disc(builder(ambient)))
 
-    @staticmethod
-    def _rotor(model) -> set:
-        return {v for v, mat in model.vox.items() if mat == "rotor"}
+    # Both copters paint every main disc at one height (`units._rotor(m, ...,
+    # 9, ...)`), and a disc is the one rotor that sweeps HORIZONTALLY: each
+    # arm is a run of voxels side by side in that plane. A tail rotor stands
+    # on edge, so whatever of it crosses the plane crosses it alone.
+    DISC_Z = 9
+
+    @classmethod
+    def _disc(cls, model) -> set:
+        plane = {
+            v for v, mat in model.vox.items() if mat == "rotor" and v[2] == cls.DISC_Z
+        }
+        return {
+            (x, y, z)
+            for x, y, z in plane
+            if {(x - 1, y, z), (x + 1, y, z), (x, y - 1, z), (x, y + 1, z)} & plane
+        }
 
     def test_a_unit_that_opts_into_the_move_clip_authors_a_move_pose(self):
         """`MOVES` is what takes a unit out of the fallback above, so a uid
@@ -243,11 +263,20 @@ class MoveFallback(unittest.TestCase):
     def test_the_aircraft_under_way_hold_a_texel_of_nose_down(self):
         """What the air family's move clip says, in the only terms a sheet
         that may never translate the hull has: attitude. The forward-most
-        course of the airframe sits one whole board texel lower under way
-        (`dz = -2`, the texel rule in `units._shift`) while the aftmost two
-        courses — nozzles, tail turret, tail rotor — are untouched, so the
-        screen line ROTATES about the wings or the mast rather than the whole
-        aircraft sinking."""
+        course of the airframe sits at least one whole board texel lower
+        under way (`dz = -2`, the texel rule in `units._shift`) while the
+        aftmost two courses — nozzles, tail turret, tail rotor, ramp — never
+        go DOWN with it, so the screen line ROTATES about the wings or the
+        mast rather than the whole aircraft sinking.
+
+        The fixed wings hold their tails exactly; the two copters lift theirs,
+        because a rotorcraft with no wing carries the whole of that reading in
+        the fuselage line and a nose-down on its own measured 17 and 14
+        changed rung-1 texels against the parked pose — the smallest
+        parked-vs-moving deltas in the fleet. Raking the airframe about the
+        mast, tail up as the nose goes down, is the same rotation read from
+        both ends: 30 and 29. Which is why this reads the aft courses'
+        FLOOR and not their voxels."""
         for uid in MOVES:
             if UNITS[uid][1] != "air":
                 continue
@@ -256,15 +285,15 @@ class MoveFallback(unittest.TestCase):
             ys = [y for _, y, _ in idle]
             with self.subTest(unit=uid, reading="nose"):
                 nose = max(ys)
-                self.assertEqual(
+                self.assertLessEqual(
                     min(z for _, y, z in moved if y == nose),
                     min(z for _, y, z in idle if y == nose) - 2,
                 )
             with self.subTest(unit=uid, reading="tail"):
                 tail = min(ys) + 1
-                self.assertEqual(
-                    {v: m for v, m in idle.items() if v[1] <= tail},
-                    {v: m for v, m in moved.items() if v[1] <= tail},
+                self.assertGreaterEqual(
+                    min(z for _, y, z in moved if y <= tail),
+                    min(z for _, y, z in idle if y <= tail),
                 )
 
     def test_the_clip_table_names_the_clips_the_manifest_publishes(self):

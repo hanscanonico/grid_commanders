@@ -2989,6 +2989,40 @@ class MoveFrames(unittest.TestCase):
                 self.assertGreaterEqual(changed, self.SUB_MIN_PARKED_CHANGED)
                 self.assertGreaterEqual(silhouette, self.SUB_MIN_PARKED_SILHOUETTE)
 
+    # The copters against their own parked poses, same reading, both frames.
+    # A rotorcraft's gait is attitude and nothing else — the disc has to be
+    # the ambient disc voxel for voxel (`MoveFallback`) and the hull may not
+    # translate in-sheet — so it is the one family whose move clip can come
+    # out as the idle while every MOVE_A-vs-MOVE_B gate above passes on the
+    # blades alone. It did: a nose-down of one texel measured 17 changed / 6
+    # silhouette on b_copter and 14 / 9 on t_copter, the smallest
+    # parked-vs-moving deltas in the fleet, and a transiting copter read as a
+    # hovering one. Raking the airframe about the mast — nose down, tail up —
+    # measures 28 changed / 15 silhouette in the thinnest livery of either
+    # copter on either frame (2026-08-25). The floors below are the texel
+    # rule, not that measurement: twelve silhouette texels is the move gate's
+    # six asked of a machine that carries its whole gait in one line.
+    COPTER_MIN_PARKED_CHANGED = 22
+    COPTER_MIN_PARKED_SILHOUETTE = 12
+
+    def test_the_flying_copters_are_not_the_hovering_copters(self):
+        """A helicopter under way must differ from one holding station by
+        something the board can count. Asked of both frames, because a
+        rotorcraft has no rest pose to pass through: MOVE_A is cruise as much
+        as MOVE_B is, and a copter that authored the attitude on one frame
+        only would spend half the clip parked."""
+        for uid in ("b_copter", "t_copter"):
+            if uid not in MOVES:
+                self.skipTest(f"{uid} has no authored move poses")
+            for fac in FACTIONS:
+                for parked, moving in ((Pose.A, Pose.MOVE_A), (Pose.B, Pose.MOVE_B)):
+                    with self.subTest(unit=uid, faction=fac.key, pose=moving.name):
+                        changed, silhouette = rung1_texels(uid, fac, (parked, moving))
+                        self.assertGreaterEqual(changed, self.COPTER_MIN_PARKED_CHANGED)
+                        self.assertGreaterEqual(
+                            silhouette, self.COPTER_MIN_PARKED_SILHOUETTE
+                        )
+
     def test_no_moving_unit_shimmers_more_than_it_walks(self):
         """The other half of the ratio, as in `AmbientFrames`: interior
         texels that only change tone, per texel of silhouette that actually
