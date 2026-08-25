@@ -16,12 +16,11 @@ const TILES_DIR := "res://assets/tiles/"
 ## Installed by the generator and read by nothing yet: the cut-in's idle pair and
 ## the move clip's two sheets are wired in by their own slices. Named here so the
 ## manifest still answers for them and the next reader does not take them for
-## dead weight.
+## dead weight. The sea's frame B has left this list — SeaBeat draws it.
 const UNREAD_SHEETS := [
 	"res://assets/tiles/units_atlas_figures_b.png",
 	"res://assets/tiles/units_atlas_move.png",
 	"res://assets/tiles/units_atlas_move_b.png",
-	"res://assets/tiles/autotiles/sea_b.png",
 ]
 
 var manifest: Dictionary
@@ -62,9 +61,12 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 		_clip_sheets("ambient_figures")[0], UnitSprite.UNITS_ATLAS_FIGURES_PATH, "the figure sheet"
 	)
 	assert_eq(
-		_clip_sheets("sea")[0],
-		TerrainAutotiles.SHEET_PATHS[TerrainAutotiles.Family.SEA],
-		"the sea sheet"
+		_clip_sheets("sea"),
+		[
+			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA),
+			TerrainAutotiles.sheet_path(TerrainAutotiles.Family.SEA, 1)
+		],
+		"the sea pair"
 	)
 
 
