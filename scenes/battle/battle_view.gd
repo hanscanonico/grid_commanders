@@ -166,6 +166,13 @@ func setup() -> void:
 	ground_layer.tile_set = terrain_layer.tile_set
 	ground_layer.scale = terrain_layer.scale
 	fog_layer.tile_set = _build_fog_tile_set()
+	# The one animated family. Hung on the layer that owns the tile set, so it
+	# lives and dies with the board and the two layers sharing that set swell
+	# with it.
+	SeaBeat.attach(
+		terrain_layer,
+		terrain_layer.tile_set.get_source(TerrainAutotiles.Family.SEA) as TileSetAtlasSource
+	)
 	_paint_map()
 	_paint_backdrop()
 	_spawn_unit_sprites()

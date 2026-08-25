@@ -516,6 +516,24 @@ plan is stated in full below and has no copy there.
   against a same-day control of 16.0% on the previous art, the failure entirely at board resolution
   (94.8% board against 21.6% cut-in) and 71.1% of it hue-carried. `docs/sprite_legibility.md`
   carries the re-read; nothing was tuned in response, and answering it is the generator's.
+  **The milestone's seventh slice is the sea's swell**, `autotiles/sea_b.png` on `BoardBeat`'s
+  `SEA_MS`, and it costs one pointer: frame B is **the same three phases in the same order** with
+  only the glints moved, so the source id, the cut, `sheet_cells`, `atlas_coords`, `variant` and
+  `PHASE_COUNTS` are all untouched and the beat re-points the SEA `TileSetAtlasSource`'s texture
+  and nothing else. Three decisions. **`TerrainAutotiles.sheet_path(family, frame)` is the
+  filename authority, as it is for every other sheet** — frame 0 is what every surface has always
+  read, so the miniature and the legibility ruler keep reading the frame-A sheet `sheet_path`'s
+  default is pinned equal to, and are **deliberately** unedited: a time frame is another axis, and a thumbnail or a report taken on a
+  different one answers a different question, which is the reason `legibility_art.gd` already
+  states about the units' frame B. **`scenes/battle/sea_beat.gd` (`SeaBeat`) is where the tick
+  lands** — a `Node` in the `CapturePips` idiom owning nothing but the source it was handed,
+  because `BattleView` is `RefCounted` and has no frame to be told about; `BattleView`, the one
+  owner of the `TileSet` and its sources, is what hands the source over, so nothing here looks one
+  up, and it opens on whatever frame the rest of the board is on rather than snapping a tick later.
+  **The backdrop and the property ground swell by construction**, sharing `terrain_layer.tile_set`,
+  so the out-of-bounds ring beats with the water it continues with no second code path. Instant and
+  a pinned capture are already frame A through `BoardBeat.frame`, so **all 85 smoke frames are
+  byte-identical** — measured in one tree against the same sweep with the slice reverted in place.
   (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can

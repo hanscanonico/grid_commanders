@@ -56,6 +56,13 @@ const SHEET_PATHS: Dictionary[int, String] = {
 	Family.MOUNTAIN: "res://assets/tiles/autotiles/mountain.png",
 }
 
+## The open water a beat later: the same three phases in the same order, with
+## only the glints moved, so nothing about the cut or the indexing changes and
+## `sheet_path` is the only place the second file is named. The sea is the one
+## animated family today, which is why one constant answers rather than a second
+## dictionary.
+const SEA_B_PATH := "res://assets/tiles/autotiles/sea_b.png"
+
 ## How many cells each family's sheet holds: a connection set's 16 masks, the
 ## bridge sheet's two decks, the phases of the phase-keyed sheets.
 const CONNECTION_VARIANTS := 16
@@ -168,6 +175,18 @@ static func phase(cell: Vector2i, count: int) -> int:
 	var hash_bits := (cell.x * 0x9E3779B1) ^ (cell.y * 0x85EBCA77)
 	hash_bits = (hash_bits ^ (hash_bits >> 13)) * 0xC2B2AE3D
 	return posmod(hash_bits >> 17, count)
+
+
+## Which file family `p_family` draws frame `p_frame` of. Frame 0 is the
+## `SHEET_PATHS` sheet every surface has always read, so the miniature and the
+## legibility ruler are unaffected by the beat: a time frame is another axis, and
+## a thumbnail or a report taken on a different one answers a different question.
+## Only the sea has a second frame; every other family answers frame 0 whatever
+## it is asked, so a caller never has to know which families animate.
+static func sheet_path(p_family: int, p_frame: int = 0) -> String:
+	if p_family == Family.SEA and p_frame == 1:
+		return SEA_B_PATH
+	return SHEET_PATHS[p_family]
 
 
 ## Every cell family `p_family`'s sheet holds, which is what BattleView
