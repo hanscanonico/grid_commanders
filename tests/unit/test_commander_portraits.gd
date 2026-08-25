@@ -177,15 +177,15 @@ func test_the_default_skull_is_the_handoff_head() -> void:
 ## two sheets. So every bust is measured — the lit shoulder against the shaded
 ## one, which must come out the same way round on all of them. Read off the
 ## uniform rather than the face because a full beard covers the shaded cheek,
-## while every general wears the same shoulders. The window is the outer edge of
-## each shoulder rather than the whole of it: a shouldered prop's strap crosses
-## the chest, and on the five mirrored busts it crosses the lit side, so a wider
-## window measures the strap instead of the uniform under it. Every bust clears
-## the floor by 0.035 here, against the 0.077 the middle of the shoulder gave
-## before there was a strap to dodge.
-const LIT_PATCH := Rect2i(20, 232, 16, 24)
-const SHADED_PATCH := Rect2i(184, 232, 16, 24)
-## Well under the 0.035 the shipped shade measures at its worst, and well over
+## while every general wears the same shoulders. The two patches are exact
+## mirror images about the bust's centre line, so what the difference reports is
+## the shade and never the shoulder's own shape — and they sit in off that
+## outer edge, because the silhouette owns it and is now the heaviest ink on the
+## sheet. This pair is the widest margin the shoulders offer: every bust clears
+## the floor by 0.045 here, a prop over either patch included.
+const LIT_PATCH := Rect2i(22, 242, 12, 12)
+const SHADED_PATCH := Rect2i(186, 242, 12, 12)
+## Well under the 0.045 the shipped shade measures at its worst, and well over
 ## the 0.0 a sheet with no shade on it at all would give.
 const SHADE_FLOOR := 0.01
 
@@ -300,3 +300,28 @@ func _strap_cast(document: String) -> String:
 		return ""
 	var start := strap + CAST_GROUP.length()
 	return document.substr(start, document.find("</g>", start) - start)
+
+
+## The design system's three weights, read off the drawing rather than the
+## source: an ad-hoc pen — the 1.2 buttons and the 1.6 beak that used to be
+## spelled inline — is invisible in a bake and reads as a detail mark carrying a
+## jaw's line. Only ink is held to the tiers; a coloured stroke drawn as a shape
+## (a pipe stem, a baton's shaft) and the backdrop's washes are not ink, and the
+## prop's cast copy is this same markup recoloured.
+func test_every_ink_stroke_is_one_of_the_three_weights() -> void:
+	var tiers := [FaceSvg.INK_SILHOUETTE, FaceSvg.INK_FEATURE, FaceSvg.INK_DETAIL]
+	var pen := RegEx.create_from_string('stroke="([^"]+)"[^/>]*?stroke-width="([^"]+)"')
+	var ink := FaceSvg.hex(UiTheme.HARD_BORDER)
+	var inked := 0
+	for theme in CommanderVisuals.faction_themes():
+		var drawings: Array[String] = [FaceSvg.new(theme).build_neutral()]
+		for id: StringName in FaceSvg.FACES:
+			drawings.append(FaceSvg.new(theme).build(id))
+		for svg: String in drawings:
+			for stroke: RegExMatch in pen.search_all(svg):
+				if stroke.get_string(1) != ink:
+					continue
+				inked += 1
+				var width := stroke.get_string(2).to_float()
+				assert_has(tiers, width, "an ink stroke is drawn at %s" % width)
+	assert_gt(inked, 2000, "the sheet stopped drawing in ink")

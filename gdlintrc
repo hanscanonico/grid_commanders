@@ -363,4 +363,7 @@ max-public-methods: 22
 # the per-prop straps and the reworked wedge backdrop. The drawer is 1238 now,
 # so it takes none of battle.gd's slack; battle.gd is pinned at its own length in
 # tools/check_scripts.sh and takes none of this either.
+#
+# The ink hierarchy (INK_SILHOUETTE / INK_FEATURE / INK_DETAIL, every stroke
+# routed through a tier) landed after the split and fits under this ceiling.
 max-file-lines: 1415

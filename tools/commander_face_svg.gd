@@ -123,6 +123,14 @@ const NOSE_TICK := &"tick"
 const NOSE_HOOK := &"hook"
 const NOSE_BROAD := &"broad"
 const NOSE_DEFAULT := NOSE_TICK
+## The design system's three ink weights. Every ink stroke names one of them:
+## the silhouette a bust is read by at chip size, the features inside it, and
+## the marks that only pay off at full size — so a scar can never come out as
+## heavy as a jaw. Backdrop washes and a coloured stroke drawn as a shape (a
+## pipe stem, a baton's shaft) are not ink and carry their own thickness.
+const INK_SILHOUETTE := 4.0
+const INK_FEATURE := 3.0
+const INK_DETAIL := 2.0
 
 const SKIN := {
 	&"light": "#f2c9a0",
@@ -210,8 +218,8 @@ func build_neutral() -> String:
 ## faction chevron goes.
 func _blank_shoulders() -> String:
 	var out := _path(SHOULDER_MASS, _slate, _line())
-	out += _stroke_path("M44,90 L55,93 L66,90", 2.4)
-	return out + _stroke_path("M55,93 L62,100 L55,107 L48,100 Z", 2.4)
+	out += _stroke_path("M44,90 L55,93 L66,90", INK_FEATURE)
+	return out + _stroke_path("M55,93 L62,100 L55,107 L48,100 Z", INK_FEATURE)
 
 
 ## One hard band down the crown, so a featureless head still has form rather
@@ -236,7 +244,7 @@ func _clip_def() -> String:
 ## than the bust or the two merge into one faction rectangle.
 func _window() -> String:
 	var field := (
-		'<rect x="%s" y="%s" width="%s" height="%s" fill="%s" stroke="%s" stroke-width="3"/>'
+		'<rect x="%s" y="%s" width="%s" height="%s" fill="%s" stroke="%s" stroke-width="%s"/>'
 		% [
 			WINDOW.position.x,
 			WINDOW.position.y,
@@ -244,6 +252,7 @@ func _window() -> String:
 			WINDOW.size.y,
 			_accent_dark,
 			_ink,
+			INK_FEATURE,
 		]
 	)
 	var wash := _rect(
@@ -269,12 +278,12 @@ func _pose(face: Dictionary) -> String:
 # --- stroke helpers ----------------------------------------------------------
 
 
-## The signature ink outline: 2.4 units, round joins. `width` overrides it for
-## the thinner line work (brows, the nose, a mouth).
-func _line(width := 2.4) -> String:
+## The signature ink outline, round-joined, at one of the three weights. The
+## default is the heaviest: the bust's own outline is most of what this draws.
+func _line(weight := INK_SILHOUETTE) -> String:
 	return (
 		' stroke="%s" stroke-width="%s" stroke-linejoin="round" stroke-linecap="round"'
-		% [_ink, width]
+		% [_ink, weight]
 	)
 
 
@@ -283,15 +292,15 @@ func _path(d: String, fill: String, extra := "") -> String:
 
 
 ## An outlined path with no fill — the shape of every brow, lash and crease.
-func _stroke_path(d: String, width: float, color := "") -> String:
-	var pen := _line(width) if color.is_empty() else _tint(color, width)
+func _stroke_path(d: String, weight: float, color := "") -> String:
+	var pen := _line(weight) if color.is_empty() else _tint(color, weight)
 	return _path(d, "none", pen)
 
 
 ## The lit top edge of the uniform: the design system's hard offset shadow read
 ## on a bust, and the line that keeps the shoulders off the field behind them.
 func _rim() -> String:
-	return ' stroke="%s" stroke-width="2" stroke-linecap="round" opacity="%s"' % [RIM, RIM_OPACITY]
+	return _tint(RIM, INK_DETAIL) + ' opacity="%s"' % RIM_OPACITY
 
 
 func _tint(color: String, width: float) -> String:
@@ -359,13 +368,14 @@ func _collar(kind: StringName) -> String:
 	match kind:
 		COLLAR_MANDARIN:
 			var band := "M40,100 Q40,87 48,85 L62,85 Q70,87 70,100 Q55,105 40,100 Z"
-			return _path(band, _accent_dark, _line()) + _stroke_path("M55,85 L55,103", 2)
+			var stand := _stroke_path("M55,85 L55,103", INK_DETAIL)
+			return _path(band, _accent_dark, _line(INK_FEATURE)) + stand
 		COLLAR_DOUBLE:
 			var facing := _path("M63,90 L73,90 L54,120 L43,120 Z", _accent_dark)
-			var pen := ' stroke="%s" stroke-width="1.2"' % _ink
+			var pen := _line(INK_DETAIL)
 			var buttons := _circle(61.5, 100, 2, _gold, pen) + _circle(55, 110, 2, _gold, pen)
-			return facing + _stroke_path("M40,90 L47,97 L63,90", 2.4) + buttons
-	var neckline := _stroke_path("M44,90 L55,101 L66,90", 2.4)
+			return facing + _stroke_path("M40,90 L47,97 L63,90", INK_FEATURE) + buttons
+	var neckline := _stroke_path("M44,90 L55,101 L66,90", INK_FEATURE)
 	return neckline + _path("M40,90 L55,104 L70,90 L70,94 L55,108 L40,94 Z", _accent_dark)
 
 
@@ -378,7 +388,7 @@ func _rank_pip(collar: StringName) -> String:
 		at = Vector2(55, 96.5)
 	elif collar == COLLAR_DOUBLE:
 		at = Vector2(34, 100)
-	return _circle(at.x, at.y, 2.2, _gold, ' stroke="%s" stroke-width="1.2"' % _ink)
+	return _circle(at.x, at.y, 2.2, _gold, _line(INK_DETAIL))
 
 
 ## The skull's own x, scaled about its centre: the one place a width is applied.
@@ -440,13 +450,12 @@ func _neck_d(width: float) -> String:
 ## lobe rather than at a fixed height: a stock ear on a 1.14 head is what makes
 ## a wide bust read as a narrow one stretched.
 func _ears(skin: String, width: float, earring: bool) -> String:
-	var pen := _line()
+	var pen := _line(INK_FEATURE)
 	var r := snappedf(5.0 * width, 0.01)
 	var out := _circle(_hx(31, width), 58, r, skin, pen) + _circle(_hx(79, width), 58, r, skin, pen)
 	if not earring:
 		return out
-	var pin := ' stroke="%s" stroke-width="1.2"' % _ink
-	return out + _circle(_hx(31, width), snappedf(58.5 + r, 0.01), 1.9, _gold, pin)
+	return out + _circle(_hx(31, width), snappedf(58.5 + r, 0.01), 1.9, _gold, _line(INK_DETAIL))
 
 
 ## The nose, one of three glyphs, drawn on the skull's own x — the tick is the
@@ -457,18 +466,18 @@ func _nose(kind: StringName, width: float) -> String:
 			"M%s,58 Q%s,63 %s,66.4 Q%s,67.6 %s,66"
 			% [_hx(55.6, width), _hx(58.2, width), _hx(56.4, width), _hx(55, width), _hx(53, width)]
 		)
-		return _stroke_path(hook, 1.8)
+		return _stroke_path(hook, INK_FEATURE)
 	if kind == NOSE_BROAD:
 		var broad := (
 			"M%s,60.5 L%s,65 Q%s,68 %s,65"
 			% [_hx(55, width), _hx(51.8, width), _hx(55, width), _hx(58.2, width)]
 		)
-		return _stroke_path(broad, 2.2)
+		return _stroke_path(broad, INK_FEATURE)
 	var tick := (
 		"M%s,60 L%s,65 Q%s,66.5 %s,65.2"
 		% [_hx(55, width), _hx(53.5, width), _hx(55, width), _hx(57, width)]
 	)
-	return _stroke_path(tick, 1.8)
+	return _stroke_path(tick, INK_FEATURE)
 
 
 func _head(skin: String, face: Dictionary = {}) -> String:
@@ -596,14 +605,13 @@ func _eyewear(acc: StringName, xs: Array[float], width: float) -> String:
 	var left := xs[0] - 45.0
 	var right := xs[1] - 65.0
 	if acc == &"eyepatch":
-		var strap := _stroke_path("M%s,50 L%s,45" % [_hx(28, width), _hx(82, width)], 2.6)
+		var strap := _stroke_path("M%s,50 L%s,45" % [_hx(28, width), _hx(82, width)], INK_FEATURE)
 		return strap + _rect(38 + left, 52, 15, 12, _ink, ' rx="3"')
 	if acc == &"glasses":
-		var pen := ' fill="none" stroke="%s" stroke-width="2"' % _ink
-		var ink := ' stroke="%s" stroke-width="2"' % _ink
+		var pen := ' fill="none"' + _line(INK_FEATURE)
 		var lenses := '<rect x="%s" y="52" width="15" height="11" rx="3"%s/>' % [38 + left, pen]
 		lenses += '<rect x="%s" y="52" width="15" height="11" rx="3"%s/>' % [57 + right, pen]
-		return lenses + _path("M%s,56 H%s" % [53 + left, 57 + right], "none", ink)
+		return lenses + _stroke_path("M%s,56 H%s" % [53 + left, 57 + right], INK_FEATURE)
 	return ""
 
 
@@ -613,7 +621,7 @@ func _details(face: Dictionary, xs: Array[float], geom: Array) -> String:
 	if face["acc"] == &"scar":
 		var cuts: Array[String] = ["M67,49 L71,60", "M65,52 L68,53", "M67,56 L70,57"]
 		for d: String in cuts:
-			out += _stroke_path(d, 1.6, "#b56b5a")
+			out += _stroke_path(d, INK_DETAIL, "#b56b5a")
 	if face.get("freckles", false):
 		var dots := ""
 		for x: float in xs:
@@ -621,10 +629,10 @@ func _details(face: Dictionary, xs: Array[float], geom: Array) -> String:
 			dots += _circle(x + 3, 66, 1, "#b56b5a")
 		out += '<g opacity="0.5">%s</g>' % dots
 	if face["acc"] == &"headset":
-		var rig := _stroke_path("M30,50 Q30,32 55,32 Q80,32 80,50", 3)
-		rig += _rect(26, 50, 8, 12, _accent_dark, _line() + ' rx="3"')
-		rig += _stroke_path("M28,60 Q24,68 40,70", 2.4)
-		rig += _circle(41, 70.5, 2.4, _accent, ' stroke="%s" stroke-width="1.4"' % _ink)
+		var rig := _stroke_path("M30,50 Q30,32 55,32 Q80,32 80,50", INK_FEATURE)
+		rig += _rect(26, 50, 8, 12, _accent_dark, _line(INK_FEATURE) + ' rx="3"')
+		rig += _stroke_path("M28,60 Q24,68 40,70", INK_DETAIL)
+		rig += _circle(41, 70.5, 2.4, _accent, _line(INK_DETAIL))
 		out += _crowned(rig, geom)
 	return out
 
@@ -729,23 +737,23 @@ func _eyes(kind: StringName, xs: Array[float], scale := EYE_DEFAULT) -> String:
 		for x: float in xs:
 			var half := 4.5 * scale
 			out += _stroke_path(
-				"M%s,57 Q%s,%s %s,57" % [x - half, x, 57 + 3.5 * scale, x + half], 2.4
+				"M%s,57 Q%s,%s %s,57" % [x - half, x, 57 + 3.5 * scale, x + half], INK_FEATURE
 			)
 		return out
 	var rx := 4.1 * scale
 	var ry := _eye_ry(kind) * scale
 	var pupil := (1.7 if kind == &"wide" else 2.1) * scale
 	for x: float in xs:
-		out += _ellipse(x, 57, rx, ry, "#ffffff", _line())
+		out += _ellipse(x, 57, rx, ry, "#ffffff", _line(INK_FEATURE))
 		out += _circle(x, 57 + 0.4 * scale, pupil, _ink)
 		out += _circle(x + 1.1 * scale, 57 - 1.0 * scale, 0.9 * scale, "#ffffff")
 		if scale >= EYE_SINGLE_CATCHLIGHT:
 			out += _circle(x - 1.5 * scale, 57 + 1.4 * scale, 0.55 * scale, "#ffffff")
 		if kind == &"lidded":
-			out += _stroke_path(_lid(x, rx, ry), 2.4)
+			out += _stroke_path(_lid(x, rx, ry), INK_FEATURE)
 	if kind == &"f":
 		for x: float in xs:
-			out += _stroke_path("M%s,53.6 Q%s,51.2 %s,53.6" % [x - 5, x, x + 5], 2.8)
+			out += _stroke_path("M%s,53.6 Q%s,51.2 %s,53.6" % [x - 5, x, x + 5], INK_FEATURE)
 	return out
 
 
@@ -787,40 +795,41 @@ func _brow(kind: StringName, x: float, side: int) -> String:
 		var rise := (48.5 if side == 0 else 52.0) + drop
 		var fall := (52.0 if side == 0 else 48.5) + drop
 		var d := "M%s,%s L%s,%s" % [x - 5.5, rise, x + 5.5, fall]
-		return _stroke_path(d, 4 if heavy else 3)
+		return _stroke_path(d, INK_SILHOUETTE if heavy else INK_FEATURE)
 	if kind == &"raised":
-		return _stroke_path("M%s,48 Q%s,45.5 %s,48" % [x - 5, x, x + 5], 3)
-	return _stroke_path("M%s,49.5 Q%s,47.5 %s,49.5" % [x - 5, x, x + 5], 3)
+		return _stroke_path("M%s,48 Q%s,45.5 %s,48" % [x - 5, x, x + 5], INK_FEATURE)
+	return _stroke_path("M%s,49.5 Q%s,47.5 %s,49.5" % [x - 5, x, x + 5], INK_FEATURE)
 
 
 func _mouth(kind: StringName) -> String:
 	match kind:
 		&"smile":
-			return _stroke_path("M47.5,70 Q55,78 62.5,70", 2.6)
+			return _stroke_path("M47.5,70 Q55,78 62.5,70", INK_FEATURE)
 		&"smirk":
-			return _stroke_path("M48.5,72 Q56,74 62.5,69", 2.6)
+			return _stroke_path("M48.5,72 Q56,74 62.5,69", INK_FEATURE)
 		&"stern":
-			return _stroke_path("M49,72 Q55,70.5 61,72.5", 2.6)
+			return _stroke_path("M49,72 Q55,70.5 61,72.5", INK_FEATURE)
 		&"snarl":
-			var jaw := _path("M47,68.5 Q55,66.5 63,68.5 L61,76 Q55,79 49,76 Z", _ink, _line())
-			return jaw + _stroke_path("M48.5,70 H61.5", 2.4, "#ffffff")
+			var bite := "M47,68.5 Q55,66.5 63,68.5 L61,76 Q55,79 49,76 Z"
+			var jaw := _path(bite, _ink, _line(INK_FEATURE))
+			return jaw + _stroke_path("M48.5,70 H61.5", INK_DETAIL, "#ffffff")
 		&"grin":
-			var open := _path("M47,68.5 Q55,80 63,68.5 Z", _ink, _line())
-			return open + _stroke_path("M49.5,70.5 H60.5", 2.2, "#ffffff")
+			var open := _path("M47,68.5 Q55,80 63,68.5 Z", _ink, _line(INK_FEATURE))
+			return open + _stroke_path("M49.5,70.5 H60.5", INK_DETAIL, "#ffffff")
 		&"clench":
-			var set_line := _stroke_path("M48.5,71 H61.5", 2.8)
-			var left_corner := _stroke_path("M48.8,70.8 L47.6,73.4", 2)
-			return set_line + left_corner + _stroke_path("M61.2,70.8 L62.4,73.4", 2)
+			var set_line := _stroke_path("M48.5,71 H61.5", INK_FEATURE)
+			var left_corner := _stroke_path("M48.8,70.8 L47.6,73.4", INK_DETAIL)
+			return set_line + left_corner + _stroke_path("M61.2,70.8 L62.4,73.4", INK_DETAIL)
 		&"laugh":
-			var wide := _path("M46,67.5 Q55,82.5 64,67.5 Z", _ink, _line())
-			var teeth := _stroke_path("M48.5,69.5 H61.5", 2.2, "#ffffff")
+			var wide := _path("M46,67.5 Q55,82.5 64,67.5 Z", _ink, _line(INK_FEATURE))
+			var teeth := _stroke_path("M48.5,69.5 H61.5", INK_DETAIL, "#ffffff")
 			return '<g transform="rotate(4 55 71)">%s</g>' % (wide + teeth)
 		&"wry":
-			return _stroke_path("M47,71 Q55,72 63,67.5", 2.6)
+			return _stroke_path("M47,71 Q55,72 63,67.5", INK_FEATURE)
 		&"open":
-			var shout := _ellipse(55, 74, 4.6, 4.8, _ink, _line())
-			return shout + _stroke_path("M52.6,76.4 Q55,79 57.4,76.4", 2, "#ffffff")
-	return _stroke_path("M49,71.5 H61", 2.6)
+			var shout := _ellipse(55, 74, 4.6, 4.8, _ink, _line(INK_FEATURE))
+			return shout + _stroke_path("M52.6,76.4 Q55,79 57.4,76.4", INK_DETAIL, "#ffffff")
+	return _stroke_path("M49,71.5 H61", INK_FEATURE)
 
 
 # --- backdrops ---------------------------------------------------------------
@@ -919,7 +928,7 @@ func _bars() -> String:
 	var bars := _rect(17, 46, 13, 80, "#ffffff")
 	bars += _rect(48, 30, 13, 96, "#ffffff")
 	bars += _rect(79, 58, 13, 68, "#ffffff")
-	var edge := _rect(48, 30, 13, 96, "none", _line(2.0))
+	var edge := _rect(48, 30, 13, 96, "none", _line(INK_DETAIL))
 	return '<g opacity="0.22">%s</g><g opacity="0.4">%s</g>' % [bars, edge]
 
 
@@ -974,12 +983,12 @@ func _prop_cast(markup: String) -> String:
 func _prop_back(id: StringName) -> String:
 	match id:
 		&"sabre":
-			var blade := _path("M82,96 L95,32 L101,35 L88,98 Z", "#cfd6dd", _line())
-			return blade + _stroke_path("M79,91 L93,96", 4)
+			var blade := _path("M82,96 L95,32 L101,35 L88,98 Z", "#cfd6dd", _line(INK_FEATURE))
+			return blade + _stroke_path("M79,91 L93,96", INK_SILHOUETTE)
 		&"wrench":
-			var shaft := _path("M80,96 L89,55 L97,57 L88,98 Z", "#aab3bb", _line())
+			var shaft := _path("M80,96 L89,55 L97,57 L88,98 Z", "#aab3bb", _line(INK_FEATURE))
 			var jaw := "M86,57 Q82,44 93,41 Q104,39 103,50 L95,49 L94,55 Z"
-			return shaft + _path(jaw, "#aab3bb", _line())
+			return shaft + _path(jaw, "#aab3bb", _line(INK_FEATURE))
 		&"anchor":
 			return _anchor()
 		&"axe":
@@ -1005,27 +1014,32 @@ func _prop_front(id: StringName, skin: String) -> String:
 func _strap(id: StringName) -> String:
 	match id:
 		&"wrench":
-			var loop := _path("M72,88 L90,94 L84,108 L66,102 Z", _accent_dark, _line(2))
-			return loop + _rect(72, 94, 8, 7, _slate, _line(1.4) + ' rx="1.5"')
+			var loop := _path("M72,88 L90,94 L84,108 L66,102 Z", _accent_dark, _line(INK_DETAIL))
+			return loop + _rect(72, 94, 8, 7, _slate, _line(INK_DETAIL) + ' rx="1.5"')
 		&"anchor":
 			return _cord(82, 90, 63, 122) + _cord(88, 94, 69, 126)
 		&"axe":
-			var down := _path("M80,90 L89,95 L73,122 L64,117 Z", _accent_dark, _line(2))
-			var across := _path("M69,95 L74,88 L93,104 L88,112 Z", _accent_dark, _line(2))
-			return down + across + _circle(78, 101, 3.4, _gold, _line(1.4))
+			var down := _path("M80,90 L89,95 L73,122 L64,117 Z", _accent_dark, _line(INK_DETAIL))
+			var across := _path("M69,95 L74,88 L93,104 L88,112 Z", _accent_dark, _line(INK_DETAIL))
+			return down + across + _circle(78, 101, 3.4, _gold, _line(INK_DETAIL))
 		&"hammer":
-			var bandolier := _path("M82,93 L93,100 L64,120 L56,111 Z", _accent_dark, _line(2))
-			var loops := _stroke_path("M78,98 L72,107", 2) + _stroke_path("M69,105 L63,114", 2)
+			var bandolier := _path(
+				"M82,93 L93,100 L64,120 L56,111 Z", _accent_dark, _line(INK_DETAIL)
+			)
+			var loops := (
+				_stroke_path("M78,98 L72,107", INK_DETAIL)
+				+ _stroke_path("M69,105 L63,114", INK_DETAIL)
+			)
 			return bandolier + loops
-	var band := _path("M80,91 L92,97 L71,122 L59,116 Z", _accent_dark, _line(2))
-	return band + _circle(75.5, 106.5, 3, _gold, _line(1.4))
+	var band := _path("M80,91 L92,97 L71,122 L59,116 Z", _accent_dark, _line(INK_DETAIL))
+	return band + _circle(75.5, 106.5, 3, _gold, _line(INK_DETAIL))
 
 
 ## One rope of a lanyard: the ink line drawn under a lighter core, so a cord
 ## thin enough to read as rope still carries the sheet's outline.
 func _cord(x1: float, y1: float, x2: float, y2: float) -> String:
 	var d := "M%s,%s L%s,%s" % [x1, y1, x2, y2]
-	return _stroke_path(d, 5.4) + _stroke_path(d, 2.6, _accent_dark)
+	return _stroke_path(d, INK_SILHOUETTE) + _stroke_path(d, 2.6, _accent_dark)
 
 
 ## The front props that stand on their own — smoked, worn or set down.
@@ -1075,7 +1089,7 @@ func _prop_held(id: StringName, skin: String) -> String:
 
 
 func _hand(x: float, y: float, skin: String) -> String:
-	return _circle(x, y, 5.5, skin, _line())
+	return _circle(x, y, 5.5, skin, _line(INK_FEATURE))
 
 
 ## Rising smoke — the shared puff trail behind a pipe and a cigar. Each puff is
@@ -1089,13 +1103,13 @@ func _smoke(puffs: Array[Vector3], opacity: String) -> String:
 
 func _pipe() -> String:
 	var stem := _stroke_path("M61,72 Q72,75 74,83", 3.5, "#5a3c28")
-	var bowl := _circle(74.5, 86, 4.2, "#5a3c28", _line())
+	var bowl := _circle(74.5, 86, 4.2, "#5a3c28", _line(INK_FEATURE))
 	var puffs: Array[Vector3] = [Vector3(82, 70, 3), Vector3(87, 59, 4), Vector3(92, 46, 5)]
 	return stem + bowl + _smoke(puffs, "0.45")
 
 
 func _cigar() -> String:
-	var pen := ' stroke="%s" stroke-width="2" stroke-linejoin="round"' % _ink
+	var pen := _line(INK_FEATURE)
 	var roll := _rect(60, 70.5, 14, 4.8, "#7a4a2b", pen + ' rx="2" transform="rotate(20 60 71)"')
 	var ember := _circle(73.5, 76.8, 2, _ember)
 	var puffs: Array[Vector3] = [Vector3(79, 66, 2.6), Vector3(84, 56, 3.4)]
@@ -1103,92 +1117,91 @@ func _cigar() -> String:
 
 
 func _baton(skin: String) -> String:
-	var pen := ' stroke="%s" stroke-width="1.6" stroke-linejoin="round"' % _ink
+	var pen := _line(INK_DETAIL)
 	var stick := _path("M28,110 L84,92", "none", _tint("#5a3c28", 5))
 	var caps := _circle(28, 110, 3, _gold, pen) + _circle(84, 92, 3, _gold, pen)
 	return stick + caps + _hand(58, 101, skin)
 
 
 func _medal() -> String:
-	var pen := ' stroke="%s" stroke-width="1.8" stroke-linejoin="round"' % _ink
+	var pen := _line(INK_FEATURE)
 	var boards := _rect(10, 92, 15, 6, _gold, pen) + _rect(85, 92, 15, 6, _gold, pen)
 	var ribbon := _path("M35,96 L44,96 L42.5,105 L36.5,105 Z", _accent, pen)
 	return boards + ribbon + _circle(39.5, 109, 4.5, _gold, pen)
 
 
 func _card(skin: String) -> String:
-	var pen := ' stroke="%s" stroke-width="2.2" stroke-linejoin="round"' % _ink
-	var face := _rect(75, 63, 15, 21, "#ffffff", pen + ' rx="2"')
+	var face := _rect(75, 63, 15, 21, "#ffffff", _line(INK_FEATURE) + ' rx="2"')
 	var pip := _path("M82.5,69 L86,73.5 L82.5,78 L79,73.5 Z", _accent)
 	var held := '<g transform="rotate(-12 82 74)">%s%s</g>' % [face, pip]
 	return held + _hand(80, 87, skin)
 
 
 func _book(skin: String) -> String:
-	var pages := _path("M14,106 Q26,97 38,106 L38,119 Q26,110 14,119 Z", "#ffffff", _line())
-	return pages + _stroke_path("M26,101.5 L26,113", 2) + _hand(37, 112, skin)
+	var leaves := "M14,106 Q26,97 38,106 L38,119 Q26,110 14,119 Z"
+	var pages := _path(leaves, "#ffffff", _line(INK_FEATURE))
+	return pages + _stroke_path("M26,101.5 L26,113", INK_DETAIL) + _hand(37, 112, skin)
 
 
 func _drone() -> String:
-	var arc := _stroke_path("M74,25 Q80,21 86,25", 2, "#ffffff")
+	var arc := _stroke_path("M74,25 Q80,21 86,25", INK_DETAIL, "#ffffff")
 	var rotors := _rect(76, 27, 9, 2.5, _accent) + _rect(89, 27, 9, 2.5, _accent)
-	var body := _rect(80, 29.5, 14, 8, _slate, _line() + ' rx="2.5"')
+	var body := _rect(80, 29.5, 14, 8, _slate, _line(INK_FEATURE) + ' rx="2.5"')
 	return '<g opacity="0.4">%s</g>' % arc + rotors + body + _circle(87, 33.5, 1.8, _led)
 
 
 func _falcon() -> String:
-	var body := _path("M22,77 Q13,81 14,92 Q15,99 23,99 Q31,97 30,86 Z", "#8c5a30", _line())
-	var wing := _stroke_path("M17,83 Q12,90 18,96", 1.8)
-	var head := _circle(25, 73.5, 6, "#f2ead8", _line())
-	var pen := ' stroke="%s" stroke-width="1.6" stroke-linejoin="round"' % _ink
-	var beak := _path("M30.5,73 L35,75 L30.5,77.5 Z", _gold, pen)
+	var breast := "M22,77 Q13,81 14,92 Q15,99 23,99 Q31,97 30,86 Z"
+	var body := _path(breast, "#8c5a30", _line(INK_FEATURE))
+	var wing := _stroke_path("M17,83 Q12,90 18,96", INK_DETAIL)
+	var head := _circle(25, 73.5, 6, "#f2ead8", _line(INK_FEATURE))
+	var beak := _path("M30.5,73 L35,75 L30.5,77.5 Z", _gold, _line(INK_DETAIL))
 	return body + wing + head + beak + _circle(26, 72.5, 1.4, _ink)
 
 
 func _dagger(skin: String) -> String:
-	var blade := _path("M89,56 L93,80 L85,80 Z", "#cfd6dd", _line())
+	var blade := _path("M89,56 L93,80 L85,80 Z", "#cfd6dd", _line(INK_FEATURE))
 	var grip := _rect(87.3, 80, 3.4, 7, _ink)
-	var ring := _circle(89, 93.5, 3, "none", _line(2))
-	return blade + grip + _hand(89, 86, skin) + ring
+	return blade + grip + _hand(89, 86, skin) + _circle(89, 93.5, 3, "none", _line(INK_DETAIL))
 
 
 func _radio(skin: String) -> String:
-	var antenna := _stroke_path("M76,83 Q68,95 77,104 Q84,110 79,118", 2.2)
-	var body := _rect(71, 65, 11, 18, _slate, _line(2.2) + ' rx="3"')
-	var grille := _path("M73.5,69 H79.5 M73.5,72 H79.5", "none", _tint("#ffffff", 1.4))
+	var antenna := _stroke_path("M76,83 Q68,95 77,104 Q84,110 79,118", INK_DETAIL)
+	var body := _rect(71, 65, 11, 18, _slate, _line(INK_FEATURE) + ' rx="3"')
+	var grille := _path("M73.5,69 H79.5 M73.5,72 H79.5", "none", _tint("#ffffff", INK_DETAIL))
 	return antenna + body + '<g opacity="0.7">%s</g>' % grille + _hand(77, 85, skin)
 
 
 func _anchor() -> String:
 	var steel := "#aab3bb"
-	var shaft := _path("M84,98 L85,38 L91,38 L90,98 Z", steel, _line())
-	var stock := _rect(76, 48, 20, 5, steel, _line() + ' rx="2"')
-	var ring := _circle(87, 31, 6.5, "none", _line(4))
+	var shaft := _path("M84,98 L85,38 L91,38 L90,98 Z", steel, _line(INK_FEATURE))
+	var stock := _rect(76, 48, 20, 5, steel, _line(INK_FEATURE) + ' rx="2"')
+	var ring := _circle(87, 31, 6.5, "none", _line(INK_SILHOUETTE))
 	var flukes := "M77,77 Q78,97 87,101 Q96,97 97,77 L92,79 Q91,92 87,94 Q83,92 82,79 Z"
-	return shaft + stock + ring + _path(flukes, steel, _line())
+	return shaft + stock + ring + _path(flukes, steel, _line(INK_FEATURE))
 
 
 func _axe() -> String:
-	var haft := _path("M86,100 L89,28 L95,29 L92,101 Z", "#8c5a30", _line())
-	var bit := _path("M83,30 Q94,25 96,42 Q94,58 83,54 L88,48 Q89,42 88,36 Z", "#cfd6dd", _line())
-	return haft + bit
+	var haft := _path("M86,100 L89,28 L95,29 L92,101 Z", "#8c5a30", _line(INK_FEATURE))
+	var bit := "M83,30 Q94,25 96,42 Q94,58 83,54 L88,48 Q89,42 88,36 Z"
+	return haft + _path(bit, "#cfd6dd", _line(INK_FEATURE))
 
 
 func _hammer() -> String:
-	var haft := _path("M81,32 L89,32 L87,102 L79,102 Z", "#8c5a30", _line())
-	var head := _rect(74, 22, 22, 16, "#8f9aa3", _line())
+	var haft := _path("M81,32 L89,32 L87,102 L79,102 Z", "#8c5a30", _line(INK_FEATURE))
+	var head := _rect(74, 22, 22, 16, "#8f9aa3", _line(INK_FEATURE))
 	var cheek := _rect(90, 22, 6, 16, "#6d7880")
 	return '<g transform="rotate(-10 85 30)">%s</g>' % (haft + head + cheek)
 
 
 func _helm() -> String:
-	var dome := _path("M20,120 Q18,98 34,96 Q50,98 48,120 Z", "#8f9aa3", _line())
+	var dome := _path("M20,120 Q18,98 34,96 Q50,98 48,120 Z", "#8f9aa3", _line(INK_FEATURE))
 	var crest := _stroke_path("M20,100 Q34,92 48,100", 4.5, _accent)
-	return dome + crest + _stroke_path("M34,97 L34,120", 1.6)
+	return dome + crest + _stroke_path("M34,97 L34,120", INK_DETAIL)
 
 
 func _coins(skin: String) -> String:
-	var pen := ' stroke="%s" stroke-width="1.8" stroke-linejoin="round"' % _ink
+	var pen := _line(INK_FEATURE)
 	var tossed := _circle(89, 83, 5, _gold, pen) + _circle(98, 89, 5, _gold, pen)
 	var held := _circle(91, 95, 5, _gold, pen)
 	return _hand(82, 97, skin) + held + '<g opacity="0.85">%s</g>' % tossed
@@ -1196,43 +1209,42 @@ func _coins(skin: String) -> String:
 
 func _scales() -> String:
 	var steel := "#aab3bb"
-	var post := _rect(26, 94, 4, 26, steel, _line(1.8))
-	var beam := _rect(15, 92, 30, 3.5, steel, _line(1.8))
-	var cords := _stroke_path("M17,95 L17,104 M43,95 L43,104", 1.4)
-	var pans := _path("M11,104 Q17,112 23,104 Z", _gold, _line(1.8))
-	pans += _path("M37,104 Q43,112 49,104 Z", _gold, _line(1.8))
-	return post + beam + cords + pans + _circle(28, 91, 2.6, _gold, _line(1.6))
+	var post := _rect(26, 94, 4, 26, steel, _line(INK_FEATURE))
+	var beam := _rect(15, 92, 30, 3.5, steel, _line(INK_FEATURE))
+	var cords := _stroke_path("M17,95 L17,104 M43,95 L43,104", INK_DETAIL)
+	var pans := _path("M11,104 Q17,112 23,104 Z", _gold, _line(INK_DETAIL))
+	pans += _path("M37,104 Q43,112 49,104 Z", _gold, _line(INK_DETAIL))
+	return post + beam + cords + pans + _circle(28, 91, 2.6, _gold, _line(INK_DETAIL))
 
 
 func _whistle() -> String:
-	var mouthpiece := _path("M60,71 L70,69.5 L70,77 L60,75.5 Z", _gold, _line(1.8))
-	var body := _rect(69, 66.5, 13, 11, _gold, _line(2) + ' rx="3.5"')
-	var hole := _circle(76, 70, 1.8, _ink)
+	var mouthpiece := _path("M60,71 L70,69.5 L70,77 L60,75.5 Z", _gold, _line(INK_FEATURE))
+	var body := _rect(69, 66.5, 13, 11, _gold, _line(INK_FEATURE) + ' rx="3.5"')
 	var puffs: Array[Vector3] = [Vector3(88, 62, 3), Vector3(94, 52, 3.8)]
-	return mouthpiece + body + hole + _smoke(puffs, "0.42")
+	return mouthpiece + body + _circle(76, 70, 1.8, _ink) + _smoke(puffs, "0.42")
 
 
 ## A model aircraft banked on an upheld palm: the same silhouette the sky held,
 ## brought down onto a hand so it has a contact point.
 func _plane(skin: String) -> String:
-	var fuselage := _path("M74,80 Q84,75 94,81 Q84,87 74,85 Z", "#e4e9ee", _line(1.8))
-	var wings := _path("M81,80 L87,70 L91,71 L89,82 Z", _accent, _line(1.6))
-	wings += _path("M81,83 L87,93 L91,92 L89,81 Z", _accent, _line(1.6))
-	var tail := _path("M75,79 L70,74 L72,84 Z", _accent, _line(1.4))
+	var fuselage := _path("M74,80 Q84,75 94,81 Q84,87 74,85 Z", "#e4e9ee", _line(INK_FEATURE))
+	var wings := _path("M81,80 L87,70 L91,71 L89,82 Z", _accent, _line(INK_DETAIL))
+	wings += _path("M81,83 L87,93 L91,92 L89,81 Z", _accent, _line(INK_DETAIL))
+	var tail := _path("M75,79 L70,74 L72,84 Z", _accent, _line(INK_DETAIL))
 	var flown := fuselage + wings + tail + _circle(89, 81, 2, _slate)
 	return '<g transform="rotate(-16 84 81)">%s</g>' % flown + _hand(84, 94, skin)
 
 
 func _compass(skin: String) -> String:
-	var dial := _circle(28, 90, 12, "#e4e9ee", _line(2.2))
-	var rim := _circle(28, 90, 8, "none", _line(1.2))
-	var north := _path("M28,81 L31.5,90 L28,93 L24.5,90 Z", _accent, _line(1.4))
-	var south := _path("M28,99 L31.5,90 L24.5,90 Z", "#aab3bb", _line(1.2))
+	var dial := _circle(28, 90, 12, "#e4e9ee", _line(INK_FEATURE))
+	var rim := _circle(28, 90, 8, "none", _line(INK_DETAIL))
+	var north := _path("M28,81 L31.5,90 L28,93 L24.5,90 Z", _accent, _line(INK_DETAIL))
+	var south := _path("M28,99 L31.5,90 L24.5,90 Z", "#aab3bb", _line(INK_DETAIL))
 	return dial + rim + north + south + _circle(28, 90, 1.6, _ink) + _hand(39, 99, skin)
 
 
 func _ledger(skin: String) -> String:
-	var block := _rect(13, 93, 26, 20, "#f2ead8", _line(2.2) + ' rx="1.5"')
-	var clasp := _rect(34, 98, 6, 7, "#aab3bb", _line(1.6) + ' rx="1"')
-	var rules := _path("M19,99 H31 M19,103 H31 M19,107 H27", "none", _tint(_ink, 1.4))
+	var block := _rect(13, 93, 26, 20, "#f2ead8", _line(INK_FEATURE) + ' rx="1.5"')
+	var clasp := _rect(34, 98, 6, 7, "#aab3bb", _line(INK_DETAIL) + ' rx="1"')
+	var rules := _path("M19,99 H31 M19,103 H31 M19,107 H27", "none", _tint(_ink, INK_DETAIL))
 	return block + '<g opacity="0.55">%s</g>' % rules + clasp + _hand(38, 111, skin)
