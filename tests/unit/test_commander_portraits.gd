@@ -105,6 +105,29 @@ func test_every_general_is_drawn_on_a_skull_of_their_own() -> void:
 		seen[key] = id
 
 
+## Expressions are cast against doctrine, and every way that mapping can rot is
+## silent: a name outside the vocabulary falls through to a default face, an eye
+## outside the dial's range draws a child or a cyclops, and a column the whole
+## roster shares is the "same template avatar" this table exists to break. Five
+## brows over twenty-two generals cannot go below five apiece, which is why the
+## mouth is the column held to three.
+func test_no_expression_is_worn_by_the_whole_roster() -> void:
+	var mouths := {}
+	var brows := {}
+	for id: StringName in FaceSvg.FACES:
+		var row: Dictionary = FaceSvg.FACES[id]
+		assert_has(FaceSvg.EYE_KINDS, row["eyes"], "%s wears an unknown eye" % id)
+		assert_has(FaceSvg.BROW_KINDS, row["brow"], "%s wears an unknown brow" % id)
+		assert_has(FaceSvg.MOUTH_KINDS, row["mouth"], "%s wears an unknown mouth" % id)
+		assert_between(float(row.get("eye", FaceSvg.EYE_DEFAULT)), 0.82, 1.06, "%s: eye" % id)
+		mouths[row["mouth"]] = int(mouths.get(row["mouth"], 0)) + 1
+		brows[row["brow"]] = int(brows.get(row["brow"], 0)) + 1
+	for mouth: StringName in mouths:
+		assert_lte(int(mouths[mouth]), 3, "%s generals share the %s mouth" % [mouths[mouth], mouth])
+	for brow: StringName in brows:
+		assert_lte(int(brows[brow]), 5, "%s generals share the %s brow" % [brows[brow], brow])
+
+
 ## The default is the one head the handoff authored, so a row that names none
 ## still draws the bust every general shared before this table grew a column —
 ## which is what the neutral silhouette has always been and must stay. The

@@ -80,6 +80,34 @@ const HEAD_DEFAULT: Array = [1.0, &"round", 0.0, 1.0]
 const JAW_ROUND := &"round"
 const JAW_SQUARE := &"square"
 const JAW_TAPERED := &"tapered"
+## The FACES `eye` column: the eye — ellipse, pupil and catchlights — scaled
+## about its own centre (0.82-1.06). The eyes are the largest feature on the
+## bust and the first thing read, so one shared size is the loudest "same
+## template avatar" signal there is; this is the dial that breaks it.
+const EYE_DEFAULT := 1.0
+## Below this a small eye keeps a single catchlight: two sparkles on a small
+## eye is what reads as a child's avatar rather than as a general.
+const EYE_SINGLE_CATCHLIGHT := 0.92
+## How far the eye band rides with the crown, in units per unit of crown. A
+## lifted skull spends its lift on forehead, which also stops the 23 pairs of
+## eyes sitting on one horizontal line across the contact sheet.
+const EYE_CROWN_RATIO := 0.5
+## The expression vocabulary the FACES table is linted against, for the reason
+## the jaws are: a name outside it falls through to a default and says nothing.
+const EYE_KINDS: Array[StringName] = [&"m", &"f", &"narrow", &"closed", &"lidded", &"wide"]
+const BROW_KINDS: Array[StringName] = [&"soft", &"angled", &"raised", &"heavy", &"cocked"]
+const MOUTH_KINDS: Array[StringName] = [
+	&"smile",
+	&"smirk",
+	&"stern",
+	&"snarl",
+	&"grin",
+	&"neutral",
+	&"clench",
+	&"laugh",
+	&"wry",
+	&"open",
+]
 
 const SKIN := {
 	&"light": "#f2c9a0",
@@ -103,7 +131,9 @@ const HAIR := {
 ## [width, jaw, crown, spread] (see HEAD_DEFAULT) and `pose` is
 ## [tilt degrees, zoom, mirrored]. Heads are cast against doctrine: the
 ## immovable are wide and square, the quick and the clever narrow and tapered,
-## and the three grey veterans wear a low crown.
+## and the three grey veterans wear a low crown. So are the expressions —
+## `brow`, `eyes`, `mouth` and the `eye` size each general's power quote is read
+## off, so a face looks like it could say its own line.
 const FACES := {
 	&"alina_ward":
 	{
@@ -113,6 +143,7 @@ const FACES := {
 		"brow": &"soft",
 		"eyes": &"f",
 		"mouth": &"smile",
+		"eye": 1.02,
 		"facial": &"none",
 		"acc": &"none",
 		"earring": true,
@@ -126,9 +157,10 @@ const FACES := {
 		"skin": &"medium",
 		"hair": &"grey",
 		"style": &"short",
-		"brow": &"soft",
+		"brow": &"heavy",
 		"eyes": &"m",
 		"mouth": &"smile",
+		"eye": 0.91,
 		"facial": &"beard",
 		"acc": &"glasses",
 		"head": [1.08, &"square", -2.0, 1.0],
@@ -144,6 +176,7 @@ const FACES := {
 		"brow": &"angled",
 		"eyes": &"narrow",
 		"mouth": &"grin",
+		"eye": 0.98,
 		"facial": &"none",
 		"acc": &"goggles",
 		"head": [0.92, &"tapered", 0.0, 1.05],
@@ -156,9 +189,10 @@ const FACES := {
 		"skin": &"light",
 		"hair": &"brown",
 		"style": &"buzz",
-		"brow": &"angled",
+		"brow": &"cocked",
 		"eyes": &"m",
 		"mouth": &"smirk",
+		"eye": 0.9,
 		"facial": &"stubble",
 		"acc": &"scar",
 		"head": [1.1, &"square", 0.5, 0.96],
@@ -174,6 +208,7 @@ const FACES := {
 		"brow": &"angled",
 		"eyes": &"f",
 		"mouth": &"stern",
+		"eye": 0.95,
 		"facial": &"none",
 		"acc": &"none",
 		"head": [0.94, &"tapered", 1.0, 1.0],
@@ -186,9 +221,10 @@ const FACES := {
 		"skin": &"light",
 		"hair": &"grey",
 		"style": &"bald",
-		"brow": &"angled",
-		"eyes": &"m",
-		"mouth": &"snarl",
+		"brow": &"heavy",
+		"eyes": &"wide",
+		"mouth": &"open",
+		"eye": 1.06,
 		"facial": &"mustache",
 		"acc": &"eyepatch",
 		"head": [1.12, &"square", -1.0, 0.94],
@@ -201,9 +237,10 @@ const FACES := {
 		"skin": &"light",
 		"hair": &"blonde",
 		"style": &"sidepart",
-		"brow": &"raised",
-		"eyes": &"m",
-		"mouth": &"smirk",
+		"brow": &"cocked",
+		"eyes": &"narrow",
+		"mouth": &"wry",
+		"eye": 0.92,
 		"facial": &"none",
 		"acc": &"none",
 		"head": [0.92, &"tapered", 1.0, 1.0],
@@ -218,7 +255,8 @@ const FACES := {
 		"style": &"bob",
 		"brow": &"soft",
 		"eyes": &"closed",
-		"mouth": &"smile",
+		"mouth": &"wry",
+		"eye": 0.86,
 		"facial": &"none",
 		"acc": &"glasses",
 		"head": [0.88, &"tapered", 2.0, 0.94],
@@ -231,9 +269,10 @@ const FACES := {
 		"skin": &"medium",
 		"hair": &"black",
 		"style": &"spiky",
-		"brow": &"raised",
-		"eyes": &"m",
-		"mouth": &"grin",
+		"brow": &"angled",
+		"eyes": &"wide",
+		"mouth": &"laugh",
+		"eye": 1.04,
 		"facial": &"none",
 		"acc": &"headset",
 		"head": [0.9, &"round", 1.0, 1.08],
@@ -248,7 +287,8 @@ const FACES := {
 		"style": &"braid",
 		"brow": &"soft",
 		"eyes": &"f",
-		"mouth": &"smile",
+		"mouth": &"wry",
+		"eye": 1.0,
 		"facial": &"none",
 		"acc": &"headband",
 		"freckles": true,
@@ -262,9 +302,10 @@ const FACES := {
 		"skin": &"pale",
 		"hair": &"black",
 		"style": &"hood",
-		"brow": &"angled",
-		"eyes": &"narrow",
+		"brow": &"soft",
+		"eyes": &"lidded",
 		"mouth": &"neutral",
+		"eye": 0.9,
 		"facial": &"none",
 		"acc": &"hood",
 		"head": [0.88, &"tapered", 0.5, 0.96],
@@ -277,9 +318,10 @@ const FACES := {
 		"skin": &"dark",
 		"hair": &"black",
 		"style": &"curly",
-		"brow": &"soft",
+		"brow": &"raised",
 		"eyes": &"m",
 		"mouth": &"grin",
+		"eye": 1.03,
 		"facial": &"stubble",
 		"acc": &"bandana",
 		"head": [1.06, &"round", 0.0, 1.0],
@@ -292,9 +334,10 @@ const FACES := {
 		"skin": &"dark",
 		"hair": &"black",
 		"style": &"bun",
-		"brow": &"angled",
+		"brow": &"cocked",
 		"eyes": &"f",
 		"mouth": &"smirk",
+		"eye": 0.93,
 		"facial": &"none",
 		"acc": &"glasses",
 		"head": [0.94, &"round", 0.5, 1.02],
@@ -310,6 +353,7 @@ const FACES := {
 		"brow": &"angled",
 		"eyes": &"narrow",
 		"mouth": &"stern",
+		"eye": 0.87,
 		"facial": &"mustache",
 		"acc": &"none",
 		"head": [1.04, &"tapered", -2.0, 0.98],
@@ -325,6 +369,7 @@ const FACES := {
 		"brow": &"raised",
 		"eyes": &"m",
 		"mouth": &"grin",
+		"eye": 1.01,
 		"facial": &"none",
 		"acc": &"goggles",
 		"head": [0.98, &"round", 0.0, 1.06],
@@ -337,9 +382,10 @@ const FACES := {
 		"skin": &"medium",
 		"hair": &"grey",
 		"style": &"curly",
-		"brow": &"soft",
+		"brow": &"heavy",
 		"eyes": &"m",
 		"mouth": &"neutral",
+		"eye": 0.97,
 		"facial": &"beard",
 		"acc": &"none",
 		"head": [1.08, &"round", -2.0, 1.0],
@@ -352,9 +398,10 @@ const FACES := {
 		"skin": &"dark",
 		"hair": &"black",
 		"style": &"buzz",
-		"brow": &"angled",
+		"brow": &"heavy",
 		"eyes": &"narrow",
-		"mouth": &"snarl",
+		"mouth": &"clench",
+		"eye": 0.94,
 		"facial": &"stubble",
 		"acc": &"scar",
 		"head": [1.08, &"square", 0.0, 0.96],
@@ -370,6 +417,7 @@ const FACES := {
 		"brow": &"raised",
 		"eyes": &"f",
 		"mouth": &"smile",
+		"eye": 1.05,
 		"facial": &"none",
 		"acc": &"headset",
 		"head": [0.9, &"tapered", 0.5, 1.08],
@@ -384,7 +432,8 @@ const FACES := {
 		"style": &"ponytail",
 		"brow": &"raised",
 		"eyes": &"f",
-		"mouth": &"grin",
+		"mouth": &"laugh",
+		"eye": 0.99,
 		"facial": &"none",
 		"acc": &"bandana",
 		"head": [0.9, &"round", 1.0, 1.04],
@@ -400,6 +449,7 @@ const FACES := {
 		"brow": &"soft",
 		"eyes": &"f",
 		"mouth": &"stern",
+		"eye": 0.96,
 		"facial": &"none",
 		"acc": &"none",
 		"head": [1.0, &"square", 0.0, 0.98],
@@ -415,6 +465,7 @@ const FACES := {
 		"brow": &"angled",
 		"eyes": &"narrow",
 		"mouth": &"snarl",
+		"eye": 0.85,
 		"facial": &"beard",
 		"acc": &"scar",
 		"head": [1.1, &"square", -0.5, 0.96],
@@ -427,9 +478,10 @@ const FACES := {
 		"skin": &"medium",
 		"hair": &"darkbrown",
 		"style": &"bald",
-		"brow": &"angled",
-		"eyes": &"m",
-		"mouth": &"stern",
+		"brow": &"heavy",
+		"eyes": &"lidded",
+		"mouth": &"clench",
+		"eye": 0.88,
 		"facial": &"beard",
 		"acc": &"none",
 		"head": [1.14, &"square", -1.5, 0.94],
@@ -596,6 +648,10 @@ func _circle(cx: float, cy: float, r: float, fill: String, extra := "") -> Strin
 	return '<circle cx="%s" cy="%s" r="%s" fill="%s"%s/>' % [cx, cy, r, fill, extra]
 
 
+func _ellipse(cx: float, cy: float, rx: float, ry: float, fill: String, extra := "") -> String:
+	return '<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"%s/>' % [cx, cy, rx, ry, fill, extra]
+
+
 func _rect(x: float, y: float, w: float, h: float, fill: String, extra := "") -> String:
 	return '<rect x="%s" y="%s" width="%s" height="%s" fill="%s"%s/>' % [x, y, w, h, fill, extra]
 
@@ -624,9 +680,10 @@ func _bust(face: Dictionary) -> String:
 	out += _crowned(_facial(face["facial"], hair), geom, false)
 	var crown := _hair_front(face["style"], hair) + _shade_hair(face) + _headwear(face["acc"])
 	out += _crowned(crown, geom)
-	out += _brows(face["brow"], xs)
-	out += _eyes(face["eyes"], xs)
-	out += _eyewear(face["acc"], xs, width)
+	var band := _brows(face["brow"], xs)
+	band += _eyes(face["eyes"], xs, float(face.get("eye", EYE_DEFAULT)))
+	band += _eyewear(face["acc"], xs, width)
+	out += _banded(band, geom)
 	out += _stroke_path("M55,60 L53.5,65 Q55,66.5 57,65.2", 1.8)
 	out += _mouth(face["mouth"])
 	out += _details(face, xs, geom)
@@ -672,6 +729,15 @@ func _crowned(inner: String, geom: Array, lift := true) -> String:
 		'<g transform="translate(%s %s) scale(%s 1) translate(-%s 0)">%s</g>'
 		% [HEAD_CX, -crown, width, HEAD_CX, inner]
 	)
+
+
+## Brows, eyes and eyewear move as one band, so a pair of glasses, a patch or a
+## lash still sits on the eye it was drawn for however far the crown walks them.
+func _banded(inner: String, geom: Array) -> String:
+	var dy := snappedf(float(geom[2]) * EYE_CROWN_RATIO, 0.01)
+	if is_zero_approx(dy):
+		return inner
+	return '<g transform="translate(0 %s)">%s</g>' % [dy, inner]
 
 
 ## A neck as wide as the skull it carries — a broad head over the stock one
@@ -937,38 +1003,77 @@ func _shade_hair(face: Dictionary) -> String:
 # --- face parts --------------------------------------------------------------
 
 
-func _eyes(kind: StringName, xs: Array[float]) -> String:
+## The eye, at the size the `eye` column asked for. Every radius and offset is
+## taken about the eye's own centre, so the scale is the one number that says
+## how big a general's eyes are.
+func _eyes(kind: StringName, xs: Array[float], scale := EYE_DEFAULT) -> String:
 	var out := ""
 	if kind == &"closed":
 		for x: float in xs:
-			out += _stroke_path("M%s,57 Q%s,60.5 %s,57" % [x - 4.5, x, x + 4.5], 2.4)
+			var half := 4.5 * scale
+			out += _stroke_path(
+				"M%s,57 Q%s,%s %s,57" % [x - half, x, 57 + 3.5 * scale, x + half], 2.4
+			)
 		return out
-	var ry := 2.6 if kind == &"narrow" else 4.4
+	var rx := 4.1 * scale
+	var ry := _eye_ry(kind) * scale
+	var pupil := (1.7 if kind == &"wide" else 2.1) * scale
 	for x: float in xs:
-		out += '<ellipse cx="%s" cy="57" rx="4.1" ry="%s" fill="#ffffff"%s/>' % [x, ry, _line()]
-		out += _circle(x, 57.4, 2.1, _ink)
-		out += _circle(x + 1.1, 56, 0.9, "#ffffff")
+		out += _ellipse(x, 57, rx, ry, "#ffffff", _line())
+		out += _circle(x, 57 + 0.4 * scale, pupil, _ink)
+		out += _circle(x + 1.1 * scale, 57 - 1.0 * scale, 0.9 * scale, "#ffffff")
+		if scale >= EYE_SINGLE_CATCHLIGHT:
+			out += _circle(x - 1.5 * scale, 57 + 1.4 * scale, 0.55 * scale, "#ffffff")
+		if kind == &"lidded":
+			out += _stroke_path(_lid(x, rx, ry), 2.4)
 	if kind == &"f":
 		for x: float in xs:
 			out += _stroke_path("M%s,53.6 Q%s,51.2 %s,53.6" % [x - 5, x, x + 5], 2.8)
 	return out
 
 
+## A heavy upper lid over the top third of the eye — the hooded read a doctrine
+## that spends its own units wants.
+func _lid(x: float, rx: float, ry: float) -> String:
+	var edge := 57 - ry * 0.3
+	return "M%s,%s Q%s,%s %s,%s" % [x - rx, edge, x, 57 - ry * 1.2, x + rx, edge]
+
+
+func _eye_ry(kind: StringName) -> float:
+	if kind == &"narrow" or kind == &"lidded":
+		return 2.6
+	if kind == &"wide":
+		return 5.4
+	return 4.4
+
+
 func _brows(kind: StringName, xs: Array[float]) -> String:
 	var out := ""
 	for i: int in xs.size():
-		var x: float = xs[i]
-		var d := ""
-		if kind == &"angled":
-			var rise := 48.5 if i == 0 else 52.0
-			var fall := 52.0 if i == 0 else 48.5
-			d = "M%s,%s L%s,%s" % [x - 5.5, rise, x + 5.5, fall]
-		elif kind == &"raised":
-			d = "M%s,48 Q%s,45.5 %s,48" % [x - 5, x, x + 5]
-		else:
-			d = "M%s,49.5 Q%s,47.5 %s,49.5" % [x - 5, x, x + 5]
-		out += _stroke_path(d, 3)
+		out += _brow(_brow_side(kind, i), xs[i], i)
 	return out
+
+
+## `cocked` is the one brow whose halves differ — one raised, one level — which
+## is why the brows are drawn a side at a time. Every other kind hands both
+## sides its own shape.
+func _brow_side(kind: StringName, side: int) -> StringName:
+	if kind != &"cocked":
+		return kind
+	return &"raised" if side == 0 else &"soft"
+
+
+func _brow(kind: StringName, x: float, side: int) -> String:
+	if kind == &"angled" or kind == &"heavy":
+		var heavy := kind == &"heavy"
+		var drop := 1.5 if heavy else 0.0
+		var rise := (48.5 if side == 0 else 52.0) + drop
+		var fall := (52.0 if side == 0 else 48.5) + drop
+		var d := "M%s,%s L%s,%s" % [x - 5.5, rise, x + 5.5, fall]
+		return _stroke_path(d, 4 if heavy else 3)
+	if kind == &"raised":
+		return _stroke_path("M%s,48 Q%s,45.5 %s,48" % [x - 5, x, x + 5], 3)
+	return _stroke_path("M%s,49.5 Q%s,47.5 %s,49.5" % [x - 5, x, x + 5], 3)
 
 
 func _mouth(kind: StringName) -> String:
@@ -985,6 +1090,19 @@ func _mouth(kind: StringName) -> String:
 		&"grin":
 			var open := _path("M47,68.5 Q55,80 63,68.5 Z", _ink, _line())
 			return open + _stroke_path("M49.5,70.5 H60.5", 2.2, "#ffffff")
+		&"clench":
+			var set_line := _stroke_path("M48.5,71 H61.5", 2.8)
+			var left_corner := _stroke_path("M48.8,70.8 L47.6,73.4", 2)
+			return set_line + left_corner + _stroke_path("M61.2,70.8 L62.4,73.4", 2)
+		&"laugh":
+			var wide := _path("M46,67.5 Q55,82.5 64,67.5 Z", _ink, _line())
+			var teeth := _stroke_path("M48.5,69.5 H61.5", 2.2, "#ffffff")
+			return '<g transform="rotate(4 55 71)">%s</g>' % (wide + teeth)
+		&"wry":
+			return _stroke_path("M47,71 Q55,72 63,67.5", 2.6)
+		&"open":
+			var shout := _ellipse(55, 72, 4, 5.5, _ink, _line())
+			return shout + _stroke_path("M52.4,74.6 Q55,77.4 57.6,74.6", 2, "#ffffff")
 	return _stroke_path("M49,71.5 H61", 2.6)
 
 
