@@ -177,11 +177,16 @@ func test_the_default_skull_is_the_handoff_head() -> void:
 ## two sheets. So every bust is measured — the lit shoulder against the shaded
 ## one, which must come out the same way round on all of them. Read off the
 ## uniform rather than the face because a full beard covers the shaded cheek,
-## while every general wears the same shoulders.
-const LIT_PATCH := Rect2i(16, 232, 32, 24)
-const SHADED_PATCH := Rect2i(172, 232, 32, 24)
-## Well under the ~0.077 the shipped shade measures, and well over the 0.0 a
-## sheet with no shade on it at all would give.
+## while every general wears the same shoulders. The window is the outer edge of
+## each shoulder rather than the whole of it: a shouldered prop's strap crosses
+## the chest, and on the five mirrored busts it crosses the lit side, so a wider
+## window measures the strap instead of the uniform under it. Every bust clears
+## the floor by 0.035 here, against the 0.077 the middle of the shoulder gave
+## before there was a strap to dodge.
+const LIT_PATCH := Rect2i(20, 232, 16, 24)
+const SHADED_PATCH := Rect2i(184, 232, 16, 24)
+## Well under the 0.035 the shipped shade measures at its worst, and well over
+## the 0.0 a sheet with no shade on it at all would give.
 const SHADE_FLOOR := 0.01
 
 
