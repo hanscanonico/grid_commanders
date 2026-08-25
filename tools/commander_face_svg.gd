@@ -141,422 +141,9 @@ const HAIR := {
 	&"darkbrown": "#33251a",
 }
 
-## Per-commander spec, straight from the handoff's FACES table, with the skull
-## the collar and the nose this repo gave each general on top of it. `head` is
-## [width, jaw, crown, spread] (see HEAD_DEFAULT), `pose` is
-## [tilt degrees, zoom, mirrored], `nose` is one of the three glyphs (see
-## NOSE_TICK), `collar` is one of the three cuts above, and `pip` puts a rank
-## stud on it — the four costliest powers only. Heads are cast against doctrine:
-## the immovable are wide and square, the quick and the clever narrow and
-## tapered, and the three grey veterans wear a low crown. Collars are cast the
-## same way: line officers wear the V, staff and planners the mandarin band, the
-## veterans and the admiral double-breasted. So are the expressions — `brow`,
-## `eyes`, `mouth` and the `eye` size each general's power quote is read off, so
-## a face looks like it could say its own line.
-const FACES := {
-	&"alina_ward":
-	{
-		"skin": &"light",
-		"hair": &"auburn",
-		"style": &"long",
-		"brow": &"soft",
-		"eyes": &"f",
-		"mouth": &"smile",
-		"eye": 1.02,
-		"facial": &"none",
-		"acc": &"none",
-		"earring": true,
-		"collar": &"v",
-		"head": [0.96, &"round", 0.5, 1.0],
-		"nose": &"tick",
-		"pose": [-5.0, 1.2, false],
-		"bg": &"rays",
-		"prop": &"sabre",
-	},
-	&"gideon_holt":
-	{
-		"skin": &"medium",
-		"hair": &"grey",
-		"style": &"short",
-		"brow": &"heavy",
-		"eyes": &"m",
-		"mouth": &"smile",
-		"eye": 0.91,
-		"facial": &"beard",
-		"acc": &"glasses",
-		"collar": &"double",
-		"head": [1.08, &"square", -2.0, 1.0],
-		"nose": &"broad",
-		"pose": [3.0, 1.14, false],
-		"bg": &"halftone",
-		"prop": &"pipe",
-	},
-	&"rhea_sol":
-	{
-		"skin": &"tan",
-		"hair": &"black",
-		"style": &"ponytail",
-		"brow": &"angled",
-		"eyes": &"narrow",
-		"mouth": &"grin",
-		"eye": 0.98,
-		"facial": &"none",
-		"acc": &"goggles",
-		"collar": &"mandarin",
-		"head": [0.92, &"tapered", 0.0, 1.05],
-		"nose": &"tick",
-		"pose": [-8.0, 1.24, true],
-		"bg": &"speed",
-		"prop": &"wrench",
-	},
-	&"cass_orlov":
-	{
-		"skin": &"light",
-		"hair": &"brown",
-		"style": &"buzz",
-		"brow": &"cocked",
-		"eyes": &"m",
-		"mouth": &"smirk",
-		"eye": 0.9,
-		"facial": &"stubble",
-		"acc": &"scar",
-		"collar": &"v",
-		"head": [1.1, &"square", 0.5, 0.96],
-		"nose": &"hook",
-		"pose": [6.0, 1.22, false],
-		"bg": &"wedge",
-		"prop": &"cigar",
-	},
-	&"mara_voss":
-	{
-		"skin": &"medium",
-		"hair": &"black",
-		"style": &"bun",
-		"brow": &"angled",
-		"eyes": &"f",
-		"mouth": &"stern",
-		"eye": 0.95,
-		"facial": &"none",
-		"acc": &"none",
-		"collar": &"v",
-		"head": [0.94, &"tapered", 1.0, 1.0],
-		"nose": &"hook",
-		"pose": [0.0, 1.18, false],
-		"bg": &"bars",
-		"prop": &"baton",
-	},
-	&"viktor_draeg":
-	{
-		"skin": &"light",
-		"hair": &"grey",
-		"style": &"bald",
-		"brow": &"heavy",
-		"eyes": &"wide",
-		"mouth": &"open",
-		"eye": 1.06,
-		"facial": &"mustache",
-		"acc": &"eyepatch",
-		"collar": &"v",
-		"head": [1.12, &"square", -1.0, 0.94],
-		"nose": &"broad",
-		"pose": [-3.0, 1.26, false],
-		"bg": &"burst",
-		"prop": &"medal",
-	},
-	&"cassian_rook":
-	{
-		"skin": &"light",
-		"hair": &"blonde",
-		"style": &"sidepart",
-		"brow": &"cocked",
-		"eyes": &"narrow",
-		"mouth": &"wry",
-		"eye": 0.92,
-		"facial": &"none",
-		"acc": &"none",
-		"collar": &"mandarin",
-		"head": [0.92, &"tapered", 1.0, 1.0],
-		"nose": &"hook",
-		"pose": [8.0, 1.18, true],
-		"bg": &"halftone",
-		"prop": &"card",
-	},
-	&"lyra_quill":
-	{
-		"skin": &"pale",
-		"hair": &"platinum",
-		"style": &"bob",
-		"brow": &"soft",
-		"eyes": &"closed",
-		"mouth": &"wry",
-		"eye": 0.86,
-		"facial": &"none",
-		"acc": &"glasses",
-		"collar": &"mandarin",
-		"head": [0.88, &"tapered", 2.0, 0.94],
-		"nose": &"hook",
-		"pose": [-4.0, 1.12, false],
-		"bg": &"grid",
-		"prop": &"book",
-	},
-	&"orin_flux":
-	{
-		"skin": &"medium",
-		"hair": &"black",
-		"style": &"spiky",
-		"brow": &"angled",
-		"eyes": &"wide",
-		"mouth": &"laugh",
-		"eye": 1.04,
-		"facial": &"none",
-		"acc": &"headset",
-		"collar": &"mandarin",
-		"head": [0.9, &"round", 1.0, 1.08],
-		"nose": &"tick",
-		"pose": [-9.0, 1.22, false],
-		"bg": &"speed",
-		"prop": &"drone",
-	},
-	&"nia_rowan":
-	{
-		"skin": &"tan",
-		"hair": &"brown",
-		"style": &"braid",
-		"brow": &"soft",
-		"eyes": &"f",
-		"mouth": &"wry",
-		"eye": 1.0,
-		"facial": &"none",
-		"acc": &"headband",
-		"freckles": true,
-		"collar": &"v",
-		"head": [0.92, &"round", 0.5, 1.06],
-		"nose": &"broad",
-		"pose": [4.0, 1.16, false],
-		"bg": &"rays",
-		"prop": &"falcon",
-	},
-	&"sable_wren":
-	{
-		"skin": &"pale",
-		"hair": &"black",
-		"style": &"hood",
-		"brow": &"soft",
-		"eyes": &"lidded",
-		"mouth": &"neutral",
-		"eye": 0.9,
-		"facial": &"none",
-		"acc": &"hood",
-		"collar": &"v",
-		"head": [0.88, &"tapered", 0.5, 0.96],
-		"nose": &"tick",
-		"pose": [0.0, 1.24, false],
-		"bg": &"wedge",
-		"prop": &"dagger",
-	},
-	&"tomas_reed":
-	{
-		"skin": &"dark",
-		"hair": &"black",
-		"style": &"curly",
-		"brow": &"raised",
-		"eyes": &"m",
-		"mouth": &"grin",
-		"eye": 1.03,
-		"facial": &"stubble",
-		"acc": &"bandana",
-		"collar": &"v",
-		"head": [1.06, &"round", 0.0, 1.0],
-		"nose": &"broad",
-		"pose": [-6.0, 1.2, false],
-		"bg": &"burst",
-		"prop": &"radio",
-	},
-	&"ines_calder":
-	{
-		"skin": &"dark",
-		"hair": &"black",
-		"style": &"bun",
-		"brow": &"cocked",
-		"eyes": &"f",
-		"mouth": &"smirk",
-		"eye": 0.93,
-		"facial": &"none",
-		"acc": &"glasses",
-		"collar": &"mandarin",
-		"head": [0.94, &"round", 0.5, 1.02],
-		"nose": &"tick",
-		"pose": [-4.0, 1.18, false],
-		"bg": &"grid",
-		"prop": &"ledger",
-	},
-	&"konrad_vale":
-	{
-		"skin": &"pale",
-		"hair": &"platinum",
-		"style": &"sidepart",
-		"brow": &"angled",
-		"eyes": &"narrow",
-		"mouth": &"stern",
-		"eye": 0.87,
-		"facial": &"mustache",
-		"acc": &"none",
-		"collar": &"double",
-		"head": [1.04, &"tapered", -2.0, 0.98],
-		"nose": &"hook",
-		"pose": [5.0, 1.25, false],
-		"bg": &"wedge",
-		"prop": &"helm",
-	},
-	&"perrin_ash":
-	{
-		"skin": &"tan",
-		"hair": &"auburn",
-		"style": &"short",
-		"brow": &"raised",
-		"eyes": &"m",
-		"mouth": &"grin",
-		"eye": 1.01,
-		"facial": &"none",
-		"acc": &"goggles",
-		"collar": &"v",
-		"head": [0.98, &"round", 0.0, 1.06],
-		"nose": &"hook",
-		"pose": [-7.0, 1.2, true],
-		"bg": &"speed",
-		"prop": &"plane",
-	},
-	&"halden_marr":
-	{
-		"skin": &"medium",
-		"hair": &"grey",
-		"style": &"curly",
-		"brow": &"heavy",
-		"eyes": &"m",
-		"mouth": &"neutral",
-		"eye": 0.97,
-		"facial": &"beard",
-		"acc": &"none",
-		"collar": &"double",
-		"head": [1.08, &"round", -2.0, 1.0],
-		"nose": &"hook",
-		"pose": [3.0, 1.16, false],
-		"bg": &"rays",
-		"prop": &"anchor",
-	},
-	&"dane_ferrow":
-	{
-		"skin": &"dark",
-		"hair": &"black",
-		"style": &"buzz",
-		"brow": &"heavy",
-		"eyes": &"narrow",
-		"mouth": &"clench",
-		"eye": 0.94,
-		"facial": &"stubble",
-		"acc": &"scar",
-		"collar": &"mandarin",
-		"head": [1.08, &"square", 0.0, 0.96],
-		"nose": &"broad",
-		"pose": [7.0, 1.24, false],
-		"bg": &"burst",
-		"prop": &"coins",
-	},
-	&"iris_colt":
-	{
-		"skin": &"light",
-		"hair": &"blonde",
-		"style": &"ponytail",
-		"brow": &"raised",
-		"eyes": &"f",
-		"mouth": &"smile",
-		"eye": 1.05,
-		"facial": &"none",
-		"acc": &"headset",
-		"collar": &"v",
-		"pip": true,
-		"head": [0.9, &"tapered", 0.5, 1.08],
-		"nose": &"tick",
-		"pose": [-6.0, 1.22, false],
-		"bg": &"halftone",
-		"prop": &"whistle",
-	},
-	&"sera_lark":
-	{
-		"skin": &"dark",
-		"hair": &"darkbrown",
-		"style": &"ponytail",
-		"brow": &"raised",
-		"eyes": &"f",
-		"mouth": &"laugh",
-		"eye": 0.99,
-		"facial": &"none",
-		"acc": &"bandana",
-		"collar": &"mandarin",
-		"head": [0.9, &"round", 1.0, 1.04],
-		"nose": &"tick",
-		"pose": [5.0, 1.2, true],
-		"bg": &"wedge",
-		"prop": &"compass",
-	},
-	&"iona_vance":
-	{
-		"skin": &"tan",
-		"hair": &"brown",
-		"style": &"bob",
-		"brow": &"soft",
-		"eyes": &"f",
-		"mouth": &"stern",
-		"eye": 0.96,
-		"facial": &"none",
-		"acc": &"none",
-		"collar": &"mandarin",
-		"pip": true,
-		"head": [1.0, &"square", 0.0, 0.98],
-		"nose": &"tick",
-		"pose": [0.0, 1.16, false],
-		"bg": &"grid",
-		"prop": &"scales",
-	},
-	&"ivar_thorne":
-	{
-		"skin": &"light",
-		"hair": &"darkbrown",
-		"style": &"long",
-		"brow": &"angled",
-		"eyes": &"narrow",
-		"mouth": &"snarl",
-		"eye": 0.85,
-		"facial": &"beard",
-		"acc": &"scar",
-		"collar": &"v",
-		"pip": true,
-		"head": [1.1, &"square", -0.5, 0.96],
-		"nose": &"broad",
-		"pose": [-5.0, 1.26, true],
-		"bg": &"burst",
-		"prop": &"axe",
-	},
-	&"radek_morn":
-	{
-		"skin": &"medium",
-		"hair": &"darkbrown",
-		"style": &"bald",
-		"brow": &"heavy",
-		"eyes": &"lidded",
-		"mouth": &"clench",
-		"eye": 0.88,
-		"facial": &"beard",
-		"acc": &"none",
-		"collar": &"double",
-		"pip": true,
-		"head": [1.14, &"square", -1.5, 0.94],
-		"nose": &"hook",
-		"pose": [2.0, 1.28, false],
-		"bg": &"halftone",
-		"prop": &"hammer",
-	},
-}
+## Per-commander spec, one row per general. The table and the meaning of
+## every column live in its own file now — this file draws it.
+const FACES := preload("res://tools/commander_faces.gd").FACES
 
 var _accent: String
 var _accent_dark: String
@@ -1314,11 +901,18 @@ func _halftone() -> String:
 	return '<g opacity="0.24">%s</g>' % dots
 
 
+## Two flat values split by one hard diagonal, rather than a bright hairline on
+## a single field a near-black uniform then disappears into. The split runs
+## clear of the shoulders at every x, so the lit half sits behind the head and
+## the hair while the uniform keeps the deep half to be a silhouette against —
+## a lit field level with the shoulders would wash them out instead. Held at
+## 0.24 white, the backdrop ceiling, so the face stays the brightest thing in
+## the frame.
 func _wedge() -> String:
-	var shade := _path("M6,120 L104,22 L104,120 Z", "#000000", ' opacity="0.2"')
-	var edge := ' stroke="#ffffff" stroke-width="2.5" opacity="0.5"'
-	var trail := ' stroke="#ffffff" stroke-width="1.4" opacity="0.25"'
-	return shade + _path("M6,120 L104,22", "none", edge) + _path("M6,134 L104,36", "none", trail)
+	var deep := _path("M6,84 L104,44 L104,120 L6,120 Z", "#000000", ' opacity="0.2"')
+	var lit := _path("M6,24 L104,24 L104,44 L6,84 Z", "#ffffff", ' opacity="0.24"')
+	var edge := ' stroke="#000000" stroke-width="2.5" opacity="0.35"'
+	return deep + lit + _path("M6,84 L104,44", "none", edge)
 
 
 func _bars() -> String:
@@ -1399,16 +993,39 @@ func _prop_back(id: StringName) -> String:
 ## it; everything else is worn or held.
 func _prop_front(id: StringName, skin: String) -> String:
 	if not _prop_back(id).is_empty():
-		return _strap()
+		return _strap(id)
 	var worn := _prop_worn(id)
 	return worn if not worn.is_empty() else _prop_held(id, skin)
 
 
-## The band a shouldered haft rests on, cut across the chest under the collar so
-## the object behind the bust reads as slung rather than as painted on the field.
-func _strap() -> String:
+## What carries the haft behind the bust, so the object reads as slung rather
+## than as painted on the field. Five shouldered props, five different rigs —
+## three of them are Meridian, and one shared diagonal band across the chest was
+## the loudest repeated mark on the contact sheet.
+func _strap(id: StringName) -> String:
+	match id:
+		&"wrench":
+			var loop := _path("M72,88 L90,94 L84,108 L66,102 Z", _accent_dark, _line(2))
+			return loop + _rect(72, 94, 8, 7, _slate, _line(1.4) + ' rx="1.5"')
+		&"anchor":
+			return _cord(82, 90, 63, 122) + _cord(88, 94, 69, 126)
+		&"axe":
+			var down := _path("M80,90 L89,95 L73,122 L64,117 Z", _accent_dark, _line(2))
+			var across := _path("M69,95 L74,88 L93,104 L88,112 Z", _accent_dark, _line(2))
+			return down + across + _circle(78, 101, 3.4, _gold, _line(1.4))
+		&"hammer":
+			var bandolier := _path("M82,93 L93,100 L64,120 L56,111 Z", _accent_dark, _line(2))
+			var loops := _stroke_path("M78,98 L72,107", 2) + _stroke_path("M69,105 L63,114", 2)
+			return bandolier + loops
 	var band := _path("M80,91 L92,97 L71,122 L59,116 Z", _accent_dark, _line(2))
 	return band + _circle(75.5, 106.5, 3, _gold, _line(1.4))
+
+
+## One rope of a lanyard: the ink line drawn under a lighter core, so a cord
+## thin enough to read as rope still carries the sheet's outline.
+func _cord(x1: float, y1: float, x2: float, y2: float) -> String:
+	var d := "M%s,%s L%s,%s" % [x1, y1, x2, y2]
+	return _stroke_path(d, 5.4) + _stroke_path(d, 2.6, _accent_dark)
 
 
 ## The front props that stand on their own — smoked, worn or set down.
