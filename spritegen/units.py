@@ -29,13 +29,26 @@ The move clip is the same machine UNDER WAY, and it is a gait and never a
 journey: the game tweens the sprite across the board itself, so a move frame
 may not translate the hull along its own run — that would double the travel
 and slide the unit out of the cell it is standing in. What a move frame owns
-is the running gear and the chassis's reaction to it. On the tracked family
-that is the tread stripe walking a half period (`_track`'s `phase`) and the
-whole hull jolting one board texel of ride height on the off-beat (`_roll`) —
-except on the MBT, which pitches its nose that texel instead so its
-silhouette does not climb into the heavy tank's (see `tank`) — with the
-weapons left at travel-lock — pose A's gun, not pose B's laid-up or
-recoiled one, because a vehicle on the move does not lay its gun.
+is the running gear and the chassis's reaction to it, with the weapons left at
+travel-lock — pose A's gun, not pose B's laid-up or recoiled one, because a
+vehicle on the move does not lay its gun.
+
+BOTH move frames carry an ATTITUDE, and that is the clip's first rule. A move
+frame that reused the parked model would put a rolling column pixel for pixel
+alongside a stopped one on half of every beat, which is what the land family
+shipped when the clip landed: MOVE_A was byte-identical to pose A. So the land
+vehicles stand ONE END of the chassis a whole board texel up on MOVE_A — the
+nose for seven of the eight, the weight gone back over the drivers as the
+machine pulls away and the front of the running gear off the ground; the tail
+on the rockets truck, whose cast shadow cannot afford the nose (see
+`rockets`) — and take the off-beat from the chassis too: the whole hull
+jolting that texel of ride height clear of the ground (`_roll`), or, where
+lifting all of a low hull would raise its silhouette into a neighbour's, the
+OTHER end rising instead (the MBT rocks tail-up, see `tank`) or a sprung
+sub-assembly riding up over a level chassis (the scout's cabin, see `recon`).
+Under it the tread stripe walks a half period, and `_tread_phase` starts the
+move clip on the opposite foot from the ambient one so the parked frame and
+the frame under way never stand at the same point in the stripe either.
 
 Only the uids in `MOVES` author the move clip; every other unit falls back to
 its ambient counterpart in `build_model`, so the move sheets are valid from
@@ -165,6 +178,19 @@ def _track(
     # road wheel hubs peeking out of the lower run
     for y in range(y0 + 1, y1, 3):
         m.set(x1, y, 0, "hub")
+
+
+def _tread_phase(pose: Pose) -> int:
+    """Which half period `_track`'s link stripe stands at, per pose.
+
+    The stripe alternates with the frame — a beat is half a period of travel —
+    but the two clips start it on opposite feet: `MOVE_A` takes the phase pose
+    B stands at and `MOVE_B` the phase pose A does. That costs nothing and buys
+    the one thing a held attitude cannot, which is separation between the
+    PARKED frame and the frame under way at the same point in the beat: a
+    rolling column's near frame is never the parked column's near frame.
+    """
+    return {Pose.A: 0, Pose.B: 1, Pose.MOVE_A: 1, Pose.MOVE_B: 0}[Pose(pose)]
 
 
 # One rotor blade, hub-relative and tip last. The disc is this blade and its
@@ -693,21 +719,31 @@ def recon(pose: Pose = Pose.A) -> Model:
     the roofline in the hull and the scout reads as a flatbed. The traverse
     measures 4 changed silhouette texels at rung 1, 13 at rung 2.
 
-    The move clip holds both the MG and the whip where pose A carries them —
-    a scout on the move is not sweeping its arc — and gives the movement to
-    the chassis, since wheels cannot carry it at this scale (see `_tire`).
-    MOVE_B pitches the NOSE one board texel: the front axle, the hood, the
-    bumper and the headlights take `dz = +2` while the tail axle, the cabin
-    and the MG hold, and the whip alone lies one diagonal step BACK over the
-    tail.
+    The move clip holds the MG where pose A carries it — a scout on the move
+    is not sweeping its arc — and holds the whip one diagonal step BACK over
+    the tail on BOTH frames, trailing in the airstream. Because that step is
+    taken against the model's own facing rather than against a screen side, a
+    horizontal flip carries it: the mirrored car's antenna still lies back.
 
-    The whole-hull `_roll` the tracked family uses is not available here, for
-    the reason the MBT's pitch documents: lifting all of a low car costs it
-    its identity. Rolled, MOVE_B read closer to the apc's frame A (0.703)
-    than to recon's own (0.700) and failed the identity gate. Pitching the
-    nose moves the same texel over the front third: 0.818 against its own
-    frame A, 0.671 against the apc's. 14 changed silhouette texels at rung 1,
-    1.14 shimmer.
+    The two frames are the car's two ends taking the ride, since the wheels
+    cannot carry it at this scale (see `_tire`). MOVE_A pitches the NOSE one
+    board texel — front axle, hood, bumper and headlights at `dz = +2`, tail
+    axle and cabin holding — and MOVE_B sets the nose down and runs the CABIN
+    up instead: the roof, the glass, the rear plate and the pintle ride the
+    texel on a one-course `hull_dk` band painted in under them, so the
+    roofline moves against a level chassis and the body reads as working on
+    its springs. Extending the nose pitch back to take the cabin with it was
+    tried first and is what the band replaces: pitched together they moved 5
+    silhouette texels between the frames, under the gate's 6, because the
+    roofline and the hood rose as one line.
+
+    The whole-hull `_roll` the tracked family jolts with is not available
+    here, for the reason the MBT's rock documents: lifting all of a low car
+    costs it its identity. Rolled, MOVE_B read closer to the apc's frame A
+    (0.703) than to recon's own (0.700). Moving one end at a time keeps the
+    shape: 0.806 and 0.904 against its own frame A, next best 0.675 and 0.765
+    (cruiser). A against MOVE_A is 30 changed texels at rung 1, 14 of them
+    silhouette; MOVE_A against MOVE_B is 46 and 15, at 2.07 shimmer.
     """
     m = Model()
     for x in (0, 8):
@@ -748,21 +784,24 @@ def recon(pose: Pose = Pose.A) -> Model:
         # both staying inside the hull's own x/y extents
         _shift(m, (4, 5, 4, 10, 6, 7), dx=1, dy=-1)
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
-    if pose is Pose.MOVE_B:
-        # The whip trails one board texel BACKWARD — `(dx +1, dy -1)` is the
-        # reverse of the models' forward `(dx -1, dy +1)` — and the chassis
-        # jolts a texel under it. Because the step is taken against the
-        # model's own facing rather than against a screen side, a horizontal
-        # flip carries it: the mirrored car's antenna still lies back over
-        # the tail. The MG is left where pose A carries it; the gunner sweeps
-        # his arc in the ambient clip, not while the scout is running.
+    if moving(pose):
+        # the whip trails one board texel BACKWARD on both frames —
+        # `(dx +1, dy -1)` is the reverse of the models' forward step
         _shift(m, (2, 2, 1, 1, 4, 7), dx=1, dy=-1)
+    if pose is Pose.MOVE_A:
         # The lifted box stops at z=6 so it takes the chassis and nothing
         # else: the only voxel above it inside the nose's x/y is the MG's
         # muzzle at (4, 10, 7), which overhangs the front axle from a barrel
         # rooted in the cabin. Lifted, it left the barrel behind and floated
         # two voxels off its own tip.
         _shift(m, (0, 9, 10, 15, 0, 6), dz=2)
+    if pose is Pose.MOVE_B:
+        # the cabin runs up its springs over a level chassis, pintle and all
+        # — the box reaches y=10 to take the muzzle with the barrel — and the
+        # two courses it came off are painted back in dark, so the body rides
+        # a texel high instead of floating a texel over its own bed
+        _shift(m, (2, 7, 3, 10, 4, 7), dz=2)
+        m.box(2, 7, 3, 9, 4, 5, "hull_dk")
     return m
 
 
@@ -781,29 +820,38 @@ def tank(pose: Pose = Pose.A) -> Model:
     so the footprint and the cast shadow are unchanged.
 
     The move clip leaves the gun where pose A carries it — a tank under way
-    does not lay its barrel — and animates the running gear instead: MOVE_A is
-    pose A with the link stripe at phase 0, MOVE_B advances the stripe a half
-    period and PITCHES the nose one board texel. Everything forward of the
-    turret ring — the front hull course, the glacis, the leading track run,
-    the mantlet and the gun it carries — takes `dz = +2` together; the engine
-    deck, the turret and the cupola hold. The gun rides up with the nose it is
-    bolted to, so this is a chassis attitude and not the two-texel gun lay of
-    pose B.
+    does not lay its barrel — and ROCKS the hull over its running gear
+    instead, one end at a time. MOVE_A takes the family's nose-up: the front
+    hull course, the glacis and the leading track run at `dz = +2`. MOVE_B
+    sets that down and lifts the REAR — the back hull course, the deck vents,
+    the exhausts and the trailing track run — so the link stripe walks under a
+    hull that pitches back and forth instead of one holding still. The turret,
+    the cupola, the mantlet and the gun lie outside both boxes and never move:
+    the barrel line the player names this unit by is the fixed thing the rock
+    is read against.
 
-    It is a pitch here and the whole-hull `_roll` the rest of the tracked
-    family uses everywhere else, for one measured reason: the MBT is the heavy
-    tank's small brother, and `_roll` raises the whole silhouette into its
-    brother's. Rolled, MOVE_B's rung-1 silhouette matched md_tank's frame A at
-    IoU 0.799 against 0.761 for its own — the unit stopped reading as itself.
-    Pitching the nose moves the same one texel over a fifth of the mass, so
-    the shape stays the tank's: 0.893 against its own frame A, 0.746 against
-    md_tank's, and md_tank's own move frames are untouched (0.785 own, 0.612
-    next). 11 changed silhouette texels at rung 1, 3.18 shimmer, 0.048 mass
-    drift.
+    It is a rock here and the whole-hull `_roll` the rest of the tracked
+    family jolts with, for one measured reason: the MBT is the heavy tank's
+    small brother, and `_roll` raises the whole silhouette into its brother's.
+    Rolled, MOVE_B's rung-1 silhouette matched md_tank's frame A at IoU 0.799
+    against 0.761 for its own — the unit stopped reading as itself. Lifting
+    one end moves the same texel over a fifth of the mass, so the shape stays
+    the tank's: 0.907 and 0.903 against its own frame A against 0.738 and
+    0.798 against md_tank's, and md_tank's own move frames stay clear of it
+    (0.943 and 0.781 own, 0.696 and 0.627 next).
+
+    Both boxes stop at z=5, which is NARROWER than the nose pitch this
+    replaces: that one carried the mantlet and the whole gun (z to 7, y to 20)
+    and so moved a line lying inside the sprite's own outline at rung 1 — 46
+    changed texels for 11 of silhouette, 3.18 shimmer, a frame re-toning its
+    interior more than it moved its edge. Cut to the running gear and the
+    glacis, the same one-texel move buys 52 changed for 19 of silhouette at
+    1.74 shimmer, and A against MOVE_A is 34 changed with 9 of silhouette.
+    Mass drift 0.040 and 0.055.
     """
     m = Model()
-    _track(m, 0, 2, 0, 13, 2, phase=int(beat(pose)))
-    _track(m, 9, 11, 0, 13, 2, phase=int(beat(pose)))
+    _track(m, 0, 2, 0, 13, 2, phase=_tread_phase(pose))
+    _track(m, 9, 11, 0, 13, 2, phase=_tread_phase(pose))
     # hull in desaturated armour; the turret crown carries the team color
     m.box(0, 11, 1, 12, 3, 5, "hull")
     m.box(1, 10, 13, 13, 3, 5, "hull")
@@ -833,9 +881,12 @@ def tank(pose: Pose = Pose.A) -> Model:
         # rebuilt down to the deck as the mount that holds it there
         _shift(m, (4, 7, 10, 20, 6, 7), dz=4)
         m.box(4, 7, 10, 10, 6, 9, "hull_dk")
+    if pose is Pose.MOVE_A:
+        # nose up: hull front, glacis and the leading track run, gun excluded
+        _shift(m, (0, 11, 10, 14, 0, 5), dz=2)
     if pose is Pose.MOVE_B:
-        # the nose rides up a texel: everything ahead of the turret ring
-        _shift(m, (0, 11, 10, 20, 0, 7), dz=2)
+        # and the other end, clear of the turret ring at y=4
+        _shift(m, (0, 11, 0, 3, 0, 5), dz=2)
     return m
 
 
@@ -849,16 +900,26 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     barrel is three voxels wide — 6 changed silhouette texels at rung 1, 20
     at rung 2, where the MBT's thinner gun needed two.
 
-    The move clip walks the stripe and rolls the whole hull `dz = +2` on
-    MOVE_B with the gun left at pose A's travel-lock, as the MBT's does. The
-    roll is UP and never down even though this is the tallest thing on the
+    The move clip walks the stripe with the gun left at pose A's travel-lock
+    and takes its two frames from the chassis. MOVE_A holds the family's
+    nose-up — the stepped glacis, the front hull course and the leading track
+    run at `dz = +2`, the turret and the gun untouched, so the heavy pulls
+    away with its weight back over the drivers. MOVE_B sets the nose down and
+    rolls the WHOLE hull the same texel (`_roll`), which is the off-beat jolt
+    of a machine this heavy riding ground.
+
+    The roll is UP and never down even though this is the tallest thing on the
     land roster: `voxel.place_in_cell` still takes it, and a settle would read
-    as the suspension giving way rather than the chassis riding. 30 changed
-    silhouette texels at rung 1, 2.33 shimmer, 0.002 mass drift.
+    as the suspension giving way rather than the chassis riding. Nothing here
+    has to borrow the MBT's rock, because it is the heavy that the MBT's roll
+    collided with and not the other way about: rolled, MOVE_B still reads
+    0.781 against its own frame A and 0.616 against the next unit's. A against
+    MOVE_A is 30 changed texels at rung 1 with 7 of silhouette; MOVE_A against
+    MOVE_B is 79 and 23, at 2.43 shimmer, mass drift 0.039 and 0.002.
     """
     m = Model()
-    _track(m, 0, 2, 0, 15, 3, phase=int(beat(pose)))
-    _track(m, 10, 12, 0, 15, 3, phase=int(beat(pose)))
+    _track(m, 0, 2, 0, 15, 3, phase=_tread_phase(pose))
+    _track(m, 10, 12, 0, 15, 3, phase=_tread_phase(pose))
     # hull with armoured side skirts over the tracks
     m.box(0, 12, 1, 14, 4, 6, "hull")
     m.box(10, 12, 2, 13, 4, 5, "hull_dk")
@@ -889,6 +950,9 @@ def md_tank(pose: Pose = Pose.A) -> Model:
     m.box(5, 7, 21, 21, 10, 10, "bore")
     if pose is Pose.B:
         _shift(m, (4, 8, 12, 21, 7, 11), dz=2)
+    if pose is Pose.MOVE_A:
+        # nose up: stepped glacis, front hull and the leading track run
+        _shift(m, (0, 12, 13, 16, 0, 6), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
     return m
@@ -904,16 +968,23 @@ def anti_air(pose: Pose = Pose.A) -> Model:
     silhouette texels at rung 1, 31 at rung 2.
 
     The move clip holds the battery at pose A's travelling elevation — a flak
-    track under way is not tracking — and gives the movement to the running
-    gear: stripe at phase 0 on MOVE_A, stripe advanced plus a whole-model
-    `dz = +2` on MOVE_B. 28 changed silhouette texels at rung 1, 1.64
-    shimmer, 0.000 mass drift; 17 of the 28 land in the top half of the
-    sprite, where the raked barrels and their cradle ride the jolt — the
-    right part of this unit to see move.
+    track under way is not tracking — and gives both frames to the running
+    gear. MOVE_A pitches the chassis nose-up one texel under the battery: the
+    front hull, its lip and the leading track run take `dz = +2` at z at most
+    3, which is under the battery box, so the raked barrels stay exactly where
+    the travelling lock put them and only the hull they ride on moves. MOVE_B
+    levels that and rolls the whole model the same texel (`_roll`).
+
+    Lifting the nose UNDER the roll — both at once — was tried and is what
+    the alternation replaces: at MOVE_B the flak track's own frame A read
+    0.615 against the apc's 0.635 and it stopped being itself. One at a time
+    it reads 0.890 and 0.702 own, against 0.650 and 0.683 next. A against
+    MOVE_A is 31 changed texels at rung 1 with 9 of silhouette; MOVE_A against
+    MOVE_B is 53 and 19, at 1.79 shimmer, mass drift 0.056 and 0.000.
     """
     m = Model()
-    _track(m, 0, 2, 0, 11, phase=int(beat(pose)))
-    _track(m, 8, 10, 0, 11, phase=int(beat(pose)))
+    _track(m, 0, 2, 0, 11, phase=_tread_phase(pose))
+    _track(m, 8, 10, 0, 11, phase=_tread_phase(pose))
     # low hull in desaturated armour
     m.box(0, 10, 1, 11, 2, 3, "hull")
     m.box(1, 9, 12, 12, 2, 3, "hull_lt")
@@ -949,6 +1020,9 @@ def anti_air(pose: Pose = Pose.A) -> Model:
         for x in (3, 7):
             _shift(m, (x, x, 9, 14, 8, 18), dz=2)
             m.box(x, x, 8, 8, 8, 9, "gunmetal_dk")
+    if pose is Pose.MOVE_A:
+        # nose up, under the battery: the box stops at the hull's top course
+        _shift(m, (0, 10, 9, 12, 0, 3), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
     return m
@@ -977,16 +1051,23 @@ def artillery(pose: Pose = Pose.A) -> Model:
     the spade and the hull hold their ground, which is what makes it a gun
     firing rather than a vehicle sinking.
 
-    The move clip does NOT recoil: a gun fires from a halt, so MOVE_A and
-    MOVE_B both carry pose A's erected howitzer and the animation is the
-    stripe walking under a hull rolled `dz = +2` on the off-beat. 28 changed
-    silhouette texels at rung 1, 2.14 shimmer, 0.000 mass drift, and they run
-    the whole height of the sprite: 6 of them are the near-vertical spike
-    riding the jolt across open sky, the rest the hull and casemate lines.
+    The move clip does NOT recoil: a gun fires from a halt, so both move
+    frames carry pose A's erected howitzer and the animation is all chassis.
+    MOVE_A pitches the nose up one texel — the front hull course, its lip and
+    the leading track run, all of it below the casemate wall, so the spike and
+    the pit it stands in are carried and not bent — and MOVE_B levels that and
+    rolls the whole model the same texel (`_roll`), which swings the
+    near-vertical spike a texel across open sky where nothing else on the
+    sheet has anything.
+
+    A against MOVE_A is 36 changed texels at rung 1 with 9 of silhouette;
+    MOVE_A against MOVE_B is 60 and 19, at 2.16 shimmer, mass drift 0.041 and
+    0.000. Identity holds at 0.911 and 0.752 against its own frame A, next
+    best 0.703 and 0.687.
     """
     m = Model()
-    _track(m, 0, 2, 0, 12, 2, phase=int(beat(pose)))
-    _track(m, 8, 10, 0, 12, 2, phase=int(beat(pose)))
+    _track(m, 0, 2, 0, 12, 2, phase=_tread_phase(pose))
+    _track(m, 8, 10, 0, 12, 2, phase=_tread_phase(pose))
     m.box(0, 10, 1, 12, 3, 4, "hull")
     m.box(1, 9, 13, 13, 3, 3, "hull_lt")
     # open casemate: a deep armoured wall ring around the gun pit, no roof;
@@ -1023,6 +1104,9 @@ def artillery(pose: Pose = Pose.A) -> Model:
         # ones, over the 5.0 shimmer bar. The full stroke clears the spike's
         # own width off the top of the sky.
         _shift(m, (3, 7, 6, 12, 8, 27), dz=-4)
+    if pose is Pose.MOVE_A:
+        # nose up, clear of the casemate wall and the pit inside it
+        _shift(m, (0, 10, 10, 13, 0, 4), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
     return m
@@ -1038,6 +1122,31 @@ def rockets(pose: Pose = Pose.A) -> Model:
     11 changed silhouette texels at rung 1 and 43 at rung 2. The cab settle
     it replaces was one voxel — half a texel, and hidden under the rack
     besides — which is why the truck measured zero at both board rungs.
+
+    The move clip leaves the rack at pose A's travelling stow — a launcher
+    elevates from a halt — and takes its frames from the carrier. MOVE_A rides
+    the TAIL up one texel: the bed and the three rear axles behind the cab,
+    everything below z=4 so the slab's own rows stay where the stow put them,
+    which stands the loaded end of a long truck up over its rear bogies.
+    MOVE_B levels that and rolls the whole truck the same texel (`_roll`), and
+    the rack, being the biggest plane on the roster, carries the jolt across
+    most of the sprite.
+
+    It is the tail here and the nose everywhere else in the family, for a
+    measured reason that belongs to the shadow rather than to the ride. This
+    truck has the sheet's tightest cast-shadow margin — its rack overhangs the
+    cell centre to the screen left, so the shadow's centroid sits 0.37px right
+    of the hull's against a 0.2px floor (`OneSun` in
+    `tests/test_generated_output.py`). Lifting the NOSE deletes the pixels the
+    front of the bed was standing on, and in this projection the front is the
+    screen-left end: the hull centroid walks right past the shadow's and the
+    frame reads as lit from the wrong shoulder (-0.14px, a failure). Lifting
+    the tail takes the same texel off the screen-RIGHT end and the margin
+    widens to 0.77px.
+
+    A against MOVE_A is 26 changed texels at rung 1 with 7 of silhouette;
+    MOVE_A against MOVE_B is 67 and 19, at 2.53 shimmer, mass drift 0.044 and
+    0.000. Identity 0.942 and 0.803 own, next best 0.646 and 0.607.
     """
     m = Model()
     for y in (1, 5, 9, 13):
@@ -1075,6 +1184,9 @@ def rockets(pose: Pose = Pose.A) -> Model:
             y0 = 11 - 2 * k
             _shift(m, (1, 8, y0, y0 + 1, 4 + 2 * k, 5 + 2 * k), dz=2)
         m.box(2, 7, 1, 2, 14, 15, "hull_dk")
+    if pose is Pose.MOVE_A:
+        # tail up: the bed and the three rear axles, under the slab
+        _shift(m, (0, 9, 0, 11, 0, 3), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
     return m
@@ -1118,17 +1230,29 @@ def apc(pose: Pose = Pose.A) -> Model:
     open troop hatch tried then changed zero texels at either rung because
     this projection buries a roof detail under the roof's own far edge.
 
-    The move clip keeps the cab up — the nod is a parked transport settling —
-    and rolls the whole hull, dropped ramp and all, `dz = +2` on MOVE_B over a
-    stripe walked a half period. The ramp riding the roll is deliberate: it is
-    bolted to the tail, so leaving it on the ground while the hull lifted
-    would tear the outline. It clears the cell at +2, so the pair needed no
-    inversion. 26 changed silhouette texels at rung 1, 1.92 shimmer, 0.000
-    mass drift.
+    The move clip never nods — the nod is a parked transport settling — and
+    puts an attitude on both frames instead. MOVE_A pitches the transport
+    nose-up: everything from the cab's rear bulkhead forward, the raised cab
+    with its roof and cupola, the glacis, the bumper and the leading track run
+    under all of it, rides `dz = +2` while the open cargo deck and the dropped
+    ramp hold the ground — the loaded end squatting as the carrier pulls away,
+    and the step between cab roof and bay wall deepening instead of shallowing
+    the way pose B's nod makes it. MOVE_B levels that and rolls the whole
+    hull, dropped ramp and all, the same texel (`_roll`). The ramp riding the
+    roll is deliberate: it is bolted to the tail, so leaving it on the ground
+    while the hull lifted would tear the outline.
+
+    Pitch and roll TOGETHER on MOVE_B is what the alternation replaces: it put
+    the cab a second texel up and the frame read 0.667 against the bomber's
+    against 0.658 for its own, the one silhouette on the sheet a raised slab
+    can be mistaken for. One at a time reads 0.871 and 0.759 own, next best
+    0.718 and 0.695. A against MOVE_A is the loudest reading on the land
+    roster at 48 changed texels at rung 1 with 13 of silhouette; MOVE_A
+    against MOVE_B is 34 and 13, at 1.62 shimmer, mass drift 0.012 and 0.000.
     """
     m = Model()
-    _track(m, 0, 2, 0, 15, phase=int(beat(pose)))
-    _track(m, 6, 8, 0, 15, phase=int(beat(pose)))
+    _track(m, 0, 2, 0, 15, phase=_tread_phase(pose))
+    _track(m, 6, 8, 0, 15, phase=_tread_phase(pose))
     # low hull tub running the whole length — the floor the cargo bay and the
     # cab both stand on, and one voxel narrower than any gun tank's
     m.box(0, 8, 1, 15, 2, 4, "hull")
@@ -1186,6 +1310,10 @@ def apc(pose: Pose = Pose.A) -> Model:
         # replaces moved a corner of a slab; this moves the tallest mass the
         # unit owns.
         _shift(m, (1, 7, 10, 17, 2, 12), dz=-2)
+    if pose is Pose.MOVE_A:
+        # nose up: the whole raised cab module from its rear bulkhead forward,
+        # the track run under it included; the open bay and the ramp hold
+        _shift(m, (0, 8, 10, 17, 0, 12), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
     return m
@@ -1202,10 +1330,20 @@ def missiles(pose: Pose = Pose.A) -> Model:
     zero changed silhouette texels at rung 1 and 3 at rung 2, all of them
     boundary flicker.
 
-    The move clip leaves both rounds seated at pose A and rolls the whole
-    erector a board texel on MOVE_B. Running the rail is pose B's verb and
-    belongs to the ambient clip: a battery that erected its rounds while
-    driving would be firing on the move.
+    The move clip leaves both rounds seated at pose A, because running the
+    rail is pose B's verb and belongs to the ambient clip: a battery that
+    erected its rounds while driving would be firing on the move. So the two
+    frames are the short chassis under them. MOVE_A lifts the front axle, the
+    livery cab and the bumper one texel (z at most 5, which is the cab's own
+    roof, so the erector pedestal and the seated rounds behind it never enter
+    the box), and MOVE_B levels that and rolls the whole erector the same
+    texel (`_roll`), which swings both spikes across open sky.
+
+    A against MOVE_A is 28 changed texels at rung 1 with 9 of silhouette;
+    MOVE_A against MOVE_B is 43 and 17, at 1.53 shimmer, mass drift 0.040 and
+    0.000. Identity 0.883 and 0.701 own, next best 0.604 and 0.587 — the
+    thinnest own-to-next margin on the land roster, and it is the seated
+    rounds that hold it, so a later pass may not move them under way.
     """
     m = Model()
     for y in (1, 8):
@@ -1250,6 +1388,9 @@ def missiles(pose: Pose = Pose.A) -> Model:
         for x0 in (2, 6):
             _shift(m, (x0, x0 + 1, 3, 9, 5, 16), dz=2)
             m.box(x0, x0 + 1, 3, 4, 5, 6, "hull_dk")
+    if pose is Pose.MOVE_A:
+        # nose up: front axle, cab and bumper, below the seated rounds
+        _shift(m, (0, 9, 8, 12, 0, 5), dz=2)
     if pose is Pose.MOVE_B:
         _roll(m, 2)
     return m
