@@ -1749,7 +1749,9 @@ def sub(pose: Pose = Pose.A) -> Model:
         # ...and the bow's freeboard goes under. It is deleted rather than
         # shifted because there is nowhere below z=0 to shift it to, and the
         # mass it gives back is what pays for the raised casing: 6.1% drift on
-        # MOVE_A and 7.1% on MOVE_B against the 8% the gate allows.
+        # MOVE_A and 7.1% on MOVE_B of the hull's own pixels, which is 4.5%
+        # and 5.2% as `MoveFrames` reads it (the cast shadow counts there,
+        # and it is pose-invariant) against the 8% that gate allows.
         for y in range(14, 20):
             for x in (2, 3, 4, 5):
                 m.unset(x, y, 1)

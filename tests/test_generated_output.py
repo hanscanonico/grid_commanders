@@ -2896,6 +2896,31 @@ class MoveFrames(unittest.TestCase):
                     _, silhouette = rung1_texels(uid, fac, MOVE_POSES)
                     self.assertGreaterEqual(silhouette, self.MIN_SILHOUETTE_TEXELS)
 
+    # The sub against its own parked pose, at rung 1 and per livery. This is
+    # the one hull whose gait is a trim and a mast rather than a stride, and
+    # the two are easy to author at a scale the board cannot sample: the
+    # first attempt raised a one-voxel periscope, 4 atlas px, and measured 3
+    # changed / 1 silhouette texel against pose A — the move clip WAS the
+    # idle, and every gate above still passed because they all read MOVE_A
+    # against MOVE_B. Measured 2026-08-25 at 22 changed / 7 silhouette in the
+    # thinnest livery; the floors are the texel rule, not the measurement.
+    SUB_MIN_PARKED_CHANGED = 14
+    SUB_MIN_PARKED_SILHOUETTE = 6
+
+    def test_the_running_sub_is_not_the_parked_sub(self):
+        """A submarine under way must differ from one lying stopped by
+        something the board can count, not by a periscope the 4:1 sample
+        eats. Asked of the sub alone: the land families legitimately carry
+        their whole gait on MOVE_B and leave MOVE_A at the rest pose, which
+        `test_the_move_pair_is_not_the_ambient_pair` allows on purpose."""
+        if "sub" not in MOVES:
+            self.skipTest("the sub has no authored move poses")
+        for fac in FACTIONS:
+            with self.subTest(faction=fac.key):
+                changed, silhouette = rung1_texels("sub", fac, (Pose.A, Pose.MOVE_A))
+                self.assertGreaterEqual(changed, self.SUB_MIN_PARKED_CHANGED)
+                self.assertGreaterEqual(silhouette, self.SUB_MIN_PARKED_SILHOUETTE)
+
     def test_no_moving_unit_shimmers_more_than_it_walks(self):
         """The other half of the ratio, as in `AmbientFrames`: interior
         texels that only change tone, per texel of silhouette that actually
@@ -3358,6 +3383,45 @@ class BoardScaleEdge(unittest.TestCase):
             boundary += 1
             breaks += value <= lo or value >= hi
         return breaks, boundary
+
+    # The copters' rotor is the one part of the sheet that is drawn as a
+    # skeleton rather than as a solid, so it is the one that can strand a
+    # texel: a blade tip one voxel across is exactly 4 atlas px, one rung-1
+    # texel, and the sample either drops it or leaves it floating clear of
+    # the aircraft — the disc read as speckle instead of an arc (b_copter
+    # pose B and MOVE_B texel (9, 10) before the tips were widened). The
+    # whole roster is clean of lone texels as of 2026-08-25; this is scoped
+    # to the two units whose thin geometry makes it a live risk.
+    LONE_TEXEL_UNITS = ("b_copter", "t_copter")
+
+    def test_no_pose_strands_a_lone_texel_at_rung_1(self):
+        """Every texel the board paints for a copter, in every pose and
+        livery, touches another one of that copter's texels. Read without
+        the cast shadow, so a tip is never rescued by the ground."""
+        for uid in self.LONE_TEXEL_UNITS:
+            for fac in FACTIONS:
+                for pose in Pose:
+                    px = (
+                        atlas.unit_cell(uid, fac, pose, shadow=False)
+                        .resize(RUNG_1_CELL, Image.NEAREST)
+                        .load()
+                    )
+                    w, h = RUNG_1_CELL
+                    on = {
+                        (x, y) for y in range(h) for x in range(w) if px[x, y][3] > 128
+                    }
+                    lone = {
+                        (x, y)
+                        for x, y in on
+                        if not any(
+                            (x + dx, y + dy) in on
+                            for dx in (-1, 0, 1)
+                            for dy in (-1, 0, 1)
+                            if (dx, dy) != (0, 0)
+                        )
+                    }
+                    with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
+                        self.assertEqual(lone, set())
 
     def test_the_board_lands_on_the_edge_at_every_phase(self):
         for phase in range(self.SCALE):
