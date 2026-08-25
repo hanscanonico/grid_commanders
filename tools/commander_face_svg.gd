@@ -116,6 +116,13 @@ const COLLAR_V := &"v"
 const COLLAR_MANDARIN := &"mandarin"
 const COLLAR_DOUBLE := &"double"
 const COLLAR_DEFAULT := COLLAR_V
+## The noses `_nose` knows how to draw, the FACES `nose` column. A name outside
+## this vocabulary falls through to the tick, which is the one nose every bust
+## shared before the column existed, so a row naming none is unchanged.
+const NOSE_TICK := &"tick"
+const NOSE_HOOK := &"hook"
+const NOSE_BROAD := &"broad"
+const NOSE_DEFAULT := NOSE_TICK
 
 const SKIN := {
 	&"light": "#f2c9a0",
@@ -135,16 +142,17 @@ const HAIR := {
 }
 
 ## Per-commander spec, straight from the handoff's FACES table, with the skull
-## and the collar this repo gave each general on top of it. `head` is
+## the collar and the nose this repo gave each general on top of it. `head` is
 ## [width, jaw, crown, spread] (see HEAD_DEFAULT), `pose` is
-## [tilt degrees, zoom, mirrored], `collar` is one of the three cuts above, and
-## `pip` puts a rank stud on it — the four costliest powers only. Heads are
-## cast against doctrine: the immovable are wide and square, the quick and the
-## clever narrow and tapered, and the three grey veterans wear a low crown.
-## Collars are cast the same way: line officers wear the V, staff and planners
-## the mandarin band, the veterans and the admiral double-breasted. So are the
-## expressions — `brow`, `eyes`, `mouth` and the `eye` size each general's power
-## quote is read off, so a face looks like it could say its own line.
+## [tilt degrees, zoom, mirrored], `nose` is one of the three glyphs (see
+## NOSE_TICK), `collar` is one of the three cuts above, and `pip` puts a rank
+## stud on it — the four costliest powers only. Heads are cast against doctrine:
+## the immovable are wide and square, the quick and the clever narrow and
+## tapered, and the three grey veterans wear a low crown. Collars are cast the
+## same way: line officers wear the V, staff and planners the mandarin band, the
+## veterans and the admiral double-breasted. So are the expressions — `brow`,
+## `eyes`, `mouth` and the `eye` size each general's power quote is read off, so
+## a face looks like it could say its own line.
 const FACES := {
 	&"alina_ward":
 	{
@@ -160,6 +168,7 @@ const FACES := {
 		"earring": true,
 		"collar": &"v",
 		"head": [0.96, &"round", 0.5, 1.0],
+		"nose": &"tick",
 		"pose": [-5.0, 1.2, false],
 		"bg": &"rays",
 		"prop": &"sabre",
@@ -177,6 +186,7 @@ const FACES := {
 		"acc": &"glasses",
 		"collar": &"double",
 		"head": [1.08, &"square", -2.0, 1.0],
+		"nose": &"broad",
 		"pose": [3.0, 1.14, false],
 		"bg": &"halftone",
 		"prop": &"pipe",
@@ -194,6 +204,7 @@ const FACES := {
 		"acc": &"goggles",
 		"collar": &"mandarin",
 		"head": [0.92, &"tapered", 0.0, 1.05],
+		"nose": &"tick",
 		"pose": [-8.0, 1.24, true],
 		"bg": &"speed",
 		"prop": &"wrench",
@@ -211,6 +222,7 @@ const FACES := {
 		"acc": &"scar",
 		"collar": &"v",
 		"head": [1.1, &"square", 0.5, 0.96],
+		"nose": &"hook",
 		"pose": [6.0, 1.22, false],
 		"bg": &"wedge",
 		"prop": &"cigar",
@@ -228,6 +240,7 @@ const FACES := {
 		"acc": &"none",
 		"collar": &"v",
 		"head": [0.94, &"tapered", 1.0, 1.0],
+		"nose": &"hook",
 		"pose": [0.0, 1.18, false],
 		"bg": &"bars",
 		"prop": &"baton",
@@ -245,6 +258,7 @@ const FACES := {
 		"acc": &"eyepatch",
 		"collar": &"v",
 		"head": [1.12, &"square", -1.0, 0.94],
+		"nose": &"broad",
 		"pose": [-3.0, 1.26, false],
 		"bg": &"burst",
 		"prop": &"medal",
@@ -262,6 +276,7 @@ const FACES := {
 		"acc": &"none",
 		"collar": &"mandarin",
 		"head": [0.92, &"tapered", 1.0, 1.0],
+		"nose": &"hook",
 		"pose": [8.0, 1.18, true],
 		"bg": &"halftone",
 		"prop": &"card",
@@ -279,6 +294,7 @@ const FACES := {
 		"acc": &"glasses",
 		"collar": &"mandarin",
 		"head": [0.88, &"tapered", 2.0, 0.94],
+		"nose": &"hook",
 		"pose": [-4.0, 1.12, false],
 		"bg": &"grid",
 		"prop": &"book",
@@ -296,6 +312,7 @@ const FACES := {
 		"acc": &"headset",
 		"collar": &"mandarin",
 		"head": [0.9, &"round", 1.0, 1.08],
+		"nose": &"tick",
 		"pose": [-9.0, 1.22, false],
 		"bg": &"speed",
 		"prop": &"drone",
@@ -314,6 +331,7 @@ const FACES := {
 		"freckles": true,
 		"collar": &"v",
 		"head": [0.92, &"round", 0.5, 1.06],
+		"nose": &"broad",
 		"pose": [4.0, 1.16, false],
 		"bg": &"rays",
 		"prop": &"falcon",
@@ -331,6 +349,7 @@ const FACES := {
 		"acc": &"hood",
 		"collar": &"v",
 		"head": [0.88, &"tapered", 0.5, 0.96],
+		"nose": &"tick",
 		"pose": [0.0, 1.24, false],
 		"bg": &"wedge",
 		"prop": &"dagger",
@@ -348,6 +367,7 @@ const FACES := {
 		"acc": &"bandana",
 		"collar": &"v",
 		"head": [1.06, &"round", 0.0, 1.0],
+		"nose": &"broad",
 		"pose": [-6.0, 1.2, false],
 		"bg": &"burst",
 		"prop": &"radio",
@@ -365,6 +385,7 @@ const FACES := {
 		"acc": &"glasses",
 		"collar": &"mandarin",
 		"head": [0.94, &"round", 0.5, 1.02],
+		"nose": &"tick",
 		"pose": [-4.0, 1.18, false],
 		"bg": &"grid",
 		"prop": &"ledger",
@@ -382,6 +403,7 @@ const FACES := {
 		"acc": &"none",
 		"collar": &"double",
 		"head": [1.04, &"tapered", -2.0, 0.98],
+		"nose": &"hook",
 		"pose": [5.0, 1.25, false],
 		"bg": &"wedge",
 		"prop": &"helm",
@@ -399,6 +421,7 @@ const FACES := {
 		"acc": &"goggles",
 		"collar": &"v",
 		"head": [0.98, &"round", 0.0, 1.06],
+		"nose": &"hook",
 		"pose": [-7.0, 1.2, true],
 		"bg": &"speed",
 		"prop": &"plane",
@@ -416,6 +439,7 @@ const FACES := {
 		"acc": &"none",
 		"collar": &"double",
 		"head": [1.08, &"round", -2.0, 1.0],
+		"nose": &"hook",
 		"pose": [3.0, 1.16, false],
 		"bg": &"rays",
 		"prop": &"anchor",
@@ -433,6 +457,7 @@ const FACES := {
 		"acc": &"scar",
 		"collar": &"mandarin",
 		"head": [1.08, &"square", 0.0, 0.96],
+		"nose": &"broad",
 		"pose": [7.0, 1.24, false],
 		"bg": &"burst",
 		"prop": &"coins",
@@ -451,6 +476,7 @@ const FACES := {
 		"collar": &"v",
 		"pip": true,
 		"head": [0.9, &"tapered", 0.5, 1.08],
+		"nose": &"tick",
 		"pose": [-6.0, 1.22, false],
 		"bg": &"halftone",
 		"prop": &"whistle",
@@ -468,6 +494,7 @@ const FACES := {
 		"acc": &"bandana",
 		"collar": &"mandarin",
 		"head": [0.9, &"round", 1.0, 1.04],
+		"nose": &"tick",
 		"pose": [5.0, 1.2, true],
 		"bg": &"wedge",
 		"prop": &"compass",
@@ -486,6 +513,7 @@ const FACES := {
 		"collar": &"mandarin",
 		"pip": true,
 		"head": [1.0, &"square", 0.0, 0.98],
+		"nose": &"tick",
 		"pose": [0.0, 1.16, false],
 		"bg": &"grid",
 		"prop": &"scales",
@@ -504,6 +532,7 @@ const FACES := {
 		"collar": &"v",
 		"pip": true,
 		"head": [1.1, &"square", -0.5, 0.96],
+		"nose": &"broad",
 		"pose": [-5.0, 1.26, true],
 		"bg": &"burst",
 		"prop": &"axe",
@@ -522,6 +551,7 @@ const FACES := {
 		"collar": &"double",
 		"pip": true,
 		"head": [1.14, &"square", -1.5, 0.94],
+		"nose": &"hook",
 		"pose": [2.0, 1.28, false],
 		"bg": &"halftone",
 		"prop": &"hammer",
@@ -708,11 +738,7 @@ func _bust(face: Dictionary) -> String:
 	out += _crowned(_hair_back(face["style"], hair), geom)
 	out += _shoulders(face) + _shade_uniform(face)
 	out += _neck(skin, width) + _shade_neck(width)
-	var ear := _line()
-	out += _circle(_hx(31, width), 58, 5, skin, ear) + _circle(_hx(79, width), 58, 5, skin, ear)
-	if face.get("earring", false):
-		var pin := ' stroke="%s" stroke-width="1.2"' % _ink
-		out += _circle(_hx(31, width), 63.5, 1.9, _gold, pin)
+	out += _ears(skin, width, face.get("earring", false))
 	out += _head(skin, face) + _shade_face(face)
 	out += _crowned(_facial(face["facial"], hair), geom, false)
 	var crown := _hair_front(face["style"], hair) + _shade_hair(face) + _headwear(face["acc"])
@@ -721,7 +747,7 @@ func _bust(face: Dictionary) -> String:
 	band += _eyes(face["eyes"], xs, float(face.get("eye", EYE_DEFAULT)))
 	band += _eyewear(face["acc"], xs, width)
 	out += _banded(band, geom)
-	out += _stroke_path("M55,60 L53.5,65 Q55,66.5 57,65.2", 1.8)
+	out += _nose(face.get("nose", NOSE_DEFAULT), width)
 	out += _mouth(face["mouth"])
 	out += _details(face, xs, geom)
 	return out + _prop(face["prop"], &"front", skin)
@@ -821,6 +847,41 @@ func _neck_d(width: float) -> String:
 	var side := _hx(47, width)
 	var far := _hx(63, width)
 	return "M%s,76 L%s,90 Q%s,95 %s,90 L%s,76 Z" % [side, side, HEAD_CX, far, far]
+
+
+## Ears as big as the skull they are set into, with the earring hung off the
+## lobe rather than at a fixed height: a stock ear on a 1.14 head is what makes
+## a wide bust read as a narrow one stretched.
+func _ears(skin: String, width: float, earring: bool) -> String:
+	var pen := _line()
+	var r := snappedf(5.0 * width, 0.01)
+	var out := _circle(_hx(31, width), 58, r, skin, pen) + _circle(_hx(79, width), 58, r, skin, pen)
+	if not earring:
+		return out
+	var pin := ' stroke="%s" stroke-width="1.2"' % _ink
+	return out + _circle(_hx(31, width), snappedf(58.5 + r, 0.01), 1.9, _gold, pin)
+
+
+## The nose, one of three glyphs, drawn on the skull's own x — the tick is the
+## single nose every bust used to share, so a row naming none is unchanged.
+func _nose(kind: StringName, width: float) -> String:
+	if kind == NOSE_HOOK:
+		var hook := (
+			"M%s,58 Q%s,63 %s,66.4 Q%s,67.6 %s,66"
+			% [_hx(55.6, width), _hx(58.2, width), _hx(56.4, width), _hx(55, width), _hx(53, width)]
+		)
+		return _stroke_path(hook, 1.8)
+	if kind == NOSE_BROAD:
+		var broad := (
+			"M%s,60.5 L%s,65 Q%s,68 %s,65"
+			% [_hx(55, width), _hx(51.8, width), _hx(55, width), _hx(58.2, width)]
+		)
+		return _stroke_path(broad, 2.2)
+	var tick := (
+		"M%s,60 L%s,65 Q%s,66.5 %s,65.2"
+		% [_hx(55, width), _hx(53.5, width), _hx(55, width), _hx(57, width)]
+	)
+	return _stroke_path(tick, 1.8)
 
 
 func _head(skin: String, face: Dictionary = {}) -> String:

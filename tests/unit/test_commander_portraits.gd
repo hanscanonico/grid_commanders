@@ -128,6 +128,19 @@ func test_no_expression_is_worn_by_the_whole_roster() -> void:
 		assert_lte(int(brows[brow]), 5, "%s generals share the %s brow" % [brows[brow], brow])
 
 
+## A nose outside the vocabulary falls through to the tick, so a typo would hand
+## a general the face they were being given one of three glyphs to escape.
+func test_every_general_names_a_nose_that_is_drawn() -> void:
+	var noses: Array[StringName] = [FaceSvg.NOSE_TICK, FaceSvg.NOSE_HOOK, FaceSvg.NOSE_BROAD]
+	var counts := {}
+	for id: StringName in FaceSvg.FACES:
+		var row: Dictionary = FaceSvg.FACES[id]
+		var nose: StringName = row.get("nose", FaceSvg.NOSE_DEFAULT)
+		assert_has(noses, nose, "%s wears an unknown nose" % id)
+		counts[nose] = int(counts.get(nose, 0)) + 1
+	assert_eq(counts.size(), noses.size(), "the sheet is not using all three noses")
+
+
 ## The default is the one head the handoff authored, so a row that names none
 ## still draws the bust every general shared before this table grew a column —
 ## which is what the neutral silhouette has always been and must stay. The
