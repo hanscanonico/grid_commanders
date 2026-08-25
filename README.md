@@ -211,8 +211,9 @@ composited over the terrain the unit stands on; it takes its output directory
 on argv, so it adds nothing to `out/` and the snapshot gate never sees it.
 
 Both instruments take `--clip {ambient,move}` (default `ambient`) and read the
-frames from `units.CLIP_POSES` and the cadence from the clip's own `*_MS`, so a
-clip that gains a frame is measured and drawn without either file being edited.
+clip's frames from `units.CLIP_POSES` — `preview_motion.py` also takes its
+sheet tuple and its cadence (`*_MS`) from `spritegen.anim` — so a clip that
+gains a frame is measured and drawn without either file being edited.
 `measure_motion.py` adds a `MOVES?` column on the move clip — a "no" row is a
 unit rendering its ambient counterpart, and says nothing about a stride.
 `preview_motion.py` draws the move clip FLIPPED as well by default, each unit's
@@ -336,8 +337,8 @@ game to read instead of retype: the cell's size, its ground line and its
 overflow, the clips (which sheets, in what order, at what cadence — the
 army's ambient beat on the board, the same beat on the cut-ins' shadowless
 `ambient_figures` pair because they are the same motion, the sea's own, and
-the `move` clip's), the units atlas's column and row order, and how many phase variants each
-terrain family ships. Every field is derived from the live tables in `spritegen/` —
+the `move` clip's), the units atlas's column and row order, and how many
+phase variants each terrain family ships. Every field is derived from the live tables in `spritegen/` —
 `atlas.CELL_W/CELL_H`, `units.ATLAS_ORDER`, `palette.FACTIONS`, the terrain
 phase tables — and `ground_px` is **measured** off a rendered cell (a composed
 cell minus the shadowless one is the cast shadow alone; an ellipse is widest on
