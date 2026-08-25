@@ -166,6 +166,11 @@ def unit_cell(
         # shadow, so its handedness is not what a mirrored sprite is caught
         # on: the hard ellipse a tank lays on grass is.
         centred_shadow=units.moving(pose) and kind != "sea",
+        # What a ship's move frames get instead of a recentred shadow: white
+        # water at the bow. It is repainted DISPLACEMENT (`voxel._bow_wave`),
+        # so it lands on the water plane by construction, cannot heave with
+        # the bob, and leaves the ambient waterline foam where pose A put it.
+        under_way=units.moving(pose) and kind == "sea",
     )
 
 

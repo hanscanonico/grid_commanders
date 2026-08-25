@@ -3140,23 +3140,52 @@ class MoveFrames(unittest.TestCase):
                             shadow - flipped - self._flip(body), set(), "unmirrored"
                         )
 
-    def test_a_moving_hull_leaves_its_foam_line_where_it_found_it(self):
-        """The ambient clip's rule (`test_the_foam_line_stays_on_the_water`),
-        asked of the move clip too, because a gait is where it is easy to
-        break: `voxel._waterline_foam` places the flecks against the composed
-        cell's own lowest spans, so a hull that trims bow-up by lifting its
-        waterline course out of them would drag the foam line up the sheet
-        and the sea would read as heaving rather than the ship as running.
-        Every move pose's foam must be pose A's, pixel for pixel."""
+    def test_a_moving_hull_adds_a_bow_wave_and_moves_nothing_else(self):
+        """A running hull ADDS white water; it never moves the water it had.
+
+        Two rules, and the first is the ambient clip's own
+        (`test_the_foam_line_stays_on_the_water`) asked of the move clip.
+        `voxel._waterline_foam` places its flecks against the composed cell's
+        lowest spans, so a hull that trims bow-up by lifting its waterline
+        course out of them would drag the foam line up the sheet and the sea
+        would read as heaving rather than the ship as running. So every fleck
+        pose A drew is still there, in the same pixel, in both move poses:
+        pose A's foam is a SUBSET of the move pose's, not merely equal to it.
+
+        The second is what a move pose may add on top — the bow wave
+        (`voxel._bow_wave`), which is why this is a superset and not an
+        equality. It is held to being a WAVE rather than a licence to paint:
+
+        - it exists, in every livery and both move frames;
+        - every new fleck lands where pose A had displacement shading or open
+          water, never on the hull, so the wave is on the sea and not a white
+          stripe on the freeboard;
+        - every new fleck is forward of the displacement patch's own midline,
+          so it is the bow breaking and not the whole ship going white.
+
+        Together those say the sea under a moving ship is the sea under the
+        parked one plus foam at its bow, which is the whole claim the move
+        clip makes about water.
+        """
         for uid in self._movers():
             if UNITS[uid][1] != "sea":
                 continue
             for fac in FACTIONS:
-                a = self._foam(atlas.unit_cell(uid, fac, Pose.A))
-                self.assertTrue(a)
+                parked = atlas.unit_cell(uid, fac, Pose.A)
+                foam, shade = self._foam(parked), self._shadow(parked)
+                water = shade | self._transparent(parked)
+                self.assertTrue(foam)
+                midline = (min(x for x, _ in shade) + max(x for x, _ in shade) + 1) // 2
                 for pose in MOVE_POSES:
+                    running = self._foam(atlas.unit_cell(uid, fac, pose))
+                    wave = running - foam
                     with self.subTest(unit=uid, faction=fac.key, pose=pose.name):
-                        self.assertEqual(a, self._foam(atlas.unit_cell(uid, fac, pose)))
+                        self.assertEqual(foam - running, set(), "the ambient line")
+                        self.assertTrue(wave, "no bow wave")
+                        self.assertEqual(wave - water, set(), "off the water")
+                        self.assertEqual(
+                            {(x, y) for x, y in wave if x > midline}, set(), "abaft"
+                        )
 
     def test_a_unit_without_a_gait_renders_its_ambient_frame(self):
         """The fallback is what makes the move sheets valid from day one:
@@ -3265,6 +3294,11 @@ class MoveFrames(unittest.TestCase):
             for x in range(w)
             if px[x, y][:3] == FOAM and px[x, y][3] == 255
         }
+
+    def _transparent(self, cell: Image.Image) -> set:
+        px = cell.convert("RGBA").load()
+        w, h = cell.size
+        return {(x, y) for y in range(h) for x in range(w) if px[x, y][3] == 0}
 
     def _body(self, cell: Image.Image) -> set:
         """Everything the unit itself paints — the shadow is the ground's."""
