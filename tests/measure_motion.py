@@ -72,8 +72,10 @@ bob (guns, autocannon, periscope, bow visor):
   bomber        101    83   36  1.31  |    369   328  144  1.28
   b_copter       44    49   25  0.96  |    209   207   97  1.13   before
                  44    49   28  0.75  |    209   209  107  0.95   after
+                 45    52   31  0.68  |    215   218  112  0.95   thick tips
   t_copter       60    58   24  1.42  |    260   241   90  1.68   before
                  60    62   30  1.07  |    260   249  109  1.28   after
+                 70    65   28  1.32  |    281   263  119  1.21   thick tips
   missiles       74     7    0  7.00  |    289    36    3 11.00   before
                  74    29   10  1.90  |    289   118   35  2.37   after
   battleship     80    66   30  1.20  |    329   267  116  1.30   before
@@ -87,6 +89,7 @@ bob (guns, autocannon, periscope, bow visor):
   ALL          1367   544  216  1.52  |   5452  2209  856  1.58   before
                1367   731  299  1.44  |   5452  2937 1170  1.51   after
                1381   754  309  1.44  |   5503  3011 1203  1.50   remass
+               1392   760  310  1.45  |   5530  3034 1218  1.49   thick tips
 
 Before the pass the whole tracked family — tank, md tank, anti air,
 artillery, rockets, apc — moved nothing at either rung. Six of them crept a
@@ -147,6 +150,13 @@ on t_copter. The AFTER row is the same four blades turned 14 degrees
 (`units._BLADE_B`), at 0.88 and 0.87, which is one aircraft with its rotor
 advanced, and it still moves 28 and 30 silhouette texels at rung 1. Silhouette
 share is not the measure of an idle on its own: WHICH texels move is.
+
+THICK TIPS is 2026-08-25: the outer two ranks of every blade widened to two
+voxels across the sweep, because a one-voxel tip is exactly one rung-1 texel
+and the sample kept leaving it stranded — the disc arrived as speckle with
+texels touching nothing (b_copter pose B (9, 10), t_copter (7, 9) and (4, 11)).
+There are none left in any pose or livery, and the frames share more of each
+other than before: 0.89 on b_copter and 0.88 on t_copter.
 
 MOVE CLIP
 ---------
