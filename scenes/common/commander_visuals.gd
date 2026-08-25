@@ -64,16 +64,27 @@ const NEUTRAL_PORTRAIT_PATH := "res://assets/portraits/commanders/none.png"
 ## mismatch, so changing the drawing's viewBox or scale cannot silently pass it by.
 const PORTRAIT_SIZE := Vector2i(220, 268)
 const EMBLEM_PX := 64
-## The square of a portrait that holds the head — hair, headwear and jaw for all
-## twenty-three busts, the neutral silhouette included. A portrait is a framed
-## window with the bust breaking out of its top, so the head's centre sits well
-## above the image's: a square field covering the whole portrait cuts the
-## headwear off the top and spends a third of itself on chest, and one fitting
-## the portrait whole leaves the head at half the field. Measured against every
-## shipped pose (the widest zoom, the tallest headwear) rather than derived,
-## because the poses are per-general; re-measure it if the bake's viewBox, scale
-## or pose range moves.
-const FACE_REGION := Rect2i(26, 14, 168, 168)
+## The square of a portrait that holds the head — hair, headwear, both ears and
+## the jaw — for all twenty-two generals. A portrait is a framed window with the
+## bust breaking out of its top, so the head's centre sits well above the
+## image's: a square covering the whole portrait spends a third of itself on
+## chest, and one fitting the portrait whole leaves the head at half the field.
+##
+## Measured over the twenty-two shipped busts rather than eyeballed, because the
+## poses are per-general (tilt, zoom and mirror) and the skulls are not one
+## width. Their ear-to-ear span runs x 22.3 (Draeg) to 199.7 (Morn), centred on
+## 111.0; the deepest chin ends at y 202 (Quill), while the highest skull starts
+## at y 30.8 (Morn). One square holds every one of them: the head centres spread
+## only 15.5px, which a 190 square absorbs with at least 6px of margin on either
+## side and 12px under that deepest chin — the clearance
+## tests/unit/test_commander_face.gd pins, 12 to 21 across the roster. So the
+## crop is a fixed rect and no per-pose anchor is needed — re-measure it if the
+## bake's viewBox, scale, skull widths or pose range move.
+##
+## Hair breaking over the top edge is deliberate and is the portrait's own
+## composition: what may never be cut is the jaw, which
+## tests/unit/test_commander_face.gd measures on every shipped bust.
+const FACE_REGION := Rect2i(16, 25, 190, 190)
 ## How commander art is sampled, everywhere it is drawn — the busts and the
 ## faction emblems alike. Linear, alone in a game whose art is otherwise
 ## nearest-neighbour: both are baked larger than any field that shows them, and
@@ -213,8 +224,14 @@ static func portrait_for(commander: CommanderType) -> Texture2D:
 ## The same portrait cropped to `FACE_REGION` — what a surface too small to show
 ## a bust asks for. The atlas shares the portrait's own texture, so a face costs
 ## no second load, and it is cached under a key of its own beside the portraits.
+##
+## The empty seat is the one exception and gets its bust back whole: the neutral
+## art is a featureless silhouette, so cropped to the head it is a dark blob on
+## near-black, and "no commander" reads as an empty seat only head-and-shoulders.
 static func face_for(commander: CommanderType) -> Texture2D:
 	var id := commander.id if commander != null else CommanderType.NEUTRAL_ID
+	if id == CommanderType.NEUTRAL_ID:
+		return portrait_for(commander)
 	var key := "face:%s" % id
 	if _texture_cache.has(key):
 		return _texture_cache[key]
