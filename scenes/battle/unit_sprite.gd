@@ -36,30 +36,19 @@ const ART_OFFSET := Vector2(0, -float(SPRITE_OVERFLOW) / 2.0)
 ## bottom edge — the two cut-ins do, and an armour cell, whose shadow is the
 ## widest, floated furthest above it. test_figure_sheet.gd measures it off the
 ## shipped sheets, the subtraction between them being the shadow itself.
-## Since the generator's one-sun pass the shadow sits SHADOW_OFFSET (2px) below
-## the feet row, so this is 9 - 2.
+## The generator lights the board with one sun, which drops the shadow
+## SHADOW_OFFSET (2px) below the feet row rather than centring it on them.
 const CELL_GROUND_PX := 7
 const UNITS_ATLAS_PATH := "res://assets/tiles/units_atlas.png"
 ## Ambient animation frame B: the same army one beat later — rotors swept,
-## air and sea units riding a pixel higher while their shadows stay put.
-## Land cells carry an idle key pose in frame B, so every column animates.
+## air and sea units riding a pixel higher while their shadows stay put, land
+## cells on an idle key pose. Every column differs, so every sprite processes;
+## tests/unit/test_ambient_frames.gd pins that against the shipped art.
 const UNITS_ATLAS_B_PATH := "res://assets/tiles/units_atlas_b.png"
 ## The same army with the tile's cast shadow subtracted, for a surface that
 ## draws the art at 1:1 over ground and a shadow of its own — see
 ## `figure_texture_for`.
 const UNITS_ATLAS_FIGURES_PATH := "res://assets/tiles/units_atlas_figures.png"
-## Milliseconds per ambient beat, and one cadence for both motions because the
-## sheets encode one: frame B is the whole army a beat later, so a rotor and a
-## swell cannot be given different rates without a third sheet. Half a second is
-## the slowest rate a swept rotor still reads as turning, which is the faster of
-## the two motions and so the one that sets the beat.
-const AMBIENT_MS := 500
-## Captures pin the ambient clock at frame A the way they pin game speed
-## and the hint strip: a frame must not depend on when the shutter fired.
-## Belt as well as braces — a capture also pins Instant, which `ambient_frame`
-## already answers with frame A — because an explicit `--speed=` still wins over
-## the pinned tier and a capture of a tier must not become a capture of a beat.
-static var ambient_frozen := false
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:
 ## with the generated liveries a desaturated unit collapsed into the iron and
 ## neutral rows — three meanings, one appearance (sprite review round 3). The
@@ -124,8 +113,8 @@ func setup(p_unit: Unit, p_active_team: int, p_atlas_row: int) -> void:
 	active_team = p_active_team
 	# On the beat the rest of the board is on, before the first paint: a copter
 	# built mid-beat would otherwise open on frame A and snap a frame later.
-	set_process(animates(p_unit.type))
-	_frame = ambient_frame() if is_processing() else 0
+	set_process(true)
+	_frame = BoardBeat.frame(BoardBeat.AMBIENT_MS)
 	atlas_row = p_atlas_row
 	scale = Vector2.ONE * SPRITE_SCALE
 	offset = ART_OFFSET
@@ -188,33 +177,8 @@ static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTextu
 	return atlas
 
 
-## Every column differs between the sheets: air and sea ride a pixel higher
-## with rotors swept, and land figures carry an idle key pose in frame B
-## (generator 7c69860). Pinned against the shipped art by
-## tests/unit/test_ambient_frames.gd.
-static func animates(_type: UnitType) -> bool:
-	return true
-
-
-## The shared ambient beat. Wall-clock, not accumulated time: every sprite
-## on the board (and any future surface that animates) agrees on the frame
-## without a conductor, and pacing stays presentation-only by construction.
-##
-## Instant is a still board by the same rule the tier states everywhere else —
-## it shows a result rather than playing one out — so it answers frame A, the
-## sheet every other surface draws from.
-##
-## The clock is a defaulted argument so that both stills — Instant and a pinned
-## capture — are checkable rather than being read off whichever beat the suite
-## happened to run in.
-static func ambient_frame(now_ms: int = Time.get_ticks_msec()) -> int:
-	if ambient_frozen or Settings.speed.instant:
-		return 0
-	return int(now_ms / AMBIENT_MS) % 2
-
-
 func _process(_delta: float) -> void:
-	var frame := ambient_frame()
+	var frame := BoardBeat.frame(BoardBeat.AMBIENT_MS)
 	if frame == _frame:
 		return
 	_frame = frame

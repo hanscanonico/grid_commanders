@@ -2,8 +2,8 @@ extends GutTest
 ## The board's ambient beat: which figures the two units sheets differ in, and
 ## when the beat is not run at all.
 ##
-## In scope despite living beside a Sprite2D: `animates` and `ambient_frame` are
-## static and pure, and nothing here builds a sprite — the same shape
+## In scope despite living beside a Sprite2D: the sheet paths and `BoardBeat.frame`
+## are static and pure, and nothing here builds a sprite — the same shape
 ## test_path_arrow.gd reads PathArrow.segments() in. What is under test is the
 ## art contract, which is the half that goes quiet when it breaks: a sheet
 ## regenerated with a still copter, or a land unit that started moving, changes
@@ -27,7 +27,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	Settings.speed = opened_at
-	UnitSprite.ambient_frozen = false
+	BoardBeat.frozen = false
 
 
 func test_the_two_sheets_are_the_same_grid() -> void:
@@ -36,22 +36,15 @@ func test_the_two_sheets_are_the_same_grid() -> void:
 	assert_eq(frame_b.get_size(), frame_a.get_size(), "the sheets are different sizes")
 
 
-func test_only_the_animated_kinds_differ_between_the_sheets() -> void:
+## Every column carries a beat now — air and sea ride a pixel higher with rotors
+## swept, land cells hold an idle key pose — which is what retired `animates()`.
+## Regenerate a sheet with one column still and this is what says so.
+func test_every_column_differs_between_the_sheets() -> void:
 	assert_gt(units.size(), 0, "no units loaded, so this would pass vacuously")
 	for type in units.all():
-		var moved := _column_differs(type.atlas_col)
-		assert_eq(
-			moved,
-			UnitSprite.animates(type),
-			(
-				"%s: the sheets %s in column %d, but animates() says %s"
-				% [
-					type.id,
-					"differ" if moved else "agree",
-					type.atlas_col,
-					UnitSprite.animates(type)
-				]
-			)
+		assert_true(
+			_column_differs(type.atlas_col),
+			"%s: the sheets agree in column %d, so it does not animate" % [type.id, type.atlas_col]
 		)
 
 
@@ -59,20 +52,32 @@ func test_only_the_animated_kinds_differ_between_the_sheets() -> void:
 ## be Instant, which is a still board and would pass every one of these vacuously.
 func test_the_beat_alternates_every_cadence() -> void:
 	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
-	assert_eq(UnitSprite.ambient_frame(0), 0, "the beat did not open on frame A")
-	assert_eq(UnitSprite.ambient_frame(UnitSprite.AMBIENT_MS), 1, "the beat did not turn over")
-	assert_eq(UnitSprite.ambient_frame(2 * UnitSprite.AMBIENT_MS), 0, "the beat did not come back")
+	assert_eq(BoardBeat.frame(BoardBeat.AMBIENT_MS, 0), 0, "the beat did not open on frame A")
+	assert_eq(
+		BoardBeat.frame(BoardBeat.AMBIENT_MS, BoardBeat.AMBIENT_MS), 1, "the beat did not turn over"
+	)
+	assert_eq(
+		BoardBeat.frame(BoardBeat.AMBIENT_MS, 2 * BoardBeat.AMBIENT_MS),
+		0,
+		"the beat did not come back"
+	)
 
 
 func test_a_frozen_clock_holds_frame_a() -> void:
 	Settings.speed = GameSpeed.by_id(GameSpeed.DEFAULT_ID)
-	UnitSprite.ambient_frozen = true
-	assert_eq(UnitSprite.ambient_frame(UnitSprite.AMBIENT_MS), 0, "a pinned capture read a beat")
+	BoardBeat.frozen = true
+	assert_eq(
+		BoardBeat.frame(BoardBeat.AMBIENT_MS, BoardBeat.AMBIENT_MS),
+		0,
+		"a pinned capture read a beat"
+	)
 
 
 func test_instant_holds_frame_a() -> void:
 	Settings.speed = GameSpeed.by_id(&"instant")
-	assert_eq(UnitSprite.ambient_frame(UnitSprite.AMBIENT_MS), 0, "Instant played the beat")
+	assert_eq(
+		BoardBeat.frame(BoardBeat.AMBIENT_MS, BoardBeat.AMBIENT_MS), 0, "Instant played the beat"
+	)
 
 
 ## True when any faction row of `column` is *drawn* differently in frame B. The
