@@ -73,10 +73,11 @@ const EMBLEM_PX := 64
 ## Measured over the twenty-two shipped busts rather than eyeballed, because the
 ## poses are per-general (tilt, zoom and mirror) and the skulls are not one
 ## width. Their ear-to-ear span runs x 22.3 (Draeg) to 199.7 (Morn), centred on
-## 111.0; the widest jaw ends at y 201.2 (Quill) and the neck under it at 215.4,
-## while the highest skull starts at y 30.8 (Morn). One square holds every one of
-## them: the head centres spread only 15.5px, which a 190 square absorbs with at
-## least 6px of margin on either side and 4px under the deepest collar. So the
+## 111.0; the deepest chin ends at y 202 (Quill), while the highest skull starts
+## at y 30.8 (Morn). One square holds every one of them: the head centres spread
+## only 15.5px, which a 190 square absorbs with at least 6px of margin on either
+## side and 12px under that deepest chin — the clearance
+## tests/unit/test_commander_face.gd pins, 12 to 21 across the roster. So the
 ## crop is a fixed rect and no per-pose anchor is needed — re-measure it if the
 ## bake's viewBox, scale, skull widths or pose range move.
 ##
