@@ -49,7 +49,6 @@ var _built := false
 ## cosmetic by construction.
 var _spoken: Dictionary[int, int] = {}
 var _field: Panel
-var _portrait: TextureRect
 var _eyebrow: Label
 var _quote: Label
 var _power_name: Label
@@ -70,19 +69,12 @@ func _build() -> void:
 	add_child(row)
 
 	# A fixed-size portrait field: an explicit height the portrait is fitted into,
-	# and a width the HBox will not stretch (it has no expand flag).
-	_field = Panel.new()
-	_field.custom_minimum_size = _PORTRAIT_FIELD
-	_field.clip_contents = true
+	# and a width the HBox will not stretch (it has no expand flag). Tall enough
+	# that the kit shows the general whole, as on the card — this is the one surface
+	# that shows one full size, and the framed window they stand in is half the
+	# drawing. Neutral until `bind` puts the firing general's faction on it.
+	_field = UiKit.commander_bust(null, _PORTRAIT_FIELD, UiKit.NO_FIELD)
 	row.add_child(_field)
-	_portrait = TextureRect.new()
-	_portrait.texture_filter = CommanderVisuals.ART_FILTER
-	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	# Whole rather than cropped, as on the card: this is the one surface that shows
-	# a general full size, and the framed window they stand in is half the drawing.
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_field.add_child(_portrait)
 
 	var copy := VBoxContainer.new()
 	copy.add_theme_constant_override("separation", 4)
@@ -121,8 +113,7 @@ func bind(commander: CommanderType, team: int) -> void:
 	add_theme_stylebox_override(
 		"panel", UiTheme.bordered(CommanderVisuals.PAPER, theme.color_dark, 4)
 	)
-	_field.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
-	_portrait.texture = CommanderVisuals.portrait_for(commander)
+	UiKit.bind_bust(_field, commander, theme.color)
 	_eyebrow.text = "%s · COMMAND POWER" % commander.display_name.to_upper()
 	var line := _next_quote(commander, team)
 	_quote.visible = not line.is_empty()

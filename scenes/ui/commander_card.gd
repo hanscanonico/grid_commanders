@@ -62,7 +62,6 @@ var _commander: CommanderType
 var _built := false
 
 var _field: Panel
-var _portrait: TextureRect
 var _emblem: TextureRect
 var _name_band: PanelContainer
 var _name_label: Label
@@ -96,24 +95,15 @@ func _build() -> void:
 	rows.add_theme_constant_override("separation", 0)
 	add_child(rows)
 
-	# --- portrait stage: faction field, portrait, emblem pin ---
-	# A plain Panel, not a PanelContainer: the latter force-stretches every child
-	# to fill it, which would blow the little emblem up over the whole portrait.
-	_field = Panel.new()
-	_field.custom_minimum_size = Vector2(0, PORTRAIT_H)
-	_field.clip_contents = true
+	# --- portrait stage: faction field, bust, emblem pin ---
+	# The kit's bust is a plain Panel, not a PanelContainer: the latter force-
+	# stretches every child to fill it, which would blow the little emblem pinned
+	# into the corner up over the whole portrait. The band is tall enough that the
+	# general is shown whole — the portrait carries its own ink-bordered window
+	# with the head breaking over its top edge, and a band this wide can only fill
+	# by cutting that composition in half.
+	_field = UiKit.commander_bust(null, Vector2(0, PORTRAIT_H), UiKit.NO_FIELD)
 	rows.add_child(_field)
-
-	_portrait = TextureRect.new()
-	_portrait.texture_filter = CommanderVisuals.ART_FILTER
-	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	# Centred whole rather than cropped to fill: the portrait carries its own
-	# ink-bordered window with the head breaking over its top edge, and a band this
-	# wide can only fill by cutting that composition in half. Fitted, it stands on
-	# the faction field the way the design's card frames it, at any card width.
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_field.add_child(_portrait)
 
 	_emblem = TextureRect.new()
 	_emblem.texture_filter = CommanderVisuals.ART_FILTER
@@ -190,8 +180,7 @@ func _build() -> void:
 
 func _apply() -> void:
 	var theme := CommanderVisuals.theme_for(_commander)
-	_field.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
-	_portrait.texture = CommanderVisuals.portrait_for(_commander)
+	UiKit.bind_bust(_field, _commander, theme.color)
 	if theme.key == CommanderVisuals.NEUTRAL_KEY:
 		_emblem.texture = null
 		_emblem.visible = false
