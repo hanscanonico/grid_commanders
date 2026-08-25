@@ -1340,16 +1340,41 @@ func _grid() -> String:
 
 # --- signature props ---------------------------------------------------------
 
+## The hard offset shadow every prop drops, in the design system's idiom at prop
+## scale: pure black, no blur, down and to the right, the same direction the
+## bust's own cast runs so one light serves the whole figure.
+const PROP_CAST := Vector2(2, 2)
+const PROP_CAST_ALPHA := 0.25
+## Every painted fill and stroke in a prop's markup. `fill="none"` is
+## deliberately unmatched: an outline-only shape casts only its outline.
+const PAINTED := '(fill|stroke)="#[0-9a-fA-F]+"'
+
+var _painted := RegEx.create_from_string(PAINTED)
+
 
 ## The one object each general is never without. The shouldered ones are drawn
-## behind the bust; the rest are held, and sit in front of it.
+## behind the bust; the rest are held, and sit in front of it. Either way it
+## casts, so it reads as standing off what is behind it.
 ##
 ## Two placement rules the drawings are laid out against: a whole object stands
 ## low and near x 12-48, because the pose scales up to 1.28 about (55, 120) and
 ## anything higher or further out crops; a shouldered haft sits outside x 86, or
-## the `long` and `hood` back hair swallows it.
+## the `long` and `hood` back hair swallows it. A prop that breaks the frame on
+## the right stops short of x 98, which is the 4px of bleed the raster needs.
 func _prop(id: StringName, layer: StringName, skin: String) -> String:
-	return _prop_back(id) if layer == &"back" else _prop_front(id, skin)
+	var drawn := _prop_back(id) if layer == &"back" else _prop_front(id, skin)
+	return "" if drawn.is_empty() else _prop_cast(drawn) + drawn
+
+
+## A prop's cast shadow: the same drawing again, flattened to one tone and
+## dropped, so the object sits in front of what is behind it rather than on it.
+## Named apart from the bust's own `_cast`, which offsets a whole posed
+## silhouette rather than re-tinting one drawing.
+func _prop_cast(markup: String) -> String:
+	return (
+		'<g transform="translate(%s %s)" opacity="%s">%s</g>'
+		% [PROP_CAST.x, PROP_CAST.y, PROP_CAST_ALPHA, _painted.sub(markup, '$1="#000000"', true)]
+	)
 
 
 func _prop_back(id: StringName) -> String:
@@ -1370,12 +1395,23 @@ func _prop_back(id: StringName) -> String:
 	return ""
 
 
+## A shouldered prop is carried, so its front layer is the strap that carries
+## it; everything else is worn or held.
 func _prop_front(id: StringName, skin: String) -> String:
+	if not _prop_back(id).is_empty():
+		return _strap()
 	var worn := _prop_worn(id)
 	return worn if not worn.is_empty() else _prop_held(id, skin)
 
 
-## The front props that stand on their own — smoked, worn, flown or set down.
+## The band a shouldered haft rests on, cut across the chest under the collar so
+## the object behind the bust reads as slung rather than as painted on the field.
+func _strap() -> String:
+	var band := _path("M80,91 L92,97 L71,122 L59,116 Z", _accent_dark, _line(2))
+	return band + _circle(75.5, 106.5, 3, _gold, _line(1.4))
+
+
+## The front props that stand on their own — smoked, worn or set down.
 func _prop_worn(id: StringName) -> String:
 	match id:
 		&"pipe":
@@ -1394,8 +1430,6 @@ func _prop_worn(id: StringName) -> String:
 			return _scales()
 		&"whistle":
 			return _whistle()
-		&"plane":
-			return _plane()
 	return ""
 
 
@@ -1410,6 +1444,8 @@ func _prop_held(id: StringName, skin: String) -> String:
 			return _book(skin)
 		&"dagger":
 			return _dagger(skin)
+		&"plane":
+			return _plane(skin)
 		&"radio":
 			return _radio(skin)
 		&"coins":
@@ -1493,10 +1529,10 @@ func _falcon() -> String:
 
 
 func _dagger(skin: String) -> String:
-	var blade := _path("M85,48 L89,72 L81,72 Z", "#cfd6dd", _line())
-	var grip := _rect(83.3, 72, 3.4, 7, _ink)
-	var ring := _circle(85, 85.5, 3, "none", _line(2))
-	return blade + grip + _hand(85, 78, skin) + ring
+	var blade := _path("M89,56 L93,80 L85,80 Z", "#cfd6dd", _line())
+	var grip := _rect(87.3, 80, 3.4, 7, _ink)
+	var ring := _circle(89, 93.5, 3, "none", _line(2))
+	return blade + grip + _hand(89, 86, skin) + ring
 
 
 func _radio(skin: String) -> String:
@@ -1508,10 +1544,10 @@ func _radio(skin: String) -> String:
 
 func _anchor() -> String:
 	var steel := "#aab3bb"
-	var shaft := _path("M85,98 L86,38 L92,38 L91,98 Z", steel, _line())
-	var stock := _rect(78, 48, 22, 5, steel, _line() + ' rx="2"')
-	var ring := _circle(89, 31, 6.5, "none", _line(4))
-	var flukes := "M70,78 Q72,98 88,101 Q104,98 106,78 L99,80 Q97,93 88,94 Q79,93 77,80 Z"
+	var shaft := _path("M84,98 L85,38 L91,38 L90,98 Z", steel, _line())
+	var stock := _rect(76, 48, 20, 5, steel, _line() + ' rx="2"')
+	var ring := _circle(87, 31, 6.5, "none", _line(4))
+	var flukes := "M77,77 Q78,97 87,101 Q96,97 97,77 L92,79 Q91,92 87,94 Q83,92 82,79 Z"
 	return shaft + stock + ring + _path(flukes, steel, _line())
 
 
@@ -1559,14 +1595,15 @@ func _whistle() -> String:
 	return mouthpiece + body + hole + _smoke(puffs, "0.42")
 
 
-func _plane() -> String:
-	var fuselage := _path("M76,29 Q87,24 98,30 Q87,36 76,34 Z", "#e4e9ee", _line(1.8))
-	var wings := _path("M84,29 L90,19 L94,20 L92,31 Z", _accent, _line(1.6))
-	wings += _path("M84,32 L90,42 L94,41 L92,30 Z", _accent, _line(1.6))
-	var tail := _path("M77,28 L72,23 L74,33 Z", _accent, _line(1.4))
-	var flown := fuselage + wings + tail + _circle(93, 30, 2, _slate)
-	var puffs: Array[Vector3] = [Vector3(80, 42, 2.6), Vector3(86, 52, 3.4)]
-	return '<g transform="rotate(-16 88 32)">%s</g>' % flown + _smoke(puffs, "0.4")
+## A model aircraft banked on an upheld palm: the same silhouette the sky held,
+## brought down onto a hand so it has a contact point.
+func _plane(skin: String) -> String:
+	var fuselage := _path("M74,80 Q84,75 94,81 Q84,87 74,85 Z", "#e4e9ee", _line(1.8))
+	var wings := _path("M81,80 L87,70 L91,71 L89,82 Z", _accent, _line(1.6))
+	wings += _path("M81,83 L87,93 L91,92 L89,81 Z", _accent, _line(1.6))
+	var tail := _path("M75,79 L70,74 L72,84 Z", _accent, _line(1.4))
+	var flown := fuselage + wings + tail + _circle(89, 81, 2, _slate)
+	return '<g transform="rotate(-16 84 81)">%s</g>' % flown + _hand(84, 94, skin)
 
 
 func _compass(skin: String) -> String:
