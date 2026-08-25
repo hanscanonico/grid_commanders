@@ -1577,13 +1577,26 @@ def b_copter(pose: Pose = Pose.A) -> Model:
     _rotor(m, 4, 10, 9, _BLADE_B if beat(pose) else _BLADE_A)
     if moving(pose):
         # A helicopter under way flies nose-down, and that attitude is what
-        # says heading on a sheet that may never translate the hull. The nose,
-        # the tandem canopy and the chin gun drop one board texel (dz = -2)
-        # about the mast, which stays: the disc is the part the eye tracks and
-        # tilting it would read as a second animation. The break needs no
-        # course repainted behind it: the fuselage is three voxels deep here,
-        # so the dropped section still overlaps the one it left.
+        # says heading on a sheet that may never translate the hull. The
+        # airframe RAKES about the mast, which stays where it is: the disc is
+        # the part the eye tracks and tilting it would read as a second
+        # animation, so every shift below is capped under z9 and the four
+        # blades of both move frames are the ambient frames' voxel for voxel.
+        #
+        # Ahead of the mast the nose, the tandem canopy and the chin gun drop
+        # one board texel (dz = -2). Behind it the boom comes UP, and it comes
+        # up along its length — one texel at the fuselage (dz = +2), a voxel
+        # more at the middle, two texels at the fin and the tail rotor — so
+        # the boom draws one leaning line instead of a stepped one. The nose
+        # alone was 17 changed / 6 silhouette rung-1 texels against pose A,
+        # the smallest parked-vs-moving delta in the fleet; the rake is 30 and
+        # 19. No course needs repainting at either break: the fuselage is
+        # three voxels deep, so each shifted section still shares a face with
+        # the one it left.
         _shift(m, (3, 5, 12, 18, 2, 6), dz=-2)
+        _shift(m, (3, 5, 5, 9, 2, 6), dz=2)
+        _shift(m, (3, 5, 3, 4, 2, 6), dz=3)
+        _shift(m, (3, 5, 0, 2, 2, 7), dz=4)
     return m
 
 
@@ -1623,14 +1636,27 @@ def t_copter(pose: Pose = Pose.A) -> Model:
     _rotor(m, 4, 4, 9, blade, clipped=True)
     _rotor(m, 5, 13, 9, blade, clipped=True)
     if moving(pose):
-        # The tandem's nose-down starts AHEAD of the forward mast (y14): the
-        # mast is bolted to the roof it stands on, so a break at y11 would
-        # leave the disc hanging over two voxels of air. Cockpit, glazing and
-        # the front of the hold drop a board texel; hold, sponsons, ramp and
-        # both discs keep pose A's line, and the belly course at y13 is
+        # The tandem rakes like `b_copter`, but a machine with a rotor at each
+        # end has to rake BETWEEN them. The nose-down starts ahead of the
+        # forward mast (y14): the mast is bolted to the roof it stands on, so
+        # a break at y11 would leave the disc hanging over two voxels of air.
+        # Cockpit, glazing and the front of the hold drop a board texel and
+        # the glazing itself a voxel further, so the nose reads as pointing
+        # down and not merely as sitting lower; the belly course at y13 is
         # repainted a voxel deeper so the break stays closed.
+        #
+        # Aft of the forward mast the hull climbs: a voxel over the hold, a
+        # whole texel from the rear mast bay back through the ramp, with the
+        # rear gear sponsons riding along (they are bolted to the flank that
+        # rose — left behind they hung in air two voxels under it). Both discs
+        # sit at z9 and every shift stops at z6, so neither disc moves and
+        # each keeps standing on roof. 14 changed / 9 silhouette rung-1 texels
+        # against pose A before, 29 and 15 now.
         _shift(m, (3, 6, 14, 17, 3, 6), dz=-2)
+        _shift(m, (3, 6, 16, 17, 1, 4), dz=-1)
         m.box(3, 6, 13, 13, 2, 2, "hull")
+        _shift(m, (2, 7, 6, 9, 1, 6), dz=1)
+        _shift(m, (2, 7, 0, 5, 1, 6), dz=2)
     return m
 
 
