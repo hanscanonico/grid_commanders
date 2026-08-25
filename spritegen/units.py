@@ -612,30 +612,46 @@ def infantry(pose: Pose = Pose.A) -> Model:
     return m
 
 
-def _mech_legs(m: Model, lifted: int | None, rise: int = 0) -> None:
-    """The rocket trooper's stance: two armoured legs under hips `rise` up,
-    with the leg at `lifted` — an x0 of 1 or 6, or None when he is standing —
-    at toe-off.
+def _mech_legs(m: Model, swing: int | None = None) -> None:
+    """The rocket trooper's stance: two armoured legs under a fixed hip line,
+    with the leg at `swing` — an x0 of 1 or 6, or None when he is standing —
+    stepped a board texel FORWARD and the other one the same texel BACK.
 
-    The rifleman's legs stand apart on both axes and can be swapped through
-    the hip centre; these two stand apart in x alone, side by side on screen
-    with nothing to swap, so the gait alternates a LIFT. What rises is the
-    boot, the knee taking the difference, and every leg — raised or planted —
-    ends one voxel under the belt band, so the raised one hangs off the hips
-    rather than floating and the caller's hip line is never punched through.
+    The rifleman's legs stand apart on both axes and swap through the hip
+    centre; these two stand apart in x alone, side by side on screen, so a
+    swap is a no-op and the gait has to be a SCISSOR instead: the boots
+    take a whole board texel each along the run, in opposite directions, and
+    exchange those places on the next frame. Two texels of stride open
+    between them, and the leg that shows — the near one, out against sky —
+    carries one of them by itself. A LIFT instead is what this walked as
+    first and it is worth five silhouette texels, under the move clip's
+    floor of six (`tests/measure_motion.py`): the raised leg has to be the
+    far one half the time, where it crosses inside the torso's own field and
+    the board never sees it, and a raised NEAR leg takes the whole sprite
+    off the ground row, which drops a tenth of its mass and floats it over
+    its own shadow.
 
-    A raised leg on a flat frame has room for no shin at all — its boot is
-    already where the shin would start — and the guard is what keeps the
-    boot: `m.box` normalises its bounds, so an inverted shin span would
-    paint back DOWN over the tire and cost that foot the one dark texel
-    that says foot.
+    Both boots therefore stay on the ground row. The board's tween is what
+    travels, so a planted boot is not a contact the art has to hold — it is
+    only the line the figure stands on, and both frames stand on it.
+
+    Only the boots and shins step. The knee plates stay in the column under
+    their own hip, one voxel below the belt band, so each leg still hangs
+    off the hips rather than floating and the caller's hip line is never
+    punched through; the one-voxel diagonal between a knee and its stepped
+    shin is the bend.
     """
     for x0 in (1, 6):
-        dz = 2 if x0 == lifted else 0
-        m.box(x0, x0 + 1, 4, 6, dz, dz, "tire")  # boot
-        if dz + 1 <= 2 + rise:
-            m.box(x0, x0 + 1, 4, 6, dz + 1, 2 + rise, "hull")  # shin
-        m.box(x0, x0 + 1, 4, 6, 3 + rise, 3 + rise, "hull_dk")  # knee plate
+        # `step` is signed along the run: -1 is the forward `(dx -1, dy +1)`
+        # diagonal, +1 is back, 0 is the standing pair, voxel for voxel.
+        if swing is None:
+            step = 0
+        else:
+            step = -1 if x0 == swing else 1
+        bx, by = x0 + step, 4 - step
+        m.box(bx, bx + 1, by, by + 2, 0, 0, "tire")  # boot
+        m.box(bx, bx + 1, by, by + 2, 1, 2, "hull")  # shin
+        m.box(x0, x0 + 1, 4, 6, 3, 3, "hull_dk")  # knee plate
 
 
 def mech(pose: Pose = Pose.A) -> Model:
@@ -648,10 +664,11 @@ def mech(pose: Pose = Pose.A) -> Model:
     silhouette texels at rung 1 against the 2 the old one-voxel settle
     scored.
 
-    The move clip walks him the way it walks the rifleman — held forward
-    lean, hips bobbing a board texel, one leg at toe-off — on legs that
-    stand side by side and so alternate a lift instead of a swap
-    (`_mech_legs` and the `moving(pose)` branch below)."""
+    The move clip walks him on the rifleman's held forward lean, but the
+    beat is his legs alone: torso and launcher hold still while the boots
+    scissor a board texel each along the run, so the warhead tip is a fixed
+    landmark and what moves is a stride (`_mech_legs` and the `moving(pose)`
+    branch below)."""
     m = Model()
     # The legs are drawn last, off whatever hip line this pose ends up with
     # (`_mech_legs`); the belt band bridging the stance sits on top of them.
@@ -693,30 +710,34 @@ def mech(pose: Pose = Pose.A) -> Model:
         _shift(m, (0, 0, 3, 6, 7, 8), dz=-2)  # left pauldron
         _shift(m, (0, 1, 2, 9, 9, 16), dz=-2)  # launcher, arm, pauldron top
     if moving(pose):
-        # The same gait the rifleman walks, on legs that cannot swap: a held
-        # forward `(dx -1, dy +1)` lean over a hip line that alternates a
-        # board texel of rise, and one leg at toe-off under it. Everything
-        # over the belt leans; the belt and the legs carry the rise, so the
-        # planted boot stays on the ground row and the trooper never
-        # translates.
+        # The rifleman's held forward `(dx -1, dy +1)` lean — the attitude of
+        # a man walking, the same on both frames, because a lean that
+        # alternated at 160 ms is a stumble — and under it a scissor of the
+        # legs (`_mech_legs`).
         #
-        # WHICH leg is up is decided by the rise. These legs are four voxels
-        # tall and a toe-off spends two of them, so a raised leg is a stub
-        # unless the hips have gone up to lend it the difference — and a stub
-        # on the FAR leg sits inside the torso's own field, where it reads as
-        # a squat rather than as a step. So the near leg, which stands out on
-        # the silhouette against sky, takes the flat frame, and the far one
-        # takes the risen frame, where it is long enough to be a leg.
+        # The beat stops at the belt. Everything over it — torso, backpack,
+        # helmet, pauldrons, launcher and its amber warhead tip — is placed
+        # identically on both frames, so the tip is a landmark the eye holds
+        # while the stance swaps beneath it. Bobbing the body a texel too,
+        # which is what this walked as first, translated every landmark at
+        # once and read as a HOP in place rather than as travel. A hip that
+        # rose on its own instead was no better: pinned under a pinned torso
+        # it only buries the belt in the chest and stretches the stance leg
+        # into a slab.
         #
-        # Measured 20 changed silhouette texels at rung 1 and 72 at rung 2,
-        # at a shimmer of 1.15-1.30 (`tests/measure_motion.py`).
-        rise = 2 if beat(pose) else 0
-        if rise:
-            _shift(m, (-1, 9, 1, 10, 4, 16), dz=rise)
-        _shift(m, (-1, 9, 1, 10, 5 + rise, 16 + rise), dx=-1, dy=1)
-        _mech_legs(m, 1 if beat(pose) else 6, rise)
+        # WHICH leg leads is what alternates: the near one on the beat, the
+        # far one off it, so the pair opens into a stride and closes through
+        # a passing position at 160 ms.
+        #
+        # Measured 14 changed silhouette texels at rung 1 and 47 at rung 2,
+        # at a shimmer of 0.14-0.19 (`tests/measure_motion.py`). The hop
+        # scored 20 and 72, but nine tenths of that was the body: this is
+        # what the LEGS are worth, and it is the cleanest ratio of shape to
+        # tone on the sheet.
+        _shift(m, (-1, 9, 1, 10, 5, 16), dx=-1, dy=1)
+        _mech_legs(m, 6 if beat(pose) else 1)
     else:
-        _mech_legs(m, None)
+        _mech_legs(m)
     return m
 
 
