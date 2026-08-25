@@ -1101,8 +1101,8 @@ func _mouth(kind: StringName) -> String:
 		&"wry":
 			return _stroke_path("M47,71 Q55,72 63,67.5", 2.6)
 		&"open":
-			var shout := _ellipse(55, 72, 4, 5.5, _ink, _line())
-			return shout + _stroke_path("M52.4,74.6 Q55,77.4 57.6,74.6", 2, "#ffffff")
+			var shout := _ellipse(55, 74, 4.6, 4.8, _ink, _line())
+			return shout + _stroke_path("M52.6,76.4 Q55,79 57.4,76.4", 2, "#ffffff")
 	return _stroke_path("M49,71.5 H61", 2.6)
 
 
