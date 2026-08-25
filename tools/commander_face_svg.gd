@@ -1039,7 +1039,7 @@ func _strap(id: StringName) -> String:
 ## thin enough to read as rope still carries the sheet's outline.
 func _cord(x1: float, y1: float, x2: float, y2: float) -> String:
 	var d := "M%s,%s L%s,%s" % [x1, y1, x2, y2]
-	return _stroke_path(d, 5.4) + _stroke_path(d, 2.6, _accent_dark)
+	return _stroke_path(d, INK_SILHOUETTE) + _stroke_path(d, 2.6, _accent_dark)
 
 
 ## The front props that stand on their own — smoked, worn or set down.
