@@ -41,8 +41,10 @@ and up out of the running gear):
 
 The one puff that survives every phase is a texel-aligned 4x4 block: exactly
 one screen pixel at rung 1 at every phase, 2x2 at rung 2. Rendered at 1:1 it is
-a flat beige SQUARE sitting on the grass beside the shadow — the sticker read
-the dithered shadow fringe was rejected for.
+a flat beige SQUARE sitting on the grass beside the shadow — the same 1:1
+failure `_shadow_ellipse`'s docstring records for the shapes it beat: a 4px
+logical-pixel checker that reads as a chequered flag, a dithered fringe that
+reads as debris.
 
 Spreading those sixteen pixels into a cloud that reads as a cloud is what the
 cell has no room for. The contact ellipse is `int(footprint_w * 0.34)` wide
