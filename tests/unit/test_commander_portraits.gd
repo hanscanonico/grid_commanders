@@ -12,6 +12,10 @@ extends GutTest
 ## only the offline bake ever comparing them.
 
 const FaceSvg := preload("res://tools/commander_face_svg.gd")
+## The prop shadow: #000 at 0.25, offset +2,+2, no blur.
+const CAST_GROUP := '<g transform="translate(2.0 2.0)" opacity="0.25">'
+## The props drawn behind the bust, whose contact point is the strap in front.
+const SHOULDERED: Array[StringName] = [&"sabre", &"wrench", &"anchor", &"axe", &"hammer"]
 
 var db: CommanderDB
 
@@ -173,11 +177,16 @@ func test_the_default_skull_is_the_handoff_head() -> void:
 ## two sheets. So every bust is measured — the lit shoulder against the shaded
 ## one, which must come out the same way round on all of them. Read off the
 ## uniform rather than the face because a full beard covers the shaded cheek,
-## while every general wears the same shoulders.
-const LIT_PATCH := Rect2i(16, 232, 32, 24)
-const SHADED_PATCH := Rect2i(172, 232, 32, 24)
-## Well under the ~0.077 the shipped shade measures, and well over the 0.0 a
-## sheet with no shade on it at all would give.
+## while every general wears the same shoulders. The window is the outer edge of
+## each shoulder rather than the whole of it: a shouldered prop's strap crosses
+## the chest, and on the five mirrored busts it crosses the lit side, so a wider
+## window measures the strap instead of the uniform under it. Every bust clears
+## the floor by 0.035 here, against the 0.077 the middle of the shoulder gave
+## before there was a strap to dodge.
+const LIT_PATCH := Rect2i(20, 232, 16, 24)
+const SHADED_PATCH := Rect2i(184, 232, 16, 24)
+## Well under the 0.035 the shipped shade measures at its worst, and well over
+## the 0.0 a sheet with no shade on it at all would give.
 const SHADE_FLOOR := 0.01
 
 
@@ -238,3 +247,30 @@ func _bust_wearing(collar: StringName) -> String:
 			return artist.build(id)
 	fail_test("no general wears the %s collar" % collar)
 	return ""
+
+
+## Every prop drops the one shadow, at the one offset. The drawing itself is a
+## picture and belongs in a capture, but "it casts" is a string fact that goes
+## silent when a new prop forgets it, so it is pinned here rather than looked at.
+## The group is spelled out rather than composed from the drawing's own
+## constants, so a revert fails these tests instead of un-parsing them.
+func test_every_prop_casts_its_shadow() -> void:
+	for id: StringName in FaceSvg.FACES:
+		assert_gt(_casts_in(_portrait(id)), 0, "%s's prop drops no shadow" % id)
+
+
+## A shouldered prop is drawn behind the bust, so what makes it touch the figure
+## is the strap in front of it: both layers draw, and both cast.
+func test_a_shouldered_prop_is_carried_by_something_in_front() -> void:
+	for id: StringName in FaceSvg.FACES:
+		if not SHOULDERED.has(FaceSvg.FACES[id]["prop"]):
+			continue
+		assert_eq(_casts_in(_portrait(id)), 2, "%s wears no strap over its haft" % id)
+
+
+func _portrait(id: StringName) -> String:
+	return FaceSvg.new(CommanderVisuals.faction_themes()[0]).build(id)
+
+
+func _casts_in(document: String) -> int:
+	return document.count(CAST_GROUP)
