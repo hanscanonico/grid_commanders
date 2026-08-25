@@ -405,18 +405,12 @@ func _make_mini(commander: CommanderType, row: HBoxContainer) -> Button:
 	content.add_theme_constant_override("separation", 0)
 	button.add_child(content)
 
-	var stage := Panel.new()
-	stage.add_theme_stylebox_override("panel", UiTheme.flat(theme.color))
+	# The tile states no height of its own — the row gives it what is left over
+	# under the name band, which is under a bust's worth — so the kit shows the
+	# face here, as it does on the other fields too small for a general whole.
+	var stage := UiKit.commander_bust(commander, Vector2.ZERO, theme.color)
 	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stage.clip_contents = true
 	content.add_child(stage)
-	var portrait := TextureRect.new()
-	portrait.texture = CommanderVisuals.portrait_for(commander)
-	portrait.texture_filter = CommanderVisuals.ART_FILTER
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stage.add_child(portrait)
 
 	var name_label := _small_label(UiTheme.SIZE_BODY)
 	name_label.text = commander.display_name

@@ -64,7 +64,6 @@ var _fire_button: Button
 ## player's turn, so the terrain chip beside it never slides.
 var _end_turn_button: Button
 var _portrait_field: Panel
-var _portrait: TextureRect
 var _co_name: Label
 var _power_name: Label
 var _meter_fill: Panel
@@ -122,21 +121,13 @@ func _build() -> void:
 
 
 func _build_commander(row: HBoxContainer) -> void:
-	_portrait_field = Panel.new()
-	_portrait_field.custom_minimum_size = Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT)
+	# Neutral until `bind` puts the side's own general and faction on it. The chip
+	# is smaller than a bust, so the kit shows the face crop here.
+	_portrait_field = UiKit.commander_bust(
+		null, Vector2(UiTheme.HUD_PORTRAIT, UiTheme.HUD_PORTRAIT), UiKit.NO_FIELD
+	)
 	_portrait_field.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_portrait_field.clip_contents = true
 	row.add_child(_portrait_field)
-	# The chip is smaller than a face, so it shows one: the face crop, covered
-	# into the square. Covering the whole bust crops about the image's own centre,
-	# which sits below the head — a small head over a band of chest.
-	_portrait = TextureRect.new()
-	_portrait.texture_filter = CommanderVisuals.ART_FILTER
-	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_portrait_field.add_child(_portrait)
 
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", UiTheme.HUD_GAP_TIGHT)
@@ -296,8 +287,7 @@ func show_commander(
 	# chrome with a fixed footprint, so hiding the block would leave a hole rather
 	# than reclaim anything. Only the meter and its controls go.
 	var powered := commander.has_power()
-	_portrait.texture = CommanderVisuals.face_for(commander)
-	_portrait_field.add_theme_stylebox_override("panel", UiTheme.flat(theme.color_light))
+	UiKit.bind_bust(_portrait_field, commander, theme.color_light)
 	_co_name.text = commander.display_name.to_upper()
 	_power_name.text = commander.power_name.to_upper() if powered else ""
 	_meter_frame.visible = powered

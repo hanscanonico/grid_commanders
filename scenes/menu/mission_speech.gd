@@ -63,24 +63,13 @@ static func _name_of(commander: CommanderType, width: int) -> Label:
 	return label
 
 
-## A face fitted into a faction-tinted field — the power banner's portrait
-## recipe, at the column's scale by default and at whatever square a caller
-## names. The one recipe every surface's bust is drawn from. Every square it is
-## asked for is smaller than a face, so it draws `face_for` rather than the whole
-## drawing: fitted whole, a 28px line bust puts the head at 15px and tells two
-## generals apart by hair colour alone.
+## The speaker's bust for a spoken line, at the column's scale by default and at
+## whatever square a caller names. The shape is `UiKit.commander_bust`'s, which
+## every surface that shows a commander shares; what is this column's is the
+## darkened field, dim enough that the words beside it stay the brightest thing
+## in the block.
 static func bust_of(commander: CommanderType, square: int = BUST) -> Control:
-	var field := Panel.new()
-	field.custom_minimum_size = Vector2(square, square)
-	field.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	field.clip_contents = true
 	var tint := CommanderVisuals.theme_for(commander).color.darkened(0.6)
-	field.add_theme_stylebox_override("panel", UiTheme.flat(tint))
-	var portrait := TextureRect.new()
-	portrait.texture = CommanderVisuals.face_for(commander)
-	portrait.texture_filter = CommanderVisuals.ART_FILTER
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
-	field.add_child(portrait)
+	var field := UiKit.commander_bust(commander, Vector2(square, square), tint)
+	field.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	return field

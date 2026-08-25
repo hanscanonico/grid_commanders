@@ -32,7 +32,7 @@ var menu_button: Button
 
 var _band: PanelContainer
 var _band_label: Label
-var _portrait: TextureRect
+var _portrait: Panel
 var _title: Label
 var _sub: Label
 
@@ -67,11 +67,9 @@ func _build() -> void:
 	rows.add_theme_constant_override("separation", 6)
 	margin.add_child(rows)
 
-	_portrait = TextureRect.new()
-	_portrait.custom_minimum_size = Vector2(_PORTRAIT, _PORTRAIT)
-	_portrait.texture_filter = CommanderVisuals.ART_FILTER
-	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# On no field: the winner stands on the lockup's own paper, under the faction
+	# band that already names them.
+	_portrait = UiKit.commander_bust(null, Vector2(_PORTRAIT, _PORTRAIT), UiKit.NO_FIELD)
 	_portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	rows.add_child(_portrait)
 
@@ -135,4 +133,4 @@ func front_with(commander: CommanderType) -> void:
 	_band.add_theme_stylebox_override("panel", UiTheme.header_box(theme.color))
 	_band_label.text = "%s · %s" % [commander.display_name, theme.display]
 	_band_label.add_theme_color_override("font_color", theme.ink)
-	_portrait.texture = CommanderVisuals.portrait_for(commander)
+	UiKit.bind_bust(_portrait, commander, UiKit.NO_FIELD)
