@@ -179,7 +179,8 @@ def _track(
 #   pose B                       blades   IoU with pose A   rung-1 silhouette
 #                                        b_copter t_copter   b_copter t_copter
 #   45-degree sweep, L1 8 (old)     4/2     0.74     0.74       25       24
-#   this 14-degree tick, L1 6        4      0.88     0.87       28       30
+#   14-degree tick, thin tips        4      0.88     0.87       28       30
+#   this tick, tips 2 across         4      0.89     0.88       31       28
 #
 # IoU is of the two frames' silhouettes with `atlas.BOB_PX` taken out, so it
 # reads the rotor and not the hop; the silhouette counts are
@@ -195,10 +196,22 @@ def _track(
 # L1 5 and draw 20x10; the old diagonals ran out to L1 8 and drew 32x16 — the
 # disc grew by half, on the one part of the sprite the eye tracks. This tip is
 # at L1 6, one voxel of span per side, and no blade changes length.
+#
+# The outer two RANKS of every blade are two voxels wide across the blade,
+# which is the direction the tip sweeps. A one-voxel tip is 4 atlas px, one
+# board texel at rung 1, and the 4:1 sample took it as a lone texel or dropped
+# it: the disc arrived as grey speckle with detached texels at the tips
+# (b_copter pose B texel (9, 10), t_copter (7, 9) and (4, 11) — none of them
+# touching the aircraft under 4-connectivity). Two voxels across the sweep is
+# 8 px there, so a tip always shares a texel with the rank behind it and the
+# disc samples as an arc. The thickening goes on the RETREATING side, so pose
+# B's tip pair is pose A's advanced one voxel round and overlapping it: the
+# disc's rendered extent is the same in both poses (L1 6, 24x12 px) and only
+# the arc inside it turns.
 Blade = tuple[tuple[int, int], ...]
 
-_BLADE_A: Blade = ((1, 0), (2, 0), (3, 0), (4, 0), (5, 0))
-_BLADE_B: Blade = ((1, 0), (2, 0), (3, 1), (4, 1), (5, 1))
+_BLADE_A: Blade = ((1, 0), (2, 0), (3, 0), (4, -1), (4, 0), (5, -1), (5, 0))
+_BLADE_B: Blade = ((1, 0), (2, 0), (3, 1), (4, 0), (4, 1), (5, 0), (5, 1))
 
 
 def _quarters(blade: Blade) -> tuple[Blade, ...]:
@@ -213,13 +226,14 @@ def _rotor(
     m: Model, cx: int, cy: int, z: int, blade: Blade, clipped: bool = False
 ) -> None:
     """A four-blade disc at `(cx, cy, z)`, collar last so the livery roots sit
-    over the sweep. `clipped` takes the tip off the two arms that run along
-    y — the tandem's discs would meet over the hold otherwise — and it is a
-    property of the AIRCRAFT, so both poses of a disc are clipped alike and
-    the tick stays the only difference between them."""
+    over the sweep. `clipped` takes the outer RANK — both voxels of it, so
+    the shortened blade still ends in a two-wide tip — off the two arms that
+    run along y, since the tandem's discs would meet over the hold otherwise;
+    it is a property of the AIRCRAFT, so both poses of a disc are clipped
+    alike and the tick stays the only difference between them."""
     arms = _quarters(blade)
     if clipped:
-        arms = tuple(arm[:-1] if i % 2 else arm for i, arm in enumerate(arms))
+        arms = tuple(arm[:-2] if i % 2 else arm for i, arm in enumerate(arms))
     for arm in arms:
         for dx, dy in arm:
             m.set(cx + dx, cy + dy, z, "rotor")
@@ -1355,7 +1369,9 @@ def b_copter(pose: Pose = Pose.A) -> Model:
 
     Pose B is the same aircraft with the same four blades a tick further
     round (`_BLADE_B`), so alternating the two poses turns the disc rather
-    than swapping its shape. Nothing else may differ.
+    than swapping its shape. Nothing else may differ. The blades are two
+    voxels wide across the sweep at the tips, which is what makes the disc
+    sample as an arc rather than as speckle — see `_BLADE_A`.
     """
     m = Model()
     # fuselage in hull livery, rounded nose
@@ -1635,10 +1651,27 @@ def sub(pose: Pose = Pose.A) -> Model:
 
     It is the one hull that does NOT take the move clip's bow-up trim: decks
     awash is the whole identity, and a bow lifted clear of the water is a boat
-    that has surfaced. Under way it runs its masts and its planes instead —
-    search periscope up in both frames, dive planes rigged down onto the
-    saddle, attack scope up on the off-beat: 25 changed silhouette texels at
-    rung 1, shimmer 0.72.
+    that has surfaced. It runs DOWN BY THE HEAD instead — the one attitude a
+    surfaced boat never holds — with its search mast up and its planes rigged
+    down: the bow's freeboard course goes under, the after casing stands a
+    board texel out of the water, the sail's forward end comes down with the
+    bow, and the attack scope is the off-beat.
+
+    The masts alone were the first attempt at this and they are not enough at
+    board scale. Pose A against MOVE_A measured 3 changed / 1 silhouette texel
+    at rung 1 — the raised search periscope is one voxel in x and 4 atlas px
+    of it, so the 4:1 sample ate the whole clip and the moving sub was the
+    parked sub. With the trim it is 23 changed / 7 silhouette against pose A,
+    and MOVE_A against MOVE_B is 43 / 25.
+
+    Which way the trim is drawn is forced by the water, not chosen. The bow
+    cannot be shifted down: `voxel._waterline_foam` reads the boat's wake off
+    the composed cell's own lowest spans, and z=0 is that course end to end,
+    so a bow that dropped a texel would take the foam line with it and the sea
+    would read as heaving. So the bow buries by LOSING its freeboard course
+    (z=1 forward of the sail) while the after casing lifts `dz +2` over water
+    filled in beneath it, and the deck line runs down to the bow with z=0
+    never touched — foam pixel-identical in all four poses, all five liveries.
     """
     m = Model()
     # decks awash: one waterline row end to end, one deck row of freeboard
@@ -1691,21 +1724,42 @@ def sub(pose: Pose = Pose.A) -> Model:
         _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
         m.box(3, 3, 11, 11, 7, 8, "steel")
     if moving(pose):
-        # No bow-up trim here: the sub's identity is the darkest hull afloat
-        # with its decks awash, and a bow raised out of the water is a boat
-        # that has surfaced. What it runs instead is its masts — the search
-        # periscope held up in both frames, as pose B raises it — and the dive
-        # planes rigged down one board texel onto the saddle for the run.
-        _shift(m, (3, 3, 11, 11, 7, 8), dz=2)
-        m.box(3, 3, 11, 11, 7, 8, "steel")
+        # Search mast up TWO board texels and standing in its own shaft, not
+        # the one texel pose B rides: at rung 1 a mast is at most a texel wide
+        # whatever it is made of, so its length is the only thing the board
+        # can count. Widening it to x3..4 as well was measured and dropped —
+        # it bought no rung-1 texel in any livery and cost 10 px of the mass
+        # budget the trim needs.
+        m.box(3, 3, 11, 11, 7, 10, "steel")
+        # planes rigged down onto the saddle for the run
         _shift(m, (2, 2, 11, 12, 3, 3), dz=-2)
         _shift(m, (5, 5, 11, 12, 3, 3), dz=-2)
+        # ...and the trim, bow first. The sail's forward two courses come down
+        # a texel with the head, attack scope and all — a sail is fixed to the
+        # casing it stands on, so it pitches with it.
+        _shift(m, (3, 4, 12, 13, 3, 7), dz=-2)
+        # The after casing rides `dz +2` clear of the water, with the water it
+        # left filled in dark beneath it so the raised deck is hull and not a
+        # box floating over a hole. It runs from the stern up to the sail's
+        # own base at y8, which is what keeps it reading as one hull sitting
+        # deeper forward instead of a deckhouse someone bolted on aft.
+        _shift(m, (2, 5, 1, 8, 1, 1), dz=2)
+        m.box(3, 4, 1, 8, 1, 2, "hull_under")
+        m.box(2, 5, 4, 8, 1, 2, "hull_under")
+        # ...and the bow's freeboard goes under. It is deleted rather than
+        # shifted because there is nowhere below z=0 to shift it to, and the
+        # mass it gives back is what pays for the raised casing: 6.1% drift on
+        # MOVE_A and 7.1% on MOVE_B against the 8% the gate allows.
+        for y in range(14, 20):
+            for x in (2, 3, 4, 5):
+                m.unset(x, y, 1)
         if beat(pose):
             # The delta is the short ATTACK scope coming up beside the search
             # one — the search mast is already up in both frames, so what the
-            # board sees moving is the second mast and not the first.
-            _shift(m, (4, 4, 13, 13, 7, 7), dz=2)
-            m.set(4, 13, 7, "steel")
+            # board sees moving is the second mast and not the first. It came
+            # down with the sail, so it goes up from where the trim left it.
+            _shift(m, (4, 4, 13, 13, 5, 5), dz=2)
+            m.set(4, 13, 5, "steel")
     return m
 
 

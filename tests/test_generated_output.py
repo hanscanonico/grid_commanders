@@ -2694,13 +2694,13 @@ class AmbientFrames(unittest.TestCase):
                 self.assertGreater(shared / len(a), 0.9)
 
     # The copters are the only units whose SHAPE changes between poses, and
-    # the shape is one part: the rotor. Measured on 2026-08-24, cell IoU with
-    # the bob taken out is 0.879 (b_copter) and 0.865 (t_copter); the
+    # the shape is one part: the rotor. Measured on 2026-08-25, cell IoU with
+    # the bob taken out is 0.889 (b_copter) and 0.878 (t_copter); the
     # 45-degree sweep these replaced drew a DIFFERENT blade set in frame B —
     # four axial blades against two long diagonals — and scored 0.74 and
     # 0.74, which read as two aircraft alternating rather than one turning.
     MIN_ROTOR_IOU = 0.85
-    # ...while still moving what the board can see: 28 and 30 texels at rung
+    # ...while still moving what the board can see: 31 and 28 texels at rung
     # 1 (`tests/measure_motion.py`), so the bar is a floor, not the number.
     MIN_ROTOR_TEXELS = 10
 
