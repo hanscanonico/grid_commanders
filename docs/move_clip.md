@@ -124,6 +124,12 @@ that pins ambient: `UnitSprite.ambient_frozen` (a capture must not depend on
 when the shutter fired) and the Instant tier (a still board shows a result
 rather than playing one out).
 
+Surface dust under a moving land vehicle is NOT part of the clip and is not
+coming: `docs/move_dust.md` has the readings that refused it — a puff small
+enough to fit behind the contact ellipse is invisible at ten of the board's
+sixteen sampling phases, and the one that survives them all is a beige square.
+If the board wants dust it belongs on the tile, game-side.
+
 ## 5. The game-side task
 
 Files:
