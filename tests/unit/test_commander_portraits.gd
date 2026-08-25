@@ -115,3 +115,37 @@ func test_the_default_skull_is_the_handoff_head() -> void:
 	var crown := "M32.0,52 Q32.0,27.0 55.0,27.0 Q78.0,27.0 78.0,52"
 	var handoff := crown + " L78.0,60 Q78.0,84 55.0,89 Q32.0,84 32.0,60 Z"
 	assert_string_contains(drawn, handoff, "the neutral bust is no longer the authored head")
+
+
+## The shade is drawn in the bust's own coordinates, and the five mirrored poses
+## are where that goes wrong invisibly: a shade path that flips with the pose
+## lights a quarter of the roster from the other side, and the sheet reads as
+## two sheets. So every bust is measured — the lit shoulder against the shaded
+## one, which must come out the same way round on all of them. Read off the
+## uniform rather than the face because a full beard covers the shaded cheek,
+## while every general wears the same shoulders.
+const LIT_PATCH := Rect2i(16, 232, 32, 24)
+const SHADED_PATCH := Rect2i(172, 232, 32, 24)
+## Well under the ~0.077 the shipped shade measures, and well over the 0.0 a
+## sheet with no shade on it at all would give.
+const SHADE_FLOOR := 0.01
+
+
+func test_every_bust_is_lit_from_the_same_side() -> void:
+	for commander in db.playable():
+		var path := "%s/%s.png" % [CommanderVisuals.PORTRAIT_DIR, commander.id]
+		var texture: Texture2D = load(path)
+		assert_not_null(texture, "%s has no portrait to read" % commander.id)
+		if texture == null:
+			continue
+		var image := texture.get_image()
+		var delta := _mean_luminance(image, LIT_PATCH) - _mean_luminance(image, SHADED_PATCH)
+		assert_gt(delta, SHADE_FLOOR, "%s is not lit from the sheet's side" % commander.id)
+
+
+func _mean_luminance(image: Image, patch: Rect2i) -> float:
+	var total := 0.0
+	for y: int in range(patch.position.y, patch.end.y):
+		for x: int in range(patch.position.x, patch.end.x):
+			total += image.get_pixel(x, y).get_luminance()
+	return total / float(patch.size.x * patch.size.y)

@@ -28,6 +28,40 @@ const WINDOW := Rect2(6, 24, 98, 96)
 const WINDOW_SHADE := 0.28
 const RIM := "#ffffff"
 const RIM_OPACITY := 0.22
+## The design system's signature: a hard offset copy of the silhouette, zero
+## blur. The offset is applied outside the pose and is the same on all 23 busts
+## — the sheet is lit from one direction, so a mirrored general is not lit from
+## the other one.
+const CAST_OFFSET := Vector2(3, 3)
+const CAST_OPACITY := 0.30
+const SHADE := "#000000"
+## The form shade, flat and hard like the cast: the head's shadow side, the neck
+## the head casts down, the shoulder away from the light, and a lit band on the
+## crown. Two face values because one is not readable on both ends of the skin
+## ramp — 0.14 black is invisible on the darkest two.
+const SHADE_FACE := 0.14
+const SHADE_FACE_DARK := 0.2
+const DARK_SKINS: Array[StringName] = [&"tan", &"dark"]
+const SHADE_NECK := 0.22
+const SHADE_UNIFORM := 0.24
+## The crown highlight is white, so it is drawn only on hair dark enough to take
+## one — on grey, platinum or blonde it reads as a bald patch — and only on the
+## crowns solid enough to hold it, a shade path having to lie over a single flat
+## fill and a spiky fringe's gaps or a bald pate putting it on skin.
+const HAIR_LIT := "#ffffff"
+const HAIR_LIT_OPACITY := 0.16
+const HAIR_LIT_COLOURS: Array[StringName] = [&"auburn", &"black", &"brown", &"darkbrown"]
+const HAIR_LIT_STYLES: Array[StringName] = [
+	&"long",
+	&"short",
+	&"ponytail",
+	&"bob",
+	&"braid",
+	&"buzz",
+	&"sidepart",
+	&"curly",
+	&"bun",
+]
 ## The uniform mass every bust rises out of, faction or not.
 const SHOULDER_MASS := "M6,120 L6,110 Q6,93 32,90 L78,90 Q104,93 104,110 L104,120 Z"
 ## The centre of the skull: every head, ear, eye and hat is placed against it,
@@ -444,6 +478,7 @@ func build(id: StringName) -> String:
 	out += _clip_def()
 	out += _window()
 	out += '<g clip-path="url(#win)">%s</g>' % _backdrop(face["bg"])
+	out += _cast(_silhouette(face), _pose(face))
 	out += '<g transform="%s">%s</g>' % [_pose(face), _bust(face)]
 	return out + "</svg>"
 
@@ -458,7 +493,9 @@ func build_neutral() -> String:
 	out += _window()
 	out += '<g clip-path="url(#win)">%s</g>' % _backdrop(&"bars")
 	var body := _blank_shoulders() + _neck(_slate) + _head(_slate) + _blank_crown()
-	out += '<g transform="translate(55 120) scale(1.18) translate(-55 -120)">'
+	var pose := "translate(55 120) scale(1.18) translate(-55 -120)"
+	out += _cast(_path(SHOULDER_MASS, SHADE, _line()) + _neck(SHADE) + _head(SHADE), pose)
+	out += '<g transform="%s">' % pose
 	return out + body + "</g></svg>"
 
 
@@ -576,16 +613,17 @@ func _bust(face: Dictionary) -> String:
 	if face["style"] == &"hood":
 		out += _path("M20,120 Q12,64 55,50 Q98,64 90,120 Z", _accent, _line())
 	out += _crowned(_hair_back(face["style"], hair), geom)
-	out += _shoulders()
-	out += _neck(skin, width)
+	out += _shoulders() + _shade_uniform(face)
+	out += _neck(skin, width) + _shade_neck(width)
 	var ear := _line()
 	out += _circle(_hx(31, width), 58, 5, skin, ear) + _circle(_hx(79, width), 58, 5, skin, ear)
 	if face.get("earring", false):
 		var pin := ' stroke="%s" stroke-width="1.2"' % _ink
 		out += _circle(_hx(31, width), 63.5, 1.9, _gold, pin)
-	out += _head(skin, face)
+	out += _head(skin, face) + _shade_face(face)
 	out += _crowned(_facial(face["facial"], hair), geom, false)
-	out += _crowned(_hair_front(face["style"], hair) + _headwear(face["acc"]), geom)
+	var crown := _hair_front(face["style"], hair) + _shade_hair(face) + _headwear(face["acc"])
+	out += _crowned(crown, geom)
 	out += _brows(face["brow"], xs)
 	out += _eyes(face["eyes"], xs)
 	out += _eyewear(face["acc"], xs, width)
@@ -639,10 +677,15 @@ func _crowned(inner: String, geom: Array, lift := true) -> String:
 ## A neck as wide as the skull it carries — a broad head over the stock one
 ## reads as a bobblehead.
 func _neck(skin: String, width := 1.0) -> String:
+	return _path(_neck_d(width), skin, _line())
+
+
+## Drawn twice — once in skin, once as the shadow the head casts down it — so
+## the two can never be cut differently.
+func _neck_d(width: float) -> String:
 	var side := _hx(47, width)
 	var far := _hx(63, width)
-	var d := "M%s,76 L%s,90 Q%s,95 %s,90 L%s,76 Z" % [side, side, HEAD_CX, far, far]
-	return _path(d, skin, _line())
+	return "M%s,76 L%s,90 Q%s,95 %s,90 L%s,76 Z" % [side, side, HEAD_CX, far, far]
 
 
 func _head(skin: String, face: Dictionary = {}) -> String:
@@ -801,6 +844,94 @@ func _details(face: Dictionary, xs: Array[float], geom: Array) -> String:
 		rig += _circle(41, 70.5, 2.4, _accent, ' stroke="%s" stroke-width="1.4"' % _ink)
 		out += _crowned(rig, geom)
 	return out
+
+
+# --- shading -----------------------------------------------------------------
+
+
+## The cast shadow: the bust's own silhouette, offset and filled flat black at
+## one opacity. Clipped to the window, because the shadow falls on the wall the
+## window frames; offset *outside* the pose, so a mirrored or tilted general
+## casts it in the same direction as everyone else. Group opacity rather than
+## per-path, so the shapes composite once instead of darkening where they meet.
+func _cast(body: String, pose: String) -> String:
+	return (
+		'<g clip-path="url(#win)" opacity="%s"><g transform="translate(%s %s) %s">%s</g></g>'
+		% [CAST_OPACITY, CAST_OFFSET.x, CAST_OFFSET.y, pose, body]
+	)
+
+
+## What the shadow is a shadow of: the bust's own shapes in flat black, minus
+## the face, the kit and the props — none of which reaches the outline. Drawn
+## from the same helpers as the bust, so a skull or a hairstyle can never grow a
+## shadow of a different shape.
+func _silhouette(face: Dictionary) -> String:
+	var geom := _head_geom(face)
+	var out := ""
+	if face["style"] == &"hood":
+		out += _path("M20,120 Q12,64 55,50 Q98,64 90,120 Z", SHADE, _line())
+	out += _crowned(_hair_back(face["style"], SHADE), geom)
+	out += _path(SHOULDER_MASS, SHADE, _line())
+	out += _neck(SHADE, float(geom[0]))
+	out += _head(SHADE, face)
+	return out + _crowned(_hair_front(face["style"], SHADE), geom)
+
+
+## A shade's x, mirrored about the skull's centre for the five flipped poses so
+## that the light still comes from the same screen side, and scaled by the
+## skull's own width so the shade stays over the fill it shades. `width` is left
+## at 1 for the shapes drawn inside `_crowned`, which scales them itself.
+func _sx(x: float, face: Dictionary, width := 1.0) -> float:
+	var pose: Array = face["pose"]
+	var lit := HEAD_CX * 2.0 - x if bool(pose[2]) else x
+	return _hx(lit, width)
+
+
+func _shade(d: String, opacity: float, color := SHADE) -> String:
+	return _path(d, color, ' opacity="%s"' % opacity)
+
+
+## The head's shadow side and the underside of the jaw, held inside the skull's
+## own outline at its narrowest jaw.
+func _shade_face(face: Dictionary) -> String:
+	var width := float(_head_geom(face)[0])
+	var outer := _sx(75, face, width)
+	var inner := _sx(66, face, width)
+	var top := _sx(64, face, width)
+	var d := (
+		"M%s,52 L%s,62 Q%s,80 %s,86 Q%s,78 %s,58 Q%s,54 %s,50 Z"
+		% [outer, outer, outer, HEAD_CX, inner, inner, inner, top]
+	)
+	var deep: bool = DARK_SKINS.has(face["skin"])
+	return _shade(d, SHADE_FACE_DARK if deep else SHADE_FACE)
+
+
+## The neck is the one place the head casts onto the body, and it is what makes
+## the chin read at chip size.
+func _shade_neck(width: float) -> String:
+	return _shade(_neck_d(width), SHADE_NECK)
+
+
+## The shoulder away from the light, so the uniform has a lit side and a dark
+## one. Kept clear of the collar, which owns its own shape.
+func _shade_uniform(face: Dictionary) -> String:
+	var edge := _sx(78, face)
+	var lip := _sx(86, face)
+	var bend := _sx(96, face)
+	var side := _sx(97, face)
+	var d := "M%s,93 L%s,93 Q%s,98 %s,110 L%s,120 L%s,120 Z" % [edge, lip, bend, side, side, edge]
+	return _shade(d, SHADE_UNIFORM)
+
+
+## One hard band on the crown, on the hair dark enough to show it.
+func _shade_hair(face: Dictionary) -> String:
+	if not HAIR_LIT_COLOURS.has(face["hair"]) or not HAIR_LIT_STYLES.has(face["style"]):
+		return ""
+	var d := (
+		"M%s,34.4 Q%s,31.6 %s,31 Q%s,33.2 %s,34.8 Z"
+		% [_sx(44, face), _sx(47, face), _sx(57, face), _sx(48, face), _sx(45.6, face)]
+	)
+	return _shade(d, HAIR_LIT_OPACITY, HAIR_LIT)
 
 
 # --- face parts --------------------------------------------------------------
