@@ -112,10 +112,11 @@ where it was. What still mirrors is the hull, and with it which pixels of that
 ground patch the hull hides, which is correct: a unit occludes its own shadow
 from whichever side it faces.
 
-The cost is a 2 px (4 px for air) horizontal recentre of the shadow at the
-instant a unit starts or stops moving — half a board texel, and it happens on
-the same frame as the position tween starting or ending, which is the loudest
-thing on screen at that moment. Ambient, figures and terrain keep the offset
+The cost is a 2 px horizontal recentre of the shadow — 4 px for air, whose
+shadow drops twice as far — at the instant a unit starts or stops moving: half
+a board texel on the ground, a whole one under an aircraft, on the same frame
+as the position tween starting or ending, which is the loudest thing on screen
+at that moment. Ambient, figures and terrain keep the offset
 shadow unchanged; nothing that is never mirrored gives up its sun.
 
 **Ships keep theirs.** A sea unit's ellipse is the water its hull displaces,
