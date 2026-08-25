@@ -356,4 +356,11 @@ max-public-methods: 22
 # the strap that carries a shouldered haft, the last of the four portrait passes
 # to land in this file. Adding to the face drawer still means moving something
 # out first, and the split due there is the FACES table itself.
-max-file-lines: 1621
+#
+# 1621 -> 1415, and the ceiling is scenes/battle/battle.gd's again: the FACES
+# table came out of tools/commander_face_svg.gd into tools/commander_faces.gd,
+# which is the split the four entries above kept naming, and it is what paid for
+# the per-prop straps and the reworked wedge backdrop. The drawer is 1238 now,
+# so it takes none of battle.gd's slack; battle.gd is pinned at its own length in
+# tools/check_scripts.sh and takes none of this either.
+max-file-lines: 1415
