@@ -729,7 +729,7 @@ func _bust(face: Dictionary) -> String:
 
 ## Uniform shoulders rising off the bottom edge, cut with the general's own
 ## collar and, for the four costliest powers, a rank pip on it.
-func _shoulders(face: Dictionary = {}) -> String:
+func _shoulders(face: Dictionary) -> String:
 	var collar: StringName = face.get("collar", COLLAR_DEFAULT)
 	var out := _path(SHOULDER_MASS, _accent, _line())
 	out += _path("M6,110 Q6,93 32,90 L78,90 Q104,93 104,110", "none", _rim())
