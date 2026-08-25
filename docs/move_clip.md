@@ -141,8 +141,16 @@ near-black rather than white on blue so it survives the board's 4:1 sample at
 rung 1, and it costs almost no new pixels, which matters because all four
 hulls' move poses already sit within 9 px of `MoveFrames.MAX_MASS_DRIFT`. That
 budget is also the ceiling on the wave: only the 1 px lip outside the rim is
-new water, and a second column of lip puts the battleship over the gate. It is
-why the parked-vs-running silhouette count rises by one texel and not by six.
+new water, and a second column of lip measures 0.083 drift on the battleship
+against a gate of 0.08. That is why the parked-vs-running change count rises by
+four or five texels while the SILHOUETTE count barely moves — one texel on the
+lander, none on the cruiser, the sub or the battleship. Six silhouette texels
+between parked and running is not reachable this way; a hull that has to change
+outline that much has to change shape, not water.
+
+The wave rides the displacement patch, so a mirrored ship carries it the same
+5 px the patch moves — the handedness above, not a new one. It stays at the
+mirrored hull's bow, which is where a bow wave belongs.
 
 The wave is the same on both move frames. Ticking it with the beat is not
 buildable here: at `voxel.BOW_REACH` the crest already covers every row of
