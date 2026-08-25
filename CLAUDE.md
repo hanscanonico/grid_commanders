@@ -36,11 +36,18 @@ plan is stated in full below and has no copy there.
   and Konrad Vale share the one `UnitPricing.cost_for` purchase authority while base cost remains
   charge/target/value currency; Perrin Ash and Halden Marr are domain-only and exactly neutral on
   land-only boards; Dane Ferrow's kill bounty is stolen through `ChargeLedger.bank_losses`,
-  never minted; Iris Colt's `AFTER_ACTIONS` Second Wind refreshes non-attack actions. The plan's
-  D4 “no new state/save” claim is superseded by the safe rule: `Unit.refreshable` records that
-  eligibility and save v8 carries it, because `acted` alone cannot distinguish an attack from a
-  non-attack after loading. Older saves default it false. The roster is deliberately 5 / 5 / 4 /
-  4, and the full balance gate is 18 × 18 × five scenarios × four seeds — both as that plan closed
+  never minted; Iris Colt's `AFTER_ACTIONS` Second Wind refreshes non-attack actions. **That last
+  clause is superseded by a user-directed retune: Second Wind refreshes an attack too**, so what
+  `Unit.refreshable` now records is only whether the action was the unit's *own* — a fresh build
+  and a unit somebody else set down or merged into stay exhausted, exactly as before — and
+  `AttackCommand` no longer clears it. The flag therefore stays alive rather than becoming dead
+  state: the plan's D4 “no new state/save” claim is still superseded by it, and save v8 still
+  carries it, because `acted` alone cannot distinguish a unit's own action from one another unit
+  spent on it. Older saves default it false, and one saved mid-turn under the old rule simply
+  under-refreshes that turn's attackers. The doubled `power_cost` (44000) rides on the `.tres` with
+  every other balance number; `docs/commander_balance.md` predates the retune and owes a regen.
+  The roster is deliberately 5 / 5 / 4 / 4, and the full balance gate is
+  18 × 18 × five scenarios × four seeds — both as that plan closed
   them; `more-commanders-plan.html` has since seated Sera Lark with the Aurora Compact (MC1),
   Iona Vance with the Meridian Coalition (MC2), Ivar Thorne with the Verdant League (MC3) and
   Radek Morn with the Iron Dominion (MC4), so they now read 6 / 6 / 5 / 5 over 22 × 22. Iona

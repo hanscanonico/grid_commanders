@@ -1,8 +1,8 @@
 class_name IrisColt
 extends CommanderType
 ## Meridian Coalition. Colt's army gives up raw combat power for tempo. Second
-## Wind refreshes only units whose committed action did not attack; builds and
-## attackers remain exhausted.
+## Wind refreshes every unit that spent its own action this turn, an attack
+## included; a fresh build and a unit somebody else set down stay exhausted.
 
 @export var combat_pct: int = -10
 

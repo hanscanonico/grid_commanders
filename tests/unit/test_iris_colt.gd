@@ -1,5 +1,6 @@
 extends GutTest
-## Iris Colt: a late power refreshes non-attack actions, never attacks or builds.
+## Iris Colt: a late power refreshes every unit that spent its own action,
+## attacks included, and never a build or a unit somebody else set down.
 
 var terrain_db: TerrainDB
 var unit_db: UnitDB
@@ -36,17 +37,37 @@ func test_all_combat_is_ten_percent_softer() -> void:
 	assert_eq(commander.defense_bonus(state, fight), -10)
 
 
-func test_second_wind_refreshes_a_move_but_not_an_attack() -> void:
+func test_second_wind_refreshes_a_move_and_an_attack_alike() -> void:
 	var state := _state("[terrain]\n.....\n[units]\n1 p 0 0\n1 t 2 0\n2 i 3 0")
 	var mover := state.units[0]
 	var attacker := state.units[1]
 	MoveCommand.new(mover, [Vector2i(0, 0), Vector2i(1, 0)]).apply(state)
 	AttackCommand.new(attacker, [Vector2i(2, 0)], Vector2i(3, 0)).apply(state)
 	assert_true(mover.refreshable)
-	assert_false(attacker.refreshable)
+	assert_true(attacker.refreshable, "the shot was the attacker's own action")
 	_fire(state)
-	assert_false(mover.acted, "the non-attacking action gets a second turn")
-	assert_true(attacker.acted, "an attacker stays exhausted")
+	assert_false(mover.acted, "the walk gets a second turn")
+	assert_false(attacker.acted, "and so does the shot")
+
+
+## The retune itself, read through the command that has to accept it: an
+## exhausted attacker is refused, and the same shot validates once the meter is
+## spent.
+func test_a_refreshed_attacker_may_fire_again() -> void:
+	var state := _state("[terrain]\n..\n[units]\n1 t 0 0\n2 t 1 0")
+	var attacker := state.units[0]
+	var target := state.units[1]
+	var first := AttackCommand.new(attacker, [Vector2i(0, 0)], Vector2i(1, 0))
+	assert_eq(first.validate(state), "")
+	first.apply(state)
+	var hp_after_first := target.hp
+	assert_lt(hp_after_first, Unit.MAX_HP, "the first shot landed")
+	var again := AttackCommand.new(attacker, [Vector2i(0, 0)], Vector2i(1, 0))
+	assert_ne(again.validate(state), "", "an exhausted attacker is refused")
+	_fire(state)
+	assert_eq(again.validate(state), "", "Second Wind hands the shot back")
+	again.apply(state)
+	assert_lt(target.hp, hp_after_first, "and the second shot lands")
 
 
 func test_a_new_build_is_never_refreshed() -> void:
@@ -70,7 +91,7 @@ func test_a_dropped_rider_is_never_refreshed() -> void:
 	var board := LoadCommand.new(rider, [Vector2i(1, 0), Vector2i(0, 0)])
 	assert_eq(board.validate(state), "")
 	board.apply(state)
-	assert_true(rider.refreshable, "boarding is the rider's own non-attack action")
+	assert_true(rider.refreshable, "boarding is the rider's own action")
 	var drop := DropCommand.new(carrier, [Vector2i(0, 0), Vector2i(1, 0)], Vector2i(2, 0))
 	assert_eq(drop.validate(state), "")
 	drop.apply(state)

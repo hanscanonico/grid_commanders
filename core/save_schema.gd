@@ -83,7 +83,8 @@ const KEY_RULES := {
 ## which can only ask once the unit count is known; this says no more than that it is a
 ## number. `acted` earns its place here as much as any of them: it is a flag the sim
 ## plays the resumed turn under, so a quoted one is a unit that cannot move.
-## `refreshable` arrived in version 8 and qualifies that action for Second Wind,
+## `refreshable` arrived in version 8 and says the action was the unit's own,
+## which is what qualifies it for Second Wind,
 ## and `tag` in version 9 is the name its board gave it — empty for most units, and
 ## the only way a mission that is about one unit finds it again after a resume. What
 ## that text may *say* is `UnitTag`'s, asked in `SaveCodec._unit_tags_error`; this
