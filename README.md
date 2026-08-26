@@ -41,6 +41,7 @@ make portraits       # regenerate the commander portraits + faction emblems
 make portraits-check # bake them in memory and byte-diff against the committed PNGs
 make import          # (re)import assets headless
 make export-android  # package a debug APK -> build/android/ (setup below)
+make export-ios      # package an Xcode project -> build/ios/ (setup below)
 make screenshot      # boot the battle scene, save screenshot.png, quit
 make menu-screenshot # the same, for the main menu
 make gallery-screenshot   # render all twenty-three commander cards (the G1 gate)

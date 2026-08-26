@@ -141,7 +141,7 @@
 
     <!-- ============================== HERO ============================== -->
     <header class="gc-hero px-6 py-10 md:px-12">
-      <p class="gc-kicker opacity-80">Grid Commanders · Platform + presentation · Proposed · rev 2 · supersedes rev 1 wholesale</p>
+      <p class="gc-kicker opacity-80">Grid Commanders · Platform + presentation · rev 2 · supersedes rev 1 wholesale · <b>shipped: MB1–MB9</b></p>
       <h1 class="text-3xl md:text-4xl font-black mt-2">Mobile Builds — the whole command table in two hands</h1>
       <p class="mt-3 max-w-3xl opacity-90">
         The engine profile was already right and still is: Godot 4.7.1, a 640×360 landscape canvas
@@ -1074,7 +1074,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB1 · Bootstrap and packaging <span class="badge badge-outline badge-sm">size M</span></h3>
+            <h3 class="font-black">MB1 · Bootstrap and packaging <span class="badge badge-outline badge-sm">size M</span> <span class="badge badge-success badge-sm align-middle">shipped · #381</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li>Install Godot <code>4.7.1.stable</code> export templates (the tree currently has
@@ -1121,7 +1121,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB2 · The touch classes become explicit <span class="badge badge-outline badge-sm">size S</span></h3>
+            <h3 class="font-black">MB2 · The touch classes become explicit <span class="badge badge-outline badge-sm">size S</span> <span class="badge badge-success badge-sm align-middle">shipped · #383</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li><span class="gc-file">scenes/common/transition_input.gd</span> —
@@ -1148,7 +1148,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB3 · The dock — every state has a way home <span class="badge badge-outline badge-sm">size M</span></h3>
+            <h3 class="font-black">MB3 · The dock — every state has a way home <span class="badge badge-outline badge-sm">size M</span> <span class="badge badge-success badge-sm align-middle">shipped · #385</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li><span class="gc-file">scenes/ui/mobile_dock.gd</span> (<code>MobileDock</code>) — a
@@ -1200,7 +1200,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB4 · Hit areas, and copy a finger can reach <span class="badge badge-outline badge-sm">size M</span></h3>
+            <h3 class="font-black">MB4 · Hit areas, and copy a finger can reach <span class="badge badge-outline badge-sm">size M</span> <span class="badge badge-success badge-sm align-middle">shipped · #384</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li><span class="gc-file">scenes/common/ui_theme.gd</span> and
@@ -1267,7 +1267,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB5 · The payload diet <span class="badge badge-outline badge-sm">size S</span></h3>
+            <h3 class="font-black">MB5 · The payload diet <span class="badge badge-outline badge-sm">size S</span> <span class="badge badge-success badge-sm align-middle">shipped · #382</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li>Music to Ogg Vorbis through the sibling <code>audio_generator</code> pipeline
@@ -1287,7 +1287,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB6 · Pinch and pan <span class="badge badge-outline badge-sm">size M</span></h3>
+            <h3 class="font-black">MB6 · Pinch and pan <span class="badge badge-outline badge-sm">size M</span> <span class="badge badge-success badge-sm align-middle">shipped · #387</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li>Two-finger pinch and one-finger pan on the board, owned by <code>MobileDock</code>'s
@@ -1313,11 +1313,17 @@
 
         <div class="card bg-base-100 border p-4" style="border-style:dashed;">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB7 · Safe area and <code>expand</code> <span class="badge badge-outline badge-sm">size M/L</span> <span class="badge badge-sm" style="background:var(--gc-road); border:0;">decision-gated</span></h3>
+            <h3 class="font-black">MB7 · Safe area and <code>expand</code> <span class="badge badge-outline badge-sm">size M/L</span> <span class="badge badge-sm" style="background:var(--gc-road); border:0;">decision-gated</span> <span class="badge badge-success badge-sm align-middle">no-op under <code>keep</code></span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li><strong>Does not start until the user answers the aspect question</strong> (§7).
             If the answer is "keep the letterbox", this milestone is deleted rather than deferred.</li>
+            <li><strong>The answer was <code>keep</code>, so nothing below was built</strong> — no
+            <code>SafeArea</code> authority exists, D4 binding it to <code>expand</code> or to
+            neither. The residual is measured instead: on the soak device the whole dock row sits
+            inside the 66 px system gesture strip (window 2220×1080 against an
+            <code>mAppBounds</code> of 2220×1014), taps reach the game and swipes there will not —
+            <span class="gc-file">docs/mobile_soak.md</span> (MB8).</li>
             <li><span class="gc-file">scenes/common/safe_area.gd</span> (<code>SafeArea</code>) —
             one authority resolved once per boot, in the <code>SideIdentity</code> /
             <code>GameSpeed</code> idiom: ask it, never call
@@ -1336,7 +1342,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB8 · Android device soak <span class="badge badge-outline badge-sm">size S</span></h3>
+            <h3 class="font-black">MB8 · Android device soak <span class="badge badge-outline badge-sm">size S</span> <span class="badge badge-success badge-sm align-middle">shipped · #388 · emulator; the real-phone sitting is owed</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li>Thirty minutes of real play on a real phone: a campaign mission, a four-army skirmish
@@ -1356,7 +1362,7 @@
 
         <div class="card bg-base-100 border p-4">
           <div class="flex flex-wrap items-baseline gap-2">
-            <h3 class="font-black">MB9 · iOS <span class="badge badge-outline badge-sm">size M</span></h3>
+            <h3 class="font-black">MB9 · iOS <span class="badge badge-outline badge-sm">size M</span> <span class="badge badge-success badge-sm align-middle">shipped · #386</span></h3>
           </div>
           <ul class="text-sm mt-2 gc-checks">
             <li>The iOS preset and the Xcode handoff; bundle identifier and team configured outside
