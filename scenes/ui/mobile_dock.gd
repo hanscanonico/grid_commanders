@@ -62,6 +62,14 @@ static func chrome_h() -> int:
 	return UiTheme.HUD_BARS_H + height()
 
 
+## The strip of the frame the board is played on: what the docked chrome leaves
+## over, in the frame's own coordinates. The single answer, so a menu clamping
+## itself and a driven check measuring one cannot hold different opinions about
+## where the board's band is.
+static func board_band(frame: Vector2) -> Rect2:
+	return Rect2(Vector2(0, UiTheme.HUD_TOP_H), Vector2(frame.x, frame.y - chrome_h()))
+
+
 ## The dock's own height, and zero on a desktop build.
 static func height() -> int:
 	return UiTheme.HUD_DOCK_H if MobileProfile.active() else 0

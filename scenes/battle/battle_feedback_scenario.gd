@@ -361,7 +361,9 @@ func _run_bar_end_turn(starting_team: int) -> String:
 	_battle.confirm_at(Vector2i(9, 8))
 	if _battle.state != Battle.State.PREVIEW:
 		return "the enemy confirm the button is judged from did not open a preview"
-	var button := _button(_battle.view.hud_bottom, ControlHints.END_TURN_CHIP)
+	var button := _button(
+		_battle.view.hud_bottom, ControlHints.chip_for(ControlHints.END_TURN_CHIP)
+	)
 	if button == null:
 		return "the bottom bar offers no End Turn button"
 	if button.disabled:

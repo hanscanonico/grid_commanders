@@ -2,7 +2,9 @@ class_name ActionMenu
 extends PanelContainer
 ## Minimal AW-style action menu (M2: Wait / Cancel; Fire etc. arrive in M3).
 ## The battle scene opens it with a list of actions; it emits the chosen id.
-## Keyboard or pad: cursor up/down + confirm/cancel. Mouse: click a row.
+## Keyboard or pad: cursor up/down + confirm/cancel. Mouse: click a row. A menu
+## with more rows than the board band has room for shows a window onto them, which
+## the highlight follows and a wheel or a finger drags.
 ##
 ## Dressed as slate chrome, like the two docked bars it opens between: the rows
 ## are ghost buttons on a dark panel, and the armed one takes the design system's
@@ -38,6 +40,15 @@ var _cycles: Array[Callable] = []
 var _index := 0
 ## One highlight step per directional gesture; see DirectionalInput.
 var _dirs := DirectionalInput.new()
+## How many rows the band left room for, and which one the window opens on. Equal
+## to the whole list whenever it fitted, which is every menu but a full build one.
+var _capacity := 0
+var _top := 0
+## What one row costs down the list, and the drag the list has not been paid for
+## yet — a slow finger arrives a row at a time rather than never, the way
+## TouchGestures spends a pan a cell at a time.
+var _row_pitch := 0.0
+var _scroll_rest := 0.0
 
 
 func _ready() -> void:
@@ -72,10 +83,17 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		button.disabled = is_disabled
 		button.pressed.connect(func() -> void: choose(id))
 		rows.add_child(UiKit.touchable(button))
+		var area := TouchTarget.of(button)
+		if area != null:
+			area.dragged.connect(_drag_by)
 		_ids.append(id)
 		_labels.append(entry.label)
 		_disabled.append(is_disabled)
 		_cycles.append(entry.get("cycle", Callable()))
+	_capacity = _ids.size()
+	_top = 0
+	_row_pitch = 0.0
+	_scroll_rest = 0.0
 	_index = -1
 	_step_index(1)
 	_update_labels()
@@ -96,6 +114,21 @@ func has_value_rows() -> bool:
 	return visible and _cycles.any(func(cycle: Callable) -> bool: return cycle.is_valid())
 
 
+## The wheel steps the window a row. A finger's drag does not arrive here at all —
+## each row's `TouchTarget` claims every mouse event over it, so the area is what
+## recognises the drag and `_drag_by` is what it hands the travel to.
+func _gui_input(event: InputEvent) -> void:
+	var click := event as InputEventMouseButton
+	if click == null or not click.pressed:
+		return
+	if click.button_index == MOUSE_BUTTON_WHEEL_UP:
+		_scroll_by(-1)
+		accept_event()
+	elif click.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		_scroll_by(1)
+		accept_event()
+
+
 ## Every recognised action claims the event *before* it runs, not after: a row may
 ## now leave the match, and the scene change frees the viewport out from under this
 ## handler, so a trailing set_input_as_handled() would be called on nothing. The
@@ -109,6 +142,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if ROW_ACTIONS.has(dir):
 		get_viewport().set_input_as_handled()
 		_step_index(ROW_ACTIONS[dir])
+		_follow_index()
 		_update_labels()
 	elif VALUE_ACTIONS.has(dir) and _cycles[_index].is_valid():
 		get_viewport().set_input_as_handled()
@@ -171,6 +205,24 @@ static func icon_cap(icon: Texture2D) -> int:
 	return maxi(1, int(UiTheme.MENU_ICON * size.x / size.y))
 
 
+## Which row the window opens on so `selected` is inside it, centred where the
+## list allows. Pure and static like PathArrow.segments, so the scroll-follow is
+## checked without a scene; a list that fits its capacity opens at the top.
+static func visible_window(selected: int, rows: int, capacity: int) -> int:
+	if capacity <= 0 or capacity >= rows:
+		return 0
+	return clampi(selected - capacity / 2, 0, rows - capacity)
+
+
+## How many rows of `pitch` (a row plus the gap under it) fit in `room`. The last
+## row needs no gap, which is the separation added back. Never fewer than one: a
+## band too short for a single row still has to show the player something.
+static func rows_that_fit(room: float, pitch: float, separation: float) -> int:
+	if pitch <= 0.0:
+		return 1
+	return maxi(1, int((room + separation) / pitch))
+
+
 ## Transparent stand-in the size icons are capped to, so icon-less rows keep
 ## their labels in the same column. Null when no row has an icon at all: plain
 ## verb menus then draw exactly as they did before.
@@ -220,7 +272,77 @@ func _place() -> void:
 	# honest: it then measures the panel the player actually sees.
 	reset_size()
 	var view := get_viewport().get_visible_rect().size
+	# A menu the band has room for is placed exactly as it always was. One that has
+	# not — the twelve-row build menu on a touch build, where the dock takes another
+	# 28 rows off the band — is cut to a window that fits with the margins on.
+	var band := MobileDock.board_band(view).size.y
+	if size.y > band:
+		_cut_to(band - 2.0 * MARGIN)
+		reset_size()
 	var top_left := Vector2(MARGIN, UiTheme.HUD_TOP_H + MARGIN)
 	var below := UiTheme.HUD_BOTTOM_H + MobileDock.height()
 	var max_pos := (view - size - Vector2(MARGIN, below + MARGIN)).max(top_left)
 	position = position.clamp(top_left, max_pos)
+
+
+## Narrows the menu to the rows that fit `room`, measured off the built list
+## rather than off the theme: a row's height is whatever its icon and font made it.
+func _cut_to(room: float) -> void:
+	var count := rows.get_child_count()
+	if count == 0:
+		return
+	var separation := float(rows.get_theme_constant(&"separation"))
+	_row_pitch = rows.get_child(0).get_combined_minimum_size().y + separation
+	var chrome := size.y - (float(count) * _row_pitch - separation)
+	_capacity = mini(count, rows_that_fit(room - chrome, _row_pitch, separation))
+	_follow_index()
+
+
+## Opens the window on the armed row, which is what makes the highlight reachable
+## by the keys that move it.
+func _follow_index() -> void:
+	_top = visible_window(_index, _ids.size(), _capacity)
+	_show_window()
+
+
+func _scroll_by(step: int) -> void:
+	var top := clampi(_top + step, 0, maxi(0, _ids.size() - _capacity))
+	if top == _top:
+		return
+	_top = top
+	_arm_inside_window()
+	_show_window()
+
+
+## The window moved out from under the highlight, so the highlight comes with it:
+## an armed row nobody can see is a confirm nobody can predict. The nearest end of
+## the window is where it lands, and a disabled row is stepped over the way every
+## other walk of this list steps over one.
+func _arm_inside_window() -> void:
+	if _index >= _top and _index < _top + _capacity:
+		return
+	var step := 1 if _index < _top else -1
+	var from := _top if step > 0 else _top + _capacity - 1
+	for i in _capacity:
+		var candidate := from + i * step
+		if not _disabled[candidate]:
+			_index = candidate
+			_update_labels()
+			return
+
+
+## The whole rows inside a finger's travel; the remainder is kept for the next
+## drag. The list follows the finger, so pulling down shows earlier rows.
+func _drag_by(relative: Vector2) -> void:
+	_scroll_rest += relative.y
+	var stepped := int(_scroll_rest / _row_pitch) if _row_pitch > 0.0 else 0
+	if stepped == 0:
+		return
+	_scroll_rest -= float(stepped) * _row_pitch
+	_scroll_by(-stepped)
+
+
+func _show_window() -> void:
+	for i in rows.get_child_count():
+		var row := rows.get_child(i) as Control
+		row.visible = i >= _top and i < _top + _capacity

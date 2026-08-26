@@ -25,11 +25,25 @@ extends Control
 ## A tap on the area is the parent's press and only the parent's — the event is
 ## claimed here, so one finger still makes one receipt (mobile R1).
 
+## A finger that travels is scrolling the list this row sits in rather than picking
+## the row. It has to be said here: MOUSE_FILTER_STOP is what makes one finger one
+## receipt, and it stops the walk up the parent chain for *every* mouse event, so a
+## scroller underneath can never see the drag unless the area hands it over. Past
+## the board's own tap slop the press is disarmed and the travel reported, so the
+## release that follows is silent. Nobody connected means nothing happens, which is
+## every touch control in the game but a menu row.
+signal dragged(relative: Vector2)
+
 ## Set once by `expand`; the caller's, because the metric belongs to UiTheme.
 var _minimum := 0.0
 ## True between a press on this area and its release, so a tap that wandered off
 ## before letting go is cancelled rather than delivered.
 var _armed := false
+## Whether a finger is down on the area at all, and how far it has come since it
+## landed — which is the whole of the difference between this row's tap and the
+## list's drag.
+var _down := false
+var _travel := 0.0
 
 
 ## Lays an area over `host` and hands it back. The area is a child, so it follows
@@ -39,6 +53,17 @@ static func expand(host: BaseButton, minimum: float) -> TouchTarget:
 	area._minimum = minimum
 	host.add_child(area)
 	return area
+
+
+## The area laid over `host`, or null on a desktop build where none was built.
+## `UiKit.touchable` hands back the button, so this is how a list finds the area
+## whose drags it wants to hear.
+static func of(host: Node) -> TouchTarget:
+	for child in host.get_children():
+		var area := child as TouchTarget
+		if area != null:
+			return area
+	return null
 
 
 func _ready() -> void:
@@ -154,21 +179,28 @@ static func _shares_band(from: float, to: float, other_from: float, other_to: fl
 ## through a real viewport for that reason.
 ##
 ## Which event class arrives is the engine's: a finger reaches this as an emulated
-## mouse press, the default `emulate_mouse_from_touch` no project setting turns
-## off.
+## mouse press and, while it travels, as emulated motion — the default
+## `emulate_mouse_from_touch` no project setting turns off.
 func _gui_input(event: InputEvent) -> void:
-	var host := get_parent() as BaseButton
-	if host == null or host.disabled:
+	var motion := event as InputEventMouseMotion
+	if motion != null:
+		_wander(motion.relative)
 		return
 	var click := event as InputEventMouseButton
 	if click == null or click.button_index != MOUSE_BUTTON_LEFT:
 		return
+	var host := get_parent() as BaseButton
+	if host == null:
+		return
 	accept_event()
 	if click.pressed:
-		_armed = true
+		_down = true
+		_travel = 0.0
+		_armed = not host.disabled
 		return
+	_down = false
 	# Released off the area after pressing on it — a cancelled tap, as it is on any
-	# other button.
+	# other button — or released after the list moved, which is not a tap at all.
 	var inside := Rect2(Vector2.ZERO, size).has_point(click.position)
 	if not _armed or not inside:
 		_armed = false
@@ -177,6 +209,19 @@ func _gui_input(event: InputEvent) -> void:
 	if host.toggle_mode:
 		host.button_pressed = not host.button_pressed
 	host.pressed.emit()
+
+
+## A press on a *disabled* row still drags the list it is in — the row answering
+## nothing is not the list refusing to move — so this is keyed to the finger being
+## down rather than to the pick being armed.
+func _wander(relative: Vector2) -> void:
+	if not _down:
+		return
+	_travel += relative.length()
+	if _travel <= TouchGestures.TAP_SLOP_PX:
+		return  # a tap that has moved a little is still a tap
+	_armed = false
+	dragged.emit(relative)
 
 
 func _fit() -> void:

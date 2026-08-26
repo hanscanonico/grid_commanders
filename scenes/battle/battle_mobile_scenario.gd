@@ -51,6 +51,7 @@ func run(mode: String) -> String:
 	flaw = flaw if flaw != "" else await _back_out_of_targeting()
 	flaw = flaw if flaw != "" else await _back_out_of_a_drop()
 	flaw = flaw if flaw != "" else await _back_out_of_an_aimed_power()
+	flaw = flaw if flaw != "" else await _scroll_the_build_menu()
 	flaw = flaw if flaw != "" else await _walk_the_board()
 	flaw = flaw if flaw != "" else await _pinch_the_ladder()
 	flaw = flaw if flaw != "" else await _pan_the_board()
@@ -154,6 +155,188 @@ func _back_out_of_an_aimed_power() -> String:
 	if game.units.size() != standing:
 		return "backing out of the aim removed %d units" % (standing - game.units.size())
 	return ""
+
+
+## The build menu is the tallest in the game and the dock takes another row of
+## chrome off the band, so on a touch build its last rows — Cancel among them, the
+## only way out of it — are a scroll away. The menu has to fit the band it was
+## given, and a finger has to be able to reach the rest of it and still pick with
+## a tap.
+func _scroll_the_build_menu() -> String:
+	_battle.confirm_at(Vector2i(3, 2))  # the red base
+	var flaw := await _reach(Battle.State.MENU)
+	if flaw != "":
+		return flaw
+	var menu := _battle.action_menu
+	# A container places its rows a frame after the menu opens, so a finger aimed
+	# before that lands on whichever row was still standing at the origin.
+	for _frame in 2:
+		await _battle.get_tree().process_frame
+	var band := MobileDock.board_band(_battle.get_viewport().get_visible_rect().size)
+	if not band.encloses(menu.get_global_rect()):
+		return "the build menu %s hangs out of the band %s" % [menu.get_global_rect(), band]
+	var last := menu.rows.get_child(menu.rows.get_child_count() - 1) as Button
+	if last.visible:
+		return "the build menu fits whole, so this is measuring no scroll at all"
+	flaw = await _wobble_on_a_row(menu)
+	flaw = flaw if flaw != "" else await _drag_to_the_last_row(menu, last)
+	flaw = flaw if flaw != "" else await _walk_the_menu(menu)
+	flaw = flaw if flaw != "" else await _arm_the_last_row(menu, last)
+	if flaw != "":
+		return flaw
+	# Cancel is the row a scroll exists to reach, and a tap is what takes it. One
+	# point for both halves of the tap: a release read off a rect the last frame
+	# moved would land outside the area the press armed, which is a cancelled tap.
+	var take := last.get_global_rect().get_center()
+	await _menu_finger(true, take)
+	await _menu_finger(false, take)
+	return await _reach(Battle.State.IDLE)
+
+
+## A finger that wanders past the tap slop and comes back is scrolling, not
+## picking: press and release land on the one row, which is the gesture that fires
+## it unless the row's own hit area heard the list move under it. The window must
+## not have walked either — a wobble is nobody asking for a row.
+##
+## On the armed row, which is the first the board can afford: a row this side has
+## no funds for answers nothing whatever the finger does, so wobbling on one would
+## photograph as a pass with the cancellation deleted.
+func _wobble_on_a_row(menu: ActionMenu) -> String:
+	var armed := _armed_row(menu)
+	if armed == null:
+		return "the build menu armed no row to wobble on"
+	var at := armed.get_global_rect().get_center()
+	var wander := Vector2(0, TouchGestures.TAP_SLOP_PX + 8.0)
+	var opened_on := _first_visible(menu)
+	var standing := _battle.game.units.size()
+	await _menu_finger(true, at)
+	await _menu_slide(at + wander)
+	await _menu_slide(at)
+	await _menu_finger(false, at)
+	if _first_visible(menu) != opened_on:
+		return "a wobble the width of the tap slop walked the window"
+	if _battle.game.units.size() != standing:
+		return "the wobble bought the row under the finger"
+	return await _reach_menu("the wobble picked the row under the finger")
+
+
+## The list follows the finger, so a drag up reaches the rows the band cut off —
+## and lets go of none of them on the way. The highlight comes with the window,
+## because an armed row nobody can see is a confirm nobody can predict; and the
+## board must not have walked under the menu, which is the one place a drag could
+## have reached `TouchGestures` instead.
+func _drag_to_the_last_row(menu: ActionMenu, last: Button) -> String:
+	var at := menu.get_global_rect().get_center()
+	var to := at - Vector2(0, menu.get_global_rect().size.y * 0.4)
+	var opened_on := _first_visible(menu)
+	var stood_on := _battle.cursor_cell
+	await _menu_finger(true, at)
+	await _menu_slide(to)
+	if _first_visible(menu) <= opened_on:
+		return "dragging the list up never walked the window"
+	if not last.visible:
+		return "dragging the list up never reached its last row"
+	if _battle.cursor_cell != stood_on:
+		return "the drag panned the board under the menu, to %s" % _battle.cursor_cell
+	var armed := _armed_row(menu)
+	if armed == null or not armed.visible:
+		return "the drag left the armed row off the window"
+	await _menu_finger(false, to)
+	return await _reach_menu("the drag picked a row off the list")
+
+
+## A pad or a hardware key walks the highlight, and the window follows it the whole
+## way down rather than only while the armed row happens to be inside it.
+func _walk_the_menu(menu: ActionMenu) -> String:
+	for _step in menu.rows.get_child_count():
+		await _key(&"cursor_down")
+		var armed := _armed_row(menu)
+		if armed == null:
+			return "the walked list armed no row at all"
+		if not armed.visible:
+			return "walking the list left the armed row [%s] off the window" % armed.text
+	return ""
+
+
+## Walks the highlight onto Cancel, which is what puts it in the window for the
+## finger that takes it.
+func _arm_the_last_row(menu: ActionMenu, last: Button) -> String:
+	for _step in menu.rows.get_child_count():
+		if _armed_row(menu) == last:
+			for _frame in 2:
+				await _battle.get_tree().process_frame  # the window settles before a finger aims
+			return "" if last.visible else "the armed last row is off the window"
+		await _key(&"cursor_down")
+	return "walking the list never armed its last row"
+
+
+func _reach_menu(complaint: String) -> String:
+	var flaw := await _reach(Battle.State.MENU)
+	return "" if flaw == "" else "%s: %s" % [complaint, flaw]
+
+
+## Where the window opens, read the way a player reads it — off which rows are on
+## screen — rather than off the index the menu keeps to itself.
+func _first_visible(menu: ActionMenu) -> int:
+	for i in menu.rows.get_child_count():
+		if (menu.rows.get_child(i) as Control).visible:
+			return i
+	return -1
+
+
+## The armed row of an open menu, read the way a player reads it — off the cursor
+## the menu prints — rather than off the index it keeps to itself.
+func _armed_row(menu: ActionMenu) -> Button:
+	for row in menu.rows.get_children():
+		var button := row as Button
+		if button.text.begins_with("> "):
+			return button
+	return null
+
+
+## One key press and release, so DirectionalInput counts it as a single gesture.
+func _key(action: StringName) -> void:
+	for pressed in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = pressed
+		await _dispatch(event)
+
+
+## A finger on a menu row, which the board's own `_finger` cannot stand in for: a
+## Button is picked by the mouse press the device emulates from the touch, and only
+## `Input` synthesises that — a touch pushed straight at the viewport arms nothing,
+## so a test that pushed one could never see a row picked or a press cancelled.
+## Positions are the canvas ones every rect here is in; `Input` takes window ones.
+func _menu_finger(down: bool, at: Vector2) -> void:
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = down
+	touch.position = _on_screen(at)
+	_finger_at[touch.index] = touch.position
+	await _dispatch(touch)
+
+
+func _menu_slide(to: Vector2) -> void:
+	var drag := InputEventScreenDrag.new()
+	drag.position = _on_screen(to)
+	drag.relative = drag.position - _finger_at.get(drag.index, drag.position)
+	_finger_at[drag.index] = drag.position
+	await _dispatch(drag)
+
+
+## `Input` buffers what it is handed and merges motion into one event a frame, so
+## a step that only awaited a frame raced the flush and read the board before its
+## own gesture had landed — which is a scenario that passes four runs in five.
+## Flushed here, and only then awaited.
+func _dispatch(event: InputEvent) -> void:
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+	for _frame in 2:
+		await _battle.get_tree().process_frame
+
+
+func _on_screen(at: Vector2) -> Vector2:
+	return _battle.get_viewport().get_final_transform() * at
 
 
 ## The right thumb: both ends of the ladder, and the walk to the next ready unit.
