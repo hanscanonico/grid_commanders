@@ -83,25 +83,32 @@ func _build() -> void:
 	# looking at the board rather than a key that does something in one interaction,
 	# so it has to say both that T exists *and* whether the lens is currently up —
 	# which a legend line, swapped per context and already full, cannot do. The copy
-	# is still ControlHints'.
-	_threat_chip = chip_button(ControlHints.THREAT_CHIP, &"show_threat")
+	# is still ControlHints', which is also what answers for the finger: on a touch
+	# build a chip drops the key it names and keeps the word it does.
+	_threat_chip = chip_button(ControlHints.chip_for(ControlHints.THREAT_CHIP), &"show_threat")
 	row.add_child(_threat_chip)
 	# The fire ring, the same way: R answers for whatever the cursor is on in every
 	# board context, so it is a lens rather than a legend entry. Beside T, and lit the
 	# same way, because the two are one pair of questions — where can this unit shoot,
 	# and where can anything shoot me.
-	_range_chip = chip_button(ControlHints.RANGE_CHIP, &"show_range")
+	_range_chip = chip_button(ControlHints.chip_for(ControlHints.RANGE_CHIP), &"show_range")
 	row.add_child(_range_chip)
 	# The mission card's chip, beside the two lenses because O is the same kind of
 	# key. Off the bar until a campaign mission says otherwise, so a skirmish's bar
 	# is laid out exactly as it was before this chip existed.
-	_objectives_chip = chip_button(ControlHints.OBJECTIVES_CHIP, &"show_objectives")
+	_objectives_chip = chip_button(
+		ControlHints.chip_for(ControlHints.OBJECTIVES_CHIP), &"show_objectives"
+	)
 	_objectives_chip.hide()
 	row.add_child(_objectives_chip)
 	# The next-ready-unit key, beside the lenses because N is stated once for the
 	# same reason they are. No field and no lit state: it never changes, so there is
 	# nothing here to hold on to. The doctrine label absorbs its width by expanding.
-	row.add_child(UiTheme.hud_label(ControlHints.NEXT_CHIP, UiTheme.SIZE_STAT, UiTheme.INK_3))
+	# A touch build says nothing here at all — the dock carries that control, and
+	# an empty word is how ControlHints asks for the label to be left off.
+	var next_word := ControlHints.chip_for(ControlHints.NEXT_CHIP)
+	if next_word != "":
+		row.add_child(UiTheme.hud_label(next_word, UiTheme.SIZE_STAT, UiTheme.INK_3))
 	row.add_child(UiTheme.hud_divider(UiTheme.HUD_TOP_RULE_H))
 	# The key legend, and the whole of it: whichever keys do something in the
 	# interaction the player is currently in. It replaced a lone "ESC · MENU" that

@@ -74,8 +74,11 @@ verify: check lint format-check test determinism
 # A `menu_` mode boots the main
 # menu instead of the board and gates it against the 640x360 frame (COM-5); the
 # set and what each one proves is in the README.
+# Imports first the way run and screenshot do: a stale class cache leaves the
+# sweep booting scenarios that never draw, which reads as a long hang rather than
+# as a cold tree.
 MODES ?=
-smoke:
+smoke: import
 	tools/smoke_scenarios.sh $(MODES)
 
 # Offline commander balance: plays AI-vs-AI across every pairing on five
