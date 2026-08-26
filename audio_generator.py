@@ -8,7 +8,8 @@ reproduces the same bytes.
 
 Outputs (under --out, default ./out):
   sfx/<name>.wav     44100 Hz mono 16-bit — drop-ins for assets/sfx/
-  music/<name>.wav   44100 Hz mono 16-bit loops — drop-ins for assets/music/
+  music/<name>.ogg   44100 Hz mono Ogg Vorbis loops — drop-ins for
+                     assets/music/, an eighth of the PCM they replace
   soundboard.html    A/B audition page: the game's current sounds against
                      this run's, with the measurements beside each pair
   musicboard.html    the same for the two marches; both players loop, so
@@ -30,6 +31,7 @@ from pathlib import Path
 
 from audiogen import measure, music, sfx
 from audiogen.dsp import RATE, seconds, to_int16
+from audiogen.ogg import ogg_bytes
 
 
 def wav_bytes(x) -> bytes:
@@ -57,8 +59,8 @@ def write_music(out: Path) -> dict:
     arrays = {name: music.render(name) for name in music.MUSIC}
     (out / "music").mkdir(parents=True, exist_ok=True)
     for name, x in arrays.items():
-        (out / "music" / f"{name}.wav").write_bytes(wav_bytes(x))
-        print(f"  wrote {out / 'music' / (name + '.wav')}")
+        (out / "music" / f"{name}.ogg").write_bytes(ogg_bytes(x))
+        print(f"  wrote {out / 'music' / (name + '.ogg')}")
     return arrays
 
 
@@ -74,12 +76,11 @@ _PAGE_STYLE = (
 )
 
 
-def _audio_tag(data: bytes, loop: bool = False) -> str:
+def _audio_tag(data: bytes, loop: bool = False, mime: str = "audio/wav") -> str:
     b64 = base64.b64encode(data).decode()
     attrs = " loop" if loop else ""
     return (
-        f'<audio controls preload="auto"{attrs} '
-        f'src="data:audio/wav;base64,{b64}"></audio>'
+        f'<audio controls preload="auto"{attrs} src="data:{mime};base64,{b64}"></audio>'
     )
 
 
@@ -114,14 +115,16 @@ def musicboard(out: Path, arrays: dict, game: Path) -> None:
     for name, x in arrays.items():
         builder, _peak = music.MUSIC[name]
         song = builder()
-        old_path = game / "assets/music" / f"{name}.wav"
         old_tag = "<em>missing</em>"
-        if old_path.exists():
-            old_tag = _audio_tag(old_path.read_bytes(), loop=True)
+        for suffix, mime in ((".ogg", "audio/ogg"), (".wav", "audio/wav")):
+            old_path = game / "assets/music" / f"{name}{suffix}"
+            if old_path.exists():
+                old_tag = _audio_tag(old_path.read_bytes(), loop=True, mime=mime)
+                break
         rows.append(
             f"<tr><td><b>{name}</b><br><small>{song.bpm:.0f} BPM</small></td>"
             f"<td>{old_tag}</td>"
-            f"<td>{_audio_tag(wav_bytes(x), loop=True)}</td>"
+            f"<td>{_audio_tag(ogg_bytes(x), loop=True, mime='audio/ogg')}</td>"
             f'<td class="num">{seconds(len(x)):.1f}s'
             f"<br>peak {measure.peak_db(x):.1f} dB<br>rms {measure.rms_db(x):.1f} dB"
             f"<br>tempo {measure.tempo_bpm(x):.1f} BPM"
@@ -142,18 +145,28 @@ def musicboard(out: Path, arrays: dict, game: Path) -> None:
 
 
 def install(out: Path, dest: Path) -> None:
-    for sub, names in (("sfx", sfx.SFX), ("music", music.MUSIC)):
+    for sub, names, suffix in (
+        ("sfx", sfx.SFX, ".wav"),
+        ("music", music.MUSIC, ".ogg"),
+    ):
         target = dest / "assets" / sub
         if not target.is_dir():
             sys.exit(
                 f"{target} is not a directory — is {dest} a grid_commanders checkout?"
             )
         for name in names:
-            src = out / sub / f"{name}.wav"
+            src = out / sub / f"{name}{suffix}"
             if not src.exists():
                 sys.exit(f"missing {src} — run a full generation first")
-            (target / f"{name}.wav").write_bytes(src.read_bytes())
-        print(f"installed {len(names)} {sub} wavs into {target}")
+            (target / f"{name}{suffix}").write_bytes(src.read_bytes())
+            kept = {f"{name}{suffix}", f"{name}{suffix}.import"}
+            for stale in target.glob(f"{name}.*"):
+                # A file left behind in a format we stopped shipping ships
+                # anyway — the game imports everything under assets/.
+                if stale.name not in kept:
+                    stale.unlink()
+                    print(f"  removed stale {stale}")
+        print(f"installed {len(names)} {sub} {suffix.lstrip('.')} files into {target}")
 
 
 def main() -> None:

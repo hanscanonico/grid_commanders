@@ -24,7 +24,8 @@ Regenerating after an edit changes exactly the sounds you edited.
 
 UI sits a step under combat by contract — a menu never barks louder than a
 battle — and the `Mix` gate holds the bands apart. Output is 44100 Hz mono
-16-bit (the shipped placeholders were 22050 Hz; Godot reimports transparently).
+(the shipped placeholders were 22050 Hz; Godot reimports transparently): the
+nine effects as 16-bit PCM `.wav`, the two music loops as Ogg Vorbis `.ogg`.
 
 ## The music
 
@@ -44,6 +45,14 @@ The game loops the whole file (`LOOP_FORWARD`), so each track is rendered as
 one seamless loop: every tail that rings past the end wraps back to beat
 zero, and the loop gates measure the seam.
 
+The music ships as Ogg Vorbis (`audiogen/ogg.py`), because 132 seconds of
+44100 Hz PCM is 11.6 MB of package and of resident RAM on a phone and about
+an eighth of that encoded. libsndfile stamps each Ogg stream with a random
+serial number, so the serial is pinned and the page CRCs recomputed — this
+repo's promise is bytes, not just samples. The effects stay PCM: all nine
+together are 264 KB, where the codec's own overhead would be most of the
+file.
+
 ## Usage
 
 ```sh
@@ -62,7 +71,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 `--install` requiring an explicit path is a scar, not an oversight: a
 defaulted destination in the sprite pipeline once overwrote uncommitted work
-in the game checkout.
+in the game checkout. It removes a same-named file in a format this repo no
+longer emits, because the game imports everything under `assets/` and a
+leftover would ship beside its replacement.
 
 ## The gates
 

@@ -11,12 +11,15 @@ Run with `.venv/bin/python -m unittest discover tests`.
 
 from __future__ import annotations
 
+import io
 import unittest
 
 import numpy as np
+import soundfile as sf
 
 from audiogen import measure, music, sequencer, sfx
-from audiogen.dsp import seconds
+from audiogen.dsp import RATE, seconds
+from audiogen.ogg import ogg_bytes
 
 # The game's autoload/music.gd Music.NAMES, verbatim.
 CONTRACT = ("parade", "advance")
@@ -136,3 +139,47 @@ class Distinctness(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OggEncoding(unittest.TestCase):
+    """The shipped format: mono Ogg Vorbis, pinned so a re-render is stable."""
+
+    def test_the_encode_is_byte_identical_across_runs(self):
+        for name in CONTRACT:
+            self.assertEqual(
+                ogg_bytes(RENDERED[name]),
+                ogg_bytes(RENDERED[name]),
+                f"{name} should encode to the same bytes twice",
+            )
+
+    def test_the_encode_keeps_every_sample_frame(self):
+        # The loop is the whole file, so a codec that padded or trimmed the
+        # stream would move the seam the gates above measure.
+        for name in CONTRACT:
+            decoded, rate = sf.read(
+                io.BytesIO(ogg_bytes(RENDERED[name])), dtype="float64"
+            )
+            self.assertEqual(rate, RATE)
+            self.assertEqual(len(decoded), len(RENDERED[name]), name)
+
+    def test_the_encode_is_far_smaller_than_the_pcm_it_replaces(self):
+        for name in CONTRACT:
+            pcm = 2 * len(RENDERED[name])
+            self.assertLess(len(ogg_bytes(RENDERED[name])), pcm / 5, name)
+
+    def test_the_decoded_track_measures_like_the_source(self):
+        for name in CONTRACT:
+            decoded, _ = sf.read(io.BytesIO(ogg_bytes(RENDERED[name])), dtype="float64")
+            source = RENDERED[name]
+            self.assertAlmostEqual(
+                measure.peak_db(decoded), measure.peak_db(source), delta=0.5, msg=name
+            )
+            self.assertAlmostEqual(
+                measure.rms_db(decoded), measure.rms_db(source), delta=0.5, msg=name
+            )
+            self.assertAlmostEqual(
+                measure.loop_rms_delta_db(decoded),
+                measure.loop_rms_delta_db(source),
+                delta=0.5,
+                msg=name,
+            )
