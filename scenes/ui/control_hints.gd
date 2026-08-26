@@ -74,6 +74,7 @@ const TOUCH_CHIPS: Dictionary = {
 	RANGE_CHIP: "RANGE",
 	OBJECTIVES_CHIP: "MISSION",
 	NEXT_CHIP: "",
+	END_TURN_CHIP: "END TURN",
 }
 
 ## End Turn's key, printed on the bottom bar's button rather than in a legend —
@@ -84,7 +85,9 @@ const TOUCH_CHIPS: Dictionary = {
 ## eventually names a binding the InputMap no longer has.
 ##
 ## Not in CHIPS: that set is what the *top* bar may print, and each of its members
-## is held to fitting beside a legend this one never sits next to.
+## is held to fitting beside a legend this one never sits next to. Its touch copy
+## is in TOUCH_CHIPS with the rest, so `chip_for` is the one way to print any of
+## them and the button drops the key a finger has not got.
 const END_TURN_CHIP := "E · END TURN"
 
 ## The touch dock's copy (mobile plan MB3). Its own block because the dock is a

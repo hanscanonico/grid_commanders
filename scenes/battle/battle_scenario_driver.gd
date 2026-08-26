@@ -801,12 +801,14 @@ func _check_rows(what: String, rows: Array[Dictionary], wanted: Array[StringName
 
 
 ## A live control sits inside the *board band* — the strip of the 640x360 frame the
-## two docked bars leave over, which is what ActionMenu clamps against and what
+## docked bars leave over, which is what ActionMenu clamps against and what
 ## MissionStrip centres itself in. Read off the live rects rather than recomputed.
+## The touch dock is one of those bars, so the band is MobileDock.board_band's
+## answer and a --mobile run of this check measures the band a finger plays in.
 func _check_in_band(what: String, control: Control) -> void:
 	var rect := control.get_global_rect()
 	var frame := _battle.get_viewport().get_visible_rect().size
-	var band := Rect2(Vector2(0, UiTheme.HUD_TOP_H), Vector2(frame.x, frame.y - UiTheme.HUD_BARS_H))
+	var band := MobileDock.board_band(frame)
 	if not band.encloses(rect):
 		_fail("the %s %s does not fit the board band %s" % [what, rect, band])
 

@@ -153,3 +153,64 @@ func test_the_area_reaches_past_the_drawn_control() -> void:
 		get_tree().root.push_input(click, true)
 	await get_tree().process_frame
 	assert_eq(hits.size(), 1, "a tap beside the chrome is still the control's")
+
+
+## A finger that travels is scrolling the list the row sits in, not picking the
+## row. It has to be the area that says so: MOUSE_FILTER_STOP breaks the walk up
+## the parent chain for every mouse event, so a scroller underneath never sees the
+## drag and never sees the press it would have to cancel.
+func test_a_drag_scrolls_instead_of_picking() -> void:
+	# Arrays rather than ints: a lambda captures a local by value, so a counter that
+	# is not a reference is one every case in this file would silently read as zero.
+	var picked: Array[int] = []
+	var reported: Array[Vector2] = []
+	var button := Button.new()
+	button.text = "ROW"
+	button.pressed.connect(func() -> void: picked.append(1))
+	_column(UiKit.touchable(button))
+	await _settle()
+	var area := _area_over(button)
+	area.dragged.connect(func(relative: Vector2) -> void: reported.append(relative))
+	_drag_across(area, Vector2(0, TouchGestures.TAP_SLOP_PX + 6.0))
+	await get_tree().process_frame
+	assert_eq(picked.size(), 0, "the row answered a finger that was scrolling the list")
+	assert_gt(reported.size(), 0, "the area reported no travel to scroll by")
+
+
+## And a finger that stays put still picks: the slop is the whole of the
+## difference, so a tap that trembles under a thumb is a tap. Out and back, so the
+## wander is half the slop each way.
+func test_a_tap_that_trembles_still_picks() -> void:
+	var picked: Array[int] = []
+	var button := Button.new()
+	button.text = "ROW"
+	button.pressed.connect(func() -> void: picked.append(1))
+	_column(UiKit.touchable(button))
+	await _settle()
+	_drag_across(_area_over(button), Vector2(0, (TouchGestures.TAP_SLOP_PX - 4.0) / 2.0))
+	await get_tree().process_frame
+	assert_eq(picked.size(), 1, "a tap that moved less than the slop was thrown away")
+
+
+## Press, travel, and release back where it started — the gesture that fires a row
+## unless something cancelled it on the way.
+func _drag_across(area: Control, wander: Vector2) -> void:
+	var at := area.get_global_rect().get_center()
+	_push_click(at, true)
+	for step in [wander, -wander]:
+		var motion := InputEventMouseMotion.new()
+		motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+		motion.position = at + (step if step == wander else Vector2.ZERO)
+		motion.global_position = motion.position
+		motion.relative = step
+		get_tree().root.push_input(motion, true)
+	_push_click(at, false)
+
+
+func _push_click(at: Vector2, down: bool) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = down
+	click.position = at
+	click.global_position = at
+	get_tree().root.push_input(click, true)

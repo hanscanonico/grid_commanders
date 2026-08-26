@@ -247,11 +247,11 @@ func _board_error() -> String:
 	return ""
 
 
-## The board band the two docked bars leave over, which is what every floating
-## surface is checked against.
+## The board band the docked bars leave over — the touch dock included, asked of
+## MobileDock.board_band — which is what every floating surface is checked against.
 func _in_band(what: String, control: Control) -> String:
 	var frame := _battle.get_viewport().get_visible_rect().size
-	var band := Rect2(Vector2(0, UiTheme.HUD_TOP_H), Vector2(frame.x, frame.y - UiTheme.HUD_BARS_H))
+	var band := MobileDock.board_band(frame)
 	if not band.encloses(control.get_global_rect()):
 		return "the %s %s does not fit the board band %s" % [what, control.get_global_rect(), band]
 	return ""

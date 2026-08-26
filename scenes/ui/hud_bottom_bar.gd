@@ -176,7 +176,7 @@ func _build_commander(row: HBoxContainer) -> void:
 
 func _build_end_turn(row: HBoxContainer) -> void:
 	_end_turn_button = Button.new()
-	_end_turn_button.text = ControlHints.END_TURN_CHIP
+	_end_turn_button.text = ControlHints.chip_for(ControlHints.END_TURN_CHIP)
 	_end_turn_button.focus_mode = Control.FOCUS_NONE
 	_end_turn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# Cream for the reason the Fire button is: this bar is slate, and a side-tinted
