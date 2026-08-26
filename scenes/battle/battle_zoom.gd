@@ -58,7 +58,19 @@ func setup() -> void:
 
 
 func set_zoom(zoom: float) -> void:
-	_settle(_nearest_rung(zoom))
+	settle_at(_nearest_rung(zoom))
+
+
+## The ladder this board offers, so a caller that has to reason about the whole of
+## it — the pinch's gain is the one — reads it here rather than rebuilding it.
+func rungs() -> PackedFloat64Array:
+	return _rungs
+
+
+## Which rung the board is standing on: where a gesture measures its own steps
+## from.
+func rung_index() -> int:
+	return _nearest_rung(_zoom)
 
 
 ## The zoom-step actions — keys, wheel and the pad's shoulders alike. Returns true
@@ -66,15 +78,18 @@ func set_zoom(zoom: float) -> void:
 ## this replaced sat first in that chain and swallowed the event the same way.
 func handle_input(event: InputEvent) -> bool:
 	if event.is_action_pressed(&"zoom_in"):
-		_settle(_nearest_rung(_zoom) + 1)
+		settle_at(rung_index() + 1)
 		return true
 	if event.is_action_pressed(&"zoom_out"):
-		_settle(_nearest_rung(_zoom) - 1)
+		settle_at(rung_index() - 1)
 		return true
 	return false
 
 
-func _settle(index: int) -> void:
+## **The one way onto a rung**, whichever end of the ladder the index falls off:
+## a key, a dock chip and a pinch all arrive here, so nothing anywhere can leave
+## the board resting between two rungs.
+func settle_at(index: int) -> void:
 	_zoom = _rungs[clampi(index, 0, _rungs.size() - 1)]
 	_view.set_zoom(_zoom)
 

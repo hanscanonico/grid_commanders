@@ -8,8 +8,9 @@ extends RefCounted
 ## What it proves is the dead ends the dock exists for, and the destructive one is
 ## the headline: an aimed Command Power is opened and then backed out of, and the
 ## meter is still full and the board still full of units afterwards. Then the three
-## other targeting states, the zoom and next-unit chips, and a computer turn paused
-## and resumed from the bar. Every flow returns an error string rather than
+## other targeting states, the zoom and next-unit chips, the two board gestures,
+## and a computer turn paused and resumed from the bar. Every flow returns an error
+## string rather than
 ## reporting one, the way its sibling scenarios do — the driver's `_fail` owns the
 ## push_error and the exit-code flag together.
 
@@ -24,7 +25,14 @@ const AIM := Vector2i(3, 3)
 ## no name on it.
 const WAIT_FRAMES := 900
 
+## The middle of the board band, which is where a finger that means the board lands
+## — the two bars and the dock swallow anything aimed at them.
+const _BAND := Vector2(320, 160)
+
 var _battle: Battle
+## Where each pushed finger last was, so a slide can state its own relative travel
+## the way the engine states a real one's.
+var _finger_at: Dictionary[int, Vector2] = {}
 
 
 func _init(battle: Battle) -> void:
@@ -44,6 +52,8 @@ func run(mode: String) -> String:
 	flaw = flaw if flaw != "" else await _back_out_of_a_drop()
 	flaw = flaw if flaw != "" else await _back_out_of_an_aimed_power()
 	flaw = flaw if flaw != "" else await _walk_the_board()
+	flaw = flaw if flaw != "" else await _pinch_the_ladder()
+	flaw = flaw if flaw != "" else await _pan_the_board()
 	flaw = flaw if flaw != "" else await _pause_and_resume_a_computer_turn()
 	return flaw
 
@@ -162,6 +172,95 @@ func _walk_the_board() -> String:
 	if _battle.cursor_cell != wanted.cell:
 		return "the dock's next-unit chip left the cursor at %s" % _battle.cursor_cell
 	return ""
+
+
+## Two fingers, spread by exactly the ladder's own gain and pinched back again.
+## What is read back is the rule rather than the feel: the board lands on a rung of
+## `BattleZoom`'s ladder both times, and undoing the spread lands on the rung the
+## hand opened on.
+func _pinch_the_ladder() -> String:
+	var opened_at := _battle.view.camera.zoom.x
+	var span := 100.0
+	_finger(0, true, _BAND + Vector2(-span / 2.0, 0))
+	_finger(1, true, _BAND + Vector2(span / 2.0, 0))
+	var gain := TouchGestures.gain_for(_rungs())
+	await _slide(1, _BAND + Vector2(span * gain - span / 2.0, 0))
+	if _battle.view.camera.zoom.x <= opened_at:
+		return "spreading two fingers never zoomed in"
+	var flaw := _on_a_rung()
+	if flaw != "":
+		return flaw
+	await _slide(1, _BAND + Vector2(span / 2.0, 0))
+	if not is_equal_approx(_battle.view.camera.zoom.x, opened_at):
+		return "pinching back landed on %f, not the rung it opened on" % _battle.view.camera.zoom.x
+	_finger(1, false, _BAND + Vector2(span / 2.0, 0))
+	_finger(0, false, _BAND + Vector2(-span / 2.0, 0))
+	return await _reach(Battle.State.IDLE)
+
+
+## One finger, dragged two cells across a unit. The board walks with it, the camera
+## comes to rest on whole world pixels, and the release confirms nothing — a drag
+## that began on a unit must never become a move (mobile R1 in its second form).
+## Then the same finger taps, which is what does select it.
+func _pan_the_board() -> String:
+	var stood_on := Vector2i(8, 8)  # the red tank
+	_battle.set_cursor_cell(stood_on)
+	var at: Vector2 = _battle.pointer.screen_of(stood_on)
+	var cell_px := float(BattleView.TILE) * _battle.view.camera.zoom.x
+	_finger(0, true, at)
+	await _slide(0, at + Vector2(2.0 * cell_px, 0))
+	if _battle.cursor_cell != stood_on - Vector2i(2, 0):
+		return "a two-cell drag left the cursor at %s" % _battle.cursor_cell
+	if _battle.view.camera.position != _battle.view.camera.position.floor():
+		return "the pan left the camera at %s" % _battle.view.camera.position
+	_finger(0, false, at + Vector2(2.0 * cell_px, 0))
+	var flaw := await _reach(Battle.State.IDLE)
+	if flaw != "":
+		return "the drag selected something: %s" % flaw
+	# The board walked under the finger, so the tank is somewhere else on the screen
+	# now — which is the pan having worked.
+	var moved_to: Vector2 = _battle.pointer.screen_of(stood_on)
+	_finger(0, true, moved_to)
+	_finger(0, false, moved_to)
+	flaw = await _reach(Battle.State.UNIT_SELECTED)
+	if flaw != "":
+		return "a tap on the tank did not pick it up: %s" % flaw
+	return await _press_back(Battle.State.IDLE)
+
+
+## The rungs this board offers, asked of the ladder rather than rebuilt.
+func _rungs() -> PackedFloat64Array:
+	return BattleZoom.rungs_for(_battle.view.min_zoom())
+
+
+func _on_a_rung() -> String:
+	for rung: float in _rungs():
+		if is_equal_approx(rung, _battle.view.camera.zoom.x):
+			return ""
+	return "the pinch rested at %f, which is no rung of this board" % _battle.view.camera.zoom.x
+
+
+## A finger landing or lifting. Pushed through the viewport the way a real one
+## arrives, so the whole path — `_unhandled_input`, BoardPointer, TouchGestures —
+## is what answers rather than any of them being called directly.
+func _finger(index: int, down: bool, at: Vector2) -> void:
+	var touch := InputEventScreenTouch.new()
+	touch.index = index
+	touch.pressed = down
+	touch.position = at
+	_finger_at[index] = at
+	_battle.get_tree().root.push_input(touch, true)
+
+
+func _slide(index: int, to: Vector2) -> void:
+	var drag := InputEventScreenDrag.new()
+	drag.index = index
+	drag.position = to
+	drag.relative = to - _finger_at.get(index, to)
+	_finger_at[index] = to
+	_battle.get_tree().root.push_input(drag, true)
+	for _frame in 2:
+		await _battle.get_tree().process_frame
 
 
 ## A watched turn is the state the bar matters most in: there is no other route to

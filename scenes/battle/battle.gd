@@ -211,6 +211,8 @@ var recorder: ReplayRecorder
 
 ## Owns the camera zoom level, its clamp against the view, and the zoom keys.
 var _zoom: BattleZoom
+## Owns where a click, a tap, a drag and a pinch land on the board.
+var pointer: BoardPointer
 ## Answers "was that one step?" for the board cursor, so an analog stick moves a
 ## cell per push rather than a cell per axis sample. See DirectionalInput.
 var _dirs := DirectionalInput.new()
@@ -308,6 +310,7 @@ func _ready() -> void:
 	commander_info_sheet.closed.connect(_close_commander_info)
 	_zoom = BattleZoom.new(view)
 	_zoom.setup()
+	pointer = BoardPointer.new(self, _zoom)
 	set_cursor_cell(Vector2i.ZERO)
 	animator.capturing = _capturing
 	if _capturing:
@@ -571,21 +574,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if state in [State.ANIMATING, State.MENU, State.CONFIRM, State.VICTORY, State.INFO]:
 		return  # the menu, guard and info sheet handle their own input; the rest block it
-	if _zoom.handle_input(event):
+	if _zoom.handle_input(event) or pointer.handle(event):
 		return
-	if event is InputEventMouseMotion:
-		var cell := _mouse_cell()
-		if map.in_bounds(cell) and cell != cursor_cell:
-			set_cursor_cell(cell)
-	elif (
-		event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
-	):
-		var cell := _mouse_cell()
-		if map.in_bounds(cell):
-			if cell != cursor_cell:
-				set_cursor_cell(cell)
-			confirm_at(cursor_cell)
-	elif event.is_action_pressed(&"confirm"):
+	if event.is_action_pressed(&"confirm"):
 		confirm_at(cursor_cell)
 	elif event.is_action_pressed(&"cancel"):
 		_cancel()
@@ -1391,10 +1382,6 @@ func _update_damage_preview() -> void:
 
 
 # --- cursor ------------------------------------------------------------------
-
-
-func _mouse_cell() -> Vector2i:
-	return Vector2i((get_global_mouse_position() / BattleView.TILE).floor())
 
 
 func set_cursor_cell(cell: Vector2i) -> void:

@@ -366,4 +366,8 @@ max-public-methods: 22
 #
 # The ink hierarchy (INK_SILHOUETTE / INK_FEATURE / INK_DETAIL, every stroke
 # routed through a tier) landed after the split and fits under this ceiling.
-max-file-lines: 1415
+#
+# 1415 -> 1402, tracking battle.gd down: the board's pointer moved out to
+# scenes/battle/board_pointer.gd so that a finger's pan and pinch had somewhere to
+# land. See the same entry in tools/check_scripts.sh.
+max-file-lines: 1402

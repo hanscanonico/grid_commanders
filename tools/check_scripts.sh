@@ -174,8 +174,14 @@ GODOT="${GODOT:-bin/Godot.app/Contents/MacOS/Godot}"
 # sibling one, so the two merged red; the raise records the merge that landed
 # without it. The five lines are the read-back's dispatch, owned here like every
 # scenario's.
+#
+# battle.gd 1415 -> 1402: the board's pointer. A finger's pan, pinch and tap had
+# nowhere to land in a file at its budget, so the mouse half went out with them —
+# scenes/battle/board_pointer.gd owns where a pointing device lands on the board
+# now, and scenes/battle/touch_gestures.gd is the Node-free recogniser under it.
+# What stayed is the one dispatch arm, beside the zoom's.
 FILE_BUDGETS="
-scenes/battle/battle.gd 1415
+scenes/battle/battle.gd 1402
 scenes/menu/main_menu.gd 1121
 core/save_codec.gd 1332
 ai/ai_unit_action_planner.gd 1099
