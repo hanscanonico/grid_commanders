@@ -965,7 +965,7 @@ func _refresh_continue() -> void:
 ## resumed.
 func _refuse_continue(caption: String, tip: String, detail: String) -> void:
 	_continue_button.disabled = true
-	_continue_caption.text = caption
+	_continue_caption.text = UiKit.caption_with_reason(caption, detail)
 	_continue_caption.add_theme_color_override("font_color", UiTheme.NEUTRAL_DARK)
 	_continue_tip.set_copy(tip, detail)
 

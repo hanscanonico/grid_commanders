@@ -71,7 +71,7 @@ func open(actions: Array[Dictionary], screen_pos: Vector2) -> void:
 		var is_disabled: bool = entry.get("disabled", false)
 		button.disabled = is_disabled
 		button.pressed.connect(func() -> void: choose(id))
-		rows.add_child(button)
+		rows.add_child(UiKit.touchable(button))
 		_ids.append(id)
 		_labels.append(entry.label)
 		_disabled.append(is_disabled)

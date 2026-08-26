@@ -171,7 +171,10 @@ func _light(chip: Button, on: bool) -> void:
 static func _chip_button(text: String, action: StringName) -> Button:
 	var chip := UiTheme.hud_chip(text, UiTheme.SIZE_STAT, UiTheme.INK_3)
 	chip.pressed.connect(_send_action.bind(action))
-	return chip
+	# A chip is the smallest control in the game — 7 px of ink on a 23 px bar — so
+	# on a touch build it answers a finger-sized rectangle it does not draw. The
+	# bar's height is untouched, which is what leaves the zoom ladder where it is.
+	return UiKit.touchable(chip)
 
 
 ## Pressed and released, the way the key itself arrives. Only the press does
