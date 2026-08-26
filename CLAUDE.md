@@ -572,9 +572,8 @@ plan is stated in full below and has no copy there.
   opens a cut-in at all, and a capture pins the *clock*, not the sheet. **14 of the 21 cut-in frames
   moved** — all four capture ones and ten of the seventeen combat ones — and the seven that did not
   (`cutin_ko` and the six `cutin_volley*`) are posed at a `t` inside a frame-A half beat, which is
-  the derivation proving itself; every board and menu frame is byte-identical. (`commander_info`
-  showed in the sweep's diff and is **not** this slice's: two runs of the unchanged tree disagree on
-  it, so it is run-to-run noise on `main`.)
+  the derivation proving itself; every board and menu frame is byte-identical, `commander_info`
+  included — re-measured at review over three sweeps of the unchanged tree and two of this one.
   (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can
