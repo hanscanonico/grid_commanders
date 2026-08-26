@@ -1388,37 +1388,149 @@ plan is stated in full below and has no copy there.
   phase-keyed texture variety, mountain scenery, future biome dressing — stays flat in the ground
   plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
   decorative tree "stands" the height a property does, a player will try to capture it.
-- `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **MB1 shipped**.
-  The engine profile was already right, so this is presentation and packaging. D1: **nothing under
-  `core/` or `ai/` learns a phone exists** — no `OS`, no `DisplayServer`, no feature tag, no touch
-  class, and a mobile build and a desktop build trade save files. D5: **the gate is
-  `OS.has_feature("mobile")` (or a presentation-only `--mobile`) and the bar is `make smoke`
-  byte-stable** — mobile chrome is never *constructed* on desktop. D2: a touch control dispatches
-  the action the keyboard already dispatches, through one facade; D3: every interaction gets a
-  visible control before any of them gets a gesture, and a pinch settles on a `BattleZoom` rung.
-  D8: touch targets grow their **hit** rectangles, never their drawn heights, because a drawn
-  height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor rung. D9: the planner is not
-  a mobile task. **Landscape only** (user decision, MB1) and **`aspect="keep"`** — `expand` and the
-  safe area are MB7, one decision, deferred together.
-  MB1's own findings, all measured on a 4.7.1 Android debug build:
-  **`OS.has_feature("mobile")` answers `true`** (with `android` true and `editor` false), so D5's
-  gate stands as written. `window/stretch/scale_mode` stays **absent** — the Android window scale
-  is a whole 3.000 or 2.000, so integer mode buys nothing there (README carries the arithmetic).
-  **D7's mechanism is REFUTED and D7's goal is therefore outstanding.** A feature-tagged autoload
-  override — `autoload/_mcp_game_helper.mobile=""` — does not clear an autoload on 4.7.1: the
-  engine reads each `autoload/*` property **raw**, so the base entry loads anyway, and the dotted
-  key is picked up as an autoload of its own with an empty path, logging one
-  "Failed to instantiate an autoload" per boot **on every platform, desktop included**. Excluding
-  the directory while a live `[autoload]` entry still names it is the same boot error. So the
-  preset ships **without** `addons/godot_ai/` excluded (≈740 KB packed), the project-layout note
-  above stays an open decision, and unregistering the helper belongs to the addon that registers
-  it. Two more packaging facts the preset records and no reader should re-derive: **`bin/*` must be
-  excluded** — an export walks the project directory rather than the index, so the gitignored
-  vendored engine rides along otherwise — and **`maps/*.txt` must be *included***, a board being a
-  plain text file that `export_filter="all_resources"` does not collect. **`tools/` cannot be
-  excluded**: `battle_setup.gd`, `battle_ai_runner.gd` and `battle_outcome.gd` name
-  `BalanceSideSpec` and `BalanceMatchEngine`, so a package without `tools/balance/` fails to
-  compile the whole scene tree — a layering smell this slice records rather than fixes.
+- `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **all shipped** (MB7 a
+  no-op, below). The engine profile was already right, so all of it is presentation and packaging.
+  D1: **nothing under `core/` or `ai/` learns a phone exists** — no `OS`, no `DisplayServer`, no
+  feature tag, no touch class, and a mobile build and a desktop build trade save files. D5: **the
+  gate is `MobileProfile` and the bar is `make smoke` byte-stable** — mobile chrome is never
+  *constructed* on desktop, and every slice below re-cleared 85/85 measured in one tree against
+  itself reverted in place. D8: touch targets grow their **hit** rectangles, never their drawn
+  heights, because a drawn height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor rung.
+  D9: the planner is not a mobile task. **Landscape only** (user decision) and **`aspect="keep"`**.
+  The five new authorities the plan left behind are `MobileProfile`, `TouchTarget` /
+  `UiKit.touchable`, `MobileDock`, `TouchGestures` / `BoardPointer` and
+  `TransitionInput.is_touch_press`; each is stated with its milestone.
+  **MB1 (#381), the package.** `export_presets.cfg` and `make export-android`; `project.godot` gains
+  only the landscape line. **`OS.has_feature("mobile")` answers `true`** (with `android` true and
+  `editor` false), so D5's gate stands as written. `window/stretch/scale_mode` stays **absent** — the
+  Android window scale is a whole 3.000 or 2.000, so integer mode buys nothing there (README carries
+  the arithmetic). **D7's mechanism is REFUTED and D7's goal is therefore outstanding**: a
+  feature-tagged autoload override — `autoload/_mcp_game_helper.mobile=""` — does not clear an
+  autoload on 4.7.1, the engine reading each `autoload/*` property **raw**, so the base entry loads
+  anyway and the dotted key is picked up as an autoload of its own with an empty path, logging one
+  "Failed to instantiate an autoload" per boot **on every platform, desktop included**. Excluding the
+  directory while a live `[autoload]` entry still names it is the same boot error, so the preset
+  ships **without** `addons/godot_ai/` excluded (≈740 KB packed) and unregistering the helper belongs
+  to the addon that registers it. Three packaging facts no reader should re-derive: **`bin/*` must be
+  excluded** (an export walks the project directory rather than the index, so the gitignored vendored
+  engine rides along otherwise), **`maps/*.txt` must be *included*** (a board is a plain text file
+  that `export_filter="all_resources"` does not collect), and **`tools/` cannot be excluded** —
+  `battle_setup.gd`, `battle_ai_runner.gd` and `battle_outcome.gd` name `BalanceSideSpec` and
+  `BalanceMatchEngine`, so a package without `tools/balance/` fails to compile the whole scene tree,
+  a layering smell recorded rather than fixed.
+  **MB2 (#383), the touch classes — one finger is one press.** `TransitionInput.is_touch_press` is
+  the single answer to what a finger press is, and `CutscenePlayback.consume_skip` asks it rather
+  than testing `InputEventScreenTouch` itself. **A finger has two doors and exactly one is ever
+  open**: `emulate_mouse_from_touch` is the engine default this game keeps, and on 4.7.1 a tap is
+  delivered as *both* a screen touch and a synthesised click, both reaching `_unhandled_input`, with
+  handling one not suppressing the other — so **MOB-09's wording is superseded by measurement**,
+  since taken literally ("a pressed touch is a press and a confirm") it is the plan's own R1
+  double-fire: one tap would skip two banners, advance two interlude lines and refuse a computer turn
+  twice. The touch branch is therefore live only while emulation is off, insurance rather than a
+  second receipt; no `[input_devices]` section is added. **`DirectionalInput` is deliberately silent
+  on touch** and that silence is recorded in its header rather than coded around — a screen has no
+  d-pad and a touch control dispatches the direction *action*, which is already one press per
+  gesture.
+  **MB4 (#384), the hit areas.** `scenes/common/mobile_profile.gd` (`MobileProfile`) **is the one
+  answer to whether this build is played with a finger** — the engine's `mobile` feature tag or the
+  presentation-only `--mobile`, resolved once; it sits beside `GameSpeed` rather than on `UiTheme`
+  because a platform is not a metric, and nothing under `core/` or `ai/` may ask it at all.
+  **`TouchTarget.inflation` is the single statement of how far a hit rectangle grows** —
+  `UiTheme.TOUCH_MIN` (44) is the metric, `UiKit.touchable` the one caller, and the rule is that a
+  control claims the free space around it, half of each gap to a neighbour and never past the canvas,
+  with what one side cannot take spilling to the other and `_retreat` handing an axis back to the
+  neighbour lying *diagonally*, which neither gap measures (found by fuzz, pinned by it). **A touch
+  control is delivered the tap the engine would have delivered** — on release, `toggled` *and*
+  `pressed` on a toggle — because a flip alone is silent to `UiKit.segment`, which reads `pressed`,
+  and that shipped as a dead seat strip. Known limits, the rule working rather than failing: a row
+  between two rows reaches 21 px of 44, a gapless list gains nothing, **a chip on the 23 px top bar
+  hangs 21 px of its area over the board's first row** (that strip's taps are the chip's), and a tap
+  in END TURN's **bottom 2 canvas px** is eaten by the dock's area — measured on device by MB8,
+  reported and not fixed. Buying any of it back means drawn height, which D8 forbids. The greyed-out
+  Continue button is copy rather than interaction (`UiKit.caption_with_reason`), a disabled control
+  taking no focus and a finger not hovering. **The `FocusSource`/`Tooltip` half of MB4 is neither
+  built nor deleted**, still gated on the device reading MOB-08 asks for.
+  **MB3 (#385), the dock.** `scenes/ui/mobile_dock.gd` (`MobileDock`) is a third docked bar built
+  only behind `MobileProfile` — Back / Resume / Step and `−` `+` `NEXT` — and its headline is the
+  abort: in `POWER_TARGETING` any tap on the board fires the aimed power, so without Back a touch
+  player must spend Hammerfall on a square they did not choose. **Every chip dispatches the action
+  the keyboard dispatches, through `HudTopBar.chip_button`**, so which states honour a press is the
+  key path's. **This supersedes D2's pause/resume exception**: `request_pause()` / `resume_turn()`
+  are not called from the dock, because `cancel` in `AI_TURN` and `confirm` in `PAUSED` already reach
+  them and a second door to one transition is what a single authority exists to prevent — Resume and
+  Step are live only where `BattleLegend.paused_in` / `steppable` say so, `confirm` at rest meaning
+  "select". **`BattleLegend` answers what a context permits** (`dock_live` beside `commands_board`),
+  reached through the one `BattleView.refresh_keys` call `Battle.state`'s setter already makes, so
+  the bar and the key legend cannot fall out of step. **Disabled, never hidden** — the height is
+  chrome the board's viewport is framed against, and a disabled chip is also what makes one tap one
+  receipt under a banner. **`MobileDock` owns the docked chrome's geometry**, `chrome_h()` and
+  `board_lift_px()`, the latter **retiring `BattleView.BOARD_LIFT_PX`**, because the dock is the only
+  reason either is not a constant. `mobile_back` is the driven gate and runs **alone**, `--mobile`
+  being a process fact `MobileProfile` resolves once, so it can never share the one-boot sweep.
+  **MB6 (#387), the two hands.** `scenes/battle/touch_gestures.gd` (`TouchGestures`) is the
+  recogniser and is deliberately pure: fingers in, **whole cells and whole rungs** out, no board
+  under it — a gesture reporting a float would bring back the fractional rest the integer ladder
+  exists to forbid. **`BattleZoom.settle_at` is the one way onto a rung**, so a key, a dock chip and
+  a pinch all arrive there and a pinch can no more rest between rungs than a key can; the pinch is
+  measured from the rung it *opened* on, so a spread and its exact undo land where the hand started.
+  **Sensitivity is per ladder** (`gain_for`, the ladder's own geometric step): one gain would make
+  Bulwark's 8.8x a hair trigger and a small board's 2.5x unreachable. **A pan walks the cursor, never
+  the camera** — `move_cursor_to` already parks the camera, so whole cells rest on whole world pixels
+  for free. **On a touch build the mouse door is shut and the finger's is open** —
+  `scenes/battle/board_pointer.gd` (`BoardPointer`) owns both, and the emulated click is refused
+  because it acts at finger-down, before anyone knows whether the finger will travel; the *release*
+  confirms, and only inside `TAP_SLOP_PX`, which makes "a drag beginning on a unit never issues a
+  move" structural rather than a threshold race. `BoardPointer` is also what paid for the slice —
+  `battle.gd` sat at its budget, so the mouse branch and `_mouse_cell` moved out with the touch half.
+  **MB9 (#386), iOS.** `export_presets.cfg` carries an iOS preset beside the Android one and it
+  exports **an Xcode project, not an `.ipa`** (`application/export_project_only`), so `make
+  export-ios` needs no signing identity and the archive is Xcode's. **No identity is committed**: the
+  engine refuses an iOS export with no team id even project-only, so the preset carries a placeholder
+  and `IOS_TEAM_ID` writes the real one into the **generated** project, build output — a signing id
+  in a tracked file being D7's rewritten-`project.godot` objection read for signing. Two toolchain
+  facts live in the README rather than being rediscovered: the 4.7.1 template's **simulator slice is
+  x86_64 only**, so an Apple Silicon simulator build needs `-arch x86_64`, and Xcode without its iOS
+  platform support installed refuses the asset catalog and the launch storyboard, which is where a
+  simulator build blocks. **D4's deferred fractional-scale measurement is taken and `scale_mode`
+  stays absent on iOS too**: at 3.275 the type carries no blended pixel at all — a pixel face is
+  rasterised at the final resolution under `canvas_items` stretch, so R6's softening is unobserved —
+  integer mode leaves the stems *less* even, fixes only the 1px slivers in texture art, and costs
+  8.4% of the short edge and 16% of the picture. Simulator, not a device.
+  **MB5 (#382), the payload — and the plan's own figure refuted.** MOB-10 read 11.6 MB of PCM in the
+  tree as 11.6 MB in the package and in RAM; Godot's WAV importer was already on `compress/mode=2`
+  (QOA), so the real package cost was 2.36 MB. What the re-encode buys is **−29% of on-device audio
+  storage and resident RAM** (2,357,070 → 1,680,280 B) and −86% of the committed bytes, against
+  −45 KB of APK — Ogg does not deflate, QOA did; **not the tenfold cut the plan estimated**. **The
+  format is the sibling `audio_generator`'s to emit, never this repo's to convert** — `make audio`
+  installs it and `audiogen/ogg.py` owns the compression level, and that module pins the Ogg serial
+  number and recomputes the page CRCs, libsndfile stamping a random one against a pipeline whose
+  promise is byte-stability. **The autoload owns looping** — `Music` sets `stream.loop` the way it
+  used to set `loop_mode`, so the `.import` files stay at their defaults. **The effects stay PCM**:
+  nine files, 264 KB, already mono, where the codec's overhead would be most of the file.
+  **MB8 (#388), the soak.** `tools/run_mobile_soak.gd` (`make mobile-soak`) **is an instrument and
+  `docs/mobile_soak.md` its dated record**, superseded wholesale by a later soak in the
+  `bulwark_balance.md` convention; it is out of `make verify` and it tunes nothing. Its planner loop
+  is `run_bulwark_measure.gd`'s with a clock around it rather than a second match engine. The
+  measurement retires R5's *estimate*: a four-army Bulwark turn costs 249 ms (Normal) to 924 ms
+  (Brutal) of mean planning on a quiet desktop, worst turns 1.1–3.5 s, with fog worth 2.9x of it (the
+  AR1 cache being inert with fog on), so the phone answer — if one is wanted — belongs to the AI
+  plans, exactly as D9 says. Two facts a later slice should not re-derive: **a device build takes no
+  launch flags** (4.7.1 ignores `command_line_params` and `command_line` intent extras), so a device
+  scenario is reached through the menus; and **`BoardBeat` and `UnitSprite` cannot be compiled by a
+  `-s` script**, because they read the `Settings` autoload, which is why the beat is timed from the
+  running scene.
+  **MB7 is a no-op under `keep`.** D4 binds `expand` and the safe area together or not at all, the
+  letterbox being what makes the notch harmless, and the user's answer was `keep` — so no `SafeArea`
+  authority exists and shipping one without `expand` would be dead code. The residual is measured
+  rather than assumed (`docs/mobile_soak.md`): the window is 2220x1080 against an `mAppBounds` of
+  2220x1014, so the whole dock row lies inside the 66 px system gesture strip — taps still reach the
+  game under immersive mode, swipes there will not, and `keep` pads the sides only.
+  **Owed device proofs, named once and not faked in any slice**: a pinch on Bulwark reaching every
+  one of that board's six rungs; MOB-08's hover reading, which gates the `FocusSource`/`Tooltip` half
+  of MB4, with its scroll-drag and ten-of-ten tap checks; and the real-phone sitting
+  `docs/mobile_soak.md` §6 lists — a campaign mission, a four-army Bulwark round timed against §2's
+  desktop figures, a replay watched to its end on Pause/Step/Resume alone (which is where the Step
+  chip is proven), a save resumed after eviction, and audio interruption over all of it.
 
 ## Architecture — the rules that matter most
 
@@ -1459,9 +1571,10 @@ res://
 │  ├─ battle/   # battle.tscn, cursor, unit_sprite
 │  │  └─ cutscene/  # the combat & capture cut-ins and the BattleStyle they read
 │  ├─ menu/     # main_menu.tscn — map and commander select, match options, campaign screens
-│  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, …)
+│  ├─ common/   # helpers shared by both scenes (SideIdentity, GameSpeed, MobileProfile, …)
 │  └─ ui/       # HUD bars, menus, damage preview, the first-match mission strip,
-│              # the in-battle mission objective card and scripted-beat speech card
+│              # the in-battle mission objective card and scripted-beat speech card,
+│              # the touch dock and its hit areas (mobile builds only)
 ├─ autoload/    # singletons: EventBus, MatchConfig, Settings, Sfx, Music, CampaignSession
 │              # (project.godot also registers _mcp_game_helper, the godot_ai editor
 │              # addon's runtime — it loads in every run today; keeping it out of export
@@ -1475,8 +1588,8 @@ res://
 │              # (tools/arena/), replay analyser (tools/replay/), art, sfx & music
 │              # pipeline
 ├─ docs/        # the offline instruments' committed records (the Balance Lab, the
-│              # commander matrix, the difficulty ladder, the arena, Bulwark's spread),
-│              # and how to author a campaign mission
+│              # commander matrix, the difficulty ladder, the arena, Bulwark's spread,
+│              # the mobile soak), and how to author a campaign mission
 └─ tests/       # GUT tests — target the Node-free layers only (see Testing)
 ```
 
