@@ -1388,6 +1388,37 @@ plan is stated in full below and has no copy there.
   phase-keyed texture variety, mountain scenery, future biome dressing — stays flat in the ground
   plane the way `TerrainAutotiles.variant`/`stands_in_cutin()` already draw it. The moment a
   decorative tree "stands" the height a property does, a player will try to capture it.
+- `mobile-builds-plan.html` — the whole command table in two hands: MB1–MB9, **MB1 shipped**.
+  The engine profile was already right, so this is presentation and packaging. D1: **nothing under
+  `core/` or `ai/` learns a phone exists** — no `OS`, no `DisplayServer`, no feature tag, no touch
+  class, and a mobile build and a desktop build trade save files. D5: **the gate is
+  `OS.has_feature("mobile")` (or a presentation-only `--mobile`) and the bar is `make smoke`
+  byte-stable** — mobile chrome is never *constructed* on desktop. D2: a touch control dispatches
+  the action the keyboard already dispatches, through one facade; D3: every interaction gets a
+  visible control before any of them gets a gesture, and a pinch settles on a `BattleZoom` rung.
+  D8: touch targets grow their **hit** rectangles, never their drawn heights, because a drawn
+  height feeds `UiTheme.HUD_BARS_H` and therefore every board's floor rung. D9: the planner is not
+  a mobile task. **Landscape only** (user decision, MB1) and **`aspect="keep"`** — `expand` and the
+  safe area are MB7, one decision, deferred together.
+  MB1's own findings, all measured on a 4.7.1 Android debug build:
+  **`OS.has_feature("mobile")` answers `true`** (with `android` true and `editor` false), so D5's
+  gate stands as written. `window/stretch/scale_mode` stays **absent** — the Android window scale
+  is a whole 3.000 or 2.000, so integer mode buys nothing there (README carries the arithmetic).
+  **D7's mechanism is REFUTED and D7's goal is therefore outstanding.** A feature-tagged autoload
+  override — `autoload/_mcp_game_helper.mobile=""` — does not clear an autoload on 4.7.1: the
+  engine reads each `autoload/*` property **raw**, so the base entry loads anyway, and the dotted
+  key is picked up as an autoload of its own with an empty path, logging one
+  "Failed to instantiate an autoload" per boot **on every platform, desktop included**. Excluding
+  the directory while a live `[autoload]` entry still names it is the same boot error. So the
+  preset ships **without** `addons/godot_ai/` excluded (≈740 KB packed), the project-layout note
+  above stays an open decision, and unregistering the helper belongs to the addon that registers
+  it. Two more packaging facts the preset records and no reader should re-derive: **`bin/*` must be
+  excluded** — an export walks the project directory rather than the index, so the gitignored
+  vendored engine rides along otherwise — and **`maps/*.txt` must be *included***, a board being a
+  plain text file that `export_filter="all_resources"` does not collect. **`tools/` cannot be
+  excluded**: `battle_setup.gd`, `battle_ai_runner.gd` and `battle_outcome.gd` name
+  `BalanceSideSpec` and `BalanceMatchEngine`, so a package without `tools/balance/` fails to
+  compile the whole scene tree — a layering smell this slice records rather than fixes.
 
 ## Architecture — the rules that matter most
 
