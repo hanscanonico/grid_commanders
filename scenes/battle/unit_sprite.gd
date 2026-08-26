@@ -63,6 +63,9 @@ const UNITS_ATLAS_MOVE_B_PATH := "res://assets/tiles/units_atlas_move_b.png"
 ## draws the art at 1:1 over ground and a shadow of its own — see
 ## `figure_texture_for`.
 const UNITS_ATLAS_FIGURES_PATH := "res://assets/tiles/units_atlas_figures.png"
+## The figures a beat later: the ambient pair's frame B with the same shadow
+## subtracted, so the cut-ins idle on the beat the board does.
+const UNITS_ATLAS_FIGURES_B_PATH := "res://assets/tiles/units_atlas_figures_b.png"
 ## The acted grey-out is a screen-space dither scrim, not desaturate-and-dim:
 ## with the generated liveries a desaturated unit collapsed into the iron and
 ## neutral rows — three meanings, one appearance (sprite review round 3). The
@@ -194,8 +197,13 @@ static func tile_texture_for(type: UnitType, row: int) -> AtlasTexture:
 ## themselves, ask for this one instead. The sheet is the board's own cell with
 ## those pixels subtracted (the generator's `compose_cell`), never a redraw,
 ## which is what keeps "board art, blown up" true of it.
-static func figure_texture_for(type: UnitType, row: int) -> AtlasTexture:
-	return _region_of(load(UNITS_ATLAS_FIGURES_PATH), type, row)
+##
+## `frame` is the idle clip's, the ambient beat's two poses with the shadow gone
+## from both. It defaults to the resting frame, so a caller that wants a still
+## asks for nothing; a cut-in passes the frame its own director's clock is on.
+static func figure_texture_for(type: UnitType, row: int, frame: int = 0) -> AtlasTexture:
+	var path := UNITS_ATLAS_FIGURES_B_PATH if frame == 1 else UNITS_ATLAS_FIGURES_PATH
+	return _region_of(load(path), type, row)
 
 
 static func _region_of(sheet: Texture2D, type: UnitType, row: int) -> AtlasTexture:

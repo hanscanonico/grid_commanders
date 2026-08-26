@@ -42,4 +42,12 @@ static var frozen := false
 static func frame(period_ms: int, now_ms: int = Time.get_ticks_msec()) -> int:
 	if frozen or Settings.speed.instant:
 		return 0
-	return int(now_ms / period_ms) % 2
+	return frame_at(period_ms, now_ms)
+
+
+## The same arithmetic on a clock of the caller's own. The two cut-ins read this
+## one directly, off CutscenePlayback's `t`: inside a cut-in everything is a pure
+## function of that clock, so a posed still and a skip both land on a fixed
+## frame — which the board's wall beat and its two stills cannot promise.
+static func frame_at(period_ms: int, elapsed_ms: int) -> int:
+	return int(elapsed_ms / period_ms) % 2

@@ -9,18 +9,12 @@ extends GutTest
 ## in the draw path and give an install a silent way to change behaviour. What the
 ## manifest is worth is drift detection, and this suite is the one place it is
 ## consumed: regenerate the art with a different cell, cadence or column and the
-## gate says so by name.
+## gate says so by name. Every sheet it names is now drawn by something: the four
+## clips are the board's ambient beat, the cut-ins' idle, the walk cycle and the
+## sea's swell.
 
 const MANIFEST_PATH := "res://assets/tiles/anim.json"
 const TILES_DIR := "res://assets/tiles/"
-## Installed by the generator and read by nothing yet: the cut-in's idle pair is
-## deliberately deferred. Named here so the manifest still answers for it and the
-## next reader does not take it for dead weight. The sea's frame B and the move
-## pair have left this list — SeaBeat and the move clip draw them.
-const UNREAD_SHEETS := [
-	"res://assets/tiles/units_atlas_figures_b.png",
-]
-
 var manifest: Dictionary
 
 
@@ -56,7 +50,9 @@ func test_the_clips_name_the_sheets_the_game_loads() -> void:
 		"the ambient pair"
 	)
 	assert_eq(
-		_clip_sheets("ambient_figures")[0], UnitSprite.UNITS_ATLAS_FIGURES_PATH, "the figure sheet"
+		_clip_sheets("ambient_figures"),
+		[UnitSprite.UNITS_ATLAS_FIGURES_PATH, UnitSprite.UNITS_ATLAS_FIGURES_B_PATH],
+		"the figures' pair"
 	)
 	assert_eq(
 		_clip_sheets("move"),
@@ -79,8 +75,6 @@ func test_every_sheet_the_manifest_names_is_installed() -> void:
 			assert_true(
 				ResourceLoader.exists(path), "%s names a sheet that is not installed" % clip
 			)
-	for path: String in UNREAD_SHEETS:
-		assert_true(ResourceLoader.exists(path), "%s ships installed for a later slice" % path)
 
 
 func test_the_phase_counts_are_the_autotiles_own() -> void:

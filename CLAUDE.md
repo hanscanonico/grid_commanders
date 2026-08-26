@@ -234,7 +234,8 @@ plan is stated in full below and has no copy there.
   — `UnitSprite.CELL_GROUND_PX`, **7** px up (9 until the animation install; the generator's one sun
   drops the shadow its 2 px `SHADOW_OFFSET` below the feet row rather than centring it on them), the
   same on every land and sea column, with air's cast displaced lower by height. The figure sheet is
-  a **pair** now, frame B beside frame A, though only frame A is read — see the install below. The
+  a **pair** now, frame B beside frame A, and both are read — the cut-ins beat between them (the
+  ninth slice below). The
   rows below it are the shadow's own spread, so a cut-in drawing the
   shadowless sheet over a contact ellipse of *its* own has to centre that ellipse on the ground line;
   both did it on the box's bottom edge, which put the ellipse below the tracks it was under and left
@@ -498,9 +499,8 @@ plan is stated in full below and has no copy there.
   **The milestone's sixth slice is the animation install, the board's new ambient baseline**
   (generator `e16d261`, adopted 2026-08-25; this clause is its record). Every sheet on the board was
   regenerated and four new ones arrived: `units_atlas_figures_b.png`, `units_atlas_move.png`,
-  `units_atlas_move_b.png` and `autotiles/sea_b.png` **ship installed and read by nothing** — the
-  move clip and the sea's beat are their own slices and the cut-in's idle is deliberately deferred,
-  a cut-in being a pure function of `CutscenePlayback`'s clock rather than of a wall clock. Three
+  `units_atlas_move_b.png` and `autotiles/sea_b.png` shipped installed and read by nothing, each
+  its own slice — **all four are drawn now** (the seventh, eighth and ninth slices below). Three
   decisions. **`scenes/battle/board_beat.gd` (`BoardBeat`) is the one clock every looping sheet
   reads** — the cadences (`AMBIENT_MS` 500, `MOVE_MS` 160, `SEA_MS` 900, deliberately not multiples
   of one another), the frozen pin and the Instant rule, Node-free statics so a beat is checkable
@@ -560,6 +560,21 @@ plan is stated in full below and has no copy there.
   move frames equal to their ambient counterparts, or both different), the shared grid, the cadence,
   the two stills and the flip policy against the shipped art. **All 85 smoke frames are
   byte-identical**, and structurally so: a capture pins Instant, so it never runs a tween.
+  **The milestone's ninth slice is the cut-ins' idle beat**, `units_atlas_figures_b.png` — the last
+  of the install's four unread sheets, so nothing the generator ships is now drawn by nothing.
+  `UnitSprite.figure_texture_for` grew a **defaulted** `frame`, staying the one way to ask for a
+  figure, and both cut-ins cut the pair once at bind and pick between them while they play. The
+  decision is which clock they pick on: **`BoardBeat.frame_at(period_ms, elapsed_ms)` is the
+  arithmetic, and a cut-in reads it off its own director's `t` rather than `BoardBeat.frame`'s wall
+  clock** — inside `scenes/battle/cutscene/` everything is a pure function of one clock, so a
+  posed `pose_at(t)` still and a skip (`t = total`) both land on a fixed pose, which a shutter-timed
+  beat could not promise. The board's two stills stay `frame`'s and do not reach in: Instant never
+  opens a cut-in at all, and a capture pins the *clock*, not the sheet. **14 of the 21 cut-in frames
+  moved** — all four capture ones and ten of the seventeen combat ones — and the seven that did not
+  (`cutin_ko` and the six `cutin_volley*`) are posed at a `t` inside a frame-A half beat, which is
+  the derivation proving itself; every board and menu frame is byte-identical. (`commander_info`
+  showed in the sweep's diff and is **not** this slice's: two runs of the unchanged tree disagree on
+  it, so it is run-to-run noise on `main`.)
   (no plan artifact; this entry is its record) — `N` walks the cursor
   to the next unit on the side in hand that has not acted, so the last one is never hunted across
   a 49×32 board. **`scenes/battle/ready_units.gd` (`ReadyUnits`) is the one authority for who can

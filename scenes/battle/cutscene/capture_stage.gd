@@ -101,11 +101,15 @@ var brightness := 0.0
 var flipped := false
 ## One dust puff per hop, its own 0 -> 1; drawn at the building's base.
 var dust := PackedFloat32Array()
-## The cut-in's clock, for the squad's marching bob. Written by the director like
-## everything else, so a posed still stays a pure function of the clock.
+## The cut-in's clock, for the squad's marching bob and its idle pose. Written by
+## the director like everything else, so a posed still stays a pure function of
+## the clock.
 var clock := 0.0
 
-var _squad_art: AtlasTexture
+## The idle clip, frame A then frame B, both cut at bind. Which one marches is
+## this cut-in's own clock's answer (`_squad_now`) rather than the board's wall
+## beat, so a posed still does not depend on when the shutter fired.
+var _squad_figures: Array[AtlasTexture] = []
 
 
 func _ready() -> void:
@@ -128,16 +132,19 @@ func bind(
 	prop_col = p_col
 	row_before = p_owner_row
 	row_after = p_capturer_row
-	_squad_art = UnitSprite.figure_texture_for(p_unit.type, p_capturer_row)
+	_squad_figures = [
+		UnitSprite.figure_texture_for(p_unit.type, p_capturer_row, 0),
+		UnitSprite.figure_texture_for(p_unit.type, p_capturer_row, 1),
+	]
 
 
 ## The atlas row the marching squad is really drawn from, read back off the
 ## region `bind` baked. A read for the scenario driver's row check, which asks
 ## what is on screen rather than what was remembered — the stage stays draw-only.
 func drawn_squad_row() -> int:
-	if _squad_art == null:
+	if _squad_figures.is_empty():
 		return -1
-	return int(_squad_art.region.position.y) / UnitSprite.SPRITE_H
+	return int(_squad_figures[0].region.position.y) / UnitSprite.SPRITE_H
 
 
 func _draw() -> void:
@@ -323,15 +330,22 @@ func _draw_shadow(ground: Vector2, strength: float) -> void:
 ## read; what goes is the shimmer inside them.
 func _draw_figure(feet: Vector2) -> void:
 	var box := Rect2(-FIGURE_PX * 0.5, -FIGURE_H, FIGURE_PX, FIGURE_H)
+	var art := _squad_now()
 	draw_set_transform(feet.round())
 	draw_texture_rect(
-		_squad_art,
+		art,
 		Rect2(box.position + Vector2(2.0, 3.0), box.size),
 		false,
 		Color(CutscenePalette.FIGURE_SHADOW, 0.4)
 	)
-	draw_texture_rect(_squad_art, box, false, Color.WHITE)
+	draw_texture_rect(art, box, false, Color.WHITE)
 	draw_set_transform(Vector2.ZERO)
+
+
+## Which pose of the idle clip the squad is marching in, off this cut-in's own
+## clock at the board's ambient cadence.
+func _squad_now() -> AtlasTexture:
+	return _squad_figures[BoardBeat.frame_at(BoardBeat.AMBIENT_MS, int(clock * 1000.0))]
 
 
 ## A fan of specks kicked up at the building's base on each landing.
