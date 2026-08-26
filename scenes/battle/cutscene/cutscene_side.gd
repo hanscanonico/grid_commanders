@@ -156,12 +156,16 @@ var flash := 0.0
 var squad_alpha := 1.0
 ## 0 -> 1 as the plates slide in and their text appears.
 var plate_p := 0.0
-## The cut-in's clock, in seconds, for the one thing here that is a function of
-## time rather than of a beat: an aircraft's hover bob. Written by the director
-## like everything else, so a posed still is still a pure function of `_t`.
+## The cut-in's clock, in seconds, for the two things here that run on time
+## rather than on a beat of the director's: an aircraft's hover bob, and the
+## squad's idle pose. Written by the director like everything else, so a posed
+## still is still a pure function of `_t`.
 var clock := 0.0
 
-var _art: AtlasTexture
+## The idle clip, frame A then frame B, both cut at bind. Which one is drawn is
+## the *director's* clock's answer (`_figure_now`), never the board's wall beat:
+## the board's would make a posed still depend on when the shutter fired.
+var _figures: Array[AtlasTexture] = []
 var _ridge_tint := Color.SLATE_GRAY
 ## Cached off the unit's domain at bind time — asked once per cut-in rather than
 ## once per figure per frame.
@@ -197,7 +201,10 @@ func bind(
 	owner_row = p_owner_row
 	accent = p_accent
 	mirror = p_mirror
-	_art = UnitSprite.figure_texture_for(p_unit.type, p_unit_row)
+	_figures = [
+		UnitSprite.figure_texture_for(p_unit.type, p_unit_row, 0),
+		UnitSprite.figure_texture_for(p_unit.type, p_unit_row, 1),
+	]
 	_ridge_tint = CutsceneScenery.ground_tint(ground.atlas_col, _ground_row())
 	_flying = p_unit.type.domain == UnitType.AIR
 	_floating = p_unit.type.domain == UnitType.SEA
@@ -208,9 +215,9 @@ func bind(
 ## reads for the scenario driver's row check, which asks what is on screen rather
 ## than what was remembered — the side stays draw-only.
 func drawn_unit_row() -> int:
-	if _art == null:
+	if _figures.is_empty():
 		return -1
-	return int(_art.region.position.y) / UnitSprite.SPRITE_H
+	return int(_figures[0].region.position.y) / UnitSprite.SPRITE_H
 
 
 ## The row the *cell's own* art is drawn in — the paved floor for a surface, the
@@ -506,10 +513,17 @@ func _draw_figure(feet: Vector2, fall: float, hittable: bool) -> void:
 	var at := feet + Vector2(_inward(-fall * 10.0), lift)
 	draw_set_transform_matrix(Transform2D(spin, flip, 0.0, at))
 	var shadow := Color(CutscenePalette.FIGURE_SHADOW, 0.4 * alpha)
-	draw_texture_rect(_art, Rect2(box.position + Vector2(2.0, 3.0), box.size), false, shadow)
+	var art := _figure_now()
+	draw_texture_rect(art, Rect2(box.position + Vector2(2.0, 3.0), box.size), false, shadow)
 	tint.a = alpha
-	draw_texture_rect(_art, box, false, tint)
+	draw_texture_rect(art, box, false, tint)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+## Which pose of the idle clip the squad is standing in, off this cut-in's own
+## clock at the board's ambient cadence.
+func _figure_now() -> AtlasTexture:
+	return _figures[BoardBeat.frame_at(BoardBeat.AMBIENT_MS, int(clock * 1000.0))]
 
 
 # --- plates ------------------------------------------------------------------
